@@ -154,10 +154,10 @@ class Uniform(Distribution):
 
     def extend_repr(self):
         if self.is_scalar_batch:
-            str_info = f'low = {self.low}, high = {self.high}'
+            s = f'low = {self.low}, high = {self.high}'
         else:
-            str_info = f'batch_shape = {self._broadcast_shape}'
-        return str_info
+            s = f'batch_shape = {self._broadcast_shape}'
+        return s
 
     @property
     def low(self):

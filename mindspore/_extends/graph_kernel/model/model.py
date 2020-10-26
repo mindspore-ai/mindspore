@@ -257,10 +257,10 @@ class Value:
         self.data_format = data_format
 
     def __str__(self):
-        return self.name + str(list(self.shape)) + str(self.value)
+        return self.name + str(list(self.shape))
 
     def __repr__(self):
-        return "%s.%s%s%s" % (self.name, self.dtype, str(list(self.shape)), str(self.value))
+        return "%s.%s%s" % (self.name, self.dtype, str(list(self.shape)))
 
     def get_size(self):
         return 1

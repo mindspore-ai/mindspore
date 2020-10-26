@@ -1008,14 +1008,13 @@ class DenseQuant(Cell):
 
     def extend_repr(self):
         """A pretty print for Dense layer."""
-        str_info = 'in_channels={}, out_channels={}, weight={}, has_bias={}'.format(
+        s = 'in_channels={}, out_channels={}, weight={}, has_bias={}'.format(
             self.in_channels, self.out_channels, self.weight, self.has_bias)
         if self.has_bias:
-            str_info = str_info + ', bias={}'.format(self.bias)
+            s += ', bias={}'.format(self.bias)
         if self.activation_flag:
-            str_info = str_info + ', activation={}'.format(self.activation)
-
-        return str_info
+            s += ', activation={}'.format(self.activation)
+        return s
 
 
 class _QuantActivation(Cell):
@@ -1387,13 +1386,13 @@ class QuantBlock(Cell):
         return x
 
     def extend_repr(self):
-        str_info = f'quant={self.quant}, core_op={type(self.core_op)}, weight=shape[{self.weight.shape}]'
+        s = f'quant={self.quant}, core_op={type(self.core_op)}, weight=shape[{self.weight.shape}]'
         if self.has_bias:
-            str_info = str_info + f', bias=shape[{self.bias.shape}]'
+            s += f', bias=shape[{self.bias.shape}]'
         if self.has_act:
-            str_info = str_info + f', activation={self.activation}'
-        str_info = str_info + f', dequant={self.dequant}'
-        return str_info
+            s += f', activation={self.activation}'
+        s += f', dequant={self.dequant}'
+        return s
 
 
 class QuantMindirBlock(Cell):
@@ -1454,9 +1453,9 @@ class QuantMindirBlock(Cell):
         return x
 
     def extend_repr(self):
-        str_info = f'core_op={type(self.core_op)}, weight=shape[{self.weight.shape}]'
+        s = f'core_op={type(self.core_op)}, weight=shape[{self.weight.shape}]'
         if self.has_bias:
-            str_info = str_info + f', bias=shape[{self.bias.shape}]'
+            s += f', bias=shape[{self.bias.shape}]'
         if self.has_act:
-            str_info = str_info + f', activation={self.activation}'
-        return str_info
+            s += f', activation={self.activation}'
+        return s

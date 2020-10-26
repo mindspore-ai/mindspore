@@ -118,8 +118,7 @@ class Softplus(Bijector):
         return self._sharpness
 
     def extend_repr(self):
-        str_info = f'sharpness = {self.sharpness}'
-        return str_info
+        return f'sharpness = {self.sharpness}'
 
     def shape_mapping(self, shape):
         return shape

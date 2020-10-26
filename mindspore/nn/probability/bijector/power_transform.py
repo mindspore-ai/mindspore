@@ -81,8 +81,7 @@ class PowerTransform(Bijector):
         return self._power
 
     def extend_repr(self):
-        str_info = f'power = {self.power}'
-        return str_info
+        return f'power = {self.power}'
 
     def shape_mapping(self, shape):
         return shape

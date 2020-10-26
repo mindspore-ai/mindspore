@@ -158,16 +158,10 @@ class Parameter(MetaTensor_):
         return (Tensor, data)
 
     def __str__(self):
-        value_str = MetaTensor.__str__(self)
-        if isinstance(self, Tensor):
-            value_str = Tensor.__str__(self)
-        return f'Parameter (name={self._param_info.name}, value={value_str})'
+        return f'Parameter (name={self._param_info.name})'
 
     def __repr__(self):
-        value_str = MetaTensor.__repr__(self)
-        if isinstance(self, Tensor):
-            value_str = Tensor.__repr__(self)
-        return f'Parameter (name={self._param_info.name}, value={value_str})'
+        return f'Parameter (name={self._param_info.name})'
 
     def __parameter__(self):
         """For parse check."""
