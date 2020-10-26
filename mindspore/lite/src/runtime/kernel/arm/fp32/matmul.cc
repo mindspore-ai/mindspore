@@ -18,11 +18,17 @@
 #include "include/errorcode.h"
 #include "nnacl/fp32/matmul.h"
 #include "src/runtime/runtime_api.h"
+#include "src/kernel_registry.h"
+#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INPUT_TENSOR_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
+
+using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
 MatmulCPUKernel::~MatmulCPUKernel() { FreeTmpBuffer(); }
@@ -328,4 +334,56 @@ void MatmulCPUKernel::eval() {
   }
 }
 
+kernel::LiteKernel *CpuMatmulFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
+                                               const mindspore::lite::PrimitiveC *primitive) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_MatMul);
+
+  auto *weight_tensor = inputs.at(kWeightIndex);
+  auto *restore_data = weight_tensor->data_c();
+  bool dequant_flag = !weight_tensor->GetQuantParams().empty() && weight_tensor->GetQuantParams().front().inited &&
+                      restore_data != nullptr;
+  if (dequant_flag) {
+    auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
+    if (dequant_weight == nullptr) {
+      MS_LOG(ERROR) << "dequant data is nullptr.";
+      free(opParameter);
+      return nullptr;
+    }
+    weight_tensor->set_data(dequant_weight);
+  }
+
+  auto kernel = new (std::nothrow) MatmulCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    if (dequant_flag) {
+      weight_tensor->FreeData();
+      weight_tensor->set_data(restore_data);
+    }
+    free(opParameter);
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    if (dequant_flag) {
+      weight_tensor->FreeData();
+      weight_tensor->set_data(restore_data);
+    }
+    return nullptr;
+  }
+
+  if (dequant_flag) {
+    weight_tensor->FreeData();
+    weight_tensor->set_data(restore_data);
+  }
+
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MatMul, CpuMatmulFp32KernelCreator)
 }  // namespace mindspore::kernel

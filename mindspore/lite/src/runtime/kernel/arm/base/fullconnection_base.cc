@@ -38,7 +38,7 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
+  MS_ASSERT(desc.type == schema::PrimitiveType_FullConnection);
   auto *weight_tensor = inputs.at(kWeightIndex);
   // data of second tensor of fc may be nullptr
   auto *restore_data = weight_tensor->data_c();
