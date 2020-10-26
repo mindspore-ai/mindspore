@@ -102,6 +102,7 @@ void TcpServer::InitServer() {
 
 void TcpServer::Start() {
   std::unique_lock<std::recursive_mutex> l(connection_mutex_);
+  MS_LOG(INFO) << "Start tcp server!";
   MS_EXCEPTION_IF_NULL(base_);
   int ret = event_base_dispatch(base_);
   if (ret == 0) {
@@ -116,6 +117,7 @@ void TcpServer::Start() {
 }
 
 void TcpServer::Stop() {
+  MS_LOG(INFO) << "Stop tcp server!";
   if (signal_event_ != nullptr) {
     event_free(signal_event_);
     signal_event_ = nullptr;
@@ -171,7 +173,7 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   server->AddConnection(fd, conn);
   bufferevent_setcb(bev, TcpServer::ReadCallback, nullptr, TcpServer::EventCallback, reinterpret_cast<void *>(conn));
   if (bufferevent_enable(bev, EV_READ | EV_WRITE) == -1) {
-    MS_LOG(EXCEPTION) << "buffer event enable read and write failed!";
+    MS_LOG(EXCEPTION) << "Buffer event enable read and write failed!";
   }
 }
 
@@ -194,7 +196,7 @@ void TcpServer::SignalCallback(evutil_socket_t, std::int16_t, void *data) {
   struct timeval delay = {0, 0};
   MS_LOG(ERROR) << "Caught an interrupt signal; exiting cleanly in 0 seconds.";
   if (event_base_loopexit(base, &delay) == -1) {
-    MS_LOG(EXCEPTION) << "event base loop exit failed.";
+    MS_LOG(EXCEPTION) << "Event base loop exit failed.";
   }
 }
 
@@ -234,7 +236,7 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
     // Notify about disconnection
     if (srv->client_disconnection_) srv->client_disconnection_(srv, conn);
   } else {
-    MS_LOG(ERROR) << "unhandled event!";
+    MS_LOG(ERROR) << "Unhandled event!";
   }
 }
 

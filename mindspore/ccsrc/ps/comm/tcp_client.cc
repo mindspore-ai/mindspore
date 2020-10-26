@@ -85,7 +85,7 @@ void TcpClient::InitTcpClient() {
 
   bufferevent_setcb(buffer_event_, ReadCallback, nullptr, EventCallback, this);
   if (bufferevent_enable(buffer_event_, EV_READ | EV_WRITE) == -1) {
-    MS_LOG(EXCEPTION) << "buffer event enable read and write failed!";
+    MS_LOG(EXCEPTION) << "Buffer event enable read and write failed!";
   }
 
   int result_code = bufferevent_socket_connect(buffer_event_, reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
@@ -107,7 +107,7 @@ void TcpClient::StartWithDelay(int seconds) {
 
   event_timeout_ = evtimer_new(event_base_, TimeoutCallback, this);
   if (evtimer_add(event_timeout_, &timeout_value) == -1) {
-    MS_LOG(EXCEPTION) << "event timeout failed!";
+    MS_LOG(EXCEPTION) << "Event timeout failed!";
   }
 }
 
@@ -212,7 +212,7 @@ void TcpClient::ReceiveMessage(const OnMessage &cb) { message_callback_ = cb; }
 void TcpClient::SendMessage(const void *buf, size_t num) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
   if (evbuffer_add(bufferevent_get_output(buffer_event_), buf, num) == -1) {
-    MS_LOG(EXCEPTION) << "event buffer add failed!";
+    MS_LOG(EXCEPTION) << "Event buffer add failed!";
   }
 }
 }  // namespace comm
