@@ -71,6 +71,10 @@ ValueNodePtr AnfImporterFromMetaGraphT::ConvertPrimitive(const std::unique_ptr<s
   MS_ASSERT(nullptr != meta_graph_);
   MS_ASSERT(nullptr != cNode);
   auto primitiveCValue = PrimitiveC::Create(cNode->primitive.release());
+  if (primitiveCValue == nullptr) {
+    MS_LOG(ERROR) << "fail to convert primitive";
+    return nullptr;
+  }
   cNode->primitive = nullptr;
   // add quant parameter
   for (auto index : cNode->inputIndex) {
@@ -156,8 +160,12 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
   MS_ASSERT(nullptr != func_graph_);
   for (const auto &cNode : meta_graph_->nodes) {
     MS_ASSERT(nullptr != cNode);
-
-    std::vector<AnfNodePtr> op_inputs = {ConvertPrimitive(cNode)};
+    auto anf_primitive = ConvertPrimitive(cNode);
+    if (anf_primitive == nullptr) {
+      MS_LOG(ERROR) << "cannot obtain anf primitive";
+      return RET_NULL_PTR;
+    }
+    std::vector<AnfNodePtr> op_inputs = {anf_primitive};
     for (unsigned int j : cNode->inputIndex) {
       auto node = GetNode(j);
       if (nullptr == node) {

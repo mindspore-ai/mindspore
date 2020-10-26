@@ -141,7 +141,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   auto matmul_cvalue = lite::PrimitiveC::Create(matmul_primitive.release());
   // get matmul quantParams
   std::vector<schema::QuantParamT> jointed_quant_params;
-  for (int i = 1; i < 9; i++) {
+  for (size_t i = 1; i < stack_cnode->inputs().size(); i++) {
     auto fullconnect_node2 = stack_cnode->input(i)->cast<CNodePtr>();
     auto fc_prim = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(fullconnect_node2->input(0));
     auto fc_input_quantParams = fc_prim->GetInputQuantParams();
