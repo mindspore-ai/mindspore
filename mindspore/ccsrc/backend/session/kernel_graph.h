@@ -185,6 +185,10 @@ class KernelGraph : public FuncGraph {
 
   void UpdateGraphDynamicAttr();
   bool is_dynamic_shape() const { return is_dynamic_shape_; }
+  void SetOptimizerFlag();
+  void SetInputNodes();
+  const std::vector<AnfNodePtr> &input_nodes() const { return input_nodes_; }
+  bool has_optimizer() const { return has_optimizer_; }
 
  private:
   // remove value node form graph
@@ -234,9 +238,9 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
   std::map<std::string, std::pair<AnfNodePtr, int>> summary_nodes_;
   // graph needn't execute
-  bool executable_;
+  bool executable_{false};
   // exist summary node in graph
-  bool summary_node_exist_;
+  bool summary_node_exist_{false};
   // valid inputs
   std::vector<bool> valid_inputs_;
 
@@ -251,7 +255,7 @@ class KernelGraph : public FuncGraph {
 
   CNodePtr start_label_;
   CNodePtr end_goto_;
-  bool null_output_;
+  bool null_output_{false};
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<int, std::pair<AnfNodePtr, bool>>> internal_outputs_to_front_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<int, tensor::TensorPtr>> internal_outputs_tensor_map_;
@@ -260,7 +264,9 @@ class KernelGraph : public FuncGraph {
   std::set<AnfNodePtr> visited_nodes_;
   std::map<AnfNodePtr, AnfNodePtr> edge_to_;
   std::stack<AnfNodePtr> loop_nodes_;
-  bool is_dynamic_shape_;
+  std::vector<AnfNodePtr> input_nodes_;
+  bool has_optimizer_{false};
+  bool is_dynamic_shape_{false};
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

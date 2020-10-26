@@ -98,7 +98,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
     return true;
   }
   virtual void GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs) const {}
-  std::vector<tensor::TensorPtr> GetNeedLockInputTensors(const GraphId &graph_id,
+  std::vector<tensor::TensorPtr> GetInputNeedLockTensors(const GraphId &graph_id,
                                                          const std::vector<tensor::TensorPtr> &inputs);
 #ifdef ENABLE_DEBUGGER
   // set debugger
