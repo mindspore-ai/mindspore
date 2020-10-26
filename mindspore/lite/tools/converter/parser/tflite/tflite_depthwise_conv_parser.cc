@@ -23,7 +23,9 @@ namespace mindspore {
 namespace lite {
 STATUS TfliteDepthwiseConv2DParser::Parse(TfliteTensorsInfo *tensors_info,
                                           const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                          const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
+                                          const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                          schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteDepthwiseConv2DParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -58,7 +60,7 @@ STATUS TfliteDepthwiseConv2DParser::Parse(TfliteTensorsInfo *tensors_info,
 
   // get the data tensor
   auto data_index = tflite_op->inputs[1];
-  const auto &data_tensor = tflite_model->subgraphs[0]->tensors[data_index];
+  const auto &data_tensor = tflite_subgraph->tensors[data_index];
   if (data_tensor == nullptr) {
     MS_LOG(ERROR) << "the data tensor is null";
     return RET_NULL_PTR;
@@ -68,7 +70,7 @@ STATUS TfliteDepthwiseConv2DParser::Parse(TfliteTensorsInfo *tensors_info,
 
   // get the weight tensor
   auto weight_index = tflite_op->inputs[1];
-  const auto &weight_tensor = tflite_model->subgraphs[0]->tensors[weight_index];
+  const auto &weight_tensor = tflite_subgraph->tensors[weight_index];
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";
     return RET_NULL_PTR;
@@ -94,14 +96,10 @@ STATUS TfliteDepthwiseConv2DParser::Parse(TfliteTensorsInfo *tensors_info,
   op->primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_NHWC);
-  AddOpInput(op, tensors_info, tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_KHWC);
-  AddOpInput(op, tensors_info, tflite_op->inputs[2], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
-              schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[1], tflite_subgraph->tensors.size(), schema::Format::Format_KHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[2], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 

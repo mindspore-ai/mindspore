@@ -22,7 +22,8 @@
 namespace mindspore {
 namespace lite {
 STATUS TfliteSplitVParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
+                                 const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteSplitVParser";
 
   if (op == nullptr) {
@@ -48,19 +49,18 @@ STATUS TfliteSplitVParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   }
   attr->numberSplit = tflite_attr->num_splits;
 
-  if (GetTfliteData(tflite_op->inputs[1], tflite_model->subgraphs[0]->tensors, tflite_model->buffers,
-                    attr->sizeSplits)) {
+  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->sizeSplits)) {
     MS_LOG(ERROR) << "get spliteV -> sizeSplits failed";
     return RET_ERROR;
   }
 
-  const auto &tensor = tflite_model->subgraphs[0]->tensors[tflite_op->inputs[0]];
+  const auto &tensor = tflite_subgraph->tensors[tflite_op->inputs[0]];
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor_shape is null";
     return RET_NULL_PTR;
   }
   auto tensor_shape = tensor->shape;
-  const auto &axis_tensor = tflite_model->subgraphs[0]->tensors[tflite_op->inputs[2]];
+  const auto &axis_tensor = tflite_subgraph->tensors[tflite_op->inputs[2]];
   if (axis_tensor == nullptr) {
     MS_LOG(ERROR) << "axis_tensor is null";
     return RET_NULL_PTR;
@@ -78,11 +78,9 @@ STATUS TfliteSplitVParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   op->primitive->value.type = schema::PrimitiveType_Split;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   for (size_t i = 0; i < tflite_op->outputs.size(); i++) {
-    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_model->subgraphs[0]->tensors.size(),
-                schema::Format::Format_NHWC);
+    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   return RET_OK;
 }

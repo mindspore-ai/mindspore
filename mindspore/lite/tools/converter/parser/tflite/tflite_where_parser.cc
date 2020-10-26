@@ -23,7 +23,8 @@
 namespace mindspore {
 namespace lite {
 STATUS TfliteWhereParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
+                                const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteWhereParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -41,8 +42,7 @@ STATUS TfliteWhereParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
     return RET_NULL_PTR;
   }
 
-  if (GetTfliteData(tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors, tflite_model->buffers,
-                    attr->condition)) {
+  if (GetTfliteData(tflite_op->inputs[0], tflite_subgraph->tensors, tflite_model->buffers, attr->condition)) {
     MS_LOG(ERROR) << "get where -> condition failed";
     return RET_ERROR;
   }
@@ -51,11 +51,9 @@ STATUS TfliteWhereParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
   op->primitive->value.value = attr.release();
 
   for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
-    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_model->subgraphs[0]->tensors.size(),
-               schema::Format::Format_NHWC);
+    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_model->subgraphs[0]->tensors.size(),
-              schema::Format::Format_NHWC);
+  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 

@@ -1103,3 +1103,8 @@ table LayerNorm {
     elementwiseAffine : bool;
 }
 
+table While {
+    condSubgraphIndex : int;
+    bodySubgraphIndex : int;
+}
+

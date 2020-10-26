@@ -226,6 +226,7 @@ union PrimitiveType {
     InstanceNorm,
     Identity,
     LayerNorm,
+    While,
 }
 
 enum QuantType: int {

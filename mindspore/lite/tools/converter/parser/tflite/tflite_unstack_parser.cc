@@ -23,7 +23,8 @@
 namespace mindspore {
 namespace lite {
 STATUS TfliteUnstackParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                  const std::unique_ptr<tflite::ModelT> &tflite_model, schema::CNodeT *op) {
+                                  const std::unique_ptr<tflite::ModelT> &tflite_model,
+                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "paser TfliteUnstackParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
@@ -52,11 +53,9 @@ STATUS TfliteUnstackParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   op->primitive->value.type = schema::PrimitiveType_Unstack;
   op->primitive->value.value = attr.release();
 
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_model->subgraphs[0]->tensors.size(),
-             schema::Format::Format_NHWC);
+  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   for (size_t i = 0; i < tflite_op->outputs.size(); i++) {
-    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_model->subgraphs[0]->tensors.size(),
-                schema::Format::Format_NHWC);
+    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   return RET_OK;
 }

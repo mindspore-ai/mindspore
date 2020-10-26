@@ -116,7 +116,7 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
       continue;
     }
     if (status == RET_OK) {
-      status = node_parser->Parse(&tensorsInfo, tflite_op, tflite_model, op.get());
+      status = node_parser->Parse(&tensorsInfo, tflite_op, tflite_model, tflite_subgraph, op.get());
       if (status != RET_OK) {
         if (status == RET_NOT_FIND_OP) {
           op_type =
@@ -337,18 +337,10 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph)
   return RET_OK;
 }
 
-schema::MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
-                                                 const QuantType &quant_type) {
-  // load graph
-  auto tflite_model = ReadTfliteModel(model_file.c_str());
-  if (tflite_model == nullptr) {
-    MS_LOG(ERROR) << "read tflite model failed";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
-    return nullptr;
-  }
-
-  if (tflite_model->subgraphs.size() != 1) {
-    MS_LOG(ERROR) << "read tflite model subgraphs failed";
+std::unique_ptr<schema::MetaGraphT> TfliteModelParser::ConstructMainGraph(
+  const std::unique_ptr<tflite::ModelT> &tflite_model, const QuantType &quant_type) {
+  if (tflite_model->subgraphs.size() < 1) {
+    MS_LOG(ERROR) << "read tflite model main subgraphs failed";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
     return nullptr;
   }
@@ -394,7 +386,28 @@ schema::MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, 
     return nullptr;
   }
 
-  return meta_graph.release();
+  return meta_graph;
+}
+
+schema::MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
+                                                 const QuantType &quant_type) {
+  // load graph
+  auto tflite_model = ReadTfliteModel(model_file.c_str());
+  if (tflite_model == nullptr) {
+    MS_LOG(ERROR) << "read tflite model failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
+    return nullptr;
+  }
+
+  // construct main_meta_graph
+  auto main_meta_graph = ConstructMainGraph(tflite_model, quant_type);
+  if (main_meta_graph == nullptr) {
+    MS_LOG(ERROR) << "ConstructMainGraph failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
+    return nullptr;
+  }
+
+  return main_meta_graph.release();
 }
 }  // namespace lite
 }  // namespace mindspore
