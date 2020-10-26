@@ -232,7 +232,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_hook_if_net_register_diff_hook_at_each_hook():
+def test_pynative_hook_diff_hook():
     input_np = np.ones([1, 1, 224, 224]).astype(np.float32)
     ms_net = FinalNet()
     ms_net.set_grad()
@@ -248,7 +248,7 @@ def test_pynative_hook_if_net_register_diff_hook_at_each_hook():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_hook_one_input_network_register_hook_at_outermost_cell_not_change_grad():
+def test_pynative_hook_outermost_cell_not_change_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsOneInputNet()
@@ -273,7 +273,7 @@ def test_pynative_hook_one_input_network_register_hook_at_outermost_cell_not_cha
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_hook_one_input_network_register_hook_to_all_cell_record_grad():
+def test_pynative_hook_all_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsOneInputNet()
@@ -305,7 +305,7 @@ def test_pynative_hook_one_input_network_register_hook_to_all_cell_record_grad()
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_hook_one_input_network_register_hook_to_mul_change_input_grad():
+def test_pynative_hook_mul_change_input_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsOneInputNet()
@@ -325,7 +325,7 @@ def test_pynative_hook_one_input_network_register_hook_to_mul_change_input_grad(
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_hook_multi_input_network_register_hook_to_mul2_change_input_grad():
+def test_pynative_hook_mul2_change_input_grad():
     input1_np = np.array([2.0, 3.0, 4.0]).astype(np.float32)
     input2_np = np.array([2.0, 3.0, 4.0]).astype(np.float32)
 
@@ -349,7 +349,7 @@ def test_pynative_hook_multi_input_network_register_hook_to_mul2_change_input_gr
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_hook_network_with_cell_in_cell_register_hook_at_outermost_cell_change_grad():
+def test_pynative_hook_outermost_cell_change_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsNetWithCellinCell()
@@ -371,7 +371,7 @@ def test_pynative_hook_network_with_cell_in_cell_register_hook_at_outermost_cell
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_hook_network_with_bprop_register_hook_at_outermost_cell_record_grad():
+def test_pynative_hook_outermost_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsSingleOpNetWithBprop()
@@ -397,7 +397,7 @@ def test_pynative_hook_network_with_bprop_register_hook_at_outermost_cell_record
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_hook_network_with_bprop_in_child_register_hook_at_outermost_cell_record_grad():
+def test_pynative_hook_bprop_outermost_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsNetHasBpropInChild()
@@ -428,7 +428,7 @@ def test_pynative_hook_network_with_bprop_in_child_register_hook_at_outermost_ce
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_hook_multi_op_network_with_bprop_register_hook_at_child_cell_record_grad():
+def test_pynative_hook_child_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsMultiOpNetWithBprop()
