@@ -744,6 +744,126 @@ class BatchMatMul(MatMul):
                              'greater or equal to 3,' + f' while x size = {len(x)}, y size= {len(y)}')
 
 
+class TensorDot(PrimitiveWithInfer):
+    """
+    Computation of Tensor contraction on arbitrary axes between tensors `a` and `b`.
+
+    Contraction allows for the summation of products of elements of `a` and `b` on specified axes.
+    The same number of axes must be specified for both x1 and x2, and values must be within range
+    of number of dims of both `a` and `b`.
+
+    Selected dims in both inputs must also match.
+
+    axes = 0 leads to outer product, and axes = 1 leads to normal matrix multiplication.
+    axes = 1 is the same as axes = ((0,),(1,) where length of input shape is 2 for both `a` and `b`
+    axes = 2 is the same as axes = ((0,1),(1,2)) where length of input shape is 3 for both `a` and `b`
+
+    Args:
+        **axes** (Union[int, tuple(int), tuple(tuple(int)), list(list(int))]): Single value or
+        tuple/list of length 2 with dimensions specified for `a` and `b` each. If single value `N` passed,
+        automatically picks up first N dims from `a` input shape and last N dims from `b` input shape.
+
+    Inputs:
+        - **x1** (Tensor): First tensor in TensorDot op with datatype float16 or float32
+        - **x2** (Tensor): Second tensor in TensorDot op with datatype float16 or float32
+
+    Outputs:
+        Tensor, the shape of the output tensor is :math:`(N + M)`. Where :math:`N` and :math:`M` are the free axes not
+        contracted in both inputs
+
+    Examples:
+        >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones(shape=[3, 1, 2]), mindspore.float32)
+        >>> tensordot = P.TensorDot(((0,1),(1,2)))
+        >>> output = tensordot(input_x1, input_x2)
+    """
+
+    @prim_attr_register
+    def __init__(self, axes):
+        self.axes = axes
+        validator.check_value_type('axes', axes, [int, tuple, list], self.name)
+        if not isinstance(self.axes, int):
+            self.axes = list(self.axes) # to avoid immutability issues
+            if len(self.axes) != 2:
+                raise ValueError("Require two axes inputs, given less")
+            self.int_to_tuple_conv() # convert before length checks
+            if len(self.axes[0]) != len(self.axes[1]):
+                raise ValueError("Axes have to be the same size/length")
+            if len(self.axes[0]) != len(set(self.axes[0])) or len(self.axes[1]) != len(set(self.axes[1])):
+                raise ValueError("Axes cannot have duplicating values")
+
+    def int_to_tuple_conv(self):
+        """
+        Converts ints to tuples in input axes, expected by most validation checks.
+        """
+        for x in [0, 1]:
+            if isinstance(self.axes[x], int):
+                self.axes[x] = (self.axes[x],)
+
+    def check_input_axes(self, x1_shape, x2_shape):
+        """
+        Convert from single int axes to 2d tuple if required and check for validity with inputs.
+        """
+        if isinstance(self.axes, int):
+            if self.axes <= 0:
+                # outer product, no input validation required
+                self.axes = ([], []) # no axes selected for either
+                return
+            if self.axes > len(x1_shape) or self.axes > len(x2_shape):
+                raise ValueError(
+                    "Axes value too high for given input arrays dimensions.")
+            x1_ind = tuple(range(len(x1_shape))[-1 * self.axes:])
+            x2_ind = tuple(range(len(x2_shape))[:self.axes])
+            self.axes = tuple((x1_ind, x2_ind))
+            self.int_to_tuple_conv()
+        for i in range(len(self.axes[0])):  # sizes already validated
+            if x1_shape[self.axes[0][i]] != x2_shape[self.axes[1][i]]:
+                raise ValueError(
+                    "Given Axes are incompatible with given input arrays")
+
+    def calc_new_shape(self, shape, position=0):
+        """
+        Calculate transpose and reshape parameters for input transformations,
+        'position' refers to whether tensor is first or second in the op.
+        """
+        contraction_axes = [i if i >= 0 else i + len(shape) for i in self.axes[position]]
+        prod_contraction = int(np.prod([shape[i] for i in contraction_axes]))
+        free_axes = [i for i in range(len(shape)) if i not in contraction_axes]
+        free_dims = [shape[i] for i in free_axes]
+        prod_free = int(np.prod(free_dims))
+
+        transpose_perm = list(contraction_axes) + free_axes if position else free_axes + list(contraction_axes)
+        new_shape = [prod_contraction, prod_free] if position else [prod_free, prod_contraction]
+        return new_shape, transpose_perm, free_dims
+
+    def generate_transform_dims(self, x1_shape, x2_shape):
+        """
+        Initiate calls for input transform calculations and calculate paramters for output
+        and for backprop tranformations.
+        """
+        self.x1_reshape_fwd, self.x1_transpose_fwd, x1_ret = self.calc_new_shape(x1_shape, 0)
+        self.x2_reshape_fwd, self.x2_transpose_fwd, x2_ret = self.calc_new_shape(x2_shape, 1)
+        self.output_shape = x1_ret + x2_ret  # combine free axes from both inputs
+        self.x1_reshape_back = [x1_shape[x] for x in self.x1_transpose_fwd]
+        self.x2_reshape_back = [x2_shape[x] for x in self.x2_transpose_fwd]
+
+    def infer_shape(self, x1, x2):
+        self.check_input_axes(x1, x2)
+        self.generate_transform_dims(x1, x2)
+        # processed parameters for reading directly into kernel
+        self.add_prim_attr('x1_transpose_fwd', self.x1_transpose_fwd)
+        self.add_prim_attr('x2_transpose_fwd', self.x2_transpose_fwd)
+        self.add_prim_attr('x1_reshape_fwd', self.x1_reshape_fwd)
+        self.add_prim_attr('x2_reshape_fwd', self.x2_reshape_fwd)
+        return self.output_shape
+
+    def infer_dtype(self, x1, x2):
+        args = {"x1": x1, "x2": x2}
+        valid_types = [mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        return x1
+
+
 class CumSum(PrimitiveWithInfer):
     """
     Computes the cumulative sum of input tensor along axis.
