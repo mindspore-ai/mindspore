@@ -223,6 +223,13 @@ constexpr auto kBasicLSTMCellInputGradOpName = "BasicLSTMCellInputGrad";
 constexpr auto kBasicLSTMCellOpName = "BasicLSTMCell";
 constexpr auto kDynamicRNNOpName = "DynamicRNN";
 constexpr auto kLSTMInputGradOpName = "LSTMInputGrad";
+constexpr auto kFusedSparseFtrlName = "FusedSparseFtrl";
+constexpr auto kFusedSparseProximalAdagradName = "FusedSparseProximalAdagrad";
+constexpr auto kFusedSparseLazyAdamName = "FusedSparseLazyAdam";
+constexpr auto kSparseApplyFtrlName = "SparseApplyFtrl";
+constexpr auto kSparseApplyFtrlV2Name = "SparseApplyFtrlV2";
+constexpr auto kSGDName = "SGD";
+constexpr auto kLARSUpdateName = "LARSUpdate";
 
 // Hcom Op Type
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
@@ -389,6 +396,14 @@ const std::set<std::string> kOptOperatorSet = {
   kFusedSparseAdamName,
   kFusedWeightScaleApplyMomentum,
   kFusedScaleApplyMomentum,
+  kApplyCenteredRMSPropOpName,
+  kFusedSparseFtrlName,
+  kFusedSparseProximalAdagradName,
+  kFusedSparseLazyAdamName,
+  kSparseApplyFtrlName,
+  kSparseApplyFtrlV2Name,
+  kSGDName,
+  kLARSUpdateName,
   kPullOpName,
 };
 
