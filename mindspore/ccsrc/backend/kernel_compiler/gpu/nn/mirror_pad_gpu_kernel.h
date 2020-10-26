@@ -40,7 +40,7 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
-    int *paddings = GetDeviceAddress<int>(inputs, 1);
+    int64_t *paddings = GetDeviceAddress<int64_t>(inputs, 1);
     T *output = GetDeviceAddress<T>(outputs, 0);
 
     size_t size = output_size_ / sizeof(T);
@@ -58,13 +58,11 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but MirrorPad needs 2 input.";
       return false;
     }
-    // check number of output -> should be 1
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but Pad needs 1 output.";
       return false;
     }
-
     string mode = GetValue<string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("mode"));
     if (mode == "REFLECT") {
       mode_ = 0;  // reflected mirroring
@@ -89,10 +87,9 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
     }
     num_input_ = input_size_;
     input_size_ *= sizeof(T);
-
     auto padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     num_paddings_ = padding_shape[0];
-    input_size_ += 2 * num_paddings_ * sizeof(int);
+    input_size_ += 2 * num_paddings_ * sizeof(int64_t);
 
     output_size_ = sizeof(T);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -103,7 +100,6 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
 
     int max_width = input_shape_[3];
     int max_height = input_shape_[2];
-
     // basic error check for padding value
     if (mode_ == 1) {  // symmetric
       max_width = max_width + (2 * max_width);
@@ -112,13 +108,11 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
       max_width = max_width + (2 * (max_width - 1));
       max_height = max_height + (2 * (max_height - 1));
     }
-
     if (output_shape_[(output_shape_.size() - 2) + 0] > max_width ||
         output_shape_[(output_shape_.size() - 2) + 1] > max_width) {
       MS_LOG(ERROR) << "ERROR: Padding value too high for input Tensor on 1 or more dims";
       return false;
     }
-
     InitSizeLists();
     return true;
   }
@@ -126,7 +120,7 @@ class MirrorPadGpuFwdKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(num_input_ * sizeof(T));
-    input_size_list_.push_back(2 * num_paddings_ * sizeof(int));
+    input_size_list_.push_back(2 * num_paddings_ * sizeof(int64_t));  // for 64 bit int defined in API
     output_size_list_.push_back(output_size_);
   }
 

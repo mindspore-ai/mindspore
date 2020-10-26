@@ -40,15 +40,15 @@ class MirrorPadGpuBackKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
-    int *paddings = GetDeviceAddress<int>(inputs, 1);
+    int64_t *paddings = GetDeviceAddress<int64_t>(inputs, 1);
+    T *interim = GetDeviceAddress<T>(workspace, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
 
-    size_t size = output_size_ / sizeof(T);
-    int dim_offset = output_shape_.size() - 2;
-
-    CalMirrorPadGrad(size, input, input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3],
-                     output_shape_[dim_offset + 0], output_shape_[dim_offset + 1], num_paddings_, paddings, mode_,
-                     output, reinterpret_cast<cudaStream_t>(stream_ptr));
+    size_t dx_size = output_size_ / sizeof(T);
+    size_t interim_dy_size = workspace_size_ / sizeof(T);
+    CalMirrorPadGrad(dx_size, interim_dy_size, input, interim, output_shape_[0], output_shape_[1], output_shape_[2],
+                     output_shape_[3], input_shape_[2], input_shape_[3], num_paddings_, paddings, mode_, output,
+                     reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -58,13 +58,11 @@ class MirrorPadGpuBackKernel : public GpuKernel {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but MirrorPadGrad needs 2 input.";
       return false;
     }
-    // check number of output -> should be 1
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but MirrorPadGrad needs 1 output.";
       return false;
     }
-
     string mode = GetValue<string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("mode"));
     if (mode == "REFLECT") {
       mode_ = 0;  // reflected mirroring
@@ -82,28 +80,43 @@ class MirrorPadGpuBackKernel : public GpuKernel {
       auto it = input_shape.begin();
       input_shape.insert(it, 2, 1);  // channel padding
     }
-
+    input_size_ = sizeof(T);
     for (auto in_shape : input_shape) {
       input_size_ *= in_shape;
       input_shape_.push_back(in_shape);
     }
     num_input_ = input_size_;
-    input_size_ *= sizeof(T);
 
+    // account for paddings in input size -> passed as int64_ts
     auto padding_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     num_paddings_ = padding_shape[0];
-    input_size_ += +(2 * num_paddings_ * sizeof(int));
+    input_size_ += (2 * num_paddings_ * sizeof(int64_t));
 
-    output_size_ = sizeof(T);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    if (output_shape.size() == 4) {
+    } else if (output_shape.size() == 3) {
+      auto it = output_shape.begin();
+      output_shape.insert(it, 1);  // batch padding
+    } else if (output_shape.size() == 2) {
+      auto it = output_shape.begin();
+      output_shape.insert(it, 2, 1);  // channel padding
+    }
+    output_size_ = sizeof(T);
     for (auto x : output_shape) {
       output_size_ *= x;
       output_shape_.push_back(x);
     }
 
+    // calc workspace size
+    // store dy values with accumulation across batch and channel only
+    workspace_size_ = sizeof(T);
+    for (int i = 0; i < 2; i++) {
+      workspace_size_ *= output_shape[i];     // BATCH, CHANNEL -> Output size
+      workspace_size_ *= input_shape[i + 2];  // WIDTH, HEIGHT -> Input Size
+    }
+
     int max_width = input_shape_[3];
     int max_height = input_shape_[2];
-
     // basic error check for padding value
     if (mode_ == 1) {  // symmetric
       max_width = max_width + (2 * max_width);
@@ -112,13 +125,11 @@ class MirrorPadGpuBackKernel : public GpuKernel {
       max_width = max_width + (2 * (max_width - 1));
       max_height = max_height + (2 * (max_height - 1));
     }
-
     if (output_shape_[(output_shape_.size() - 2) + 0] > max_width ||
         output_shape_[(output_shape_.size() - 2) + 1] > max_width) {
       MS_LOG(ERROR) << "ERROR: Padding value too high for input Tensor on 1 or more DIMS";
       return false;
     }
-
     InitSizeLists();
     return true;
   }
@@ -126,7 +137,8 @@ class MirrorPadGpuBackKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(num_input_ * sizeof(T));
-    input_size_list_.push_back(2 * num_paddings_ * sizeof(int));
+    input_size_list_.push_back(2 * num_paddings_ * sizeof(int64_t));  // for 64 bit int defined in API
+    workspace_size_list_.push_back(workspace_size_);
     output_size_list_.push_back(output_size_);
   }
 
@@ -134,9 +146,8 @@ class MirrorPadGpuBackKernel : public GpuKernel {
   size_t num_input_;
   int num_paddings_;
   int mode_;
-  std::vector<int> input_shape_;   // dims of the input data
-  std::vector<int> output_shape_;  // dims of the output data
-  // default
+  std::vector<int> input_shape_;
+  std::vector<int> output_shape_;
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;

@@ -19,13 +19,28 @@
 #include <cuda_runtime.h>
 #include "runtime/device/gpu/cuda_common.h"
 
+// preset size of paddings
+#define MAX_PADDINGS 4
+#define PADDING_SIZE 2
+
+// define constants for kernel indexing use
+#define BATCH 0 * PADDING_SIZE
+#define CHANNEL 1 * PADDING_SIZE
+#define HEIGHT 2 * PADDING_SIZE
+#define WIDTH 3 * PADDING_SIZE
+#define TOP 0
+#define BOTTOM 1
+#define LEFT 0
+#define RIGHT 1
+
 template <typename T>
-void CalMirrorPad(const size_t size, const T *input, const int num, const int channels, const int old_height,
+void CalMirrorPad(const size_t size, const T *input, const int old_batch, const int old_channel, const int old_height,
                   const int old_width, const int padded_height, const int padded_width, int padd_num,
-                  const int *paddings, int mode, T *output, cudaStream_t cuda_stream);
+                  const int64_t *paddings, int mode, T *output, cudaStream_t cuda_stream);
 template <typename T>
-void CalMirrorPadGrad(const size_t size, const T *dy, const int num, const int channels, const int padded_height,
-                      const int padded_width, const int old_height, const int old_width, const int padd_dim,
-                      const int *paddings, int mode, T *dx, cudaStream_t cuda_stream);
+void CalMirrorPadGrad(const size_t dx_size, const size_t dy_size, T *dy, T *interim, const int output_batch,
+                      const int output_channel, const int output_height, const int output_width, const int input_height,
+                      const int input_width, const int padd_dim, const int64_t *paddings, int mode, T *dx,
+                      cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_MIRROR_PAD_IMPL_H_
