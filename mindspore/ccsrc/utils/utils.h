@@ -85,6 +85,8 @@ constexpr auto kSplitVOpName = "SplitV";
 constexpr auto kSparseApplyAdagradOpName = "SparseApplyAdagrad";
 constexpr auto kMomentumOpName = "Momentum";
 constexpr auto kApplyMomentumOpName = "ApplyMomentum";
+constexpr auto kCombineMomentumOpName = "CombineMomentum";
+constexpr auto kCombineMomentumWeightOpName = "CombineMomentumWeight";
 constexpr auto kApplyAdadeltaOpName = "ApplyAdadelta";
 constexpr auto kApplyAdagradOpName = "ApplyAdagrad";
 constexpr auto kApplyAdagradDAName = "ApplyAdagradDA";
@@ -374,38 +376,38 @@ const std::set<std::string> kOpFormatList = {
   kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z, kOpFormat_C1HWNCoC0,      kOpFormat_FRAC_NZ,
   kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDHWC,  kOpFormat_FRACTAL_ZN_LSTM};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
-const std::set<std::string> kOptOperatorSet = {
-  kMomentumOpName,
-  kApplyMomentumOpName,
-  kApplyAdadeltaOpName,
-  kApplyAdagradOpName,
-  kApplyAdagradDAName,
-  kApplyAdamOpName,
-  kApplyAdaMaxOpName,
-  kApplyAddSignOpName,
-  kApplyCenteredRMSPOpName,
-  kApplyFtrlOpName,
-  kApplyFtrlV2OpName,
-  kApplyGradientDescentOpName,
-  kApplyPowerSignOpName,
-  kApplyProximalAdagradOpName,
-  kApplyProximalGradientDescentOpName,
-  kApplyRMSPropOpName,
-  kFusedAdamWeightDecayName,
-  kFusedAdamName,
-  kFusedSparseAdamName,
-  kFusedWeightScaleApplyMomentum,
-  kFusedScaleApplyMomentum,
-  kApplyCenteredRMSPropOpName,
-  kFusedSparseFtrlName,
-  kFusedSparseProximalAdagradName,
-  kFusedSparseLazyAdamName,
-  kSparseApplyFtrlName,
-  kSparseApplyFtrlV2Name,
-  kSGDName,
-  kLARSUpdateName,
-  kPullOpName,
-};
+const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
+                                               kApplyMomentumOpName,
+                                               kApplyAdadeltaOpName,
+                                               kApplyAdagradOpName,
+                                               kApplyAdagradDAName,
+                                               kApplyAdamOpName,
+                                               kApplyAdaMaxOpName,
+                                               kApplyAddSignOpName,
+                                               kApplyCenteredRMSPOpName,
+                                               kApplyFtrlOpName,
+                                               kApplyFtrlV2OpName,
+                                               kApplyGradientDescentOpName,
+                                               kApplyPowerSignOpName,
+                                               kApplyProximalAdagradOpName,
+                                               kApplyProximalGradientDescentOpName,
+                                               kApplyRMSPropOpName,
+                                               kFusedAdamWeightDecayName,
+                                               kFusedAdamName,
+                                               kFusedSparseAdamName,
+                                               kFusedWeightScaleApplyMomentum,
+                                               kFusedScaleApplyMomentum,
+                                               kApplyCenteredRMSPropOpName,
+                                               kFusedSparseFtrlName,
+                                               kFusedSparseProximalAdagradName,
+                                               kFusedSparseLazyAdamName,
+                                               kSparseApplyFtrlName,
+                                               kSparseApplyFtrlV2Name,
+                                               kSGDName,
+                                               kLARSUpdateName,
+                                               kPullOpName,
+                                               kCombineMomentumWeightOpName,
+                                               kCombineMomentumOpName};
 
 const std::set<std::string> kHWSpecialFormatSet = {
   kOpFormat_FRAC_Z,    kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,       kOpFormat_FRAC_NZ,

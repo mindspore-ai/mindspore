@@ -17,12 +17,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_CONV2D_GRAD_INPUT_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_CONV2D_GRAD_INPUT_GPU_KERNEL_H_
 
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <string>
+#include <vector>
+
+#include "backend/kernel_compiler/gpu/cuda_impl/pad_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/pad_impl.cuh"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 
 namespace mindspore {
@@ -83,7 +84,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
         cudnnConvolutionBackwardData(cudnn_handle_, &alpha, w_desc_, w, dy_desc_, dy, conv_desc_, algo_, work_space,
                                      workspace_size_, &beta_, padded_descriptor_, padded),
         "ConvolutionBackwardData failed");
-      if (data_format_ == "NHWC") {
+      if (data_format_ == kOpFormat_NHWC) {
         CalPadGradNHWC(output_size_ / sizeof(T), padded, n_, old_height_, old_width_, c_, old_height_ + pad_height_,
                        old_width_ + pad_width_, pad_top_, pad_left_, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
       } else {
@@ -105,6 +106,10 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
+    auto format_attr = GetAttr<std::string>(kernel_node, "data_format");
+    if (format_attr == kOpFormat_NHWC) {
+      data_format_ = kOpFormat_NHWC;
+    }
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     is_null_input_ = CHECK_NULL_INPUT(dy_shape);
@@ -116,9 +121,11 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
 
     std::vector<size_t> input_shape;
     GetInputShape(kernel_node, &input_shape);
-    if (data_format_ == "NHWC") {
+    if (data_format_ == kOpFormat_NHWC) {
       compute_format_ = CUDNN_TENSOR_NHWC;
-      ShapeNCHW2NHWC(&input_shape);
+      if (format_attr == kOpFormat_NCHW) {
+        ShapeNCHW2NHWC(&input_shape);
+      }
     }
     SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
     Set4DDesc(dy_shape, input_shape, filter_shape);
@@ -146,12 +153,12 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
       }
       int dimA[4];
       int strideApadded[4];
-      if (data_format_ == "NCHW" || data_format_ == "DefaultFormat") {
+      if (data_format_ == kOpFormat_NCHW || data_format_ == kOpFormat_DEFAULT) {
         auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_height_ + pad_height_),
                              IntToSize(old_width_ + pad_width_)};
         SetDimA(padded_shape, dimA, 4, data_format_);
         SetStrideA(padded_shape, strideApadded, 4, data_format_);
-      } else if (data_format_ == "NHWC") {
+      } else if (data_format_ == kOpFormat_NHWC) {
         auto padded_shape = {IntToSize(n_), IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_),
                              IntToSize(c_)};
         SetDimA(padded_shape, dimA, 4, data_format_);
@@ -326,7 +333,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   cudnnTensorDescriptor_t padded_descriptor_;
   cudnnConvolutionBwdDataAlgo_t algo_;
   std::string pad_mode_;
-  std::string data_format_ = "NCHW";
+  std::string data_format_ = kOpFormat_NCHW;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

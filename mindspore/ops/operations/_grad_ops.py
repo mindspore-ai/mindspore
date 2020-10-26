@@ -21,6 +21,7 @@ from ..._checkparam import Validator as validator, Rel
 from .._utils import get_concat_offset
 from ...common import dtype as mstype
 from .. import functional as F
+from ... import context
 
 class AbsGrad(PrimitiveWithInfer):
     """Computes gradients for abs operation."""
@@ -199,16 +200,23 @@ class BatchNormGrad(PrimitiveWithInfer):
         return (x_type, scale_type, scale_type, reserve_1_type, reserve_2_type)
 
 
-class BiasAddGrad(Primitive):
+class BiasAddGrad(PrimitiveWithInfer):
     """Computes gradients of BiasAdd."""
 
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, data_format="NCHW"):
         self.init_prim_io_names(inputs=['dout'], outputs=['output'])
-        self.add_prim_attr('data_format', 'NCHW')
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
+        self.add_prim_attr('data_format', self.format)
 
-    def __call__(self, d_output):
-        raise NotImplementedError
+    def infer_shape(self, d_output):
+        channel = d_output[1] if self.format == "NCHW" else d_output[-1]
+        return (channel,)
+
+    def infer_dtype(self, dout_dtype):
+        return dout_dtype
 
 
 class KLDivLossGrad(PrimitiveWithInfer):
@@ -291,6 +299,8 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         stride (tuple): The stride to be applied to the convolution filter. Default: (1, 1).
         dilation (tuple): Specifies the dilation rate to be used for the dilated convolution. Default: (1, 1, 1, 1).
         group (int): Splits input into groups. Default: 1.
+        data_format (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
+            default is 'NCHW'.
 
     Returns:
         Tensor, the gradients of convolution.
@@ -306,7 +316,8 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
                  mode=1,
                  stride=(1, 1),
                  dilation=(1, 1, 1, 1),
-                 group=1):
+                 group=1,
+                 data_format="NCHW"):
         """Initialize Convolution"""
         self.init_prim_io_names(inputs=['out_backprop', 'input', 'filter_sizes'], outputs=['output'])
         self.out_channel = out_channel
@@ -321,7 +332,10 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         self.dilation = dilation
         self.group = group
         self.add_prim_attr('groups', group)
-        self.add_prim_attr('data_format', "NCHW")
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
+        self.add_prim_attr('data_format', self.format)
 
     def __infer__(self, doutput, x, w_size):
         w_size_v = w_size['value']
@@ -530,10 +544,13 @@ class FusedBatchNormGradEx(PrimitiveWithInfer):
     """Gradients of FusedBatchNormEx operation."""
 
     @prim_attr_register
-    def __init__(self, epsilon=0.0, momentum=0.1):
+    def __init__(self, epsilon=0.0, momentum=0.1, data_format="NCHW"):
         self.init_prim_io_names(inputs=['dy', 'x', 'scale', 'save_mean', 'save_inv_variance', 'reserve'],
                                 outputs=['dx', 'bn_scale', 'bn_bias'])
-        self.add_prim_attr('data_format', "NCHW")
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
+        self.add_prim_attr('data_format', self.format)
 
     def infer_shape(self, y_backprop_shape, x_shape, scale_shape, save_mean_shape, save_variance_shape, reserve_shape):
         return (x_shape, scale_shape, scale_shape)
@@ -604,16 +621,19 @@ class _PoolGrad(PrimitiveWithInfer):
     """Gradients of the max/avg pool operation."""
 
     @prim_attr_register
-    def __init__(self, ksize, strides, padding="VALID"):
+    def __init__(self, ksize, strides, padding="VALID", data_format="NCHW"):
         self.init_prim_io_names(inputs=['x_origin', 'out_origin', 'grad'], outputs=['output'])
 
         validator.check_value_type('ksize', ksize, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
         self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
         self.add_prim_attr("padding", self.padding)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
         self.is_maxpoolgradwithargmax = (self.name == "MaxPoolGradWithArgmax")
         if not self.is_maxpoolgradwithargmax:
-            self.add_prim_attr('data_format', "NCHW")
+            self.add_prim_attr('data_format', self.format)
 
         def _grad_check_int_or_tuple(arg_name, arg_val, is_argmax):
             validator.check_value_type(arg_name, arg_val, (int, tuple), self.name)
@@ -633,10 +653,12 @@ class _PoolGrad(PrimitiveWithInfer):
                     raise error_msg
             return ret
 
-        self.ksize = _grad_check_int_or_tuple("ksize", ksize, self.is_maxpoolgradwithargmax)
+        ksize = _grad_check_int_or_tuple("ksize", ksize, self.is_maxpoolgradwithargmax)
+        self.ksize = ksize if self.format == "NCHW" else [ksize[0], ksize[2], ksize[3], ksize[1]]
         self.add_prim_attr("ksize", self.ksize)
 
-        self.strides = _grad_check_int_or_tuple("strides", strides, self.is_maxpoolgradwithargmax)
+        strides = _grad_check_int_or_tuple("strides", strides, self.is_maxpoolgradwithargmax)
+        self.strides = strides if self.format == "NCHW" else [strides[0], strides[2], strides[3], strides[1]]
         self.add_prim_attr("strides", self.strides)
 
 
@@ -679,8 +701,8 @@ class AvgPoolGradGpu(_PoolGrad):
     """Gradients of the avg pool operation for gpu."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
-        super(AvgPoolGradGpu, self).__init__(ksize, strides, padding)
+    def __init__(self, ksize=1, strides=1, padding="VALID", data_format="NCHW"):
+        super(AvgPoolGradGpu, self).__init__(ksize, strides, padding, data_format)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
         return x1_shape
@@ -693,8 +715,8 @@ class MaxPoolGrad(_PoolGrad):
     """Performs gradients of the max pool operation."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
-        super(MaxPoolGrad, self).__init__(ksize, strides, padding)
+    def __init__(self, ksize=1, strides=1, padding="VALID", data_format="NCHW"):
+        super(MaxPoolGrad, self).__init__(ksize, strides, padding, data_format)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
         return x1_shape
@@ -763,7 +785,7 @@ class MaxPoolGradWithArgmax(_PoolGrad):
     """Computes the gradients of MaxPoolWithArgmax."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID",):
+    def __init__(self, ksize=1, strides=1, padding="VALID"):
         self.init_prim_io_names(inputs=['x', 'grad', 'argmax'], outputs=['output'])
         super(MaxPoolGradWithArgmax, self).__init__(ksize, strides, padding)
 

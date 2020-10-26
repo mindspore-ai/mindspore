@@ -86,6 +86,10 @@ class PoolingGradGpuKernel : public GpuKernel {
     auto dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
+    auto format_attr = GetAttr<std::string>(kernel_node, "data_format");
+    if (format_attr == kOpFormat_NHWC) {
+      data_format_ = kOpFormat_NHWC;
+    }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(input_mask);
     if (is_null_input_) {
@@ -236,7 +240,7 @@ class PoolingGradGpuKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
   std::string mode_;
   std::string pad_mode_;
-  std::string data_format_ = "NCHW";
+  std::string data_format_ = kOpFormat_NCHW;
   cudnnDataType_t cudnn_data_type_;
   cudnnTensorFormat_t compute_format_;
   int old_height_;

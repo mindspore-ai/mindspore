@@ -38,8 +38,10 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
                                                   const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-
-  if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC) {
+  auto format_attr = AnfAlgo::GetCNodePrimitive(node)->GetAttr("data_format");
+  MS_EXCEPTION_IF_NULL(format_attr);
+  auto format = GetValue<std::string>(format_attr);
+  if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC && format != "NHWC") {
     return nullptr;
   }
 

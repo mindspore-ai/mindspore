@@ -78,6 +78,10 @@ class PoolingGpuFwdKernel : public GpuKernel {
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
+    auto format_attr = GetAttr<std::string>(kernel_node, "data_format");
+    if (format_attr == kOpFormat_NHWC) {
+      data_format_ = kOpFormat_NHWC;
+    }
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
 
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -200,7 +204,7 @@ class PoolingGpuFwdKernel : public GpuKernel {
   std::vector<int> stride_;
   std::string mode_;
   std::string pad_mode_;
-  std::string data_format_ = "NCHW";
+  std::string data_format_ = kOpFormat_NCHW;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

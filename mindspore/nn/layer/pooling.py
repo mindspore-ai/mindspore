@@ -25,10 +25,12 @@ __all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d']
 class _PoolNd(Cell):
     """N-D  AvgPool"""
 
-    def __init__(self, kernel_size, stride, pad_mode):
+    def __init__(self, kernel_size, stride, pad_mode, data_format="NCHW"):
         super(_PoolNd, self).__init__()
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
-
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
+        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
+            raise ValueError("NHWC format only support in GPU target.")
         def _check_int_or_tuple(arg_name, arg_value):
             validator.check_value_type(arg_name, arg_value, [int, tuple], self.cls_name)
             error_msg = f'For \'{self.cls_name}\' the {arg_name} should be an positive int number or ' \
@@ -93,6 +95,8 @@ class MaxPool2d(_PoolNd):
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -121,11 +125,12 @@ class MaxPool2d(_PoolNd):
            [8. 8.]]]]
     """
 
-    def __init__(self, kernel_size=1, stride=1, pad_mode="valid"):
-        super(MaxPool2d, self).__init__(kernel_size, stride, pad_mode)
+    def __init__(self, kernel_size=1, stride=1, pad_mode="valid", data_format="NCHW"):
+        super(MaxPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
         self.max_pool = P.MaxPool(ksize=self.kernel_size,
                                   strides=self.stride,
-                                  padding=self.pad_mode)
+                                  padding=self.pad_mode,
+                                  data_format=self.format)
         self.max_pool_with_arg_max = P.MaxPoolWithArgmax(ksize=self.kernel_size,
                                                          strides=self.stride,
                                                          padding=self.pad_mode)
@@ -252,6 +257,8 @@ class AvgPool2d(_PoolNd):
 
             - valid: Adopts the way of discarding. The possible largest height and width of output
               will be returned without padding. Extra pixels will be discarded.
+        data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
+            Default: 'NCHW'.
 
 
     Inputs:
@@ -284,11 +291,13 @@ class AvgPool2d(_PoolNd):
     def __init__(self,
                  kernel_size=1,
                  stride=1,
-                 pad_mode="valid"):
-        super(AvgPool2d, self).__init__(kernel_size, stride, pad_mode)
+                 pad_mode="valid",
+                 data_format="NCHW"):
+        super(AvgPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
         self.avg_pool = P.AvgPool(ksize=self.kernel_size,
                                   strides=self.stride,
-                                  padding=self.pad_mode)
+                                  padding=self.pad_mode,
+                                  data_format=self.format)
 
     def construct(self, x):
         return self.avg_pool(x)
