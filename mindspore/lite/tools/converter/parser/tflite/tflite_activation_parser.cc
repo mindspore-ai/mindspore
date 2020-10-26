@@ -56,6 +56,9 @@ STATUS TfliteActivationParser::Parse(TfliteTensorsInfo *tensors_info,
   } else if (std::strcmp(node_name, "Logistic") == 0) {
     MS_LOG(DEBUG) << "parse TfliteLogisticParser";
     attr->type = schema::ActivationType_SIGMOID;
+  } else if (std::strcmp(node_name, "Swish") == 0) {
+    MS_LOG(DEBUG) << "parse TfliteSwishParser";
+    attr->type = schema::ActivationType_SWISH;
   } else if (std::strcmp(node_name, "HardSwish") == 0) {
     MS_LOG(DEBUG) << "parse TfliteHardSwishParser";
     attr->type = schema::ActivationType_HSWISH;
@@ -82,6 +85,7 @@ STATUS TfliteActivationParser::Parse(TfliteTensorsInfo *tensors_info,
 TfliteNodeRegister g_TfliteReluParser("Relu", new TfliteReluParser());
 TfliteNodeRegister g_TfliteRelu6Parser("Relu6", new TfliteRelu6Parser());
 TfliteNodeRegister g_TfliteTanhParser("Tanh", new TfliteTanhParser());
+TfliteNodeRegister g_TfliteSwishParser("Swish", new TfliteSwishParser());
 TfliteNodeRegister g_TfliteHardSwishParser("HardSwish", new TfliteHardSwishParser());
 TfliteNodeRegister g_tfliteLogisticParser("Logistic", new TfliteLogisticParser());
 TfliteNodeRegister g_TfliteLeakyReluParser("LeakyRelu", new TfliteLeakyReluParser());

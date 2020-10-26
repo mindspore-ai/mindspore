@@ -79,7 +79,8 @@ enum ActivationType : byte {
     LINEAR = 15,
     HARD_TANH = 16,
     SIGN = 17,
-    UNKNOW = 18
+    SWISH = 18,
+    UNKNOW = 19
 }
 enum ActivationGradType : byte {
     NO_ACTIVATION = 0,

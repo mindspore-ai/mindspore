@@ -53,6 +53,8 @@ int Activation::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> 
     attr->type = schema::ActivationType_SIGMOID;
   } else if (prim.name() == "ReLU6") {
     attr->type = schema::ActivationType_RELU6;
+  } else if (prim.name() == "Swish") {
+    attr->type = schema::ActivationType_SWISH;
   } else if (prim.name() == "HSwish") {
     attr->type = schema::ActivationType_HSWISH;
   } else if (prim.name() == "HSigmoid") {

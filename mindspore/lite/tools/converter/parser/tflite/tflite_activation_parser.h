@@ -53,6 +53,11 @@ class TfliteLogisticParser : public TfliteActivationParser {
   TfliteLogisticParser() : TfliteActivationParser() {}
 };
 
+class TfliteSwishParser : public TfliteActivationParser {
+ public:
+  TfliteSwishParser() : TfliteActivationParser() {}
+};
+
 class TfliteHardSwishParser : public TfliteActivationParser {
  public:
   TfliteHardSwishParser() : TfliteActivationParser() {}
