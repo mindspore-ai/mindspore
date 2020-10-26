@@ -52,7 +52,7 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
                             param->stride_w_ == 1 && param->pad_u_ == 1 && param->pad_d_ == 1 && param->pad_l_ == 1 &&
                             param->pad_r_ == 1 && param->dilation_h_ == 1 && param->dilation_w_ == 1 && IH_ == OH_ &&
                             IW_ == OW_ && batch_size_ == 1;
-    const bool channel_good = CI_SLICES_ >= 12 && CO_SLICES_ >= 12;
+    const bool channel_good = CI_SLICES_ >= 8 && CO_SLICES_ >= 8;
     const bool hw_good = TILES_X_ * TILES_Y_ >= 16;
     return attr_valid && channel_good && hw_good;
   }
