@@ -156,10 +156,10 @@ class Logistic(Distribution):
 
     def extend_repr(self):
         if self.is_scalar_batch:
-            str_info = f'location = {self._loc}, scale = {self._scale}'
+            s = f'location = {self._loc}, scale = {self._scale}'
         else:
-            str_info = f'batch_shape = {self._broadcast_shape}'
-        return str_info
+            s = f'batch_shape = {self._broadcast_shape}'
+        return s
 
     @property
     def loc(self):

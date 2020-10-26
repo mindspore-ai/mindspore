@@ -547,9 +547,8 @@ class LayerNorm(Cell):
 
     def extend_repr(self):
         """Display instance object as string."""
-        s = 'normalized_shape={}, begin_norm_axis={}, begin_params_axis={}, gamma{}, beta={}'.format(
+        return 'normalized_shape={}, begin_norm_axis={}, begin_params_axis={}, gamma{}, beta={}'.format(
             self.normalized_shape, self.begin_norm_axis, self.begin_params_axis, self.gamma, self.beta)
-        return s
 
 
 class GroupNorm(Cell):
@@ -642,5 +641,4 @@ class GroupNorm(Cell):
 
     def extend_repr(self):
         """Display instance object as string."""
-        s = 'num_groups={}, num_channels={}'.format(self.num_groups, self.num_channels)
-        return s
+        return 'num_groups={}, num_channels={}'.format(self.num_groups, self.num_channels)

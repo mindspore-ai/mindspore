@@ -150,10 +150,10 @@ class Geometric(Distribution):
 
     def extend_repr(self):
         if self.is_scalar_batch:
-            str_info = f'probs = {self.probs}'
+            s = f'probs = {self.probs}'
         else:
-            str_info = f'batch_shape = {self._broadcast_shape}'
-        return str_info
+            s = f'batch_shape = {self._broadcast_shape}'
+        return s
 
     @property
     def probs(self):

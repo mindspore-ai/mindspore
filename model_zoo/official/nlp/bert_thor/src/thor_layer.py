@@ -270,12 +270,9 @@ class Dense_Thor(Cell):
 
     def extend_repr(self):
         """extend_repr"""
-        str_info = 'in_channels={}, out_channels={}, weight={}, has_bias={}' \
-            .format(self.in_channels, self.out_channels, self.weight, self.has_bias)
+        s = 'in_channels={}, out_channels={}'.format(self.in_channels, self.out_channels)
         if self.has_bias:
-            str_info = str_info + ', bias={}'.format(self.bias)
-
+            s += ', bias={}'.format(self.bias)
         if self.activation_flag:
-            str_info = str_info + ', activation={}'.format(self.activation)
-
-        return str_info
+            s += ', activation={}'.format(self.activation)
+        return s

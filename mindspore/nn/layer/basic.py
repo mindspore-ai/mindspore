@@ -121,8 +121,7 @@ class Dropout(Cell):
         return self.dropout_do_mask(x, output, keep_prob)
 
     def extend_repr(self):
-        str_info = 'keep_prob={}, dtype={}'.format(self.keep_prob, self.dtype)
-        return str_info
+        return 'keep_prob={}, dtype={}'.format(self.keep_prob, self.dtype)
 
 
 class Flatten(Cell):
@@ -365,8 +364,7 @@ class Norm(Cell):
         return x
 
     def extend_repr(self):
-        str_info = 'axis={}, keep_dims={}'.format(self.axis, self.keep_dims)
-        return str_info
+        return 'axis={}, keep_dims={}'.format(self.axis, self.keep_dims)
 
 
 class OneHot(Cell):

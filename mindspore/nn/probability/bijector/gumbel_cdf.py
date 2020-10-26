@@ -100,8 +100,7 @@ class GumbelCDF(Bijector):
         return self._parameter_type
 
     def extend_repr(self):
-        str_info = f'loc = {self.loc}, scale = {self.scale}'
-        return str_info
+        return f'loc = {self.loc}, scale = {self.scale}'
 
     def shape_mapping(self, shape):
         return shape

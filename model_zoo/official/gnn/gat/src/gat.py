@@ -102,12 +102,10 @@ class GNNFeatureTransform(nn.Cell):
         return output
 
     def extend_repr(self):
-        str_info = 'in_channels={}, out_channels={}, weight={}, has_bias={}' \
-                .format(self.in_channels, self.out_channels, self.weight, self.has_bias)
+        s = 'in_channels={}, out_channels={}'.format(self.in_channels, self.out_channels)
         if self.has_bias:
-            str_info = str_info + ', bias={}'.format(self.bias)
-
-        return str_info
+            s += ', has_bias={}'.format(self.has_bias)
+        return s
 
 
 class _BaseAggregator(nn.Cell):

@@ -141,15 +141,15 @@ class _ConvVariational(_Conv):
         return outputs
 
     def extend_repr(self):
-        str_info = 'in_channels={}, out_channels={}, kernel_size={}, stride={},  pad_mode={}, ' \
-                    'padding={}, dilation={}, group={}, weight_mean={}, weight_std={}, has_bias={}'\
+        s = 'in_channels={}, out_channels={}, kernel_size={}, stride={},  pad_mode={}, ' \
+            'padding={}, dilation={}, group={}, weight_mean={}, weight_std={}, has_bias={}'\
             .format(self.in_channels, self.out_channels, self.kernel_size, self.stride, self.pad_mode, self.padding,
                     self.dilation, self.group, self.weight_posterior.mean, self.weight_posterior.untransformed_std,
                     self.has_bias)
         if self.has_bias:
-            str_info = str_info + ', bias_mean={}, bias_std={}'\
+            s += ', bias_mean={}, bias_std={}'\
                 .format(self.bias_posterior.mean, self.bias_posterior.untransformed_std)
-        return str_info
+        return s
 
     def _apply_variational_bias(self, inputs):
         bias_posterior_tensor = self.bias_posterior("sample")

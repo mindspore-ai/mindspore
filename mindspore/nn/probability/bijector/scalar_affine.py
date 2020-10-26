@@ -90,8 +90,7 @@ class ScalarAffine(Bijector):
         return self._shift
 
     def extend_repr(self):
-        str_info = f'scale = {self.scale}, shift = {self.shift}'
-        return str_info
+        return f'scale = {self.scale}, shift = {self.shift}'
 
     def shape_mapping(self, shape):
         return shape
