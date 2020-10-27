@@ -808,6 +808,61 @@ double LayerNormCost::GetForwardComputationCost(const std::vector<TensorInfo> &i
   return result;
 }
 
+double UniqueCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                      int32_t stage_id) const {
+  return 0.0;
+}
+double UniqueCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                       int32_t stage_id) const {
+  double result = 0.0;
+  if (is_parameter_[0]) {
+    TensorInfo input = inputs[0];
+    CheckGlobalDeviceManager();
+    MS_EXCEPTION_IF_NULL(g_device_manager);
+    auto total_device_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+    Shape input_shape = input.shape();
+    Shape input_slice_shape = input.slice_shape();
+    int32_t used_device_num = 1;
+    for (size_t i = 0; i < input_shape.size(); ++i) {
+      used_device_num *= input_shape[i] / input_slice_shape[i];
+    }
+    if (total_device_num != IntToSize(used_device_num)) {
+      result = ListProduct(input_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+    }
+  }
+  return result;
+}
+double UniqueCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                             const std::vector<TensorInfo> &outputs, int32_t stage_id) const {
+  // In forward phase, the computation cost = slice(A) + slice(B)
+  Shape input_slice_shape = inputs[0].slice_shape();
+  double result = ListProduct(input_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+  return result;
+}
+double UniqueCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                              const std::vector<TensorInfo> &outputs, int32_t stage_id) const {
+  // In backward phase, the computation cost = (0 or 1) allreduce(slice(B))
+  double result = 0.0;
+  if (is_parameter_[0]) {
+    TensorInfo input = inputs[0];  // tensor B
+    CheckGlobalDeviceManager();
+    MS_EXCEPTION_IF_NULL(g_device_manager);
+    auto total_device_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+
+    Shape input_shape = input.shape();
+    Shape input_slice_shape = input.slice_shape();
+    int32_t used_device_num = 1;
+    for (size_t i = 0; i < input_shape.size(); ++i) {
+      used_device_num *= input_shape[i] / input_slice_shape[i];
+    }
+
+    if (total_device_num != IntToSize(used_device_num)) {
+      result += ListProduct(input_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+    }
+  }
+  return result;
+}
+
 double GatherV2PCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                          int32_t stage_id) const {
   double result = 0.0;

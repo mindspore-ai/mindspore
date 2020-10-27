@@ -39,7 +39,7 @@ Status Arrangement::Init(const Shape &array) {
 }
 
 bool Arrangement::IsValidArrangement() {
-  return !std::any_of(array_.begin(), array_.end(), [](int64_t value) { return value <= 0; });
+  return !std::any_of(array_.begin(), array_.end(), [](int64_t value) { return value <= 0 && value != -1; });
 }
 
 void Arrangement::ComputeSize() {

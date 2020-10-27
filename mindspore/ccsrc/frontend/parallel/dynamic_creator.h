@@ -182,6 +182,7 @@ REGISTER(DropoutInfo);
 REGISTER(PackInfo);
 REGISTER(ConcatInfo);
 REGISTER(SplitInfo);
+REGISTER(UniqueInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

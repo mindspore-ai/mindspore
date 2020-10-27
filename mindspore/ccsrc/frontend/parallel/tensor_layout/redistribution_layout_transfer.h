@@ -29,10 +29,12 @@ class RedistributionLayoutTransfer : public LayoutTransfer {
   RedistributionLayoutTransfer() = default;
   ~RedistributionLayoutTransfer() override = default;
   std::shared_ptr<ReshapeLayoutTransfer> UnifyDeviceArrangementAndTensorShape() const;
+  bool IsDynamicShape() const { return is_dynamic_shape_; }
 
  private:
   Status CheckValidTransfer() override;
   std::shared_ptr<ReshapeLayoutTransfer> UnifyDeviceArrangement() const;
+  bool is_dynamic_shape_ = false;
 };
 }  // namespace parallel
 }  // namespace mindspore

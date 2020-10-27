@@ -21,7 +21,19 @@
 
 namespace mindspore {
 namespace parallel {
-Status RedistributionLayoutTransfer::CheckValidTransfer() { return Status::SUCCESS; }
+Status RedistributionLayoutTransfer::CheckValidTransfer() {
+  Shape from_shape = from_in_.tensor_shape().array();
+  if (std::find(from_shape.begin(), from_shape.end(), -1) != from_shape.end()) {
+    is_dynamic_shape_ = true;
+    if (from_in_ != to_in_) {
+      MS_LOG(ERROR) << "In dynamic shape scene, the from_tensor_shape should be equal to to_tensor_shape";
+      MS_LOG(ERROR) << "from_in layout" << from_in_.ToString();
+      MS_LOG(ERROR) << "to_in layout" << to_in_.ToString();
+      return Status::FAILED;
+    }
+  }
+  return Status::SUCCESS;
+}
 
 /*
  * unify device arrangement between in_layout and out_layout
