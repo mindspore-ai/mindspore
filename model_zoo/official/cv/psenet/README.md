@@ -35,6 +35,9 @@ With the development of convolutional neural network, scene text detection techn
 Progressive Scale Expansion Network (PSENet) is a text detector which is able to well detect the arbitrary-shape text in natural scene.
 
 # [Dataset](#contents)
+
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 Dataset used: [ICDAR2015](https://rrc.cvc.uab.es/?ch=4&com=tasks#TextLocalization)
 A training set of 1000 images containing about 4500 readable words 
 A testing set containing about 2000 readable words
