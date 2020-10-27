@@ -895,7 +895,7 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   MS_EXCEPTION_IF_NULL(addr);
   auto type = AnfAlgo::GetOutputInferDataType(anf_node, output_index);
   auto format = kOpFormat_DEFAULT;
-  string tensor_name = node_name + ':' + "0";
+  string tensor_name = node_name + "_output:" + "0";
   ShapeVector int_shapes;
   auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
