@@ -24,8 +24,8 @@ ConvDw3x3Int8Corner:
     dup v26.4s, w9        // out_zp
     ldr x9, [sp, #8]
     dup v27.4s, w9         // out_multiplier
-    ldr x9, [sp, #16]
-    dup v28.4s, w9         // left_shift
+    ldr x8, [sp, #16]
+    dup v28.4s, w8         // left_shift
     ldr x9, [sp, #24]
     dup v29.4s, w9         // right_shift
     ldr x9, [sp, #32]
@@ -85,26 +85,24 @@ ConvDw3x3Int8Corner:
         smlal v23.4s, v3.4h, v7.4h
         ld1 {v6.8h}, [x12], x13
         smlal2 v24.4s, v3.8h, v7.8h
-
-        sqshl v23.4s, v23.4s, v28.4s
-        sqshl v24.4s, v24.4s, v28.4s
-        sqrdmulh v23.4s, v23.4s, v27.4s
-        sqrdmulh v24.4s, v24.4s, v27.4s
-
-        and v21.16b, v29.16b, v23.16b
-        sshr v21.4s, v21.4s, #31
-        sqadd v23.4s, v23.4s, v21.4s
-        srshl v23.4s, v23.4s, v29.4s
-
-        and v22.16b, v29.16b, v24.16b
-        sshr v22.4s, v22.4s, #31
-        sqadd v24.4s, v24.4s, v22.4s
-        srshl v24.4s, v24.4s, v29.4s
-
         ld1 {v3.8b}, [x11], x5
         ssubl v3.8h, v3.8b, v25.8b
         ld1 {v7.8h}, [x12], x13
 
+        cbz w8, RightShiftLoop
+        sqshl v23.4s, v23.4s, v28.4s
+        sqshl v24.4s, v24.4s, v28.4s
+        sqrdmulh v23.4s, v23.4s, v27.4s
+        sqrdmulh v24.4s, v24.4s, v27.4s
+        b AddZpLoop
+
+        RightShiftLoop:
+        sqrdmulh v23.4s, v23.4s, v27.4s
+        sqrdmulh v24.4s, v24.4s, v27.4s
+        sqrshl v23.4s, v23.4s, v29.4s
+        sqrshl v24.4s, v24.4s, v29.4s
+
+        AddZpLoop:
         add v23.4s, v23.4s, v26.4s
         add v24.4s, v24.4s, v26.4s
         smax v23.4s, v23.4s, v30.4s
@@ -135,21 +133,20 @@ ConvDw3x3Int8Corner:
         smlal v23.4s, v3.4h, v7.4h
         smlal2 v24.4s, v3.8h, v7.8h
 
+        cbz w8, RightShift
         sqshl v23.4s, v23.4s, v28.4s
         sqshl v24.4s, v24.4s, v28.4s
         sqrdmulh v23.4s, v23.4s, v27.4s
         sqrdmulh v24.4s, v24.4s, v27.4s
+        b AddZp
 
-        and v21.16b, v29.16b, v23.16b
-        sshr v21.4s, v21.4s, #31
-        sqadd v23.4s, v23.4s, v21.4s
-        srshl v23.4s, v23.4s, v29.4s
+        RightShift:
+        sqrdmulh v23.4s, v23.4s, v27.4s
+        sqrdmulh v24.4s, v24.4s, v27.4s
+        sqrshl v23.4s, v23.4s, v29.4s
+        sqrshl v24.4s, v24.4s, v29.4s
 
-        and v22.16b, v29.16b, v24.16b
-        sshr v22.4s, v22.4s, #31
-        sqadd v24.4s, v24.4s, v22.4s
-        srshl v24.4s, v24.4s, v29.4s
-
+        AddZp:
         add v23.4s, v23.4s, v26.4s
         add v24.4s, v24.4s, v26.4s
         smax v23.4s, v23.4s, v30.4s
