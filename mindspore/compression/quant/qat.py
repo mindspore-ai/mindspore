@@ -33,7 +33,7 @@ from ..common import QuantDtype
 from .quantizer import Quantizer, OptimizeOption
 
 
-__all__ = ["QuantizationAwareTraining"]
+__all__ = ["QuantizationAwareTraining", "create_quant_config"]
 
 
 _ACTIVATION_MAP = {nn.ReLU: quant.ActQuant,
@@ -44,13 +44,12 @@ _ACTIVATION_MAP = {nn.ReLU: quant.ActQuant,
                    nn.HSwish: quant.HSwishQuant}
 
 
-def get_quant_config(quant_observer=(quant.FakeQuantWithMinMaxObserver, quant.FakeQuantWithMinMaxObserver),
-                     quant_delay=(0, 0),
-                     quant_dtype=(QuantDtype.INT8, QuantDtype.INT8),
-                     per_channel=(False, False),
-                     symmetric=(False, False),
-                     narrow_range=(False, False)
-                     ):
+def create_quant_config(quant_observer=(quant.FakeQuantWithMinMaxObserver, quant.FakeQuantWithMinMaxObserver),
+                        quant_delay=(0, 0),
+                        quant_dtype=(QuantDtype.INT8, QuantDtype.INT8),
+                        per_channel=(False, False),
+                        symmetric=(False, False),
+                        narrow_range=(False, False)):
     r"""
     Configs the oberser type of weights and data flow with quant params.
 
@@ -78,9 +77,9 @@ def get_quant_config(quant_observer=(quant.FakeQuantWithMinMaxObserver, quant.Fa
     weight_observer = quant_observer[0].partial_init(quant_delay=quant_delay[0], quant_dtype=quant_dtype[0],
                                                      per_channel=per_channel[0], symmetric=symmetric[0],
                                                      narrow_range=narrow_range[0])
-    act_observer = quant_observer[0].partial_init(quant_delay=quant_delay[-1], quant_dtype=quant_dtype[-1],
-                                                  per_channel=per_channel[-1], symmetric=symmetric[-1],
-                                                  narrow_range=narrow_range[-1])
+    act_observer = quant_observer[-1].partial_init(quant_delay=quant_delay[-1], quant_dtype=quant_dtype[-1],
+                                                   per_channel=per_channel[-1], symmetric=symmetric[-1],
+                                                   narrow_range=narrow_range[-1])
     return quant.QuantConfig(weight=weight_observer, activation=act_observer)
 
 
@@ -221,11 +220,11 @@ class QuantizationAwareTraining(Quantizer):
         self.act_range = Validator.check_bool(narrow_range[-1], "narrow range")
         self._convert_method_map = {quant.Conv2dBnAct: self._convert_conv,
                                     quant.DenseBnAct: self._convert_dense}
-        self.quant_config = get_quant_config(quant_delay=quant_delay,
-                                             quant_dtype=quant_dtype,
-                                             per_channel=per_channel,
-                                             symmetric=symmetric,
-                                             narrow_range=narrow_range)
+        self.quant_config = create_quant_config(quant_delay=quant_delay,
+                                                quant_dtype=quant_dtype,
+                                                per_channel=per_channel,
+                                                symmetric=symmetric,
+                                                narrow_range=narrow_range)
 
     def _convert_op_name(self, name):
         pattern = re.compile(r'([A-Z]{1})')

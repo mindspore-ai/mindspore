@@ -322,7 +322,7 @@ def _partial_init(cls_or_self, **kwargs):
     return r
 
 
-class Observer(Cell):
+class _Observer(Cell):
     """
     Base class of Observer. Observer is used to calculate the statistics of specific layer.
 
@@ -334,7 +334,7 @@ class Observer(Cell):
     """
 
     def __init__(self, quant_dtype):
-        super(Observer, self).__init__()
+        super(_Observer, self).__init__()
         self.quant_dtype = quant_dtype
 
     def extend_repr(self):
@@ -347,7 +347,7 @@ class Observer(Cell):
     partial_init = classmethod(_partial_init)
 
 
-class UniformQuantObserver(Observer):
+class UniformQuantObserver(_Observer):
     """
     The base class of Uniform Quantization Observer.
 
@@ -542,7 +542,8 @@ class Conv2dBnFoldQuant(Cell):
         var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
             variance vector. Default: 'ones'.
         fake (bool): Whether Conv2dBnFoldQuant Cell adds FakeQuantWithMinMaxObserver. Default: True.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
         freeze_bn (int): The quantization freeze BatchNormal op is according to the global step. Default: 100000.
 
@@ -553,7 +554,9 @@ class Conv2dBnFoldQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
+        >>>                                      quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
         >>> result = conv2d_bnfold(input)
         >>> result.shape
@@ -725,7 +728,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
             Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
@@ -735,7 +739,9 @@ class Conv2dBnWithoutFoldQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> conv2d_no_bnfold = nn.Conv2dBnWithoutFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid")
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> conv2d_no_bnfold = nn.Conv2dBnWithoutFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
+        >>>                                                quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mstype.float32)
         >>> result = conv2d_no_bnfold(input)
         >>> result.shape
@@ -846,7 +852,8 @@ class Conv2dQuant(Cell):
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
             Default: 'normal'.
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the bias vector. Default: 'zeros'.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
@@ -856,7 +863,9 @@ class Conv2dQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid")
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
+        >>>                               quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
         >>> result = conv2d_quant(input)
         >>> result.shape
@@ -947,7 +956,8 @@ class DenseQuant(Cell):
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (Union[str, Cell, Primitive]): The regularization function applied to the output of the layer,
             eg. 'relu'. Default: None.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
@@ -957,7 +967,8 @@ class DenseQuant(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> dense_quant = nn.DenseQuant(3, 6)
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> dense_quant = nn.DenseQuant(3, 6, quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
         >>> result = dense_quant(input)
         >>> result.shape
@@ -1048,7 +1059,8 @@ class ActQuant(_QuantActivation):
     Args:
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
@@ -1058,7 +1070,8 @@ class ActQuant(_QuantActivation):
         Tensor, with the same type and shape as the `input`.
 
     Examples:
-        >>> act_quant = nn.ActQuant(nn.ReLU())
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> act_quant = nn.ActQuant(nn.ReLU(), quant_config=qconfig)
         >>> input = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
         >>> result = act_quant(input)
         >>> result
@@ -1096,7 +1109,8 @@ class LeakyReLUQuant(_QuantActivation):
     Args:
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
@@ -1106,7 +1120,8 @@ class LeakyReLUQuant(_QuantActivation):
         Tensor, with the same type and shape as the `input`.
 
     Examples:
-        >>> activation = nn.LeakyReLUQuant(nn.LeakyReLU())
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> activation = nn.LeakyReLUQuant(nn.LeakyReLU(), quant_config=qconfig)
         >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> result = activation(input)
         >>> result
@@ -1153,7 +1168,8 @@ class HSwishQuant(_QuantActivation):
     Args:
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
@@ -1163,7 +1179,8 @@ class HSwishQuant(_QuantActivation):
         Tensor, with the same type and shape as the `input`.
 
     Examples:
-        >>> activation = nn.HSwishQuant(nn.HSwish())
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> activation = nn.HSwishQuant(nn.HSwish(), quant_config=qconfig)
         >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> result = activation(input)
         >>> result
@@ -1210,7 +1227,8 @@ class HSigmoidQuant(_QuantActivation):
     Args:
         activation (Cell): Activation cell class.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
@@ -1220,7 +1238,8 @@ class HSigmoidQuant(_QuantActivation):
         Tensor, with the same type and shape as the `x`.
 
     Examples:
-        >>> activation = nn.HSigmoidQuant(nn.HSigmoid())
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> activation = nn.HSigmoidQuant(nn.HSigmoid(), quant_config=qconfig)
         >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> result = activation(input)
         >>> result
@@ -1266,7 +1285,8 @@ class TensorAddQuant(Cell):
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
@@ -1277,7 +1297,8 @@ class TensorAddQuant(Cell):
         Tensor, with the same type and shape as the `input_x1`.
 
     Examples:
-        >>> add_quant = nn.TensorAddQuant()
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> add_quant = nn.TensorAddQuant(quant_config=qconfig)
         >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones((2, 3)), mindspore.float32)
         >>> result = add_quant(input_x1, input_x2)
@@ -1311,7 +1332,8 @@ class MulQuant(Cell):
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        quant_config (QuantConfig): Configs the oberser type of weight and activation. Default: quant_config_default.
+        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
+            both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
 
     Inputs:
@@ -1322,7 +1344,8 @@ class MulQuant(Cell):
         Tensor, with the same type and shape as the `input_x1`.
 
     Examples:
-        >>> mul_quant = nn.MulQuant()
+        >>> qconfig = compression.quant.create_quant_config()
+        >>> mul_quant = nn.MulQuant(quant_config=qconfig)
         >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones((2, 3)) * 2, mindspore.float32)
         >>> result = mul_quant(input_x1, input_x2)

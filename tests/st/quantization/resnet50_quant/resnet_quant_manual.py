@@ -19,13 +19,13 @@ import mindspore.common.initializer as weight_init
 from mindspore.ops import operations as P
 from mindspore import Tensor
 from mindspore.nn import FakeQuantWithMinMaxObserver, Conv2dBnFoldQuant
-from mindspore.compression.quant import qat
+from mindspore.compression.quant import create_quant_config
 
 _ema_decay = 0.999
 _symmetric = True
 _fake = True
 _per_channel = True
-_quant_config = qat.get_quant_config(per_channel=(_per_channel, False), symmetric=(_symmetric, False))
+_quant_config = create_quant_config(per_channel=(_per_channel, False), symmetric=(_symmetric, False))
 
 
 def _weight_variable(shape, factor=0.01):
