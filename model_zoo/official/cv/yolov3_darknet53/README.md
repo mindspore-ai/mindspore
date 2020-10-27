@@ -40,6 +40,7 @@ YOLOv3 use DarkNet53 for performing feature extraction, which is a hybrid approa
 
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
 Dataset used: [COCO2014](https://cocodataset.org/#download) 
 
@@ -307,8 +308,8 @@ The above python command will run in the background. You can view the results th
 | -------------------------- | ----------------------------------------------------------- |------------------------------------------------------------ |
 | Model Version              | YOLOv3                                                      |YOLOv3                                                       |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G             | NV SMX2 V100-16G; CPU 2.10GHz, 96cores; Memory, 251G        |
-| uploaded Date              | 06/31/2020 (month/day/year)                                 | 09/02/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.5.0-alpha                                                 | 0.7.0                                                       |
+| uploaded Date              | 09/15/2020 (month/day/year)                                 | 09/02/2020 (month/day/year)                                 |
+| MindSpore Version          | 1.0.0                                                       | 1.0.0                                                       |
 | Dataset                    | COCO2014                                                    | COCO2014                                                    |
 | Training Parameters        | epoch=320, batch_size=32, lr=0.001, momentum=0.9            | epoch=320, batch_size=32, lr=0.001, momentum=0.9            |
 | Optimizer                  | Momentum                                                    | Momentum                                                    |
@@ -328,8 +329,8 @@ The above python command will run in the background. You can view the results th
 | ------------------- | --------------------------- |------------------------------|
 | Model Version       | YOLOv3                      | YOLOv3                       |
 | Resource            | Ascend 910                  | NV SMX2 V100-16G             |
-| Uploaded Date       | 06/31/2020 (month/day/year) | 08/20/2020 (month/day/year)  |
-| MindSpore Version   | 0.5.0-alpha                 | 0.7.0                        |
+| Uploaded Date       | 09/15/2020 (month/day/year) | 08/20/2020 (month/day/year)  |
+| MindSpore Version   | 1.0.0                       | 1.0.0                        |
 | Dataset             | COCO2014, 40,504  images    | COCO2014, 40,504  images     |
 | batch_size          | 1                           | 1                            |
 | outputs             | mAP                         | mAP                          |
