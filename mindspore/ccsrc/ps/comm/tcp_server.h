@@ -27,6 +27,8 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <memory>
+#include <vector>
 
 #include "utils/log_adapter.h"
 #include "ps/comm/tcp_message_handler.h"
@@ -38,46 +40,49 @@ namespace comm {
 class TcpServer;
 class TcpConnection {
  public:
-  TcpConnection() : buffer_event_(nullptr), fd_(0), server_(nullptr) {}
+  explicit TcpConnection(struct bufferevent *bev, const evutil_socket_t &fd, const TcpServer *server)
+      : buffer_event_(bev), fd_(0), server_(server) {}
   virtual ~TcpConnection() = default;
 
-  virtual void InitConnection(const evutil_socket_t &fd, const struct bufferevent *bev, const TcpServer *server);
-  void SendMessage(const void *buffer, size_t num) const;
+  virtual void InitConnection();
+  virtual void SendMessage(const void *buffer, size_t num) const;
+  void SendMessage(const CommMessage &message) const;
   virtual void OnReadHandler(const void *buffer, size_t numBytes);
   TcpServer *GetServer() const;
-  evutil_socket_t GetFd() const;
+  const evutil_socket_t &GetFd() const;
 
  protected:
-  TcpMessageHandler tcp_message_handler_;
   struct bufferevent *buffer_event_;
   evutil_socket_t fd_;
-  TcpServer *server_;
+  const TcpServer *server_;
+  TcpMessageHandler tcp_message_handler_;
 };
 
 using OnServerReceiveMessage =
-  std::function<void(const TcpServer &tcp_server, const TcpConnection &conn, const void *buffer, size_t num)>;
+  std::function<void(const TcpServer &tcp_server, const TcpConnection &conn, const CommMessage &)>;
 
 class TcpServer {
  public:
-  using OnConnected = std::function<void(const TcpServer *, const TcpConnection *)>;
-  using OnDisconnected = std::function<void(const TcpServer *, const TcpConnection *)>;
-  using OnAccepted = std::function<const TcpConnection *(const TcpServer *)>;
+  using OnConnected = std::function<void(const TcpServer &, const TcpConnection &)>;
+  using OnDisconnected = std::function<void(const TcpServer &, const TcpConnection &)>;
+  using OnAccepted = std::function<const TcpConnection *(const TcpServer &)>;
 
-  explicit TcpServer(std::string address, std::uint16_t port);
+  explicit TcpServer(const std::string &address, std::uint16_t port);
   virtual ~TcpServer();
 
   void SetServerCallback(const OnConnected &client_conn, const OnDisconnected &client_disconn,
                          const OnAccepted &client_accept);
-  void InitServer();
+  void Init();
   void Start();
+  void StartWithNoBlock();
   void Stop();
   void SendToAllClients(const char *data, size_t len);
   void AddConnection(const evutil_socket_t &fd, const TcpConnection *connection);
   void RemoveConnection(const evutil_socket_t &fd);
-  void ReceiveMessage(const OnServerReceiveMessage &cb);
-  static void SendMessage(const TcpConnection &conn, const void *data, size_t num);
-  void SendMessage(const void *data, size_t num);
-  OnServerReceiveMessage GetServerReceiveMessage() const;
+  OnServerReceiveMessage GetServerReceive() const;
+  void SetMessageCallback(const OnServerReceiveMessage &cb);
+  static void SendMessage(const TcpConnection &conn, const CommMessage &message);
+  void SendMessage(const CommMessage &message);
 
  protected:
   static void ListenerCallback(struct evconnlistener *listener, evutil_socket_t socket, struct sockaddr *saddr,
@@ -85,9 +90,8 @@ class TcpServer {
   static void SignalCallback(evutil_socket_t sig, std::int16_t events, void *server);
   static void ReadCallback(struct bufferevent *, void *connection);
   static void EventCallback(struct bufferevent *, std::int16_t events, void *server);
-  virtual TcpConnection *onCreateConnection();
+  virtual TcpConnection *onCreateConnection(struct bufferevent *bev, const evutil_socket_t &fd);
 
- private:
   struct event_base *base_;
   struct event *signal_event_;
   struct evconnlistener *listener_;
@@ -101,6 +105,7 @@ class TcpServer {
   std::recursive_mutex connection_mutex_;
   OnServerReceiveMessage message_callback_;
 };
+
 }  // namespace comm
 }  // namespace ps
 }  // namespace mindspore

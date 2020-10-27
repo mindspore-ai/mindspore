@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <memory>
 
 namespace mindspore {
 namespace ps {
@@ -31,7 +32,9 @@ namespace comm {
 
 class TestHttpServer : public UT::Common {
  public:
-  TestHttpServer() = default;
+  TestHttpServer() : server_(nullptr) {}
+
+  virtual ~TestHttpServer() = default;
 
   static void testGetHandler(std::shared_ptr<HttpMessageHandler> resp) {
     std::string host = resp->GetRequestHost();
@@ -57,7 +60,7 @@ class TestHttpServer : public UT::Common {
   }
 
   void SetUp() override {
-    server_ = new HttpServer("0.0.0.0", 9999);
+    server_ = std::make_unique<HttpServer>("0.0.0.0", 9999);
     OnRequestReceive http_get_func = std::bind(
       [](std::shared_ptr<HttpMessageHandler> resp) {
         EXPECT_STREQ(resp->GetPathParam("key1").c_str(), "value1");
@@ -106,7 +109,7 @@ class TestHttpServer : public UT::Common {
   }
 
  private:
-  HttpServer *server_;
+  std::unique_ptr<HttpServer> server_;
 };
 
 TEST_F(TestHttpServer, httpGetQequest) {
@@ -143,13 +146,13 @@ TEST_F(TestHttpServer, messageHandler) {
 }
 
 TEST_F(TestHttpServer, portErrorNoException) {
-  HttpServer *server_exception = new HttpServer("0.0.0.0", -1);
+  auto server_exception = std::make_unique<HttpServer>("0.0.0.0", -1);
   OnRequestReceive http_handler_func = std::bind(TestHttpServer::testGetHandler, std::placeholders::_1);
   EXPECT_NO_THROW(server_exception->RegisterRoute("/handler", &http_handler_func));
 }
 
 TEST_F(TestHttpServer, addressException) {
-  HttpServer *server_exception = new HttpServer("12344.0.0.0", 9998);
+  auto server_exception = std::make_unique<HttpServer>("12344.0.0.0", 9998);
   OnRequestReceive http_handler_func = std::bind(TestHttpServer::testGetHandler, std::placeholders::_1);
   ASSERT_THROW(server_exception->RegisterRoute("/handler", &http_handler_func), std::exception);
 }
