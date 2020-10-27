@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,15 @@
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/gather.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/gatherv2.cuh"
 
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class GatherGpuFwdKernel : public GpuKernel {
+class GatherV2GpuFwdKernel : public GpuKernel {
  public:
-  GatherGpuFwdKernel() : axis_(0), handle_(nullptr) {}
-  ~GatherGpuFwdKernel() = default;
+  GatherV2GpuFwdKernel() : axis_(0), handle_(nullptr) {}
+  ~GatherV2GpuFwdKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -42,15 +42,15 @@ class GatherGpuFwdKernel : public GpuKernel {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
     auto input_dim1 = input_shapes_[IntToSize(axis_)];
-    Gather(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], input_dim1,
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+    GatherV2(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], input_dim1,
+             reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherGpuFwdKernel needs 2.";
+      MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherGpuV2FwdKernel needs 2.";
     }
     input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
