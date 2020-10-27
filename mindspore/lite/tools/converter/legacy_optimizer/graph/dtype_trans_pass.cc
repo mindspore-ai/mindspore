@@ -40,6 +40,12 @@ STATUS DTypeTransPass::Run(schema::MetaGraphT *graph) {
     MS_LOG(ERROR) << "DoModelOutputDTypeTrans error: " << status;
     return status;
   }
+
+  status = DoNodeInoutDTypeTrans(graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "DoNodeInoutDTypeTrans error: " << status;
+    return status;
+  }
   return RET_OK;
 }
 
@@ -123,6 +129,51 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
       }
     }
   }
+  return RET_OK;
+}
+
+STATUS DTypeTransPass::DoNodeInoutDTypeTrans(schema::MetaGraphT *graph) {
+  MS_ASSERT(graph != nullptr);
+  // insert transNode before and after existNode
+  for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
+    if (IsContain(GetInt8OpList(), GetCNodeTType(**iter)) || (*iter)->quantType != QuantType_AwareTraining) {
+      continue;
+    }
+    auto nodeName = (*iter)->name;
+    if ((*iter)->inputIndex.empty()) {
+      MS_LOG(ERROR) << "Op " << nodeName.c_str() << " should have " << kMinInputNum << " input tensor at least";
+      return RET_ERROR;
+    }
+    STATUS status;
+    // insert pre
+    for (size_t i = 0; i < (*iter)->inputIndex.size(); i++) {
+      MS_ASSERT(graph->allTensors.size() > (*iter)->inputIndex.at(i));
+      auto &preTensor = graph->allTensors.at((*iter)->inputIndex.at(i));
+      if (preTensor->dataType != TypeId::kNumberTypeInt8) {
+        continue;
+      }
+      iter = InsertDTypeTransNode(graph, iter, kBefore, i, kInt8ToFP32, &status);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "InsertInt8ToFloat32Node before " << nodeName.c_str() << " failed";
+        return RET_ERROR;
+      }
+    }
+
+    // insert post
+    for (size_t i = 0; i < (*iter)->outputIndex.size(); i++) {
+      auto &postTensor = graph->allTensors.at((*iter)->outputIndex.at(i));
+      if (postTensor->dataType != TypeId::kNumberTypeInt8) {
+        continue;
+      }
+      iter = InsertDTypeTransNode(graph, iter, kAfter, i, kFP32ToInt8, &status);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "InsertFloat32ToUint8Node after " << nodeName.c_str() << " failed";
+        return RET_ERROR;
+      }
+    }
+    (*iter)->quantType = QuantType_QUANT_NONE;
+  }
+
   return RET_OK;
 }
 
