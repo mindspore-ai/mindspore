@@ -1488,6 +1488,23 @@ void SessionBasic::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &ro
 }
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+void SessionBasic::CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) {
+  auto input_nodes = kernel_graph->inputs();
+  for (const auto &input_node : input_nodes) {
+    if (!input_node->isa<Parameter>()) {
+      continue;
+    }
+    auto pk_node = input_node->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(pk_node);
+    auto param_info_ptr = pk_node->param_info();
+    if (param_info_ptr != nullptr && param_info_ptr->init_in_server()) {
+      const std::string &param_name = pk_node->fullname_with_scope();
+      MS_LOG(EXCEPTION) << "Can not initialize the parameter[" << param_name
+                        << "] in server, this parameter is used by kernel which executes in device";
+    }
+  }
+}
+
 void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
   if (!ps::Util::IsRoleOfWorker()) {
     MS_LOG(INFO) << "Not parameter server mode.";

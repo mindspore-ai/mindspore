@@ -45,6 +45,9 @@
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #include "toolchain/adx_datadump_server.h"
+#if ENABLE_CPU && ENABLE_D
+#include "ps/util.h"
+#endif
 
 namespace mindspore {
 namespace session {
@@ -166,9 +169,12 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   RootGraphExecutorValidate(NOT_NULL(root_graph));
   // adjust kernel
   AdjustKernel(root_graph);
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  // Assign parameter keys.
-  AssignParamKey(root_graph);
+#if ENABLE_CPU && ENABLE_D
+  if (ps::Util::IsParamServerMode()) {
+    CheckPSModeConsistence(root_graph);
+    // Assign parameter keys.
+    AssignParamKey(root_graph);
+  }
 #endif
   // assign stream
   AssignStream(NOT_NULL(root_graph));
@@ -316,7 +322,7 @@ void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tens
   if (debugger_) {
     debugger_->PreExecute(kernel_graph);
   }
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#if ENABLE_CPU && ENABLE_D
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
 #endif

@@ -68,9 +68,11 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   MS_LOG(INFO) << "Set kernel info";
   SetKernelInfo(graph.get());
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  AssignParamKey(graph);
-  if (ps::Util::IsRoleOfWorker()) {
-    Optimize(graph);
+  if (ps::Util::IsParamServerMode()) {
+    AssignParamKey(graph);
+    if (ps::Util::IsRoleOfWorker()) {
+      Optimize(graph);
+    }
   }
 #endif
   MS_LOG(INFO) << "Build kernel";

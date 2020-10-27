@@ -169,8 +169,8 @@ class Parameter(MetaTensor_):
     def set_param_ps(self, init_in_server=False):
         if _is_role_worker() or _is_role_pserver() or _is_role_sched():
             if init_in_server and (not self.name.endswith("embedding_table")):
-                raise RuntimeError("Can not initialize parameter '{}' in server, only parameters of \
-                                   sparse operator support initialization in server.".format(self.name))
+                raise RuntimeError("Can not initialize parameter '{}' in server, only parameters of "
+                                   "sparse operator support initialization in server.".format(self.name))
             self.is_param_ps = True
             self.init_in_server = init_in_server
             self._param_info.init_in_server = init_in_server
