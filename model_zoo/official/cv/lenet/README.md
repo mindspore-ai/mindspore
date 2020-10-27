@@ -30,6 +30,8 @@ LeNet is very simple, which contains 5 layers. The layer composition consists of
 
 # [Dataset](#contents)
 
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 Dataset used: [MNIST](<http://yann.lecun.com/exdb/mnist/>) 
 
 - Dataset size：52.4M，60,000 28*28 in 10 classes
@@ -165,16 +167,16 @@ You can view the results through the file "log.txt". The accuracy of the test da
 | Parameters                 | LeNet                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
-| uploaded Date              | 06/09/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.5.0-beta                                                      |
+| uploaded Date              | 09/16/2020 (month/day/year)                                 |
+| MindSpore Version          | 1.0.0                                                      |
 | Dataset                    | MNIST                                                    |
 | Training Parameters        | epoch=10, steps=1875, batch_size = 32, lr=0.01              |
 | Optimizer                  | Momentum                                                         |
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       | 0.002                                                      |
-| Speed                      | 1.70 ms/step                          |
-| Total time                 | 43.1s                          |                                       |
+| Speed                      | 1.071 ms/step                          |
+| Total time                 | 32.1s                          |                                       |
 | Checkpoint for Fine tuning | 482k (.ckpt file)                                         |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet |
 

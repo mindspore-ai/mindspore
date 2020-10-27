@@ -30,6 +30,8 @@ AlexNet composition consists of 5 convolutional layers and 3 fully connected lay
 
 # [Dataset](#contents)
 
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 Dataset used: [CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>)
 
 - Dataset size：175M，60,000 32*32 colorful images in 10 classes
@@ -195,15 +197,15 @@ Before running the command below, please check the checkpoint path used for eval
 | -------------------------- | ------------------------------------------------------------| -------------------------------------------------|
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G              | NV SMX2 V100-32G                                 |
 | uploaded Date              | 06/09/2020 (month/day/year)                                 | 17/09/2020 (month/day/year)                      |
-| MindSpore Version          | 0.5.0-beta                                                  | 0.7.0-beta                                       |
+| MindSpore Version          | 1.0.0                                                  | 0.7.0-beta                                       |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10                                         |
 | Training Parameters        | epoch=30, steps=1562, batch_size = 32, lr=0.002             | epoch=30, steps=1562, batch_size = 32, lr=0.002  |
 | Optimizer                  | Momentum                                                    | Momentum                                         |
 | Loss Function              | Softmax Cross Entropy                                       | Softmax Cross Entropy                            |
 | outputs                    | probability                                                 | probability                                      |
-| Loss                       | 0.0016                                                      | 0.01                                             |
-| Speed                      | 21 ms/step                                                  | 16.8 ms/step                                     |
-| Total time                 | 17 mins                                                     | 14 mins                                          |
+| Loss                       | 0.08                                                      | 0.01                                             |
+| Speed                      | 7.3 ms/step                                                  | 16.8 ms/step                                     |
+| Total time                 | 6 mins                                                     | 14 mins                                          |
 | Checkpoint for Fine tuning | 445M (.ckpt file)                                           | 445M (.ckpt file)                                |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet |
 
