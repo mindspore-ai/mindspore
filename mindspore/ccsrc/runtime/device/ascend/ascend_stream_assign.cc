@@ -1634,8 +1634,18 @@ StreamActiveKind AscendStreamAssign::GetStreamActiveKind(const NotNull<KernelGra
     if (name == kSendOpName || name == kRecvOpName) {
       continue;
     }
+    auto stream = AnfAlgo::GetStreamId(cnode);
+    auto it = hcom_stream_map_.find(stream);
+    if (it != hcom_stream_map_.end()) {
+      continue;
+    }
 
-    pre_stream_id = AnfAlgo::GetStreamId(cnode);
+    it = independent_stream_map_.find(stream);
+    if (it != independent_stream_map_.end()) {
+      continue;
+    }
+
+    pre_stream_id = stream;
     break;
   }
 
@@ -1645,7 +1655,18 @@ StreamActiveKind AscendStreamAssign::GetStreamActiveKind(const NotNull<KernelGra
       continue;
     }
 
-    next_stream_id = AnfAlgo::GetStreamId(cnode);
+    auto stream = AnfAlgo::GetStreamId(cnode);
+    auto it = hcom_stream_map_.find(stream);
+    if (it != hcom_stream_map_.end()) {
+      continue;
+    }
+
+    it = independent_stream_map_.find(stream);
+    if (it != independent_stream_map_.end()) {
+      continue;
+    }
+
+    next_stream_id = stream;
     break;
   }
 
