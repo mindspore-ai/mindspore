@@ -45,7 +45,7 @@ bool TensorPromotion::Run(const FuncGraphPtr &func_graph) {
     AnfNodePtrList inputs, outputs;
     inputs.insert(inputs.end(), args.begin() + 1, args.end());
     kernel::GetFuncGraphOutputNodes(fg, &outputs);
-    auto new_cnode = CreateNewFuseCNode(func_graph, fg, inputs, outputs, false);
+    auto new_cnode = CreateNewFuseCNode(func_graph, fg, inputs, outputs);
     SetNewKernelInfo(new_cnode, fg, inputs, outputs, AnfAlgo::GetProcessor(node));
     mng->Replace(node, new_cnode);
     changed = true;

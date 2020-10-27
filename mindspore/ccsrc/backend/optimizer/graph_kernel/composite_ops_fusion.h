@@ -26,25 +26,6 @@
 
 namespace mindspore {
 namespace opt {
-enum GraphKernelType {
-  ELEWISE = 0,  // only contain elewise basic ops
-  REDUCE,       // contain reduce ops
-  CUBE,         // contain cube ops
-};
-
-struct GraphKernelInfo {
-  GraphKernelType op_type = ELEWISE;
-  bool is_before_kernel_select = false;
-  int reduce_op_num = 0;
-  int cal_step = 0;
-  std::string origin_composite_name = "";
-};
-
-// when composite fuse composite the cal step is greate than this number, not fuse
-#if ENABLE_D
-const int MAX_REDUCE_OP_FUSION_CAL_STEP = 5;
-const int MAX_REDUCE_OP_FUSION_REDUCE_NUM = 2;
-#endif
 const std::set<std::string> graph_kernel_black_list = {"BNTrainingUpdateSum", "ApplyMomentum", "LayerNormForward",
                                                        "LambNextMV", "LambUpdateWithLR"};
 
@@ -52,7 +33,7 @@ std::vector<AnfNodePtr> RemoveCircle(const std::vector<AnfNodePtr> &fused_op, bo
 
 void TopoSortForNodeList(std::vector<AnfNodePtr> *lst);
 
-bool FuseCompositeOps(const std::shared_ptr<session::KernelGraph> &kernel_graph, bool is_before_kernel_select = false);
+bool FuseCompositeOps(const std::shared_ptr<session::KernelGraph> &kernel_graph);
 
 class CompositeOpsFusion : public Pass {
  public:

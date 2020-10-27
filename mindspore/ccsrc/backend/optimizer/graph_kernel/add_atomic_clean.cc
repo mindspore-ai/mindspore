@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/optimizer/pass/add_atomic_clean.h"
+#include "backend/optimizer/graph_kernel/add_atomic_clean.h"
 #include <memory>
 #include <vector>
 #include <functional>
@@ -75,7 +75,7 @@ CNodePtr CreateTbeAtomicCleanNode(const std::shared_ptr<session::KernelGraph> &k
 }
 }  // namespace
 
-void AddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+bool AddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto mng = kernel_graph->manager();
   if (mng == nullptr) {
@@ -83,6 +83,7 @@ void AddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
     kernel_graph->set_manager(mng);
   }
   auto &todos = kernel_graph->execution_order();
+  bool changed = false;
   for (auto iter = todos.cbegin(); iter != todos.end(); ++iter) {
     auto node = *iter;
     if (AnfAlgo::IsGraphKernel(node) && kernel_graph->nodes().contains(node)) {
@@ -112,9 +113,17 @@ void AddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
         new_cnode->set_kernel_info(node->kernel_info_ptr());
         mng->Replace(node, new_cnode);
         g_output_idx.clear();
+
+        changed = true;
       }
     }
   }
+
+  return changed;
+}
+
+bool CleanAddAtomic::Run(const FuncGraphPtr &func_graph) {
+  return AddAtomicClean(std::dynamic_pointer_cast<session::KernelGraph>(func_graph));
 }
 }  // namespace opt
 }  // namespace mindspore

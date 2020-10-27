@@ -24,6 +24,7 @@
 #include "vm/segment_runner.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
+#include "backend/kernel_compiler/kernel.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/func_graph.h"
 #include "backend/optimizer/pass/const_input_to_attr_registry.h"
@@ -445,7 +446,7 @@ AnfNodePtrList GetExpandOuts(const AnfNodePtrList &outs) {
 }
 
 AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &func_graph, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
-                              const AnfNodePtrList &outputs, bool is_before_kernel_select) {
+                              const AnfNodePtrList &outputs) {
   auto func_node = NewValueNode(fg);
   std::vector<AnfNodePtr> fn_inputs;
   fn_inputs.push_back(func_node);
@@ -467,9 +468,6 @@ AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &func_graph, const FuncGraphPtr
     auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
     auto input_abs = GetOutputAbstract(kernel_with_index.first, kernel_with_index.second);
     fg->parameters()[i]->set_abstract(input_abs);
-    if (is_before_kernel_select) {
-      fg->parameters()[i]->set_kernel_info(std::make_shared<device::KernelInfo>());
-    }
   }
   return fuse_cnode;
 }
@@ -529,8 +527,7 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
 }
 
 void FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
-                         const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::string &postfix,
-                         bool is_before_kernel_select) {
+                         const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::string &postfix) {
   if (fuse_nodes.empty()) {
     return;
   }
@@ -547,10 +544,8 @@ void FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
   AnfNodePtrList outputs;
 
   std::tie(fg, inputs, outputs) = MixedNodesTransToGraph(fuse_nodes, &src_outputs);
-  auto fuse_new_node = CreateNewFuseCNode(kernel_graph, fg, inputs, outputs, is_before_kernel_select);
-  if (!is_before_kernel_select) {
-    SetNewKernelInfo(fuse_new_node, fg, inputs, outputs, AnfAlgo::GetProcessor(fuse_nodes[0]));
-  }
+  auto fuse_new_node = CreateNewFuseCNode(kernel_graph, fg, inputs, outputs);
+  SetNewKernelInfo(fuse_new_node, fg, inputs, outputs, AnfAlgo::GetProcessor(fuse_nodes[0]));
   // Handle get-item probleam.
   ReplaceNewFuseCNode(kernel_graph, fuse_new_node, src_outputs);
 
@@ -702,9 +697,20 @@ FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNo
 
 std::unordered_set<PrimitivePtr> GetExpandOps() {
   std::unordered_set<PrimitivePtr> expand_ops = {
-    prim::kPrimSquare,     prim::kPrimBiasAdd,     prim::kPrimBiasAddGrad,          prim::kPrimGelu,
-    prim::kPrimGeluGrad,   prim::kPrimFusedAdam,   prim::kPrimFusedAdamWeightDecay, prim::kPrimTanhGrad,
-    prim::kPrimReduceMean, prim::kPrimMaximumGrad, prim::kPrimMinimumGrad};
+    prim::kPrimSquare,
+#if ENABLE_GPU
+    prim::kPrimBiasAdd,
+    prim::kPrimBiasAddGrad,
+    prim::kPrimGelu,
+    prim::kPrimGeluGrad,
+    prim::kPrimFusedAdam,
+    prim::kPrimFusedAdamWeightDecay,
+    prim::kPrimTanhGrad,
+    prim::kPrimReduceMean,
+    prim::kPrimMaximumGrad,
+    prim::kPrimMinimumGrad
+#endif
+  };
   return expand_ops;
 }
 
@@ -725,14 +731,52 @@ std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &p
 }
 
 std::vector<PrimitivePtr> GetFusibleOpList() {
+#if ENABLE_D
   std::vector<PrimitivePtr> fusible_basic_ops = {
-    prim::kPrimAbs,      prim::kPrimRound,  prim::kPrimNeg,        prim::kPrimExp,       prim::kPrimTensorAdd,
-    prim::kPrimRealDiv,  prim::kPrimMul,    prim::kPrimMinimum,    prim::kPrimMaximum,   prim::kPrimLog,
-    prim::kPrimPow,      prim::kPrimSub,    prim::kPrimRsqrt,      prim::kPrimSqrt,      prim::kPrimCast,
-    prim::kPrimAddN,     prim::kPrimEqual,  prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,
-    prim::kPrimGreater,  prim::kPrimAssign, prim::kPrimReduceSum,  prim::kPrimTanh,      prim::kPrimReshape,
-    prim::kPrimTranspose};
+    prim::kPrimAbs,        prim::kPrimRound,      prim::kPrimNeg,       prim::kPrimExp,     prim::kPrimTensorAdd,
+    prim::kPrimExpandDims, prim::kPrimMul,        prim::kPrimMinimum,   prim::kPrimMaximum, prim::kPrimLog,
+    prim::kPrimPow,        prim::kPrimSub,        prim::kPrimRsqrt,     prim::kPrimSqrt,    prim::kPrimAddN,
+    prim::kPrimEqual,      prim::kPrimReciprocal, prim::kPrimReduceSum, prim::kPrimTanh,    prim::kPrimReshape,
+    prim::kPrimTranspose,  prim::kPrimCast};
+#elif ENABLE_GPU
+  std::vector<PrimitivePtr> fusible_basic_ops = {
+    prim::kPrimAbs,     prim::kPrimRound,      prim::kPrimNeg,       prim::kPrimExp,     prim::kPrimTensorAdd,
+    prim::kPrimRealDiv, prim::kPrimMul,        prim::kPrimMinimum,   prim::kPrimMaximum, prim::kPrimLog,
+    prim::kPrimPow,     prim::kPrimSub,        prim::kPrimRsqrt,     prim::kPrimSqrt,    prim::kPrimAddN,
+    prim::kPrimEqual,   prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,  prim::kPrimGreater,
+    prim::kPrimAssign,  prim::kPrimReduceSum,  prim::kPrimTanh,      prim::kPrimReshape, prim::kPrimTranspose,
+    prim::kPrimCast};
+#else
+  std::vector<PrimitivePtr> fusible_basic_ops;
+#endif
   return fusible_basic_ops;
+}
+
+bool CheckProcessor(const AnfNodePtr &node, kernel::Processor processor = kernel::Processor::AICORE) {
+  MS_EXCEPTION_IF_NULL(node);
+
+  auto node_kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  if (node_kernel_info == nullptr) {
+    return false;
+  }
+
+  auto node_build_info = node_kernel_info->GetMutableSelectKernelBuildInfo();
+  if (node_build_info == nullptr) {
+    return false;
+  }
+
+  return node_build_info->processor() == processor;
+}
+
+bool IsBasicFuseOp(const AnfNodePtr &node) {
+  std::vector<PrimitivePtr> basic_ops = GetFusibleOpList();
+#if ENABLE_D
+  if (!CheckProcessor(node)) {
+    return false;
+  }
+#endif
+  return std::any_of(basic_ops.begin(), basic_ops.end(),
+                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
 }
 
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type) {
