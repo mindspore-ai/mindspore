@@ -336,18 +336,19 @@ void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvPara
   int in_channel = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
-  int ic8 = UP_DIV(in_channel, C8NUM);
-  int ic8_minus = ic8 - 1;
+  int ic8_round = UP_ROUND(in_channel, C8NUM);
+  int ic8 = in_channel / C8NUM * C8NUM;
+  int in_plane = in_h * in_w;
 
   for (int b = 0; b < in_batch; b++) {
-    int src_batch_offset = b * in_channel * in_h * in_w;
-    int dst_batch_offset = b * ic8 * C8NUM * in_h * in_w;
-    for (int k = 0; k < in_w * in_h; k++) {
+    int src_batch_offset = b * in_channel * in_plane;
+    int dst_batch_offset = b * ic8_round * in_plane;
+    for (int k = 0; k < in_plane; k++) {
       int src_plane_offset = src_batch_offset + k * in_channel;
       int dst_plane_offset = dst_batch_offset + k * C8NUM;
-      for (int i = 0; i < ic8_minus; ++i) {
-        int src_c_offset = src_plane_offset + i * C8NUM;
-        int dst_c_offset = dst_plane_offset + i * C8NUM * in_h * in_w;
+      for (int i = 0; i < ic8; i += 8) {
+        int src_c_offset = src_plane_offset + i;
+        int dst_c_offset = dst_plane_offset + i * in_plane;
 #ifdef ENABLE_ARM
         vst1q_s16(packed_input + dst_c_offset, vmovl_s8(vld1_s8(input_data + src_c_offset)));
 #else
@@ -356,17 +357,17 @@ void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvPara
         }
 #endif
       }  // ic8_minus loop
-      int tmp_ic = ic8_minus * C8NUM;
-      int res_c = in_channel - tmp_ic;
-      int tmp_ic_offset = tmp_ic * in_h * in_w;
+      int res_c = in_channel - ic8;
+      int tmp_ic_offset = ic8 * in_plane;
       for (int l = 0; l < res_c; ++l) {
-        int src_c_offset = src_plane_offset + tmp_ic + l;
+        int src_c_offset = src_plane_offset + ic8 + l;
         int dst_c_offset = dst_plane_offset + tmp_ic_offset + l;
-        (packed_input + dst_c_offset)[l] = (int16_t)(input_data + src_c_offset)[l];
+        (packed_input + dst_c_offset)[0] = (int16_t)(input_data + src_c_offset)[0];
       }  // res ic loop
-      for (int l = res_c; l < C8NUM; ++l) {
-        int dst_c_offset = dst_plane_offset + tmp_ic_offset + l;
-        (packed_input + dst_c_offset)[l] = 0;
+      int res2 = ic8_round - in_channel;
+      for (int l = 0; l < res2; ++l) {
+        int dst_c_offset = dst_plane_offset + tmp_ic_offset + res_c + l;
+        (packed_input + dst_c_offset)[0] = 0;
       }  // res ic loop
     }    // kh * kw loop
   }
@@ -375,7 +376,8 @@ void PackInputToC8Int8(const int8_t *input_data, int16_t *packed_input, ConvPara
 void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight_data, ConvParameter *conv_param) {
   // origin weight format : ohwi
   int input_channel = conv_param->input_channel_;
-  int ic8 = UP_DIV(input_channel, C8NUM);
+  int ic8 = input_channel / C8NUM * C8NUM;
+  int ic8_round = UP_ROUND(input_channel, C8NUM);
   int output_channel = conv_param->output_channel_;
   QuantArg *filter_zp = conv_param->conv_quant_arg_.filter_quant_args_;
   int kernel_plane = conv_param->kernel_h_ * conv_param->kernel_w_;
@@ -391,9 +393,9 @@ void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight
         zp = filter_zp[o].zp_;
       }
       int src_oc_offset = src_kernel_offset + o * kernel_plane * input_channel;
-      int dst_oc_offset = dst_kernel_offset + o * ic8 * kernel_plane * C8NUM;
+      int dst_oc_offset = dst_kernel_offset + o * ic8_round * kernel_plane;
       int i = 0;
-      for (; i < (ic8 - 1); i += C8NUM) {
+      for (; i < ic8; i += C8NUM) {
         int src_ic_offset = src_oc_offset + i;
         int dst_ic_offset = dst_oc_offset + i * kernel_plane;
 #ifdef ENABLE_ARM64
@@ -416,7 +418,7 @@ void PackWeightToC8Int8(const int8_t *origin_weight_data, int16_t *packed_weight
         }
 #endif
       }
-      dst_oc_offset += (ic8 - 1) * kernel_plane * C8NUM;
+      dst_oc_offset += ic8 * kernel_plane;
       for (; i < input_channel; i++) {
         int c8_block_rem = i % C8NUM;
         int src_ic_offset = src_oc_offset + i;

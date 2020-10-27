@@ -259,7 +259,16 @@ kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &
   int dilation_w = conv_param->dilation_w_;
   kernel::LiteKernel *kernel;
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
-    kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+#ifdef ENABLE_ARM64
+    void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
+    if (optimize_op_handler != nullptr) {
+      kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    } else {
+      kernel = new (std::nothrow) kernel::Convolution3x3Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    }
+#else
+    kernel = new (std::nothrow) kernel::Convolution3x3Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+#endif
   } else if (kernel_h == 1 && kernel_w == 1) {
     kernel = new (std::nothrow) kernel::Convolution1x1Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   } else {
