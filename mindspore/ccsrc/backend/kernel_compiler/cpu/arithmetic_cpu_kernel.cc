@@ -21,6 +21,14 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
+void ArithmeticCPUKernel::AssignAdd(T *input1, const T *input2, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = input1[i] + input2[i];
+    input1[i] = out[i];
+  }
+}
+
+template <typename T>
 void ArithmeticCPUKernel::Add(const T *input1, const T *input2, T *out, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
     out[i] = input1[i] + input2[i];
@@ -65,11 +73,16 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = MUL;
   } else if (kernel_name == "Div") {
     operate_type_ = DIV;
+  } else if (kernel_name == prim::kPrimAssignAdd->name()) {
+    operate_type_ = ASSIGNADD;
   }
 
   input_shape0_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   input_shape1_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  if (output_shape_.size() == 0) {
+    output_shape_.insert(output_shape_.begin(), 1);
+  }
   size_t l = input_shape0_.size();
   for (size_t i = 0; i < output_shape_.size() - l; ++i) {
     input_shape0_.insert(input_shape0_.begin(), 1);
@@ -138,8 +151,8 @@ void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   T *input2 = reinterpret_cast<T *>(inputs[1]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
   auto lens = outputs[0]->size / sizeof(T);
-  MS_LOG(INFO) << "lens=" << lens;
-  const size_t thread_num = 24;
+  size_t thread_num = lens < 128 * 24 ? std::ceil(lens / 128.0) : 24;
+  MS_LOG(INFO) << "lens=" << lens << "; use thread_num=" << thread_num;
   std::vector<std::thread> threads;
   threads.reserve(thread_num);
   size_t start = 0;
@@ -154,6 +167,8 @@ void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, co
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::Mul<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == DIV) {
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::Div<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == ASSIGNADD) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::AssignAdd<T>, this, input1, input2, output, start, end));
     }
     start += once_compute_size;
   }
