@@ -72,6 +72,7 @@ def test_gatherv2_semi_auto0():
 
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -84,6 +85,7 @@ def test_gatherv2_semi_auto1():
 
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -96,6 +98,7 @@ def test_gatherv2_semi_auto2():
 
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -108,6 +111,7 @@ def test_gatherv2_semi_auto3():
 
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -120,6 +124,7 @@ def test_gatherv2_semi_auto4():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -132,6 +137,7 @@ def test_gatherv2_semi_auto5():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -143,6 +149,7 @@ def test_gatherv2_semi_auto6():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -154,6 +161,7 @@ def test_gatherv2_semi_auto7():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -163,6 +171,7 @@ def test_gatherv2_auto0():
     net.set_auto_parallel()
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 32]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -172,6 +181,7 @@ def test_gatherv2_auto1():
     net.set_auto_parallel()
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -184,6 +194,7 @@ def test_gatherv2_cpu0():
 
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -196,6 +207,7 @@ def test_gatherv2_cpu1():
 
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -208,4 +220,5 @@ def test_gatherv2_cpu2():
 
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)

@@ -79,6 +79,7 @@ def test_double_source_graph():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y, z, w, a)
 
 
@@ -114,4 +115,5 @@ def test_double_source_complex_graph():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y, z, w, a)

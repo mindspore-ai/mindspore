@@ -134,6 +134,7 @@ def test_two_matmul():
     net.set_auto_parallel()
     reset_op_id()
 
+    net.set_train()
     _executor.compile(net, x, y, b, phase='train')
     strategies = _executor._get_shard_strategy(net)
     expected_strategies = {'Default/network-Net/MatMul-op0': [[16, 1], [1, 1]],

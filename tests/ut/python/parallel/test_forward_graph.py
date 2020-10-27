@@ -41,6 +41,7 @@ _b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
 
 def compile_net(net):
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, _x, _b)
     context.reset_auto_parallel_context()
 

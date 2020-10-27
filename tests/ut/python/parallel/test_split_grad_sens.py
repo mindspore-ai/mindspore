@@ -66,10 +66,12 @@ class GradWrap4(nn.Cell):
 
 def compile_net(net, x, y, b):
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y, b)
 
 def compile_net_no_bias(net, x, y):
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y)
 
 def test_no_grad():
@@ -120,6 +122,7 @@ def test_grad_sens_parameter_type():
 
     sens = Tensor(np.ones([128, 64]), dtype=ms.float32)
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y, b, sens, phase='train', auto_parallel_mode=True)
     x_layout = ([8, 8], [1, -1], [16, 32], 0, True, '')
     y_layout = ([8, 8], [-1, 0], [32, 8], 0, True, '')

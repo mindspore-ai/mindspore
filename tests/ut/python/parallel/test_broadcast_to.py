@@ -68,6 +68,7 @@ def compile_net(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
+    train_net.set_train()
     _executor.compile(train_net, _x1)
     context.reset_auto_parallel_context()
 
@@ -77,6 +78,7 @@ def compile_net2(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
+    train_net.set_train()
     _executor.compile(train_net, _x1, _x2)
     context.reset_auto_parallel_context()
 

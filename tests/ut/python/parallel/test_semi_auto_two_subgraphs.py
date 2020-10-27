@@ -107,4 +107,5 @@ def test_two_subgraphs():
     net = TrainStepWrap(NetWithLoss(Net()))
     input_x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, input_x)

@@ -73,4 +73,5 @@ def test_auto_parallel_bn_with_prelu():
 
     net = GradWrap(NetWithLoss(Net()))
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)

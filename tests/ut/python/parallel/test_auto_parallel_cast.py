@@ -81,6 +81,7 @@ def test_double_star_graph():
     net.set_auto_parallel()
     reset_op_id()
 
+    net.set_train()
     _executor.compile(net, x, y, z, w, phase='train')
     strategies = _executor._get_shard_strategy(net)
     expected_strategies = {'Default/network-Net/Cast-op0': [[8, 1]],

@@ -76,6 +76,7 @@ def auto_parallel_compile_net(mode, dev_num, strategy1=None, strategy2=None):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_network = TrainOneStepCell(net, optimizer)
     train_network.set_auto_parallel()
+    train_network.set_train()
     _executor.compile(train_network, inputs, label)
     context.reset_auto_parallel_context()
 

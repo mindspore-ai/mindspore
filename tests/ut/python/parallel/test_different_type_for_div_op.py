@@ -37,6 +37,7 @@ class GradWrap(nn.Cell):
 
 def compile_net(net, x, y):
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y)
 
 

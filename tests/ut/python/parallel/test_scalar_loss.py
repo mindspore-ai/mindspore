@@ -60,4 +60,5 @@ def test_sum_as_loss():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)

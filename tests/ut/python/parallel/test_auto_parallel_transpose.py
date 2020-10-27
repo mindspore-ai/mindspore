@@ -76,6 +76,7 @@ def test_two_matmul_transpose():
     net.set_auto_parallel()
     reset_op_id()
 
+    net.set_train()
     _executor.compile(net, x, y, b, phase='train')
     strategies = _executor._get_shard_strategy(net)
     expected_strategies = {'Default/network-Net/Transpose-op3': [[1, 16]],

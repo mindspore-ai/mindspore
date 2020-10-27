@@ -317,6 +317,7 @@ class ReshapeNet6(nn.Cell):
 
 def compile_net(net, input_):
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, input_)
 
 

@@ -68,6 +68,7 @@ def test_reshape_matmul():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 def test_reshape_reshape():
@@ -90,6 +91,7 @@ def test_reshape_reshape():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 
@@ -115,6 +117,7 @@ def test_reshape_auto_1():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 
@@ -143,6 +146,7 @@ def test_reshape_auto_2():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 
@@ -168,6 +172,7 @@ def test_reshape_auto_3():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 
@@ -194,6 +199,7 @@ def test_reshape_auto_4():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)
 
 
@@ -244,6 +250,7 @@ def test_reshape_auto_5():
     net = GradWrap5(NetWithLoss5(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y)
 
 def test_reshape_auto_6():
@@ -291,6 +298,7 @@ def test_reshape_auto_6():
     net = GradWrap6(NetWithLoss6(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x, y)
 
 def test_reshape_auto_7():
@@ -313,4 +321,5 @@ def test_reshape_auto_7():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
+    net.set_train()
     _executor.compile(net, x)

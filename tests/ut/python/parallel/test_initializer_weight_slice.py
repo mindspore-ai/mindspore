@@ -53,6 +53,7 @@ def check_initializer_weight_slice(init_name="Uniform"):
         weight = initializer(init_name, [64, 32], ms.float32)
         net = Net(strategy1, strategy2, weight)
         net.set_auto_parallel()
+        net.set_train()
         exe.compile(net, x, auto_parallel_mode=True, phase='train')
         hccl.rank_id = rank_save
         return net.parameters_dict()['w1'].data.asnumpy()
@@ -131,6 +132,7 @@ def test_check_initializer_weight_slice_seed(init_name="Uniform"):
         weight = initializer(init_name, [64, 32], ms.float32)
         net = Net(strategy1, strategy2, weight)
         net.set_auto_parallel()
+        net.set_train()
         exe.compile(net, x, auto_parallel_mode=True, phase='train')
         hccl.rank_id = rank_save
         return net.parameters_dict()['w1'].data.asnumpy()

@@ -66,6 +66,7 @@ def test_embeddinglookup_reducescatter_false():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -77,6 +78,7 @@ def test_embeddinglookup_reducescatter_true():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -88,6 +90,7 @@ def test_embeddinglookup_reducescatter_false_grad():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -100,6 +103,7 @@ def test_embeddinglookup_reducescatter_true_grad():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([8, 32, 8]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -114,6 +118,7 @@ def test_embeddinglookup_semi_auto1():
     net.set_auto_parallel()
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
 
 
@@ -128,4 +133,5 @@ def test_embeddinglookup_semi_auto2():
     net.set_auto_parallel()
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
+    net.set_train()
     _executor.compile(net, x, y)
