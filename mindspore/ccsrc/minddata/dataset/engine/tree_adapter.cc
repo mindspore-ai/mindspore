@@ -66,6 +66,8 @@ Status TreeAdapter::GetNext(TensorRow *row) {
 }
 
 Status TreeAdapter::DFSBuildTree(std::shared_ptr<api::Dataset> ir, std::shared_ptr<DatasetOp> *op) {
+  // validate the op can be built first before building the DatasetOp
+  RETURN_IF_NOT_OK(ir->ValidateParams());
   std::vector<std::shared_ptr<DatasetOp>> ops = ir->Build();
   CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build node.");
 
