@@ -288,7 +288,7 @@ def _set_pb_env():
                        "When the checkpoint file is too large, "
                        "it may cause memory limit error durning load checkpoint file. "
                        "This can be solved by set env `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`.")
-    elif os.getenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION") != "python":
+    elif os.getenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION") is None:
         logger.warning("Set the env `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` to prevent memory overflow.")
         os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
