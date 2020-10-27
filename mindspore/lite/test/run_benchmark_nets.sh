@@ -51,7 +51,7 @@ function Run_Converter() {
 
     # Convert onnx models:
     while read line; do
-        model_name=${line%:*}
+        model_name=${line%;*}
         if [[ $model_name == \#* ]]; then
           continue
         fi
@@ -160,6 +160,38 @@ function Run_Converter() {
             converter_result='converter weight_quant '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
     done < ${models_tflite_weightquant_config}
+
+    # Convert models which do not need to be cared about the accuracy:
+    while read line; do
+        model_name=${line}
+        model_type=${line##*.}
+        if [[ $model_name == \#* ]] || [[ $model_type == \#* ]]; then
+          continue
+        fi
+        case $model_type in
+          tflite)
+            model_fmk="TFLITE"
+            ;;
+          caffemodel)
+            model_name=${model_name%.*}
+            model_fmk="CAFFE"
+            ;;
+          onnx)
+            model_fmk="ONNX"
+            ;;
+          mindir)
+            model_fmk="MINDIR"
+            ;;
+        esac
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk='${model_fmk}' --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name} >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}
+        if [ $? = 0 ]; then
+            converter_result='converter '${model_type}' '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter '${model_type}' '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_only_for_process_config}
 }
 
 # Run on x86 platform:
@@ -202,7 +234,7 @@ function Run_x86() {
 
     # Run onnx converted models:
     while read line; do
-        model_name=${line%:*}
+        model_name=${line%;*}
         length=${#model_name}
         input_shapes=${line:length+1}
         if [[ $model_name == \#* ]]; then
@@ -309,6 +341,24 @@ function Run_x86() {
             run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_weightquant_config}
+
+    # Run converted models which do not need to be cared about the accuracy:
+    while read line; do
+        model_name=${line}
+        if [[ ${line##*.} == "caffemodel" ]]; then
+          model_name=${line%.*}
+        fi
+        echo ${model_name} >> "${run_x86_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "{run_x86_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_only_for_process_config}
 }
 
 # Run on arm64 platform:
@@ -430,7 +480,7 @@ function Run_arm64() {
 
     # Run onnx converted models:
     while read line; do
-        model_name=${line%:*}
+        model_name=${line%;*}
         length=${#model_name}
         input_shapes=${line:length+1}
         if [[ $model_name == \#* ]]; then
@@ -770,6 +820,7 @@ models_tflite_gpu_config=${basepath}/models_fp32_gpu.cfg
 models_fp16_gpu_config=${basepath}/models_fp16_gpu.cfg
 models_arm32_config=${basepath}/models_arm32.cfg
 models_compatibility_config=${basepath}/models_compatibility.cfg
+models_only_for_process_config=${basepath}/models_only_for_process.cfg
 
 ms_models_path=${basepath}/ms_models
 
