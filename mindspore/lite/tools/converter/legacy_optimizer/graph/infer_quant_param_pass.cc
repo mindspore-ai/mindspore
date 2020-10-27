@@ -30,6 +30,10 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
     if (node->quantType == schema::QuantType_WeightQuant) {
       continue;
     }
+    DetermineNodeQuantType(*graph, node.get());
+    if (node->quantType == schema::QuantType_AwareTraining) {
+      continue;
+    }
     if (GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMax ||
         GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMaxVars) {
       MS_ASSERT(false);
@@ -38,14 +42,14 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
     if (quantParamCalcer == nullptr) {
       MS_LOG(WARNING) << "Can not find QuantParamCalcer for " << node->name.c_str()
                       << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";
-      node->quantType = static_cast<schema::QuantType>(schema::QuantType_QUANT_NONE);
+      node->quantType = schema::QuantType_QUANT_NONE;
     } else {
       auto status = quantParamCalcer->Calc(graph, *node);
       if (status != RET_OK) {
         MS_LOG(WARNING) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
         node->quantType = schema::QuantType_QUANT_NONE;
       } else {
-        DetermineNodeQuantType(*graph, node.get());
+        node->quantType = schema::QuantType_AwareTraining;
       }
     }
   }
@@ -77,7 +81,7 @@ void InferQuantParamPass::DetermineNodeQuantType(const schema::MetaGraphT &graph
     }
   }
 
-  if (canQuant && IsContain(GetInt8OpList(), GetCNodeTType(*cnode))) {
+  if (canQuant) {
     cnode->quantType = schema::QuantType_AwareTraining;
   } else {
     cnode->quantType = schema::QuantType_QUANT_NONE;

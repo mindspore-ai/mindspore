@@ -45,6 +45,7 @@ class DTypeTransPass : public GraphPass {
 
   STATUS DoModelOutputDTypeTrans(schema::MetaGraphT *graph);
 
+  STATUS DoNodeInoutDTypeTrans(schema::MetaGraphT *graph);
   NodeIter InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place, size_t inoutIdx,
                                 DTypeTransNodeType nodeType, STATUS *errorCode);
 
