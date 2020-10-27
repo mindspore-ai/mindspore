@@ -31,10 +31,6 @@ using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
 int TransposeFp16CPUKernel::Init() {
-  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
-  num_unit_ = static_cast<int>(in_tensors_[kInputIndex]->shape().at(param->perm_[kNHWC_H]));
-  thread_h_num_ = MSMIN(thread_num_, num_unit_);
-  thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -42,9 +38,12 @@ int TransposeFp16CPUKernel::Init() {
 }
 
 int TransposeFp16CPUKernel::ReSize() {
+  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  num_unit_ = static_cast<int>(in_tensors_[kInputIndex]->shape().at(param->perm_[kNHWC_H]));
+  thread_h_num_ = MSMIN(thread_num_, num_unit_);
+  thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   auto &in_tensor = in_tensors_.front();
   auto &out_tensor = out_tensors_.front();
-  auto param = reinterpret_cast<TransposeParameter *>(op_parameter_);
   auto in_shape = in_tensor->shape();
   auto out_shape = out_tensor->shape();
   param->strides_[param->num_axes_ - 1] = 1;
