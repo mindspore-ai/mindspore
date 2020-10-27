@@ -747,6 +747,41 @@ class Padding(PrimitiveWithInfer):
         return out
 
 
+class UniqueWithPad(PrimitiveWithInfer):
+    """
+    Return unique elements and relative indexes in 1-D tensor, fill with pad num.
+
+    Inputs:
+        - **x** (Tensor) - The tensor need to be unique. Must be 1-D vector with types: int32, int64.
+        - **pad_num** (int) - Pad num.
+
+    Outputs:
+        tuple(Tensor), tuple of 2 tensors, y and idx.
+        - y (Tensor) - The unique elements filled with pad_num, the shape and type same as x.
+        - idx (Tensor) - The index of each value of x in the unique output y, the shape and type same as x.
+
+    Examples:
+        >>> x = Tensor(np.array([1, 1, 5, 5, 4, 4, 3, 3, 2, 2,]), mindspore.int32)
+        >>> pad_num = 8
+        >>> out = P.UniqueWithPad()(x, pad_num)
+        ([1, 5, 4, 3, 2, 8, 8, 8, 8, 8], [0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init UniqueWithPad"""
+
+    def __infer__(self, x, pad_num):
+        validator.check_tensor_type_same({"x": x['dtype']}, [mstype.int32, mstype.int64], self.name)
+        validator.check_subclass("pad_num", pad_num['dtype'], [mstype.int32, mstype.int64], self.name)
+        x_shape = list(x['shape'])
+        validator.check("rank of x", len(x_shape), "expected", 1, Rel.EQ, self.name)
+        out_shape = x_shape
+        out = {'shape': (out_shape, out_shape),
+               'dtype': (x['dtype'], x['dtype']),
+               'value': None}
+        return out
+
+
 class Split(PrimitiveWithInfer):
     """
     Splits input tensor into output_num of tensors along the given axis and output numbers.

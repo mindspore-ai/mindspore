@@ -19,6 +19,8 @@ from .embedding_lookup import _embedding_lookup_aicpu
 from .padding import _padding_aicpu
 from .gather import _gather_aicpu
 from .identity import _identity_aicpu
+from .edit_distance import _edit_distance_aicpu
+from .unique_with_pad import _unique_with_pad_aicpu
 from .dropout_genmask import _dropout_genmask_aicpu
 from .get_next import _get_next_aicpu
 from .print_tensor import _print_aicpu
@@ -56,3 +58,4 @@ from .fused_sparse_lazy_adam import _fused_sparse_lazy_adam_aicpu
 from .fused_sparse_ftrl import _fused_sparse_ftrl_aicpu
 from .fused_sparse_proximal_adagrad import _fused_sparse_proximal_adagrad_aicpu
 from .meshgrid import _meshgrid_aicpu
+from .trans_data import _trans_data_aicpu
