@@ -183,6 +183,7 @@ class Executor {
   std::condition_variable sync_cond_var_;
   std::queue<std::shared_ptr<Task>> ready_tasks_;
   std::list<std::shared_ptr<RunGraphTask>> pending_tasks_;
+  std::vector<std::shared_ptr<Task>> done_tasks_;
   std::shared_ptr<std::thread> worker_;
 };
 }  // namespace session

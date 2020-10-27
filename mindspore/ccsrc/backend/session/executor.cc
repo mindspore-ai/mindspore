@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/session/executor.h"
+#include <algorithm>
 #include <exception>
 #include "backend/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -169,11 +170,12 @@ void Executor::WorkerLoop() {
     } catch (const std::exception &e) {
       MsException::GetInstance().SetException();
     }
+    {
+      std::unique_lock<std::mutex> lock(task_mutex_);
+      done_tasks_.emplace_back(task);
+    }
     if (task->type_ != kRunGraph || task->sync_run_) {
-      task = nullptr;
       sync_cond_var_.notify_all();
-    } else {
-      task = nullptr;
     }
   }
 }
@@ -304,6 +306,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
   }
   std::unique_lock<std::mutex> lock(task_mutex_);
   ready_tasks_.push(task);
+  done_tasks_.clear();
   task_cond_var_.notify_all();
 }
 
