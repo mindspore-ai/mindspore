@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "transform/graph_ir/op_declare/selection_ops_declare.h"
 #include <vector>
+#include "transform/graph_ir/op_declare/selection_ops_declare.h"
 
 namespace mindspore::transform {
 // CumsumD
@@ -133,4 +133,10 @@ INPUT_MAP(UnsortedSegmentMin) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)
 ATTR_MAP(UnsortedSegmentMin) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentMin) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(UnsortedSegmentMin, prim::kPrimUnsortedSegmentMin->name(), ADPT_DESC(UnsortedSegmentMin))
+
+// ReverseV2
+INPUT_MAP(ReverseV2D) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ReverseV2D) = {{"axis", ATTR_DESC(axis, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(ReverseV2D) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ReverseV2D, kNameReverseV2, ADPT_DESC(ReverseV2D))
 }  // namespace mindspore::transform
