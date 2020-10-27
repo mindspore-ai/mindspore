@@ -55,6 +55,11 @@ struct Chn4 {
   T c4;
 };
 
+using BOOL_C1 = Chn1<bool>;
+using BOOL_C2 = Chn2<bool>;
+using BOOL_C3 = Chn3<bool>;
+using BOOL_C4 = Chn4<bool>;
+
 using UINT8_C1 = Chn1<uint8_t>;
 using UINT8_C2 = Chn2<uint8_t>;
 using UINT8_C3 = Chn3<uint8_t>;
@@ -84,6 +89,16 @@ using INT32_C1 = Chn1<int32_t>;
 using INT32_C2 = Chn2<int32_t>;
 using INT32_C3 = Chn3<int32_t>;
 using INT32_C4 = Chn4<int32_t>;
+
+using UINT64_C1 = Chn1<uint64_t>;
+using UINT64_C2 = Chn2<uint64_t>;
+using UINT64_C3 = Chn3<uint64_t>;
+using UINT64_C4 = Chn4<uint64_t>;
+
+using INT64_C1 = Chn1<int64_t>;
+using INT64_C2 = Chn2<int64_t>;
+using INT64_C3 = Chn3<int64_t>;
+using INT64_C4 = Chn4<int64_t>;
 
 using FLOAT32_C1 = Chn1<float>;
 using FLOAT32_C2 = Chn2<float>;
