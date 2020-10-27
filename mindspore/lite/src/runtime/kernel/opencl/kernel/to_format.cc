@@ -87,7 +87,11 @@ int ToFormatOpenCLKernel::InitNHWC() {
 int ToFormatOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   std::vector<size_t> global = {N_ * H_, W_, UP_DIV(C_, C4NUM)};
-  std::vector<size_t> local = {16, 8, 1};
+  std::vector<size_t> local = {8, 16, 3};
+  size_t max_work_group_size = ocl_runtime_->GetKernelMaxWorkGroupSize(kernel_(), (*ocl_runtime_->Device())());
+  if (max_work_group_size < 384) {
+    local[2] = 1;
+  }
   cl_int4 shape{(cl_int)N_, (cl_int)H_, (cl_int)W_, (cl_int)C_};
   cl_int4 gsize{(cl_int)global[0], (cl_int)global[1], (cl_int)global[2], 1};
 
