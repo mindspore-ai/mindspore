@@ -133,6 +133,8 @@ class OpenCLKernel : public LiteKernel {
  protected:
   lite::opencl::OpenCLRuntime *ocl_runtime_;
   OpenCLMemType out_mem_type_{OpenCLMemType::IMG};
+  std::vector<size_t> global_size_;
+  std::vector<size_t> local_size_;
 
  private:
   lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;

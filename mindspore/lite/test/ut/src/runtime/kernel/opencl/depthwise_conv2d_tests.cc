@@ -41,20 +41,8 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   }
 
   // pack input
-  int IC4 = UP_DIV(conv_param->input_channel_, C4NUM);
-  int pack_input_size = C4NUM * IC4 * conv_param->input_h_ * conv_param->input_w_;
-  auto packed_input = new (std::nothrow) T2[pack_input_size];
-  if (packed_input == nullptr) {
-    return;
-  }
-  memset(packed_input, 0, pack_input_size * sizeof(T2));
-  int plane = conv_param->input_w_ * conv_param->input_h_;
+  int input_size = conv_param->input_channel_ * conv_param->input_h_ * conv_param->input_w_;
   std::function<T2(T2)> to_dtype = [](T2 x) -> T2 { return x; };
-  if (format == schema::Format_NHWC4) {
-    kernel::PackNHWCToNHWC4<T2, T2>(input_data, packed_input, 1, plane, conv_param->input_channel_, to_dtype);
-  } else {
-    kernel::PackNHWCToNC4HW4<T2, T2>(input_data, packed_input, 1, plane, conv_param->input_channel_, to_dtype);
-  }
 
   // pack weight
   int pack_weight_size = conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_;
@@ -62,8 +50,8 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
 
   // T1 bias_data[] = {0.31856894, 0.6674104, 0.13179787, 0.7163272, 0.2894061, 0.0, 0.0, 0.0};
   T1 bias_data[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  size_t packed_output_size = conv_param->output_batch_ * C4NUM * UP_DIV(conv_param->output_channel_, C4NUM) *
-                              conv_param->output_h_ * conv_param->output_w_;
+  size_t output_size =
+    conv_param->output_batch_ * conv_param->output_channel_ * conv_param->output_h_ * conv_param->output_w_;
 
   std::vector<int> shape_filter = {1, conv_param->kernel_h_, conv_param->kernel_w_, conv_param->output_channel_};
   std::vector<int> shape_bias = {conv_param->output_channel_};
@@ -81,7 +69,6 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
       {conv_param->output_batch_, conv_param->output_channel_, conv_param->output_h_, conv_param->output_w_});
   } else {
     MS_LOG(ERROR) << "Unsupported format: " << format;
-    delete[] packed_input;
     return;
   }
   auto tensor_a = lite::Tensor(TypeId(dtype), shape_in, format);
@@ -98,7 +85,6 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   OpParameter *parameter = reinterpret_cast<OpParameter *>(conv_param);
   auto pKernel = std::make_unique<kernel::DepthwiseConv2dOpenCLKernel>(parameter, inputs, outputs);
   if (pKernel.get() == nullptr) {
-    delete[] packed_input;
     return;
   }
   pKernel->Init();
@@ -107,38 +93,22 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
   std::vector<lite::Tensor *> inputs_{&tensor_a};
   auto pGraph = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_, outputs, kernels, kernels, kernels);
   if (pGraph.get() == nullptr) {
-    delete[] packed_input;
     return;
   }
   pGraph->Init();
 
   // freamework to do!!!
   inputs[0]->MallocData(allocator);
-  memcpy(inputs[0]->data_c(), packed_input, sizeof(T2) * pack_input_size);
+  memcpy(inputs[0]->data_c(), input_data, sizeof(T2) * input_size);
 
   pGraph->Run();
   if (is_compare) {
-    T2 *packed_output = reinterpret_cast<T2 *>(outputs[0]->data_c());
-    auto packed_correct_data = new (std::nothrow) T2[packed_output_size];
-    if (packed_correct_data == nullptr) {
-      delete[] packed_input;
-      return;
-    }
-    memset(packed_correct_data, 0, packed_output_size * sizeof(T2));
-    if (format == schema::Format_NC4HW4) {
-      kernel::PackNHWCToNC4HW4<T2, T2>(gnd_data, packed_correct_data, conv_param->output_batch_,
-                                       conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_,
-                                       to_dtype);
-    } else {
-      kernel::PackNHWCToNHWC4<T2, T2>(gnd_data, packed_correct_data, conv_param->output_batch_,
-                                      conv_param->output_h_ * conv_param->output_w_, conv_param->output_channel_,
-                                      to_dtype);
-    }
+    T2 *output_data = reinterpret_cast<T2 *>(outputs[0]->data_c());
 
     printf("==================input_data=================\n");
     std::cout << std::endl;
-    for (int i = 0; i < pack_input_size; i++) {
-      std::cout << packed_input[i] << ", ";
+    for (int i = 0; i < input_size; i++) {
+      std::cout << input_data[i] << ", ";
     }
     std::cout << std::endl;
     printf("==================weight data=================\n");
@@ -149,23 +119,21 @@ void DepthWiseTestMain(ConvParameter *conv_param, T2 *input_data, T1 *weight_dat
     std::cout << std::endl;
     printf("==================output data=================\n");
     std::cout << std::endl;
-    for (int i = 0; i < packed_output_size; i++) {
-      std::cout << packed_output[i] << ", ";
+    for (int i = 0; i < output_size; i++) {
+      std::cout << output_data[i] << ", ";
     }
     std::cout << std::endl;
     printf("==================expected output data=================\n");
-    for (int i = 0; i < packed_output_size; i++) {
-      std::cout << packed_correct_data[i] << ", ";
+    for (int i = 0; i < output_size; i++) {
+      std::cout << gnd_data[i] << ", ";
     }
     std::cout << std::endl;
     // compare
-    CommonTest::CompareOutputData<T2>(packed_output, packed_correct_data, packed_output_size, err_max);
-    delete[] packed_correct_data;
+    CommonTest::CompareOutputData<T2>(output_data, gnd_data, output_size, err_max);
   }
 
   inputs[1]->set_data(nullptr);
   inputs[2]->set_data(nullptr);
-  delete[] packed_input;
   inputs[0]->set_data(nullptr);
   outputs[0]->set_data(nullptr);
   return;
