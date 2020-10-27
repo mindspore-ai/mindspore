@@ -16,7 +16,7 @@
 
 from mindspore.nn.cell import Cell
 from mindspore.ops.operations.comm_ops import AllGather
-
+from mindspore.communication import GlobalComm
 
 _allgather_cell = None
 
@@ -26,10 +26,10 @@ class AllGatherCell(Cell):
     Allgather cell, used in model parallel scenario.
     To allgather the selected parameter slice from each device.
     """
-    def __init__(self):
+    def __init__(self, group):
         super(AllGatherCell, self).__init__(auto_prefix=False)
 
-        self.allgather = AllGather()
+        self.allgather = AllGather(group)
 
     def construct(self, x):
         x = self.allgather(x)
@@ -58,13 +58,16 @@ class SaveOptShardCkptCell(Cell):
         return x
 
 
-def get_allgather_cell(group):
+def get_allgather_cell(group, need_merge_twice=False):
     """Get AllGatherCell object."""
     global _allgather_cell
-    if group:
+    if need_merge_twice:
         _allgather_cell = SaveOptShardCkptCell(group)
     else:
-        _allgather_cell = AllGatherCell()
+        if group:
+            _allgather_cell = AllGatherCell(group)
+        else:
+            _allgather_cell = AllGatherCell(GlobalComm.WORLD_COMM_GROUP)
     return _allgather_cell
 
 

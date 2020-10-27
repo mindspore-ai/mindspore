@@ -77,8 +77,9 @@ def auto_parallel_compile_net(mode, dev_num, strategy1=None, strategy2=None):
     train_network = TrainOneStepCell(net, optimizer)
     train_network.set_auto_parallel()
     train_network.set_train()
-    _executor.compile(train_network, inputs, label)
+    _executor.compile(train_network, inputs, label, phase="train", auto_parallel_mode=True)
     context.reset_auto_parallel_context()
+    return train_network
 
 
 def test_auto_parallel_momentum_1():
@@ -93,7 +94,11 @@ def test_auto_parallel_momentum_2():
 def test_auto_parallel_momentum_3():
     # hybrid parallel case
     # weight1 could not be shard and weight2 is repeated
-    auto_parallel_compile_net("semi_auto_parallel", 32, ((4, 8), (8, 1)), ((4, 4), (4, 2)))
+    train_network = auto_parallel_compile_net("semi_auto_parallel", 32, ((4, 8), (8, 1)), ((4, 4), (4, 2)))
+    param_dict = train_network.parameter_layout_dict
+    # validate opt_shard_group
+    assert not param_dict["weight1"][5]
+    assert param_dict["weight2"][5].startswith("4")
 
 
 def test_auto_parallel_momentum_4():

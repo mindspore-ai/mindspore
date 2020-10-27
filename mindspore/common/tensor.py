@@ -16,6 +16,7 @@
 import numpy as np
 
 from mindspore import log as logger
+from mindspore.communication.management import get_rank, get_group_size
 from .._c_expression import Tensor as Tensor_
 from .._c_expression import MetaTensor as MetaTensor_
 from .._checkparam import check_type, check_typename
@@ -409,7 +410,7 @@ class MetaTensor(MetaTensor_):
         self.init = init
         MetaTensor_.__init__(self, dtype, shape)
 
-    def to_tensor(self, slice_index=None, shape=None):
+    def to_tensor(self, slice_index=None, shape=None, opt_shard_group=None):
         """
         Get the tensor format data of this MetaTensor.
 
@@ -418,6 +419,8 @@ class MetaTensor(MetaTensor_):
                 It is used when initialize a slice of a parameter, it guarantees that devices
                 using the same slice can generate the same tensor.
             shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
+            opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
+                to get one shard of a parameter's slice.
         """
         if self.init is None:
             raise TypeError("to_dense must be set MetaTensor.init, init can't be None")
@@ -453,7 +456,12 @@ class MetaTensor(MetaTensor_):
 
         with seed_context(self.init):
             self.init(arr)
-        return Tensor(arr, dtype=self.dtype)
+        data = np.array(arr)
+        if opt_shard_group:
+            rank = get_rank(opt_shard_group)
+            size = get_group_size(opt_shard_group)
+            data = np.split(data, size)[rank]
+        return Tensor(data, dtype=self.dtype)
 
 
 def _vm_compare(*args):

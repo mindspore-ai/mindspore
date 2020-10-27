@@ -456,13 +456,18 @@ def _get_merged_param_data(net, param_name, param_data):
     # while any dim is not equal to -1, means param is split and needs to be merged
     # pipeline parallel need to be supported here later
     for dim in tensor_map:
-        if dim != -1 or opt_shard_group:
-            allgather_net = get_allgather_cell(opt_shard_group)
+        if dim != -1:
+            if opt_shard_group:
+                allgather_net = get_allgather_cell(opt_shard_group, True)
+            else:
+                allgather_net = get_allgather_cell(opt_shard_group, False)
             param_data = allgather_net(param_data)
             if field_size:
                 return _reshape_param_data_with_weight(param_data, dev_mat, field_size)
             return _reshape_param_data(param_data, dev_mat, tensor_map)
-
+    if opt_shard_group:
+        allgather_net = get_allgather_cell(opt_shard_group, False)
+        param_data = allgather_net(param_data)
     return param_data
 
 

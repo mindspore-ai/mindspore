@@ -418,9 +418,9 @@ class Parameter(MetaTensor_):
                 if _is_role_worker():
                     data = self.init_mode.to_tensor(0, [1])
                 else:
-                    data = self.init_mode.to_tensor(slice_index, layout[2])
+                    data = self.init_mode.to_tensor(slice_index, layout[2], layout[5])
             else:
-                data = self.init_mode.to_tensor(slice_index, layout[2])
+                data = self.init_mode.to_tensor(slice_index, layout[2], layout[5])
         else:
             if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, MetaTensor)):
                 if _is_role_worker():
