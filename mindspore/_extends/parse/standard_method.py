@@ -30,7 +30,6 @@ trans = P.Transpose()
 shape_ = P.Shape()
 dtype_ = P.DType()
 
-
 def all_(x, axis=(), keep_dims=False):
     """
     Check all array elements along a given axis evaluate to True.
@@ -144,12 +143,16 @@ def bool_(x):
 
 
 def enumerate_(x, start=0):
-    """Enumerate list or tuple."""
+    """Enumerate list or tuple or tensor."""
     x_type = F.typeof(x)
     ret = ()
     op_name = "enumerate"
-    if check_is_tuple_or_list(x_type, op_name, "first input") and check_is_const_int(start, op_name, "start"):
-        ret = zip(range(start, start + len(x)), x)
+    if check_is_tuple_or_list_or_tensor(x_type, op_name, "first input") and check_is_const_int(start, op_name, "start"):
+        if check_is_tensor(x_type):
+            for i in range(x.shape[0]):
+                ret += ((start + i, x[i]),)
+        else:
+            ret = zip(range(start, start + len(x)), x)
     return ret
 
 
@@ -177,11 +180,19 @@ def check_type_same(x_type, base_type):
 
 
 @constexpr
-def check_is_tuple_or_list(x, op_name, arg_name):
+def check_is_tensor(x):
     """check whether x is list or tuple."""
-    if isinstance(x, (mstype.list_type, mstype.tuple_type)):
+    if isinstance(x, mstype.tensor_type):
         return True
-    raise TypeError(f"For '{op_name}', the '{arg_name}' should be tuple or list, but got {x}.")
+    return False
+
+
+@constexpr
+def check_is_tuple_or_list_or_tensor(x, op_name, arg_name):
+    """check whether x is list or tuple or tensor."""
+    if isinstance(x, (mstype.list_type, mstype.tuple_type, mstype.tensor_type)):
+        return True
+    raise TypeError(f"For '{op_name}', the '{arg_name}' should be tuple or list or tensor, but got {x}.")
 
 
 @constexpr
