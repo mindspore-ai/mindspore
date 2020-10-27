@@ -54,7 +54,14 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
           tensor->quantParams.emplace_back(weightQauntParam.release());
         }
         tensor->dataType = TypeId::kNumberTypeInt8;
-        ::memcpy(tensor->data.data(), qDatas.data(), wShapeSize);
+        tensor->data.clear();
+        tensor->data.resize(wShapeSize * sizeof(int8_t));
+        auto ret =
+          memcpy_s(tensor->data.data(), wShapeSize * sizeof(int8_t), qDatas.data(), wShapeSize * sizeof(int8_t));
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "memcpy_s failed: " << ret;
+          return RET_ERROR;
+        }
       } else if (quantParam->dstDtype == TypeId::kNumberTypeInt32) {
         // quant bias data
         auto bShapeSize = GetShapeSize(*(tensor.get()));

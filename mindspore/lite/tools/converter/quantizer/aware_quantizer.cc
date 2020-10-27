@@ -98,8 +98,14 @@ STATUS AwareQuantizer::DoQuantize() {
           tensor->quantParams.clear();
           tensor->quantParams.emplace_back(weightQauntParam.release());
         }
-
-        ::memcpy(tensor->data.data(), qDatas.data(), wShapeSize);
+        tensor->data.clear();
+        tensor->data.resize(wShapeSize * sizeof(int8_t));
+        auto ret =
+          memcpy_s(tensor->data.data(), wShapeSize * sizeof(int8_t), qDatas.data(), wShapeSize * sizeof(int8_t));
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "memcpy_s failed: " << ret;
+          return RET_ERROR;
+        }
       } else if (quantParam->dstDtype == TypeId::kNumberTypeInt32) {
         // quant bias data
         auto bShapeSize = GetShapeSize(*(tensor.get()));
