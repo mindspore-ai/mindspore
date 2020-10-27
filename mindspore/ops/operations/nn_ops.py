@@ -1649,7 +1649,7 @@ class BiasAdd(PrimitiveWithInfer):
         - **input_x** (Tensor) - The input tensor. The shape can be 2-4 dimensions.
         - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`.
         - **data_format** (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
-            default is 'NCHW'.
+          default is 'NCHW'.
           The shape of `bias` must be the same as `input_x` in the second dimension.
 
     Outputs:
