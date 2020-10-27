@@ -502,8 +502,8 @@ def test_cast26():
 def test_cast27():
     x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
     t0 = mstype.float64
-    x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float64))
-    t1 = mstype.float32
+    x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
+    t1 = mstype.uint64
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     net = Net(t0, t1)
@@ -511,4 +511,55 @@ def test_cast27():
     type0 = output[0].asnumpy().dtype
     assert type0 == 'float64'
     type1 = output[1].asnumpy().dtype
-    assert type1 == 'float32'
+    assert type1 == 'uint64'
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cast28():
+    x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
+    t0 = mstype.int8
+    x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
+    t1 = mstype.int16
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = Net(t0, t1)
+    output = net(x0, x1)
+    type0 = output[0].asnumpy().dtype
+    assert type0 == 'int8'
+    type1 = output[1].asnumpy().dtype
+    assert type1 == 'int16'
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cast29():
+    x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
+    t0 = mstype.int64
+    x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
+    t1 = mstype.uint8
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = Net(t0, t1)
+    output = net(x0, x1)
+    type0 = output[0].asnumpy().dtype
+    assert type0 == 'int64'
+    type1 = output[1].asnumpy().dtype
+    assert type1 == 'uint8'
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cast30():
+    x0 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
+    t0 = mstype.uint16
+    x1 = Tensor(np.arange(24).reshape((4, 3, 2)).astype(np.float32))
+    t1 = mstype.uint32
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = Net(t0, t1)
+    output = net(x0, x1)
+    type0 = output[0].asnumpy().dtype
+    assert type0 == 'uint16'
+    type1 = output[1].asnumpy().dtype
+    assert type1 == 'uint32'

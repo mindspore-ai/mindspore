@@ -86,8 +86,9 @@ bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
             auto used_node_index = used_node_list->at(j).second - 1;
             if (AnfAlgo::GetCNodeName(used_node) == prim::kPrimTupleGetItem->name()) {
               ProcessTupleGetItem(graph, used_node, used_node_index, deviceType, inferType);
+            } else {
+              ReducePrecision(graph, used_node, used_node_index, deviceType, inferType);
             }
-            ReducePrecision(graph, used_node, used_node_index, deviceType, inferType);
           }
         }
       }
