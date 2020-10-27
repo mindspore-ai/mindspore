@@ -36,6 +36,9 @@ int SplitInt8CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
+
+  output_ptr_.resize(param->num_split_);
+
   auto in_tensor = in_tensors_.at(kInputIndex);
 
   auto in_quant_args = in_tensor->GetQuantParams();
@@ -90,7 +93,7 @@ int SplitInt8CPUKernel::Run() {
   input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->MutableData());
   MS_ASSERT(param->num_split_ == outputs_.size());
   for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_.push_back(reinterpret_cast<int8_t *>(out_tensors_.at(i)->MutableData()));
+    output_ptr_[i] = reinterpret_cast<int8_t *>(out_tensors_.at(i)->data_c());
   }
 
   auto ret = ParallelLaunch(this->context_->thread_pool_, SplitInt8Run, this, thread_n_num_);
