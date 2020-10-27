@@ -290,7 +290,7 @@ python eval.py
 | ------------------------ | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
 | Resource                 | Ascend 910                      | Tesla V100-PCIE 32G             | Ascend 910                      | Ascend 910                      |
 | Uploaded Date            | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     |
-| MindSpore Version        | 0.6.0-beta                      | master                          | 0.6.0-beta                      | 0.6.0-beta                      |
+| MindSpore Version        | 1.0                             | 1.0                             | 1.0                             | 1.0                             |
 | Dataset                  | [1]                             | [1]                             | [1]                             | [1]                             |
 | Training Parameters      | Epoch=15,<br />batch_size=16000 | Epoch=15,<br />batch_size=16000 | Epoch=15,<br />batch_size=16000 | Epoch=15,<br />batch_size=16000 |
 | Optimizer                | FTRL,Adam                       | FTRL,Adam                       | FTRL,Adam                       | FTRL,Adam                       |
@@ -312,8 +312,8 @@ Note: The result of GPU is tested under the master version. The parameter server
 | Parameters        | Wide&Deep                   |
 | ----------------- | --------------------------- |
 | Resource          | Ascend 910                  |
-| Uploaded Date     | 08/21/2020 (month/day/year) |
-| MindSpore Version | 0.6.0-beta                  |
+| Uploaded Date     | 10/27/2020 (month/day/year) |
+| MindSpore Version | 1.0                 |
 | Dataset           | [1]                         |
 | Batch Size        | 16000                       |
 | Outputs           | AUC                         |
