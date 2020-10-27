@@ -57,9 +57,7 @@ class TreeAdapter {
   // to be able to launch a thread. BuildAndPrepare needs to be called before this function
   TaskGroup *AllTasks() const { return tree_ != nullptr ? tree_->AllTasks() : nullptr; }
 
-  std::shared_ptr<DatasetOp> root() { return tree_->root(); }
-
-  Status Launch() const { return tree_->Launch(); }
+  Status Launch() const;
 
  private:
   // This RECURSIVE function converts IR nodes into DatasetOp in ExecutionTree. IR could build a vector of ops. In

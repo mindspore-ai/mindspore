@@ -87,5 +87,10 @@ Status TreeAdapter::DFSBuildTree(std::shared_ptr<api::Dataset> ir, std::shared_p
   return Status::OK();
 }
 
+Status TreeAdapter::Launch() const {
+  CHECK_FAIL_RETURN_UNEXPECTED(tree_ != nullptr, "Tree is a nullptr.");
+  return tree_->Launch();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -80,20 +80,26 @@ Status ToDevice::Init(std::shared_ptr<api::Dataset> d) {
 Status ToDevice::Send() {
   std::unique_ptr<DataBuffer> db;
   RETURN_IF_NOT_OK(tree_adapter_->Launch());
-  RETURN_IF_NOT_OK(tree_adapter_->root()->GetNextBuffer(&db));
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  RETURN_IF_NOT_OK(root->GetNextBuffer(&db));
   return Status::OK();
 }
 
 Status ToDevice::Continue() {
   // tree_.root() must be DeviceQueueOp
-  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(tree_adapter_->root().get());
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
   CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "ContinueSend only supported by DeviceQueueOp");
   op->ContinueSend();
   return Status::OK();
 }
 
 Status ToDevice::Stop() {
-  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(tree_adapter_->root().get());
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
   CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "StopSend only supported by DeviceQueueOp");
   op->StopSend();
   return Status::OK();
