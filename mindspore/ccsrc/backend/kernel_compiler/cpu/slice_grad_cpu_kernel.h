@@ -35,12 +35,16 @@ class SliceGradCPUKernel : public CPUKernel {
  private:
   void ExpandAllMemberDims();
   bool CanCopyMemoryOnAxis(size_t dim) const;
+  int SignOfStride(size_t axis) const;
   void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
-                        const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num) const;
+                        const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num,
+                        int id) const;
   void CheckParam(const CNodePtr &kernel_node) const;
+  void FormatArgs(bool stride);
   std::vector<int> begin_;
   std::vector<int> end_;
   std::vector<int> strides_;
+  std::vector<int> size_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> input_element_num_;
   std::vector<size_t> output_shape_;
