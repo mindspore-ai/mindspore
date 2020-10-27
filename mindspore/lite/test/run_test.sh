@@ -47,3 +47,4 @@ cp -fr $TEST_DATA_DIR/testPK ./data
 ./lite-test --gtest_filter="TestScaleOpenCL*"
 ./lite-test --gtest_filter="TestFullConnectionOpenCL*"
 ./lite-test --gtest_filter="TestResizeOpenCL*"
+./lite-test --gtest_filter="TestSwishOpenCLCI.Fp32CI"

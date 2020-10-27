@@ -171,7 +171,7 @@ void FullConnectionOpenCLKernel::PadWeight() {
 
 int FullConnectionOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  std::vector<size_t> local = {1, 4, 1};
+  std::vector<size_t> local = {32, 4, 1};
   std::vector<size_t> global = {UP_DIV(outShape.C, C4NUM), 4, outShape.N};
   int arg_count = 0;
   cl_int4 in_shape = {static_cast<int>(inShape.N), static_cast<int>(inShape.H), static_cast<int>(inShape.W),

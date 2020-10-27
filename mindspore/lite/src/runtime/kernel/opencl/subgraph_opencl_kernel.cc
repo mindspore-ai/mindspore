@@ -48,22 +48,6 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     }
   }
   for (size_t i = 0; i < in_tensors.size(); ++i) {
-    if (in_tensors.at(i)->shape().size() <= 1) {
-      if (mem_type == OpenCLMemType::IMG) {
-        for (auto &iv : in_kernels[i]) {
-          auto tensors = iv->in_tensors();
-          tensors.emplace_back(in_tensors.at(i));
-          iv->set_in_tensors(tensors);
-        }
-      } else {
-        for (auto &iv : in_kernels[i]) {
-          auto tensors = iv->out_tensors();
-          tensors.emplace_back(in_tensors.at(i));
-          iv->set_out_tensors(tensors);
-        }
-      }
-      continue;
-    }
     auto dst_format = (mem_type == OpenCLMemType::IMG) ? schema::Format::Format_NHWC4 : schema::Format::Format_NHWC;
     auto src_format = (mem_type == OpenCLMemType::IMG) ? schema::Format::Format_NHWC : schema::Format::Format_NHWC4;
     auto *new_tensor = new (std::nothrow) lite::Tensor();
