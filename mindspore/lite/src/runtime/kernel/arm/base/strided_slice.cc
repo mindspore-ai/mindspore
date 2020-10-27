@@ -136,6 +136,7 @@ kernel::LiteKernel *CpuStridedSliceKernelCreator(const std::vector<lite::Tensor 
   return kernel;
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_StridedSlice, CpuStridedSliceKernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, CpuStridedSliceKernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_StridedSlice, CpuStridedSliceKernelCreator)
 }  // namespace mindspore::kernel
