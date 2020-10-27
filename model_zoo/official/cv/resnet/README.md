@@ -419,13 +419,13 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | uploaded Date              | 04/01/2020 (month/day/year)                         | 08/01/2020 (month/day/year)
 | MindSpore Version          | 0.1.0-alpha                                                       |0.6.0-alpha   |
 | Dataset                    | ImageNet2012                                                    | ImageNet2012|
-| Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             |epoch=90, steps per epoch=5004, batch_size = 32  |
+| Training Parameters        | epoch=90, steps per epoch=626, batch_size = 256             |epoch=90, steps per epoch=626, batch_size = 256  |
 | Optimizer                  | Momentum                                                         |Momentum|
 | Loss Function              | Softmax Cross Entropy                                       |Softmax Cross Entropy           |
 | outputs                    | probability                                                 |  probability          |
 | Loss                       | 1.8464266                                                    | 1.9023  |
-| Speed                      | 118ms/step（8pcs）                     |67.1ms/step（8pcs）|
-| Total time                 | 114 mins                          | 500 mins|
+| Speed                      | 118ms/step（8pcs）                     | 270ms/step（8pcs）|
+| Total time                 | 114 mins                          | 260 mins|
 | Parameters (M)             | 25.5                                                         | 25.5 |
 | Checkpoint for Fine tuning | 197M (.ckpt file)                                         |197M (.ckpt file)     |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/resnet) |
