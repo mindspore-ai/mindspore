@@ -258,4 +258,5 @@ REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LessEqual, CpuArithmeticFp16K
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Greater, CpuArithmeticFp16KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_GreaterEqual, CpuArithmeticFp16KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Eltwise, CpuArithmeticFp16KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SquaredDifference, CpuArithmeticFp16KernelCreator)
 }  // namespace mindspore::kernel
