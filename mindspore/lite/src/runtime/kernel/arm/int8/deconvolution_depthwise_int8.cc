@@ -111,8 +111,8 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
     memset(packed_output_, 0, pack_output_size * sizeof(int8_t));
   }
 
-  output_buffer_ = reinterpret_cast<int32_t *>(
-    context_->allocator->Malloc(conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * sizeof(int32_t)));
+  output_buffer_ = reinterpret_cast<int32_t *>(context_->allocator->Malloc(
+    conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * conv_param_->thread_num_ * sizeof(int32_t)));
   if (output_buffer_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
@@ -153,7 +153,8 @@ int DeconvolutionDepthwiseInt8CPUKernel::ReSize() {
 }
 
 int DeconvolutionDepthwiseInt8CPUKernel::Execute(int task_id) {
-  DeconvDwInt8(packed_output_, output_buffer_, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_),
+  auto buffer = output_buffer_ + conv_param_->output_h_ * conv_param_->output_w_ * C4NUM * task_id;
+  DeconvDwInt8(packed_output_, buffer, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_),
                conv_param_, sliding, task_id);
   return RET_OK;
 }
