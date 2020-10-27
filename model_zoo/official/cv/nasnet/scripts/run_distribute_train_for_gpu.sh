@@ -14,5 +14,5 @@
 # limitations under the License.
 # ============================================================================
 DATA_DIR=$1
-mpirun --allow-run-as-root -n 8 --output-filename log_output --merge-stderr-to-stdout \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 mpirun --allow-run-as-root -n 8 --output-filename log_output --merge-stderr-to-stdout \
   python ./train.py --is_distributed --platform 'GPU' --dataset_path $DATA_DIR > train.log 2>&1 &
