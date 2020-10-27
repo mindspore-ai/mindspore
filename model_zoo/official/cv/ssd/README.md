@@ -31,6 +31,8 @@ SSD discretizes the output space of bounding boxes into a set of default boxes o
 The SSD approach is based on a feed-forward convolutional network that produces a fixed-size collection of bounding boxes and scores for the presence of object class instances in those boxes, followed by a non-maximum suppression step to produce the final detections. The early network layers are based on a standard architecture used for high quality image classification, which is called the base network. Then add auxiliary structure to the network to produce detections.
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 Dataset used: [COCO2017](<http://images.cocodataset.org/>) 
 
 - Dataset size：19G
@@ -299,14 +301,14 @@ mAP: 0.2244936111705981
 | -------------------------- | -------------------------------------------------------------| -------------------------------------------------------------|
 | Model Version              | SSD V1                                                       | SSD V1                                                       |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             | NV SMX2 V100-16G                                             |
-| uploaded Date              | 06/01/2020 (month/day/year)                                  | 09/24/2020 (month/day/year)                                  |
-| MindSpore Version          | 0.3.0-alpha                                                  | 1.0.0                                                        |
+| uploaded Date              | 09/15/2020 (month/day/year)                                  | 09/24/2020 (month/day/year)                                  |
+| MindSpore Version          | 1.0.0                                                        | 1.0.0                                                        |
 | Dataset                    | COCO2017                                                     | COCO2017                                                     |
 | Training Parameters        | epoch = 500,  batch_size = 32                                | epoch = 800,  batch_size = 32                                |
 | Optimizer                  | Momentum                                                     | Momentum                                                     |
 | Loss Function              | Sigmoid Cross Entropy,SmoothL1Loss                           | Sigmoid Cross Entropy,SmoothL1Loss                           |
 | Speed                      | 8pcs: 90ms/step                                              | 8pcs: 121ms/step                                             |
-| Total time                 | 8pcs: 4.81hours                                              | 8pcs: 12.31hours                                              |
+| Total time                 | 8pcs: 4.81hours                                              | 8pcs: 12.31hours                                             |
 | Parameters (M)             | 34                                                           | 34                                                           |
 | Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd |
 
@@ -317,8 +319,8 @@ mAP: 0.2244936111705981
 | ------------------- | ----------------------------| ----------------------------|
 | Model Version       | SSD V1                      | SSD V1                      |
 | Resource            | Ascend 910                  | GPU                         |
-| Uploaded Date       | 06/01/2020 (month/day/year) | 09/24/2020 (month/day/year) |
-| MindSpore Version   | 0.3.0-alpha                 | 1.0.0                       |
+| Uploaded Date       | 09/15/2020 (month/day/year) | 09/24/2020 (month/day/year) |
+| MindSpore Version   | 1.0.0                       | 1.0.0                       |
 | Dataset             | COCO2017                    | COCO2017                    |
 | batch_size          | 1                           | 1                           |
 | outputs             | mAP                         | mAP                         |

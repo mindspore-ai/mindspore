@@ -42,6 +42,7 @@ YOLOv3 use DarkNet53 for performing feature extraction, which is a hybrid approa
 
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
 Dataset used: [COCO2014](https://cocodataset.org/#download) 
 
@@ -276,8 +277,8 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 | -------------------------- | ---------------------------------------------------------------------------------------------- |
 | Model Version              | YOLOv3_Darknet53_Quant V1                                                                      |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G                                                |
-| uploaded Date              | 06/31/2020 (month/day/year)                                                                    |
-| MindSpore Version          | 0.6.0-alpha                                                                                    |
+| uploaded Date              | 09/15/2020 (month/day/year)                                                                    |
+| MindSpore Version          | 1.0.0                                                                                          |
 | Dataset                    | COCO2014                                                                                       | 
 | Training Parameters        | epoch=135, batch_size=16, lr=0.012, momentum=0.9                                               |
 | Optimizer                  | Momentum                                                                                       |
@@ -297,8 +298,8 @@ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
 | ------------------- | --------------------------- |
 | Model Version       | YOLOv3_Darknet53_Quant V1   |
 | Resource            | Ascend 910                  |
-| Uploaded Date       | 06/31/2020 (month/day/year) |
-| MindSpore Version   | 0.6.0-alpha                 |
+| Uploaded Date       | 09/15/2020 (month/day/year) |
+| MindSpore Version   | 1.0.0                       |
 | Dataset             | COCO2014, 40,504  images    |
 | batch_size          | 1                           |
 | outputs             | mAP                         |

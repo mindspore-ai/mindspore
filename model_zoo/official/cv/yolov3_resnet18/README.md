@@ -34,6 +34,7 @@ And we use ResNet18 as the backbone of YOLOv3_ResNet18. The architecture of ResN
 
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
 Dataset used: [COCO2017](<http://images.cocodataset.org/>) 
 
@@ -200,35 +201,35 @@ Note the precision and recall values are results of two-classification(person an
 
 ### Evaluation Performance 
 
-| Parameters                 | Ascend                                                      | 
+| Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | YOLOv3_Resnet18 V1                                          |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             | 
-| uploaded Date              | 06/01/2020 (month/day/year)                                 | 
-| MindSpore Version          | 0.2.0-alpha                                                 | 
-| Dataset                    | COCO2017                                                    | 
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G            |
+| uploaded Date              | 09/15/2020 (month/day/year)                                 |
+| MindSpore Version          | 1.0.0                                                       |
+| Dataset                    | COCO2017                                                    |
 | Training Parameters        | epoch = 150, batch_size = 32, lr = 0.001                    |
-| Optimizer                  | Adam                                                        | 
+| Optimizer                  | Adam                                                        |
 | Loss Function              | Sigmoid Cross Entropy                                       |
-| outputs                    | probability                                                 | 
-| Speed                      | 1pc: 120 ms/step;  8pcs: 160 ms/step                        | 
-| Total time                 | 1pc: 150 mins;  8pcs: 70 mins                               | 
-| Parameters (M)             | 189                                                         | 
+| outputs                    | probability                                                 |
+| Speed                      | 1pc: 120 ms/step;  8pcs: 160 ms/step                        |
+| Total time                 | 1pc: 150 mins;  8pcs: 70 mins                               |
+| Parameters (M)             | 189                                                         |
 | Scripts                    | [yolov3_resnet18 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_resnet18) | [yolov3_resnet18 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_resnet18) |
 
 
 ### Inference Performance
 
-| Parameters          | Ascend                                          | 
+| Parameters          | Ascend                                          |
 | ------------------- | ----------------------------------------------- |
-| Model Version       | YOLOv3_Resnet18 V1                              | 
+| Model Version       | YOLOv3_Resnet18 V1                              |
 | Resource            | Ascend 910                                      |
-| Uploaded Date       | 06/01/2020 (month/day/year)                     |
-| MindSpore Version   | 0.2.0-alpha                                     |
+| Uploaded Date       | 09/15/2020 (month/day/year)                     |
+| MindSpore Version   | 1.0.0                                           |
 | Dataset             | COCO2017                                        |
 | batch_size          | 1                                               |
 | outputs             | presion and recall                              |
-| Accuracy            | class 0: 88.18%/66.00%; class 1: 85.34%/79.13%  | 
+| Accuracy            | class 0: 88.18%/66.00%; class 1: 85.34%/79.13%  |
 
 # [Description of Random Situation](#contents)
 
