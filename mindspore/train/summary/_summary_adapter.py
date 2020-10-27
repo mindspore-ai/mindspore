@@ -80,7 +80,7 @@ def package_graph_event(data):
     Args:
         data (Bytes): Graph bytes string.
 
-    Retruns:
+    Returns:
         Event, event log object.
     """
     graph_event = Event()
@@ -209,7 +209,7 @@ def _fill_tensor_summary(tag: str, np_value, summary_tensor):
         np_value (Type): Summary data type.
         summary_tensor (Tensor): The tensor of summary.
 
-    Retruns:
+    Returns:
         Summary, return tensor summary content.
     """
     logger.debug(f"Set({tag}) the tensor summary value")
