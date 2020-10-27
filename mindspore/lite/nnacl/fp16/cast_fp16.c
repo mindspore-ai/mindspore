@@ -14,6 +14,19 @@
  * limitations under the License.
  */
 #include "nnacl/fp16/cast_fp16.h"
+
+void BoolToFloat16(const bool *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)input[i];
+  }
+}
+
+void Uint8ToFloat16(const uint8_t *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)input[i];
+  }
+}
+
 #ifndef ENABLE_ARM64
 void Float32ToFloat16(const float *input, float16_t *output, int number) {
   for (int i = 0; i < number; ++i) {

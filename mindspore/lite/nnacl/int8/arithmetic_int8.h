@@ -22,19 +22,20 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ElementNotEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size,
+int ElementNotEqualInt8(int8_t *input0, int8_t *input1, uint8_t *output, int element_size,
                         ArithmeticQuantArg *quant_arg);
 
-int ElementEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size, ArithmeticQuantArg *quant_arg);
+int ElementEqualInt8(int8_t *input0, int8_t *input1, uint8_t *output, int element_size, ArithmeticQuantArg *quant_arg);
 
-int ElementLessInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size, ArithmeticQuantArg *quant_arg);
+int ElementLessInt8(int8_t *input0, int8_t *input1, uint8_t *output, int element_size, ArithmeticQuantArg *quant_arg);
 
-int ElementLessEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size,
+int ElementLessEqualInt8(int8_t *input0, int8_t *input1, uint8_t *output, int element_size,
                          ArithmeticQuantArg *quant_arg);
 
-int ElementGreaterInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size, ArithmeticQuantArg *quant_arg);
+int ElementGreaterInt8(int8_t *input0, int8_t *input1, uint8_t *output, int element_size,
+                       ArithmeticQuantArg *quant_arg);
 
-int ElementGreaterEqualInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size,
+int ElementGreaterEqualInt8(int8_t *input0, int8_t *input1, uint8_t *output, int element_size,
                             ArithmeticQuantArg *quant_arg);
 
 #ifdef __cplusplus
