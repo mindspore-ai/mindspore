@@ -269,6 +269,11 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return RET_PARAM_INVALID;
   }
+  if (model->buf == nullptr) {
+    MS_LOG(ERROR) << "The input model buf is nullptr.";
+    is_running_.store(false);
+    return RET_PARAM_INVALID;
+  }
 
   auto ret = ConvertTensors(model);
   if (ret != RET_OK) {

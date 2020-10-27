@@ -106,18 +106,17 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
 int RunConverter(int argc, const char **argv) {
   std::unique_ptr<converter::Flags> flags(new (std::nothrow) converter::Flags);
   if (flags == nullptr) {
-    MS_LOG(ERROR) << "new flags error ";
-    std::cout << "NEW FLAGS ERROR:" << RET_MEMORY_FAILED << std::endl;
-    PrintErrorInfo(RET_MEMORY_FAILED);
+    MS_LOG(ERROR) << "NEW FLAGS ERROR:" << RET_MEMORY_FAILED << " " << GetErrorInfo(RET_MEMORY_FAILED);
+    std::cout << "NEW FLAGS ERROR:" << RET_MEMORY_FAILED << " " << GetErrorInfo(RET_MEMORY_FAILED) << std::endl;
     return RET_MEMORY_FAILED;
   }
   auto status = flags->Init(argc, argv);
   if (status != RET_OK) {
     if (status != RET_SUCCESS_EXIT) {
-      MS_LOG(ERROR) << "converter::Flags Init failed: " << status;
-      std::cout << "CONVERTER::FLAGS INIT FAILED:" << status << std::endl;
+      MS_LOG(ERROR) << "CONVERTER::FLAGS INIT FAILED:" << status << " " << GetErrorInfo(status) << std::endl;
+      std::cout << "CONVERTER::FLAGS INIT FAILED:" << status << " " << GetErrorInfo(status) << std::endl;
     }
-    PrintErrorInfo(status);
+    std::cout << GetErrorInfo(status) << std::endl;
     return status;
   }
   // Load graph
@@ -147,18 +146,18 @@ int RunConverter(int argc, const char **argv) {
       fb_graph = onnxConverter.Convert(flags.get());
     } break;
     default: {
-      MS_LOG(ERROR) << "Unsupported fmkType: " << flags->fmk;
-      std::cout << "UNSUPPORTED FMKTYPE " << flags->fmk << ":" << RET_INPUT_PARAM_INVALID << std::endl;
-      PrintErrorInfo(RET_INPUT_PARAM_INVALID);
+      MS_LOG(ERROR) << "UNSUPPORTED FMKTYPE " << flags->fmk << ":" << RET_INPUT_PARAM_INVALID << " "
+                    << GetErrorInfo(RET_INPUT_PARAM_INVALID);
+      std::cout << "UNSUPPORTED FMKTYPE " << flags->fmk << ":" << RET_INPUT_PARAM_INVALID << " "
+                << GetErrorInfo(RET_INPUT_PARAM_INVALID) << std::endl;
       return RET_INPUT_PARAM_INVALID;
     }
   }
   NoSupportOp::GetInstance()->PrintOps();
   status = ReturnCode::GetSingleReturnCode()->GetReturnCode();
   if (fb_graph == nullptr) {
-    MS_LOG(ERROR) << "Convert model return nullptr";
-    std::cout << "CONVERT RESULT FAILED:" << status << std::endl;
-    PrintErrorInfo(status);
+    MS_LOG(ERROR) << "CONVERT RESULT FAILED:" << status << " " << GetErrorInfo(status);
+    std::cout << "CONVERT RESULT FAILED:" << status << " " << GetErrorInfo(status) << std::endl;
     return status;
   }
 
@@ -167,16 +166,14 @@ int RunConverter(int argc, const char **argv) {
   fb_graph->version = Version();
   status = storage.Save(*fb_graph, flags->outputFile);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Save graph to file failed";
-    std::cout << "SAVE GRAPH FAILED:" << status << std::endl;
-    PrintErrorInfo(status);
+    MS_LOG(ERROR) << "SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status);
+    std::cout << "SAVE GRAPH FAILED:" << status << " " << GetErrorInfo(status) << std::endl;
     return status;
   }
 
   delete fb_graph;
-  MS_LOG(INFO) << "CONVERT RESULT: SUCCESS!";
+  MS_LOG(INFO) << "CONVERT RESULT SUCCESS:" << status;
   std::cout << "CONVERT RESULT SUCCESS:" << status << std::endl;
-  PrintErrorInfo(status);
   return status;
 }
 }  // namespace lite
