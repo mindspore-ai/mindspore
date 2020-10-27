@@ -284,10 +284,11 @@ def check_version_and_env_config():
 def _set_pb_env():
     """Set env variable `PROTOCOL_BUFFERS` to prevent memory overflow."""
     if os.getenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION") == "cpp":
-        logger.warning("Current env variable `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp`,\
-                       When the parameter is too large, it may cause memory limit error.\
-                       This can be solved by set env `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`.")
-    elif os.getenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION") == "":
+        logger.warning("Current env variable `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp`. "
+                       "When the checkpoint file is too large, "
+                       "it may cause memory limit error durning load checkpoint file. "
+                       "This can be solved by set env `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`.")
+    elif os.getenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION") != "python":
         logger.warning("Set the env `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` to prevent memory overflow.")
         os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
