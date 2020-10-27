@@ -120,9 +120,9 @@ class LiteKernel {
 
   void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) { this->out_tensors_ = out_tensors; }
 
-  std::vector<lite::Tensor *> in_tensors() const { return this->in_tensors_; }
+  const std::vector<lite::Tensor *> &in_tensors() const { return this->in_tensors_; }
 
-  std::vector<lite::Tensor *> out_tensors() const { return this->out_tensors_; }
+  const std::vector<lite::Tensor *> &out_tensors() const { return this->out_tensors_; }
 
   void AddInKernel(LiteKernel *kernel) {
     if (!lite::IsContain(this->in_kernels_, kernel)) {
@@ -140,9 +140,9 @@ class LiteKernel {
 
   void SetOutKernel(const std::vector<LiteKernel *> &kernel) { this->out_kernels_ = kernel; }
 
-  std::vector<LiteKernel *> in_kernels() const { return this->in_kernels_; }
+  const std::vector<LiteKernel *> &in_kernels() const { return this->in_kernels_; }
 
-  std::vector<LiteKernel *> out_kernels() const { return this->out_kernels_; }
+  const std::vector<LiteKernel *> &out_kernels() const { return this->out_kernels_; }
 
   void InitOutTensorRefCount();
 
