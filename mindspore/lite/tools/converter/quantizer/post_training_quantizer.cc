@@ -1332,7 +1332,11 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
           MS_LOG(ERROR) << "new char[] failed";
           return RET_MEMORY_FAILED;
         }
-        std::memcpy(tensor_data, bias_diff.data(), size);
+        ret = ::memcpy_s(tensor_data, size * sizeof(char), bias_diff.data(), size * sizeof(char));
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "memcpy_s error: " << ret;
+          return false;
+        }
         param_value->set_tensor_addr(tensor_data);
         param_value->set_tensor_size(size);
         parameter->set_default_param(param_value);

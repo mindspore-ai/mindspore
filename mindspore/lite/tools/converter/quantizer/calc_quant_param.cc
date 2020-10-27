@@ -216,6 +216,7 @@ int LinearCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
 class CalcConcat : public QuantParamCalcer {
  public:
   CalcConcat() = default;
+  ~CalcConcat() override = default;
 
   int Calc(MetaGraphT *graph, const CNodeT &node) override {
     MS_ASSERT(node.outputIndex.size() == 1);
@@ -280,6 +281,7 @@ class CalcConcat : public QuantParamCalcer {
 class CalcAdd : public QuantParamCalcer {
  public:
   CalcAdd() = default;
+  ~CalcAdd() override = default;
 
   int Calc(MetaGraphT *graph, const CNodeT &node) override {
     MS_ASSERT(node.inputIndex.size() == 2);
@@ -357,6 +359,7 @@ class CalcAdd : public QuantParamCalcer {
 class CalcRealDiv : public QuantParamCalcer {
  public:
   CalcRealDiv() = default;
+  ~CalcRealDiv() override = default;
 
   int Calc(MetaGraphT *graph, const CNodeT &node) override {
     MS_ASSERT(node.inputIndex.size() == 2);
@@ -424,6 +427,7 @@ class CalcRealDiv : public QuantParamCalcer {
 class CalcToSet : public QuantParamCalcer {
  public:
   CalcToSet(float min, float max) : min(min), max(max) {}
+  ~CalcToSet() override = default;
 
   int Calc(MetaGraphT *graph, const CNodeT &node) override {
     MS_ASSERT(node.inputIndex.size() == 1);
@@ -468,6 +472,7 @@ class CalcToSet : public QuantParamCalcer {
 class CalcActivation : public QuantParamCalcer {
  public:
   CalcActivation() = default;
+  ~CalcActivation() override = default;
 
   int Calc(MetaGraphT *subGraph, const CNodeT &node) override {
     MS_ASSERT(node.inputIndex.size() == 1);
