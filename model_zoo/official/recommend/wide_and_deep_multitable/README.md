@@ -157,7 +157,7 @@ python eval.py
 | ------------------------ | ------------------------------- | ------------------------------- |
 | Resource                 | Ascend 910                      | Ascend 910                      |
 | Uploaded Date            | 08/21/2020 (month/day/year)     | 08/21/2020 (month/day/year)     |
-| MindSpore Version        | 0.7.0-beta                      | 0.7.0-beta                      |
+| MindSpore Version        | 1.0                             | 1.0                             |
 | Dataset                  | [1]                             | [1]                             |
 | Training Parameters      | Epoch=3,<br />batch_size=131072 | Epoch=8,<br />batch_size=131072 |
 | Optimizer                | FTRL,Adam                       | FTRL,Adam                       |
@@ -178,8 +178,8 @@ All executable scripts can be found in [here](https://gitee.com/mindspore/mindsp
 | Parameters        | Wide&Deep                   |
 | ----------------- | --------------------------- |
 | Resource          | Ascend 910                  |
-| Uploaded Date     | 08/21/2020 (month/day/year) |
-| MindSpore Version | 0.7.0-beta                  |
+| Uploaded Date     | 10/27/2020 (month/day/year) |
+| MindSpore Version | 1.0                  |
 | Dataset           | [1]                         |
 | Batch Size        | 131072                      |
 | Outputs           | AUC，MAP                    |
