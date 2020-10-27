@@ -301,7 +301,7 @@ def do_eval_standalone():
             input_data.append(data[i])
         input_ids, input_mask, token_type_id, label_ids = input_data
         logits = eval_model(input_ids, token_type_id, input_mask)
-        callback.update(logits[3], label_ids)
+        callback.update(logits, label_ids)
     acc = callback.acc_num / callback.total_num
     print("======================================")
     print("============== acc is {}".format(acc))
