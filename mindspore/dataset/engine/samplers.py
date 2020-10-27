@@ -585,15 +585,6 @@ class WeightedRandomSampler(BuiltinSampler):
         if not isinstance(weights, list):
             weights = [weights]
 
-        if weights == []:
-            raise ValueError("weights size should not be 0")
-
-        if list(filter(lambda x: x < 0, weights)):
-            raise ValueError("weights should not contain negative numbers")
-
-        if list(filter(lambda x: x == 0, weights)) == weights:
-            raise ValueError("elements of weights should not be all zero")
-
         if num_samples is not None:
             if num_samples <= 0:
                 raise ValueError("num_samples should be a positive integer "

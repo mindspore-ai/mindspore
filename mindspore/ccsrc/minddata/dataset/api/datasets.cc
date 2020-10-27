@@ -67,6 +67,7 @@
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
+#include "minddata/dataset/engine/ir/datasetops/build_sentence_piece_vocab_node.h"
 #include "minddata/dataset/engine/ir/datasetops/build_vocab_node.h"
 #endif
 
@@ -504,6 +505,35 @@ std::shared_ptr<BucketBatchByLengthNode> Dataset::BucketBatchByLength(
   }
 
   return ds;
+}
+
+// Function to create a SentencePieceVocab from dataset
+std::shared_ptr<SentencePieceVocab> Dataset::BuildSentencePieceVocab(
+  const std::vector<std::string> &col_names, uint32_t vocab_size, float character_coverage,
+  SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params) {
+  auto vocab = std::make_shared<SentencePieceVocab>();
+  auto ds = std::make_shared<BuildSentenceVocabNode>(shared_from_this(), vocab, col_names, vocab_size,
+                                                     character_coverage, model_type, params);
+
+  // Validate input params
+  if (!ds->ValidateParams()) {
+    return nullptr;
+  }
+
+  // Run tree here to start building vocab
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  if (iter == nullptr) {
+    MS_LOG(ERROR) << "Fail to run iterator in BuildSentencePieceVocab.";
+    return nullptr;
+  }
+
+  // Finish building vocab by triggering GetNextRow
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  if (!iter->GetNextRow(&row)) {
+    return nullptr;
+  }
+
+  return vocab;
 }
 
 // Function to create a Vocab from dataset

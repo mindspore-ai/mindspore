@@ -113,6 +113,11 @@ Status SaveToDisk::ValidateParams() {
     MS_LOG(ERROR) << err;
     RETURN_STATUS_SYNTAX_ERROR(err);
   }
+  if (access(dir.ParentPath().c_str(), R_OK) == -1) {
+    std::string err_msg = "CreateSaver failed, no access to specified dataset path: " + dataset_path_;
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   if (num_files_ <= 0 || num_files_ > 1000) {
     std::string err = "CreateSaver failed, num_files must between 1 and 1000, but got " + std::to_string(num_files_);
     MS_LOG(ERROR) << err;

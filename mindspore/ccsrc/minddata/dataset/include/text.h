@@ -21,11 +21,14 @@
 #include <string>
 #include <vector>
 
+#include "mindspore/ccsrc/minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/text/vocab.h"
 #include "minddata/dataset/util/status.h"
-#include "mindspore/ccsrc/minddata/dataset/core/data_type.h"
+
+#include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
+#include "minddata/dataset/text/sentence_piece_vocab.h"
+#include "minddata/dataset/text/vocab.h"
 
 namespace mindspore {
 namespace dataset {
@@ -36,6 +39,7 @@ namespace text {
 
 // Text Op classes (in alphabetical order)
 class LookupOperation;
+class SentencePieceTokenizerOperation;
 
 /// \brief Lookup operator that looks up a word to an id.
 /// \param[in] vocab a Vocab object.
@@ -45,6 +49,20 @@ class LookupOperation;
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
                                         const mindspore::dataset::DataType &data_type = DataType("int32"));
+
+/// \brief Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
+/// \param[in] vocab a SentencePieceVocab object.
+/// \param[in] out_type The type of output.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<SentencePieceTokenizerOperation> SentencePieceTokenizer(
+  const std::shared_ptr<SentencePieceVocab> &vocab, mindspore::dataset::SPieceTokenizerOutType out_type);
+
+/// \brief Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
+/// \param[in] vocab_path vocab model file path.
+/// \param[in] out_type The type of output.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<SentencePieceTokenizerOperation> SentencePieceTokenizer(
+  const std::string &vocab_path, mindspore::dataset::SPieceTokenizerOutType out_type);
 
 /* ####################################### Derived TensorOperation classes ################################# */
 
@@ -64,6 +82,25 @@ class LookupOperation : public TensorOperation {
   std::string unknown_token_;
   int32_t default_id_;
   DataType data_type_;
+};
+
+class SentencePieceTokenizerOperation : public TensorOperation {
+ public:
+  SentencePieceTokenizerOperation(const std::shared_ptr<SentencePieceVocab> &vocab, SPieceTokenizerOutType out_type);
+
+  SentencePieceTokenizerOperation(const std::string &vocab_path, SPieceTokenizerOutType out_type);
+
+  ~SentencePieceTokenizerOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::shared_ptr<SentencePieceVocab> vocab_;
+  std::string vocab_path_;
+  SPieceTokenizerLoadType load_type_;
+  SPieceTokenizerOutType out_type_;
 };
 }  // namespace text
 }  // namespace api

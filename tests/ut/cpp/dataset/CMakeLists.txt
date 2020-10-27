@@ -112,12 +112,15 @@ SET(DE_UT_SRCS
         c_api_dataset_config_test.cc
         c_api_dataset_csv_test.cc
         c_api_dataset_manifest_test.cc
+        c_api_dataset_minddata_test.cc
         c_api_dataset_randomdata_test.cc
+        c_api_dataset_save.cc
         c_api_dataset_textfile_test.cc
         c_api_dataset_tfrecord_test.cc
         c_api_dataset_voc_test.cc
         c_api_datasets_test.cc
         c_api_dataset_iterator_test.cc
+        c_api_text_sentence_piece_vocab_test.cc
         c_api_text_vocab_test.cc
         tensor_op_fusion_pass_test.cc
         sliding_window_op_test.cc

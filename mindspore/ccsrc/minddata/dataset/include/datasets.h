@@ -22,6 +22,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -37,6 +38,7 @@
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/path.h"
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/text/sentence_piece_vocab.h"
 #include "minddata/dataset/text/vocab.h"
 #endif
 
@@ -86,7 +88,6 @@ class VOCNode;
 // Dataset Op classes (in alphabetical order)
 #ifndef ENABLE_ANDROID
 class BucketBatchByLengthNode;
-class BuildVocabNode;
 #endif
 class ConcatNode;
 class MapNode;
@@ -635,7 +636,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
   /// \brief Function to transfer data through a device.
   /// \notes If device is Ascend, features of data will be transferred one by one. The limitation
-  ///            of data transmission per time is 256M.
+  ///     of data transmission per time is 256M.
   /// \param[in] send_epoch_end Whether to send end of sequence to device or not (default=True).
   /// \return Returns true if no error encountered else false.
   bool DeviceQueue(bool send_epoch_end = true);
@@ -658,7 +659,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
   /// \brief Function to create a BatchNode
   /// \notes Combines batch_size number of consecutive rows into batches
-  /// \param[in] batch_size Path to the root directory that contains the dataset
+  /// \param[in] batch_size The number of rows each batch is created with
   /// \param[in] drop_remainder Determines whether or not to drop the last possibly incomplete
   ///     batch. If true, and if there are less than batch_size rows
   ///     available to make the last batch, then those rows will
@@ -668,7 +669,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
 #ifndef ENABLE_ANDROID
   /// \brief Function to create a BucketBatchByLengthNode
-  /// \notes Combines batch_size number of consecutive rows into batches
+  /// \notes Bucket elements according to their lengths. Each bucket will be padded and batched when
+  ///    they are full.
   /// \param[in] column_names Columns passed to element_length_function
   /// \param[in] bucket_boundaries A list consisting of the upper boundaries of the buckets.
   ///    Must be strictly increasing. If there are n boundaries, n+1 buckets are created: One bucket for
@@ -676,10 +678,10 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///    0<i<n, and one bucket for [bucket_boundaries[n-1], inf).
   /// \param[in] bucket_batch_sizes A list consisting of the batch sizes for each bucket.
   ///    Must contain elements equal to the size of bucket_boundaries + 1.
-  /// \param[in] element_length_function A function pointer that takes in TensorRow and outputs a TensorRow. The
-  /// output
-  ///    must contain a single tensor containing a single int32_t. If no value is provided, then size of column_names
-  ///    must be 1, and the size of the first dimension of that column will be taken as the length (default=nullptr)
+  /// \param[in] element_length_function A function pointer that takes in TensorRow and outputs a TensorRow.
+  ///    The output must contain a single tensor containing a single int32_t. If no value is provided,
+  ///    then size of column_names must be 1, and the size of the first dimension of that column will be taken
+  ///    as the length (default=nullptr)
   /// \param[in] pad_info Represents how to batch each column. The key corresponds to the column name, the value must
   ///    be a tuple of 2 elements.  The first element corresponds to the shape to pad to, and the second element
   ///    corresponds to the value to pad with. If a column is not specified, then that column will be padded to the
@@ -687,8 +689,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///    padded to the longest in the current batch, unless if pad_to_bucket_boundary is true. If no padding is
   ///    wanted, set pad_info to None (default=empty dictionary).
   /// \param[in] pad_to_bucket_boundary If true, will pad each unspecified dimension in pad_info to the
-  /// bucket_boundary
-  ///    minus 1. If there are any elements that fall into the last bucket, an error will occur (default=false).
+  ///    bucket_boundary minus 1. If there are any elements that fall into the last bucket,
+  ///    an error will occur (default=false).
   /// \param[in] drop_remainder If true, will drop the last batch for each bucket if it is not a full batch
   ///    (default=false).
   /// \return Shared pointer to the current BucketBatchByLengthNode
@@ -698,6 +700,20 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     std::function<TensorRow(TensorRow)> element_length_function = nullptr,
     const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info = {},
     bool pad_to_bucket_boundary = false, bool drop_remainder = false);
+
+  /// \brief Function to create a SentencePieceVocab from source dataset
+  /// \notes Build a SentencePieceVocab from a dataset.
+  /// \param[in] col_names Column names to get words from. It can be a vector of column names
+  /// \param[in] vocab_size Vocabulary size. The type is uint32
+  /// \param[in] character_coverage Percentage of characters covered by the model, must be between
+  ///     0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
+  ///     Japanese or Chinese character sets, and 1.0 for other languages with small character sets.
+  /// \param[in] model_type Model type. Choose from unigram (default), bpe, char, or word.
+  ///     The input sentence must be pretokenized when using word type.
+  /// \param[in] params A vector contains more option parameters of sentencepiece library
+  std::shared_ptr<SentencePieceVocab> BuildSentencePieceVocab(
+    const std::vector<std::string> &col_names, uint32_t vocab_size, float character_coverage,
+    SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params);
 
   /// \brief Function to create a Vocab from source dataset
   /// \notes Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab

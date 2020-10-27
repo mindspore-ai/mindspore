@@ -76,7 +76,7 @@ Status BuildSentencePieceVocabOp::SentenceThread() {
   } else {
     auto itr = column_name_id_map_.find(col_names_[0]);
     CHECK_FAIL_RETURN_UNEXPECTED(itr != column_name_id_map_.end(),
-                                 "Invalid parameter, column name: " + col_names_[0] + "does not exist.");
+                                 "Invalid parameter, column name: " + col_names_[0] + " does not exist.");
     col_id_ = itr->second;
   }
   std::unique_ptr<DatasetSentenceIterator> sentence_iter = std::make_unique<DatasetSentenceIterator>(this);
