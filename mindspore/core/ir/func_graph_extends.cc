@@ -245,6 +245,10 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   if (!NeedGenerate(kwarg_list)) {
     return shared_from_base<FuncGraph>();
   }
+  auto iter = func_graph_cache_.find(args_spec_list);
+  if (iter != func_graph_cache_.end()) {
+    return iter->second;
+  }
   FuncGraphPtr specialized_graph = BasicClone(shared_from_base<FuncGraph>());
   size_t kwarg_count = kwarg_list.size();
   int pos_args_input_count = SizeToInt(arguments_count - kwarg_count - hyper_param_count_);
@@ -290,6 +294,7 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   specialized_graph->set_kwonlyargs_count(0);
   specialized_graph->ClearDefaultValues();
   specialized_graph->set_is_generate(true);
+  func_graph_cache_[args_spec_list] = specialized_graph;
   return specialized_graph;
 }
 

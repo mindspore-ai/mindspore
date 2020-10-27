@@ -34,6 +34,7 @@
 #include "utils/ordered_map.h"
 #include "base/base_ref.h"
 #include "ir/func_graph_cloner.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
@@ -417,6 +418,9 @@ class FuncGraph : public FuncGraphBase {
   // Design switch_layer_input as a ptr to
   // share between derived backpropagator and cloned graphs
   std::shared_ptr<bool> switch_layer_input_;
+  std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
+                     abstract::AbstractBasePtrListEqual>
+    func_graph_cache_;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {
