@@ -43,8 +43,10 @@ class FullConnectionOpenCLKernel : public OpenCLKernel {
   bool enable_fp16_{false};
   bool transposeA{false};
   bool transposeB{true};
-  std::vector<int> inShape;
-  std::vector<int> outShape;
+  float activation_min_{-FLT_MAX};
+  float activation_max_{FLT_MAX};
+  Image2DInfo inShape = Image2DInfo(nullptr);
+  Image2DInfo outShape = Image2DInfo(nullptr);
 };
 }  // namespace mindspore::kernel
 

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "src/common/utils.h"
 #include "src/runtime/kernel/opencl/kernel/convolution.h"
+#include "src/runtime/kernel/opencl/kernel/fullconnection.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -29,6 +30,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2D;
+using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
 
@@ -339,12 +341,40 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tenso
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                    const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel =
-    new (std::nothrow) ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Create OpenCL Convolution kernel failed!";
-    free(opParameter);
-    return nullptr;
+  kernel::LiteKernel *kernel;
+  bool is_hw1 = inputs[0]->shape().size() == 4 && inputs[0]->shape()[1] == 1 && inputs[0]->shape()[2] == 1 &&
+                outputs[0]->shape().size() == 4 && outputs[0]->shape()[1] == 1 && outputs[0]->shape()[2] == 1;
+  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  bool is_pad_stride_ok = conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1 && conv_param->stride_h_ == 1 &&
+                          conv_param->stride_w_ == 1 && conv_param->pad_u_ == 0 && conv_param->pad_d_ == 0 &&
+                          conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->dilation_h_ == 1 &&
+                          conv_param->dilation_w_ == 1;
+  if (is_hw1 && is_pad_stride_ok) {
+    auto param = static_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "Create OpenCL FullConnection kernel param failed!";
+      return nullptr;
+    }
+    param->op_parameter_.type_ = PrimitiveType_FullConnection;
+    param->a_transpose_ = false;
+    param->b_transpose_ = true;
+    param->act_type_ = conv_param->act_type_;
+    kernel = new (std::nothrow) FullConnectionOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "Create OpenCL FullConnection kernel failed!";
+      free(param);
+      free(opParameter);
+      return nullptr;
+    } else {
+      free(opParameter);
+    }
+  } else {
+    kernel = new (std::nothrow) ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "Create OpenCL Convolution kernel failed!";
+      free(opParameter);
+      return nullptr;
+    }
   }
   auto ret = kernel->Init();
   if (ret != mindspore::lite::RET_OK) {
