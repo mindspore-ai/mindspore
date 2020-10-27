@@ -29,6 +29,34 @@ void Sub::SetActivationType(int activation_type) {
   this->primitive_->value.AsSub()->activationType = (schema::ActivationType)activation_type;
 }
 
+int Sub::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Sub;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Sub) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    delete this->primitive_;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::SubT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      delete this->primitive_;
+      return RET_ERROR;
+    }
+    // todo: confirm the activationType
+    attr->activationType = schema::ActivationType_NO_ACTIVATION;
+    this->primitive_->value.value = attr;
+  }
+  return RET_OK;
+}
+
 #else
 
 int Sub::GetActivationType() const { return this->primitive_->value_as_Sub()->activationType(); }

@@ -52,6 +52,12 @@ int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
+    if (prim.GetAttr("dims") == nullptr) {
+      MS_LOG(WARNING) << "get dims failed";
+      attr->dims = {1};
+    } else {
+      attr->dims = GetValue<std::vector<int>>(prim.GetAttr("dims"));
+    }
     if (inputs.size() == kAnfPopulaterTwo) {
       auto inputNode = inputs[kAnfPopulaterOne];
       MS_ASSERT(inputNode != nullptr);
@@ -68,6 +74,9 @@ int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
             MS_ASSERT(elem != nullptr);
             attr->multiples.emplace_back(elem->value());
           }
+        } else {
+          int multiple = GetValue<int>(value);
+          attr->multiples = {multiple};
         }
       }
     }

@@ -31,7 +31,35 @@ int Gather::GetBatchDims() const { return this->primitive_->value.AsGather()->ba
 
 void Gather::SetAxis(int axis) { this->primitive_->value.AsGather()->axis = axis; }
 void Gather::SetBatchDims(int batch_dims) { this->primitive_->value.AsGather()->batchDims = batch_dims; }
-
+int Gather::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitive error";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Gather;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Gather) {
+    MS_LOG(ERROR) << "Gather primitive value type :  " << schema::EnumNamePrimitiveType(primitive_->value.type)
+                  << "is  not equal" << schema::EnumNamePrimitiveType(schema::PrimitiveType_Gather);
+    delete this->primitive_;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto gather_attr = new (std::nothrow) schema::GatherT();
+    if (gather_attr == nullptr) {
+      MS_LOG(ERROR) << "new primitive value.value error";
+      delete this->primitive_;
+      delete gather_attr;
+      return RET_ERROR;
+    }
+    gather_attr->axis = GetValue<int>(prim.GetAttr("axis"));
+    gather_attr->batchDims = GetValue<int>(prim.GetAttr("batchDims"));
+    this->primitive_->value.value = gather_attr;
+  }
+  return RET_OK;
+}
 #else
 int Gather::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);

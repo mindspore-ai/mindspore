@@ -966,6 +966,8 @@ table Adam {
 table Assign {
 }
 
+table AssignAdd {
+}
 
 table Where{
     condition: [bool];
@@ -1008,6 +1010,9 @@ table ToFormat {
 
 
 table Depend {
+}
+
+table ControlDepend {
 }
 
 table Return {
@@ -1108,3 +1113,18 @@ table While {
     bodySubgraphIndex : int;
 }
 
+table UnsortedSegmentSum {
+    numSegments : int;
+}
+
+table OnesLike {
+
+}
+
+table BinaryCrossEntropy {
+  reduction : int = 1;
+}
+
+table BinaryCrossEntropyGrad {
+  reduction : int = 1;
+}

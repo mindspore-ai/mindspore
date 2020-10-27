@@ -14,34 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_EXPAND_DIMS_H_
-#define LITE_MINDSPORE_LITE_C_OPS_EXPAND_DIMS_H_
-
 #include <vector>
 #include <set>
 #include <cmath>
 #include "src/ops/primitive_c.h"
-
+#ifndef LITE_SRC_OPS_ASSIGN_ADD_H_
+#define LITE_SRC_OPS_ASSIGN_ADD_H_
 namespace mindspore {
 namespace lite {
-class ExpandDims : public PrimitiveC {
+class AssignAdd : public PrimitiveC {
  public:
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(ExpandDims, PrimitiveC);
-  ExpandDims() = default;
-  explicit ExpandDims(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  void SetDim(int dim);
+  MS_DECLARE_PARENT(AssignAdd, PrimitiveC);
+  AssignAdd() = default;
+  explicit AssignAdd(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-
 #else
-  ExpandDims() = default;
+  AssignAdd() = default;
 
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-  int GetDim() const;
 };
 }  // namespace lite
 }  // namespace mindspore
-
-#endif  // LITE_MINDSPORE_LITE_C_OPS_EXPAND_DIMS_H_
+#endif  // LITE_SRC_OPS_ASSIGN_ADD_H_

@@ -32,6 +32,7 @@ class Sub : public Arithmetic {
   Sub() = default;
   explicit Sub(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   void SetActivationType(int activation_type);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 
 #else
   Sub() = default;

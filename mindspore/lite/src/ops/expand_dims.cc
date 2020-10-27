@@ -27,6 +27,43 @@ int ExpandDims::GetDim() const { return this->primitive_->value.AsExpandDims()->
 
 void ExpandDims::SetDim(int dim) { this->primitive_->value.AsExpandDims()->dim = dim; }
 
+int ExpandDims::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_ExpandDims;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_ExpandDims) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    delete this->primitive_;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::ExpandDimsT();
+    if (attr == nullptr) {
+      delete this->primitive_;
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    // use axis instead of dim
+    if (inputs[1]->isa<ValueNode>()) {
+      auto axis_tensor = inputs[1]->cast<ValueNodePtr>();
+      int axis = GetValue<int>(axis_tensor->value());
+      attr->dim = axis;
+    } else {
+      MS_LOG(ERROR) << "input axis is not value node.";
+      delete this->primitive_;
+      delete attr;
+      return RET_ERROR;
+    }
+    this->primitive_->value.value = attr;
+  }
+  return RET_OK;
+}
+
 #else
 int ExpandDims::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
@@ -56,9 +93,6 @@ int ExpandDims::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> 
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  if (inputs_.size() != kSingleNum) {
-    MS_LOG(ERROR) << "input size is invalid";
-  }
   if (outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "output size is invalid";
   }

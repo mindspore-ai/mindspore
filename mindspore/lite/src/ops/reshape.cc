@@ -62,6 +62,9 @@ int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
           MS_ASSERT(elem != nullptr);
           attr->shape.emplace_back(static_cast<int>(elem->value()));
         }
+      } else {
+        int dim = GetValue<int>(val);
+        attr->shape = {dim};
       }
     }
     if (attr == nullptr) {

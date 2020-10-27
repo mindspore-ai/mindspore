@@ -227,6 +227,12 @@ union PrimitiveType {
     Identity,
     LayerNorm,
     While,
+    ControlDepend,
+    UnsortedSegmentSum,
+    AssignAdd,
+    OnesLike,
+    BinaryCrossEntropyGrad,
+    BinaryCrossEntropy
 }
 
 enum QuantType: int {
