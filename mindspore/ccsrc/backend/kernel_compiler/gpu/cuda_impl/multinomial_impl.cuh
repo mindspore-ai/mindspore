@@ -20,8 +20,8 @@
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T>
-void Multinomial(int seed, T *input, int num_sample, curandState *globalState, int *output, size_t distributions,
-                 size_t categories, cudaStream_t cuda_stream);
+void Multinomial(int seed, int seed2, T *input, int num_sample, curandState *globalState, int *output,
+                 size_t distributions, size_t categories, cudaStream_t cuda_stream);
 template <typename T>
 void CheckNonNeg(const size_t size, const T *input, T *output, cudaStream_t stream);
 template <typename T>

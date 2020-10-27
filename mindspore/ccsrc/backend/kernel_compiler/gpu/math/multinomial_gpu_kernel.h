@@ -32,7 +32,13 @@ namespace kernel {
 template <typename T>
 class MultinomialGpuKernel : public GpuKernel {
  public:
-  MultinomialGpuKernel() : input_size_0_(0), output_size_(0), distributions_(0), workspace_size_(sizeof(curandState)) {}
+  MultinomialGpuKernel()
+      : input_size_0_(0),
+        output_size_(0),
+        distributions_(0),
+        workspace_size_(sizeof(curandState)),
+        seed_(0),
+        seed2_(0) {}
   ~MultinomialGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -52,7 +58,7 @@ class MultinomialGpuKernel : public GpuKernel {
            IntToSize(categories), 1, false, false, reinterpret_cast<cudaStream_t>(stream_ptr));
     NormInput(cum_sum_input, IntToSize(distributions_), IntToSize(categories),
               reinterpret_cast<cudaStream_t>(stream_ptr));
-    Multinomial(seed_, cum_sum_input, num_sample, devStates, output_addr, IntToSize(distributions_),
+    Multinomial(seed_, seed2_, cum_sum_input, num_sample, devStates, output_addr, IntToSize(distributions_),
                 IntToSize(categories), reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -87,6 +93,7 @@ class MultinomialGpuKernel : public GpuKernel {
     }
     workspace_size_ = output_size_;
     seed_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed"));
+    seed2_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2"));
     InitSizeLists();
     return true;
   }
@@ -106,6 +113,7 @@ class MultinomialGpuKernel : public GpuKernel {
   size_t distributions_;
   size_t workspace_size_;
   int seed_;
+  int seed2_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
