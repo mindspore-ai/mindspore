@@ -117,6 +117,17 @@ bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
 std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
   std::vector<bool> is_parameter;
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
+  // input is a ValueList or ValueTuple, then all inputs are not parameter.
+  if ((node_inputs.size() == 2) &&
+      (IsValueNode<ValueList>(node_inputs[1]) || IsValueNode<ValueTuple>(node_inputs[1]))) {
+    std::vector<ValuePtr> inputs_seq;
+    if (IsValueNode<ValueList>(node_inputs[1])) {
+      inputs_seq = node_inputs[1]->cast<ValueNodePtr>()->value()->cast<ValueListPtr>()->value();
+    } else {
+      inputs_seq = node_inputs[1]->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
+    }
+    return std::vector<bool>(inputs_seq.size(), false);
+  }
   if ((node_inputs.size() == 2) &&
       (AnfNodeIsPrimitive(node_inputs[1], MAKE_TUPLE) || AnfNodeIsPrimitive(node_inputs[1], MAKE_LIST))) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
@@ -194,6 +205,22 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<size_t> inputs_type_len;
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
+
+  if ((node_inputs.size() == 2) &&
+      (IsValueNode<ValueList>(node_inputs[1]) || IsValueNode<ValueTuple>(node_inputs[1]))) {
+    std::vector<ValuePtr> inputs_seq;
+    if (IsValueNode<ValueList>(node_inputs[1])) {
+      inputs_seq = node_inputs[1]->cast<ValueNodePtr>()->value()->cast<ValueListPtr>()->value();
+    } else {
+      inputs_seq = node_inputs[1]->cast<ValueNodePtr>()->value()->cast<ValueTuplePtr>()->value();
+    }
+    for (auto &ele : inputs_seq) {
+      auto tensor = ele->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      inputs_type_len.push_back(GetLengthOfDataType(tensor->Dtype()));
+    }
+    return inputs_type_len;
+  }
 
   if ((node_inputs.size() == 2) &&
       (AnfNodeIsPrimitive(node_inputs[1], MAKE_TUPLE) || AnfNodeIsPrimitive(node_inputs[1], MAKE_LIST))) {
