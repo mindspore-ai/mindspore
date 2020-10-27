@@ -158,36 +158,28 @@ HEIGHT1_LOOP:
   smlal v23.4s, v8.4h, v20.4h
   smlal2 v24.4s, v8.8h, v20.8h
 
-  // Apply left shfit
+  cbz w12, SKIP_LEFTSHIFT1
   sqshl v21.4s, v21.4s, v26.4s
   sqshl v22.4s, v22.4s, v26.4s
   sqshl v23.4s, v23.4s, v26.4s
   sqshl v24.4s, v24.4s, v26.4s
-
-  // Apply the fixed-point part of the multiplier.
   sqrdmulh v21.4s, v21.4s, v27.4s
   sqrdmulh v22.4s, v22.4s, v27.4s
   sqrdmulh v23.4s, v23.4s, v27.4s
   sqrdmulh v24.4s, v24.4s, v27.4s
+  b OUTZP1
 
-  // Apply right shfit
-  and v12.16b, v28.16b, v21.16b
-  sshr v12.4s, v12.4s, #31
-  sqadd v21.4s, v21.4s, v12.4s
-  srshl v21.4s, v21.4s, v28.4s
-  and v16.16b, v28.16b, v22.16b
-  sshr v16.4s, v16.4s, #31
-  sqadd v22.4s, v22.4s, v16.4s
-  srshl v22.4s, v22.4s, v28.4s  
-  and v20.16b, v28.16b, v23.16b
-  sshr v20.4s, v20.4s, #31
-  sqadd v23.4s, v23.4s, v20.4s
-  srshl v23.4s, v23.4s, v28.4s
-  and v12.16b, v28.16b, v24.16b
-  sshr v12.4s, v12.4s, #31
-  sqadd v24.4s, v24.4s, v12.4s
-  srshl v24.4s, v24.4s, v28.4s
+SKIP_LEFTSHIFT1:
+  sqrdmulh v21.4s, v21.4s, v27.4s
+  sqrdmulh v22.4s, v22.4s, v27.4s
+  sqrdmulh v23.4s, v23.4s, v27.4s
+  sqrdmulh v24.4s, v24.4s, v27.4s
+  sqrshl v21.4s, v21.4s, v28.4s
+  sqrshl v22.4s, v22.4s, v28.4s
+  sqrshl v23.4s, v23.4s, v28.4s
+  sqrshl v24.4s, v24.4s, v28.4s
 
+OUTZP1:
   // Add output zero point
   sqadd v21.4s, v21.4s, v29.4s
   sqadd v22.4s, v22.4s, v29.4s
@@ -279,36 +271,28 @@ WIDTH2_LEFT:
   smlal v23.4s, v8.4h, v20.4h
   smlal2 v24.4s, v8.8h, v20.8h
 
-  // Apply left shfit
+  cbz w12, SKIP_LEFTSHIFT2
   sqshl v21.4s, v21.4s, v26.4s
   sqshl v22.4s, v22.4s, v26.4s
   sqshl v23.4s, v23.4s, v26.4s
   sqshl v24.4s, v24.4s, v26.4s
-
-  // Apply the fixed-point part of the multiplier.
   sqrdmulh v21.4s, v21.4s, v27.4s
   sqrdmulh v22.4s, v22.4s, v27.4s
   sqrdmulh v23.4s, v23.4s, v27.4s
   sqrdmulh v24.4s, v24.4s, v27.4s
+  b OUTZP2
 
-  // Apply right shfit
-  and v9.16b, v28.16b, v21.16b
-  sshr v9.4s, v9.4s, #31
-  sqadd v21.4s, v21.4s, v9.4s
-  srshl v21.4s, v21.4s, v28.4s
-  and v10.16b, v28.16b, v22.16b
-  sshr v10.4s, v10.4s, #31
-  sqadd v22.4s, v22.4s, v10.4s
-  srshl v22.4s, v22.4s, v28.4s  
-  and v11.16b, v28.16b, v23.16b
-  sshr v11.4s, v11.4s, #31
-  sqadd v23.4s, v23.4s, v11.4s
-  srshl v23.4s, v23.4s, v28.4s
-  and v12.16b, v28.16b, v24.16b
-  sshr v12.4s, v12.4s, #31
-  sqadd v24.4s, v24.4s, v12.4s
-  srshl v24.4s, v24.4s, v28.4s
+SKIP_LEFTSHIFT2:
+  sqrdmulh v21.4s, v21.4s, v27.4s
+  sqrdmulh v22.4s, v22.4s, v27.4s
+  sqrdmulh v23.4s, v23.4s, v27.4s
+  sqrdmulh v24.4s, v24.4s, v27.4s
+  sqrshl v21.4s, v21.4s, v28.4s
+  sqrshl v22.4s, v22.4s, v28.4s
+  sqrshl v23.4s, v23.4s, v28.4s
+  sqrshl v24.4s, v24.4s, v28.4s
 
+OUTZP2:
   // Add output zero point
   sqadd v21.4s, v21.4s, v29.4s
   sqadd v22.4s, v22.4s, v29.4s
@@ -358,24 +342,20 @@ WIDTH1_LEFT:
   smlal v21.4s, v8.4h, v19.4h
   smlal2 v22.4s, v8.8h, v19.8h
 
-  // Apply left shfit
+  cbz w12, SKIP_LEFTSHIFT3
   sqshl v21.4s, v21.4s, v26.4s
   sqshl v22.4s, v22.4s, v26.4s
-
-  // Apply the fixed-point part of the multiplier.
   sqrdmulh v21.4s, v21.4s, v27.4s
   sqrdmulh v22.4s, v22.4s, v27.4s
+  b OUTZP3
 
-  // Apply right shfit
-  and v9.16b, v28.16b, v21.16b
-  sshr v9.4s, v9.4s, #31
-  sqadd v21.4s, v21.4s, v9.4s
-  srshl v21.4s, v21.4s, v28.4s
-  and v10.16b, v28.16b, v22.16b
-  sshr v10.4s, v10.4s, #31
-  sqadd v22.4s, v22.4s, v10.4s
-  srshl v22.4s, v22.4s, v28.4s  
+SKIP_LEFTSHIFT3:
+  sqrdmulh v21.4s, v21.4s, v27.4s
+  sqrdmulh v22.4s, v22.4s, v27.4s
+  sqrshl v21.4s, v21.4s, v28.4s
+  sqrshl v22.4s, v22.4s, v28.4s
 
+OUTZP3:
   // Add output zero point
   sqadd v21.4s, v21.4s, v29.4s
   sqadd v22.4s, v22.4s, v29.4s
