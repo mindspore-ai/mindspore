@@ -302,6 +302,7 @@ void ConvDw3x3Int8(int8_t *output_data, int8_t *buffer, const int8_t *input_data
   }
 }
 
+#ifndef ENABLE_ARM32
 void ConvDw3x3Int8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
                               int width, int in_kh_step, int in_kw_step, int channel, int8_t in_zp, int32_t out_zp,
                               int out_multiplier, int left_shift, int right_shift, int32_t acc_min, int32_t acc_max) {
@@ -338,6 +339,7 @@ void ConvDw3x3Int8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *wei
     }
   }
 }
+#endif
 
 #ifndef ENABLE_ARM64
 void ConvDw3x3Int8Corner(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int in_kh_step,
@@ -730,12 +732,13 @@ void DeconvDepthwiseCenterInt8(int32_t *dst, const int16_t *src, const int16_t *
 }
 #endif
 
-void DeconvDepthwisePostFuncInt8(int8_t *dst, int32_t *output_buffer, const int32_t *bias, int block_channel,
-                                 const ConvParameter *conv_param, int out_multiplier, int left_shift, int right_shift,
-                                 int32_t out_zp, int32_t acc_min, int32_t acc_max) {
+#ifndef ENABLE_ARM
+void DeconvDwInt8Post(int8_t *dst, int32_t *output_buffer, const int32_t *bias, int block_channel, int pixel_nums,
+                      int out_multiplier, int left_shift, int right_shift, int32_t out_zp, int32_t acc_min,
+                      int32_t acc_max) {
   int8_t *dst_k = dst;
   int32_t *buffer_k = output_buffer;
-  for (int k = 0; k < conv_param->output_h_ * conv_param->output_w_; k++) {
+  for (int k = 0; k < pixel_nums; k++) {
     for (int c = 0; c < C4NUM; c++) {
       buffer_k[c] += bias[c];
       buffer_k[c] = RoundingDivideByPOT(
@@ -749,6 +752,7 @@ void DeconvDepthwisePostFuncInt8(int8_t *dst, int32_t *output_buffer, const int3
     buffer_k += C4NUM;
   }
 }
+#endif
 
 void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *input_data, const int16_t *weight_data,
                   const int32_t *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
@@ -791,11 +795,11 @@ void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *in
                                   sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_);
 #endif
       }
-      DeconvDepthwisePostFuncInt8(
-        dst_data, output_buffer, bias, sliding->block_channel_, conv_param,
-        conv_param->conv_quant_arg_.quant_multiplier_[0], conv_param->conv_quant_arg_.left_shift_[0],
-        conv_param->conv_quant_arg_.right_shift_[0], conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
-        conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0]);
+      DeconvDwInt8Post(dst_data, output_buffer, bias, sliding->block_channel_,
+                       conv_param->output_h_ * conv_param->output_w_, conv_param->conv_quant_arg_.quant_multiplier_[0],
+                       conv_param->conv_quant_arg_.left_shift_[0], conv_param->conv_quant_arg_.right_shift_[0],
+                       conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+                       conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0]);
     }  // output C4 loop
     src += sliding->in_step_;
     dst += sliding->out_step_;
