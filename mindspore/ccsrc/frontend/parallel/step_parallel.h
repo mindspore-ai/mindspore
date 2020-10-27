@@ -36,6 +36,7 @@ using OperatorInfoPtr = std::shared_ptr<mindspore::parallel::OperatorInfo>;
 namespace mindspore {
 namespace parallel {
 const uint64_t kUSecondInSecond = 1000000;
+const int32_t RECURSION_LIMIT = 3;
 
 struct LossNodeInfo {
   bool has_tuple_getitem = false;
@@ -103,8 +104,6 @@ std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr &node, const 
 
 // Extract shape from anfnode
 std::vector<Shapes> ExtractShape(const CNodePtr &node);
-
-std::pair<AnfNodePtr, int> FindParallelCareNode(const AnfNodePtr &node);
 
 // Find finally sub graph
 std::pair<AnfNodePtr, int> FindSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &parameter);
