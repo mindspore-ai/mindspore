@@ -287,7 +287,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  ret = executor->Prepare(this->kernels_);
+  ret = executor_->Prepare(this->kernels_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare executor failed: " << ret;
     is_running_.store(false);
@@ -325,9 +325,12 @@ int LiteSession::RunGraph(const KernelCallBack &before, const KernelCallBack &af
   STATUS ret;
   MS_ASSERT(this->context_);
   if (before == nullptr && after == nullptr) {
-    ret = executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
+    ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get());
   } else {
-    ret = executor->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get(), before, after);
+    ret = executor_->Run(this->inputs_, this->outputs_, this->kernels_, this->context_->allocator.get(), before, after);
+  }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "RunGraph failed : " << ret;
   }
   is_running_.store(false);
   return ret;
@@ -376,8 +379,8 @@ int LiteSession::Init(const Context *context) {
     }
   }
 #endif
-  executor = new (std::nothrow) Executor();
-  if (nullptr == executor) {
+  executor_ = new (std::nothrow) Executor();
+  if (nullptr == executor_) {
     MS_LOG(ERROR) << "New Executor failed";
     is_running_.store(false);
     return RET_ERROR;
@@ -425,8 +428,8 @@ LiteSession::~LiteSession() {
     delete kernel;
   }
   delete this->context_;
-  delete this->executor;
-  this->executor = nullptr;
+  delete this->executor_;
+  this->executor_ = nullptr;
   is_running_.store(false);
 }
 

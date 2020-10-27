@@ -240,8 +240,8 @@ class SessionWithParallelExecutor : public lite::LiteSession {
  public:
   int Init(lite::InnerContext *context) {
     lite::LiteSession::Init(context);
-    delete this->executor;
-    this->executor = new mindspore::lite::ParallelExecutor();
+    delete this->executor_;
+    this->executor_ = new mindspore::lite::ParallelExecutor();
     return 0;
   }
 };

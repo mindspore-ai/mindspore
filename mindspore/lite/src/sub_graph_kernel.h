@@ -35,7 +35,12 @@ class SubGraphKernel : public LiteKernel {
     subgraph_type_ = kCpuFP32SubGraph;
   }
 
-  ~SubGraphKernel() override { delete (executor_); }
+  ~SubGraphKernel() override {
+    for (auto *node : nodes_) {
+      delete node;
+    }
+    nodes_.clear();
+  }
 
   // called while compiling graph. Call node->Prepare() by default.
   int Prepare() override;
@@ -71,7 +76,7 @@ class CpuSubGraph : public SubGraphKernel {
     this->executor_ = new mindspore::lite::Executor;
   }
 
-  ~CpuSubGraph() override = default;
+  ~CpuSubGraph() override { delete this->executor_; }
 
   int Prepare() override;
   int Init() override { return SubGraphKernel::Init(); }
@@ -91,15 +96,14 @@ class CpuFp32SubGraph : public CpuSubGraph {
       : CpuSubGraph(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
     subgraph_type_ = kCpuFP32SubGraph;
     this->name_ = "CpuFP32SubGraph";
-    this->executor_ = new mindspore::lite::Executor;
   }
 
   ~CpuFp32SubGraph() override = default;
   int Init() override { return mindspore::lite::RET_ERROR; }
   int PreProcess() override;
-  int Run() override { return SubGraphKernel::Run(); }
+  int Run() override { return CpuSubGraph::Run(); }
   int Run(const KernelCallBack &before, const KernelCallBack &after) override {
-    return SubGraphKernel::Run(before, after);
+    return CpuSubGraph::Run(before, after);
   };
   int PostProcess() override { return mindspore::lite::RET_OK; }
 };
@@ -112,15 +116,14 @@ class CpuFp16SubGraph : public CpuSubGraph {
       : CpuSubGraph(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
     subgraph_type_ = kCpuFP16SubGraph;
     this->name_ = "CpuFP16SubGraph";
-    this->executor_ = new mindspore::lite::Executor;
   }
 
   ~CpuFp16SubGraph() override = default;
   int Init() override { return mindspore::lite::RET_ERROR; }
   int PreProcess() override;
-  int Run() override { return SubGraphKernel::Run(); }
+  int Run() override { return CpuSubGraph::Run(); }
   int Run(const KernelCallBack &before, const KernelCallBack &after) override {
-    return SubGraphKernel::Run(before, after);
+    return CpuSubGraph::Run(before, after);
   };
   int PostProcess() override;
 };
