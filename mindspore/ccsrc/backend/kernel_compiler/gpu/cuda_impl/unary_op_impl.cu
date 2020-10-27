@@ -44,6 +44,27 @@ __global__ void LogarithmKernel(const half *input, half *output, const size_t co
   return;
 }
 template <typename T>
+__global__ void Log1pKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = static_cast<T>(log1p(static_cast<double>(input[i])));
+  }
+  return;
+}
+template <typename T>
+__global__ void ErfKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = static_cast<T>(erf(static_cast<float>(input[i])));
+  }
+  return;
+}
+template <typename T>
+__global__ void ErfcKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = static_cast<T>(erfc(static_cast<float>(input[i])));
+  }
+  return;
+}
+template <typename T>
 __global__ void NegativeKernel(const T *input, T *output, const size_t count) {
   T neg_one = -1;
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -189,6 +210,21 @@ void Negative(const T *input, T *output, const size_t count, cudaStream_t cuda_s
   return;
 }
 template <typename T>
+void Log1p(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  Log1pKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Erf(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  ErfKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Erfc(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  ErfcKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Reciprocal(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   ReciprocalKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -252,6 +288,9 @@ void Floor(const T *input, T *output, const size_t count, cudaStream_t cuda_stre
 template void Exponential<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Logarithm<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Negative<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Log1p<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Erf<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Erfc<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Reciprocal<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Square<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Sqrt<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
@@ -266,6 +305,9 @@ template void Floor<float>(const float *input, float *output, const size_t count
 template void Exponential<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Logarithm<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Negative<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Log1p<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Erf<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Erfc<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Reciprocal<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Square<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Sqrt<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
