@@ -620,11 +620,11 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
 }
 
 bool ExtractChannel(const LiteMat &src, LiteMat &dst, int col) {
-  if (src.IsEmpty() || col < 0 || col > src.dims_ - 1) {
+  if (src.IsEmpty() || col < 0 || col > src.channel_ - 1) {
     return false;
   }
-  (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
   if (src.data_type_ == LDataType::FLOAT32) {
+    (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
     const float *src_start_p = src;
     float *dst_start_p = dst;
     for (int h = 0; h < src.height_; h++) {
@@ -638,6 +638,7 @@ bool ExtractChannel(const LiteMat &src, LiteMat &dst, int col) {
     }
     return true;
   } else if (src.data_type_ == LDataType::UINT8) {
+    (void)dst.Init(src.width_, src.height_, 1, src.data_type_);
     const uint8_t *src_start_p = src;
     uint8_t *dst_start_p = dst;
     for (int h = 0; h < src.height_; h++) {

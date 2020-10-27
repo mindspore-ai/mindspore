@@ -88,6 +88,12 @@ if (SUPPORT_GPU)
             ${LITE_DIR}/src/runtime/kernel/opencl/utils.cc
             )
 endif()
+
+if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+  if (ENABLE_CONVERTER)
+    set(BUILD_MINDDATA "off")
+  endif()
+endif()
 ### minddata lite
 if (BUILD_MINDDATA STREQUAL "lite")
 #    include_directories(${CCSRC_DIR}/minddata)
