@@ -16,12 +16,11 @@
 
 #include "include/errorcode.h"
 #include <map>
-#include <iostream>
 #include <string>
 
 namespace mindspore {
 namespace lite {
-void PrintErrorInfo(STATUS status) {
+std::string GetErrorInfo(STATUS status) {
   std::map<int, std::string> info_map = {{RET_OK, "No error occurs."},
                                          {RET_ERROR, "Common error code."},
                                          {RET_NULL_PTR, "NULL pointer returned."},
@@ -42,7 +41,7 @@ void PrintErrorInfo(STATUS status) {
                                          {RET_INFER_ERR, "Failed to infer shape."},
                                          {RET_INFER_INVALID, "Invalid infer shape before runtime."},
                                          {RET_INPUT_PARAM_INVALID, "Invalid input param by user."}};
-  std::cout << info_map[status] << std::endl;
+  return info_map.find(status) == info_map.end() ? "Unknown error" : info_map[status];
 }
 }  // namespace lite
 }  // namespace mindspore

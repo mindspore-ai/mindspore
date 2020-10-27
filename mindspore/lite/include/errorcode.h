@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_INCLUDE_ERRORCODE_H_
 #define MINDSPORE_LITE_INCLUDE_ERRORCODE_H_
 
+#include <string>
+
 namespace mindspore {
 namespace lite {
 /// \brief STATUS defined for holding error code in MindSpore Lite.
@@ -61,7 +63,9 @@ constexpr int RET_INPUT_PARAM_INVALID = -600; /**< Invalid input param by user. 
 /// \brief Print description of errorcode.
 ///
 /// \param[in] error_code define return status of procedure.
-void PrintErrorInfo(STATUS error_code);
+///
+/// \return String of errorcode info.
+std::string GetErrorInfo(STATUS error_code);
 }  // namespace lite
 }  // namespace mindspore
 
