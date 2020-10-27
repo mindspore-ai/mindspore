@@ -318,7 +318,7 @@ class Parameter(MetaTensor_):
             data (Union[Tensor, MetaTensor, int, float]): new data.
             slice_shape (bool): If slice the Parameter, will not check if shape is match. Default: False.
 
-        Retruns:
+        Returns:
             Parameter, the parameter after set data.
         """
         def raise_type_error(incoming):
