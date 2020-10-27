@@ -45,6 +45,8 @@ class ArithmeticCPUKernel : public CPUKernel {
   void Mul(const T *input1, const T *input2, T *out, size_t start, size_t end);
   template <typename T>
   void Div(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void AssignAdd(T *input1, const T *input2, T *out, size_t start, size_t end);
   std::vector<size_t> input_shape0_;
   std::vector<size_t> input_shape1_;
   std::vector<size_t> input_element_num0_;
@@ -63,6 +65,12 @@ MS_REG_CPU_KERNEL(
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
   Sub, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  AssignAdd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  AssignAdd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
   ArithmeticCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
