@@ -20,6 +20,7 @@
 #include "nnacl/fp32/common_func.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/fullconnection.h"
+#include "src/runtime/kernel/opencl/utils.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/fullconnection.cl.inc"
 #endif
@@ -43,23 +44,22 @@ int FullConnectionOpenCLKernel::Init() {
   transposeB = param->b_transpose_;
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if ((in_tensors_[0]->shape().size() != 4 && in_tensors_[0]->shape().size() != 2) ||
-      out_tensors_[0]->shape().size() != 2) {
-    MS_LOG(ERROR) << "fullconnection only support input shape size = 2 or 4";
+      (out_tensors_[0]->shape().size() != 4 && out_tensors_[0]->shape().size() != 2)) {
+    MS_LOG(ERROR) << "fullconnection only support input output shape size = 2 or 4";
     return RET_ERROR;
   }
-  if (in_tensors_[0]->shape().size() == 4) {
-    inShape = {in_tensors_[0]->shape()[0], in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2],
-               in_tensors_[0]->shape()[3]};
-  } else {
-    inShape = {in_tensors_[0]->shape()[0], 1, 1, in_tensors_[0]->shape()[1]};
-  }
-
-  outShape = out_tensors_[0]->shape();
+  // call default move constructor(elemwised moved)
+  inShape = Image2DInfo(in_tensors_[0]);
+  outShape = Image2DInfo(out_tensors_[0]);
   switch (param->act_type_) {
     case ActType_No:
       break;
     case ActType_Relu:
-      kernel_name += "_ReLU";
+      activation_min_ = 0.f;
+      break;
+    case ActType_Relu6:
+      activation_min_ = 0.f;
+      activation_max_ = 6.f;
       break;
     default:
       MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
@@ -81,14 +81,13 @@ int FullConnectionOpenCLKernel::Init() {
 }
 
 void FullConnectionOpenCLKernel::PadWeight() {
-  // ABMCI @ ABCICO = ABMCO
   auto allocator = ocl_runtime_->GetAllocator();
-  int ci = inShape[3];
+  int ci = inShape.C;
   int ci4 = UP_DIV(ci, C4NUM);
-  int co = outShape[1];
+  int co = outShape.C;
   int co4 = UP_DIV(co, C4NUM);
-  int h = inShape[1];
-  int w = inShape[2];
+  int h = inShape.H;
+  int w = inShape.W;
 
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   padWeight_ = allocator->Malloc(h * w * ci4 * co4 * C4NUM * C4NUM * dtype_size);
@@ -172,18 +171,20 @@ void FullConnectionOpenCLKernel::PadWeight() {
 
 int FullConnectionOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  // local size should less than MAX_GROUP_SIZE
-  std::vector<size_t> local = {32, 4, 1};
-  std::vector<size_t> global = {UP_DIV(static_cast<size_t>(outShape[1]), C4NUM), 4, static_cast<size_t>(outShape[0])};
+  std::vector<size_t> local = {1, 4, 1};
+  std::vector<size_t> global = {UP_DIV(outShape.C, C4NUM), 4, outShape.N};
   int arg_count = 0;
-  cl_int4 in_shape = {inShape[0], inShape[1], inShape[2], inShape[3]};
-  cl_int2 out_shape = {outShape[0], outShape[1]};
+  cl_int4 in_shape = {static_cast<int>(inShape.N), static_cast<int>(inShape.H), static_cast<int>(inShape.W),
+                      static_cast<int>(inShape.C)};
+  cl_int2 out_shape = {static_cast<int>(outShape.N), static_cast<int>(outShape.C)};
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, activation_min_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, activation_max_);
   ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
   return RET_OK;
 }
