@@ -464,7 +464,8 @@ class SummaryCollector(Callback):
         try:
             self._record.add_value(PluginEnum.IMAGE.value, 'input_data/auto', input_data)
         except (TypeError, ValueError):
-            logger.warning('The input data of network are not image, so will not collect by SummaryCollector.')
+            if not self._dataset_sink_mode:
+                logger.warning('The input data of network are not image, so will not collect by SummaryCollector.')
             self._collect_specified_data['collect_input_data'] = False
             return
 
@@ -636,8 +637,8 @@ class SummaryCollector(Callback):
         """
         learning_rate = optimizer.learning_rate
         if not isinstance(learning_rate, Parameter):
-            logger.warning("The learning rate detected in the optimizer "
-                           "is not a Parameter type, so it is not recorded.")
+            logger.warning("The learning rate detected in the optimizer is not a Parameter type, "
+                           "so it is not recorded. Its type is %r.", type(learning_rate).__name__)
             return None
         return learning_rate.data
 

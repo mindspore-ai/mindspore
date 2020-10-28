@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Define dataset graph related operations."""
-import json
 from importlib import import_module
 
+from mindspore import log as logger
 from mindspore.train import lineage_pb2
 
 
@@ -33,9 +33,11 @@ class DatasetGraph:
         """
         dataset_package = import_module('mindspore.dataset')
         dataset_dict = dataset_package.serialize(dataset)
-        json_str = json.dumps(dataset_dict, indent=2)
-        dataset_dict = json.loads(json_str)
         dataset_graph_proto = lineage_pb2.DatasetGraph()
+        if not isinstance(dataset_dict, dict):
+            logger.warning("The dataset graph serialized from dataset object is not a dict. "
+                           "Its type is %r.", type(dataset_dict).__name__)
+            return dataset_graph_proto
         if "children" in dataset_dict:
             children = dataset_dict.pop("children")
             if children:
@@ -92,7 +94,7 @@ class DatasetGraph:
             message (Operation): Enhancement operation proto message.
         """
         for key, value in operation.items():
-            if isinstance(value, list):
+            if isinstance(value, (list, tuple)):
                 if all(isinstance(ele, int) for ele in value):
                     message.size.extend(value)
                 else:
@@ -118,11 +120,12 @@ class DatasetGraph:
             message.mapInt[key] = value
         elif isinstance(value, float):
             message.mapDouble[key] = value
-        elif isinstance(value, list) and key != "operations":
+        elif isinstance(value, (list, tuple)) and key != "operations":
             if value:
                 replace_value_list = list(map(lambda x: "" if x is None else x, value))
                 message.mapStrList[key].strValue.extend(replace_value_list)
         elif value is None:
             message.mapStr[key] = "None"
         else:
-            raise ValueError(f"Parameter {key} is not supported in event package.")
+            logger.warning("The parameter %r is not recorded, because its type is not supported in event package. "
+                           "Its type is %r.", key, type(value).__name__)
