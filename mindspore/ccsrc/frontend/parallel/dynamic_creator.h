@@ -173,6 +173,8 @@ REGISTER(ExpandDimsInfo);
 REGISTER(SqueezeInfo);
 REGISTER(SigmoidCrossEntropyWithLogitsInfo);
 REGISTER(SquareInfo);
+REGISTER(UnsortedSegmentSumInfo);
+REGISTER(UnsortedSegmentMinInfo);
 REGISTER(GatherV2PInfo);
 REGISTER(EmbeddingLookupInfo);
 REGISTER(TileInfo);

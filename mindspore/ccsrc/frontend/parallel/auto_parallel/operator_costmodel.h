@@ -578,6 +578,58 @@ class DropOutCost : public OperatorCost {
 
 using DropOutCostPtr = std::shared_ptr<DropOutCost>;
 
+class UnsortedSegmentSumCost : public OperatorCost {
+ public:
+  explicit UnsortedSegmentSumCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  UnsortedSegmentSumCost() : OperatorCost(true) {}
+  ~UnsortedSegmentSumCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                     int32_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int32_t) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int32_t) const override;
+  double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int32_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                   int32_t) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                    int32_t) const override {
+    return 0.0;
+  }
+};
+
+using UnsortedSegmentSumCostPtr = std::shared_ptr<UnsortedSegmentSumCost>;
+
+class UnsortedSegmentMinCost : public OperatorCost {
+ public:
+  explicit UnsortedSegmentMinCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  UnsortedSegmentMinCost() : OperatorCost(true) {}
+  ~UnsortedSegmentMinCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                     int32_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int32_t) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int32_t) const override;
+  double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int32_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                   int32_t) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                    int32_t) const override {
+    return 0.0;
+  }
+};
+
+using UnsortedSegmentMinCostPtr = std::shared_ptr<UnsortedSegmentMinCost>;
+
 class LayerNormCost : public OperatorCost {
  public:
   explicit LayerNormCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}

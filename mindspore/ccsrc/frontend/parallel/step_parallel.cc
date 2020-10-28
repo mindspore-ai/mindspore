@@ -740,9 +740,25 @@ void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node
   if (manager == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:AddNode error since manager is nullptr";
   }
+  // Sovle the input order
+  // For example input_node:{segment_sum:1, segment_sum:2, gahter:2}
+  // The Original code here will bind the all operations to the first inputs of theses operatos
+  // However, the segment_sum operation needs two inputs, To sovle this
+  // We maintain a dict to count the times of the same operations,
+  // and bind the inputs according to the times of the op appears.
+  static std::unordered_map<AnfNodePtr, int> input_map = {};
+  static int appear_count = 0;
   for (auto &replace_input : replace_graph->first) {
     auto pre_node = node->input(IntToSize(replace_input.second));
-    manager->SetEdge(replace_input.first, 1, pre_node);
+
+    auto it = input_map.find(replace_input.first);
+    if (it != input_map.end()) {
+      appear_count = 1 + it->second;
+    } else {
+      appear_count = 1;
+    }
+    input_map[replace_input.first] = appear_count;
+    manager->SetEdge(replace_input.first, appear_count, pre_node);
   }
   //  "(void)manager->Replace(replace_graph->first, pre_node);" can not be called
   auto replace_output = replace_graph->second;
