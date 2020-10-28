@@ -54,8 +54,23 @@ int QuantizedAddCPUKernel::Init() {
   QuantizeMultiplierSmallerThanOne(real_input1_multiplier, &para_.input1_multiplier_, &para_.input1_shift_);
   QuantizeMultiplierSmallerThanOne(real_output_multiplier, &para_.output_multiplier_, &para_.output_shift_);
 
-  para_.output_activation_min_ = std::numeric_limits<int8_t>::min();
-  para_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  switch (arith_para_->activation_type_) {
+    case schema::ActivationType_RELU:
+      para_.output_activation_min_ = 0;
+      para_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+      break;
+    case schema::ActivationType_RELU6:
+      para_.output_activation_min_ = 0;
+      para_.output_activation_max_ = 6;
+      break;
+    case schema::ActivationType_NO_ACTIVATION:
+      para_.output_activation_min_ = std::numeric_limits<int8_t>::min();
+      para_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+      break;
+    default:
+      MS_LOG(ERROR) << "Add does not support activation type " << arith_para_->activation_type_;
+      return RET_ERROR;
+  }
 
   int left_shift0 = -para_.input0_shift_ > 0 ? -para_.input0_shift_ : 0;
   para_.right_shift0_ = -para_.input0_shift_ > 0 ? 0 : para_.input0_shift_;
