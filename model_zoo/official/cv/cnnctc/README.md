@@ -44,6 +44,8 @@ This is an example of training CNN+CTC model for text recognition on MJSynth and
 
 # [Dataset](#contents)
 
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 The [MJSynth](https://www.robots.ox.ac.uk/~vgg/data/text/) and [SynthText](https://github.com/ankush-me/SynthText) dataset are used for model training. The [The IIIT 5K-word dataset](https://cvit.iiit.ac.in/research/projects/cvit-projects/the-iiit-5k-word-dataset) dataset is used for evaluation.
 
 - step 1:
@@ -247,7 +249,7 @@ The model will be evaluated on the IIIT dataset, sample results and overall accu
 
 ### Training Performance 
 
-| Parameters                 | FasterRcnn                                                   |
+| Parameters                 | CNNCTC                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
@@ -265,7 +267,7 @@ The model will be evaluated on the IIIT dataset, sample results and overall accu
 
 ### Evaluation Performance
 
-| Parameters          | FasterRcnn                   |
+| Parameters          | CNNCTC                   |
 | ------------------- | --------------------------- |
 | Model Version       | V1                |
 | Resource            | Ascend 910                  |

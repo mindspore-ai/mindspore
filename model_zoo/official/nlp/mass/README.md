@@ -61,6 +61,8 @@ get the most possible prediction results.
 
 # Dataset
 
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 Dataset used: 
 - monolingual English data from News Crawl dataset(WMT 2019) for pre-training.
 - Gigaword Corpus(Graff et al., 2003) for Text Summarization.
@@ -590,7 +592,7 @@ The comparisons between MASS and other baseline methods in terms of PPL on Corne
 | Model Version              | v1                                                                        |
 | Resource                   | Ascend 910, cpu 2.60GHz, 192cores；memory, 755G                            |
 | uploaded Date              | 05/24/2020                                                                |
-| MindSpore Version          | 0.2.0                                                                     |
+| MindSpore Version          | 1.0.0                                                                     |
 | Dataset                    | News Crawl 2007-2017 English monolingual corpus, Gigaword corpus, Cornell Movie Dialog corpus |
 | Training Parameters        | Epoch=50, steps=XXX, batch_size=192, lr=1e-4                              |
 | Optimizer                  | Adam                                                                      |
@@ -613,7 +615,7 @@ The comparisons between MASS and other baseline methods in terms of PPL on Corne
 | Model Version              | V1                                                         |
 | Resource                   | Huawei 910                                                 |
 | uploaded Date              | 05/24/2020                                                 |
-| MindSpore Version          | 0.2.0                                                      |
+| MindSpore Version          | 1.0.0                                                      |
 | Dataset                    | Gigaword corpus, Cornell Movie Dialog corpus               |
 | batch_size                 | ---                                                        |
 | outputs                    | Sentence and probability                                   |

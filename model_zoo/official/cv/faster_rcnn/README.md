@@ -33,6 +33,8 @@ FasterRcnn is a two-stage target detection network,This network uses a region pr
 
 # Dataset
 
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 Dataset used: [COCO2017](<https://cocodataset.org/>) 
 
 - Dataset size：19G
