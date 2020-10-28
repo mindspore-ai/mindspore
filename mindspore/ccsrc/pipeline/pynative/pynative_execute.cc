@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -589,6 +589,13 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int> *te
   bool reg_exist = opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, &reg);
   if (op_run_info->op_name == prim::kPrimEmbeddingLookup->name()) {
     reg_exist = false;
+  }
+  if (op_run_info->op_name == prim::kPrimGatherD->name()) {
+    auto ms_context = MsContext::GetInstance();
+    // Gather op needs converting const input to attr on GPU device
+    if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
+      reg_exist = false;
+    }
   }
 
   op_prim->BeginRecordAddAttr();

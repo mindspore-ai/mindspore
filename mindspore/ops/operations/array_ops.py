@@ -3978,6 +3978,7 @@ class GatherD(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize GatherD"""
+        self.init_prim_io_names(inputs=['x', 'dim', 'index'], outputs=['output'])
 
     def __infer__(self, x, dim, index):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
