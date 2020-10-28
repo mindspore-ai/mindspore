@@ -64,3 +64,15 @@ void Float32ToInt32(const float *input, int32_t *output, int number) {
     output[i] = (int32_t)input[i];
   }
 }
+
+void Float32ToInt64(const float *input, int64_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int64_t)input[i];
+  }
+}
+
+void Int32ToInt64(const int32_t *input, int64_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int64_t)input[i];
+  }
+}
