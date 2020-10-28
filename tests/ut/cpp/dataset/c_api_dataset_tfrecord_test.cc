@@ -398,11 +398,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShard) {
 
   // Create a TFRecord Dataset
   // Each file has two columns("image", "label") and 3 rows
-  std::vector<std::string> files = {
-    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data",
-    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0002.data",
-    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0003.data"
-  };
+  std::vector<std::string> files = {datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data",
+                                    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0002.data",
+                                    datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0003.data"};
   std::shared_ptr<Dataset> ds1 = TFRecord(files, "", {}, 0, ShuffleMode::kFalse, 2, 1, true);
   EXPECT_NE(ds1, nullptr);
   std::shared_ptr<Dataset> ds2 = TFRecord(files, "", {}, 0, ShuffleMode::kFalse, 2, 1, false);
@@ -504,4 +502,13 @@ TEST_F(MindDataTestPipeline, TestIncorrectTFSchemaObject) {
   TensorMap mp;
   // this will fail due to the incorrect schema used
   EXPECT_FALSE(itr->GetNextRow(&mp));
+}
+
+TEST_F(MindDataTestPipeline, TestIncorrectTFrecordFile) {
+  std::string path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
+  std::shared_ptr<api::Dataset> ds = api::TFRecord({path});
+  EXPECT_NE(ds, nullptr);
+  // the tf record file is incorrect, hence validate param will fail
+  auto itr = ds->CreateIterator();
+  EXPECT_EQ(itr, nullptr);
 }
