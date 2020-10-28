@@ -34,6 +34,8 @@ class DeConvWinogradFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
     deconv_param_ = new DeConvParam();
     for (auto &wg : deconv_param_->a_buffer_) {
       wg.buf_init_ = false;
+      wg.dest_buffer_ = nullptr;
+      wg.middle_buffer_ = nullptr;
     }
   }
   ~DeConvWinogradFp16CPUKernel() override;
