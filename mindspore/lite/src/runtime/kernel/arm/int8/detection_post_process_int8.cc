@@ -27,8 +27,30 @@ using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore::kernel {
 
+int DetectionPostProcessInt8CPUKernel::DequantizeInt8ToFp32(const int task_id) {
+  int num_unit_thread = MSMIN(thread_n_stride_, quant_size_ - task_id * thread_n_stride_);
+  int thread_offset = task_id * thread_n_stride_;
+  int ret = DoDequantizeInt8ToFp32(data_int8_ + thread_offset, data_fp32_ + thread_offset, quant_param_.scale,
+                                   quant_param_.zeroPoint, num_unit_thread);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "QuantDTypeCast error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int DequantizeInt8ToFp32Run(void *cdata, int task_id) {
+  auto KernelData = reinterpret_cast<DetectionPostProcessInt8CPUKernel *>(cdata);
+  auto ret = KernelData->DequantizeInt8ToFp32(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "QuantDTypeCastRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int DetectionPostProcessInt8CPUKernel::Dequantize(lite::Tensor *tensor, float **data) {
-  auto data_int8 = reinterpret_cast<int8_t *>(tensor->MutableData());
+  data_int8_ = reinterpret_cast<int8_t *>(tensor->MutableData());
   *data = reinterpret_cast<float *>(context_->allocator->Malloc(tensor->ElementsNum() * sizeof(float)));
   if (*data == nullptr) {
     MS_LOG(ERROR) << "Malloc data failed.";
@@ -38,8 +60,17 @@ int DetectionPostProcessInt8CPUKernel::Dequantize(lite::Tensor *tensor, float **
     MS_LOG(ERROR) << "null quant param";
     return RET_ERROR;
   }
-  auto quant_param = tensor->GetQuantParams().front();
-  DoDequantizeInt8ToFp32(data_int8, *data, quant_param.scale, quant_param.zeroPoint, tensor->ElementsNum());
+  quant_param_ = tensor->GetQuantParams().front();
+  data_fp32_ = *data;
+  quant_size_ = tensor->ElementsNum();
+  thread_n_stride_ = UP_DIV(quant_size_, op_parameter_->thread_num_);
+
+  auto ret = ParallelLaunch(this->context_->thread_pool_, DequantizeInt8ToFp32Run, this, op_parameter_->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "QuantDTypeCastRun error error_code[" << ret << "]";
+    context_->allocator->Free(*data);
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 int DetectionPostProcessInt8CPUKernel::GetInputData() {
@@ -47,11 +78,11 @@ int DetectionPostProcessInt8CPUKernel::GetInputData() {
     MS_LOG(ERROR) << "Input data type error";
     return RET_ERROR;
   }
-  int status = Dequantize(in_tensors_.at(0), &input_boxes);
+  int status = Dequantize(in_tensors_.at(0), &input_boxes_);
   if (status != RET_OK) {
     return status;
   }
-  status = Dequantize(in_tensors_.at(1), &input_scores);
+  status = Dequantize(in_tensors_.at(1), &input_scores_);
   if (status != RET_OK) {
     return status;
   }

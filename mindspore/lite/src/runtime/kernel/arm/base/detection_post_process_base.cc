@@ -26,10 +26,27 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore::kernel {
+
+void PartialArgSort(const float *scores, int *indexes, int num_to_sort, int num_values) {
+  std::partial_sort(indexes, indexes + num_to_sort, indexes + num_values, [&scores](const int i, const int j) {
+    if (scores[i] == scores[j]) {
+      return i < j;
+    }
+    return scores[i] > scores[j];
+  });
+}
+
 int DetectionPostProcessBaseCPUKernel::Init() {
+  params_->decoded_boxes_ = nullptr;
+  params_->nms_candidate_ = nullptr;
+  params_->indexes_ = nullptr;
+  params_->scores_ = nullptr;
+  params_->all_class_indexes_ = nullptr;
+  params_->all_class_scores_ = nullptr;
+  params_->single_class_indexes_ = nullptr;
+  params_->selected_ = nullptr;
+  params_->anchors_ = nullptr;
   auto anchor_tensor = in_tensors_.at(2);
-  DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
-  parameter->anchors_ = nullptr;
   if (anchor_tensor->data_type() == kNumberTypeInt8) {
     auto quant_param = anchor_tensor->GetQuantParams().front();
     auto anchor_int8 = reinterpret_cast<int8_t *>(anchor_tensor->MutableData());
@@ -40,14 +57,14 @@ int DetectionPostProcessBaseCPUKernel::Init() {
     }
     DoDequantizeInt8ToFp32(anchor_int8, anchor_fp32, quant_param.scale, quant_param.zeroPoint,
                            anchor_tensor->ElementsNum());
-    parameter->anchors_ = anchor_fp32;
+    params_->anchors_ = anchor_fp32;
   } else if (anchor_tensor->data_type() == kNumberTypeFloat32 || anchor_tensor->data_type() == kNumberTypeFloat) {
-    parameter->anchors_ = new (std::nothrow) float[anchor_tensor->ElementsNum()];
-    if (parameter->anchors_ == nullptr) {
+    params_->anchors_ = new (std::nothrow) float[anchor_tensor->ElementsNum()];
+    if (params_->anchors_ == nullptr) {
       MS_LOG(ERROR) << "Malloc anchor failed";
       return RET_ERROR;
     }
-    memcpy(parameter->anchors_, anchor_tensor->MutableData(), anchor_tensor->Size());
+    memcpy(params_->anchors_, anchor_tensor->MutableData(), anchor_tensor->Size());
   } else {
     MS_LOG(ERROR) << "unsupported anchor data type " << anchor_tensor->data_type();
     return RET_ERROR;
@@ -55,12 +72,55 @@ int DetectionPostProcessBaseCPUKernel::Init() {
   return RET_OK;
 }
 
-DetectionPostProcessBaseCPUKernel::~DetectionPostProcessBaseCPUKernel() {
-  DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
-  delete[](parameter->anchors_);
-}
+DetectionPostProcessBaseCPUKernel::~DetectionPostProcessBaseCPUKernel() { delete[](params_->anchors_); }
 
 int DetectionPostProcessBaseCPUKernel::ReSize() { return RET_OK; }
+
+int NmsMultiClassesFastCoreRun(void *cdata, int task_id) {
+  auto KernelData = reinterpret_cast<DetectionPostProcessBaseCPUKernel *>(cdata);
+  int ret = NmsMultiClassesFastCore(KernelData->num_boxes_, KernelData->num_classes_with_bg_, KernelData->input_scores_,
+                                    PartialArgSort, KernelData->params_, task_id, KernelData->thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "NmsMultiClassesFastCore error task_id[" << task_id << "] error_code[" << ret << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+void DetectionPostProcessBaseCPUKernel::FreeAllocatedBuffer() {
+  if (params_->decoded_boxes_ != nullptr) {
+    context_->allocator->Free(params_->decoded_boxes_);
+    params_->decoded_boxes_ = nullptr;
+  }
+  if (params_->nms_candidate_ != nullptr) {
+    context_->allocator->Free(params_->nms_candidate_);
+    params_->nms_candidate_ = nullptr;
+  }
+  if (params_->indexes_ != nullptr) {
+    context_->allocator->Free(params_->indexes_);
+    params_->indexes_ = nullptr;
+  }
+  if (params_->scores_ != nullptr) {
+    context_->allocator->Free(params_->scores_);
+    params_->scores_ = nullptr;
+  }
+  if (params_->all_class_indexes_ != nullptr) {
+    context_->allocator->Free(params_->all_class_indexes_);
+    params_->all_class_indexes_ = nullptr;
+  }
+  if (params_->all_class_scores_ != nullptr) {
+    context_->allocator->Free(params_->all_class_scores_);
+    params_->all_class_scores_ = nullptr;
+  }
+  if (params_->single_class_indexes_ != nullptr) {
+    context_->allocator->Free(params_->single_class_indexes_);
+    params_->single_class_indexes_ = nullptr;
+  }
+  if (params_->selected_ != nullptr) {
+    context_->allocator->Free(params_->selected_);
+    params_->selected_ = nullptr;
+  }
+}
 
 int DetectionPostProcessBaseCPUKernel::Run() {
   MS_ASSERT(context_->allocator != nullptr);
@@ -73,56 +133,105 @@ int DetectionPostProcessBaseCPUKernel::Run() {
   auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->MutableData());
   auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->MutableData());
 
-  const int num_boxes = in_tensors_.at(0)->shape()[1];
-  const int num_classes_with_bg = in_tensors_.at(1)->shape()[2];
-  DetectionPostProcessParameter *parameter = reinterpret_cast<DetectionPostProcessParameter *>(op_parameter_);
-  parameter->decoded_boxes_ = context_->allocator->Malloc(num_boxes * 4 * sizeof(float));
-  parameter->nms_candidate_ = context_->allocator->Malloc(num_boxes * sizeof(uint8_t));
-  parameter->selected_ = context_->allocator->Malloc(num_boxes * sizeof(int));
-  parameter->score_with_class_ = context_->allocator->Malloc(num_boxes * sizeof(ScoreWithIndex));
-  if (!parameter->decoded_boxes_ || !parameter->nms_candidate_ || !parameter->selected_ ||
-      !parameter->score_with_class_) {
-    MS_LOG(ERROR) << "malloc parameter->decoded_boxes_ || parameter->nms_candidate_ || parameter->selected_ || "
-                     "parameter->score_with_class_ failed.";
+  num_boxes_ = in_tensors_.at(0)->shape()[1];
+  num_classes_with_bg_ = in_tensors_.at(1)->shape()[2];
+  params_->decoded_boxes_ = context_->allocator->Malloc(num_boxes_ * 4 * sizeof(float));
+  if (params_->decoded_boxes_ == nullptr) {
+    MS_LOG(ERROR) << "malloc params->decoded_boxes_ failed.";
+    FreeAllocatedBuffer();
     return RET_ERROR;
   }
-  if (parameter->use_regular_nms_) {
-    parameter->score_with_class_all_ =
-      context_->allocator->Malloc((num_boxes + parameter->max_detections_) * sizeof(ScoreWithIndex));
-    if (parameter->score_with_class_all_ == nullptr) {
-      MS_LOG(ERROR) << "malloc parameter->score_with_class_all_failed.";
+  params_->nms_candidate_ = context_->allocator->Malloc(num_boxes_ * sizeof(uint8_t));
+  if (params_->nms_candidate_ == nullptr) {
+    MS_LOG(ERROR) << "malloc params->nms_candidate_ failed.";
+    FreeAllocatedBuffer();
+    return RET_ERROR;
+  }
+  params_->selected_ = context_->allocator->Malloc(num_boxes_ * sizeof(int));
+  if (params_->selected_ == nullptr) {
+    MS_LOG(ERROR) << "malloc params->selected_ failed.";
+    FreeAllocatedBuffer();
+    return RET_ERROR;
+  }
+  params_->single_class_indexes_ = context_->allocator->Malloc(num_boxes_ * sizeof(int));
+  if (params_->single_class_indexes_ == nullptr) {
+    MS_LOG(ERROR) << "malloc params->single_class_indexes_ failed.";
+    FreeAllocatedBuffer();
+    return RET_ERROR;
+  }
+
+  if (params_->use_regular_nms_) {
+    params_->scores_ = context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(float));
+    if (params_->scores_ == nullptr) {
+      MS_LOG(ERROR) << "malloc params->scores_ failed";
+      FreeAllocatedBuffer();
       return RET_ERROR;
     }
-    parameter->indexes_ = context_->allocator->Malloc((num_boxes + parameter->max_detections_) * sizeof(int));
-    if (parameter->indexes_ == nullptr) {
-      MS_LOG(ERROR) << "malloc parameter->indexes_ failed.";
-      context_->allocator->Free(parameter->score_with_class_all_);
+    params_->indexes_ = context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(int));
+    if (params_->indexes_ == nullptr) {
+      MS_LOG(ERROR) << "malloc params->indexes_ failed";
+      FreeAllocatedBuffer();
+      return RET_ERROR;
+    }
+    params_->all_class_scores_ = context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(float));
+    if (params_->all_class_scores_ == nullptr) {
+      MS_LOG(ERROR) << "malloc params->all_class_scores_ failed";
+      FreeAllocatedBuffer();
+      return RET_ERROR;
+    }
+    params_->all_class_indexes_ = context_->allocator->Malloc((num_boxes_ + params_->max_detections_) * sizeof(int));
+    if (params_->all_class_indexes_ == nullptr) {
+      MS_LOG(ERROR) << "malloc params->all_class_indexes_ failed";
+      FreeAllocatedBuffer();
       return RET_ERROR;
     }
   } else {
-    parameter->score_with_class_all_ =
-      context_->allocator->Malloc((num_boxes * parameter->num_classes_) * sizeof(ScoreWithIndex));
-    if (!parameter->score_with_class_all_) {
-      MS_LOG(ERROR) << "malloc parameter->score_with_class_all_ failed.";
+    params_->scores_ = context_->allocator->Malloc(num_boxes_ * sizeof(float));
+    if (params_->scores_ == nullptr) {
+      MS_LOG(ERROR) << "malloc params->scores_ failed";
+      FreeAllocatedBuffer();
+      return RET_ERROR;
+    }
+    params_->indexes_ = context_->allocator->Malloc(num_boxes_ * params_->num_classes_ * sizeof(int));
+    if (!params_->indexes_) {
+      MS_LOG(ERROR) << "malloc params->indexes_ failed.";
+      FreeAllocatedBuffer();
       return RET_ERROR;
     }
   }
-  DetectionPostProcess(num_boxes, num_classes_with_bg, input_boxes, input_scores, parameter->anchors_, output_boxes,
-                       output_classes, output_scores, output_num, parameter);
-  context_->allocator->Free(parameter->decoded_boxes_);
-  parameter->decoded_boxes_ = nullptr;
-  context_->allocator->Free(parameter->nms_candidate_);
-  parameter->nms_candidate_ = nullptr;
-  context_->allocator->Free(parameter->selected_);
-  parameter->selected_ = nullptr;
-  context_->allocator->Free(parameter->score_with_class_);
-  parameter->score_with_class_ = nullptr;
-  context_->allocator->Free(parameter->score_with_class_all_);
-  parameter->score_with_class_all_ = nullptr;
-  if (parameter->use_regular_nms_) {
-    context_->allocator->Free(parameter->indexes_);
-    parameter->indexes_ = nullptr;
+
+  status = DecodeBoxes(num_boxes_, input_boxes_, params_->anchors_, params_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "DecodeBoxes error";
+    FreeAllocatedBuffer();
+    return status;
   }
+
+  if (params_->use_regular_nms_) {
+    status = DetectionPostProcessRegular(num_boxes_, num_classes_with_bg_, input_scores_, output_boxes, output_classes,
+                                         output_scores, output_num, PartialArgSort, params_);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "DetectionPostProcessRegular error error_code[" << status << "]";
+      FreeAllocatedBuffer();
+      return status;
+    }
+  } else {
+    status = ParallelLaunch(this->context_->thread_pool_, NmsMultiClassesFastCoreRun, this, op_parameter_->thread_num_);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "NmsMultiClassesFastCoreRun error error_code[" << status << "]";
+      FreeAllocatedBuffer();
+      return status;
+    }
+    status = DetectionPostProcessFast(num_boxes_, num_classes_with_bg_, input_scores_,
+                                      reinterpret_cast<float *>(params_->decoded_boxes_), output_boxes, output_classes,
+                                      output_scores, output_num, PartialArgSort, params_);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "DetectionPostProcessFast error error_code[" << status << "]";
+      FreeAllocatedBuffer();
+      return status;
+    }
+  }
+  FreeAllocatedBuffer();
   return RET_OK;
-}
+}  // namespace mindspore::kernel
 }  // namespace mindspore::kernel

@@ -34,18 +34,24 @@ typedef struct {
   float xmax;
 } BboxCorner;
 
-typedef struct {
-  float score;
-  int index;
-} ScoreWithIndex;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+int DecodeBoxes(const int num_boxes, const float *input_boxes, const float *anchors,
+                DetectionPostProcessParameter *param);
 
-int DetectionPostProcess(const int num_boxes, const int num_classes_with_bg, float *input_boxes,
-                         const float *input_scores, float *input_anchors, float *output_boxes, float *output_classes,
-                         float *output_scores, float *output_num, DetectionPostProcessParameter *param);
+int NmsMultiClassesFastCore(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
+                            void (*)(const float *, int *, int, int), const DetectionPostProcessParameter *param,
+                            const int task_id, const int thread_num);
+
+int DetectionPostProcessFast(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
+                             const float *decoded_boxes, float *output_boxes, float *output_classes,
+                             float *output_scores, float *output_num, void (*)(const float *, int *, int, int),
+                             const DetectionPostProcessParameter *param);
+
+int DetectionPostProcessRegular(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
+                                float *output_boxes, float *output_classes, float *output_scores, float *output_num,
+                                void (*)(const float *, int *, int, int), const DetectionPostProcessParameter *param);
 #ifdef __cplusplus
 }
 #endif
