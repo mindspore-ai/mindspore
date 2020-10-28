@@ -35,10 +35,12 @@ class PoolingOpenCLKernel : public OpenCLKernel {
   int Run() override;
 
  private:
-  std::vector<size_t> InitGlobalSize() const;
+  void InitGlobalSize();
   PoolingParameter *parameter_;
   cl::Kernel kernel_;
   bool enable_fp16_{false};
+  std::vector<size_t> local_size_;
+  std::vector<size_t> global_size_;
 };
 
 }  // namespace mindspore::kernel
