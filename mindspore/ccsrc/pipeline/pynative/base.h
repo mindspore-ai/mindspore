@@ -53,8 +53,9 @@ struct OpExecInfo {
   std::string prim_id;
   PrimitivePyPtr py_primitive;
   AbstractBasePtr abstract;
-  ValuePtr value = nullptr;
+  bool is_dynamic_shape = false;
 
+  ValuePtr value = nullptr;
   py::list op_inputs;
   py::dict op_attrs;
   std::vector<bool> inputs_mask;
