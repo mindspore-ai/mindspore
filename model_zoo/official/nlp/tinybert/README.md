@@ -354,7 +354,7 @@ The best acc is 0.891176
 | Model Version              | TinyBERT                                                   | TinyBERT                           |
 | Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G               | NV SMX2 V100-32G, cpu:2.10GHz 64cores,  memory:251G         |
 | uploaded Date              | 08/20/2020                                                 | 08/24/2020                |
-| MindSpore Version          | 0.6.0                                                      | 0.7.0                     |
+| MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
 | Dataset                    | cn-wiki-128                                                | cn-wiki-128               |
 | Training Parameters        | src/gd_config.py                                           | src/gd_config.py          |
 | Optimizer                  | AdamWeightDecay                                            | AdamWeightDecay           |
@@ -365,6 +365,7 @@ The best acc is 0.891176
 | Total time                 | 17.3h(3poch, 8p)                                           | 48h(3poch, 8p)            |
 | Params (M)                 | 15M                                                        | 15M                       |
 | Checkpoint for task distill| 74M(.ckpt file)                                            | 74M(.ckpt file)           |    
+| Scripts                    | [TinyBERT](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/tinybert) |          |
 
 #### Inference Performance
 
@@ -373,7 +374,7 @@ The best acc is 0.891176
 | Model Version              |                               |                           |
 | Resource                   | Ascend 910                    | NV SMX2 V100-32G          |
 | uploaded Date              | 08/20/2020                    | 08/24/2020                |
-| MindSpore Version          | 0.6.0                         | 0.7.0                     |
+| MindSpore Version          | 1.0.0                         | 1.0.0                     |
 | Dataset                    | SST-2,                        | SST-2                     |
 | batch_size                 | 32                            | 32                        |
 | Accuracy                   | 0.902777                      | 0.9086                    |
