@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,9 @@ __global__ void SinKernel(const half *input, half *output, const size_t count) {
 template <typename T>
 __global__ void AsinKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = asinf(input[i]);
+    float inputf = static_cast<float>(input[i]);
+    T res = static_cast<T>(asinf(inputf));
+    output[i] = res;
   }
   return;
 }
@@ -132,7 +134,9 @@ __global__ void CosKernel(const half *input, half *output, const size_t count) {
 template <typename T>
 __global__ void ACosKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = acosf(input[i]);
+    float inputf = static_cast<float>(input[i]);
+    T res = static_cast<T>(acosf(inputf));
+    output[i] = res;
   }
   return;
 }
