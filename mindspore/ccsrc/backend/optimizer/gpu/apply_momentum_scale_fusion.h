@@ -37,27 +37,8 @@ class ApplyMomentumScaleFusion : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  static bool IsScalar(const BaseRef &n) {
-    if (utils::isa<AnfNodePtr>(n)) {
-      AnfNodePtr in = utils::cast<AnfNodePtr>(n);
-      MS_EXCEPTION_IF_NULL(in);
-      auto shape = in->Shape()->cast<abstract::ShapePtr>();
-      MS_EXCEPTION_IF_NULL(shape);
-      if (shape->shape().size() != 0) {
-        return false;
-      }
-      auto dtype = in->Type();
-      if (dtype->type_id() != kObjectTypeTensorType) {
-        return false;
-      }
-      auto element_type = dyn_cast<TensorType>(dtype)->element()->type_id();
-      if (element_type != kNumberTypeFloat32) {
-        return false;
-      }
-      return true;
-    }
-    return false;
-  }
+  static bool IsScalar(const BaseRef &n);
+
   VarPtr scale_;
   VarPtr variable_;
   VarPtr accumulation_;

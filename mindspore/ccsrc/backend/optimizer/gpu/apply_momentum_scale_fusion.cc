@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
 bool ApplyMomentumScaleFusion::IsScalar(const BaseRef &n) {
   if (utils::isa<AnfNodePtr>(n)) {
     AnfNodePtr in = utils::cast<AnfNodePtr>(n);
@@ -86,5 +85,5 @@ const AnfNodePtr ApplyMomentumScaleFusion::Process(const FuncGraphPtr &graph, co
   replace_node->set_scope(node->scope());
   return replace_node;
 }
-}  // namespace
 }  // namespace opt
+}  // namespace mindspore
