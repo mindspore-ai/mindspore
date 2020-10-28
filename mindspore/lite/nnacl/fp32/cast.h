@@ -39,6 +39,8 @@ void Int32ToFloat32(const int32_t *input, float *output, int number);
 void Fp16ToFloat32(const uint16_t *input, float *output, int number);
 void Float32ToFp16(const float *input, uint16_t *output, int number);
 void Float32ToInt32(const float *input, int32_t *output, int number);
+void Float32ToInt64(const float *input, int64_t *output, int number);
+void Int32ToInt64(const int32_t *input, int64_t *output, int number);
 #ifdef __cplusplus
 }
 #endif
