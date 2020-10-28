@@ -35,6 +35,7 @@ here basic modules mainly include basic operation like:  **3×3 conv** and **2×
 
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
 #### Dataset used: [CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>)
 
@@ -340,8 +341,8 @@ after allreduce eval: top5_correct=45582, tot=50000, acc=91.16%
 | -------------------------- | ---------------------------------------------- |------------------------------------|
 | Model Version              | VGG16                                          | VGG16                                           |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G  |NV SMX2 V100-32G                                 |
-| uploaded Date              | 08/20/2020                                      |08/20/2020                                       |
-| MindSpore Version          | 0.5.0-alpha                                     |0.5.0-alpha                                             |
+| uploaded Date              | 10/28/2020                                     | 10/28/2020                                       |
+| MindSpore Version          | 1.0.0                                          | 1.0.0                                             |
 | Dataset                    | CIFAR-10                                        |ImageNet2012                                     |
 | Training Parameters        | epoch=70, steps=781, batch_size = 64, lr=0.1   |epoch=150, steps=40036, batch_size = 32, lr=0.1  |
 | Optimizer                  | Momentum                                        |Momentum                                         |
@@ -360,8 +361,8 @@ after allreduce eval: top5_correct=45582, tot=50000, acc=91.16%
 | ------------------- | --------------------------- |---------------------
 | Model Version       | VGG16                       |    VGG16                       |
 | Resource            | Ascend 910                  |   GPU                          |
-| Uploaded Date       | 08/20/2020                |  08/20/2020                    |
-| MindSpore Version   | 0.5.0-alpha                 |0.5.0-alpha                     |
+| Uploaded Date       | 10/28/2020                  | 10/28/2020                     |
+| MindSpore Version   | 1.0.0                       | 1.0.0                          |
 | Dataset             | CIFAR-10, 10,000 images     |ImageNet2012, 5000 images       |
 | batch_size          |   64                        |    32                          |
 | outputs             | probability                 |    probability                            |
