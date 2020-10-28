@@ -38,6 +38,7 @@
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
+#include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
@@ -164,6 +165,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
   pm->AddPass(std::make_shared<opt::ArithmeticSimplify>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
+  pm->AddPass(std::make_shared<opt::TensorPromotion>());
   pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.

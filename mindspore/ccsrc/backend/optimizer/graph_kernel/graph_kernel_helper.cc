@@ -263,8 +263,9 @@ bool GenJson(const AnfNodePtrList &op_nodes, const AnfNodePtrList &inputs, const
   MS_LOG(INFO) << "Collect fusion json: " << fused_name;
   return true;
 }
+}  // namespace
 
-void ConvertComplexTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
+bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr) {
   MS_EXCEPTION_IF_NULL(inputs_ptr);
   auto nodes = TopoSort(fg->get_return());
 
@@ -284,7 +285,7 @@ void ConvertComplexTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inp
   }
 
   if (vmap.empty()) {
-    return;
+    return false;
   }
 
   auto mng = fg->manager();
@@ -310,11 +311,12 @@ void ConvertComplexTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inp
 
     inputs.push_back(vnode);
   }
+  return true;
 }
 
 // Transform nodes(including basic and composite node) to a new graph, and collect their inputs and outputs.
 std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(const AnfNodePtrList &fuse_nodes,
-                                                                                AnfNodePtrList *src_outputs = nullptr) {
+                                                                                AnfNodePtrList *src_outputs) {
   FuncGraphPtr fg;
   AnfNodePtrList inputs;
   AnfNodePtrList outputs;
@@ -341,13 +343,12 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(
   }
 
   EliminateMakeTuple(fg, mng);
-  ConvertComplexTensorToParameter(fg, &inputs);
+  ConvertNonscalarTensorToParameter(fg, &inputs);
 
   outputs.clear();
   kernel::GetFuncGraphOutputNodes(fg, &outputs);
   return std::make_tuple(fg, inputs, outputs);
 }
-}  // namespace
 
 void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
                       const AnfNodePtrList &outputs, kernel::Processor processor) {
