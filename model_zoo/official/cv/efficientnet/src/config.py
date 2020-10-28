@@ -41,6 +41,7 @@ efficientnet_b0_config_gpu = edict({
     'smoothing': 0.1,
     #Use Tensorflow BatchNorm defaults for models that support it
     'bn_tf': False,
+    'save_checkpoint': True,
     'keep_checkpoint_max': 10,
     'loss_scale': 1024,
     'resume_start_epoch': 0,
