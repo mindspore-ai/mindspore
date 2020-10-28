@@ -56,6 +56,15 @@ else()
     find_library(register libregister.so ${ASCEND_RUNTIME_PATH})
     find_library(resource libresource.so ${ASCEND_RUNTIME_PATH})
     find_library(error_manager liberror_manager.so ${ASCEND_RUNTIME_PATH})
+    # for Atlas env
+    set(ASCEND_TOOLKIT_RUNTIME_PATH ${ASCEND_PATH}/ascend-toolkit/latest/fwkacllib/lib64)
+    find_library(cce libcce.so ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(hccl libhccl.so ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(runtime libruntime.so ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(msprof libmsprof.so ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(register libregister.so ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(resource libresource.so ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    find_library(error_manager liberror_manager.so ${ASCEND_TOOLKIT_RUNTIME_PATH})
 endif()
 
 # compile libraries from following directories
