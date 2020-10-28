@@ -52,16 +52,23 @@ std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
 }
 
 void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
-  local_size_ = {16, 16};
-  auto out_shape = out_tensors_[0]->shape();
-  if (out_shape.size() == 2) {
-    size_t H = out_shape[0];
-    size_t W = UP_DIV(out_shape[1], C4NUM);
-    global_size_ = {W, H};
+  if (element_flag_) {
+    local_size_ = {16, 16};
+    auto out_shape = out_tensors_[0]->shape();
+    if (out_shape.size() == 2) {
+      size_t H = out_shape[0];
+      size_t W = UP_DIV(out_shape[1], C4NUM);
+      global_size_ = {W, H};
+    } else {
+      size_t H = out_shape[0] * out_shape[1];
+      size_t W = out_shape[2] * UP_DIV(out_shape[3], C4NUM);
+      global_size_ = {W, H};
+    }
   } else {
-    size_t H = out_shape[0] * out_shape[1];
-    size_t W = out_shape[2] * UP_DIV(out_shape[3], C4NUM);
-    global_size_ = {W, H};
+    local_size_ = {};
+    auto out_shape = GetNHWCShape(out_tensors_[0]->shape());
+    global_size_ = {static_cast<size_t>(UP_DIV(out_shape[3], C4NUM)), static_cast<size_t>(out_shape[2]),
+                    static_cast<size_t>(out_shape[1] * out_shape[0])};
   }
 }
 
@@ -126,6 +133,27 @@ int ArithmeticOpenCLKernel::InitBuffer() {
       }
     }
   }
+  return RET_OK;
+}
+
+int ArithmeticOpenCLKernel::SetArgs() {
+  int arg_idx = 3;
+  if (!element_flag_) {
+    cl_int4 input0_shape = {inputs_nhwc_shapes_[0][0], inputs_nhwc_shapes_[0][1], inputs_nhwc_shapes_[0][2],
+                            UP_DIV(inputs_nhwc_shapes_[0][3], C4NUM)};
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input0_shape);
+    cl_int4 input1_shape = {inputs_nhwc_shapes_[1][0], inputs_nhwc_shapes_[1][1], inputs_nhwc_shapes_[1][2],
+                            UP_DIV(inputs_nhwc_shapes_[1][3], C4NUM)};
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input1_shape);
+    auto out_shape = GetNHWCShape(out_tensors_[0]->shape());
+    cl_int4 output_shape{out_shape[0], out_shape[1], out_shape[2], UP_DIV(out_shape[3], C4NUM)};
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
+  } else {
+    cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
+  }
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_min_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_max_);
   return RET_OK;
 }
 
@@ -237,6 +265,7 @@ int ArithmeticOpenCLKernel::Init() {
 
   Image2dGetWorkGroupSize();
   InitBuffer();
+  SetArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -250,29 +279,7 @@ int ArithmeticOpenCLKernel::Run() {
   auto input_1_ptr = inputs_weight_ptrs_[1] == nullptr ? in_tensors_[1]->data_c() : inputs_weight_ptrs_[1];
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_1_ptr);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  if (!element_flag_) {
-    cl_int4 input0_shape = {inputs_nhwc_shapes_[0][0], inputs_nhwc_shapes_[0][1], inputs_nhwc_shapes_[0][2],
-                            UP_DIV(inputs_nhwc_shapes_[0][3], C4NUM)};
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input0_shape);
-    cl_int4 input1_shape = {inputs_nhwc_shapes_[1][0], inputs_nhwc_shapes_[1][1], inputs_nhwc_shapes_[1][2],
-                            UP_DIV(inputs_nhwc_shapes_[1][3], C4NUM)};
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input1_shape);
-    auto out_shape = GetNHWCShape(out_tensors_[0]->shape());
-    cl_int4 output_shape{out_shape[0], out_shape[1], out_shape[2], UP_DIV(out_shape[3], C4NUM)};
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_min_);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_max_);
-    ocl_runtime_->RunKernel(kernel_,
-                            {static_cast<size_t>(UP_DIV(out_shape[3], C4NUM)), static_cast<size_t>(out_shape[2]),
-                             static_cast<size_t>(out_shape[1] * out_shape[0])},
-                            {}, nullptr);
-  } else {
-    cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_min_);
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_max_);
-    ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
-  }
+  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
   return RET_OK;
 }
 

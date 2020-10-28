@@ -83,17 +83,20 @@ int PoolingOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  InitGlobalSize();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
 
   return mindspore::lite::RET_OK;
 }
 
-std::vector<size_t> PoolingOpenCLKernel::InitGlobalSize() const {
+void PoolingOpenCLKernel::InitGlobalSize() {
   const size_t global_x = out_tensors_[0]->shape()[1];
   const size_t global_y = out_tensors_[0]->shape()[2];
   const size_t global_z = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
-  std::vector<size_t> global = {global_x, global_y, global_z};
-  return global;
+  global_size_ = {global_z, global_y, global_x};
+  int max_work_group_size = ocl_runtime_->GetKernelMaxWorkGroupSize(kernel_(), (*ocl_runtime_->Device())());
+  local_size_ = GetCommonLocalSize(global_size_, max_work_group_size);
+  global_size_ = GetCommonGlobalSize(local_size_, global_size_);
 }
 
 int PoolingOpenCLKernel::Run() {
@@ -116,13 +119,7 @@ int PoolingOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, kernel_size);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, padding);
 
-  std::vector<size_t> local_size;
-  std::vector<size_t> global_size = InitGlobalSize();
-  int max_work_group_size = ocl_runtime_->GetKernelMaxWorkGroupSize(kernel_(), (*ocl_runtime_->Device())());
-  local_size = GetCommonLocalSize(global_size, max_work_group_size);
-  global_size = GetCommonGlobalSize(local_size, global_size);
-
-  ocl_runtime_->RunKernel(kernel_, global_size, local_size, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
   return mindspore::lite::RET_OK;
 }
 

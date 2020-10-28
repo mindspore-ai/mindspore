@@ -33,6 +33,7 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
   int Init() override;
   int Run() override;
   int InitBuffer() override;
+  int SetArgs();
 
  private:
   std::vector<size_t> InitGlobalSize() const;
