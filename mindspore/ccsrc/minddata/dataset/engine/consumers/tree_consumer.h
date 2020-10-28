@@ -164,6 +164,7 @@ class TreeGetters : public TreeConsumer {
   Status GetOutputShapes(std::vector<TensorShape> *shapes);
   Status GetBatchSize(int64_t *batch_size);
   Status GetRepeatCount(int64_t *repeat_count);
+  Status GetNumClasses(int64_t *num_classes);
   bool isInitialized();
   std::string Name() override { return "TreeGetters"; }
   Status GetRow(TensorRow *r);

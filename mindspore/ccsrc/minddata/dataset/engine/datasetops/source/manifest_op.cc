@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include <set>
 #include <nlohmann/json.hpp>
 
 #include "utils/ms_utils.h"
@@ -297,6 +298,7 @@ Status ManifestOp::ParseManifestFile() {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Manifest file: " + file_);
   }
   std::string line;
+  std::set<std::string> classes;
   while (getline(file_handle, line)) {
     try {
       nlohmann::json js = nlohmann::json::parse(line);
@@ -317,6 +319,7 @@ Status ManifestOp::ParseManifestFile() {
       for (nlohmann::json::iterator it = annotations.begin(); it != annotations.end(); ++it) {
         nlohmann::json annotation = it.value();
         std::string label_name = annotation.value("name", "");
+        classes.insert(label_name);
         if (label_name == "") {
           file_handle.close();
           RETURN_STATUS_UNEXPECTED("Invalid data, label name is not found in Manifest file: " + image_file_path);
@@ -336,6 +339,7 @@ Status ManifestOp::ParseManifestFile() {
       RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse manifest file: " + line);
     }
   }
+  num_classes_ = classes.size();
   file_handle.close();
 
   return Status::OK();
@@ -468,6 +472,19 @@ Status ManifestOp::GetDatasetSize(int64_t *dataset_size) {
   sample_size = sampler_->GetNumSamples();
   *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
   dataset_size_ = *dataset_size;
+  return Status::OK();
+}
+
+// Get number of classes
+Status ManifestOp::GetNumClasses(int64_t *num_classes) {
+  if (num_classes_ > 0) {
+    *num_classes = num_classes_;
+    return Status::OK();
+  }
+  std::shared_ptr<ManifestOp> op;
+  RETURN_IF_NOT_OK(Builder().SetManifestFile(file_).SetClassIndex(class_index_).SetUsage(usage_).Build(&op));
+  RETURN_IF_NOT_OK(op->ParseManifestFile());
+  *num_classes = num_classes_;
   return Status::OK();
 }
 

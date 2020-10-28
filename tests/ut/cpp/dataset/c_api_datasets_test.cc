@@ -221,7 +221,7 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongExtension) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestImageFolderGetDatasetSize) {
+TEST_F(MindDataTestPipeline, TestImageFolderGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestImageFolderGetDatasetSize.";
 
   // Create an ImageFolder Dataset
@@ -229,6 +229,10 @@ TEST_F(MindDataTestPipeline, TestImageFolderGetDatasetSize) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true);
   EXPECT_NE(ds, nullptr);
 
+  EXPECT_EQ(ds->GetDatasetSize(), 44);
+  EXPECT_EQ(ds->GetNumClasses(), 4);
+  EXPECT_EQ(ds->GetNumClasses(), 4);
+  EXPECT_EQ(ds->GetDatasetSize(), 44);
   EXPECT_EQ(ds->GetDatasetSize(), 44);
 }
 

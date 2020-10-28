@@ -257,30 +257,77 @@ int64_t Dataset::GetDatasetSize() {
 
 std::vector<DataType> Dataset::GetOutputTypes() {
   std::vector<DataType> types;
-  Status s;
+  Status rc;
+  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  rc = runtime_context->Init();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetOutputTypes: Initializing RuntimeContext failed.";
+    types.clear();
+    return types;
+  }
   if (!tree_getters_->isInitialized()) {
-    s = tree_getters_->Init(shared_from_this());
-    if (s.IsError()) {
-      MS_LOG(ERROR) << "GetDatasetSize: Initializing RuntimeContext failed.";
+    rc = tree_getters_->Init(shared_from_this());
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "GetOutputTypes: Initializing TreeGetters failed.";
+      types.clear();
       return types;
     }
   }
-  tree_getters_->GetOutputTypes(&types);
+  rc = tree_getters_->GetOutputTypes(&types);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetOutputTypes: Get Output Types failed.";
+    types.clear();
+    return types;
+  }
   return types;
 }
 
 std::vector<TensorShape> Dataset::GetOutputShapes() {
   std::vector<TensorShape> shapes;
-  Status s;
+  Status rc;
+  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  rc = runtime_context->Init();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetOutputShapes: Initializing RuntimeContext failed.";
+    shapes.clear();
+    return shapes;
+  }
   if (!tree_getters_->isInitialized()) {
-    s = tree_getters_->Init(shared_from_this());
-    if (s.IsError()) {
-      MS_LOG(ERROR) << "GetDatasetSize: Initializing RuntimeContext failed.";
+    rc = tree_getters_->Init(shared_from_this());
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "GetOutputShapes: Initializing TreeGetters failed.";
+      shapes.clear();
       return shapes;
     }
   }
-  tree_getters_->GetOutputShapes(&shapes);
+  rc = tree_getters_->GetOutputShapes(&shapes);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetOutputShapes: Get Output Shapes failed.";
+    shapes.clear();
+    return shapes;
+  }
   return shapes;
+}
+
+int64_t Dataset::GetNumClasses() {
+  int64_t num_classes;
+  auto ds = shared_from_this();
+  Status rc;
+  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  rc = runtime_context->Init();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetNumClasses: Initializing RuntimeContext failed.";
+    return -1;
+  }
+  if (!tree_getters_->isInitialized()) {
+    rc = tree_getters_->Init(ds);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "GetNumClasses: Initializing TreeGetters failed.";
+      return -1;
+    }
+  }
+  rc = tree_getters_->GetNumClasses(&num_classes);
+  return rc.IsError() ? -1 : num_classes;
 }
 
 // Constructor to initialize the cache
@@ -656,6 +703,7 @@ Status Dataset::AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   }
   return Status::OK();
 }
+
 int64_t Dataset::GetBatchSize() {
   int64_t batch_size;
   auto ds = shared_from_this();
@@ -666,14 +714,17 @@ int64_t Dataset::GetBatchSize() {
     MS_LOG(ERROR) << "GetBatchSize: Initializing RuntimeContext failed.";
     return -1;
   }
-  rc = tree_getters_->Init(ds);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetBatchSize: Initializing TreeGetters failed.";
-    return -1;
+  if (!tree_getters_->isInitialized()) {
+    rc = tree_getters_->Init(ds);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "GetBatchSize: Initializing TreeGetters failed.";
+      return -1;
+    }
   }
   rc = tree_getters_->GetBatchSize(&batch_size);
   return rc.IsError() ? -1 : batch_size;
 }
+
 int64_t Dataset::GetRepeatCount() {
   int64_t repeat_count;
   auto ds = shared_from_this();
@@ -684,10 +735,12 @@ int64_t Dataset::GetRepeatCount() {
     MS_LOG(ERROR) << "GetRepeatCount: Initializing RuntimeContext failed.";
     return -1;
   }
-  rc = tree_getters_->Init(ds);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetRepeatCount: Initializing TreeGetters failed.";
-    return -1;
+  if (!tree_getters_->isInitialized()) {
+    rc = tree_getters_->Init(ds);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "GetRepeatCount: Initializing TreeGetters failed.";
+      return -1;
+    }
   }
   rc = tree_getters_->GetRepeatCount(&repeat_count);
   return rc.IsError() ? 0 : repeat_count;

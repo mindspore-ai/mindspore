@@ -222,6 +222,11 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   /// \return Status of the function
   Status GetDatasetSize(int64_t *dataset_size) override;
 
+  /// \brief Base-class override for GetNumClasses
+  /// \param[out] num_classes the number of classes
+  /// \return Status of the function
+  Status GetNumClasses(int64_t *num_classes) override;
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

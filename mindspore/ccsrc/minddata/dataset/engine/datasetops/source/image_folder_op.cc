@@ -468,5 +468,17 @@ Status ImageFolderOp::GetDatasetSize(int64_t *dataset_size) {
   dataset_size_ = *dataset_size;
   return Status::OK();
 }
+
+// Get number of classes
+Status ImageFolderOp::GetNumClasses(int64_t *num_classes) {
+  if (num_classes_ > 0) {
+    *num_classes = num_classes_;
+    return Status::OK();
+  }
+  int64_t num_rows = num_rows_;
+  RETURN_IF_NOT_OK(CountRowsAndClasses(folder_path_, extensions_, &num_rows, num_classes));
+  num_classes_ = *num_classes;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

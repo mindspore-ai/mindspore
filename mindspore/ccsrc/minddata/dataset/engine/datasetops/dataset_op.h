@@ -191,6 +191,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Status - The status code return
   virtual int64_t GetTreeRepeatCount();
 
+  /// \brief Gets the number of classes
+  /// \return Status - The status code return
+  virtual Status GetNumClasses(int64_t *num_classes);
+
   /// \brief Performs handling for when an eoe message is received.
   /// The base class implementation simply flows the eoe message to output. Derived classes
   /// may override if they need to perform special eoe handling.
@@ -419,6 +423,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   std::mutex column_name_map_mutex_;                             // For protecting shared access to the column map
   CallbackManager callback_manager_;                             // Manages callbacks associated with a DatasetOp
   int64_t dataset_size_;                                         // Size of the dataset
+  int64_t num_classes_;                                          // Number of classes
 
  private:
   /// Sets the operator id.
