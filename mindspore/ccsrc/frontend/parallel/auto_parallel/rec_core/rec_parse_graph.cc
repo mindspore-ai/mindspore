@@ -48,7 +48,7 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
   auto idx = DictOpType.find(op_type);
   if (idx == DictOpType.end()) {
     NewOp.apply.op_type = OperatorType::kRecUnkownType;
-    MS_LOG(INFO) << "Unknown operator type: " << op_type;
+    MS_LOG(INFO) << ops[iter_ops]->name() << ": Unknown operator type " << op_type;
   } else {
     NewOp.apply.op_type = DictOpType.at(op_type);
   }
