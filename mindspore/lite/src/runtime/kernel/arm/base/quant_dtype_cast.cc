@@ -66,6 +66,16 @@ int QuantDTypeCastCPUKernel::Init() {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
       return RET_ERROR;
     }
+  } else if (param->srcT == kNumberTypeUInt8 && param->dstT == kNumberTypeFloat32) {
+    if (in_tensor->data_type() != kNumberTypeUInt8 || out_tensor->data_type() != kNumberTypeFloat32) {
+      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      return RET_ERROR;
+    }
+  } else if (param->srcT == kNumberTypeFloat32 && param->dstT == kNumberTypeUInt8) {
+    if (in_tensor->data_type() != kNumberTypeFloat32 || out_tensor->data_type() != kNumberTypeUInt8) {
+      MS_LOG(ERROR) << "param data type and tensor data type do not match.";
+      return RET_ERROR;
+    }
   } else {
     MS_LOG(ERROR) << "param data type not supported:"
                   << " src: " << param->srcT << " dst: " << param->dstT;
@@ -106,20 +116,26 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
                                  quant_arg.zeroPoint, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeInt8) {
-    ret = DoQuantizeToInt8FromFp32(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
-                                   quant_arg.zeroPoint, num_unit_thread);
+    ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_ptr_ + thread_offset, quant_arg.scale,
+                               quant_arg.zeroPoint, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeUInt8) {
-    ret = DoDequantizeInt8ToUInt8(int8_ptr_ + thread_offset, uint8_ptr_ + thread_offset, num_unit_thread);
+    ret = Int8ToUInt8(int8_ptr_ + thread_offset, uint8_ptr_ + thread_offset, num_unit_thread);
+  } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
+    ret = DoDequantizeUInt8ToFp32(uint8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
+                                  quant_arg.zeroPoint, num_unit_thread);
+  } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeUInt8) {
+    ret = DoQuantizeFp32ToUInt8(float32_ptr_ + thread_offset, uint8_ptr_ + thread_offset, quant_arg.scale,
+                                quant_arg.zeroPoint, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeInt8) {
-    ret = DoQuantizeToInt8FromUint8(uint8_ptr_ + thread_offset, int8_ptr_ + thread_offset, num_unit_thread);
+    ret = UInt8ToInt8(uint8_ptr_ + thread_offset, int8_ptr_ + thread_offset, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeInt8) {
     auto input_quant_arg = in_tensors_.front()->GetQuantParams().front();
     ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, num_unit_thread,
                                  input_quant_arg.scale, input_quant_arg.zeroPoint);
     if (ret) {
       auto output_quant_arg = out_tensors_.front()->GetQuantParams().front();
-      ret = DoQuantizeToInt8FromFp32(float32_ptr_ + thread_offset, int8_out_ptr_ + thread_offset,
-                                     output_quant_arg.scale, output_quant_arg.zeroPoint, num_unit_thread);
+      ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_out_ptr_ + thread_offset, output_quant_arg.scale,
+                                 output_quant_arg.zeroPoint, num_unit_thread);
     }
   }
 
@@ -162,6 +178,14 @@ int QuantDTypeCastCPUKernel::Run() {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
     int8_out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
     float32_ptr_ = new float[in_tensors_[0]->ElementsNum()];
+  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8 &&
+             out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
+    uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_[0]->data_c());
+    float32_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->data_c());
+  } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32 &&
+             out_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8) {
+    float32_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->data_c());
+    uint8_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c());
   }
 
   auto ret = ParallelLaunch(this->context_->thread_pool_, QuantDTypeCastRun, this, thread_n_num_);

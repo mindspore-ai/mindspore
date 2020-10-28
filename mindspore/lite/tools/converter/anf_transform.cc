@@ -46,6 +46,10 @@ AnfTransform::~AnfTransform() = default;
 
 FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   MS_ASSERT(nullptr != old_graph);
+  if (config == nullptr) {
+    MS_LOG(ERROR) << "config shoud be specified";
+    return nullptr;
+  }
   // fusion const_fold
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);

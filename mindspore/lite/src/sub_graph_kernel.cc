@@ -178,7 +178,7 @@ int CpuFp16SubGraph::PreProcess() {
 }
 
 int CpuFp16SubGraph::PostProcess() {
-  auto fp16_to_fp32_cast_func = lite::Float16CastUtil::GetInstance()->float16_to_float32_func_;
+  auto fp16_to_fp32_cast_func = kernel::Float16CastUtil::GetInstance()->float16_to_float32_func_;
   if (fp16_to_fp32_cast_func == nullptr) {
     MS_LOG(ERROR) << "Can not find cast fp16 to fp32 func";
     return RET_ERROR;
