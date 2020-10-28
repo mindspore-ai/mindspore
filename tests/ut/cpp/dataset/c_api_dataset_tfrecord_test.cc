@@ -491,3 +491,17 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception2) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestIncorrectTFSchemaObject) {
+  std::string path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
+  std::shared_ptr<api::SchemaObj> schema = api::Schema();
+  schema->add_column("image", "uint8", {1});
+  schema->add_column("label", "int64", {1});
+  std::shared_ptr<api::Dataset> ds = api::TFRecord({path}, schema);
+  EXPECT_NE(ds, nullptr);
+  auto itr = ds->CreateIterator();
+  EXPECT_NE(itr, nullptr);
+  TensorMap mp;
+  // this will fail due to the incorrect schema used
+  EXPECT_FALSE(itr->GetNextRow(&mp));
+}

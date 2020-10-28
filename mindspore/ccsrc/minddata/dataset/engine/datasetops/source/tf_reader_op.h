@@ -387,7 +387,7 @@ class TFReaderOp : public ParallelOp {
   // @param end_file - If file contains the end sample of data.
   // @param pre_count - Total rows of previous files.
   // @return Status - the error code returned.
-  bool NeedPushFileToblockQueue(const std::string &file_name, int64_t *start_offset, int64_t *end_offset,
+  bool NeedPushFileToBlockQueue(const std::string &file_name, int64_t *start_offset, int64_t *end_offset,
                                 const int64_t &pre_count);
 
   // Caculate number of rows in each shard.
