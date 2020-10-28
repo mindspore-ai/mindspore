@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+#include <sys/stat.h>
 #include <fstream>
 #include <string>
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/util/path.h"
+#include "mindspore/core/utils/ms_utils.h"
 namespace mindspore {
 namespace dataset {
 
@@ -58,6 +60,18 @@ Status DeviceQueueTracing::SaveToFile() {
 
 Status DeviceQueueTracing::Init(const std::string &dir_path, const std::string &device_id) {
   file_path_ = (Path(dir_path) / Path("device_queue_profiling_" + device_id + ".txt")).toString();
+  return Status::OK();
+}
+
+Status DeviceQueueTracing::ChangeFileMode() {
+  if (value_.empty()) {
+    return Status::OK();
+  }
+
+  if (chmod(common::SafeCStr(file_path_), S_IRUSR | S_IWUSR) == -1) {
+    std::string err_str = "Change file mode failed," + file_path_;
+    return Status(StatusCode::kUnexpectedError, err_str);
+  }
   return Status::OK();
 }
 }  // namespace dataset

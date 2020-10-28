@@ -35,6 +35,7 @@ class GetNextProfiling : public ProfilingOp {
   uint64_t GetTimeStamp() const;
   void RecordData(uint32_t queue_size, uint64_t start_time_stamp, uint64_t end_time_stamp);
   void Init();
+  void ChangeFileMode();
 
  private:
   std::string profiling_path_;

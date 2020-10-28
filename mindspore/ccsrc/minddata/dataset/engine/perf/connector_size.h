@@ -61,6 +61,9 @@ class ConnectorSize : public Sampling {
   // Parse op infomation and transform to json format
   json ParseOpInfo(const DatasetOp &node, const std::vector<int32_t> &size);
 
+  // Change file mode after save throughput data
+  Status ChangeFileMode() { return Status::OK(); }
+
  private:
   ExecutionTree *tree_ = nullptr;          // ExecutionTree pointer
   ConnectorSizeSampleTable sample_table_;  // Dataset structure to store all samples of connector size sampling

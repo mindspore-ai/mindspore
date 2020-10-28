@@ -59,21 +59,6 @@ class ConnectorThroughput : public Sampling {
   // This function samples the connector size of every nodes within the ExecutionTree
   Status Sample() override;
 
-  /* Status TestPrint() override {
-     std::ofstream os("performance_monitor.txt");
-     if (throughput_.size() == 0) {
-       os << "data is empty" << std::endl;
-       return Status::OK();
-     }
-     for (int i = 0; i < throughput_.size(); i++) {
-       for (int j = 0; j < n_nodes_; j++) {
-         os << throughput_[j][i] << " ";
-       }
-       os << std::endl;
-     }
-     return Status::OK();
-   };*/
-
   // Traverse the tree nodes and count them
   int InitNodes();
 
@@ -86,6 +71,8 @@ class ConnectorThroughput : public Sampling {
   Status Init(const std::string &dir_path, const std::string &device_id);
 
   json ParseOpInfo(const DatasetOp &node, const std::vector<double> &thr);
+
+  Status ChangeFileMode() override;
 
  private:
   ExecutionTree *tree_ = nullptr;  // ExecutionTree pointer
