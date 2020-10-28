@@ -44,10 +44,11 @@ class Initializer:
 
     @property
     def seed(self):
-        seed_ = self._seed if self._seed is not None else get_seed()
-        if seed_ is None:
-            seed_ = 1
-        _, seed = _get_graph_seed(seed_, "init")
+        if self._seed is None:
+            seed_ = get_seed() if get_seed() is not None else 1
+            _, seed = _get_graph_seed(seed_, "init")
+        else:
+            seed = self._seed
         return seed
 
     @seed.setter
