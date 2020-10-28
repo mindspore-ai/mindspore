@@ -31,11 +31,76 @@ DeConvWinogradFp16CPUKernel::~DeConvWinogradFp16CPUKernel() {
   return;
 }
 
-void DeConvWinogradFp16CPUKernel::FreeResizeBuf() { return; }
+void DeConvWinogradFp16CPUKernel::FreeResizeBuf() {
+  for (int i = 0; i < deconv_param_->compute_size_; i++) {
+    DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
+    if (unit.tmp_buffer_ != nullptr) {
+      free(unit.tmp_buffer_);
+      unit.tmp_buffer_ = nullptr;
+    }
+    if (unit.use_winograd_) {
+      if (unit.winograd_.b_buffer_ != nullptr) {
+        free(unit.winograd_.b_buffer_);
+        unit.winograd_.b_buffer_ = nullptr;
+      }
+    }
+  }
+
+  for (int i = 0; i < DECONV_WINOGRAD_BUFFER_COUNT; i++) {
+    DeConvWgABuffer &wg = deconv_param_->a_buffer_[i];
+    if (wg.buf_init_) {
+      if (wg.dest_buffer_ != nullptr) {
+        free(wg.dest_buffer_);
+        wg.dest_buffer_ = nullptr;
+      }
+      if (wg.middle_buffer_ != nullptr) {
+        free(wg.middle_buffer_);
+        wg.middle_buffer_ = nullptr;
+      }
+    }
+    wg.buf_init_ = false;
+  }
+
+  if (tile_input_ != nullptr) {
+    free(tile_input_);
+    tile_input_ = nullptr;
+  }
+
+  if (tile_output_ != nullptr) {
+    free(tile_output_);
+    tile_output_ = nullptr;
+  }
+
+  if (nc4hw4_output_ != nullptr) {
+    free(nc4hw4_output_);
+    nc4hw4_output_ = nullptr;
+  }
+  return;
+}
 
 void DeConvWinogradFp16CPUKernel::FreeDeconvParam() {
+  for (int i = 0; i < deconv_param_->compute_size_; i++) {
+    DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
+
+    if (unit.weight_ != nullptr) {
+      free(unit.weight_);
+      unit.weight_ = nullptr;
+    }
+
+    if (unit.use_winograd_) {
+      if (unit.winograd_.AT_ != nullptr) {
+        free(unit.winograd_.AT_);
+        unit.winograd_.AT_ = nullptr;
+      }
+      if (unit.winograd_.BT_ != nullptr) {
+        free(unit.winograd_.BT_);
+        unit.winograd_.BT_ = nullptr;
+      }
+    }
+  }
+
   if (deconv_param_ != nullptr) {
-    delete deconv_param_;
+    delete (deconv_param_);
     deconv_param_ = nullptr;
   }
   return;
@@ -47,6 +112,9 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
 
   nc4hw4_output_ =
     reinterpret_cast<float16_t *>(malloc(deconv_param_->oc_up4_ * deconv_param_->output_plane_ * sizeof(float16_t)));
+  if (nc4hw4_output_ == nullptr) {
+    return RET_NULL_PTR;
+  }
 
   deconv_param_->in_tile_w_count_ = UP_DIV(conv_param_->input_w_, DECONV_WINOGRAD_DEFAULT_UNIT);
   deconv_param_->in_tile_h_count_ = UP_DIV(conv_param_->input_h_, DECONV_WINOGRAD_DEFAULT_UNIT);
@@ -62,6 +130,9 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
   int size = deconv_param_->thread_num_ * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
              DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
   tile_input_ = reinterpret_cast<float16_t *>(malloc(size * sizeof(float16_t)));
+  if (tile_input_ == nullptr) {
+    return RET_NULL_PTR;
+  }
   memset(tile_input_, 0, size * sizeof(float16_t));
 
   deconv_param_->out_tile_w_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_w_ + conv_param_->kernel_w_;
@@ -69,6 +140,9 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
   size = deconv_param_->thread_num_ * deconv_param_->out_tile_w_ * deconv_param_->out_tile_h_ *
          DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->oc_up4_;
   tile_output_ = reinterpret_cast<float16_t *>(malloc(size * sizeof(float16_t)));
+  if (tile_output_ == nullptr) {
+    return RET_NULL_PTR;
+  }
 
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
@@ -79,18 +153,33 @@ int DeConvWinogradFp16CPUKernel::InitParameter() {
         size = unit.winograd_.kh_ * unit.winograd_.kw_ * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
         deconv_param_->a_buffer_[unit.winograd_.kh_].middle_buffer_ =
           malloc(deconv_param_->thread_num_ * size * sizeof(float16_t));
+        if (deconv_param_->a_buffer_[unit.winograd_.kh_].middle_buffer_ == nullptr) {
+          return RET_NULL_PTR;
+        }
         deconv_param_->a_buffer_[unit.winograd_.kh_].dest_buffer_ =
           malloc(deconv_param_->thread_num_ * size * sizeof(float16_t));
+        if (deconv_param_->a_buffer_[unit.winograd_.kh_].dest_buffer_ == nullptr) {
+          return RET_NULL_PTR;
+        }
       }
 
       unit.winograd_.b_buffer_ = malloc(deconv_param_->thread_num_ * unit.winograd_.kh_ * unit.winograd_.kw_ *
                                         deconv_param_->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE * sizeof(float16_t));
+      if (unit.winograd_.b_buffer_ == nullptr) {
+        return RET_NULL_PTR;
+      }
       unit.tmp_buffer_ = malloc(deconv_param_->thread_num_ * unit.winograd_.kh_ * unit.winograd_.kw_ *
                                 deconv_param_->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float16_t));
+      if (unit.tmp_buffer_ == nullptr) {
+        return RET_NULL_PTR;
+      }
 
     } else {
       unit.tmp_buffer_ = malloc(deconv_param_->thread_num_ * deconv_param_->oc_div4_ * unit.w_size_ * unit.h_size_ *
                                 DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float16_t));
+      if (unit.tmp_buffer_ == nullptr) {
+        return RET_NULL_PTR;
+      }
     }
   }
 
@@ -204,9 +293,15 @@ int DeConvWinogradFp16CPUKernel::InitComputeParam() {
         unit.winograd_.b_buffer_ = nullptr;
         unit.weight_ = malloc(unit.winograd_.kh_ * unit.winograd_.kw_ * deconv_param_->oc_up4_ *
                               deconv_param_->ic_up4_ * sizeof(float16_t));
+        if (unit.weight_ == nullptr) {
+          return RET_NULL_PTR;
+        }
       } else {
         unit.use_winograd_ = false;
         unit.weight_ = malloc(h_size * w_size * deconv_param_->ic_up4_ * deconv_param_->oc_up4_ * sizeof(float16_t));
+        if (unit.weight_ == nullptr) {
+          return RET_NULL_PTR;
+        }
       }
       unit.tmp_buffer_ = nullptr;
       deconv_param_->compute_units_[cur_count] = unit;
@@ -226,7 +321,7 @@ int DeConvWinogradFp16CPUKernel::InitDataParam() {
   }
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param_->compute_units_[i];
-    ret = PackDeConvWgDataFp16(fp16_weight_, unit, conv_param_, deconv_param_);
+    ret = PackDeConvWgDataFp16(execute_weight_, unit, conv_param_, deconv_param_);
     if (ret != RET_OK) {
       return ret;
     }
