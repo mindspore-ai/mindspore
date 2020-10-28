@@ -31,6 +31,7 @@ LSTM contains embeding, encoder and decoder modules. Encoder module consists of 
 
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
 - aclImdb_v1 for training evaluation.[Large Movie Review Dataset](http://ai.stanford.edu/~amaas/data/sentiment/)
 - GloVe: Vector representations for words.[GloVe: Global Vectors for Word Representation](https://nlp.stanford.edu/projects/glove/)
@@ -226,8 +227,8 @@ config.py:
 | Parameters                 | LSTM (GPU)                                                     | LSTM (CPU)                 |
 | -------------------------- | -------------------------------------------------------------- | -------------------------- |
 | Resource                   | Tesla V100-SMX2-16GB                                           | Ubuntu X86-i7-8565U-16GB   |
-| uploaded Date              | 08/06/2020 (month/day/year)                                    | 08/06/2020 (month/day/year)|
-| MindSpore Version          | 0.6.0-beta                                                     | 0.6.0-beta                 |
+| uploaded Date              | 10/28/2020 (month/day/year)                                    | 10/28/2020 (month/day/year)|
+| MindSpore Version          | 1.0.0                                                          | 1.0.0                      |
 | Dataset                    | aclimdb_v1                                                     | aclimdb_v1                 |
 | Training Parameters        | epoch=20, batch_size=64                                        | epoch=20, batch_size=64    |
 | Optimizer                  | Momentum                                                       | Momentum                   |
@@ -244,8 +245,8 @@ config.py:
 | Parameters          | LSTM (GPU)                  | LSTM (CPU)                   |
 | ------------------- | --------------------------- | ---------------------------- |
 | Resource            | Tesla V100-SMX2-16GB        | Ubuntu X86-i7-8565U-16GB     |
-| uploaded Date       | 08/06/2020 (month/day/year) | 08/06/2020 (month/day/year)  |
-| MindSpore Version   | 0.6.0-beta                  | 0.6.0-beta                   |
+| uploaded Date       | 10/28/2020 (month/day/year) | 10/28/2020 (month/day/year)  |
+| MindSpore Version   | 1.0.0                       | 1.0.0                        |
 | Dataset             | aclimdb_v1                  | aclimdb_v1                   |
 | batch_size          | 64                          | 64                           |
 | Accuracy            | 84%                         | 83%                          |
