@@ -33,6 +33,8 @@ Specifically, Transformer contains six encoder modules and six decoder modules. 
 
 # [Dataset](#contents)
 
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
 - *WMT Englis-German* for training.
 - *WMT newstest2014* for evaluation. 
 
@@ -236,8 +238,8 @@ Parameters for learning rate:
 | Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
 | Resource                   | Ascend 910                                                     |
-| uploaded Date              | 06/09/2020 (month/day/year)                                    |
-| MindSpore Version          | 0.5.0-beta                                                     |
+| uploaded Date              | 09/15/2020 (month/day/year)                                    |
+| MindSpore Version          | 1.0.0                                                          |
 | Dataset                    | WMT Englis-German                                              |
 | Training Parameters        | epoch=52, batch_size=96                                        |
 | Optimizer                  | Adam                                                           |
@@ -255,8 +257,8 @@ Parameters for learning rate:
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Resource            | Ascend 910                  |
-| Uploaded Date       | 06/09/2020 (month/day/year) |
-| MindSpore Version   | 0.5.0-beta                  |
+| Uploaded Date       | 09/15/2020 (month/day/year) |
+| MindSpore Version   | 1.0.0                       |
 | Dataset             | WMT newstest2014            |
 | batch_size          | 1                           |
 | outputs             | BLEU score                  |
