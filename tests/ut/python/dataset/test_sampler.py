@@ -236,6 +236,12 @@ def test_add_sampler_invalid_input():
     assert "Conflicting arguments during sampler assignments" in str(info.value)
 
 
+def test_distributed_sampler_invalid_offset():
+    with pytest.raises(ValueError) as info:
+        sampler = ds.DistributedSampler(num_shards=4, shard_id=0, shuffle=False, num_samples=None, offset=5)
+    assert "offset should be no more than num_shards" in str(info.value)
+
+
 if __name__ == '__main__':
     test_sequential_sampler(True)
     test_random_sampler(True)
@@ -245,3 +251,4 @@ if __name__ == '__main__':
     test_subset_sampler()
     test_sampler_chain()
     test_add_sampler_invalid_input()
+    test_distributed_sampler_invalid_offset()

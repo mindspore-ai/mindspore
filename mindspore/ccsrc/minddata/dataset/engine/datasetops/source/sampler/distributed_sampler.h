@@ -34,11 +34,12 @@ class DistributedSampler : public Sampler {
   /// \param[in] shuffle Option to shuffle
   /// \param seed Seed parameter to shuffle, default to max unsigned int (different seed in sampler will
   ///     result in different samples being picked
-  /// \param[in] offset The starting position which the elements in the dataset are send to.The application
-  ///     scenario of this parameter is when the concatdataset is set distributedSampler
+  /// \param[in] offset The starting device id where the elements in the dataset are send to, which should be no more
+  ///     than num_dev. The application scenario of this parameter is when the concatdataset is set distributedSampler
   /// \param even_dist The option to indicate whether or not each shard returns the same number of rows.
   ///     This option is not exposed in the python API. Current behavior is that the remainder will always
-  ///     be handled by the first n shards, n being the corresponding device id.
+  ///     be handled by the first n shards, n being the corresponding device id. Please notice that when offset is set,
+  ///     even_dist will be forcibly converted to false for sending rest datasets in concatdataset scenario.
   DistributedSampler(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
                      uint32_t seed = std::numeric_limits<uint32_t>::max(), int64_t offset = -1, bool even_dist = true);
 

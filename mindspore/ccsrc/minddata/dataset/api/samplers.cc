@@ -142,6 +142,12 @@ bool DistributedSamplerObj::ValidateParams() {
     return false;
   }
 
+  if (offset_ > num_shards_) {
+    MS_LOG(ERROR) << "DistributedSampler: invalid offset: " << offset_
+                  << ", which should be no more than num_shards: " << num_shards_;
+    return false;
+  }
+
   return true;
 }
 

@@ -116,3 +116,42 @@ TEST_F(MindDataTestPipeline, TestWeightedRandomSamplerFail) {
   std::shared_ptr<SamplerObj> sampl3 = WeightedRandomSampler(weights3);
   EXPECT_EQ(sampl3, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerSuccess.";
+  // Test basic setting of distributed_sampler
+
+  // num_shards=4, shard_id=0, shuffle=false, num_samplers=0, seed=0, offset=-1, even_dist=true
+  std::shared_ptr<SamplerObj> sampler = DistributedSampler(4, 0, false, 0, 0, -1, true);
+  EXPECT_NE(sampler, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto label = row["label"];
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 11);
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestDistributedSamplerFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerFail.";
+  // Test invalid offset setting of distributed_sampler
+
+  // offset=5 which is greater than num_shards=4
+  std::shared_ptr<SamplerObj> sampler = DistributedSampler(4, 0, false, 0, 0, 5, false);
+  EXPECT_EQ(sampler, nullptr);
+}
