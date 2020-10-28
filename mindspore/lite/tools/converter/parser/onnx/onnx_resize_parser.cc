@@ -55,7 +55,7 @@ STATUS OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
           {"tf_half_pixel_for_nn", schema::CoordinateTransformMode_TF_HALF_PIXEL},
           {"tf_crop_and_resize", schema::CoordinateTransformMode_TF_CROP_AND_RESIZE},
         };
-        return transform_map[onnx_node_attr.strings(0)];
+        return transform_map[onnx_node_attr.s()];
       }();
     } else if (attribute_name == "cubic_coeff_a") {
       attr->cubicCoeff = onnx_node_attr.f();
@@ -70,7 +70,7 @@ STATUS OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
           {"linear", schema::ResizeMethod_LINEAR},
           {"cubic", schema::ResizeMethod_CUBIC},
         };
-        return resize_mode[onnx_node_attr.strings(0)];
+        return resize_mode[onnx_node_attr.s()];
       }();
     } else if (attribute_name == "nearest_mode") {
       attr->nearestMode = [&]() {
@@ -80,7 +80,7 @@ STATUS OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
           {"floor", schema::NearestMode_FLOOR},
           {"ceil", schema::NearestMode_CEIL},
         };
-        return nearest_mode[onnx_node_attr.strings(0)];
+        return nearest_mode[onnx_node_attr.s()];
       }();
     }
   }
