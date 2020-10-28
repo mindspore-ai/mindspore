@@ -17,9 +17,9 @@
 current_exec_path=$(pwd)
 echo 'current_exec_path: '${current_exec_path}
 
-if [ $# != 1 ]
+if [ $# != 2 ]
 then
-    echo "Usage: sh run_distribute_train.sh [PRETRAINED_PATH]"
+    echo "Usage: sh run_distribute_train.sh [RANK_FILE] [PRETRAINED_PATH]"
 exit 1
 fi
 
@@ -30,20 +30,24 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
+
 PATH1=$(get_real_path $1)
-
-
 if [ ! -f $PATH1 ]
 then
-    echo "error: PRETRAINED_PATH=$PATH1 is not a file"
+    echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
 exit 1
 fi
 
-python ${current_exec_path}/src/generate_hccn_file.py
+PATH2=$(get_real_path $2)
+if [ ! -f $PATH2 ]
+then
+    echo "error: PRETRAINED_PATH=$PATH2 is not a file"
+exit 1
+fi
 
 export DEVICE_NUM=8
 export RANK_SIZE=8
-export RANK_TABLE_FILE=${current_exec_path}/rank_table_8p.json
+export RANK_TABLE_FILE=$PATH1
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do
@@ -70,7 +74,7 @@ do
     cd ${current_exec_path}/device_$i || exit
     export RANK_ID=$i
     export DEVICE_ID=$i
-    python ${current_exec_path}/train.py --run_distribute --device_id $i --pre_trained $PATH1 --device_num ${DEVICE_NUM} >test_deep$i.log 2>&1 &
+    python ${current_exec_path}/train.py --run_distribute --device_id $i --pre_trained $PATH2 --device_num ${DEVICE_NUM} >test_deep$i.log 2>&1 &
     cd ${current_exec_path} || exit
 done
 

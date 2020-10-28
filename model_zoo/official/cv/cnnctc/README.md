@@ -148,7 +148,6 @@ The entire code structure is as following:
         |---callback.py    // loss callback file
         |---dataset.py    // process dataset
         |---util.py    // routine operation
-        |---generate_hccn_file.py    // generate distribute json file
         |---preprocess_dataset.py    // preprocess dataset
 
 ```
