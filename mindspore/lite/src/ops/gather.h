@@ -33,6 +33,7 @@ class Gather : public PrimitiveC {
   explicit Gather(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(int axis);
   void SetBatchDims(int batch_dims);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   Gather() = default;
 

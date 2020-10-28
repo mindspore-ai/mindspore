@@ -31,6 +31,51 @@ void Power::SetPower(float power) { this->primitive_->value.AsPower()->power = p
 void Power::SetScale(float scale) { this->primitive_->value.AsPower()->scale = scale; }
 void Power::SetShift(float shift) { this->primitive_->value.AsPower()->shift = shift; }
 
+int Power::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Power;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Power) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    delete this->primitive_;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::PowerT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      delete this->primitive_;
+      return RET_ERROR;
+    }
+
+    if (prim.GetAttr("scale") == nullptr) {
+      MS_LOG(WARNING) << "get scale failed";
+      attr->scale = 1.0f;
+    } else {
+      attr->scale = GetValue<float>(prim.GetAttr("scale"));
+    }
+    if (prim.GetAttr("power") == nullptr) {
+      MS_LOG(WARNING) << "get power failed";
+      attr->power = 1.0f;
+    } else {
+      attr->power = GetValue<float>(prim.GetAttr("power"));
+    }
+    if (prim.GetAttr("shift") == nullptr) {
+      MS_LOG(WARNING) << "get shift failed";
+      attr->shift = 0;
+    } else {
+      attr->shift = GetValue<float>(prim.GetAttr("shift"));
+    }
+    this->primitive_->value.value = attr;
+  }
+  return RET_OK;
+}
+
 #else
 
 float Power::GetPower() const { return this->primitive_->value_as_Power()->power(); }

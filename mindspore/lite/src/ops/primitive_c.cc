@@ -145,6 +145,8 @@
 #include "src/ops/identity.h"
 #include "src/ops/instance_norm.h"
 #include "src/ops/while.h"
+#include "src/ops/oneslike.h"
+#include "src/ops/unsorted_segment_sum.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -165,6 +167,10 @@
 #include "src/ops/sgd.h"
 #include "src/ops/adam.h"
 #include "src/ops/assign.h"
+#include "src/ops/control_depend.h"
+#include "src/ops/assign_add.h"
+#include "src/ops/binary_cross_entropy.h"
+#include "src/ops/binary_cross_entropy_grad.h"
 #endif
 
 #endif
@@ -504,6 +510,18 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<While>(prim, inputs, quantType);
   } else if (op_type == "OneHot") {
     return NewPrimitiveC<OneHot>(prim, inputs, quantType);
+  } else if (op_type == "GatherV2") {
+    return NewPrimitiveC<Gather>(prim, inputs, quantType);
+  } else if (op_type == "OnesLike") {
+    return NewPrimitiveC<OnesLike>(prim, inputs, quantType);
+  } else if (op_type == "Pow") {
+    return NewPrimitiveC<Power>(prim, inputs, quantType);
+  } else if (op_type == "Sub") {
+    return NewPrimitiveC<Sub>(prim, inputs, quantType);
+  } else if (op_type == "ExpandDims") {
+    return NewPrimitiveC<ExpandDims>(prim, inputs, quantType);
+  } else if (op_type == "UnsortedSegmentSum") {
+    return NewPrimitiveC<UnsortedSegmentSum>(prim, inputs, quantType);
 
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
@@ -514,6 +532,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<ApplyMomentum>(prim, inputs, quantType);
   } else if (op_type == "Depend") {
     return NewPrimitiveC<Depend>(prim, inputs, quantType);
+  } else if (op_type == "ControlDepend") {
+    return NewPrimitiveC<ControlDepend>(prim, inputs, quantType);
   } else if ((op_type == "ReluGrad" || op_type == "ReLU6Grad" || op_type == "SigmoidGrad" ||
               op_type == "HSigmoidGrad" || op_type == "HSwishGrad")) {
     return NewPrimitiveC<ActivationGrad>(prim, inputs, quantType);
@@ -539,6 +559,12 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Adam>(prim, inputs, quantType);
   } else if (op_type == "Assign") {
     return NewPrimitiveC<Assign>(prim, inputs, quantType);
+  } else if (op_type == "AssignAdd") {
+    return NewPrimitiveC<AssignAdd>(prim, inputs, quantType);
+  } else if (op_type == "BinaryCrossEntropy") {
+    return NewPrimitiveC<BinaryCrossEntropy>(prim, inputs, quantType);
+  } else if (op_type == "BinaryCrossEntropyGrad") {
+    return NewPrimitiveC<BinaryCrossEntropyGrad>(prim, inputs, quantType);
 #else
   } else if (op_type == "Conv2DBackpropInput") {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
@@ -830,6 +856,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new PowerGrad(primitive);
     case schema::PrimitiveType_Depend:
       return new Depend(primitive);
+    case schema::PrimitiveType_ControlDepend:
+      return new ControlDepend(primitive);
     case schema::PrimitiveType_FlattenGrad:
       return new FlattenGrad(primitive);
     case schema::PrimitiveType_NegGrad:
@@ -842,6 +870,17 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new Adam(primitive);
     case schema::PrimitiveType_Assign:
       return new Assign(primitive);
+    case schema::PrimitiveType_AssignAdd:
+      return new AssignAdd(primitive);
+    case schema::PrimitiveType_OnesLike:
+      return new OnesLike(primitive);
+    case schema::PrimitiveType_UnsortedSegmentSum:
+      return new UnsortedSegmentSum(primitive);
+    case schema::PrimitiveType_BinaryCrossEntropyGrad:
+      return new BinaryCrossEntropyGrad(primitive);
+    case schema::PrimitiveType_BinaryCrossEntropy:
+      return new BinaryCrossEntropy(primitive);
+
 #endif
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);

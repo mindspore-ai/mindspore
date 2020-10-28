@@ -36,6 +36,9 @@
 #include "src/ops/bn_grad.h"
 #include "nnacl/fp32_grad/batch_norm.h"
 #include "src/ops/adam.h"
+#include "src/ops/oneslike.h"
+#include "src/ops/binary_cross_entropy.h"
+#include "src/ops/binary_cross_entropy_grad.h"
 
 namespace mindspore::kernel {
 
@@ -74,6 +77,30 @@ OpParameter *PopulateApplyMomentumParameter(const mindspore::lite::PrimitiveC *p
   p->use_nesterov_ = apply_momentum_primitive->GetUseNesterov();
 
   return reinterpret_cast<OpParameter *>(p);
+}
+
+OpParameter *PopulateBCEParameter(const mindspore::lite::PrimitiveC *primitive) {
+  int32_t *reduction = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
+  if (reduction == nullptr) {
+    MS_LOG(ERROR) << "malloc reduction failed.";
+    return nullptr;
+  }
+  auto param =
+    reinterpret_cast<mindspore::lite::BinaryCrossEntropy *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  *reduction = param->GetReduction();
+  return reinterpret_cast<OpParameter *>(reduction);
+}
+
+OpParameter *PopulateBCEGradParameter(const mindspore::lite::PrimitiveC *primitive) {
+  int32_t *reduction = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
+  if (reduction == nullptr) {
+    MS_LOG(ERROR) << "malloc reduction failed.";
+    return nullptr;
+  }
+  auto param =
+    reinterpret_cast<mindspore::lite::BinaryCrossEntropyGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  *reduction = param->GetReduction();
+  return reinterpret_cast<OpParameter *>(reduction);
 }
 
 OpParameter *PopulateAdamParameter(const mindspore::lite::PrimitiveC *primitive) {
@@ -396,6 +423,13 @@ void PopulateTrainParameters() {
   lite::Registry BNGradParameterRegistry(schema::PrimitiveType_BNGrad, PopulateBNGradParameter);
   lite::Registry AdamParameterRegistry(schema::PrimitiveType_Adam, PopulateAdamParameter);
   lite::Registry AssignParameterRegistry(schema::PrimitiveType_Assign, DefaultPopulateParameter);
+  lite::Registry AssignAddParameterRegistry(schema::PrimitiveType_AssignAdd, DefaultPopulateParameter);
+  lite::Registry BinaryCrossEntropyParameterRegistry(schema::PrimitiveType_BinaryCrossEntropy, PopulateBCEParameter);
+  lite::Registry BinaryCrossEntropyGradParameterRegistry(schema::PrimitiveType_BinaryCrossEntropyGrad,
+                                                         PopulateBCEGradParameter);
+  lite::Registry OnesLikeParameterRegistry(schema::PrimitiveType_OnesLike, DefaultPopulateParameter);
+  lite::Registry UnsortedSegmentSumParameterRegistry(schema::PrimitiveType_UnsortedSegmentSum,
+                                                     DefaultPopulateParameter);
 }
 
 }  // namespace mindspore::kernel
