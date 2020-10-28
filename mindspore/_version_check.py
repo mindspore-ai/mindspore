@@ -166,7 +166,7 @@ class AscendEnvChecker(EnvChecker):
 
         # check content
         self.path_check = "/fwkacllib/ccec_compiler/bin/"
-        self.python_path_check = "opp/op_impl/built_in/ai_core/tbe/"
+        self.python_path_check = "opp/op_impl/built-in/ai_core/tbe/"
         self.ld_lib_path_check_fwk = "/fwkacllib/lib64/"
         self.ld_lib_path_check_addons = "/add-ons/"
         self.ascend_opp_path_check = "/op"
