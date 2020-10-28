@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include <vector>
 #include <memory>
 #include "src/common/utils.h"
-#include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/quantizer/calc_quant_param.h"
 #include "tools/common/node_util.h"
 
@@ -40,13 +41,13 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
     }
     auto quantParamCalcer = quantParamRegister->GetQuantParamCalcer(GetCNodeTType(*node));
     if (quantParamCalcer == nullptr) {
-      MS_LOG(WARNING) << "Can not find QuantParamCalcer for " << node->name.c_str()
-                      << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";
+      MS_LOG(DEBUG) << "Can not find QuantParamCalcer for " << node->name.c_str()
+                    << ", type: " << GetCNodeTTypeName(*node).c_str() << " set node to QuantNone and skip";
       node->quantType = schema::QuantType_QUANT_NONE;
     } else {
       auto status = quantParamCalcer->Calc(graph, *node);
       if (status != RET_OK) {
-        MS_LOG(WARNING) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
+        MS_LOG(DEBUG) << "quantParamCalcer failed: " << status << " node: " << node->name.c_str();
         node->quantType = schema::QuantType_QUANT_NONE;
       } else {
         node->quantType = schema::QuantType_AwareTraining;
