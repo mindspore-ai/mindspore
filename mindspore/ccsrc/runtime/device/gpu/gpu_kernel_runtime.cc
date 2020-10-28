@@ -187,14 +187,6 @@ bool GPUKernelRuntime::InitDevice() {
     MS_LOG(ERROR) << "No GPU device found.";
     return false;
   }
-  const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
-  bool collective_inited = CollectiveInitializer::instance().collective_inited();
-  if (collective_inited && collective_handle_ != nullptr) {
-    auto get_local_rank_funcptr =
-      reinterpret_cast<GetLocalRankId>(dlsym(const_cast<void *>(collective_handle_), "local_rank_id"));
-    MS_EXCEPTION_IF_NULL(get_local_rank_funcptr);
-    device_id_ = IntToUint((*get_local_rank_funcptr)());
-  }
   if (!GPUDeviceManager::GetInstance().is_device_id_init()) {
     if (!GPUDeviceManager::GetInstance().set_cur_device_id(device_id_)) {
       MS_LOG(ERROR) << "Failed to set current device to " << SizeToInt(device_id_);
