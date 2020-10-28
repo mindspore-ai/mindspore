@@ -4,7 +4,7 @@ MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV PATH /usr/local/bin:$PATH
+ENV PATH /usr/local/bin:/root/.local/bin:$PATH
 
 # Install base tools
 RUN apt update \
