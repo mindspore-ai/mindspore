@@ -145,11 +145,12 @@ echo $task
 if [ "$task" == "train" ]
 then
   if [ $RANK_SIZE -gt 1 ]
-    then
-      mpirun -n $RANK_SIZE --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
-      python train.py --config ${configurations##*/} --platform GPU >>log.log 2>&1 &
-    fi
-  python train.py --config ${configurations##*/} --platform GPU >>log.log 2>&1 &
+  then
+    mpirun -n $RANK_SIZE --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
+    python train.py --config ${configurations##*/} --platform GPU >>log.log 2>&1 &
+  else
+    python train.py --config ${configurations##*/} --platform GPU >>log.log 2>&1 &
+  fi
 elif [ "$task" == "infer" ]
 then
   python eval.py --config ${configurations##*/} --output ${output} --vocab ${vocab##*/} --metric ${metric} --platform GPU >>log_infer.log 2>&1 &
