@@ -41,26 +41,6 @@ using mindspore::schema::PrimitiveType_Activation;
 namespace mindspore::kernel {
 
 int ActivationOpenClKernel::Init() {
-  in_size_ = in_tensors_[0]->shape().size();
-  out_size_ = out_tensors_[0]->shape().size();
-  size_t n, h, w, c;
-  if (in_size_ == 2) {
-    n = in_tensors_[0]->shape()[0];
-    c = in_tensors_[0]->shape()[1];
-    h = w = 1;
-  } else {
-    n = in_tensors_[0]->shape()[0];
-    h = in_tensors_[0]->shape()[1];
-    w = in_tensors_[0]->shape()[2];
-    c = in_tensors_[0]->shape()[3];
-  }
-  nhwc_shape_ = {n, h, w, c};
-  enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  fp_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
-  if (in_size_ != 2 && in_size_ != 4) {
-    MS_LOG(ERROR) << "Activate fun only support dim=4 or 2, but your dim=" << in_size_;
-    return mindspore::lite::RET_ERROR;
-  }
   std::map<int, std::string> kernel_names{{ActivationType_LEAKY_RELU, "LeakyRelu"},
                                           {ActivationType_RELU, "Relu"},
                                           {ActivationType_SIGMOID, "Sigmoid"},
@@ -70,43 +50,41 @@ int ActivationOpenClKernel::Init() {
     MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
     return mindspore::lite::RET_ERROR;
   }
-
+  outShape = Image2DInfo(out_tensors_[0]);
+  local_size_ = {};
+  global_size_ = {outShape.width, outShape.height};
   std::string source = activation_source;
   std::set<std::string> build_options;
   std::string program_name = "Activation";
   ocl_runtime_->LoadSource(program_name, source);
   std::string kernel_name = kernel_names[type_];
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
-  MS_LOG(DEBUG) << op_parameter_->name_ << " init Done!";
+  SetArgs();
+  MS_LOG(DEBUG) << kernel_name << " init Done!";
   return mindspore::lite::RET_OK;
 }
 
-int ActivationOpenClKernel::Run() {
-  MS_LOG(DEBUG) << op_parameter_->name_ << " begin running!";
-  cl_int4 img2d_shape = GetImg2dShape();
-  int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, img2d_shape);
+int ActivationOpenClKernel::SetArgs() {
+  int arg_idx = 2;
+  cl_int2 image_size = {static_cast<int>(outShape.width), static_cast<int>(outShape.height)};
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, image_size);
   if (type_ == ActivationType_LEAKY_RELU) {
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, alpha_);
   }
-  std::vector<size_t> local = {};
-  std::vector<size_t> global = {static_cast<size_t>(img2d_shape.s[1]), static_cast<size_t>(img2d_shape.s[2])};
-  auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+  return RET_OK;
+}
+
+int ActivationOpenClKernel::Run() {
+  MS_LOG(DEBUG) << this->name() << " begin running!";
+  int arg_idx = 0;
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
+  auto ret = ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
   if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Run kernel:" << op_parameter_->name_ << " fail.";
+    MS_LOG(ERROR) << "Run kernel:" << this->name() << " fail.";
     return mindspore::lite::RET_ERROR;
   }
   return mindspore::lite::RET_OK;
-}
-
-cl_int4 ActivationOpenClKernel::GetImg2dShape() {
-  cl_int4 img2d_shape = {1, 1, 1, 1};
-  img2d_shape.s[1] = nhwc_shape_[1];
-  img2d_shape.s[2] = nhwc_shape_[2] * UP_DIV(nhwc_shape_[3], C4NUM);
-  img2d_shape.s[3] = C4NUM;
-  return img2d_shape;
 }
 
 kernel::LiteKernel *OpenClActivationKernelCreator(const std::vector<lite::Tensor *> &inputs,
