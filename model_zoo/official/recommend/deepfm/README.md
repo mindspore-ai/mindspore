@@ -249,8 +249,8 @@ Parameters for both training and evaluation can be set in config.py
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | DeepFM                                                      | To do                  |
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory 755G              | To do                  |
-| uploaded Date              | 05/17/2020 (month/day/year)                                 | To do                  |
-| MindSpore Version          | 0.3.0-alpha                                                 | To do                  |
+| uploaded Date              | 09/15/2020 (month/day/year)                                 | To do                  |
+| MindSpore Version          | 1.0.0                                                 | To do                  |
 | Dataset                    | [1]                                                         | To do                  |
 | Training Parameters        | epoch=15, batch_size=1000, lr=1e-5                          | To do                  |
 | Optimizer                  | Adam                                                        | To do                  |
