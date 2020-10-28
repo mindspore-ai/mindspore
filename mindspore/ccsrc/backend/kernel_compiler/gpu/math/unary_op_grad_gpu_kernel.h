@@ -27,9 +27,17 @@
 
 namespace mindspore {
 namespace kernel {
-enum UnaryGradOptype { UNARY_OP_SQRT_GRAD = 0, UNARY_OP_RSQRT_GRAD, UNARY_OP_GRAD_INVALID_TYPE = 255 };
+enum UnaryGradOptype {
+  UNARY_OP_SQRT_GRAD = 0,
+  UNARY_OP_RSQRT_GRAD = 1,
+  UNARY_OP_ASIN_GRAD = 2,
+  UNARY_OP_ACOS_GRAD = 3,
+  UNARY_OP_GRAD_INVALID_TYPE = 255
+};
 static const std::map<std::string, UnaryGradOptype> kUnaryGradOpTypeMap = {{"SqrtGrad", UNARY_OP_SQRT_GRAD},
-                                                                           {"RsqrtGrad", UNARY_OP_RSQRT_GRAD}};
+                                                                           {"RsqrtGrad", UNARY_OP_RSQRT_GRAD},
+                                                                           {"AsinGrad", UNARY_OP_ASIN_GRAD},
+                                                                           {"ACosGrad", UNARY_OP_ACOS_GRAD}};
 template <typename T>
 class UnaryGradOpGpuKernel : public GpuKernel {
  public:
@@ -56,6 +64,16 @@ class UnaryGradOpGpuKernel : public GpuKernel {
     switch (unary_grad_op_type_) {
       case UNARY_OP_SQRT_GRAD: {
         SqrtGrad(input_x_addr, input_dx_addr, output_y_addr, inputs[0]->size / sizeof(T),
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ASIN_GRAD: {
+        AsinGrad(input_x_addr, input_dx_addr, output_y_addr, inputs[0]->size / sizeof(T),
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ACOS_GRAD: {
+        ACosGrad(input_x_addr, input_dx_addr, output_y_addr, inputs[0]->size / sizeof(T),
                  reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
