@@ -280,6 +280,12 @@ void KernelAdjust::InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> 
   for (size_t idx = i + 1; idx < orders.size(); idx++) {
     cur_cnode = orders[idx];
     if (AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, cur_cnode)) {
+      auto pre_node = orders[idx - 1];
+      auto pre_kernel_name = AnfAlgo::GetCNodeName(pre_node);
+      if (pre_kernel_name == kAtomicAddrCleanOpName) {
+        other_list.pop_back();
+        memcpy_list.push_back(pre_node);
+      }
       memcpy_list.emplace_back(cur_cnode);
     } else {
       other_list.emplace_back(cur_cnode);
