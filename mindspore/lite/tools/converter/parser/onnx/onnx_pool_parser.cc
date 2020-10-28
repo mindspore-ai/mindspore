@@ -94,7 +94,7 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       }
     }
     if (attribute_name == "ceil_mode") {
-      if (onnx_node_attr.f() == 0) {
+      if (onnx_node_attr.i() == 0) {
         attr->roundMode = schema::RoundMode_FLOOR;
       } else {
         attr->roundMode = schema::RoundMode_CEIL;

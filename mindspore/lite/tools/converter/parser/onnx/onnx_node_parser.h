@@ -37,12 +37,21 @@ class OnnxNodeParser {
 
   STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
 
+  static STATUS set_opset_version(int version) {
+    opset_version_ = version;
+    return RET_OK;
+  }
+  static int opset_version() { return opset_version_; }
+
  protected:
   schema::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
 
   void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
 
   const std::string &name;
+
+ private:
+  static int opset_version_;
 };
 }  // namespace lite
 }  // namespace mindspore
