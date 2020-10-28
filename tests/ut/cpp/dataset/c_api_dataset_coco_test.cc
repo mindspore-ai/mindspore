@@ -155,22 +155,34 @@ TEST_F(MindDataTestPipeline, TestCocoDetection) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestCocoException) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoException.";
+TEST_F(MindDataTestPipeline, TestCocoFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoFail.";
   // Create a Coco Dataset
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
   std::string invalid_folder_path = "./NotExist";
   std::string invalid_annotation_file = "./NotExistFile";
 
-  std::shared_ptr<Dataset> ds = Coco(invalid_folder_path, annotation_file);
-  EXPECT_EQ(ds, nullptr);
+  std::shared_ptr<Dataset> ds0 = Coco(invalid_folder_path, annotation_file);
+  EXPECT_NE(ds0, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter0 = ds0->CreateIterator();
+  // Expect failure: invalid COCO input
+  EXPECT_EQ(iter0, nullptr);
 
   std::shared_ptr<Dataset> ds1 = Coco(folder_path, invalid_annotation_file);
-  EXPECT_EQ(ds1, nullptr);
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid COCO input
+  EXPECT_EQ(iter1, nullptr);
 
   std::shared_ptr<Dataset> ds2 = Coco(folder_path, annotation_file, "valid_mode");
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid COCO input
+  EXPECT_EQ(iter2, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
@@ -335,13 +347,17 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestCocoWithNullSampler) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoWithNullSampler.";
+TEST_F(MindDataTestPipeline, TestCocoWithNullSamplerFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoWithNullSamplerFail.";
   // Create a Coco Dataset
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
 
   std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Detection", false, nullptr);
-  // Expect failure: sampler can not be nullptr
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid COCO input, sampler cannot be nullptr
+  EXPECT_EQ(iter, nullptr);
 }

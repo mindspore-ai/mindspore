@@ -292,8 +292,8 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetDistribution) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestCLUEDatasetException) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetException.";
+TEST_F(MindDataTestPipeline, TestCLUEDatasetFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetFail.";
   // Create a CLUE Dataset
   std::string clue_file = datasets_root_path_ + "/testCLUE/wsc/train.json";
   std::string task = "WSC";
@@ -301,28 +301,60 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetException) {
   std::string invalid_clue_file = "./NotExistFile";
 
   std::shared_ptr<Dataset> ds0 = CLUE({}, task, usage);
-  EXPECT_EQ(ds0, nullptr);
+  EXPECT_NE(ds0, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter0 = ds0->CreateIterator();
+  // Expect failure: invalid CLUE input
+  EXPECT_EQ(iter0, nullptr);
 
   std::shared_ptr<Dataset> ds1 = CLUE({invalid_clue_file}, task, usage);
-  EXPECT_EQ(ds1, nullptr);
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid CLUE input
+  EXPECT_EQ(iter1, nullptr);
 
   std::shared_ptr<Dataset> ds2 = CLUE({clue_file}, "invalid_task", usage);
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid CLUE input
+  EXPECT_EQ(iter2, nullptr);
 
   std::shared_ptr<Dataset> ds3 = CLUE({clue_file}, task, "invalid_usage");
-  EXPECT_EQ(ds3, nullptr);
+  EXPECT_NE(ds3, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid CLUE input
+  EXPECT_EQ(iter3, nullptr);
 
   std::shared_ptr<Dataset> ds4 = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, 2, 2);
-  EXPECT_EQ(ds4, nullptr);
+  EXPECT_NE(ds4, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter4 = ds4->CreateIterator();
+  // Expect failure: invalid CLUE input
+  EXPECT_EQ(iter4, nullptr);
 
   std::shared_ptr<Dataset> ds5 = CLUE({clue_file}, task, usage, -1, ShuffleMode::kGlobal);
-  EXPECT_EQ(ds5, nullptr);
+  EXPECT_NE(ds5, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter5 = ds5->CreateIterator();
+  // Expect failure: invalid CLUE input
+  EXPECT_EQ(iter5, nullptr);
 
   std::shared_ptr<Dataset> ds6 = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, -1);
-  EXPECT_EQ(ds6, nullptr);
+  EXPECT_NE(ds6, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter6 = ds6->CreateIterator();
+  // Expect failure: invalid CLUE input
+  EXPECT_EQ(iter6, nullptr);
 
   std::shared_ptr<Dataset> ds7 = CLUE({clue_file}, task, usage, 0, ShuffleMode::kGlobal, 0, -1);
-  EXPECT_EQ(ds7, nullptr);
+  EXPECT_NE(ds7, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter7 = ds7->CreateIterator();
+  // Expect failure: invalid CLUE input
+  EXPECT_EQ(iter7, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {

@@ -162,30 +162,42 @@ TEST_F(MindDataTestPipeline, TestAlbumError) {
   std::string folder_path = datasets_root_path_ + "/testAlbum/ima";
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
   std::vector<std::string> column_names = {"image", "label", "id"};
-  // Create a Album Dataset
+  // Create an Album Dataset
   std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true, SequentialSampler(0, 1));
+  EXPECT_NE(ds, nullptr);
 
-  EXPECT_EQ(ds, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Album input
+  EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestAlbumWithNullSampler) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumWithNullSampler.";
+TEST_F(MindDataTestPipeline, TestAlbumWithNullSamplerError) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumWithNullSamplerError.";
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
   std::vector<std::string> column_names = {"image", "label", "id"};
-  // Create a Album Dataset
+  // Create an Album Dataset
   std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true, nullptr);
-  // Expect failure: sampler can not be nullptr
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Album input, sampler cannot be nullptr
+  EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestAlbumDuplicateColumnName) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumDuplicateColumnName.";
+TEST_F(MindDataTestPipeline, TestAlbumDuplicateColumnNameError) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumDuplicateColumnNameError.";
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
   std::vector<std::string> column_names = {"image", "image", "id"};
-  // Create a Album Dataset
+  // Create an Album Dataset
   std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true);
-  // Expect failure: duplicate column names
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Album input, duplicate column names
+  EXPECT_EQ(iter, nullptr);
 }

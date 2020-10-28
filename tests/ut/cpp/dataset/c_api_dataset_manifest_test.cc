@@ -227,24 +227,43 @@ TEST_F(MindDataTestPipeline, TestManifestError) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestError.";
 
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
-  // Create a Manifest Dataset with not exist file
+  // Create a Manifest Dataset with non-existing file
   std::shared_ptr<Dataset> ds0 = Manifest("NotExistFile", "train");
-  EXPECT_EQ(ds0, nullptr);
+  EXPECT_NE(ds0, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter0 = ds0->CreateIterator();
+  // Expect failure: invalid Manifest input
+  EXPECT_EQ(iter0, nullptr);
 
   // Create a Manifest Dataset with invalid usage
   std::shared_ptr<Dataset> ds1 = Manifest(file_path, "invalid_usage");
-  EXPECT_EQ(ds1, nullptr);
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid Manifest input
+  EXPECT_EQ(iter1, nullptr);
 
   // Create a Manifest Dataset with invalid string
   std::shared_ptr<Dataset> ds2 = Manifest(":*?\"<>|`&;'", "train");
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid Manifest input
+  EXPECT_EQ(iter2, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestManifestWithNullSampler) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestWithNullSampler.";
+TEST_F(MindDataTestPipeline, TestManifestWithNullSamplerError) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestWithNullSamplerError.";
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
   // Create a Manifest Dataset
   std::shared_ptr<Dataset> ds = Manifest(file_path, "train", nullptr);
-  // Expect failure: sampler can not be nullptr
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Manifest input, sampler cannot be nullptr
+  EXPECT_EQ(iter, nullptr);
 }
