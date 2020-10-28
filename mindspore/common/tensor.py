@@ -439,10 +439,10 @@ class MetaTensor(MetaTensor_):
                 global_seed = get_seed()
                 self._np_seed = np.random.get_state()[1][0]
                 self.need_set_seed = ((slice_index is not None) and (global_seed is None))
-                self.seed = self.init.seed
 
             def __enter__(self):
                 if self.need_set_seed:
+                    self.seed = self.init.seed
                     np.random.seed(slice_index)
                     self.init.seed = slice_index
 
