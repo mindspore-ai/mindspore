@@ -154,6 +154,20 @@ class Normal(Distribution):
             s = f'batch_shape = {self._broadcast_shape}'
         return s
 
+    def _get_dist_type(self):
+        return "Normal"
+
+    def _get_dist_args(self, mean=None, sd=None):
+        if mean is not None:
+            self.checktensor(mean, 'mean')
+        else:
+            mean = self._mean_value
+        if sd is not None:
+            self.checktensor(sd, 'sd')
+        else:
+            sd = self._sd_value
+        return mean, sd
+
     def _mean(self, mean=None, sd=None):
         """
         The mean of the distribution.

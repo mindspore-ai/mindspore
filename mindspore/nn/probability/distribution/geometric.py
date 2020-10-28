@@ -162,6 +162,16 @@ class Geometric(Distribution):
         """
         return self._probs
 
+    def _get_dist_type(self):
+        return "Geometric"
+
+    def _get_dist_args(self, probs1=None):
+        if probs1 is not None:
+            self.checktensor(probs1, 'probs')
+        else:
+            probs1 = self.probs
+        return (probs1,)
+
     def _mean(self, probs1=None):
         r"""
         .. math::

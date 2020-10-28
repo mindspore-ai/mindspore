@@ -344,6 +344,33 @@ class Distribution(Cell):
         else:
             self._call_cross_entropy = self._raise_not_implemented_error('cross_entropy')
 
+    def _get_dist_args(self, *args, **kwargs):
+        return raise_not_implemented_util('get_dist_args', self.name, *args, **kwargs)
+
+    def get_dist_args(self, *args, **kwargs):
+        """
+        Check the availability and validity of default parameters and `dist_spec_args`.
+
+        Args:
+            *args (list): the list of positional arguments forwarded to subclasses.
+            **kwargs (dictionary): the dictionary of keyword arguments forwarded to subclasses.
+
+        Note:
+            `dist_spec_args` must be passed in through list or dictionary. The order of `dist_spec_args`
+            should follow the initialization order of default parameters through `_add_parameter`.
+            If some `dist_spec_args` is None, the corresponding default parameter is returned.
+        """
+        return self._get_dist_args(*args, **kwargs)
+
+    def _get_dist_type(self, *args, **kwargs):
+        return raise_not_implemented_util('get_dist_type', self.name, *args, **kwargs)
+
+    def get_dist_type(self, *args, **kwargs):
+        """
+        Return the type of the distribution.
+        """
+        return self._get_dist_type(*args, **kwargs)
+
     def _raise_not_implemented_error(self, func_name):
         name = self.name
         def raise_error(*args, **kwargs):
@@ -721,4 +748,8 @@ class Distribution(Cell):
             return self._call_cross_entropy(*args, **kwargs)
         if name == 'sample':
             return self._sample(*args, **kwargs)
+        if name == 'get_dist_args':
+            return self._get_dist_args(*args, **kwargs)
+        if name == 'get_dist_type':
+            return self._get_dist_type(*args, **kwargs)
         return raise_not_implemented_util(name, self.name, *args, **kwargs)

@@ -109,7 +109,7 @@ class Gumbel(TransformedDistribution):
             bijector=msb.Invert(gumbel_cdf),
             seed=seed, name=name)
 
-        self._parameter_type = gumbel_cdf.parameter_type
+        self.parameter_type = gumbel_cdf.parameter_type
         self._broadcast_shape = gumbel_cdf.event_shape
         if self._broadcast_shape != ():
             self._is_scalar_batch = False
@@ -145,6 +145,20 @@ class Gumbel(TransformedDistribution):
         else:
             str_info = f'batch_shape = {self._broadcast_shape}'
         return str_info
+
+    def _get_dist_type(self):
+        return "Gumbel"
+
+    def _get_dist_args(self, loc=None, scale=None):
+        if loc is not None:
+            self.checktensor(loc, 'loc')
+        else:
+            loc = self.loc
+        if scale is not None:
+            self.checktensor(scale, 'scale')
+        else:
+            scale = self.scale
+        return loc, scale
 
     def _mean(self):
         r"""
