@@ -46,16 +46,16 @@ class ReverseCPUKernel : public LiteKernel {
   int DoReverse(int task_id);
 
  private:
-  int thread_sz_count_;
-  int thread_sz_stride_;
-  int data_size_;
-  int strides_[REVERSE_STRIDE_MAX_SIZE];
-  int inCount_[REVERSE_STRIDE_MAX_SIZE];
-  int outCount_[REVERSE_STRIDE_MAX_SIZE];
-  int thread_count_;
+  int thread_sz_count_ = 0;
+  int thread_sz_stride_ = 0;
+  int data_size_ = 0;
+  int strides_[REVERSE_STRIDE_MAX_SIZE] = {0};
+  int inCount_[REVERSE_STRIDE_MAX_SIZE] = {0};
+  int outCount_[REVERSE_STRIDE_MAX_SIZE] = {0};
+  int thread_count_ = 1;
   int *tmp_ = nullptr;
-  float *in_ptr_;
-  float *out_ptr_;
+  float *in_ptr_ = nullptr;
+  float *out_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

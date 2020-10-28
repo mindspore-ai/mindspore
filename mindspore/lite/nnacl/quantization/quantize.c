@@ -71,7 +71,7 @@ void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, 
 }
 
 // quantize from float to int8
-void Quantize(float *input_data, int length, float scale, int zero_point, int8_t *output_data) {
+void Quantize(const float *input_data, int length, float scale, int zero_point, int8_t *output_data) {
   for (int i = 0; i < length; ++i) {
     int q = (int)round(input_data[i] / scale + zero_point);
     q = q > SCHAR_MAX ? SCHAR_MAX : q;

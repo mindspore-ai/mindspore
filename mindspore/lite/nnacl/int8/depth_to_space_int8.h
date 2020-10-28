@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DepthToSpaceForNHWCInt8(const int8_t *input, int8_t *output, int *in_shape, DepthToSpaceParameter *param,
+void DepthToSpaceForNHWCInt8(const int8_t *input, int8_t *output, const int *in_shape, DepthToSpaceParameter *param,
                              QuantArg *in_quant_arg, QuantArg *out_quant_arg);
 #ifdef __cplusplus
 }

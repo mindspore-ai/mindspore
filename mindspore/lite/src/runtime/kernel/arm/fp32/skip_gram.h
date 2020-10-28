@@ -38,9 +38,9 @@ class SkipGramCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  const lite::InnerContext *ctx_;
-  int thread_count_;
-  SkipGramParameter *skip_gram_parameter_;
+  const lite::InnerContext *ctx_ = nullptr;
+  int thread_count_ = 1;
+  SkipGramParameter *skip_gram_parameter_ = nullptr;
 };
 
 }  // namespace mindspore::kernel

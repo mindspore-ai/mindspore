@@ -33,7 +33,7 @@ typedef struct ExpParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Exp(float *input_data, float *output_data, ExpParameter *parameter, int task_id);
+int Exp(const float *input_data, float *output_data, ExpParameter *parameter, int task_id);
 #ifdef __cplusplus
 }
 #endif

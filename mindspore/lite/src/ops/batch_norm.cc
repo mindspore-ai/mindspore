@@ -45,6 +45,7 @@ int BatchNorm::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new FusedBatchNormT failed";
       delete this->primitive_;
+      this->primitive_ = nullptr;
       return RET_ERROR;
     }
     attr->epsilon = GetValue<float>(prim.GetAttr("epsilon"));

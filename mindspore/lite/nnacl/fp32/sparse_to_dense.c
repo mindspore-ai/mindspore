@@ -15,9 +15,8 @@
  */
 #include "nnacl/fp32/sparse_to_dense.h"
 
-void SparseToDense(int **sparse_indices, int *output_shape,
-                   float *sparse_values, float default_value, float *output,
-                   bool isScalar, int index_start, int index_end, int out_width) {
+void SparseToDense(int **sparse_indices, int *output_shape, const float *sparse_values, float default_value,
+                   float *output, bool isScalar, int index_start, int index_end, int out_width) {
   for (int i = index_start; i < index_end; i++) {
     for (int j = 0; j < out_width; j++) {
       output[i * out_width + j] = default_value;
@@ -31,14 +30,12 @@ void SparseToDense(int **sparse_indices, int *output_shape,
   int index;
   if (isScalar == true) {
     for (int i = index_start; i < index_end; i++) {
-      index = d1 * sparse_indices[i][0] + d2 * sparse_indices[i][1] +
-              d3 * sparse_indices[i][2] + sparse_indices[i][3];
+      index = d1 * sparse_indices[i][0] + d2 * sparse_indices[i][1] + d3 * sparse_indices[i][2] + sparse_indices[i][3];
       output[index] = sparse_values[0];
     }
   } else {
     for (int i = index_start; i < index_end; i++) {
-      index = d1 * sparse_indices[i][0] + d2 * sparse_indices[i][1] +
-              d3 * sparse_indices[i][2] + sparse_indices[i][3];
+      index = d1 * sparse_indices[i][0] + d2 * sparse_indices[i][1] + d3 * sparse_indices[i][2] + sparse_indices[i][3];
       output[index] = sparse_values[i];
     }
   }

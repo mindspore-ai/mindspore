@@ -52,7 +52,7 @@ void TileOneDimensionUint8(uint8_t *inData, uint8_t *outData, int dim, size_t nd
   }
 }
 
-void ComputeStrides(int *shape, int *strides, int ndim) {
+void ComputeStrides(const int *shape, int *strides, const int ndim) {
   int stride = 1;
   for (int i = ndim - 1; i >= 0; i--) {
     strides[i] = stride;

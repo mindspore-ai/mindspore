@@ -36,13 +36,13 @@ class ExpCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  const lite::InnerContext *ctx_;
-  int thread_count_;
-  ExpParameter *exp_parameter_;
+  const lite::InnerContext *ctx_ = nullptr;
+  int thread_count_ = 1;
+  ExpParameter *exp_parameter_ = nullptr;
 
  private:
-  float *input_addr_;
-  float *output_addr_;
+  float *input_addr_ = nullptr;
+  float *output_addr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

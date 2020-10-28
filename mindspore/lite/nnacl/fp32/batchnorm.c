@@ -18,7 +18,6 @@
 #include <math.h>
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/op_base.h"
-#include "nnacl/errorcode.h"
 
 void BatchNormFp32(const void *input, const void *mean, const void *variance, BatchNormParameter *param, int task_id,
                    void *output) {

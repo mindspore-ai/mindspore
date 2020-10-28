@@ -491,8 +491,8 @@ void ConvDw3x3Int8Pad(int8_t *output_data, const int8_t *input_data, const int16
 /*conv depthwise sliding window perchannel int8 begin*/
 void DepthwiseBorderPixelInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
                               int width, int in_kh_step, int in_kw_step, int kernel_w, int8_t *input_zp,
-                              int32_t *out_zp, int *out_multiplier, int *left_shift, int *right_shift, int32_t *acc_min,
-                              int32_t *acc_max) {
+                              int32_t *out_zp, int *out_multiplier, int *left_shift, const int *right_shift,
+                              int32_t *acc_min, int32_t *acc_max) {
   int tmp_buffer[C8NUM];
   for (int i = 0; i < C8NUM; i++) {
     tmp_buffer[i] = 0;

@@ -18,7 +18,7 @@
 #include <math.h>
 #include "nnacl/errorcode.h"
 
-void Calculate_Data(float *input_data, float *output_data, int num, EluParameter *parameter) {
+void Calculate_Data(const float *input_data, float *output_data, int num, EluParameter *parameter) {
   output_data[num] = input_data[num] < 0 ? parameter->alpha_ * expm1(input_data[num]) : input_data[num];
 }
 

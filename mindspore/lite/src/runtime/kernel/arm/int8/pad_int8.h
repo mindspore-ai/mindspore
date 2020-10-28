@@ -48,7 +48,7 @@ class PadInt8CPUKernel : public LiteKernel {
 
  private:
   int HandleMirrorPad();
-  int CheckPaddings(int *paddings, int length, int *input_shape, int mode);
+  int CheckPaddings(const int *paddings, int length, int *input_shape, int mode);
   int CopyPaddingFromInput();
   void CalculateStrides();
   int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length);
@@ -56,8 +56,8 @@ class PadInt8CPUKernel : public LiteKernel {
   PadParameter *pad_param_ = nullptr;
   int8_t *in_data_ = nullptr;
   int8_t *out_data_ = nullptr;
-  int in_dims_[DEFAULT_PAD_NDIMS];
-  int out_dims_[DEFAULT_PAD_NDIMS];
+  int in_dims_[DEFAULT_PAD_NDIMS] = {0};
+  int out_dims_[DEFAULT_PAD_NDIMS] = {0};
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_PAD_INT8_H_

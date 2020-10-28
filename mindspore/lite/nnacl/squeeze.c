@@ -18,7 +18,7 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int DoSqueeze(float *in_data, float *out_data, size_t data_size) {
+int DoSqueeze(const float *in_data, float *out_data, size_t data_size) {
   if (in_data == NULL || out_data == NULL) {
     return -1;
   }

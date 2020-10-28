@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Reshape(void *input_ptr, void *output_ptr, size_t data_size);
+void Reshape(const void *input_ptr, void *output_ptr, size_t data_size);
 #ifdef __cplusplus
 }
 #endif

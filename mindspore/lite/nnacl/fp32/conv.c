@@ -21,7 +21,7 @@
 #include "nnacl/fp32/matmul.h"
 
 // fp32 conv common
-void ConvFp32(float *input_data, float *packed_input, float *packed_weight, const float *bias_data,
+void ConvFp32(float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
               float *col_major_input, float *output_data, int task_id, ConvParameter *conv_param) {
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
@@ -70,7 +70,7 @@ void ConvFp32(float *input_data, float *packed_input, float *packed_weight, cons
 }
 
 // fp32 conv winograd
-void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, float *output_data,
+void ConvWinogardFp32(float *input_data, const float *trans_weight, const float *bias_data, float *output_data,
                       TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param, InputTransFunc in_func,
                       OutputTransFunc out_func) {
   int thread_num = conv_param->thread_num_;

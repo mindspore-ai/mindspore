@@ -18,7 +18,6 @@
 #include <math.h>
 #include "nnacl/quantization/fixed_point.h"
 #include "nnacl/quantization/quantize.h"
-#include "nnacl/errorcode.h"
 
 int SoftmaxInt8(const int8_t *input_ptr, int8_t *output_ptr, int count, int *exp_data, int *sum_data,
                 SoftmaxQuantArg quant_param, SoftmaxParameter *parameter) {

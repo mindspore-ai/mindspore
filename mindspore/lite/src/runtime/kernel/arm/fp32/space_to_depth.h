@@ -34,11 +34,11 @@ class SpaceToDepthCPUKernel : public LiteKernel {
   int Run() override;
 
  private:
-  int thread_h_stride_;
-  int thread_h_num_;
-  int num_unit_;
-  float *input_ptr_;
-  float *output_ptr_;
+  int thread_h_stride_ = 0;
+  int thread_h_num_ = 0;
+  int num_unit_ = 0;
+  float *input_ptr_ = nullptr;
+  float *output_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

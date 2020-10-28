@@ -56,7 +56,9 @@ int PackDeConvWgDataFp32(float *nhwc_weight, DeConvComputeUnit *unit, ConvParame
     /* winograd AT */
     unit->winograd_.AT_ = malloc(unit->winograd_.i_ * unit->winograd_.o_ * sizeof(float));
     if (unit->winograd_.AT_ == NULL) {
-      free(current_unit_weight);
+      if (current_unit_weight != NULL) {
+        free(current_unit_weight);
+      }
       return NNACL_NULL_PTR;
     }
     memcpy(unit->winograd_.AT_, matrix_at, unit->winograd_.i_ * unit->winograd_.o_ * sizeof(float));
@@ -64,8 +66,12 @@ int PackDeConvWgDataFp32(float *nhwc_weight, DeConvComputeUnit *unit, ConvParame
     /* winograd BT */
     unit->winograd_.BT_ = malloc(unit->winograd_.o_ * unit->winograd_.o_ * sizeof(float));
     if (unit->winograd_.BT_ == NULL) {
-      free(current_unit_weight);
-      free(unit->winograd_.AT_);
+      if (current_unit_weight != NULL) {
+        free(current_unit_weight);
+      }
+      if (unit->winograd_.AT_ != NULL) {
+        free(unit->winograd_.AT_);
+      }
       return NNACL_NULL_PTR;
     }
     memcpy(unit->winograd_.BT_, matrix_bt, unit->winograd_.o_ * unit->winograd_.o_ * sizeof(float));
@@ -74,9 +80,15 @@ int PackDeConvWgDataFp32(float *nhwc_weight, DeConvComputeUnit *unit, ConvParame
     size = conv_param->input_channel_ * conv_param->output_channel_ * unit->winograd_.kh_ * unit->winograd_.kw_;
     float *winograd_unit_weight = (float *)malloc(size * sizeof(float));
     if (winograd_unit_weight == NULL) {
-      free(current_unit_weight);
-      free(unit->winograd_.AT_);
-      free(unit->winograd_.BT_);
+      if (current_unit_weight != NULL) {
+        free(current_unit_weight);
+      }
+      if (unit->winograd_.AT_ != NULL) {
+        free(unit->winograd_.AT_);
+      }
+      if (unit->winograd_.BT_ != NULL) {
+        free(unit->winograd_.BT_);
+      }
       return NNACL_NULL_PTR;
     }
     WinogradWeightTransform(current_unit_weight, winograd_unit_weight, matrix_g, matrix_gt, C4NUM, unit->winograd_.kh_,
@@ -105,7 +117,9 @@ int PackDeConvWgDataFp32(float *nhwc_weight, DeConvComputeUnit *unit, ConvParame
     }
   }
 
-  free(current_unit_weight);
+  if (current_unit_weight != NULL) {
+    free(current_unit_weight);
+  }
   return NNACL_OK;
 }
 
@@ -317,7 +331,7 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
   return;
 }
 
-void _deConvWinograd(float *tile_in, float *tile_out, float *weight_buf, float *tmp_buf, float *at_buf,
+void _deConvWinograd(const float *tile_in, float *tile_out, float *weight_buf, float *tmp_buf, float *at_buf,
                      float *a_mid_buf, float *trans_a_buf, bool *transfered, float *bt_buf, float *b_tmp_buf,
                      int unit_size, int w_start, int h_start, ConvParameter *conv_param, DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;
@@ -357,8 +371,8 @@ void _deConvWinograd(float *tile_in, float *tile_out, float *weight_buf, float *
   return;
 }
 
-void _deConvCommon(float *tile_in, float *tile_out, float *weight, float *tmp_buf, int h_start, int w_start, int h_size,
-                   int w_size, ConvParameter *conv_param, DeConvParam *deconv_param) {
+void _deConvCommon(float *tile_in, float *tile_out, const float *weight, float *tmp_buf, int h_start, int w_start,
+                   int h_size, int w_size, ConvParameter *conv_param, DeConvParam *deconv_param) {
   int count = deconv_param->oc_div4_ * w_size * h_size;
   int in_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
   int out_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up4_;

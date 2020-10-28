@@ -46,7 +46,7 @@ class ScaleInt8CPUKernel : public LiteKernel {
   int8_t *scale_ = nullptr;
   int8_t *offset_ = nullptr;
   int8_t *output_ptr_ = nullptr;
-  bool has_bias_;
+  bool has_bias_ = false;
   ScaleParameter *scale_param_;
 
   int InitQuantArgs();

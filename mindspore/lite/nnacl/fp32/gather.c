@@ -18,7 +18,7 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-inline int Stride(int *shape, int rank, int index) {
+inline int Stride(const int *shape, int rank, int index) {
   int i, stride = 1;
   for (i = index + 1; i < rank; ++i) {
     stride *= shape[i];
@@ -26,7 +26,7 @@ inline int Stride(int *shape, int rank, int index) {
   return stride;
 }
 
-int Gather(float *input, int outer_size, int inner_size, int limit, int *indices, int indices_element_size,
+int Gather(float *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
            float *output) {
   int i, m;
   for (m = 0; m < outer_size; ++m) {
@@ -42,7 +42,7 @@ int Gather(float *input, int outer_size, int inner_size, int limit, int *indices
   return NNACL_OK;
 }
 
-int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, int *indices,
+int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, const int *indices,
                 int indices_element_size, int32_t *output) {
   int i, m;
   for (m = 0; m < outer_size; ++m) {

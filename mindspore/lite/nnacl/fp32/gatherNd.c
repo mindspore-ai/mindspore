@@ -18,7 +18,7 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int GatherNd(float *input, float *output, int *in_offset, int area, int count) {
+int GatherNd(const float *input, float *output, int *in_offset, int area, int count) {
   int i = 0;
   for (i = 0; i < count; i++) {
     (void)memcpy(output + area * i, input + in_offset[i], area * sizeof(float));

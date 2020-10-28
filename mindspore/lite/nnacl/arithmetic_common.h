@@ -49,7 +49,7 @@ extern "C" {
 #endif
 void TileOneDimension(float *inData, float *outData, int dim, size_t ndim, int *inShape, int *inStrides,
                       int *outStrides, int *multiple);
-void ComputeStrides(int *shape, int *strides, int ndim);
+void ComputeStrides(const int *shape, int *strides, const int ndim);
 
 void CalcMultiplesAndStrides(ArithmeticParameter *param);
 

@@ -22,9 +22,9 @@
 #include "nnacl/arithmetic_common.h"
 #include "nnacl/fp32/arithmetic.h"
 
-typedef int (*ArithmeticRun)(float *input0, float *input1, float *output, int element_size);
-typedef int (*ArithmeticOptRun)(float *input0, float *input1, float *output, int element_size,
-                                ArithmeticParameter *param);
+typedef int (*ArithmeticRun)(const float *input0, const float *input1, float *output, const int element_size);
+typedef int (*ArithmeticOptRun)(const float *input0, const float *input1, float *output, const int element_size,
+                                const ArithmeticParameter *param);
 
 int BroadcastRun(float *input0, float *input1, float *output, int dim, int out_count, int break_pos,
                  ArithmeticRun arithmetic_run, ArithmeticParameter *params) {

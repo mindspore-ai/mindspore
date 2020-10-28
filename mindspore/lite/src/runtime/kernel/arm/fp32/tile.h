@@ -34,7 +34,7 @@ class TileCPUKernel : public LiteKernel {
   int Run() override;
 
  private:
-  void ComputeStrides(int *shape, int *strides, int ndim);
+  void ComputeStrides(const int *shape, int *strides, int ndim);
 };
 }  // namespace mindspore::kernel
 

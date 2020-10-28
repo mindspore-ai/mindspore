@@ -23,7 +23,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int GatherNdInt8(int8_t *in_data, int8_t *out_data, int *in_offset, int area, int count, GatherQuantArg param);
+int GatherNdInt8(int8_t *in_data, int8_t *out_data, const int *in_offset, int area, int count, GatherQuantArg param);
 #ifdef __cplusplus
 }
 #endif

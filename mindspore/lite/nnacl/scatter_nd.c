@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include "nnacl/errorcode.h"
 
-int DoScatterND(float *output_ptr, float *update, int *output_unit_offsets, int unit_size, int num_units) {
+int DoScatterND(float *output_ptr, const float *update, int *output_unit_offsets, int unit_size, int num_units) {
   if (output_ptr == NULL || update == NULL || output_unit_offsets == NULL || unit_size <= 0 || num_units < 0) {
     return NNACL_ERR;
   }

@@ -26,105 +26,121 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ElementOptAdd(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptAddInt(int *input0, int *input1, int *output, int element_size, ArithmeticParameter *param);
-int ElementOptAddRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptAddRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptSub(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptSubRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptSubRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptMul(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptMulRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptMulRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptMulInt(int *input0, int *input1, int *output, int element_size, ArithmeticParameter *param);
-int ElementOptMulReluInt(int *input0, int *input1, int *output, int element_size, ArithmeticParameter *param);
-int ElementOptMulRelu6Int(int *input0, int *input1, int *output, int element_size, ArithmeticParameter *param);
-int ElementOptDiv(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptDivRelu(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementOptDivRelu6(float *input0, float *input1, float *output, int element_size, ArithmeticParameter *param);
-int ElementMul(float *input0, float *input1, float *output, int element_size);
-int ElementMulRelu(float *input0, float *input1, float *output, int element_size);
-int ElementMulRelu6(float *input0, float *input1, float *output, int element_size);
-int ElementMulInt(int *input0, int *input1, int *output, int element_size);
-int ElementMulReluInt(int *input0, int *input1, int *output, int element_size);
-int ElementMulRelu6Int(int *input0, int *input1, int *output, int element_size);
+int ElementOptAdd(const float *input0, const float *input1, float *output, const int element_size,
+                  const ArithmeticParameter *param);
+int ElementOptAddInt(const int *input0, const int *input1, int *output, const int element_size,
+                     const ArithmeticParameter *param);
+int ElementOptAddRelu(const float *input0, const float *input1, float *output, const int element_size,
+                      const ArithmeticParameter *param);
+int ElementOptAddRelu6(const float *input0, const float *input1, float *output, const int element_size,
+                       const ArithmeticParameter *param);
+int ElementOptSub(const float *input0, const float *input1, float *output, const int element_size,
+                  const ArithmeticParameter *param);
+int ElementOptSubRelu(const float *input0, const float *input1, float *output, const int element_size,
+                      const ArithmeticParameter *param);
+int ElementOptSubRelu6(const float *input0, const float *input1, float *output, const int element_size,
+                       const ArithmeticParameter *param);
+int ElementOptMul(const float *input0, const float *input1, float *output, const int element_size,
+                  const ArithmeticParameter *param);
+int ElementOptMulRelu(const float *input0, const float *input1, float *output, const int element_size,
+                      const ArithmeticParameter *param);
+int ElementOptMulRelu6(const float *input0, const float *input1, float *output, const int element_size,
+                       const ArithmeticParameter *param);
+int ElementOptMulInt(const int *input0, const int *input1, int *output, const int element_size,
+                     const ArithmeticParameter *param);
+int ElementOptMulReluInt(const int *input0, const int *input1, int *output, const int element_size,
+                         const ArithmeticParameter *param);
+int ElementOptMulRelu6Int(const int *input0, const int *input1, int *output, const int element_size,
+                          const ArithmeticParameter *param);
+int ElementOptDiv(const float *input0, const float *input1, float *output, const int element_size,
+                  const ArithmeticParameter *param);
+int ElementOptDivRelu(const float *input0, const float *input1, float *output, const int element_size,
+                      const ArithmeticParameter *param);
+int ElementOptDivRelu6(const float *input0, const float *input1, float *output, const int element_size,
+                       const ArithmeticParameter *param);
+int ElementMul(const float *input0, const float *input1, float *output, const int element_size);
+int ElementMulRelu(const float *input0, const float *input1, float *output, const int element_size);
+int ElementMulRelu6(const float *input0, const float *input1, float *output, const int element_size);
+int ElementMulInt(const int *input0, const int *input1, int *output, const int element_size);
+int ElementMulReluInt(const int *input0, const int *input1, int *output, const int element_size);
+int ElementMulRelu6Int(const int *input0, const int *input1, int *output, const int element_size);
 int BroadcastMul(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                  ArithmeticParameter *param);
 
-int ElementAdd(float *input0, float *input1, float *output, int element_size);
-int ElementAddRelu(float *input0, float *input1, float *output, int element_size);
-int ElementAddRelu6(float *input0, float *input1, float *output, int element_size);
-int ElementAddInt(int *input0, int *input1, int *output, int element_size);
+int ElementAdd(const float *input0, const float *input1, float *output, const int element_size);
+int ElementAddRelu(const float *input0, const float *input1, float *output, const int element_size);
+int ElementAddRelu6(const float *input0, const float *input1, float *output, const int element_size);
+int ElementAddInt(const int *input0, const int *input1, int *output, const int element_size);
 int BroadcastAdd(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                  ArithmeticParameter *param);
 int BroadcastAddInt8(int8_t *input0, int8_t *input1, int8_t *tile_input0, int8_t *tile_input1, int8_t *output,
                      int element_size, ArithmeticParameter *param);
 
-int ElementSub(float *input0, float *input1, float *output, int element_size);
-int ElementSubRelu(float *input0, float *input1, float *output, int element_size);
-int ElementSubRelu6(float *input0, float *input1, float *output, int element_size);
+int ElementSub(const float *input0, const float *input1, float *output, const int element_size);
+int ElementSubRelu(const float *input0, const float *input1, float *output, const int element_size);
+int ElementSubRelu6(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastSub(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                  ArithmeticParameter *param);
 
-int ElementDiv(float *input0, float *input1, float *output, int element_size);
-int ElementDivRelu(float *input0, float *input1, float *output, int element_size);
-int ElementDivRelu6(float *input0, float *input1, float *output, int element_size);
+int ElementDiv(const float *input0, const float *input1, float *output, const int element_size);
+int ElementDivRelu(const float *input0, const float *input1, float *output, const int element_size);
+int ElementDivRelu6(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastDiv(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                  ArithmeticParameter *param);
 
-int ElementLogicalAnd(float *input0, float *input1, float *output, int element_size);
+int ElementLogicalAnd(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastLogicalAnd(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                         int element_size, ArithmeticParameter *param);
 
-int ElementLogicalOr(float *input0, float *input1, float *output, int element_size);
+int ElementLogicalOr(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastLogicalOr(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                        int element_size, ArithmeticParameter *param);
 
-int ElementMaximum(float *input0, float *input1, float *output, int element_size);
+int ElementMaximum(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastMaximum(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                      int element_size, ArithmeticParameter *param);
 
-int ElementMinimum(float *input0, float *input1, float *output, int element_size);
+int ElementMinimum(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastMinimum(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                      int element_size, ArithmeticParameter *param);
 
-int ElementFloorDiv(float *input0, float *input1, float *output, int element_size);
-int ElementFloorDivInt(int *input0, int *input1, int *output, int element_size);
+int ElementFloorDiv(const float *input0, const float *input1, float *output, const int element_size);
+int ElementFloorDivInt(const int *input0, const int *input1, int *output, const int element_size);
 int BroadcastFloorDiv(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param);
 
-int ElementFloorMod(float *input0, float *input1, float *output, int element_size);
-int ElementFloorModInt(int *input0, int *input1, int *output, int element_size);
+int ElementFloorMod(const float *input0, const float *input1, float *output, const int element_size);
+int ElementFloorModInt(const int *input0, const int *input1, int *output, const int element_size);
 int BroadcastFloorMod(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param);
 
-int ElementSquaredDifference(float *input0, float *input1, float *output, int element_size);
+int ElementSquaredDifference(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastSquaredDifference(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                                int element_size, ArithmeticParameter *param);
 
-int ElementNotEqual(float *input0, float *input1, float *output, int element_size);
+int ElementNotEqual(const float *input0, const float *input1, float *output, const int element_size);
 
 int BroadcastNotEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param);
 
-int ElementEqual(float *input0, float *input1, float *output, int element_size);
+int ElementEqual(const float *input0, const float *input1, float *output, const int element_size);
 
 int BroadcastEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                    int element_size, ArithmeticParameter *param);
 
-int ElementLess(float *input0, float *input1, float *output, int element_size);
+int ElementLess(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastLess(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
                   ArithmeticParameter *param);
 
-int ElementLessEqual(float *input0, float *input1, float *output, int element_size);
+int ElementLessEqual(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastLessEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                        int element_size, ArithmeticParameter *param);
 
-int ElementGreater(float *input0, float *input1, float *output, int element_size);
+int ElementGreater(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastGreater(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                      int element_size, ArithmeticParameter *param);
 
-int ElementGreaterEqual(float *input0, float *input1, float *output, int element_size);
+int ElementGreaterEqual(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastGreaterEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
                           int element_size, ArithmeticParameter *param);
 

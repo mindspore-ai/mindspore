@@ -79,13 +79,13 @@ void ElementMulAcc(const float *input0, const float *input1, float *output, int 
   }
 }
 
-void UpdataState(float *cell_state, float *forget_gate, float *input_gate, float *cell_gate, int batch,
+void UpdataState(float *cell_state, float *forget_gate, const float *input_gate, float *cell_gate, int batch,
                  int hidden_size) {
   ElementMul(forget_gate, cell_state, cell_state, batch * hidden_size);
   ElementMulAcc(input_gate, cell_gate, cell_state, batch * hidden_size);
 }
 
-void UpdataOutput(float *cell_state, float *output_gate, float *hidden_state, int batch, int hidden_size) {
+void UpdataOutput(const float *cell_state, float *output_gate, float *hidden_state, int batch, int hidden_size) {
   Tanh(cell_state, batch * hidden_size, hidden_state);
   ElementMul(hidden_state, output_gate, hidden_state, batch * hidden_size);
 }

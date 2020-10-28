@@ -36,6 +36,9 @@ float StdPowerImpl(float x, float exponent) { return pow(x, exponent); }
 
 void Power(const float *input, const float *exponent, float *output, int len, float scale, float shift,
            bool broadcast) {
+  if (input == NULL || exponent == NULL) {
+    return;
+  }
   if (broadcast) {
     if (CheckInteger(*exponent)) {
       for (int i = 0; i < len; ++i) {

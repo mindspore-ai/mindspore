@@ -94,7 +94,7 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, in
     unit_size = UP_ROUND(kernel_plane * in_channel, C16NUM);
   }
 #endif
-  bool per_channel;
+  bool per_channel = false;
   if (conv_param->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL) {
     input_sum_offset = tile_n * up_round_oc;
     per_channel = true;

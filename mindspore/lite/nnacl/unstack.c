@@ -17,7 +17,7 @@
 #include "nnacl/unstack.h"
 #include <string.h>
 
-void Unistack(float *input, float **output, UnstackParameter *para) {
+void Unistack(const float *input, float **output, UnstackParameter *para) {
   for (int j = 0; j < para->num_; j++) {
     float *out_addr = output[j];
     int out_offset = 0;

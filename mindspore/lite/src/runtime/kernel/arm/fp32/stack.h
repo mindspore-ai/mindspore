@@ -34,7 +34,7 @@ class StackCPUKernel : public LiteKernel {
   int Run() override;
 
  protected:
-  int axis_;
+  int axis_ = 0;
 };
 }  // namespace mindspore::kernel
 

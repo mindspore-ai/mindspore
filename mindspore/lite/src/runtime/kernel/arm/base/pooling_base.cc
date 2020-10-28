@@ -71,6 +71,7 @@ void PoolingBaseCPUKernel::FreeQuantParam() {
       }
     }
     free(pooling_quant_arg_);
+    pooling_quant_arg_ = nullptr;
   }
 }
 

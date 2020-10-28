@@ -29,7 +29,7 @@ extern "C" {
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row,
                int col, size_t stride, int out_type);
 void MatVecMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int col);
-void RowMajor2ColMajor(float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row4Major(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row12Major(float *src_ptr, float *dst_ptr, int row, int col);

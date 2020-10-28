@@ -17,7 +17,7 @@
 #include "nnacl/fp32/tile.h"
 #include <string.h>
 
-void DoCopyData(float *input_data, float *output_data, size_t size, size_t multiple) {
+void DoCopyData(const float *input_data, float *output_data, size_t size, size_t multiple) {
   float *out_data = output_data;
   for (size_t i = 0; i < multiple; ++i) {
     (void)memcpy(out_data, input_data, size * sizeof(float));

@@ -54,11 +54,18 @@ int Resize::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
   }
   if (this->primitive_->value.value == nullptr) {
     auto attr = new (std::nothrow) schema::ResizeT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr value failed";
+      return RET_ERROR;
+    }
     if (prim.instance_name() == "ResizeNearestNeighbor") {
       attr->method = schema::ResizeMethod_NEAREST;
     } else if (prim.instance_name() == "ResizeBilinear") {
       attr->method = schema::ResizeMethod_LINEAR;
     } else {
+      if (attr != nullptr) {
+        delete attr;
+      }
       MS_LOG(ERROR) << "wrong resize type";
       return RET_ERROR;
     }
@@ -69,6 +76,9 @@ int Resize::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
 
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {
+      if (attr != nullptr) {
+        delete attr;
+      }
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
