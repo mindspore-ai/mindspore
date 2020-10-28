@@ -41,6 +41,7 @@ Specifically, the GoogleNet contains numerous inception modules, which are conne
 
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
 Dataset used: [CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>) 
 
@@ -167,11 +168,11 @@ Parameters for both training and evaluation can be set in config.py
   'image_width': 224        # image width used as input to the model
   'data_path': './cifar10'  # absolute full path to the train and evaluation datasets
   'device_target': 'Ascend' # device running the program
-  'device_id': 4            # device ID used to train or evaluate the dataset. Ignore it when you use run_train.sh for distributed training
+  'device_id': 0            # device ID used to train or evaluate the dataset. Ignore it when you use run_train.sh for distributed training
   'keep_checkpoint_max': 10 # only keep the last keep_checkpoint_max checkpoint
   'checkpoint_path': './train_googlenet_cifar10-125_390.ckpt'  # the absolute full path to save the checkpoint file
   'onnx_filename': 'googlenet.onnx' # file name of the onnx model used in export.py
-  'geir_filename': 'googlenet.geir' # file name of the geir model used in export.py
+  'air_filename': 'googlenet.air' # file name of the air model used in export.py
   ```
 
 For more configuration details, please refer the script `config.py`.
@@ -265,7 +266,7 @@ For more configuration details, please refer the script `config.py`.
   Note that for evaluation after distributed training, please set the checkpoint_path to be the last saved checkpoint file such as "username/googlenet/train_parallel0/train_googlenet_cifar10-125_48.ckpt". The accuracy of the test dataset will be as follows:
   
   ```
-  # grep "accuracy: " dist.eval.log
+  # grep "accuracy: " eval.log
   accuracy: {'acc': 0.9217}
   ```
 
@@ -310,8 +311,8 @@ For more configuration details, please refer the script `config.py`.
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | Inception V1                                                | Inception V1           |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             | NV SMX2 V100-32G       |
-| uploaded Date              | 08/31/2020 (month/day/year)                                 | 08/20/2020 (month/day/year) |
-| MindSpore Version          | 0.7.0-alpha                                                 | 0.6.0-alpha            |
+| uploaded Date              | 10/28/2020 (month/day/year)                                 | 10/28/2020 (month/day/year) |
+| MindSpore Version          | 1.0.0                                                       | 1.0.0                  |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10               |
 | Training Parameters        | epoch=125, steps=390, batch_size = 128, lr=0.1              | epoch=125, steps=390, batch_size=128, lr=0.1    |
 | Optimizer                  | Momentum                                                    | Momentum               |
@@ -323,15 +324,15 @@ For more configuration details, please refer the script `config.py`.
 | Parameters (M)             | 13.0                                                        | 13.0                   |
 | Checkpoint for Fine tuning | 43.07M (.ckpt file)                                         | 43.07M (.ckpt file)    |
 | Model for inference        | 21.50M (.onnx file),  21.60M(.air file)                     |      | 
-| Scripts                    | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r0.7/model_zoo/official/cv/googlenet) | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r0.6/model_zoo/official/cv/googlenet) |
+| Scripts                    | [googlenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet) | [googlenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet) |
 
 #### GoogleNet on 1200k images
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | Inception V1                                                |
 | Resource                   | Ascend 910, CPU 2.60GHz, 56cores, Memory 314G               |
-| uploaded Date              | 09/20/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.7.0-alpha                                                 |
+| uploaded Date              | 10/28/2020 (month/day/year)                                 |
+| MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | 1200k images                                                |
 | Training Parameters        | epoch=300, steps=5000, batch_size=256, lr=0.1               |
 | Optimizer                  | Momentum                                                    |
@@ -352,8 +353,8 @@ For more configuration details, please refer the script `config.py`.
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | Inception V1                | Inception V1                |
 | Resource            | Ascend 910                  | GPU                         |
-| Uploaded Date       | 08/31/2020 (month/day/year) | 08/20/2020 (month/day/year) |
-| MindSpore Version   | 0.7.0-alpha                 | 0.6.0-alpha                 |
+| Uploaded Date       | 10/28/2020 (month/day/year) | 10/28/2020 (month/day/year) |
+| MindSpore Version   | 1.0.0                       | 1.0.0                       |
 | Dataset             | CIFAR-10, 10,000 images     | CIFAR-10, 10,000 images     |
 | batch_size          | 128                         | 128                         |
 | outputs             | probability                 | probability                 |
@@ -365,8 +366,8 @@ For more configuration details, please refer the script `config.py`.
 | ------------------- | --------------------------- |
 | Model Version       | Inception V1                |
 | Resource            | Ascend 910                  |
-| Uploaded Date       | 09/20/2020 (month/day/year) |
-| MindSpore Version   | 0.7.0-alpha                 |
+| Uploaded Date       | 10/28/2020 (month/day/year) |
+| MindSpore Version   | 1.0.0                       |
 | Dataset             | 1200k images                |
 | batch_size          | 256                         |
 | outputs             | probability                 |
