@@ -29,3 +29,12 @@ def test_asin_fp32():
     output_ms = P.Asin()(Tensor(x_np))
     output_np = np.arcsin(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_asin_fp16():
+    x_np = np.array([0.74, 0.04, 0.30, 0.56]).astype(np.float16)
+    output_ms = P.Asin()(Tensor(x_np))
+    output_np = np.arcsin(x_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
