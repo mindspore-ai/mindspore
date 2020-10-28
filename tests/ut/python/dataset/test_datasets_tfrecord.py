@@ -294,6 +294,24 @@ def test_tfrecord_invalid_files():
     assert nonexistent_file in str(info.value)
 
 
+def test_tf_wrong_schema():
+    logger.info("test_tf_wrong_schema")
+    files = ["../data/dataset/test_tf_file_3_images2/train-0000-of-0001.data"]
+    schema = ds.Schema()
+    schema.add_column('image', de_type=mstype.uint8, shape=[1])
+    schema.add_column('label', de_type=mstype.int64, shape=[1])
+    data1 = ds.TFRecordDataset(files, schema, shuffle=False)
+    exception_occurred = False
+    try:
+        for _ in data1:
+            pass
+    except RuntimeError as e:
+        exception_occurred = True
+        assert "Shape in schema's column 'image' is incorrect" in str(e)
+
+    assert exception_occurred, "test_tf_wrong_schema failed."
+
+
 if __name__ == '__main__':
     test_tfrecord_shape()
     test_tfrecord_read_all_dataset()
@@ -312,3 +330,4 @@ if __name__ == '__main__':
     test_tfrecord_no_schema_columns_list()
     test_tfrecord_schema_columns_list()
     test_tfrecord_invalid_files()
+    test_tf_wrong_schema()
