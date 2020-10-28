@@ -240,6 +240,20 @@ class ClipByNorm(nn.Cell):
         return norm
 
 
+class ClipByGlobalNorm(nn.Cell):
+    """ClipByGlobalNorm net definition"""
+
+    def __init__(self, x, clip_norm=1.0, use_norm=None):
+        super(ClipByGlobalNorm, self).__init__()
+        self.x = x
+        self.clip_norm = clip_norm
+        self.use_norm = use_norm
+
+    def construct(self):
+        norm = C.clip_by_global_norm(self.x, self.clip_norm, self.use_norm)
+        return norm
+
+
 class Embedding(nn.Cell):
     """Embedding net definition"""
 
@@ -1129,6 +1143,11 @@ test_case_math_ops = [
         'block': ClipByNorm(axis=0),
         'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32)),
                         Tensor(np.array([0.01]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('ClipByGlobalNorm', {
+        'block': ClipByGlobalNorm(x=Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32)),
+                                  clip_norm=1.0, use_norm=None),
+        'desc_inputs': [],
         'skip': ['backward']}),
     ('Embedding_1', {
         'block': Embedding(vocab_size=10, embedding_size=3),

@@ -273,6 +273,7 @@ class ClipByNorm(Cell):
         \text{output}(X) = \frac{\text{clip_norm} * X}{L_2(X)},
 
     where :math:`L_2(X)` is the :math:`L_2`-norm of :math:`X`.
+
     Args:
         axis (Union[None, int, tuple(int)): Compute the L2-norm along the Specific dimension.
                                             Default: None, all dimensions to calculate.
@@ -280,6 +281,7 @@ class ClipByNorm(Cell):
     Inputs:
         - **input** (Tensor) - Tensor of shape N-D. The type must be float32 or float16.
         - **clip_norm** (Tensor) - A scalar Tensor of shape :math:`()` or :math:`(1)`.
+                                   Or a tensor shape can be broadcast to input shape.
 
     Outputs:
         Tensor, clipped tensor with the same shape as the input, whose type is float32.
