@@ -168,6 +168,12 @@ if (PLATFORM_ARM64)
     endif ()
 endif ()
 
+if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+  if (ENABLE_CONVERTER)
+    set(BUILD_MINDDATA "off")
+  endif()
+endif()
+
 if (BUILD_MINDDATA STREQUAL "lite" OR BUILD_MINDDATA STREQUAL "full")
     # add sentencepiece dependency
     # include(${TOP_DIR}/cmake/external_libs/sentencepiece.cmake)
