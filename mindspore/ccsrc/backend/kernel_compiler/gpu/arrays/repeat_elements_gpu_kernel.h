@@ -97,7 +97,7 @@ class RepeatElementsGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
-      MS_LOG(EXCEPTION) << input_count << " arguments were provided, but RepeatElementGpuKernel expects 1.";
+      MS_LOG(EXCEPTION) << input_count << " arguments were provided, but RepeatElementsGpuKernel expects 1.";
     }
 
     std::vector<size_t> temp_input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
