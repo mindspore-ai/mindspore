@@ -31,7 +31,6 @@ echo $PATH1
 PATH2=$(get_real_path $2)
 echo $PATH2
 
-python ${current_exec_path}/src/generate_hccn_file.py --rank_file=$PATH1
 export RANK_TABLE_FILE=$PATH1
 export RANK_SIZE=8
 ulimit -u unlimited
