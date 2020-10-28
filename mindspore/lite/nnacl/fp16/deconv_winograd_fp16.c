@@ -210,12 +210,14 @@ int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvPa
     int ret = CookToomFilter(matrix_a, matrix_at, matrix_b, matrix_bt, matrix_g, matrix_gt, 0.5f,
                              DECONV_WINOGRAD_DEFAULT_UNIT, unit->h_size_);
     if (ret != NNACL_OK) {
+      free(current_unit_weight);
       return NNACL_ERRCODE_WINOGRAD_GENERATOR_ERROR;
     }
 
     /* winograd AT */
     unit->winograd_.AT_ = malloc(unit->winograd_.i_ * unit->winograd_.o_ * sizeof(float16_t));
     if (unit->winograd_.AT_ == NULL) {
+      free(current_unit_weight);
       return NNACL_NULL_PTR;
     }
     Float32ToFloat16(matrix_at, unit->winograd_.AT_, unit->winograd_.i_ * unit->winograd_.o_);
@@ -223,6 +225,8 @@ int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvPa
     /* winograd BT */
     unit->winograd_.BT_ = malloc(unit->winograd_.o_ * unit->winograd_.o_ * sizeof(float16_t));
     if (unit->winograd_.BT_ == NULL) {
+      free(current_unit_weight);
+      free(unit->winograd_.AT_);
       return NNACL_NULL_PTR;
     }
     Float32ToFloat16(matrix_bt, unit->winograd_.BT_, unit->winograd_.o_ * unit->winograd_.o_);
@@ -231,6 +235,9 @@ int PackDeConvWgDataFp16(float16_t *nhwc_weight, DeConvComputeUnit *unit, ConvPa
     size = conv_param->input_channel_ * output_channel * unit->winograd_.kh_ * unit->winograd_.kw_;
     float16_t *winograd_unit_weight = (float16_t *)malloc(size * sizeof(float16_t));
     if (winograd_unit_weight == NULL) {
+      free(current_unit_weight);
+      free(unit->winograd_.AT_);
+      free(unit->winograd_.BT_);
       return NNACL_NULL_PTR;
     }
 

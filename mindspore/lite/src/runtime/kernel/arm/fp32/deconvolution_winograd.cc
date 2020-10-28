@@ -113,6 +113,10 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
   int size = deconv_param_->thread_num_ * DECONV_WINOGRAD_DEFAULT_UNIT * DECONV_WINOGRAD_DEFAULT_UNIT *
              DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
   tile_input_ = reinterpret_cast<float *>(malloc(size * sizeof(float)));
+  if (tile_input_ == nullptr) {
+    MS_LOG(ERROR) << "tile_input_ error!";
+    return RET_NULL_PTR;
+  }
   memset(tile_input_, 0, size * sizeof(float));
 
   deconv_param_->out_tile_w_ = (DECONV_WINOGRAD_DEFAULT_UNIT - 1) * conv_param_->stride_w_ + conv_param_->kernel_w_;
@@ -127,18 +131,38 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
         size = unit.winograd_.kh_ * unit.winograd_.kw_ * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param_->ic_up4_;
         deconv_param_->a_buffer_[unit.winograd_.kh_].middle_buffer_ =
           malloc(deconv_param_->thread_num_ * size * sizeof(float));
+        if (deconv_param_->a_buffer_[unit.winograd_.kh_].middle_buffer_ == nullptr) {
+          MS_LOG(ERROR) << "middle_buffer_ error!";
+          return RET_NULL_PTR;
+        }
         deconv_param_->a_buffer_[unit.winograd_.kh_].dest_buffer_ =
           malloc(deconv_param_->thread_num_ * size * sizeof(float));
+        if (deconv_param_->a_buffer_[unit.winograd_.kh_].dest_buffer_ == nullptr) {
+          MS_LOG(ERROR) << "dest_buffer_ error!";
+          return RET_NULL_PTR;
+        }
       }
 
       unit.winograd_.b_buffer_ = malloc(deconv_param_->thread_num_ * unit.winograd_.kh_ * unit.winograd_.kw_ *
                                         deconv_param_->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE * sizeof(float));
+      if (unit.winograd_.b_buffer_ == nullptr) {
+        MS_LOG(ERROR) << "b_buffer_ error!";
+        return RET_NULL_PTR;
+      }
       unit.tmp_buffer_ = malloc(deconv_param_->thread_num_ * unit.winograd_.kh_ * unit.winograd_.kw_ *
                                 deconv_param_->oc_div4_ * DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float));
+      if (unit.tmp_buffer_ == nullptr) {
+        MS_LOG(ERROR) << "tmp_buffer_ error!";
+        return RET_NULL_PTR;
+      }
 
     } else {
       unit.tmp_buffer_ = malloc(deconv_param_->thread_num_ * deconv_param_->oc_div4_ * unit.w_size_ * unit.h_size_ *
                                 DECONV_WINOGRAD_DEFAULT_TILE * C4NUM * sizeof(float));
+      if (unit.tmp_buffer_ == nullptr) {
+        MS_LOG(ERROR) << "tmp_buffer_ error!";
+        return RET_NULL_PTR;
+      }
     }
   }
 
@@ -217,9 +241,17 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
         unit.winograd_.b_buffer_ = nullptr;
         unit.weight_ = malloc(unit.winograd_.kh_ * unit.winograd_.kw_ * deconv_param_->oc_up4_ *
                               deconv_param_->ic_up4_ * sizeof(float));
+        if (unit.weight_ == nullptr) {
+          MS_LOG(ERROR) << "weight_ error!";
+          return RET_NULL_PTR;
+        }
       } else {
         unit.use_winograd_ = false;
         unit.weight_ = malloc(h_size * w_size * deconv_param_->ic_up4_ * deconv_param_->oc_up4_ * sizeof(float));
+        if (unit.weight_ == nullptr) {
+          MS_LOG(ERROR) << "weight_ error!";
+          return RET_NULL_PTR;
+        }
       }
       unit.tmp_buffer_ = nullptr;
       deconv_param_->compute_units_[cur_count] = unit;
@@ -244,6 +276,10 @@ int DeConvolutionWinogradCPUKernel::InitDataParam() {
 
   /* bias */
   bias_data_ = malloc(deconv_param_->oc_up4_ * sizeof(float));
+  if (bias_data_ == nullptr) {
+    MS_LOG(ERROR) << "bias_data_ error!";
+    return RET_NULL_PTR;
+  }
   memset(bias_data_, 0, deconv_param_->oc_up4_ * sizeof(float));
   if (in_tensors_.size() == 3) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);

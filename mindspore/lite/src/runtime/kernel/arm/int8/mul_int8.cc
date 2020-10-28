@@ -110,9 +110,14 @@ int MulInt8CPUKernel::Run() {
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
   if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
     input0_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    if (input0_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc input0_data_  failed.";
+      return RET_ERROR;
+    }
     input1_data_ = static_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
-    if (!input0_data_ || !input1_data_) {
-      MS_LOG(ERROR) << "malloc input0_data_ || input1_data_ failed.";
+    if (input1_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc input1_data_  failed.";
+      ctx_->allocator->Free(input0_data_);
       return RET_ERROR;
     }
     TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->MutableData()),

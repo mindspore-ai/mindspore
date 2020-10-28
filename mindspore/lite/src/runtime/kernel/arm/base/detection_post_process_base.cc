@@ -89,9 +89,14 @@ int DetectionPostProcessBaseCPUKernel::Run() {
   if (parameter->use_regular_nms_) {
     parameter->score_with_class_all_ =
       context_->allocator->Malloc((num_boxes + parameter->max_detections_) * sizeof(ScoreWithIndex));
+    if (parameter->score_with_class_all_ == nullptr) {
+      MS_LOG(ERROR) << "malloc parameter->score_with_class_all_failed.";
+      return RET_ERROR;
+    }
     parameter->indexes_ = context_->allocator->Malloc((num_boxes + parameter->max_detections_) * sizeof(int));
-    if (!parameter->score_with_class_all_ || !parameter->indexes_) {
-      MS_LOG(ERROR) << "malloc parameter->score_with_class_all_ || parameter->indexes_ failed.";
+    if (parameter->indexes_ == nullptr) {
+      MS_LOG(ERROR) << "malloc parameter->indexes_ failed.";
+      context_->allocator->Free(parameter->score_with_class_all_);
       return RET_ERROR;
     }
   } else {

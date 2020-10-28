@@ -48,7 +48,7 @@ class Convolution3x3Int8CPUKernel : public ConvolutionBaseCPUKernel {
   int32_t *tmp_dst_buffer_ = nullptr;
   int8_t *tmp_out_ = nullptr;
 };
-void ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param);
+int ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_3X3_INT8_H_
