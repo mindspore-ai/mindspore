@@ -103,13 +103,13 @@ void DeConvInt8CPUKernel::CheckSupportOptimize() {
     if (dlopen_error != nullptr) {
       MS_LOG(ERROR) << "load matmul func failed! " << dlopen_error << ".";
       support_optimize_ = false;
-      matmul_func_ = nullptr;
+      matmul_func_ = MatMulR4Int8Neon64;
     } else {
       support_optimize_ = true;
     }
   } else {
     support_optimize_ = false;
-    matmul_func_ = nullptr;
+    matmul_func_ = MatMulR4Int8Neon64;
   }
 #endif
   return;
