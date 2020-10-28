@@ -395,11 +395,7 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
     result =
       kernel::GpuKernelFactory::GetInstance().SearchRegistered(AnfAlgo::GetCNodeName(kernel_node), builder->Build());
     if (!result) {
-      auto ms_context = MsContext::GetInstance();
-      MS_EXCEPTION_IF_NULL(ms_context);
-      if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-        result = kernel::GpuKernelFactory::GetInstance().ReducePrecision(AnfAlgo::GetCNodeName(kernel_node), builder);
-      }
+      result = kernel::GpuKernelFactory::GetInstance().ReducePrecision(AnfAlgo::GetCNodeName(kernel_node), builder);
     }
     if (!result) {
       result = SelectAkgKernel(kernel_node, builder->Build());
