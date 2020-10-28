@@ -436,6 +436,9 @@ def check_from_dataset_sentencepiece(method):
 
         if vocab_size is not None:
             check_uint32(vocab_size, "vocab_size")
+        else:
+            raise TypeError("vocab_size must be provided")
+
 
         if character_coverage is not None:
             type_check(character_coverage, (float,), "character_coverage")
