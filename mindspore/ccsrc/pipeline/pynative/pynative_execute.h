@@ -68,6 +68,13 @@ struct GraphInfo {
 };
 
 class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
+ private:
+  MsBackendPolicy InitEnv(const OpExecInfoPtr &op_exec_info);
+  py::tuple RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_exec_info);
+  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
+                       abstract::AbstractBasePtrList *args_spec_list);
+  void RunParameterAutoMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
+
  public:
   static std::shared_ptr<PynativeExecutor> GetInstance() {
     std::lock_guard<std::mutex> i_lock(instance_lock_);
@@ -117,9 +124,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_param_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, std::vector<int> index) {
     graph_info_map_[g].param_map[obj] = std::make_pair(node, index);
   }
-
-  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
-                       abstract::AbstractBasePtrList *args_spec_list);
   void MakeCNode(const OpExecInfoPtr &op_exec_info, const py::object &out, const AnfNodePtr &cnode);
   ValuePtr GetForwardValue(const OpExecInfoPtr &op_exec_info);
   void SaveOpForwardValue(const std::string &id, const ValuePtr &value,
@@ -137,7 +141,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void SetTupleParam(const py::object &obj, const AnfNodePtr &para_node, std::vector<int> idx);
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
   py::tuple RunOpInner(const py::args &args);
-  py::tuple RunOpInner(const OpExecInfoPtr &op_exec_info);
 
   ~PynativeExecutor();
 

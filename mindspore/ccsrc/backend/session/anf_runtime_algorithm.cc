@@ -479,14 +479,18 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &n
   MS_EXCEPTION_IF_NULL(node);
   abstract::BaseShapePtr base_shape = node->Shape();
   MS_EXCEPTION_IF_NULL(base_shape);
-  if (base_shape->isa<abstract::Shape>() && output_idx == 0) {
-    return TransShapeToSizet(base_shape->cast<abstract::ShapePtr>());
+  if (base_shape->isa<abstract::Shape>()) {
+    if (output_idx == 0) {
+      return TransShapeToSizet(base_shape->cast<abstract::ShapePtr>());
+    }
+    MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << output_idx
+                      << ".";
   } else if (base_shape->isa<abstract::TupleShape>()) {
     auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
     MS_EXCEPTION_IF_NULL(tuple_shape);
     if (output_idx >= tuple_shape->size()) {
       MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
-                        << ".";
+                        << " node:" << node->DebugString() << ".";
     }
     auto b_shp = (*tuple_shape)[output_idx];
     if (b_shp->isa<abstract::Shape>()) {
@@ -495,13 +499,14 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &n
       return std::vector<size_t>();
     } else {
       MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
-                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString();
+                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
+                        << "node :" << node->DebugString() << ".";
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
     return std::vector<size_t>();
   }
   MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
-                    << base_shape->ToString();
+                    << base_shape->ToString() << " node : " << node->DebugString();
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx) {
