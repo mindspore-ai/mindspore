@@ -38,17 +38,21 @@ int Scheduler::Schedule(const lite::Model *model, std::vector<Tensor *> *tensors
   int ret = InferShape(model, tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "op infer shape failed.";
-    return RET_ERROR;
+    return ret;
   }
-  ret = InitOp2Kernel(model, tensors, kernels);
+  ret = BuildKernels(model, tensors, kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "init op to kernel failed.";
-    return RET_ERROR;
+    return ret;
   }
 
   kernel::LiteKernelUtil::InitIOKernels(*kernels);
 
-  ConstructSubGraphs(kernels);
+  ret = ConstructSubGraphs(kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ConstructSubGraphs failed.";
+    return ret;
+  }
 
   kernel::LiteKernelUtil::InitIOKernels(*kernels);
 
@@ -129,8 +133,8 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<Tensor *> *tenso
   return RET_OK;
 }
 
-int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<Tensor *> *tensors,
-                             std::vector<kernel::LiteKernel *> *kernels) {
+int Scheduler::BuildKernels(const lite::Model *model, std::vector<Tensor *> *tensors,
+                            std::vector<kernel::LiteKernel *> *kernels) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(tensors != nullptr);
   uint32_t kernelCount = model->nodes_.size();
@@ -194,7 +198,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
     std::vector<kernel::LiteKernel *> sub_kernels;
     std::queue<kernel::LiteKernel *> kernel_queue;
     kernel_queue.emplace(head_kernel);
-    auto cur_sub_graph_type = this->GetKernelSubGraphType(head_kernel);
+    auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernel);
     while (!kernel_queue.empty()) {
       auto cur_kernel = kernel_queue.front();
       kernel_queue.pop();
@@ -202,7 +206,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
       sub_kernels.emplace_back(cur_kernel);
       auto post_kernels = cur_kernel->out_kernels();
       for (auto post_kernel : post_kernels) {
-        if (cur_sub_graph_type == this->GetKernelSubGraphType(post_kernel)) {
+        if (cur_sub_graph_type == mindspore::lite::Scheduler::GetKernelSubGraphType(post_kernel)) {
           auto post_kernel_inputs = post_kernel->in_kernels();
           if (std::all_of(post_kernel_inputs.begin(), post_kernel_inputs.end(),
                           [&](kernel::LiteKernel *kernel) { return is_kernel_sinked[kernel]; })) {
