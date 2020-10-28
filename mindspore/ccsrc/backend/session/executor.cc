@@ -220,6 +220,7 @@ bool Executor::IsTaskReady(const std::shared_ptr<RunGraphTask> &task) {
 void Executor::SyncRunTask(const std::shared_ptr<Task> &task) {
   std::unique_lock<std::mutex> lock(task_mutex_);
   ready_tasks_.push(task);
+  done_tasks_.clear();
   task_cond_var_.notify_all();
   sync_cond_var_.wait(lock);
   MsException::GetInstance().CheckException();
@@ -328,6 +329,11 @@ void Executor::RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const Gr
   task->op_run_info_ = op_run_info;
   task->graph_info_ = graph_info;
   task->input_tensors_ = input_tensors;
+  for (auto &tensor : input_tensors) {
+    if (tensor->NeedWait()) {
+      tensor->Wait();
+    }
+  }
   SyncRunTask(task);
   *outputs = task->outputs_;
 }
