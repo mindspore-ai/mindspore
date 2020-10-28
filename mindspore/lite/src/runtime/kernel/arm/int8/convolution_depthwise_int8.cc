@@ -168,22 +168,26 @@ kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *>
                                                const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
-  kernel::LiteKernel *kernel;
+  kernel::LiteKernel *kernel = nullptr;
   auto act_quant_size =
     MSMAX(inputs[kInputIndex]->GetQuantParams().size(), outputs[kOutputIndex]->GetQuantParams().size());
   if (act_quant_size == 1) {  // per tensor
-    auto conv_parm = reinterpret_cast<ConvParameter *>(opParameter);
-    auto channel = inputs[kWeightIndex]->shape()[0];
+    auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+    if (primitive != nullptr && primitive->GetInferFlag()) {
+      conv_param->input_h_ = inputs[kInputIndex]->Height();
+      conv_param->input_w_ = inputs[kInputIndex]->Width();
+      conv_param->input_channel_ = inputs[kInputIndex]->Channel();
+      conv_param->output_h_ = outputs[kOutputIndex]->Height();
+      conv_param->output_w_ = outputs[kOutputIndex]->Width();
+    }
     auto weight_quant_size = inputs[kWeightIndex]->GetQuantParams().size();
-    if (CheckIfUse3X3(conv_parm, channel) && weight_quant_size == 1) {
+    if (CheckIfUse3X3(conv_param) && weight_quant_size == 1) {
 #ifdef ENABLE_ARM64
       kernel =
         new (std::nothrow) kernel::ConvolutionDepthwise3x3Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-#else
-      kernel =
-        new (std::nothrow) kernel::ConvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
 #endif
-    } else {
+    }
+    if (kernel == nullptr) {
       kernel =
         new (std::nothrow) kernel::ConvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
     }

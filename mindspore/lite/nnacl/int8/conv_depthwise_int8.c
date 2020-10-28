@@ -139,11 +139,22 @@ void ConvDwInt8(int8_t *output_data, int32_t *row_buffer, const int8_t *input_da
 /*conv depthwise int8 end*/
 
 /*conv depthwise 3x3 int8 begin*/
-bool CheckIfUse3X3(const ConvParameter *conv_param, int channel) {
-  bool use_3x3 = conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 && conv_param->stride_h_ == 1 &&
-                 conv_param->stride_w_ == 1 && (conv_param->pad_u_ == 0 || conv_param->pad_u_ == 1) &&
+bool CheckIfUse3X3(const ConvParameter *conv_param) {
+  bool use_3x3 = conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 &&
+                 (conv_param->stride_h_ == 1 || conv_param->stride_h_ == 2) &&
+                 (conv_param->stride_w_ == 1 || conv_param->stride_w_ == 2) &&
+                 conv_param->stride_h_ == conv_param->stride_w_ &&
+                 (conv_param->pad_u_ == 0 || conv_param->pad_u_ == 1) &&
                  (conv_param->pad_l_ == 0 || conv_param->pad_l_ == 1) && conv_param->pad_u_ == conv_param->pad_l_ &&
-                 conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 && (channel % 8 == 0);
+                 conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1 && (conv_param->input_channel_ % 8 == 0);
+  if (!use_3x3) {
+    return false;
+  }
+  const int out_w = conv_param->output_w_ - 1;
+  const int out_h = conv_param->output_h_ - 1;
+  const int in_w = out_w * conv_param->stride_w_ - conv_param->pad_l_ + conv_param->kernel_w_;
+  const int in_h = out_h * conv_param->stride_h_ - conv_param->pad_u_ + conv_param->kernel_h_;
+  use_3x3 = in_w <= (conv_param->input_w_ + conv_param->pad_l_) && in_h <= (conv_param->input_h_ + conv_param->pad_u_);
   return use_3x3;
 }
 
@@ -206,8 +217,14 @@ void ConvDw3x3Int8Block(int8_t *output, const int8_t *buffer, const int16_t *wei
                         int32_t acc_max, int stride) {
   for (; start_c <= end_c - 8; start_c += 8) {
 #ifdef ENABLE_ARM64
-    ConvDw3x3Int8Neon64(output, buffer, weight, bias, col_size, row_size, channel, output_h, output_w, in_zp, out_zp,
-                        out_multiplier, left_shift, right_shift, acc_min, acc_max);
+    if (stride == 1) {
+      ConvDw3x3Int8Neon64(output, buffer, weight, bias, col_size, row_size, channel, output_h, output_w, in_zp, out_zp,
+                          out_multiplier, left_shift, right_shift, acc_min, acc_max);
+    } else {
+      ConvDw3x3Int8Stride2(output, buffer, weight, bias, col_size, row_size, channel, output_h, output_w, in_zp, out_zp,
+                           out_multiplier, left_shift, right_shift, acc_min, acc_max);
+    }
+
 #else
     ConvDw3x3Int8Window(output, buffer, weight, bias, col_size, row_size, channel, output_h, output_w, in_zp, out_zp,
                         out_multiplier, left_shift, right_shift, acc_min, acc_max, stride);

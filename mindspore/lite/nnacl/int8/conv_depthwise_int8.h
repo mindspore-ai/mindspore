@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-bool CheckIfUse3X3(const ConvParameter *conv_param, int channel);
+bool CheckIfUse3X3(const ConvParameter *conv_param);
 
 void ConvDwInt8(int8_t *output_data, int32_t *output_row, const int8_t *input_data, const int16_t *weight_data,
                 const int32_t *bias_data, const ConvParameter *conv_param, int task_id);
