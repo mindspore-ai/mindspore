@@ -228,6 +228,44 @@ class Moments(nn.Cell):
         return mean, variance
 
 
+class ClipByNorm(nn.Cell):
+    """ClipByNorm net definition"""
+
+    def __init__(self, axis=None):
+        super(ClipByNorm, self).__init__()
+        self.clip_by_norm = nn.ClipByNorm(axis=axis)
+
+    def construct(self, input_x, max_norm):
+        norm = self.clip_by_norm(input_x, max_norm)
+        return norm
+
+
+class Embedding(nn.Cell):
+    """Embedding net definition"""
+
+    def __init__(self, vocab_size, embedding_size, padding_idx=None):
+        super(Embedding, self).__init__()
+        self.embedding = nn.Embedding(vocab_size=vocab_size, embedding_size=embedding_size,
+                                      padding_idx=padding_idx)
+
+    def construct(self, index):
+        res = self.embedding(index)
+        return res
+
+
+class EmbeddingLookup(nn.Cell):
+    """EmbeddingLookup net definition"""
+
+    def __init__(self, vocab_size, embedding_size, max_norm=None):
+        super(EmbeddingLookup, self).__init__()
+        self.embedding_lookup = nn.EmbeddingLookup(vocab_size=vocab_size, embedding_size=embedding_size,
+                                                   max_norm=max_norm)
+
+    def construct(self, index):
+        res = self.embedding_lookup(index)
+        return res
+
+
 class CountNonZero(nn.Cell):
     """CountNonZero net definition"""
 
@@ -1082,6 +1120,32 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[True, False, False], [False, True, True]])),
                         [2, 3], [2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('ClipByNorm_1', {
+        'block': ClipByNorm(),
+        'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32)),
+                        Tensor(np.array([0.01]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('ClipByNorm_2', {
+        'block': ClipByNorm(axis=0),
+        'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32)),
+                        Tensor(np.array([0.01]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('Embedding_1', {
+        'block': Embedding(vocab_size=10, embedding_size=3),
+        'desc_inputs': [Tensor(np.array([0, 2, 2, 7]).astype(np.int32))],
+        'skip': ['backward']}),
+    ('Embedding_2', {
+        'block': Embedding(vocab_size=10, embedding_size=3, padding_idx=2),
+        'desc_inputs': [Tensor(np.array([0, 2, 2, 7]).astype(np.int32))],
+        'skip': ['backward']}),
+    ('EmbeddingLookup_1', {
+        'block': EmbeddingLookup(vocab_size=10, embedding_size=3),
+        'desc_inputs': [Tensor(np.array([0, 2, 2, 7]).astype(np.int32))],
+        'skip': ['backward']}),
+    ('EmbeddingLookup_2', {
+        'block': EmbeddingLookup(vocab_size=10, embedding_size=3, max_norm=0.01),
+        'desc_inputs': [Tensor(np.array([0, 2, 2, 7]).astype(np.int32))],
+        'skip': ['backward']}),
     ('Moments', {
         'block': Moments(axis=(), keep_dims=False),
         'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32))],
