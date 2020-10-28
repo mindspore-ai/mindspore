@@ -379,7 +379,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
     for param_name in param_not_load:
         logger.debug("%s", param_name)
 
-    logger.info("Load parameter into net finish, {} parameters has not been loaded.".format(len(param_not_load)))
+    logger.info("Load parameter into net finish.")
+    logger.warning("{} parameters in the net are not loaded.".format(len(param_not_load)))
     return param_not_load
 
 
