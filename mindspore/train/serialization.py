@@ -232,8 +232,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         net (Cell): Cell network. Default: None
         strict_load (bool): Whether to strict load the parameter into net. If False, it will load parameter
                            in the param_dict into net with the same suffix. Default: False
-        filter_prefix (Union[str, list[str], tuple[str]]): Parameter with the filter prefix will not be loaded.
-            Default: None.
+        filter_prefix (Union[str, list[str], tuple[str]]): Parameters starting with the filter_prefix
+            will not be loaded. Default: None.
 
     Returns:
         Dict, key is parameter name, value is a Parameter.

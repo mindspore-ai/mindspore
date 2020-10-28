@@ -90,7 +90,8 @@ class CheckpointConfig:
             Default: True. Integrated save function is only supported in automatic parallel scene, not supported
             in manual parallel.
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False.
-        saved_network (Cell): Network to be saved in checkpoint file. Default: None.
+        saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
+            with the network in training, the initial value of saved_network will be saved. Default: None.
 
     Raises:
         ValueError: If the input_param is None or 0.
