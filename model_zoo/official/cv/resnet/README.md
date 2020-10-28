@@ -133,17 +133,20 @@ sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [C
     ├── run_distribute_train_gpu.sh        # launch gpu distributed training(8 pcs)
     ├── run_parameter_server_train_gpu.sh  # launch gpu parameter server training(8 pcs)
     ├── run_eval_gpu.sh                    # launch gpu evaluation
-    └── run_standalone_train_gpu.sh        # launch gpu standalone training(1 pcs)
+    ├── run_standalone_train_gpu.sh        # launch gpu standalone training(1 pcs)
+    └── run_gpu_resnet_benchmark.sh        # GPU benchmark for resnet50 with imagenet2012(1 pcs)
   ├── src
     ├── config.py                          # parameter configuration
     ├── dataset.py                         # data preprocessing
     ├── CrossEntropySmooth.py              # loss definition for ImageNet2012 dataset
     ├── lr_generator.py                    # generate learning rate for each step
-    └── resnet.py                          # resnet backbone, including resnet50 and resnet101 and se-resnet50
+    ├── resnet.py                          # resnet backbone, including resnet50 and resnet101 and se-resnet50
+    └── resnet_gpu_benchmark.py            # resnet50 for GPU benchmark
   ├── export.py                            # export model for inference
   ├── mindspore_hub_conf.py                # mindspore hub interface
   ├── eval.py                              # eval net
-  └── train.py                             # train net
+  ├── train.py                             # train net
+  └── gpu_resent_benchmark.py              # GPU benchmark for resnet50
 ```
 
 ## [Script Parameters](#contents)
@@ -272,6 +275,9 @@ sh run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATA
 
 # infer example
 sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+
+# gpu benchmark example
+sh run_gpu_resnet_benchmark.sh [IMAGENET_DATASET_PATH] [BATCH_SIZE](optional)
 ```
 
 #### Running parameter server mode training
@@ -335,7 +341,22 @@ epoch: 4 step: 5004, loss is 3.5011306
 epoch: 5 step: 5004, loss is 3.3501816
 ...
 ```
+- GPU Benchmark of ResNet50 with ImageNet2012 dataset
 
+```
+# ========START RESNET50 GPU BENCHMARK========
+step time: 22549.130 ms, fps: 11 img/sec. epoch: 1 step: 1, loss is 6.940182
+step time: 182.485 ms, fps: 1402 img/sec. epoch: 1 step: 2, loss is 7.078993
+step time: 175.263 ms, fps: 1460 img/sec. epoch: 1 step: 3, loss is 7.559594
+step time: 174.775 ms, fps: 1464 img/sec. epoch: 1 step: 4, loss is 8.020937
+step time: 175.564 ms, fps: 1458 img/sec. epoch: 1 step: 5, loss is 8.140132
+step time: 175.438 ms, fps: 1459 img/sec. epoch: 1 step: 6, loss is 8.021118
+step time: 175.760 ms, fps: 1456 img/sec. epoch: 1 step: 7, loss is 7.910158
+step time: 176.033 ms, fps: 1454 img/sec. epoch: 1 step: 8, loss is 7.940162
+step time: 175.995 ms, fps: 1454 img/sec. epoch: 1 step: 9, loss is 7.740654
+step time: 175.313 ms, fps: 1460 img/sec. epoch: 1 step: 10, loss is 7.956182
+...
+```
 ## [Evaluation Process](#contents)
 
 ### Usage
