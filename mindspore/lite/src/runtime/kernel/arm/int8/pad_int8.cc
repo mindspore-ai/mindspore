@@ -44,6 +44,10 @@ void PadInt8CPUKernel::FreeQuantParam() {
     free(pad_param_->pad_quant_arg_.out_quanr_args_);
     pad_param_->pad_quant_arg_.out_quanr_args_ = nullptr;
   }
+  if (pad_param_->pad_quant_arg_.constant_value_ != nullptr) {
+    free(pad_param_->pad_quant_arg_.constant_value_);
+    pad_param_->pad_quant_arg_.constant_value_ = nullptr;
+  }
 }
 
 int PadInt8CPUKernel::SetQuantParam() {
