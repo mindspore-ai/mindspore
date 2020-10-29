@@ -32,6 +32,7 @@ namespace vision {
 
 // Transform Op classes (in alphabetical order)
 #ifndef ENABLE_ANDROID
+class AutoContrastOperation;
 class CenterCropOperation;
 #endif
 class CropOperation;
@@ -42,6 +43,7 @@ class CutOutOperation;
 class DecodeOperation;
 #ifndef ENABLE_ANDROID
 class HwcToChwOperation;
+class InvertOperation;
 class MixUpBatchOperation;
 #endif
 class NormalizeOperation;
@@ -52,13 +54,16 @@ class RandomColorOperation;
 class RandomColorAdjustOperation;
 class RandomCropOperation;
 class RandomCropDecodeResizeOperation;
+class RandomCropWithBBoxOperation;
 class RandomHorizontalFlipOperation;
+class RandomHorizontalFlipWithBBoxOperation;
 class RandomPosterizeOperation;
 class RandomResizedCropOperation;
 class RandomRotationOperation;
 class RandomSharpnessOperation;
 class RandomSolarizeOperation;
 class RandomVerticalFlipOperation;
+class RandomVerticalFlipWithBBoxOperation;
 class RescaleOperation;
 #endif
 class ResizeOperation;
@@ -67,6 +72,13 @@ class RgbaToBgrOperation;
 class RgbaToRgbOperation;
 class SwapRedBlueOperation;
 class UniformAugOperation;
+
+/// \brief Function to create a AutoContrast TensorOperation.
+/// \notes Apply automatic contrast on input image.
+/// \param[in] cutoff Percent of pixels to cut off from the histogram, the valid range of cutoff value is 0 to 100.
+/// \param[in] ignore Pixel values to ignore.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<AutoContrastOperation> AutoContrast(float cutoff = 0.0, std::vector<uint32_t> ignore = {});
 
 /// \brief Function to create a CenterCrop TensorOperation.
 /// \notes Crops the input image at the center to the given size.
@@ -112,6 +124,11 @@ std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
 /// \notes Transpose the input image; shape (H, W, C) to shape (C, H, W).
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<HwcToChwOperation> HWC2CHW();
+
+/// \brief Function to create a Invert TensorOperation.
+/// \notes Apply invert on input image in RGB mode.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<InvertOperation> Invert();
 
 /// \brief Function to create a MixUpBatch TensorOperation.
 /// \notes Apply MixUp transformation on an input batch of images and labels. The labels must be in
@@ -232,11 +249,37 @@ std::shared_ptr<RandomCropDecodeResizeOperation> RandomCropDecodeResize(
   std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0}, std::vector<float> ratio = {3. / 4, 4. / 3},
   InterpolationMode interpolation = InterpolationMode::kLinear, int32_t max_attempts = 10);
 
+/// \brief Function to create a RandomCropWithBBox TensorOperation.
+/// \Crop the input image at a random location and adjust bounding boxes accordingly.
+/// \param[in] size A vector representing the output size of the cropped image.
+///     If size is a single value, a square crop of size (size, size) is returned.
+///     If size has 2 values, it should be (height, width).
+/// \param[in] padding A vector with the value of pixels to pad the image. If 4 values are provided,
+///     it pads the left, top, right and bottom respectively.
+/// \param[in] pad_if_needed A boolean whether to pad the image if either side is smaller than
+///     the given output size.
+/// \param[in] fill_value A vector representing the pixel intensity of the borders, it is used to
+///     fill R, G, B channels respectively.
+/// \param[in] padding_mode The method of padding (default=BorderType::kConstant).It can be any of
+///     [BorderType::kConstant, BorderType::kEdge, BorderType::kReflect, BorderType::kSymmetric].
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomCropWithBBoxOperation> RandomCropWithBBox(std::vector<int32_t> size,
+                                                                std::vector<int32_t> padding = {0, 0, 0, 0},
+                                                                bool pad_if_needed = false,
+                                                                std::vector<uint8_t> fill_value = {0, 0, 0},
+                                                                BorderType padding_mode = BorderType::kConstant);
+
 /// \brief Function to create a RandomHorizontalFlip TensorOperation.
 /// \notes Tensor operation to perform random horizontal flip.
 /// \param[in] prob A float representing the probability of flip.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob = 0.5);
+
+/// \brief Function to create a RandomHorizontalFlipWithBBox TensorOperation.
+/// \notes Flip the input image horizontally, randomly with a given probability and adjust bounding boxes accordingly.
+/// \param[in] prob A float representing the probability of flip.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomHorizontalFlipWithBBoxOperation> RandomHorizontalFlipWithBBox(float prob = 0.5);
 
 /// \brief Function to create a RandomPosterize TensorOperation.
 /// \notes Tensor operation to perform random posterize.
@@ -293,6 +336,12 @@ std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> thr
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob = 0.5);
 
+/// \brief Function to create a RandomVerticalFlipWithBBox TensorOperation.
+/// \notes Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
+/// \param[in] prob A float representing the probability of flip.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomVerticalFlipWithBBoxOperation> RandomVerticalFlipWithBBox(float prob = 0.5);
+
 /// \brief Function to create a RescaleOperation TensorOperation.
 /// \notes Tensor operation to rescale the input image.
 /// \param[in] rescale Rescale factor.
@@ -336,6 +385,21 @@ std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<
                                                     int32_t num_ops = 2);
 
 /* ####################################### Derived TensorOperation classes ################################# */
+
+class AutoContrastOperation : public TensorOperation {
+ public:
+  explicit AutoContrastOperation(float cutoff = 0.0, std::vector<uint32_t> ignore = {});
+
+  ~AutoContrastOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  float cutoff_;
+  std::vector<uint32_t> ignore_;
+};
 
 class CenterCropOperation : public TensorOperation {
  public:
@@ -417,6 +481,15 @@ class DecodeOperation : public TensorOperation {
 class HwcToChwOperation : public TensorOperation {
  public:
   ~HwcToChwOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+};
+
+class InvertOperation : public TensorOperation {
+ public:
+  ~InvertOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -566,11 +639,45 @@ class RandomCropDecodeResizeOperation : public TensorOperation {
   int32_t max_attempts_;
 };
 
+class RandomCropWithBBoxOperation : public TensorOperation {
+ public:
+  RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
+                              bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
+                              BorderType padding_mode = BorderType::kConstant);
+
+  ~RandomCropWithBBoxOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::vector<int32_t> size_;
+  std::vector<int32_t> padding_;
+  bool pad_if_needed_;
+  std::vector<uint8_t> fill_value_;
+  BorderType padding_mode_;
+};
+
 class RandomHorizontalFlipOperation : public TensorOperation {
  public:
   explicit RandomHorizontalFlipOperation(float probability = 0.5);
 
   ~RandomHorizontalFlipOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  float probability_;
+};
+
+class RandomHorizontalFlipWithBBoxOperation : public TensorOperation {
+ public:
+  explicit RandomHorizontalFlipWithBBoxOperation(float probability = 0.5);
+
+  ~RandomHorizontalFlipWithBBoxOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -667,6 +774,20 @@ class RandomVerticalFlipOperation : public TensorOperation {
   explicit RandomVerticalFlipOperation(float probability = 0.5);
 
   ~RandomVerticalFlipOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  float probability_;
+};
+
+class RandomVerticalFlipWithBBoxOperation : public TensorOperation {
+ public:
+  explicit RandomVerticalFlipWithBBoxOperation(float probability = 0.5);
+
+  ~RandomVerticalFlipWithBBoxOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 

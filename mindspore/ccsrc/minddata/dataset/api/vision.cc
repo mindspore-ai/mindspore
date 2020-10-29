@@ -21,6 +21,7 @@
 #endif
 // Kernel image headers (in alphabetical order)
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #include "minddata/dataset/kernels/image/center_crop_op.h"
 #endif
 #include "minddata/dataset/kernels/image/crop_op.h"
@@ -31,6 +32,7 @@
 #include "minddata/dataset/kernels/image/decode_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
+#include "minddata/dataset/kernels/image/invert_op.h"
 #include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #endif
 #include "minddata/dataset/kernels/image/normalize_op.h"
@@ -42,12 +44,15 @@
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
+#include "minddata/dataset/kernels/image/random_crop_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
+#include "minddata/dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_posterize_op.h"
 #include "minddata/dataset/kernels/image/random_rotation_op.h"
 #include "minddata/dataset/kernels/image/random_sharpness_op.h"
 #include "minddata/dataset/kernels/image/random_solarize_op.h"
 #include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
+#include "minddata/dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/rescale_op.h"
 #endif
 #include "minddata/dataset/kernels/image/resize_op.h"
@@ -67,6 +72,16 @@ namespace vision {
 #ifndef ENABLE_ANDROID
 // FUNCTIONS TO CREATE VISION TRANSFORM OPERATIONS
 // (In alphabetical order)
+
+// Function to create AutoContrastOperation.
+std::shared_ptr<AutoContrastOperation> AutoContrast(float cutoff, std::vector<uint32_t> ignore) {
+  auto op = std::make_shared<AutoContrastOperation>(cutoff, ignore);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
 
 // Function to create CenterCropOperation.
 std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size) {
@@ -122,6 +137,16 @@ std::shared_ptr<DecodeOperation> Decode(bool rgb) {
 // Function to create HwcToChwOperation.
 std::shared_ptr<HwcToChwOperation> HWC2CHW() {
   auto op = std::make_shared<HwcToChwOperation>();
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create InvertOperation.
+std::shared_ptr<InvertOperation> Invert() {
+  auto op = std::make_shared<InvertOperation>();
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -229,9 +254,31 @@ std::shared_ptr<RandomCropDecodeResizeOperation> RandomCropDecodeResize(std::vec
   return op;
 }
 
+// Function to create RandomCropWithBBoxOperation.
+std::shared_ptr<RandomCropWithBBoxOperation> RandomCropWithBBox(std::vector<int32_t> size, std::vector<int32_t> padding,
+                                                                bool pad_if_needed, std::vector<uint8_t> fill_value,
+                                                                BorderType padding_mode) {
+  auto op = std::make_shared<RandomCropWithBBoxOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
 // Function to create RandomHorizontalFlipOperation.
 std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob) {
   auto op = std::make_shared<RandomHorizontalFlipOperation>(prob);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RandomHorizontalFlipOperation.
+std::shared_ptr<RandomHorizontalFlipWithBBoxOperation> RandomHorizontalFlipWithBBox(float prob) {
+  auto op = std::make_shared<RandomHorizontalFlipWithBBoxOperation>(prob);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -296,6 +343,16 @@ std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> thr
 // Function to create RandomVerticalFlipOperation.
 std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob) {
   auto op = std::make_shared<RandomVerticalFlipOperation>(prob);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create RandomVerticalFlipWithBBoxOperation.
+std::shared_ptr<RandomVerticalFlipWithBBoxOperation> RandomVerticalFlipWithBBox(float prob) {
+  auto op = std::make_shared<RandomVerticalFlipWithBBoxOperation>(prob);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -368,6 +425,60 @@ std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<
 
 #endif
 /* ####################################### Validator Functions ############################################ */
+Status ValidateVectorFillvalue(const std::string &dataset_name, const std::vector<uint8_t> &fill_value) {
+  if (fill_value.empty() || (fill_value.size() != 1 && fill_value.size() != 3)) {
+    std::string err_msg = dataset_name + ": fill_value vector has incorrect size: " + std::to_string(fill_value.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  for (uint8_t single_fill_value : fill_value) {
+    if (single_fill_value > 255) {
+      std::string err_msg =
+        dataset_name + ": fill_value has to be between 0 and 255, got:" + std::to_string(single_fill_value);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+
+  return Status::OK();
+}
+
+Status ValidateVectorProbability(const std::string &dataset_name, const float &probability) {
+  if (probability < 0.0 || probability > 1.0) {
+    std::string err_msg =
+      dataset_name + ": probability must be between 0.0 and 1.0, got: " + std::to_string(probability);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  return Status::OK();
+}
+
+Status ValidateVectorPadding(const std::string &dataset_name, const std::vector<int32_t> &padding) {
+  if (padding.empty() || padding.size() == 3 || padding.size() > 4) {
+    std::string err_msg = dataset_name + ": padding vector has incorrect size: " + std::to_string(padding.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  for (int32_t i = 0; i < padding.size(); ++i) {
+    if (padding[i] < 0) {
+      std::string err_msg =
+        dataset_name +
+        ": invalid padding, padding value must be greater than or equal to 0, got: " + std::to_string(padding[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+    if (padding[i] == INT_MAX) {
+      std::string err_msg =
+        dataset_name + ": invalid padding, padding value too large, got: " + std::to_string(padding[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+
+  return Status::OK();
+}
+
 Status ValidateVectorPositive(const std::string &dataset_name, const std::vector<int32_t> &size) {
   for (int32_t i = 0; i < size.size(); ++i) {
     if (size[i] <= 0) {
@@ -387,6 +498,34 @@ bool CmpFloat(const float &a, const float &b, float epsilon = 0.0000000001f) { r
 
 // (In alphabetical order)
 #ifndef ENABLE_ANDROID
+
+// AutoContrastOperation
+AutoContrastOperation::AutoContrastOperation(float cutoff, std::vector<uint32_t> ignore)
+    : cutoff_(cutoff), ignore_(ignore) {}
+
+Status AutoContrastOperation::ValidateParams() {
+  if (cutoff_ < 0 || cutoff_ > 100) {
+    std::string err_msg = "AutoContrast: cutoff has to be between 0 and 100, got: " + std::to_string(cutoff_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  for (uint32_t single_ignore : ignore_) {
+    if (single_ignore > 255) {
+      std::string err_msg =
+        "AutoContrast: invalid size, ignore has to be between 0 and 255, got: " + std::to_string(single_ignore);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> AutoContrastOperation::Build() {
+  std::shared_ptr<AutoContrastOp> tensor_op = std::make_shared<AutoContrastOp>(cutoff_, ignore_);
+  return tensor_op;
+}
+
 // CenterCropOperation
 CenterCropOperation::CenterCropOperation(std::vector<int32_t> size) : size_(size) {}
 
@@ -542,6 +681,11 @@ Status HwcToChwOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> HwcToChwOperation::Build() { return std::make_shared<HwcToChwOp>(); }
 
+// InvertOperation
+Status InvertOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> InvertOperation::Build() { return std::make_shared<InvertOp>(); }
+
 // MixUpOperation
 MixUpBatchOperation::MixUpBatchOperation(float alpha) : alpha_(alpha) {}
 
@@ -598,37 +742,9 @@ PadOperation::PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fi
 
 Status PadOperation::ValidateParams() {
   // padding
-  if (padding_.empty() || padding_.size() == 3 || padding_.size() > 4) {
-    std::string err_msg = "Pad: padding vector has incorrect size: " + std::to_string(padding_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  for (int32_t i = 0; i < padding_.size(); ++i) {
-    if (padding_[i] < 0) {
-      std::string err_msg =
-        "Pad: invalid padding, padding value must be greater than or equal to 0, got: " + std::to_string(padding_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-    if (padding_[i] == INT_MAX) {
-      std::string err_msg = "Pad: invalid padding, padding value too large, got: " + std::to_string(padding_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
+  RETURN_IF_NOT_OK(ValidateVectorPadding("Pad", padding_));
   // fill_value
-  if (fill_value_.empty() || (fill_value_.size() != 1 && fill_value_.size() != 3)) {
-    std::string err_msg = "Pad: fill_value vector has incorrect size: " + std::to_string(fill_value_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  for (int32_t i = 0; i < fill_value_.size(); ++i) {
-    if (fill_value_[i] < 0 || fill_value_[i] > 255) {
-      std::string err_msg = "Pad: fill_value has to be between 0 and 255, got:" + std::to_string(fill_value_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
+  RETURN_IF_NOT_OK(ValidateVectorFillvalue("Pad", fill_value_));
   return Status::OK();
 }
 
@@ -975,37 +1091,9 @@ Status RandomCropOperation::ValidateParams() {
   }
   RETURN_IF_NOT_OK(ValidateVectorPositive("RandomCrop", size_));
   // padding
-  if (padding_.empty() || padding_.size() != 4) {
-    std::string err_msg = "RandomCrop: padding vector has incorrect size: " + std::to_string(padding_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  for (int32_t i = 0; i < padding_.size(); ++i) {
-    if (padding_[i] < 0) {
-      std::string err_msg = "RandomCrop: invalid padding, padding value must be greater than or equal to 0, got: " +
-                            std::to_string(padding_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-    if (padding_[i] == INT_MAX) {
-      std::string err_msg = "RandomCrop: invalid padding, padding value too large, got: " + std::to_string(padding_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
+  RETURN_IF_NOT_OK(ValidateVectorPadding("RandomCrop", padding_));
   // fill_value
-  if (fill_value_.empty() || fill_value_.size() != 3) {
-    std::string err_msg = "RandomCrop: fill_value vector has incorrect size: " + std::to_string(fill_value_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  for (int32_t i = 0; i < fill_value_.size(); ++i) {
-    if (fill_value_[i] < 0 || fill_value_[i] > 255) {
-      std::string err_msg = "RandomCrop: fill_value has to be between 0 and 255, got:" + std::to_string(fill_value_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
+  RETURN_IF_NOT_OK(ValidateVectorFillvalue("RandomCrop", fill_value_));
   return Status::OK();
 }
 
@@ -1018,14 +1106,37 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
     crop_width = size_[1];
   }
 
-  int32_t pad_top = padding_[0];
-  int32_t pad_bottom = padding_[1];
-  int32_t pad_left = padding_[2];
-  int32_t pad_right = padding_[3];
+  int32_t pad_top, pad_bottom, pad_left, pad_right;
+  switch (padding_.size()) {
+    case 1:
+      pad_left = padding_[0];
+      pad_top = padding_[0];
+      pad_right = padding_[0];
+      pad_bottom = padding_[0];
+      break;
+    case 2:
+      pad_left = padding_[0];
+      pad_top = padding_[1];
+      pad_right = padding_[0];
+      pad_bottom = padding_[1];
+      break;
+    default:
+      pad_left = padding_[0];
+      pad_top = padding_[1];
+      pad_right = padding_[2];
+      pad_bottom = padding_[3];
+  }
 
-  uint8_t fill_r = fill_value_[0];
-  uint8_t fill_g = fill_value_[1];
-  uint8_t fill_b = fill_value_[2];
+  uint8_t fill_r, fill_g, fill_b;
+  fill_r = fill_value_[0];
+  fill_g = fill_value_[0];
+  fill_b = fill_value_[0];
+
+  if (fill_value_.size() == 3) {
+    fill_r = fill_value_[0];
+    fill_g = fill_value_[1];
+    fill_b = fill_value_[2];
+  }
 
   auto tensor_op = std::make_shared<RandomCropOp>(crop_height, crop_width, pad_top, pad_bottom, pad_left, pad_right,
                                                   padding_mode_, pad_if_needed_, fill_r, fill_g, fill_b);
@@ -1125,21 +1236,105 @@ std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
   return tensor_op;
 }
 
+// RandomCropWithBBoxOperation
+RandomCropWithBBoxOperation::RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding,
+                                                         bool pad_if_needed, std::vector<uint8_t> fill_value,
+                                                         BorderType padding_mode)
+    : size_(size),
+      padding_(padding),
+      pad_if_needed_(pad_if_needed),
+      fill_value_(fill_value),
+      padding_mode_(padding_mode) {}
+
+Status RandomCropWithBBoxOperation::ValidateParams() {
+  // size
+  if (size_.empty() || size_.size() > 2) {
+    std::string err_msg = "RandomCropWithBBox: size must be a vector of one or two values";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  RETURN_IF_NOT_OK(ValidateVectorPositive("RandomCropWithBBox", size_));
+  // padding
+  RETURN_IF_NOT_OK(ValidateVectorPadding("RandomCropWithBBox", padding_));
+  // fill_value
+  RETURN_IF_NOT_OK(ValidateVectorFillvalue("RandomCropWithBBox", fill_value_));
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> RandomCropWithBBoxOperation::Build() {
+  int32_t crop_height = size_[0];
+  int32_t crop_width = size_[0];
+
+  // User has specified the crop_width value.
+  if (size_.size() == 2) {
+    crop_width = size_[1];
+  }
+
+  int32_t pad_top, pad_bottom, pad_left, pad_right;
+  switch (padding_.size()) {
+    case 1:
+      pad_left = padding_[0];
+      pad_top = padding_[0];
+      pad_right = padding_[0];
+      pad_bottom = padding_[0];
+      break;
+    case 2:
+      pad_left = padding_[0];
+      pad_top = padding_[1];
+      pad_right = padding_[0];
+      pad_bottom = padding_[1];
+      break;
+    default:
+      pad_left = padding_[0];
+      pad_top = padding_[1];
+      pad_right = padding_[2];
+      pad_bottom = padding_[3];
+  }
+
+  uint8_t fill_r, fill_g, fill_b;
+  fill_r = fill_value_[0];
+  fill_g = fill_value_[0];
+  fill_b = fill_value_[0];
+
+  if (fill_value_.size() == 3) {
+    fill_r = fill_value_[0];
+    fill_g = fill_value_[1];
+    fill_b = fill_value_[2];
+  }
+
+  auto tensor_op =
+    std::make_shared<RandomCropWithBBoxOp>(crop_height, crop_width, pad_top, pad_bottom, pad_left, pad_right,
+                                           padding_mode_, pad_if_needed_, fill_r, fill_g, fill_b);
+  return tensor_op;
+}
+
 // RandomHorizontalFlipOperation
 RandomHorizontalFlipOperation::RandomHorizontalFlipOperation(float probability) : probability_(probability) {}
 
 Status RandomHorizontalFlipOperation::ValidateParams() {
-  if (probability_ < 0.0 || probability_ > 1.0) {
-    std::string err_msg = "RandomHorizontalFlip: probability must be between 0.0 and 1.0.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+  RETURN_IF_NOT_OK(ValidateVectorProbability("RandomHorizontalFlip", probability_));
 
   return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomHorizontalFlipOperation::Build() {
   std::shared_ptr<RandomHorizontalFlipOp> tensor_op = std::make_shared<RandomHorizontalFlipOp>(probability_);
+  return tensor_op;
+}
+
+// RandomHorizontalFlipWithBBoxOperation
+RandomHorizontalFlipWithBBoxOperation::RandomHorizontalFlipWithBBoxOperation(float probability)
+    : probability_(probability) {}
+
+Status RandomHorizontalFlipWithBBoxOperation::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateVectorProbability("RandomHorizontalFlipWithBBox", probability_));
+
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> RandomHorizontalFlipWithBBoxOperation::Build() {
+  std::shared_ptr<RandomHorizontalFlipWithBBoxOp> tensor_op =
+    std::make_shared<RandomHorizontalFlipWithBBoxOp>(probability_);
   return tensor_op;
 }
 
@@ -1253,15 +1448,20 @@ RandomRotationOperation::RandomRotationOperation(std::vector<float> degrees, Int
 
 Status RandomRotationOperation::ValidateParams() {
   // degrees
-  if (degrees_.size() != 2) {
+  if (degrees_.size() != 2 && degrees_.size() != 1) {
     std::string err_msg =
-      "RandomRotation: degrees must be a vector of two values, got: " + std::to_string(degrees_.size());
-    MS_LOG(ERROR) << "RandomRotation: degrees must be a vector of two values, got: " << degrees_;
+      "RandomRotation: degrees must be a vector of one or two values, got: " + std::to_string(degrees_.size());
+    MS_LOG(ERROR) << "RandomRotation: degrees must be a vector of one or two values, got: " << degrees_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (degrees_[1] < degrees_[0]) {
+  if ((degrees_[1] < degrees_[0]) && (degrees_.size() == 2)) {
     std::string err_msg = "RandomRotation: degrees must be in the format of (min, max).";
     MS_LOG(ERROR) << "RandomRotation: degrees must be in the format of (min, max), got: " << degrees_;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  } else if ((degrees_[0] <= 0) && degrees_.size() == 1) {
+    std::string err_msg = "RandomRotation: if the degress has one element, the value must be greater than 0.";
+    MS_LOG(ERROR) << "RandomRotation: if the degress has one element, the value must be greater than 0, got: "
+                  << degrees_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // center
@@ -1272,27 +1472,33 @@ Status RandomRotationOperation::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // fill_value
-  if (fill_value_.empty() || fill_value_.size() != 3) {
-    std::string err_msg =
-      "RandomRotation: fill_value must be a vector of two values, got: " + std::to_string(fill_value_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  for (int32_t i = 0; i < fill_value_.size(); ++i) {
-    if (fill_value_[i] < 0 || fill_value_[i] > 255) {
-      std::string err_msg =
-        "RandomRotation: fill_value has to be between 0 and 255, got: " + std::to_string(fill_value_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
+  RETURN_IF_NOT_OK(ValidateVectorFillvalue("RandomRotation", fill_value_));
   return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
-  std::shared_ptr<RandomRotationOp> tensor_op =
-    std::make_shared<RandomRotationOp>(degrees_[0], degrees_[1], center_[0], center_[1], interpolation_mode_, expand_,
-                                       fill_value_[0], fill_value_[1], fill_value_[2]);
+  float start_degree, end_degree;
+  if (degrees_.size() == 1) {
+    start_degree = -degrees_[0];
+    end_degree = degrees_[0];
+  } else if (degrees_.size() == 2) {
+    start_degree = degrees_[0];
+    end_degree = degrees_[1];
+  }
+
+  uint8_t fill_r, fill_g, fill_b;
+  fill_r = fill_value_[0];
+  fill_g = fill_value_[0];
+  fill_b = fill_value_[0];
+
+  if (fill_value_.size() == 3) {
+    fill_r = fill_value_[0];
+    fill_g = fill_value_[1];
+    fill_b = fill_value_[2];
+  }
+
+  std::shared_ptr<RandomRotationOp> tensor_op = std::make_shared<RandomRotationOp>(
+    start_degree, end_degree, center_[0], center_[1], interpolation_mode_, expand_, fill_r, fill_g, fill_b);
   return tensor_op;
 }
 
@@ -1355,17 +1561,29 @@ std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
 RandomVerticalFlipOperation::RandomVerticalFlipOperation(float probability) : probability_(probability) {}
 
 Status RandomVerticalFlipOperation::ValidateParams() {
-  if (probability_ < 0.0 || probability_ > 1.0) {
-    std::string err_msg = "RandomVerticalFlip: probability must be between 0.0 and 1.0.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+  RETURN_IF_NOT_OK(ValidateVectorProbability("RandomVerticalFlip", probability_));
 
   return Status::OK();
 }
 
 std::shared_ptr<TensorOp> RandomVerticalFlipOperation::Build() {
   std::shared_ptr<RandomVerticalFlipOp> tensor_op = std::make_shared<RandomVerticalFlipOp>(probability_);
+  return tensor_op;
+}
+
+// RandomVerticalFlipWithBBoxOperation
+RandomVerticalFlipWithBBoxOperation::RandomVerticalFlipWithBBoxOperation(float probability)
+    : probability_(probability) {}
+
+Status RandomVerticalFlipWithBBoxOperation::ValidateParams() {
+  RETURN_IF_NOT_OK(ValidateVectorProbability("RandomVerticalFlipWithBBox", probability_));
+
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> RandomVerticalFlipWithBBoxOperation::Build() {
+  std::shared_ptr<RandomVerticalFlipWithBBoxOp> tensor_op =
+    std::make_shared<RandomVerticalFlipWithBBoxOp>(probability_);
   return tensor_op;
 }
 
