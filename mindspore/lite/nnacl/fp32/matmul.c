@@ -16,7 +16,7 @@
 
 #include "nnacl/fp32/matmul.h"
 
-void RowMajor2ColMajor(float *src_ptr, float *dst_ptr, int row, int col) {
+void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; ++r) {
     for (int c = 0; c < col; ++c) {
       dst_ptr[c * row + r] = src_ptr[r * col + c];

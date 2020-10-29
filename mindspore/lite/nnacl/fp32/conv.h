@@ -34,11 +34,11 @@ extern "C" {
 #endif
 
 // fp32 convolution common (im2col+gemm)
-void ConvFp32(float *input_data, float *packed_input, float *packed_weight, const float *bias_data,
+void ConvFp32(float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
               float *col_major_input, float *output_data, int task_id, ConvParameter *conv_param);
 
 // fp32 convolution winograd
-void ConvWinogardFp32(float *input_data, float *trans_weight, const float *bias_data, float *output_data,
+void ConvWinogardFp32(float *input_data, const float *trans_weight, const float *bias_data, float *output_data,
                       TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param, InputTransFunc in_func,
                       OutputTransFunc out_func);
 #ifdef __cplusplus

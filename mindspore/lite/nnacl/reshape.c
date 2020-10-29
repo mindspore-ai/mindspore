@@ -17,4 +17,4 @@
 #include "nnacl/reshape.h"
 #include <string.h>
 
-void Reshape(void *input_ptr, void *output_ptr, size_t data_size) { memcpy(output_ptr, input_ptr, data_size); }
+void Reshape(const void *input_ptr, void *output_ptr, size_t data_size) { memcpy(output_ptr, input_ptr, data_size); }

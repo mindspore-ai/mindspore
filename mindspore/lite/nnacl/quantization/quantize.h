@@ -276,7 +276,7 @@ int32_t QuantizeToInt8(float real_value, float scale, int32_t zp);
 
 void CalculateActivationRangeQuantized(bool is_relu, bool is_relu6, int32_t zp, float scale, int *mini, int *maxi);
 // quantize from float to int8
-void Quantize(float *input_data, int length, float scale, int zero_point, int8_t *output_data);
+void Quantize(const float *input_data, int length, float scale, int zero_point, int8_t *output_data);
 
 // dequantize from int8 to float
 void Dequantize(int8_t *input_data, int length, float scale, int zero_point, float *output_data);

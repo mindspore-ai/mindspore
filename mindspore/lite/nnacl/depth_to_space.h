@@ -20,7 +20,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DepthToSpaceForNHWC(const void *input, void *output, int *in_shape, DepthToSpaceParameter *param);
+void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceParameter *param);
 #ifdef __cplusplus
 }
 #endif

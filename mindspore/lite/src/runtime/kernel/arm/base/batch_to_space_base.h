@@ -40,7 +40,7 @@ class BatchToSpaceBaseCPUKernel : public LiteKernel {
   bool IsNoCrop() const { return no_crop_; }
 
  private:
-  bool no_crop_;
+  bool no_crop_ = false;
 };
 }  // namespace mindspore::kernel
 

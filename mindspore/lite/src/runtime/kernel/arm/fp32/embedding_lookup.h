@@ -43,14 +43,14 @@ class EmbeddingLookupCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  const lite::InnerContext *ctx_;
-  int thread_count_;
-  EmbeddingLookupParameter *embedding_lookup_parameter_;
+  const lite::InnerContext *ctx_ = nullptr;
+  int thread_count_ = 1;
+  EmbeddingLookupParameter *embedding_lookup_parameter_ = nullptr;
 
  private:
-  float *input_addr_;
-  float *output_addr_;
-  int *ids_addr_;
+  float *input_addr_ = nullptr;
+  float *output_addr_ = nullptr;
+  int *ids_addr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

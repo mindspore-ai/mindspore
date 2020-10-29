@@ -40,10 +40,10 @@ class MatmulBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  MatMulParameter *params_;
-  int thread_stride_;
-  const InnerContext *ctx_;
-  int thread_count_;
+  MatMulParameter *params_ = nullptr;
+  int thread_stride_ = 0;
+  const InnerContext *ctx_ = nullptr;
+  int thread_count_ = 0;
 };
 }  // namespace mindspore::kernel
 

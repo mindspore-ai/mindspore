@@ -18,7 +18,7 @@
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
-void ScaleInner(float *in_data, float *out_data, float *scale, float *offset, int outer_start, int outer_end,
+void ScaleInner(float *in_data, float *out_data, const float *scale, float *offset, int outer_start, int outer_end,
                 int axis_size, int inner_size) {
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size * inner_size;
@@ -43,7 +43,7 @@ void ScaleInner(float *in_data, float *out_data, float *scale, float *offset, in
   }
 }
 
-void ScaleAxis(float *in_data, float *out_data, float *scale, float *offset, int outer_start, int outer_end,
+void ScaleAxis(float *in_data, float *out_data, const float *scale, float *offset, int outer_start, int outer_end,
                int axis_size) {
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size;
@@ -78,7 +78,7 @@ void DoScale(float *in_data, float *out_data, float *scale, float *offset, int t
   }
 }
 
-void ScaleInnerRelu(float *in_data, float *out_data, float *scale, float *offset, int outer_start, int outer_end,
+void ScaleInnerRelu(float *in_data, float *out_data, const float *scale, float *offset, int outer_start, int outer_end,
                     int axis_size, int inner_size) {
 #ifdef ENABLE_ARM64
   float32x4_t zeros = {0, 0, 0, 0};
@@ -108,7 +108,7 @@ void ScaleInnerRelu(float *in_data, float *out_data, float *scale, float *offset
   }
 }
 
-void ScaleAxisRelu(float *in_data, float *out_data, float *scale, float *offset, int outer_start, int outer_end,
+void ScaleAxisRelu(float *in_data, float *out_data, const float *scale, float *offset, int outer_start, int outer_end,
                    int axis_size) {
 #ifdef ENABLE_ARM64
   float32x4_t zeros = {0, 0, 0, 0};
@@ -149,7 +149,7 @@ void DoScaleRelu(float *in_data, float *out_data, float *scale, float *offset, i
   }
 }
 
-void ScaleInnerRelu6(float *in_data, float *out_data, float *scale, float *offset, int outer_start, int outer_end,
+void ScaleInnerRelu6(float *in_data, float *out_data, const float *scale, float *offset, int outer_start, int outer_end,
                      int axis_size, int inner_size) {
 #ifdef ENABLE_ARM64
   float32x4_t zeros = {0, 0, 0, 0};
@@ -180,7 +180,7 @@ void ScaleInnerRelu6(float *in_data, float *out_data, float *scale, float *offse
   }
 }
 
-void ScaleAxisRelu6(float *in_data, float *out_data, float *scale, float *offset, int outer_start, int outer_end,
+void ScaleAxisRelu6(float *in_data, float *out_data, const float *scale, float *offset, int outer_start, int outer_end,
                     int axis_size) {
 #ifdef ENABLE_ARM64
   float32x4_t zeros = {0, 0, 0, 0};

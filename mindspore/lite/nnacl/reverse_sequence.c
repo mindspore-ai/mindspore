@@ -18,7 +18,7 @@
 #include <string.h>
 #include "nnacl/arithmetic_common.h"
 
-void ReverseSequence(float *input0, void *input1, float *output, ReverseSequenceParameter *para) {
+void ReverseSequence(float *input0, const void *input1, float *output, ReverseSequenceParameter *para) {
   (void)memcpy(output, input0, para->total_data_size_);
   ComputeStrides(para->input_shape0_, para->input_stride_, para->ndim_);
   ComputeStrides(para->output_shape_, para->output_stride_, para->ndim_);

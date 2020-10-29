@@ -20,7 +20,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-int ROIPooling(float *in_ptr, float *out_ptr, float *roi, float *max_c, int tid, ROIPoolingParameter *param) {
+int ROIPooling(float *in_ptr, float *out_ptr, const float *roi, float *max_c, int tid, ROIPoolingParameter *param) {
   int num_rois = param->output_n_;
   int units = UP_DIV(num_rois, param->thread_num_);
   int roi_st = tid * units;

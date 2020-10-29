@@ -60,11 +60,11 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
 
  protected:
   void *bias_data_ = nullptr;
-  const InnerContext *ctx_;
-  ConvParameter *conv_param_;
-  ConvQuantArg *conv_quant_arg_;
-  int tile_num_;
-  int thread_count_;
+  const InnerContext *ctx_ = nullptr;
+  ConvParameter *conv_param_ = nullptr;
+  ConvQuantArg *conv_quant_arg_ = nullptr;
+  int tile_num_ = 0;
+  int thread_count_ = 1;
 };
 }  // namespace mindspore::kernel
 

@@ -40,10 +40,10 @@ class FullconnectionBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  MatMulParameter *fc_param_;
-  int thread_stride_;
-  const InnerContext *ctx_;
-  int thread_count_;
+  MatMulParameter *fc_param_ = nullptr;
+  int thread_stride_ = 0;
+  const InnerContext *ctx_ = nullptr;
+  int thread_count_ = 1;
 };
 }  // namespace mindspore::kernel
 

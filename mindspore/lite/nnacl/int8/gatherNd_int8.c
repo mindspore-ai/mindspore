@@ -18,7 +18,7 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int GatherNdInt8(int8_t *input, int8_t *output, int *in_offset, int area, int count, GatherQuantArg param) {
+int GatherNdInt8(int8_t *input, int8_t *output, const int *in_offset, int area, int count, GatherQuantArg param) {
   double alpha = param.alpha_;
   int z1 = param.zp_in_;
   int z2 = param.zp_out_;

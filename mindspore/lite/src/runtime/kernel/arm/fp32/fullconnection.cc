@@ -64,6 +64,10 @@ int FullconnectionCPUKernel::ReSize() {
   if (in_tensors_.size() == 3) {
     int col_tmp = is_vector_input_ ? fc_param_->col_ : fc_param_->col_8_;
     bias_ptr_ = reinterpret_cast<float *>(malloc(col_tmp * sizeof(float)));
+    if (bias_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "malloc bias_ptr_ failed";
+      return RET_ERROR;
+    }
     memcpy(bias_ptr_, in_tensors_[2]->MutableData(), fc_param_->col_ * sizeof(float));
   }
 

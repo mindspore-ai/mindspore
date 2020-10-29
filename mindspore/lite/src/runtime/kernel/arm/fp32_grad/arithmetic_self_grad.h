@@ -24,7 +24,7 @@
 namespace mindspore::kernel {
 
 class ArithmeticSelfGradCPUKernel : public LiteKernel {
-  typedef int (*ArithmeticSelfGradOperation)(float *, float *, float *, int);
+  typedef int (*ArithmeticSelfGradOperation)(const float *, const float *, float *, const int);
 
  public:
   ArithmeticSelfGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

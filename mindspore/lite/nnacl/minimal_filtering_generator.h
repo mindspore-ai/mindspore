@@ -26,21 +26,21 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Polynomial(float *interval, float *m, int degree);
+void Polynomial(const float *interval, float *m, int degree);
 
-void DiagonalPlusMatrix(float *matrix, float *diagonal_matrix, int degree);
+void DiagonalPlusMatrix(const float *matrix, float *diagonal_matrix, int degree);
 
-void ResidueMatrix(float *interval, float *b, int row, int col);
+void ResidueMatrix(const float *interval, float *b, int row, int col);
 
 int LT(float *poly_array, float *matrix_lt, int n);
 
-void T(float *poly_array, float *matrix_t, int n);
+void T(const float *poly_array, float *matrix_t, int n);
 
 int B(float *poly_array, float *matrix_b, int in_unit);
 
 void GenerateIntervalArray(float *array, float interval, int degree);
 
-void MatrixTranspose(float *matrix, float *trans_matrix, int row, int col);
+void MatrixTranspose(const float *matrix, float *trans_matrix, int row, int col);
 
 void MatrixMultiply(const float *matrix_a, const float *matrix_b, float *matrix_c, int m, int k, int n);
 
@@ -49,7 +49,7 @@ int CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *ma
 void MatrixMultiplyWinograd(const float *matix_a, const float *matrix_b, float *matrix_c, int m, int k, int n,
                             int in_channel, int c4_channel);
 
-int WinogradWeightTransform(const float *weight_data, float *winograd_data, float *matrix_g, float *matrix_gt,
+int WinogradWeightTransform(const float *weight_data, float *winograd_data, float *matrix_g, const float *matrix_gt,
                             int oc_block, int input_unit_, int kernel_unit_, int channel, int batch, bool pack);
 
 #ifdef ENABLE_ARM

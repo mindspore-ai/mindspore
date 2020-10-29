@@ -19,7 +19,7 @@
 #include "nnacl/winograd_utils.h"
 #include "nnacl/errorcode.h"
 
-void Polynomial(float *interval, float *m, int degree) {
+void Polynomial(const float *interval, float *m, int degree) {
   for (int i = 0; i < degree; ++i) {
     float mul = 1;
     for (int j = 0; j < degree; ++j) {
@@ -30,7 +30,7 @@ void Polynomial(float *interval, float *m, int degree) {
   }
 }
 
-void DiagonalPlusMatrix(float *matrix, float *diagonal_matrix, int degree) {
+void DiagonalPlusMatrix(const float *matrix, float *diagonal_matrix, int degree) {
   int data_num = (degree + 1) * (degree + 1);
   memset(diagonal_matrix, 0, data_num * sizeof(float));
   for (int i = 0; i < degree; ++i) {
@@ -41,7 +41,7 @@ void DiagonalPlusMatrix(float *matrix, float *diagonal_matrix, int degree) {
   diagonal_matrix[data_num - 1] = 1;
 }
 
-void ResidueMatrix(float *interval, float *b, int row, int col) {
+void ResidueMatrix(const float *interval, float *b, int row, int col) {
   // row : input unit, col : output_unit
   // result : matrix b
   int len = row * col;
@@ -87,7 +87,7 @@ int LT(float *poly_array, float *matrix_lt, int n) {
   return NNACL_OK;
 }
 
-void T(float *poly_array, float *matrix_t, int n) {
+void T(const float *poly_array, float *matrix_t, int n) {
   memset(matrix_t, 0, n * (n + 1) * sizeof(float));
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n + 1; ++j) {
@@ -148,7 +148,7 @@ void GenerateIntervalArray(float *array, float interval, int degree) {
   }
 }
 
-void MatrixTranspose(float *matrix, float *trans_matrix, int row, int col) {
+void MatrixTranspose(const float *matrix, float *trans_matrix, int row, int col) {
   for (int i = 0; i < col; ++i) {
     for (int j = 0; j < row; ++j) {
       trans_matrix[i * row + j] = matrix[j * col + i];
@@ -255,7 +255,7 @@ void MatrixMultiplyVec(const float32x4_t *matrix_a, const float32x4_t *matrix_b,
 }
 #endif
 
-int WinogradWeightTransform(const float *weight_data, float *winograd_data, float *matrix_g, float *matrix_gt,
+int WinogradWeightTransform(const float *weight_data, float *winograd_data, float *matrix_g, const float *matrix_gt,
                             int oc_block, int input_unit, int kernel_unit, int channel, int batch, bool pack) {
   // original weight format : ohwi
   int oc_block_num = UP_DIV(batch, oc_block);

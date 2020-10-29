@@ -63,6 +63,7 @@ int TransposeCPUKernel::ReSize() {
   }
   if (this->out_shape_ != nullptr) {
     free(this->out_shape_);
+    this->out_shape_ = nullptr;
   }
   in_shape_ = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
   if (in_shape_ == nullptr) {

@@ -31,7 +31,7 @@ int TileCPUKernel::Init() {
   return ReSize();
 }
 
-void TileCPUKernel::ComputeStrides(int *shape, int *strides, int ndim) {
+void TileCPUKernel::ComputeStrides(const int *shape, int *strides, int ndim) {
   int stride = 1;
   for (int i = ndim - 1; i >= 0; i--) {
     strides[i] = stride;

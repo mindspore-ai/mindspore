@@ -38,8 +38,8 @@ class DetectionPostProcessBaseCPUKernel : public LiteKernel {
   int Run() override;
 
  protected:
-  float *input_boxes;
-  float *input_scores;
+  float *input_boxes = nullptr;
+  float *input_scores = nullptr;
 
   virtual int GetInputData() = 0;
 };

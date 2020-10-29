@@ -49,9 +49,9 @@ class PadCPUKernel : public LiteKernel {
   int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length);
 
  protected:
-  PadParameter *pad_param_;
-  int in_[4];
-  int out_[4];
+  PadParameter *pad_param_ = nullptr;
+  int in_[4] = {0};
+  int out_[4] = {0};
 };
 
 int PadImpl(void *cdata, int task_id);

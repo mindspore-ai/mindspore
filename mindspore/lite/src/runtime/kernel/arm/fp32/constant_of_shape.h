@@ -40,8 +40,8 @@ class ConstantOfShapeCPUKernel : public LiteKernel {
   int DoExecute(int task_id);
 
  private:
-  ConstantOfShapeParameter *param_;
-  void *out_ptr_;
+  ConstantOfShapeParameter *param_ = nullptr;
+  void *out_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

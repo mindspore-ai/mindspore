@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace lite {
-static float CompareOutputRelativeData(float *output_data, float *correct_data, int data_size) {
+static float CompareOutputRelativeData(const float *output_data, float *correct_data, int data_size) {
   float error = 0;
 
   // relative error

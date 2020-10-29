@@ -15,7 +15,7 @@
  */
 #include "nnacl/where.h"
 
-void Where(bool *input, float *input1, float *input2, float *output, WhereParameter *where_param_, int task_id) {
+void Where(bool *input, float *input1, const float *input2, float *output, WhereParameter *where_param_, int task_id) {
   for (int i = task_id; i < where_param_->number_; i += where_param_->op_parameter_.thread_num_) {
     if (input[where_param_->num_ > 1 ? i : 0] == true) {
       output[i] = input1[where_param_->num1_ > 1 ? i : 0];

@@ -16,7 +16,7 @@
 #include "nnacl/fp32/space_to_batch.h"
 #include "nnacl/arithmetic_common.h"
 
-void DoSpaceToBatchNHWC(const float *input, float *output, int *block_sizes, int *in_shape, int *out_shape) {
+void DoSpaceToBatchNHWC(const float *input, float *output, const int *block_sizes, int *in_shape, int *out_shape) {
   int out_dim0 = out_shape[0];
   int out_dim1 = out_shape[1];
   int out_dim2 = out_shape[2];
@@ -45,7 +45,7 @@ void DoSpaceToBatchNHWC(const float *input, float *output, int *block_sizes, int
   }
 }
 
-void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape, int *padding, int *out_shape) {
+void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape, const int *padding, int *out_shape) {
   int in_h = in_shape[1];
   int in_w = in_shape[2];
   int in_c = in_shape[3];
@@ -63,8 +63,8 @@ void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape,
   for (int i = 0; i < in_shape[0]; ++i) {
     size_t in_offset0 = i * in_strides[0];
     for (int pad_h_top = 0; pad_h_top < padding[0]; ++pad_h_top) {
-        memset(output + out_offset, 0, ped_h_size);
-        out_offset += ped_h_num;
+      memset(output + out_offset, 0, ped_h_size);
+      out_offset += ped_h_num;
     }
     for (int j = 0; j < in_h; ++j) {
       size_t in_offset1 = in_offset0 + j * in_strides[1];

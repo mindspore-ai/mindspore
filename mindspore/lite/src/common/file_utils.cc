@@ -85,7 +85,7 @@ std::string RealPath(const char *path) {
   return res;
 }
 
-int CompareOutputData(float *output_data, size_t output_size, float *correct_data, size_t data_size) {
+int CompareOutputData(const float *output_data, size_t output_size, float *correct_data, size_t data_size) {
   if (output_size != data_size) {
     printf("compare failed, output_size %zu isn't equal to data_size %zu.\n", output_size, data_size);
     return 0;

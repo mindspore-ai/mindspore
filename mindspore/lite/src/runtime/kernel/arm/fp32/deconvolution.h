@@ -52,11 +52,11 @@ class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
 
  private:
   MatMulParameter *matmul_param_ = nullptr;
-  int input_plane_;
-  int kernel_plane_;
-  int output_plane_;
-  int thread_count_;
-  int thread_stride_;
+  int input_plane_ = 0;
+  int kernel_plane_ = 0;
+  int output_plane_ = 0;
+  int thread_count_ = 1;
+  int thread_stride_ = 0;
   float *weight_ptr_ = nullptr;
   float *pack_input_ = nullptr;
   float *pack_output_ = nullptr;

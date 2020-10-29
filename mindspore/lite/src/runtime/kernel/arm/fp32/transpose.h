@@ -38,12 +38,12 @@ class TransposeCPUKernel : public LiteKernel {
   int TransposeParallel(int task_id);
 
  private:
-  int thread_num_;
-  int thread_h_stride_;
-  int thread_h_num_;
-  int num_unit_;
-  float *in_data_;
-  float *out_data_;
+  int thread_num_ = 1;
+  int thread_h_stride_ = 0;
+  int thread_h_num_ = 0;
+  int num_unit_ = 0;
+  float *in_data_ = nullptr;
+  float *out_data_ = nullptr;
   int *in_shape_ = nullptr;
   int *out_shape_ = nullptr;
   int *dim_size_ = nullptr;

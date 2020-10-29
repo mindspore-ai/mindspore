@@ -18,7 +18,7 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int ExpandDims(void *input_ptr, void *output_ptr, size_t data_size) {
+int ExpandDims(const void *input_ptr, void *output_ptr, size_t data_size) {
   memcpy(output_ptr, input_ptr, data_size);
   return NNACL_OK;
 }

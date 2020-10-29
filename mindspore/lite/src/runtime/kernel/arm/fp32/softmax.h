@@ -40,8 +40,8 @@ class SoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
 
  private:
   float *sum_data_ = nullptr;
-  int in_plane_size_;
-  int out_plane_size_;
+  int in_plane_size_ = 0;
+  int out_plane_size_ = 0;
 };
 }  // namespace mindspore::kernel
 

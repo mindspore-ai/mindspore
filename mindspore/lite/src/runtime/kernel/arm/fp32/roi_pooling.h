@@ -42,11 +42,11 @@ class ROIPoolingCPUKernel : public LiteKernel {
   int DoExecute(int task_id);
 
  private:
-  float *in_ptr_;
-  float *out_ptr_;
-  float *roi_ptr_;
+  float *in_ptr_ = nullptr;
+  float *out_ptr_ = nullptr;
+  float *roi_ptr_ = nullptr;
   float *max_c_ = nullptr;
-  ROIPoolingParameter *param_;
+  ROIPoolingParameter *param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

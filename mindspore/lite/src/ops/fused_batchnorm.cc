@@ -46,6 +46,10 @@ int FusedBatchNorm::UnPackAttr(const Primitive &prim, const std::vector<AnfNodeP
   }
   if (this->primitive_->value.value == nullptr) {
     auto attr = new (std::nothrow) schema::FusedBatchNormT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr value failed";
+      return RET_ERROR;
+    }
     attr->epsilon = GetValue<float>(prim.GetAttr("epsilon"));
     attr->momentum = GetValue<float>(prim.GetAttr("momentum"));
     this->primitive_->value.value = attr;

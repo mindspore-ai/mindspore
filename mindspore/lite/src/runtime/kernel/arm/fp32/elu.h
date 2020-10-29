@@ -36,13 +36,13 @@ class EluCPUKernel : public LiteKernel {
   int DoExcute(int task_id);
 
  protected:
-  const lite::InnerContext *ctx_;
-  int thread_count_;
-  EluParameter *elu_parameter_;
+  const lite::InnerContext *ctx_ = nullptr;
+  int thread_count_ = 1;
+  EluParameter *elu_parameter_ = nullptr;
 
  private:
-  float *input_addr;
-  float *output_addr;
+  float *input_addr = nullptr;
+  float *output_addr = nullptr;
 };
 }  // namespace mindspore::kernel
 

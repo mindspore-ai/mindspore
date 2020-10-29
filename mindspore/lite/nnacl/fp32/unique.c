@@ -16,7 +16,7 @@
 
 #include "nnacl/fp32/unique.h"
 
-int Find(float *array, int len, float target) {
+int Find(const float *array, int len, float target) {
   for (int i = 0; i < len; ++i) {
     if (array[i] == target) {
       return i;
@@ -25,7 +25,7 @@ int Find(float *array, int len, float target) {
   return -1;
 }
 
-void Unique(float *input, int input_len, float *output0, int *output0_len, int *output1) {
+void Unique(const float *input, int input_len, float *output0, int *output0_len, int *output1) {
   *output0_len = 0;
   for (int i = 0; i < input_len; i++) {
     int idx = Find(output0, *output0_len, input[i]);

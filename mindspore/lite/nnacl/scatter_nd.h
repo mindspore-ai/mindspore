@@ -26,7 +26,7 @@ typedef struct ScatterNDParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoScatterND(float *output_ptr, float *update, int *output_unit_offsets, int unit_size, int num_units);
+int DoScatterND(float *output_ptr, const float *update, int *output_unit_offsets, int unit_size, int num_units);
 #ifdef __cplusplus
 }
 #endif

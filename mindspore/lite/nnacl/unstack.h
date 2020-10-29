@@ -31,7 +31,7 @@ typedef struct UnstackParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Unistack(float *input, float **output, UnstackParameter *para);
+void Unistack(const float *input, float **output, UnstackParameter *para);
 #ifdef __cplusplus
 }
 #endif

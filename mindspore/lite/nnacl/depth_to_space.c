@@ -16,7 +16,7 @@
 #include "nnacl/depth_to_space.h"
 #include <string.h>
 
-void DepthToSpaceForNHWC(const void *input, void *output, int *in_shape, DepthToSpaceParameter *param) {
+void DepthToSpaceForNHWC(const void *input, void *output, const int *in_shape, const DepthToSpaceParameter *param) {
   int32_t block_size = param->block_size_;
   int32_t in_shape_dim2 = in_shape[2];
   int32_t in_shape_dim1 = in_shape[1];

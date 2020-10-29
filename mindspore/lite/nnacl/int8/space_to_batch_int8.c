@@ -16,7 +16,8 @@
 #include "nnacl/int8/space_to_batch_int8.h"
 #include "nnacl/arithmetic_common.h"
 
-void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, int *block_sizes, int *in_shape, int *out_shape) {
+void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int *block_sizes, int *in_shape,
+                            int *out_shape) {
   int out_dim0 = out_shape[0];
   int out_dim1 = out_shape[1];
   int out_dim2 = out_shape[2];
@@ -45,8 +46,8 @@ void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, int *block_size
   }
 }
 
-void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, int *in_shape, int *padding, int *out_shape,
-                                   int32_t zp) {
+void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, int *in_shape, const int *padding,
+                                   int *out_shape, int32_t zp) {
   int in_h = in_shape[1];
   int in_w = in_shape[2];
   int in_c = in_shape[3];

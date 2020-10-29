@@ -30,8 +30,8 @@ typedef struct SpaceToBatchParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoSpaceToBatchNHWC(const float *input, float *output, int *block_sizes, int *in_shape, int *out_shape);
-void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape, int *padding, int *out_shape);
+void DoSpaceToBatchNHWC(const float *input, float *output, const int *block_sizes, int *in_shape, int *out_shape);
+void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape, const int *padding, int *out_shape);
 #ifdef __cplusplus
 }
 #endif

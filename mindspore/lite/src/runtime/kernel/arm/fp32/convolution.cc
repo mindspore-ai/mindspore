@@ -198,7 +198,12 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   int out_channel = inputs.at(kWeightIndex)->Batch();
   int new_in_channel = inputs.at(kWeightIndex)->Channel();
-  int new_out_channel = out_channel / group;
+  int new_out_channel = 0;
+  if (group == 0) {
+    MS_LOG(ERROR) << "Divisor 'group' cannot be 0.";
+  } else {
+    new_out_channel = out_channel / group;
+  }
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int input_num = inputs.size();
