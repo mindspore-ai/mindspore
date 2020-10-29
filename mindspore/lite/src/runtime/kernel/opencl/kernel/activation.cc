@@ -35,17 +35,16 @@ using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::ActivationType_SIGMOID;
+using mindspore::schema::ActivationType_SWISH;
 using mindspore::schema::ActivationType_TANH;
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
 
 int ActivationOpenClKernel::Init() {
-  std::map<int, std::string> kernel_names{{ActivationType_LEAKY_RELU, "LeakyRelu"},
-                                          {ActivationType_RELU, "Relu"},
-                                          {ActivationType_SIGMOID, "Sigmoid"},
-                                          {ActivationType_RELU6, "Relu6"},
-                                          {ActivationType_TANH, "Tanh"}};
+  std::map<int, std::string> kernel_names{
+    {ActivationType_LEAKY_RELU, "LeakyRelu"}, {ActivationType_RELU, "Relu"}, {ActivationType_SIGMOID, "Sigmoid"},
+    {ActivationType_RELU6, "Relu6"},          {ActivationType_TANH, "Tanh"}, {ActivationType_SWISH, "Swish"}};
   if (kernel_names.count(type_) == 0) {
     MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
     return mindspore::lite::RET_ERROR;
