@@ -56,7 +56,8 @@ if __name__ == '__main__':
             device_id = int(os.getenv('DEVICE_ID'))
             context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
             context.reset_auto_parallel_context()
-            context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True)
+            context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              gradients_mean=True, all_reduce_fusion_config=[8])
             init()
             rank_id = int(os.environ.get('RANK_ID'))
         elif args_opt.device_target == "GPU":
@@ -65,7 +66,8 @@ if __name__ == '__main__':
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=get_group_size(),
                                               parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              gradients_mean=True)
+                                              gradients_mean=True,
+                                              all_reduce_fusion_config=[8])
             rank_id = get_rank()
         else:
             print("Unsupported device_target ", args_opt.device_target)
