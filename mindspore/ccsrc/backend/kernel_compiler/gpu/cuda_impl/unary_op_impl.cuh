@@ -21,6 +21,8 @@
 template <typename T>
 void Exponential(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+void Expm1(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 void Logarithm(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void Log1p(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
