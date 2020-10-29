@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+# an simple tutorial as follows, more parameters can be setting
 if [ $# != 3 ]
 then
-    echo "Usage: sh run_train.sh [RANK_TABLE_FILE] [cifar10|imagenet] [DATA_PATH]"
+    echo "Usage: sh run_distribution_ascend.sh [RANK_TABLE_FILE] [cifar10|imagenet] [DATA_PATH]"
 exit 1
 fi
 
