@@ -13,11 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-export DEVICE_NUM=1
-export RANK_SIZE=1
-
 # an simple tutorial as follows, more parameters can be setting
-script_self=$(readlink -f "$0")
-self_path=$(dirname "${script_self}")
-python -s ${self_path}/../train.py --device_target="GPU" > log.txt 2>&1 &
+if [ $# != 3 ]
+then
+    echo "Usage: sh run_standalone_train_gpu.sh [cifar10|imagenet] [DATA_PATH] [DEVICE_ID]"
+exit 1
+fi
+
+export DATASET_NAME=$1
+export DATA_PATH=$2
+export DEVICE_ID=$3
+
+python train.py --dataset_name=$DATASET_NAME --data_path=$DATA_PATH \
+               --device_id=$DEVICE_ID --device_target="GPU" > log 2>&1 &

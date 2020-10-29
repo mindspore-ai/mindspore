@@ -13,8 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 # an simple tutorial as follows, more parameters can be setting
-script_self=$(readlink -f "$0")
-self_path=$(dirname "${script_self}")
-python -s ${self_path}/../eval.py --device_target="GPU" > log.txt 2>&1 &
+if [ $# != 4 ]
+then
+    echo "Usage: sh run_standalone_eval_gpu.sh [cifar10|imagenet] [DATA_PATH] [CKPT_PATH] [DEVICE_ID]"
+exit 1
+fi
+
+export DATASET_NAME=$1
+export DATA_PATH=$2
+export CKPT_PATH=$3
+export DEVICE_ID=$4
+
+python eval.py --dataset_name=$DATASET_NAME --data_path=$DATA_PATH --ckpt_path=$CKPT_PATH \
+               --device_id=$DEVICE_ID --device_target="GPU" > eval_log 2>&1 &
