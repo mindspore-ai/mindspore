@@ -142,6 +142,7 @@ void OpTilingCalculater::Init() {
 std::string GetRealOpType(const std::string &op_type) {
   static const std::map<std::string, std::string> kOpTypeMap = {
     {"SparseApplyFtrl", "SparseApplyFtrlD"},
+    {"SparseApplyProximalAdagrad", "SparseApplyProximalAdagradD"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {
