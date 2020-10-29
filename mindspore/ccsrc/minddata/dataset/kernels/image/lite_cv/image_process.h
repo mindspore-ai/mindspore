@@ -91,10 +91,10 @@ bool Split(const LiteMat &src, std::vector<LiteMat> &mv);
 bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst);
 
 /// \brief Apply affine transformation for 1 channel image
-bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);
+bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue);
 
 /// \brief Apply affine transformation for 3 channel image
-bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue);
+bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue);
 
 /// \brief Get default anchor boxes for Faster R-CNN, SSD, YOLO etc
 std::vector<std::vector<float>> GetDefaultBoxes(const BoxesConfig config);

@@ -26,6 +26,7 @@ LiteMat::LiteMat() {
   channel_ = 0;
   c_step_ = 0;
   dims_ = 0;
+  size_ = 0;
   data_type_ = LDataType::UINT8;
   ref_count_ = 0;
 }
@@ -199,7 +200,10 @@ void *LiteMat::AlignMalloc(unsigned int size) {
   return nullptr;
 }
 
-void LiteMat::AlignFree(void *ptr) { (void)free(reinterpret_cast<void **>(ptr)[-1]); }
+void LiteMat::AlignFree(void *ptr) {
+  (void)free(reinterpret_cast<void **>(ptr)[-1]);
+  ptr = nullptr;
+}
 
 inline void LiteMat::InitElemSize(LDataType data_type) { elem_size_ = data_type.SizeInBytes(); }
 
