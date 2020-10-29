@@ -37,16 +37,11 @@ class ActivationOpenClKernel : public OpenCLKernel {
   int Run() override;
 
  private:
-  cl_int4 GetImg2dShape();
-
+  int SetArgs();
   cl::Kernel kernel_;
   int type_;
   float alpha_;
-  int in_size_{};
-  int out_size_{};
-  size_t fp_size{};
-  bool enable_fp16_{false};
-  std::vector<size_t> nhwc_shape_;
+  Image2DInfo outShape = Image2DInfo(nullptr);
 };
 
 }  // namespace mindspore::kernel
