@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HiObject</string>
+    <string name="app_name">Detection</string>
     <string name="action_settings">设置</string>
 
     <string name="request_permission">This sample needs camera permission.</string>

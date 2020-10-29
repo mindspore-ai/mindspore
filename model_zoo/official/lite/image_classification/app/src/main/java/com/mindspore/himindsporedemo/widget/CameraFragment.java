@@ -227,7 +227,7 @@ public class CameraFragment extends Fragment {
         mMindsporeHandlerThread = new HandlerThread("MINDSPORE");
         mMindsporeHandlerThread.start();
         mMindsporeHandler = new Handler(mMindsporeHandlerThread.getLooper());
-        mMindsporeHandler.post(classifyRunnable);
+        mMindsporeHandler.postDelayed(classifyRunnable, 500);
     }
 
 
@@ -252,7 +252,7 @@ public class CameraFragment extends Fragment {
                     }
                 }
                 if (mMindsporeHandler != null && !isPreBackgroundThreadPause) {
-                    mMindsporeHandler.post(classifyRunnable);
+                    mMindsporeHandler.postDelayed(classifyRunnable, 500);
                 }
             }
         }

@@ -612,7 +612,7 @@ public class CameraFragment extends Fragment {
         mPreBackgroundThread = new HandlerThread("AlgoBackground");
         mPreBackgroundThread.start();
         mPreBackgroundHandler = new Handler(mPreBackgroundThread.getLooper());
-        mPreBackgroundHandler.post(periodicClassify);
+        mPreBackgroundHandler.postDelayed(periodicClassify, 500);
     }
 
 
@@ -627,7 +627,7 @@ public class CameraFragment extends Fragment {
                 }
                 //重复请求
                 if (mPreBackgroundHandler != null && !isPreBackgroundThreadPause) {
-                    mPreBackgroundHandler.post(periodicClassify);
+                    mPreBackgroundHandler.postDelayed(periodicClassify, 500);
                 }
             }
         }

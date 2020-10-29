@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MindSporeClassify</string>
+    <string name="app_name">Classification</string>
     <string name="action_settings">设置</string>
 
     <string name="request_permission">This sample needs camera permission.</string>
