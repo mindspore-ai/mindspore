@@ -1057,7 +1057,7 @@ class ActQuant(_QuantActivation):
     Please check `FakeQuantWithMinMaxObserver` or other observer for more details.
 
     Args:
-        activation (Cell): Activation cell class.
+        activation (Cell): Activation cell.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
         quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
             both set to default FakeQuantWithMinMaxObserver.
@@ -1084,6 +1084,7 @@ class ActQuant(_QuantActivation):
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
         super(ActQuant, self).__init__()
+        self.act = Validator.check_isinstance("activation", activation, Cell)
         self.fake_quant_act = quant_config.activation(min_init=-6,
                                                       max_init=6,
                                                       ema=False,
