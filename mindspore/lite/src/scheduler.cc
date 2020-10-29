@@ -234,7 +234,6 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
 #if SUPPORT_GPU
     auto sub_kernel =
       new kernel::SubGraphOpenCLKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
-    sub_kernel->Init();
     return sub_kernel;
 #else
     return nullptr;
