@@ -140,45 +140,14 @@ ConvDwInt8Center:
             sqrdmulh v6.4s, v6.4s, v22.4s
             sqrdmulh v7.4s, v7.4s, v23.4s
 
-            and v15.16b, v26.16b, v0.16b
-            sshr v15.4s, v15.4s, #31
-            sqadd v0.4s, v0.4s, v15.4s
-            srshl v0.4s, v0.4s, v26.4s
-
-            and v14.16b, v27.16b, v1.16b
-            sshr v14.4s, v14.4s, #31
-            sqadd v1.4s, v1.4s, v14.4s
-            srshl v1.4s, v1.4s, v27.4s
-
-            and v13.16b, v26.16b, v2.16b
-            sshr v13.4s, v13.4s, #31
-            sqadd v2.4s, v2.4s, v13.4s
-            srshl v2.4s, v2.4s, v26.4s
-
-            and v12.16b, v27.16b, v3.16b
-            sshr v12.4s, v12.4s, #31
-            sqadd v3.4s, v3.4s, v12.4s
-            srshl v3.4s, v3.4s, v27.4s
-
-            and v11.16b, v26.16b, v4.16b
-            sshr v11.4s, v11.4s, #31
-            sqadd v4.4s, v4.4s, v11.4s
-            srshl v4.4s, v4.4s, v26.4s
-
-            and v10.16b, v27.16b, v5.16b
-            sshr v10.4s, v10.4s, #31
-            sqadd v5.4s, v5.4s, v10.4s
-            srshl v5.4s, v5.4s, v27.4s
-
-            and v9.16b, v26.16b, v6.16b
-            sshr v9.4s, v9.4s, #31
-            sqadd v6.4s, v6.4s, v9.4s
-            srshl v6.4s, v6.4s, v26.4s
-
-            and v8.16b, v27.16b, v7.16b
-            sshr v8.4s, v8.4s, #31
-            sqadd v7.4s, v7.4s, v8.4s
-            srshl v7.4s, v7.4s, v27.4s
+            sqrshl v0.4s, v0.4s, v26.4s
+            sqrshl v1.4s, v1.4s, v27.4s
+            sqrshl v2.4s, v2.4s, v26.4s
+            sqrshl v3.4s, v3.4s, v27.4s
+            sqrshl v4.4s, v4.4s, v26.4s
+            sqrshl v5.4s, v5.4s, v27.4s
+            sqrshl v6.4s, v6.4s, v26.4s
+            sqrshl v7.4s, v7.4s, v27.4s
 
             add v0.4s, v0.4s, v20.4s
             add v1.4s, v1.4s, v21.4s
@@ -270,15 +239,8 @@ ConvDwInt8Center:
             sqshl v1.4s, v1.4s, v25.4s
             sqrdmulh v1.4s, v1.4s, v23.4s
 
-            and v15.16b, v26.16b, v0.16b
-            sshr v15.4s, v15.4s, #31
-            sqadd v0.4s, v0.4s, v15.4s
-            srshl v0.4s, v0.4s, v26.4s
-
-            and v14.16b, v27.16b, v1.16b
-            sshr v14.4s, v14.4s, #31
-            sqadd v1.4s, v1.4s, v14.4s
-            srshl v1.4s, v1.4s, v27.4s
+            sqrshl v0.4s, v0.4s, v26.4s
+            sqrshl v1.4s, v1.4s, v27.4s
 
             add v0.4s, v0.4s, v20.4s
             smax v0.4s, v0.4s, v28.4s
