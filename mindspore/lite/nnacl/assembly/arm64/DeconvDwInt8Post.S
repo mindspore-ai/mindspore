@@ -36,11 +36,7 @@ DeconvDwInt8Post:
         add v0.4s, v0.4s, v25.4s
         sqshl v0.4s, v0.4s, v26.4s
         sqrdmulh v0.4s, v0.4s, v27.4s
-
-        and v16.16b, v28.16b, v0.16b
-        sshr v16.4s, v16.4s, #31
-        sqadd v0.4s, v0.4s, v16.4s
-        srshl v0.4s, v0.4s, v28.4s
+        sqrshl v0.4s, v0.4s, v28.4s
 
         add v0.4s, v0.4s, v29.4s
         smax v0.4s, v0.4s, v30.4s
