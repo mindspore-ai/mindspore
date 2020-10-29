@@ -316,7 +316,8 @@ class Parameter(MetaTensor_):
 
         Args:
             data (Union[Tensor, MetaTensor, int, float]): new data.
-            slice_shape (bool): If slice the Parameter, will not check if shape is match. Default: False.
+            slice_shape (bool): If slice the parameter is set to true, the shape is not checked for consistency.
+                                Default: False.
 
         Returns:
             Parameter, the parameter after set data.

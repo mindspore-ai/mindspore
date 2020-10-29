@@ -254,6 +254,9 @@ class LazyAdam(Optimizer):
     def target(self, value):
         """If the input value is set to "CPU", the parameters will be updated on the host using the Fused
            optimizer operation."""
+        if not isinstance(value, str):
+            raise ValueError("The value must be str type, but got value type is {}".format(type(value)))
+
         if value not in ('CPU', 'Ascend'):
             raise ValueError("The value must be 'CPU' or 'Ascend', but got value {}".format(value))
 
