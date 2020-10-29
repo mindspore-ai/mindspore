@@ -407,7 +407,8 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kLARSUpdateName,
                                                kPullOpName,
                                                kCombineMomentumWeightOpName,
-                                               kCombineMomentumOpName};
+                                               kCombineMomentumOpName,
+                                               kSparseApplyProximalAdagradOpName};
 
 const std::set<std::string> kHWSpecialFormatSet = {
   kOpFormat_FRAC_Z,    kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,       kOpFormat_FRAC_NZ,
