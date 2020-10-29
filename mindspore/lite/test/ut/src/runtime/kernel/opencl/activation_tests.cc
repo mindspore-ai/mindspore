@@ -28,10 +28,12 @@ using mindspore::kernel::LiteKernel;
 using mindspore::kernel::SubGraphOpenCLKernel;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::Tensor;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::ActivationType_SIGMOID;
+using mindspore::schema::ActivationType_SWISH;
 using mindspore::schema::ActivationType_TANH;
 using mindspore::schema::PrimitiveType_Activation;
 
@@ -617,6 +619,88 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
   delete input_tensor;
   output_tensor->set_data(nullptr);
   delete output_tensor;
+  delete sub_graph;
+}
+
+TEST_F(TestActivationOpenCL, SwishFp_dim4) {
+  size_t input_size;
+  std::string in_file = "/data/local/tmp/test_data/in_swishfp16.bin";
+  std::string out_file = "/data/local/tmp/test_data/out_swishfp16.bin";
+  auto input_data = reinterpret_cast<float16_t *>(mindspore::lite::ReadFile(in_file.c_str(), &input_size));
+  MS_LOG(INFO) << "Swish Begin test!";
+  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper();
+  auto runtime = ocl_runtime.GetInstance();
+  runtime->Init();
+  auto data_type = kNumberTypeFloat16;
+  runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
+  bool enable_fp16 = runtime->GetFp16Enable();
+
+  MS_LOG(INFO) << "Init tensors.";
+  std::vector<int> input_shape = {1, 2, 3, 9};
+  schema::Format format = schema::Format_NHWC;
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
+  auto input_tensor = Tensor(data_type, input_shape, format, tensor_type);
+  auto output_tensor = Tensor(data_type, input_shape, format, tensor_type);
+
+  std::vector<lite::Tensor *> inputs{&input_tensor};
+  std::vector<lite::Tensor *> outputs{&output_tensor};
+  auto allocator = runtime->GetAllocator();
+  inputs[0]->MallocData(allocator);
+  MS_LOG(INFO) << "Initialize input data";
+  memcpy(inputs[0]->data_c(), input_data, input_size);
+  if (enable_fp16) {
+    printf_tensor<float16_t>("Swish:FP16--input data--", inputs[0]);
+  } else {
+    printf_tensor<float>("Swish:FP32--input data--", inputs[0]);
+  }
+
+  auto param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "New ActivationParameter fail.";
+    return;
+  }
+  param->type_ = ActivationType_SWISH;
+  auto *kernel =
+    new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "Kernel:Swish create fail.";
+    delete param;
+    return;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete param;
+    delete kernel;
+    MS_LOG(ERROR) << "Init Swish fail.";
+    return;
+  }
+  MS_LOG(INFO) << "Create kernel SubGraphOpenCLKernel.";
+  std::vector<kernel::LiteKernel *> kernels{kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    delete kernel;
+    delete param;
+    MS_LOG(ERROR) << "Kernel SubGraphOpenCLKernel create fail.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Initialize sub_graph.";
+  ret = sub_graph->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init sub_graph error.";
+    delete sub_graph;
+    return;
+  }
+
+  MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
+  ret = sub_graph->Run();
+  if (ret != RET_OK) {
+    delete param;
+    delete sub_graph;
+    MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
+    return;
+  }
+  CompareRes<float16_t>(&output_tensor, out_file);
   delete sub_graph;
 }
 }  // namespace mindspore
