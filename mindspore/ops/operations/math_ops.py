@@ -724,11 +724,29 @@ class BatchMatMul(MatMul):
         >>> input_y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
         >>> batmatmul = P.BatchMatMul()
         >>> output = batmatmul(input_x, input_y)
+        [[[[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]]
+
+         [[[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]]]
         >>>
         >>> input_x = Tensor(np.ones(shape=[2, 4, 3, 1]), mindspore.float32)
         >>> input_y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
         >>> batmatmul = P.BatchMatMul(transpose_a=True)
         >>> output = batmatmul(input_x, input_y)
+        [[[[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]]
+
+         [[[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]
+          [[3. 3. 3. 3.]]]]
     """
 
     @prim_attr_register

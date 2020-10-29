@@ -75,11 +75,12 @@ class Dropout(Cell):
     Examples:
         >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
         >>> net = nn.Dropout(keep_prob=0.8)
+        >>> net.set_train()
         >>> net(x)
-        [[[1.0, 1.0, 1.0],
-          [1.0, 1.0, 1.0]],
-         [[1.0, 1.0, 1.0],
-          [1.0, 1.0, 1.0]]]
+        [[[0., 1.25, 0.],
+          [1.25, 1.25, 1.25]],
+         [[1.25, 1.25, 1.25],
+          [1.25, 1.25, 1.25]]]
     """
 
     def __init__(self, keep_prob=0.5, dtype=mstype.float32):
@@ -287,7 +288,8 @@ class ClipByNorm(Cell):
         >>> net = nn.ClipByNorm()
         >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
         >>> clip_norm = Tensor(np.array([100]).astype(np.float32))
-        >>> net(input, clip_norm)
+        >>> net(input, clip_norm).shape
+        (4, 16)
 
     """
 

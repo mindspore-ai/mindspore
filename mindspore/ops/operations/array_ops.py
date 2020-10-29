@@ -1941,7 +1941,7 @@ class Slice(PrimitiveWithInfer):
     """
     Slices a tensor in the specified shape.
 
-    Args:
+    Inputs:
         x (Tensor): The target tensor.
         begin (tuple): The beginning of the slice. Only constant value is allowed.
         size (tuple): The size of the slice. Only constant value is allowed.
@@ -2262,8 +2262,8 @@ class StridedSlice(PrimitiveWithInfer):
         validator.check_value_type("strides", strides_v, [tuple], self.name)
 
         if tuple(filter(lambda x: not isinstance(x, int), begin_v + end_v + strides_v)):
-            raise ValueError(f"For {self.name}, both the begins, ends, and strides must be a tuple of int, "
-                             f"but got begins: {begin_v}, ends: {end_v}, strides: {strides_v}.")
+            raise TypeError(f"For {self.name}, both the begins, ends, and strides must be a tuple of int, "
+                            f"but got begins: {begin_v}, ends: {end_v}, strides: {strides_v}.")
 
         if tuple(filter(lambda x: x == 0, strides_v)):
             raise ValueError(f"For '{self.name}', the strides cannot contain 0, but got strides: {strides_v}.")

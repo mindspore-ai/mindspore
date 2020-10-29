@@ -447,6 +447,8 @@ class CentralCrop(Cell):
         >>> net = nn.CentralCrop(central_fraction=0.5)
         >>> image = Tensor(np.random.random((4, 3, 4, 4)), mindspore.float32)
         >>> output = net(image)
+        >>> output.shape
+        (4, 3, 2, 2)
     """
 
     def __init__(self, central_fraction):
