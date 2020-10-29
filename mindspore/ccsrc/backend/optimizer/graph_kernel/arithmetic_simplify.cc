@@ -37,6 +37,7 @@ AnfNodePtr NewCNodeWithInfo(const AnfNodePtrList &inputs, const AnfNodePtr &ori_
   } else {
     ResetKernelInfo(new_cnode, UNKNOWN_KERNEL_TYPE);
   }
+
   func_graph->AddNode(new_cnode);
   return new_cnode;
 }
@@ -768,16 +769,11 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
         mng_sub = Manage(sub_graph, false);
         sub_graph->set_manager(mng_sub);
       }
-      bool sub_graph_changed = false;
       for (auto node_sub : sub_graph->GetOrderedCnodes()) {
         auto new_node = TrySimplify(node_sub);
         if (new_node != nullptr) {
-          sub_graph_changed = true;
           PERFORM_REPLACE(node_sub->cast<AnfNodePtr>(), new_node, sub_graph, replaced);
         }
-      }
-      if (sub_graph_changed) {
-        ResetKernelInfo(node, AKG_KERNEL);
       }
     } else {
       auto new_node = TrySimplify(node);
