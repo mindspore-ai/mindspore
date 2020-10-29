@@ -183,7 +183,7 @@ int NonMaxSuppressionCPUKernel::Run() {
           float intersec_x1 = std::max(cand.x1_, box.x1_);
           float intersec_x2 = std::min(cand.x2_, box.x2_);
           float intersec_y1 = std::max(cand.y1_, box.y1_);
-          float intersec_y2 = std::max(cand.y2_, box.y2_);
+          float intersec_y2 = std::min(cand.y2_, box.y2_);
           const float intersec_area =
             std::max(intersec_x2 - intersec_x1, 0.0f) * std::max(intersec_y2 - intersec_y1, 0.0f);
           if (intersec_area <= 0.0f) {
