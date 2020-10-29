@@ -79,6 +79,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
       new_tensor = nullptr;
       return RET_ERROR;
     }
+    parameter->op_parameter.type_ = mindspore::schema::PrimitiveType_ToFormat;
     parameter->src_format = src_format;
     parameter->dst_format = dst_format;
     parameter->out_mem_type = mem_type;

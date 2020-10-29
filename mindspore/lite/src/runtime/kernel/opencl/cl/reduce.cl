@@ -84,3 +84,94 @@ __kernel void sum_local_NHWC4(__read_only image2d_t src_data, __write_only image
   }
   WRITE_IMAGE(dst_data, (int2)(X, 0), TO_FLT4(result));
 }
+
+__kernel void mean_WC_NHWC4(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) {
+  int X = get_global_id(0);  // H
+  if (X >= size.x) {
+    return;
+  }
+  float4 result = (float4)0.f;
+  for (int w = 0; w < size.y; w++) {
+    for (int c = 0; c < size.z; c++) {
+      result += convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c, X)));
+    }
+  }
+
+  result /= size.y * size.w;
+  FLT4 result2 = (FLT4)(0.f);
+  result2.x = dot(TO_FLT4(result), (FLT4)(1.f));
+  WRITE_IMAGE(dst_data, (int2)(0, X), result2);
+}
+
+__kernel void mean_WC_local_NHWC4(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) {
+  int X = get_global_id(0);  // H
+  int localy = get_local_id(1);
+  int localz = get_local_id(2);
+  if (X >= size.x) return;
+  __local float4 temp[LOCAL_CACHE_THREAD][LOCAL_CACHE_THREAD];
+  temp[localy][localz] = (float4)0.f;
+  for (int w = localy; w < size.y; w += LOCAL_CACHE_THREAD) {
+    for (int c = localz; c < size.z; c += LOCAL_CACHE_THREAD) {
+      temp[localy][localz] += convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c, X)));
+    }
+  }
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if (localz == 0) {
+    for (int i = 1; i < LOCAL_CACHE_THREAD; i++) {
+      temp[localy][0] += temp[localy][i];
+    }
+  }
+  barrier(CLK_LOCAL_MEM_FENCE);
+  float4 result = temp[0][0];
+  for (int i = 1; i < LOCAL_CACHE_THREAD; i++) {
+    result += temp[i][0];
+  }
+  result /= size.y * size.w;
+  FLT4 result2 = (FLT4)(0.f);
+  result2.x = dot(TO_FLT4(result), (FLT4)(1.f));
+  WRITE_IMAGE(dst_data, (int2)(0, X), result2);
+}
+
+__kernel void sum_WC_NHWC4(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) {
+  int X = get_global_id(0);  // H
+  if (X >= size.x) {
+    return;
+  }
+  FLT4 result = (FLT4)0.f;
+  for (int w = 0; w < size.y; w++) {
+    for (int c = 0; c < size.z; c++) {
+      result += READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c, X));
+    }
+  }
+  FLT4 result2 = (FLT4)(0.f);
+  result2.x = dot(TO_FLT4(result), (FLT4)(1.f));
+  WRITE_IMAGE(dst_data, (int2)(0, X), result2);
+}
+
+__kernel void sum_WC_local_NHWC4(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 size) {
+  int X = get_global_id(0);  // H
+  int localy = get_local_id(1);
+  int localz = get_local_id(2);
+  if (X >= size.x) return;
+  __local float4 temp[LOCAL_CACHE_THREAD][LOCAL_CACHE_THREAD];
+  temp[localy][localz] = (float4)0.f;
+  for (int w = localy; w < size.y; w += LOCAL_CACHE_THREAD) {
+    for (int c = localz; c < size.z; c += LOCAL_CACHE_THREAD) {
+      temp[localy][localz] += convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(w * size.z + c, X)));
+    }
+  }
+  barrier(CLK_LOCAL_MEM_FENCE);
+  if (localz == 0) {
+    for (int i = 1; i < LOCAL_CACHE_THREAD; i++) {
+      temp[localy][0] += temp[localy][i];
+    }
+  }
+  barrier(CLK_LOCAL_MEM_FENCE);
+  float4 result = temp[0][0];
+  for (int i = 1; i < LOCAL_CACHE_THREAD; i++) {
+    result += temp[i][0];
+  }
+  FLT4 result2 = (FLT4)(0.f);
+  result2.x = dot(TO_FLT4(result), (FLT4)(1.f));
+  WRITE_IMAGE(dst_data, (int2)(0, X), result2);
+}
