@@ -40,6 +40,7 @@ class ReduceOpenCLKernel : public OpenCLKernel {
   bool enable_fp16_{false};
   std::vector<size_t> nhwc_shape_;
   bool use_local_{false};
+  bool wc_reduce_{false};
   static const size_t LOCAL_CACHE_THREAD{16};
 };
 }  // namespace mindspore::kernel

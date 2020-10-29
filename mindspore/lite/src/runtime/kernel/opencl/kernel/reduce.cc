@@ -51,24 +51,34 @@ int ReduceOpenCLKernel::Init() {
     MS_LOG(ERROR) << "not supported reduce type:" << reduce_param->mode_;
     return RET_PARAM_INVALID;
   }
-  if (reduce_param->num_axes_ != 2 || ((reduce_param->axes_[0] != 1 || reduce_param->axes_[1] != 2) &&
-                                       (reduce_param->axes_[0] != 2 || reduce_param->axes_[1] != 1))) {
-    MS_LOG(ERROR) << "reduce op only support axes HW";
+  if (reduce_param->num_axes_ != 2) {
+    MS_LOG(ERROR) << "reduce op only support axes=2";
+    return RET_PARAM_INVALID;
+  }
+  bool hw_reduce = (reduce_param->axes_[0] == 1 && reduce_param->axes_[1] == 2) ||
+                   (reduce_param->axes_[0] == 2 && reduce_param->axes_[1] == 1);
+  wc_reduce_ = (reduce_param->axes_[0] == 2 && reduce_param->axes_[1] == 3) ||
+               (reduce_param->axes_[0] == 3 && reduce_param->axes_[1] == 2);
+  if (!hw_reduce && !wc_reduce_) {
+    MS_LOG(ERROR) << "reduce op only support axis (1,2) or (2,3)";
+    return RET_PARAM_INVALID;
+  }
+  if (wc_reduce_ && reduce_param->keep_dims_ == false) {
+    MS_LOG(ERROR) << "reduce axis (2,3) should keep dims";
     return RET_PARAM_INVALID;
   }
   std::string kernel_name = reduce_type2str.at(reduce_param->mode_);
-  if (in_tensors_[0]->shape()[1] >= LOCAL_CACHE_THREAD || in_tensors_[0]->shape()[2] >= LOCAL_CACHE_THREAD) {
+  if (wc_reduce_) {
+    kernel_name += "_WC";
+  }
+  if (in_tensors_[0]->shape()[reduce_param->axes_[0]] >= LOCAL_CACHE_THREAD ||
+      in_tensors_[0]->shape()[reduce_param->axes_[1]] >= LOCAL_CACHE_THREAD) {
     use_local_ = true;
     kernel_name += "_local";
   }
   kernel_name += "_NHWC4";
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
 
-  if (in_tensors_[0]->shape().back() != out_tensors_[0]->shape().back()) {
-    MS_LOG(ERROR) << "Reduce input channel " << in_tensors_[0]->shape().back() << " should equal output channel"
-                  << out_tensors_[0]->shape().back();
-    return mindspore::lite::RET_ERROR;
-  }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
@@ -109,7 +119,10 @@ int ReduceOpenCLKernel::Run() {
     local = {1, LOCAL_CACHE_THREAD, LOCAL_CACHE_THREAD};
   }
   std::vector<size_t> global = {static_cast<size_t>(c4), 1, 1};
-  cl_int4 size = {h, w, c4, 1};
+  if (wc_reduce_) {
+    global = {static_cast<size_t>(h), 1, 1};
+  }
+  cl_int4 size = {h, w, c4, c};
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());

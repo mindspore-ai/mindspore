@@ -30,7 +30,7 @@ class TestReduceOpenCL : public mindspore::CommonTest {
 };
 
 void RunTestCaseReduce(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16,
-                       int reduce_mode) {
+                       int reduce_mode, bool WC = false) {
   auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
@@ -43,6 +43,11 @@ void RunTestCaseReduce(const std::vector<int> &shape, void *input_data, void *ou
   }
   param->axes_[0] = 1;
   param->axes_[1] = 2;
+  if (WC) {
+    param->axes_[0] = 2;
+    param->axes_[1] = 3;
+    param->keep_dims_ = true;
+  }
   param->num_axes_ = 2;
   param->mode_ = reduce_mode;
   int n = shape[0];
@@ -58,8 +63,11 @@ void RunTestCaseReduce(const std::vector<int> &shape, void *input_data, void *ou
     return;
   }
   std::vector<int> out_shape = {n, c};
+  if (WC) {
+    out_shape = {n, h, 1, 1};
+  }
   auto tensor_out_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
-                                                       out_shape, schema::Format_NC);
+                                                       out_shape, WC ? schema::Format_NHWC : schema::Format_NC);
   auto tensor_out = tensor_out_ptr.get();
   if (tensor_out == nullptr) {
     MS_LOG(ERROR) << "tensor_out create error.";
@@ -151,5 +159,29 @@ TEST_F(TestReduceOpenCL, ReduceSumFp16) {
   std::vector<float16_t> output_data = {18.0f, 22.0f, 26.0f};
 
   RunTestCaseReduce(shape, input_data.data(), output_data.data(), true, schema::ReduceMode_ReduceSum);
+}
+
+TEST_F(TestReduceOpenCL, ReduceMeanWCFp32) {
+  int n = 1;
+  int h = 3;
+  int w = 2;
+  int c = 2;
+  std::vector<int> shape = {n, h, w, c};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
+  std::vector<float> output_data = {1.5f, 5.5f, 9.5f};
+
+  RunTestCaseReduce(shape, input_data.data(), output_data.data(), false, schema::ReduceMode_ReduceMean, true);
+}
+
+TEST_F(TestReduceOpenCL, ReduceSumWCFp32) {
+  int n = 1;
+  int h = 3;
+  int w = 2;
+  int c = 2;
+  std::vector<int> shape = {n, h, w, c};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
+  std::vector<float> output_data = {6.0f, 22.0f, 38.0f};
+
+  RunTestCaseReduce(shape, input_data.data(), output_data.data(), false, schema::ReduceMode_ReduceSum, true);
 }
 }  // namespace mindspore
