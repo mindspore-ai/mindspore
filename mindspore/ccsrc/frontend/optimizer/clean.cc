@@ -304,6 +304,13 @@ AnfNodePtr EraseMakeDictNode(const CNodePtr &node) {
   return inputs[2];
 }
 
+AnfNodePtr EraseDictGetValues(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &inputs = node->inputs();
+  MS_ASSERT(inputs.size() == 2 && "DictGetValues should have two inputs");
+  return inputs[1];
+}
+
 AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   const auto &inputs = node->inputs();
@@ -374,6 +381,8 @@ bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
       new_node = ConvertDictGetItemToTupleGetItem(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimDictSetItem)) {
       new_node = ConvertDictSetItemToTupleSetItem(cnode);
+    } else if (IsPrimitiveCNode(node, prim::kPrimDictGetValues)) {
+      new_node = EraseDictGetValues(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimMakeDict)) {
       new_node = EraseMakeDictNode(cnode);
     } else if (IsPrimitiveCNode(node, prim::kPrimMakeKeywordArg)) {

@@ -132,6 +132,20 @@ def _dict_setitem_with_number(data, key, value):
     """
     return F.dict_setitem(data, key, value)
 
+@setitem.register("Dictionary", "String", "Tuple")
+def _dict_setitem_with_tuple(data, key, value):
+    """
+    Assigns value to dictionary.
+
+    Inputs:
+        data (dict): Data of type dict.
+        key (str): Key of the data.
+        value (Tuple): Value given.
+
+    Outputs:
+        dict, type is as same as the element type of data.
+    """
+    return F.dict_setitem(data, key, value)
 
 @setitem.register("Tensor", "Tensor", "Tensor")
 def _tensor_setitem_by_tensor_with_tensor(data, index, value_tensor):

@@ -279,6 +279,8 @@ inline const PrimitivePtr kPrimListGetItem = std::make_shared<Primitive>("list_g
 inline const PrimitivePtr kPrimListSetItem = std::make_shared<Primitive>("list_setitem");
 inline const PrimitivePtr kPrimDictGetItem = std::make_shared<Primitive>("dict_getitem");
 inline const PrimitivePtr kPrimDictSetItem = std::make_shared<Primitive>("dict_setitem");
+inline const PrimitivePtr kPrimDictGetKeys = std::make_shared<Primitive>("dict_getkeys");
+inline const PrimitivePtr kPrimDictGetValues = std::make_shared<Primitive>("dict_getvalues");
 inline const PrimitivePtr kPrimListAppend = std::make_shared<Primitive>("list_append");
 inline const PrimitivePtr kPrimListLen = std::make_shared<Primitive>("list_len");
 
