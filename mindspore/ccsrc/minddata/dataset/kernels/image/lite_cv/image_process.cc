@@ -717,7 +717,7 @@ inline void MergeImpl(const std::vector<LiteMat> &mv, T *dst_ptr, int height, in
 }
 
 bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
-  if (mv.empty() || mv.size() > 4) return false;
+  if (mv.size() != 1 && mv.size() != 3 && mv.size() != 4) return false;
 
   int width = mv[0].width_;
   int height = mv[0].height_;
@@ -973,9 +973,7 @@ bool Subtract(const LiteMat &src1, const LiteMat &src2, LiteMat &dst) {
 
   size_t total_size = src1.height_ * src1.width_ * src1.channel_;
 
-  if (src1.data_type_ == LDataType::BOOL) {
-    SubtractImpl<bool>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::INT8) {
+  if (src1.data_type_ == LDataType::INT8) {
     SubtractImpl<int8_t>(src1, src2, dst, total_size);
   } else if (src1.data_type_ == LDataType::UINT8) {
     SubtractImpl<uint8_t>(src1, src2, dst, total_size);
