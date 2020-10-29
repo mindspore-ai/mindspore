@@ -18,13 +18,14 @@
 
 #include <memory>
 #include "backend/optimizer/common/optimizer.h"
+#include "backend/session/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace opt {
 class ApplyMomentumScaleFusion : public PatternProcessPass {
  public:
   explicit ApplyMomentumScaleFusion(bool multigraph = true) : PatternProcessPass("momentum_scale_fusion", multigraph) {
-    scale_ = std::make_shared<Var>();
+    scale_ = std::make_shared<CondVar>(IsScalar);
     variable_ = std::make_shared<Var>();
     accumulation_ = std::make_shared<Var>();
     learning_rate_ = std::make_shared<Var>();
@@ -36,6 +37,8 @@ class ApplyMomentumScaleFusion : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
+  static bool IsScalar(const BaseRef &n);
+
   VarPtr scale_;
   VarPtr variable_;
   VarPtr accumulation_;
