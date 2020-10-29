@@ -19,45 +19,67 @@
 
 namespace mindspore {
 namespace kernel {
+const size_t kUseBucketUniqueSize = 100000;
+const size_t kUniqueThreadNum = 23;
 void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  n_ = input_shape[0];
+  input_size_ = input_shape[0];
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
 
+void UniqueCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
+  workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
+  workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
+}
+
 bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                             const std::vector<kernel::AddressPtr> & /*workspace*/,
+                             const std::vector<kernel::AddressPtr> &workspace,
                              const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
+    LaunchKernel<int, int>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
+    LaunchKernel<int64_t, int>(inputs, workspace, outputs);
+  } else if (dtype_ == kNumberTypeFloat32) {
+    LaunchKernel<float, int>(inputs, workspace, outputs);
   }
   return true;
 }
 
-template <typename T>
-void UniqueCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto idx_addr = reinterpret_cast<int64_t *>(outputs[1]->addr);
-
-  std::unordered_map<T, int64_t> uniq;
-  int n = SizeToInt(n_);
-  uniq.reserve(n * 2);
-  for (int i = 0, j = 0; i < n; ++i) {
-    auto it = uniq.emplace(x_addr[i], j);
-    idx_addr[i] = it.first->second;
-    if (it.second) {
-      ++j;
-    }
+template <typename DataType, typename IndexType>
+void UniqueCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                   const std::vector<AddressPtr> &outputs) {
+  if (input_size_ == 0) {
+    return;
   }
-  for (const auto &it : uniq) {
-    y_addr[it.second] = it.first;
+  if (inputs.size() < 1) {
+    MS_LOG(EXCEPTION) << "Input size should be large than 0";
   }
+  if (workspace.size() < 3) {
+    MS_LOG(EXCEPTION) << "workspace size should be large than 2";
+  }
+  if (outputs.size() < 2) {
+    MS_LOG(EXCEPTION) << "Output size should be large than 1";
+  }
+  auto params = std::make_shared<UniqueParam<DataType, IndexType>>();
+  params->input_ = reinterpret_cast<DataType *>(inputs[0]->addr);
+  params->input_idx_ = reinterpret_cast<IndexType *>(workspace[0]->addr);
+  params->workspace_ = reinterpret_cast<DataType *>(workspace[1]->addr);
+  params->workspace_idx_ = reinterpret_cast<IndexType *>(workspace[2]->addr);
+  params->output_ = reinterpret_cast<DataType *>(outputs[0]->addr);
+  params->inverse_idx_ = reinterpret_cast<IndexType *>(outputs[1]->addr);
+  params->input_size_ = input_size_;
+  params->output_size_ = 0;
+  params->need_sort_ = true;
+  params->thread_num_ = kUniqueThreadNum;
+  if (input_size_ < kUseBucketUniqueSize) {
+    Unique(params);
+  } else {
+    BucketUnique(params);
+  }
+  output_size_ = params->output_size_;
 }
 
 void UniqueCPUKernel::CheckParam(const CNodePtr &kernel_node) {
