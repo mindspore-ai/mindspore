@@ -21,14 +21,14 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
 /// \class TextFileNode
 /// \brief A Dataset derived class to represent TextFile dataset
-class TextFileNode : public Dataset {
+class TextFileNode : public DatasetNode {
  public:
   /// \brief Constructor
   TextFileNode(std::vector<std::string> dataset_files, int32_t num_samples, ShuffleMode shuffle, int32_t num_shards,

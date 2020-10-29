@@ -33,7 +33,7 @@ CSVNode::CSVNode(const std::vector<std::string> &csv_files, char field_delim,
                  const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
                  const std::vector<std::string> &column_names, int64_t num_samples, ShuffleMode shuffle,
                  int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache)
-    : Dataset(std::move(cache)),
+    : DatasetNode(std::move(cache)),
       dataset_files_(csv_files),
       field_delim_(field_delim),
       column_defaults_(column_defaults),

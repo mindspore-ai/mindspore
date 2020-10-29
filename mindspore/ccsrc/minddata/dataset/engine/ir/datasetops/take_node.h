@@ -21,17 +21,17 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 
 namespace api {
 
-class TakeNode : public Dataset {
+class TakeNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit TakeNode(std::shared_ptr<Dataset> child, int32_t count);
+  explicit TakeNode(std::shared_ptr<DatasetNode> child, int32_t count);
 
   /// \brief Destructor
   ~TakeNode() = default;

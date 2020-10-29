@@ -56,7 +56,7 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
 
   mindspore::dataset::TreeAdapter tree_adapter;
 
-  Status rc = tree_adapter.BuildAndPrepare(ds, 1);
+  Status rc = tree_adapter.BuildAndPrepare(ds->IRNode(), 1);
 
   EXPECT_TRUE(rc.IsOk());
 
@@ -91,7 +91,7 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
 
   mindspore::dataset::TreeAdapter tree_adapter;
 
-  Status rc = tree_adapter.BuildAndPrepare(ds, 2);
+  Status rc = tree_adapter.BuildAndPrepare(ds->IRNode(), 2);
   EXPECT_TRUE(rc.IsOk());
 
   const std::unordered_map<std::string, int32_t> map = tree_adapter.GetColumnNameMap();
@@ -128,7 +128,7 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
 
   mindspore::dataset::TreeAdapter tree_adapter;
 
-  Status rc = tree_adapter.BuildAndPrepare(ds, 2);
+  Status rc = tree_adapter.BuildAndPrepare(ds->IRNode(), 2);
 
   EXPECT_TRUE(rc.IsOk());
 

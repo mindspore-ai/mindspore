@@ -27,7 +27,7 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 
-ZipNode::ZipNode(const std::vector<std::shared_ptr<Dataset>> &datasets) : datasets_(datasets) {
+ZipNode::ZipNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets) : datasets_(datasets) {
   for (auto dataset : datasets_) {
     this->children.push_back(dataset);
   }

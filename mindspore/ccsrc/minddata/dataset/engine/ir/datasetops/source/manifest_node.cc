@@ -32,7 +32,7 @@ ManifestNode::ManifestNode(const std::string &dataset_file, const std::string &u
                            const std::shared_ptr<SamplerObj> &sampler,
                            const std::map<std::string, int32_t> &class_indexing, bool decode,
                            std::shared_ptr<DatasetCache> cache)
-    : Dataset(std::move(cache)),
+    : DatasetNode(std::move(cache)),
       dataset_file_(dataset_file),
       usage_(usage),
       decode_(decode),

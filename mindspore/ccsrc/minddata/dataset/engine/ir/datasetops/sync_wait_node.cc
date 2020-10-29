@@ -27,7 +27,7 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 // Constructor for SyncWaitNode
-SyncWaitNode::SyncWaitNode(std::shared_ptr<Dataset> child, const std::string &condition_name, int32_t num_batch,
+SyncWaitNode::SyncWaitNode(std::shared_ptr<DatasetNode> child, const std::string &condition_name, int32_t num_batch,
                            py::function callback)
     : condition_name_(condition_name), num_batch_(num_batch), callback_(callback) {
   this->children.push_back(child);

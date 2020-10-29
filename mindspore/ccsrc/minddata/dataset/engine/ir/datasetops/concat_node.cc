@@ -27,18 +27,16 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 // Function to build ConcatOp
-ConcatNode::ConcatNode(const std::vector<std::shared_ptr<Dataset>> &datasets) : datasets_(datasets) {
-  this->children = datasets_;
-}
+ConcatNode::ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets) { this->children = datasets; }
 
 Status ConcatNode::ValidateParams() {
-  if (datasets_.empty()) {
+  if (children.size() < 2) {
     std::string err_msg = "ConcatNode: concatenated datasets are not specified.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  if (find(datasets_.begin(), datasets_.end(), nullptr) != datasets_.end()) {
+  if (find(children.begin(), children.end(), nullptr) != children.end()) {
     std::string err_msg = "ConcatNode: concatenated datasets should not be null.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);

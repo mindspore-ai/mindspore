@@ -3,6 +3,7 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 add_subdirectory(source)
 
 set(DATASET_ENGINE_IR_DATASETOPS_SRC_FILES
+        dataset_node.cc
         batch_node.cc
         bucket_batch_by_length_node.cc
         build_sentence_piece_vocab_node.cc

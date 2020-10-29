@@ -23,16 +23,16 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 
 namespace api {
 
-class ShuffleNode : public Dataset {
+class ShuffleNode : public DatasetNode {
  public:
-  ShuffleNode(std::shared_ptr<Dataset> child, int32_t shuffle_size, bool reset_every_epoch);
+  ShuffleNode(std::shared_ptr<DatasetNode> child, int32_t shuffle_size, bool reset_every_epoch);
 
   ~ShuffleNode() = default;
 

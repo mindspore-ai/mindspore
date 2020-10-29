@@ -53,7 +53,7 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
   RETURN_IF_NOT_OK(runtime_context->Init());
   auto consumer = std::make_unique<IteratorConsumer>();
   consumer_ = consumer.get();
-  RETURN_IF_NOT_OK(consumer->Init(ds));
+  RETURN_IF_NOT_OK(consumer->Init(ds->IRNode()));
   runtime_context->AssignConsumer(std::move(consumer));
   return Status::OK();
 }

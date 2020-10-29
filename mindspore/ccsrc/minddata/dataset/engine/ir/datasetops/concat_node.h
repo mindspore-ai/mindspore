@@ -21,16 +21,16 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
 
-class ConcatNode : public Dataset {
+class ConcatNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit ConcatNode(const std::vector<std::shared_ptr<Dataset>> &datasets);
+  explicit ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets);
 
   /// \brief Destructor
   ~ConcatNode() = default;
@@ -42,9 +42,6 @@ class ConcatNode : public Dataset {
   /// \brief Parameters validation
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
-
- private:
-  std::vector<std::shared_ptr<Dataset>> datasets_;
 };
 
 }  // namespace api

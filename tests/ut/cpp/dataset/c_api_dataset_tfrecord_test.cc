@@ -443,34 +443,34 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception) {
 
   // This case expected to fail because the list of dir_path cannot be empty.
   std::shared_ptr<Dataset> ds1 = TFRecord({});
-  EXPECT_EQ(ds1, nullptr);
+  EXPECT_EQ(ds1->CreateIterator(), nullptr);
 
   // This case expected to fail because the file in dir_path is not exist.
   std::string file_path = datasets_root_path_ + "/testTFTestAllTypes/test.data";
   std::shared_ptr<Dataset> ds2 = TFRecord({file_path, "noexist.data"});
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_EQ(ds2->CreateIterator(), nullptr);
 
   // This case expected to fail because the file of schema is not exist.
   std::shared_ptr<Dataset> ds4 = TFRecord({file_path, "notexist.json"});
-  EXPECT_EQ(ds4, nullptr);
+  EXPECT_EQ(ds4->CreateIterator(), nullptr);
 
   // This case expected to fail because num_samples is negative.
   std::shared_ptr<Dataset> ds5 = TFRecord({file_path}, "", {}, -1);
-  EXPECT_EQ(ds5, nullptr);
+  EXPECT_EQ(ds5->CreateIterator(), nullptr);
 
   // This case expected to fail because num_shards is negative.
   std::shared_ptr<Dataset> ds6 = TFRecord({file_path}, "", {}, 10, ShuffleMode::kFalse, 0);
-  EXPECT_EQ(ds6, nullptr);
+  EXPECT_EQ(ds6->CreateIterator(), nullptr);
 
   // This case expected to fail because shard_id is out_of_bound.
   std::shared_ptr<Dataset> ds7 = TFRecord({file_path}, "", {}, 10, ShuffleMode::kFalse, 3, 3);
-  EXPECT_EQ(ds7, nullptr);
+  EXPECT_EQ(ds7->CreateIterator(), nullptr);
 
   // This case expected to fail because the provided number of files < num_shards in file-based sharding.
   std::string file_path1 = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
   std::string file_path2 = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0002.data";
   std::shared_ptr<Dataset> ds8 = TFRecord({file_path1, file_path2}, "", {}, 0, ShuffleMode::kFalse, 3);
-  EXPECT_EQ(ds8, nullptr);
+  EXPECT_EQ(ds8->CreateIterator(), nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception2) {

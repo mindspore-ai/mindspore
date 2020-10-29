@@ -22,14 +22,16 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include "minddata/dataset/engine/tree_adapter.h"
+#include "minddata/dataset/text/vocab.h"
 
 namespace mindspore::dataset {
 // Forward declare
 class TreeAdapter;
 
 namespace api {
-class Dataset;
+class DatasetNode;
 }
 
 /// A base class for tree consumers which would fetch rows from the tree pipeline
@@ -40,7 +42,9 @@ class TreeConsumer {
   /// Initializes the consumer, this involves constructing and preparing the tree.
   /// \param d The dataset node that represent the root of the IR tree.
   /// \return Status error code.
-  virtual Status Init(std::shared_ptr<api::Dataset> d);
+  virtual Status Init(std::shared_ptr<api::DatasetNode> d);
+
+  Status Terminate();
 
  protected:
   /// The class owns the tree_adapter that handles execution tree operations.
@@ -57,7 +61,7 @@ class IteratorConsumer : public TreeConsumer {
   /// \param num_epochs number of epochs. Default to -1 (infinite epochs).
   explicit IteratorConsumer(int32_t num_epochs = -1) : TreeConsumer(), num_epochs_(num_epochs) {}
 
-  Status Init(std::shared_ptr<api::Dataset> d) override;
+  Status Init(std::shared_ptr<api::DatasetNode> d) override;
 
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
@@ -126,10 +130,10 @@ class SaveToDisk : public TreeConsumer {
 /// Consumer that iterates over the dataset and send it to a device
 class ToDevice : public TreeConsumer {
  public:
-  ToDevice(std::string device_type, bool send_epoch_end, int32_t num_epochs = -1)
-      : TreeConsumer(), device_type_(device_type), send_epoch_end_(send_epoch_end), num_epochs_(num_epochs) {}
+  explicit ToDevice(bool send_epoch_end, int32_t num_epochs = -1)
+      : TreeConsumer(), send_epoch_end_(send_epoch_end), num_epochs_(num_epochs) {}
 
-  Status Init(std::shared_ptr<api::Dataset> d) override;
+  Status Init(std::shared_ptr<api::DatasetNode> d) override;
 
   /// Send the data to device
   /// \return  Status error code
@@ -158,7 +162,7 @@ class ToDevice : public TreeConsumer {
 class TreeGetters : public TreeConsumer {
  public:
   TreeGetters();
-  Status Init(std::shared_ptr<api::Dataset> d) override;
+  Status Init(std::shared_ptr<api::DatasetNode> d) override;
   Status GetDatasetSize(int64_t *size);
   Status GetOutputTypes(std::vector<DataType> *types);
   Status GetOutputShapes(std::vector<TensorShape> *shapes);
@@ -174,6 +178,24 @@ class TreeGetters : public TreeConsumer {
   TensorRow row_;
   bool init_flag_;  // indicate whether the tree has initialized
   bool row_flag_;   // indicate whether the first row has been stored in row_
+};
+
+class BuildVocabConsumer : public TreeConsumer {
+ public:
+  /// BuildVocabConsumer Constructor which will call the base class default constructor.
+  BuildVocabConsumer() = default;
+
+  Status Init(std::shared_ptr<api::DatasetNode> d) override;
+
+  /// Save the given dataset to MindRecord format on disk. This is a blocking method (i.e., after returning, all rows
+  /// would be written to disk)
+  /// \return  Status error code
+  Status Start();
+
+ protected:
+  /// Method to return the name of the consumer
+  /// \return string
+  std::string Name() override { return "BuildVocab"; }
 };
 
 }  // namespace mindspore::dataset

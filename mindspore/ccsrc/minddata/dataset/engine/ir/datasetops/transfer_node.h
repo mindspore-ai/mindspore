@@ -21,18 +21,17 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 
 namespace api {
 
-class TransferNode : public Dataset {
+class TransferNode : public DatasetNode {
  public:
   /// \brief Constructor
-  TransferNode(std::shared_ptr<Dataset> child, const std::string &queue_name, int32_t device_id,
-               const std::string &device_type, bool send_epoch_end);
+  TransferNode(std::shared_ptr<DatasetNode> child, bool send_epoch_end);
 
   /// \brief Destructor
   ~TransferNode() = default;
@@ -45,7 +44,7 @@ class TransferNode : public Dataset {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
-  static Status get_distribution(std::shared_ptr<Dataset> ds, int32_t *device_id);
+  static Status get_distribution(std::shared_ptr<DatasetNode> ds, int32_t *device_id);
 
  private:
   std::string queue_name_;

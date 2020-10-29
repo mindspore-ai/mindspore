@@ -31,7 +31,7 @@ namespace api {
 CelebANode::CelebANode(const std::string &dataset_dir, const std::string &usage,
                        const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
                        const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache)
-    : Dataset(std::move(cache)),
+    : DatasetNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       usage_(usage),
       sampler_(sampler),

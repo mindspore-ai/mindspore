@@ -28,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 
-BuildVocabNode::BuildVocabNode(std::shared_ptr<Dataset> child, std::shared_ptr<Vocab> vocab,
+BuildVocabNode::BuildVocabNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<Vocab> vocab,
                                const std::vector<std::string> &columns, const std::pair<int64_t, int64_t> &freq_range,
                                int64_t top_k, const std::vector<std::string> &special_tokens, bool special_first)
     : vocab_(vocab),

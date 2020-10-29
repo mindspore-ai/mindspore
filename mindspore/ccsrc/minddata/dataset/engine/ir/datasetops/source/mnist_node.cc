@@ -30,7 +30,7 @@ namespace api {
 
 MnistNode::MnistNode(std::string dataset_dir, std::string usage, std::shared_ptr<SamplerObj> sampler,
                      std::shared_ptr<DatasetCache> cache)
-    : Dataset(std::move(cache)), dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
+    : DatasetNode(std::move(cache)), dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
 Status MnistNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("MnistNode", dataset_dir_));

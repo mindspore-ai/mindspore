@@ -22,12 +22,12 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
-class MindDataNode : public Dataset {
+class MindDataNode : public DatasetNode {
  public:
   /// \brief Constructor
   MindDataNode(const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list,

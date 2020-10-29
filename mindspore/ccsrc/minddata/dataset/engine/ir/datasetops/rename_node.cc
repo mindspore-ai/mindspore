@@ -27,7 +27,7 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 // Function to build RenameOp
-RenameNode::RenameNode(std::shared_ptr<Dataset> child, const std::vector<std::string> &input_columns,
+RenameNode::RenameNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &input_columns,
                        const std::vector<std::string> &output_columns)
     : input_columns_(input_columns), output_columns_(output_columns) {
   this->children.push_back(child);

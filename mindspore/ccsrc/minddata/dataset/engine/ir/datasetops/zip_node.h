@@ -21,16 +21,16 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
 
-class ZipNode : public Dataset {
+class ZipNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit ZipNode(const std::vector<std::shared_ptr<Dataset>> &datasets);
+  explicit ZipNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets);
 
   /// \brief Destructor
   ~ZipNode() = default;
@@ -44,7 +44,7 @@ class ZipNode : public Dataset {
   Status ValidateParams() override;
 
  private:
-  std::vector<std::shared_ptr<Dataset>> datasets_;
+  std::vector<std::shared_ptr<DatasetNode>> datasets_;
 };
 
 }  // namespace api

@@ -28,14 +28,8 @@ namespace dataset {
 namespace api {
 
 // Constructor for TransferNode
-TransferNode::TransferNode(std::shared_ptr<Dataset> child, const std::string &queue_name, int32_t device_id,
-                           const std::string &device_type, bool send_epoch_end)
-    : queue_name_(queue_name),
-      device_id_(device_id),
-      device_type_(device_type),
-      prefetch_size_(16),
-      send_epoch_end_(send_epoch_end),
-      total_batch_(0) {
+TransferNode::TransferNode(std::shared_ptr<DatasetNode> child, bool send_epoch_end)
+    : prefetch_size_(16), send_epoch_end_(send_epoch_end), total_batch_(0) {
   this->children.push_back(child);
 }
 
@@ -48,6 +42,15 @@ Status TransferNode::ValidateParams() {
 
 // Function to build TransferNode
 std::vector<std::shared_ptr<DatasetOp>> TransferNode::Build() {
+  // Get a uuid for queue name
+  queue_name_ = Services::GetUniqueID();
+  // TODO(CRC):
+  // Get device type from ms context
+  device_type_ = "CPU";
+  // Get device ID from children
+  device_id_ = 0;
+  RETURN_EMPTY_IF_ERROR(TransferNode::get_distribution(shared_from_this(), &device_id_));
+
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
@@ -67,13 +70,13 @@ std::vector<std::shared_ptr<DatasetOp>> TransferNode::Build() {
 }
 
 // Function to get the device_id
-Status TransferNode::get_distribution(std::shared_ptr<Dataset> ds, int32_t *device_id) {
+Status TransferNode::get_distribution(std::shared_ptr<DatasetNode> ds, int32_t *device_id) {
   // Get device id according to the type of dataset
   Status rc = ds->GetShardId(device_id);
   if (rc != Status::OK()) {
     // Get device id from the child node
-    if (ds->children.size()) {
-      ds = ds->children[0];
+    if (ds->Children().size()) {
+      ds = ds->Children()[0];
       return TransferNode::get_distribution(ds, device_id);
     } else {
       std::string err_msg = "Unknown dataset type.";

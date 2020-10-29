@@ -82,30 +82,30 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/image/lite_cv  MINDDATA_KERNELS_IMA
 
 if (BUILD_MINDDATA STREQUAL "full")
     include_directories("${CMAKE_SOURCE_DIR}/../ccsrc/minddata/dataset/kernels/image")
-    list(REMOVE_ITEM MINDDATA_API_SRC_FILES 
-        "${MINDDATA_DIR}/api/text.cc" 
-        )
+    list(REMOVE_ITEM MINDDATA_API_SRC_FILES
+            "${MINDDATA_DIR}/api/text.cc"
+            )
 
-    list(REMOVE_ITEM MINDDATA_CALLBACK_SRC_FILES 
-        "${MINDDATA_DIR}/callback/py_ds_callback.cc" 
-        )
+    list(REMOVE_ITEM MINDDATA_CALLBACK_SRC_FILES
+            "${MINDDATA_DIR}/callback/py_ds_callback.cc"
+            )
 
     list(REMOVE_ITEM MINDDATA_CORE_SRC_FILES
-        "${MINDDATA_DIR}/core/cv_tensor.cc"
-        )
+            "${MINDDATA_DIR}/core/cv_tensor.cc"
+            )
 
     list(REMOVE_ITEM MINDDATA_KERNELS_SRC_FILES "${MINDDATA_DIR}/kernels/py_func_op.cc")
     list(REMOVE_ITEM MINDDATA_ENGINE_DATASETOPS_SRC_FILES
-        "${MINDDATA_DIR}/engine/datasetops/build_sentence_piece_vocab_op.cc"
-        "${MINDDATA_DIR}/engine/datasetops/filter_op.cc"
-        "${MINDDATA_DIR}/engine/datasetops/barrier_op.cc"
-        "${MINDDATA_DIR}/engine/datasetops/bucket_batch_by_length_op.cc"
-        "${MINDDATA_DIR}/engine/datasetops/build_vocab_op.cc"
-        "${MINDDATA_DIR}/engine/datasetops/cache_merge_op.cc"
-        "${MINDDATA_DIR}/engine/datasetops/cache_base_op.cc"
-        "${MINDDATA_DIR}/engine/datasetops/cache_lookup_op.cc"
-        "${MINDDATA_DIR}/engine/datasetops/cache_op.cc"
-        )
+            "${MINDDATA_DIR}/engine/datasetops/build_sentence_piece_vocab_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/filter_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/barrier_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/bucket_batch_by_length_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/build_vocab_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/cache_merge_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/cache_base_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/cache_lookup_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/cache_op.cc"
+            )
 
     list(REMOVE_ITEM MINDDATA_ENGINE_DATASETOPS_SOURCE_SRC_FILES
         "${MINDDATA_DIR}/engine/datasetops/source/generator_op.cc"
@@ -161,47 +161,55 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/kernels/image/random_crop_and_resize_with_bbox_op.cc"
         "${MINDDATA_DIR}/kernels/image/random_crop_decode_resize_op.cc"
         "${MINDDATA_DIR}/kernels/image/random_crop_and_resize_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_crop_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_crop_with_bbox_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_with_bbox_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_posterize_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_resize_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_rotation_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_select_subpolicy_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_solarize_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_vertical_flip_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_vertical_flip_with_bbox_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_sharpness_op.cc"
-        "${MINDDATA_DIR}/kernels/image/rescale_op.cc"
-        "${MINDDATA_DIR}/kernels/image/rgba_to_bgr_op.cc"
-        "${MINDDATA_DIR}/kernels/image/rgba_to_rgb_op.cc"
-        "${MINDDATA_DIR}/kernels/image/sharpness_op.cc"
-        "${MINDDATA_DIR}/kernels/image/solarize_op.cc"
-        "${MINDDATA_DIR}/kernels/image/swap_red_blue_op.cc"
-        "${MINDDATA_DIR}/kernels/image/uniform_aug_op.cc"
-        "${MINDDATA_DIR}/kernels/image/resize_with_bbox_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_resize_with_bbox_op.cc"
-        "${MINDDATA_DIR}/kernels/image/random_color_op.cc"
-	)
+            "${MINDDATA_DIR}/kernels/image/random_crop_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_crop_with_bbox_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_with_bbox_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_posterize_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_resize_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_rotation_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_select_subpolicy_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_solarize_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_vertical_flip_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_vertical_flip_with_bbox_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_sharpness_op.cc"
+            "${MINDDATA_DIR}/kernels/image/rescale_op.cc"
+            "${MINDDATA_DIR}/kernels/image/rgba_to_bgr_op.cc"
+            "${MINDDATA_DIR}/kernels/image/rgba_to_rgb_op.cc"
+            "${MINDDATA_DIR}/kernels/image/sharpness_op.cc"
+            "${MINDDATA_DIR}/kernels/image/solarize_op.cc"
+            "${MINDDATA_DIR}/kernels/image/swap_red_blue_op.cc"
+            "${MINDDATA_DIR}/kernels/image/uniform_aug_op.cc"
+            "${MINDDATA_DIR}/kernels/image/resize_with_bbox_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_resize_with_bbox_op.cc"
+            "${MINDDATA_DIR}/kernels/image/random_color_op.cc"
+            )
 
     list(REMOVE_ITEM MINDDATA_ENGINE_IR_DATASETOPS_SRC_FILES
-        "${MINDDATA_DIR}/engine/ir/datasetops/bucket_batch_by_length_node.cc"
-        "${MINDDATA_DIR}/engine/ir/datasetops/build_sentence_piece_vocab_node.cc"
-        "${MINDDATA_DIR}/engine/ir/datasetops/build_vocab_node.cc"
-        "${MINDDATA_DIR}/engine/ir/datasetops/sync_wait_node.cc"
-        )
+            "${MINDDATA_DIR}/engine/ir/datasetops/bucket_batch_by_length_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/build_sentence_piece_vocab_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/build_vocab_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/sync_wait_node.cc"
+            )
+    list(REMOVE_ITEM MINDDATA_ENGINE_CONSUMERS_SRC_FILES
+            "${MINDDATA_DIR}/engine/consumers/python_tree_consumer.cc"
+            )
+
+    list(REMOVE_ITEM MINDDATA_ENGINE_SRC_FILES
+            "${MINDDATA_DIR}/engine/python_runtime_context.cc"
+            )
+
     list(REMOVE_ITEM MINDDATA_KERNELS_DATA_SRC_FILES
-        "${MINDDATA_DIR}/kernels/data/unique_op.cc"
-	)
+            "${MINDDATA_DIR}/kernels/data/unique_op.cc"
+            )
     include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
 
     if (BUILD_MINDDATA_EXAMPLE AND (PLATFORM_ARM32 OR PLATFORM_ARM64))
-        set(MINDDATA_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/example/jni-example.cc)
-    endif()
+      set(MINDDATA_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/example/jni-example.cc)
+    endif ()
 
     add_library(minddata-lite SHARED
-        ${MINDDATA_API_SRC_FILES}
+            ${MINDDATA_API_SRC_FILES}
         ${MINDDATA_CALLBACK_SRC_FILES}
         ${MINDDATA_CORE_SRC_FILES}
         ${MINDDATA_ENGINE_SRC_FILES}

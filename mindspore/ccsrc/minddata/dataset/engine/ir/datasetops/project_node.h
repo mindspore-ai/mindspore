@@ -21,17 +21,17 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 
 namespace api {
 
-class ProjectNode : public Dataset {
+class ProjectNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit ProjectNode(std::shared_ptr<Dataset> child, const std::vector<std::string> &columns);
+  explicit ProjectNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &columns);
 
   /// \brief Destructor
   ~ProjectNode() = default;

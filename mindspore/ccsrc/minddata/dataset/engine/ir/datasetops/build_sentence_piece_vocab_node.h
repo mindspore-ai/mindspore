@@ -29,10 +29,10 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 
-class BuildSentenceVocabNode : public Dataset {
+class BuildSentenceVocabNode : public DatasetNode {
  public:
   /// \brief Constructor
-  BuildSentenceVocabNode(std::shared_ptr<Dataset> child, std::shared_ptr<SentencePieceVocab> vocab,
+  BuildSentenceVocabNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<SentencePieceVocab> vocab,
                          const std::vector<std::string> &col_names, uint32_t vocab_size, float character_coverage,
                          SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params);
 

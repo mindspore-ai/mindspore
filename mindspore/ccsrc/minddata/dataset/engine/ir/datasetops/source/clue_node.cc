@@ -33,7 +33,7 @@ namespace api {
 // Constructor for CLUENode
 CLUENode::CLUENode(const std::vector<std::string> clue_files, std::string task, std::string usage, int64_t num_samples,
                    ShuffleMode shuffle, int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache)
-    : Dataset(std::move(cache)),
+    : DatasetNode(std::move(cache)),
       dataset_files_(clue_files),
       task_(task),
       usage_(usage),

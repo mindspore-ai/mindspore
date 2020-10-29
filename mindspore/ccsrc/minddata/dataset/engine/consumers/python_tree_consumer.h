@@ -26,24 +26,21 @@
 namespace mindspore::dataset {
 
 /// Consumer that iterates over the dataset and returns the rows one by one as a python list or a dict
-class PythonIterator : public IteratorConsumer {
-  /// Constructor
+
+class PythonIteratorConsumer : public IteratorConsumer {
+ public:
+  /// Constructor which will call the base class default constructor.
   /// \param num_epochs number of epochs. Default to -1 (infinite epochs).
-  explicit PythonIterator(int32_t num_epochs = -1) : IteratorConsumer(num_epochs) {}
+  explicit PythonIteratorConsumer(int32_t num_epochs = -1) : IteratorConsumer(num_epochs) {}
+  /// Returns the next row in a vector format
+  /// \param[out] out std::vector of Tensors
+  /// \return Status error code
+  Status GetNextAsList(py::list *out);
 
-  /// Get the next row as a python dict
-  /// \param[out] output python dict
-  /// \return  Status error code
-  Status GetNextAsMap(py::dict *output) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
-  /// Get the next row as a python dict
-  /// \param[out] output python dict
-  /// \return  Status error code
-  Status GetNextAsList(py::list *output) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
+  /// Returns the next row in as a map
+  /// \param[out] out std::map of string to Tensor
+  /// \return Status error code
+  Status GetNextAsDict(py::dict *out);
 };
-
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CONSUMERS_PYTHON_TREE_CONSUMER_H_

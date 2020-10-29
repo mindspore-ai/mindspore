@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/engine/runtime_context.h"
-#include <memory>
-#include <utility>
+#include "minddata/dataset/engine/python_runtime_context.h"
+#include "pybind11/pybind11.h"
+
 namespace mindspore::dataset {
 
-void RuntimeContext::AssignConsumer(std::shared_ptr<TreeConsumer> tree_consumer) {
-  tree_consumer_ = std::move(tree_consumer);
+Status PythonRuntimeContext::Terminate() {
+  // Release GIL before joining all threads
+  py::gil_scoped_release gil_release;
+  return tree_consumer_->Terminate();
 }
 }  // namespace mindspore::dataset

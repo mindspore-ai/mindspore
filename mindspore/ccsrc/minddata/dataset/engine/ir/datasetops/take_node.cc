@@ -27,7 +27,7 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 // Constructor for TakeNode
-TakeNode::TakeNode(std::shared_ptr<Dataset> child, int32_t count) : take_count_(count) {
+TakeNode::TakeNode(std::shared_ptr<DatasetNode> child, int32_t count) : take_count_(count) {
   this->children.push_back(child);
 }
 

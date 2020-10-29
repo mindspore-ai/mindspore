@@ -34,10 +34,11 @@ namespace mindspore::dataset {
 // TreeConsumer
 TreeConsumer::TreeConsumer() { tree_adapter_ = std::make_unique<TreeAdapter>(); }
 
-Status TreeConsumer::Init(std::shared_ptr<api::Dataset> d) { return tree_adapter_->BuildAndPrepare(std::move(d)); }
+Status TreeConsumer::Init(std::shared_ptr<api::DatasetNode> d) { return tree_adapter_->BuildAndPrepare(std::move(d)); }
+Status TreeConsumer::Terminate() { return tree_adapter_->AllTasks()->DoServiceStop(); }
 
 // IteratorConsumer
-Status IteratorConsumer::Init(std::shared_ptr<api::Dataset> d) {
+Status IteratorConsumer::Init(std::shared_ptr<api::DatasetNode> d) {
   return tree_adapter_->BuildAndPrepare(std::move(d), num_epochs_);
 }
 
@@ -73,7 +74,7 @@ Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr>
 }
 
 // ToDevice
-Status ToDevice::Init(std::shared_ptr<api::Dataset> d) {
+Status ToDevice::Init(std::shared_ptr<api::DatasetNode> d) {
   return tree_adapter_->BuildAndPrepare(std::move(d), num_epochs_);
 }
 
@@ -384,7 +385,7 @@ TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), row_flag_(fal
   tree_adapter_ = std::make_unique<TreeAdapter>();
 }
 
-Status TreeGetters::Init(std::shared_ptr<api::Dataset> d) {
+Status TreeGetters::Init(std::shared_ptr<api::DatasetNode> d) {
   Status s = tree_adapter_->BuildAndPrepare(std::move(d));
   if (!s.IsError()) {
     init_flag_ = true;
@@ -461,6 +462,17 @@ Status TreeGetters::GetNumClasses(int64_t *num_classes) {
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
   RETURN_IF_NOT_OK(root->GetNumClasses(num_classes));
+  return Status::OK();
+}
+Status BuildVocabConsumer::Init(std::shared_ptr<api::DatasetNode> d) {
+  return tree_adapter_->BuildAndPrepare(std::move(d), 1);
+}
+Status BuildVocabConsumer::Start() {
+  // Getting one row would trigger building the vocab
+  TensorRow row;
+  RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
+  // The returned row would EOE which is an empty row
+  CHECK_FAIL_RETURN_UNEXPECTED(row.empty(), "The fetched row from BuildVocab should be an EOE.");
   return Status::OK();
 }
 }  // namespace mindspore::dataset

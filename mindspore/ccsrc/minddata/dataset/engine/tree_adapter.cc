@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace dataset {
 
-Status TreeAdapter::BuildAndPrepare(std::shared_ptr<api::Dataset> root_ir, int32_t num_epoch) {
+Status TreeAdapter::BuildAndPrepare(std::shared_ptr<api::DatasetNode> root_ir, int32_t num_epoch) {
   // Check whether this function has been called before. If so, return failure
   CHECK_FAIL_RETURN_UNEXPECTED(tree_ == nullptr, "ExecutionTree is already built.");
   RETURN_UNEXPECTED_IF_NULL(root_ir);
@@ -65,7 +65,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   return Status::OK();
 }
 
-Status TreeAdapter::DFSBuildTree(std::shared_ptr<api::Dataset> ir, std::shared_ptr<DatasetOp> *op) {
+Status TreeAdapter::DFSBuildTree(std::shared_ptr<api::DatasetNode> ir, std::shared_ptr<DatasetOp> *op) {
   // validate the op can be built first before building the DatasetOp
   RETURN_IF_NOT_OK(ir->ValidateParams());
   std::vector<std::shared_ptr<DatasetOp>> ops = ir->Build();
@@ -80,7 +80,7 @@ Status TreeAdapter::DFSBuildTree(std::shared_ptr<api::Dataset> ir, std::shared_p
   }
 
   // Build the children of ir, once they return, add the return value to *op
-  for (std::shared_ptr<api::Dataset> child_ir : ir->children) {
+  for (const auto &child_ir : ir->Children()) {
     std::shared_ptr<DatasetOp> child_op;
     RETURN_IF_NOT_OK(DFSBuildTree(child_ir, &child_op));
     RETURN_IF_NOT_OK(ops.back()->AddChild(child_op));  // append children to the last of ops

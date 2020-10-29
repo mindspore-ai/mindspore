@@ -49,7 +49,7 @@ class Iterator {
   Iterator() : consumer_(nullptr) {}
 
   /// \brief Destructor
-  ~Iterator() = default;
+  ~Iterator() { Stop(); }
 
   /// \brief Method for building and launching the pipeline.
   /// \param[in] ops - a vector of DatasetOp in the data pipeline.
