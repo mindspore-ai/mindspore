@@ -298,6 +298,9 @@ class _PynativeExecutor:
     def end_graph(self, obj, output, *args, **kwargs):
         self._executor.end_graph(obj, output, *args, *(kwargs.values()))
 
+    def check_graph(self, obj, *args, **kwargs):
+        return self._executor.check_graph(obj, *args, *(kwargs.values()))
+
     def grad(self, grad, obj, weights, *args, **kwargs):
         self._executor.grad_net(grad, obj, weights, *args, *(kwargs.values()))
 
