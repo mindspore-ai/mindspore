@@ -70,9 +70,9 @@ Status MindDataNode::ValidateParams() {
   }
 
   if (padded_sample_ != nullptr) {
-    if (num_padded_ < 0) {
+    if (num_padded_ < 0 || num_padded_ > INT_MAX) {
       std::string err_msg =
-        "MindDataNode: num_padded must be greater than or equal to zero, num_padded: " + std::to_string(num_padded_);
+        "MindDataNode: num_padded must to be between 0 and INT32_MAX, but got: " + std::to_string(num_padded_);
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
