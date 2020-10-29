@@ -240,6 +240,14 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim, const std::vector<An
     input_quant_param_.emplace_back(quants);
   }
 
+  // fill input_quant_param_ by not inited quant_parm
+  if (input_quant_param_.size() < inputs.size()) {
+    quants.clear();
+    schema::QuantParamT tmpQuantParam;
+    quants.emplace_back(tmpQuantParam);
+    input_quant_param_.insert(input_quant_param_.end(), inputs.size() - input_quant_param_.size(), quants);
+  }
+
   if (input_quant_param_.size() == kDoubleNum) {
     quants.clear();
     quantParam.min = 0.0;
@@ -248,14 +256,6 @@ void PrimitiveC::PopulaterQuantParam(const Primitive &prim, const std::vector<An
     quantParam.scale = input_quant_param_.at(0).at(0).scale * input_quant_param_.at(1).at(0).scale;
     quants.emplace_back(quantParam);
     input_quant_param_.emplace_back(quants);
-  }
-
-  // fill input_quant_param_ by not inited quant_parm
-  if (input_quant_param_.size() < inputs.size()) {
-    quants.clear();
-    schema::QuantParamT tmpQuantParam;
-    quants.emplace_back(tmpQuantParam);
-    input_quant_param_.insert(input_quant_param_.end(), inputs.size() - 1 - input_quant_param_.size(), quants);
   }
 
   quants.clear();
