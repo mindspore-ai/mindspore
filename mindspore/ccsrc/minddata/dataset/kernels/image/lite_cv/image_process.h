@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
+#include "lite_cv/lite_mat.h"
 
 namespace mindspore {
 namespace dataset {

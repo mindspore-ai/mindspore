@@ -81,6 +81,7 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/image/lite_cv  MINDDATA_KERNELS_IMA
 
 
 if (BUILD_MINDDATA STREQUAL "full")
+    include_directories("${CMAKE_SOURCE_DIR}/../ccsrc/minddata/dataset/kernels/image")
     list(REMOVE_ITEM MINDDATA_API_SRC_FILES 
         "${MINDDATA_DIR}/api/text.cc" 
         )
