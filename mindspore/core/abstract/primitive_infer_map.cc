@@ -72,6 +72,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimListSetItem, {InferImplListSetItem, true}},
     {prim::kPrimDictGetItem, {InferImplDictGetItem, true}},
     {prim::kPrimDictSetItem, {InferImplDictSetItem, true}},
+    {prim::kPrimDictGetKeys, {InferImplDictGetKeys, true}},
+    {prim::kPrimDictGetValues, {InferImplDictGetValues, true}},
     {prim::kPrimListAppend, {InferImplListAppend, true}},
     {prim::kPrimTupleLen, {InferImplTupleLen, true}},
     {prim::kPrimListLen, {InferImplListLen, true}},

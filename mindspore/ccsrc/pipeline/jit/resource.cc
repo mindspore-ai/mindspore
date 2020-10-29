@@ -141,6 +141,8 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"__len__", prim::kPrimDictLen},          // P.dict_len
                                          {"__getitem__", prim::kPrimDictGetItem},  // P.dict_getitem
                                          {"__setitem__", prim::kPrimDictSetItem},  // P.dict_setitem,
+                                         {"keys", prim::kPrimDictGetKeys},         // P.dict_getkeys,
+                                         {"values", prim::kPrimDictGetValues},     // P.dict_getvalues,
                                          {"__bool__", std::string("dict_bool")}    // C.dict_bool
                                        }},
                                       {kObjectTypeTensorType,
