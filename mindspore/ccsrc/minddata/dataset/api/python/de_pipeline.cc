@@ -1959,6 +1959,8 @@ Status DEPipeline::ParseBuildSentencePieceVocabOp(const py::dict &args, std::sha
     if (!value.is_none()) {
       if (key == "vocab_size") {
         builder->SetVocabSize(ToInt(value));
+      } else if (key == "columns") {
+        (void)builder->SetColumnNames(ToStringVector(value));
       } else if (key == "character_coverage") {
         (void)builder->SetCharacterCoverage(ToFloat(value));
       } else if (key == "params") {
