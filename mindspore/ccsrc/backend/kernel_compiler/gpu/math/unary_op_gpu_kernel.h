@@ -30,6 +30,9 @@ namespace kernel {
 enum UnaryOptype {
   UNARY_OP_EXP = 0,
   UNARY_OP_LOG,
+  UNARY_OP_LOG1P,
+  UNARY_OP_ERF,
+  UNARY_OP_ERFC,
   UNARY_OP_NEG,
   UNARY_OP_RECIPROCAL,
   UNARY_OP_ZEROSLIKE,
@@ -46,6 +49,9 @@ enum UnaryOptype {
 };
 static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY_OP_EXP},
                                                                    {"Log", UNARY_OP_LOG},
+                                                                   {"Log1p", UNARY_OP_LOG1P},
+                                                                   {"Erf", UNARY_OP_ERF},
+                                                                   {"Erfc", UNARY_OP_ERFC},
                                                                    {"Neg", UNARY_OP_NEG},
                                                                    {"Reciprocal", UNARY_OP_RECIPROCAL},
                                                                    {"ZerosLike", UNARY_OP_ZEROSLIKE},
@@ -86,6 +92,18 @@ class UnaryOpGpuKernel : public GpuKernel {
       }
       case UNARY_OP_LOG: {
         Logarithm(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_LOG1P: {
+        Log1p(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ERF: {
+        Erf(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ERFC: {
+        Erfc(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
       case UNARY_OP_NEG: {
