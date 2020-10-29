@@ -94,6 +94,12 @@ int Slice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
           }
         }
       }
+      std::vector<int> axes;
+      axes.clear();
+      for (size_t i = 0; i < attr->begin.size(); i++) {
+        axes.push_back(i);
+      }
+      attr->axes = axes;
     }
     this->primitive_->value.value = attr;
   }

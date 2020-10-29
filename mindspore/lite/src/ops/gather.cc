@@ -54,8 +54,15 @@ int Gather::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
       delete gather_attr;
       return RET_ERROR;
     }
-    gather_attr->axis = GetValue<int>(prim.GetAttr("axis"));
-    gather_attr->batchDims = GetValue<int>(prim.GetAttr("batchDims"));
+    if (inputs[2]->isa<ValueNode>()) {
+      ValueNodePtr axis_tensor = inputs[2]->cast<ValueNodePtr>();
+      int axis = GetValue<int>(axis_tensor->value());
+      gather_attr->axis = axis;
+    } else {
+      MS_LOG(ERROR) << "input axis is not value node.";
+      return RET_ERROR;
+    }
+    gather_attr->batchDims = 0;
     this->primitive_->value.value = gather_attr;
   }
   return RET_OK;
@@ -85,8 +92,7 @@ Registry GatherRegistry(schema::PrimitiveType_Gather, GatherCreator);
 int Gather::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (inputs_.size() != kDoubleNum) {
-    MS_LOG(ERROR) << "Gather should have two inputs";
-    return RET_INPUT_TENSOR_ERROR;
+    MS_LOG(DEBUG) << "Gather should have two inputs";
   }
   if (outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "Gather should have one outputs";

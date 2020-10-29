@@ -16,6 +16,10 @@
 
 #include "src/ops/oneslike.h"
 
+#ifndef PRIMITIVE_WRITEABLE
+#include "src/ops/ops_register.h"
+#endif
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -59,6 +63,11 @@ int OnesLike::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffer
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *OnesLikeCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<OnesLike>(primitive);
+}
+Registry OnesLikeRegistry(schema::PrimitiveType_OnesLike, OnesLikeCreator);
 #endif
 int OnesLike::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   Tensor *x = inputs_[0];

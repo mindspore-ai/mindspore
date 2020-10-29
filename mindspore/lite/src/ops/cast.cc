@@ -89,7 +89,7 @@ int Cast::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
+  if (outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "tensor number is error.";
     return RET_INPUT_TENSOR_ERROR;
   }

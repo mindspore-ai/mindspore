@@ -17,6 +17,10 @@
 #include <memory>
 #include "src/ops/unsorted_segment_sum.h"
 
+#ifndef PRIMITIVE_WRITEABLE
+#include "src/ops/ops_register.h"
+#endif
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -69,6 +73,11 @@ int UnsortedSegmentSum::GetNumSegments() const {
   int ret = this->primitive_->value_as_UnsortedSegmentSum()->numSegments();
   return ret;
 }
+
+PrimitiveC *UnsortedSegmentSumCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<UnsortedSegmentSum>(primitive);
+}
+Registry UnsortedSegmentSumRegistry(schema::PrimitiveType_UnsortedSegmentSum, UnsortedSegmentSumCreator);
 #endif
 int UnsortedSegmentSum::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   // check inputs and outputs
