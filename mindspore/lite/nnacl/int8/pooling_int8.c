@@ -486,20 +486,21 @@ void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
               const int8_t *in_data = input_ptr + in_h_offset + w * channel;
               int j = 0;
 #ifdef ENABLE_NEON
+              const int8_t *tmp_in_data = in_data;
               int c16 = real_channel / 16 * 16;
               int c8 = real_channel / 8 * 8;
               for (; j < c16; j += 16) {
-                int8x16_t ori_in = vld1q_s8(in_data);
+                int8x16_t ori_in = vld1q_s8(tmp_in_data);
                 int8x16_t out_array16 = vld1q_s8(out_array + j);
-                in_data += 16;
+                tmp_in_data += 16;
                 out_array16 = vmaxq_s8(ori_in, out_array16);
                 vst1q_s8(out_array + j, out_array16);
               }  // 16 channel loop
 
               for (; j < c8; j += 8) {
-                int8x8_t ori_in = vld1_s8(in_data);
+                int8x8_t ori_in = vld1_s8(tmp_in_data);
                 int8x8_t out_array8 = vld1_s8(out_array + j);
-                in_data += 8;
+                tmp_in_data += 8;
                 out_array8 = vmax_s8(ori_in, out_array8);
                 vst1_s8(out_array + j, out_array8);
               }  // 8 channel loop
