@@ -141,6 +141,15 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   kernel_graph->SetExecOrderByDefault();
 }
 
+void GPUSession::RunOpHardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+}
+
 void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -350,6 +359,7 @@ void GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &grap
   auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   SelectKernel(kernel_graph);
+  RunOpHardwareOptimize(kernel_graph);
   StartKernelRT();
   // Hide NopOp from execution graph
   opt::HideNopNode(kernel_graph.get());
