@@ -724,7 +724,7 @@ Status NormalizeOperation::ValidateParams() {
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     if (mean_[i] < 0.0f || mean_[i] > 255.0f || CmpFloat(mean_[i], 0.0f)) {
-      std::string err_msg = "Normalize: mean vector has incorrect value: " + std::to_string(std_[i]);
+      std::string err_msg = "Normalize: mean vector has incorrect value: " + std::to_string(mean_[i]);
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
