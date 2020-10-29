@@ -92,6 +92,7 @@ inline const PrimitivePtr kPrimEmbeddingLookupCommGrad = std::make_shared<Primit
 inline const PrimitivePtr kPrimSize = std::make_shared<Primitive>("Size");
 inline const PrimitivePtr kPrimArgMax = std::make_shared<Primitive>("Argmax");
 inline const PrimitivePtr kPrimPack = std::make_shared<Primitive>("Pack");
+inline const PrimitivePtr kPrimUnsortedSegmentMax = std::make_shared<Primitive>("UnsortedSegmentMax");
 inline const PrimitivePtr kPrimUnsortedSegmentSum = std::make_shared<Primitive>("UnsortedSegmentSum");
 inline const PrimitivePtr kPrimUnsortedSegmentMin = std::make_shared<Primitive>("UnsortedSegmentMin");
 inline const PrimitivePtr kPrimConcatOffset = std::make_shared<Primitive>("ConcatOffset");
