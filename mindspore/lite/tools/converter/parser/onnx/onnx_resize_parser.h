@@ -25,6 +25,7 @@ namespace lite {
 class OnnxResizeParser : public OnnxNodeParser {
  public:
   OnnxResizeParser() : OnnxNodeParser("Resize") {}
+  ~OnnxResizeParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

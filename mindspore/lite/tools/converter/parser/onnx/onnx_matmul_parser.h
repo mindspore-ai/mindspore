@@ -25,6 +25,7 @@ namespace lite {
 class OnnxMatmulParser : public OnnxNodeParser {
  public:
   OnnxMatmulParser() : OnnxNodeParser("MatMul") {}
+  ~OnnxMatmulParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

@@ -25,6 +25,7 @@ namespace lite {
 class OnnxConstantOfShapeParser : public OnnxNodeParser {
  public:
   OnnxConstantOfShapeParser() : OnnxNodeParser("ConstantOfShape") {}
+  ~OnnxConstantOfShapeParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

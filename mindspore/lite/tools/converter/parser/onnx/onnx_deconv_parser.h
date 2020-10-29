@@ -26,6 +26,7 @@ namespace lite {
 class OnnxDeConvParser : public OnnxNodeParser {
  public:
   OnnxDeConvParser() : OnnxNodeParser("DeConv") {}
+  ~OnnxDeConvParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 

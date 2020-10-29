@@ -25,6 +25,7 @@ namespace lite {
 class OnnxCastParser : public OnnxNodeParser {
  public:
   OnnxCastParser() : OnnxNodeParser("Cast") {}
+  ~OnnxCastParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

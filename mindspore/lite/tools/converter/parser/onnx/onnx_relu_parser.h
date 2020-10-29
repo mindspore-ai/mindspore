@@ -25,6 +25,7 @@ namespace lite {
 class OnnxReluParser : public OnnxNodeParser {
  public:
   OnnxReluParser() : OnnxNodeParser("Relu") {}
+  ~OnnxReluParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
@@ -32,11 +33,13 @@ class OnnxReluParser : public OnnxNodeParser {
 class OnnxLeakeyReluParser : public OnnxReluParser {
  public:
   OnnxLeakeyReluParser() : OnnxReluParser() {}
+  ~OnnxLeakeyReluParser() override = default;
 };
 
 class OnnxPReluParser : public OnnxNodeParser {
  public:
   OnnxPReluParser() : OnnxNodeParser("Prelu") {}
+  ~OnnxPReluParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

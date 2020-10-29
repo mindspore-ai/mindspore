@@ -29,7 +29,7 @@ namespace mindspore {
 namespace lite {
 class OnnxNodeParser {
  public:
-  explicit OnnxNodeParser(const std::string &nodeName) : name(nodeName) {}
+  explicit OnnxNodeParser(const std::string nodeName) : name(nodeName) {}
 
   virtual ~OnnxNodeParser() = default;
 
@@ -48,7 +48,7 @@ class OnnxNodeParser {
 
   void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
 
-  const std::string &name;
+  const std::string name;
 
  private:
   static int opset_version_;

@@ -25,6 +25,7 @@ namespace lite {
 class OnnxIdentityParser : public OnnxNodeParser {
  public:
   OnnxIdentityParser() : OnnxNodeParser("Identity") {}
+  ~OnnxIdentityParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

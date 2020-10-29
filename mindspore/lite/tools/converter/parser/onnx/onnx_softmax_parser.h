@@ -25,6 +25,7 @@ namespace lite {
 class OnnxSoftMaxParser : public OnnxNodeParser {
  public:
   OnnxSoftMaxParser() : OnnxNodeParser("Softmax") {}
+  ~OnnxSoftMaxParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

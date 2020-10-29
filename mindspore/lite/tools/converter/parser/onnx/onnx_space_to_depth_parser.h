@@ -25,6 +25,7 @@ namespace lite {
 class OnnxSpaceToDepthParser : public OnnxNodeParser {
  public:
   OnnxSpaceToDepthParser() : OnnxNodeParser("SpaceToDepth") {}
+  ~OnnxSpaceToDepthParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

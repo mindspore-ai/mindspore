@@ -25,6 +25,7 @@ namespace lite {
 class OnnxSplitParser : public OnnxNodeParser {
  public:
   OnnxSplitParser() : OnnxNodeParser("Split") {}
+  ~OnnxSplitParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

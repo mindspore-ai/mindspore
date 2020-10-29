@@ -25,6 +25,7 @@ namespace lite {
 class OnnxFlattenParser : public OnnxNodeParser {
  public:
   OnnxFlattenParser() : OnnxNodeParser("Fatten") {}
+  ~OnnxFlattenParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
