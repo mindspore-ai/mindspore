@@ -29,6 +29,7 @@ python ${CUR_DIR}/scripts/ascend_distributed_launcher/get_distribute_pretrain_cm
     --hyper_parameter_config_dir=${CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini \
     --data_dir=$1 \
     --hccl_config_dir=$2 \
+    --hccl_time_out=600 \
     --cmd_file=distributed_cmd.sh
 
 bash distributed_cmd.sh
