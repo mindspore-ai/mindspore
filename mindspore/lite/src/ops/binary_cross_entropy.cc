@@ -17,6 +17,10 @@
 #include <string>
 #include "src/ops/binary_cross_entropy.h"
 
+#ifndef PRIMITIVE_WRITEABLE
+#include "src/ops/ops_register.h"
+#endif
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -85,6 +89,11 @@ int BinaryCrossEntropy::UnPackToFlatBuilder(const schema::Primitive *primitive, 
 }
 
 int BinaryCrossEntropy::GetReduction() const { return this->primitive_->value_as_BinaryCrossEntropy()->reduction(); }
+
+PrimitiveC *BinaryCrossEntropyCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<BinaryCrossEntropy>(primitive);
+}
+Registry BinaryCrossEntropyRegistry(schema::PrimitiveType_BinaryCrossEntropy, BinaryCrossEntropyCreator);
 #endif
 int BinaryCrossEntropy::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   Tensor *x = inputs_[0];

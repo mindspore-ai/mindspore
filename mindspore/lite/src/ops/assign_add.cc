@@ -15,6 +15,11 @@
  */
 
 #include "src/ops/assign_add.h"
+
+#ifndef PRIMITIVE_WRITEABLE
+#include "src/ops/ops_register.h"
+#endif
+
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
@@ -58,7 +63,13 @@ int AssignAdd::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
   fbb->Finish(prim_offset);
   return RET_OK;
 }
+
+PrimitiveC *AssignAddCreator(const schema::Primitive *primitive) {
+  return PrimitiveC::NewPrimitiveC<AssignAdd>(primitive);
+}
+Registry AssignAddRegistry(schema::PrimitiveType_AssignAdd, AssignAddCreator);
 #endif
+
 int AssignAdd::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   Tensor *x = inputs_[0];
   Tensor *y = inputs_[1];
