@@ -14,12 +14,9 @@
 # ============================================================================
 """Train Retinaface_resnet50."""
 from __future__ import print_function
-import random
 import math
-import numpy as np
+import mindspore
 
-import mindspore.nn as nn
-import mindspore.dataset as de
 from mindspore import context
 from mindspore.context import ParallelMode
 from mindspore.train import Model
@@ -31,28 +28,7 @@ from src.config import cfg_res50
 from src.network import RetinaFace, RetinaFaceWithLossCell, TrainingWrapper, resnet50
 from src.loss import MultiBoxLoss
 from src.dataset import create_dataset
-
-def setup_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    de.config.set_seed(seed)
-
-def adjust_learning_rate(initial_lr, gamma, stepvalues, steps_per_epoch, total_epochs, warmup_epoch=5):
-    lr_each_step = []
-    for epoch in range(1, total_epochs+1):
-        for step in range(steps_per_epoch):
-            if epoch <= warmup_epoch:
-                lr = 1e-6 + (initial_lr - 1e-6) * ((epoch - 1) * steps_per_epoch + step) / \
-                     (steps_per_epoch * warmup_epoch)
-            else:
-                if stepvalues[0] <= epoch <= stepvalues[1]:
-                    lr = initial_lr * (gamma ** (1))
-                elif epoch > stepvalues[1]:
-                    lr = initial_lr * (gamma ** (2))
-                else:
-                    lr = initial_lr
-            lr_each_step.append(lr)
-    return lr_each_step
+from src.lr_schedule import adjust_learning_rate
 
 def train(cfg):
 
@@ -107,10 +83,10 @@ def train(cfg):
                               warmup_epoch=cfg['warmup_epoch'])
 
     if cfg['optim'] == 'momentum':
-        opt = nn.Momentum(net.trainable_params(), lr, momentum)
+        opt = mindspore.nn.Momentum(net.trainable_params(), lr, momentum)
     elif cfg['optim'] == 'sgd':
-        opt = nn.SGD(params=net.trainable_params(), learning_rate=lr, momentum=momentum,
-                     weight_decay=weight_decay, loss_scale=1)
+        opt = mindspore.nn.SGD(params=net.trainable_params(), learning_rate=lr, momentum=momentum,
+                               weight_decay=weight_decay, loss_scale=1)
     else:
         raise ValueError('optim is not define.')
 
@@ -127,14 +103,13 @@ def train(cfg):
 
     print("============== Starting Training ==============")
     model.train(max_epoch, ds_train, callbacks=callback_list,
-                dataset_sink_mode=False)
-
+                dataset_sink_mode=True)
 
 
 if __name__ == '__main__':
 
-    setup_seed(1)
     config = cfg_res50
+    mindspore.common.seed.set_seed(config['seed'])
     print('train config:\n', config)
 
     train(cfg=config)

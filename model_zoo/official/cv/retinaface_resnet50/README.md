@@ -80,7 +80,7 @@ After installing MindSpore via the official website and download the dataset, yo
   python train.py > train.log 2>&1 & 
   
   # run distributed training example
-  bash scripts/run_distribute_gpu_train.sh 3 0,1,2
+  bash scripts/run_distribute_gpu_train.sh 4 0,1,2,3
   
   # run evaluation example
   export CUDA_VISIBLE_DEVICES=0
@@ -109,7 +109,8 @@ After installing MindSpore via the official website and download the dataset, yo
         │   ├──config.py            // parameter configuration 
         │   ├──augmentation.py     // data augment method 
         │   ├──loss.py            // loss function 
-        │   ├──utils.py          // data preprocessing 
+        │   ├──utils.py          // data preprocessing
+        │   ├──lr_schedule.py   // learning rate schedule
         ├── data 
         │   ├──widerface                    // dataset data
         │   ├──resnet50_pretrain.ckpt      // resnet50 imagenet pretrain model
@@ -136,7 +137,7 @@ Parameters for both training and evaluation can be set in config.py
     'batch_size': 8,                                          # Batch size of train
     'num_workers': 8,                                         # Num worker of dataset load data
     'num_anchor': 29126,                                      # Num of anchor boxes, it depends on the image size
-    'ngpu': 3,                                                # Num gpu of train
+    'ngpu': 4,                                                # Num gpu of train
     'epoch': 100,                                             # Training epoch number
     'decay1': 70,                                             # Epoch number of the first weight attenuation
     'decay2': 90,                                             # Epoch number of the second weight attenuation
@@ -146,29 +147,31 @@ Parameters for both training and evaluation can be set in config.py
     'out_channel': 256,                                       # Output channel of DetectionHead
     'match_thresh': 0.35,                                     # Threshold for match box
     'optim': 'sgd',                                           # Optimizer type
-    'warmup_epoch': -1,                                       # Warmup size, -1 means no warm-up
-    'initial_lr': 0.001,                                      # Learning rate
+    'warmup_epoch': 5,                                        # Warmup size, 0 means no warm-up
+    'initial_lr': 0.01,                                       # Learning rate
     'network': 'resnet50',                                    # Backbone name
     'momentum': 0.9,                                          # Momentum for Optimizer
     'weight_decay': 5e-4,                                     # Weight decay for Optimizer
     'gamma': 0.1,                                             # Attenuation ratio of learning rate
     'ckpt_path': './checkpoint/',                             # Model save path
-    'save_checkpoint_steps': 1000,                            # Save checkpoint steps
+    'save_checkpoint_steps': 2000,                            # Save checkpoint steps
     'keep_checkpoint_max': 1,                                 # Number of reserved checkpoints
     'resume_net': None,                                       # Network for restart, default is None
     'training_dataset': '',                                   # Training dataset label path, like 'data/widerface/train/label.txt'
     'pretrain': True,                                         # whether training based on the pre-trained backbone
     'pretrain_path': './data/res50_pretrain.ckpt',            # Pre-trained backbone checkpoint path
-    # val
-    'val_model': './checkpoint/ckpt_0/RetinaFace-100_536.ckpt', # Validation model path
-    'val_dataset_folder': './data/widerface/val/',            # Validation dataset path
-    'val_origin_size': False,                                 # Is full size verification used
-    'val_confidence_threshold': 0.02,                         # Threshold for val confidence
-    'val_nms_threshold': 0.4,                                 # Threshold for val NMS
-    'val_iou_threshold': 0.5,                                 # Threshold for val IOU
-    'val_save_result': False,                                 # Whether save the resultss
-    'val_predict_save_folder': './widerface_result',          # Result save path 
-    'val_gt_dir': './data/ground_truth/',                      # Path of val set ground_truth
+    'seed': 1,                                                # setup train seed
+    'lr_type': 'dynamic_lr',
+  # val
+    'val_model': './checkpoint/ckpt_0/RetinaFace-100_536.ckpt',   # Validation model path
+    'val_dataset_folder': './data/widerface/val/',                # Validation dataset path
+    'val_origin_size': False,                                     # Is full size verification used
+    'val_confidence_threshold': 0.02,                             # Threshold for val confidence
+    'val_nms_threshold': 0.4,                                     # Threshold for val NMS
+    'val_iou_threshold': 0.5,                                     # Threshold for val IOU
+    'val_save_result': False,                                     # Whether save the resultss
+    'val_predict_save_folder': './widerface_result',              # Result save path 
+    'val_gt_dir': './data/ground_truth/',                         # Path of val set ground_truth
   ```
 
 
@@ -193,7 +196,7 @@ Parameters for both training and evaluation can be set in config.py
 - running on GPU
 
   ```
-  bash scripts/run_distribute_gpu_train.sh 3 0,1,2
+  bash scripts/run_distribute_gpu_train.sh 4 0,1,2,3
   ```
   
   The above shell script will run distribute training in the background. You can view the results through the file `train/train.log`.
@@ -207,7 +210,7 @@ Parameters for both training and evaluation can be set in config.py
 
 - evaluation on WIDERFACE dataset when running on GPU
 
-  Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path in src/config.py, e.g., "username/retinaface/checkpoint/ckpt_0/RetinaFace-100_536.ckpt".
+  Before running the command below, please check the checkpoint path used for evaluation. Please set the checkpoint path to be the absolute full path in src/config.py, e.g., "username/retinaface/checkpoint/ckpt_0/RetinaFace-100_402.ckpt".
   
   ```
   export CUDA_VISIBLE_DEVICES=0
@@ -218,7 +221,7 @@ Parameters for both training and evaluation can be set in config.py
   
   ```
   # grep "Val AP" eval.log
-  Easy   Val AP : 0.9413
+  Easy   Val AP : 0.9422
   Medium Val AP : 0.9325
   Hard   Val AP : 0.8900
   ```
@@ -233,7 +236,7 @@ Parameters for both training and evaluation can be set in config.py
   
   ```
   # grep "Val AP" eval.log
-  Easy   Val AP : 0.9413
+  Easy   Val AP : 0.9422
   Medium Val AP : 0.9325
   Hard   Val AP : 0.8900
   ```
@@ -253,14 +256,14 @@ Parameters for both training and evaluation can be set in config.py
 | uploaded Date              | 10/16/2020 (month/day/year)                                  |
 | MindSpore Version          | 1.0.0                                                        |
 | Dataset                    | WIDERFACE                                                    |
-| Training Parameters        | epoch=100, steps=536, batch_size=8, lr=0.001              |
+| Training Parameters        | epoch=100, steps=402, batch_size=8, lr=0.01                  |
 | Optimizer                  | SGD                                                          |
 | Loss Function              | MultiBoxLoss + Softmax Cross Entropy                         |
 | outputs                    | bounding box + confidence + landmark                         |
 | Loss                       | 1.200                                                        |
-| Speed                      | 3pcs: 566 ms/step                                            |
-| Total time                 | 3pcs: 8.43 hours                                              |
-| Parameters (M)             | 27.29M                                                            |
+| Speed                      | 4pcs: 560 ms/step                                            |
+| Total time                 | 4pcs: 6.4 hours                                              |
+| Parameters (M)             | 27.29M                                                       |
 | Checkpoint for Fine tuning | 336.3M (.ckpt file)                                          |
 | Scripts                    | [retinaface script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/retinaface) |
 
