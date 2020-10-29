@@ -27,6 +27,7 @@ namespace mindspore::lite::quant {
 class QuantCast {
  public:
   QuantCast() = default;
+  ~QuantCast() = default;
   STATUS Run(FuncGraphPtr graph);
   void SetInputDataDType(TypeId dataType) { this->inputDataDType = dataType; }
 

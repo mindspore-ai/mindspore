@@ -29,6 +29,7 @@ namespace lite {
 class CaffeInspector {
  public:
   CaffeInspector() = default;
+  ~CaffeInspector() = default;
 
   STATUS InspectModel(const caffe::NetParameter &proto);
   STATUS ParseInput();

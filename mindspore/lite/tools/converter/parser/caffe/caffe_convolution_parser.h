@@ -27,6 +27,7 @@ namespace lite {
 class CaffeConvolutionParser : public CaffeNodeParser {
  public:
   CaffeConvolutionParser() : CaffeNodeParser("convolution") {}
+  ~CaffeConvolutionParser() = default;
 
   STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;

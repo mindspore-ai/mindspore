@@ -112,7 +112,7 @@ void *WorkspacePool::AllocWorkSpaceMem(size_t size) {
   return alloc.second;
 }
 
-void WorkspacePool::FreeWorkSpaceMem(void *ptr) {
+void WorkspacePool::FreeWorkSpaceMem(const void *ptr) {
   if (ptr == nullptr) {
     return;
   }

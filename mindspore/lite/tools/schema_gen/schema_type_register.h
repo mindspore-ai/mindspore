@@ -21,6 +21,7 @@ namespace mindspore::lite::ops {
 class SchemaTypeRegister {
  public:
   explicit SchemaTypeRegister(GetSchemaDef func) { SchemaRegisterImpl::Instance()->TypePush(func); }
+  ~SchemaTypeRegister() = default;
 };
 }  // namespace mindspore::lite::ops
 

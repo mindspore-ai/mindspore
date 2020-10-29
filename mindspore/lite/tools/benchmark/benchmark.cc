@@ -427,7 +427,9 @@ int Benchmark::RunBenchmark() {
       return ret;
     }
   }
-  model->Free();
+  if (model != nullptr) {
+    model->Free();
+  }
   ms_inputs_ = session_->GetInputs();
   auto end_prepare_time = GetTimeUs();
   MS_LOG(INFO) << "PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms";
@@ -446,6 +448,7 @@ int Benchmark::RunBenchmark() {
       data.second->shape.clear();
       data.second->data.clear();
       delete data.second;
+      data.second = nullptr;
     }
     benchmark_data_.clear();
     if (status != 0) {

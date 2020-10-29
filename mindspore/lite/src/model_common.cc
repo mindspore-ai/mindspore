@@ -90,6 +90,10 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
   if (take_buf) {
     model->buf = const_cast<char *>(model_buf);
   } else {
+    if (size == 0) {
+      MS_LOG(ERROR) << "malloc size is equal to 0";
+      return nullptr;
+    }
     model->buf = reinterpret_cast<char *>(malloc(size));
     if (model->buf == nullptr) {
       MS_LOG(ERROR) << "new inner model buf fail!";

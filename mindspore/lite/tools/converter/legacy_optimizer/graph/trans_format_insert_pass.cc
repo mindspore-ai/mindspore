@@ -143,6 +143,7 @@ STATUS TransOpInsertPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uni
   if (type == PrimitiveType_Concat) {
     auto origin_axis = node->primitive->value.AsConcat()->axis;
     auto axis_map = GetNc2NhAxisMap();
+    MS_ASSERT(node->primitive->value.AsConcat() != nullptr);
     node->primitive->value.AsConcat()->axis = axis_map[origin_axis];
   }
   if (type == PrimitiveType_StridedSlice) {
@@ -157,12 +158,14 @@ STATUS TransOpInsertPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uni
   if (type == PrimitiveType_Split) {
     auto origin_axis = node->primitive->value.AsSplit()->splitDim;
     auto axis_map = GetNc2NhAxisMap();
+    MS_ASSERT(node->primitive->value.AsSplit != nullptr);
     node->primitive->value.AsSplit()->splitDim = axis_map[origin_axis];
   }
   if (type == PrimitiveType_Crop) {
     auto origin_axis = node->primitive->value.AsCrop()->axis;
     auto offsets = node->primitive->value.AsCrop()->offsets;
     auto axis_map = GetNc2NhAxisMap();
+    MS_ASSERT(node->primitive->value.AsCrop() != nullptr);
     node->primitive->value.AsCrop()->axis = axis_map[origin_axis];
     // nchw->nhwc,offsets need pad 0;
     if (axis_map[origin_axis] == 0) {
@@ -178,10 +181,15 @@ STATUS TransOpInsertPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uni
       MS_LOG(ERROR) << "Crop error";
       return RET_ERROR;
     }
+    MS_ASSERT(node->primitive->value.AsCrop() != nullptr);
     node->primitive->value.AsCrop()->offsets = offsets;
   }
   if (type == PrimitiveType_Slice) {
     auto attr = node->primitive->value.AsSlice();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "attr is nullptr";
+      return RET_NULL_PTR;
+    }
     auto origin_begin = attr->begin;
     attr->begin = {origin_begin[NCHW_N], origin_begin[NCHW_H], origin_begin[NCHW_W], origin_begin[NCHW_C]};
     auto origin_end = attr->axes;

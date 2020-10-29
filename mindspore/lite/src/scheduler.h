@@ -27,6 +27,7 @@ namespace mindspore::lite {
 class Scheduler {
  public:
   explicit Scheduler(const InnerContext *ctx) { context_ = const_cast<InnerContext *>(ctx); }
+  ~Scheduler() = default;
 
   int Schedule(const lite::Model *model, std::vector<Tensor *> *tensors, std::vector<kernel::LiteKernel *> *kernels);
 

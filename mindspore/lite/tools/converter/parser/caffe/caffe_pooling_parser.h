@@ -26,6 +26,7 @@ namespace lite {
 class CaffePoolingParser : public CaffeNodeParser {
  public:
   CaffePoolingParser() : CaffeNodeParser("pooling") {}
+  ~CaffePoolingParser() = default;
 
   STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;

@@ -137,7 +137,7 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
       MS_LOG(ERROR) << "Op should have " << kOutputNum << " output tensor";
       return RET_ERROR;
     }
-    STATUS status;
+    STATUS status = RET_OK;
 #ifdef SUPPORT_TRAIN
     if (IsContain(GetNhwcAllInputOpList(), GetCNodeTType(**iter))) {
       int idx_num = node->inputIndex.size();
