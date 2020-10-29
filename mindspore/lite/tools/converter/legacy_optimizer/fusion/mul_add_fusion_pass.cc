@@ -98,6 +98,10 @@ STATUS MulAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &patternN
     // dont fusion, return
     return RET_OK;
   }
+  if (mulNodeBiasTensor->dataType == TypeId::kNumberTypeUInt8) {
+    MS_LOG(DEBUG) << "won't fusion uint8 mul add for precision.";
+    return RET_OK;
+  }
   // add node the second tensor is not constant tensor, don't fusion
   auto addNodeInputIndex = addNode->inputIndex;
   if (addNodeInputIndex.size() != ADD_OP_INPUT_NUM) {
