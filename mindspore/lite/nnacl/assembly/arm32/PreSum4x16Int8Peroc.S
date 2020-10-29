@@ -20,9 +20,9 @@
 // r7 stride
 
 PreSum4x16Int8Peroc:
-  push {r4-r8, r10, r11, lr}
+  push {r4-r11, lr}
   vpush {q4-q7}
-  add sp, sp, #96
+  add sp, sp, #100
 
   ldr r4, [sp]
   ldr r5, [sp, #4]
@@ -125,6 +125,6 @@ OcRes:
   b RowLoop
 
 End:
-  sub sp, sp, #96
+  sub sp, sp, #100
   vpop {q4-q7}
-  pop {r4-r8, r10, r11, pc}
+  pop {r4-r11, pc}
