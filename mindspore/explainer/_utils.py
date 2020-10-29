@@ -29,6 +29,7 @@ __all__ = [
 ]
 
 from typing import Tuple, Union
+import math
 
 import numpy as np
 from PIL import Image
@@ -204,7 +205,8 @@ def calc_correlation(x: Union[ms.Tensor, np.ndarray],
     x = format_tensor_to_ndarray(x)
     y = format_tensor_to_ndarray(y)
     faithfulness = -np.corrcoef(x, y)[0, 1]
-
+    if math.isnan(faithfulness):
+        return np.float(0)
     return faithfulness
 
 
@@ -232,7 +234,6 @@ def rank_pixels(inputs: _Array, descending: bool = True) -> _Array:
         >> np.array([[2, 3, 4], [1, 0, 5]])
         rank_pixels(x, descending=False)
         >> np.array([[3, 2, 0], [4, 5, 1]])
-
     """
     if len(inputs.shape) != 2:
         raise ValueError('Only support 2D array currently')

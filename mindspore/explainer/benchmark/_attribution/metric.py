@@ -47,8 +47,15 @@ class AttributionMetric:
     """Super class of XAI metric class used in classification scenarios."""
 
     def __init__(self, num_labels=None):
+        self._verify_params(num_labels)
         self._num_labels = num_labels
         self._global_results = {i: [] for i in range(num_labels)}
+
+    @staticmethod
+    def _verify_params(num_labels):
+        check_value_type("num_labels", num_labels, int)
+        if num_labels < 1:
+            raise ValueError("Argument num_labels must be parsed with a integer > 0.")
 
     def evaluate(self, explainer, inputs, targets, saliency=None):
         """This function evaluates on a single sample and return the result."""
@@ -119,5 +126,11 @@ class AttributionMetric:
         """Check the evaluate parameters."""
         check_value_type('explainer', explainer, Attribution)
         verify_argument(inputs, 'inputs')
+        output = explainer.model(inputs)
+        check_value_type("output of explainer model", output, Tensor)
+        output_dim = explainer.model(inputs).shape[1]
+        if output_dim > self._num_labels:
+            raise ValueError("The output dimension of of black-box model in explainer should not exceed the dimension "
+                             "of num_labels set in the __init__, please set num_labels larger.")
         verify_targets(targets, self._num_labels)
         check_value_type('saliency', saliency, (Tensor, type(None)))

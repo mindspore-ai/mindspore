@@ -90,7 +90,7 @@ class Localization(AttributionMetric):
         Evaluate localization on a single data sample.
 
         Args:
-            explainer (Explanation): The explainer to be evaluated, see `mindspore/explainer/explanation`.
+            explainer (Explanation): The explainer to be evaluated, see `mindspore.explainer.explanation`.
             inputs (Tensor): data sample. Currently only support single sample at each call.
             targets (int): target label to evaluate on.
             saliency (Tensor): A saliency tensor.
@@ -113,7 +113,7 @@ class Localization(AttributionMetric):
             >>> saliency = gradient(inputs, targets)
             >>> res = localization.evaluate(gradient, inputs, targets, saliency, mask=masks)
         """
-        self._check_evaluate_param(explainer, inputs, targets, saliency)
+        self._check_evaluate_param_with_mask(explainer, inputs, targets, saliency, mask)
 
         mask_np = format_tensor_to_ndarray(mask)[0]
 
@@ -141,6 +141,10 @@ class Localization(AttributionMetric):
 
     def _check_evaluate_param_with_mask(self, explainer, inputs, targets, saliency, mask):
         self._check_evaluate_param(explainer, inputs, targets, saliency)
-        check_value_type('mask', mask, (Tensor, np.ndarray))
         if len(inputs.shape) != 4:
             raise ValueError('Argument mask must be 4D Tensor')
+        if mask is None:
+            raise ValueError('To compute localization, mask must be provided.')
+        check_value_type('mask', mask, (Tensor, np.ndarray))
+        if len(mask.shape) != 4 or len(mask) != len(inputs):
+            raise ValueError("The input mask must be 4-dimensional (1, 1, h, w) with same length of inputs.")
