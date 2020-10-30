@@ -487,6 +487,7 @@ class BCELoss(_Loss):
         >>> inputs = Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]), mindspore.float32)
         >>> labels = Tensor(np.array([[0, 1, 0], [0, 0, 1]]), mindspore.float32)
         >>> loss(inputs, labels)
+        1.8952923
     """
 
     def __init__(self, weight=None, reduction='none'):
