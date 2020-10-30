@@ -32,6 +32,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/kernel_runtime.h"
 #include "debug/data_dump/e2e_dump_util.h"
+#include "utils/config_manager.h"
 
 using debugger::EventReply;
 using debugger::GraphProto;
@@ -71,9 +72,9 @@ Debugger::Debugger()
     // configure partial memory reuse
     partial_memory_ = CheckDebuggerPartialMemoryEnabled();
 
-    // switch memory reuse on or off
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
+    // switch memory reuse on or off
     context_ptr->set_param<bool>(MS_CTX_ENABLE_MEM_REUSE, partial_memory_);
     // print some message about memory reuse to user
     if (partial_memory_) {
@@ -194,6 +195,18 @@ void Debugger::EnableDebugger() {
   debug_services_ = std::make_unique<DebugServices>();
 }
 
+void Debugger::CheckDatasetSinkMode() {
+  if (CheckDebuggerDumpEnabled() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+    MS_EXCEPTION(NotSupportError)
+      << "e2e_dump not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
+  }
+
+  if (CheckDebuggerEnabled() && ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+    MS_EXCEPTION(NotSupportError)
+      << "Debugger is not supported with dataset_sink_mode=True. Please set dataset_sink_mode=False";
+  }
+}
+
 bool Debugger::CheckDebuggerDumpEnabled() {
   // see if dump is enabled
   if (device_target_ == kGPUDevice) {
@@ -247,6 +260,7 @@ void Debugger::Reset() {
 void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
+  CheckDatasetSinkMode();
   if (debugger_->DebuggerBackendEnabled()) {
     // check and save graph_ptr, suspend if graph is new
     CheckGraphPtr(graph_ptr);
