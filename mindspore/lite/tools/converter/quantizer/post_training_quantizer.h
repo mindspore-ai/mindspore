@@ -57,6 +57,7 @@ class PostTrainingQuantizer : public Quantizer {
  public:
   PostTrainingQuantizer(FuncGraphPtr graph, std::string path, int bit_num, TypeId target_type = kNumberTypeInt8,
                         bool per_channel = true);
+  ~PostTrainingQuantizer() = default;
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
 

@@ -30,7 +30,7 @@ namespace mindspore {
 namespace lite {
 class CaffeNodeParser {
  public:
-  explicit CaffeNodeParser(const std::string &nodeName) : name(nodeName) {}
+  explicit CaffeNodeParser(const std::string nodeName) : name(nodeName) {}
 
   virtual ~CaffeNodeParser() {}
 
@@ -38,7 +38,7 @@ class CaffeNodeParser {
                     std::vector<schema::TensorT *> *weightVec) = 0;
 
  protected:
-  const std::string &name;
+  const std::string name;
 };
 
 schema::TensorT *ConvertWeight(const caffe::BlobProto &proto);

@@ -80,6 +80,7 @@ STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPt
     auto tensor_addr = GetInputAddr(stack_node->input(i), 2);
     if (tensor_addr == nullptr) {
       MS_LOG(ERROR) << "input tensor addr nullptr";
+      delete[] new_tensor_data;
       return RET_ERROR;
     }
     if (EOK != memcpy_s(new_tensor_data + (i - 1) * tensor_size, tensor_size, tensor_addr, tensor_size)) {
@@ -155,6 +156,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   rmatmul_quant_params.pop_back();
   // no bias quantParams
   rmatmul_quant_params.emplace_back(jointed_quant_params);
+  MS_ASSERT(matmul_cvalue != nullptr);
   matmul_cvalue->SetInputQuantParams(rmatmul_quant_params);
   matmul_cvalue->SetOutputQuantParams(fc_prim->GetOutputQuantParams());
   auto matmul_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(matmul_cvalue));
@@ -169,6 +171,7 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
       return node;
     }
     auto prim = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(matmul_value_node);
+    MS_ASSERT(prim->GetPrimitiveT()->value.AsMatMul() != nullptr);
     prim->GetPrimitiveT()->value.AsMatMul()->transposeB = true;
     matmul_inputs.push_back(rmatmul_paramter);
   } else {

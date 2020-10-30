@@ -33,7 +33,7 @@ class WorkspacePool {
   WorkspacePool &operator=(const WorkspacePool &) = delete;
   static WorkspacePool *GetInstance();
   void *AllocWorkSpaceMem(size_t size);
-  void FreeWorkSpaceMem(void *ptr);
+  void FreeWorkSpaceMem(const void *ptr);
 
  private:
   std::vector<std::pair<size_t, void *>> allocList{};

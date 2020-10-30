@@ -199,12 +199,22 @@ int CpuFp16SubGraph::PostProcess() {
       auto ret = tensor->FreeData();
       if (RET_OK != ret) {
         MS_LOG(ERROR) << "free data failed";
+        if (this->context_ != nullptr && this->context_->allocator != nullptr) {
+          this->context_->allocator->Free(float16_data);
+        } else {
+          free(float16_data);
+        }
         return RET_ERROR;
       }
       tensor->set_data_type(TypeId::kNumberTypeFloat32);
       ret = tensor->MallocData();
       if (RET_OK != ret) {
         MS_LOG(ERROR) << "malloc data failed";
+        if (this->context_ != nullptr && this->context_->allocator != nullptr) {
+          this->context_->allocator->Free(float16_data);
+        } else {
+          free(float16_data);
+        }
         return RET_ERROR;
       }
       fp16_to_fp32_cast_func(float16_data, tensor->data_c(), tensor->ElementsNum());

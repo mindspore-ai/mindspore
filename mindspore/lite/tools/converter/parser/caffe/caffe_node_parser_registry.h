@@ -41,6 +41,7 @@ class CaffeNodeRegistrar {
   CaffeNodeRegistrar(const std::string &name, CaffeNodeParser *parser) {
     CaffeNodeParserRegistry::GetInstance()->parsers[name] = parser;
   }
+  ~CaffeNodeRegistrar() = default;
 };
 }  // namespace mindspore::lite
 

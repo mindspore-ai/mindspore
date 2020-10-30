@@ -62,8 +62,11 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
       buf[i] = proto.double_data(i);
     }
     weight->data.resize(count * sizeof(float));
-    ::memcpy_s(weight->data.data(), count * sizeof(float), reinterpret_cast<uint8_t *>(buf.get()),
-               count * sizeof(float));
+    if (::memcpy_s(weight->data.data(), count * sizeof(float), reinterpret_cast<uint8_t *>(buf.get()),
+                   count * sizeof(float)) != EOK) {
+      MS_LOG(ERROR) << "memcpy failed";
+      return nullptr;
+    }
   } else {
     // datatype float
     if (count != proto.data_size()) {
@@ -73,7 +76,10 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
     }
     weight->data.resize(count * sizeof(float));
     const float *data_ptr = proto.data().data();
-    ::memcpy_s(weight->data.data(), count * sizeof(float), (uint8_t *)data_ptr, count * sizeof(float));
+    if (::memcpy_s(weight->data.data(), count * sizeof(float), (uint8_t *)data_ptr, count * sizeof(float)) != EOK) {
+      MS_LOG(ERROR) << "memcpy failed";
+      return nullptr;
+    }
   }
   weight->refCount = 1;
 

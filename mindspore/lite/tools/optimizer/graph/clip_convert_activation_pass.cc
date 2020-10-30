@@ -46,7 +46,10 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     MS_ASSERT(clip_cnode->inputs().size() > kClipMaxIndex);
 
     auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(clip_cnode->input(0));
+    MS_ASSERT(primitive_c != nullptr);
     auto primT = primitive_c->GetPrimitiveT();
+    MS_ASSERT(primT != nullptr);
+    MS_ASSERT(primT->value.AsClip() != nullptr);
     float max = primT->value.AsClip()->max;
     float min = primT->value.AsClip()->min;
     if ((min == -1) && (max == -1)) {

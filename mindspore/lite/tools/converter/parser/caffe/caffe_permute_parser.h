@@ -26,6 +26,7 @@ namespace lite {
 class CaffePermuteParser : public CaffeNodeParser {
  public:
   CaffePermuteParser() : CaffeNodeParser("Permute") {}
+  ~CaffePermuteParser() = default;
 
   STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;
