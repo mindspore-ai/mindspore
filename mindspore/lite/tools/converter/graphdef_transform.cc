@@ -132,9 +132,11 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
 
   // do quantization
   {
-    Optimizer fusionOptimizer;
-    fusionOptimizer.AddPass(new (std::nothrow) TensorQuantPass());
-    status = fusionOptimizer.Run(graphDefT);
+    Optimizer tensorQuantOptimizer;
+    tensorQuantOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
+    tensorQuantOptimizer.AddPass(new (std::nothrow) InferShapePass());
+    tensorQuantOptimizer.AddPass(new (std::nothrow) TensorQuantPass());
+    status = tensorQuantOptimizer.Run(graphDefT);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "DoQuantize failed!";
       return status;

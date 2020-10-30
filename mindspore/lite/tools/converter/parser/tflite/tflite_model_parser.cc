@@ -76,12 +76,6 @@ void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::Tensor
       quant_param->zeroPoint = tflite_tensor->quantization->zero_point[i];
     }
 
-    // change quant param min to 0 to fit ms-lite ops
-    if (GetTfliteDataType(tflite_tensor->type) == TypeId::kNumberTypeUInt8 && tensor->data.empty()) {
-      quant_param->zeroPoint = quant_param->zeroPoint - 128;
-      tensor->dataType = TypeId::kNumberTypeInt8;
-    }
-
     if (!tflite_tensor->quantization->min.empty()) {
       quant_param->min = tflite_tensor->quantization->min[i];
     }
@@ -127,7 +121,6 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
         }
         continue;
       }
-
       sub_graph->nodes.emplace_back(op.release());
       opMap[sub_graph->nodes.back()->name] = sub_graph->nodes.back().get();
       tfliteOpMap[tflite_op.get()] = sub_graph->nodes.back().get();
