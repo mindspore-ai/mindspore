@@ -85,7 +85,7 @@ std::string RealPath(const char *path) {
   return res;
 }
 
-int CompareOutputData(const float *output_data, size_t output_size, float *correct_data, size_t data_size) {
+int CompareOutputData(const float *output_data, size_t output_size, const float *correct_data, size_t data_size) {
   if (output_size != data_size) {
     printf("compare failed, output_size %zu isn't equal to data_size %zu.\n", output_size, data_size);
     return 0;
@@ -107,7 +107,7 @@ int CompareOutputData(const float *output_data, size_t output_size, float *corre
   return 0;
 }
 
-int CompareOutput(float *output_data, size_t output_num, std::string file_path) {
+int CompareOutput(const float *output_data, size_t output_num, std::string file_path) {
   size_t ground_truth_size;
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &ground_truth_size));
   size_t ground_truth_num = ground_truth_size / sizeof(float);

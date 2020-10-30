@@ -63,9 +63,7 @@ int Resize::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     } else if (prim.instance_name() == "ResizeBilinear") {
       attr->method = schema::ResizeMethod_LINEAR;
     } else {
-      if (attr != nullptr) {
-        delete attr;
-      }
+      delete attr;
       MS_LOG(ERROR) << "wrong resize type";
       return RET_ERROR;
     }

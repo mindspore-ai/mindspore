@@ -34,16 +34,16 @@ extern "C" {
 #endif
 int DoTranspose(float *in_data, float *out_data, int *input_shape, int *output_shape,
                 TransposeParameter *transpose_param, int h_start, int h_end, int *size, int *position);
-void TransposeDim2(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end);
-void TransposeDim3(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end);
-void TransposeDim4(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end);
-void TransposeDim5(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end);
-void TransposeDims(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end, int dims, int *size, int *position);
+void TransposeDim2(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end);
+void TransposeDim3(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end);
+void TransposeDim4(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end);
+void TransposeDim5(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end);
+void TransposeDims(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end, int dims, int *size, int *position);
 #ifdef __cplusplus
 }
 #endif

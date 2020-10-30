@@ -16,7 +16,6 @@
 
 #include "nnacl/fp32/softmax.h"
 #include <math.h>
-#include <float.h>
 
 // output = exp(input) / reduce_sum(exp(input), axis)
 void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, SoftmaxParameter *parameter) {

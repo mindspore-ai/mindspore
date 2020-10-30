@@ -20,8 +20,8 @@
 
 namespace mindspore {
 namespace lite {
-int CompareRelativeOutput(float *output_data, std::string file_path);
-float RelativeOutputError(float *output_data, std::string file_path);
+int CompareRelativeOutput(const float *output_data, std::string file_path);
+float RelativeOutputError(const float *output_data, std::string file_path);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_COMMON_FILE_UTILS_EXT_H_

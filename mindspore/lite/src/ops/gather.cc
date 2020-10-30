@@ -44,6 +44,7 @@ int Gather::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     MS_LOG(ERROR) << "Gather primitive value type :  " << schema::EnumNamePrimitiveType(primitive_->value.type)
                   << "is  not equal" << schema::EnumNamePrimitiveType(schema::PrimitiveType_Gather);
     delete this->primitive_;
+    this->primitive_ = nullptr;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
@@ -52,6 +53,8 @@ int Gather::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
       MS_LOG(ERROR) << "new primitive value.value error";
       delete this->primitive_;
       delete gather_attr;
+      this->primitive_ = nullptr;
+      gather_attr = nullptr;
       return RET_ERROR;
     }
     if (inputs[2]->isa<ValueNode>()) {

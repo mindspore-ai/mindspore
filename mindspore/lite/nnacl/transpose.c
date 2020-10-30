@@ -18,8 +18,8 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-void TransposeDim2(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end) {
+void TransposeDim2(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int output0 = output_shape[0];
@@ -33,8 +33,8 @@ void TransposeDim2(float *in_data, float *out_data, const int *strides, int *out
   }
 }
 
-void TransposeDim3(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end) {
+void TransposeDim3(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -56,8 +56,8 @@ void TransposeDim3(float *in_data, float *out_data, const int *strides, int *out
   }
 }
 
-void TransposeDim4(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end) {
+void TransposeDim4(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -88,8 +88,8 @@ void TransposeDim4(float *in_data, float *out_data, const int *strides, int *out
   }
 }
 
-void TransposeDim5(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end) {
+void TransposeDim5(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -127,8 +127,8 @@ void TransposeDim5(float *in_data, float *out_data, const int *strides, int *out
   }
 }
 
-void TransposeDims(float *in_data, float *out_data, const int *strides, int *out_strides, int *perm, int *output_shape,
-                   int h_start, int h_end, int dims, int *size, int *position) {
+void TransposeDims(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+                   int *output_shape, int h_start, int h_end, int dims, int *size, int *position) {
   *(size + dims - 1) = 1;
   for (int i = dims - 1; i > 0; --i) {
     *(size + i - 1) = *(size + i) * output_shape[i];

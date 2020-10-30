@@ -41,6 +41,7 @@ int Sub::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
   if (this->primitive_->value.type != schema::PrimitiveType_Sub) {
     MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
     delete this->primitive_;
+    this->primitive_ = nullptr;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
@@ -48,6 +49,7 @@ int Sub::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new primitiveT value failed";
       delete this->primitive_;
+      this->primitive_ = nullptr;
       return RET_ERROR;
     }
     // todo: confirm the activationType

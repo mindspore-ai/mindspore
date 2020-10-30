@@ -204,7 +204,7 @@ int MirrorPadImplInt8(void *cdata, int task_id) {
   return RET_OK;
 }
 
-int PadInt8CPUKernel::CheckPaddings(const int *paddings, int length, int *input_shape, int mode) {
+int PadInt8CPUKernel::CheckPaddings(const int *paddings, int length, const int *input_shape, int mode) {
   if (paddings == nullptr || input_shape == nullptr) {
     return RET_NULL_PTR;
   }

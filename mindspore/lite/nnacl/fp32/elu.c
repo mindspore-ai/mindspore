@@ -22,7 +22,7 @@ void Calculate_Data(const float *input_data, float *output_data, int num, EluPar
   output_data[num] = input_data[num] < 0 ? parameter->alpha_ * expm1(input_data[num]) : input_data[num];
 }
 
-int Elu(float *input_data, float *output_data, EluParameter *parameter, int task_id) {
+int Elu(const float *input_data, float *output_data, EluParameter *parameter, int task_id) {
   for (size_t i = task_id; i < parameter->in_size_; i += parameter->thread_num_) {
     Calculate_Data(input_data, output_data, i, parameter);
   }

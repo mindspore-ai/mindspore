@@ -43,6 +43,7 @@ int BinaryCrossEntropyGrad::UnPackAttr(const Primitive &prim, const std::vector<
                   << schema::EnumNamePrimitiveType(primitive_->value.type) << "is  not equal"
                   << schema::EnumNamePrimitiveType(schema::PrimitiveType_BinaryCrossEntropyGrad);
     delete this->primitive_;
+    this->primitive_ = nullptr;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
@@ -58,6 +59,8 @@ int BinaryCrossEntropyGrad::UnPackAttr(const Primitive &prim, const std::vector<
       MS_LOG(ERROR) << "get reduction failed!";
       delete this->primitive_;
       delete attr;
+      this->primitive_ = nullptr;
+      attr = nullptr;
       return RET_ERROR;
     } else {
       reduction = GetValue<string>(prim.GetAttr("reduction"));

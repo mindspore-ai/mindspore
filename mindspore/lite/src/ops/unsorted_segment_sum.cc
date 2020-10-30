@@ -41,6 +41,7 @@ int UnsortedSegmentSum::UnPackAttr(const Primitive &prim, const std::vector<AnfN
                   << schema::EnumNamePrimitiveType(primitive_->value.type) << "is  not equal"
                   << schema::EnumNamePrimitiveType(schema::PrimitiveType_UnsortedSegmentSum);
     delete this->primitive_;
+    this->primitive_ = nullptr;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {

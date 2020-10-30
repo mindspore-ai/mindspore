@@ -75,7 +75,7 @@ static OutputTransFunc OutputTransFuncRelu6List8[] = {NULL,
                                                       OutputTransform8x6Relu6Unit,
                                                       OutputTransform8x7Relu6Unit};
 
-void GeneralInputTransformUnit(const float *src_data, float *dst_data, float *matrix_b, const float *matrix_bt,
+void GeneralInputTransformUnit(const float *src_data, float *dst_data, const float *matrix_b, const float *matrix_bt,
                                int src_step, int dst_step, int in_unit) {
   int len = in_unit * in_unit;
   if (len > MAX_LEN) return;
@@ -112,7 +112,7 @@ void GeneralInputTransformUnit(const float *src_data, float *dst_data, float *ma
 #endif
 }
 
-void GeneralOutputTransformUnit(const float *src_data, float *dst_data, const float *bias_data, float *matrix_a,
+void GeneralOutputTransformUnit(const float *src_data, float *dst_data, const float *bias_data, const float *matrix_a,
                                 const float *matrix_at, int src_step, int dst_step, int in_unit, int out_unit) {
   int src_len = in_unit * in_unit;
   if (src_len > MAX_LEN) {

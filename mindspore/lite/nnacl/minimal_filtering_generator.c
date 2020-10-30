@@ -54,7 +54,7 @@ void ResidueMatrix(const float *interval, float *b, int row, int col) {
   b[len - 1] = 1;
 }
 
-int LT(float *poly_array, float *matrix_lt, int n) {
+int LT(const float *poly_array, float *matrix_lt, int n) {
   if (n > MAX_LEN) {
     return NNACL_ERR;
   }

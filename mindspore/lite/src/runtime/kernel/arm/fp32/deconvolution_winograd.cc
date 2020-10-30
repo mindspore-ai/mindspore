@@ -68,22 +68,24 @@ void DeConvolutionWinogradCPUKernel::FreeResizeBuf() {
 }
 
 void DeConvolutionWinogradCPUKernel::FreeDeconvParam() {
-  for (int i = 0; i < deconv_param_->compute_size_; i++) {
-    DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
+  if (deconv_param_ != nullptr) {
+    for (int i = 0; i < deconv_param_->compute_size_; i++) {
+      DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
 
-    if (unit.weight_ != nullptr) {
-      free(unit.weight_);
-      unit.weight_ = nullptr;
-    }
-
-    if (unit.use_winograd_) {
-      if (unit.winograd_.AT_ != nullptr) {
-        free(unit.winograd_.AT_);
-        unit.winograd_.AT_ = nullptr;
+      if (unit.weight_ != nullptr) {
+        free(unit.weight_);
+        unit.weight_ = nullptr;
       }
-      if (unit.winograd_.BT_ != nullptr) {
-        free(unit.winograd_.BT_);
-        unit.winograd_.BT_ = nullptr;
+
+      if (unit.use_winograd_) {
+        if (unit.winograd_.AT_ != nullptr) {
+          free(unit.winograd_.AT_);
+          unit.winograd_.AT_ = nullptr;
+        }
+        if (unit.winograd_.BT_ != nullptr) {
+          free(unit.winograd_.BT_);
+          unit.winograd_.BT_ = nullptr;
+        }
       }
     }
   }
