@@ -528,7 +528,7 @@ void DepthwiseBorderPixelInt8(int8_t *dst, const int8_t *src, const int16_t *wei
 void DepthwiseBorderInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int top,
                          int bottom, int left, int right, const ConvParameter *conv_param,
                          const SlidingWindowParam *sliding, int8_t *in_zp, int32_t *out_zp, const int *out_multiplier,
-                         int *left_shift, const int *right_shift, int32_t *acc_min, int32_t *acc_max) {
+                         const int *left_shift, const int *right_shift, int32_t *acc_min, int32_t *acc_max) {
   int8_t *dst_h = dst + top * sliding->out_h_step_;
   for (int oh = top; oh < bottom; oh++) {
     int ih = oh * conv_param->stride_h_ - conv_param->pad_u_;

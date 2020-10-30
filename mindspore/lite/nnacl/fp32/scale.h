@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoScale(const float *in_data, float *out_data, const float *scale, float *offset, int task_id,
+void DoScale(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
              ScaleParameter *scale_param);
 void DoScaleRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
                  ScaleParameter *scale_param);

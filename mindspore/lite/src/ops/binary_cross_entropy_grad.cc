@@ -51,6 +51,7 @@ int BinaryCrossEntropyGrad::UnPackAttr(const Primitive &prim, const std::vector<
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new binary cross entropy attr failed!";
       delete this->primitive_;
+      this->primitive_ = nullptr;
       return RET_ERROR;
     }
     // default is mean

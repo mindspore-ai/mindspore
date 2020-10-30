@@ -46,7 +46,7 @@ void DoSpaceToBatchNHWC(const float *input, float *output, const int *block_size
   }
 }
 
-void DoSpaceToBatchPaddingNHWC(const float *input, float *output, int *in_shape, const int *padding,
+void DoSpaceToBatchPaddingNHWC(const float *input, float *output, const int *in_shape, const int *padding,
                                const int *out_shape) {
   int in_h = in_shape[1];
   int in_w = in_shape[2];
