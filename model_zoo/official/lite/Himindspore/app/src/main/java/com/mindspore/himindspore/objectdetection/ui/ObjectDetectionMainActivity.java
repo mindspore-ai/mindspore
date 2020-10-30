@@ -3,20 +3,16 @@ package com.mindspore.himindspore.objectdetection.ui;
 import android.Manifest;
 import android.content.Intent;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.mindspore.himindspore.R;
 
 public class ObjectDetectionMainActivity extends AppCompatActivity implements View.OnClickListener {
-
-    private static final int RC_CHOOSE_PHOTO = 1;
 
     private static final int REQUEST_CAMERA_PERMISSION = 2;
     private static final int REQUEST_PHOTO_PERMISSION = 3;
@@ -63,25 +59,13 @@ public class ObjectDetectionMainActivity extends AppCompatActivity implements Vi
 
 
     private void choosePhoto() {
-        Intent intentToPickPic = new Intent(Intent.ACTION_PICK, null);
-        intentToPickPic.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
-        startActivityForResult(intentToPickPic, RC_CHOOSE_PHOTO);
+        Intent intent = new Intent(ObjectDetectionMainActivity.this, ObjectPhotoActivity.class);
+        startActivity(intent);
     }
 
     private void chooseCamera() {
         Intent intent = new Intent(ObjectDetectionMainActivity.this, ObjectCameraActivity.class);
         startActivity(intent);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (RC_CHOOSE_PHOTO == requestCode && null != data && null != data.getData()) {
-            Intent intent = new Intent(ObjectDetectionMainActivity.this, PhotoActivity.class);
-            intent.setData(data.getData());
-            startActivity(intent);
-        }
     }
 }
 

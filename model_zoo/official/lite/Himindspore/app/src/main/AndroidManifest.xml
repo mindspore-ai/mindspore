@@ -46,7 +46,7 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
-            android:name=".objectdetection.ui.PhotoActivity"
+            android:name=".objectdetection.ui.ObjectPhotoActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
