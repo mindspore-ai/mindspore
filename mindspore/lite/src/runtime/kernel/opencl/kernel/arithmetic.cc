@@ -148,6 +148,13 @@ int ArithmeticOpenCLKernel::SetArgs() {
     auto out_shape = GetNHWCShape(out_tensors_[0]->shape());
     cl_int4 output_shape{out_shape[0], out_shape[1], out_shape[2], UP_DIV(out_shape[3], C4NUM)};
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
+    int broadcastC_flag = 0;  // do not need broadcast in C4
+    if (inputs_nhwc_shapes_[0][3] == 1 && inputs_nhwc_shapes_[1][3] != 1) {
+      broadcastC_flag = 1;  // BroadCast C4 in input0
+    } else if (inputs_nhwc_shapes_[0][3] != 1 && inputs_nhwc_shapes_[1][3] == 1) {
+      broadcastC_flag = 2;  // BroadCast C4 in input1
+    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, broadcastC_flag);
   } else {
     cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);

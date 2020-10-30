@@ -70,6 +70,12 @@ int ActivationOpenClKernel::SetArgs() {
   if (type_ == ActivationType_LEAKY_RELU) {
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, alpha_);
   }
+  if (type_ == ActivationType_SIGMOID) {
+    int c4 = outShape.Slice;
+    int last_c4 = outShape.C % 4 == 0 ? 4 : outShape.C % 4;
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, c4);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, last_c4);
+  }
   return RET_OK;
 }
 
