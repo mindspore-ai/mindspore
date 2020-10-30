@@ -19,9 +19,12 @@
 #include "nnacl/common_func.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
+#include "src/kernel_registry.h"
 
+using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
 MatmulInt8CPUKernel::~MatmulInt8CPUKernel() { FreeTmpBuffer(); }
@@ -193,4 +196,29 @@ int MatmulInt8CPUKernel::Run() {
   }
   return RET_OK;
 }
+
+kernel::LiteKernel *CpuMatMulInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const lite::InnerContext *ctx, const KernelKey &desc,
+                                               const mindspore::lite::PrimitiveC *primitive) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_MatMul);
+  auto *kernel = new (std::nothrow) MatmulInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    free(opParameter);
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete kernel;
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_MatMul, CpuMatMulInt8KernelCreator)
 }  // namespace mindspore::kernel

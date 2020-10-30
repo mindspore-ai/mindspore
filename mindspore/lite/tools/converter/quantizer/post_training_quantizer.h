@@ -91,6 +91,8 @@ class PostTrainingQuantizer : public Quantizer {
 
   const std::string kTypeConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2D);
   const std::string kTypeDepthwiseConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_DepthwiseConv2D);
+  const std::string kTypeConcat = schema::EnumNamePrimitiveType(schema::PrimitiveType_Concat);
+  const std::string kTypeAdd = schema::EnumNamePrimitiveType(schema::PrimitiveType_Add);
 
   STATUS PreProcess();
 
@@ -191,10 +193,7 @@ class Calibrator {
 
   STATUS RecordMaxValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
 
-  STATUS UpdateDivergInverval(std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
-
-  STATUS UpdateOutputDivergInverval(
-    std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
+  STATUS UpdateDivergInverval(std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
 
   STATUS UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
   void Dump();
@@ -209,7 +208,7 @@ class Calibrator {
 
   std::map<CNodePtr, MaxMin> GetMinMax(std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
-  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *GetInputDivergInfo();
+  std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *GetInputDivergInfo();
 
   std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *GetOutputDivergInfo();
 
@@ -220,7 +219,7 @@ class Calibrator {
 
   ConfigParam config_param_;
 
-  std::unordered_map<std::string, std::unique_ptr<DivergInfo>> input_diverg_info_;
+  std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> inputs_diverg_info_;
 
   std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> outputs_diverg_info_;
 
