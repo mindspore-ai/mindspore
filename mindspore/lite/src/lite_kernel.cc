@@ -16,6 +16,7 @@
 
 #include "src/lite_kernel.h"
 #include <algorithm>
+#include <queue>
 #include "src/tensor.h"
 
 namespace mindspore::kernel {
@@ -120,19 +121,19 @@ std::string LiteKernel::ToString() const {
   std::ostringstream oss;
   oss << "LiteKernel: " << this->name_;
   oss << ", Type: " << this->type_str();
-  oss << std::endl << this->in_tensors_.size() << " InputTensors:";
+  oss << ", " << this->in_tensors_.size() << " InputTensors:";
   for (auto tensor : in_tensors_) {
-    oss << " " << tensor << ":" << tensor->ToString();
+    oss << " " << tensor;
   }
-  oss << std::endl << this->out_tensors_.size() << " OutputTensors:";
+  oss << ", " << this->out_tensors_.size() << " OutputTensors:";
   for (auto tensor : out_tensors_) {
-    oss << " " << tensor << ":" << tensor->ToString();
+    oss << " " << tensor;
   }
-  oss << std::endl << this->in_kernels_.size() << " InputKernels:";
+  oss << ", " << this->in_kernels_.size() << " InputKernels:";
   for (auto in_kernel : in_kernels_) {
     oss << " " << in_kernel->name_;
   }
-  oss << std::endl << this->out_kernels_.size() << " OutputKernels:";
+  oss << ", " << this->out_kernels_.size() << " OutputKernels:";
   for (auto out_kernel : out_kernels_) {
     oss << " " << out_kernel->name_;
   }
@@ -237,6 +238,42 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
     }
   }
   return output_tensors;
+}
+
+int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels) {
+  auto old_kernels = *kernels;
+  kernels->clear();
+  std::queue<kernel::LiteKernel *> kernel_queue;
+  for (auto kernel : old_kernels) {
+    if (kernel->in_kernels().empty()) {
+      kernel_queue.push(kernel);
+      kernels->emplace_back(kernel);
+    }
+  }
+  while (!kernel_queue.empty()) {
+    auto cur_kernel = kernel_queue.front();
+    kernel_queue.pop();
+    MS_ASSERT(cur_kernel != nullptr);
+    auto next_kernels = cur_kernel->out_kernels();
+    for (auto next_kernel : next_kernels) {
+      auto in_kernels = next_kernel->in_kernels();
+      if (lite::IsContain(*kernels, const_cast<kernel::LiteKernel *>(next_kernel))) {
+        MS_LOG(ERROR) << "TopologicalSortKernels failed, loop exist";
+        return RET_ERROR;
+      }
+      if (std::all_of(in_kernels.begin(), in_kernels.end(), [&](const kernel::LiteKernel *in_kernel) {
+            return lite::IsContain(*kernels, const_cast<kernel::LiteKernel *>(in_kernel));
+          })) {
+        kernel_queue.push(next_kernel);
+      }
+    }
+  }
+  if (kernels->size() != old_kernels.size()) {
+    MS_LOG(ERROR) << "TopologicalSortKernels failed, kernels size before sort: " << old_kernels.size()
+                  << ", kernels size after sort: " << kernels->size();
+    return RET_ERROR;
+  }
+  return RET_OK;
 }
 
 void LiteKernelUtil::InitIOKernels(std::vector<kernel::LiteKernel *> &kernels) {

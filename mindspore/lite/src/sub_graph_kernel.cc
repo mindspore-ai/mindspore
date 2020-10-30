@@ -44,23 +44,23 @@ int SubGraphKernel::Prepare() {
 std::string SubGraphKernel::ToString() const {
   std::ostringstream oss;
   oss << "===============================================" << std::endl << "Subgraph type : " << this->subgraph_type_;
-  oss << std::endl << this->in_tensors_.size() << " InputTensors:";
+  oss << std::endl << this->in_tensors_.size() << "Subgraph inputTensors:";
   for (auto tensor : in_tensors_) {
-    oss << " " << tensor << ":" << tensor->ToString();
+    oss << " " << tensor;
   }
-  oss << std::endl << this->out_tensors_.size() << " OutputTensors:";
+  oss << std::endl << this->out_tensors_.size() << "Subgraph outputTensors:";
   for (auto tensor : out_tensors_) {
-    oss << " " << tensor << ":" << tensor->ToString();
+    oss << " " << tensor;
   }
-  oss << std::endl << "input kernels :";
+  oss << std::endl << "Subgraph input kernels :" << std::endl;
   for (auto kernel : this->in_kernels_) {
-    oss << " " << kernel->ToString();
+    oss << " " << kernel->ToString() << std::endl;
   }
-  oss << std::endl << "output kernels :";
+  oss << std::endl << "Subgraph output kernels :" << std::endl;
   for (auto kernel : this->out_kernels_) {
-    oss << " " << kernel->ToString();
+    oss << " " << kernel->ToString() << std::endl;
   }
-  oss << std::endl << nodes_.size() << "　nodes :";
+  oss << std::endl << nodes_.size() << "　nodes in subgraph :";
   for (auto kernel : this->nodes_) {
     oss << " " << kernel->name();
   }
@@ -178,36 +178,18 @@ int CpuFp16SubGraph::PreProcess() {
 }
 
 int CpuFp16SubGraph::PostProcess() {
-  auto fp16_to_fp32_cast_func = kernel::Float16CastUtil::GetInstance()->float16_to_float32_func_;
+  auto fp16_to_fp32_cast_func = Float16CastUtil::GetInstance()->float16_to_float32_func_;
   if (fp16_to_fp32_cast_func == nullptr) {
     MS_LOG(ERROR) << "Can not find cast fp16 to fp32 func";
     return RET_ERROR;
   }
   for (auto tensor : this->out_tensors_) {
     if (tensor->data_type() == kNumberTypeFloat16) {
-      void *float16_data = nullptr;
-      if (this->context_ != nullptr && this->context_->allocator != nullptr) {
-        float16_data = this->context_->allocator->Malloc(tensor->Size());
-      } else {
-        float16_data = malloc(tensor->Size());
-      }
-      if (float16_data == nullptr) {
-        MS_LOG(ERROR) << "malloc data failed";
-        return RET_ERROR;
-      }
-      memcpy(float16_data, tensor->data_c(), tensor->Size());
-      auto ret = tensor->FreeData();
-      if (RET_OK != ret) {
-        MS_LOG(ERROR) << "free data failed";
-        if (this->context_ != nullptr && this->context_->allocator != nullptr) {
-          this->context_->allocator->Free(float16_data);
-        } else {
-          free(float16_data);
-        }
-        return RET_ERROR;
-      }
+      auto float16_data = tensor->data_c();
+      MS_ASSERT(float16_data != nullptr);
+      tensor->set_data(nullptr);
       tensor->set_data_type(TypeId::kNumberTypeFloat32);
-      ret = tensor->MallocData();
+      auto ret = tensor->MallocData();
       if (RET_OK != ret) {
         MS_LOG(ERROR) << "malloc data failed";
         if (this->context_ != nullptr && this->context_->allocator != nullptr) {
@@ -217,9 +199,10 @@ int CpuFp16SubGraph::PostProcess() {
         }
         return RET_ERROR;
       }
+      MS_ASSERT(tensor->data_c() != nullptr);
       fp16_to_fp32_cast_func(float16_data, tensor->data_c(), tensor->ElementsNum());
-      if (this->context_ != nullptr && this->context_->allocator != nullptr) {
-        this->context_->allocator->Free(float16_data);
+      if (tensor->allocator() != nullptr) {
+        tensor->allocator()->Free(float16_data);
       } else {
         free(float16_data);
       }

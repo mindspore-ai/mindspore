@@ -37,8 +37,8 @@ class Scheduler {
   kernel::LiteKernel *ScheduleNode(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                    const mindspore::lite::PrimitiveC *primitive, const Model::Node *cnode);
 
-  int InitOp2Kernel(const lite::Model *model, std::vector<Tensor *> *tensors,
-                    std::vector<kernel::LiteKernel *> *kernels);
+  int BuildKernels(const lite::Model *model, std::vector<Tensor *> *tensors,
+                   std::vector<kernel::LiteKernel *> *kernels);
 
   static int InferShape(const lite::Model *model, std::vector<Tensor *> *tensors);
 
