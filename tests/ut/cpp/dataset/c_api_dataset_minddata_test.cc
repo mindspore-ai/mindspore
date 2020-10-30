@@ -335,19 +335,34 @@ TEST_F(MindDataTestPipeline, TestMindDataFail1) {
   // Create a MindData Dataset with incorrect pattern
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/apple.mindrecord0";
   std::shared_ptr<Dataset> ds1 = MindData(file_path1);
-  EXPECT_EQ(ds1, nullptr);
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid MindData input with incorrect pattern
+  EXPECT_EQ(iter1, nullptr);
 
   // Create a MindData Dataset with incorrect file path
   std::string file_path2 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/apple.mindrecord0";
   std::vector<std::string> file_list = {file_path2};
   std::shared_ptr<Dataset> ds2 = MindData(file_list);
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid MindData input with incorrect file path
+  EXPECT_EQ(iter2, nullptr);
 
   // Create a MindData Dataset with incorrect file path
   // ATTENTION: file_path3 is not a pattern to search for ".mindrecord*"
   std::string file_path3 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord";
   std::shared_ptr<Dataset> ds3 = MindData(file_path3);
-  EXPECT_EQ(ds3, nullptr);
+  EXPECT_NE(ds3, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid MindData input with incorrect file path
+  EXPECT_EQ(iter3, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestMindDataFail2) {
@@ -356,12 +371,22 @@ TEST_F(MindDataTestPipeline, TestMindDataFail2) {
   // Create a MindData Dataset with incorrect column name
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::shared_ptr<Dataset> ds1 = MindData(file_path1, {""});
-  EXPECT_EQ(ds1, nullptr);
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid MindData input with incorrect column name
+  EXPECT_EQ(iter1, nullptr);
 
   // Create a MindData Dataset with duplicate column name
   std::string file_path2 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::shared_ptr<Dataset> ds2 = MindData(file_path2, {"label", "label"});
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid MindData input with duplicate column name
+  EXPECT_EQ(iter2, nullptr);
 
   // Create a MindData Dataset with unexpected column name
   std::string file_path3 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
@@ -371,8 +396,9 @@ TEST_F(MindDataTestPipeline, TestMindDataFail2) {
 
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds3->CreateIterator();
-  EXPECT_EQ(iter, nullptr);
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid MindData input with unexpected column name
+  EXPECT_EQ(iter3, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestMindDataFail3) {
@@ -384,14 +410,19 @@ TEST_F(MindDataTestPipeline, TestMindDataFail3) {
   EXPECT_NE(ds1, nullptr);
 
   // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid MindData input with unsupported sampler
   EXPECT_EQ(iter1, nullptr);
 
   // Create a MindData Dataset with incorrect sampler
   std::string file_path2 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::shared_ptr<Dataset> ds2 = MindData(file_path2, {}, nullptr);
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid MindData input with incorrect sampler
+  EXPECT_EQ(iter2, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestMindDataFail4) {
@@ -400,11 +431,14 @@ TEST_F(MindDataTestPipeline, TestMindDataFail4) {
   // Create a MindData Dataset
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::shared_ptr<Dataset> ds1 = MindData(file_path1, {}, RandomSampler(), nullptr, 2);
+  EXPECT_NE(ds1, nullptr);
 
-  // num_padded is specified but padded_sample is not
-  EXPECT_EQ(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid MindData input, num_padded is specified but padded_sample is not
+  EXPECT_EQ(iter1, nullptr);
 
-  // Create paded sample for MindDataset
+  // Create padded sample for MindDataset
   auto pad = nlohmann::json::object();
   pad["file_name"] = "1.jpg";
   pad["label"] = 123456;
@@ -412,18 +446,24 @@ TEST_F(MindDataTestPipeline, TestMindDataFail4) {
   // Create a MindData Dataset
   std::string file_path2 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::shared_ptr<Dataset> ds2 = MindData(file_path2, {"label"}, RandomSampler(), pad, -2);
+  EXPECT_NE(ds2, nullptr);
 
-  // num_padded must be greater than or equal to zero
-  EXPECT_EQ(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid MindData input, num_padded is not greater than or equal to zero
+  EXPECT_EQ(iter2, nullptr);
 
   // Create a MindData Dataset
   std::string file_path3 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::shared_ptr<Dataset> ds3 = MindData(file_path3, {}, RandomSampler(), pad, 1);
+  EXPECT_NE(ds3, nullptr);
 
-  // padded_sample is specified and requires columns_list as well
-  EXPECT_EQ(ds3, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid MindData input, padded_sample is specified but requires columns_list as well
+  EXPECT_EQ(iter3, nullptr);
 
-  // Create paded sample with unmatch column name
+  // Create padded sample with unmatched column name
   auto pad2 = nlohmann::json::object();
   pad2["a"] = "1.jpg";
   pad2["b"] = 123456;
@@ -431,7 +471,10 @@ TEST_F(MindDataTestPipeline, TestMindDataFail4) {
   // Create a MindData Dataset
   std::string file_path4 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::shared_ptr<Dataset> ds4 = MindData(file_path4, {"file_name", "label"}, RandomSampler(), pad2, 1);
+  EXPECT_NE(ds4, nullptr);
 
-  // columns_list does not match any column in padded_sample
-  EXPECT_EQ(ds4, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter4 = ds4->CreateIterator();
+  // Expect failure: invalid MindData input, columns_list does not match any column in padded_sample
+  EXPECT_EQ(iter4, nullptr);
 }

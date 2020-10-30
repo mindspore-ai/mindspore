@@ -168,58 +168,84 @@ TEST_F(MindDataTestPipeline, TestCifar100GetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
-TEST_F(MindDataTestPipeline, TestCifar100DatasetFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetFail1.";
+TEST_F(MindDataTestPipeline, TestCifar100DatasetFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetFail.";
 
   // Create a Cifar100 Dataset
   std::shared_ptr<Dataset> ds = Cifar100("", "all", RandomSampler(false, 10));
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Cifar100 input
+  EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestCifar10DatasetFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetFail1.";
+TEST_F(MindDataTestPipeline, TestCifar10DatasetFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetFail.";
 
   // Create a Cifar10 Dataset
   std::shared_ptr<Dataset> ds = Cifar10("", "all", RandomSampler(false, 10));
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Cifar10 input
+  EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestCifar10DatasetWithInvalidUsage) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetWithNullSampler.";
+TEST_F(MindDataTestPipeline, TestCifar10DatasetWithInvalidUsageFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetWithNullSamplerFail.";
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   std::shared_ptr<Dataset> ds = Cifar10(folder_path, "validation");
-  // Expect failure: validation is not a valid usage
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Cifar10 input, validation is not a valid usage
+  EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestCifar10DatasetWithNullSampler) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetWithNullSampler.";
+TEST_F(MindDataTestPipeline, TestCifar10DatasetWithNullSamplerFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetWithNullSamplerFail.";
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", nullptr);
-  // Expect failure: sampler can not be nullptr
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Cifar10 input, sampler cannot be nullptr
+  EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestCifar100DatasetWithNullSampler) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetWithNullSampler.";
+TEST_F(MindDataTestPipeline, TestCifar100DatasetWithNullSamplerFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetWithNullSamplerFail.";
 
-  // Create a Cifar10 Dataset
+  // Create a Cifar100 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
   std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", nullptr);
-  // Expect failure: sampler can not be nullptr
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Cifar100 input, sampler cannot be nullptr
+  EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestCifar100DatasetWithWrongSampler) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetWithWrongSampler.";
+TEST_F(MindDataTestPipeline, TestCifar100DatasetWithWrongSamplerFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetWithWrongSamplerFail.";
 
-  // Create a Cifar10 Dataset
+  // Create a Cifar100 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
   std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", RandomSampler(false, -10));
-  // Expect failure: sampler is not construnced correctly
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Cifar100 input, sampler is not constructed correctly
+  EXPECT_EQ(iter, nullptr);
 }

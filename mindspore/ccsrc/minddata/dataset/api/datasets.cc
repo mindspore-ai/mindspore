@@ -352,7 +352,7 @@ std::shared_ptr<AlbumNode> Album(const std::string &dataset_dir, const std::stri
                                  const std::shared_ptr<SamplerObj> &sampler) {
   auto ds = std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler);
 
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a CelebANode.
@@ -362,8 +362,7 @@ std::shared_ptr<CelebANode> CelebA(const std::string &dataset_dir, const std::st
                                    const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<CelebANode>(dataset_dir, usage, sampler, decode, extensions, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a Cifar10Node.
@@ -372,8 +371,7 @@ std::shared_ptr<Cifar10Node> Cifar10(const std::string &dataset_dir, const std::
                                      const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<Cifar10Node>(dataset_dir, usage, sampler, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a Cifar100Node.
@@ -382,8 +380,7 @@ std::shared_ptr<Cifar100Node> Cifar100(const std::string &dataset_dir, const std
                                        const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<Cifar100Node>(dataset_dir, usage, sampler, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a CLUENode.
@@ -392,8 +389,7 @@ std::shared_ptr<CLUENode> CLUE(const std::vector<std::string> &clue_files, const
                                int32_t shard_id, const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<CLUENode>(clue_files, task, usage, num_samples, shuffle, num_shards, shard_id, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a CocoNode.
@@ -402,8 +398,7 @@ std::shared_ptr<CocoNode> Coco(const std::string &dataset_dir, const std::string
                                const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<CocoNode>(dataset_dir, annotation_file, task, decode, sampler, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a CSVNode.
@@ -414,8 +409,7 @@ std::shared_ptr<CSVNode> CSV(const std::vector<std::string> &dataset_files, char
   auto ds = std::make_shared<CSVNode>(dataset_files, field_delim, column_defaults, column_names, num_samples, shuffle,
                                       num_shards, shard_id, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a ImageFolderNode.
@@ -431,8 +425,7 @@ std::shared_ptr<ImageFolderNode> ImageFolder(const std::string &dataset_dir, boo
   auto ds =
     std::make_shared<ImageFolderNode>(dataset_dir, decode, sampler, recursive, extensions, class_indexing, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 #ifndef ENABLE_ANDROID
@@ -443,8 +436,7 @@ std::shared_ptr<ManifestNode> Manifest(const std::string &dataset_file, const st
                                        const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<ManifestNode>(dataset_file, usage, sampler, class_indexing, decode, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a MindDataNode.
@@ -453,8 +445,7 @@ std::shared_ptr<MindDataNode> MindData(const std::string &dataset_file, const st
                                        int64_t num_padded) {
   auto ds = std::make_shared<MindDataNode>(dataset_file, columns_list, sampler, padded_sample, num_padded);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a MindDataNode.
@@ -464,8 +455,7 @@ std::shared_ptr<MindDataNode> MindData(const std::vector<std::string> &dataset_f
                                        int64_t num_padded) {
   auto ds = std::make_shared<MindDataNode>(dataset_files, columns_list, sampler, padded_sample, num_padded);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 #endif
 
@@ -475,8 +465,7 @@ std::shared_ptr<MnistNode> Mnist(const std::string &dataset_dir, const std::stri
                                  const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<MnistNode>(dataset_dir, usage, sampler, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to overload "+" operator to concat two datasets
@@ -484,8 +473,7 @@ std::shared_ptr<ConcatNode> operator+(const std::shared_ptr<Dataset> &datasets1,
                                       const std::shared_ptr<Dataset> &datasets2) {
   std::shared_ptr<ConcatNode> ds = std::make_shared<ConcatNode>(std::vector({datasets2, datasets1}));
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a TextFileNode.
@@ -494,8 +482,7 @@ std::shared_ptr<TextFileNode> TextFile(const std::vector<std::string> &dataset_f
                                        const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<TextFileNode>(dataset_files, num_samples, shuffle, num_shards, shard_id, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 #ifndef ENABLE_ANDROID
@@ -505,8 +492,7 @@ std::shared_ptr<VOCNode> VOC(const std::string &dataset_dir, const std::string &
                              const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<VOCNode>(dataset_dir, task, usage, class_indexing, decode, sampler, cache);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 #endif
 
@@ -514,8 +500,7 @@ std::shared_ptr<VOCNode> VOC(const std::string &dataset_dir, const std::string &
 std::shared_ptr<ZipNode> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
   auto ds = std::make_shared<ZipNode>(datasets);
 
-  // Call derived class validation method.
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // FUNCTIONS TO CREATE DATASETS FOR DATASET OPS
@@ -528,10 +513,6 @@ std::shared_ptr<BatchNode> Dataset::Batch(int32_t batch_size, bool drop_remainde
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map;
   bool pad = false;
   auto ds = std::make_shared<BatchNode>(shared_from_this(), batch_size, drop_remainder, pad, cols_to_map, pad_map);
-
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
 
   return ds;
 }
@@ -546,10 +527,6 @@ std::shared_ptr<BucketBatchByLengthNode> Dataset::BucketBatchByLength(
   auto ds = std::make_shared<BucketBatchByLengthNode>(shared_from_this(), column_names, bucket_boundaries,
                                                       bucket_batch_sizes, element_length_function, pad_info,
                                                       pad_to_bucket_boundary, drop_remainder);
-
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
 
   return ds;
 }
@@ -617,7 +594,7 @@ std::shared_ptr<ConcatNode> Dataset::Concat(const std::vector<std::shared_ptr<Da
   auto ds = std::make_shared<ConcatNode>(datasets);
   ds->children.push_back(shared_from_this());
 
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
 
 // Function to create a Map dataset.
@@ -628,20 +605,12 @@ std::shared_ptr<MapNode> Dataset::Map(std::vector<std::shared_ptr<TensorOperatio
   auto ds =
     std::make_shared<MapNode>(shared_from_this(), operations, input_columns, output_columns, project_columns, cache);
 
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
-
   return ds;
 }
 
 // Function to create a ProjectNode.
 std::shared_ptr<ProjectNode> Dataset::Project(const std::vector<std::string> &columns) {
   auto ds = std::make_shared<ProjectNode>(shared_from_this(), columns);
-  // Call derived class validation method.
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
 
   return ds;
 }
@@ -650,10 +619,6 @@ std::shared_ptr<ProjectNode> Dataset::Project(const std::vector<std::string> &co
 std::shared_ptr<RenameNode> Dataset::Rename(const std::vector<std::string> &input_columns,
                                             const std::vector<std::string> &output_columns) {
   auto ds = std::make_shared<RenameNode>(shared_from_this(), input_columns, output_columns);
-  // Call derived class validation method.
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
 
   return ds;
 }
@@ -667,10 +632,6 @@ std::shared_ptr<Dataset> Dataset::Repeat(int32_t count) {
 
   auto ds = std::make_shared<RepeatNode>(shared_from_this(), count);
 
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
-
   return ds;
 }
 
@@ -679,21 +640,12 @@ std::shared_ptr<ShuffleNode> Dataset::Shuffle(int32_t buffer_size) {
   // Pass in reshuffle_each_epoch with true
   auto ds = std::make_shared<ShuffleNode>(shared_from_this(), buffer_size, true);
 
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
-
   return ds;
 }
 
 // Function to create a SkipNode.
 std::shared_ptr<SkipNode> Dataset::Skip(int32_t count) {
   auto ds = std::make_shared<SkipNode>(shared_from_this(), count);
-
-  // Call derived class validation method.
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
 
   return ds;
 }
@@ -708,11 +660,6 @@ std::shared_ptr<Dataset> Dataset::Take(int32_t count) {
 
   auto ds = std::make_shared<TakeNode>(shared_from_this(), count);
 
-  // Call derived class validation method.
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
-
   return ds;
 }
 
@@ -722,8 +669,9 @@ std::shared_ptr<ZipNode> Dataset::Zip(const std::vector<std::shared_ptr<Dataset>
   auto ds = std::make_shared<ZipNode>(datasets);
   ds->children.push_back(shared_from_this());
 
-  return ds->ValidateParams() ? ds : nullptr;
+  return ds;
 }
+
 Status Dataset::AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   if (cache_ != nullptr) {
     RETURN_IF_NOT_OK(cache_->Build());

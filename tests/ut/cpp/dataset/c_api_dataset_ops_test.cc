@@ -178,7 +178,12 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail1) {
 
   // Create a BucketBatchByLength operation on ds
   ds = ds->BucketBatchByLength({"image"}, {}, {1});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail2) {
@@ -193,7 +198,12 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail2) {
 
   // Create a BucketBatchByLength operation on ds
   ds = ds->BucketBatchByLength({"image"}, {1}, {});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail3) {
@@ -208,7 +218,12 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail3) {
 
   // Create a BucketBatchByLength operation on ds
   ds = ds->BucketBatchByLength({"image"}, {-1, 1}, {1, 2, 3});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail4) {
@@ -223,7 +238,12 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail4) {
 
   // Create a BucketBatchByLength operation on ds
   ds = ds->BucketBatchByLength({"image"}, {2, 2}, {1, 2, 3});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail5) {
@@ -238,7 +258,12 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail5) {
 
   // Create a BucketBatchByLength operation on ds
   ds = ds->BucketBatchByLength({"image"}, {1, 2}, {1, 2});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail6) {
@@ -252,7 +277,12 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail6) {
   EXPECT_NE(ds, nullptr);
   // Create a BucketBatchByLength operation on ds
   ds = ds->BucketBatchByLength({"image"}, {1, 2}, {1, -2, 3});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail7) {
@@ -267,7 +297,12 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail7) {
 
   // Create a BucketBatchByLength operation on ds
   ds = ds->BucketBatchByLength({"image", "label"}, {1, 2}, {1, 2, 3});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestConcatFail1) {
@@ -314,7 +349,12 @@ TEST_F(MindDataTestPipeline, TestConcatFail2) {
   // Create a Concat operation on the ds
   // Input dataset to concat is empty
   ds = ds->Concat({});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestConcatSuccess) {
@@ -564,8 +604,8 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestProjectDuplicateColumn) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProjectDuplicateColumn.";
+TEST_F(MindDataTestPipeline, TestProjectDuplicateColumnFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProjectDuplicateColumnFail.";
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -583,13 +623,18 @@ TEST_F(MindDataTestPipeline, TestProjectDuplicateColumn) {
   // Create a Project operation on ds
   std::vector<std::string> column_project = {"image", "image"};
 
-  // Expect failure: duplicate project column name
+  // Create a Project operation on ds
   ds = ds->Project(column_project);
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: duplicate project op column name
+  EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestMapDuplicateColumn) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMapDuplicateColumn.";
+TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMapDuplicateColumnFail.";
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -602,18 +647,30 @@ TEST_F(MindDataTestPipeline, TestMapDuplicateColumn) {
 
   // Create a Map operation on ds
   auto ds1 = ds->Map({random_vertical_flip_op}, {"image", "image"}, {}, {});
-  // Expect failure: duplicate input column name
-  EXPECT_EQ(ds1, nullptr);
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: duplicate Map op input column name
+  EXPECT_EQ(iter1, nullptr);
 
   // Create a Map operation on ds
   auto ds2 = ds->Map({random_vertical_flip_op}, {}, {"label", "label"}, {});
-  // Expect failure: duplicate output column name
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: duplicate Map op output column name
+  EXPECT_EQ(iter2, nullptr);
 
   // Create a Map operation on ds
   auto ds3 = ds->Map({random_vertical_flip_op}, {}, {}, {"image", "image"});
-  // Expect failure: duplicate project column name
-  EXPECT_EQ(ds3, nullptr);
+  EXPECT_NE(ds3, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: duplicate Map op project column name
+  EXPECT_EQ(iter3, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
@@ -683,7 +740,12 @@ TEST_F(MindDataTestPipeline, TestRenameFail1) {
 
   // Create a Rename operation on ds
   ds = ds->Rename({"image", "label"}, {"col2"});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRenameFail2) {
@@ -697,7 +759,12 @@ TEST_F(MindDataTestPipeline, TestRenameFail2) {
 
   // Create a Rename operation on ds
   ds = ds->Rename({"image", "label"}, {"col2", ""});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRenameFail3) {
@@ -711,11 +778,21 @@ TEST_F(MindDataTestPipeline, TestRenameFail3) {
 
   // Create a Rename operation on ds
   auto ds1 = ds->Rename({"image", "image"}, {"col1", "col2"});
-  EXPECT_EQ(ds1, nullptr);
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter1, nullptr);
 
   // Create a Rename operation on ds
   auto ds2 = ds->Rename({"image", "label"}, {"col1", "col1"});
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter2, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRenameSuccess) {
@@ -861,7 +938,12 @@ TEST_F(MindDataTestPipeline, TestRepeatFail1) {
   // Create a Repeat operation on ds
   int32_t repeat_num = 0;
   ds = ds->Repeat(repeat_num);
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRepeatFail2) {
@@ -876,7 +958,12 @@ TEST_F(MindDataTestPipeline, TestRepeatFail2) {
   // Create a Repeat operation on ds
   int32_t repeat_num = -2;
   ds = ds->Repeat(repeat_num);
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestShuffleDataset) {
@@ -990,8 +1077,12 @@ TEST_F(MindDataTestPipeline, TestSkipDatasetError1) {
   // Create a Skip operation on ds with invalid count input
   int32_t count = -1;
   ds = ds->Skip(count);
-  // Expect nullptr for invalid input skip_count
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Skip input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTakeDatasetDefault) {
@@ -1057,14 +1148,22 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetError1) {
   // Create a Take operation on ds with invalid count input
   int32_t count = -5;
   auto ds1 = ds->Take(count);
-  // Expect nullptr for invalid input take_count
-  EXPECT_EQ(ds1, nullptr);
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 
   // Create a Take operation on ds with invalid count input
   count = 0;
   auto ds2 = ds->Take(count);
-  // Expect nullptr for invalid input take_count
-  EXPECT_EQ(ds2, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  iter = ds2->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTakeDatasetNormal) {
@@ -1197,7 +1296,12 @@ TEST_F(MindDataTestPipeline, TestZipFail2) {
   // Create a Zip operation on the datasets
   // Input dataset to zip is empty
   ds = Zip({});
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestZipSuccess) {
