@@ -1147,7 +1147,8 @@ class Dataset:
             1. To save the samples in order, set dataset's shuffle to False and num_files to 1.
             2. Before calling the function, do not use batch operator, repeat operator or data augmentation operators
                with random attribute in map operator.
-            3. Mindrecord does not support DE_UINT64, multi-dimensional DE_UINT8(drop dimension) nor
+            3. Can not save number type tensor whose shape is dynamic.
+            4. Mindrecord does not support DE_UINT64, multi-dimensional DE_UINT8(drop dimension) nor
                multi-dimensional DE_STRING.
 
         Args:
