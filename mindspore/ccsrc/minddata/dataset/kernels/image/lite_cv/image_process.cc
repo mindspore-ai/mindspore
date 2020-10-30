@@ -973,7 +973,9 @@ bool Subtract(const LiteMat &src1, const LiteMat &src2, LiteMat &dst) {
 
   size_t total_size = src1.height_ * src1.width_ * src1.channel_;
 
-  if (src1.data_type_ == LDataType::INT8) {
+  if (src1.data_type_ == LDataType::BOOL) {
+    SubtractImpl<bool>(src1, src2, dst, total_size);
+  } else if (src1.data_type_ == LDataType::INT8) {
     SubtractImpl<int8_t>(src1, src2, dst, total_size);
   } else if (src1.data_type_ == LDataType::UINT8) {
     SubtractImpl<uint8_t>(src1, src2, dst, total_size);
@@ -1053,9 +1055,7 @@ bool Divide(const LiteMat &src1, const LiteMat &src2, LiteMat &dst) {
 
   size_t total_size = src1.height_ * src1.width_ * src1.channel_;
 
-  if (src1.data_type_ == LDataType::BOOL) {
-    DivideImpl<bool>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::INT8) {
+  if (src1.data_type_ == LDataType::INT8) {
     DivideImpl<int8_t>(src1, src2, dst, total_size);
   } else if (src1.data_type_ == LDataType::UINT8) {
     DivideImpl<uint8_t>(src1, src2, dst, total_size);
