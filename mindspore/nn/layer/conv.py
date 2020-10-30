@@ -481,6 +481,19 @@ class Conv2dTranspose(_Conv):
 
     Input is typically of shape :math:`(N, C, H, W)`, where :math:`N` is batch size and :math:`C` is channel number.
 
+    If the 'pad_mode' is set to be "pad", the height and width of output are defined as:
+
+    .. math::
+
+        H_{out} = (H_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times
+        (\text{ks_h} - 1) + 1
+
+        W_{out} = (W_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times
+        (\text{ks_w} - 1) + 1
+
+    where :math:`\text{ks_h}` is the height of the convolution kernel and :math:`\text{ks_w}` is the width
+    of the convolution kernel.
+
     Args:
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
@@ -529,9 +542,10 @@ class Conv2dTranspose(_Conv):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> net = nn.Conv2dTranspose(3, 64, 4, has_bias=False, weight_init='normal')
+        >>> net = nn.Conv2dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
         >>> input = Tensor(np.ones([1, 3, 16, 50]), mindspore.float32)
-        >>> net(input)
+        >>> net(input).shape
+        (1, 64, 19, 53)
         """
 
     def __init__(self,
@@ -654,6 +668,15 @@ class Conv1dTranspose(_Conv):
 
     Input is typically of shape :math:`(N, C, W)`, where :math:`N` is batch size and :math:`C` is channel number.
 
+    If the 'pad_mode' is set to be "pad", the width of output is defined as:
+
+    .. math::
+
+        W_{out} = (W_{in} - 1) \times \text{stride} - 2 \times \text{padding} + \text{dilation} \times
+        (\text{ks_w} - 1) + 1
+
+    where :math:`\text{ks_w}` is the width of the convolution kernel.
+
     Args:
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
@@ -694,9 +717,10 @@ class Conv1dTranspose(_Conv):
         Tensor of shape :math:`(N, C_{out}, W_{out})`.
 
     Examples:
-        >>> net = nn.Conv1dTranspose(3, 64, 4, has_bias=False, weight_init='normal')
+        >>> net = nn.Conv1dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
         >>> input = Tensor(np.ones([1, 3, 50]), mindspore.float32)
-        >>> net(input)
+        >>> net(input).shape
+        (1, 64, 53)
     """
 
     def __init__(self,
