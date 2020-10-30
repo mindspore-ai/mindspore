@@ -196,6 +196,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/weight_format_hardcode_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_cast_node_remove_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/unused_transpose_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/identity_remove_pass.cc
             )
 endif()
