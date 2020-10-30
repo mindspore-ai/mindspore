@@ -13,30 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "nnacl/fp32/instance_norm.h"
 #include <math.h>
-#include "nnacl/instance_norm_parameter.h"
+#include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-void InstanceNormFp32(const void *input, const void *mean, const void *variance, InstanceNormParameter *param,
-                      int task_id, void *output) {
-  int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
-  int completed_units = task_id * units_per_thread;
-  if (completed_units >= param->unit_) {
-    return;
+int InstanceNorm(const int outer_size, const int inner_size, const float *src_data, const float *scale_data,
+                 const float *bias_data, InstanceNormParameter *param, float *dst_data, const int task_id,
+                 const int thread_num) {
+  if (src_data == NULL || dst_data == NULL || scale_data == NULL || bias_data == NULL) {
+    return NNACL_NULL_PTR;
   }
-  int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
-  int cur_offset = completed_units * param->channel_;
-  for (int n = 0; n < param->batch_; n++) {
-    for (int hw = 0; hw < cur_unit; hw++) {
-      for (int c = 0; c < param->channel_; c++) {
-        float variance_sqrt = sqrt(((const float *)variance)[n * param->channel_ + c] + param->epsilon_);
-        ((float *)output)[cur_offset + c] =
-          (((const float *)input)[cur_offset + c] - ((const float *)mean)[n * param->channel_ + c]) / variance_sqrt;
-      }
-      cur_offset += param->channel_;
+  int i, j;
+  for (j = task_id; j < outer_size; j += thread_num) {
+    int offset = (j / param->channel_) * inner_size * param->channel_;
+    const float *src = src_data + offset;
+    float *dst = dst_data + offset;
+    float mean = 0.0f;
+    float square_mean = 0.0f;
+    for (i = 0; i < inner_size; i++) {
+      int idx = j % param->channel_ + i * param->channel_;
+      mean += src[idx];
+      square_mean += src[idx] * src[idx];
     }
-    cur_offset += (param->unit_ - cur_unit) * param->channel_;
+    mean /= (float)inner_size;
+    square_mean /= (float)inner_size;
+    float deno = 1 / sqrtf(square_mean - mean * mean + param->epsilon_);
+    for (i = 0; i < inner_size; ++i) {
+      int idx = j % param->channel_ + i * param->channel_;
+      int scale_idx = (j / param->channel_) * param->channel_ + j % param->channel_;
+      dst[idx] = ((src[idx] - mean) * deno) * scale_data[scale_idx] + bias_data[scale_idx];
+    }
   }
+  return NNACL_OK;
 }

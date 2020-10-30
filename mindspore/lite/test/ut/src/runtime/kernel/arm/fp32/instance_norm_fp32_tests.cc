@@ -45,8 +45,8 @@ TEST_F(TestInstanceNormFp32, INTest1) {
   std::vector<lite::Tensor *> inputs_tensor = {&input0_tensor, &input1_tensor, &input2_tensor};
 
   std::vector<float> output(12);
-  std::vector<float> corr_out = {-6.1533737, 7.4904885,  -0.8563998, -0.289212,  -9.356432,  0.13245535,
-                                 -3.5422924, -14.005781, -2.3525476, -6.7113695, -16.396551, -1.4275324};
+  std::vector<float> corr_out = {5.0145645, 9.248516,   15.439679, 33.51017,  0.0012711287, 31.0666883,
+                                 17.70254,  -2.5507483, -8.204435, 2.3031063, -3.8630369,   6.4138837};
 
   lite::Tensor output0_tensor(kNumberTypeFloat32, {1, 2, 2, 3});
   output0_tensor.set_data(output.data());
@@ -80,8 +80,8 @@ TEST_F(TestInstanceNormFp32, INTest1) {
 TEST_F(TestInstanceNormFp32, INTest2) {
   std::vector<float> in_data = {-11.18675,  11.433986,  11.386012, 11.245945,   -2.7614849, 14.692399,
                                 -1.1983503, -6.6790967, 6.383416,  -13.3213005, -8.693595,  9.476344,
-                                -11.18675,  11.433986,  11.386012, 11.245945,   -2.7614849, 14.692399,
-                                -1.1983503, -6.6790967, 6.383416,  -13.3213005, -8.693595,  9.476344};
+                                -12.18675,  12.433986,  12.386012, 12.245945,   -3.7614849, 15.692399,
+                                -2.1983503, -7.6790967, 7.383416,  -14.3213005, -9.693595,  10.476344};
   std::vector<float> in_data1 = {12.352293, 5.122387, 14.249514, 12.352293, 5.122387, 14.249514};
   std::vector<float> in_data2 = {14.632595, 0.70900035, 11.179003, 14.632595, 0.70900035, 11.179003};
 
@@ -90,18 +90,18 @@ TEST_F(TestInstanceNormFp32, INTest2) {
   op_param.epsilon_ = 0.001f;
 
   lite::Tensor input0_tensor(kNumberTypeFloat32, {2, 2, 2, 3});
-  lite::Tensor input1_tensor(kNumberTypeFloat32, {6});
-  lite::Tensor input2_tensor(kNumberTypeFloat32, {6});
+  lite::Tensor input1_tensor(kNumberTypeFloat32, {2, 3});
+  lite::Tensor input2_tensor(kNumberTypeFloat32, {2, 3});
   input0_tensor.set_data(in_data.data());
   input1_tensor.set_data(in_data1.data());
   input2_tensor.set_data(in_data2.data());
   std::vector<lite::Tensor *> inputs_tensor = {&input0_tensor, &input1_tensor, &input2_tensor};
 
   std::vector<float> output(24);
-  std::vector<float> corr_out = {-6.1533737, 7.4904885,  -0.8563998, -0.289212,  -9.356432,  0.13245535,
-                                 -3.5422924, -14.005781, -2.3525476, -6.7113695, -16.396551, -1.4275324,
-                                 -6.1533737, 7.4904885,  -0.8563998, -0.289212,  -9.356432,  0.13245535,
-                                 -3.5422924, -14.005781, -2.3525476, -6.7113695, -16.396551, -1.4275324};
+  std::vector<float> corr_out = {5.0145645, 9.248516,   15.439679, 33.51017,  0.0012711287, 31.0666883,
+                                 17.70254,  -2.5507483, -8.204435, 2.3031063, -3.8630369,   6.4138837,
+                                 5.133601,  9.310399,   15.439679, 33.886883, -0.22505027,  31.066883,
+                                 16.888313, -2.5316327, -8.204435, 2.6215858, -3.717714,    6.4138837};
 
   lite::Tensor output0_tensor(kNumberTypeFloat32, {2, 2, 2, 3});
   output0_tensor.set_data(output.data());

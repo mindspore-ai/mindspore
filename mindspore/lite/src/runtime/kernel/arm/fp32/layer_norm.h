@@ -39,7 +39,7 @@ class LayerNormCPUKernel : public LiteKernel {
   int DoLayerNorm(int thread_id);
 
  private:
-  LayerNormParameter *param_;
+  LayerNormParameter *param_ = nullptr;
   int outer_size_;
   int inner_size_;
   float *src_data_ = nullptr;
