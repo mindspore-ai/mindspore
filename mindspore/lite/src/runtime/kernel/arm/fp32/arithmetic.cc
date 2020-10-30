@@ -48,7 +48,16 @@ int ArithmeticCPUKernel::PreProcess() {
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }
-    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(PopulateArithmetic(primitive_));
+    if (op_parameter_ != nullptr) {
+      free(op_parameter_);
+      op_parameter_ = nullptr;
+    }
+    op_parameter_ = PopulateArithmetic(primitive_);
+    if (op_parameter_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc parameter failed";
+      return RET_ERROR;
+    }
+    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
     ret = ReSize();
     if (ret != 0) {
       MS_LOG(ERROR) << "ReSize fail!ret: " << ret;
