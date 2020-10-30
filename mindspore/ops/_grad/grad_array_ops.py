@@ -374,6 +374,15 @@ def get_bprop_gather_v2(self):
     return bprop
 
 
+@bprop_getters.register(P.GatherD)
+def get_bprop_gather_d(self):
+
+    def bprop(x, dim, index, out, dout):
+        return P.GatherDGrad(dim)(index, dout)
+
+    return bprop
+
+
 @bprop_getters.register(P.SparseGatherV2)
 def get_bprop_sparse_gather_v2(self):
     """Generate bprop for SparseGatherV2"""
