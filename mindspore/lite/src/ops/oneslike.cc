@@ -37,6 +37,7 @@ int OnesLike::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &i
                   << schema::EnumNamePrimitiveType(primitive_->value.type) << "is  not equal"
                   << schema::EnumNamePrimitiveType(schema::PrimitiveType_OnesLike);
     delete this->primitive_;
+    this->primitive_ = nullptr;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
@@ -44,6 +45,7 @@ int OnesLike::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &i
     if (this->primitive_->value.value == nullptr) {
       MS_LOG(ERROR) << "new primitiveT value failed";
       delete this->primitive_;
+      this->primitive_ = nullptr;
       return RET_ERROR;
     }
   }

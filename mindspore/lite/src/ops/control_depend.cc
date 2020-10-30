@@ -32,6 +32,7 @@ int ControlDepend::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePt
   if (this->primitive_->value.type != schema::PrimitiveType_ControlDepend) {
     MS_LOG(ERROR) << "primitive_ type is error:" << this->primitive_->value.type;
     delete this->primitive_;
+    this->primitive_ = nullptr;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
@@ -39,6 +40,7 @@ int ControlDepend::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePt
     if (attr == nullptr) {
       MS_LOG(ERROR) << "attr is nullptr";
       delete this->primitive_;
+      this->primitive_ = nullptr;
       return RET_ERROR;
     }
     this->primitive_->value.value = attr;

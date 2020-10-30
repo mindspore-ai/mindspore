@@ -35,6 +35,8 @@ OpParameter *PopulateLayerNormParameter(const mindspore::lite::PrimitiveC *primi
   layer_norm_parameter->normalized_shape_ = reinterpret_cast<int *>(malloc(normalized_shape.size() * sizeof(int)));
   if (layer_norm_parameter->normalized_shape_ == nullptr) {
     MS_LOG(ERROR) << "malloc layer_norm_parameter->normalized_shape_ failed.";
+    free(layer_norm_parameter);
+    layer_norm_parameter = nullptr;
     return nullptr;
   }
   for (size_t i = 0; i < normalized_shape.size(); i++) {

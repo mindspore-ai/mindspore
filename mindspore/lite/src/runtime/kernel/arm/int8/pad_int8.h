@@ -48,7 +48,7 @@ class PadInt8CPUKernel : public LiteKernel {
 
  private:
   int HandleMirrorPad();
-  int CheckPaddings(const int *paddings, int length, int *input_shape, int mode);
+  int CheckPaddings(const int *paddings, int length, const int *input_shape, int mode);
   int CopyPaddingFromInput();
   void CalculateStrides();
   int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length);

@@ -17,7 +17,7 @@
 #include "nnacl/fp32/stack.h"
 #include "nnacl/arithmetic_common.h"
 
-size_t GetStackCopyNum(int axis, int *in_shape, size_t shape_size) {
+size_t GetStackCopyNum(int axis, const int *in_shape, size_t shape_size) {
   size_t one_input_size = 1;
   for (size_t i = 0; i < shape_size; ++i) {
     one_input_size *= in_shape[i];
@@ -68,6 +68,4 @@ void DoStackInt32(const int32_t *const *inputs, size_t input_num, int *in_shape,
   }
 }
 
-void DoStackOneInput(const int8_t *input, int8_t *output, size_t data_size) {
-  memcpy(output, input, data_size);
-}
+void DoStackOneInput(const int8_t *input, int8_t *output, size_t data_size) { memcpy(output, input, data_size); }

@@ -171,15 +171,15 @@ class ArithmeticCPUKernel : public LiteKernel {
 
  private:
   int BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count, int out_thread_stride);
-  int break_pos_;
-  int outside_;
-  int thread_count_;
-  ArithmeticParameter *arithmeticParameter_;
+  int break_pos_ = 0;
+  int outside_ = 0;
+  int thread_count_ = 1;
+  ArithmeticParameter *arithmeticParameter_ = nullptr;
   ArithmeticRun arithmetic_run_ = nullptr;
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;
   ArithmeticIntRun arithmetic_run_int_ = nullptr;
   ArithmeticOptIntRun arithmetic_opt_run_int_ = nullptr;
-  LiteDataType data_type_;
+  LiteDataType data_type_ = kDataTypeFloat;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_H_

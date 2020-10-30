@@ -15,7 +15,6 @@
  */
 
 #include "nnacl/common_func.h"
-#include "nnacl/quantization/fixed_point.h"
 
 int offset(const int *shape, const int dim0, const int dim1, const int dim2, const int dim3) {
   return ((dim0 * shape[1] + dim1) * shape[2] + dim2) * shape[3] + dim3;

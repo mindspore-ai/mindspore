@@ -30,7 +30,8 @@ typedef struct WhereParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Where(bool *input, float *input1, const float *input2, float *output, WhereParameter *where_param_, int task_id);
+void Where(bool *input, const float *input1, const float *input2, float *output, WhereParameter *where_param_,
+           int task_id);
 #ifdef __cplusplus
 }
 #endif

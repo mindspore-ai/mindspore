@@ -32,7 +32,7 @@ void DiagonalPlusMatrix(const float *matrix, float *diagonal_matrix, int degree)
 
 void ResidueMatrix(const float *interval, float *b, int row, int col);
 
-int LT(float *poly_array, float *matrix_lt, int n);
+int LT(const float *poly_array, float *matrix_lt, int n);
 
 void T(const float *poly_array, float *matrix_t, int n);
 

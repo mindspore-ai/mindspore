@@ -43,6 +43,7 @@ int Power::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
   if (this->primitive_->value.type != schema::PrimitiveType_Power) {
     MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
     delete this->primitive_;
+    this->primitive_ = nullptr;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
@@ -50,6 +51,7 @@ int Power::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new primitiveT value failed";
       delete this->primitive_;
+      this->primitive_ = nullptr;
       return RET_ERROR;
     }
 

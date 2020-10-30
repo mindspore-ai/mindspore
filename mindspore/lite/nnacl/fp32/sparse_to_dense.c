@@ -15,7 +15,7 @@
  */
 #include "nnacl/fp32/sparse_to_dense.h"
 
-void SparseToDense(int **sparse_indices, int *output_shape, const float *sparse_values, float default_value,
+void SparseToDense(int **sparse_indices, const int *output_shape, const float *sparse_values, float default_value,
                    float *output, bool isScalar, int index_start, int index_end, int out_width) {
   for (int i = index_start; i < index_end; i++) {
     for (int j = 0; j < out_width; j++) {

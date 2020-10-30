@@ -18,7 +18,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-int SpaceToDepthForNHWC(const float *input, float *output, int *in_shape, int *out_shape, int shape_size,
+int SpaceToDepthForNHWC(const float *input, float *output, int *in_shape, const int *out_shape, int shape_size,
                         int block_size, int h_start, int h_end) {
   if (input == NULL || output == NULL) {
     return NNACL_NULL_PTR;

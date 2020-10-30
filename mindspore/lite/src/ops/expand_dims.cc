@@ -39,12 +39,14 @@ int ExpandDims::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> 
   if (this->primitive_->value.type != schema::PrimitiveType_ExpandDims) {
     MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
     delete this->primitive_;
+    this->primitive_ = nullptr;
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
     auto attr = new (std::nothrow) schema::ExpandDimsT();
     if (attr == nullptr) {
       delete this->primitive_;
+      this->primitive_ = nullptr;
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
@@ -57,6 +59,8 @@ int ExpandDims::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> 
       MS_LOG(ERROR) << "input axis is not value node.";
       delete this->primitive_;
       delete attr;
+      this->primitive_ = nullptr;
+      attr = nullptr;
       return RET_ERROR;
     }
     this->primitive_->value.value = attr;
