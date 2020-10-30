@@ -131,7 +131,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         >>> shape = (4, 2)
         >>> minval = Tensor(1, mstype.int32)
         >>> maxval = Tensor(2, mstype.int32)
-        >>> output = C.uniform(shape, minval, maxval, seed=5)
+        >>> output = C.uniform(shape, minval, maxval, seed=5, dtype=mstype.int32)
         >>>
         >>> For continuous uniform distribution, minval and maxval can be multi-dimentional:
         >>> shape = (4, 2)
