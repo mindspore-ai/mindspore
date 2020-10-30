@@ -30,6 +30,7 @@ Graph Attention Networks(GAT) was proposed in 2017 by Petar Veličković et al. 
 Note that according to whether this attention layer is the output layer of the network or not, the node update function can be concatenate or average.
 
 # [Dataset](#contents)
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 - Dataset size:
   Statistics of dataset used are summerized as below:
 
@@ -175,7 +176,7 @@ Parameters for both training and evaluation can be set in config.py.
 | ------------------------------------ | ----------------------------------------- |
 | Resource                             | Ascend 910                                |
 | uploaded Date                        | 06/16/2020(month/day/year)                |
-| MindSpore Version                    | 0.5.0-beta                                |
+| MindSpore Version                    | 1.0.0                              |
 | Dataset                              | Cora/Citeseer                             |
 | Training Parameter                   | epoch=200                                 |
 | Optimizer                            | Adam                                      |
