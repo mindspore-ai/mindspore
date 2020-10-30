@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">HiMindSpore</string>
+    <string name="app_name_title">MindSpore</string>
+    <string name="switch_custom">custom</string>
+
+    <string name="title_image">Image Classification</string>
+    <string name="title_object">Object Detection</string>
+    <string name="title_source">Source Code</string>
+    <string name="title_help">Help And FeedBack</string>
+
+    <string name="title_photo">Photo</string>
+    <string name="title_camera">Camera</string>
+
+    <string name="title_demo">Demo</string>
+    <string name="title_custom">Custom</string>
+
+    <string name="title_time">Inference Time</string>
+
+</resources>

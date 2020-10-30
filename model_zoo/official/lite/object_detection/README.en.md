@@ -45,11 +45,11 @@ This object detection sample program on the Android device includes a Java layer
 
 When MindSpore C++ APIs are called at the Android JNI layer, related library files are required. You can use MindSpore Lite [source code compilation](https://www.mindspore.cn/tutorial/lite/en/master/use/build.html) to generate the MindSpore Lite version. In this case, you need to use the compile command of generate with image preprocessing module.
 
-In this example, the build process automatically downloads the `mindspore-lite-1.0.0-minddata-arm64-cpu` by the `app/download.gradle` file and saves in the `app/src/main/cpp` directory.
+In this example, the build process automatically downloads the `mindspore-lite-1.0.1-runtime-arm64-cpu` by the `app/download.gradle` file and saves in the `app/src/main/cpp` directory.
 
 Note: if the automatic download fails, please manually download the relevant library files and put them in the corresponding location.
 
-mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz [Download link](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.0/lite/android_aarch64/mindspore-lite-1.0.0-minddata-arm64-cpu.tar.gz)
+mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz [Download link](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/android_aarch64/mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz)
 
 ```
 android{
@@ -71,7 +71,7 @@ Create a link to the `.so` library file in the `app/CMakeLists.txt` file:
 
 ```
 # Set MindSpore Lite Dependencies.
-set(MINDSPORELITE_VERSION  mindspore-lite-1.0.0-minddata-arm64-cpu)
+set(MINDSPORELITE_VERSION  mindspore-lite-1.0.1-runtime-arm64-cpu)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION})
 add_library(mindspore-lite SHARED IMPORTED )
 add_library(minddata-lite SHARED IMPORTED )
