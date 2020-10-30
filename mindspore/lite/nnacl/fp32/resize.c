@@ -65,8 +65,8 @@ int PrepareResizeBilinear(const int *input_shape, const int *output_shape, bool 
 }
 
 int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                   const int *y_bottoms, const int *y_tops, int *x_lefts, int *x_rights, const float *y_bottom_weights,
-                   float *x_left_weights, int n_h_begin, int n_h_end) {
+                   const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
+                   const float *y_bottom_weights, float *x_left_weights, int n_h_begin, int n_h_end) {
   if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
       y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;
@@ -208,8 +208,9 @@ int InterpCol(const float *bottom_line, const float *top_line, float *output, in
 }
 
 int ResizeBilinear2(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                    const int *y_bottoms, const int *y_tops, int *x_lefts, int *x_rights, const float *y_bottom_weights,
-                    float *x_left_weights, float *line0, float *line1, int n_h_begin, int n_h_end) {
+                    const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
+                    const float *y_bottom_weights, float *x_left_weights, float *line0, float *line1, int n_h_begin,
+                    int n_h_end) {
   if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
       y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;

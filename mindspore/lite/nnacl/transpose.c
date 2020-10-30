@@ -18,7 +18,7 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-void TransposeDim2(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+void TransposeDim2(const float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
                    const int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
@@ -33,7 +33,7 @@ void TransposeDim2(float *in_data, float *out_data, const int *strides, int *out
   }
 }
 
-void TransposeDim3(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+void TransposeDim3(const float *in_data, float *out_data, const int *strides, const int *out_strides, const int *perm,
                    const int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
@@ -56,7 +56,7 @@ void TransposeDim3(float *in_data, float *out_data, const int *strides, int *out
   }
 }
 
-void TransposeDim4(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+void TransposeDim4(const float *in_data, float *out_data, const int *strides, const int *out_strides, const int *perm,
                    const int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
@@ -88,7 +88,7 @@ void TransposeDim4(float *in_data, float *out_data, const int *strides, int *out
   }
 }
 
-void TransposeDim5(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+void TransposeDim5(const float *in_data, float *out_data, const int *strides, const int *out_strides, const int *perm,
                    const int *output_shape, int h_start, int h_end) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
@@ -127,7 +127,7 @@ void TransposeDim5(float *in_data, float *out_data, const int *strides, int *out
   }
 }
 
-void TransposeDims(float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
+void TransposeDims(const float *in_data, float *out_data, const int *strides, const int *out_strides, const int *perm,
                    const int *output_shape, int h_start, int h_end, int dims, int *size, int *position) {
   *(size + dims - 1) = 1;
   for (int i = dims - 1; i > 0; --i) {
@@ -149,7 +149,7 @@ void TransposeDims(float *in_data, float *out_data, const int *strides, int *out
   }
 }
 
-int DoTranspose(float *in_data, float *out_data, int *input_shape, int *output_shape,
+int DoTranspose(const float *in_data, float *out_data, int *input_shape, const int *output_shape,
                 TransposeParameter *transpose_param, int h_start, int h_end, int *size, int *position) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_ERR;

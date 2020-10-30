@@ -65,7 +65,7 @@ void ScaleAxis(const float *in_data, float *out_data, const float *scale, const 
   }
 }
 
-void DoScale(const float *in_data, float *out_data, const float *scale, float *offset, int task_id,
+void DoScale(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
              ScaleParameter *scale_param) {
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
