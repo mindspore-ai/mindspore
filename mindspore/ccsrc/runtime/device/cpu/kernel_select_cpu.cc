@@ -210,7 +210,7 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
                   const std::vector<KernelAttr> &kernel_attrs, const std::vector<std::string> &input_formats,
                   const std::vector<TypeId> &input_types, const std::vector<size_t> &input_not_cnode_indexes,
                   const std::vector<std::string> &infer_output_formats, const std::vector<TypeId> &infer_output_types,
-                  bool strict) {
+                  std::pair<bool, bool> *matched, bool strict) {
   int max_type_matched_num = -1;
   int max_format_matched_num = -1;
   for (auto kernel_attr : kernel_attrs) {
@@ -244,10 +244,13 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
     }
     // All formats and data types matched
     if (max_type_matched_num == SizeToInt(input_types.size()) &&
-        max_format_matched_num == SizeToInt(input_types.size()) &&
-        output_type_format_matched_num.first == SizeToInt(infer_output_types.size()) &&
-        output_type_format_matched_num.second == SizeToInt(infer_output_types.size())) {
-      return true;
+        max_format_matched_num == SizeToInt(input_types.size())) {
+      matched->first = true;
+      if (output_type_format_matched_num.first == SizeToInt(infer_output_types.size()) &&
+          output_type_format_matched_num.second == SizeToInt(infer_output_types.size())) {
+        matched->second = true;
+        return true;
+      }
     }
   }
   return false;
@@ -261,22 +264,23 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   std::vector<std::string> infer_output_formats;
   std::vector<TypeId> infer_output_types;
   MS_LOG(INFO) << "SetKernelInfo, CNode Name: " << AnfAlgo::GetCNodeName(kernel_node);
-  GetInputFormatsAndDtypes(kernel_node, &input_formats, &input_types, &input_not_cnode_indexes);
-  GetOutputInferFormatsAndDtypes(kernel_node, &infer_output_formats, &infer_output_types);
   auto kernel_attrs =
     kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
   if (kernel_attrs.empty()) {
     MS_LOG(EXCEPTION) << "Operator[" << AnfAlgo::GetCNodeName(kernel_node) << "] is not support.";
   }
+  GetInputFormatsAndDtypes(kernel_node, &input_formats, &input_types, &input_not_cnode_indexes);
+  GetOutputInferFormatsAndDtypes(kernel_node, &infer_output_formats, &infer_output_types);
   KernelAttr selected_kernel_attr;
-  bool matched = true;
+  std::pair<bool, bool> matched = std::make_pair(false, false);
   if (!SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_formats, input_types,
-                    input_not_cnode_indexes, infer_output_formats, infer_output_types, true)) {
-    matched = SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_formats, input_types,
-                           input_not_cnode_indexes, infer_output_formats, infer_output_types, false);
+                    input_not_cnode_indexes, infer_output_formats, infer_output_types, &matched, true)) {
+    matched = std::make_pair(false, false);
+    SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_formats, input_types, input_not_cnode_indexes,
+                 infer_output_formats, infer_output_types, &matched, false);
   }
-
-  if (selected_kernel_attr.GetInputSize() > 0 && (matched || input_types.size() == input_not_cnode_indexes.size())) {
+  if (selected_kernel_attr.GetInputSize() > 0 &&
+      (matched.first || input_types.size() == input_not_cnode_indexes.size())) {
     MS_LOG(INFO) << "Input format and dtype is matched";
     GetOutputFormatsAndDtypes(kernel_node, selected_kernel_attr, &output_formats, &output_types);
     UpdatePrevNotCNodeFormatDtype(selected_kernel_attr, input_not_cnode_indexes, kernel_node);
