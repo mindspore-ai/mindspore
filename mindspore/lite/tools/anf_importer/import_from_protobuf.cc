@@ -371,9 +371,9 @@ bool AnfImporterFromProtobuf::ObtainCNodeAttrInTensorForm(const PrimitivePtr &pr
       prim->set_attr(attr_name, MakeValue<double>(attr_value));
     } else if (attr_tensor_type == onnx::TensorProto_DataType_INT64) {
       size_t data_size = sizeof(int64_t);
-      int32_t attr_value = 0;
+      int64_t attr_value = 0;
       ret = memcpy_s(&attr_value, data_size, tensor_buf.data(), tensor_buf.size());
-      prim->set_attr(attr_name, MakeValue<int32_t>(attr_value));
+      prim->set_attr(attr_name, MakeValue<int64_t>(attr_value));
     } else if (attr_tensor_type == onnx::TensorProto_DataType_BOOL) {
       size_t data_size = sizeof(bool);
       bool attr_value = false;

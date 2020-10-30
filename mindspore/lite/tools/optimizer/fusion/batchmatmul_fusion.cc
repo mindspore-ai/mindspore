@@ -85,6 +85,7 @@ STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPt
     }
     if (EOK != memcpy_s(new_tensor_data + (i - 1) * tensor_size, tensor_size, tensor_addr, tensor_size)) {
       MS_LOG(ERROR) << "memcpy_s data failed";
+      delete[] new_tensor_data;
       return RET_ERROR;
     }
   }
@@ -156,7 +157,10 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   rmatmul_quant_params.pop_back();
   // no bias quantParams
   rmatmul_quant_params.emplace_back(jointed_quant_params);
-  MS_ASSERT(matmul_cvalue != nullptr);
+  if (matmul_cvalue == nullptr) {
+    MS_LOG(ERROR) << "matmul_cvalue is nullptr.";
+    return nullptr;
+  }
   matmul_cvalue->SetInputQuantParams(rmatmul_quant_params);
   matmul_cvalue->SetOutputQuantParams(fc_prim->GetOutputQuantParams());
   auto matmul_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(matmul_cvalue));
@@ -164,14 +168,16 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
 
   // batchmatmul right node may be const
   if (right_reshape_node->isa<Parameter>()) {
-    // return stack_cnode;
     auto rmatmul_paramter = func_graph->add_parameter();
     if (GetRightMatmulInputParamter(stack_cnode, rmatmul_paramter) != RET_OK) {
       MS_LOG(ERROR) << "GetRightMatmulInputParamter failed";
       return node;
     }
     auto prim = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(matmul_value_node);
-    MS_ASSERT(prim->GetPrimitiveT()->value.AsMatMul() != nullptr);
+    if (prim->GetPrimitiveT()->value.AsMatMul() == nullptr) {
+      MS_LOG(ERROR) << "prim->GetPrimitiveT()->value.AsMatMul() is nullptr.";
+      return nullptr;
+    }
     prim->GetPrimitiveT()->value.AsMatMul()->transposeB = true;
     matmul_inputs.push_back(rmatmul_paramter);
   } else {

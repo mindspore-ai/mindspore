@@ -39,7 +39,7 @@ void *LiteBackendAllocWorkspace(int deviceType, int deviceId, uint64_t size, int
   return p->AllocWorkSpaceMem(size);
 }
 
-int LiteBackendFreeWorkspace(int deviceType, int deviceId, void *ptr) {
+int LiteBackendFreeWorkspace(int deviceType, int deviceId, const void *ptr) {
   std::lock_guard<std::mutex> lock(gWorkspaceMutex);
   auto p = mindspore::predict::WorkspacePool::GetInstance();
   if (p == nullptr) {
