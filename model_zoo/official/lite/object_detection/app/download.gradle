@@ -10,8 +10,7 @@ def targetModelFile = "src/main/assets/model/ssd.ms"
 def mindSporeLibrary_arm64 = "src/main/cpp/${mindsporeLite_Version}.tar.gz"
 
 def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/ssd_mobilenetv2_lite/ssd.ms"
-//def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.0/lite/android_aarch64/${mindsporeLite_Version}.tar.gz"
-def mindsporeLiteDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/lib/mindspore%20version%201.0.1/${mindsporeLite_Version}.tar.gz"
+def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/android_aarch64/${mindsporeLite_Version}.tar.gz"
 
 def cleantargetMindSporeInclude = "src/main/cpp"
 
