@@ -1324,7 +1324,6 @@ STATUS PostTrainingQuantizer::BiasCorrection(FuncGraphPtr func_graph) {
         MS_ASSERT(param_value != nullptr);
         param_value->set_tensor_shape(shape);
         param_value->set_tensor_type(kNumberTypeFloat32);
-        // param_value->set_format(tensor->format);
 
         auto size = sizeof(float) * bias_diff.size();
         char *tensor_data = new (std::nothrow) char[size];

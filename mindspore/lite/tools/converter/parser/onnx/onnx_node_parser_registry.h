@@ -41,6 +41,7 @@ class OnnxNodeRegistrar {
   OnnxNodeRegistrar(const std::string &name, OnnxNodeParser *parser) {
     OnnxNodeParserRegistry::GetInstance()->parsers[name] = parser;
   }
+  ~OnnxNodeRegistrar() = default;
 };
 }  // namespace lite
 }  // namespace mindspore

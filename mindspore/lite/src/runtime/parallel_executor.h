@@ -35,7 +35,7 @@ class ParallelExecutor : public Executor {
   int Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
           std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
           const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
-  inline kernel::LiteKernel *GetReadyKernel(const int index) { return readyKernels.at(index); }
+  inline kernel::LiteKernel *GetReadyKernel(const int index) const { return readyKernels.at(index); }
   inline void SetResult(const int index, const int result) { results.at(index) = result; }
 
  private:

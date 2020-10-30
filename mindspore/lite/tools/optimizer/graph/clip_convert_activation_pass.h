@@ -29,8 +29,6 @@ class ClipConvertActivationPass : public Pass {
  public:
   ClipConvertActivationPass() : Pass("clip_convert_activation_pass") {}
   ~ClipConvertActivationPass() override = default;
-  // void SetQuantType(QuantType type);
-  // void SetFmkType(FmkType fmkType);
   bool Run(const FuncGraphPtr &graph) override;
 };
 }  // namespace mindspore::opt

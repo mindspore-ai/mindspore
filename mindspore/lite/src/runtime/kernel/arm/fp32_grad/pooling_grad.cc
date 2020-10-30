@@ -21,7 +21,6 @@
 #include "nnacl/fp32_grad/pooling_grad.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
-// #include "src/train/ops/train_ops.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

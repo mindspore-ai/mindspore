@@ -54,7 +54,7 @@ int CompareRelativeOutput(const float *output_data, std::string file_path) {
 }
 
 float RelativeOutputError(const float *output_data, std::string file_path) {
-  size_t output_size;
+  size_t output_size = 0;
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
   size_t output_num = output_size / sizeof(float);
   float error = CompareOutputRelativeData(output_data, ground_truth, output_num);
