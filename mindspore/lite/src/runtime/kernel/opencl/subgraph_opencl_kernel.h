@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SUBGRAPH_OPENCL_KENEL_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SUBGRAPH_OPENCL_KENEL_H_
 
+#include <set>
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/runtime/opencl/opencl_allocator.h"
@@ -41,11 +42,13 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
     subgraph_type_ = kGpuSubGraph;
     this->name_ = "GpuSubGraph";
     this->executor_ = new lite::opencl::OpenCLExecutor();
+    nodes_set_.insert(nodes.begin(), nodes.end());
   }
   ~SubGraphOpenCLKernel() override;
 
   int PreProcess() override { return mindspore::lite::RET_OK; }
   int PostProcess() override { return mindspore::lite::RET_OK; }
+  int Prepare() override;
   int Init() override;
   int InferShape();
   int ReSize() override;
@@ -56,6 +59,13 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   int UnInit();
   int UpdateTensorDataType();
   int MallocTensorWithReuse();
+  int ReplaceOutTensorAndKernelToNull(const std::vector<lite::Tensor *> &in_tensors,
+                                      const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
+                                      OpenCLMemType mem_type);
+  int ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
+                                         const std::vector<kernel::LiteKernel *> &in_kernels, lite::Tensor *new_tensor,
+                                         kernel::LiteKernel *in_convert_op, OpenCLMemType mem_type);
+  int GetInOutNodes();
   int GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
                     const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
                     std::vector<lite::Tensor *> *out_tensors, std::vector<OpenCLToFormatParameter *> *out_parameters,
@@ -70,6 +80,9 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   std::vector<OpenCLToFormatParameter *> out_parameters_;
   std::vector<LiteKernel *> in_convert_ops_;
   std::vector<LiteKernel *> out_convert_ops_;
+  std::vector<LiteKernel *> in_nodes_;
+  std::vector<LiteKernel *> out_nodes_;
+  std::set<LiteKernel *> nodes_set_;
   lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
   lite::opencl::OpenCLRuntime *ocl_runtime_{nullptr};
 };
