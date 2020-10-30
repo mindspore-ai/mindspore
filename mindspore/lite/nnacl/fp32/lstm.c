@@ -79,8 +79,8 @@ void ElementMulAcc(const float *input0, const float *input1, float *output, int 
   }
 }
 
-void UpdataState(float *cell_state, const float *forget_gate, const float *input_gate, float *cell_gate, int batch,
-                 int hidden_size) {
+void UpdataState(float *cell_state, const float *forget_gate, const float *input_gate, const float *cell_gate,
+                 int batch, int hidden_size) {
   ElementMul(forget_gate, cell_state, cell_state, batch * hidden_size);
   ElementMulAcc(input_gate, cell_gate, cell_state, batch * hidden_size);
 }

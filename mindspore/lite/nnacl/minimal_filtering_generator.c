@@ -103,7 +103,7 @@ void T(const float *poly_array, float *matrix_t, int n) {
   }
 }
 
-int B(float *poly_array, float *matrix_b, int in_unit) {
+int B(const float *poly_array, float *matrix_b, int in_unit) {
   memset(matrix_b, 0, in_unit * in_unit * sizeof(float));
   int n = in_unit - 1;
   if ((n * n) > MAX_LEN || (n * in_unit) > MAX_LEN) {

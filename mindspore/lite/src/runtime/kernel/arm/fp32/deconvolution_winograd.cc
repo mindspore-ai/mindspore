@@ -88,14 +88,12 @@ void DeConvolutionWinogradCPUKernel::FreeDeconvParam() {
         }
       }
     }
-  }
 
-  if (deconv_param_->compute_units_ != nullptr) {
-    free(deconv_param_->compute_units_);
-    deconv_param_->compute_units_ = nullptr;
-  }
+    if (deconv_param_->compute_units_ != nullptr) {
+      free(deconv_param_->compute_units_);
+      deconv_param_->compute_units_ = nullptr;
+    }
 
-  if (deconv_param_ != nullptr) {
     delete (deconv_param_);
     deconv_param_ = nullptr;
   }

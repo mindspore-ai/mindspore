@@ -18,7 +18,7 @@
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
-void ScaleInner(float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
+void ScaleInner(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                 int outer_end, int axis_size, int inner_size) {
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size * inner_size;
@@ -43,8 +43,8 @@ void ScaleInner(float *in_data, float *out_data, const float *scale, const float
   }
 }
 
-void ScaleAxis(float *in_data, float *out_data, const float *scale, const float *offset, int outer_start, int outer_end,
-               int axis_size) {
+void ScaleAxis(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
+               int outer_end, int axis_size) {
   for (int out = outer_start; out < outer_end; out++) {
     int out_offset = out * axis_size;
     int index = 0;
@@ -65,7 +65,7 @@ void ScaleAxis(float *in_data, float *out_data, const float *scale, const float 
   }
 }
 
-void DoScale(float *in_data, float *out_data, const float *scale, float *offset, int task_id,
+void DoScale(const float *in_data, float *out_data, const float *scale, float *offset, int task_id,
              ScaleParameter *scale_param) {
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
@@ -79,7 +79,7 @@ void DoScale(float *in_data, float *out_data, const float *scale, float *offset,
   }
 }
 
-void ScaleInnerRelu(float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
+void ScaleInnerRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                     int outer_end, int axis_size, int inner_size) {
 #ifdef ENABLE_ARM64
   float32x4_t zeros = {0, 0, 0, 0};
@@ -109,7 +109,7 @@ void ScaleInnerRelu(float *in_data, float *out_data, const float *scale, const f
   }
 }
 
-void ScaleAxisRelu(float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
+void ScaleAxisRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                    int outer_end, int axis_size) {
 #ifdef ENABLE_ARM64
   float32x4_t zeros = {0, 0, 0, 0};
@@ -136,7 +136,7 @@ void ScaleAxisRelu(float *in_data, float *out_data, const float *scale, const fl
   }
 }
 
-void DoScaleRelu(float *in_data, float *out_data, const float *scale, float *offset, int task_id,
+void DoScaleRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
                  ScaleParameter *scale_param) {
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
@@ -150,7 +150,7 @@ void DoScaleRelu(float *in_data, float *out_data, const float *scale, float *off
   }
 }
 
-void ScaleInnerRelu6(float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
+void ScaleInnerRelu6(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                      int outer_end, int axis_size, int inner_size) {
 #ifdef ENABLE_ARM64
   float32x4_t zeros = {0, 0, 0, 0};
@@ -181,7 +181,7 @@ void ScaleInnerRelu6(float *in_data, float *out_data, const float *scale, const 
   }
 }
 
-void ScaleAxisRelu6(float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
+void ScaleAxisRelu6(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                     int outer_end, int axis_size) {
 #ifdef ENABLE_ARM64
   float32x4_t zeros = {0, 0, 0, 0};
@@ -209,7 +209,7 @@ void ScaleAxisRelu6(float *in_data, float *out_data, const float *scale, const f
   }
 }
 
-void DoScaleRelu6(float *in_data, float *out_data, const float *scale, float *offset, int task_id,
+void DoScaleRelu6(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
                   ScaleParameter *scale_param) {
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;

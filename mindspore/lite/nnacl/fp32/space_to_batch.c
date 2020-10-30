@@ -16,7 +16,7 @@
 #include "nnacl/fp32/space_to_batch.h"
 #include "nnacl/arithmetic_common.h"
 
-void DoSpaceToBatchNHWC(const float *input, float *output, const int *block_sizes, int *in_shape,
+void DoSpaceToBatchNHWC(const float *input, float *output, const int *block_sizes, const int *in_shape,
                         const int *out_shape) {
   int out_dim0 = out_shape[0];
   int out_dim1 = out_shape[1];

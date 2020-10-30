@@ -24,7 +24,7 @@ typedef struct SpaceToDepthParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int SpaceToDepthForNHWC(const float *input, float *output, int *in_shape, const int *out_shape, int shape_size,
+int SpaceToDepthForNHWC(const float *input, float *output, const int *in_shape, const int *out_shape, int shape_size,
                         int block_size, int h_start, int h_end);
 #ifdef __cplusplus
 }
