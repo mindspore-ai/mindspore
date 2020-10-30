@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_GRPC_SERVER_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_GRPC_SERVER_H_
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <utility>
@@ -34,6 +35,7 @@ namespace dataset {
 class CacheServerRequest : public BaseRequest {
  public:
   friend class CacheServer;
+  friend class CacheService;
   enum class STATE : int8_t { CREATE = 1, PROCESS = 2, FINISH = 3 };
   explicit CacheServerRequest(int32_t queue_id)
       : BaseRequest::BaseRequest(BaseRequest::RequestType::kRequestUnknown),

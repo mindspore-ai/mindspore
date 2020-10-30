@@ -94,6 +94,11 @@ Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, C alloc, 
   CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "size must be positive");
   try {
     T *data = alloc.allocate(n);
+    // Some of our implementation of allocator (e.g. NumaAllocator) don't throw std::bad_alloc.
+    // So we have to catch for null ptr
+    if (data == nullptr) {
+      return Status(StatusCode::kOutOfMemory);
+    }
     if (!std::is_arithmetic<T>::value) {
       for (auto i = 0; i < n; i++) {
         std::allocator_traits<C>::construct(alloc, &(data[i]), std::forward<Args>(args)...);

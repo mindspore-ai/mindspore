@@ -74,6 +74,9 @@ Status CacheServerGreeterImpl::Run() {
 #if CACHE_LOCAL_CLIENT
     RETURN_IF_NOT_OK(CachedSharedMemoryArena::CreateArena(&shm_pool_, port_, shm_pool_sz_in_gb_));
     MS_LOG(INFO) << "Creation of local socket and shared memory successful";
+    auto cs = CacheServer::GetInstance().GetHWControl();
+    // This shared memory is a hot memory and we will interleave among all the numa nodes.
+    cs->InterleaveMemory(const_cast<void *>(shm_pool_->SharedMemoryBaseAddr()), shm_pool_sz_in_gb_ * 1073741824L);
 #endif
   } else {
     std::string errMsg = "Fail to start server. ";
@@ -127,8 +130,13 @@ Status CacheServerRequest::operator()(CacheServerGreeter::AsyncService *svc, grp
     st_ = STATE::PROCESS;
     svc->RequestCacheServerRequest(&ctx_, &rq_, &responder_, cq, cq, this);
   } else if (st_ == STATE::PROCESS) {
+    auto &cs = CacheServer::GetInstance();
     // Get a new tag and handle the next request before we serve the current request.
-    // The tag will be recycled when its state is changed to FINISH
+    // The tag will be recycled when its state is changed to FINISH.
+    // The number of free list queues is the same as the number of grpc threads.
+    // Where we get the free list it doesn't matter (as long we return it back to the right queue).
+    // We can round robin, use the qid or even use the worker id. We will use the free list queue
+    // where the current request comes from.
     CacheServerRequest *next_rq;
     RETURN_IF_NOT_OK(CacheServer::GetFreeRequestTag(myQID, &next_rq));
     RETURN_IF_NOT_OK((*next_rq)(svc, cq));
@@ -138,8 +146,24 @@ Status CacheServerRequest::operator()(CacheServerGreeter::AsyncService *svc, grp
     type_ = static_cast<RequestType>(rq_.type());
     // Now we pass the address of this instance to CacheServer's main loop.
     MS_LOG(DEBUG) << "Handle request " << *this;
-    auto &cs = CacheServer::GetInstance();
-    RETURN_IF_NOT_OK(cs.PushRequest(myQID, this));
+    // We will distribute the request evenly (or randomly) over all the numa nodes.
+    // The exception is BatchFetch which we need to pre-process here.
+    if (type_ == BaseRequest::RequestType::kBatchFetchRows) {
+      rc_ = cs.BatchFetchRows(&rq_, &reply_);
+      if (!rc_.IsInterrupted()) {
+        Status2CacheReply(rc_, &reply_);
+        st_ = CacheServerRequest::STATE::FINISH;
+        responder_.Finish(reply_, grpc::Status::OK, this);
+      } else {
+        return rc_;
+      }
+    } else {
+      // When the number of grpc workers is the same as the server workers, we will use this queue id
+      // and push to the corresponding queue.
+      bool random = cs.GetNumWorkers() != cs.GetNumGrpcWorkers();
+      worker_id_t worker_id = random ? cs.GetRandomWorker() : myQID;
+      RETURN_IF_NOT_OK(cs.PushRequest(worker_id, this));
+    }
   } else if (st_ == STATE::FINISH) {
     MS_LOG(DEBUG) << *this << " Finished.";
     // Return back to the free list.

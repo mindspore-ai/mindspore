@@ -24,7 +24,7 @@ namespace mindspore {
 namespace dataset {
 
 // Constructor
-CacheErrorPass::CacheErrorPass() : is_cached_(false) {}
+CacheErrorPass::CacheErrorPass() : is_cached_(false), is_mappable_(false) {}
 
 // Identifies the subtree below this node as being cached
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
@@ -75,5 +75,81 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modifi
   return Status::OK();
 }
 #endif
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<CocoOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
+  // Turn on the flag that this is a tree with mappable leaf dataset
+  is_mappable_ = true;
+  return Status::OK();
+}
+
+Status CacheErrorPass::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+  // Turn off the flag that we're under a merge op
+  is_cached_ = false;
+  return Status::OK();
+}
+
+// Currently, returns an error if RepeatOp exists under a cache
+// Because there is no operator in the cache hit stream to consume eoes, caching above repeat causes problem.
+Status CacheErrorPass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
+  if (is_cached_ && is_mappable_) {
+    RETURN_STATUS_UNEXPECTED("Repeat is not supported as a descendant operator under a mappable cache.");
+  }
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

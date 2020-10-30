@@ -37,6 +37,11 @@ void Task::operator()() {
   ss << Services::GetUniqueID();
 #endif
   MS_LOG(DEBUG) << my_name_ << " Thread ID " << ss.str() << " Started.";
+
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+  native_handle_ = pthread_self();
+#endif
+
   try {
     // Previously there is a timing hole where the thread is spawn but hit error immediately before we can set
     // the TaskGroup pointer and register. We move the registration logic to here (after we spawn) so we can
@@ -96,7 +101,8 @@ Task::Task(const std::string &myName, const std::function<Status()> &f)
       task_group_(nullptr),
       is_master_(false),
       running_(false),
-      caught_severe_exception_(false) {
+      caught_severe_exception_(false),
+      native_handle_(0) {
   IntrpResource::ResetIntrpState();
   wp_.ResetIntrpState();
   wp_.Clear();
@@ -164,5 +170,10 @@ Status Task::OverrideInterruptRc(const Status &rc) {
   }
   return rc;
 }
+
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+pthread_t Task::GetNativeHandle() const { return native_handle_; }
+#endif
+
 }  // namespace dataset
 }  // namespace mindspore

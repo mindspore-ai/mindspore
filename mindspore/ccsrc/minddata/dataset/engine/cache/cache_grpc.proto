@@ -32,12 +32,13 @@ message CacheRequest {
   uint32 flag = 2;
   oneof connect_info {
     // The server_connection_id is the actual id we use for operations after the cache is built
-    int64 connection_id = 3;
+    uint64 connection_id = 3;
     // But some request like CreateCache we have to use the session id and crc to connect to the server.
     CacheClientInfo connection_info = 4;
   }
+  int32 client_id = 5;
   // Everything else is just vector of buffers
-  repeated bytes buf_data = 5;
+  repeated bytes buf_data = 6;
 }
 
 message CacheReply {

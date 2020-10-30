@@ -17,7 +17,6 @@
 #include <iomanip>
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/cache/cache_request.h"
-#include "minddata/dataset/engine/cache/cache_service.h"
 #include "minddata/dataset/engine/cache/cache_fbb.h"
 #include "minddata/dataset/util/bit.h"
 
@@ -59,6 +58,7 @@ CacheClient::CacheClient(session_id_type session_id, uint64_t cache_mem_sz, bool
     : server_connection_id_(0),
       cache_mem_sz_(cache_mem_sz),
       spill_(spill),
+      client_id_(-1),
       local_bypass_(false),
       hostname_(std::move(hostname)),
       port_(port),
@@ -71,6 +71,22 @@ CacheClient::CacheClient(session_id_type session_id, uint64_t cache_mem_sz, bool
 
 CacheClient::~CacheClient() {
   cache_miss_keys_wp_.Set();
+  if (client_id_ != -1) {
+    try {
+      // Send a message to the server, saying I am done.
+      auto rq = std::make_shared<ConnectResetRequest>(server_connection_id_, client_id_);
+      Status rc = PushRequest(rq);
+      if (rc.IsOk()) {
+        rc = rq->Wait();
+        if (rc.IsOk()) {
+          MS_LOG(INFO) << "Disconnect from server successful";
+        }
+      }
+    } catch (const std::exception &e) {
+      // Can't do anything in destructor. So just log the error.
+      MS_LOG(ERROR) << e.what();
+    }
+  }
   (void)comm_->ServiceStop();
 }
 
@@ -85,7 +101,7 @@ void CacheClient::Print(std::ostream &out) const {
 }
 
 Status CacheClient::WriteRow(const TensorRow &row, row_id_type *row_id_from_server) const {
-  auto rq = std::make_shared<CacheRowRequest>(server_connection_id_, cookie(), SupportLocalClient());
+  auto rq = std::make_shared<CacheRowRequest>(this);
   RETURN_IF_NOT_OK(rq->SerializeCacheRowRequest(this, row));
   RETURN_IF_NOT_OK(PushRequest(rq));
   RETURN_IF_NOT_OK(rq->Wait());
@@ -104,7 +120,7 @@ Status CacheClient::WriteBuffer(std::unique_ptr<DataBuffer> &&in) const {
     for (auto i = 0; i < num_rows; ++i) {
       TensorRow row;
       RETURN_IF_NOT_OK(db_ptr->PopRow(&row));
-      arr[i] = std::make_shared<CacheRowRequest>(server_connection_id_, cookie(), SupportLocalClient());
+      arr[i] = std::make_shared<CacheRowRequest>(this);
       RETURN_IF_NOT_OK(arr[i]->SerializeCacheRowRequest(this, row));
       RETURN_IF_NOT_OK(PushRequest(arr[i]));
     }
@@ -118,7 +134,7 @@ Status CacheClient::WriteBuffer(std::unique_ptr<DataBuffer> &&in) const {
 
 Status CacheClient::GetRows(const std::vector<row_id_type> &row_id, TensorTable *out) const {
   RETURN_UNEXPECTED_IF_NULL(out);
-  auto rq = std::make_shared<BatchFetchRequest>(server_connection_id_, row_id, SupportLocalClient());
+  auto rq = std::make_shared<BatchFetchRequest>(this, row_id);
   RETURN_IF_NOT_OK(PushRequest(rq));
   RETURN_IF_NOT_OK(rq->Wait());
   int64_t mem_addr;
@@ -167,7 +183,7 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
     lck.Unlock();  // GetStat will grab the mutex again. So unlock it to prevent deadlock.
     CacheServiceStat stat{};
     RETURN_IF_NOT_OK(GetStat(&stat));
-    if (stat.cache_service_state == static_cast<uint8_t>(CacheService::State::kFetchPhase)) {
+    if (stat.cache_service_state == static_cast<uint8_t>(CacheServiceState::kFetchPhase)) {
       return Status(StatusCode::kDuplicateKey, __LINE__, __FILE__, "Not an error and we should bypass the build phase");
     }
   } else {
@@ -183,18 +199,16 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
     // Start the comm layer to receive reply
     RETURN_IF_NOT_OK(comm_->ServiceStart());
     // Initiate connection
-    auto rq = std::make_shared<CreateCacheRequest>(cinfo_, cache_mem_sz_, createFlag);
+    auto rq = std::make_shared<CreateCacheRequest>(this, cinfo_, cache_mem_sz_, createFlag);
     RETURN_IF_NOT_OK(PushRequest(rq));
     Status rc = rq->Wait();
-    if (rc.IsOk() || rc.get_code() == StatusCode::kDuplicateKey) {
-      std::string cookie;
-      rq->ParseResult(&server_connection_id_, &cookie);
-      if (rc.IsOk()) {
-        // The 1st guy creating the cache will get a cookie back.
-        // But this object may be shared among pipelines and we don't want
-        // overwrite it.
-        cookie_ = cookie;
-      }
+    bool success = (rc.IsOk() || rc.get_code() == StatusCode::kDuplicateKey);
+    // If we get kDuplicateKey, it just means we aren't the first one to create the cache,
+    // and we will continue to parse the result.
+    if (rc.get_code() == StatusCode::kDuplicateKey) {
+      RETURN_IF_NOT_OK(rq->PostReply());
+    }
+    if (success) {
       // Attach to shared memory for local client
       RETURN_IF_NOT_OK(comm_->AttachToSharedMemory(port_, &local_bypass_));
     }

@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <algorithm>
 #include <cerrno>
 #include <iomanip>
 #include <iostream>
@@ -31,7 +32,9 @@
 
 namespace mindspore {
 namespace dataset {
-
+const int32_t CacheAdminArgHandler::kDefaultNumWorkers = std::thread::hardware_concurrency() > 2
+                                                           ? std::thread::hardware_concurrency() / 2
+                                                           : 1;
 const char CacheAdminArgHandler::kServerBinary[] = "cache_server";
 const char CacheAdminArgHandler::kDefaultSpillDir[] = "/tmp";
 
@@ -304,8 +307,10 @@ Status CacheAdminArgHandler::Validate() {
   }
 
   // Additional checks here
-  if (num_workers_ < 1 || num_workers_ > 100)
-    return Status(StatusCode::kSyntaxError, "Number of workers must be in range of 1 and 100.");
+  auto max_num_workers = std::max<int32_t>(std::thread::hardware_concurrency(), 100);
+  if (num_workers_ < 1 || num_workers_ > max_num_workers)
+    return Status(StatusCode::kSyntaxError,
+                  "Number of workers must be in range of 1 and " + std::to_string(max_num_workers) + ".");
   if (log_level_ < 0 || log_level_ > 3) return Status(StatusCode::kSyntaxError, "Log level must be in range (0..3).");
   if (memory_cap_ratio_ <= 0 || memory_cap_ratio_ > 1)
     return Status(StatusCode::kSyntaxError, "Memory cap ratio should be positive and no greater than 1");
@@ -354,13 +359,15 @@ Status CacheAdminArgHandler::RunCommand() {
       std::vector<SessionCacheInfo> session_info = rq->GetSessionCacheInfo();
       if (!session_info.empty()) {
         std::cout << std::setw(12) << "Session" << std::setw(12) << "Cache Id" << std::setw(12) << "Mem cached"
-                  << std::setw(12) << "Disk cached" << std::setw(16) << "Avg cache size" << std::endl;
+                  << std::setw(12) << "Disk cached" << std::setw(16) << "Avg cache size" << std::setw(10) << "Numa hit"
+                  << std::endl;
         for (auto curr_session : session_info) {
           std::string cache_id;
           std::string stat_mem_cached;
           std::string stat_disk_cached;
           std::string stat_avg_cached;
-          int32_t crc = (curr_session.connection_id & 0x00000000FFFFFFFF);
+          std::string stat_numa_hit;
+          uint32_t crc = (curr_session.connection_id & 0x00000000FFFFFFFF);
           cache_id = (curr_session.connection_id == 0) ? "n/a" : std::to_string(crc);
           stat_mem_cached =
             (curr_session.stats.num_mem_cached == 0) ? "n/a" : std::to_string(curr_session.stats.num_mem_cached);
@@ -368,10 +375,12 @@ Status CacheAdminArgHandler::RunCommand() {
             (curr_session.stats.num_disk_cached == 0) ? "n/a" : std::to_string(curr_session.stats.num_disk_cached);
           stat_avg_cached =
             (curr_session.stats.avg_cache_sz == 0) ? "n/a" : std::to_string(curr_session.stats.avg_cache_sz);
+          stat_numa_hit =
+            (curr_session.stats.num_numa_hit == 0) ? "n/a" : std::to_string(curr_session.stats.num_numa_hit);
 
           std::cout << std::setw(12) << curr_session.session_id << std::setw(12) << cache_id << std::setw(12)
                     << stat_mem_cached << std::setw(12) << stat_disk_cached << std::setw(16) << stat_avg_cached
-                    << std::endl;
+                    << std::setw(10) << stat_numa_hit << std::endl;
         }
       } else {
         std::cout << "No active sessions." << std::endl;

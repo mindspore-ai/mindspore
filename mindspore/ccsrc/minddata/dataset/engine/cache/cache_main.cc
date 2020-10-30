@@ -54,6 +54,8 @@ ds::Status SendSyncCommand(int32_t port, ds::BaseRequest::RequestType type, ds::
 #endif
   try {
     rq->set_type(static_cast<int16_t>(type));
+    rq->set_client_id(-1);
+    rq->set_flag(0);
     grpc::ChannelArguments args;
     grpc::ClientContext ctx;
     grpc::CompletionQueue cq;

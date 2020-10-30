@@ -309,8 +309,7 @@ Status CacheMergeOp::TensorRowCacheRequest::AsyncSendCacheRequest(const std::sha
   if (st_.compare_exchange_strong(expected, State::kDirty)) {
     // We will do a deep copy but write directly into CacheRequest protobuf or shared memory
     Status rc;
-    cleaner_copy_ =
-      std::make_shared<CacheRowRequest>(cc->server_connection_id_, cc->cookie(), cc->SupportLocalClient());
+    cleaner_copy_ = std::make_shared<CacheRowRequest>(cc.get());
     rc = cleaner_copy_->SerializeCacheRowRequest(cc.get(), row);
     if (rc.IsOk()) {
       // Send the request async. The cleaner will check the return code.

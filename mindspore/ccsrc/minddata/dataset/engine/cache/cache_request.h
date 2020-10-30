@@ -41,6 +41,7 @@ struct CacheServiceStat {
   int64_t num_mem_cached;
   int64_t num_disk_cached;
   int64_t avg_cache_sz;
+  int64_t num_numa_hit;
   row_id_type min_row_id;
   row_id_type max_row_id;
   int8_t cache_service_state;
@@ -75,6 +76,8 @@ class BaseRequest {
     kHeartBeat = 14,
     kToggleWriteMode = 15,
     kListSessions = 16,
+    kConnectReset = 17,
+    kInternalFetchRow = 18,
     // Add new request before it.
     kRequestUnknown = 32767
   };
@@ -84,10 +87,15 @@ class BaseRequest {
   friend class CacheClientGreeter;
   friend class CacheClientRequestTag;
   friend class CacheClient;
+  friend class CacheService;
 
   /// \brief Base class of a cache server request
   /// \param type Type of the request
-  explicit BaseRequest(RequestType type) : type_(type) { rq_.set_type(static_cast<int16_t>(type_)); }
+  explicit BaseRequest(RequestType type) : type_(type) {
+    rq_.set_type(static_cast<int16_t>(type_));
+    rq_.set_client_id(-1);
+    rq_.set_flag(0);
+  }
   virtual ~BaseRequest() = default;
 
   /// \brief A print method for debugging
@@ -138,15 +146,7 @@ class CacheRowRequest : public BaseRequest {
  public:
   friend class CacheServer;
   friend class CacheClient;
-  explicit CacheRowRequest(connection_id_type connection_id, const std::string &cookie, bool local_bypass)
-      : BaseRequest(RequestType::kCacheRow),
-        support_local_bypass_(local_bypass),
-        addr_(-1),
-        sz_(0),
-        row_id_from_server_(-1) {
-    rq_.set_connection_id(connection_id);
-    rq_.add_buf_data(cookie);
-  }
+  explicit CacheRowRequest(const CacheClient *cc);
   ~CacheRowRequest() override = default;
 
   /// \brief Serialize a TensorRow for streaming to the cache server
@@ -193,7 +193,7 @@ class BatchFetchRequest : public BaseRequest {
  public:
   friend class CacheServer;
   friend class CacheService;
-  BatchFetchRequest(connection_id_type connection_id, const std::vector<row_id_type> &row_id, bool local_bypass);
+  BatchFetchRequest(const CacheClient *cc, const std::vector<row_id_type> &row_id);
   ~BatchFetchRequest() override = default;
   Status RestoreRows(TensorTable *out, const void *baseAddr, int64_t *out_addr);
 
@@ -212,21 +212,18 @@ class CreateCacheRequest : public BaseRequest {
   /// \param connection_id
   /// \param cache_mem_sz Maximum memory assigned for this connection. 0 means unlimited
   /// \param flag Attributes of the cache.
-  explicit CreateCacheRequest(const CacheClientInfo &cinfo, uint64_t cache_mem_sz,
+  explicit CreateCacheRequest(CacheClient *cc, const CacheClientInfo &cinfo, uint64_t cache_mem_sz,
                               CreateCacheFlag flag = CreateCacheFlag::kNone);
   ~CreateCacheRequest() override = default;
-  void ParseResult(connection_id_type *id, std::string *out) {
-    auto p = flatbuffers::GetRoot<CreateCacheReplyMsg>(reply_.result().data());
-    *id = p->connection_id();
-    *out = p->cookie()->str();
-  }
 
-  /// Overload the base class Prepare
+  /// Overload the base class Prepare/PostReply
   Status Prepare() override;
+  Status PostReply() override;
 
  private:
   uint64_t cache_mem_sz_;
   CreateCacheFlag flag_;
+  CacheClient *cc_;
 };
 
 /// \brief Request to get all the keys not present at the server.
@@ -395,6 +392,23 @@ class ToggleWriteModeRequest : public BaseRequest {
     rq_.add_buf_data(on_off ? "on" : "off");
   }
   ~ToggleWriteModeRequest() override = default;
+};
+
+class ConnectResetRequest : public BaseRequest {
+ public:
+  friend class CacheServer;
+  explicit ConnectResetRequest(connection_id_type connection_id, int32_t client_id)
+      : BaseRequest(RequestType::kConnectReset) {
+    rq_.set_connection_id(connection_id);
+    rq_.set_client_id(client_id);
+  }
+  ~ConnectResetRequest() override = default;
+
+  /// Override the base class function
+  Status Prepare() override {
+    CHECK_FAIL_RETURN_UNEXPECTED(rq_.client_id() != -1, "Invalid client id");
+    return Status::OK();
+  }
 };
 }  // namespace dataset
 }  // namespace mindspore

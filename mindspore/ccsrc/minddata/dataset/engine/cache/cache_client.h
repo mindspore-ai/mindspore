@@ -47,6 +47,9 @@ namespace dataset {
 class CacheClient {
  public:
   friend class CacheMergeOp;
+  friend class CreateCacheRequest;
+  friend class CacheRowRequest;
+  friend class BatchFetchRequest;
 
   /// \brief A builder to help creating a CacheClient object
   class Builder {
@@ -115,7 +118,7 @@ class CacheClient {
     session_id_type GetSessionId() const { return session_id_; }
     uint64_t GetCacheMemSz() const { return cache_mem_sz_; }
     bool isSpill() const { return spill_; }
-    const std::string &getHostname() const { return hostname_; }
+    const std::string &GetHostname() const { return hostname_; }
     int32_t GetPort() const { return port_; }
     int32_t GetNumConnections() const { return num_connections_; }
     int32_t GetPrefetchSize() const { return prefetch_size_; }
@@ -256,8 +259,10 @@ class CacheClient {
   CacheClientInfo cinfo_;
   // The server_connection_id_ is the actual id we use for operations after the cache is built
   connection_id_type server_connection_id_;
-  // Some magic cookie returned from the cache server.
+  // Some magic cookie/id returned from the cache server.
   std::string cookie_;
+  int32_t client_id_;
+  std::vector<int32_t> cpu_list_;
   // Comm layer
   bool local_bypass_;
   std::string hostname_;

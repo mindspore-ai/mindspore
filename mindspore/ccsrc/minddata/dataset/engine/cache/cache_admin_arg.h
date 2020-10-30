@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <sstream>
+#include <thread>
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 
@@ -29,7 +30,7 @@ namespace dataset {
 
 class CacheAdminArgHandler {
  public:
-  static constexpr int32_t kDefaultNumWorkers = 32;
+  static const int32_t kDefaultNumWorkers;
   static constexpr int32_t kDefaultSharedMemorySizeInGB = 4;
   static constexpr int32_t kDefaultLogLevel = 1;
   static constexpr float kMemoryCapRatio = 0.8;

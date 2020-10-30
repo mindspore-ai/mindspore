@@ -65,6 +65,7 @@ table ServiceStatMsg {
     num_mem_cached:int64;
     num_disk_cached:int64;
     avg_cache_sz:int64;
+    num_numa_hit:int64;
     min_row_id:int64;
     max_row_id:int64;
     state:int8;
@@ -89,8 +90,10 @@ table CreateCacheRequestMsg {
 
 /// Return result of CreateCacheRequest
 table CreateCacheReplyMsg {
-    connection_id:int64;
+    client_id:int32;
+    connection_id:uint64;
     cookie:string;
+    cpu_id:[int32];
 }
 
 table ListSessionMsg {
@@ -101,4 +104,23 @@ table ListSessionMsg {
 
 table ListSessionsMsg {
     sessions:[ListSessionMsg];
+}
+
+table DataLocatorMsg {
+    key:int64;
+    node_id:int32;
+    addr:int64;
+    size:int64;
+}
+
+table BatchDataLocatorMsg {
+    connection_id:uint64;
+    rows:[DataLocatorMsg];
+}
+
+table FetchRowMsg {
+    key:int64;
+    source_addr:int64;
+    dest_addr:int64;
+    size:int64;
 }

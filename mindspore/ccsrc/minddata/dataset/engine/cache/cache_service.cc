@@ -13,51 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
+#include <random>
 #include "minddata/dataset/engine/cache/cache_service.h"
 #include "minddata/dataset/engine/cache/cache_server.h"
+#include "minddata/dataset/engine/cache/cache_numa.h"
+#include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/slice.h"
 
 namespace mindspore {
 namespace dataset {
 CacheService::CacheService(uint64_t mem_sz, const std::string &root, bool generate_id)
     : root_(root),
-      cache_mem_sz_(mem_sz),
+      cache_mem_sz_(mem_sz * 1048576L),  // mem_sz is in MB unit
       cp_(nullptr),
       next_id_(0),
       generate_id_(generate_id),
-      st_(generate_id ? State::kBuildPhase : State::kNone),
-      cur_mem_usage_(0),
-      cur_disk_usage_(0) {}
+      num_clients_(0),
+      st_(generate_id ? CacheServiceState::kBuildPhase : CacheServiceState::kNone) {}
 
 CacheService::~CacheService() { (void)ServiceStop(); }
 
-bool CacheService::UseArena() {
-  // If fixed size, use Arena instead of the pool from global context.
-  return (cache_mem_sz_ > 0);
-}
-
 Status CacheService::DoServiceStart() {
-  std::shared_ptr<MemoryPool> mp_;
   CacheServer &cs = CacheServer::GetInstance();
-  if (UseArena()) {
-    auto avail_mem = cs.GetAvailableSystemMemory() / 1048576L;
+  float memory_cap_ratio = cs.GetMemoryCapRatio();
+  if (cache_mem_sz_ > 0) {
+    auto avail_mem = CacheServerHW::GetTotalSystemMemory();
     if (cache_mem_sz_ > avail_mem) {
       // Output a warning that we use more than recommended. If we fail to allocate, we will fail anyway.
-      MS_LOG(WARNING) << "Requesting cache size " << cache_mem_sz_ << " MB while available system memory " << avail_mem
-                      << " MB";
+      MS_LOG(WARNING) << "Requesting cache size " << cache_mem_sz_ << " while available system memory " << avail_mem;
     }
-    // Create a fixed size arena based on the parameter.
-    std::shared_ptr<Arena> arena;
-    RETURN_IF_NOT_OK(Arena::CreateArena(&arena, cache_mem_sz_));
-    mp_ = std::move(arena);
-    // update the global usage only.
-    cs.UpdateMemoryUsage(cache_mem_sz_ * 1048576L, CacheServer::MemUsageOp::kAllocate);
-  } else {
-    // Unlimited size. Simply use a system pool. Another choice is CircularPool.
-    mp_ = std::make_shared<SystemPool>();
+    memory_cap_ratio = static_cast<float>(cache_mem_sz_) / avail_mem;
   }
-  // Put together a CachePool for backing up the Tensor
-  cp_ = std::make_shared<CachePool>(CachePool::value_allocator(mp_), UseArena(), root_);
+  numa_pool_ = std::make_shared<NumaMemoryPool>(cs.GetHWControl(), memory_cap_ratio);
+  // It is possible we aren't able to allocate the pool for many reasons.
+  std::vector<numa_id_t> avail_nodes = numa_pool_->GetAvailableNodes();
+  if (avail_nodes.empty()) {
+    RETURN_STATUS_UNEXPECTED("Unable to bring up numa memory pool");
+  }
+  // Put together a CachePool for backing up the Tensor.
+  cp_ = std::make_shared<CachePool>(numa_pool_, root_);
   RETURN_IF_NOT_OK(cp_->ServiceStart());
   // Assign a name to this cache. Used for exclusive connection. But we can just use CachePool's name.
   cookie_ = cp_->MyName();
@@ -68,26 +62,18 @@ Status CacheService::DoServiceStop() {
   if (cp_ != nullptr) {
     RETURN_IF_NOT_OK(cp_->ServiceStop());
   }
-  CacheServer &cs = CacheServer::GetInstance();
-  if (UseArena()) {
-    cs.UpdateMemoryUsage(cache_mem_sz_ * 1048576L, CacheServer::MemUsageOp::kFree);
-  } else {
-    MS_LOG(INFO) << "Memory/disk usage for the current service: " << GetMemoryUsage() << " bytes and " << GetDiskUsage()
-                 << " bytes.";
-    cs.UpdateMemoryUsage(GetMemoryUsage(), CacheServer::MemUsageOp::kFree);
-  }
   return Status::OK();
 }
 
 Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type *row_id_generated) {
   SharedLock rw(&rw_lock_);
   RETURN_UNEXPECTED_IF_NULL(row_id_generated);
-  if (st_ == State::kFetchPhase) {
+  if (st_ == CacheServiceState::kFetchPhase) {
     // For this kind of cache service, once we are done with the build phase into fetch phase, we can't
     // allow other to cache more rows.
     RETURN_STATUS_UNEXPECTED("Can't accept cache request in fetch phase");
   }
-  if (st_ == State::kNoLocking) {
+  if (st_ == CacheServiceState::kNoLocking) {
     // We ignore write this request once we turn off locking on the B+ tree. So we will just
     // return out of memory from now on.
     return Status(StatusCode::kOutOfMemory);
@@ -128,25 +114,12 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
       all_data.emplace_back(buf.at(i + 1), msg->data_sz()->Get(i));
       total_sz += msg->data_sz()->Get(i);
     }
-    // Now we cache the buffer. If we are using Arena which has a fixed cap, then just do it.
-    // Otherwise, we check how much (globally) how much we use and may simply spill to disk
-    // directly.
-    CacheServer &cs = CacheServer::GetInstance();
-    bool write_to_disk_directly = UseArena() ? false : (total_sz + cs.GetMemoryUsage()) > cs.GetAvailableSystemMemory();
-    Status rc = cp_->Insert(*row_id_generated, all_data, write_to_disk_directly);
+    // Now we cache the buffer.
+    Status rc = cp_->Insert(*row_id_generated, all_data);
     if (rc == Status(StatusCode::kDuplicateKey)) {
       MS_LOG(DEBUG) << "Ignoring duplicate key.";
     } else {
       RETURN_IF_NOT_OK(rc);
-    }
-    // All good, then update the memory usage local and global (if not using arena)
-    if (write_to_disk_directly) {
-      cur_disk_usage_ += total_sz;
-    } else {
-      cur_mem_usage_ += total_sz;
-      if (!UseArena()) {
-        cs.UpdateMemoryUsage(total_sz, CacheServer::MemUsageOp::kAllocate);
-      }
     }
     return Status::OK();
   } catch (const std::exception &e) {
@@ -157,12 +130,12 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
 Status CacheService::FastCacheRow(const ReadableSlice &src, row_id_type *row_id_generated) {
   SharedLock rw(&rw_lock_);
   RETURN_UNEXPECTED_IF_NULL(row_id_generated);
-  if (st_ == State::kFetchPhase) {
+  if (st_ == CacheServiceState::kFetchPhase) {
     // For this kind of cache service, once we are done with the build phase into fetch phase, we can't
     // allow other to cache more rows.
     RETURN_STATUS_UNEXPECTED("Can't accept cache request in fetch phase");
   }
-  if (st_ == State::kNoLocking) {
+  if (st_ == CacheServiceState::kNoLocking) {
     // We ignore write this request once we turn off locking on the B+ tree. So we will just
     // return out of memory from now on.
     return Status(StatusCode::kOutOfMemory);
@@ -183,26 +156,12 @@ Status CacheService::FastCacheRow(const ReadableSlice &src, row_id_type *row_id_
       }
       *row_id_generated = msg->row_id();
     }
-    // Now we cache the buffer. If we are using Arena which has a fixed cap, then just do it.
-    // Otherwise, we check how much (globally) how much we use and may simply spill to disk
-    // directly.
-    auto total_sz = src.GetSize();
-    CacheServer &cs = CacheServer::GetInstance();
-    bool write_to_disk_directly = UseArena() ? false : (total_sz + cs.GetMemoryUsage()) > cs.GetAvailableSystemMemory();
-    Status rc = cp_->Insert(*row_id_generated, {src}, write_to_disk_directly);
+    // Now we cache the buffer.
+    Status rc = cp_->Insert(*row_id_generated, {src});
     if (rc == Status(StatusCode::kDuplicateKey)) {
       MS_LOG(DEBUG) << "Ignoring duplicate key.";
     } else {
       RETURN_IF_NOT_OK(rc);
-    }
-    // All good, then update the memory usage local and global (if not using arena)
-    if (write_to_disk_directly) {
-      cur_disk_usage_ += total_sz;
-    } else {
-      cur_mem_usage_ += total_sz;
-      if (!UseArena()) {
-        cs.UpdateMemoryUsage(total_sz, CacheServer::MemUsageOp::kAllocate);
-      }
     }
     return Status::OK();
   } catch (const std::exception &e) {
@@ -247,52 +206,116 @@ Status CacheService::GetStat(CacheService::ServiceStat *out) {
   return Status::OK();
 }
 
-Status CacheService::PreBatchFetch(const std::vector<row_id_type> &v, std::vector<key_size_pair> *out,
-                                   int64_t *mem_sz) {
+Status CacheService::PreBatchFetch(connection_id_type connection_id, const std::vector<row_id_type> &v,
+                                   const std::shared_ptr<flatbuffers::FlatBufferBuilder> &fbb) {
   SharedLock rw(&rw_lock_);
-  RETURN_UNEXPECTED_IF_NULL(out);
-  RETURN_UNEXPECTED_IF_NULL(mem_sz);
-  const auto num_elements = v.size();
-  *mem_sz = (num_elements + 1) * sizeof(int64_t);
-  (*out).reserve(num_elements);
+  std::vector<flatbuffers::Offset<DataLocatorMsg>> datalocator_v;
+  datalocator_v.reserve(v.size());
   for (auto row_id : v) {
-    auto sz = cp_->GetSize(row_id);
-    if (sz > 0) {
-      (*out).emplace_back(row_id, sz);
-      (*mem_sz) += sz;
-    } else {
-      // key not found
-      (*out).emplace_back(-1, 0);
-    }
+    flatbuffers::Offset<DataLocatorMsg> offset;
+    RETURN_IF_NOT_OK(cp_->GetDataLocator(row_id, fbb, &offset));
+    datalocator_v.push_back(offset);
   }
+  auto offset_v = fbb->CreateVector(datalocator_v);
+  BatchDataLocatorMsgBuilder bld(*fbb);
+  bld.add_connection_id(connection_id);
+  bld.add_rows(offset_v);
+  auto offset_final = bld.Finish();
+  fbb->Finish(offset_final);
   return Status::OK();
 }
 
-Status CacheService::BatchFetch(const std::vector<row_id_type> &v, const std::vector<key_size_pair> &info,
-                                WritableSlice *out) const {
+Status CacheService::BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuilder> &fbb, WritableSlice *out) const {
   RETURN_UNEXPECTED_IF_NULL(out);
   SharedLock rw(&rw_lock_);
-  if (st_ == State::kBuildPhase) {
+  if (st_ == CacheServiceState::kBuildPhase) {
     // For this kind of cache service, we can't fetch yet until we are done with caching all the rows.
     RETURN_STATUS_UNEXPECTED("Can't accept cache request in fetch phase");
   }
-  const auto num_elements = v.size();
+  CacheServer &cs = CacheServer::GetInstance();
+  int32_t numQ = cs.GetNumGrpcWorkers();
+  auto rng = GetRandomDevice();
+  std::uniform_int_distribution<session_id_type> distribution(0, numQ - 1);
+  int32_t qID = distribution(rng);
+  std::vector<CacheServerRequest *> cache_rq_list;
+  auto p = flatbuffers::GetRoot<BatchDataLocatorMsg>(fbb->GetBufferPointer());
+  const auto num_elements = p->rows()->size();
+  auto connection_id = p->connection_id();
+  cache_rq_list.reserve(num_elements);
   int64_t data_offset = (num_elements + 1) * sizeof(int64_t);
   auto *offset_array = reinterpret_cast<int64_t *>(out->GetMutablePointer());
   offset_array[0] = data_offset;
   for (auto i = 0; i < num_elements; ++i) {
-    auto sz = info.at(i).second;
-    offset_array[i + 1] = offset_array[i] + sz;
+    auto data_locator = p->rows()->Get(i);
+    auto node_id = data_locator->node_id();
+    size_t sz = data_locator->size();
+    void *source_addr = reinterpret_cast<void *>(data_locator->addr());
+    auto key = data_locator->key();
+    // Please read the comment in CacheServer::BatchFetchRows where we allocate
+    // the buffer big enough so each thread (which we are going to dispatch) will
+    // not run into false sharing problem. We are going to round up sz to 4k.
+    auto sz_4k = round_up_4K(sz);
+    offset_array[i + 1] = offset_array[i] + sz_4k;
     if (sz > 0) {
       WritableSlice row_data(*out, offset_array[i], sz);
-      auto key = info.at(i).first;
-      size_t bytesRead = 0;
-      RETURN_IF_NOT_OK(cp_->Read(key, &row_data, &bytesRead));
-      if (bytesRead != sz) {
-        MS_LOG(ERROR) << "Unexpected length. Read " << bytesRead << ". Expected " << sz << "."
-                      << " Internal key: " << key << "\n";
-        RETURN_STATUS_UNEXPECTED("Length mismatch. See log file for details.");
-      }
+      // Get a request and send to the proper worker (at some numa node) to do the fetch.
+      worker_id_t worker_id = cs.IsNumaAffinityOn() ? cs.GetWorkerByNumaId(node_id) : cs.GetRandomWorker();
+      CacheServerRequest *cache_rq;
+      RETURN_IF_NOT_OK(cs.GetFreeRequestTag(qID++ % numQ, &cache_rq));
+      cache_rq_list.push_back(cache_rq);
+      // Set up all the necessarily field.
+      cache_rq->type_ = BaseRequest::RequestType::kInternalFetchRow;
+      cache_rq->st_ = CacheServerRequest::STATE::PROCESS;
+      cache_rq->rq_.set_connection_id(connection_id);
+      cache_rq->rq_.set_type(static_cast<int16_t>(cache_rq->type_));
+      auto dest_addr = row_data.GetMutablePointer();
+      flatbuffers::FlatBufferBuilder fb2;
+      FetchRowMsgBuilder bld(fb2);
+      bld.add_key(key);
+      bld.add_size(sz);
+      bld.add_source_addr(reinterpret_cast<int64_t>(source_addr));
+      bld.add_dest_addr(reinterpret_cast<int64_t>(dest_addr));
+      auto offset = bld.Finish();
+      fb2.Finish(offset);
+      cache_rq->rq_.add_buf_data(fb2.GetBufferPointer(), fb2.GetSize());
+      RETURN_IF_NOT_OK(cs.PushRequest(worker_id, cache_rq));
+    }
+  }
+  // Now wait for all of them to come back. Let go of the shared lock. We shouldn't be holding
+  // any lock while we can wait for a long time.
+  rw.Unlock();
+  Status rc;
+  for (CacheServerRequest *rq : cache_rq_list) {
+    RETURN_IF_NOT_OK(rq->Wait());
+    if (rq->rc_.IsError() && !rq->rc_.IsInterrupted() && rc.IsOk()) {
+      rc = rq->rc_;
+    }
+    RETURN_IF_NOT_OK(cs.ReturnRequestTag(rq));
+  }
+  return rc;
+}
+
+Status CacheService::InternalFetchRow(const FetchRowMsg *p) {
+  RETURN_UNEXPECTED_IF_NULL(p);
+  SharedLock rw(&rw_lock_);
+  size_t bytesRead = 0;
+  int64_t key = p->key();
+  size_t sz = p->size();
+  void *source_addr = reinterpret_cast<void *>(p->source_addr());
+  void *dest_addr = reinterpret_cast<void *>(p->dest_addr());
+  WritableSlice dest(dest_addr, sz);
+  if (source_addr != nullptr) {
+    // We are not checking if the row is still present but simply use the information passed in.
+    // This saves another tree lookup and is faster.
+    ReadableSlice src(source_addr, sz);
+    RETURN_IF_NOT_OK(WritableSlice::Copy(&dest, src));
+  } else {
+    RETURN_IF_NOT_OK(cp_->Read(key, &dest, &bytesRead));
+    if (bytesRead != sz) {
+      std::string errMsg = "Unexpected length. Read " + std::to_string(bytesRead) + ". Expected " + std::to_string(sz) +
+                           "." + " Internal key: " + std::to_string(key);
+      MS_LOG(ERROR) << errMsg;
+      RETURN_STATUS_UNEXPECTED(errMsg);
     }
   }
   return Status::OK();
@@ -312,7 +335,7 @@ Status CacheService::CacheSchema(const void *buf, int64_t len) {
 
 Status CacheService::FetchSchema(std::string *out) const {
   SharedLock rw(&rw_lock_);
-  if (st_ == State::kBuildPhase) {
+  if (st_ == CacheServiceState::kBuildPhase) {
     // For this kind of cache service, we can't fetch yet until we are done with caching all the rows.
     RETURN_STATUS_UNEXPECTED("Can't accept cache request in fetch phase");
   }
@@ -333,7 +356,7 @@ Status CacheService::BuildPhaseDone() {
   if (HasBuildPhase()) {
     // Exclusive lock to switch phase
     UniqueLock rw(&rw_lock_);
-    st_ = State::kFetchPhase;
+    st_ = CacheServiceState::kFetchPhase;
     cp_->SetLocking(false);
     return Status::OK();
   } else {
@@ -348,12 +371,12 @@ Status CacheService::ToggleWriteMode(bool on_off) {
   } else {
     // If we stop accepting write request, we turn off locking for the
     // underlying B+ tree. All future write request we will return kOutOfMemory.
-    if (st_ == State::kNone && !on_off) {
-      st_ = State::kNoLocking;
+    if (st_ == CacheServiceState::kNone && !on_off) {
+      st_ = CacheServiceState::kNoLocking;
       cp_->SetLocking(on_off);
       MS_LOG(WARNING) << "Locking mode is switched off.";
-    } else if (st_ == State::kNoLocking && on_off) {
-      st_ = State::kNone;
+    } else if (st_ == CacheServiceState::kNoLocking && on_off) {
+      st_ = CacheServiceState::kNone;
       cp_->SetLocking(on_off);
     }
   }

@@ -24,7 +24,6 @@
 #include <vector>
 #include "minddata/dataset/engine/connector.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
-#include "minddata/dataset/engine/cache/cache_service.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"

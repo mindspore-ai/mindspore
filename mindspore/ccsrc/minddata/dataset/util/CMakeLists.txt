@@ -3,7 +3,6 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 add_library(utils OBJECT
     arena.cc
     buddy.cc
-    cache_pool.cc
     circular_pool.cc
     data_helper.cc
     memory_pool.cc
@@ -16,8 +15,6 @@ add_library(utils OBJECT
     lock.cc
     semaphore.cc
     status.cc
-    storage_container.cc
-    storage_manager.cc
     slice.cc
     path.cc
     wait_post.cc
