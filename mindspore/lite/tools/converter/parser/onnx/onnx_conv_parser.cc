@@ -172,7 +172,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
 
-  if (attr->group > kSingleGrounp) {
+  if (attr->group > kSingleGrounp && attr->group == attr->channelIn) {
     if (!ParseGroupConvolution(attr, op)) {
       MS_LOG(ERROR) << "Convert Convolution to Depthwise failed";
       return RET_ERROR;

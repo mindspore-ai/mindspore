@@ -83,8 +83,7 @@ int CastCPUKernel::DoCast(int thread_id) {
     } else if (input_data_type == kNumberTypeInt32 && output_data_type == kNumberTypeInt64) {
       Int32ToInt64(reinterpret_cast<int32_t *>(input->data_c()) + offset,
                    reinterpret_cast<int64_t *>(output_data) + offset, data_num);
-    } else if (input_data_type == kNumberTypeInt32 &&
-               (output_data_type == kNumberTypeInt32 || output_data_type == kNumberTypeInt64)) {
+    } else if (input_data_type == kNumberTypeInt32 && output_data_type == kNumberTypeInt32) {
       memcpy(reinterpret_cast<int32_t *>(output_data) + offset, reinterpret_cast<int32_t *>(input->data_c()) + offset,
              data_num * sizeof(int32_t));
     } else {
