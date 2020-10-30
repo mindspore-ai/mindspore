@@ -41,7 +41,7 @@ ConvolutionDepthwiseSWFp16CPUKernel::~ConvolutionDepthwiseSWFp16CPUKernel() {
 }
 
 int ConvolutionDepthwiseSWFp16CPUKernel::InitBuffer() {
-  if (conv_param_->input_channel_ % C4NUM != 0) {
+  if (conv_param_->input_channel_ % C8NUM != 0) {
     need_align_ = true;
     int C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
     int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C8NUM * C8;
