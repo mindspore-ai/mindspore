@@ -19,9 +19,9 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 top_k_op_info = TBERegOp("TopK") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("top_k.so") \
+    .binfile_name("top_k_d.so") \
     .compute_cost(10) \
-    .kernel_name("top_k") \
+    .kernel_name("top_k_d") \
     .partial_flag(True) \
     .attr("dim", "optional", "int", "all") \
     .attr("k", "required", "int", "all") \
