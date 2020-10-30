@@ -269,10 +269,11 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   Status LoadIDTensor(const std::string &file, uint32_t col_num, TensorRow *row);
 
   /// \brief Load a tensor row according to a json file
+  /// \param[in] row_id_type row_id - id for this tensor row
   /// \param[in] ImageColumns file Json file location
   /// \param[inout] TensorRow row Json content stored into a tensor row
   /// \return Status The error code returned
-  Status LoadTensorRow(const std::string &file, TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, const std::string &file, TensorRow *row);
 
   /// \param[in] const std::vector<int64_t> &keys Keys in ioblock
   /// \param[inout] std::unique_ptr<DataBuffer> db Databuffer to push to

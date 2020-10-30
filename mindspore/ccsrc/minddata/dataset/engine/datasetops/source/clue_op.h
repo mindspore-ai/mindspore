@@ -187,6 +187,10 @@ class ClueOp : public ParallelOp {
   ///     that this clue op will produce the full set of data into the cache.
   void MakeSimpleProducer();
 
+  // Op name getter
+  // @return Name of the current Op
+  std::string Name() const override { return "ClueOp"; }
+
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.
   // @param modified - Whether this node visit modified the pipeline.

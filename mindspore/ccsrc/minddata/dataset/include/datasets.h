@@ -145,10 +145,13 @@ std::shared_ptr<SchemaObj> Schema(const std::string &schema_file = "");
 /// \param[in] decode the option to decode the images in dataset (default = false)
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<AlbumNode> Album(const std::string &dataset_dir, const std::string &data_schema,
                                  const std::vector<std::string> &column_names = {}, bool decode = false,
-                                 const std::shared_ptr<SamplerObj> &sampler = RandomSampler());
+                                 const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                 const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function to create a CelebANode
 /// \notes The generated dataset has two columns ['image', 'attr'].
@@ -549,6 +552,17 @@ std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t me
                                                  std::optional<int32_t> num_connections = std::nullopt,
                                                  std::optional<int32_t> prefetch_sz = std::nullopt);
 #endif
+
+/// \brief Function to create a sampler for non-mappable dataset (to be used by cache op later).
+/// \notes Non-mappable dataset does not directly support a sampler. It has provided sampling arguments (shuffle,
+///     num_samples, num_shards, shard_id) and it DOES support sampling if somewhere above it in the pipeline contains
+///     a cache. If there is no cache above it, then the sampler is not used.
+/// \param[in] num_samples The number of samples to be included in the dataset.
+/// \param[in] shuffle If true, the indices are shuffled.
+/// \param[in] num_shards Number of shards to divide the dataset into.
+/// \param[in] shard_id Shard ID of the current shard within num_shards.
+/// \return Shared pointer to the current Sampler.
+std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards, int32_t shard_id);
 
 /// \brief Function to create a ZipNode
 /// \notes Applies zip to the dataset

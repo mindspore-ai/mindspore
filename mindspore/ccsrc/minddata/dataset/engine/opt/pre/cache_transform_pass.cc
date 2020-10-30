@@ -188,10 +188,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ImageFolderOp> n
 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) {
-  if (is_caching_) {
-    RETURN_STATUS_UNEXPECTED("There is currently no support for AlbumOp under cache.");
-  }
-  return Status::OK();
+  return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
 // Perform leaf node cache transform identification

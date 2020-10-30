@@ -91,14 +91,21 @@ std::vector<std::shared_ptr<DatasetOp>> TFRecordNode::Build() {
 
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
+  // TFReaderOp by itself is a non-mappable dataset that does not support sampling.
+  // However, if a cache operator is injected at some other place higher in the tree, that cache can
+  // inherit this sampler from the leaf, providing sampling support from the caching layer.
+  // That is why we save the sampler here in a leaf node that does not use sampling.
+  std::shared_ptr<SamplerObj> sampler_ = SelectSampler(num_samples_, shuffle_files, num_shards_, shard_id_);
+
   // Create and initialize TFReaderOp
-  std::shared_ptr<TFReaderOp> tf_reader_op = std::make_shared<TFReaderOp>(
-    num_workers_, worker_connector_size_, rows_per_buffer_, num_samples_, sorted_dir_files, std::move(data_schema),
-    connector_que_size_, columns_list_, shuffle_files, num_shards_, shard_id_, shard_equal_rows_, nullptr);
+  std::shared_ptr<TFReaderOp> tf_reader_op =
+    std::make_shared<TFReaderOp>(num_workers_, worker_connector_size_, rows_per_buffer_, num_samples_, sorted_dir_files,
+                                 std::move(data_schema), connector_que_size_, columns_list_, shuffle_files, num_shards_,
+                                 shard_id_, shard_equal_rows_, std::move(sampler_->Build()));
 
   RETURN_EMPTY_IF_ERROR(tf_reader_op->Init());
 
-  if (shuffle_ == ShuffleMode::kGlobal) {
+  if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
 
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;

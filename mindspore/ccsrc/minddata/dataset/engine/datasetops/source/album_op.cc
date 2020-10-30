@@ -429,9 +429,9 @@ Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, 
 // to take a reference to a column descriptor?
 // the design of this class is to make the code more readable, forgoing minor perfomance gain like
 // getting rid of duplicated checks
-Status AlbumOp::LoadTensorRow(const std::string &file, TensorRow *row) {
+Status AlbumOp::LoadTensorRow(row_id_type row_id, const std::string &file, TensorRow *row) {
   // testing here is to just print out file path
-  (*row) = {};
+  (*row) = TensorRow(row_id, {});
   MS_LOG(INFO) << "Image row file: " << file << ".";
 
   std::ifstream file_handle(folder_path_ + file);
@@ -448,7 +448,7 @@ Status AlbumOp::LoadTensorRow(const std::string &file, TensorRow *row) {
       // get columns in schema:
       int32_t columns = data_schema_->NumColumns();
 
-      // loop over each column descriptor, this can optimized by swtich cases
+      // loop over each column descriptor, this can optimized by switch cases
       for (int32_t i = 0; i < columns; i++) {
         // special case to handle
         if (data_schema_->column(i).name() == "id") {
@@ -525,7 +525,7 @@ Status AlbumOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Dat
   TensorRow trow;
 
   for (const int64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(image_rows_[key], &trow));
+    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_rows_[key], &trow));
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));

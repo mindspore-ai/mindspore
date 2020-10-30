@@ -17,14 +17,19 @@
 #include "minddata/dataset/include/datasets.h"
 
 // IR leaf nodes
-
+#include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 
 using namespace mindspore::dataset;
@@ -384,3 +389,359 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheVocCApi) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheAlbumCApi) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  std::string folder_path = datasets_root_path_ + "/testAlbum/images";
+  std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
+  std::vector<std::string> column_names = {"image", "label", "id"};
+  // Create a Album Dataset, 7 records in it
+  std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, false, RandomSampler(), some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 14);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a RandomDataset
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
+  schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
+  std::shared_ptr<Dataset> ds = RandomData(4, schema, {}, RandomSampler(), some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 8);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi1) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a TFRecord Dataset, this file_path has 3 records in it
+  std::string file_path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
+  std::string schema_path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
+  std::shared_ptr<Dataset> ds =
+    TFRecord({file_path}, schema_path, {"image"}, 0, ShuffleMode::kFalse, 1, 0, false, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi2) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a TFRecord Dataset, this file_path has 3 records in it
+  std::string file_path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
+  std::string schema_path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
+
+  // In this one, the TFRecord dataset will be given sharding configuration, however since a cache is
+  // used, the tree prepare should undo the sharding configuration and instead, a distributed
+  // sampler will be chosen with the same shard config.
+  // With only 3 records shard into 3, we expect only 1 record returned for this shard
+  // However, the sharding will be done by the sampler, not by the TFRecord leaf node
+  // In this case, it is a row-based sharding, not the file-based sharding that would happen if
+  // there was not any cache.
+  std::shared_ptr<Dataset> ds =
+    TFRecord({file_path}, schema_path, {"image"}, 0, ShuffleMode::kFalse, 3, 0, false, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTFRecordCApi3) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a TFRecord Dataset, this file_path has 3 records in it
+  std::string file_path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
+  std::string schema_path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
+
+  // In this one, a num_samples argument is given.
+  // In this case, a sequential sampler would be chosen with the same num_samples argument.
+  // The samples will be selected by the sequential sampler, not by the TFRecord leaf node.
+  std::shared_ptr<Dataset> ds =
+    TFRecord({file_path}, schema_path, {"image"}, 2, ShuffleMode::kFalse, 1, 0, false, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheTextfileCApi) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a TextFile Dataset, this file_path has 3 records in it
+  std::string file_path = datasets_root_path_ + "/testTextFileDataset/1.txt";
+
+  // In this one, a num_samples=2 argument is given.
+  // In this case, a sequential sampler would be chosen with the same num_samples argument.
+  // The samples will be selected by the sequential sampler, not by the TextFile leaf node.
+  std::shared_ptr<Dataset> ds = TextFile({file_path}, 2, ShuffleMode::kGlobal, 1, 0, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCsvCApi) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a CSV Dataset, this file_path has 3 records in it
+  std::string file_path = datasets_root_path_ + "/testCSV/1.csv";
+  std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
+
+  // In this one, a num_samples=2 argument is given.
+  // In this case, a sequential sampler would be chosen with the same num_samples argument.
+  // The samples will be selected by the sequential sampler, not by the CSV leaf node.
+  std::shared_ptr<Dataset> ds = CSV({file_path}, ',', {}, column_names, 2, ShuffleMode::kFalse, 1, 0, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheClueCApi) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create a CLUE Dataset, this file_path has 3 records in it
+  std::string file_path = datasets_root_path_ + "/testCLUE/afqmc/train.json";
+  std::string task = "AFQMC";
+  std::string usage = "train";
+
+  // In this one, a num_samples=2 argument is given.
+  // In this case, a sequential sampler would be chosen with the same num_samples argument.
+  // The samples will be selected by the sequential sampler, not by the CLUE leaf node.
+  std::shared_ptr<Dataset> ds = CLUE({file_path}, task, usage, 2, ShuffleMode::kFalse, 1, 0, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+

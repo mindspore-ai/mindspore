@@ -80,6 +80,12 @@ std::vector<std::shared_ptr<DatasetOp>> CSVNode::Build() {
 
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
+  // CSVOp by itself is a non-mappable dataset that does not support sampling.
+  // However, if a cache operator is injected at some other place higher in the tree, that cache can
+  // inherit this sampler from the leaf, providing sampling support from the caching layer.
+  // That is why we save the sampler here in a leaf node that does not use sampling.
+  std::shared_ptr<SamplerObj> sampler_ = SelectSampler(num_samples_, shuffle_files, num_shards_, shard_id_);
+
   // Sort the dataset files in a lexicographical order
   std::vector<std::string> sorted_dataset_files = dataset_files_;
   std::sort(sorted_dataset_files.begin(), sorted_dataset_files.end());
@@ -98,11 +104,12 @@ std::vector<std::shared_ptr<DatasetOp>> CSVNode::Build() {
     }
   }
 
-  std::shared_ptr<CsvOp> csv_op = std::make_shared<CsvOp>(
-    sorted_dataset_files, field_delim_, column_default_list, column_names_, num_workers_, rows_per_buffer_,
-    num_samples_, worker_connector_size_, connector_que_size_, shuffle_files, num_shards_, shard_id_, nullptr);
+  std::shared_ptr<CsvOp> csv_op =
+    std::make_shared<CsvOp>(sorted_dataset_files, field_delim_, column_default_list, column_names_, num_workers_,
+                            rows_per_buffer_, num_samples_, worker_connector_size_, connector_que_size_, shuffle_files,
+                            num_shards_, shard_id_, std::move(sampler_->Build()));
   RETURN_EMPTY_IF_ERROR(csv_op->Init());
-  if (shuffle_ == ShuffleMode::kGlobal) {
+  if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t num_rows = 0;
