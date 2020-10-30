@@ -34,9 +34,16 @@ class DetectionPostProcessInt8CPUKernel : public DetectionPostProcessBaseCPUKern
       : DetectionPostProcessBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DetectionPostProcessInt8CPUKernel() = default;
 
+  int8_t *data_int8_ = nullptr;
+  float *data_fp32_ = nullptr;
+  lite::QuantArg quant_param_;
+  int quant_size_;
+  int thread_n_stride_;
+  int DequantizeInt8ToFp32(const int task_id);
+
  private:
-  int GetInputData();
   int Dequantize(lite::Tensor *tensor, float **data);
+  int GetInputData();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_DETECTION_POST_PROCESS_INT8_H_

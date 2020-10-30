@@ -38,9 +38,11 @@ typedef struct DetectionPostProcessParameter {
   void *decoded_boxes_;
   void *nms_candidate_;
   void *indexes_;
+  void *scores_;
+  void *all_class_indexes_;
+  void *all_class_scores_;
+  void *single_class_indexes_;
   void *selected_;
-  void *score_with_class_;
-  void *score_with_class_all_;
 } DetectionPostProcessParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_DETECTION_POST_PROCESS_PARAMETER_H_

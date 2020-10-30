@@ -30,18 +30,27 @@ class DetectionPostProcessBaseCPUKernel : public LiteKernel {
   DetectionPostProcessBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                     const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {
+    params_ = reinterpret_cast<DetectionPostProcessParameter *>(parameter);
+  }
   virtual ~DetectionPostProcessBaseCPUKernel();
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
- protected:
-  float *input_boxes = nullptr;
-  float *input_scores = nullptr;
+  int thread_num_;
+  int num_boxes_;
+  int num_classes_with_bg_;
+  float *input_boxes_ = nullptr;
+  float *input_scores_ = nullptr;
+  DetectionPostProcessParameter *params_ = nullptr;
 
+ protected:
   virtual int GetInputData() = 0;
+
+ private:
+  void FreeAllocatedBuffer();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DETECTION_POST_PROCESS_BASE_H_
