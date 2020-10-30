@@ -130,7 +130,7 @@ static void ResizeBilinear3C(const unsigned char *src, int src_width, int src_he
     for (int k = 0; k < dst_width * 3; k++) {
       int16_t t0 = (int16_t)((y_weight[0] * (int16_t)(*row0_ptr0++)) >> 16);
       int16_t t1 = (int16_t)((y_weight[1] * (int16_t)(*row1_ptr1++)) >> 16);
-      *dst_ptr++ = (unsigned char)((t0 + t1 + 2) >> 2);
+      *dst_ptr++ = static_cast<unsigned char>((t0 + t1 + 2) >> 2);
     }
     y_weight += 2;
   }
@@ -202,7 +202,7 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
     for (int k = 0; k < dst_width; k++) {
       int16_t t0 = (int16_t)((y_weight[0] * (int16_t)(*row0_ptr0++)) >> 16);
       int16_t t1 = (int16_t)((y_weight[1] * (int16_t)(*row1_ptr1++)) >> 16);
-      *dst_ptr++ = (unsigned char)((t0 + t1 + 2) >> 2);
+      *dst_ptr++ = static_cast<unsigned char>((t0 + t1 + 2) >> 2);
     }
 
     y_weight += 2;
@@ -873,7 +873,8 @@ std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std:
 }
 
 template <typename Pixel_Type>
-bool ImplementAffine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> &dsize, Pixel_Type borderValue) {
+bool ImplementAffine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> &dsize,
+                     Pixel_Type borderValue) {
   if (dsize.size() != 2 || CheckZero(dsize)) {
     return false;
   }
@@ -912,11 +913,11 @@ bool ImplementAffine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<si
   return true;
 }
 
-bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue) {
+bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue) {
   return ImplementAffine(src, out_img, M, dsize, borderValue);
 }
 
-bool Affine(LiteMat &src, LiteMat &out_img, double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue) {
+bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue) {
   return ImplementAffine(src, out_img, M, dsize, borderValue);
 }
 
