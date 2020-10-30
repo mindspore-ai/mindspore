@@ -41,7 +41,10 @@ class OnnxModelParser : public ModelParser {
 
   virtual ~OnnxModelParser();
 
-  schema::MetaGraphT *ParseGraph(const onnx::GraphProto &graph, const QuantType &quantType = QuantType_QUANT_NONE);
+  //  schema::MetaGraphT *ParseGraph(const onnx::GraphProto &graph, const QuantType &quantType = QuantType_QUANT_NONE);
+  int ParseGraph(schema::MetaGraphT *dst_graph, schema::SubGraphT *dst_sub_graph, const onnx::GraphProto &onnx_graph,
+                 const QuantType &quantType);
+
   schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
                                 const QuantType &quantType = QuantType_QUANT_NONE) override;
 
@@ -52,9 +55,9 @@ class OnnxModelParser : public ModelParser {
 
   STATUS SetGraphConstTensor(const onnx::GraphProto &onnx_graph, TensorCache *tensor_cache);
 
-  STATUS SetGraphInputTensor(const onnx::GraphProto &onnx_graph, schema::MetaGraphT *graph, TensorCache *tensor_cache);
+  STATUS SetGraphInputTensor(const onnx::GraphProto &onnx_graph, schema::SubGraphT *graph, TensorCache *tensor_cache);
 
-  STATUS SetGraphOutputTensor(const onnx::GraphProto &onnx_graph, schema::MetaGraphT *graph, TensorCache *tensor_cache);
+  STATUS SetGraphOutputTensor(const onnx::GraphProto &onnx_graph, schema::SubGraphT *graph, TensorCache *tensor_cache);
 
   STATUS AddValueInfo(const onnx::ValueInfoProto &proto, const std::string &name, const Category &type,
                       TensorCache *tensor_cache, int *index);
@@ -67,7 +70,8 @@ class OnnxModelParser : public ModelParser {
                               const QuantType &quantType, schema::MetaGraphT *dst_graph);
 
   void ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                         schema::MetaGraphT *graph, TensorCache *tensor_cache, const QuantType &quant_type);
+                         schema::SubGraphT *sub_graph, schema::MetaGraphT *graph, TensorCache *tensor_cache,
+                         const QuantType &quant_type);
 
   STATUS ParseOnnxGivenFillNode(const onnx::NodeProto &onnx_node, TensorCache *tensor_cache);
 

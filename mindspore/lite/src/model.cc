@@ -30,16 +30,22 @@ void Model::Free() {
 
 void Model::Destroy() {
   Free();
-  auto nodes_size = this->nodes_.size();
+  auto nodes_size = this->all_nodes_.size();
   for (size_t i = 0; i < nodes_size; ++i) {
-    auto node = this->nodes_[i];
+    auto node = this->all_nodes_[i];
     MS_ASSERT(node != nullptr);
     MS_ASSERT(node->primitive_ != nullptr);
     delete node->primitive_;
     node->primitive_ = nullptr;
     delete node;
   }
-  this->nodes_.clear();
+  this->all_nodes_.clear();
+
+  auto sub_graph_size = this->sub_graphs_.size();
+  for (size_t i = 0; i < sub_graph_size; ++i) {
+    auto sub_graph = this->sub_graphs_[i];
+    delete sub_graph;
+  }
 }
 
 Model::~Model() { Destroy(); }

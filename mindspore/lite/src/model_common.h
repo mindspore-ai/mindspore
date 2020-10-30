@@ -24,6 +24,10 @@ bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model);
 
 bool ConvertTensors(const schema::MetaGraph *meta_graph, Model *model);
 
+int ConvertSubGraph(const schema::SubGraph *sub_graph, Model *model);
+
+int MetaGraphMappingSubGraph(const mindspore::schema::MetaGraph *meta_graph, Model *model);
+
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_MODEL_COMMON_H_

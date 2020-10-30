@@ -255,6 +255,14 @@ table CNode {
     quantType: QuantType = QUANT_NONE;
 }
 
+table SubGraph {
+    name:string;
+    inputIndices: [uint];
+    outputIndices: [uint];
+    nodeIndices: [uint];
+    tensorIndices: [uint];
+}
+
 table MetaGraph {
     name: string;
     version: string;
@@ -264,7 +272,7 @@ table MetaGraph {
     mempoolSize: uint;
     nodes: [CNode];
     allTensors: [Tensor]; // weight + input + output
-    subGraph : [MetaGraph];
+    subGraph : [SubGraph];
 }
 
 root_type MetaGraph;

@@ -26,11 +26,12 @@ namespace mindspore {
 namespace lite {
 std::vector<size_t> GetGraphInputNodes(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
+  MS_ASSERT(!(model->sub_graphs_.empty()));
   std::vector<size_t> ret;
-  for (auto graph_in_index : model->input_indices_) {
-    auto node_size = model->nodes_.size();
+  for (auto graph_in_index : model->sub_graphs_.front()->input_indices_) {
+    auto node_size = model->all_nodes_.size();
     for (size_t j = 0; j < node_size; ++j) {
-      auto node = model->nodes_[j];
+      auto node = model->all_nodes_[j];
       MS_ASSERT(node != nullptr);
       if (std::any_of(node->input_indices_.begin(), node->input_indices_.end(),
                       [&](const uint32_t &node_in_index) { return node_in_index == graph_in_index; })) {
@@ -46,10 +47,10 @@ std::vector<size_t> GetGraphInputNodes(const lite::Model *model) {
 std::vector<size_t> GetGraphOutputNodes(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   std::vector<size_t> ret;
-  for (auto graph_out_index : model->output_indices_) {
-    auto node_size = model->nodes_.size();
+  for (auto graph_out_index : model->sub_graphs_.front()->output_indices_) {
+    auto node_size = model->all_nodes_.size();
     for (size_t j = 0; j < node_size; ++j) {
-      auto node = model->nodes_[j];
+      auto node = model->all_nodes_[j];
       MS_ASSERT(node != nullptr);
       if (std::any_of(node->output_indices_.begin(), node->output_indices_.end(),
                       [&](const uint32_t &node_out_index) { return node_out_index == graph_out_index; })) {
@@ -65,9 +66,9 @@ std::vector<size_t> GetGraphOutputNodes(const lite::Model *model) {
 std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, const size_t tensor_idx) {
   MS_ASSERT(model != nullptr);
   std::vector<size_t> post_node_idxes;
-  auto nodes_size = model->nodes_.size();
+  auto nodes_size = model->all_nodes_.size();
   for (size_t i = 0; i < nodes_size; ++i) {
-    auto node = model->nodes_[i];
+    auto node = model->all_nodes_[i];
     if (node == nullptr) {
       continue;
     }

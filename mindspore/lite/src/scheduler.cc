@@ -90,9 +90,9 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<Tensor *> *tenso
   MS_ASSERT(model != nullptr);
   MS_ASSERT(tensors != nullptr);
   bool infer_shape_interrupt = false;
-  uint32_t kernelCount = model->nodes_.size();
+  uint32_t kernelCount = model->all_nodes_.size();
   for (uint32_t i = 0; i < kernelCount; ++i) {
-    auto node = model->nodes_[i];
+    auto node = model->all_nodes_[i];
     MS_ASSERT(node != nullptr);
     std::vector<Tensor *> inputs;
     std::vector<Tensor *> outputs;
@@ -133,10 +133,10 @@ int Scheduler::InitOp2Kernel(const lite::Model *model, std::vector<Tensor *> *te
                              std::vector<kernel::LiteKernel *> *kernels) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(tensors != nullptr);
-  uint32_t kernelCount = model->nodes_.size();
+  uint32_t kernelCount = model->all_nodes_.size();
   auto graph_output_node_indexes = GetGraphOutputNodes(model);
   for (uint32_t i = 0; i < kernelCount; ++i) {
-    auto node = model->nodes_[i];
+    auto node = model->all_nodes_[i];
     MS_ASSERT(node != nullptr);
     std::vector<Tensor *> inputs;
     std::vector<Tensor *> outputs;

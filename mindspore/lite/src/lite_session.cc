@@ -43,7 +43,7 @@ static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor
   MS_ASSERT(model != nullptr);
   auto post_node_idxes = GetLinkedPostNodeIdx(model, tensor_idx);
   return std::none_of(post_node_idxes.begin(), post_node_idxes.end(), [&](const size_t &post_node_idx) {
-    auto node = model->nodes_[post_node_idx];
+    auto node = model->all_nodes_[post_node_idx];
     MS_ASSERT(node != nullptr);
     return IsContain(packed_op, static_cast<schema::PrimitiveType>(node->primitive_->Type()));
   });
@@ -124,9 +124,10 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
 
 void LiteSession::InitGraphInputTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
-  auto graph_in_size = model->input_indices_.size();
+  MS_ASSERT(!(model->sub_graphs_.empty()));
+  auto graph_in_size = model->sub_graphs_.front()->input_indices_.size();
   for (size_t i = 0; i < graph_in_size; ++i) {
-    auto in_tensor_idx = model->input_indices_[i];
+    auto in_tensor_idx = model->sub_graphs_.front()->input_indices_[i];
     MS_ASSERT(in_tensor_idx < this->tensors_.size());
     auto *in_tensor = this->tensors_.at(in_tensor_idx);
     MS_ASSERT(in_tensor != nullptr);
@@ -146,9 +147,9 @@ void LiteSession::InitGraphOutputTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(this->outputs_.empty());
   MS_ASSERT(meta_graph != nullptr);
-  auto graph_out_size = model->output_indices_.size();
+  auto graph_out_size = model->sub_graphs_.front()->output_indices_.size();
   for (size_t i = 0; i < graph_out_size; ++i) {
-    auto out_tensor_idx = model->output_indices_[i];
+    auto out_tensor_idx = model->sub_graphs_.front()->output_indices_[i];
     MS_ASSERT(out_tensor_idx < this->tensors_.size());
     auto *out_tensor = this->tensors_.at(out_tensor_idx);
     MS_ASSERT(out_tensor != nullptr);
@@ -160,9 +161,9 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(this->input_map_.empty());
   auto graph_input_node_indexes = GetGraphInputNodes(model);
-  auto graph_in_size = model->input_indices_.size();
+  auto graph_in_size = model->sub_graphs_.front()->input_indices_.size();
   for (auto in_node_index : graph_input_node_indexes) {
-    auto in_node = model->nodes_[in_node_index];
+    auto in_node = model->all_nodes_[in_node_index];
     MS_ASSERT(in_node != nullptr);
     MS_ASSERT(this->input_map_.find(in_node->name()->str()) == this->input_map_.end());
     auto in_size = in_node->input_indices_.size();
@@ -170,7 +171,7 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
       auto in_tensor_index = size_t(in_node->input_indices_[i]);
       bool is_graph_input = false;
       for (size_t j = 0; j < graph_in_size; ++j) {
-        if (in_tensor_index == model->input_indices_[j]) {
+        if (in_tensor_index == model->sub_graphs_.front()->input_indices_[j]) {
           is_graph_input = true;
           break;
         }
@@ -192,10 +193,11 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
 
 void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
+  MS_ASSERT(!(model->sub_graphs_.empty()));
   auto graph_output_node_indexes = GetGraphOutputNodes(model);
-  auto graph_out_size = model->output_indices_.size();
+  auto graph_out_size = model->sub_graphs_.front()->output_indices_.size();
   for (auto out_node_index : graph_output_node_indexes) {
-    auto out_node = model->nodes_[out_node_index];
+    auto out_node = model->all_nodes_[out_node_index];
     MS_ASSERT(out_node != nullptr);
     MS_ASSERT(this->output_map_.find(out_node->name()->str()) == this->output_map_.end());
     auto out_size = out_node->output_indices_.size();
@@ -203,7 +205,7 @@ void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
       auto out_tensor_index = out_node->output_indices_[i];
       bool is_graph_output = false;
       for (size_t j = 0; j < graph_out_size; ++j) {
-        if (out_tensor_index == model->output_indices_[j]) {
+        if (out_tensor_index == model->sub_graphs_.front()->output_indices_[j]) {
           is_graph_output = true;
           break;
         }
@@ -225,18 +227,18 @@ void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
 void LiteSession::InitGraphOutputTensorNames(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(this->output_tensor_names_.empty());
-  auto out_size = model->output_indices_.size();
+  auto out_size = model->sub_graphs_.front()->output_indices_.size();
   for (size_t i = 0; i < out_size; ++i) {
-    this->output_tensor_names_.emplace_back(std::to_string(model->output_indices_[i]));
+    this->output_tensor_names_.emplace_back(std::to_string(model->sub_graphs_.front()->output_indices_[i]));
   }
 }
 
 void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(this->output_tensor_map_.empty());
-  auto graph_out_size = model->output_indices_.size();
+  auto graph_out_size = model->sub_graphs_.front()->output_indices_.size();
   for (size_t i = 0; i < graph_out_size; ++i) {
-    size_t graph_out_index = model->output_indices_[i];
+    size_t graph_out_index = model->sub_graphs_.front()->output_indices_[i];
     MS_ASSERT(graph_out_index < this->tensors_.size());
     auto *out_tensor = this->tensors_.at(graph_out_index);
     if (out_tensor == nullptr) {
