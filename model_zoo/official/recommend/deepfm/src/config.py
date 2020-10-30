@@ -24,7 +24,7 @@ class DataConfig:
     data_vocab_size = 184965
     train_num_of_parts = 21
     test_num_of_parts = 3
-    batch_size = 1000
+    batch_size = 16000
     data_field_size = 39
     # dataset format, 1: mindrecord, 2: tfrecord, 3: h5
     data_format = 2
@@ -38,7 +38,7 @@ class ModelConfig:
     data_field_size = DataConfig.data_field_size
     data_vocab_size = DataConfig.data_vocab_size
     data_emb_dim = 80
-    deep_layer_args = [[400, 400, 512], "relu"]
+    deep_layer_args = [[1024, 512, 256, 128], "relu"]
     init_args = [-0.01, 0.01]
     weight_bias_init = ['normal', 'normal']
     keep_prob = 0.9
@@ -49,14 +49,17 @@ class TrainConfig:
     Define parameters of training.
     """
     batch_size = DataConfig.batch_size
-    l2_coef = 1e-6
-    learning_rate = 1e-5
-    epsilon = 1e-8
+    l2_coef = 8e-5
+    learning_rate = 5e-4
+    epsilon = 5e-8
     loss_scale = 1024.0
-    train_epochs = 15
+
+    train_epochs = 5
+
     save_checkpoint = True
     ckpt_file_name_prefix = "deepfm"
     save_checkpoint_steps = 1
-    keep_checkpoint_max = 15
+    keep_checkpoint_max = 50
+
     eval_callback = True
     loss_callback = True
