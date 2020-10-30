@@ -82,6 +82,10 @@ void GPUSession::Init(uint32_t device_id) {
   if (!ret) {
     MS_LOG(EXCEPTION) << "GPUSession failed to set current device id.";
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+
   MS_LOG(INFO) << "Set device id " << device_id << " for gpu session.";
   InitDevice(kGPUDevice, device_id);
 }
