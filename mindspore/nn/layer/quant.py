@@ -42,9 +42,6 @@ __all__ = [
     'Conv2dQuant',
     'DenseQuant',
     'ActQuant',
-    'LeakyReLUQuant',
-    'HSwishQuant',
-    'HSigmoidQuant',
     'TensorAddQuant',
     'MulQuant',
 ]
@@ -90,7 +87,7 @@ class Conv2dBnAct(Cell):
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
             'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
         alpha (float): Slope of the activation function at x < 0. Default: 0.2.
-        after_fake(bool): Determin whether there must be a fake quantization operation after Cond2dBnAct.
+        after_fake(bool): Determine whether there must be a fake quantization operation after Cond2dBnAct.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -177,7 +174,7 @@ class DenseBnAct(Cell):
         activation (Union[str, Cell, Primitive]): Specifies activation type. The optional values are as following:
             'Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid',
             'PReLU', 'LeakyReLU', 'h-Swish', and 'h-Sigmoid'. Default: None.
-        after_fake(bool): Determin whether there must be a fake quantization operation after DenseBnAct.
+        after_fake(bool): Determine whether there must be a fake quantization operation after DenseBnAct.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
@@ -1058,7 +1055,9 @@ class ActQuant(_QuantActivation):
 
     Args:
         activation (Cell): Activation cell.
+        ema (bool): The exponential Moving Average algorithm updates min and max. Default: False.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
+        fake_before (bool): Whether add fake quant operation before activation. Default: False.
         quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
             both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
@@ -1080,198 +1079,31 @@ class ActQuant(_QuantActivation):
 
     def __init__(self,
                  activation,
+                 ema=False,
                  ema_decay=0.999,
+                 fake_before=False,
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
         super(ActQuant, self).__init__()
         self.act = Validator.check_isinstance("activation", activation, Cell)
+        self.fake_before = Validator.check_bool(fake_before, "fake_before")
+        if self.fake_before:
+            self.fake_quant_act_before = quant_config.activation(min_init=-6,
+                                                                 max_init=6,
+                                                                 ema=ema,
+                                                                 ema_decay=ema_decay,
+                                                                 quant_dtype=quant_dtype)
         self.fake_quant_act = quant_config.activation(min_init=-6,
                                                       max_init=6,
-                                                      ema=False,
+                                                      ema=ema,
                                                       ema_decay=ema_decay,
                                                       quant_dtype=quant_dtype)
-        self.act = activation
 
     def construct(self, x):
+        if self.fake_before:
+            x = self.fake_quant_act_before(x)
         x = self.act(x)
         x = self.fake_quant_act(x)
-        return x
-
-    def get_origin(self):
-        return self.act
-
-
-class LeakyReLUQuant(_QuantActivation):
-    r"""
-    LeakyReLUQuant activation function. Add Fake Quant OP after HSwish OP.
-
-    This part is a more detailed overview of HSwish op.
-
-    Args:
-        activation (Cell): Activation cell class.
-        ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
-            both set to default FakeQuantWithMinMaxObserver.
-        quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
-
-    Inputs:
-        - **input** (Tensor) - The input of LeakyReLUQuant.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input`.
-
-    Examples:
-        >>> qconfig = compression.quant.create_quant_config()
-        >>> activation = nn.LeakyReLUQuant(nn.LeakyReLU(), quant_config=qconfig)
-        >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = activation(input)
-        >>> result
-        [[0.9882355, 1.9764705, -0.18823528], [-0.37647057, 0., -0.18823528]]
-    """
-
-    def __init__(self,
-                 activation,
-                 ema_decay=0.999,
-                 quant_config=quant_config_default,
-                 quant_dtype=QuantDtype.INT8):
-        super(LeakyReLUQuant, self).__init__()
-        self.fake_quant_act_before = quant_config.activation(min_init=-6,
-                                                             max_init=6,
-                                                             ema=True,
-                                                             ema_decay=ema_decay,
-                                                             quant_dtype=quant_dtype)
-        self.fake_quant_act_after = quant_config.activation(min_init=-6,
-                                                            max_init=6,
-                                                            ema=True,
-                                                            ema_decay=ema_decay,
-                                                            quant_dtype=quant_dtype)
-        if issubclass(activation.__class__, nn.LeakyReLU):
-            self.act = activation
-        else:
-            raise ValueError("Activation should be `nn.LeakyReLU`")
-
-    def construct(self, x):
-        x = self.fake_quant_act_before(x)
-        x = self.act(x)
-        x = self.fake_quant_act_after(x)
-        return x
-
-    def get_origin(self):
-        return self.act
-
-
-class HSwishQuant(_QuantActivation):
-    r"""
-    HSwishQuant activation function. Add Fake Quant OP after HSwish OP.
-
-    This part is a more detailed overview of HSwish op.
-
-    Args:
-        activation (Cell): Activation cell class.
-        ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
-            both set to default FakeQuantWithMinMaxObserver.
-        quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
-
-    Inputs:
-        - **input** (Tensor) - The input of HSwishQuant.
-
-    Outputs:
-        Tensor, with the same type and shape as the `input`.
-
-    Examples:
-        >>> qconfig = compression.quant.create_quant_config()
-        >>> activation = nn.HSwishQuant(nn.HSwish(), quant_config=qconfig)
-        >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = activation(input)
-        >>> result
-        [[0.65882355, 1.6470588, -0.32941177], [-0.32941177, 0., -0.32941177]]
-    """
-
-    def __init__(self,
-                 activation,
-                 ema_decay=0.999,
-                 quant_config=quant_config_default,
-                 quant_dtype=QuantDtype.INT8):
-        super(HSwishQuant, self).__init__()
-        self.fake_quant_act_before = quant_config.activation(min_init=-6,
-                                                             max_init=6,
-                                                             ema=True,
-                                                             ema_decay=ema_decay,
-                                                             quant_dtype=quant_dtype)
-        self.fake_quant_act_after = quant_config.activation(min_init=-6,
-                                                            max_init=6,
-                                                            ema=True,
-                                                            ema_decay=ema_decay,
-                                                            quant_dtype=quant_dtype)
-        if issubclass(activation.__class__, nn.HSwish):
-            self.act = activation
-        else:
-            raise ValueError("Activation should be `nn.HSwish`")
-
-    def construct(self, x):
-        x = self.fake_quant_act_before(x)
-        x = self.act(x)
-        x = self.fake_quant_act_after(x)
-        return x
-
-    def get_origin(self):
-        return self.act
-
-
-class HSigmoidQuant(_QuantActivation):
-    r"""
-    HSigmoidQuant activation function. Add Fake Quant OP before and after HSigmoid OP.
-
-    This part is a more detailed overview of HSigmoid op.
-
-    Args:
-        activation (Cell): Activation cell class.
-        ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
-            both set to default FakeQuantWithMinMaxObserver.
-        quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
-
-    Inputs:
-        - **x** (Tensor) - The input of HSigmoidQuant.
-
-    Outputs:
-        Tensor, with the same type and shape as the `x`.
-
-    Examples:
-        >>> qconfig = compression.quant.create_quant_config()
-        >>> activation = nn.HSigmoidQuant(nn.HSigmoid(), quant_config=qconfig)
-        >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = activation(input)
-        >>> result
-        [[0.65882355, 0.84705883, 0.32941177], [0.1882353, 0.5176471, 0.32941177]]
-    """
-
-    def __init__(self,
-                 activation,
-                 ema_decay=0.999,
-                 quant_config=quant_config_default,
-                 quant_dtype=QuantDtype.INT8):
-        super(HSigmoidQuant, self).__init__()
-        self.fake_quant_act_before = quant_config.activation(min_init=-6,
-                                                             max_init=6,
-                                                             ema=True,
-                                                             ema_decay=ema_decay,
-                                                             quant_dtype=quant_dtype)
-        self.fake_quant_act_after = quant_config.activation(min_init=-6,
-                                                            max_init=6,
-                                                            ema=True,
-                                                            ema_decay=ema_decay,
-                                                            quant_dtype=quant_dtype)
-        if issubclass(activation.__class__, nn.HSigmoid):
-            self.act = activation
-        else:
-            raise ValueError("Activation should be `nn.HSigmoid`")
-
-    def construct(self, x):
-        x = self.fake_quant_act_before(x)
-        x = self.act(x)
-        x = self.fake_quant_act_after(x)
         return x
 
     def get_origin(self):

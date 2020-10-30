@@ -36,14 +36,6 @@ from .quantizer import Quantizer, OptimizeOption
 __all__ = ["QuantizationAwareTraining", "create_quant_config"]
 
 
-_ACTIVATION_MAP = {nn.ReLU: quant.ActQuant,
-                   nn.ReLU6: quant.ActQuant,
-                   nn.Sigmoid: quant.ActQuant,
-                   nn.LeakyReLU: quant.LeakyReLUQuant,
-                   nn.HSigmoid: quant.HSigmoidQuant,
-                   nn.HSwish: quant.HSwishQuant}
-
-
 def create_quant_config(quant_observer=(quant.FakeQuantWithMinMaxObserver, quant.FakeQuantWithMinMaxObserver),
                         quant_delay=(0, 0),
                         quant_dtype=(QuantDtype.INT8, QuantDtype.INT8),
@@ -387,7 +379,7 @@ class QuantizationAwareTraining(Quantizer):
 
     def _convert_dense(self, subcell):
         """
-        convert dense cell to combine dense cell
+        convert dense cell to quant cell
         """
         dense_inner = subcell.dense
         dense_inner = quant.DenseQuant(dense_inner.in_channels,
@@ -413,9 +405,20 @@ class QuantizationAwareTraining(Quantizer):
         return subcell
 
     def _convert_activation(self, activation):
+        """
+        convert activation cell to quant cell
+        """
         act_class = activation.__class__
-        if act_class not in _ACTIVATION_MAP:
-            raise ValueError("Unsupported activation in auto quant: ", act_class)
-        return _ACTIVATION_MAP[act_class](activation=activation,
-                                          quant_config=self.quant_config,
-                                          quant_dtype=self.act_dtype)
+        act_list = [nn.ReLU, nn.ReLU6, nn.Sigmoid]
+        act_list_withfakebefore = [nn.LeakyReLU, nn.HSigmoid, nn.HSwish]
+        if act_class in act_list:
+            return quant.ActQuant(activation=activation,
+                                  quant_config=self.quant_config,
+                                  quant_dtype=self.act_dtype)
+        if act_class in act_list_withfakebefore:
+            return quant.ActQuant(activation=activation,
+                                  ema=True,
+                                  fake_before=True,
+                                  quant_config=self.quant_config,
+                                  quant_dtype=self.act_dtype)
+        raise ValueError("Unsupported activation in auto quant: ", act_class)
