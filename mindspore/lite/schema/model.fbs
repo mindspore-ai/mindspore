@@ -232,7 +232,8 @@ union PrimitiveType {
     AssignAdd,
     OnesLike,
     BinaryCrossEntropyGrad,
-    BinaryCrossEntropy
+    BinaryCrossEntropy,
+    LpNormalization,
 }
 
 enum QuantType: int {

@@ -300,7 +300,7 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
   for (const auto &tensor : in_tensors) {
     auto dtype = tensor->data_type();
     if (dtype == kNumberTypeFloat32 || dtype == kNumberTypeFloat16 || dtype == kNumberTypeInt8 ||
-        dtype == kNumberTypeInt32) {
+        dtype == kNumberTypeInt32 || dtype == kNumberTypeBool) {
       return dtype;
     }
   }
@@ -346,7 +346,7 @@ kernel::SubGraphType Scheduler::GetKernelSubGraphType(kernel::LiteKernel *kernel
     if (desc.data_type == kNumberTypeFloat16) {
       return kernel::kCpuFP16SubGraph;
     } else if (desc.data_type == kNumberTypeFloat32 || desc.data_type == kNumberTypeInt8 ||
-               desc.data_type == kNumberTypeInt32) {
+               desc.data_type == kNumberTypeInt32 || desc.data_type == kNumberTypeBool) {
       return kernel::kCpuFP32SubGraph;
     }
   }

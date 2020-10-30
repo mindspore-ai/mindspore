@@ -48,7 +48,9 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_FusedBatchNorm,
   schema::PrimitiveType_PReLU,
   schema::PrimitiveType_BiasAdd,
-  schema::PrimitiveType_InstanceNorm};
+  schema::PrimitiveType_InstanceNorm,
+  schema::PrimitiveType_SpaceToDepth,
+  schema::PrimitiveType_DepthToSpace};
 
 static const std::vector<schema::PrimitiveType> nhwcOpDualInputList = {
 #ifdef SUPPORT_TRAIN

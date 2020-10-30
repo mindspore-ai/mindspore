@@ -42,6 +42,7 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
   std::vector<int> axes;
   std::vector<int> starts;
   std::vector<int> ends;
+  std::vector<int> steps;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "starts") {
@@ -62,8 +63,63 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
       for (int i = 0; i < num; ++i) {
         ends.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
       }
+    } else if (attribute_name == "steps") {
+      const int num = onnx_node_attr.ints_size();
+      steps.clear();
+      for (int i = 0; i < num; ++i) {
+        steps.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+      }
     }
   }
+
+  if (onnx_node.input_size() > 1) {
+    const auto &starts_name = onnx_node.input(1);
+    for (const auto &it : onnx_graph.initializer()) {
+      if (it.name() == starts_name) {
+        starts.clear();
+        for (int i = 0; i < it.int32_data_size(); ++i) {
+          starts.push_back(it.int32_data(i));
+        }
+      }
+    }
+  }
+
+  if (onnx_node.input_size() > 2) {
+    const auto &ends_name = onnx_node.input(2);
+    for (const auto &it : onnx_graph.initializer()) {
+      if (it.name() == ends_name) {
+        ends.clear();
+        for (int i = 0; i < it.int32_data_size(); ++i) {
+          ends.push_back(it.int32_data(i));
+        }
+      }
+    }
+  }
+
+  if (onnx_node.input_size() > 3) {
+    const auto &axes_name = onnx_node.input(3);
+    for (const auto &it : onnx_graph.initializer()) {
+      if (it.name() == axes_name) {
+        axes.clear();
+        for (int i = 0; i < it.int32_data_size(); ++i) {
+          axes.push_back(it.int32_data(i));
+        }
+      }
+    }
+  }
+
+  if (onnx_node.input_size() > 4) {
+    const auto &steps_name = onnx_node.input(4);
+    for (const auto &it : onnx_graph.initializer()) {
+      if (it.name() == steps_name) {
+        steps.clear();
+        for (int i = 0; i < it.int32_data_size(); ++i) {
+          steps.push_back(it.int32_data(i));
+        }
+      }
+    }
+  }
+
   std::vector<int> sizes(starts.size(), -1);
   for (size_t i = 0; i < starts.size(); ++i) {
     sizes[i] = (ends[i] < 0 ? ends[i] : ends[i] - starts[i]);
@@ -71,6 +127,7 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
   attr->axes = axes;
   attr->begin = starts;
   attr->size = sizes;
+  attr->step = steps;
   op->primitive->value.type = schema::PrimitiveType_Slice;
   op->primitive->value.value = attr.release();
   return RET_OK;

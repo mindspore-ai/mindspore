@@ -170,7 +170,7 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
       auto node = GetNode(j);
       if (nullptr == node) {
         MS_LOG(ERROR) << "Can't find input node.";
-        return RET_NOT_FIND_OP;
+        return RET_ERROR;
       }
       op_inputs.push_back(node);
     }
@@ -203,7 +203,7 @@ int AnfImporterFromMetaGraphT::AddReturnCNode() {
       auto cNode = GetNode(tensor_id);
       if (nullptr == cNode) {
         MS_LOG(ERROR) << "Can't find input node.";
-        return RET_NOT_FIND_OP;
+        return RET_ERROR;
       }
       make_tuple_inputs.emplace_back(cNode);
     }
@@ -233,7 +233,7 @@ int AnfImporterFromMetaGraphT::AddReturnCNode() {
     auto cnode = GetNode(meta_graph_->outputIndex.front());
     if (nullptr == cnode) {
       MS_LOG(ERROR) << "Can't find input node.";
-      return RET_NOT_FIND_OP;
+      return RET_ERROR;
     }
     op_inputs.emplace_back(cnode);
     auto return_cnode = func_graph_->NewCNode(op_inputs);

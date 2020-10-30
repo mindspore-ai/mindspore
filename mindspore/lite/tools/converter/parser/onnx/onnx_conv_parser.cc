@@ -24,9 +24,6 @@ namespace lite {
 constexpr int32_t kSingleGroup = 1;
 bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx DepthwiseConvParser";
-  if (attr == nullptr || attr->group != attr->channelIn) {
-    return false;
-  }
   std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam = std::make_unique<schema::DepthwiseConv2DT>();
   if (depthwiseConv2DParam == nullptr) {
     MS_LOG(ERROR) << "new op failed";
@@ -172,7 +169,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
 
-  if (attr->group > kSingleGroup && attr->group == attr->channelIn) {
+  if (attr != nullptr && attr->group > kSingleGroup && attr->group == attr->channelIn) {
     if (!ParseGroupConvolution(attr, op)) {
       MS_LOG(ERROR) << "Convert Convolution to Depthwise failed";
       return RET_ERROR;
