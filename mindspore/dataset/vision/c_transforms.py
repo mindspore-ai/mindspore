@@ -560,7 +560,7 @@ class RandomPosterize(cde.RandomPosterizeOp):
             Bits values must be in range of [1,8], and include at
             least one integer value in the given range. It must be in
             (min, max) or integer format. If min=max, then it is a single fixed
-            magnitude operation (default=[4, 8]).
+            magnitude operation (default=[8, 8]).
 
     Examples:
         >>> import mindspore.dataset.vision.c_transforms as c_vision
