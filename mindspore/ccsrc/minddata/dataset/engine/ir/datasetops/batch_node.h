@@ -31,10 +31,16 @@ namespace api {
 
 class BatchNode : public DatasetNode {
  public:
-  /// \brief Constructor
+#ifdef ENABLE_PYTHON
+  /// \brief Constructor #1, for Python API to create a BatchNode
   BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, bool drop_remainder, bool pad,
-            std::vector<std::string> cols_to_map,
+            const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
+            py::function batch_size_func, py::function batch_map_func,
             std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map);
+#endif
+
+  /// \brief Constructor #2 for C++ API to create a BatchNode
+  BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, bool drop_remainder);
 
   /// \brief Destructor
   ~BatchNode() = default;
@@ -51,7 +57,12 @@ class BatchNode : public DatasetNode {
   int32_t batch_size_;
   bool drop_remainder_;
   bool pad_;
-  std::vector<std::string> cols_to_map_;
+  std::vector<std::string> in_col_names_;
+  std::vector<std::string> out_col_names_;
+#ifdef ENABLE_PYTHON
+  py::function batch_size_func_;
+  py::function batch_map_func_;
+#endif
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
 };
 

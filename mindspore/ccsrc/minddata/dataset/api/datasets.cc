@@ -478,10 +478,7 @@ std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &dat
 // Function to create a Batch dataset
 BatchDataset::BatchDataset(std::shared_ptr<Dataset> input, int32_t batch_size, bool drop_remainder) {
   // Default values
-  std::vector<std::string> cols_to_map = {};
-  std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map;
-  bool pad = false;
-  auto ds = std::make_shared<BatchNode>(input->IRNode(), batch_size, drop_remainder, pad, cols_to_map, pad_map);
+  auto ds = std::make_shared<BatchNode>(input->IRNode(), batch_size, drop_remainder);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
