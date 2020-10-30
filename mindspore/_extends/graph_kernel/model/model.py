@@ -296,6 +296,7 @@ class Graph:
     def __init__(self, name, ops):
         self.name = name
         self.ops = ops  # in topo order, can not use set
+        self.inputs = []
         self.outputs = []
 
     def set_processor(self, processor):
@@ -341,6 +342,9 @@ class Graph:
                         if d not in self.ops:
                             outputs.append(op.output)
                             break
+        if self.inputs:
+            inputs = self.inputs
+
         if self.outputs:
             outputs = self.outputs
         return inputs, outputs

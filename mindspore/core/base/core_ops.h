@@ -143,6 +143,7 @@ inline const PrimitivePtr kPrimDepthwiseConv2dNativeBackpropFilter =
   std::make_shared<Primitive>("DepthwiseConv2dNativeBackpropFilter");
 inline const PrimitivePtr kPrimDepthwiseConv2dNativeBackpropInput =
   std::make_shared<Primitive>("DepthwiseConv2dNativeBackpropInput");
+inline const PrimitivePtr kPrimBiasAdd = std::make_shared<Primitive>("BiasAdd");
 inline const PrimitivePtr kPrimBiasAddGrad = std::make_shared<Primitive>("BiasAddGrad");
 inline const PrimitivePtr kPrimSoftmaxCrossEntropyWithLogits =
   std::make_shared<Primitive>("SoftmaxCrossEntropyWithLogits");

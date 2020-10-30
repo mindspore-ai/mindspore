@@ -18,3 +18,5 @@ from .gelu import expand_gelu
 from .layernorm import expand_layernorm
 from .softmax import expand_softmax
 from .square import expand_square
+from .bias_add import expand_biasadd
+from .bias_add_grad import expand_biasaddgrad

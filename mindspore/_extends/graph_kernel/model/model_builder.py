@@ -22,14 +22,36 @@ class OpInfer:
     """Op infer"""
     @staticmethod
     def default_reduce_infer(inputs, attrs):
+        """Default reduce infer"""
         shape = copy.deepcopy(inputs[0].shape)
-        for i in attrs['reduce_axis']:
-            shape[i] = 1
+        if attrs['keep_dims']:
+            for i in attrs['reduce_axis']:
+                shape[i] = 1
+            return shape
+
+        real_shape = []
+        for i, _ in enumerate(shape):
+            if i not in attrs['reduce_axis']:
+                real_shape.append(shape[i])
+        return real_shape
+
+    @staticmethod
+    def default_elementwise_infer(inputs, attrs):
+        """Default elementwise infer"""
+        shape = (1,)
+        max_flatten_shape = 1
+        for t in inputs:
+            flatten_shape = 1
+            for s in t.shape:
+                flatten_shape *= s
+            if flatten_shape >= max_flatten_shape:
+                max_flatten_shape = flatten_shape
+                shape = t.shape
         return shape
 
     default_infer_shape_func = [
         None,
-        lambda inputs, attrs: max([t.shape for t in inputs]),
+        default_elementwise_infer.__func__,
         lambda inputs, attrs: max([t.shape for t in inputs]),
         default_reduce_infer.__func__,
         None,
@@ -72,8 +94,15 @@ class OpInfer:
 class GraphBuilder:
     """Graph builder"""
     class GraphWrapper:
+        """Graph wrapper"""
+
         def __init__(self, name):
             self.graph = Graph(name, [])
+
+        def set_input(self, *para):
+            for t in para:
+                t.para_type = Tensor.PARA_INPUT
+                self.graph.inputs.append(t)
 
         def set_output(self, *para):
             for t in para:
