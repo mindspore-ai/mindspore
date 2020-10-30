@@ -35,12 +35,27 @@ __kernel void Relu6(__read_only image2d_t input, __write_only image2d_t output, 
   WRITE_IMAGE(output, (int2)(X, Y), in_c4);
 }
 
-__kernel void Sigmoid(__read_only image2d_t input, __write_only image2d_t output, const int2 img_shape) {
+__kernel void Sigmoid(__read_only image2d_t input, __write_only image2d_t output, const int2 img_shape, const int c4,
+                      const int last_c4) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
   if (X >= img_shape.x || Y >= img_shape.y) return;
+  int C4 = X % c4;
   FLT4 in_c4 = READ_IMAGE(input, smp_zero, (int2)(X, Y));
-  in_c4 = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-in_c4));
+  if (C4 < c4 - 1) {
+    in_c4 = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-in_c4));
+  } else {
+    in_c4.x = (FLT)(1.f) / ((FLT)(1.f) + exp(-in_c4.x));
+    if (last_c4 > 1) {
+      in_c4.y = (FLT)(1.f) / ((FLT)(1.f) + exp(-in_c4.y));
+    }
+    if (last_c4 > 2) {
+      in_c4.z = (FLT)(1.f) / ((FLT)(1.f) + exp(-in_c4.z));
+    }
+    if (last_c4 > 3) {
+      in_c4.w = (FLT)(1.f) / ((FLT)(1.f) + exp(-in_c4.w));
+    }
+  }
   WRITE_IMAGE(output, (int2)(X, Y), in_c4);
 }
 

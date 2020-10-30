@@ -266,7 +266,7 @@ __kernel void ElementGreaterEqual_IMG(__read_only image2d_t input_a, __read_only
 
 __kernel void BroadcastNHWC4Add_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
                                     __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
-                                    const int4 output_shape, float act_min, float act_max) {
+                                    const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // W
   int Z = get_global_id(2);  // H
@@ -281,14 +281,21 @@ __kernel void BroadcastNHWC4Add_IMG(__read_only image2d_t input_a, __read_only i
   int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
   int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
-  FLT4 result = a + b;
+  FLT4 result;
+  if (broadcastC_flag == 0) {
+    result = a + b;
+  } else if (broadcastC_flag == 1) {
+    result = a.x + b;
+  } else {
+    result = a + b.x;
+  }
   result = clamp(result, (FLT)(act_min), (FLT)(act_max));
   WRITE_IMAGE(output, (int2)(Y * output_shape.w + X, Z), result);
 }
 
 __kernel void BroadcastNHWC4Sub_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
                                     __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
-                                    const int4 output_shape, float act_min, float act_max) {
+                                    const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // W
   int Z = get_global_id(2);  // H
@@ -303,14 +310,21 @@ __kernel void BroadcastNHWC4Sub_IMG(__read_only image2d_t input_a, __read_only i
   int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
   int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
-  FLT4 result = a - b;
+  FLT4 result;
+  if (broadcastC_flag == 0) {
+    result = a - b;
+  } else if (broadcastC_flag == 1) {
+    result = a.x - b;
+  } else {
+    result = a - b.x;
+  }
   result = clamp(result, (FLT)(act_min), (FLT)(act_max));
   WRITE_IMAGE(output, (int2)(Y * output_shape.w + X, Z), result);
 }
 
 __kernel void BroadcastNHWC4Mul_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
                                     __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
-                                    const int4 output_shape, float act_min, float act_max) {
+                                    const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // W
   int Z = get_global_id(2);  // H
@@ -325,14 +339,21 @@ __kernel void BroadcastNHWC4Mul_IMG(__read_only image2d_t input_a, __read_only i
   int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
   int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
-  FLT4 result = a * b;
+  FLT4 result;
+  if (broadcastC_flag == 0) {
+    result = a * b;
+  } else if (broadcastC_flag == 1) {
+    result = a.x * b;
+  } else {
+    result = a * b.x;
+  }
   result = clamp(result, (FLT)(act_min), (FLT)(act_max));
   WRITE_IMAGE(output, (int2)(Y * output_shape.w + X, Z), result);
 }
 
 __kernel void BroadcastNHWC4Div_IMG(__read_only image2d_t input_a, __read_only image2d_t input_b,
                                     __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
-                                    const int4 output_shape, float act_min, float act_max) {
+                                    const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // W
   int Z = get_global_id(2);  // H
@@ -347,7 +368,14 @@ __kernel void BroadcastNHWC4Div_IMG(__read_only image2d_t input_a, __read_only i
   int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
   int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
-  FLT4 result = a / b;
+  FLT4 result;
+  if (broadcastC_flag == 0) {
+    result = a / b;
+  } else if (broadcastC_flag == 1) {
+    result = a.x / b;
+  } else {
+    result = a / b.x;
+  }
   result = clamp(result, (FLT)(act_min), (FLT)(act_max));
   WRITE_IMAGE(output, (int2)(Y * output_shape.w + X, Z), result);
 }
