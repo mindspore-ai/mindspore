@@ -154,14 +154,6 @@ class ReLU6Info : public ActivationOther {
   ~ReLU6Info() override = default;
 };
 
-class ReLUV2Info : public ActivationOther {
- public:
-  ReLUV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-             const PrimitiveAttrs &attrs)
-      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
-  ~ReLUV2Info() override = default;
-};
-
 class SoftsignInfo : public ActivationOther {
  public:
   SoftsignInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
