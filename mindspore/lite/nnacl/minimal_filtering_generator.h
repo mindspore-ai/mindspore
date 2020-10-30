@@ -36,7 +36,7 @@ int LT(const float *poly_array, float *matrix_lt, int n);
 
 void T(const float *poly_array, float *matrix_t, int n);
 
-int B(float *poly_array, float *matrix_b, int in_unit);
+int B(const float *poly_array, float *matrix_b, int in_unit);
 
 void GenerateIntervalArray(float *array, float interval, int degree);
 

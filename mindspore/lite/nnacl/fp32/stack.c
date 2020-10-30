@@ -37,7 +37,8 @@ size_t GetStackPreAxisCount(const int *in_shape, int axis) {
   return pre_axis_count;
 }
 
-void DoStack(const float *const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis, float *output) {
+void DoStack(const float *const *inputs, size_t input_num, const int *in_shape, size_t shape_size, int axis,
+             float *output) {
   size_t copy_num = GetStackCopyNum(axis, in_shape, shape_size);
   size_t copy_size = copy_num * sizeof(float);
   size_t pre_axis_count = GetStackPreAxisCount(in_shape, axis);
@@ -52,7 +53,7 @@ void DoStack(const float *const *inputs, size_t input_num, int *in_shape, size_t
   }
 }
 
-void DoStackInt32(const int32_t *const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis,
+void DoStackInt32(const int32_t *const *inputs, size_t input_num, const int *in_shape, size_t shape_size, int axis,
                   int32_t *output) {
   size_t copy_num = GetStackCopyNum(axis, in_shape, shape_size);
   size_t copy_size = copy_num * sizeof(int32_t);
