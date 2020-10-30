@@ -136,6 +136,33 @@ def test_cv_minddataset_reader_basic_padded_samples(add_and_remove_cv_file):
     assert num_padded_iter == 5
     assert num_iter == 15
 
+def test_cv_minddataset_reader_basic_padded_samples_type_cast(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    columns_list = ["label", "file_name", "data"]
+
+    data = get_data(CV_DIR_NAME)
+    padded_sample = data[0]
+    padded_sample['label'] = -1
+    padded_sample['file_name'] = 99999
+    num_readers = 4
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers, padded_sample=padded_sample, num_padded=5)
+    assert data_set.get_dataset_size() == 15
+    num_iter = 0
+    num_padded_iter = 0
+    for item in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+        logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
+        logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
+        if item['label'] == -1:
+            num_padded_iter += 1
+            assert item['file_name'] == bytes(str(padded_sample['file_name']),
+                                              encoding='utf8')
+            assert item['label'] == padded_sample['label']
+            assert (item['data'] == np.array(list(padded_sample['data']))).all()
+        num_iter += 1
+    assert num_padded_iter == 5
+    assert num_iter == 15
+
 
 def test_cv_minddataset_partition_padded_samples(add_and_remove_cv_file):
     """tutorial for cv minddataset."""

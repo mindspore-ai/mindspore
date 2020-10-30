@@ -137,6 +137,10 @@ MSRStatus ShardColumn::GetColumnFromJson(const std::string &column_name, const j
   // Initialize num bytes
   *n_bytes = ColumnDataTypeSize[column_data_type];
   auto json_column_value = columns_json[column_name];
+  if (!json_column_value.is_string() && !json_column_value.is_number()) {
+    MS_LOG(ERROR) << "Conversion failed (" << json_column_value << ").";
+    return FAILED;
+  }
   switch (column_data_type) {
     case ColumnFloat32: {
       return GetFloat<float>(data_ptr, json_column_value, false);
@@ -152,7 +156,12 @@ MSRStatus ShardColumn::GetColumnFromJson(const std::string &column_name, const j
     }
     default: {
       // Convert string to c_str
-      std::string tmp_string = json_column_value;
+      std::string tmp_string;
+      if (json_column_value.is_string()) {
+        tmp_string = json_column_value.get<string>();
+      } else {
+        tmp_string = json_column_value.dump();
+      }
       *n_bytes = tmp_string.size();
       auto data = reinterpret_cast<const unsigned char *>(common::SafeCStr(tmp_string));
       *data_ptr = std::make_unique<unsigned char[]>(*n_bytes);
@@ -169,10 +178,6 @@ template <typename T>
 MSRStatus ShardColumn::GetFloat(std::unique_ptr<unsigned char[]> *data_ptr, const json &json_column_value,
                                 bool use_double) {
   std::unique_ptr<T[]> array_data = std::make_unique<T[]>(1);
-  if (!json_column_value.is_string() && !json_column_value.is_number()) {
-    MS_LOG(ERROR) << "Conversion to float failed (" << json_column_value << ").";
-    return FAILED;
-  }
   if (json_column_value.is_number()) {
     array_data[0] = json_column_value;
   } else {
