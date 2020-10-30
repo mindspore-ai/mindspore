@@ -81,7 +81,11 @@ class LogWriter {
 
   ~LogWriter() = default;
 
+#ifdef _WIN32
+  void operator<(const LogStream &stream) const noexcept __declspec(dllexport);
+#else
   void operator<(const LogStream &stream) const noexcept __attribute__((visibility("default")));
+#endif
 
  private:
   void OutputLog(const std::ostringstream &msg) const;

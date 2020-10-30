@@ -20,7 +20,7 @@
 
 namespace mindspore::lite {
 class PrimitiveC;
-struct Model {
+struct MS_API Model {
   struct Node {
     String name_;
     NodeType node_type_;
