@@ -120,6 +120,8 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_te
       kernel->set_desc(key);
     }
     return kernel;
+  } else {
+    free(parameter);
   }
   return nullptr;
 }
