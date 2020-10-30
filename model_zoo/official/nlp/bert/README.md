@@ -448,9 +448,9 @@ The result will be as follows:
 | Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | BERT_base                                                  | BERT_base                 |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G              | NV SMX2 V100-32G          |
 | uploaded Date              | 08/22/2020                                                 | 05/06/2020                |
-| MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
+| MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
 | Dataset                    | cn-wiki-128(4000w)                                         | ImageNet                  |
 | Training Parameters        | src/config.py                                              | src/config.py             |
 | Optimizer                  | Lamb                                                       | Momentum                  |
@@ -463,14 +463,14 @@ The result will be as follows:
 | Total time                 | 73h                                                        |                           |
 | Params (M)                 | 110M                                                       |                           |
 | Checkpoint for Fine tuning | 1.2G(.ckpt file)                                           |                           |
-
+| Scripts                    | [BERT_base](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)  |                           |
 
 | Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | BERT_NEZHA                                                 | BERT_NEZHA                |
-| Resource                   | Ascend 910, cpu:2.60GHz 56cores, memory:314G               | NV SMX2 V100-32G          |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G              | NV SMX2 V100-32G          |
 | uploaded Date              | 08/20/2020                                                 | 05/06/2020                |
-| MindSpore Version          | 0.6.0                                                      | 0.3.0                     |
+| MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
 | Dataset                    | cn-wiki-128(4000w)                                         | ImageNet                  |
 | Training Parameters        | src/config.py                                              | src/config.py             |
 | Optimizer                  | Lamb                                                       | Momentum                  |
@@ -483,6 +483,7 @@ The result will be as follows:
 | Total time                 | 200h                                                       |                           |
 | Params (M)                 | 340M                                                       |                           |
 | Checkpoint for Fine tuning | 3.2G(.ckpt file)                                           |                           |             
+| Scripts                    | [BERT_NEZHA](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)  |                           |
 
 #### Inference Performance
 
@@ -491,7 +492,7 @@ The result will be as follows:
 | Model Version              |                               |                           |                      
 | Resource                   | Ascend 910                    | NV SMX2 V100-32G          | 
 | uploaded Date              | 08/22/2020                    | 05/22/2020                |                      
-| MindSpore Version          | 0.6.0                         | 0.2.0                     | 
+| MindSpore Version          | 1.0.0                         | 1.0.0                     |
 | Dataset                    | cola, 1.2W                    | ImageNet, 1.2W            |
 | batch_size                 | 32(1P)                        | 130(8P)                   |                      
 | Accuracy                   | 0.588986                      | ACC1[72.07%] ACC5[90.90%] |                     
