@@ -44,21 +44,6 @@ void ShardTask::MakePerm() {
   }
 }
 
-void ShardTask::InsertTask(TaskType task_type, int shard_id, int group_id, const std::vector<uint64_t> &offset,
-                           const json &label) {
-  MS_LOG(DEBUG) << "Into insert task, shard_id: " << shard_id << ", group_id: " << group_id
-                << ", label: " << label.dump() << ", size of task_list_: " << task_list_.size() << ".";
-  task_list_.emplace_back(task_type, std::make_tuple(shard_id, group_id), offset, label);
-}
-
-void ShardTask::InsertTask(std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json> task) {
-  MS_LOG(DEBUG) << "Into insert task, shard_id: " << std::get<0>(std::get<1>(task))
-                << ", group_id: " << std::get<1>(std::get<1>(task)) << ", label: " << std::get<3>(task).dump()
-                << ", size of task_list_: " << task_list_.size() << ".";
-
-  task_list_.push_back(std::move(task));
-}
-
 void ShardTask::PopBack() { task_list_.pop_back(); }
 
 uint32_t ShardTask::Size() const { return static_cast<uint32_t>(task_list_.size()); }

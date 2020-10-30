@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+#include <thread>
+
 #include "minddata/mindrecord/include/shard_distributed_sample.h"
 #include "minddata/mindrecord/include/shard_reader.h"
 #include "utils/ms_utils.h"
@@ -1036,15 +1039,37 @@ MSRStatus ShardReader::CreateTasksByRow(const std::vector<std::tuple<int, int, i
   if (std::get<0>(ret) != SUCCESS) {
     return FAILED;
   }
-  auto offsets = std::get<1>(ret);
-  auto local_columns = std::get<2>(ret);
+  auto &offsets = std::get<1>(ret);
+  auto &local_columns = std::get<2>(ret);
   if (shard_count_ <= kMaxFileCount) {
+    int sample_count = 0;
     for (int shard_id = 0; shard_id < shard_count_; shard_id++) {
-      for (uint32_t i = 0; i < offsets[shard_id].size(); i += 1) {
-        tasks_.InsertTask(TaskType::kCommonTask, offsets[shard_id][i][0], offsets[shard_id][i][1],
-                          std::vector<uint64_t>{offsets[shard_id][i][2], offsets[shard_id][i][3]},
-                          local_columns[shard_id][i]);
-      }
+      sample_count += offsets[shard_id].size();
+    }
+    MS_LOG(DEBUG) << "There are " << sample_count << " records in the dataset.";
+
+    // Init the tasks_ size
+    tasks_.ResizeTask(sample_count);
+
+    // Init the task threads, maybe use ThreadPool is better
+    std::vector<std::thread> init_tasks_thread(shard_count_);
+
+    uint32_t current_offset = 0;
+    for (uint32_t shard_id = 0; shard_id < shard_count_; shard_id++) {
+      init_tasks_thread[shard_id] = std::thread([this, &offsets, &local_columns, shard_id, current_offset]() {
+        auto offset = current_offset;
+        for (uint32_t i = 0; i < offsets[shard_id].size(); i += 1) {
+          tasks_.InsertTask(offset, TaskType::kCommonTask, offsets[shard_id][i][0], offsets[shard_id][i][1],
+                            std::vector<uint64_t>{offsets[shard_id][i][2], offsets[shard_id][i][3]},
+                            local_columns[shard_id][i]);
+          offset++;
+        }
+      });
+      current_offset += offsets[shard_id].size();
+    }
+
+    for (uint32_t shard_id = 0; shard_id < shard_count_; shard_id++) {
+      init_tasks_thread[shard_id].join();
     }
   } else {
     return FAILED;
