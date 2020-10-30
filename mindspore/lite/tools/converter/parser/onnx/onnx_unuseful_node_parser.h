@@ -25,6 +25,7 @@ namespace lite {
 class OnnxUnusefulNodeParser : public OnnxNodeParser {
  public:
   OnnxUnusefulNodeParser() : OnnxNodeParser("UnusefulNode") {}
+  ~OnnxUnusefulNodeParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

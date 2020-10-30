@@ -25,6 +25,7 @@ namespace lite {
 class OnnxSliceParser : public OnnxNodeParser {
  public:
   OnnxSliceParser() : OnnxNodeParser("Slice") {}
+  ~OnnxSliceParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

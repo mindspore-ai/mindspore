@@ -25,6 +25,7 @@ namespace lite {
 class OnnxPoolParser : public OnnxNodeParser {
  public:
   OnnxPoolParser() : OnnxNodeParser("Pool") {}
+  ~OnnxPoolParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

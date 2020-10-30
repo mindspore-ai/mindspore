@@ -25,6 +25,7 @@ namespace lite {
 class OnnxTransposeParser : public OnnxNodeParser {
  public:
   OnnxTransposeParser() : OnnxNodeParser("Transpose") {}
+  ~OnnxTransposeParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

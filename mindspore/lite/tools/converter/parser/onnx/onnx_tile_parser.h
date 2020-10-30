@@ -25,6 +25,7 @@ namespace lite {
 class OnnxTileParser : public OnnxNodeParser {
  public:
   OnnxTileParser() : OnnxNodeParser("Tile") {}
+  ~OnnxTileParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

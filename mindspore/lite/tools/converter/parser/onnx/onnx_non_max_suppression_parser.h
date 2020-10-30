@@ -25,6 +25,7 @@ namespace lite {
 class OnnxNonMaxSuppressionParser : public OnnxNodeParser {
  public:
   OnnxNonMaxSuppressionParser() : OnnxNodeParser("NonMaxSuppression") {}
+  ~OnnxNonMaxSuppressionParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
