@@ -540,11 +540,6 @@ std::shared_ptr<SentencePieceVocab> Dataset::BuildSentencePieceVocab(
   auto ds = std::make_shared<BuildSentenceVocabNode>(shared_from_this(), vocab, col_names, vocab_size,
                                                      character_coverage, model_type, params);
 
-  // Validate input params
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
-
   // Run tree here to start building vocab
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   if (iter == nullptr) {
@@ -568,10 +563,6 @@ std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &colum
   auto vocab = std::make_shared<Vocab>();
   auto ds = std::make_shared<BuildVocabNode>(shared_from_this(), vocab, columns, freq_range, top_k, special_tokens,
                                              special_first);
-
-  if (!ds->ValidateParams()) {
-    return nullptr;
-  }
 
   // Run tree here to starting building vocab
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
@@ -1051,7 +1042,7 @@ std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t me
                                                  std::optional<int32_t> num_connections,
                                                  std::optional<int32_t> prefetch_sz) {
   auto cache = std::make_shared<DatasetCacheImpl>(id, mem_sz, spill, hostname, port, num_connections, prefetch_sz);
-  return cache->ValidateParams() ? cache : nullptr;
+  return cache;
 }
 #endif
 
