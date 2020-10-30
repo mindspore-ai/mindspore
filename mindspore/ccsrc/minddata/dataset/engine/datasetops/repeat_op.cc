@@ -194,7 +194,7 @@ Status RepeatOp::Accept(NodePass *p, bool *modified) {
 
 // Get Dataset size
 Status RepeatOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0 || num_repeats_ == -1) {
+  if (dataset_size_ > 0) {
     *dataset_size = dataset_size_;
     return Status::OK();
   }

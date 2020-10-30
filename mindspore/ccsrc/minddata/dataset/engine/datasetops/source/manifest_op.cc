@@ -481,10 +481,13 @@ Status ManifestOp::GetNumClasses(int64_t *num_classes) {
     *num_classes = num_classes_;
     return Status::OK();
   }
+  int64_t classes_count;
   std::shared_ptr<ManifestOp> op;
   RETURN_IF_NOT_OK(Builder().SetManifestFile(file_).SetClassIndex(class_index_).SetUsage(usage_).Build(&op));
   RETURN_IF_NOT_OK(op->ParseManifestFile());
-  *num_classes = num_classes_;
+  classes_count = static_cast<int64_t>(op->label_index_.size());
+  *num_classes = classes_count;
+  num_classes_ = classes_count;
   return Status::OK();
 }
 
