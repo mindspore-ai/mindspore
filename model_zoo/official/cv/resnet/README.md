@@ -513,7 +513,7 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Uploaded Date       | 04/01/2020 (month/day/year) | 08/01/2020 (month/day/year) |
 | MindSpore Version   | 0.1.0-alpha                 | 0.6.0-alpha                 |
 | Dataset             | ImageNet2012                | ImageNet2012                |
-| batch_size          | 256                         | 32                          |
+| batch_size          | 256                         | 256                          |
 | outputs             | probability                 | probability                 |
 | Accuracy            | 76.70%                      | 76.74%                      |
 | Model for inference | 98M (.air file)         |  |

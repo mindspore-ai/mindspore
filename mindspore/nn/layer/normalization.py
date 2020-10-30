@@ -108,7 +108,7 @@ class _BatchNorm(Cell):
             self.bn_train = P.FusedBatchNorm(mode=1,
                                              epsilon=self.eps,
                                              momentum=self.momentum)
-        self.bn_infer = P.BatchNorm(is_training=False, epsilon=self.eps)
+        self.bn_infer = P.BatchNorm(is_training=False, epsilon=self.eps, data_format=self.format)
         self.enable_global_sync = self.is_global and (self.is_ge_backend or (self.is_graph_mode and self.is_ascend))
         self.enable_default_train = self.is_graph_mode and not self.is_global and \
                                     (self.is_ge_backend or self.is_ascend)
