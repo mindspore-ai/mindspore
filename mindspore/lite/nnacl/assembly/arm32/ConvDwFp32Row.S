@@ -92,11 +92,11 @@ ConvDwFp32Row:
             beq Loop16LineEnd
 
             LoopDepth0:
-                vld1.32 {s0}, [r6]!
-                vld1.32 {s1}, [r8]!
-                vld1.32 {s2}, [r0]!
-                vmla.f32 s2, s0, s1
-                vst1.32 {s2}, [r11]!
+                vld1.32 d0[0], [r6]!
+                vld1.32 d2[0], [r8]!
+                vld1.32 d4[0], [r0]!
+                vmla.f32 s8, s0, s4
+                vst1.32 d4[0], [r11]!
                 subs r10, r10, #1
                 bne LoopDepth0
 
