@@ -48,6 +48,7 @@ constexpr auto kJsonKeyOp = "op";
 constexpr auto kJsonKeyPtrAddress = "ptr_address";
 constexpr auto kJsonKeyCompositeGraph = "composite_graph";
 constexpr auto kJsonKeyPlatform = "platform";
+constexpr auto kJsonKeyOpFullName = "op_full_name";
 
 constexpr auto kAttrInputNames = "input_names";
 

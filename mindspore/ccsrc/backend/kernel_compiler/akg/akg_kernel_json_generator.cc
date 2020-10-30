@@ -575,11 +575,18 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   auto fg = anf_nodes[0]->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   auto attr_val = fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
+  constexpr size_t name_len_limited = 80;
   if (attr_val != nullptr) {
-    auto fg_attr = GetValue<std::string>(attr_val);
-    (void)kernel_name_.append(fg_attr).append("_");
+    auto fg_name = GetValue<std::string>(attr_val);
+    if (fg_name.size() > name_len_limited) {
+      (*kernel_json)[kJsonKeyOpFullName] = kernel_name_ + fg_name;
+      auto suffix_pos = fg_name.find_last_of("_");
+      fg_name =
+        fg_name.substr(0, name_len_limited - fg_name.size() + suffix_pos) + "_more" + fg_name.substr(suffix_pos);
+    }
+    static_cast<void>(kernel_name_.append(fg_name).append("_"));
   }
-  (void)kernel_name_.append(std::to_string(hash_id));
+  static_cast<void>(kernel_name_.append(std::to_string(hash_id)));
   (*kernel_json)[kJsonKeyId] = GetOpCntInc();
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
