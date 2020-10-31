@@ -56,7 +56,7 @@
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 - 安装Mindspore
 - 安装[pyblind11](https://github.com/pybind/pybind11)
-- 安装[Opencv3.4](https://docs.opencv.org/3.4.9/d7/d9f/tutory_linux_install.html)
+- 安装[Opencv3.4](https://docs.opencv.org/3.4.9/)
 
 # 快速入门
 

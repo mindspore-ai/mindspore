@@ -4008,3 +4008,44 @@ class LinSpace(PrimitiveWithInfer):
                'dtype': start['dtype'],
                'value': None}
         return out
+
+class MatrixInverse(PrimitiveWithInfer):
+    """
+    Returns the inverse of the input matrix. If the matrix is irreversible, an error may be reported or an unknown
+    result may be returned
+
+    Args:
+        adjoint (bool) : An optional bool. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - A matrix to be calculated.
+          types: float32, double.
+
+    Outputs:
+        Tensor, has the same type and shape as input `x`.
+
+    Examples:
+        >>> x = Tensor(np.random.uniform(-2, 2, (2, 2, 2)), mstype.float32)
+        >>> matrix_inverse = P.MatrixInverse(adjoint=False)
+        >>> result = matrix_inverse(x)
+        [[[ 0.6804  0.8111]
+          [-2.3257  -1.0616]
+         [[-0.7074  -0.4963]
+          [0.1896  -1.5285]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, adjoint=False):
+        """Initialize MatrixInverse"""
+        validator.check_value_type("adjoint", adjoint, [bool], self.name)
+        self.adjoint = adjoint
+
+    def infer_dtype(self, x_dtype):
+        valid_type = [mstype.float32, mstype.double]
+        validator.check_tensor_dtype_valid("x_dtype", x_dtype, valid_type, self.name)
+        return x_dtype
+
+    def infer_shape(self, x_shape):
+        validator.check_int(len(x_shape), 2, Rel.GE, self.name, None)
+        validator.check_equal_int(x_shape[-1], x_shape[-2], self.name, None)
+        return x_shape
