@@ -24,8 +24,13 @@
 #include <vector>
 #include "ir/dtype/type_id.h"
 
-namespace mindspore {
+#ifdef _WIN32
+#define MS_API __declspec(dllexport)
+#else
 #define MS_API __attribute__((visibility("default")))
+#endif
+
+namespace mindspore {
 namespace tensor {
 /// \brief MSTensor defined tensor in MindSpore Lite.
 class MS_API MSTensor {

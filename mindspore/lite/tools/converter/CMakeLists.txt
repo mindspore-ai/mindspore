@@ -151,23 +151,3 @@ target_link_libraries(converter_lite PRIVATE
         mindspore::flatbuffers
         pthread
         )
-
-if (NOT PLATFORM_ARM64 AND NOT PLATFORM_ARM32)
-    install(TARGETS converter_lite
-            RUNTIME DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
-    if (WIN32)
-        get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
-        file(GLOB LIB_LIST ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_seh-1.dll)
-        install(FILES ${LIB_LIST} DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/build/mindspore/tools/converter/mindspore_core/gvar/libmindspore_gvar.dll
-                DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
-        install(FILES ${glog_LIBPATH}/../bin/libglog.dll
-                DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/converter COMPONENT ${COMPONENT_NAME})
-    else ()
-        install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/gvar/libmindspore_gvar.so
-                DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/lib COMPONENT ${COMPONENT_NAME})
-
-        install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
-                DESTINATION ${MAIN_DIR}-${COMPONENT_NAME}/third_party/glog/lib RENAME libglog.so.0 COMPONENT ${COMPONENT_NAME})
-    endif ()
-endif ()

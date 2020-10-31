@@ -44,7 +44,7 @@ using AllocatorPtr = std::shared_ptr<Allocator>;
 /// \param[out] MSTensor.
 ///
 /// \return STATUS as an error code of this interface, STATUS is defined in errorcode.h.
-int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor);
+int MS_API StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor);
 
 /// \brief Get string vector from MSTensor.
 /// \param[in] MSTensor.
