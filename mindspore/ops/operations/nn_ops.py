@@ -52,7 +52,7 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
     validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
     ret_value = _get_return_value()
     for item in ret_value:
-        if isinstance(item, int) and item > 0:
+        if isinstance(item, int) and not isinstance(item, bool) and item > 0:
             continue
         _raise_message()
     return ret_value

@@ -565,20 +565,20 @@ def check_input_format(input_param):
 
 
 def _expand_tuple(n_dimensions):
-    """To expand a number to tuple."""
+    """To expand a int number to tuple."""
 
     def convert(m):
         if not isinstance(m, tuple):
-            if isinstance(m, int):
+            if isinstance(m, int) and not isinstance(m, bool):
                 return tuple(repeat(m, n_dimensions))
-            raise TypeError("Input type must be int or tuple.")
+            raise TypeError("Input type must be int or tuple[int].")
 
         if not len(m) is n_dimensions:
-            raise TypeError("Input dimension is incorrect.")
+            raise TypeError("Input tuple dimension is incorrect.")
 
         for i in m:
-            if not isinstance(i, int):
-                raise TypeError("Incorrect type inside of a tuple!")
+            if not isinstance(i, int) or isinstance(i, bool):
+                raise TypeError("Incorrect type inside of a tuple, must be int!")
         return m
 
     return convert

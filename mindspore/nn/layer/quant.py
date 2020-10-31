@@ -762,13 +762,10 @@ class Conv2dBnWithoutFoldQuant(Cell):
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
         super(Conv2dBnWithoutFoldQuant, self).__init__()
-        if isinstance(kernel_size, int):
-            self.kernel_size = (kernel_size, kernel_size)
-        else:
-            self.kernel_size = kernel_size
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = has_bias
+        self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
         self.dilation = twice(dilation)
         self.pad_mode = pad_mode
@@ -884,13 +881,10 @@ class Conv2dQuant(Cell):
                  quant_config=quant_config_default,
                  quant_dtype=QuantDtype.INT8):
         super(Conv2dQuant, self).__init__()
-        if isinstance(kernel_size, int):
-            self.kernel_size = (kernel_size, kernel_size)
-        else:
-            self.kernel_size = kernel_size
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = has_bias
+        self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
         self.dilation = twice(dilation)
         self.pad_mode = pad_mode
