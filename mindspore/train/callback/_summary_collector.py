@@ -453,10 +453,16 @@ class SummaryCollector(Callback):
         if not self._collect_specified_data.get('collect_input_data'):
             return
 
+        if self._dataset_sink_mode:
+            self._collect_specified_data['collect_input_data'] = False
+            logger.warning('SummaryCollector is not supported to record input data in dataset sink mode.')
+            return
+
         input_data = getattr(cb_params, 'train_dataset_element', None)
         if input_data is None:
             self._collect_specified_data['collect_input_data'] = False
-            logger.info("The 'train_dataset_element' in cb_params is None, maybe there is dataset sink mode.")
+            logger.info("The 'train_dataset_element' in cb_params is None, "
+                        "so 'SummaryCollector' will not record the input data.")
             return
 
         if isinstance(input_data, (list, tuple)) and input_data:
@@ -464,8 +470,7 @@ class SummaryCollector(Callback):
         try:
             self._record.add_value(PluginEnum.IMAGE.value, 'input_data/auto', input_data)
         except (TypeError, ValueError):
-            if not self._dataset_sink_mode:
-                logger.warning('The input data of network are not image, so will not collect by SummaryCollector.')
+            logger.warning('The input data of network are not image, so will not collect by SummaryCollector.')
             self._collect_specified_data['collect_input_data'] = False
             return
 
