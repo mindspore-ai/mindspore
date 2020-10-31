@@ -282,19 +282,19 @@ class Cell(Cell_):
         return tuple(res)
 
     def __call__(self, *inputs, **kwargs):
+        if kwargs:
+            bound_args = inspect.signature(self.construct).bind(*inputs, **kwargs)
+            inputs = bound_args.args
+            kwargs = bound_args.kwargs
         if context.get_context("mode") == context.GRAPH_MODE:
             if kwargs:
                 raise ValueError("For 'graph' mode, the outermost network does not support passing "
-                                 "key-value pair parameters and variable key-value pair parameters.")
+                                 "variable key-value pair parameters.")
             if self.enable_hook:
                 raise ValueError("The graph mode does not support hook function.")
             out = self.compile_and_run(*inputs)
             return out
 
-        if kwargs:
-            bound_args = inspect.signature(self.construct).bind(*inputs, **kwargs)
-            inputs = bound_args.args
-            kwargs = bound_args.kwargs
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("cell inputs should not be numpy array.")
