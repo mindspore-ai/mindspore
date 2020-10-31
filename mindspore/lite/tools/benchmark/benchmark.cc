@@ -427,10 +427,8 @@ int Benchmark::RunBenchmark() {
       return ret;
     }
   }
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "model is null.";
+  if (model != nullptr) {
     model->Free();
-    return RET_NULL_PTR;
   }
   ms_inputs_ = session_->GetInputs();
   auto end_prepare_time = GetTimeUs();
