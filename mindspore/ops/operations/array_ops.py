@@ -3020,7 +3020,7 @@ class ScatterDiv(_ScatterOp):
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
-        >>> updates = Tensor(np.ones([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
+        >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
         >>> scatter_div = P.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         [[3.0, 3.0, 3.0], [1.0, 1.0, 1.0]]

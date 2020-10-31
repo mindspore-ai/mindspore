@@ -59,7 +59,7 @@ class CropAndResize(PrimitiveWithInfer):
         >>>         super(CropAndResizeNet, self).__init__()
         >>>         self.crop_and_resize = P.CropAndResize()
         >>>         self.crop_size = crop_size
-        >>>     @ms_function
+        >>>
         >>>     def construct(self, x, boxes, box_index):
         >>>         return self.crop_and_resize(x, boxes, box_index, self.crop_size)
         >>>
@@ -74,7 +74,8 @@ class CropAndResize(PrimitiveWithInfer):
         >>> crop_size = (24, 24)
         >>> crop_and_resize = CropAndResizeNet(crop_size=crop_size)
         >>> output = crop_and_resize(Tensor(image), Tensor(boxes), Tensor(box_index))
-        >>> print(output.asnumpy())
+        >>> output.shape
+        (5, 24, 24, 3)
     """
 
     @prim_attr_register
