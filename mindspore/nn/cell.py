@@ -1018,13 +1018,16 @@ class Cell(Cell_):
 
     def set_param_ps(self, recurse=True, init_in_server=False):
         """
-        Set whether the trainable parameter is updated by parameter server.
+        Set whether the trainable parameters are updated by parameter server and whether the
+        trainable parameters are initialized on server.
 
         Note:
             It only works when a running task is in the parameter server mode.
 
         Args:
             recurse (bool): Whether sets the trainable parameters of subcells. Default: True.
+            init_in_server (bool): Whether trainable parameters updated by parameter server are
+            initialized on server. Default: False.
         """
         params = self.trainable_params(recurse)
         for param in params:
