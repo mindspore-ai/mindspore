@@ -55,6 +55,12 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
         continue;
       }
     }
+    if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimGatherD->name()) {
+      auto ms_context = MsContext::GetInstance();
+      if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
+        continue;
+      }
+    }
     if (AnfAlgo::IsDynamicShape(cnode)) {
       MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
       continue;
