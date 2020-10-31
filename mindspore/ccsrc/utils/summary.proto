@@ -130,7 +130,7 @@ message Explain {
 		repeated string benchmark_method = 3;
 	}
 
-    optional string image_id = 1;  // The Metadata and image id must have one fill in
+    optional string image_id = 1;  // The Metadata and image id and benchmark must have one fill in
     optional bytes image_data = 2;
     repeated int32 ground_truth_label = 3;
 
