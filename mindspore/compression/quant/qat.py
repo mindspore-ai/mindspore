@@ -410,12 +410,12 @@ class QuantizationAwareTraining(Quantizer):
         """
         act_class = activation.__class__
         act_list = [nn.ReLU, nn.ReLU6, nn.Sigmoid]
-        act_list_withfakebefore = [nn.LeakyReLU, nn.HSigmoid, nn.HSwish]
+        act_list_with_fake_before = [nn.LeakyReLU, nn.HSigmoid, nn.HSwish]
         if act_class in act_list:
             return quant.ActQuant(activation=activation,
                                   quant_config=self.quant_config,
                                   quant_dtype=self.act_dtype)
-        if act_class in act_list_withfakebefore:
+        if act_class in act_list_with_fake_before:
             return quant.ActQuant(activation=activation,
                                   ema=True,
                                   fake_before=True,
