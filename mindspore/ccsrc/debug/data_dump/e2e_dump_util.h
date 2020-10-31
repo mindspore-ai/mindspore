@@ -34,6 +34,11 @@ class E2eDumpUtil {
   ~E2eDumpUtil() = default;
   static bool DumpData(const session::KernelGraph *graph, uint32_t device_id, Debugger *debugger = nullptr);
   static void GetFileKernelName(NotNull<std::string *> kernel_name);
+  // Dump data when task error.
+  static void DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
+                            std::string *kernel_name, Debugger *debugger);
+  static void DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
+                             std::string *kernel_name, Debugger *debugger);
 
  private:
   static void DumpOutput(const session::KernelGraph *graph, const std::string &dump_path, Debugger *debugger);

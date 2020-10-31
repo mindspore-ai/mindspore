@@ -112,20 +112,26 @@ void E2eDumpUtil::DumpOutput(const session::KernelGraph *graph, const std::strin
       continue;
     }
     DumpJsonParser::GetInstance().MatchKernel(kernel_name);
-    GetFileKernelName(NOT_NULL(&kernel_name));
-    auto output_size = AnfAlgo::GetOutputTensorNum(node);
-    for (size_t j = 0; j < output_size; ++j) {
-      auto addr = AnfAlgo::GetOutputAddr(node, j);
-      ShapeVector int_shapes;
-      GetDumpIntShape(node, j, trans_flag, NOT_NULL(&int_shapes));
-      auto type = AnfAlgo::GetOutputInferDataType(node, j);
-      std::string file_path = dump_path + '/' + kernel_name + '_' + "output_" + std::to_string(j);
-      if (IsDeviceTargetGPU()) {
-        DumpGPUMemToFile(file_path, node->fullname_with_scope(), NOT_NULL(addr), trans_flag, int_shapes, type, j,
-                         debugger);
-      } else {
-        DumpMemToFile(file_path, NOT_NULL(addr), trans_flag, int_shapes, type);
-      }
+    DumpOutputImpl(node, trans_flag, dump_path, &kernel_name, debugger);
+  }
+}
+
+void E2eDumpUtil::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
+                                 std::string *kernel_name, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(node);
+  GetFileKernelName(NOT_NULL(kernel_name));
+  auto output_size = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t j = 0; j < output_size; ++j) {
+    auto addr = AnfAlgo::GetOutputAddr(node, j);
+    ShapeVector int_shapes;
+    GetDumpIntShape(node, j, trans_flag, NOT_NULL(&int_shapes));
+    auto type = AnfAlgo::GetOutputInferDataType(node, j);
+    std::string file_path = dump_path + '/' + *kernel_name + '_' + "output_" + std::to_string(j);
+    if (IsDeviceTargetGPU()) {
+      DumpGPUMemToFile(file_path, node->fullname_with_scope(), NOT_NULL(addr), trans_flag, int_shapes, type, j,
+                       debugger);
+    } else {
+      DumpMemToFile(file_path, NOT_NULL(addr), trans_flag, int_shapes, type);
     }
   }
 }
@@ -147,35 +153,41 @@ void E2eDumpUtil::DumpInput(const session::KernelGraph *graph, const std::string
       continue;
     }
     DumpJsonParser::GetInstance().MatchKernel(kernel_name);
-    GetFileKernelName(NOT_NULL(&kernel_name));
-    auto input_size = AnfAlgo::GetInputTensorNum(node);
-    for (size_t j = 0; j < input_size; ++j) {
-      auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, j);
-      auto input = kernel_with_index.first;
-      auto index = kernel_with_index.second;
-      auto addr = AnfAlgo::GetOutputAddr(input, index);
+    DumpInputImpl(node, trans_flag, dump_path, &kernel_name, debugger);
+  }
+}
 
-      std::string tensor_name;
-      size_t slot;
-      if (IsDeviceTargetGPU()) {
-        auto input_kernel = node->input(j + 1);
-        std::string input_kernel_name = input_kernel->fullname_with_scope();
-        tensor_name = input_kernel_name;
-        slot = 0;
-      } else {
-        tensor_name = node->fullname_with_scope();
-        slot = j;
-      }
+void E2eDumpUtil::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::string &dump_path,
+                                std::string *kernel_name, Debugger *debugger) {
+  MS_EXCEPTION_IF_NULL(node);
+  GetFileKernelName(NOT_NULL(kernel_name));
+  auto input_size = AnfAlgo::GetInputTensorNum(node);
+  for (size_t j = 0; j < input_size; ++j) {
+    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, j);
+    auto input = kernel_with_index.first;
+    auto index = kernel_with_index.second;
+    auto addr = AnfAlgo::GetOutputAddr(input, index);
 
-      ShapeVector int_shapes;
-      GetDumpIntShape(input, index, trans_flag, NOT_NULL(&int_shapes));
-      auto type = AnfAlgo::GetOutputInferDataType(input, index);
-      std::string file_path = dump_path + '/' + kernel_name + '_' + "input_" + std::to_string(j);
-      if (IsDeviceTargetGPU()) {
-        DumpGPUMemToFile(file_path, tensor_name, NOT_NULL(addr), trans_flag, int_shapes, type, slot, debugger);
-      } else {
-        DumpMemToFile(file_path, NOT_NULL(addr), trans_flag, int_shapes, type);
-      }
+    std::string tensor_name;
+    size_t slot;
+    if (IsDeviceTargetGPU()) {
+      auto input_kernel = node->input(j + 1);
+      std::string input_kernel_name = input_kernel->fullname_with_scope();
+      tensor_name = input_kernel_name;
+      slot = 0;
+    } else {
+      tensor_name = node->fullname_with_scope();
+      slot = j;
+    }
+
+    ShapeVector int_shapes;
+    GetDumpIntShape(input, index, trans_flag, NOT_NULL(&int_shapes));
+    auto type = AnfAlgo::GetOutputInferDataType(input, index);
+    std::string file_path = dump_path + '/' + *kernel_name + '_' + "input_" + std::to_string(j);
+    if (IsDeviceTargetGPU()) {
+      DumpGPUMemToFile(file_path, tensor_name, NOT_NULL(addr), trans_flag, int_shapes, type, slot, debugger);
+    } else {
+      DumpMemToFile(file_path, NOT_NULL(addr), trans_flag, int_shapes, type);
     }
   }
 }
