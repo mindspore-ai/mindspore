@@ -32,6 +32,7 @@ args = parser.parse_args()
 
 DEFAULT_NUM_LABELS = 2
 DEFAULT_SEQ_LENGTH = 128
+DEFAULT_BS = 32
 task_params = {"SST-2": {"num_labels": 2, "seq_length": 64},
                "QNLI": {"num_labels": 2, "seq_length": 128},
                "MNLI": {"num_labels": 3, "seq_length": 128}}
@@ -60,6 +61,7 @@ class Task:
 if __name__ == '__main__':
     task = Task(args.task_name)
     td_student_net_cfg.seq_length = task.seq_length
+    td_student_net_cfg.batch_size = DEFAULT_BS
 
     eval_model = BertModelCLS(td_student_net_cfg, False, task.num_labels, 0.0, phase_type="student")
     param_dict = load_checkpoint(args.ckpt_file)
