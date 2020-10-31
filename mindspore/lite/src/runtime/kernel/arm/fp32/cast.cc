@@ -165,7 +165,7 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Cast, CpuCastFp32KernelCreato
 REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_Cast, CpuCastFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Cast, CpuCastFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Cast, CpuCastFp32KernelCreator)
-#ifndef ENABLE_ARM64
+#ifndef ENABLE_ARM
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Cast, CpuCastFp32KernelCreator)
 #endif
 }  // namespace mindspore::kernel
