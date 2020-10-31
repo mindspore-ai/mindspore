@@ -50,10 +50,12 @@ class L2NormCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
 
+ protected:
+  L2NormParameter *l2_norm_param_;
+
  private:
   int MallocTmpBuffer();
   void FreeTmpBuffer();
-  L2NormParameter *l2_norm_param_;
   float sqrt_sum_;
   float *input_ptr_;
   float *output_ptr_;
