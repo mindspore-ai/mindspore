@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/cpu/arithmetic_self_cpu_kernel.h"
 #include <cmath>
-#include <thread>
 #include <string>
+#include <thread>
+#include "backend/kernel_compiler/cpu/arithmetic_self_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
@@ -30,9 +30,9 @@ void Square(const T *in, T *out, size_t start, size_t end) {
 }
 
 template <typename T>
-void Sqrt(const T *in, T *out, size_t start, size_t end) {
+void Neg(const T *in, T *out, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
-    out[i] = sqrtf(in[i]);
+    out[i] = -in[i];
   }
 }
 }  // namespace
@@ -42,8 +42,8 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   if (kernel_name == prim::kPrimSquare->name()) {
     operate_type_ = SQUARE;
-  } else if (kernel_name == prim::kPrimSqrt->name()) {
-    operate_type_ = SQRT;
+  } else if (kernel_name == prim::kPrimNeg->name()) {
+    operate_type_ = NEG;
   }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
@@ -66,10 +66,11 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
                                            const std::vector<AddressPtr> &outputs) {
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  auto lens = inputs[0]->size / sizeof(T);
-  MS_LOG(INFO) << "lens=" << lens;
+  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
 
-  const size_t thread_num = 24;
+  auto max_thread_num = std::thread::hardware_concurrency();
+  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
+  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
   std::vector<std::thread> threads;
   threads.reserve(thread_num);
   size_t start = 0;
@@ -78,8 +79,8 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
     size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
     if (operate_type_ == SQUARE) {
       threads.emplace_back(std::thread(Square<T>, input, output, start, end));
-    } else if (operate_type_ == SQRT) {
-      threads.emplace_back(std::thread(Sqrt<T>, input, output, start, end));
+    } else if (operate_type_ == NEG) {
+      threads.emplace_back(std::thread(Neg<T>, input, output, start, end));
     }
     start += once_compute_size;
   }

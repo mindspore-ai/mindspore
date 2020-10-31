@@ -13,12 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
-from mindspore import Tensor
-from mindspore.ops import operations as P
+import pytest
+
+import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-import mindspore.context as context
+from mindspore import Tensor, context
+from mindspore.ops import operations as P
+
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 class TensorAdd(nn.Cell):
     def __init__(self):
@@ -34,10 +37,30 @@ class TensorAdd(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_add():
-    x = np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32)
-    y = np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    x0 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32))
+    y0 = Tensor(np.random.uniform(-2, 2, (1, 1, 1, 1)).astype(np.float32))
+    x1 = Tensor(np.random.uniform(-2, 2, (1, 3, 1, 4)).astype(np.float32))
+    y1 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32))
+    x2 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32))
+    y2 = Tensor(2, mstype.float32)
     add = TensorAdd()
-    output = add(Tensor(x), Tensor(y))
-    assert (output.asnumpy() == x + y).all()
+    out = add(x0, y0).asnumpy()
+    exp = x0.asnumpy() + y0.asnumpy()
+    diff = np.abs(out - exp)
+    err = np.ones(shape=exp.shape) * 1.0e-5
+    assert np.all(diff < err)
+    assert out.shape == exp.shape
+
+    out = add(x1, y1).asnumpy()
+    exp = x1.asnumpy() + y1.asnumpy()
+    diff = np.abs(out - exp)
+    err = np.ones(shape=exp.shape) * 1.0e-5
+    assert np.all(diff < err)
+    assert out.shape == exp.shape
+
+    out = add(x2, y2).asnumpy()
+    exp = x2.asnumpy() + y2.asnumpy()
+    diff = np.abs(out - exp)
+    err = np.ones(shape=exp.shape) * 1.0e-5
+    assert np.all(diff < err)
+    assert out.shape == exp.shape

@@ -15,8 +15,8 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ARITHMETIC_CPU_KERNEL_H_
-#include <vector>
 #include <memory>
+#include <vector>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -31,7 +31,8 @@ class ArithmeticCPUKernel : public CPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-
+  template <typename T>
+  void LaunchLess(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
@@ -44,9 +45,13 @@ class ArithmeticCPUKernel : public CPUKernel {
   template <typename T>
   void Mul(const T *input1, const T *input2, T *out, size_t start, size_t end);
   template <typename T>
-  void Div(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void RealDiv(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void Pow(const T *input1, const T *input2, T *out, size_t start, size_t end);
   template <typename T>
   void AssignAdd(T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void Less(const T *input1, const T *input2, bool *out, size_t start, size_t end);
   std::vector<size_t> input_shape0_;
   std::vector<size_t> input_shape1_;
   std::vector<size_t> input_element_num0_;
@@ -65,6 +70,34 @@ MS_REG_CPU_KERNEL(
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
   Sub, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Pow, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Pow, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Pow, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  RealDiv, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  RealDiv,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  RealDiv, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Less, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Less, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Less, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
   AssignAdd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),

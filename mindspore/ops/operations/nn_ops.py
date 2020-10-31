@@ -640,6 +640,7 @@ class FusedBatchNorm(Primitive):
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self._update_parameter = True
+        self.target = context.get_context("device_target")
 
 
 class FusedBatchNormEx(PrimitiveWithInfer):

@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include <string>
 #include "backend/kernel_compiler/cpu/mkldnn/fused_batch_norm_cpu_kernel.h"
-#include "utils/ms_utils.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
