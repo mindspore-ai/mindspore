@@ -167,6 +167,17 @@ class Parameter(MetaTensor_):
         """For parse check."""
 
     def set_param_ps(self, init_in_server=False):
+        """
+        Set whether the trainable parameter is updated by parameter server and whether the
+        trainable parameter is initialized on server.
+
+        Note:
+            It only works when a running task is in the parameter server mode.
+
+        Args:
+            init_in_server (bool): Whether trainable parameter updated by parameter server is
+            initialized on server. Default: False.
+        """
         if _is_role_worker() or _is_role_pserver() or _is_role_sched():
             if init_in_server and (not self.name.endswith("embedding_table")):
                 raise RuntimeError("Can not initialize parameter '{}' in server, only parameters of "
