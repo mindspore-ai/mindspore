@@ -19,6 +19,7 @@ SequentialSampler, SubsetRandomSampler, and WeightedRandomSampler.
 Users can also define a custom sampler by extending from the Sampler class.
 """
 
+import numbers
 import numpy as np
 import mindspore._c_dataengine as cde
 import mindspore.dataset as ds
@@ -590,6 +591,20 @@ class WeightedRandomSampler(BuiltinSampler):
     def __init__(self, weights, num_samples=None, replacement=True):
         if not isinstance(weights, list):
             weights = [weights]
+
+        for ind, w in enumerate(weights):
+            if not isinstance(w, numbers.Number):
+                raise TypeError("type of weights element should be number, "
+                                "but got w[{}]={}, type={}".format(ind, w, type(w)))
+
+        if weights == []:
+            raise ValueError("weights size should not be 0")
+
+        if list(filter(lambda x: x < 0, weights)) != []:
+            raise ValueError("weights should not contain negative numbers")
+
+        if list(filter(lambda x: x == 0, weights)) == weights:
+            raise ValueError("elements of weights should not be all zero")
 
         if num_samples is not None:
             if num_samples <= 0:
