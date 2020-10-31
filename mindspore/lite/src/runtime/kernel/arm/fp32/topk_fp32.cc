@@ -77,7 +77,7 @@ kernel::LiteKernel *CpuTopKFp32KernelCreator(const std::vector<lite::Tensor *> &
     MS_LOG(ERROR) << "input parameter is nullptr!";
     return nullptr;
   }
-  MS_ASSERT(desc.type == PrimitiveType_Tile);
+  MS_ASSERT(desc.type == PrimitiveType_TopK);
   auto *kernel = new (std::nothrow) TopKCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new TopKCPUKernel fail!";

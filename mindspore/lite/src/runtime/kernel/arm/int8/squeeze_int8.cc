@@ -74,7 +74,7 @@ int SqueezeInt8CPUKernel::Init() {
     quant_Squeeze_parm_->in_quant_args_[i].zp_ = quant_args.front().zeroPoint;
   }
 
-  MS_ASSERT(outputs_.size() == 1);
+  MS_ASSERT(this->out_tensors_.size() == 1);
   auto output_tensor = out_tensors_.at(0);
   MS_ASSERT(output_tensor != nullptr);
   auto quant_args = output_tensor->GetQuantParams();
@@ -94,7 +94,6 @@ int SqueezeInt8CPUKernel::ReSize() {
     auto *input_tensor = in_tensors_.at(i);
     MS_ASSERT(input_tensor != nullptr);
     auto input_size = input_tensor->shape().size();
-    MS_ASSERT(input_size != NULL);
     quant_Squeeze_parm_->input_shapes_[i] = reinterpret_cast<int *>(malloc(sizeof(int) * input_size));
     if (quant_Squeeze_parm_->input_shapes_[i] == nullptr) {
       MS_LOG(ERROR) << "Null pointer reference: quant_Squeeze_parm_->input_shapes_[" << i << "].";
@@ -113,7 +112,6 @@ int SqueezeInt8CPUKernel::ReSize() {
   auto output_tensor = out_tensors_.at(0);
   MS_ASSERT(output_tensor != nullptr);
   auto output_shape = output_tensor->shape();
-  MS_ASSERT(output_shape != NULL);
   auto output_dim = output_shape.size();
   quant_Squeeze_parm_->output_dim_ = output_dim;
   int output_size = 1;

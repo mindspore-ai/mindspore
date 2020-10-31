@@ -106,7 +106,7 @@ class LogWriter {
 
 }  // namespace mindspore
 
-#ifdef DEBUG
+#ifdef Debug
 #include <cassert>
 #define MS_ASSERT(f) assert(f)
 #else

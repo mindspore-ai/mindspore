@@ -43,6 +43,5 @@ class Executor {
 
   int TransformTensorLayout(Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
 };
-
 }  // namespace mindspore::lite
 #endif

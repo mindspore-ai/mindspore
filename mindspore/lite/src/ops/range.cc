@@ -64,8 +64,6 @@ int Range::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
 
-  MS_ASSERT(range_prim != nullptr);
-
   output->set_data_type(input->data_type());
   output->SetFormat(input->GetFormat());
   if (!GetInferFlag()) {

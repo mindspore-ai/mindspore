@@ -46,7 +46,6 @@ int HashtableLookup::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
   auto output = outputs_.at(0);
   auto hits = outputs_.at(1);
   MS_ASSERT(input != nullptr);
-  MS_ASSERT(keys != nullptr);
   MS_ASSERT(values != nullptr);
   MS_ASSERT(output != nullptr);
   MS_ASSERT(hits != nullptr);

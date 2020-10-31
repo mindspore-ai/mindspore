@@ -176,7 +176,6 @@ int Reshape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
     return RET_OK;
   }
 
-  MS_ASSERT(reshape_prim != nullptr);
   std::vector<int> out_shape;
   if (inputs_.size() == kDoubleNum) {
     auto shape_tensor = inputs_.at(1);

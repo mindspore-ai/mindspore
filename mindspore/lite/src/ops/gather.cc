@@ -113,7 +113,6 @@ int Gather::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
     return RET_OK;
   }
 
-  MS_ASSERT(gather_prim != nullptr);
   int axis = GetAxis();
   int batch_dims = GetBatchDims();
   if (axis < 0) {

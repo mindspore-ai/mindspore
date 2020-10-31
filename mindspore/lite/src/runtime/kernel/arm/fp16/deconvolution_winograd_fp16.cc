@@ -346,7 +346,7 @@ int DeConvWinogradFp16CPUKernel::InitDataParam() {
       fp16_bias_data[i] = (float16_t)src_bias[i];
     }
   } else {
-    MS_ASSERT(inputs_.size() == kInputSize1);
+    MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
 
   return RET_OK;

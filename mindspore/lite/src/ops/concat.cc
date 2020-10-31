@@ -104,7 +104,6 @@ int Concat::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
     return RET_OK;
   }
 
-  MS_ASSERT(concat_prim != nullptr);
   auto input0_shape = inputs_.at(0)->shape();
   auto axis = GetAxis() < 0 ? GetAxis() + input0_shape.size() : GetAxis();
   if (axis < 0 || axis >= input0_shape.size()) {

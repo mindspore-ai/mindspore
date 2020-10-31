@@ -162,7 +162,6 @@ void LiteSession::InitGraphInputMSTensors() {
 void LiteSession::InitGraphOutputTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(this->outputs_.empty());
-  MS_ASSERT(meta_graph != nullptr);
   auto graph_out_size = model->sub_graphs_.front()->output_indices_.size();
   for (size_t i = 0; i < graph_out_size; ++i) {
     auto out_tensor_idx = model->sub_graphs_.front()->output_indices_[i];
@@ -181,7 +180,7 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
   for (auto in_node_index : graph_input_node_indexes) {
     auto in_node = model->all_nodes_[in_node_index];
     MS_ASSERT(in_node != nullptr);
-    MS_ASSERT(this->input_map_.find(in_node->name()->str()) == this->input_map_.end());
+    MS_ASSERT(this->input_map_.find(in_node->name_) == this->input_map_.end());
     auto in_size = in_node->input_indices_.size();
     for (size_t i = 0; i < in_size; ++i) {
       auto in_tensor_index = size_t(in_node->input_indices_[i]);
@@ -215,7 +214,6 @@ void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
   for (auto out_node_index : graph_output_node_indexes) {
     auto out_node = model->all_nodes_[out_node_index];
     MS_ASSERT(out_node != nullptr);
-    MS_ASSERT(this->output_map_.find(out_node->name()->str()) == this->output_map_.end());
     auto out_size = out_node->output_indices_.size();
     for (size_t i = 0; i < out_size; ++i) {
       auto out_tensor_index = out_node->output_indices_[i];

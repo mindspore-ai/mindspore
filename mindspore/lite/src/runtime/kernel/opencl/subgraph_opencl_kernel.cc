@@ -100,8 +100,6 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
   out_tensors->clear();
   out_parameters->clear();
   out_convert_ops->clear();
-  MS_ASSERT(in_tensors.size() == to_kernels.size());
-  MS_ASSERT(in_tensors.size() == from_kernels.size());
   std::vector<std::vector<kernel::LiteKernel *>> loop_kernels;
   if (mem_type == MemType::BUF) {
     GetKernelFromToTensor(in_tensors, nodes_, &loop_kernels, true);

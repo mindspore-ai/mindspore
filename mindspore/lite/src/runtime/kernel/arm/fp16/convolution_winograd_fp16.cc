@@ -97,7 +97,7 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
       fp16_bias_data[i] = (float16_t)ori_bias[i];
     }
   } else {
-    MS_ASSERT(inputs_.size() == kInputSize1);
+    MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
   return RET_OK;
 }
