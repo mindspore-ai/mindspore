@@ -79,8 +79,6 @@ TEST_F(MindDataTestPipeline, TestAlbumgetters) {
   std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names);
   EXPECT_NE(ds, nullptr);
 
-  int64_t dataset_size = ds->GetDatasetSize();
-  EXPECT_EQ(dataset_size, 7);
   int64_t num_classes = ds->GetNumClasses();
   EXPECT_EQ(num_classes, -1);
   int64_t batch_size = ds->GetBatchSize();
@@ -114,7 +112,7 @@ TEST_F(MindDataTestPipeline, TestAlbumDecode) {
     auto shape = image->shape();
     MS_LOG(INFO) << "Tensor image shape size: " << shape.Size();
     MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    EXPECT_GT(shape.Size(), 1); // Verify decode=true took effect
+    EXPECT_GT(shape.Size(), 1);  // Verify decode=true took effect
     iter->GetNextRow(&row);
   }
 

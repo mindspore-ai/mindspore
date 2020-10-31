@@ -99,6 +99,9 @@ TEST_F(MindDataTestPipeline, TestVOCGetDatasetSize) {
   std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", class_index, false, SequentialSampler(0, 6));
   EXPECT_NE(ds, nullptr);
 
+  ds = ds->Batch(2);
+  ds = ds->Repeat(2);
+
   EXPECT_EQ(ds->GetDatasetSize(), 6);
 }
 
