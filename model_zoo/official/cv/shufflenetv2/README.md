@@ -14,6 +14,8 @@
         - [Training Performance](#evaluation-performance)
         - [Inference Performance](#evaluation-performance)
 
+- [ModelZoo Homepage](#modelzoo-homepage)
+
 # [ShuffleNetV2 Description](#contents)
 
 ShuffleNetV2 is a much faster and more accurate netowrk than the previous networks on different platforms such as Ascend or GPU.
@@ -117,3 +119,38 @@ You can start evaluation using python or shell scripts. The usage of shell scrip
 ### Result
 
 Inference result will be stored in the example path, you can find result in `eval.log`.
+
+# [Model description](#contents)
+
+## [Performance](#contents)
+
+### Training Performance
+
+| Parameters                 | ShuffleNetV2              |
+| -------------------------- | ------------------------- |
+| Resource                   | NV SMX2 V100-32G          |
+| uploaded Date              | 09/24/2020                |
+| MindSpore Version          | 1.0.0                     |
+| Dataset                    | ImageNet                  |
+| Training Parameters        | src/config.py             |
+| Optimizer                  | Momentum                  |
+| Loss Function              | CrossEntropySmooth        |
+| Accuracy                   | 69.4%(TOP1)               |
+| Total time                 | 49 h 8ps                  |
+
+### Inference Performance
+
+| Parameters                 |                           |
+| -------------------------- | ------------------------- |
+| Resource                   | NV SMX2 V100-32G          |
+| uploaded Date              | 09/24/2020                |
+| MindSpore Version          | 1.0.0                     |
+| Dataset                    | ImageNet, 1.2W            |
+| batch_size                 | 128                        |
+| outputs                    | probability               |
+| Accuracy                   | acc=69.4%(TOP1)           |
+
+
+# [ModelZoo Homepage](#contents)
+
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).

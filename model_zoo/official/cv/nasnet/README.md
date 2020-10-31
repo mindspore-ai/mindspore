@@ -1,39 +1,81 @@
-# NASNet Example
+# Contents
 
-## Description
+- [NASNet Description](#nasnet-description)
+- [Model Architecture](#model-architecture)
+- [Dataset](#dataset)
+- [Environment Requirements](#environment-requirements)
+- [Quick Start](#quick-start)    
+- [Script Description](#script-description)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
+    - [Training Process](#training-process)
+    - [Evaluation Process](#evaluation-process)
+- [Model Description](#model-description)
+    - [Performance](#performance)  
+        - [Training Performance](#evaluation-performance)
+        - [Inference Performance](#evaluation-performance)
+- [ModelZoo Homepage](#modelzoo-homepage)
 
-This is an example of training NASNet-A-Mobile in MindSpore.
+# [NASNet Description](#contents)
 
-## Requirements
 
-- Install [Mindspore](http://www.mindspore.cn/install/en).
-- Download the dataset.
+[Paper](https://arxiv.org/abs/1707.07012): Barret Zoph, Vijay Vasudevan, Jonathon Shlens, Quoc V. Le. Learning Transferable Architectures for Scalable Image Recognition. 2017.
 
-## Structure
+# [Model architecture](#contents)
 
-```shell
+The overall network architecture of NASNet is show below:
+
+[Link](https://arxiv.org/abs/1707.07012)
+
+
+# [Dataset](#contents)
+
+Dataset used: [imagenet](http://www.image-net.org/)
+
+- Dataset size: ~125G, 1.2W colorful images in 1000 classes
+  - Train: 120G, 1.2W images
+  - Test: 5G, 50000 images
+- Data format: RGB images.
+  - Note: Data will be processed in src/dataset.py 
+
+
+# [Environment Requirements](#contents)
+
+- Hardware GPU
+  - Prepare hardware environment with GPU processor. 
+- Framework
+  - [MindSpore](https://www.mindspore.cn/install/en)
+- For more information, please check the resources below：
+  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+
+# [Script description](#contents)
+
+## [Script and sample code](#contents)
+
+```python
 .
-└─nasnet      
+└─nasnet
   ├─README.md
-  ├─scripts      
-    ├─run_standalone_train_for_gpu.sh         # launch standalone training with gpu platform(1p)
-    ├─run_distribute_train_for_gpu.sh         # launch distributed training with gpu platform(8p)
-    └─run_eval_for_gpu.sh                     # launch evaluating with gpu platform
+  ├─scripts
+    ├─run_standalone_train_for_gpu.sh # launch standalone training with gpu platform(1p)
+    ├─run_distribute_train_for_gpu.sh # launch distributed training with gpu platform(8p)
+    └─run_eval_for_gpu.sh             # launch evaluating with gpu platform
   ├─src
     ├─config.py                       # parameter configuration
     ├─dataset.py                      # data preprocessing
     ├─loss.py                         # Customized CrossEntropy loss function
     ├─lr_generator.py                 # learning rate generator
-    ├─nasnet_a_mobile.py              # network definition
-  ├─eval.py                           # eval net
-  ├─export.py                         # convert checkpoint
-  └─train.py                          # train net
-  
+├─nasnet_a_mobile.py                  # network definition
+├─eval.py                             # eval net
+├─export.py                           # convert checkpoint
+└─train.py                            # train net  
+
 ```
 
-## Parameter Configuration
+## [Script Parameters](#contents)
 
-Parameters for both training and evaluating can be set in config.py
+Parameters for both training and evaluating can be set in config.py.
 
 ```       
 'random_seed': 1,                # fix random seed
@@ -56,22 +98,18 @@ Parameters for both training and evaluating can be set in config.py
 'opt_eps': 1.0,                  # epsilon
 'rmsprop_decay': 0.9,            # rmsprop decay
 'loss_scale': 1,                 # loss scale
-
 ```
 
-
-
-## Running the example
-
-### Train
+## [Training Process](#contents)
 
 #### Usage
 
 ```
-# distribute training example(8p)
-sh run_distribute_train_for_gpu.sh DATA_DIR 
-# standalone training
-sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
+GPU:
+    # distribute training example(8p)
+    sh run_distribute_train_for_gpu.sh DATA_DIR
+    # standalone training
+    sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
 ```
 
 #### Launch
@@ -83,13 +121,11 @@ sh scripts/run_distribute_train_for_gpu.sh /dataset/train
 sh scripts/run_standalone_train_for_gpu.sh 0 /dataset/train
 ```
 
-#### Result
-
 You can find checkpoint file together with result in log.
 
-### Evaluation
+## [Evaluation Process](#contents)
 
-#### Usage
+### Usage
 
 ```
 # Evaluation
@@ -103,9 +139,47 @@ sh run_eval_for_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 sh scripts/run_eval_for_gpu.sh 0 /dataset/val ./checkpoint/nasnet-a-mobile-rank0-248_10009.ckpt
 ```
 
-> checkpoint can be produced in training process.
-
 #### Result
 
 Evaluation result will be stored in the scripts path. Under this, you can find result like the followings in log.
  
+```
+acc=73.5%(TOP1)
+```
+
+# [Model description](#contents)
+
+## [Performance](#contents)
+
+### Training Performance
+
+| Parameters                 | NASNet                    |
+| -------------------------- | ------------------------- |
+| Resource                   | NV SMX2 V100-32G          |
+| uploaded Date              | 09/24/2020                |
+| MindSpore Version          | 1.0.0                     |
+| Dataset                    | ImageNet                  |
+| Training Parameters        | src/config.py             |
+| Optimizer                  | Momentum                  |
+| Loss Function              | SoftmaxCrossEntropyWithLogits       |
+| Loss                       | 1.8965                    |
+| Accuracy                   | 73.5%(TOP1)               |
+| Total time                 | 144 h 8ps                 |
+| Checkpoint for Fine tuning | 89 M(.ckpt file)         |
+
+### Inference Performance
+
+| Parameters                 |                           |
+| -------------------------- | ------------------------- |
+| Resource                   | NV SMX2 V100-32G          |
+| uploaded Date              | 09/24/2020                |
+| MindSpore Version          | 1.0.0                     | 
+| Dataset                    | ImageNet, 1.2W            | 
+| batch_size                 | 32                        |
+| outputs                    | probability               |
+| Accuracy                   | acc=73.5%(TOP1)           |
+
+
+# [ModelZoo Homepage](#contents)
+ 
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo). 
