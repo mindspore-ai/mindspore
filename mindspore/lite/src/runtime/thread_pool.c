@@ -140,9 +140,36 @@ static bool run_once = true;
 
 #define MAX_CPU_ID (9)
 #define MAX_PATH_SIZE (256)
+
+enum Arch {
+  UnKnown_Arch = 0,
+  Cortex_A5,
+  Cortex_A7,
+  Cortex_A8,
+  Cortex_A9,
+  Cortex_A12,
+  Cortex_A15,
+  Cortex_A17,
+  Cortex_A32,
+  Cortex_A34,
+  Cortex_A35,
+  Cortex_A53,
+  Cortex_A55,
+  Cortex_A57,
+  Cortex_A65,
+  Cortex_A72,
+  Cortex_A73,
+  Cortex_A75,
+  Cortex_A76,
+  Cortex_A77,
+  Cortex_A78,
+  Cortex_X1
+};
+
 typedef struct {
   int core_id;
   int max_freq;
+  enum Arch arch;
 } CpuInfo;
 
 int GetCpuCoreNum() { return (int)sysconf(_SC_NPROCESSORS_CONF); }
@@ -210,6 +237,156 @@ int GetMaxFrequence(int core_id) {
   return maxFreq;
 }
 
+int ParseCpuPart(const char *line, int start, int size) {
+  int cpu_part = 0;
+  for (int i = start; i < size && i < start + 3; i++) {
+    char c = line[i];
+    int d;
+    if (c >= '0' && c <= '9') {
+      d = c - '0';
+    } else if ((c - 'A') < 6) {
+      d = 10 + (c - 'A');
+    } else if ((c - 'a') < 6) {
+      d = 10 + (c - 'a');
+    } else {
+      LOG_ERROR("CPU part in /proc/cpuinfo is ignored due to unexpected non-hex character");
+      break;
+    }
+    cpu_part = cpu_part * 16 + d;
+  }
+  return cpu_part;
+}
+
+enum Arch GetArch(int cpu_part) {
+  // https://en.wikipedia.org/wiki/Comparison_of_ARMv7-A_cores
+  // https://en.wikipedia.org/wiki/Comparison_of_ARMv8-A_cores
+  switch (cpu_part) {
+    case 0x800:  // High-performance Kryo 260 (r10p2) / Kryo 280 (r10p1) "Gold" -> Cortex-A73
+      return Cortex_A73;
+    case 0x801:  // Low-power Kryo 260 / 280 "Silver" -> Cortex-A53
+      return Cortex_A53;
+    case 0x802:  // High-performance Kryo 385 "Gold" -> Cortex-A75
+      return Cortex_A75;
+    case 0x803:  // Low-power Kryo 385 "Silver" -> Cortex-A55r0
+      return Cortex_A55;
+    case 0x804:  // High-performance Kryo 485 "Gold" / "Gold Prime" -> Cortex-A76
+      return Cortex_A76;
+    case 0x805:  // Low-performance Kryo 485 "Silver" -> Cortex-A55
+      return Cortex_A55;
+    case 0xC05:
+      return Cortex_A5;
+    case 0xC07:
+      return Cortex_A7;
+    case 0xC08:
+      return Cortex_A8;
+    case 0xC09:
+      return Cortex_A9;
+    case 0xC0C:
+      return Cortex_A12;
+    case 0xC0D:
+      return Cortex_A12;
+    case 0xC0E:
+      return Cortex_A17;
+    case 0xC0F:
+      return Cortex_A15;
+    case 0xD01:  // also Huawei Kunpeng 920 series taishan_v110 when not on android
+      return Cortex_A32;
+    case 0xD02:
+      return Cortex_A34;
+    case 0xD03:
+      return Cortex_A53;
+    case 0xD04:
+      return Cortex_A35;
+    case 0xD05:
+      return Cortex_A55;
+    case 0xD06:
+      return Cortex_A65;
+    case 0xD07:
+      return Cortex_A57;
+    case 0xD08:
+      return Cortex_A72;
+    case 0xD09:
+      return Cortex_A73;
+    case 0xD0A:
+      return Cortex_A75;
+    case 0xD0B:
+      return Cortex_A76;
+    case 0xD0D:
+      return Cortex_A77;
+    case 0xD0E:  // Cortex-A76AE
+      return Cortex_A76;
+    case 0xD40:  // Kirin 980 Big/Medium cores -> Cortex-A76
+      return Cortex_A76;
+    case 0xD41:
+      return Cortex_A78;
+    case 0xD43:  // Cortex-A65AE
+      return Cortex_A65;
+    case 0xD44:
+      return Cortex_X1;
+    default:
+      return UnKnown_Arch;
+  }
+}
+
+int SetArch(CpuInfo *freq_set, int core_num) {
+  if (core_num <= 0) {
+    LOG_ERROR("core_num must be greater than 0.");
+    return RET_TP_ERROR;
+  }
+  FILE *fp = fopen("/proc/cpuinfo", "r");
+  if (fp == NULL) {
+    LOG_ERROR("read /proc/cpuinfo error.");
+    return RET_TP_ERROR;
+  }
+  enum Arch *archs = malloc(core_num * sizeof(enum Arch));
+  if (archs == NULL) {
+    fclose(fp);
+    LOG_ERROR("malloc memory for archs error.");
+    return RET_TP_ERROR;
+  }
+  const int max_line_size = 1024;
+  char line[max_line_size] = {0};
+  int count = 0;
+  while (!feof(fp)) {
+    fgets(line, max_line_size, fp);
+    // line start with "CPU part"
+    if (0 == memcmp(line, "CPU part", 8)) {
+      // get number like 0xD03
+      for (int i = 0; i < max_line_size - 4; ++i) {
+        if (line[i] == '0' && line[i + 1] == 'x') {
+          int cpu_part = ParseCpuPart(line, i + 2, max_line_size);
+          enum Arch arch = GetArch(cpu_part);
+          if (arch == UnKnown_Arch) {
+            LOG_ERROR("cpu's architecture is unknown.");
+            free(archs);
+            fclose(fp);
+            return RET_TP_ERROR;
+          }
+          count++;
+          if (count > core_num) {
+            LOG_ERROR("number of cpu_part in /proc/cpuinfo is more than core_num.");
+            free(archs);
+            fclose(fp);
+            return RET_TP_ERROR;
+          }
+          archs[count - 1] = arch;
+        }
+      }
+    }
+  }
+  if (count < core_num) {
+    LOG_ERROR("number of cpu_part in /proc/cpuinfo is less than core_num.");
+    free(archs);
+    fclose(fp);
+    return RET_TP_ERROR;
+  }
+  for (int i = 0; i < core_num; ++i) {
+    freq_set[i].arch = archs[i];
+  }
+  free(archs);
+  return RET_TP_OK;
+}
+
 int SortCpuProcessor() {
   gCoreNum = GetCpuCoreNum();
   if (gCoreNum <= 0) {
@@ -221,11 +398,17 @@ int SortCpuProcessor() {
     int max_freq = GetMaxFrequence(i);
     freq_set[i].core_id = i;
     freq_set[i].max_freq = max_freq;
+    freq_set[i].arch = UnKnown_Arch;
   }
-  // sort core id by frequency
+  int err_code = SetArch(freq_set, gCoreNum);
+  if (err_code != RET_TP_OK) {
+    LOG_ERROR("set arch failed.");
+  }
+  // sort core id by frequency into descending order
   for (int i = 0; i < gCoreNum; ++i) {
     for (int j = i + 1; j < gCoreNum; ++j) {
-      if (freq_set[i].max_freq <= freq_set[j].max_freq) {
+      if (freq_set[i].max_freq < freq_set[j].max_freq ||
+          (freq_set[i].max_freq == freq_set[j].max_freq && freq_set[i].arch <= freq_set[j].arch)) {
         CpuInfo temp = freq_set[i];
         freq_set[i] = freq_set[j];
         freq_set[j] = temp;
