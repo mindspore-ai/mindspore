@@ -1234,6 +1234,23 @@ class EluGrad(PrimitiveWithInfer):
         return x_dtype
 
 
+class GatherDGrad(PrimitiveWithInfer):
+    """Performs grad of GatherD operation."""
+
+    @prim_attr_register
+    def __init__(self, dim=0):
+        """Initialize GatherDGrad"""
+        validator.check_is_int(dim, int)
+        self.add_prim_attr("dim", dim)
+        self.init_prim_io_names(inputs=['index', 'grad'], outputs=['output'])
+
+    def infer_shape(self, index_shape, grad_shape):
+        return grad_shape
+
+    def infer_dtype(self, index_dtype, grad_dtype):
+        return grad_dtype
+
+
 class ResizeBilinearGrad(PrimitiveWithInfer):
     """Performs grad of ResizeBilinear operation."""
 
