@@ -19,6 +19,7 @@ from typing import Callable, Optional, Union, Tuple
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 
+from mindspore import log
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops.operations as op
@@ -332,6 +333,11 @@ class NaiveFaithfulness(_FaithfulnessHelper):
             - faithfulness (np.ndarray): faithfulness score
 
         """
+        if not np.count_nonzero(saliency):
+            log.warning("The saliency map is zero everywhere. The correlation will be set to zero.")
+            correlation = 0
+            normalized_faithfulness = (correlation + 1) / 2
+            return np.array([normalized_faithfulness], np.float)
         reference = self._get_reference(inputs)
         perturbations, masks = self._perturb(
             inputs, saliency, reference, return_mask=True)
