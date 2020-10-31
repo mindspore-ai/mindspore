@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <tuple>
 #include <unordered_set>
 #include <nlohmann/json.hpp>
 #include "ir/anf.h"
@@ -37,6 +38,9 @@ constexpr auto kJsonKeyMultiGraph = "multi_graph";
 constexpr auto kJsonKeyGraphDesc = "graph_desc";
 constexpr auto kJsonKeyGraphMode = "graph_mode";
 
+bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr);
+std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(const AnfNodePtrList &fuse_nodes,
+                                                                                AnfNodePtrList *src_outputs = nullptr);
 void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
                       const AnfNodePtrList &outputs, kernel::Processor processor);
 AnfNodePtrList GetExpandOuts(const AnfNodePtrList &outs);

@@ -203,6 +203,7 @@ bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr
     AnfNodePtrList outputs;
     std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(fuse_nodes);
     RemoveControlDependOut(fg, &outputs, mng);
+    ConvertNonscalarTensorToParameter(fg, &inputs);
     auto fuse_new_node = CreateNewFuseCNode(kernel_graph, fg, inputs, outputs, is_before_kernel_select);
     if (!is_before_kernel_select) {
       SetNewKernelInfo(fuse_new_node, fg, inputs, outputs, AnfAlgo::GetProcessor(fuse_nodes[0]));

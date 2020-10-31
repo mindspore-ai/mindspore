@@ -205,6 +205,8 @@ class CompositeGraph:
                             if output.shape[i] == 1 and inputs[0].shape[i] > 1:
                                 red_axis.append(i)
                     else:
+                        if isinstance(a['value'], int):
+                            a['value'] = [a['value']]
                         for i in a['value']:
                             red_axis.append(i if i >= 0 else dim_size + i)
                     attr['reduce_axis'] = red_axis

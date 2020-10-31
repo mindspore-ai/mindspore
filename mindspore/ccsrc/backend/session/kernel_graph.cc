@@ -395,8 +395,9 @@ void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
   kernel::GetValidKernelNodes(func_graph, &node_list, &input_list, &output_list);
   for (auto &anf_node : node_list) {
     MS_EXCEPTION_IF_NULL(anf_node);
-    auto kernel_info = std::make_shared<device::KernelInfo>();
-    anf_node->set_kernel_info(kernel_info);
+    if (anf_node->kernel_info() == nullptr) {
+      anf_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+    }
     auto anf_cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(anf_cnode);
     for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_cnode); ++i) {
@@ -412,8 +413,9 @@ void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
   }
   for (auto &anf_node : input_list) {
     MS_EXCEPTION_IF_NULL(anf_node);
-    auto kernel_info = std::make_shared<device::KernelInfo>();
-    anf_node->set_kernel_info(kernel_info);
+    if (anf_node->kernel_info() == nullptr) {
+      anf_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+    }
   }
 }
 
