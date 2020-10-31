@@ -232,6 +232,9 @@ constexpr auto kSparseApplyFtrlName = "SparseApplyFtrl";
 constexpr auto kSparseApplyFtrlV2Name = "SparseApplyFtrlV2";
 constexpr auto kSGDName = "SGD";
 constexpr auto kLARSUpdateName = "LARSUpdate";
+constexpr auto kBasicLSTMCellCStateGradOpName = "BasicLSTMCellCStateGrad";
+constexpr auto kBasicLSTMCellCStateGradV2OpName = "BasicLSTMCellCStateGradV2";
+constexpr auto kMatMulV2OpName = "MatMulV2";
 
 // Hcom Op Type
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
