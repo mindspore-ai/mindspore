@@ -23,10 +23,7 @@ typedef struct InstanceNormParameter {
   OpParameter op_parameter_;
   float epsilon_;
   float momentum_;
-  int unit_;
-  int batch_;
   int channel_;
-  bool fused_;
 } InstanceNormParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_INSTANCE_NORM_PARAMETER_H_

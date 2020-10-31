@@ -33,7 +33,6 @@ OpParameter *PopulateInstanceNormParameter(const mindspore::lite::PrimitiveC *pr
   memset(instance_norm_param, 0, sizeof(InstanceNormParameter));
   instance_norm_param->op_parameter_.type_ = primitive->Type();
   instance_norm_param->epsilon_ = param->GetEpsilon();
-  instance_norm_param->fused_ = false;
   return reinterpret_cast<OpParameter *>(instance_norm_param);
 }
 

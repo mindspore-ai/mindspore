@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_LITE_NNACL_FP32_INSTANCE_NORM_H_
 #define MINDSPORE_LITE_NNACL_FP32_INSTANCE_NORM_H_
 
+#include "nnacl/op_base.h"
 #include "nnacl/instance_norm_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void InstanceNormFp32(const void *input, const void *mean, const void *variance, InstanceNormParameter *param,
-                      int task_id, void *output);
-void FusedInstanceNormFp32(const void *input, const void *scale, const void *offset, const void *mean,
-                           const void *variance, InstanceNormParameter *param, int task_id, void *output);
+int InstanceNorm(const int outer_size, const int inner_size, const float *src_data, const float *scale_data,
+                 const float *bias_data, InstanceNormParameter *param, float *dst_data, const int task_id,
+                 const int thread_num);
 #ifdef __cplusplus
 }
 #endif
