@@ -2,6 +2,7 @@ file(GLOB_RECURSE _PREACTIVATE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "common/*.cc"
     "mem_reuse/*.cc"
     "pass/*.cc"
+    "somas/*.cc"
 )
 
 if (ENABLE_D)

@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2019 Huawei Technologies Co., Ltd
  *
@@ -15,21 +16,21 @@
  */
 
 #include "runtime/device/kernel_runtime.h"
-#include <vector>
-#include <utility>
-#include <numeric>
 #include <functional>
-#include "utils/ms_utils.h"
-#include "common/trans.h"
-#include "utils/utils.h"
-#include "utils/ms_context.h"
-#include "frontend/operator/ops.h"
-#include "backend/session/kernel_graph.h"
-#include "backend/session/anf_runtime_algorithm.h"
+#include <numeric>
+#include <utility>
+#include <vector>
 #include "backend/optimizer/common/helper.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "backend/session/kernel_graph.h"
+#include "common/trans.h"
 #include "debug/data_dump/dump_json_parser.h"
+#include "frontend/operator/ops.h"
 #include "ir/value.h"
+#include "utils/ms_context.h"
+#include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
+#include "utils/utils.h"
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
 
@@ -440,6 +441,9 @@ void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNode
   if (type == kReuseDynamicMem) {
     // reuse communication op's all outputs' memory
     type = kReuseDynamicCommMem;
+  }
+
+  if (type == kReuseDynamicCommMem || type == kSomasReuseDynamicMem) {
     bool not_reuse = KernelMemNotReuse(node);
     if (not_reuse) {
       type = kDynamicMem;
@@ -504,7 +508,7 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
     return;
   }
 
-  if (type == kReuseDynamicMem) {
+  if (type == kReuseDynamicMem || type == kSomasReuseDynamicMem) {
     bool not_reuse = KernelMemNotReuse(node);
     if (not_reuse) {
       type = kDynamicMem;
@@ -530,13 +534,13 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
 
   if (node->isa<CNode>()) {
     bool independent = AnfAlgo::IsIndependentNode(node->cast<CNodePtr>());
-    if (independent && type == kReuseDynamicMem) {
-      MS_LOG(INFO) << "Independent disable mem_reuse";
+    if (independent && (type == kReuseDynamicMem || type == kSomasReuseDynamicMem)) {
+      MS_LOG(INFO) << "Independent node " << node->fullname_with_scope() << " disable memory reuse";
       type = kDynamicMem;
     }
   }
 
-  if (type == kReuseDynamicMem) {
+  if (type == kReuseDynamicMem || type == kSomasReuseDynamicMem) {
     bool not_reuse = KernelMemNotReuse(node);
     if (not_reuse) {
       type = kDynamicMem;
@@ -671,8 +675,13 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
 
   if (is_enable_mem_reuse) {
     MS_LOG(INFO) << "Memory Reuse is enable...";
+#ifdef MEM_REUSE_DEBUG
     mem_manager_->MallocReusedDynamicMem(graph);
     mem_type = kReuseDynamicMem;
+#else
+    mem_manager_->MallocSomasDynamicMem(graph);
+    mem_type = kSomasReuseDynamicMem;
+#endif
   } else {
     MS_LOG(INFO) << "Memory Reuse is disable...";
   }

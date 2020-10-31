@@ -15,6 +15,7 @@
  */
 
 #include "runtime/device/memory_manager.h"
+#include <string>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
 using mindspore::memreuse::BestFitMemReuse;
@@ -47,6 +48,40 @@ void MemoryManager::MallocReusedDynamicMem(const session::KernelGraph *graph) {
   mem_reuse_util_ptr_->set_mem_base(base_ptr);
 }
 
+void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  SomasPtr somas_reuse_util_ptr = std::make_shared<somas::Somas>();
+  MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr);
+  somas_reuse_util_ptr_ = somas_reuse_util_ptr;
+
+  if (!(somas_reuse_util_ptr->Allocate(graph))) {
+    MS_LOG(EXCEPTION) << "Somas Allocate Failed.";
+  }
+
+  size_t total_allocated_size = somas_reuse_util_ptr->GetTotalMemSize();
+  MS_LOG(INFO) << "Graph " << graph->graph_id() << ": TotalSomasReuseDynamicSize [" << total_allocated_size << "]";
+  auto base_ptr = MallocDynamicMem(total_allocated_size, false);
+  MS_LOG(INFO) << "Somas Reuse Memory Base Address [" << static_cast<void *>(base_ptr) << "], End Address ["
+               << static_cast<void *>(base_ptr + total_allocated_size) << "]";
+  somas_reuse_util_ptr->set_mem_base_addr(base_ptr);
+
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  if (save_graphs) {
+    std::string file_path =
+      save_graphs_path + "/" + "somas_after_allocate_" + std::to_string(graph->graph_id()) + ".ir";
+    somas_reuse_util_ptr_->DumpSomasBasicIR(file_path);
+
+    std::string mem_file_path = save_graphs_path + "/" + "somas_mem_info_" + std::to_string(graph->graph_id()) + ".ir";
+    somas_reuse_util_ptr_->DumpSomasMemoryIR(mem_file_path);
+  }
+}
+
 uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,
                                         const DeviceAddressPtr &address) {
   MS_EXCEPTION_IF_NULL(node);
@@ -68,6 +103,9 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
     } else if (type == kReuseDynamicCommMem) {
       MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
       ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
+    } else if (type == kSomasReuseDynamicMem) {
+      MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
+      ptr = somas_reuse_util_ptr_->GetNodeOutputPtr(node, index);
     } else {
       ptr = MallocDynamicMem(size, communication_mem);
     }
@@ -83,6 +121,9 @@ uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, Me
   } else if (type == kReuseDynamicMem) {
     MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
     ptr = mem_reuse_util_ptr_->GetNodeOutputPtr(node, index);
+  } else if (type == kSomasReuseDynamicMem) {
+    MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
+    ptr = somas_reuse_util_ptr_->GetNodeOutputPtr(node, index);
   }
   address->ptr_ = ptr;
   return ptr;
@@ -92,6 +133,9 @@ uint8_t *MemoryManager::MallocWorkSpaceMem(const AnfNodePtr &node, size_t index,
   if (type == kReuseDynamicMem) {
     MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr_);
     return mem_reuse_util_ptr_->GetNodeWorkSpacePtr(node, index);
+  } else if (type == kSomasReuseDynamicMem) {
+    MS_EXCEPTION_IF_NULL(somas_reuse_util_ptr_);
+    return somas_reuse_util_ptr_->GetNodeWorkSpacePtr(node, index);
   }
   return MallocDynamicMem(size, false);
 }

@@ -17,16 +17,18 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_MEMORY_MANAGER_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_MEMORY_MANAGER_H_
 #include <memory>
-#include <vector>
 #include <utility>
+#include <vector>
 #include "backend/optimizer/mem_reuse/mem_reuse.h"
 #include "backend/optimizer/mem_reuse/mem_reuse_allocator.h"
+#include "backend/optimizer/somas/somas.h"
 namespace mindspore {
 namespace device {
-enum MemType { kStaticMem, kDynamicMem, kReuseDynamicMem, kReuseDynamicCommMem };
+enum MemType { kStaticMem, kDynamicMem, kReuseDynamicMem, kSomasReuseDynamicMem, kReuseDynamicCommMem };
 const int kGetAllOuts = -1;
 const uint64_t kMemAlignSize = 512;
 using MemReuseUtilPtr = mindspore::memreuse::MemReuseUtilPtr;
+using SomasPtr = mindspore::somas::SomasPtr;
 
 class MemoryManager {
  public:
@@ -42,6 +44,7 @@ class MemoryManager {
   virtual void ClearGlobalIdleMem() {}
 
   void MallocReusedDynamicMem(const session::KernelGraph *graph);
+  void MallocSomasDynamicMem(const session::KernelGraph *graph);
   uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,
                            const DeviceAddressPtr &address);
   uint8_t *MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, MemType type, size_t size);
@@ -68,6 +71,7 @@ class MemoryManager {
   size_t total_static_size_ = 0;
   size_t total_dynamic_size_ = 0;
   MemReuseUtilPtr mem_reuse_util_ptr_{nullptr};
+  SomasPtr somas_reuse_util_ptr_{nullptr};
 };
 }  // namespace device
 }  // namespace mindspore
