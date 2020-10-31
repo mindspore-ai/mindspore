@@ -824,6 +824,10 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new InstanceNorm(primitive);
     case schema::PrimitiveType_While:
       return new While(primitive);
+    case schema::PrimitiveType_OnnxInt8Quantize:
+      return new Quant(primitive);
+    case schema::PrimitiveType_OnnxInt8Dequantize:
+      return new Dequant(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:

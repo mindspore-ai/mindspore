@@ -152,7 +152,7 @@ std::string FlagParser::Usage(const Option<std::string> &usgMsg) const {
   // first line, brief of the usage
   std::string usageString = usgMsg.IsSome() ? usgMsg.Get() + "\n" : "";
   // usage of bin name
-  usageString += usageMsg.IsNone() ? "usage: " + binName + " [options]\n" : usageMsg.Get() + "\n";
+  usageString += usageMsg.IsNone() ? "\nusage: " + binName + " [options]\n" : usageMsg.Get() + "\n";
   // help line of help message, usageLine:message of parametors
   std::string helpLine = "";
   std::string usageLine = "";

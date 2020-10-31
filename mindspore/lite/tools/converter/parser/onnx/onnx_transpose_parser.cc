@@ -61,5 +61,6 @@ STATUS OnnxTransposeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx
 }
 
 OnnxNodeRegistrar g_onnxTransposeParser("Transpose", new OnnxTransposeParser());
+OnnxNodeRegistrar g_onnxInt8TransposeParser("Int8Transpose", new OnnxTransposeParser());
 }  // namespace lite
 }  // namespace mindspore
