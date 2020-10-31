@@ -48,19 +48,12 @@ ScaleOpenCLKernel::~ScaleOpenCLKernel() {
 
 void ScaleOpenCLKernel::Image2dGetWorkGroupSize() {
   local_size_ = {16, 16};
-  if (out_tensors_[0]->shape().size() == 2) {
-    size_t H = out_tensors_[0]->shape()[0];
-    size_t W = UP_DIV(out_tensors_[0]->shape()[1], C4NUM);
-    global_size_ = {W, H};
-  } else {
-    size_t H = out_tensors_[0]->Batch() * out_tensors_[0]->Height();
-    size_t W = out_tensors_[0]->Width() * UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-    global_size_ = {W, H};
-  }
+  auto image2d_info = Image2DInfo(out_tensors_[0]);
+  global_size_ = {image2d_info.width, image2d_info.height};
 }
 
 int ScaleOpenCLKernel::InitBuffer() {
-  if (!element_flag_) {
+  if (!weight_vector_flag_) {
     return RET_OK;
   }
   if (in_tensors_[1]->IsConst()) {
@@ -68,17 +61,18 @@ int ScaleOpenCLKernel::InitBuffer() {
     std::vector<size_t> img_size;
     GetImageSize(0, &img_size);
     img_size[2] = in_tensors_[1]->data_type() == kNumberTypeFloat16 ? CL_HALF_FLOAT : CL_FLOAT;
-    if (scale_C_flag_) {
+    if (broadcast_flag_) {
       img_size[1] = 1;
       img_size[0] = UP_DIV(in_tensors_[1]->shape()[0], C4NUM);
       scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
       offset_ptr_ = allocator->CreateImageFromHost(in_tensors_[2]->data_c(), in_tensors_[2]->ElementsNum(), img_size);
       return RET_OK;
     }
-    int pack_weight_size = in_tensors_[1]->ElementsC4Num();
-    int plane = in_tensors_[1]->Height() * in_tensors_[1]->Width();
-    int channel = in_tensors_[1]->Channel();
-    int batch = in_tensors_[1]->Batch();
+    auto image2d_info = Image2DInfo(in_tensors_[1]);
+    int pack_weight_size = image2d_info.ElementsC4Num;
+    int plane = image2d_info.H * image2d_info.W;
+    int channel = image2d_info.C;
+    int batch = image2d_info.N;
     if (in_tensors_[0]->GetFormat() == in_tensors_[1]->GetFormat()) {
       if (in_tensors_[0]->data_type() == in_tensors_[1]->data_type()) {
         scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
@@ -157,16 +151,27 @@ int ScaleOpenCLKernel::Init() {
   }
   if (scale_shape.size() != in_shape.size()) {
     if (scale_tensor->ElementsNum() == 1) {
-      element_flag_ = false;
+      weight_vector_flag_ = false;
       kernel_name = "BoardcastScale";
-    } else if (((in_shape.size() == 4 && axis_ == 3) || (in_shape.size() == 2 && axis_ == 1)) &&
-               scale_shape.size() == 1) {
-      element_flag_ = true;
-      scale_C_flag_ = true;
-      kernel_name = "Scale_C";
+    } else if (scale_shape.size() == 1) {
+      weight_vector_flag_ = true;
+      broadcast_flag_ = true;
+      if ((in_shape.size() == 4 && axis_ == 3) || (in_shape.size() == 2 && axis_ == 1)) {
+        kernel_name = "Scale_C";
+      } else if (in_shape.size() == 4 && axis_ == 1) {
+        kernel_name = "Scale_H";
+        broadcast_H_flag_ = true;
+      } else {
+        MS_LOG(ERROR) << "unsupported scale axis " << axis_;
+        return RET_ERROR;
+      }
+    } else {
+      MS_LOG(ERROR) << "unsupported scale axis " << axis_ << ", in shape " << in_shape << ", scale shape"
+                    << scale_shape;
+      return RET_ERROR;
     }
   } else {
-    element_flag_ = true;
+    weight_vector_flag_ = true;
     kernel_name = "Scale";
   }
   lite::STATUS error_code;
@@ -206,7 +211,7 @@ int ScaleOpenCLKernel::Run() {
 
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  if (element_flag_) {
+  if (weight_vector_flag_) {
     void *scale = scale_ptr_ == nullptr ? in_tensors_[1]->data_c() : scale_ptr_;
     void *offset = offset_ptr_ == nullptr ? in_tensors_[2]->data_c() : offset_ptr_;
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, scale);
@@ -230,8 +235,12 @@ int ScaleOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
-  if (element_flag_ && scale_C_flag_) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, UP_DIV(in_tensors_[1]->shape()[0], C4NUM));
+  if (weight_vector_flag_ && broadcast_flag_) {
+    if (broadcast_H_flag_) {
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[1]->shape()[0]);
+    } else {
+      ocl_runtime_->SetKernelArg(kernel_, arg_idx++, UP_DIV(in_tensors_[1]->shape()[0], C4NUM));
+    }
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, act_type);
   ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
