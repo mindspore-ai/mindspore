@@ -43,11 +43,19 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
       MS_LOG(ERROR) << "CreateNotExistDirs Failed!";
       return std::nullopt;
     }
-
+#if defined(SYSTEM_ENV_POSIX)
     if (nullptr == realpath(prefix_path.c_str(), real_path)) {
-      MS_LOG(ERROR) << "dir " << prefix_path << " does not exit.";
+      MS_LOG(ERROR) << "dir " << prefix_path << " does not exist.";
       return std::nullopt;
     }
+#elif defined(SYSTEM_ENV_WINDOWS)
+    if (nullptr == _fullpath(real_path, prefix_path.c_str(), PATH_MAX)) {
+      MS_LOG(ERROR) << "dir " << prefix_path << " does not exist.";
+      return std::nullopt;
+    }
+#else
+    MS_LOG(EXCEPTION) << "Unsupported platform.";
+#endif
     out_path = std::string(real_path) + last_path;
   }
 
@@ -56,9 +64,17 @@ std::optional<std::string> Common::GetRealPath(const std::string &input_path) {
       MS_LOG(ERROR) << "Prefix path is too longer!";
       return std::nullopt;
     }
+#if defined(SYSTEM_ENV_POSIX)
     if (nullptr == realpath(input_path.c_str(), real_path)) {
-      MS_LOG(ERROR) << "File " << input_path << " does not exit, it will be created.";
+      MS_LOG(ERROR) << "File " << input_path << " does not exist, it will be created.";
     }
+#elif defined(SYSTEM_ENV_WINDOWS)
+    if (nullptr == _fullpath(real_path, input_path.c_str(), PATH_MAX)) {
+      MS_LOG(ERROR) << "File " << input_path << " does not exist, it will be created.";
+    }
+#else
+    MS_LOG(EXCEPTION) << "Unsupported platform.";
+#endif
     out_path = std::string(real_path);
   }
   return out_path;

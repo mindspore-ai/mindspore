@@ -14,6 +14,7 @@
 # ============================================================================
 """ test_context """
 import os
+import shutil
 import pytest
 
 from mindspore import context
@@ -150,6 +151,6 @@ def teardown_module():
         if not os.path.exists(item_name):
             continue
         if os.path.isdir(item_name):
-            os.rmdir(item_name)
+            shutil.rmtree(item_name)
         elif os.path.isfile(item_name):
             os.remove(item_name)

@@ -4,6 +4,7 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/draw.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/dump_proto.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
 )
 
 if (ENABLE_DEBUGGER)
@@ -12,7 +13,6 @@ if (ENABLE_DEBUGGER)
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/grpc_client.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/proto_exporter.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
-        "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
         )
 endif (ENABLE_DEBUGGER)
 

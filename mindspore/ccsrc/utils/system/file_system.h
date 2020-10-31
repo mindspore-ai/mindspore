@@ -198,6 +198,51 @@ class PosixWriteFile : public WriteFile {
 };
 #endif
 
+#if defined(SYSTEM_ENV_WINDOWS)
+// File system of create or delete directory for windows system
+class WinFileSystem : public FileSystem {
+ public:
+  WinFileSystem() = default;
+
+  ~WinFileSystem() override = default;
+
+  // create a new write file
+  WriteFilePtr CreateWriteFile(const string &file_name) override;
+
+  // check the file is exist?
+  bool FileExist(const string &file_name) override;
+
+  // delete the file
+  bool DeleteFile(const string &file_name) override;
+
+  // Create a Directory
+  bool CreateDir(const string &dir_name) override;
+
+  // Delete the specified directory.
+  bool DeleteDir(const string &dir_name) override;
+};
+
+// A file that can be read and write for windows
+class WinWriteFile : public WriteFile {
+ public:
+  explicit WinWriteFile(const string &file_name) : WriteFile(file_name), file_(nullptr) {}
+
+  ~WinWriteFile() override;
+
+  bool Open() override;
+
+  bool Write(const std::string &data) override;
+
+  bool Close() override;
+
+  bool Flush() override;
+
+  bool Sync() override;
+
+ private:
+  FILE *file_;
+};
+#endif
 }  // namespace system
 }  // namespace mindspore
 

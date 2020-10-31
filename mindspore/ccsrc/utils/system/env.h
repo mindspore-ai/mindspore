@@ -34,6 +34,9 @@ class Env {
 #if defined(SYSTEM_ENV_POSIX)
     auto fs = std::make_shared<PosixFileSystem>();
     return fs;
+#elif defined(SYSTEM_ENV_WINDOWS)
+    auto fs = std::make_shared<WinFileSystem>();
+    return fs;
 #else
     MS_LOG(EXCEPTION) << "Now not support the platform.";
 #endif

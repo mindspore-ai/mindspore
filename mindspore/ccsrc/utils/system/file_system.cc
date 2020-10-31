@@ -16,14 +16,18 @@
 
 #include "utils/system/file_system.h"
 
+#if defined(SYSTEM_ENV_POSIX)
 #include <sys/stat.h>
 #include <unistd.h>
+#elif defined(SYSTEM_ENV_WINDOWS)
+#include <direct.h>
+#endif
 
 namespace mindspore {
 namespace system {
 
 #if defined(SYSTEM_ENV_POSIX)
-// Implement the Posix file systen
+// Implement the Posix file system
 WriteFilePtr PosixFileSystem::CreateWriteFile(const string &file_name) {
   if (file_name.empty()) {
     MS_LOG(ERROR) << "Create write file failed because the file name is null.";
@@ -49,7 +53,7 @@ bool PosixFileSystem::FileExist(const string &file_name) {
   }
   auto result = access(file_name.c_str(), F_OK);
   if (result != 0) {
-    MS_LOG(INFO) << "The file(" << file_name << ") not exist.";
+    MS_LOG(DEBUG) << "The file(" << file_name << ") not exist.";
     return false;
   }
   return true;
@@ -62,7 +66,7 @@ bool PosixFileSystem::DeleteFile(const string &file_name) {
   }
   auto result = unlink(file_name.c_str());
   if (result != 0) {
-    MS_LOG(ERROR) << "Delete the file(" << file_name << ") is falire, error(" << errno << ").";
+    MS_LOG(ERROR) << "Delete the file(" << file_name << ") is failed, error(" << errno << ").";
     return false;
   }
   return true;
@@ -77,7 +81,7 @@ bool PosixFileSystem::CreateDir(const string &dir_name) {
   auto result = mkdir(dir_name.c_str(), DEFAULT_MKDIR_MODE);
   if (result != 0) {
     if (errno != EEXIST) {
-      MS_LOG(ERROR) << "Create the dir(" << dir_name << ") is falire, error(" << errno << ").";
+      MS_LOG(ERROR) << "Create the dir(" << dir_name << ") is failed, error(" << errno << ").";
       return false;
     }
   }
@@ -98,5 +102,147 @@ bool PosixFileSystem::DeleteDir(const string &dir_name) {
 }
 #endif
 
+#if defined(SYSTEM_ENV_WINDOWS)
+// Implement the Windows file system
+WriteFilePtr WinFileSystem::CreateWriteFile(const string &file_name) {
+  if (file_name.empty()) {
+    MS_LOG(ERROR) << "Create write file failed because the file name is null.";
+    return nullptr;
+  }
+  auto fp = std::make_shared<WinWriteFile>(file_name);
+  if (fp == nullptr) {
+    MS_LOG(ERROR) << "Create write file(" << file_name << ") failed.";
+    return nullptr;
+  }
+  bool result = fp->Open();
+  if (!result) {
+    MS_LOG(ERROR) << "Open the write file(" << file_name << ") failed.";
+    return nullptr;
+  }
+  return fp;
+}
+
+bool WinFileSystem::FileExist(const string &file_name) {
+  if (file_name.empty()) {
+    MS_LOG(WARNING) << "The file name is null.";
+    return false;
+  }
+  auto result = access(file_name.c_str(), F_OK);
+  if (result != 0) {
+    MS_LOG(DEBUG) << "The file(" << file_name << ") not exist.";
+    return false;
+  }
+  return true;
+}
+
+bool WinFileSystem::CreateDir(const string &dir_name) {
+  if (dir_name.empty()) {
+    MS_LOG(WARNING) << "The directory name is null.";
+    return false;
+  }
+  auto result = mkdir(dir_name.c_str());
+  if (result != 0) {
+    MS_LOG(ERROR) << "Create the dir(" << dir_name << ") is failed, error(" << result << ").";
+    return false;
+  }
+  return true;
+}
+
+bool WinFileSystem::DeleteDir(const string &dir_name) {
+  if (dir_name.empty()) {
+    MS_LOG(WARNING) << "The directory name is null.";
+    return false;
+  }
+  auto result = rmdir(dir_name.c_str());
+  if (result != 0) {
+    MS_LOG(ERROR) << "Delete the dir(" << dir_name << ") is failed, error(" << result << ").";
+    return false;
+  }
+  return true;
+}
+
+bool WinFileSystem::DeleteFile(const string &file_name) {
+  if (file_name.empty()) {
+    MS_LOG(WARNING) << "The file name is null.";
+    return false;
+  }
+  auto result = unlink(file_name.c_str());
+  if (result != 0) {
+    MS_LOG(ERROR) << "Delete the file(" << file_name << ") is failed, error(" << errno << ").";
+    return false;
+  }
+  return true;
+}
+
+bool WinWriteFile::Open() {
+  if (file_ != nullptr) {
+    MS_LOG(WARNING) << "The File(" << file_name_ << ") already open.";
+    return true;
+  }
+  // check the path
+  if (nullptr == file_name_.c_str()) {
+    MS_LOG(EXCEPTION) << "The file path is null.";
+  }
+  char path[PATH_MAX + 1] = {0x00};
+  if (file_name_.size() > PATH_MAX || nullptr == _fullpath(path, file_name_.c_str(), PATH_MAX)) {
+    MS_LOG(EXCEPTION) << "Convert to real path fail, file name is " << file_name_ << ".";
+  }
+
+  // open the file
+  file_ = fopen(path, "w+");
+  if (file_ == nullptr) {
+    MS_LOG(ERROR) << "File(" << path << ") IO ERROR: " << errno << ".";
+    return false;
+  }
+  return true;
+}
+
+bool WinWriteFile::Write(const std::string &data) {
+  MS_LOG(DEBUG) << "Write data(" << data.size() << ") to file(" << this->file_name_ << ").";
+  size_t r = fwrite(data.data(), 1, data.size(), file_);
+  if (r != data.size()) {
+    MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ".";
+    return false;
+  }
+  return true;
+}
+
+bool WinWriteFile::Close() {
+  if (file_ == nullptr) {
+    MS_LOG(WARNING) << "File(" << file_name_ << ") already close.";
+    return true;
+  }
+  bool result = true;
+  if (fclose(file_) != 0) {
+    MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << errno << ".";
+    result = false;
+  }
+  file_ = nullptr;
+  return result;
+}
+
+bool WinWriteFile::Flush() {
+  if (fflush(file_) != 0) {
+    MS_LOG(ERROR) << "File(" << file_name_ << ") IO ERROR: " << EBADF << ".";
+    return false;
+  }
+  return true;
+}
+
+bool WinWriteFile::Sync() { return Flush(); }
+
+WinWriteFile::~WinWriteFile() {
+  try {
+    if (file_ != nullptr) {
+      (void)fclose(file_);
+      file_ = nullptr;
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Exception when closing file.";
+  } catch (...) {
+    MS_LOG(ERROR) << "Non standard exception when closing file.";
+  }
+}
+#endif
 }  // namespace system
 }  // namespace mindspore

@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <cstdlib>
 #include <algorithm>
+#include <iomanip>
 
 #include "ir/param_info.h"
 #include "pipeline/jit/pass.h"
@@ -85,7 +86,7 @@ std::unordered_map<abstract::AbstractBasePtrList, int, abstract::AbstractBasePtr
 namespace {
 std::string GetBaseNameForIR(int stage_idx, const std::string &action_name) {
   std::ostringstream oss;
-  oss << stage_idx << "_" << action_name;
+  oss << std::setfill('0') << std::setw(2) << stage_idx << "_" << action_name;
   return oss.str();
 }
 
