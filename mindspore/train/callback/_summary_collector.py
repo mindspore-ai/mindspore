@@ -543,8 +543,7 @@ class SummaryCollector(Callback):
         if not isinstance(loss, Tensor):
             loss = Tensor(loss)
 
-        precision = 4
-        loss = Tensor(round(np.mean(loss.asnumpy()), precision))
+        loss = Tensor(np.mean(loss.asnumpy()))
         return loss
 
     def _get_optimizer(self, cb_params):
