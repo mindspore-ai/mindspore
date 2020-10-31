@@ -31,6 +31,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::ActivationType_HSWISH;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
@@ -44,7 +45,8 @@ namespace mindspore::kernel {
 int ActivationOpenClKernel::Init() {
   std::map<int, std::string> kernel_names{
     {ActivationType_LEAKY_RELU, "LeakyRelu"}, {ActivationType_RELU, "Relu"}, {ActivationType_SIGMOID, "Sigmoid"},
-    {ActivationType_RELU6, "Relu6"},          {ActivationType_TANH, "Tanh"}, {ActivationType_SWISH, "Swish"}};
+    {ActivationType_RELU6, "Relu6"},          {ActivationType_TANH, "Tanh"}, {ActivationType_SWISH, "Swish"},
+    {ActivationType_HSWISH, "HSwish"}};
   if (kernel_names.count(type_) == 0) {
     MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
     return mindspore::lite::RET_ERROR;

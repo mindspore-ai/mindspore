@@ -29,6 +29,7 @@ using mindspore::kernel::SubGraphOpenCLKernel;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::Tensor;
+using mindspore::schema::ActivationType_HSWISH;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
@@ -39,6 +40,7 @@ using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore {
 class TestActivationOpenCL : public mindspore::CommonTest {};
+
 class TestActivationOpenCLTanh : public mindspore::CommonTest {};
 
 void LoadActivationData(void *dst, size_t dst_size, const std::string &file_path) {
@@ -622,7 +624,7 @@ TEST_F(TestActivationOpenCLTanh, TanhFp_dim4) {
   delete sub_graph;
 }
 
-TEST_F(TestActivationOpenCL, SwishFp_dim4) {
+TEST_F(TestActivationOpenCL, SwishFp16_dim4) {
   size_t input_size;
   std::string in_file = "/data/local/tmp/test_data/in_swishfp16.bin";
   std::string out_file = "/data/local/tmp/test_data/out_swishfp16.bin";
@@ -701,6 +703,83 @@ TEST_F(TestActivationOpenCL, SwishFp_dim4) {
     return;
   }
   CompareRes<float16_t>(&output_tensor, out_file);
+  delete sub_graph;
+}
+
+TEST_F(TestActivationOpenCL, HSwishFp16_dim4) {
+  MS_LOG(INFO) << " begin test ";
+  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+  auto runtime = runtime_wrapper.GetInstance();
+  runtime->Init();
+  auto allocator = runtime->GetAllocator();
+
+  std::vector<int> input_shape = {1, 1, 2, 4};
+  std::vector<int> output_shape = {1, 1, 2, 4};
+  auto data_type = kNumberTypeFloat32;
+
+  auto tensor_type = lite::Tensor::CONST_TENSOR;
+  schema::Format format = schema::Format_NHWC;
+  float input_data[] = {-3.0, -2.0, -1.0, 0.0, 1.0, 5.0, 6.0, 7.0};
+  float correctOutput[] = {-0, -0.33333334, -0.33333334, 0, 0.6666667, 5, 6, 7};
+
+  MS_LOG(INFO) << "Init tensors.";
+  auto output_tensor = Tensor(data_type, input_shape, format, tensor_type);
+  auto in_tensor = Tensor(data_type, output_shape, format, tensor_type);
+  std::vector<lite::Tensor *> inputs{&in_tensor};
+  std::vector<lite::Tensor *> outputs{&output_tensor};
+  runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
+
+  MS_LOG(INFO) << "Initialize input data";
+  auto param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
+  if (param == nullptr) {
+    MS_LOG(ERROR) << "New ActivationParameter fail.";
+    return;
+  }
+  param->type_ = ActivationType_HSWISH;
+  auto *kernel =
+    new (std::nothrow) kernel::ActivationOpenClKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "Kernel:HSwish create fail.";
+    delete param;
+    return;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    delete param;
+    delete kernel;
+    MS_LOG(ERROR) << "Init HSwish fail.";
+    return;
+  }
+  inputs[0]->MallocData(allocator);
+  memcpy(inputs[0]->data_c(), input_data, sizeof(input_data));
+  MS_LOG(INFO) << "Create kernel SubGraphOpenCLKernel.";
+  std::vector<kernel::LiteKernel *> kernels{kernel};
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  if (sub_graph == nullptr) {
+    delete kernel;
+    delete param;
+    MS_LOG(ERROR) << "Kernel SubGraphOpenCLKernel create fail.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Initialize sub_graph.";
+  ret = sub_graph->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init sub_graph error.";
+    delete sub_graph;
+    return;
+  }
+
+  MS_LOG(INFO) << "Run SubGraphOpenCLKernel.";
+  ret = sub_graph->Run();
+  if (ret != RET_OK) {
+    delete param;
+    delete sub_graph;
+    MS_LOG(ERROR) << "Run SubGraphOpenCLKernel error.";
+    return;
+  }
+  auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
+  CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001);
   delete sub_graph;
 }
 }  // namespace mindspore
