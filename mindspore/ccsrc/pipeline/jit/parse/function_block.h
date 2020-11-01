@@ -101,12 +101,21 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   // keeps all removable phis which will be removed in one pass.
   std::unordered_map<ParameterPtr, AnfNodePtr> removable_phis_;
 
+  // Keeps the map for the resolve node to the removable phi node.
+  // For the case that ReadVariable returns a phi node although this phi node
+  // generated in the prev block is identified as removable. The other blocks
+  // should find this phi node.
+  std::unordered_map<AnfNodePtr, ParameterPtr> resolve_to_removable_phis_;
+
   // hold declared global variables in function
   std::set<std::string> global_vars_;
 
   // other depend need to insert before function return nodes.
   // summary or some other node
   std::vector<AnfNodePtr> auto_depends_;
+
+  // keeps the new made resolve symbol for the variable not found in vars_.
+  std::unordered_map<std::string, AnfNodePtr> var_to_resolve_;
 };
 
 }  // namespace parse

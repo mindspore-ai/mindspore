@@ -49,11 +49,11 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
   if (vars_.count(var)) {
     AnfNodePtr node = vars_[var];
     MS_EXCEPTION_IF_NULL(node);
-    if (node->isa<ValueNode>()) {
-      return NewValueNode(GetValueNode(node));
-    } else {
-      return node;
+    auto iter = resolve_to_removable_phis_.find(node);
+    if (iter != resolve_to_removable_phis_.end()) {
+      return iter->second;
     }
+    return node;
   }
   // get var from predecessor block ,if can't get the make a resolve node to it
   if (matured_) {
@@ -64,7 +64,13 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
       return block->ReadVariable(var);
     } else if (prev_blocks_.empty()) {
       // get namespace and make Reslove
-      return MakeResolveSymbol(var);
+      auto it = var_to_resolve_.find(var);
+      if (it != var_to_resolve_.end()) {
+        return it->second;
+      }
+      auto tmp_node = MakeResolveSymbol(var);
+      var_to_resolve_[var] = tmp_node;
+      return tmp_node;
     }
   }
   // If have more than one predecessor blocks then build a phi node.
@@ -217,6 +223,7 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
     // replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."
     WriteVariable(var, arg_node);
     removable_phis_[phi] = arg_node;
+    resolve_to_removable_phis_[arg_node] = phi;
     // The following equal to statement "The φ-function defining v1, which now reads φ(v2, v1), is optimized
     // recursively". check if phi1 is assigned with this phi before, then phi1 can be replaced with arg_node.
     for (auto &prev : prev_blocks_) {
