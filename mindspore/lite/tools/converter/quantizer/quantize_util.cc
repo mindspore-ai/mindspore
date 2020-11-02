@@ -22,7 +22,7 @@
 #include <vector>
 #include <set>
 #include "src/ops/primitive_c.h"
-#include "mindspore/lite/tools/converter/quantizer/general_bitpacking.h"
+#include "mindspore/lite/tools/converter/quantizer/bitpacking.h"
 #include "src/common/utils.h"
 #include "abstract/abstract_value.h"
 #include "securec/include/securec.h"
@@ -288,30 +288,6 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   quantParam->zeroPoint = zeroPoint;
   quantParam->narrowRange = narrowRange;
   quantParam->numBits = numBits;
-
-  return RET_OK;
-}
-
-STATUS PostBitPack(float *weight, size_t shapeSize, size_t bitNum) {
-  auto *rawDatas = reinterpret_cast<uint8_t *>(weight);
-  vector<uint8_t> qDatas(rawDatas, rawDatas + shapeSize);
-  vector<uint8_t> qDatas_packed;
-  if (bitNum < 8 && bitNum > 1) {
-    BitPack weight_bitpack(bitNum);
-    weight_bitpack.BitPacking(qDatas, qDatas_packed);
-    if (EOK != memcpy_s(rawDatas, shapeSize, &qDatas_packed[0], shapeSize)) {
-      MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas_packed failed";
-      return RET_ERROR;
-    }
-  } else if (bitNum == 8) {
-    if (EOK != memcpy_s(rawDatas, shapeSize, &qDatas[0], shapeSize)) {
-      MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas failed";
-      return RET_ERROR;
-    }
-  } else {
-    MS_LOG(ERROR) << "bitNum must be between 0 and 8 : " << bitNum;
-    return RET_ERROR;
-  }
 
   return RET_OK;
 }

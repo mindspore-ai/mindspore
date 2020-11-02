@@ -34,6 +34,7 @@
 #include "base/base.h"
 #include "ir/primitive.h"
 #include "abstract/dshape.h"
+#include "tools/converter/quantizer/bitpacking.h"
 
 namespace mindspore {
 namespace lite {
@@ -279,6 +280,34 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
     }
     weight->set_tensor_size(elem_count * sizeof(T));
   }
+
+  // do bit pack
+  if (bitNum != 8 && bitNum != 16) {
+    std::vector<T> data{};
+    for (size_t i = 0; i < quant_datas.size(); ++i) {
+      data.emplace_back((static_cast<T>(quant_datas[i])));
+    }
+    if (bitNum > 0 && bitNum < 8) {
+      std::vector<uint8_t> pack_data{};
+      BitPack::BitPacking<T, uint8_t>(bitNum, data, &pack_data);
+      auto ret = memcpy_s(raw_datas, weight->tensor_size(), pack_data.data(), pack_data.size() * sizeof(uint8_t));
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas_packed failed";
+        return RET_ERROR;
+      }
+      weight->set_tensor_size(pack_data.size() * sizeof(uint8_t));
+    } else if (bitNum > 8 && bitNum < 16) {
+      std::vector<uint16_t> pack_data{};
+      BitPack::BitPacking<T, uint16_t>(bitNum, data, &pack_data);
+      auto ret = memcpy_s(raw_datas, weight->tensor_size(), pack_data.data(), pack_data.size() * sizeof(uint16_t));
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas_packed failed";
+        return RET_ERROR;
+      }
+      weight->set_tensor_size(pack_data.size() * sizeof(uint16_t));
+    }
+  }
+
   if (quant_params.empty()) {
     MS_LOG(ERROR) << "quant_params empty";
     return RET_ERROR;
@@ -290,8 +319,6 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
   }
   return RET_OK;
 }
-
-STATUS PostBitPack(float *weights, size_t shapeSize, size_t bitNum = UINT8_QUANTIZATION);
 
 schema::PrimitiveType NodePrimitiveType(CNodePtr cnode);
 }  // namespace quant
