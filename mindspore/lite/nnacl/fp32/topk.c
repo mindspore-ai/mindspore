@@ -22,8 +22,11 @@ int DescendCmp(const void *a, const void *b) {
     return 1;
   } else if (sub < 0) {
     return -1;
+  }
+  if (((const TopkNode *)a)->index > ((const TopkNode *)b)->index) {
+    return 1;
   } else {
-    return 0;
+    return -1;
   }
 }
 
@@ -33,8 +36,11 @@ int AscendCmp(const void *a, const void *b) {
     return 1;
   } else if (sub < 0) {
     return -1;
+  }
+  if (((const TopkNode *)a)->index > ((const TopkNode *)b)->index) {
+    return -1;
   } else {
-    return 0;
+    return 1;
   }
 }
 
