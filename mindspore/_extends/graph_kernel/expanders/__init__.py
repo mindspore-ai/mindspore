@@ -15,6 +15,7 @@
 """expanders init"""
 
 from .gelu import expand_gelu
+from .gelu_grad import expand_gelugrad
 from .layernorm import expand_layernorm
 from .softmax import expand_softmax
 from .square import expand_square

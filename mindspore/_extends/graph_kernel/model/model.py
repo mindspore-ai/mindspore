@@ -153,6 +153,7 @@ class PrimLib:
         'make_tuple': Prim(CONTROL),
         'ControlDepend': Prim(CONTROL),
         'Assign': Prim(ELEMWISE),
+        'Tanh': Prim(ELEMWISE),
         '@ReduceInit': Prim(ELEMWISE),
     }
 
