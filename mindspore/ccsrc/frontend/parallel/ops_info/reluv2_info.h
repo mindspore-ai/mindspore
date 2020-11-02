@@ -30,8 +30,8 @@
 namespace mindspore {
 namespace parallel {
 /*
- * The input, output and mask have the same tensormap.
- * And all dimensions of input are splitable.
+ * The second dimension is not splitable, as mask is caculated along it.
+ * The input and output have the same tensormap (3, 2, 1, 0), mask's tensormap is (3, 2, 1, 0, -1)
  */
 class ReLUV2Info : public OperatorInfo {
  public:
