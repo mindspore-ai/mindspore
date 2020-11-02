@@ -21,6 +21,7 @@
 #include "src/lite_kernel.h"
 #include "nnacl/scale.h"
 #include "nnacl/quantization/quantize.h"
+#include "nnacl/arithmetic_common.h"
 
 namespace mindspore::kernel {
 
@@ -29,7 +30,7 @@ class ScaleInt8CPUKernel : public LiteKernel {
   ScaleInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx_->thread_num_) {
     scale_param_ = reinterpret_cast<ScaleParameter *>(op_parameter_);
   }
   ~ScaleInt8CPUKernel() override;
@@ -42,12 +43,20 @@ class ScaleInt8CPUKernel : public LiteKernel {
   int Scale(int task_id);
 
  private:
-  int8_t *input_ptr_ = nullptr;
-  int8_t *scale_ = nullptr;
-  int8_t *offset_ = nullptr;
-  int8_t *output_ptr_ = nullptr;
-  bool has_bias_ = false;
+  int8_t *input0_data_ = nullptr;
+  int8_t *input1_data_ = nullptr;
+  int8_t *input2_data_ = nullptr;
+  int8_t *output_data_ = nullptr;
+  const lite::InnerContext *ctx_;
   ScaleParameter *scale_param_;
+  ArithmeticParameter *tile_para = nullptr;
+  std::vector<int> second_in_shape_;
+  int thread_count_;
+  int64_t elements_num_;
+  int64_t count_unit_;
+  bool has_bias_ = false;
+  bool malloced_scale_ = false;
+  bool malloced_offset_ = false;
 
   int InitQuantArgs();
 };

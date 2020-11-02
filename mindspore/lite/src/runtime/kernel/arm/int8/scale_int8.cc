@@ -19,6 +19,7 @@
 #include <string.h>
 #include <vector>
 #include "nnacl/int8/scale_int8.h"
+#include "nnacl/arithmetic_common.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -35,63 +36,65 @@ constexpr size_t kScaleInputsSize = 2;
 constexpr size_t kScaleBiasInputsSize = 3;
 }  // namespace
 ScaleInt8CPUKernel::~ScaleInt8CPUKernel() {
-  if (scale_param_->const_scale_) {
-    if (scale_ != nullptr) {
-      free(scale_);
-      scale_ = nullptr;
-    }
+  if (tile_para != nullptr) {
+    free(tile_para);
+    tile_para = nullptr;
   }
-  if (has_bias_ && scale_param_->const_offset_) {
-    if (offset_ != nullptr) {
-      free(offset_);
-      offset_ = nullptr;
-    }
+  if (input1_data_ != nullptr && malloced_scale_) {
+    free(input1_data_);
+  }
+  if (input2_data_ != nullptr && malloced_offset_) {
+    free(input2_data_);
   }
 }
 
 int ScaleInt8CPUKernel::InitScaleOffset() {
-  auto scale_tensor = in_tensors_.at(1);
-  int8_t *scale_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
+  CalcMultiplesAndStrides(tile_para);
+  scale_param_->const_scale_ = false;
+  auto *scale_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
+  // scale may be const value ,can be processed in prepare stage
   if (scale_ptr != nullptr) {
     scale_param_->const_scale_ = true;
-    if (scale_ != nullptr) {
-      free(scale_);
-      scale_ = nullptr;
+    input1_data_ = scale_ptr;
+    // need broadcasting
+    if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
+      input1_data_ = reinterpret_cast<int8_t *>(malloc(out_tensors_.at(0)->Size()));
+      if (input1_data_ == nullptr) {
+        MS_LOG(ERROR) << "malloc input1_data_  failed.";
+        return RET_ERROR;
+      }
+      malloced_scale_ = true;
+      TileOneDimensionUint8(reinterpret_cast<uint8_t *>(in_tensors_.at(1)->data_c()),
+                            reinterpret_cast<uint8_t *>(input1_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
+                            tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
     }
-    scale_ = reinterpret_cast<int8_t *>(malloc(scale_tensor->ElementsNum() * sizeof(int8_t)));
-    if (scale_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
-    }
-    memcpy(scale_, scale_ptr, scale_tensor->ElementsNum() * sizeof(int8_t));
-  } else {
-    scale_param_->const_scale_ = false;
-    scale_ = nullptr;
   }
 
+  scale_param_->const_offset_ = false;
   if (in_tensors_.size() == 3) {
     has_bias_ = true;
     auto offset_tensor = in_tensors_.at(2);
-    int8_t *offset_ptr = reinterpret_cast<int8_t *>(offset_tensor->data_c());
+    auto *offset_ptr = reinterpret_cast<int8_t *>(offset_tensor->data_c());
+    // offset may be const value ,can be processed in prepare stage
     if (offset_ptr != nullptr) {
       scale_param_->const_offset_ = true;
-      if (offset_ != nullptr) {
-        free(offset_);
-        offset_ = nullptr;
+      input2_data_ = offset_ptr;
+      // need broadcasting
+      if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(2)->ElementsNum()) {
+        input2_data_ = reinterpret_cast<int8_t *>(malloc(out_tensors_.at(0)->Size()));
+        if (input2_data_ == nullptr) {
+          MS_LOG(ERROR) << "malloc input2_data_  failed.";
+          free(input1_data_);
+          return RET_ERROR;
+        }
+        malloced_offset_ = true;
+        TileOneDimensionUint8(reinterpret_cast<uint8_t *>(in_tensors_.at(2)->data_c()),
+                              reinterpret_cast<uint8_t *>(input2_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
+                              tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
       }
-      offset_ = reinterpret_cast<int8_t *>(malloc(offset_tensor->ElementsNum() * sizeof(int8_t)));
-      if (offset_ == nullptr) {
-        MS_LOG(ERROR) << "Malloc buffer failed.";
-        return RET_ERROR;
-      }
-      memcpy(offset_, offset_ptr, offset_tensor->ElementsNum() * sizeof(int8_t));
-    } else {
-      scale_param_->const_offset_ = false;
-      offset_ = nullptr;
     }
-  } else {
-    has_bias_ = false;
   }
+
   return RET_OK;
 }
 
@@ -102,29 +105,66 @@ int ScaleInt8CPUKernel::InitParameter() {
   auto scale_shape = scale_tensor->shape();
 
   if (scale_param_->axis_ < 0) {
-    scale_param_->axis_ = scale_param_->axis_ + in_shape.size();
+    scale_param_->axis_ += in_shape.size();
   }
   if (scale_shape.size() + scale_param_->axis_ > in_shape.size()) {
     MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
     return RET_ERROR;
   }
-  scale_param_->outer_size_ = 1;
-  scale_param_->axis_size_ = 1;
-  scale_param_->inner_size_ = 1;
-  for (int i = 0; i < scale_param_->axis_; i++) {
-    scale_param_->outer_size_ *= in_shape[i];
-  }
+
   for (size_t i = 0; i < scale_shape.size(); i++) {
     if (in_shape[i + scale_param_->axis_] != scale_shape[i]) {
       MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
       return RET_ERROR;
     }
-    scale_param_->axis_size_ *= in_shape[i + scale_param_->axis_];
   }
-  for (size_t i = scale_param_->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
-    scale_param_->inner_size_ *= in_shape[i];
+
+  tile_para = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+  if (tile_para == nullptr) {
+    MS_LOG(ERROR) << "malloc tile parameter failed.";
+    return RET_ERROR;
   }
-  scale_param_->op_parameter_.thread_num_ = MSMIN(scale_param_->op_parameter_.thread_num_, scale_param_->outer_size_);
+  size_t input0_size = in_tensors_.at(0)->shape().size();
+  size_t input1_size = in_tensors_.at(1)->shape().size();
+  size_t output_size = out_tensors_.at(0)->shape().size();
+  auto input1_shape = in_tensors_.at(1)->shape();
+  tile_para->ndim_ = output_size;
+  // supplement shape of scale tensor with number 1
+  size_t len = input0_size - scale_param_->axis_;
+  second_in_shape_ = input1_shape;
+  if (len != input1_size) {
+    second_in_shape_.resize(len);
+    size_t i = 0;
+    for (; i < input1_size; ++i) {
+      second_in_shape_[i] = input1_shape[i];
+    }
+    for (; i < len; ++i) {
+      second_in_shape_[i] = 1;
+    }
+    input1_size = len;
+  }
+
+  if (input0_size == input1_size) {
+    for (size_t i = 0; i < output_size; i++) {
+      tile_para->in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
+      tile_para->in_shape1_[i] = in_tensors_.at(1)->DimensionSize(i);
+      tile_para->out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
+    }
+  } else {
+    MS_ASSERT(input0_size > input1_size);
+    size_t fill_dim_num = input0_size - input1_size;
+    int j = 0;
+    for (size_t i = 0; i < output_size; i++) {
+      tile_para->in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
+      if (i < fill_dim_num) {
+        tile_para->in_shape1_[i] = 1;
+      } else {
+        tile_para->in_shape1_[i] = second_in_shape_[j++];
+      }
+      tile_para->out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
+    }
+  }
+
   return RET_OK;
 }
 
@@ -156,6 +196,24 @@ int ScaleInt8CPUKernel::InitQuantArgs() {
     scale_param_->offset_mul_arg_.left_shift_ = shift > 0 ? shift : 0;
     scale_param_->offset_mul_arg_.right_shift_ = shift < 0 ? -shift : 0;
   }
+
+  switch (scale_param_->activation_type_) {
+    case schema::ActivationType_RELU:
+      scale_param_->output_activation_min_ = 0;
+      scale_param_->output_activation_max_ = INT8_MAX;
+      break;
+    case schema::ActivationType_RELU6:
+      scale_param_->output_activation_min_ = 0;
+      scale_param_->output_activation_max_ = 6;
+      break;
+    case schema::ActivationType_NO_ACTIVATION:
+      scale_param_->output_activation_min_ = INT8_MIN;
+      scale_param_->output_activation_max_ = INT8_MAX;
+      break;
+    default:
+      MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
+      return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -176,13 +234,13 @@ int ScaleInt8CPUKernel::Init() {
 int ScaleInt8CPUKernel::ReSize() {
   auto ret = InitParameter();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale fp32 InitParameter failed.";
+    MS_LOG(ERROR) << "Scale int8 InitParameter failed.";
     return RET_ERROR;
   }
 
   ret = InitScaleOffset();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Scale fp32 InitScaleOffset failed.";
+    MS_LOG(ERROR) << "Scale int8 InitScaleOffset failed.";
     return RET_ERROR;
   }
 
@@ -195,38 +253,21 @@ int ScaleInt8CPUKernel::ReSize() {
 }
 
 int ScaleInt8CPUKernel::Scale(int task_id) {
-  if (has_bias_) {
-    switch (scale_param_->activation_type_) {
-      case schema::ActivationType_RELU:
-        DoScaleWithBiasInt8(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_, INT8_MAX, 0);
-        break;
-      case schema::ActivationType_RELU6:
-        DoScaleWithBiasInt8(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_, 6, 0);
-        break;
-      case schema::ActivationType_NO_ACTIVATION:
-        DoScaleWithBiasInt8(input_ptr_, output_ptr_, scale_, offset_, task_id, scale_param_, INT8_MAX, INT8_MIN);
-        break;
-      default:
-        MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
-        return RET_ERROR;
-    }
-  } else {
-    switch (scale_param_->activation_type_) {
-      case schema::ActivationType_RELU:
-        DoScaleInt8(input_ptr_, output_ptr_, scale_, task_id, scale_param_, INT8_MAX, 0);
-        break;
-      case schema::ActivationType_RELU6:
-        DoScaleInt8(input_ptr_, output_ptr_, scale_, task_id, scale_param_, 6, 0);
-        break;
-      case schema::ActivationType_NO_ACTIVATION:
-        DoScaleInt8(input_ptr_, output_ptr_, scale_, task_id, scale_param_, INT8_MAX, INT8_MIN);
-        break;
-      default:
-        MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
-        return RET_ERROR;
-    }
+  int real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
+  if (real_dst_count <= 0) {
+    return lite::RET_OK;
   }
+  int8_t *cur_input0_data = input0_data_ + task_id * count_unit_;
+  int8_t *cur_input1_data = input1_data_ + task_id * count_unit_;
+  int8_t *cur_output_data = output_data_ + task_id * count_unit_;
 
+  if (has_bias_) {
+    int8_t *cur_input2_data = input2_data_ + task_id * count_unit_;
+    DoScaleWithBiasInt8(cur_input0_data, cur_output_data, cur_input1_data, cur_input2_data, scale_param_,
+                        real_dst_count);
+  } else {
+    DoScaleInt8(cur_input0_data, cur_output_data, cur_input1_data, scale_param_, real_dst_count);
+  }
   return RET_OK;
 }
 
@@ -241,18 +282,59 @@ int ScaleRunInt8(void *cdata, int task_id) {
 }
 
 int ScaleInt8CPUKernel::Run() {
-  auto in_tensor = in_tensors_.front();
-  input_ptr_ = reinterpret_cast<int8_t *>(in_tensor->data_c());
-  if (scale_ == nullptr) {
-    auto scale_tensor = in_tensors_[1];
-    scale_ = reinterpret_cast<int8_t *>(scale_tensor->data_c());
+  elements_num_ = out_tensors_.at(0)->ElementsNum();
+  count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
+  input0_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
+  output_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+
+  // need broadcasting
+  if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
+    // scale is passed by previous node, need do broadcasting online
+    if (!scale_param_->const_scale_) {
+      input1_data_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
+      if (input1_data_ == nullptr) {
+        MS_LOG(ERROR) << "malloc input1_data_  failed.";
+        return RET_ERROR;
+      }
+      TileOneDimensionUint8(reinterpret_cast<uint8_t *>(in_tensors_.at(1)->data_c()),
+                            reinterpret_cast<uint8_t *>(input1_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
+                            tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
+    }
+
+    // If has bias, bias is passed by previous node case, need do broadcasting online
+    if (has_bias_ && !scale_param_->const_offset_) {
+      input2_data_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(out_tensors_.at(0)->Size()));
+      if (input2_data_ == nullptr) {
+        MS_LOG(ERROR) << "malloc input2_data_  failed.";
+        ctx_->allocator->Free(input1_data_);
+        input1_data_ = nullptr;
+        return RET_ERROR;
+      }
+      TileOneDimensionUint8(reinterpret_cast<uint8_t *>(in_tensors_.at(2)->data_c()),
+                            reinterpret_cast<uint8_t *>(input2_data_), 0, tile_para->ndim_, tile_para->in_shape1_,
+                            tile_para->in_strides1_, tile_para->out_strides_, tile_para->multiples1_);
+    }
+
+    auto ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
+    // free memory malloced from memory pool
+    if (!scale_param_->const_scale_) {
+      ctx_->allocator->Free(input1_data_);
+      input1_data_ = nullptr;
+    }
+    if (has_bias_ && !scale_param_->const_offset_) {
+      ctx_->allocator->Free(input2_data_);
+      input2_data_ = nullptr;
+    }
+    return ret;
+  }
+
+  // input1 has the same shape with input0 situation
+  if (input1_data_ == nullptr) {
+    input1_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
   }
   if (has_bias_ && !scale_param_->const_offset_) {
-    offset_ = reinterpret_cast<int8_t *>(in_tensors_.at(2)->data_c());
+    input2_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(2)->data_c());
   }
-  auto out_tensor = out_tensors_.front();
-  output_ptr_ = reinterpret_cast<int8_t *>(out_tensor->data_c());
-
   auto ret = ParallelLaunch(this->context_->thread_pool_, ScaleRunInt8, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
@@ -260,6 +342,7 @@ int ScaleInt8CPUKernel::Run() {
   }
   return RET_OK;
 }
+
 kernel::LiteKernel *CpuScaleInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
