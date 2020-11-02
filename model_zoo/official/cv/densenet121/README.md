@@ -246,7 +246,7 @@ You can modify the training behaviour through the various flags in the `train.py
 | Dataset             | ImageNet                    |
 | epochs              | 120                         |
 | outputs             | probability                 |
-| train performance   | Top1:75.13%; Top5:92.57%    |
+| accuracy            | Top1:75.13%; Top5:92.57%    |
 
 ### Training performance results
 

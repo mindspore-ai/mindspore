@@ -42,7 +42,7 @@ config_gpu = edict({
     'is_save_on_master': 0,
     'dropout_keep_prob': 0.5,
     'has_bias': True,
-    'amp_level': 'O3'
+    'amp_level': 'O0'
 })
 
 config_ascend = edict({
