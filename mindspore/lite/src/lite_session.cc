@@ -380,6 +380,7 @@ int LiteSession::Init(const Context *context) {
     auto opencl_runtime = ocl_runtime_wrap_.GetInstance();
     opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
     if (opencl_runtime->Init() != RET_OK) {
+      this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};
       MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
     } else {
       MS_LOG(INFO) << "Init OpenCL runtime success.";
