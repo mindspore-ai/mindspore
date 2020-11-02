@@ -354,12 +354,12 @@ class AvgPool1d(_PoolNd):
                  kernel_size=1,
                  stride=1,
                  pad_mode="valid"):
-        super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
         validator.check_value_type('kernel_size', kernel_size, [int], self.cls_name)
         validator.check_value_type('stride', stride, [int], self.cls_name)
         self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.cls_name)
         validator.check_int(kernel_size, 1, Rel.GE, "kernel_size", self.cls_name)
         validator.check_int(stride, 1, Rel.GE, "stride", self.cls_name)
+        super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
         self.kernel_size = (1, kernel_size)
         self.stride = (1, stride)
         self.avg_pool = P.AvgPool(ksize=self.kernel_size,
