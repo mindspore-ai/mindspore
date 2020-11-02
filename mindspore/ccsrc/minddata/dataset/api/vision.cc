@@ -868,8 +868,7 @@ Status RandomAffineOperation::ValidateParams() {
   }
   for (int32_t i = 0; i < scale_range_.size(); ++i) {
     if (scale_range_[i] <= 0) {
-      std::string err_msg =
-        "RandomAffine: scale must be greater than or equal to 0, got:" + std::to_string(fill_value_[i]);
+      std::string err_msg = "RandomAffine: scale must be greater than 0, got: " + std::to_string(fill_value_[i]);
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
@@ -1455,13 +1454,15 @@ Status RandomRotationOperation::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if ((degrees_[1] < degrees_[0]) && (degrees_.size() == 2)) {
-    std::string err_msg = "RandomRotation: degrees must be in the format of (min, max).";
-    MS_LOG(ERROR) << "RandomRotation: degrees must be in the format of (min, max), got: " << degrees_;
+    std::string err_msg = "RandomRotation: degrees must be in the format of (min, max), got: (" +
+                          std::to_string(degrees_[0]) + ", " + std::to_string(degrees_[1]) + ")";
+    MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  } else if ((degrees_[0] <= 0) && degrees_.size() == 1) {
-    std::string err_msg = "RandomRotation: if the degress has one element, the value must be greater than 0.";
-    MS_LOG(ERROR) << "RandomRotation: if the degress has one element, the value must be greater than 0, got: "
-                  << degrees_;
+  } else if ((degrees_[0] < 0) && degrees_.size() == 1) {
+    std::string err_msg =
+      "RandomRotation: if degrees only has one value, it must be greater than or equal to 0, got: " +
+      std::to_string(degrees_[0]);
+    MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // center
