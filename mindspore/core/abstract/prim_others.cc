@@ -430,5 +430,15 @@ AbstractBasePtr InferImplReduceScatter(const AnalysisEnginePtr &, const Primitiv
   tmp_shape[0] = IntMulWithOverflowCheck(tmp_shape[0], rank_size);
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(tmp_shape));
 }
+
+AbstractBasePtr InferImplMemCpyAsync(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x->shape()->shape()));
+}
 }  // namespace abstract
 }  // namespace mindspore

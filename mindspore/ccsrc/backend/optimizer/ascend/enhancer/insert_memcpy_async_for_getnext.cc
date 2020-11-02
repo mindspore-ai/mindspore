@@ -43,6 +43,9 @@ AnfNodePtr InsertMemcpyAsyncForGetNextOutputs(const FuncGraphPtr &func_graph, co
     if (new_node == nullptr) {
       MS_LOG(EXCEPTION) << "Create memcpy_async op failed!";
     }
+    if (AnfAlgo::IsNodeDynamicShape(tuple_get_item)) {
+      AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), new_node);
+    }
     AnfAlgo::SetNodeAttr(kAttrLabelForInsertStreamActive, MakeValue(true), new_node);
     make_tuple_inputs.push_back(new_node);
   }

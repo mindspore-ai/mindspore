@@ -29,6 +29,7 @@
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "common/trans.h"
 #include "abstract/param_validator.h"
+#include "pipeline/jit/static_analysis/static_analysis.h"
 
 namespace mindspore {
 namespace session {
@@ -1279,7 +1280,8 @@ bool AnfRuntimeAlgorithm::GetBooleanAttr(const AnfNodePtr &node, const std::stri
 }
 
 bool AnfRuntimeAlgorithm::IsDynamicShape(const AnfNodePtr &node) {
-  return GetBooleanAttr(node, kAttrInputIsDynamicShape) || GetBooleanAttr(node, kAttrOutputIsDynamicShape);
+  return GetBooleanAttr(node, kAttrInputIsDynamicShape) || GetBooleanAttr(node, kAttrOutputIsDynamicShape) ||
+         GetBooleanAttr(node, kAttrIsDynamicShape);
 }
 
 void AnfRuntimeAlgorithm::GetRealDynamicShape(const std::vector<size_t> &shape,
@@ -1357,6 +1359,37 @@ std::vector<int> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &anf_no
   } else {
     MS_LOG(EXCEPTION) << "Invalid Shape Type";
   }
+}
+
+bool CheckDynamic(const NotNull<abstract::ShapePtr> &shape) {
+  return !std::all_of(shape->shape().begin(), shape->shape().end(), [](int s) { return s > 0; });
+}
+
+bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto base_shape = node->Shape();
+  if (base_shape == nullptr) {
+    MS_LOG(INFO) << "Invalid base shape, node: " << node->fullname_with_scope();
+    return false;
+  }
+  if (base_shape->isa<abstract::Shape>()) {
+    if (CheckDynamic(NOT_NULL(base_shape->cast<abstract::ShapePtr>()))) {
+      return true;
+    }
+  } else if (base_shape->isa<abstract::TupleShape>()) {
+    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    for (size_t i = 0; i < tuple_shape->size(); i++) {
+      auto b_shape = (*tuple_shape)[i];
+      if (!b_shape->isa<abstract::Shape>()) {
+        continue;
+      }
+      if (CheckDynamic(NOT_NULL(b_shape->cast<abstract::ShapePtr>()))) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 }  // namespace session
 }  // namespace mindspore
