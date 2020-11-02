@@ -44,7 +44,7 @@ def test_check_is_int5():
         Validator.check_is_int(False)
 
 def test_check_positive_int1():
-    a = np.random.randint(0, 100)
+    a = np.random.randint(1, 100)
     assert Validator.check_positive_int(a) == a
 
 def test_check_positive_int2():
