@@ -19,7 +19,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.ops.primitive import constexpr
 import mindspore.context as context
-from mindspore._checkparam import Validator, check_typename
+from mindspore._checkparam import Validator as validator
 from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.communication import management
@@ -52,7 +52,7 @@ class _BatchNorm(Cell):
 
         if momentum < 0 or momentum > 1:
             raise ValueError("momentum should be a number in range [0, 1], but got {}".format(momentum))
-        self.format = Validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
         self.use_batch_statistics = use_batch_statistics
@@ -67,7 +67,7 @@ class _BatchNorm(Cell):
             gamma_init, num_features), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
             beta_init, num_features), name="beta", requires_grad=affine)
-        self.group = Validator.check_positive_int(device_num_each_group)
+        self.group = validator.check_positive_int(device_num_each_group)
         self.is_global = False
         if self.group != 1:
             self.rank_id = get_rank()
@@ -472,7 +472,7 @@ class GlobalBatchNorm(_BatchNorm):
                                               use_batch_statistics,
                                               device_num_each_group,
                                               input_dims='both')
-        self.group = Validator.check_positive_int(device_num_each_group)
+        self.group = validator.check_positive_int(device_num_each_group)
         if self.group <= 1:
             raise ValueError("the number of group must be greater than 1.")
 
@@ -607,12 +607,12 @@ class GroupNorm(Cell):
 
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros'):
         super(GroupNorm, self).__init__()
-        self.num_groups = Validator.check_positive_int(num_groups)
-        self.num_channels = Validator.check_positive_int(num_channels)
+        self.num_groups = validator.check_positive_int(num_groups)
+        self.num_channels = validator.check_positive_int(num_channels)
         if num_channels % num_groups != 0:
             raise ValueError("num_channels should be divided by num_groups")
-        self.eps = check_typename('eps', eps, (float,))
-        self.affine = Validator.check_bool(affine)
+        self.eps = validator.check_value_type('eps', eps, (float,), type(self).__name__)
+        self.affine = validator.check_bool(affine)
 
         gamma = initializer(gamma_init, num_channels)
         beta = initializer(beta_init, num_channels)

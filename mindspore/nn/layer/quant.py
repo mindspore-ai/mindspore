@@ -442,8 +442,8 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         super(FakeQuantWithMinMaxObserver, self).__init__(quant_dtype=quant_dtype, per_channel=per_channel,
                                                           symmetric=symmetric, narrow_range=narrow_range,
                                                           num_channels=num_channels)
-        Validator.check_type("min_init", min_init, [int, float])
-        Validator.check_type("max_init", max_init, [int, float])
+        Validator.check_value_type("min_init", min_init, [int, float], type(self).__name__)
+        Validator.check_value_type("max_init", max_init, [int, float], type(self).__name__)
         Validator.check("min_init", min_init, "max_init", max_init, rel=Rel.LT)
         Validator.check_non_negative_int(quant_delay, 'quant_delay')
         self.min_init = min_init

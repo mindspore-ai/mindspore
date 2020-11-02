@@ -55,8 +55,7 @@ class UpdateCache(PrimitiveWithInfer):
         return [1]
 
     def infer_dtype(self, input_x_dtype, indices_dtype, update_dtype, max_num_dtype):
-        args = {"indices": indices_dtype}
-        validator.check_tensor_type_same(args, mstype.int_type, self.name)
+        validator.check_tensor_dtype_valid("indices", indices_dtype, mstype.int_type, self.name)
         return input_x_dtype
 
 
@@ -140,7 +139,7 @@ class SearchCacheIdx(PrimitiveWithInfer):
 
     def infer_dtype(self, hashmap_dtype, indices_dtype, step_dtype, emb_max_num_dtype, cache_max_num_dtype):
         args = {"hashmap": hashmap_dtype, "indices": indices_dtype}
-        validator.check_tensor_type_same(args, mstype.int_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.int_type, self.name)
         out_dtype = (hashmap_dtype, hashmap_dtype, hashmap_dtype)
         return out_dtype
 
@@ -182,8 +181,7 @@ class CacheSwapHashmap(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, hashmap_dtype, miss_emb_idx_dtype, step_dtype):
-        args = {"miss_emb_idx": miss_emb_idx_dtype}
-        validator.check_tensor_type_same(args, mstype.int_type, self.name)
+        validator.check_tensor_dtype_valid("miss_emb_idx", miss_emb_idx_dtype, mstype.int_type, self.name)
         out_dtype = (miss_emb_idx_dtype, miss_emb_idx_dtype)
         return out_dtype
 
@@ -224,8 +222,7 @@ class CacheSwapTable(PrimitiveWithInfer):
         return miss_value_shape
 
     def infer_dtype(self, cache_table_dtype, swap_cache_idx_dtype, miss_value_dtype):
-        args = {"swap_cache_idx": swap_cache_idx_dtype}
-        validator.check_tensor_type_same(args, mstype.int_type, self.name)
+        validator.check_tensor_dtype_valid("swap_cache_idx", swap_cache_idx_dtype, mstype.int_type, self.name)
         return miss_value_dtype
 
 
@@ -261,7 +258,7 @@ class MapCacheIdx(PrimitiveWithInfer):
 
     def infer_dtype(self, hashmap_dtype, indices_dtype, step_dtype, emb_max_num_dtype, cache_max_num_dtype):
         args = {"hashmap": hashmap_dtype, "indices": indices_dtype}
-        validator.check_tensor_type_same(args, mstype.int_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.int_type, self.name)
         out_dtype = (hashmap_dtype, hashmap_dtype,
                      hashmap_dtype, hashmap_dtype)
         return out_dtype

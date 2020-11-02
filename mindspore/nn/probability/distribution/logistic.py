@@ -111,7 +111,7 @@ class Logistic(Distribution):
         param = dict(locals())
         param['param_dict'] = {'loc': loc, 'scale': scale}
         valid_dtype = mstype.float_type
-        Validator.check_type(type(self).__name__, dtype, valid_dtype)
+        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
         super(Logistic, self).__init__(seed, dtype, name, param)
 
         self._loc = self._add_parameter(loc, 'loc')

@@ -19,7 +19,7 @@ from mindspore import log as logger
 from mindspore.communication.management import get_rank, get_group_size
 from .._c_expression import Tensor as Tensor_
 from .._c_expression import MetaTensor as MetaTensor_
-from .._checkparam import check_type, check_typename
+from .._checkparam import Validator as validator
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
 
@@ -64,9 +64,19 @@ class Tensor(Tensor_):
             input_data = np.array(input_data)
 
         # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
-        check_type('tensor input_data', input_data, (Tensor_, float, int))
+        validator.check_value_type('input_data', input_data, (Tensor_, np.ndarray, list, tuple, float, int, bool),
+                                   'Tensor')
+        valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
+                        np.float16, np.float32, np.float64, np.bool_)
+        if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes:
+            raise TypeError(f"For Tensor, the input_data is a numpy array whose data type is "
+                            f"{input_data.dtype} that is not supported to initialize a Tensor.")
+        if isinstance(input_data, (tuple, list)):
+            if np.array(input_data).dtype not in valid_dtypes:
+                raise TypeError(f"For Tensor, the input_data is {input_data} that contain unsupported element.")
         if dtype is not None:
-            check_typename('dtype', dtype, mstype.number_type + (mstype.bool_,))
+            validator.check_type_name('dtype', dtype, mstype.number_type + (mstype.bool_,), "Tensor")
+
         if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
             input_data = np.ascontiguousarray(input_data)
         if dtype is None:
@@ -405,8 +415,9 @@ class MetaTensor(MetaTensor_):
     Returns:
         Array, an array after being initialized.
     """
+
     def __init__(self, dtype, shape, init=None):
-        #check param
+        # check param
         self.init = init
         MetaTensor_.__init__(self, dtype, shape)
 
@@ -434,8 +445,10 @@ class MetaTensor(MetaTensor_):
             msg = "Error shape={}".format(shape)
             logger.error(msg)
             raise ValueError(msg)
+
         class seed_context:
             '''set and restore seed'''
+
             def __init__(self, init):
                 self.init = init
                 from .seed import get_seed
@@ -481,5 +494,6 @@ def _vm_compare(*args):
         fn = getattr(args[1].asnumpy(), obj_str)
         y = args[0]
     return Tensor(np.array(fn(y)))
+
 
 tensor_operator_registry.register('vm_compare', _vm_compare)

@@ -380,7 +380,7 @@ class Assert(PrimitiveWithInfer):
         return [1]
 
     def infer_dtype(self, condition, inputs):
-        validator.check_scalar_or_tensor_type_same({"condition": condition}, [mstype.bool_], self.name)
+        validator.check_scalar_or_tensor_types_same({"condition": condition}, [mstype.bool_], self.name)
         for dtype in inputs:
             validator.check_subclass("input", dtype, [mstype.tensor], self.name)
         return mstype.int32

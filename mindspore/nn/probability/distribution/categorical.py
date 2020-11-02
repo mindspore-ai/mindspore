@@ -109,7 +109,7 @@ class Categorical(Distribution):
         param = dict(locals())
         param['param_dict'] = {'probs': probs}
         valid_dtype = mstype.int_type
-        Validator.check_type("Categorical", dtype, valid_dtype)
+        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
         super(Categorical, self).__init__(seed, dtype, name, param)
 
         self._probs = self._add_parameter(probs, 'probs')

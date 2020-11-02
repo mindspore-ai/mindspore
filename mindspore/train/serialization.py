@@ -588,8 +588,8 @@ def _quant_export(network, *inputs, file_format, **kwargs):
     if quant_mode not in quant_mode_formats:
         raise KeyError(f'Quant_mode input is wrong, Please choose the right mode of the quant_mode.')
 
-    mean = Validator.check_type("mean", mean, (int, float))
-    std_dev = Validator.check_type("std_dev", std_dev, (int, float))
+    mean = Validator.check_value_type("mean", mean, (int, float))
+    std_dev = Validator.check_value_type("std_dev", std_dev, (int, float))
 
     if context.get_context('device_target') not in supported_device:
         raise KeyError("Unsupported {} device target.".format(context.get_context('device_target')))

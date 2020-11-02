@@ -61,8 +61,8 @@ class Assign(PrimitiveWithCheck):
 
     def check_dtype(self, variable, value):
         if variable != mstype.type_refkey:
-            validator.check_tensor_type_same({"variable": variable}, mstype.number_type, self.name)
-        validator.check_scalar_or_tensor_type_same({"value": value}, mstype.number_type, self.name)
+            validator.check_tensor_dtype_valid("variable", variable, mstype.number_type, self.name)
+        validator.check_scalar_or_tensor_types_same({"value": value}, mstype.number_type, self.name)
 
 
 class BoundingBoxEncode(PrimitiveWithInfer):
@@ -112,7 +112,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
 
     def infer_dtype(self, anchor_box, groundtruth_box):
         args = {"anchor_box": anchor_box, "groundtruth_box": groundtruth_box}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return anchor_box
 
 
@@ -169,7 +169,7 @@ class BoundingBoxDecode(PrimitiveWithInfer):
 
     def infer_dtype(self, anchor_box, deltas):
         args = {"anchor_box": anchor_box, "deltas": deltas}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return anchor_box
 
 
@@ -221,8 +221,8 @@ class CheckValid(PrimitiveWithInfer):
 
     def infer_dtype(self, bboxes_type, metas_type):
         valid_type = [mstype.float32, mstype.float16, mstype.int16, mstype.uint8]
-        validator.check_tensor_type_same({"bboxes_type": bboxes_type}, valid_type, self.name)
-        validator.check_tensor_type_same({"metas_type": metas_type}, valid_type, self.name)
+        validator.check_tensor_dtype_valid("bboxes_type", bboxes_type, valid_type, self.name)
+        validator.check_tensor_dtype_valid("metas_type", metas_type, valid_type, self.name)
         return mstype.bool_
 
 
@@ -281,8 +281,8 @@ class IOU(PrimitiveWithInfer):
 
     def infer_dtype(self, anchor_boxes, gt_boxes):
         valid_type = [mstype.float32, mstype.float16]
-        validator.check_tensor_type_same({"anchor_boxes": anchor_boxes}, valid_type, self.name)
-        validator.check_tensor_type_same({"gt_boxes": gt_boxes}, valid_type, self.name)
+        validator.check_tensor_dtype_valid("anchor_boxes", anchor_boxes, valid_type, self.name)
+        validator.check_tensor_dtype_valid("gt_boxes", gt_boxes, valid_type, self.name)
         return anchor_boxes
 
 
@@ -478,7 +478,7 @@ class ConfusionMatrix(PrimitiveWithInfer):
         if weights is not None:
             validator.check_subclass('weights', weights, mstype.tensor, self.name)
         args = {"labels": labels, "predictions": predictions}
-        validator.check_tensor_type_same(args, (mstype.number_type), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.number_type), self.name)
         return labels
 
 
@@ -506,8 +506,7 @@ class PopulationCount(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        args = {"x": x_dtype}
-        validator.check_tensor_type_same(args, (mstype.int16, mstype.uint16,), self.name)
+        validator.check_tensor_dtype_valid("x", x_dtype, (mstype.int16, mstype.uint16,), self.name)
         return mstype.tensor_type(mstype.uint8)
 
 class Push(PrimitiveWithInfer):

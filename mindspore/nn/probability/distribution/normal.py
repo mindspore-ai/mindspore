@@ -127,7 +127,7 @@ class Normal(Distribution):
         param = dict(locals())
         param['param_dict'] = {'mean': mean, 'sd': sd}
         valid_dtype = mstype.float_type
-        Validator.check_type(type(self).__name__, dtype, valid_dtype)
+        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
         super(Normal, self).__init__(seed, dtype, name, param)
 
         self._mean_value = self._add_parameter(mean, 'mean')

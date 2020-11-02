@@ -102,7 +102,7 @@ class Gumbel(TransformedDistribution):
         Constructor of Gumbel distribution.
         """
         valid_dtype = mstype.float_type
-        Validator.check_type(type(self).__name__, dtype, valid_dtype)
+        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
         gumbel_cdf = msb.GumbelCDF(loc, scale, dtype)
         super(Gumbel, self).__init__(
             distribution=msd.Uniform(0.0, 1.0, dtype=dtype),

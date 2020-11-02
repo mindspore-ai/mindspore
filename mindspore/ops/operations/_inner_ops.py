@@ -54,6 +54,7 @@ class ExtractImagePatches(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, ksizes, strides, rates, padding="valid"):
         """init"""
+
         def _check_tuple_or_list(arg_name, arg_val, prim_name):
             validator.check_value_type(f"{arg_name}s", ksizes, [tuple, list], self.name)
             if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[3] != 1:
@@ -103,7 +104,7 @@ class ExtractImagePatches(PrimitiveWithInfer):
 
     def infer_dtype(self, input_x):
         """infer dtype"""
-        validator.check_tensor_type_same({"input_x": input_x}, mstype.number_type, self.name)
+        validator.check_tensor_dtype_valid("input_x", input_x, mstype.number_type, self.name)
         return input_x
 
 
@@ -161,7 +162,7 @@ class Range(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x_dtype': x_dtype}, [mstype.float32, mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float32, mstype.int32], self.name)
         return x_dtype
 
 
@@ -254,6 +255,7 @@ class Dequant(PrimitiveWithInfer):
         >>> dequant = P.Dequant(False, False)
         >>> y = dequant(input_x)
     """
+
     @prim_attr_register
     def __init__(self, sqrt_mode=False, relu_flag=False):
         self.sqrt_mode = validator.check_value_type("sqrt_mode", sqrt_mode, [bool], self.name)
@@ -303,10 +305,9 @@ class LinSpace(PrimitiveWithInfer):
         return assist
 
     def infer_dtype(self, assist, start, stop, num):
-        args = {"num": num}
-        validator.check_tensor_type_same(args, (mstype.int32,), self.name)
+        validator.check_tensor_dtype_valid("num", num, (mstype.int32,), self.name)
         args = {"assist": assist, "start": start, "stop": stop}
-        validator.check_tensor_type_same(args, (mstype.float32,), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32,), self.name)
         return assist
 
 
@@ -343,12 +344,12 @@ class MatrixDiag(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype, assist_dtype):
         valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
         args = {"x": x_dtype, "assist": assist_dtype}
-        validator.check_tensor_type_same(args, valid_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, valid_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape, assist_shape):
         validator.check_int(len(assist_shape), 2, Rel.GE, "assist rank", self.name)
-        validator.check('rank of x', len(x_shape)+1,
+        validator.check('rank of x', len(x_shape) + 1,
                         'rank of assist', len(assist_shape), Rel.LE, self.name)
         validator.check('assist\'s penultimate dimension', assist_shape[-2], 'assist\'s last dimension',
                         assist_shape[-1], Rel.EQ, self.name)
@@ -358,7 +359,7 @@ class MatrixDiag(PrimitiveWithInfer):
         while r_idx >= r_end_dim:
             if x_shape[r_idx] != 1:
                 validator.check("reverse x dim %d" % r_idx, x_shape[r_idx], "reverse assist dim %d" %
-                                assist_shape[r_idx-1], assist_shape[r_idx-1], Rel.EQ, self.name)
+                                assist_shape[r_idx - 1], assist_shape[r_idx - 1], Rel.EQ, self.name)
             r_idx = r_idx - 1
 
         return assist_shape
@@ -391,7 +392,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype, assist_dtype):
         valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
         args = {"x": x_dtype, "assist": assist_dtype}
-        validator.check_tensor_type_same(args, valid_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, valid_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape, assist_shape):
@@ -434,7 +435,7 @@ class MatrixSetDiag(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype, diagonal_dtype, assist_dtype):
         valid_type = [mstype.float16, mstype.float32, mstype.int32, mstype.int8, mstype.uint8]
         args = {"x": x_dtype, "diagonal": diagonal_dtype, "assist": assist_dtype}
-        validator.check_tensor_type_same(args, valid_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, valid_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape, diagonal_shape, assist_shape):
@@ -583,21 +584,21 @@ class DynamicGRUV2(PrimitiveWithInfer):
         return y_shape, outh_shape, outh_shape, outh_shape, outh_shape, outh_shape
 
     def infer_dtype(self, x_dtype, winput_dtype, whidden_dtype, binput_dtype, bhidden_dtype, seq_dtype, h_dtype):
-        validator.check_tensor_type_same({"x dtype": x_dtype}, (mstype.float16,), self.name)
-        validator.check_tensor_type_same({"weight input dtype": winput_dtype}, (mstype.float16,), self.name)
-        validator.check_tensor_type_same({"weight hidden dtype": whidden_dtype}, (mstype.float16,), self.name)
+        validator.check_tensor_dtype_valid("x dtype", x_dtype, [mstype.float16], self.name)
+        validator.check_tensor_dtype_valid("weight input dtype", winput_dtype, [mstype.float16], self.name)
+        validator.check_tensor_dtype_valid("weight hidden dtype", whidden_dtype, [mstype.float16], self.name)
         b_dtype = mstype.float32
         if binput_dtype is not None:
-            validator.check_tensor_type_same({"bias input dtype": binput_dtype},
-                                             (mstype.float16, mstype.float32), self.name)
+            validator.check_tensor_dtype_valid("bias input dtype", binput_dtype,
+                                               (mstype.float16, mstype.float32), self.name)
             b_dtype = binput_dtype
         elif bhidden_dtype is not None:
-            validator.check_tensor_type_same({"bias hidden dtype": bhidden_dtype},
-                                             (mstype.float16, mstype.float32), self.name)
+            validator.check_tensor_dtype_valid("bias hidden dtype", bhidden_dtype,
+                                               (mstype.float16, mstype.float32), self.name)
             b_dtype = bhidden_dtype
         elif h_dtype is not None:
-            validator.check_tensor_type_same({"init_h dtype": h_dtype},
-                                             (mstype.float16, mstype.float32), self.name)
+            validator.check_tensor_dtype_valid("init_h dtype", h_dtype,
+                                               (mstype.float16, mstype.float32), self.name)
             b_dtype = h_dtype
         return b_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype
 

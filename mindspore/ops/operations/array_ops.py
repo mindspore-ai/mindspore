@@ -63,9 +63,9 @@ class _ScatterOp(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
         args = {"x": x_dtype, "updates": updates_dtype}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return x_dtype
 
 
@@ -73,6 +73,7 @@ class _ScatterNdOp(_ScatterOp):
     """
     Defines _ScatterNd operators
     """
+
     def _check_scatter_shape(self, x_shape, indices_shape, updates_shape, prim_name):
         validator.check('the dimension of x', len(x_shape),
                         'the dimension of indices', indices_shape[-1], Rel.GE)
@@ -627,6 +628,7 @@ class Unique(Primitive):
         >>> out = P.Unique()(x)
         (Tensor([1, 2, 5], mindspore.int32), Tensor([0, 1, 2, 1], mindspore.int32))
     """
+
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
@@ -661,11 +663,11 @@ class GatherV2(PrimitiveWithCheck):
     def __init__(self):
         """Initialize index_select"""
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
-        self.add_prim_attr("dynamic_shape_depends", [2,])
+        self.add_prim_attr("dynamic_shape_depends", [2])
 
     def __check__(self, params, indices, axis):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
+        validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
         validator.check_subclass("axis", axis['dtype'], mstype.int_, self.name)
         axis_v = axis['value']
         params_shp = params['shape']
@@ -727,6 +729,7 @@ class Padding(PrimitiveWithInfer):
         >>> out = P.Padding(pad_dim_size)(x)
         [[8, 0, 0, 0], [10, 0, 0, 0]]
     """
+
     @prim_attr_register
     def __init__(self, pad_dim_size=8):
         """Initialize padding"""
@@ -766,12 +769,13 @@ class UniqueWithPad(PrimitiveWithInfer):
         >>> out = P.UniqueWithPad()(x, pad_num)
         ([1, 5, 4, 3, 2, 8, 8, 8, 8, 8], [0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
     """
+
     @prim_attr_register
     def __init__(self):
         """init UniqueWithPad"""
 
     def __infer__(self, x, pad_num):
-        validator.check_tensor_type_same({"x": x['dtype']}, [mstype.int32, mstype.int64], self.name)
+        validator.check_tensor_dtype_valid("x", x['dtype'], [mstype.int32, mstype.int64], self.name)
         validator.check_subclass("pad_num", pad_num['dtype'], [mstype.int32, mstype.int64], self.name)
         x_shape = list(x['shape'])
         validator.check("rank of x", len(x_shape), "expected", 1, Rel.EQ, self.name)
@@ -903,7 +907,7 @@ class TruncatedNormal(PrimitiveWithInfer):
     def __init__(self, seed=0, dtype=mstype.float32):
         """Initialize TruncatedNormal"""
         validator.check_value_type('seed', seed, [int], self.name)
-        validator.check_type_same({'dtype': dtype}, mstype.number_type, self.name)
+        validator.check_types_same_and_valid({'dtype': dtype}, mstype.number_type, self.name)
 
     def __infer__(self, shape):
         shape_value = shape['value']
@@ -984,10 +988,10 @@ class Fill(PrimitiveWithInfer):
         validator.check_value_type("value", x['value'], [numbers.Number, bool], self.name)
         for i, item in enumerate(dims['value']):
             validator.check_positive_int(item, f'dims[{i}]', self.name)
-        valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                       mstype.uint8, mstype.uint32, mstype.uint64,
-                       mstype.float16, mstype.float32, mstype.float64]
-        validator.check_type_same({"value": dtype['value']}, valid_types, self.name)
+        valid_dtypes = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                        mstype.uint8, mstype.uint32, mstype.uint64,
+                        mstype.float16, mstype.float32, mstype.float64]
+        validator.check_types_same_and_valid({"value": dtype['value']}, valid_dtypes, self.name)
         x_nptype = mstype.dtype_to_nptype(dtype['value'])
         ret = np.full(dims['value'], x['value'], x_nptype)
         out = {
@@ -1026,7 +1030,7 @@ class OnesLike(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type + (mstype.bool_,), self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type + (mstype.bool_,), self.name)
         return x_dtype
 
 
@@ -1059,7 +1063,7 @@ class ZerosLike(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type + (mstype.bool_,), self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type + (mstype.bool_,), self.name)
         return x_dtype
 
 
@@ -1264,7 +1268,7 @@ class Argmax(PrimitiveWithInfer):
         """Initialize Argmax"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type("axis", axis, [int], self.name)
-        validator.check_type_same({'output': output_type}, [mstype.int32], self.name)
+        validator.check_types_same_and_valid({'output': output_type}, [mstype.int32], self.name)
         self.axis = axis
         self.add_prim_attr('output_type', output_type)
 
@@ -1547,7 +1551,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
     def __init__(self):
         """Initialize UnsortedSegmentSum"""
         self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
-        self.add_prim_attr("dynamic_shape_depends", [2,])
+        self.add_prim_attr("dynamic_shape_depends", [2])
 
     def __infer__(self, x, segment_ids, num_segments):
         x_type = x['dtype']
@@ -1570,7 +1574,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.tensor, mstype.number], self.name)
         if isinstance(num_segments_type, type(mstype.tensor)):
-            validator.check_tensor_type_same({"num_segments": num_segments_type}, [mstype.int32], self.name)
+            validator.check_tensor_dtype_valid("num_segments", num_segments_type, [mstype.int32], self.name)
             shp = [-1]
         else:
             validator.check_value_type('num_segments', num_segments_v, [int], self.name)
@@ -1623,8 +1627,8 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
         x_shape = x['shape']
         segment_ids_shape = segment_ids['shape']
         valid_type = [mstype.float16, mstype.float32, mstype.int32]
-        validator.check_tensor_type_same({"x": x['dtype']}, valid_type, self.name)
-        validator.check_tensor_type_same({"segment_ids": segment_ids['dtype']}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
+        validator.check_tensor_dtype_valid("segment_ids", segment_ids['dtype'], [mstype.int32], self.name)
         validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
         validator.check(f'first shape of input_x', x_shape[0],
                         'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
@@ -1673,8 +1677,8 @@ class UnsortedSegmentMax(PrimitiveWithInfer):
         x_shape = x['shape']
         segment_ids_shape = segment_ids['shape']
         valid_type = [mstype.float16, mstype.float32, mstype.int32]
-        validator.check_tensor_type_same({"x": x['dtype']}, valid_type, self.name)
-        validator.check_tensor_type_same({"segment_ids": segment_ids['dtype']}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid({"segment_ids": segment_ids['dtype']}, [mstype.int32], self.name)
         validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
         validator.check(f'first shape of input_x', x_shape[0],
                         'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
@@ -1726,8 +1730,8 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
         validator.check_subclass("input_x", x_type, mstype.tensor, self.name)
         validator.check_value_type("x_shape", x_shape, [list], self.name)
         valid_type = [mstype.float16, mstype.float32, mstype.int32]
-        validator.check_tensor_type_same({"x": x['dtype']}, valid_type, self.name)
-        validator.check_tensor_type_same({"segment_ids": segment_ids['dtype']}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
+        validator.check_tensor_dtype_valid("segment_ids", segment_ids['dtype'], [mstype.int32], self.name)
         validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
         validator.check(f'first shape of input_x', x_shape[0],
                         'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
@@ -1833,7 +1837,7 @@ class ParallelConcat(PrimitiveWithInfer):
         validator.check_int(len(x_shp), 1, Rel.GE, f'x_shp length', self.name)
 
         args = {f"x_type[{i}]": elem for i, elem in enumerate(x_type)}
-        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type + (mstype.bool_,), self.name)
 
         first_elem = x_shp[0]
         for i, elem in enumerate(x_shp[1:]):
@@ -2070,7 +2074,7 @@ class ReverseV2(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, (mstype.bool_,) + mstype.number_type, self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
 
 
@@ -2100,7 +2104,7 @@ class Rint(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float16, mstype.float32], self.name)
         return x_dtype
 
 
@@ -2167,7 +2171,7 @@ class Select(PrimitiveWithInfer):
         self.add_prim_attr('T', x_type)
         validator.check_subclass("x_type", x_type, mstype.tensor, self.name)
         validator.check_subclass("y_type", y_type, mstype.tensor, self.name)
-        validator.check_tensor_type_same({"cond": cond_type}, [mstype.bool_], self.name)
+        validator.check_tensor_dtype_valid("cond", cond_type, [mstype.bool_], self.name)
         if x_type != y_type:
             raise TypeError('\'%s\' the x_type %s must be the same as y_type %s.' % (self.name, x_type, y_type))
         return x_type
@@ -2542,7 +2546,7 @@ class Eye(PrimitiveWithInfer):
         validator.check_positive_int(n, "n", self.name)
         validator.check_positive_int(m, "m", self.name)
         args = {"dtype": t}
-        validator.check_type_same(args, mstype.number_type + (mstype.bool_,), self.name)
+        validator.check_types_same_and_valid(args, mstype.number_type + (mstype.bool_,), self.name)
         np_type = mstype.dtype_to_nptype(t)
         ret = np.eye(n, m, dtype=np_type)
         return Tensor(ret)
@@ -2581,7 +2585,7 @@ class ScatterNd(PrimitiveWithInfer):
     def __infer__(self, indices, update, shape):
         shp = shape['value']
         validator.check_subclass("update_dtype", update['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_type_same({"indices": indices['dtype']}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid("indices", indices['dtype'], [mstype.int32], self.name)
         validator.check_value_type("shape", shp, [tuple], self.name)
         for i, x in enumerate(shp):
             validator.check_positive_int(x, f'shape[{i}]', self.name)
@@ -2632,14 +2636,13 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
             validator.check_non_negative_int(value, f'{i}th value of size', self.name)
         self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
 
-    def infer_shape(self, x):
-        validator.check('the dimension of input_x', len(x), '', 4, Rel.EQ, self.name)
-        return tuple(x)[:-2] + tuple(self.size)
+    def infer_shape(self, x_shape):
+        validator.check('the dimension of input_x', len(x_shape), '', 4, Rel.EQ, self.name)
+        return tuple(x_shape)[:-2] + tuple(self.size)
 
-    def infer_dtype(self, x):
-        validator.check_subclass("x", x, mstype.tensor, self.name)
-        validator.check_tensor_type_same({"x": x}, mstype.number_type, self.name)
-        return x
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_dtype_valid("x", x_dtype, mstype.number_type, self.name)
+        return x_dtype
 
 
 class GatherNd(PrimitiveWithInfer):
@@ -2674,8 +2677,7 @@ class GatherNd(PrimitiveWithInfer):
         return indices_shape[:-1] + x_shape[indices_shape[-1]:]
 
     def infer_dtype(self, x_dtype, indices_dtype):
-        validator.check_subclass("x_dtype", x_dtype, mstype.tensor, self.name)
-        validator.check_tensor_type_same({"indices": indices_dtype}, mstype.int_type, self.name)
+        validator.check_tensor_dtype_valid("indices", indices_dtype, mstype.int_type, self.name)
         return x_dtype
 
 
@@ -2715,9 +2717,9 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
         args = {"x": x_dtype, "value": value_dtype}
-        validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
 
 
@@ -2763,9 +2765,9 @@ class ScatterUpdate(_ScatterOp):
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
         args = {"x": x_dtype, "value": value_dtype}
-        validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
 
 
@@ -2802,7 +2804,6 @@ class ScatterNdUpdate(_ScatterNdOp):
          [0.4 2.2 -3.2]]
     """
 
-
     @prim_attr_register
     def __init__(self, use_locking=True):
         """Initialize ScatterNdUpdate"""
@@ -2810,9 +2811,9 @@ class ScatterNdUpdate(_ScatterNdOp):
         self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
         args = {"x": x_dtype, "value": value_dtype}
-        validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
 
 
@@ -3131,9 +3132,9 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
 
     def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
-        validator.check_tensor_type_same({'indices': indices_dtype}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
         args = {"x": x_dtype, "updates": updates_dtype}
-        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32, mstype.int32], self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32, mstype.int32], self.name)
         return x_dtype
 
 
@@ -3304,7 +3305,7 @@ class SpaceToBatch(PrimitiveWithInfer):
         self.paddings = paddings
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'input_x': x_dtype}, mstype.number_type, self.name)
+        validator.check_tensor_dtype_valid('input_x', x_dtype, mstype.number_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape):
@@ -3376,7 +3377,7 @@ class BatchToSpace(PrimitiveWithInfer):
         self.crops = crops
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'input_x': x_dtype}, mstype.number_type, self.name)
+        validator.check_tensor_dtype_valid('input_x', x_dtype, mstype.number_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape):
@@ -3465,7 +3466,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
         self.add_prim_attr("paddings", paddings_append)
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'input_x': x_dtype}, mstype.number_type, self.name)
+        validator.check_tensor_dtype_valid('input_x', x_dtype, mstype.number_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape):
@@ -3558,7 +3559,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
         self.add_prim_attr("crops", crops_append)
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'input_x': x_dtype}, mstype.number_type, self.name)
+        validator.check_tensor_dtype_valid('input_x', x_dtype, mstype.number_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape):
@@ -3721,13 +3722,13 @@ class Meshgrid(PrimitiveWithInfer):
         out_shape = tuple(tuple(shape_0) for _ in range(n))
         return out_shape
 
-
     def infer_dtype(self, x_type):
         validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, self.name)
         n = len(x_type)
         for i in range(1, n):
             validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, self.name, TypeError)
         return x_type
+
 
 class InplaceUpdate(PrimitiveWithInfer):
     r"""
@@ -3771,7 +3772,7 @@ class InplaceUpdate(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype, v_dtype):
         args = {'x': x_dtype, 'v': v_dtype}
         valid_type = [mstype.int32, mstype.float16, mstype.float32]
-        validator.check_tensor_type_same(args, valid_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, valid_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape, v_shape):
@@ -3831,8 +3832,8 @@ class ReverseSequence(PrimitiveWithInfer):
         return x
 
     def infer_dtype(self, x, seq_lengths):
-        validator.check_tensor_type_same({"x_dtype": x}, mstype.number_type + (mstype.bool_,), self.name)
-        validator.check_tensor_type_same({"seq_lengths_dtype": seq_lengths}, [mstype.int32, mstype.int64], self.name)
+        validator.check_tensor_dtype_valid("x_dtype", x, mstype.number_type + (mstype.bool_,), self.name)
+        validator.check_tensor_dtype_valid("seq_lengths_dtype", seq_lengths, [mstype.int32, mstype.int64], self.name)
         return x
 
 
@@ -3899,9 +3900,9 @@ class EditDistance(PrimitiveWithInfer):
         validator.check_const_input('truth_shape', truth_shape['value'], self.name)
         args_int = {"hypothesis_indices": h_indices['dtype'], "hypothesis_shape": h_shape['dtype'],
                     "truth_indices": truth_indices['dtype'], "truth_shape": truth_shape['dtype']}
-        validator.check_tensor_type_same(args_int, [mstype.int64], self.name)
+        validator.check_tensors_dtypes_same_and_valid(args_int, [mstype.int64], self.name)
         args = {"hypothesis_values": h_values['dtype'], "truth_values": truth_values['dtype']}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
 
         hypothesis_indices_shp, truth_indices_shp = h_indices['shape'], truth_indices['shape']
         validator.check("hypothesis_indices rank", len(hypothesis_indices_shp), "expected", 2, Rel.EQ, self.name)
@@ -3941,6 +3942,7 @@ class TransShape(PrimitiveWithInfer):
     Outputs:
         Tensor, a tensor whose data type is same as 'input_x', and the shape is the same as the `out_shape`.
     """
+
     @prim_attr_register
     def __init__(self):
         self.__setattr_flag__ = True
@@ -3948,7 +3950,7 @@ class TransShape(PrimitiveWithInfer):
     def __infer__(self, x, shape):
         shp = shape['value']
         dtype = x['dtype']
-        validator.check_tensor_type_same({'x': dtype}, mstype.number_type + (mstype.bool_,), self.name)
+        validator.check_tensor_dtype_valid('x', dtype, mstype.number_type + (mstype.bool_,), self.name)
         self.add_prim_attr('out_shape', tuple(shp))
         return {'shape': shp,
                 'dtype': dtype,
@@ -3989,7 +3991,7 @@ class Sort(PrimitiveWithInfer):
         return x_shape, x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({"x_dtype": x_dtype}, [mstype.float32, mstype.float16], self.name)
+        validator.check_tensor_dtype_valid("x_dtype", x_dtype, [mstype.float32, mstype.float16], self.name)
         return x_dtype, mstype.tensor_type(mstype.int32)
 
 
@@ -4019,6 +4021,7 @@ class EmbeddingLookup(PrimitiveWithInfer):
         >>> out = P.EmbeddingLookup()(input_params, input_indices, offset)
         [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize index_select"""
@@ -4028,7 +4031,7 @@ class EmbeddingLookup(PrimitiveWithInfer):
 
     def __infer__(self, params, indices, offset):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_type_same({"indices": indices['dtype']}, mstype.int_type, self.name)
+        validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
         validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
         params_shp = params['shape']
         if len(params_shp) != 2:
@@ -4060,6 +4063,7 @@ class GatherD(PrimitiveWithInfer):
         >>> out = P.GatherD()(x, dim, index)
         [[1, 1], [4, 3]]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize GatherD"""
@@ -4067,7 +4071,7 @@ class GatherD(PrimitiveWithInfer):
 
     def __infer__(self, x, dim, index):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_type_same({"index": index['dtype']}, [mstype.int32, mstype.int64], self.name)
+        validator.check_tensor_dtype_valid("index", index['dtype'], [mstype.int32, mstype.int64], self.name)
         validator.check_subclass("dim", dim['dtype'], mstype.int32, self.name)
         x_shp = x['shape']
         idx_shp = index['shape']
@@ -4103,6 +4107,7 @@ class Identity(PrimitiveWithInfer):
         >>> y = P.Identity()(x)
         [1, 2, 3, 4]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize identity"""

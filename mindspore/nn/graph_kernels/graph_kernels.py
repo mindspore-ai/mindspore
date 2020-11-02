@@ -21,7 +21,7 @@ from ...ops import operations as P
 from ...ops.primitive import PrimitiveWithInfer, prim_attr_register
 from ...ops.composite import multitype_ops as C
 from ...ops.operations import _grad_ops as G
-from ..._checkparam import Validator
+from ..._checkparam import Validator as validator
 from ..cell import Cell, GraphKernel
 
 
@@ -194,7 +194,7 @@ class ApplyMomentum(GraphKernel):
                  use_locking=False,
                  gradient_scale=1.0):
         super(ApplyMomentum, self).__init__()
-        self.gradient_scale = Validator.check_type('gradient_scale', gradient_scale, [float])
+        self.gradient_scale = validator.check_value_type('gradient_scale', gradient_scale, [float], type(self).__name__)
         self.fake_output_assign_1 = InplaceAssign()
         self.fake_output_assign_1.add_prim_attr("fake_output", True)
         self.fake_output_assign_2 = InplaceAssign()
@@ -334,7 +334,7 @@ class ReduceMean(GraphKernel):
 
     def __init__(self, keep_dims=True):
         super(ReduceMean, self).__init__()
-        self.keep_dims = Validator.check_type('keep_dims', keep_dims, [bool])
+        self.keep_dims = validator.check_value_type('keep_dims', keep_dims, [bool], type(self).__name__)
         self.sum = P.ReduceSum(self.keep_dims)
 
     def construct(self, x, axis):
@@ -431,8 +431,10 @@ class LayerNormForward(GraphKernel):
     """ Forward function of the LayerNorm operator. """
     def __init__(self, begin_norm_axis=1, begin_params_axis=1):
         super(LayerNormForward, self).__init__()
-        self.begin_norm_axis = Validator.check_type('begin_norm_axis', begin_norm_axis, [int])
-        self.begin_params_axis = Validator.check_type('begin_params_axis', begin_params_axis, [int])
+        self.begin_norm_axis = validator.check_value_type('begin_norm_axis', begin_norm_axis, [int],
+                                                          type(self).__name__)
+        self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int],
+                                                            type(self).__name__)
         self.mul = P.Mul()
         self.sum_keep_dims = P.ReduceSum(keep_dims=True)
         self.sub = P.Sub()
@@ -686,7 +688,7 @@ class LogSoftmax(GraphKernel):
 
     def __init__(self, axis=-1):
         super(LogSoftmax, self).__init__()
-        self.axis = Validator.check_type('axis', axis, [int])
+        self.axis = validator.check_value_type('axis', axis, [int], type(self).__name__)
         self.max_keep_dims = P.ReduceMax(keep_dims=True)
         self.sub = P.Sub()
         self.exp = P.Exp()
@@ -952,13 +954,13 @@ class Softmax(GraphKernel):
 
     def __init__(self, axis):
         super(Softmax, self).__init__()
-        Validator.check_type("axis", axis, [int, tuple])
+        validator.check_value_type("axis", axis, [int, tuple], type(self).__name__)
         if isinstance(axis, int):
             self.axis = (axis,)
         else:
             self.axis = axis
         for item in self.axis:
-            Validator.check_type("item of axis", item, [int])
+            validator.check_value_type("item of axis", item, [int], type(self).__name__)
         self.max = P.ReduceMax(keep_dims=True)
         self.sub = P.Sub()
         self.exp = P.Exp()

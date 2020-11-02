@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for gradients."""
+from functools import partial
 
 from .. import signature as sig
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
@@ -22,6 +23,7 @@ from .._utils import get_concat_offset
 from ...common import dtype as mstype
 from .. import functional as F
 from ... import context
+
 
 class AbsGrad(PrimitiveWithInfer):
     """Computes gradients for abs operation."""
@@ -55,7 +57,7 @@ class ACosGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x, dout):
         args = {"x": x, "dout": dout}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return x
 
 
@@ -72,7 +74,7 @@ class AcoshGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x, dout):
         args = {"x": x, "dout": dout}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return x
 
 
@@ -94,7 +96,7 @@ class AsinGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x, dout):
         args = {"x": x, "dout": dout}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return x
 
 
@@ -111,7 +113,7 @@ class AsinhGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x, dout):
         args = {"x": x, "dout": dout}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return x
 
 
@@ -128,7 +130,7 @@ class ReciprocalGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype, dout_dtype):
         args = {"x": x_dtype, "dout": dout_dtype}
-        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
         return x_dtype
 
 
@@ -145,7 +147,8 @@ class RsqrtGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype, dout_dtype):
         args = {"x": x_dtype, "dout": dout_dtype}
-        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32, mstype.int32, mstype.int8], self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32, mstype.int32, mstype.int8],
+                                                      self.name)
         return x_dtype
 
 
@@ -162,7 +165,7 @@ class SoftmaxGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype, dout_dtype):
         args = {"x": x_dtype, "dout": dout_dtype}
-        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
         return x_dtype
 
 
@@ -179,7 +182,7 @@ class SqrtGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype, dout_dtype):
         args = {"x": x_dtype, "dout": dout_dtype}
-        validator.check_tensor_type_same(args, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
         return x_dtype
 
 
@@ -232,7 +235,7 @@ class KLDivLossGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type, y_type, doutput_type):
         args = {'x_type': x_type, 'y_type': y_type, 'doutput_type': doutput_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
         return x_type, y_type
 
 
@@ -251,7 +254,7 @@ class BinaryCrossEntropyGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type, y_type, doutput_type, weight_type):
         args = {'x_type': x_type, 'y_type': y_type, 'doutput_type': doutput_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
         if weight_type:
             validator.check('x_type', x_type, 'weight_type', weight_type, Rel.EQ, TypeError)
         return x_type
@@ -343,7 +346,8 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         for i, dim_len in enumerate(w_size_v):
             validator.check_value_type("w_size[%d]" % i, dim_len, [int], self.name)
         args = {"x": x['dtype'], "doutput": doutput['dtype']}
-        validator.check_tensor_type_same(args, [mstype.int8, mstype.int32, mstype.float16, mstype.float32], self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.int8, mstype.int32, mstype.float16, mstype.float32],
+                                                      self.name)
         out = {
             'value': None,
             'shape': w_size_v,
@@ -406,7 +410,7 @@ class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):
     def __infer__(self, x, w_size, dout):
         w_size_v = w_size['value']
         args = {'x': x['dtype'], 'dout': dout['dtype']}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         out = {
             'value': None,
             'shape': w_size_v,
@@ -466,7 +470,7 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
 
     def __infer__(self, x_size, w, dout):
         args = {'w': w['dtype'], 'dout': dout['dtype']}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         x_size_v = x_size['value']
         out = {
             'value': None,
@@ -505,10 +509,9 @@ class DropoutGrad(PrimitiveWithInfer):
         return dy_shape
 
     def infer_dtype(self, dy_dtype, mask_dtype):
-        valid_types = (mstype.float16, mstype.float32)
-        validator.check_subclass("dy", dy_dtype, mstype.tensor, self.name)
+        valid_dtypes = (mstype.float16, mstype.float32)
         validator.check_subclass("mask", mask_dtype, mstype.tensor, self.name)
-        validator.check_tensor_type_same({"dy_dtype": dy_dtype}, valid_types, self.name)
+        validator.check_tensor_dtype_valid("dy", dy_dtype, valid_dtypes, self.name)
         return dy_dtype
 
 
@@ -627,9 +630,10 @@ class GeluGrad(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, y_backprop_dtype, x_dtype, y_dtype):
-        validator.check_tensor_type_same({"y_backprop": y_backprop_dtype}, (mstype.float16, mstype.float32), self.name)
-        validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32), self.name)
-        validator.check_tensor_type_same({"y": y_dtype}, (mstype.float16, mstype.float32), self.name)
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ("y_backprop", "x", "y"),
+                  (y_backprop_dtype, x_dtype, y_dtype)))
         return x_dtype
 
 
@@ -782,7 +786,7 @@ class MaxPoolGradGrad(_PoolGrad):
 
     def infer_dtype(self, x1_dtype, x2_dtype, grad_dtype):
         args = {'x1_dtype': x1_dtype, 'x2_dtype': x2_dtype, 'grad_dtype': grad_dtype}
-        validator.check_tensor_type_same(args, [mstype.float16], self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16], self.name)
         return x1_dtype
 
 
@@ -858,7 +862,7 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
 
     def infer_dtype(self, x_dtype, grad_dtype, argmax_dtype):
         args = {'x_dtype': x_dtype, 'grad_dtype': grad_dtype}
-        validator.check_tensor_type_same(args, [mstype.float16], self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16], self.name)
         return grad_dtype
 
 
@@ -902,7 +906,7 @@ class L2NormalizeGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, input_x, out, dout):
         args = {'input_x': input_x, 'out': out, 'dout': dout}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return input_x
 
 
@@ -993,7 +997,7 @@ class LSTMGradData(PrimitiveWithInfer):
     def infer_dtype(self, y_dtype, dy_dtype, dhy_dtype, dcy_dtype, w_dtype,
                     hx_dtype, cx_dtype, reserve_dtype, state_dtype):
         args = {"dy": dy_dtype, "dhy": dhy_dtype, "dcy": dcy_dtype}
-        validator.check_tensor_type_same(args, (mstype.float32, mstype.float16), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32, mstype.float16), self.name)
         return (dy_dtype, dy_dtype, dy_dtype)
 
 
@@ -1265,14 +1269,14 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
         args = {"y_dtype": y_dtype, "init_h_dtype": init_h_dtype, "h_dtype": h_dtype,
                 "dy_dtype": dy_dtype, "dh_dtype": dh_dtype, "update_dtype": update_dtype,
                 "reset_dtype": reset_dtype, "new_dtype": new_dtype, "hnew_dtype": hnew_dtype}
-        validator.check_tensor_type_same({"x_dtype": x_dtype}, valid_types, self.name)
-        validator.check_tensor_type_same({"winput_dtype": winput_dtype}, valid_types, self.name)
-        validator.check_tensor_type_same({"whidden_dtype": whidden_dtype}, valid_types, self.name)
-        validator.check_tensor_type_same(args, valid_types, self.name)
+        validator.check_tensor_dtype_valid("x_dtype", x_dtype, valid_types, self.name)
+        validator.check_tensor_dtype_valid("winput_dtype", winput_dtype, valid_types, self.name)
+        validator.check_tensor_dtype_valid("whidden_dtype", whidden_dtype, valid_types, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
         if seq_dtype is not None:
-            validator.check_tensor_type_same({"seq_dtype": seq_dtype}, (mstype.float32, mstype.float16), self.name)
+            validator.check_tensor_dtype_valid("seq_dtype", seq_dtype, valid_types, self.name)
         if mask_dtype is not None:
-            validator.check_tensor_type_same({"mask_dtype": mask_dtype}, (mstype.float32, mstype.float16), self.name)
+            validator.check_tensor_dtype_valid("mask_dtype", mask_dtype, valid_types, self.name)
         return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
 
 
@@ -1302,10 +1306,10 @@ class PReLUGrad(PrimitiveWithInfer):
         return y_backprop_shape, w_shape
 
     def infer_dtype(self, y_backprop_dtype, A_dtype, w_dtype):
-        valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({"y_backprop": y_backprop_dtype}, valid_types, self.name)
-        validator.check_tensor_type_same({"A_dtype": A_dtype}, valid_types, self.name)
-        validator.check_tensor_type_same({"w_dtype": w_dtype}, valid_types, self.name)
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ('y_backprop', "input_x", "weight"),
+                  (y_backprop_dtype, A_dtype, w_dtype)))
         return y_backprop_dtype, w_dtype
 
 
@@ -1335,8 +1339,9 @@ class ReLU6Grad(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, y_grad_dtype, x_dtype):
-        validator.check_tensor_type_same({"y_grad": y_grad_dtype}, (mstype.float16, mstype.float32), self.name)
-        validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32), self.name)
+        valid_dtypes = (mstype.float16, mstype.float32)
+        validator.check_tensor_dtype_valid("y_grad", y_grad_dtype, valid_dtypes, self.name)
+        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
         return x_dtype
 
 
@@ -1354,8 +1359,8 @@ class ReluGradV2(PrimitiveWithInfer):
         return gradients_shape
 
     def infer_dtype(self, gradients_dtype, mask_dtype):
-        validator.check_tensor_type_same({'gradients': gradients_dtype}, mstype.number_type, self.name)
-        validator.check_tensor_type_same({'mask': mask_dtype}, (mstype.uint8,), self.name)
+        validator.check_tensor_dtype_valid('gradients', gradients_dtype, mstype.number_type, self.name)
+        validator.check_tensor_dtype_valid('mask', mask_dtype, (mstype.uint8,), self.name)
         return gradients_dtype
 
 
@@ -1371,7 +1376,7 @@ class EluGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, y_grad_dtype, x_dtype):
         args = {'y_grad': y_grad_dtype, 'x': x_dtype}
-        validator.check_tensor_type_same(args, mstype.float_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.float_type, self.name)
         return x_dtype
 
 
@@ -1474,7 +1479,7 @@ class SigmoidGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, out, dout):
         args = {'out': out, 'dout': dout}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return out
 
 
@@ -1489,8 +1494,9 @@ class HSigmoidGrad(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, y_grad_dtype, x_dtype):
-        validator.check_tensor_type_same({"y_grad": y_grad_dtype}, (mstype.float16, mstype.float32), self.name)
-        validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32), self.name)
+        valid_dtypes = (mstype.float16, mstype.float32)
+        validator.check_tensor_dtype_valid("y_grad", y_grad_dtype, valid_dtypes, self.name)
+        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
         return x_dtype
 
 
@@ -1505,8 +1511,9 @@ class HSwishGrad(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, y_grad_dtype, x_dtype):
-        validator.check_tensor_type_same({"y_grad": y_grad_dtype}, (mstype.float16, mstype.float32), self.name)
-        validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32), self.name)
+        valid_dtypes = (mstype.float16, mstype.float32)
+        validator.check_tensor_dtype_valid("y_grad", y_grad_dtype, valid_dtypes, self.name)
+        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
         return x_dtype
 
 
@@ -1525,7 +1532,7 @@ class SigmoidCrossEntropyWithLogitsGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype, y_dtype, dout_dtype):
         args = {"x_dtype": x_dtype, "y_dtype": y_dtype, 'dout_dtype': dout_dtype}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return dout_dtype
 
 
@@ -1562,7 +1569,7 @@ class SmoothL1LossGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, prediction, target, dloss):
         args = {"prediction": prediction, "target": target, 'dloss': dloss}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return dloss
 
 
@@ -1597,8 +1604,7 @@ class StridedSliceGrad(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['dy', 'shapex', 'begin', 'end', 'strides'], outputs=['output'])
 
     def __infer__(self, dy, shapex, begin, end, strides):
-        args = {"dy": dy['dtype']}
-        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), self.name)
+        validator.check_tensor_dtype_valid("dy", dy['dtype'], mstype.number_type + (mstype.bool_,), self.name)
 
         for idx, item in enumerate(shapex['value']):
             validator.check_value_type("shapex[%d]" % idx, item, [int], self.name)
@@ -1627,7 +1633,7 @@ class SoftplusGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, dout_dtype, x_dtype):
         args = {"x_dtype": x_dtype, "dout_dtype": dout_dtype}
-        validator.check_tensor_type_same(args, mstype.float_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.float_type, self.name)
         return x_dtype
 
 
@@ -1643,7 +1649,7 @@ class TanhGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, out, dout):
         args = {"out": out, "dout": dout}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return out
 
 
@@ -1756,7 +1762,7 @@ class AtanGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x, dout):
         args = {"x": x, "dout": dout}
-        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return x
 
 
@@ -1900,7 +1906,7 @@ class LRNGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, grads, x, y):
         args = {"grads": grads, "x": x, "y": y}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32,), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32,), self.name)
         return x
 
     def infer_shape(self, grads, x, y):

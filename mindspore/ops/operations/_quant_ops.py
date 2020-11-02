@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Operators for quantization."""
+from functools import partial
 
 import mindspore.context as context
 from ..._checkparam import Validator as validator
@@ -92,12 +93,10 @@ class MinMaxUpdatePerLayer(PrimitiveWithInfer):
         return min_shape, max_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
-        valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"max": max_type}, valid_types, self.name)
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ("x", "min", "max"),
+                  (x_type, min_type, max_type)))
         return min_type, max_type
 
 
@@ -157,13 +156,10 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
         return min_shape, max_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
-        valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same(
-            {"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"max": max_type}, valid_types, self.name)
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ("x", "min", "max"),
+                  (x_type, min_type, max_type)))
         return min_type, max_type
 
 
@@ -193,6 +189,7 @@ class FakeQuantWithMinMaxVars(PrimitiveWithInfer):
         >>>                 input_tensor, min_tensor, max_tensor)
         >>> output_tensor shape: (3, 16, 5, 5)  data type: mstype.float32
     """
+
     @prim_attr_register
     def __init__(self,
                  num_bits=8,
@@ -217,10 +214,10 @@ class FakeQuantWithMinMaxVars(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
-        valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({'x': x_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'min': min_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'max': max_type}, valid_types, self.name)
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ("x", "min", "max"),
+                  (x_type, min_type, max_type)))
         return x_type
 
 
@@ -256,6 +253,7 @@ class FakeQuantWithMinMaxVarsGradient(PrimitiveWithInfer):
         >>> min_gradient shape: (1,)           data type: mstype.float32
         >>> max_gradient shape: (1,)           data type: mstype.float32
     """
+
     @prim_attr_register
     def __init__(self,
                  num_bits=8,
@@ -281,11 +279,10 @@ class FakeQuantWithMinMaxVarsGradient(PrimitiveWithInfer):
         return x_shape, min_shape, max_shape
 
     def infer_dtype(self, dout_type, x_type, min_type, max_type):
-        valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({'dout': dout_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'x': x_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'min': min_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'max': max_type}, valid_types, self.name)
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ('dout', "x", "min", "max"),
+                  (dout_type, x_type, min_type, max_type)))
         return x_type, min_type, max_type
 
 
@@ -315,6 +312,7 @@ class FakeQuantWithMinMaxVarsPerChannel(PrimitiveWithInfer):
         >>>                 input_tensor, min_tensor, max_tensor)
         >>> output_tensor shape: (3, 16, 3, 4)  data type: mstype.float32
     """
+
     @prim_attr_register
     def __init__(self,
                  num_bits=8,
@@ -332,10 +330,10 @@ class FakeQuantWithMinMaxVarsPerChannel(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
-        valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({'x': x_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'min': min_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'max': max_type}, valid_types, self.name)
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ("x", "min", "max"),
+                  (x_type, min_type, max_type)))
         return x_type
 
 
@@ -372,6 +370,7 @@ class FakeQuantWithMinMaxVarsPerChannelGradient(PrimitiveWithInfer):
         >>> min_gradient shape: (4,)           data type: mstype.float32
         >>> max_gradient shape: (4,)           data type: mstype.float32
     """
+
     @prim_attr_register
     def __init__(self,
                  num_bits=8,
@@ -390,11 +389,10 @@ class FakeQuantWithMinMaxVarsPerChannelGradient(PrimitiveWithInfer):
         return x_shape, min_shape, max_shape
 
     def infer_dtype(self, dout_type, x_type, min_type, max_type):
-        valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({'dout': dout_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'x': x_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'min': min_type}, valid_types, self.name)
-        validator.check_tensor_type_same({'max': max_type}, valid_types, self.name)
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ("dout", "x", "min", "max"),
+                  (dout_type, x_type, min_type, max_type)))
         return x_type, min_type, max_type
 
 
@@ -468,14 +466,12 @@ class FakeQuantPerLayer(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type, min_type, max_type):
         if context.get_context('device_target') == "GPU":
-            valid_types = (mstype.float32,)
+            valid_dtypes = (mstype.float32,)
         else:
-            valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"max": max_type}, valid_types, self.name)
+            valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("x", "min", "max"),
+                  (x_type, min_type, max_type)))
         return x_type
 
 
@@ -525,16 +521,12 @@ class FakeQuantPerLayerGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, dout_type, x_type, min_type, max_type):
         if context.get_context('device_target') == "GPU":
-            valid_types = (mstype.float32,)
+            valid_dtypes = (mstype.float32,)
         else:
-            valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same(
-            {"dout": dout_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"max": max_type}, valid_types, self.name)
+            valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("dout", "x", "min", "max"),
+                  (dout_type, x_type, min_type, max_type)))
         return dout_type
 
 
@@ -623,14 +615,12 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type, min_type, max_type):
         if context.get_context('device_target') == "GPU":
-            valid_types = (mstype.float32,)
+            valid_dtypes = (mstype.float32,)
         else:
-            valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"max": max_type}, valid_types, self.name)
+            valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("x", "min", "max"),
+                  (x_type, min_type, max_type)))
         return x_type
 
 
@@ -680,16 +670,12 @@ class FakeQuantPerChannelGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, dout_type, x_type, min_type, max_type):
         if context.get_context('device_target') == "GPU":
-            valid_types = (mstype.float32,)
+            valid_dtypes = (mstype.float32,)
         else:
-            valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_type_same(
-            {"dout": dout_type}, valid_types, self.name)
-        validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"min": min_type}, valid_types, self.name)
-        validator.check_tensor_type_same(
-            {"max": max_type}, valid_types, self.name)
+            valid_dtypes = (mstype.float16, mstype.float32)
+        tuple(map(partial(validator.check_tensor_dtype_valid, valid_dtypes=valid_dtypes, prim_name=self.name),
+                  ("dout", "x", "min", "max"),
+                  (dout_type, x_type, min_type, max_type)))
         return dout_type
 
 
@@ -750,8 +736,8 @@ class BatchNormFold(PrimitiveWithInfer):
         validator.check("input type", x_type, "mean type", mean_type)
         validator.check("input type", x_type, "variance type", variance_type)
         args = {"x": x_type, "mean": mean_type, "variance": variance_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
-        validator.check_tensor_type_same({"global_step": global_step_type}, (mstype.int32,), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensor_dtype_valid("global_step", global_step_type, (mstype.int32,), self.name)
         return x_type, x_type, x_type, x_type
 
 
@@ -797,8 +783,8 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
                     global_step_type):
         args = {"input": x_type, "d_batch_mean": d_batch_mean_type, "d_batch_std": d_batch_std_type,
                 "batch_mean": batch_mean_type, "batch_std": batch_std_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
-        validator.check_tensor_type_same({"global_step": global_step_type}, (mstype.int32,), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensor_dtype_valid("global_step", global_step_type, (mstype.int32,), self.name)
         return x_type
 
 
@@ -841,7 +827,7 @@ class CorrectionMul(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type, batch_std_type, running_std_type):
         args = {"x": x_type, "batch_std": batch_std_type, "running_std": running_std_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
         return x_type
 
 
@@ -879,7 +865,7 @@ class CorrectionMulGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, dout_type, x_type, gamma_type, running_std_type):
         args = {"dout": dout_type, "x": x_type, "gamma": gamma_type, "running_std": running_std_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
         if context.get_context('device_target') == "Ascend":
             return x_type, x_type
         return x_type, gamma_type
@@ -972,8 +958,8 @@ class BatchNormFold2(PrimitiveWithInfer):
                     running_mean_type, global_step_type):
         args = {"batch_std": batch_std_type, "running_std": running_std_type, "batch_mean": batch_mean_type,
                 "beta": beta_type, "running_mean": running_mean_type, "gamma": gamma_type, "x": x_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
-        validator.check_tensor_type_same({"global_step": global_step_type}, (mstype.int32,), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensor_dtype_valid("global_step", global_step_type, (mstype.int32,), self.name)
         return x_type
 
 
@@ -1031,8 +1017,8 @@ class BatchNormFold2Grad(PrimitiveWithInfer):
                         "dout type", dout_type)
         args = {"batch_std": batch_std_type, "batch_mean": batch_mean_type, "gamma": gamma_type,
                 "running_std": running_std_type, "running_mean": running_mean_type, "dout": dout_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
-        validator.check_tensor_type_same({"global_step": global_step_type}, (mstype.int32,), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensor_dtype_valid("global_step", global_step_type, (mstype.int32,), self.name)
         return gamma_type, gamma_type, gamma_type, gamma_type, gamma_type
 
 
@@ -1061,7 +1047,7 @@ class BatchNormFoldD(PrimitiveWithInfer):
         validator.check("input type", x_type, "mean type", mean_type)
         validator.check("input type", x_type, "variance type", variance_type)
         args = {"x": x_type, "mean": mean_type, "variance": variance_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
         return x_type, x_type, x_type, x_type, x_type, x_type, x_type
 
 
@@ -1090,8 +1076,7 @@ class BatchNormFoldGradD(PrimitiveWithInfer):
         validator.check("input type", x_type, "d_batch_std type", d_batch_std_type)
         validator.check("input type", x_type, "batch_mean type", batch_mean_type)
         validator.check("input type", x_type, "batch_std type", batch_std_type)
-        args = {"input type": x_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensor_dtype_valid("input type", x_type, (mstype.float16, mstype.float32), self.name)
         return x_type
 
 
@@ -1136,7 +1121,7 @@ class BatchNormFold2_D(PrimitiveWithInfer):
     def infer_dtype(self, x_type, beta_type, gamma_type, batch_std_type, running_std_type, batch_mean_type):
         args = {"batch_std": batch_std_type, "running_std": running_std_type, "batch_mean": batch_mean_type,
                 "beta": beta_type, "gamma": gamma_type, "x": x_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
         return x_type
 
 
@@ -1174,7 +1159,7 @@ class BatchNormFold2GradD(PrimitiveWithInfer):
                         "dout type", dout_type)
         args = {"batch_std": batch_std_type, "batch_mean": batch_mean_type, "gamma": gamma_type,
                 "running_std": running_std_type, "dout": dout_type}
-        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
         return gamma_type, gamma_type, gamma_type, gamma_type
 
 

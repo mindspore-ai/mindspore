@@ -104,11 +104,11 @@ class CropAndResize(PrimitiveWithInfer):
         box_index_dtype = box_index['dtype']
         crop_size_dtype = crop_size['dtype']
         # check dytpe
-        validator.check_tensor_type_same({"x": x_dtype},
-                                         [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.float16,
-                                          mstype.float32, mstype.float64, mstype.uint8, mstype.uint16], self.name)
-        validator.check_tensor_type_same({"boxes": boxes_dtype}, [mstype.float32], self.name)
-        validator.check_tensor_type_same({"box_index": box_index_dtype}, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid("x", x_dtype,
+                                           [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.float16,
+                                            mstype.float32, mstype.float64, mstype.uint8, mstype.uint16], self.name)
+        validator.check_tensor_dtype_valid("boxes", boxes_dtype, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid("box_index", box_index_dtype, [mstype.int32], self.name)
         validator.check_value_type("crop_size", crop_size_value, [tuple], self.name)
         # check input shape rank
         validator.check("x rank", len(x_shape), "expected", 4, Rel.EQ, self.name)

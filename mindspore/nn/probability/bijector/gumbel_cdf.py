@@ -68,7 +68,7 @@ class GumbelCDF(Bijector):
         """
         param = dict(locals())
         valid_dtype = mstype.float_type + mstype.int_type + mstype.uint_type
-        Validator.check_type(type(self).__name__, dtype, valid_dtype)
+        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
         parameter_type = set_param_type({'loc': loc, "scale": scale}, dtype)
         super(GumbelCDF, self).__init__(name=name, dtype=dtype, param=param)
 

@@ -105,7 +105,7 @@ class AllReduce(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, target_dtypes, self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
         return x_dtype
 
 
@@ -167,7 +167,7 @@ class AllGather(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, target_dtypes, self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
         return x_dtype
 
     def __call__(self, tensor):
@@ -217,7 +217,7 @@ class _HostAllGather(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, target_dtypes, self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
         return x_dtype
 
     def __call__(self, tensor):
@@ -279,7 +279,7 @@ class ReduceScatter(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, target_dtypes, self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
         return x_dtype
 
     def __call__(self, tensor):
@@ -328,7 +328,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, target_dtypes, self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
         return x_dtype
 
     def __call__(self, tensor):
@@ -390,7 +390,7 @@ class Broadcast(PrimitiveWithInfer):
         if not isinstance(x_dtype, tuple):
             raise TypeError(f"{self.name}'s input should be a tuple!")
         for _ele in x_dtype:
-            validator.check_tensor_type_same({'x': _ele}, target_dtypes, self.name)
+            validator.check_tensor_dtype_valid('x', _ele, target_dtypes, self.name)
         return x_dtype
 
 
@@ -432,7 +432,7 @@ class _AlltoAll(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_type_same({'x': x_dtype}, target_dtypes, self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
         return x_dtype
 
     def __call__(self, tensor):

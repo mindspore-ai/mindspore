@@ -151,8 +151,8 @@ class Gamma(PrimitiveWithInfer):
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
-        Validator.check_tensor_type_same({"alpha": alpha["dtype"]}, [mstype.float32], self.name)
-        Validator.check_tensor_type_same({"beta": beta["dtype"]}, [mstype.float32], self.name)
+        Validator.check_tensor_dtype_valid("alpha", alpha["dtype"], [mstype.float32], self.name)
+        Validator.check_tensor_dtype_valid("beta", beta["dtype"], [mstype.float32], self.name)
         broadcast_shape = get_broadcast_shape(alpha['shape'], beta['shape'], self.name)
         broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name)
         out = {
@@ -203,7 +203,7 @@ class Poisson(PrimitiveWithInfer):
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
-        Validator.check_tensor_type_same({"mean": mean["dtype"]}, [mstype.float32], self.name)
+        Validator.check_tensor_dtype_valid("mean", mean["dtype"], [mstype.float32], self.name)
         broadcast_shape = get_broadcast_shape(mean['shape'], shape_v, self.name)
         out = {
             'shape': broadcast_shape,
@@ -259,8 +259,8 @@ class UniformInt(PrimitiveWithInfer):
         Validator.check_value_type("shape", shape_v, [tuple], self.name)
         for i, shape_i in enumerate(shape_v):
             Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
-        Validator.check_tensor_type_same({"minval": minval["dtype"]}, [mstype.int32], self.name)
-        Validator.check_tensor_type_same({"maxval": maxval["dtype"]}, [mstype.int32], self.name)
+        Validator.check_tensor_dtype_valid("minval", minval["dtype"], [mstype.int32], self.name)
+        Validator.check_tensor_dtype_valid("maxval", maxval["dtype"], [mstype.int32], self.name)
         minval_shape = minval['shape']
         maxval_shape = maxval['shape']
         Validator.check("dim of minval", len(minval_shape), '0(scalar)', 0, Rel.EQ, self.name)
@@ -361,7 +361,7 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         return ([self.count, len(x_shape)], [self.count])
 
     def infer_dtype(self, x_dtype):
-        Validator.check_tensor_type_same({'x': x_dtype}, [mstype.bool_], self.name)
+        Validator.check_tensor_dtype_valid('x', x_dtype, [mstype.bool_], self.name)
         return (mstype.int32, mstype.bool_)
 
 
@@ -407,8 +407,8 @@ class RandomCategorical(PrimitiveWithInfer):
 
     def __infer__(self, logits, num_samples, seed):
         logits_dtype = logits['dtype']
-        valid_types = (mstype.float32, mstype.float16, mstype.float64)
-        Validator.check_tensor_type_same({'logits': logits_dtype}, valid_types, self.name)
+        valid_dtypes = (mstype.float32, mstype.float16, mstype.float64)
+        Validator.check_tensor_dtype_valid('logits', logits_dtype, valid_dtypes, self.name)
         num_samples_v = num_samples['value']
         seed_v = seed['value']
         Validator.check_value_type('num_samples', num_samples_v, (int,), self.name)
@@ -460,7 +460,7 @@ class Multinomial(PrimitiveWithInfer):
         input_shape = inputs["shape"]
         if len(input_shape) != 1 and len(input_shape) != 2:
             raise ValueError("input dim must be 1 or 2")
-        Validator.check_tensor_type_same({'inputs': inputs['dtype']}, [mstype.float32], self.name)
+        Validator.check_tensor_dtype_valid('inputs', inputs['dtype'], [mstype.float32], self.name)
         num_samples_value = num_samples["value"]
         if num_samples_value is None:
             raise ValueError(f"For {self.name}, shape nust be const")
