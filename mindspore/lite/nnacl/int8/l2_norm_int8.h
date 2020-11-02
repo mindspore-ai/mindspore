@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_L2NORM_PARAMETER_H_
-#define MINDSPORE_LITE_NNACL_L2NORM_PARAMETER_H_
+#ifndef MINDSPORE_LITE_NNACL_INT8_L2_NORM_INT8_H_
+#define MINDSPORE_LITE_NNACL_INT8_L2_NORM_INT8_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/l2_norm_parameter.h"
 
-typedef struct L2NormParameter {
-  OpParameter op_parameter_;
-  int *axis_;
-  size_t axis_num_;
-  float epsilon_;
-  int data_num_;
-  int *shape_;
-  size_t shape_num_;
-  ActType act_type_;
-} L2NormParameter;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef struct {
-  QuantArg in_;
-  QuantArg out_;
-} L2NormQuantArg;
+int L2NormalizationInt8(const int8_t *input_data, int8_t *output_data, const L2NormParameter *param,
+                        const L2NormQuantArg *quant_param, const int begin, const int end);
 
-#endif  // MINDSPORE_LITE_NNACL_L2NORM_PARAMETER_H_
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_INT8_L2_NORM_INT8_H_
