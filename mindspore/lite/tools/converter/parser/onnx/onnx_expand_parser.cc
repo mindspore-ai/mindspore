@@ -16,6 +16,7 @@
 
 #include "tools/converter/parser/onnx/onnx_expand_parser.h"
 #include <memory>
+#include <vector>
 
 namespace mindspore {
 namespace lite {

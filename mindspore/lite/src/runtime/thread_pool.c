@@ -384,6 +384,7 @@ int SetArch(CpuInfo *freq_set, int core_num) {
     freq_set[i].arch = archs[i];
   }
   free(archs);
+  fclose(fp);
   return RET_TP_OK;
 }
 

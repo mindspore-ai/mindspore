@@ -16,7 +16,7 @@
 
 #include "src/common/file_utils.h"
 #include <fcntl.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <climits>
 #include <cmath>
 #include "securec/include/securec.h"
@@ -107,7 +107,7 @@ int CompareOutputData(const float *output_data, size_t output_size, const float 
   return 0;
 }
 
-int CompareOutput(const float *output_data, size_t output_num, std::string file_path) {
+int CompareOutput(const float *output_data, size_t output_num, const std::string &file_path) {
   size_t ground_truth_size = 0;
   auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &ground_truth_size));
   size_t ground_truth_num = ground_truth_size / sizeof(float);

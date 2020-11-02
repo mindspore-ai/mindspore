@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/model_common.h"
 #include "include/version.h"
 #ifndef PRIMITIVE_WRITEABLE
@@ -23,7 +22,7 @@
 namespace mindspore::lite {
 bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model) {
   for (size_t i = 0; i < meta_graph->nodes()->size(); ++i) {
-    Model::Node *node = new (std::nothrow) Model::Node();
+    auto *node = new (std::nothrow) Model::Node();
     if (node == nullptr) {
       MS_LOG(ERROR) << "new node fail!";
       return false;

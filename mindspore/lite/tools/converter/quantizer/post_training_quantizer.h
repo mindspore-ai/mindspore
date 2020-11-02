@@ -110,14 +110,15 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS QuantNode();
 
   STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min,
-                      std::shared_ptr<PrimitiveC> lite_primitive);
-  STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min, std::shared_ptr<PrimitiveC>);
+                      const std::shared_ptr<PrimitiveC> &lite_primitive) const;
+  STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min,
+                       const std::shared_ptr<PrimitiveC> &) const;
 
-  STATUS DoWeightQuant(AnfNodePtr weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchannel);
+  STATUS DoWeightQuant(const AnfNodePtr &weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchannel) const;
 
-  STATUS DoBiasQuant(AnfNodePtr bias, std::shared_ptr<PrimitiveC> primitive_c);
+  STATUS DoBiasQuant(const AnfNodePtr &bias, const std::shared_ptr<PrimitiveC> &primitive_c);
   STATUS Int8Inference();
-  STATUS BiasCorrection(FuncGraphPtr func_graph);
+  STATUS BiasCorrection(const FuncGraphPtr &func_graph);
 };
 
 struct DivergInfo {
@@ -189,7 +190,7 @@ class Calibrator {
 
   size_t GetInputNum() const { return config_param_.image_paths.size(); }
 
-  STATUS AddQuantizedOp(CNodePtr node);
+  STATUS AddQuantizedOp(const CNodePtr &node);
 
   STATUS RecordMaxValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
 

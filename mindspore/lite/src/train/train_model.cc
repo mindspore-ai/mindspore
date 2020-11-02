@@ -49,8 +49,8 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   model->buf_size_ = size;
   auto meta_graph = schema::GetMetaGraph(model->buf);
   if (meta_graph == nullptr) {
-    delete model;
     free(model->buf);
+    delete model;
     MS_LOG(ERROR) << "meta_graph is nullptr!";
     return nullptr;
   }
