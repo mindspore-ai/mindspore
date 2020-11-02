@@ -59,29 +59,23 @@ class Gradient(Attribution):
     explanation.
 
     .. math::
-        _attribution = \div{\delta{y}, \delta{x}}
 
-    Args:
-        network (Cell): The black-box model to be explained.
+        attribution = \frac{\partial{y}}{\partial{x}}
 
-    Notes:
+    Note:
         The parsed `network` will be set to eval mode through `network.set_grad(False)` and `network.set_train(False)`.
         If you want to train the `network` afterwards, please reset it back to training mode through the opposite
         operations.
 
+    Args:
+        network (Cell): The black-box model to be explained.
+
     Examples:
+        >>> from mindspore.explainer.explanation import Gradient
         >>> net = resnet50(10)
         >>> param_dict = load_checkpoint("resnet50.ckpt")
         >>> load_param_into_net(net, param_dict)
-        >>> # bind net with its output activation if you wish, e.g. nn.Sigmoid(),
-        >>> # you may also use the net itself. The saliency map might be slightly different for softmax activation.
-        >>> net = nn.SequentialCell([net, nn.Sigmoid()])
-        >>> # init Gradient with a trained network.
         >>> gradient = Gradient(net)
-        >>> # parse data and the target label to be explained and get the saliency map
-        >>> inputs = ms.Tensor(np.random.rand([1, 3, 224, 224]), ms.float32)
-        >>> label = 5
-        >>> saliency = gradient(inputs, label)
     """
 
     def __init__(self, network):
@@ -99,9 +93,18 @@ class Gradient(Attribution):
         Call function for `Gradient`.
 
         Args:
-            inputs (Tensor): The input data to be explained, 4D Tensor.
-            targets (Union[Tensor, int]): The label of interest. It should be a 1D or 0D Tensor, or an integer.
-                If `targets` is a 1D `Tensor`, its length should be the same as `inputs`.
+            inputs (Tensor): The input data to be explained, a 4D tensor of shape :math:`(N, C, H, W)`.
+            targets (Tensor, int): The label of interest. It should be a 1D or 0D tensor, or an integer.
+                If it is a 1D tensor, its length should be the same as `inputs`.
+
+        Returns:
+            Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
+
+        Examples:
+            >>> inputs = ms.Tensor(np.random.rand([1, 3, 224, 224]), ms.float32)
+            >>> label = 5
+            >>> # gradient is a Gradient object, parse data and the target label to be explained and get the attribution
+            >>> saliency = gradient(inputs, label)
         """
         self._verify_data(inputs, targets)
         inputs = unify_inputs(inputs)
