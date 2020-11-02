@@ -79,11 +79,12 @@ class DequantUtil {
       }
     } else {
       auto quant_param = input_tensor->GetQuantParams();
+      auto quant_clusters = input_tensor->GetQuantClusters();
       auto param = quant_param.front();
       auto scale = param.scale;
       auto zero_point = param.zeroPoint;
       for (int64_t j = 0; j < input_tensor->ElementsNum(); j++) {
-        if (param.clusters.size() != 0) {
+        if (!quant_clusters.empty()) {
           int8_t index = quant_datas[j];
           if (index > INT8_MAX || index < INT8_MIN) {
             MS_LOG(ERROR) << "KMeans param quant is error.";
