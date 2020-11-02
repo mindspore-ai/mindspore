@@ -105,6 +105,9 @@ Status PyFuncOp::CastOutput(const py::object &ret_py_obj, TensorRow *output) {
         RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({1}), DataType(DataType::DE_INT32), &out));
         RETURN_IF_NOT_OK(out->SetItemAt({0}, ret_py_obj.cast<int32_t>()));
         break;
+      case DataType::DE_BOOL:
+        RETURN_IF_NOT_OK(Tensor::CreateScalar(ret_py_obj.cast<bool>(), &out));
+        break;
       default:
         RETURN_STATUS_UNEXPECTED("No cast for the specified DataType was found.");
     }

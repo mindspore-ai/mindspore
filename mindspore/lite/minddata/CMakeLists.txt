@@ -189,6 +189,7 @@ if (BUILD_MINDDATA STREQUAL "full")
             "${MINDDATA_DIR}/engine/ir/datasetops/bucket_batch_by_length_node.cc"
             "${MINDDATA_DIR}/engine/ir/datasetops/build_sentence_piece_vocab_node.cc"
             "${MINDDATA_DIR}/engine/ir/datasetops/build_vocab_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/filter_node.cc"
             "${MINDDATA_DIR}/engine/ir/datasetops/sync_wait_node.cc"
             )
     list(REMOVE_ITEM MINDDATA_ENGINE_CONSUMERS_SRC_FILES

@@ -46,7 +46,7 @@ class FilterOp : public ParallelOp {
 
     // Setter method.
     // @return Builder setter method returns reference to the builder.
-    Builder &SetPredicateFunc(py::function func) {
+    Builder &SetPredicateFunc(std::shared_ptr<TensorOp> func) {
       builder_predicate_func_ = std::move(func);
       return *this;
     }
@@ -82,7 +82,7 @@ class FilterOp : public ParallelOp {
     // @return Status - The error code return.
     Status SanityCheck();
     std::vector<std::string> build_in_col_names_;
-    py::function builder_predicate_func_;
+    std::shared_ptr<TensorOp> builder_predicate_func_;
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
   };
@@ -97,7 +97,7 @@ class FilterOp : public ParallelOp {
   // @param op_connector_size The size of each queue in the connector.
   // @param predicate_func python callable which returns a boolean value.
   FilterOp(const std::vector<std::string> &in_col_names, int32_t num_workers, int32_t op_queue_size,
-           py::function predicate_func);
+           std::shared_ptr<TensorOp> predicate_func);
 
   // Destructor
   ~FilterOp() = default;
@@ -144,7 +144,7 @@ class FilterOp : public ParallelOp {
 
  private:
   // predicate_func python callable which returns a boolean value.
-  py::function predicate_func_;
+  std::shared_ptr<TensorOp> predicate_func_;
 
   // Variable to store the column name that will feed to predicate function.
   std::vector<std::string> in_columns_;

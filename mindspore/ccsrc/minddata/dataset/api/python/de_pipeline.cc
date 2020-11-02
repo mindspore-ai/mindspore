@@ -829,8 +829,9 @@ Status DEPipeline::ParseFilterOp(const py::dict &args, std::shared_ptr<DatasetOp
         if (!py::isinstance<py::function>(op)) {
           RETURN_STATUS_UNEXPECTED("Error: predicate is not recognised (not pyfunc).");
         }
-        py::function predicate_func = op.cast<py::function>();
-        (void)builder->SetPredicateFunc(std::move(predicate_func));
+        std::shared_ptr<TensorOp> py_func;
+        py_func = std::make_shared<PyFuncOp>(value.cast<py::function>(), DataType::DE_BOOL);
+        (void)builder->SetPredicateFunc(py_func);
       } else if (key == "input_columns") {
         std::vector<std::string> in_col_names = ToStringVector(args["input_columns"]);
         (void)builder->SetInColNames(in_col_names);

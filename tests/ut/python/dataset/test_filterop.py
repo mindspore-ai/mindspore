@@ -284,7 +284,6 @@ def test_filter_by_generator_with_map_part_col():
     ret_data = []
     for item in dataset_f.create_dict_iterator(num_epochs=1, output_numpy=True):
         num_iter += 1
-        print(item)
         ret_data.append(item["out1"])
     assert num_iter == 3
     assert ret_data[0] == 9

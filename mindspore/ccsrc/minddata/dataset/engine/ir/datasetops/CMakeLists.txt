@@ -9,6 +9,7 @@ set(DATASET_ENGINE_IR_DATASETOPS_SRC_FILES
         build_sentence_piece_vocab_node.cc
         build_vocab_node.cc
         concat_node.cc
+        filter_node.cc
         map_node.cc
         project_node.cc
         rename_node.cc
