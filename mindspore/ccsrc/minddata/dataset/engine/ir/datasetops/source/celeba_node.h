@@ -23,13 +23,13 @@
 #include <utility>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
 
-class CelebANode : public Dataset {
+class CelebANode : public DatasetNode {
  public:
   /// \brief Constructor
   CelebANode(const std::string &dataset_dir, const std::string &usage, const std::shared_ptr<SamplerObj> &sampler,

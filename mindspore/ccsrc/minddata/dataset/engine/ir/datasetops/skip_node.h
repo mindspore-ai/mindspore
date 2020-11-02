@@ -21,16 +21,16 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 
 namespace api {
-class SkipNode : public Dataset {
+class SkipNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit SkipNode(std::shared_ptr<Dataset> child, int32_t count);
+  explicit SkipNode(std::shared_ptr<DatasetNode> child, int32_t count);
 
   /// \brief Destructor
   ~SkipNode() = default;

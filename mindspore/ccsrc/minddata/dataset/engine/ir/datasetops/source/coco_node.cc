@@ -30,7 +30,7 @@ namespace api {
 // Constructor for CocoNode
 CocoNode::CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
                    const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache)
-    : Dataset(std::move(cache)),
+    : DatasetNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       annotation_file_(annotation_file),
       task_(task),

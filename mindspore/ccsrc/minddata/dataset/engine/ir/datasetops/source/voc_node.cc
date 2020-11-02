@@ -32,7 +32,7 @@ namespace api {
 VOCNode::VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
                  const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler,
                  std::shared_ptr<DatasetCache> cache)
-    : Dataset(std::move(cache)),
+    : DatasetNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       task_(task),
       usage_(usage),

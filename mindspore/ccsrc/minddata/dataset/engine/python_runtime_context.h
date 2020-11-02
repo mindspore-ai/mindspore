@@ -13,44 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_RUNTIME_CONTEXT_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_RUNTIME_CONTEXT_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PYTHON_RUNTIME_CONTEXT_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PYTHON_RUNTIME_CONTEXT_H_
 
 #include <memory>
 #include <utility>
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
+#include "minddata/dataset/engine/consumers/python_tree_consumer.h"
+#include "minddata/dataset/engine/runtime_context.h"
 
 namespace mindspore::dataset {
-class TreeConsumer;
+class RuntimeContext;
 
 /// Class the represents single runtime instance which can consume data from a data pipeline
-class RuntimeContext {
+class PythonRuntimeContext : public RuntimeContext {
  public:
-  /// Default constructor
-  RuntimeContext() = default;
-
-  /// Initialize the runtime, for now we just call the global init
-  /// \return Status error code
-  Status Init() { return GlobalInit(); }
-
   /// Method to terminate the runtime, this will not release the resources
   /// \return Status error code
-  virtual Status Terminate() { return Status::OK(); }
+  Status Terminate() override;
 
-  /// Set the tree consumer
-  /// \param tree_consumer to be assigned
-  void AssignConsumer(std::shared_ptr<TreeConsumer> tree_consumer);
+  ~PythonRuntimeContext() {
+    Terminate();
+    {
+      py::gil_scoped_acquire gil_acquire;
+      tree_consumer_.reset();
+    }
+  }
 
-  /// Get the tree consumer
-  /// \return Raw pointer to the tree consumer.
-  TreeConsumer *GetConsumer() { return tree_consumer_.get(); }
-
-  ~RuntimeContext() { Terminate(); }
-
- protected:
-  std::shared_ptr<TreeConsumer> tree_consumer_;
+  PythonIteratorConsumer *GetPythonConsumer() { return dynamic_cast<PythonIteratorConsumer *>(tree_consumer_.get()); }
 };
 
 }  // namespace mindspore::dataset
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_RUNTIME_CONTEXT_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_PYTHON_RUNTIME_CONTEXT_H_

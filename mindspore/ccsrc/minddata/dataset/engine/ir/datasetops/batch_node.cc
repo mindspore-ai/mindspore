@@ -28,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 
-BatchNode::BatchNode(std::shared_ptr<Dataset> child, int32_t batch_size, bool drop_remainder, bool pad,
+BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, bool drop_remainder, bool pad,
                      std::vector<std::string> cols_to_map,
                      std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map)
     : batch_size_(batch_size),

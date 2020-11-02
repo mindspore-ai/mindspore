@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -31,7 +31,7 @@ namespace api {
 
 /// \class GeneratorNode
 /// \brief A Dataset derived class to represent GeneratorNode dataset
-class GeneratorNode : public Dataset {
+class GeneratorNode : public DatasetNode {
  public:
   /// \brief Constructor
   GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,

@@ -1093,7 +1093,7 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetDefault) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 7));
   EXPECT_NE(ds, nullptr);
 
-  // Create a Take operation on ds, dafault count = -1
+  // Create a Take operation on ds, default count = -1
   ds = ds->Take();
   EXPECT_NE(ds, nullptr);
 

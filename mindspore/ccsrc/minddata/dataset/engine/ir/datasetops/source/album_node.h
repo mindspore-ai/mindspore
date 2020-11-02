@@ -21,13 +21,13 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
 
-class AlbumNode : public Dataset {
+class AlbumNode : public DatasetNode {
  public:
   /// \brief Constructor
   AlbumNode(const std::string &dataset_dir, const std::string &data_schema,

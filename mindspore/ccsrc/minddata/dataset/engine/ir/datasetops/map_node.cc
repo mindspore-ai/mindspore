@@ -28,14 +28,14 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 
-MapNode::MapNode(std::shared_ptr<Dataset> child, std::vector<std::shared_ptr<TensorOperation>> operations,
+MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
                  std::vector<std::string> input_columns, std::vector<std::string> output_columns,
                  const std::vector<std::string> &project_columns, std::shared_ptr<DatasetCache> cache)
     : operations_(operations),
       input_columns_(input_columns),
       output_columns_(output_columns),
       project_columns_(project_columns),
-      Dataset(std::move(cache)) {
+      DatasetNode(std::move(cache)) {
   this->children.push_back(child);
 }
 

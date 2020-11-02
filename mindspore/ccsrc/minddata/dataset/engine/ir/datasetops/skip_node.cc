@@ -28,7 +28,7 @@ namespace dataset {
 namespace api {
 
 // Constructor for SkipNode
-SkipNode::SkipNode(std::shared_ptr<Dataset> child, int32_t count) : skip_count_(count) {
+SkipNode::SkipNode(std::shared_ptr<DatasetNode> child, int32_t count) : skip_count_(count) {
   this->children.push_back(child);
 }
 

@@ -55,6 +55,53 @@ bool ValidateFirstRowCrc(const std::string &filename) {
 
 // Validator for TFRecordNode
 Status TFRecordNode::ValidateParams() {
+  if (dataset_files_.empty()) {
+    std::string err_msg = "TFRecordNode: dataset_files is not specified.";
+    MS_LOG(ERROR) << err_msg;
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  }
+
+  for (const auto &f : dataset_files_) {
+    Path dataset_file(f);
+    if (!dataset_file.Exists()) {
+      std::string err_msg = "TFRecordNode: dataset file: [" + f + "] is invalid or does not exist.";
+      MS_LOG(ERROR) << err_msg;
+
+      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+    }
+  }
+
+  if (num_samples_ < 0) {
+    std::string err_msg = "TFRecordNode: Invalid number of samples: " + std::to_string(num_samples_);
+    MS_LOG(ERROR) << err_msg;
+
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  }
+
+  if (num_shards_ <= 0) {
+    std::string err_msg = "TFRecordNode: Invalid num_shards: " + std::to_string(num_shards_);
+    MS_LOG(ERROR) << err_msg;
+
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  }
+
+  if (shard_id_ < 0 || shard_id_ >= num_shards_) {
+    std::string err_msg = "TFRecordNode: Invalid input, shard_id: " + std::to_string(shard_id_) +
+                          ", num_shards: " + std::to_string(num_shards_);
+    MS_LOG(ERROR) << err_msg;
+
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  }
+
+  if (cache_ == nullptr && !shard_equal_rows_ && dataset_files_.size() < num_shards_) {
+    // This check only makes sense in a non-cache path. We should make sure there is at least one file per
+    // shard in file-based sharding
+    std::string err_msg =
+      "TFRecordNode: Invalid number of dataset files, should at least be " + std::to_string(num_shards_);
+    MS_LOG(ERROR) << err_msg;
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  }
+
   std::vector<std::string> invalid_files(dataset_files_.size());
   auto it = std::copy_if(dataset_files_.begin(), dataset_files_.end(), invalid_files.begin(),
                          [](const std::string &filename) { return !ValidateFirstRowCrc(filename); });

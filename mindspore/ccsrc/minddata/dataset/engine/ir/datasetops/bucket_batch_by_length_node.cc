@@ -29,7 +29,7 @@ namespace mindspore {
 namespace dataset {
 namespace api {
 BucketBatchByLengthNode::BucketBatchByLengthNode(
-  std::shared_ptr<Dataset> child, const std::vector<std::string> &column_names,
+  std::shared_ptr<DatasetNode> child, const std::vector<std::string> &column_names,
   const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
   std::function<TensorRow(TensorRow)> element_length_function,
   const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info, bool pad_to_bucket_boundary,

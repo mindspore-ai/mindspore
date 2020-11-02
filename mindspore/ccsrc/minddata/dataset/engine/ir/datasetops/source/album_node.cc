@@ -32,7 +32,7 @@ namespace api {
 AlbumNode::AlbumNode(const std::string &dataset_dir, const std::string &data_schema,
                      const std::vector<std::string> &column_names, bool decode,
                      const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache)
-    : Dataset(std::move(cache)),
+    : DatasetNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       schema_path_(data_schema),
       column_names_(column_names),

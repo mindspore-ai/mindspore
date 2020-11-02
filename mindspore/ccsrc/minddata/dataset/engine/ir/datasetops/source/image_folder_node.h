@@ -24,7 +24,7 @@
 #include <vector>
 
 #include "mindspore/ccsrc/minddata/dataset/engine/ir/cache/dataset_cache.h"
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
@@ -33,7 +33,7 @@ namespace api {
 
 /// \class ImageFolderNode
 /// \brief A Dataset derived class to represent ImageFolder dataset
-class ImageFolderNode : public Dataset {
+class ImageFolderNode : public DatasetNode {
  public:
   /// \brief Constructor
   ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler, bool recursive,

@@ -23,15 +23,15 @@
 #include <utility>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
-class BucketBatchByLengthNode : public Dataset {
+class BucketBatchByLengthNode : public DatasetNode {
  public:
   /// \brief Constructor
-  BucketBatchByLengthNode(std::shared_ptr<Dataset> child, const std::vector<std::string> &column_names,
+  BucketBatchByLengthNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &column_names,
                           const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
                           std::function<TensorRow(TensorRow)> element_length_function = nullptr,
                           const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info = {},

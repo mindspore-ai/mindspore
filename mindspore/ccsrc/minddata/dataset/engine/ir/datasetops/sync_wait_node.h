@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
@@ -30,10 +30,10 @@ namespace api {
 
 /// \class SyncWaitNode
 /// \brief A Dataset derived class to represent SyncWaitNode dataset
-class SyncWaitNode : public Dataset {
+class SyncWaitNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit SyncWaitNode(std::shared_ptr<Dataset> child, const std::string &condition_name, int32_t num_batch,
+  explicit SyncWaitNode(std::shared_ptr<DatasetNode> child, const std::string &condition_name, int32_t num_batch,
                         py::function callback);
 
   /// \brief Destructor

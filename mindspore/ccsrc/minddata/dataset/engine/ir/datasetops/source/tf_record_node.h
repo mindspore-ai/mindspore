@@ -22,21 +22,21 @@
 #include <utility>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
 /// \class TFRecordNode
 /// \brief A Dataset derived class to represent TFRecord dataset
-class TFRecordNode : public Dataset {
+class TFRecordNode : public DatasetNode {
  public:
   /// \brief Constructor
   /// \note Parameter 'schema' is the path to the schema file
   TFRecordNode(const std::vector<std::string> &dataset_files, std::string schema,
                const std::vector<std::string> &columns_list, int64_t num_samples, ShuffleMode shuffle,
                int32_t num_shards, int32_t shard_id, bool shard_equal_rows, std::shared_ptr<DatasetCache> cache)
-      : Dataset(std::move(cache)),
+      : DatasetNode(std::move(cache)),
         dataset_files_(dataset_files),
         schema_path_(schema),
         columns_list_(columns_list),
@@ -51,7 +51,7 @@ class TFRecordNode : public Dataset {
   TFRecordNode(const std::vector<std::string> &dataset_files, std::shared_ptr<SchemaObj> schema,
                const std::vector<std::string> &columns_list, int64_t num_samples, ShuffleMode shuffle,
                int32_t num_shards, int32_t shard_id, bool shard_equal_rows, std::shared_ptr<DatasetCache> cache)
-      : Dataset(std::move(cache)),
+      : DatasetNode(std::move(cache)),
         dataset_files_(dataset_files),
         schema_obj_(schema),
         columns_list_(columns_list),

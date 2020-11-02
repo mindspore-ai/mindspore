@@ -31,7 +31,7 @@ namespace api {
 // Constructor for TextFileNode
 TextFileNode::TextFileNode(std::vector<std::string> dataset_files, int32_t num_samples, ShuffleMode shuffle,
                            int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache)
-    : Dataset(std::move(cache)),
+    : DatasetNode(std::move(cache)),
       dataset_files_(dataset_files),
       num_samples_(num_samples),
       shuffle_(shuffle),

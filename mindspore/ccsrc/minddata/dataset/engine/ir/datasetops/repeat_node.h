@@ -23,17 +23,17 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 
 namespace api {
 
-class RepeatNode : public Dataset {
+class RepeatNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit RepeatNode(std::shared_ptr<Dataset> child, int32_t count);
+  explicit RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count);
 
   /// \brief Destructor
   ~RepeatNode() = default;

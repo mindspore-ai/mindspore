@@ -28,7 +28,8 @@ namespace dataset {
 namespace api {
 
 // Function to build ProjectOp
-ProjectNode::ProjectNode(std::shared_ptr<Dataset> child, const std::vector<std::string> &columns) : columns_(columns) {
+ProjectNode::ProjectNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &columns)
+    : columns_(columns) {
   this->children.push_back(child);
 }
 

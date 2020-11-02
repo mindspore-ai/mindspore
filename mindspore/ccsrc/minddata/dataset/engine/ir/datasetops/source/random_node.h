@@ -22,13 +22,13 @@
 #include <utility>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
 
-class RandomNode : public Dataset {
+class RandomNode : public DatasetNode {
  public:
   // Some constants to provide limits to random generation.
   static constexpr int32_t kMaxNumColumns = 4;
@@ -38,7 +38,7 @@ class RandomNode : public Dataset {
   /// \brief Constructor
   RandomNode(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema, const std::vector<std::string> &columns_list,
              const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache)
-      : Dataset(std::move(cache)),
+      : DatasetNode(std::move(cache)),
         total_rows_(total_rows),
         schema_path_(""),
         schema_(std::move(schema)),
@@ -48,7 +48,7 @@ class RandomNode : public Dataset {
   /// \brief Constructor
   RandomNode(const int32_t &total_rows, std::string schema_path, const std::vector<std::string> &columns_list,
              const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache)
-      : Dataset(std::move(cache)),
+      : DatasetNode(std::move(cache)),
         total_rows_(total_rows),
         schema_path_(schema_path),
         columns_list_(columns_list),

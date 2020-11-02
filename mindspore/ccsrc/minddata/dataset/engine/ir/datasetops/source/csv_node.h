@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
@@ -47,7 +47,7 @@ class CsvRecord : public CsvBase {
   T value;
 };
 
-class CSVNode : public Dataset {
+class CSVNode : public DatasetNode {
  public:
   /// \brief Constructor
   CSVNode(const std::vector<std::string> &dataset_files, char field_delim,

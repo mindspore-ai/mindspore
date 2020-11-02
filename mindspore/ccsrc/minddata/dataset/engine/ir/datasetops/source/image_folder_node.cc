@@ -40,7 +40,7 @@ ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shar
       recursive_(recursive),
       class_indexing_(class_indexing),
       exts_(extensions),
-      Dataset(std::move(cache)) {}
+      DatasetNode(std::move(cache)) {}
 
 Status ImageFolderNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("ImageFolderNode", dataset_dir_));

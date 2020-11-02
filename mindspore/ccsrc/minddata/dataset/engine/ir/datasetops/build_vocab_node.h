@@ -22,17 +22,17 @@
 #include <utility>
 #include <vector>
 
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {
 namespace dataset {
 namespace api {
 
-class BuildVocabNode : public Dataset {
+class BuildVocabNode : public DatasetNode {
  public:
   /// \brief Constructor
-  BuildVocabNode(std::shared_ptr<Dataset> child, std::shared_ptr<Vocab> vocab, const std::vector<std::string> &columns,
-                 const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
+  BuildVocabNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<Vocab> vocab,
+                 const std::vector<std::string> &columns, const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
                  const std::vector<std::string> &special_tokens, bool special_first);
 
   /// \brief Destructor
