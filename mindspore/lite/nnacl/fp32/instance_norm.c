@@ -38,7 +38,7 @@ int InstanceNorm(const int outer_size, const int inner_size, const float *src_da
     }
     mean /= (float)inner_size;
     square_mean /= (float)inner_size;
-    float deno = 1 / sqrtf(square_mean - mean * mean + param->epsilon_);
+    const float deno = 1 / sqrtf(square_mean - mean * mean + param->epsilon_);
     for (i = 0; i < inner_size; ++i) {
       int idx = j % param->channel_ + i * param->channel_;
       int scale_idx = (j / param->channel_) * param->channel_ + j % param->channel_;

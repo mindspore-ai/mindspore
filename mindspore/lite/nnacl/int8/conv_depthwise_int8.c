@@ -247,7 +247,7 @@ void ConvDw3x3Int8Row(int8_t *output, int8_t *buffer, const int8_t *input, const
   int acc_min = conv_param->conv_quant_arg_.out_act_min_[0];
   int acc_max = conv_param->conv_quant_arg_.out_act_max_[0];
 
-  int ih_offset = 64 * block_input_w;
+  const int ih_offset = 64 * block_input_w;
   int w = start_w;
   if (conv_param->output_channel_ > 64 || (conv_param->output_channel_ < 64 && conv_param->input_w_ > 150)) {
     for (; w <= end_w - block_output_w; w += block_output_w) {
@@ -295,9 +295,9 @@ void ConvDw3x3Int8(int8_t *output_data, int8_t *buffer, const int8_t *input_data
   int start_ow = sliding->left_;
   int end_ow = sliding->right_;
 
-  int block_output_h = 1;
+  const int block_output_h = 1;
   int block_output_w = conv_param->stride_w_ == 1 ? 30 : 14;
-  int block_input_h = 3;
+  const int block_input_h = 3;
   int block_input_w = conv_param->stride_w_ * (block_output_w - 1) + 3;
 
   for (int b = 0; b < conv_param->output_batch_; b++) {

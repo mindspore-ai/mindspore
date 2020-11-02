@@ -56,7 +56,7 @@ int AudioSpectrogram::Log2Ceil(uint32_t length) {
   }
   int floor = 0;
   for (int i = 4; i >= 0; --i) {
-    int shift = (1 << i);
+    const int shift = (1 << i);
     uint32_t tmp = length >> shift;
     if (tmp != 0) {
       length = tmp;

@@ -118,7 +118,7 @@ void PReluShareChannel(float *input, float *output, PReluParameter *prelu_param_
     cal_index = j * 32;
 #else
     cal_index = j * 32;
-    int cal_per_time = 32;
+    const int cal_per_time = 32;
 #endif
     float *input_ptr = input + cal_index;
     float *output_ptr = input + cal_index;

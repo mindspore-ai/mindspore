@@ -39,7 +39,7 @@ int LayerNorm(const int outer_size, const int inner_size, const float *src_data,
     }
     mean /= (float)inner_size;
     square_mean /= (float)inner_size;
-    float deno = 1 / sqrtf(square_mean - mean * mean + epsilon);
+    const float deno = 1 / sqrtf(square_mean - mean * mean + epsilon);
     for (i = 0; i < inner_size; ++i) {
       dst[i] = (src[i] - mean) * deno;
       if (affine) {
