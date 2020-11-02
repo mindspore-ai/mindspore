@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_KERNEL_CPU_ARM_FP32_TRANSPOSE_H_
 
 #include <vector>
+#include "include/errorcode.h"
+#include "nnacl/fp32/transpose.h"
 #include "src/lite_kernel.h"
-
 #include "src/kernel_registry.h"
 
 namespace mindspore::kernel {
-
 class TransposeCPUKernel : public LiteKernel {
  public:
   explicit TransposeCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,

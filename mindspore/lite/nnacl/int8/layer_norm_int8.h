@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_INT8_LAYER_NORM_H_
+#define MINDSPORE_LITE_NNACL_INT8_LAYER_NORM_H_
 
-#ifndef MINDSPORE_LITE_NNACL_TRANSPOSE_H_
-#define MINDSPORE_LITE_NNACL_TRANSPOSE_H_
+#include "nnacl/errorcode.h"
+#include "nnacl/layer_norm_parameter.h"
+#include "nnacl/quantization/fixed_point.h"
 
-#include "nnacl/op_base.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define MAX_TRANSPOSE_DIM_SIZE 5
+int LayerNormInt8(const int8_t *src_data, const int8_t *gamma_data, const int32_t *beta_data, int8_t *dst_data,
+                  bool affine, int outer_size, int inner_size, LayerNormQuantArg *quant_);
 
-typedef struct TransposeParameter {
-  OpParameter op_parameter_;
-  int perm_[8];
-  bool conjugate_;
-  int num_axes_;
-  int strides_[8];
-  int out_strides_[8];
-  int data_size_;
-} TransposeParameter;
+#ifdef __cplusplus
+}
+#endif
 
-#endif  // MINDSPORE_LITE_NNACL_TRANSPOSE_H_
+#endif  // MINDSPORE_LITE_NNACL_INT8_LAYER_NORM_H_
