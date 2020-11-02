@@ -5611,33 +5611,35 @@ class DynamicRNN(PrimitiveWithInfer):
     DynamicRNN Operator.
 
     Args:
-        cell_type (str): An string identifying the cell type in the op. Default: 'LSTM'.
+        cell_type (str): A string identifying the cell type in the op. Default: 'LSTM'.
             Only 'LSTM' is currently supported.
-        direction (str): An string identifying the direction in the op. Default: 'UNIDIRECTIONAL'.
+        direction (str): A string identifying the direction in the op. Default: 'UNIDIRECTIONAL'.
             Only 'UNIDIRECTIONAL' is currently supported.
         cell_depth (int): An integer identifying the cell depth in the op. Default: 1.
-        use_peephole (bool): An bool identifying if use peephole in the op. Default: False.
-        keep_prob (float): An float identifying the keep prob in the op. Default: 1.0.
-        cell_clip (float): An float identifying the cell clip in the op. Default: -1.0.
+        use_peephole (bool): A bool identifying if use peephole in the op. Default: False.
+        keep_prob (float): A float identifying the keep prob in the op. Default: 1.0.
+        cell_clip (float): A float identifying the cell clip in the op. Default: -1.0.
         num_proj (int): An integer identifying the num proj in the op. Default: 0.
-        time_major (bool): An bool identifying the time major in the op. Default: True.
+        time_major (bool): A bool identifying the time major in the op. Default: True.
             Only `True` is currently supported.
-        activation (str): An string identifying the type of activation function in the op. Default: 'tanh'.
+        activation (str): A string identifying the type of activation function in the op. Default: 'tanh'.
             Only 'tanh' is currently supported.
-        forget_bias (float): An float identifying the forget bias in the op. Default: 0.0.
-        is_training (bool): An bool identifying is training in the op. Default: True.
+        forget_bias (float): A float identifying the forget bias in the op. Default: 0.0.
+        is_training (bool): A bool identifying is training in the op. Default: True.
 
     Inputs:
         - **x** (Tensor) - Current words. Tensor of shape (`num_step`, `batch_size`, `input_size`).
-          The data type must be float16 or float32.
+          The data type must be float16.
         - **w** (Tensor) - Weight. Tensor of shape (`input_size + hidden_size`, `4 x hidden_size`).
-          The data type must be float16 or float32.
+          The data type must be float16.
         - **b** (Tensor) - Bias. Tensor of shape (`4 x hidden_size`).
           The data type must be float16 or float32.
         - **seq_length** (Tensor) - The length of each batch. Tensor of shape (`batch_size`).
           Only `None` is currently supported.
         - **init_h** (Tensor) - Hidden state of initial time. Tensor of shape (1, `batch_size`, `hidden_size`).
+          The data type must be float16.
         - **init_c** (Tensor) - Cell state of initial time. Tensor of shape (1, `batch_size`, `hidden_size`).
+          The data type must be float16.
 
     Outputs:
         - **y** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
@@ -5664,7 +5666,9 @@ class DynamicRNN(PrimitiveWithInfer):
         >>> init_h = Tensor(np.random.rand(1, 16, 32).astype(np.float16))
         >>> init_c = Tensor(np.random.rand(1, 16, 32).astype(np.float16))
         >>> dynamic_rnn = P.DynamicRNN()
-        >>> output = lstm(x, w, b, None, init_h, init_c)
+        >>> output = dynamic_rnn(x, w, b, None, init_h, init_c)
+        >>> output[0].shape
+        (2, 16, 32)
     """
 
     @prim_attr_register
@@ -5684,7 +5688,7 @@ class DynamicRNN(PrimitiveWithInfer):
         self.cell_depth = validator.check_value_type("cell_depth", cell_depth, [int], self.name)
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.cell_clip = validator.check_value_type("cell_clip", cell_clip, [float], self.name)
-        self.num_proj = validator.check_value_type("num_proj", num_proj, [int], self.name)
+        self.num_proj = validator.check_non_negative_int(num_proj, "num_proj", self.name)
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.use_peephole = validator.check_value_type("use_peephole", use_peephole, [bool], self.name)
         self.time_major = validator.check_value_type("time_major", time_major, [bool], self.name)
@@ -5721,11 +5725,11 @@ class DynamicRNN(PrimitiveWithInfer):
         return y_shape, y_shape, y_shape, y_shape, y_shape, y_shape, y_shape, y_shape
 
     def infer_dtype(self, x_dtype, w_dtype, b_dtype, seq_dtype, h_dtype, c_dtype):
-        validator.check_tensor_type_same({"x dtype": x_dtype}, (mstype.float32, mstype.float16), self.name)
-        validator.check_tensor_type_same({"w dtype": w_dtype}, (mstype.float32, mstype.float16), self.name)
+        validator.check_tensor_type_same({"x dtype": x_dtype}, (mstype.float16,), self.name)
+        validator.check_tensor_type_same({"w dtype": w_dtype}, (mstype.float16,), self.name)
         validator.check_tensor_type_same({"b dtype": b_dtype}, (mstype.float32, mstype.float16), self.name)
-        validator.check_tensor_type_same({"h dtype": h_dtype}, (mstype.float32, mstype.float16), self.name)
-        validator.check_tensor_type_same({"c dtype": c_dtype}, (mstype.float32, mstype.float16), self.name)
+        validator.check_tensor_type_same({"h dtype": h_dtype}, (mstype.float16,), self.name)
+        validator.check_tensor_type_same({"c dtype": c_dtype}, (mstype.float16,), self.name)
         return b_dtype, x_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype, b_dtype
 
 

@@ -92,4 +92,42 @@ OUTPUT_MAP(DynamicRNNGrad) = {{0, OUTPUT_DESC(dw)},
                               {3, OUTPUT_DESC(dh_prev)},
                               {4, OUTPUT_DESC(dc_prev)}};
 REG_ADPT_DESC(DynamicRNNGrad, kNameDynamicRNNGrad, ADPT_DESC(DynamicRNNGrad))
+
+// DynamicGRUV2
+INPUT_MAP(DynamicGRUV2) = {{1, INPUT_DESC(x)},          {2, INPUT_DESC(weight_input)}, {3, INPUT_DESC(weight_hidden)},
+                           {4, INPUT_DESC(bias_input)}, {5, INPUT_DESC(bias_hidden)},  {6, INPUT_DESC(seq_length)},
+                           {7, INPUT_DESC(init_h)}};
+ATTR_MAP(DynamicGRUV2) = {{"direction", ATTR_DESC(direction, AnyTraits<std::string>())},
+                          {"cell_depth", ATTR_DESC(cell_depth, AnyTraits<int64_t>())},
+                          {"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
+                          {"cell_clip", ATTR_DESC(cell_clip, AnyTraits<float>())},
+                          {"num_proj", ATTR_DESC(num_proj, AnyTraits<int64_t>())},
+                          {"time_major", ATTR_DESC(time_major, AnyTraits<bool>())},
+                          {"activation", ATTR_DESC(direction, AnyTraits<std::string>())},
+                          {"gate_order", ATTR_DESC(gate_order, AnyTraits<std::string>())},
+                          {"reset_after", ATTR_DESC(reset_after, AnyTraits<bool>())},
+                          {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};
+OUTPUT_MAP(DynamicGRUV2) = {{0, OUTPUT_DESC(y)},     {1, OUTPUT_DESC(output_h)}, {2, OUTPUT_DESC(update)},
+                            {3, OUTPUT_DESC(reset)}, {4, OUTPUT_DESC(new)},      {5, OUTPUT_DESC(hidden_new)}};
+REG_ADPT_DESC(DynamicGRUV2, kNameDynamicGRUV2, ADPT_DESC(DynamicGRUV2))
+
+// DynamicGRUV2Grad
+INPUT_MAP(DynamicGRUV2Grad) = {
+  {1, INPUT_DESC(x)},           {2, INPUT_DESC(weight_input)}, {3, INPUT_DESC(weight_hidden)},
+  {4, INPUT_DESC(y)},           {5, INPUT_DESC(init_h)},       {6, INPUT_DESC(h)},
+  {7, INPUT_DESC(dy)},          {8, INPUT_DESC(dh)},           {9, INPUT_DESC(update)},
+  {10, INPUT_DESC(reset)},      {11, INPUT_DESC(new)},         {12, INPUT_DESC(hidden_new)},
+  {13, INPUT_DESC(seq_length)}, {14, INPUT_DESC(mask)}};
+ATTR_MAP(DynamicGRUV2Grad) = {{"direction", ATTR_DESC(direction, AnyTraits<std::string>())},
+                              {"cell_depth", ATTR_DESC(cell_depth, AnyTraits<int64_t>())},
+                              {"keep_prob", ATTR_DESC(keep_prob, AnyTraits<float>())},
+                              {"cell_clip", ATTR_DESC(cell_clip, AnyTraits<float>())},
+                              {"num_proj", ATTR_DESC(num_proj, AnyTraits<int64_t>())},
+                              {"time_major", ATTR_DESC(time_major, AnyTraits<bool>())},
+                              {"bias_type", ATTR_DESC(bias_type, AnyTraits<std::string>())},
+                              {"gate_order", ATTR_DESC(gate_order, AnyTraits<std::string>())},
+                              {"reset_after", ATTR_DESC(reset_after, AnyTraits<bool>())}};
+OUTPUT_MAP(DynamicGRUV2Grad) = {{0, OUTPUT_DESC(dw_input)},  {1, OUTPUT_DESC(dw_hidden)}, {2, OUTPUT_DESC(db_input)},
+                                {3, OUTPUT_DESC(db_hidden)}, {4, OUTPUT_DESC(dx)},        {5, OUTPUT_DESC(dh_prev)}};
+REG_ADPT_DESC(DynamicGRUV2Grad, kNameDynamicGRUV2Grad, ADPT_DESC(DynamicGRUV2Grad))
 }  // namespace mindspore::transform

@@ -817,6 +817,17 @@ class BasicLSTMCellNet(nn.Cell):
         return self.lstm(x, h, c, w, b)
 
 
+class DynamicGRUV2Net(nn.Cell):
+    """ DynamicGRUV2Net definition """
+
+    def __init__(self):
+        super(DynamicGRUV2Net, self).__init__()
+        self.dynamic_gru = inner.DynamicGRUV2()
+
+    def construct(self, x, w_i, w_h, b_i, b_h, init_h):
+        return self.dynamic_gru(x, w_i, w_h, b_i, b_h, None, init_h)
+
+
 class EditDistance(nn.Cell):
     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
         super(EditDistance, self).__init__()
@@ -2508,6 +2519,19 @@ test_case_other_ops = [
                        Tensor(np.random.rand(1, 64).astype(np.float16)),
                        Tensor(np.random.rand(1, 64).astype(np.float16)),
                        Tensor(np.random.rand(1, 64).astype(np.float16))]}),
+    ('DynamicGRUV2Net', {
+        'block': DynamicGRUV2Net(),
+        'desc_inputs': [Tensor(np.random.rand(2, 8, 64).astype(np.float16)),
+                        Tensor(np.random.rand(64, 48).astype(np.float16)),
+                        Tensor(np.random.rand(16, 48).astype(np.float16)),
+                        Tensor(np.random.rand(48).astype(np.float16)),
+                        Tensor(np.random.rand(48).astype(np.float16)),
+                        Tensor(np.random.rand(8, 16).astype(np.float16))],
+        'desc_bprop': [Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
+                       Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
+                       Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
+                       Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
+                       Tensor(np.random.rand(2, 8, 16).astype(np.float16))]}),
 ]
 
 test_case_quant_ops = [
