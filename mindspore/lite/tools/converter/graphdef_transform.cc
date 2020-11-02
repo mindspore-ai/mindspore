@@ -15,7 +15,6 @@
  */
 
 #include "tools/converter/graphdef_transform.h"
-#include <memory>
 #include <string>
 #include "schema/model_generated.h"
 #include "src/common/log_adapter.h"
@@ -35,6 +34,7 @@
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
+#include "tools/converter/legacy_optimizer/graph/set_unused_quant_param_to_default_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -154,6 +154,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     quantNodeOptimizer.AddPass(dTypeTransPass);
     quantNodeOptimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
     quantNodeOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    quantNodeOptimizer.AddPass(new (std::nothrow) SetUnusedQuantParamToDefaultPass());
     status = quantNodeOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run quantNodeOptimizer graphPasses Failed";
