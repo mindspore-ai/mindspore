@@ -18,24 +18,10 @@
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/vision.h"
 
-// IR non-leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
-#include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
-#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
-#include "minddata/dataset/engine/ir/datasetops/map_node.h"
-#include "minddata/dataset/engine/ir/datasetops/project_node.h"
-#include "minddata/dataset/engine/ir/datasetops/rename_node.h"
-#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
-#include "minddata/dataset/engine/ir/datasetops/skip_node.h"
-#include "minddata/dataset/engine/ir/datasetops/zip_node.h"
-
-// IR leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
-
 using namespace mindspore::dataset;
+using mindspore::dataset::BorderType;
+using mindspore::dataset::InterpolationMode;
+using mindspore::dataset::Tensor;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

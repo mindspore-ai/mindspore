@@ -18,18 +18,9 @@
 #include "minddata/dataset/include/config.h"
 #include "minddata/dataset/include/datasets.h"
 
-// IR non-leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
-#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
-#include "minddata/dataset/engine/ir/datasetops/map_node.h"
-#include "minddata/dataset/engine/ir/datasetops/project_node.h"
-#include "minddata/dataset/engine/ir/datasetops/rename_node.h"
-#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
-
-// IR leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
-
 using namespace mindspore::dataset;
+using mindspore::dataset::ShuffleMode;
+using mindspore::dataset::Tensor;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

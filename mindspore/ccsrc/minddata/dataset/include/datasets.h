@@ -61,13 +61,14 @@ class Iterator;
 class TensorOperation;
 class SchemaObj;
 class SamplerObj;
-// Datasets classes (in alphabetical order)
 class CsvBase;
+
+// Dataset classes (in alphabetical order)
 class BatchDataset;
-// Dataset Op classes (in alphabetical order)
 #ifndef ENABLE_ANDROID
 class BucketBatchByLengthDataset;
 #endif
+class CSVDataset;
 class ConcatDataset;
 class MapDataset;
 class ProjectDataset;

@@ -23,13 +23,11 @@
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/text.h"
 
-// IR non-leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/map_node.h"
-
-// IR leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
-
 using namespace mindspore::dataset;
+using mindspore::dataset::SentencePieceModel;
+using mindspore::dataset::SentencePieceVocab;
+using mindspore::dataset::ShuffleMode;
+using mindspore::dataset::Tensor;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

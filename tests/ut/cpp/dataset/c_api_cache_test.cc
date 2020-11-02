@@ -16,21 +16,7 @@
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
 
-// IR leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 
 using namespace mindspore::dataset;
 
