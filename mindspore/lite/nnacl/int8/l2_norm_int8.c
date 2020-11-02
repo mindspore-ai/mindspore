@@ -52,12 +52,6 @@ void GetSqrtQuantMultiplierExp(int32_t input, int reverse_shift, int32_t *multip
   *shift *= reverse_shift;
 }
 
-int32_t MultiplyByQuantizedMultiplier2(int32_t input, int32_t multiplier, int shift) {
-  int left_shift = MSMAX(shift, 0);
-  int right_shift = MSMAX(-shift, 0);
-  return RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(input * (1 << left_shift), multiplier), right_shift);
-}
-
 int L2NormalizationInt8(const int8_t *input_data, int8_t *output_data, const L2NormParameter *param,
                         const L2NormQuantArg *quant_param, const int begin, const int end) {
   const int inner_size = param->shape_[param->shape_num_ - 1];
@@ -73,7 +67,7 @@ int L2NormalizationInt8(const int8_t *input_data, int8_t *output_data, const L2N
     GetSqrtQuantMultiplierExp(square_sum, -1, &multiplier, &shift);
     for (int k = 0; k < inner_size; ++k) {
       int32_t in = input_data[i * inner_size + k] - quant_param->in_.zp_;
-      int32_t out = MultiplyByQuantizedMultiplier2(in, multiplier, shift + 7);
+      int32_t out = RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(in * (1 << 7), multiplier), -shift);
       output_data[i * inner_size + k] = MSMIN(127, MSMAX(-128, out));
     }
   }

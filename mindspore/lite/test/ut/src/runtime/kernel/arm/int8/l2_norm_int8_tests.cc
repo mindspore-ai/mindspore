@@ -67,6 +67,53 @@ TEST_F(TestL2NormInt8, norm) {
   for (int i = 0; i < 10; ++i) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
+  free(param_.axis_);
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
+}
+
+TEST_F(TestL2NormInt8, norm2) {
+  lite::Tensor in_tensor(kNumberTypeInt8, {1, 1, 1, 51});
+  lite::Tensor out_tensor(kNumberTypeInt8, {1, 1, 1, 51});
+  int8_t input_data[] = {65, 83, 90, 0, 58, 0,  60, 0, 52, 58, 10, 0,  0,  54, 53, 0,  0,
+                         0,  99, 45, 0, 59, 66, 0,  0, 44, 48, 68, 88, 0,  16, 55, 60, 0,
+                         0,  52, 0,  0, 66, 33, 0,  0, 81, 0,  0,  74, 57, 0,  0,  0,  26};
+  int8_t output_data[51] = {0};
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
+
+  const lite::QuantArg quant_in = {0.0470588244f, 0};
+  const lite::QuantArg quant_out = {0.0078125f, 0};
+  in_tensor.AddQuantParam(quant_in);
+  out_tensor.AddQuantParam(quant_out);
+
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
+
+  param_.axis_num_ = 1;
+  param_.axis_ = reinterpret_cast<int *>(malloc(sizeof(int)));
+  param_.axis_[0] = -1;
+  param_.epsilon_ = 1e-6;
+  param_.act_type_ = ActType_No;
+  param_.shape_ = nullptr;
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_L2Norm};
+
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
+
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), ctx.get(), desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
+
+  auto ret = kernel->Run();
+  EXPECT_EQ(0, ret);
+  int8_t expect[] = {26, 33, 36, 0, 23, 0,  24, 0, 21, 23, 4, 0, 0,  21, 21, 0, 0,  0, 39, 18, 0,  23, 26, 0, 0, 17,
+                     19, 27, 35, 0, 6,  22, 24, 0, 0,  21, 0, 0, 26, 13, 0,  0, 32, 0, 0,  29, 22, 0,  0,  0, 10};
+  for (size_t i = 0; i < sizeof(expect); ++i) {
+    EXPECT_EQ(output_data[i], expect[i]);
+  }
+  free(param_.axis_);
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
 }
