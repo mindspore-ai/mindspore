@@ -38,7 +38,7 @@ struct OpenCLToFormatParameter {
 
 struct Image2DInfo {
   explicit Image2DInfo(const lite::Tensor *tensor) {
-    if (tensor) {
+    if (tensor != nullptr) {
       auto shape = tensor->shape();
       if (shape.size() == 1) {
         N = shape[0];

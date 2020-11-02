@@ -39,7 +39,7 @@ __kernel void Sigmoid(__read_only image2d_t input, __write_only image2d_t output
                       const int last_c4) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
-  if (X >= img_shape.x || Y >= img_shape.y) return;
+  if (X >= img_shape.x || Y >= img_shape.y || c4 == 0) return;
   int C4 = X % c4;
   FLT4 in_c4 = READ_IMAGE(input, smp_zero, (int2)(X, Y));
   if (C4 < c4 - 1) {
