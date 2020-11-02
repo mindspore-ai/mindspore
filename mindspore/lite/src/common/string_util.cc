@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "src/common/string_util.h"
 #include <algorithm>
+#include "src/common/string_util.h"
 #include "include/ms_tensor.h"
 
 namespace mindspore {
@@ -35,7 +35,7 @@ std::vector<StringPack> ParseStringBuffer(const void *data) {
     MS_LOG(ERROR) << "data is nullptr";
     return buffer;
   }
-  const int32_t *offset = reinterpret_cast<const int32_t *>(data);
+  const auto *offset = reinterpret_cast<const int32_t *>(data);
   int32_t num = *offset;
   for (int i = 0; i < num; i++) {
     offset += 1;
@@ -59,7 +59,7 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
     return RET_ERROR;
   }
 
-  int32_t *string_info = reinterpret_cast<int32_t *>(data);
+  auto *string_info = reinterpret_cast<int32_t *>(data);
   char *string_data = reinterpret_cast<char *>(data);
 
   string_info[0] = num;
@@ -140,13 +140,13 @@ static uint64_t k1 = 0xb492b66fbe98f273ULL;
 static uint64_t k2 = 0x9ae16a3b2f90404fULL;
 
 uint64_t Fetch64Bit(const char *p) {
-  uint64_t result;
+  uint64_t result = 0;
   memcpy(&result, p, sizeof(uint64_t));
   return result;
 }
 
 uint32_t Fetch32Bit(const char *p) {
-  uint32_t result;
+  uint32_t result = 0;
   memcpy(&result, p, sizeof(uint32_t));
   return result;
 }
@@ -226,7 +226,7 @@ std::pair<uint64_t, uint64_t> HashLen32WithSeeds(const char *s, uint64_t a, uint
 }
 
 uint64_t StringHash64(const char *s, size_t len) {
-  uint64_t seed_value = 81;
+  const uint64_t seed_value = 81;
   if (len <= 16) {
     return HashStringLen0to16(s, len);
   } else if (len <= 32) {
