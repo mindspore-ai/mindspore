@@ -464,8 +464,8 @@ def test_tensor_assign():
     net(Ta, b, Tck)
     net2(t, b, tck)
     # Error for A[Slice] = Number
-    # 1. A[Slice] = Number,  Slice error
-    with pytest.raises(IndexError):
+    # 1. A[Slice] = Number,  0 in shape
+    with pytest.raises(ValueError):
         net_e2(t, Tensor(2, mstype.int32))
 
     # Error for A[Slice] = U, U is a Tensor
