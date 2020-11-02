@@ -508,16 +508,34 @@ class Faithfulness(AttributionMetric):
     """
     Provides evaluation on faithfulness on XAI explanations.
 
-    Faithfulness first generate saliency map with given explainers and calculate faithfulness based on different
-     faithfulness metric.
+    Three specific metrics to obtain quantified results are supported: "NaiveFaithfulness", "DeletionAUC", and
+    "InsertionAUC".
+
+    For metric "NaiveFaithfulness", a series of perturbed images are created by modifying pixels
+    on original image. Then the perturbed images will be fed to the model and a series of output probability drops can
+    be obtained. The faithfulness is then quantified as the correlation between the propability drops and the saliency
+    map values on the same pixels (we normalize the correlation further to make them in range of [0, 1]).
+
+    For metric "DeletionAUC", a series of perturbed images are created by accumulatively modifying pixels of the
+    original image to a base value (e.g. a constant). The perturbation starts from pixels with high saliency values
+    to pixels with low saliency values. Feeding the perturbed images into the model in order, an output probability
+    drop curve can be obtained. "DeletionAUC" is then obtained as the area under this probability drop curve.
+
+    For metric "InsertionAUC", a series of perturbed images are created by accumulatively inserting pixels of the
+    original image to a reference image (e.g. a black image). The insertion starts from pixels with high saliency values
+    to pixels with low saliency values. Feeding the perturbed images into the model in order, an output probability
+    increase curve can be obtained. "InsertionAUC" is then obtained as the area under this curve.
+
+    For all the three metrics, higher value indicates better faithfulness.
 
     Args:
-        num_labels (int): number of labels
-        metric (str): the specifi metric to quantify faithfulness.
-            Options: 'DeletionAUC', 'InsertionAUC', 'NaiveFaithfulness'.
+        num_labels (int): Number of labels.
+        metric (str, optional): The specifi metric to quantify faithfulness.
+            Options: "DeletionAUC", "InsertionAUC", "NaiveFaithfulness".
             Default: 'NaiveFaithfulness'.
 
     Examples:
+        >>> from mindspore.explainer.benchmark import Faithfulness
         >>> # init a `Faithfulness` object
         >>> num_labels = 10
         >>> metric = "InsertionAUC"
@@ -549,19 +567,22 @@ class Faithfulness(AttributionMetric):
         """
         Evaluate faithfulness on a single data sample.
 
+        Note:
+            To apply `Faithfulness` to evaluate an explainer, this explainer must be initialized with a network that
+            contains the output activation function. Otherwise, the results will not be correct. Currently only single
+            sample (:math:`N=1`) at each call is supported.
+
         Args:
-            explainer (Explainer): A explainer instance object.
-                The 'Explainer' object see mindspore/explainer/explanation.
-            inputs (Tensor): data sample. Currently only support single sample at each call.
-            targets (Union[int, Tensor]): A target label to evaluate on.
-            saliency (Tensor): A saliency tensor.
+            explainer (Explanation): The explainer to be evaluated, see `mindspore.explainer.explanation`.
+            inputs (Tensor): A data sample, a 4D tensor of shape :math:`(N, C, H, W)`.
+            targets (Tensor, int): The label of interest. It should be a 1D or 0D tensor, or an integer.
+                If `targets` is a 1D tensor, its length should be the same as `inputs`.
+            saliency (Tensor, optional): The saliency map to be evaluated, a 4D tensor of shape :math:`(N, 1, H, W)`.
+                If it is None, the parsed `explainer` will generate the saliency map with `inputs` and `targets` and
+                continue the evaluation. Default: None.
 
-        Return:
-            np.ndarray: result of faithfulness evaluated on explainer.
-
-        Notes:
-            To apply `Faithfulness` to evaluate an explainer, this explainer must be initialize with a network that
-            contains the output activation function. Otherwise, the results will not be correct.
+        Returns:
+            numpy.ndarray, 1D array of shape :math:`(N,)`, result of faithfulness evaluated on `explainer`.
 
         Examples:
             >>> # init an explainer, the network should contain the output activation function.

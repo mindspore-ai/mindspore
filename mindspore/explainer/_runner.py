@@ -56,16 +56,17 @@ def _make_rgba(saliency):
 
 class ExplainRunner:
     """
-    High-level API for users to generate results with the explanation methods and the evaluation methods.
+    A high-level API for users to generate and store results of the explanation methods and the evaluation methods.
 
     After generating results with the explanation methods and the evaluation methods, the results will be written into
-    a specified file with 'mindspore.summary.SummaryRecord'. The stored content can be viewed using MindInsight.
+    a specified file with `mindspore.summary.SummaryRecord`. The stored content can be viewed using MindInsight.
 
     Args:
-        summary_dir (str): The directory path to save the summary files which store the generated results.
+        summary_dir (str, optional): The directory path to save the summary files which store the generated results.
             Default: "./"
 
     Examples:
+        >>> from mindspore.explainer import ExplainRunner
         >>> # init a runner with a specified directory
         >>> summary_dir = "summary_dir"
         >>> runner = ExplainRunner(summary_dir)
@@ -83,14 +84,20 @@ class ExplainRunner:
             explainers: List,
             benchmarkers: Optional[List] = None):
         """
-        Genereate results and write results into the summary files in `self.summary_dir`.
+        Genereates results and writes results into the summary files in `summary_dir` specified during the object
+        initialization.
 
         Args:
             dataset (tuple): A tuple that contains `mindspore.dataset` object for iteration and its labels.
-                - dataset[0], a `mindspore.dataset` object to provide data to explain.
-                - dataset[1], a list of string that specifies the label names of the dataset.
-            explainers (list): A list of explanation objects to generate _attribution results.
-            benchmarkers (list): A list of benchmark objects to generate evaluation results. Default: None
+
+                - dataset[0]: A `mindspore.dataset` object to provide data to explain.
+                - dataset[1]: A list of string that specifies the label names of the dataset.
+
+            explainers (list[Explanation]): A list of explanation objects to generate attribution results. Explanation
+                object is an instance initialized with the explanation methods in module
+                `mindspore.explainer.explanation`.
+            benchmarkers (list[Benchmark], optional): A list of benchmark objects to generate evaluation results.
+                Default: None
 
         Examples:
             >>> from mindspore.explainer.explanation import GuidedBackprop, Gradient
