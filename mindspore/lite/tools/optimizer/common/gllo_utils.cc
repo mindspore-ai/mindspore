@@ -501,7 +501,7 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(con
   auto iter = manager->node_users().find(node);
   if (iter == manager->node_users().end()) {
     MS_LOG(ERROR) << "node has no output in manager";
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NOT_FIND_OP);
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
     return nullptr;
   }
   auto output_info_list = iter->second;

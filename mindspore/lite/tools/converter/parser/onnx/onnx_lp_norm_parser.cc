@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/onnx/onnx_lrn_parser.h"
+#include "tools/converter/parser/onnx/onnx_lp_norm_parser.h"
 #include <memory>
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "onnx LrnParser";
+STATUS OnnxLpNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+                               schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx LpNormParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -31,34 +32,26 @@ STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::LocalResponseNormalizationT> attr = std::make_unique<schema::LocalResponseNormalizationT>();
+  std::unique_ptr<schema::LpNormalizationT> attr = std::make_unique<schema::LpNormalizationT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
 
   auto onnx_node_attr = onnx_node.attribute();
-  int32_t size = 0;
   for (int i = 0; i < onnx_node_attr.size(); ++i) {
-    if (onnx_node_attr.at(i).name() == "alpha") {
-      attr->alpha = onnx_node_attr.at(i).f();
-    } else if (onnx_node_attr.at(i).name() == "beta") {
-      attr->beta = onnx_node_attr.at(i).f();
-    } else if (onnx_node_attr.at(i).name() == "bias") {
-      attr->bias = onnx_node_attr.at(i).f();
-    } else if (onnx_node_attr.at(i).name() == "size") {
-      size = static_cast<int32_t>(onnx_node_attr.at(i).i());
-      attr->depth_radius = size / 2;
+    if (onnx_node_attr.at(i).name() == "axis") {
+      attr->axis = onnx_node_attr.at(i).i();
+    } else if (onnx_node_attr.at(i).name() == "p") {
+      attr->p = onnx_node_attr.at(i).i();
     }
   }
-  attr->alpha /= size;
 
-  op->primitive->value.type = schema::PrimitiveType_LocalResponseNormalization;
+  op->primitive->value.type = schema::PrimitiveType_LpNormalization;
   op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
-OnnxNodeRegistrar g_onnxLrnxParser("Lrn", new OnnxLrnParser());
-OnnxNodeRegistrar g_onnxLRNxParser("LRN", new OnnxLrnParser());
+OnnxNodeRegistrar g_onnxLpNormParser("LpNormalization", new OnnxLpNormParser());
 }  // namespace lite
 }  // namespace mindspore

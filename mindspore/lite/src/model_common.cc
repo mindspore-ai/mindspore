@@ -92,6 +92,7 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
   } else {
     if (size == 0) {
       MS_LOG(ERROR) << "malloc size is equal to 0";
+      delete (model);
       return nullptr;
     }
     model->buf = reinterpret_cast<char *>(malloc(size));

@@ -553,6 +553,7 @@ table Slice {
     axes: [int];
     begin: [int];
     size: [int];
+    step: [int];
 }
 
 table Floor {
@@ -1127,4 +1128,9 @@ table BinaryCrossEntropy {
 
 table BinaryCrossEntropyGrad {
   reduction : int = 1;
+}
+
+table LpNormalization {
+    axis : int;
+    p : int;
 }
