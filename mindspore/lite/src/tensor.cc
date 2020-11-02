@@ -367,6 +367,10 @@ void Tensor::AddQuantParam(const QuantArg &quant_arg) { this->quant_params_.push
 
 std::vector<QuantArg> Tensor::GetQuantParams() const { return this->quant_params_; }
 
+std::vector<float> Tensor::GetQuantClusters() const { return this->quant_clusters_; }
+
+void Tensor::SetQuantClusters(const std::vector<float> &clusters) { this->quant_clusters_ = clusters; }
+
 std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src) {
   std::vector<tensor::MSTensor *> target(src.size());
   std::transform(src.begin(), src.end(), target.begin(), [](Tensor *t) { return dynamic_cast<tensor::MSTensor *>(t); });

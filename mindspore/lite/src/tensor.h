@@ -33,8 +33,8 @@ namespace lite {
 struct QuantArg {
   double scale;
   int32_t zeroPoint;
-  double var_corr{1};
-  double mean_corr{0};
+  float var_corr{1};
+  float mean_corr{0};
   bool inited;
   std::vector<float> clusters{};
 };
@@ -119,6 +119,10 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   std::vector<QuantArg> GetQuantParams() const;
 
+  std::vector<float> GetQuantClusters() const;
+
+  void SetQuantClusters(const std::vector<float> &clusters);
+
   bool IsConst();
 
   bool IsScalar();
@@ -138,6 +142,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   Category category_;
   size_t ref_count_ = 0;
   std::vector<QuantArg> quant_params_;
+  std::vector<float> quant_clusters_;
   mindspore::lite::Allocator *allocator_ = nullptr;
 };
 

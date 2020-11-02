@@ -32,10 +32,9 @@ table QuantParam {
     narrowRange: bool = true;
     numBits: int = 8;
     inited: bool = false;
-    varCorr: double = 1;
-    meanCorr: double = 0;
+    varCorr: float = 1;
+    meanCorr: float = 0;
     dstDtype: int = 32;
-    clusters: [float];
 }
 
 table Tensor {
@@ -49,6 +48,7 @@ table Tensor {
     offset: int;
     data: [ubyte];
     quantParams: [QuantParam];
+    quantClusters: [float];
 }
 
 union PrimitiveType {

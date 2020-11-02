@@ -107,14 +107,16 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
         quant_arg.var_corr = quant_params->Get(j)->varCorr();
         quant_arg.mean_corr = quant_params->Get(j)->meanCorr();
         quant_arg.inited = quant_params->Get(j)->inited();
-        auto quant_clusters = quant_params->Get(j)->clusters();
-        if (quant_clusters != nullptr) {
-          for (size_t k = 0; k < quant_clusters->size(); k++) {
-            quant_arg.clusters.emplace_back(quant_clusters->Get(k));
-          }
-        }
         dstTensor->AddQuantParam(quant_arg);
       }
+    }
+    auto quant_clusters = srcTensor->quantClusters();
+    if (quant_clusters != nullptr) {
+      std::vector<float> clusters;
+      for (size_t j = 0; j < quant_clusters->size(); j++) {
+        clusters.push_back(quant_clusters->Get(j));
+      }
+      dstTensor->SetQuantClusters(clusters);
     }
     this->tensors_.emplace_back(dstTensor);
   }

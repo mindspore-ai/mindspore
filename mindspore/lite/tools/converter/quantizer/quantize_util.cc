@@ -449,7 +449,6 @@ std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epoc
     error = error_cur;
   }
   // update data
-  quantParam->clusters = clusters;
   return clusters_index;
 }
 
