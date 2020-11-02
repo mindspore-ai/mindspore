@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Constructor for TransferNode
 TransferNode::TransferNode(std::shared_ptr<DatasetNode> child, bool send_epoch_end)
@@ -88,6 +87,5 @@ Status TransferNode::get_distribution(std::shared_ptr<DatasetNode> ds, int32_t *
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

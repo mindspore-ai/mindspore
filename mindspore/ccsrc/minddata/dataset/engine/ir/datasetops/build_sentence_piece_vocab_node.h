@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 class BuildSentenceVocabNode : public DatasetNode {
  public:
@@ -56,7 +55,6 @@ class BuildSentenceVocabNode : public DatasetNode {
   std::unordered_map<std::string, std::string> params_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_BUILD_SENTENCE_PIECE_VOCAB_NODE_H_

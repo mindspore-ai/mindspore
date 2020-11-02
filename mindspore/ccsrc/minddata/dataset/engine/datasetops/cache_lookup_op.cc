@@ -87,7 +87,7 @@ Status CacheLookupOp::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   leaf_op_wp_.Set();
   return Status::OK();
 }
-Status CacheLookupOp::InitSampler() { return Sampler::InitSampler(); }
+Status CacheLookupOp::InitSampler() { return SamplerRT::InitSampler(); }
 void CacheLookupOp::Print(std::ostream &out, bool show_all) const { CacheBase::Print(out, show_all); }
 Status CacheLookupOp::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   std::vector<row_id_type> cache_miss;

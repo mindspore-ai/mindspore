@@ -100,7 +100,7 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
     /// \brief Setter method
     /// \param[in] sampler
     /// \return Builder setter method returns reference to the builder
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       builder_sampler_ = std::move(sampler);
       return *this;
     }
@@ -147,7 +147,7 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
     int32_t builder_rows_per_buffer_;
     int32_t builder_op_connector_size_;
     std::set<std::string> builder_extensions_;
-    std::shared_ptr<Sampler> builder_sampler_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
     std::unique_ptr<DataSchema> builder_schema_;
   };
 
@@ -161,7 +161,8 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   /// \param[in] data_schema - schema of dataset
   /// \param[in] sampler - sampler tells AlbumOp what to read
   AlbumOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size, bool do_decode,
-          const std::set<std::string> &exts, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
+          const std::set<std::string> &exts, std::unique_ptr<DataSchema> data_schema,
+          std::shared_ptr<SamplerRT> sampler);
 
   /// \brief Destructor.
   ~AlbumOp() = default;

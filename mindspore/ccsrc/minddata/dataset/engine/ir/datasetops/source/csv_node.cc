@@ -27,7 +27,7 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 // Constructor for CSVNode
 CSVNode::CSVNode(const std::vector<std::string> &csv_files, char field_delim,
                  const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
@@ -137,6 +137,5 @@ Status CSVNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

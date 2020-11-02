@@ -33,7 +33,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 
 using namespace mindspore::dataset;
-using namespace mindspore::dataset::api;
+
 using mindspore::dataset::DataType;
 using mindspore::dataset::ShuffleMode;
 using mindspore::dataset::Tensor;
@@ -492,10 +492,10 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetExeception2) {
 
 TEST_F(MindDataTestPipeline, TestIncorrectTFSchemaObject) {
   std::string path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
-  std::shared_ptr<api::SchemaObj> schema = api::Schema();
+  std::shared_ptr<SchemaObj> schema = Schema();
   schema->add_column("image", "uint8", {1});
   schema->add_column("label", "int64", {1});
-  std::shared_ptr<api::Dataset> ds = api::TFRecord({path}, schema);
+  std::shared_ptr<Dataset> ds = TFRecord({path}, schema);
   EXPECT_NE(ds, nullptr);
   auto itr = ds->CreateIterator();
   EXPECT_NE(itr, nullptr);
@@ -506,7 +506,7 @@ TEST_F(MindDataTestPipeline, TestIncorrectTFSchemaObject) {
 
 TEST_F(MindDataTestPipeline, TestIncorrectTFrecordFile) {
   std::string path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
-  std::shared_ptr<api::Dataset> ds = api::TFRecord({path});
+  std::shared_ptr<Dataset> ds = TFRecord({path});
   EXPECT_NE(ds, nullptr);
   // the tf record file is incorrect, hence validate param will fail
   auto itr = ds->CreateIterator();

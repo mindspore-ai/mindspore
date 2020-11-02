@@ -84,7 +84,7 @@ Status TextFileOp::Builder::Build(std::shared_ptr<TextFileOp> *op) {
 TextFileOp::TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t total_rows, int32_t worker_connector_size,
                        std::unique_ptr<DataSchema> schema, std::vector<std::string> text_files_list,
                        int32_t op_connector_size, bool shuffle_files, int32_t num_device, int32_t device_id,
-                       std::shared_ptr<Sampler> sampler)
+                       std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       device_id_(device_id),
       num_devices_(num_device),

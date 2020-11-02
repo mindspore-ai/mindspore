@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace dataset {
 
-namespace api {
 class SkipNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -46,7 +45,7 @@ class SkipNode : public DatasetNode {
  private:
   int32_t skip_count_;
 };
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SKIP_NODE_H_

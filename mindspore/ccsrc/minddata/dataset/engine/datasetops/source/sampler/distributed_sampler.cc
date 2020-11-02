@@ -23,9 +23,9 @@
 
 namespace mindspore {
 namespace dataset {
-DistributedSampler::DistributedSampler(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
-                                       uint32_t seed, int64_t offset, bool even_dist)
-    : Sampler(num_samples, std::numeric_limits<int64_t>::max()),
+DistributedSamplerRT::DistributedSamplerRT(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
+                                           uint32_t seed, int64_t offset, bool even_dist)
+    : SamplerRT(num_samples, std::numeric_limits<int64_t>::max()),
       cnt_(0),
       seed_(seed == std::numeric_limits<uint32_t>::max() ? GetSeed() : seed),
       device_id_(dev_id),
@@ -35,7 +35,7 @@ DistributedSampler::DistributedSampler(int64_t num_samples, int64_t num_dev, int
       offset_(offset),
       non_empty_(true) {}
 
-Status DistributedSampler::InitSampler() {
+Status DistributedSamplerRT::InitSampler() {
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
   // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
@@ -74,7 +74,7 @@ Status DistributedSampler::InitSampler() {
   return Status::OK();
 }
 
-Status DistributedSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status DistributedSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (cnt_ > samples_per_buffer_) {
     RETURN_STATUS_UNEXPECTED(
       "Number of samples(cnt) that have already been filled in to buffer should be less than or "
@@ -143,7 +143,7 @@ Status DistributedSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer
   return Status::OK();
 }
 
-Status DistributedSampler::ResetSampler() {
+Status DistributedSamplerRT::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(cnt_ == samples_per_buffer_, "ERROR Reset() called early/late");
   cnt_ = 0;
 
@@ -160,10 +160,10 @@ Status DistributedSampler::ResetSampler() {
   return Status::OK();
 }
 
-void DistributedSampler::Print(std::ostream &out, bool show_all) const {
+void DistributedSamplerRT::Print(std::ostream &out, bool show_all) const {
   out << "\nSampler: DistributedSampler";
   if (show_all) {
-    Sampler::Print(out, show_all);
+    SamplerRT::Print(out, show_all);
     out << "\nseed: " << seed_ << "\ndevice_id: " << device_id_ << "\nnum_devices: " << num_devices_
         << "\nshuffle: " << shuffle_;
   }

@@ -1140,7 +1140,7 @@ Status DEPipeline::ParseConcatOp(const py::dict &args, std::shared_ptr<DatasetOp
     if (!value.is_none()) {
       if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        std::shared_ptr<SamplerRT> sampler = create().cast<std::shared_ptr<SamplerRT>>();
         (void)builder->SetSampler(std::move(sampler));
       }
       if (key == "children_flag_and_nums") {
@@ -1164,7 +1164,7 @@ Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<Dataset
   // Required arguments
   std::vector<std::string> files_list;
   std::shared_ptr<CacheClient> cache_client = nullptr;
-  std::shared_ptr<Sampler> sampler = nullptr;
+  std::shared_ptr<SamplerRT> sampler = nullptr;
   int num_workers = 0;
   std::shared_ptr<TFReaderOp::Builder> builder = std::make_shared<TFReaderOp::Builder>();
   if (!args["dataset_files"].is_none()) {
@@ -1210,7 +1210,7 @@ Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<Dataset
         cache_client = value.cast<std::shared_ptr<CacheClient>>();
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        sampler = create().cast<std::shared_ptr<Sampler>>();
+        sampler = create().cast<std::shared_ptr<SamplerRT>>();
       }
     }
   }
@@ -1234,7 +1234,7 @@ Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<Dataset
   } else if (cache_client) {
     const int64_t num_samples = 0;
     const int64_t start_index = 0;
-    sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+    sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
     (void)builder->SetSampler(std::move(sampler));
   }
 
@@ -1308,7 +1308,7 @@ Status DEPipeline::ParseImageFolderOp(const py::dict &args, std::shared_ptr<Data
         (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        std::shared_ptr<SamplerRT> sampler = create().cast<std::shared_ptr<SamplerRT>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "extensions") {
         (void)builder->SetExtensions(ToStringSet(value));
@@ -1363,7 +1363,7 @@ Status DEPipeline::ParseManifestOp(const py::dict &args, std::shared_ptr<Dataset
         (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        std::shared_ptr<SamplerRT> sampler = create().cast<std::shared_ptr<SamplerRT>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "class_indexing") {
         (void)builder->SetClassIndex(ToStringMap(value));
@@ -1416,7 +1416,7 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
         (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        std::shared_ptr<SamplerRT> sampler = create().cast<std::shared_ptr<SamplerRT>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "decode") {
         (void)builder->SetDecode(ToBool(value));
@@ -1478,7 +1478,7 @@ Status DEPipeline::ParseCocoOp(const py::dict &args, std::shared_ptr<DatasetOp> 
         (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        std::shared_ptr<SamplerRT> sampler = create().cast<std::shared_ptr<SamplerRT>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "decode") {
         (void)builder->SetDecode(ToBool(value));
@@ -1529,7 +1529,7 @@ Status DEPipeline::ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetO
         (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        std::shared_ptr<SamplerRT> sampler = create().cast<std::shared_ptr<SamplerRT>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "usage") {
         (void)builder->SetUsage(ToString(value));
@@ -1583,7 +1583,7 @@ Status DEPipeline::ParseCifar100Op(const py::dict &args, std::shared_ptr<Dataset
         (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        std::shared_ptr<SamplerRT> sampler = create().cast<std::shared_ptr<SamplerRT>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "usage") {
         (void)builder->SetUsage(ToString(value));
@@ -1618,7 +1618,7 @@ Status DEPipeline::ParseRandomDataOp(const py::dict &args, std::shared_ptr<Datas
   // Required arguments
   RandomDataOp::Builder builder;
   std::shared_ptr<CacheClient> cache_client = nullptr;
-  std::shared_ptr<Sampler> sampler = nullptr;
+  std::shared_ptr<SamplerRT> sampler = nullptr;
   int num_workers = 0;
 
   if (args["total_rows"].is_none()) {
@@ -1646,7 +1646,7 @@ Status DEPipeline::ParseRandomDataOp(const py::dict &args, std::shared_ptr<Datas
         cache_client = value.cast<std::shared_ptr<CacheClient>>();
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        sampler = create().cast<std::shared_ptr<Sampler>>();
+        sampler = create().cast<std::shared_ptr<SamplerRT>>();
       }
     }
   }
@@ -1670,7 +1670,7 @@ Status DEPipeline::ParseRandomDataOp(const py::dict &args, std::shared_ptr<Datas
   } else if (cache_client) {
     const int64_t num_samples = 0;
     const int64_t start_index = 0;
-    sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+    sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
     (void)builder.SetSampler(std::move(sampler));
   }
 
@@ -1715,7 +1715,7 @@ Status DEPipeline::ParseMnistOp(const py::dict &args, std::shared_ptr<DatasetOp>
         (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        std::shared_ptr<SamplerRT> sampler = create().cast<std::shared_ptr<SamplerRT>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "usage") {
         (void)builder->SetUsage(ToString(value));
@@ -1768,7 +1768,7 @@ Status DEPipeline::ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp
         (void)builder->SetNumWorkers(num_workers);
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        std::shared_ptr<Sampler> sampler = create().cast<std::shared_ptr<Sampler>>();
+        std::shared_ptr<SamplerRT> sampler = create().cast<std::shared_ptr<SamplerRT>>();
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "decode") {
         (void)builder->SetDecode(ToBool(value));
@@ -1806,7 +1806,7 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
   // Required arguments
   std::vector<std::string> files_list;
   std::shared_ptr<CacheClient> cache_client = nullptr;
-  std::shared_ptr<Sampler> sampler = nullptr;
+  std::shared_ptr<SamplerRT> sampler = nullptr;
   int num_workers = 0;
   std::shared_ptr<TextFileOp::Builder> builder = std::make_shared<TextFileOp::Builder>();
   if (!args["dataset_files"].is_none()) {
@@ -1840,7 +1840,7 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
         cache_client = value.cast<std::shared_ptr<CacheClient>>();
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        sampler = create().cast<std::shared_ptr<Sampler>>();
+        sampler = create().cast<std::shared_ptr<SamplerRT>>();
       }
     }
   }
@@ -1855,7 +1855,7 @@ Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<Dataset
   } else if (cache_client) {
     int64_t num_samples = 0;
     int64_t start_index = 0;
-    sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+    sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
     (void)builder->SetSampler(std::move(sampler));
   }
 
@@ -1991,7 +1991,7 @@ Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> 
                                std::shared_ptr<DatasetOp> *bottom) {
   std::vector<std::string> files_list;
   std::shared_ptr<CacheClient> cache_client = nullptr;
-  std::shared_ptr<Sampler> sampler = nullptr;
+  std::shared_ptr<SamplerRT> sampler = nullptr;
   int num_workers = 0;
 
   std::shared_ptr<ClueOp::Builder> builder = std::make_shared<ClueOp::Builder>();
@@ -2036,7 +2036,7 @@ Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> 
         cache_client = value.cast<std::shared_ptr<CacheClient>>();
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        sampler = create().cast<std::shared_ptr<Sampler>>();
+        sampler = create().cast<std::shared_ptr<SamplerRT>>();
       }
     }
   }
@@ -2051,7 +2051,7 @@ Status DEPipeline::ParseClueOp(const py::dict &args, std::shared_ptr<DatasetOp> 
   } else if (cache_client) {
     int64_t num_samples = 0;
     int64_t start_index = 0;
-    sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+    sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
     (void)builder->SetSampler(std::move(sampler));
   }
 
@@ -2116,7 +2116,7 @@ Status DEPipeline::ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *
                               std::shared_ptr<DatasetOp> *bottom) {
   std::vector<std::string> files_list;
   std::shared_ptr<CacheClient> cache_client = nullptr;
-  std::shared_ptr<Sampler> sampler = nullptr;
+  std::shared_ptr<SamplerRT> sampler = nullptr;
   int num_workers = 0;
   std::shared_ptr<CsvOp::Builder> builder = std::make_shared<CsvOp::Builder>();
   if (!args["dataset_files"].is_none()) {
@@ -2173,7 +2173,7 @@ Status DEPipeline::ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *
         cache_client = value.cast<std::shared_ptr<CacheClient>>();
       } else if (key == "sampler") {
         auto create = py::reinterpret_borrow<py::object>(value).attr("create");
-        sampler = create().cast<std::shared_ptr<Sampler>>();
+        sampler = create().cast<std::shared_ptr<SamplerRT>>();
       }
     }
   }
@@ -2188,7 +2188,7 @@ Status DEPipeline::ParseCsvOp(const py::dict &args, std::shared_ptr<DatasetOp> *
   } else if (cache_client) {
     int64_t num_samples = 0;
     int64_t start_index = 0;
-    sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+    sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
     (void)builder->SetSampler(std::move(sampler));
   }
 

@@ -60,7 +60,7 @@ Status CocoOp::Builder::Build(std::shared_ptr<CocoOp> *ptr) {
   if (builder_sampler_ == nullptr) {
     const int64_t num_samples = 0;
     const int64_t start_index = 0;
-    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
+    builder_sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(builder_schema_->AddColumn(
@@ -123,7 +123,7 @@ Status CocoOp::Builder::SanityCheck() {
 
 CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
                int32_t num_workers, int32_t rows_per_buffer, int32_t queue_size, bool decode,
-               std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
+               std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_workers, queue_size, std::move(sampler)),
       decode_(decode),
       row_cnt_(0),

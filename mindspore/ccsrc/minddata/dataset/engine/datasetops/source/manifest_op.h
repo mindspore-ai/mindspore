@@ -88,7 +88,7 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
     // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       builder_sampler_ = std::move(sampler);
       return *this;
     }
@@ -119,7 +119,7 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
     Status Build(std::shared_ptr<ManifestOp> *op);
 
    private:
-    std::shared_ptr<Sampler> builder_sampler_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
     bool builder_decode_;
 
     std::string builder_file_;
@@ -139,7 +139,7 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // @param td::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
   ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, bool decode,
              const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
-             std::shared_ptr<Sampler> sampler, std::string usage);
+             std::shared_ptr<SamplerRT> sampler, std::string usage);
   // Destructor.
   ~ManifestOp() = default;
 

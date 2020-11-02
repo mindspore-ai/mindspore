@@ -26,8 +26,6 @@
 namespace mindspore {
 namespace dataset {
 
-namespace api {
-
 class TakeNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -48,7 +46,6 @@ class TakeNode : public DatasetNode {
   int32_t take_count_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_TAKE_NODE_H_

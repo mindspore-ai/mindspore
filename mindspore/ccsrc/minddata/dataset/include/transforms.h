@@ -28,7 +28,6 @@ namespace dataset {
 
 class TensorOp;
 
-namespace api {
 // Abstract class to represent a dataset in the data pipeline.
 class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
  public:
@@ -94,7 +93,6 @@ class TypeCastOperation : public TensorOperation {
   std::string data_type_;
 };
 }  // namespace transforms
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TRANSFORMS_H_

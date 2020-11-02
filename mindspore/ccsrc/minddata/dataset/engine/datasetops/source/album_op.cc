@@ -42,7 +42,7 @@ Status AlbumOp::Builder::Build(std::shared_ptr<AlbumOp> *ptr) {
   if (builder_sampler_ == nullptr) {
     const int64_t num_samples = 0;  // default num samples of 0 means to sample entire set of data
     const int64_t start_index = 0;
-    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
+    builder_sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   }
 
   builder_schema_ = std::make_unique<DataSchema>();
@@ -73,7 +73,7 @@ Status AlbumOp::Builder::SanityCheck() {
 
 AlbumOp::AlbumOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size, bool do_decode,
                  const std::set<std::string> &exts, std::unique_ptr<DataSchema> data_schema,
-                 std::shared_ptr<Sampler> sampler)
+                 std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_wkrs, queue_size, std::move(sampler)),
       rows_per_buffer_(rows_per_buffer),
       folder_path_(file_dir),

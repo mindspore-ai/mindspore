@@ -147,11 +147,11 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestConcurrencyRequest) {
   (void)TaskManager::GetMasterThreadRc();
   TaskGroup vg;
   Status rc;
-  
+
   session_id_type env_session;
   rc = GetSessionFromEnv(&env_session);
   ASSERT_TRUE(rc.IsOk());
-  
+
   // use arbitrary session of 1, size 1, spilling is true
   CacheClient::Builder builder;
   // use arbitrary session of 1, size of 0, spilling// is true
@@ -273,7 +273,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
 
   int64_t num_samples = 0;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
   rc = CacheOp::Builder()
          .SetNumWorkers(5)
          .SetClient(myClient)
@@ -386,7 +386,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   // CacheOp
   int64_t num_samples = 0;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
   CacheClient::Builder builder;
   builder.SetSessionId(env_session).SetCacheMemSz(4).SetSpill(true);
   std::shared_ptr<CacheClient> myClient;
@@ -457,7 +457,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = GetSessionFromEnv(&env_session);
   ASSERT_TRUE(rc.IsOk());
 
-  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
 
   CacheClient::Builder ccbuilder;
   ccbuilder.SetSessionId(env_session).SetCacheMemSz(0).SetSpill(true);
@@ -559,7 +559,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheInheritSampler) {
 
   int64_t num_samples = 0;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
 
   // Start with an empty execution tree
   auto myTree = std::make_shared<ExecutionTree>();

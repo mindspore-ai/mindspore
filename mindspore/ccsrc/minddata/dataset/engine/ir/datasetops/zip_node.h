@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 class ZipNode : public DatasetNode {
  public:
@@ -47,7 +46,6 @@ class ZipNode : public DatasetNode {
   std::vector<std::shared_ptr<DatasetNode>> datasets_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_ZIP_NODE_H_

@@ -28,8 +28,6 @@
 namespace mindspore {
 namespace dataset {
 
-namespace api {
-
 class ShuffleNode : public DatasetNode {
  public:
   ShuffleNode(std::shared_ptr<DatasetNode> child, int32_t shuffle_size, bool reset_every_epoch);
@@ -46,7 +44,6 @@ class ShuffleNode : public DatasetNode {
   bool reset_every_epoch_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SHUFFLE_NODE_H_

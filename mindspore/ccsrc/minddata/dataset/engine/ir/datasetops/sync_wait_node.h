@@ -26,8 +26,6 @@
 namespace mindspore {
 namespace dataset {
 
-namespace api {
-
 /// \class SyncWaitNode
 /// \brief A Dataset derived class to represent SyncWaitNode dataset
 class SyncWaitNode : public DatasetNode {
@@ -52,7 +50,7 @@ class SyncWaitNode : public DatasetNode {
   int32_t num_batch_;
   py::function callback_;
 };
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SYNC_WAIT_NODE_H_

@@ -46,7 +46,7 @@ class CacheBase : public ParallelOp {
   /// \param cache_client CacheClient for communication to the CacheServer
   /// \param sampler Sampler which is mandatory
   CacheBase(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-            std::shared_ptr<CacheClient> cache_client, std::shared_ptr<Sampler> sampler);
+            std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler);
   /// \brief Destructor
   ~CacheBase();
 

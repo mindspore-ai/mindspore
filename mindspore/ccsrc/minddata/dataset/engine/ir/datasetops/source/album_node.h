@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 class AlbumNode : public DatasetNode {
  public:
@@ -57,7 +56,6 @@ class AlbumNode : public DatasetNode {
   std::shared_ptr<SamplerObj> sampler_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_ALBUM_NODE_H_

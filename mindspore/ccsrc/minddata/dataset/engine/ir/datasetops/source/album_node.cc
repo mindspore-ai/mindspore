@@ -27,7 +27,7 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 // Constructor for AlbumNode
 AlbumNode::AlbumNode(const std::string &dataset_dir, const std::string &data_schema,
                      const std::vector<std::string> &column_names, bool decode,
@@ -78,6 +78,5 @@ Status AlbumNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

@@ -46,7 +46,7 @@ Status CacheBase::Reset() {
   return Status::OK();
 }
 CacheBase::CacheBase(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-                     std::shared_ptr<CacheClient> cache_client, std::shared_ptr<Sampler> sampler)
+                     std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       row_cnt_(0),
       num_cache_miss_(0),

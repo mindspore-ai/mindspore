@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 // Constructor for SyncWaitNode
 SyncWaitNode::SyncWaitNode(std::shared_ptr<DatasetNode> child, const std::string &condition_name, int32_t num_batch,
                            py::function callback)
@@ -58,6 +58,6 @@ Status SyncWaitNode::ValidateParams() {
 
   return Status::OK();
 }
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore

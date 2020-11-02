@@ -22,16 +22,16 @@
 
 namespace mindspore {
 namespace dataset {
-RandomSampler::RandomSampler(int64_t num_samples, bool replacement, bool reshuffle_each_epoch,
-                             int64_t samples_per_buffer)
-    : Sampler(num_samples, samples_per_buffer),
+RandomSamplerRT::RandomSamplerRT(int64_t num_samples, bool replacement, bool reshuffle_each_epoch,
+                                 int64_t samples_per_buffer)
+    : SamplerRT(num_samples, samples_per_buffer),
       seed_(GetSeed()),
       replacement_(replacement),
       next_id_(0),
       reshuffle_each_epoch_(reshuffle_each_epoch),
       dist(nullptr) {}
 
-Status RandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status RandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (next_id_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED("RandomSampler Internal Error");
   } else if (next_id_ == num_samples_) {
@@ -68,7 +68,7 @@ Status RandomSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   return Status::OK();
 }
 
-Status RandomSampler::InitSampler() {
+Status RandomSamplerRT::InitSampler() {
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
   // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
@@ -94,7 +94,7 @@ Status RandomSampler::InitSampler() {
   return Status::OK();
 }
 
-Status RandomSampler::ResetSampler() {
+Status RandomSamplerRT::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "ERROR Reset() called early/late");
   next_id_ = 0;
 
@@ -115,11 +115,11 @@ Status RandomSampler::ResetSampler() {
   return Status::OK();
 }
 
-void RandomSampler::Print(std::ostream &out, bool show_all) const {
+void RandomSamplerRT::Print(std::ostream &out, bool show_all) const {
   out << "\nSampler: RandomSampler";
   if (show_all) {
     // Call the super class for displaying any common detailed info
-    Sampler::Print(out, show_all);
+    SamplerRT::Print(out, show_all);
     // Then add our own info if any
   }
 }

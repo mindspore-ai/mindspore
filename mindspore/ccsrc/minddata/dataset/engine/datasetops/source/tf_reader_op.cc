@@ -58,7 +58,7 @@ TFReaderOp::Builder::Builder()
   builder_data_schema_ = std::make_unique<DataSchema>();
 }
 
-bool ValidateFirstRowCrc(const std::string &filename) {
+bool TFReaderOp::ValidateFirstRowCrc(const std::string &filename) {
   std::ifstream reader;
   reader.open(filename);
   if (!reader) {
@@ -134,7 +134,7 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
                        int64_t total_num_rows, std::vector<std::string> dataset_files_list,
                        std::unique_ptr<DataSchema> data_schema, int32_t op_connector_size,
                        std::vector<std::string> columns_to_load, bool shuffle_files, int32_t num_device,
-                       int32_t device_id, bool equal_rows_per_shard, std::shared_ptr<Sampler> sampler)
+                       int32_t device_id, bool equal_rows_per_shard, std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       device_id_(device_id),
       num_devices_(num_device),

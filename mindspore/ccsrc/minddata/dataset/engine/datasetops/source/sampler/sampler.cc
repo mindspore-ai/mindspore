@@ -32,13 +32,13 @@ Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
   return Status::OK();
 }
 
-Sampler::Sampler(int64_t num_samples, int64_t samples_per_buffer)
+SamplerRT::SamplerRT(int64_t num_samples, int64_t samples_per_buffer)
     : num_rows_(0), num_samples_(num_samples), samples_per_buffer_(samples_per_buffer), col_desc_(nullptr) {}
 
-Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
-  std::shared_ptr<Sampler> child_sampler;
+Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
+  std::shared_ptr<SamplerRT> child_sampler;
   if (HasChildSampler()) {
-    child_sampler = std::dynamic_pointer_cast<Sampler>(child_[0]);
+    child_sampler = std::dynamic_pointer_cast<SamplerRT>(child_[0]);
     if (!child_sampler) {
       std::string err_msg("Cannot handshake, child is not a sampler object.");
       RETURN_STATUS_UNEXPECTED(err_msg);
@@ -64,7 +64,7 @@ Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   return Status::OK();
 }
 
-Status Sampler::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements) {
+Status SamplerRT::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements) {
   if (num_elements == 0) {
     RETURN_STATUS_UNEXPECTED("Invalid data, num of elements cannot be 0.");
   }
@@ -77,7 +77,7 @@ Status Sampler::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t
   return Status::OK();
 }
 
-void Sampler::Print(std::ostream &out, bool show_all) const {
+void SamplerRT::Print(std::ostream &out, bool show_all) const {
   // Sampler printing is usually only called in the show_all mode.
   // Derived classes will display the name, then call back to this base
   // for common info.
@@ -88,7 +88,7 @@ void Sampler::Print(std::ostream &out, bool show_all) const {
 }
 
 #ifdef ENABLE_PYTHON
-Status Sampler::GetAllIdsThenReset(py::array *data) {
+Status SamplerRT::GetAllIdsThenReset(py::array *data) {
   std::unique_ptr<DataBuffer> db;
   std::shared_ptr<Tensor> sample_ids;
   TensorRow sample_row;
@@ -123,27 +123,27 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
 }
 #endif
 
-Status Sampler::SetNumSamples(int64_t num_samples) {
+Status SamplerRT::SetNumSamples(int64_t num_samples) {
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples >= 0, "Invalid parameter, num_samples must be greater than or equal to 0.");
   num_samples_ = num_samples;
   return Status::OK();
 }
 
-int64_t Sampler::GetNumSamples() { return num_samples_; }
+int64_t SamplerRT::GetNumSamples() { return num_samples_; }
 
-Status Sampler::SetNumRowsInDataset(int64_t num_rows) {
+Status SamplerRT::SetNumRowsInDataset(int64_t num_rows) {
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows > 0, "Invalid parameter, num_rows must be greater than 0.");
   num_rows_ = num_rows;
   return Status::OK();
 }
 
-Status Sampler::AddChild(std::shared_ptr<Sampler> child) {
+Status SamplerRT::AddChild(std::shared_ptr<SamplerRT> child) {
   if (child == nullptr) {
     return Status::OK();
   }
 
   // Only samplers can be added, not any other DatasetOp.
-  std::shared_ptr<Sampler> sampler = std::dynamic_pointer_cast<Sampler>(child);
+  std::shared_ptr<SamplerRT> sampler = std::dynamic_pointer_cast<SamplerRT>(child);
   if (!sampler) {
     std::string err_msg("Cannot add child, child is not a sampler object.");
     RETURN_STATUS_UNEXPECTED(err_msg);
@@ -160,9 +160,9 @@ Status Sampler::AddChild(std::shared_ptr<Sampler> child) {
   return Status::OK();
 }
 
-bool Sampler::HasChildSampler() { return !child_.empty(); }
+bool SamplerRT::HasChildSampler() { return !child_.empty(); }
 
-Status Sampler::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
+Status SamplerRT::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
   if (child_ids_ == nullptr) {
     RETURN_STATUS_UNEXPECTED("Trying to get associated child id, but there are no child ids!");
   }

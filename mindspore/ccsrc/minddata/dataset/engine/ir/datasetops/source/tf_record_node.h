@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 /// \class TFRecordNode
 /// \brief A Dataset derived class to represent TFRecord dataset
 class TFRecordNode : public DatasetNode {
@@ -88,7 +88,6 @@ class TFRecordNode : public DatasetNode {
   bool shard_equal_rows_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TF_RECORD_NODE_H_

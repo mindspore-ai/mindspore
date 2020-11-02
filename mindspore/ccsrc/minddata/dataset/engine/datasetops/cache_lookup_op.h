@@ -28,7 +28,7 @@ namespace dataset {
 /// \brief provides a memory/disk cache that acts as a save-point within a mappable dataset.
 /// \note For non-mappable dataset, please see CacheOp
 /// \see CacheOp
-class CacheLookupOp : public CacheBase, public Sampler {
+class CacheLookupOp : public CacheBase, public SamplerRT {
  public:
   class Builder {
    public:
@@ -62,7 +62,7 @@ class CacheLookupOp : public CacheBase, public Sampler {
 
     /// \brief Setter method.
     /// \return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       build_sampler_ = std::move(sampler);
       return *this;
     }
@@ -77,7 +77,7 @@ class CacheLookupOp : public CacheBase, public Sampler {
     int32_t rows_per_buffer_;
     int32_t build_op_connector_size_;
     std::shared_ptr<CacheClient> build_cache_client_;
-    std::shared_ptr<Sampler> build_sampler_;
+    std::shared_ptr<SamplerRT> build_sampler_;
 
     // Check if the required parameters are set by the builder.
     // \return Status The error code return
@@ -87,8 +87,8 @@ class CacheLookupOp : public CacheBase, public Sampler {
   /// \note It takes the same argument as the base class.
   /// \see CacheBase
   CacheLookupOp(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-                std::shared_ptr<CacheClient> cache_client, std::shared_ptr<Sampler> sampler)
-      : CacheBase(num_workers, op_connector_size, rows_per_buf, cache_client, sampler), Sampler(*(sampler.get())) {}
+                std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler)
+      : CacheBase(num_workers, op_connector_size, rows_per_buf, cache_client, sampler), SamplerRT(*(sampler.get())) {}
   ~CacheLookupOp() = default;
   // As a parallel op, we override these two functions
   Status operator()() override;

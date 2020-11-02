@@ -30,7 +30,6 @@
 
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
-#include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
@@ -47,8 +46,6 @@
 namespace mindspore {
 namespace dataset {
 
-class DatasetOp;
-class DataSchema;
 class Tensor;
 class TensorShape;
 class TreeAdapter;
@@ -57,10 +54,8 @@ class TreeGetters;
 class Vocab;
 #endif
 
-namespace api {
-// Forward declare
 class DatasetNode;
-class Dataset;
+
 class Iterator;
 
 class TensorOperation;
@@ -91,7 +86,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   // need friend class so they can access the children_ field
   friend class Iterator;
   friend class TransferNode;
-  friend class mindspore::dataset::TreeAdapter;
 
   /// \brief Constructor
   Dataset();
@@ -108,14 +102,14 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   std::vector<DataType> GetOutputTypes();
 
   /// \brief Gets the output shape
-  /// \return a vector of TensorShape. If failed, return am empty vector
+  /// \return a vector of TensorShape. If failed, return an empty vector
   std::vector<TensorShape> GetOutputShapes();
 
   /// \brief Gets the batch size
   /// \return int64_t
   int64_t GetBatchSize();
 
-  /// \brief Gets the the repeat count
+  /// \brief Gets the repeat count
   /// \return int64_t
   int64_t GetRepeatCount();
 
@@ -136,7 +130,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \brief Function to transfer data through a device.
   /// \notes If device is Ascend, features of data will be transferred one by one. The limitation
   ///     of data transmission per time is 256M.
-  /// \param[in] send_epoch_end Whether to send end of sequence to device or not (default=True).
+  /// \param[in] send_epoch_end Whether to send end of sequence to device or not (default=true).
   /// \return Returns true if no error encountered else false.
   bool DeviceQueue(bool send_epoch_end = true);
 
@@ -164,9 +158,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///     available to make the last batch, then those rows will
   ///     be dropped and not propagated to the next node
   /// \return Shared pointer to the current BatchDataset
-  std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false) {
-    return std::make_shared<BatchDataset>(shared_from_this(), batch_size, drop_remainder);
-  }
+  std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
 
 #ifndef ENABLE_ANDROID
   /// \brief Function to create a BucketBatchByLengthDataset
@@ -965,7 +957,6 @@ std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t me
 /// \param[in] datasets List of shared pointers to the datasets that we want to zip
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets);
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 

@@ -65,7 +65,7 @@ Status RandomDataOp::Builder::SanityCheck() const {
 
 // Constructor for RandomDataOp
 RandomDataOp::RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t rows_per_buffer, int64_t total_rows,
-                           std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
+                           std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       buffer_id_(0),
       rows_per_buffer_(rows_per_buffer),

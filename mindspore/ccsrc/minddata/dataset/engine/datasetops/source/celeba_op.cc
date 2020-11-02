@@ -46,7 +46,7 @@ Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
   if (builder_sampler_ == nullptr) {
     const int64_t num_samples = 0;
     const int64_t start_index = 0;
-    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
+    builder_sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   }
 
   builder_schema_ = std::make_unique<DataSchema>();
@@ -79,7 +79,7 @@ Status CelebAOp::Builder::SanityCheck() {
 
 CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size,
                    bool decode, const std::string &usage, const std::set<std::string> &exts,
-                   std::unique_ptr<DataSchema> schema, std::shared_ptr<Sampler> sampler)
+                   std::unique_ptr<DataSchema> schema, std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_workers, queue_size, std::move(sampler)),
       rows_per_buffer_(rows_per_buffer),
       folder_path_(dir),

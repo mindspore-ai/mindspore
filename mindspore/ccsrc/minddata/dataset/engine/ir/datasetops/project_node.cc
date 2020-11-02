@@ -25,7 +25,6 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Function to build ProjectOp
 ProjectNode::ProjectNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &columns)
@@ -53,6 +52,5 @@ std::vector<std::shared_ptr<DatasetOp>> ProjectNode::Build() {
   return node_ops;
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

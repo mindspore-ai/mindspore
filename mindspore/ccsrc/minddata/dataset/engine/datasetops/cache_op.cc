@@ -68,7 +68,7 @@ Status CacheOp::Builder::Build(std::shared_ptr<CacheOp> *ptr) {
 
 // Constructor of CacheOp
 CacheOp::CacheOp(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-                 std::shared_ptr<CacheClient> cache_client, std::shared_ptr<Sampler> sampler)
+                 std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler)
     : CacheBase(num_workers, op_connector_size, rows_per_buf, std::move(cache_client), std::move(sampler)),
       num_guys_in_(0),
       phase_(Phase::kBuildPhase) {}

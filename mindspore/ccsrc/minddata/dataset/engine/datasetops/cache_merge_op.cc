@@ -46,7 +46,7 @@ void CacheMergeOp::Print(std::ostream &out, bool show_all) const {
 }
 
 CacheMergeOp::CacheMergeOp(int32_t numWorkers, int32_t opConnectorSize, int32_t numCleaners,
-                           std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<Sampler> &sampler)
+                           std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<SamplerRT> &sampler)
     : ParallelOp(numWorkers, opConnectorSize, sampler),
       num_cleaners_(numCleaners),
       cache_client_(std::move(cache_client)),

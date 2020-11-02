@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 class CelebANode : public DatasetNode {
  public:
@@ -58,7 +57,6 @@ class CelebANode : public DatasetNode {
   std::shared_ptr<SamplerObj> sampler_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_CELEBA_NODE_H_

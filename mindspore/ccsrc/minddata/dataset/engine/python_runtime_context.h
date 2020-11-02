@@ -26,13 +26,14 @@
 namespace mindspore::dataset {
 class RuntimeContext;
 
-/// Class the represents single runtime instance which can consume data from a data pipeline
+/// Class that represents single runtime instance which can consume data from a data pipeline
 class PythonRuntimeContext : public RuntimeContext {
  public:
   /// Method to terminate the runtime, this will not release the resources
   /// \return Status error code
   Status Terminate() override;
 
+  // Safe destructing the tree that includes python objects
   ~PythonRuntimeContext() {
     Terminate();
     {

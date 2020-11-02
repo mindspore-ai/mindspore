@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace dataset {
 // Samples elements from id `0, 1, ..., weights.size()-1` with given probabilities (weights).
-class WeightedRandomSampler : public Sampler {
+class WeightedRandomSamplerRT : public SamplerRT {
  public:
   // Constructor.
   // @param num_samples Number of samples to be drawn.
@@ -34,11 +34,11 @@ class WeightedRandomSampler : public Sampler {
   // @param replacement Determine if samples are drawn with/without replacement.
   // @param samples_per_buffer The number of ids we draw on each call to GetNextBuffer().
   // When samplesPerBuffer=0, GetNextBuffer() will draw all the sample ids and return them at once.
-  WeightedRandomSampler(int64_t num_samples, const std::vector<double> &weights, bool replacement,
-                        int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+  WeightedRandomSamplerRT(int64_t num_samples, const std::vector<double> &weights, bool replacement,
+                          int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.
-  ~WeightedRandomSampler() = default;
+  ~WeightedRandomSamplerRT() = default;
 
   // Initialize the sampler.
   // @param op (Not used in this sampler)

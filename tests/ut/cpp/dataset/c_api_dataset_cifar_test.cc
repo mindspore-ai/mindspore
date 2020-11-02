@@ -27,15 +27,11 @@
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
-
 // IR leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
 
-using namespace mindspore::dataset::api;
-using mindspore::dataset::Tensor;
-using mindspore::dataset::DataType;
-using mindspore::dataset::TensorShape;
+using namespace mindspore::dataset;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

@@ -176,7 +176,7 @@ class CacheTransformPass : public TreePass {
 
     bool is_caching_;
     std::shared_ptr<DatasetOp> leaf_op_;
-    std::shared_ptr<Sampler> sampler_;
+    std::shared_ptr<SamplerRT> sampler_;
     // The two operators that work together to establish the cache transform
     std::vector<std::pair<std::shared_ptr<DatasetOp>, std::shared_ptr<CacheOp>>> cache_pairs_;
   };

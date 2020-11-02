@@ -28,8 +28,6 @@ namespace dataset {
 
 class TensorOp;
 
-namespace api {
-
 // class to run tensor operations in eager mode
 class Execute {
  public:
@@ -45,7 +43,6 @@ class Execute {
   std::shared_ptr<TensorOperation> op_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // DATASET_API_EXECUTE_H_

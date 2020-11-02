@@ -38,7 +38,7 @@ class MindDataTestTensorOpFusionPass : public UT::DatasetOpTesting {
 TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResize_fusion_disabled) {
   MS_LOG(INFO) << "Doing RandomCropDecodeResize_fusion";
   std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int64_t conns, std::string path,
-                                             bool shuf = false, std::shared_ptr<Sampler> sampler = nullptr,
+                                             bool shuf = false, std::shared_ptr<SamplerRT> sampler = nullptr,
                                              std::map<std::string, int32_t> map = {}, bool decode = false);
   std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
   auto rcar_op = std::make_shared<RandomCropAndResizeOp>();
@@ -73,7 +73,7 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResize_fusion_disabled) {
 TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResize_fusion_enabled) {
   MS_LOG(INFO) << "Doing RandomCropDecodeResize_fusion";
   std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int64_t conns, std::string path,
-                                             bool shuf = false, std::shared_ptr<Sampler> sampler = nullptr,
+                                             bool shuf = false, std::shared_ptr<SamplerRT> sampler = nullptr,
                                              std::map<std::string, int32_t> map = {}, bool decode = false);
   std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
   auto rcar_op = std::make_shared<RandomCropAndResizeOp>();

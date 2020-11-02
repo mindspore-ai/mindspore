@@ -25,7 +25,6 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 ZipNode::ZipNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets) : datasets_(datasets) {
   for (auto dataset : datasets_) {
@@ -57,6 +56,5 @@ std::vector<std::shared_ptr<DatasetOp>> ZipNode::Build() {
   return node_ops;
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

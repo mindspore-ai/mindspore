@@ -26,7 +26,6 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 #ifdef ENABLE_PYTHON
 // constructor #1, called by Pybind
@@ -96,6 +95,5 @@ std::vector<std::shared_ptr<DatasetOp>> BatchNode::Build() {
   return node_ops;
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

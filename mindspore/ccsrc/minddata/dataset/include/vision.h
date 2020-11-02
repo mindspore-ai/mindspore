@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Transform operations for performing computer vision.
 namespace vision {
@@ -880,7 +879,6 @@ class UniformAugOperation : public TensorOperation {
 #endif
 
 }  // namespace vision
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_H_

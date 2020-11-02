@@ -110,7 +110,7 @@ class CacheMergeOp : public ParallelOp {
     /// \brief Setter method
     /// \param sampler
     /// \return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       build_sampler_ = std::move(sampler);
       return *this;
     }
@@ -133,7 +133,7 @@ class CacheMergeOp : public ParallelOp {
     int32_t build_op_connector_size_;
     int32_t build_num_cleaners_;
     std::shared_ptr<CacheClient> build_cache_client_;
-    std::shared_ptr<Sampler> build_sampler_;
+    std::shared_ptr<SamplerRT> build_sampler_;
 
     /// Check if the required parameters are set by the builder.
     /// \return Status The error code return
@@ -147,7 +147,7 @@ class CacheMergeOp : public ParallelOp {
   /// \param cache_client CacheClient to commmunicate with the Cache server
   /// \param sampler as a derived class of ParallelOp
   CacheMergeOp(int32_t numWorkers, int32_t opConnectorSize, int32_t numCleaners,
-               std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<Sampler> &sampler);
+               std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<SamplerRT> &sampler);
   ~CacheMergeOp();
   void Print(std::ostream &out, bool show_all) const override;
   std::string Name() const override { return kCacheMergeOp; }

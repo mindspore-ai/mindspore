@@ -23,18 +23,18 @@
 
 namespace mindspore {
 namespace dataset {
-class PythonSampler : public Sampler {
+class PythonSamplerRT : public SamplerRT {
  public:
   // Constructor
   // @param num_samples - the number of samples to draw.  Value of 0 means to sample all of the
   //                      data from the dataset.
   // @param py_sampler_instance - the python instance of the sampler
   // @param int64_t samples_per_buffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit PythonSampler(int64_t num_samples, py::object py_sampler_instance,
-                         int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+  explicit PythonSamplerRT(int64_t num_samples, py::object py_sampler_instance,
+                           int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.
-  ~PythonSampler() = default;
+  ~PythonSamplerRT() = default;
 
   // Initialize the sampler.
   // @return Status

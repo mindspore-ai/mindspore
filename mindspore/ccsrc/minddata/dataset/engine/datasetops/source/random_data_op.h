@@ -120,7 +120,7 @@ class RandomDataOp : public ParallelOp {
     // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       builder_sampler_ = std::move(sampler);
       return *this;
     }
@@ -133,7 +133,7 @@ class RandomDataOp : public ParallelOp {
     Status SanityCheck() const;
 
     std::unique_ptr<DataSchema> builder_data_schema_;
-    std::shared_ptr<Sampler> builder_sampler_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
     int64_t builder_rows_per_buffer_;
@@ -152,7 +152,7 @@ class RandomDataOp : public ParallelOp {
    * @return Builder - The modified builder by reference
    */
   RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t rows_per_buffer, int64_t total_rows,
-               std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
+               std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
 
   /**
    * Destructor

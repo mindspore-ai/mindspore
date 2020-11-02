@@ -35,10 +35,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 
-using namespace mindspore::dataset::api;
-using mindspore::dataset::BorderType;
-using mindspore::dataset::InterpolationMode;
-using mindspore::dataset::Tensor;
+using namespace mindspore::dataset;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
@@ -207,16 +204,16 @@ TEST_F(MindDataTestPipeline, TestCenterCropFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCenterCrop with invalid parameters.";
 
   // center crop height value negative
-  std::shared_ptr<TensorOperation> center_crop = mindspore::dataset::api::vision::CenterCrop({-32, 32});
+  std::shared_ptr<TensorOperation> center_crop = mindspore::dataset::vision::CenterCrop({-32, 32});
   EXPECT_EQ(center_crop, nullptr);
   // center crop width value negative
-  center_crop = mindspore::dataset::api::vision::CenterCrop({32, -32});
+  center_crop = mindspore::dataset::vision::CenterCrop({32, -32});
   EXPECT_EQ(center_crop, nullptr);
   // 0 value would result in nullptr
-  center_crop = mindspore::dataset::api::vision::CenterCrop({0, 32});
+  center_crop = mindspore::dataset::vision::CenterCrop({0, 32});
   EXPECT_EQ(center_crop, nullptr);
   // center crop with 3 values
-  center_crop = mindspore::dataset::api::vision::CenterCrop({10, 20, 30});
+  center_crop = mindspore::dataset::vision::CenterCrop({10, 20, 30});
   EXPECT_EQ(center_crop, nullptr);
 }
 
@@ -224,13 +221,13 @@ TEST_F(MindDataTestPipeline, TestCropFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCrop with invalid parameters.";
 
   // wrong width
-  std::shared_ptr<TensorOperation> crop = mindspore::dataset::api::vision::Crop({0, 0}, {32, -32});
+  std::shared_ptr<TensorOperation> crop = mindspore::dataset::vision::Crop({0, 0}, {32, -32});
   EXPECT_EQ(crop, nullptr);
   // wrong height
-  crop = mindspore::dataset::api::vision::Crop({0, 0}, {-32, -32});
+  crop = mindspore::dataset::vision::Crop({0, 0}, {-32, -32});
   EXPECT_EQ(crop, nullptr);
   // zero height
-  crop = mindspore::dataset::api::vision::Crop({0, 0}, {0, 32});
+  crop = mindspore::dataset::vision::Crop({0, 0}, {0, 32});
   EXPECT_EQ(crop, nullptr);
 }
 
@@ -889,13 +886,13 @@ TEST_F(MindDataTestPipeline, TestNormalizeFail) {
 
   // std value at 0.0
   std::shared_ptr<TensorOperation> normalize =
-    mindspore::dataset::api::vision::Normalize({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0});
+    mindspore::dataset::vision::Normalize({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0});
   EXPECT_EQ(normalize, nullptr);
   // normalize with 2 values (not 3 values) for mean
-  normalize = mindspore::dataset::api::vision::Normalize({121.0, 115.0}, {70.0, 68.0, 71.0});
+  normalize = mindspore::dataset::vision::Normalize({121.0, 115.0}, {70.0, 68.0, 71.0});
   EXPECT_EQ(normalize, nullptr);
   // normalize with 2 values (not 3 values) for standard deviation
-  normalize = mindspore::dataset::api::vision::Normalize({121.0, 115.0, 100.0}, {68.0, 71.0});
+  normalize = mindspore::dataset::vision::Normalize({121.0, 115.0, 100.0}, {68.0, 71.0});
   EXPECT_EQ(normalize, nullptr);
 }
 
@@ -1308,7 +1305,7 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_crop = mindspore::dataset::api::vision::RandomCropWithBBox({128, 128});
+  std::shared_ptr<TensorOperation> random_crop = mindspore::dataset::vision::RandomCropWithBBox({128, 128});
   EXPECT_NE(random_crop, nullptr);
 
   // Create a Map operation on ds
@@ -1903,7 +1900,7 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess1) {
 
   // Create objects for the tensor ops
   std::vector<uint8_t> threshold = {10, 100};
-  std::shared_ptr<TensorOperation> random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
+  std::shared_ptr<TensorOperation> random_solarize = mindspore::dataset::vision::RandomSolarize(threshold);
   EXPECT_NE(random_solarize, nullptr);
 
   // Create a Map operation on ds
@@ -1942,7 +1939,7 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_solarize = mindspore::dataset::api::vision::RandomSolarize();
+  std::shared_ptr<TensorOperation> random_solarize = mindspore::dataset::vision::RandomSolarize();
   EXPECT_NE(random_solarize, nullptr);
 
   // Create a Map operation on ds
@@ -1976,19 +1973,19 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomSolarizeFail with invalid parameters.";
 
   std::vector<uint8_t> threshold = {13, 1};
-  std::shared_ptr<TensorOperation> random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
+  std::shared_ptr<TensorOperation> random_solarize = mindspore::dataset::vision::RandomSolarize(threshold);
   EXPECT_EQ(random_solarize, nullptr);
 
   threshold = {1, 2, 3};
-  random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
+  random_solarize = mindspore::dataset::vision::RandomSolarize(threshold);
   EXPECT_EQ(random_solarize, nullptr);
 
   threshold = {1};
-  random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
+  random_solarize = mindspore::dataset::vision::RandomSolarize(threshold);
   EXPECT_EQ(random_solarize, nullptr);
 
   threshold = {};
-  random_solarize = mindspore::dataset::api::vision::RandomSolarize(threshold);
+  random_solarize = mindspore::dataset::vision::RandomSolarize(threshold);
   EXPECT_EQ(random_solarize, nullptr);
 }
 
@@ -2007,13 +2004,13 @@ TEST_F(MindDataTestPipeline, DISABLED_TestRandomVerticalFlipFail) {
 TEST_F(MindDataTestPipeline, TestResizeFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResize with invalid parameters.";
   // negative resize value
-  std::shared_ptr<TensorOperation> resize_op = mindspore::dataset::api::vision::Resize({30, -30});
+  std::shared_ptr<TensorOperation> resize_op = mindspore::dataset::vision::Resize({30, -30});
   EXPECT_EQ(resize_op, nullptr);
   // zero resize value
-  resize_op = mindspore::dataset::api::vision::Resize({0, 30});
+  resize_op = mindspore::dataset::vision::Resize({0, 30});
   EXPECT_EQ(resize_op, nullptr);
   // resize with 3 values
-  resize_op = mindspore::dataset::api::vision::Resize({30, 20, 10});
+  resize_op = mindspore::dataset::vision::Resize({30, 20, 10});
   EXPECT_EQ(resize_op, nullptr);
 }
 
@@ -2137,7 +2134,7 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess1) {
   auto image = row["image"];
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::api::vision::Rescale(1.0, 0.0);
+  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::vision::Rescale(1.0, 0.0);
   EXPECT_NE(rescale, nullptr);
 
   // Convert to the same type
@@ -2172,7 +2169,7 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::api::vision::Rescale(1.0 / 255, 1.0);
+  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::vision::Rescale(1.0 / 255, 1.0);
   EXPECT_NE(rescale, nullptr);
 
   ds = ds->Map({rescale}, {"image"});
@@ -2204,7 +2201,7 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess2) {
 TEST_F(MindDataTestPipeline, TestRescaleFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleFail with invalid params.";
   // incorrect negative rescale parameter
-  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::api::vision::Rescale(-1.0, 0.0);
+  std::shared_ptr<TensorOperation> rescale = mindspore::dataset::vision::Rescale(-1.0, 0.0);
   EXPECT_EQ(rescale, nullptr);
 }
 

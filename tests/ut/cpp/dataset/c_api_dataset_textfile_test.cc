@@ -32,7 +32,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 
 using namespace mindspore::dataset;
-using namespace mindspore::dataset::api;
+
 using mindspore::dataset::ShuffleMode;
 using mindspore::dataset::Tensor;
 

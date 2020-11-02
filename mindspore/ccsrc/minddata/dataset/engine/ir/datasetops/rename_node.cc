@@ -25,7 +25,7 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 // Function to build RenameOp
 RenameNode::RenameNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &input_columns,
                        const std::vector<std::string> &output_columns)
@@ -54,6 +54,6 @@ std::vector<std::shared_ptr<DatasetOp>> RenameNode::Build() {
   node_ops.push_back(std::make_shared<RenameOp>(input_columns_, output_columns_, connector_que_size_));
   return node_ops;
 }
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -27,8 +27,6 @@
 namespace mindspore {
 namespace dataset {
 
-namespace api {
-
 /// \class GeneratorNode
 /// \brief A Dataset derived class to represent GeneratorNode dataset
 class GeneratorNode : public DatasetNode {
@@ -53,7 +51,7 @@ class GeneratorNode : public DatasetNode {
   std::vector<std::string> column_names_;
   std::vector<DataType> column_types_;
 };
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_GENERATOR_NODE_H_

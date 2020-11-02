@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 class ManifestNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -55,7 +55,7 @@ class ManifestNode : public DatasetNode {
   std::map<std::string, int32_t> class_index_;
   std::shared_ptr<SamplerObj> sampler_;
 };
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_MANIFEST_NODE_H_

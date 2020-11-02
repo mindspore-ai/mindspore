@@ -18,7 +18,7 @@
 #include "minddata/dataset/engine/ir/cache/dataset_cache_impl.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
 
-namespace mindspore::dataset::api {
+namespace mindspore::dataset {
 
 /// Method to initialize the DatasetCache by creating an instance of a CacheClient
 /// \return Status Error code
@@ -41,4 +41,4 @@ Status DatasetCacheImpl::CreateCacheOp(int32_t num_workers, std::shared_ptr<Data
   return Status::OK();
 }
 
-}  // namespace mindspore::dataset::api
+}  // namespace mindspore::dataset

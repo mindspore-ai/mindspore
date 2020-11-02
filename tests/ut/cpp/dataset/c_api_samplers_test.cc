@@ -24,8 +24,7 @@
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
 
-using namespace mindspore::dataset::api;
-using mindspore::dataset::Tensor;
+using namespace mindspore::dataset;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

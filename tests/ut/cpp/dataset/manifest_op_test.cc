@@ -42,7 +42,7 @@ std::shared_ptr<RepeatOp> Repeat(int repeatCnt);
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
 std::shared_ptr<ManifestOp> Manifest(int32_t num_works, int32_t rows, int32_t conns, const std::string &file,
-                                     std::string usage = "train", std::shared_ptr<Sampler> sampler = nullptr,
+                                     std::string usage = "train", std::shared_ptr<SamplerRT> sampler = nullptr,
                                      std::map<std::string, int32_t> map = {}, bool decode = false) {
   std::shared_ptr<ManifestOp> so;
   ManifestOp::Builder builder;
@@ -86,7 +86,7 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
 TEST_F(MindDataTestManifest, TestSubsetRandomSamplerManifest) {
   std::vector<int64_t> indices({1});
   int64_t num_samples = 0;
-  std::shared_ptr<Sampler> sampler = std::make_shared<SubsetRandomSampler>(num_samples, indices);
+  std::shared_ptr<SamplerRT> sampler = std::make_shared<SubsetRandomSamplerRT>(num_samples, indices);
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   // Expect 6 samples for label 0 and 1
   auto tree = Build({Manifest(16, 2, 32, file, "train", std::move(sampler))});
@@ -147,7 +147,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   int64_t num_samples = 1;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
   auto tree = Build({Manifest(16, 2, 32, file, "train", std::move(seq_sampler), {}), Repeat(4)});
   tree->Prepare();
   Status rc = tree->Launch();
@@ -176,7 +176,7 @@ TEST_F(MindDataTestManifest, MindDataTestManifestEval) {
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   int64_t num_samples = 1;
   int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSampler>(num_samples, start_index);
+  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
   auto tree = Build({Manifest(16, 2, 32, file, "eval", std::move(seq_sampler), {})});
   tree->Prepare();
   Status rc = tree->Launch();

@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 class MapNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -51,7 +51,6 @@ class MapNode : public DatasetNode {
   std::vector<std::string> project_columns_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_MAP_NODE_H_

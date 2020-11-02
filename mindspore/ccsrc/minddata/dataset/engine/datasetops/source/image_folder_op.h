@@ -113,7 +113,7 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
     // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       builder_sampler_ = std::move(sampler);
       return *this;
     }
@@ -151,7 +151,7 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
     int32_t builder_rows_per_buffer_;
     int32_t builder_op_connector_size_;
     std::set<std::string> builder_extensions_;
-    std::shared_ptr<Sampler> builder_sampler_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
     std::unique_ptr<DataSchema> builder_schema_;
     std::map<std::string, int32_t> builder_labels_to_read_;
   };
@@ -165,7 +165,7 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   // @param td::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
   ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size, bool recursive,
                 bool do_decode, const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
-                std::unique_ptr<DataSchema>, std::shared_ptr<Sampler> sampler);
+                std::unique_ptr<DataSchema>, std::shared_ptr<SamplerRT> sampler);
 
   // Destructor.
   ~ImageFolderOp() = default;

@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 GeneratorNode::GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
                              const std::vector<DataType> &column_types)
     : generator_function_(generator_function), column_names_(column_names), column_types_(column_types) {}
@@ -55,6 +55,6 @@ std::vector<std::shared_ptr<DatasetOp>> GeneratorNode::Build() {
 
 // no validation is needed for generator op.
 Status GeneratorNode::ValidateParams() { return Status::OK(); }
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 /// \class TextFileNode
 /// \brief A Dataset derived class to represent TextFile dataset
 class TextFileNode : public DatasetNode {
@@ -57,7 +57,6 @@ class TextFileNode : public DatasetNode {
   ShuffleMode shuffle_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_TEXT_FILE_NODE_H_

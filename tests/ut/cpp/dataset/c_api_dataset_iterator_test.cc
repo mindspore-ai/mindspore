@@ -33,9 +33,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 
-using namespace mindspore::dataset::api;
-using mindspore::dataset::Tensor;
-using mindspore::dataset::TensorShape;
+using namespace mindspore::dataset;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

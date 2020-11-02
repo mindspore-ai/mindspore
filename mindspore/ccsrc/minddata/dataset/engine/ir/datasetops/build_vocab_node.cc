@@ -26,7 +26,6 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 BuildVocabNode::BuildVocabNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<Vocab> vocab,
                                const std::vector<std::string> &columns, const std::pair<int64_t, int64_t> &freq_range,
@@ -78,6 +77,6 @@ Status BuildVocabNode::ValidateParams() {
 
   return Status::OK();
 }
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -20,14 +20,14 @@
 
 namespace mindspore {
 namespace dataset {
-PKSampler::PKSampler(int64_t num_samples, int64_t val, bool shuffle, int64_t samples_per_buffer)
-    : Sampler(num_samples, samples_per_buffer),
+PKSamplerRT::PKSamplerRT(int64_t num_samples, int64_t val, bool shuffle, int64_t samples_per_buffer)
+    : SamplerRT(num_samples, samples_per_buffer),
       shuffle_(shuffle),
       seed_(GetSeed()),
       next_id_(0),
       samples_per_class_(val) {}
 
-Status PKSampler::InitSampler() {
+Status PKSamplerRT::InitSampler() {
   labels_.reserve(label_to_ids_.size());
   for (const auto &pair : label_to_ids_) {
     if (pair.second.empty() == false) {
@@ -61,7 +61,7 @@ Status PKSampler::InitSampler() {
   return Status::OK();
 }
 
-Status PKSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status PKSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (next_id_ > num_samples_ || num_samples_ == 0) {
     RETURN_STATUS_UNEXPECTED("Index must be less than or equal to num_samples, but got: " + std::to_string(next_id_));
   } else if (next_id_ == num_samples_) {
@@ -96,7 +96,7 @@ Status PKSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   return Status::OK();
 }
 
-Status PKSampler::ResetSampler() {
+Status PKSamplerRT::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "ERROR Reset() called early/late");
   next_id_ = 0;
   rnd_.seed(seed_++);
@@ -108,18 +108,18 @@ Status PKSampler::ResetSampler() {
   return Status::OK();
 }
 
-Status PKSampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
+Status PKSamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   RETURN_UNEXPECTED_IF_NULL(op);
   RETURN_IF_NOT_OK(op->GetClassIds(&label_to_ids_));
   RETURN_IF_NOT_OK(InitSampler());
   return Status::OK();
 }
 
-void PKSampler::Print(std::ostream &out, bool show_all) const {
+void PKSamplerRT::Print(std::ostream &out, bool show_all) const {
   out << "\nSampler: PKSampler";
   if (show_all) {
     // Call the super class for displaying any common detailed info
-    Sampler::Print(out, show_all);
+    SamplerRT::Print(out, show_all);
     // Then add our own info if any
   }
 }

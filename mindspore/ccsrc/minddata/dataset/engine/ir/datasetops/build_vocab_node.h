@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 class BuildVocabNode : public DatasetNode {
  public:
@@ -55,7 +54,6 @@ class BuildVocabNode : public DatasetNode {
   bool special_first_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_BUILD_VOCAB_NODE_H_

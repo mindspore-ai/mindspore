@@ -34,8 +34,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
 
-using namespace mindspore::dataset::api;
-using mindspore::dataset::Tensor;
+using namespace mindspore::dataset;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

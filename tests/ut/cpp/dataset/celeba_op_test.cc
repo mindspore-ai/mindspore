@@ -38,8 +38,8 @@ std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
 std::shared_ptr<CelebAOp> Celeba(int32_t num_workers, int32_t rows_per_buffer, int32_t queue_size,
-                                 const std::string &dir, std::shared_ptr<Sampler> sampler = nullptr,
-                                 bool decode = false, const std::string &dataset_type="all") {
+                                 const std::string &dir, std::shared_ptr<SamplerRT> sampler = nullptr,
+                                 bool decode = false, const std::string &dataset_type = "all") {
   std::shared_ptr<CelebAOp> so;
   CelebAOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_workers)
@@ -125,8 +125,9 @@ TEST_F(MindDataTestCelebaDataset, TestCelebaRepeat) {
 TEST_F(MindDataTestCelebaDataset, TestSubsetRandomSamplerCeleba) {
   std::vector<int64_t> indices({1});
   int64_t num_samples = 0;
-  std::shared_ptr<Sampler> sampler = std::make_shared<SubsetRandomSampler>(num_samples, indices);
-  uint32_t expect_labels[1][40] = {{0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1}};
+  std::shared_ptr<SamplerRT> sampler = std::make_shared<SubsetRandomSamplerRT>(num_samples, indices);
+  uint32_t expect_labels[1][40] = {{0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+                                    0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1}};
   std::string dir = datasets_root_path_ + "/testCelebAData/";
   uint32_t count = 0;
   auto tree = Build({Celeba(16, 2, 32, dir, std::move(sampler))});

@@ -25,7 +25,6 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 RepeatNode::RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count) : repeat_count_(count) {
   this->children.push_back(child);
@@ -49,6 +48,6 @@ Status RepeatNode::ValidateParams() {
 
   return Status::OK();
 }
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore

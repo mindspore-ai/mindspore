@@ -25,18 +25,18 @@
 namespace mindspore {
 namespace dataset {
 // Randomly samples elements from a given list of indices, without replacement.
-class SubsetRandomSampler : public Sampler {
+class SubsetRandomSamplerRT : public SamplerRT {
  public:
   // Constructor.
   // @param num_samples The number of samples to draw. 0 for the full amount.
   // @param indices List of indices from where we will randomly draw samples.
   // @param samples_per_buffer The number of ids we draw on each call to GetNextBuffer().
   // When samplesPerBuffer=0, GetNextBuffer() will draw all the sample ids and return them at once.
-  explicit SubsetRandomSampler(int64_t num_samples, const std::vector<int64_t> &indices,
-                               std::int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+  explicit SubsetRandomSamplerRT(int64_t num_samples, const std::vector<int64_t> &indices,
+                                 std::int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.
-  ~SubsetRandomSampler() = default;
+  ~SubsetRandomSamplerRT() = default;
 
   // Initialize the sampler.
   // @return Status

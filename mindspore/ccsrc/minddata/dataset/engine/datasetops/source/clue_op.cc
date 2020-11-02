@@ -94,7 +94,7 @@ std::vector<std::string> ClueOp::Builder::split(const std::string &s, char delim
 
 ClueOp::ClueOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
                ColKeyMap cols_to_keyword, std::vector<std::string> clue_files_list, int32_t op_connector_size,
-               bool shuffle_files, int32_t num_device, int32_t device_id, std::shared_ptr<Sampler> sampler)
+               bool shuffle_files, int32_t num_device, int32_t device_id, std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       rows_per_buffer_(rows_per_buffer),
       num_rows_per_shard_(0),

@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 TensorOperation::TensorOperation() {}
 
@@ -94,6 +93,5 @@ Status TypeCastOperation::ValidateParams() {
 std::shared_ptr<TensorOp> TypeCastOperation::Build() { return std::make_shared<TypeCastOp>(data_type_); }
 
 }  // namespace transforms
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 class BatchNode : public DatasetNode {
  public:
@@ -66,7 +65,6 @@ class BatchNode : public DatasetNode {
   std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_BATCH_NODE_H_

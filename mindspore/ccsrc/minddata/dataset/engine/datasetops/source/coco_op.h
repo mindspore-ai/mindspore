@@ -119,7 +119,7 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
     // Setter method.
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       builder_sampler_ = std::move(sampler);
       return *this;
     }
@@ -149,7 +149,7 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
     int32_t builder_rows_per_buffer_;
-    std::shared_ptr<Sampler> builder_sampler_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
     std::unique_ptr<DataSchema> builder_schema_;
   };
 
@@ -166,7 +166,7 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   // @param std::shared_ptr<Sampler> sampler - sampler tells CocoOp what to read
   CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
          int32_t num_workers, int32_t rows_per_buffer, int32_t queue_size, bool decode,
-         std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler);
+         std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler);
 
   // Destructor
   ~CocoOp() = default;
