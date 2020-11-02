@@ -164,8 +164,6 @@ class OperatorInfo {
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
   void set_stage_id(int32_t stage_id) { stage_id_ = stage_id; }
   int32_t stage_id() const { return stage_id_; }
-  void set_opt_shard_flag(bool flag) { opt_shard_flag_ = flag; }
-  bool opt_shard_flag() { return opt_shard_flag_; }
   Status CreateGroupByTensorMap(const Shape &tensor_map, std::vector<Group> *group);
 
   // Key for user data.
@@ -269,7 +267,6 @@ class OperatorInfo {
  private:
   OperatorCostPtr operator_cost_;
   std::vector<TypePtr> outputs_type_;
-  bool opt_shard_flag_ = false;
 };
 
 Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy);

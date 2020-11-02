@@ -109,7 +109,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node);
 std::pair<AnfNodePtr, int> FindSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &parameter);
 
 // Set distribute shape for parameters abstract
-void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int> &res);
+std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int> &res);
 
 // change parameters'shape in resource
 void CoverSliceShape(const FuncGraphPtr &root);
