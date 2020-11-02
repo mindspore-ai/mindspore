@@ -705,6 +705,7 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
     prim::kPrimSquare,
     prim::kPrimBiasAdd,
     prim::kPrimBiasAddGrad,
+    prim::kPrimGelu,
   };
   return expand_ops;
 }
@@ -731,7 +732,7 @@ std::vector<PrimitivePtr> GetFusibleOpList() {
     prim::kPrimRealDiv, prim::kPrimMul,    prim::kPrimMinimum,    prim::kPrimMaximum,   prim::kPrimLog,
     prim::kPrimPow,     prim::kPrimSub,    prim::kPrimRsqrt,      prim::kPrimSqrt,      prim::kPrimCast,
     prim::kPrimAddN,    prim::kPrimEqual,  prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,
-    prim::kPrimGreater, prim::kPrimAssign, prim::kPrimReduceSum};
+    prim::kPrimGreater, prim::kPrimAssign, prim::kPrimReduceSum,  prim::kPrimTanh};
   return fusible_basic_ops;
 }
 

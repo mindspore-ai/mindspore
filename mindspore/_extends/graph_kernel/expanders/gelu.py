@@ -16,11 +16,16 @@
 from mindspore._extends.graph_kernel.model import model_builder as builder
 
 CSVALUE = 0.044715
-CSVALUE_A = 1.5957691  # 2*np.sqrt(2/np.pi)
+CSVALUE_SQRT_TWO_DIV_PI = 0.7978845608028564  # np.sqrt(2/np.pi)
+ONE = 1.0
+HALF = 0.5
 
 
 def expand_gelu(expand_info):
     """Gelu expander"""
+    # cal formula are:
+    # gelu(x) = 0.5 * x * (1.0 + tanh(y))
+    # y = sqrt(2.0 / pi) * (x + 0.044715 * x * x * x)
 
     # get op info.
     input_desc = expand_info['input_desc'][0]
@@ -30,35 +35,29 @@ def expand_gelu(expand_info):
     with graph_builder.graph_scope('main') as graph_scope:
         # create tensor input.
         input_x = graph_builder.tensor(input_desc['shape'], input_desc['data_type'], input_desc['format'])
+        graph_scope.set_input(input_x)
         dtype = input_x.dtype
         if dtype == 'float16':
             input_x = graph_builder.emit('Cast', [input_x], attrs={'dst_type': 'float32'})
 
-        # cal tanh.
+        # cal y
         mul_0 = graph_builder.emit('Mul', [input_x, input_x])
         pow_0 = graph_builder.emit('Mul', [mul_0, input_x])
         const_csvalue = graph_builder.value(pow_0.dtype, CSVALUE, input_desc['format'])
         mul_1 = graph_builder.emit('Mul', [pow_0, const_csvalue])
         tanh_res = graph_builder.emit('TensorAdd', [input_x, mul_1])
+        const_csvalue_sqrt_two_div_pi = graph_builder.value(
+            tanh_res.dtype, CSVALUE_SQRT_TWO_DIV_PI, input_desc['format'])
+        y = graph_builder.emit('Mul', [tanh_res, const_csvalue_sqrt_two_div_pi])
 
-        const_csvalue_a = graph_builder.value(tanh_res.dtype, CSVALUE_A, input_desc['format'])
-        mul_0 = graph_builder.emit('Mul', [tanh_res, const_csvalue_a])
+        # cal gelu(x)
+        tanh_y = graph_builder.emit('Tanh', [y])
+        const_one = graph_builder.value(tanh_y.dtype, ONE, input_desc['format'])
+        const_half = graph_builder.value(tanh_y.dtype, HALF, input_desc['format'])
+        tanh_y_add_one = graph_builder.emit('TensorAdd', [tanh_y, const_one])
+        mul_x = graph_builder.emit('Mul', [input_x, tanh_y_add_one])
+        result = graph_builder.emit('Mul', [const_half, mul_x])
 
-        const_zero = graph_builder.value(mul_0.dtype, 0.0, input_desc['format'])
-        mul_0_min = graph_builder.emit('Minimum', [mul_0, const_zero])
-        right_mul = graph_builder.emit('Exp', [mul_0_min])
-
-        mul_0_abs = graph_builder.emit('Abs', [mul_0])
-        const_neg_one = graph_builder.value(mul_0_abs.dtype, -1.0, input_desc['format'])
-        mul_0_abs_neg = graph_builder.emit('Mul', [mul_0_abs, const_neg_one])
-
-        mul_0_abs_neg_exp = graph_builder.emit('Exp', [mul_0_abs_neg])
-
-        const_one = graph_builder.value(mul_0_abs_neg_exp.dtype, 1.0, input_desc['format'])
-        mul_0_abs_neg_exp_add = graph_builder.emit('TensorAdd', [mul_0_abs_neg_exp, const_one])
-        left_mul = graph_builder.emit('RealDiv', [input_x, mul_0_abs_neg_exp_add])
-
-        result = graph_builder.emit('Mul', [left_mul, right_mul])
         if dtype == 'float16':
             result = graph_builder.emit('Cast', [result], attrs={'dst_type': 'float16'})
         # set graph output.
