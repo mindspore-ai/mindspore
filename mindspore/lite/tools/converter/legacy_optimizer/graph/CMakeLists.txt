@@ -12,6 +12,7 @@ file(GLOB GRAPH_PASS
         ${CMAKE_CURRENT_SOURCE_DIR}/infershape_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor_quant_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/infer_quant_param_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/set_unused_quant_param_to_default_pass.cc
         )
 set_property(SOURCE ${GRAPH_PASS} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_library(graph_pass_mid OBJECT ${GRAPH_PASS})
