@@ -38,6 +38,7 @@ int LReluFp16(const float16_t *src, float16_t *dst, int ele_num, float16_t alpha
 int SigmoidFp16(const float16_t *src, float16_t *dst, int ele_num);
 int TanhFp16(const float16_t *src, float16_t *dst, int ele_num);
 int HSwishFp16(const float16_t *src, float16_t *dst, int ele_num);
+int SwishFp16(const float16_t *src, float16_t *dst, int ele_num);
 #ifdef __cplusplus
 }
 #endif

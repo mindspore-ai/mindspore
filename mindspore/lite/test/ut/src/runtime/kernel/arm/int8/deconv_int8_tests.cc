@@ -271,41 +271,6 @@ TEST_F(TestDeconvInt8, MatMulOptTest1) {
   CompareOutputData(tmp_output, correct_tmp_output, 12 * 3 * 8, 0);
 }
 
-TEST_F(TestDeconvInt8, PostAddTest1) {
-  int32_t in[] = {
-    -4956,  -3923,  868,   -8880, -4089, -5179, -4526, -4527, -10464, 99,    -5826, -2995, -4519, -4519, -10509, -2505,
-    -11272, 434,    -4522, -4523, -5287, -8936, -878,  373,   -4528,  -4529, -1960, -6589, 1688,  2287,  -8059,  926,
-    -2506,  -6972,  -2834, -8281, -8118, -3110, -4526, -4527, -4528,  -4529, -4519, -4519, -4519, -4519, -4519,  -4519,
-    -4520,  -4521,  -4522, -4523, -4524, -4525, -4526, -4527, -4528,  -4529, -4519, -4519, -4519, -4519, -4519,  -4519,
-    1578,   2231,   -4522, -4523, -4524, -4525, -4526, -4527, -8449,  -990,  -4519, -4519, -4519, -4519, -4519,  -4519,
-    -4303,  -10293, -4522, -4523, -4524, -4525, -4526, -4527, -4528,  -4529, -4519, -4519, -4519, -4519, -4519,  -4519,
-    -7025,  924,    -4522, -4523, -4524, -4525, -4526, -4527, -4528,  -4529, -4519, -4519, -4519, -4519, -4519,  -4519,
-    -4520,  -4521,  -4522, -4523, -4524, -4525, -4526, -4527, -4528,  -4529, -4519, -4519, -4519, -4519, -4519,  -4519};
-  int8_t co[] = {-8,  11,  99,  -80,  8,  -12, 0,  0,   112, 124, -109, 85, -24,  28, 0,   0,  -110,
-                 37,  -72, 65,  -124, 91, 0,   0,  -14, -81, 67,  90,   4,  -106, 0,  0,   47, -38,
-                 114, 125, -65, 100,  0,  0,   37, -45, 31,  -69, -66,  26, 0,    0,  -46, 100};
-  int32_t bias[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-  int8_t out[50] = {0};
-  double multiplier = 0.0183649725490196;
-  int32_t quant_multiplier;
-  int32_t left_shift;
-  int32_t right_shift;
-  QuantizeRoundParameter(multiplier, &quant_multiplier, &left_shift, &right_shift);
-  int32_t zp = 83;
-  PostFuncInt8C8(in, bias, out, 10, 5, quant_multiplier, left_shift, right_shift, zp, -128, 127);
-  CompareOutputData(out, co, 50, 1);
-
-  int8_t co_relu[] = {0, 11, 99, 0, 8, 0, 0, 0,  112, 124, 0,   85, 0,   28, 0, 0,  0, 37, 0, 65, 0,  91, 0, 0, 0,
-                      0, 67, 90, 4, 0, 0, 0, 47, 0,   114, 125, 0,  100, 0,  0, 37, 0, 31, 0, 0,  26, 0,  0, 0, 100};
-  PostFuncInt8C8(in, bias, out, 10, 5, quant_multiplier, left_shift, right_shift, zp, 0, 127);
-  CompareOutputData(out, co_relu, 50, 1);
-
-  int8_t co_relu6[] = {0, 6, 6, 0, 6, 0, 0, 0, 6, 6, 0, 6, 0, 6, 0, 0, 0, 6, 0, 6, 0, 6, 0, 0, 0,
-                       0, 6, 6, 4, 0, 0, 0, 6, 0, 6, 6, 0, 6, 0, 0, 6, 0, 6, 0, 0, 6, 0, 0, 0, 6};
-  PostFuncInt8C8(in, bias, out, 10, 5, quant_multiplier, left_shift, right_shift, zp, 0, 6);
-  CompareOutputData(out, co_relu6, 50, 1);
-}
-
 int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                         ConvParameter *conv_param, int8_t **correct) {
   /* float data from deconv fp32 testcase : DeConvTestInit2 */

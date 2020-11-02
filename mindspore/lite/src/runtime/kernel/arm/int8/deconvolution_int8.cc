@@ -150,7 +150,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     MS_LOG(ERROR) << "deconv int8 malloc weight_ptr_ error!";
     return RET_ERROR;
   }
-  memset(weight_ptr_, static_cast<int8_t>(conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_), size);
+  memset(weight_ptr_, 0, size);
   DeConvWeightTransInt8(reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData()), weight_ptr_,
                         conv_param_->input_channel_, conv_param_->output_channel_,
                         conv_param_->kernel_h_ * conv_param_->kernel_w_, support_optimize_);
@@ -163,8 +163,8 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
   }
   memset(weight_sum_, 0, size * sizeof(int32_t));
   DeConvPackWeightSum(weight_ptr_, weight_sum_, conv_param_->conv_quant_arg_.input_quant_args_[0].zp_,
-                      conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_, UP_ROUND(matmul_param_->deep_, C16NUM),
-                      size, support_optimize_);
+                      conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_, matmul_param_->deep_, size,
+                      support_optimize_);
 
   return RET_OK;
 }

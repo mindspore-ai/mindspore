@@ -33,7 +33,17 @@ using mindspore::schema::ActivationType_SWISH;
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
-int ActivationCPUKernel::Init() { return RET_OK; }
+int ActivationCPUKernel::Init() {
+  if (type_ != schema::ActivationType_RELU && type_ != schema::ActivationType_RELU6 &&
+      type_ != schema::ActivationType_LEAKY_RELU && type_ != schema::ActivationType_SIGMOID &&
+      type_ != schema::ActivationType_TANH && type_ != schema::ActivationType_HSWISH &&
+      type_ != schema::ActivationType_SWISH && type_ != schema::ActivationType_HSIGMOID &&
+      type_ != schema::ActivationType_HARD_TANH) {
+    MS_LOG(ERROR) << "Activation fp32 not support type: " << type_;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 
 int ActivationCPUKernel::ReSize() { return RET_OK; }
 

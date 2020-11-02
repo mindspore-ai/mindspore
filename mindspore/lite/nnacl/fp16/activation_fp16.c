@@ -94,3 +94,15 @@ int HSwishFp16(const float16_t *src, float16_t *dst, int ele_num) {
   }
   return NNACL_OK;
 }
+
+int SwishFp16(const float16_t *src, float16_t *dst, int ele_num) {
+  int ret = SigmoidFp16(src, dst, ele_num);
+  if (ret != NNACL_OK) {
+    return NNACL_ERR;
+  }
+  int index = 0;
+  for (; index < ele_num; index++) {
+    dst[index] = src[index] * dst[index];
+  }
+  return NNACL_OK;
+}
