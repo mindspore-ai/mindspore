@@ -21,45 +21,55 @@ from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.context as context
 
-class UniformSamplerNet(nn.Cell):
+class UniformCandidateSamplerNet(nn.Cell):
     def __init__(self, num_true, num_sampled, unique, range_max):
-        super(UniformSamplerNet, self).__init__()
-        self.sampler = P.UniformSampler(num_true, num_sampled, unique, range_max)
+        super(UniformCandidateSamplerNet, self).__init__()
+        self.sampler = P.UniformCandidateSampler(num_true, num_sampled,
+                                                 unique, range_max)
 
     def construct(self, x):
         return self.sampler(x)
 
 
-def uniform_sampler(x, num_true, num_sampled, unique, range_max):
-    uniform_sampler_net = UniformSamplerNet(num_true, num_sampled, unique, range_max)
-    out1, out2, out3 = uniform_sampler_net(Tensor(x.astype(np.int32)))
+def uniform_candidate_sampler(x, num_true, num_sampled, unique, range_max):
+    uniform_candidate_sampler_net = UniformCandidateSamplerNet(num_true,
+                                                               num_sampled,
+                                                               unique,
+                                                               range_max)
+    out1, out2, out3 = uniform_candidate_sampler_net(Tensor(x.astype(np.int32)))
     return out1.shape, out2.shape, out3.shape
 
 
-class UniformSamplerHitNet(nn.Cell):
+class UniformCandidateSamplerHitNet(nn.Cell):
     def __init__(self, num_true, num_sampled, unique, range_max, seed, remove_accidental_hits):
-        super(UniformSamplerHitNet, self).__init__()
-        self.sampler = P.UniformSampler(num_true, num_sampled, unique, range_max, seed=seed,
-                                        remove_accidental_hits=remove_accidental_hits)
+        super(UniformCandidateSamplerHitNet, self).__init__()
+        self.sampler = P.UniformCandidateSampler(num_true, num_sampled, unique,
+                                                 range_max, seed=seed,
+                                                 remove_accidental_hits=remove_accidental_hits)
 
     def construct(self, x):
         return self.sampler(x)
 
 
-def uniform_sampler_hit(x, num_true, num_sampled, unique, range_max, seed,
-                        remove_accidental_hits):
-    uniform_sampler_net = UniformSamplerHitNet(num_true, num_sampled, unique, range_max,
-                                               seed, remove_accidental_hits)
-    out1, out2, out3 = uniform_sampler_net(Tensor(x.astype(np.int32)))
+def uniform_candidate_sampler_hit(x, num_true, num_sampled, unique, range_max, seed,
+                                  remove_accidental_hits):
+    uniform_candidate_sampler_net = UniformCandidateSamplerHitNet(num_true,
+                                                                  num_sampled,
+                                                                  unique,
+                                                                  range_max,
+                                                                  seed,
+                                                                  remove_accidental_hits)
+    out1, out2, out3 = uniform_candidate_sampler_net(Tensor(x.astype(np.int32)))
     return out1, out2, out3
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_uniform_sampler_unique_1_true():
+def test_uniform_candidate_sampler_unique_1_true():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ms1, ms2, ms3 = uniform_sampler(np.array([[1], [3], [4], [6], [3]]), 1, 3, True, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1], [3], [4], [6], [3]]),
+                                              1, 3, True, 4)
     expected_1 = (3,)
     expected_2 = (5, 1)
     expected_3 = (3,)
@@ -70,9 +80,10 @@ def test_uniform_sampler_unique_1_true():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_uniform_sampler_not_unique_1_true():
+def test_uniform_candidate_sampler_not_unique_1_true():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ms1, ms2, ms3 = uniform_sampler(np.array([[1], [3], [4], [6], [3]]), 1, 3, False, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1], [3], [4], [6], [3]]),
+                                              1, 3, False, 4)
     expected_1 = (3,)
     expected_2 = (5, 1)
     expected_3 = (3,)
@@ -83,9 +94,11 @@ def test_uniform_sampler_not_unique_1_true():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_uniform_sampler_unique_2_true():
+def test_uniform_candidate_sampler_unique_2_true():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ms1, ms2, ms3 = uniform_sampler(np.array([[1, 2], [3, 2], [4, 2], [6, 2], [3, 2]]), 2, 3, True, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1, 2], [3, 2], [4, 2],
+                                                        [6, 2], [3, 2]]),
+                                              2, 3, True, 4)
     expected_1 = (3,)
     expected_2 = (5, 2)
     expected_3 = (3,)
@@ -96,9 +109,12 @@ def test_uniform_sampler_unique_2_true():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_uniform_sampler_not_unique_2_true():
+def test_uniform_candidate_sampler_not_unique_2_true():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ms1, ms2, ms3 = uniform_sampler(np.array([[1, 2], [3, 2], [4, 2], [6, 2], [3, 2]]), 2, 3, False, 4)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[1, 2], [3, 2],
+                                                        [4, 2], [6, 2],
+                                                        [3, 2]]),
+                                              2, 3, False, 4)
     expected_1 = (3,)
     expected_2 = (5, 2)
     expected_3 = (3,)
@@ -109,10 +125,14 @@ def test_uniform_sampler_not_unique_2_true():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_uniform_sampler_large():
+def test_uniform_candidate_sampler_large():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ms1, ms2, ms3 = uniform_sampler(np.array([[12221, 41414], [3312, 5125152], [3312454, 51252],
-                                              [65125, 225125], [35125, 5125122]]), 2, 5, False, 100)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.array([[12221, 41414],
+                                                        [3312, 5125152],
+                                                        [3312454, 51252],
+                                                        [65125, 225125],
+                                                        [35125, 5125122]]),
+                                              2, 5, False, 100)
     expected_1 = (5,)
     expected_2 = (5, 2)
     expected_3 = (5,)
@@ -124,9 +144,10 @@ def test_uniform_sampler_large():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_uniform_sampler_large_random():
+def test_uniform_candidate_sampler_large_random():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ms1, ms2, ms3 = uniform_sampler(np.arange(2142).reshape(34, 63), 63, 10, False, 12)
+    ms1, ms2, ms3 = uniform_candidate_sampler(np.arange(2142).reshape(34, 63),
+                                              63, 10, False, 12)
     expected_1 = (10,)
     expected_2 = (34, 63)
     expected_3 = (10,)
@@ -138,9 +159,9 @@ def test_uniform_sampler_large_random():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_uniform_sampler_unique_1_true_hit():
+def test_uniform_candidate_sampler_unique_1_true_hit():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ms1, _, _ = uniform_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, False)
+    ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, False)
     expected_1 = np.array([0, 3, 1])
     np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
 
@@ -148,8 +169,8 @@ def test_uniform_sampler_unique_1_true_hit():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_uniform_sampler_unique_1_true_no_hit():
+def test_uniform_candidate_sampler_unique_1_true_no_hit():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    ms1, _, _ = uniform_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, True)
+    ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, True)
     expected_1 = np.array([0, 3, 2])
     np.testing.assert_array_equal(ms1.asnumpy(), expected_1)

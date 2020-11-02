@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_UNIFORM_SAMPLER_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_UNIFORM_SAMPLER_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_UNIFORM_CANDIDATE_SAMPLER_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_UNIFORM_CANDIDATE_SAMPLER_GPU_KERNEL_H_
 
 #include <cmath>
 #include <set>
@@ -23,16 +23,16 @@
 #include <random>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/uniform_sampler_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/uniform_candidate_sampler_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class UniformSamplerGpuKernel : public GpuKernel {
+class UniformCandidateSamplerGpuKernel : public GpuKernel {
  public:
-  UniformSamplerGpuKernel()
+  UniformCandidateSamplerGpuKernel()
       : num_true_(0), num_sampled_(0), unique_(false), range_max_(0), input_size_(0), remove_accidental_hits_(false) {}
-  ~UniformSamplerGpuKernel() override = default;
+  ~UniformCandidateSamplerGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -61,20 +61,20 @@ class UniformSamplerGpuKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(sampled_candidates, &sampled_candidates_[0], sampled_candidates_size,
                                                cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync sampled_candidates failed");
-    CalUniformSampler(static_cast<int>(input_size_), num_sampled_, value, true_expected_count, sampled_expected_count,
-                      reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalUniformCandidateSampler(static_cast<int>(input_size_), num_sampled_, value, true_expected_count,
+                               sampled_expected_count, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but UniformSampler needs 1 input.";
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but UniformCandidateSampler needs 1 input.";
       return false;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 3) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but UniformSampler has 3 outputs.";
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but UniformCandidateSampler has 3 outputs.";
       return false;
     }
     // getting attrs
@@ -88,7 +88,7 @@ class UniformSamplerGpuKernel : public GpuKernel {
     generator_.seed(seed);
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     if (input_shape.size() != 2) {
-      MS_LOG(ERROR) << "Input is " << input_shape.size() << "-D, but UniformSampler supports only 2-D inputs.";
+      MS_LOG(ERROR) << "Input is " << input_shape.size() << "-D, but UniformCandidateSampler supports only 2-D inputs.";
       return false;
     }
     input_size_ = input_shape[0] * input_shape[1];
@@ -160,4 +160,4 @@ class UniformSamplerGpuKernel : public GpuKernel {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_UNIFORM_SAMPLER_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_UNIFORM_CANDIDATE_SAMPLER_GPU_KERNEL_H_
