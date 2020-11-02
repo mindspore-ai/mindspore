@@ -22,6 +22,7 @@
 #include <exception>
 #include <algorithm>
 #include <thread>
+#include "debug/data_dump/e2e_dump_util.h"
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "runtime/device/cpu/mpi/mpi_interface.h"
 #include "utils/ms_context.h"
@@ -106,6 +107,7 @@ std::string GetRankId() {
 }
 }  // namespace
 
+std::vector<rtExceptionInfo> AscendKernelRuntime::exception_infos_;
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 
 void AscendKernelRuntime::SetContext() {
@@ -267,6 +269,12 @@ bool AscendKernelRuntime::Init() {
   mem_manager_ = std::make_shared<AscendMemoryManager>();
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->MallocDeviceMemory();
+
+  // Set callback func when exception error
+  auto rt_ret = rtSetTaskFailCallback(ExceptionCallback);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "SetTaskFailCallback failed, error: " << rt_ret;
+  }
 
   initialized_ = true;
   return ret;
@@ -507,11 +515,41 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
   }
 }
 
-void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
-  auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph_id);
-  for (auto iter : runtime_info_map) {
-    MS_LOG(WARNING) << "Task name:" << iter.first << " task_id:" << std::get<kTupleTaskId>(*iter.second)
-                    << " stream_id:" << std::get<kTupleStreamId>(*iter.second);
+void AscendKernelRuntime::ExceptionCallback(rtExceptionInfo *exception_info) {
+  static std::mutex exception_mutex;
+  std::lock_guard<std::mutex> lock(exception_mutex);
+  exception_infos_.push_back(*exception_info);
+}
+
+void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  std::vector<std::string> full_scope_name{};
+  // Find node name(full scope name)
+  auto runtime_info_map = ModelRunner::Instance().GetRuntimeInfoMap(graph->graph_id());
+  MS_LOG(ERROR) << "Exception_infos_ size: " << exception_infos_.size() << ". first example: "
+                << ", task_id: " << exception_infos_.at(0).taskid << ", stream_id: " << exception_infos_.at(0).streamid
+                << ", tid: " << exception_infos_.at(0).tid << ", device_id: " << exception_infos_.at(0).deviceid;
+
+  for (const auto &exception_info : exception_infos_) {
+    for (const auto &iter : runtime_info_map) {
+      auto task_id = std::get<kTupleTaskId>(*iter.second);
+      auto stream_id = std::get<kTupleStreamId>(*iter.second);
+      if (task_id == exception_info.taskid && stream_id == exception_info.streamid) {
+        full_scope_name.push_back(iter.first);
+        MS_LOG(ERROR) << "Node: " << iter.first << ", run task error.";
+      }
+    }
+  }
+  // Dump error data in local path
+  const std::string local_path = std::string("./task_error_dump/") + std::to_string(exception_infos_.at(0).deviceid);
+  for (const auto &node : graph->execution_order()) {
+    for (auto &name : full_scope_name) {
+      if (node->fullname_with_scope() == name) {
+        MS_LOG(ERROR) << "Begin to dump node (" << name << ") task error input/output data in local path.";
+        E2eDumpUtil::DumpInputImpl(node, false, local_path, &name, nullptr);
+        E2eDumpUtil::DumpOutputImpl(node, false, local_path, &name, nullptr);
+      }
+    }
   }
 }
 
@@ -621,8 +659,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 
   bool status = ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
   if (!status) {
-    MS_LOG(ERROR) << "Run task failed";
-    DebugTaskIdName(graph->graph_id());
+    DumpTaskExceptionInfo(graph);
     return false;
   }
   return true;

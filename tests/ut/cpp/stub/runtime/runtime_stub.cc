@@ -146,3 +146,5 @@ RTS_API rtError_t rtProfilerStop(uint64_t profConfig, int32_t numsDev, uint32_t*
 int AdxDataDumpServerInit() { return 0; }
 
 int AdxDataDumpServerUnInit() { return 0; }
+
+RTS_API rtError_t rtSetTaskFailCallback(rtTaskFailCallback callback) {return RT_ERROR_NONE; }

@@ -71,9 +71,10 @@ class AscendKernelRuntime : public KernelRuntime {
   void ReleaseDeviceRes() override;
   bool GraphWithEmptyTaskList(const session::KernelGraph *graph) const;
   bool CheckGraphIdValid(GraphId graph_id) const;
-  static void DebugTaskIdName(GraphId graph_id);
   void DistributeDebugTask(NotNull<const session::KernelGraph *> graph, NotNull<std::function<void *()>> model_handle);
   void LaunchDataDump(GraphId graph_id);
+  static void DumpTaskExceptionInfo(const session::KernelGraph *graph);
+  static void ExceptionCallback(rtExceptionInfo *exception_info);
 
   rtContext_t rt_context_{nullptr};
   rtContext_t rt_context_hccl_{nullptr};
@@ -81,6 +82,7 @@ class AscendKernelRuntime : public KernelRuntime {
   unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
   unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
   unordered_map<GraphId, std::shared_ptr<DataDumper>> graph_data_dumper_;
+  static std::vector<rtExceptionInfo> exception_infos_;
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);
