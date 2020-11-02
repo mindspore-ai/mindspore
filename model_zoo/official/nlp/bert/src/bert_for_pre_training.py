@@ -28,7 +28,6 @@ from mindspore.context import ParallelMode
 from mindspore.communication.management import get_group_size
 from mindspore import context
 from .bert_model import BertModel
-from .utils import ClipByGlobalNorm
 
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
@@ -565,7 +564,7 @@ class BertTrainAccumulateStepsWithLossScaleCell(nn.Cell):
             scaling = scaling_sens * self.degree * self.accumulation_steps
             grads = self.hyper_map(F.partial(grad_scale, scaling), grads)
             if self.enable_global_norm:
-                grads = ClipByGlobalNorm()(grads)
+                grads = C.clip_by_global_norm(grads, 1.0, None)
             else:
                 grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
             accu_overflow = self.overflow_reducer(accu_overflow)
