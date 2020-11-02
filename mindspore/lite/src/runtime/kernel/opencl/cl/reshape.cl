@@ -13,43 +13,37 @@ __kernel void reshape_NHWC4(__read_only image2d_t src_data, __write_only image2d
   }
   int CI4 = UP_DIV(src_size.x, C4NUM);
   int CI4_rem = src_size.x % C4NUM;
+  CI4_rem = (CI4_rem == 0) ? C4NUM : CI4_rem;
   int in_img_x = CI4 * src_size.y;
   FLT4 res = (FLT4)(0.0f);
   FLT tmp[4];
   FLT res_tmp[4];
   int gcnt = 0;
-  int start = 0;
-  int i = 0;
-  int j = 0;
-  int n = 0;
-  int cond = (((int)(CO4_rem > 0)) << 1) | (CI4_rem > 0);
-  switch (cond) {
-    case 1:
-      start = ((X / CO4 * dst_size.z + min(dst_size.z, (X % CO4) * C4NUM)) + dst_size.w * Y);
-      gcnt = start / src_size.x * CI4 + (start % src_size.x) / C4NUM;
-      start = (CI4 > 1 && gcnt < CI4) ? 0 : ((X + Y * dst_size.x) * C4NUM) % src_size.x % C4NUM;
-      for (i = 0, n = 0, j = start; i < 4; ++n, j = 0) {
-        int X_src = (gcnt + n) % in_img_x;
-        res = READ_IMAGE(src_data, smp_zero, (int2)(X_src, (gcnt + n) / in_img_x));
-        tmp[0] = res.x;
-        tmp[1] = res.y;
-        tmp[2] = res.z;
-        tmp[3] = res.w;
-        int k = (X_src % CI4) == (CI4 - 1) ? CI4_rem : 4;
-        for (; j < k && i < 4; ++j, ++i) {
-          res_tmp[i] = tmp[j];
-        }
+  if (CO4_rem == 0 && ((CI4_rem & 0x3) == 0)) {
+    gcnt = X + dst_size.x * Y;
+    res = READ_IMAGE(src_data, smp_zero, (int2)(gcnt % in_img_x, gcnt / in_img_x));
+    WRITE_IMAGE(dst_data, (int2)(X, Y), res);
+  } else {
+    int start = ((X / CO4 * dst_size.z + min(dst_size.z, (X % CO4) * C4NUM)) + dst_size.w * Y);
+    gcnt = start / src_size.x * CI4 + (start % src_size.x) / C4NUM;
+    start = start % src_size.x % C4NUM;
+    for (int i = 0,  n = 0, j = start; i < C4NUM; ++n, j = 0) {
+      int X_src = (gcnt + n) % in_img_x;
+      res = READ_IMAGE(src_data, smp_zero, (int2)(X_src, (gcnt + n) / in_img_x));
+      tmp[0] = res.x;
+      tmp[1] = res.y;
+      tmp[2] = res.z;
+      tmp[3] = res.w;
+      int k = (X_src % CI4) == (CI4 - 1) ? CI4_rem : C4NUM;
+      for (; j < k && i < C4NUM; ++j, ++i) {
+        res_tmp[i] = tmp[j];
       }
-      res.x = res_tmp[0];
-      res.y = res_tmp[1];
-      res.z = res_tmp[2];
-      res.w = res_tmp[3];
-      WRITE_IMAGE(dst_data, (int2)(X, Y), res);
-      break;
-    default:
-      gcnt = X + dst_size.x * Y;
-      res = READ_IMAGE(src_data, smp_zero, (int2)(gcnt % in_img_x, gcnt / in_img_x));
-      WRITE_IMAGE(dst_data, (int2)(X, Y), res);
+    }
+    res.x = res_tmp[0];
+    res.y = res_tmp[1];
+    res.z = res_tmp[2];
+    res.w = res_tmp[3];
+    WRITE_IMAGE(dst_data, (int2)(X, Y), res);
   }
 }
 
