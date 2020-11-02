@@ -38,7 +38,7 @@ __dtype__ = [
     "number", "tensor",
     "string", "type_none",
     "tensor_type",
-    "Type"
+    "Type", "Int"
 ]
 
 __method__ = [
@@ -104,6 +104,7 @@ tuple_type = typing.Tuple
 index_slices = typing.RowTensorType()
 sparse_tensor = typing.SparseTensorType()
 undetermined = typing.UndeterminedType()
+Int = typing.Int
 
 number_type = (int8,
                int16,
