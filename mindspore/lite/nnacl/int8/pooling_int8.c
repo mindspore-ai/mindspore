@@ -467,9 +467,9 @@ void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
         int out_h_index = index / output_w;
         int in_w_index = out_w_index * stride_w - pad_w;
         int in_h_index = out_h_index * stride_h - pad_h;
-        int ky_s = 0 > (-in_h_index) ? 0 : (-in_h_index);
+        const int ky_s = 0 > (-in_h_index) ? 0 : (-in_h_index);
         int ky_e = MSMIN(win_h, in_h - in_h_index);
-        int kx_s = 0 > (-in_w_index) ? 0 : (-in_w_index);
+        const int kx_s = 0 > (-in_w_index) ? 0 : (-in_w_index);
         int kx_e = MSMIN(win_w, in_w - in_w_index);
         int input_stride = (in_h_index * in_w + in_w_index) * channel + in_batch_offset;
         int out_plane_offset = out_batch_offset + index * channel;

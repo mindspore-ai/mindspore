@@ -19,7 +19,7 @@
 
 static void BinaryCrossEntropyLossKernel(const int input_size, const int reduction, const float *input_x,
                                          const float *input_y, const float *weight, float *loss, float *tmp_loss) {
-  float epsilon = 1e-12;
+  const float epsilon = 1e-12;
   if (reduction == 0) {
     for (int i = 0; i < input_size; i++) {
       float value =

@@ -65,6 +65,9 @@ int DecodeBoxes(const int num_boxes, const float *input_boxes, const float *anch
 int NmsSingleClass(const int num_boxes, const float *decoded_boxes, const int max_detections, const float *scores,
                    int *selected, void (*PartialArgSort)(const float *, int *, int, int),
                    const DetectionPostProcessParameter *param) {
+  if (PartialArgSort == NULL) {
+    return NNACL_NULL_PTR;
+  }
   uint8_t *nms_candidate = param->nms_candidate_;
   const int output_num = num_boxes < max_detections ? num_boxes : max_detections;
   int possible_candidate_num = num_boxes;
@@ -144,7 +147,11 @@ int DetectionPostProcessFast(const int num_boxes, const int num_classes_with_bg,
     for (int j = 0; j < max_classes_per_anchor; ++j) {
       *((BboxCorner *)(output_boxes) + out_num) = *box;
       output_scores[out_num] = input_scores[indexes[j]];
-      output_classes[out_num++] = (float)(indexes[j] % num_classes_with_bg - first_class_index);
+      if (num_classes_with_bg != 0) {
+        output_classes[out_num++] = (float)(indexes[j] % num_classes_with_bg - first_class_index);
+      } else {
+        return NNACL_ERRCODE_DIVISOR_ZERO;
+      }
     }
   }
   *output_num = (float)out_num;
