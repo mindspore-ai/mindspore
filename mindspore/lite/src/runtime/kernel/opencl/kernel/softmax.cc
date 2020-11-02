@@ -43,8 +43,8 @@ std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
 }
 
 int SoftmaxOpenCLKernel::InitGlobalSize() {
-  size_t global_x, global_y, global_z;
-  global_z = 1;
+  size_t global_x, global_y;
+  const size_t global_z = 1;
   if (axis_ == 1) {
     global_x = UP_DIV(nhwc_shape_[3], C4NUM);
     global_y = nhwc_shape_[2];

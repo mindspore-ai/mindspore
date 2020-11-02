@@ -30,9 +30,7 @@ __kernel void Convolution(__read_only image2d_t input, __write_only image2d_t ou
   const int strideW = kernel_stride.w;
 
   const int padTop = pad.x;
-  const int padBottom = pad.y;
   const int padLeft = pad.z;
-  const int padRight = pad.w;
 
   const int dilationH = dilation.x;
   const int dilationW = dilation.y;
@@ -74,7 +72,7 @@ __kernel void Convolution(__read_only image2d_t input, __write_only image2d_t ou
     }
   }
 
-  if (bias) {
+  if (bias != 0) {
     out_c4 = out_c4 + bias[co_slice];
   }
 
@@ -116,7 +114,7 @@ __kernel void Winograd4x4To36(__read_only image2d_t input, __write_only image2d_
     return;
   }
 
-  int IH = input_shape.y, IW = input_shape.z;
+  int IW = input_shape.z;
   int TILE_X = UP_DIV(IW, 4);
   int tile_x = tile_xy % TILE_X;
   int tile_y = tile_xy / TILE_X;
@@ -229,7 +227,6 @@ __kernel void Winograd36To4x4(__read_only image2d_t input, __write_only image2d_
 
   int TILE_XY = input_shape.z;
   int SLICES = input_shape.w;
-  int OH = output_shape.y;
   int OW = output_shape.z;
 
   if (tile_xy >= TILE_XY || row >= 4 || slice >= SLICES) {
@@ -257,7 +254,7 @@ __kernel void Winograd36To4x4(__read_only image2d_t input, __write_only image2d_
       acc += AtM_row[y] * At[idx];
     }
 
-    if (bias) {
+    if (bias != 0) {
       acc += bias[slice];
     }
 

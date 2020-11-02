@@ -57,13 +57,10 @@ __kernel void reshape_NC4HW4(__read_only image2d_t src_data, __write_only image2
                              int4 dst_size) {
   int X = get_global_id(0);
   int Y = get_global_id(1);
-  int CO4 = UP_DIV(dst_size.z, C4NUM);
-  int CO4_rem = dst_size.z % C4NUM;
   if (X >= dst_size.x || Y > dst_size.y) {
     return;
   }
   int CI4 = UP_DIV(src_size.x, C4NUM);
-  int CI4_rem = src_size.x % C4NUM;
   int in_img_x = CI4 * src_size.y;
   int gcnt = X + dst_size.x * Y;
   WRITE_IMAGE(dst_data, (int2)(X, Y), READ_IMAGE(src_data, smp_zero, (int2)(gcnt % in_img_x, gcnt / in_img_x)));
