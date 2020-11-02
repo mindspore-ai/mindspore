@@ -69,7 +69,7 @@ def classification_dataset(data_dir, image_size, per_batch_size, max_epoch, rank
     Args:
         data_dir (str): Path to the root directory that contains the dataset for "input_mode="folder"".
             Or path of the textfile that contains every image's path of the dataset.
-        image_size (str): Size of the input images.
+        image_size (Union(int, sequence)): Size of the input images.
         per_batch_size (int): the batch size of evey step during training.
         max_epoch (int): the number of epochs.
         rank (int): The shard ID within num_shards (default=None).
@@ -90,14 +90,14 @@ def classification_dataset(data_dir, image_size, per_batch_size, max_epoch, rank
     Examples:
         >>> from src.datasets.classification import classification_dataset
         >>> # path to imagefolder directory. This directory needs to contain sub-directories which contain the images
-        >>> dataset_dir = "/path/to/imagefolder_directory"
-        >>> de_dataset = classification_dataset(train_data_dir, image_size=[224, 244],
+        >>> data_dir = "/path/to/imagefolder_directory"
+        >>> de_dataset = classification_dataset(data_dir, image_size=[224, 244],
         >>>                               per_batch_size=64, max_epoch=100,
         >>>                               rank=0, group_size=4)
         >>> # Path of the textfile that contains every image's path of the dataset.
-        >>> dataset_dir = "/path/to/dataset/images/train.txt"
+        >>> data_dir = "/path/to/dataset/images/train.txt"
         >>> images_dir = "/path/to/dataset/images"
-        >>> de_dataset = classification_dataset(train_data_dir, image_size=[224, 244],
+        >>> de_dataset = classification_dataset(data_dir, image_size=[224, 244],
         >>>                               per_batch_size=64, max_epoch=100,
         >>>                               rank=0, group_size=4,
         >>>                               input_mode="txt", root=images_dir)
