@@ -101,6 +101,10 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
   out_convert_ops->clear();
   MS_ASSERT(in_tensors.size() == to_kernels.size());
   MS_ASSERT(in_tensors.size() == from_kernels.size());
+  std::vector<std::vector<kernel::LiteKernel *>> loop_kernels;
+  if (mem_type == OpenCLMemType::BUF) {
+    GetKernelFromToTensor(in_tensors, nodes_, &loop_kernels, true);
+  }
 
   ReplaceOutTensorAndKernelToNull(in_tensors, in_kernels, mem_type);
 
@@ -163,8 +167,6 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
 
     // replace in_tensor of inner kernel which use out tensor
     if (mem_type == OpenCLMemType::BUF) {
-      std::vector<std::vector<kernel::LiteKernel *>> loop_kernels;
-      GetKernelFromToTensor(in_tensors, nodes_, &loop_kernels, true);
       for (auto &iv : loop_kernels[i]) {
         auto tensors = iv->in_tensors();
         auto jv = std::find(tensors.begin(), tensors.end(), in_tensors.at(i));
