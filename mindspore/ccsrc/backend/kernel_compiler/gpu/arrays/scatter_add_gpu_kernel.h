@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class ScatterAddKernel : public GpuKernel {
  public:
-  ScatterAddKernel() : input_size_(0), inner_size_(0), indices_size_(0), updates_size_(0) {}
+  ScatterAddKernel() : input_size_(0), inner_size_(0), indices_size_(0), updates_size_(0), use_locking_(true) {}
   ~ScatterAddKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -40,7 +40,10 @@ class ScatterAddKernel : public GpuKernel {
     int *indices = GetDeviceAddress<int>(inputs, 1);
     T *updates = GetDeviceAddress<T>(inputs, 2);
     T *output = GetDeviceAddress<T>(outputs, 0);
-    CalScatterAdd(input_size_, inner_size_, indices_size_, input, indices, updates, output,
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
+                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
+                               "cudaMemcpyAsync output failed");
+    CalScatterAdd(input_size_, inner_size_, indices_size_, use_locking_, input, indices, updates, output,
                   reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -69,6 +72,7 @@ class ScatterAddKernel : public GpuKernel {
       indices_size_ *= indices_shape[i];
     }
     updates_size_ = indices_size_ * inner_size_;
+    use_locking_ = GetAttr<bool>(kernel_node, "use_locking");
     InitSizeLists();
     return true;
   }
@@ -86,6 +90,7 @@ class ScatterAddKernel : public GpuKernel {
   int inner_size_;
   int indices_size_;
   int updates_size_;
+  bool use_locking_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
