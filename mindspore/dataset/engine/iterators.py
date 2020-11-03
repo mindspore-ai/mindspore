@@ -95,7 +95,7 @@ class Iterator:
         # Trim the tree by saving the parent subtree into self.parent_subtree and
         # restore it after launching our c++ pipeline.
         if self.dataset.parent:
-            logger.warning("The dataset passed in is not the root of the pipeline. Ignoring parent subtree.")
+            logger.info("The dataset passed in is not the root of the pipeline. Ignoring parent subtree.")
             self.parent_subtree = self.dataset.parent
             self.dataset.parent = []
 
