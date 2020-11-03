@@ -239,8 +239,8 @@ std::string ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const la
       scores[i] = temp_scores[i];
   }
 
-  float unifiedThre = 0.5;
-  float probMax = 1.0;
+  const float unifiedThre = 0.5;
+  const float probMax = 1.0;
   for (size_t i = 0; i < RET_CATEGORY_SUM; ++i) {
       float threshold = g_thres_map[i];
       float tmpProb = scores[i];
