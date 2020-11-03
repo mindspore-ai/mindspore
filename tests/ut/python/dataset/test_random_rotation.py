@@ -104,6 +104,26 @@ def test_random_rotation_op_py(plot=False):
         if plot:
             visualize_image(original, rotation_de, mse, rotation_cv)
 
+def test_random_rotation_op_py_ANTIALIAS():
+    """
+    Test RandomRotation in python transformations op
+    """
+    logger.info("test_random_rotation_op_py_ANTIALIAS")
+
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
+    # use [90, 90] to force rotate 90 degrees, expand is set to be True to match output size
+    transform1 = mindspore.dataset.transforms.py_transforms.Compose([py_vision.Decode(),
+                                                                     py_vision.RandomRotation((90, 90),
+                                                                                              expand=True,
+                                                                                              resample=Inter.ANTIALIAS),
+                                                                     py_vision.ToTensor()])
+    data1 = data1.map(operations=transform1, input_columns=["image"])
+
+    num_iter = 0
+    for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        num_iter += 1
+    logger.info("use RandomRotation by Inter.ANTIALIAS process {} images.".format(num_iter))
 
 def test_random_rotation_expand():
     """
@@ -219,6 +239,7 @@ def test_rotation_diff(plot=False):
 if __name__ == "__main__":
     test_random_rotation_op_c(plot=True)
     test_random_rotation_op_py(plot=True)
+    test_random_rotation_op_py_ANTIALIAS()
     test_random_rotation_expand()
     test_random_rotation_md5()
     test_rotation_diff(plot=True)

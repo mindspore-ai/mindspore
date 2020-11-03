@@ -35,6 +35,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
 from .utils import Inter, Border
 
 DE_PY_INTER_MODE = {Inter.NEAREST: Image.NEAREST,
+                    Inter.ANTIALIAS: Image.ANTIALIAS,
                     Inter.LINEAR: Image.LINEAR,
                     Inter.CUBIC: Image.CUBIC}
 
@@ -374,11 +375,13 @@ class Resize:
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
-            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
-
-            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
+            It can be any of [Inter.NEAREST, Inter.ANTIALIAS, Inter.BILINEAR, Inter.BICUBIC].
 
             - Inter.NEAREST, means the interpolation method is nearest-neighbor interpolation.
+
+            - Inter.ANTIALIAS, means the interpolation method is antialias interpolation.
+
+            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
 
             - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
 
@@ -421,11 +424,13 @@ class RandomResizedCrop:
             to be cropped (default=(0.08, 1.0)).
         ratio (tuple, optional): Range (min, max) of aspect ratio to be cropped (default=(3. / 4., 4. / 3.)).
         interpolation (Inter mode, optional): Image interpolation mode (default=Inter.BILINEAR).
-            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
-
-            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
+            It can be any of [Inter.NEAREST, Inter.ANTIALIAS, Inter.BILINEAR, Inter.BICUBIC].
 
             - Inter.NEAREST, means the interpolation method is nearest-neighbor interpolation.
+
+            - Inter.ANTIALIAS, means the interpolation method is antialias interpolation.
+
+            - Inter.BILINEAR, means the interpolation method is bilinear interpolation.
 
             - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
 
@@ -559,11 +564,13 @@ class RandomRotation:
             If degrees is a sequence, it should be (min, max).
         resample (Inter mode, optional): An optional resampling filter (default=Inter.NEAREST).
             If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
-            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC].
-
-            - Inter.BILINEAR, means the resampling method is bilinear interpolation.
+            It can be any of [Inter.NEAREST, Inter.ANTIALIAS, Inter.BILINEAR, Inter.BICUBIC].
 
             - Inter.NEAREST, means the resampling method is nearest-neighbor interpolation.
+
+            - Inter.ANTIALIAS, means the resampling method is antialias interpolation.
+
+            - Inter.BILINEAR, means the resampling method is bilinear interpolation.
 
             - Inter.BICUBIC, means the resampling method is bicubic interpolation.
 

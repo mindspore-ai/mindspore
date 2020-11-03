@@ -19,8 +19,9 @@ from enum import Enum, IntEnum
 
 class Inter(IntEnum):
     NEAREST = 0
-    BILINEAR = LINEAR = 1
-    BICUBIC = CUBIC = 2
+    ANTIALIAS = 1
+    BILINEAR = LINEAR = 2
+    BICUBIC = CUBIC = 3
 
 
 # Padding Mode, Border Type
