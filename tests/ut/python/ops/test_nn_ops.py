@@ -637,6 +637,16 @@ test_cases = [
                         Tensor(np.array([1, 2]).astype(np.float32))],
         'skip': ['backward']
     }),
+    ('MatInverse', {
+        'block': nn.MatInverse(),
+        'desc_inputs': [Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))],
+        'skip': ['backward']
+    }),
+    ('MatDet', {
+        'block': nn.MatDet(),
+        'desc_inputs': [Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))],
+        'skip': ['backward']
+    }),
     ('LRNNet', {
         'block': LRNNet(),
         'desc_inputs': [Tensor(np.ones([1, 5, 4, 4], np.float32))],

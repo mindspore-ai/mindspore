@@ -25,7 +25,18 @@ from ...common import dtype as mstype
 from ..._checkparam import Validator as validator
 
 
-__all__ = ['ReduceLogSumExp', 'Range', 'LinSpace', 'LGamma', 'DiGamma', 'IGamma', 'LBeta', 'MatMul', 'Moments']
+__all__ = ['ReduceLogSumExp',
+           'Range',
+           'LinSpace',
+           'LGamma',
+           'DiGamma',
+           'IGamma',
+           'LBeta',
+           'MatMul',
+           'Moments',
+           'MatInverse',
+           'MatDet',
+           ]
 
 
 @constexpr
@@ -996,3 +1007,77 @@ class Moments(Cell):
             variance = self.cast(variance, mstype.float16)
             return mean, variance
         return mean, variance
+
+
+class MatInverse(Cell):
+    """
+    Calculate the inverse of Positive-Definite Hermitian matrix using Cholesky decomposition.
+
+    Supported Platforms:
+        ``GPU``
+
+    Inputs:
+        - **a** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
+          With float16 or float32 data type.
+
+    Outputs:
+        Tensor, has the same dtype as the `a`.
+
+    Examples:
+        >>> input_a = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
+        >>> op = nn.MatInverse()
+        >>> output = op(input_a)
+        >>> print(output)
+        [[49.36112  -13.555558  2.1111116]
+         [-13.555558  3.7777784  -0.5555557]
+         [2.1111116  -0.5555557  0.11111111]]
+    """
+    def __init__(self):
+        super(MatInverse, self).__init__()
+        self.dtype = P.DType()
+        self.choleskytrsm = P.CholeskyTrsm()
+        self.matmul = MatMul(transpose_x1=True)
+
+    def construct(self, a):
+        input_dtype = self.dtype(a)
+        _check_input_dtype("input_a", input_dtype, [mstype.float16, mstype.float32], self.cls_name)
+        l_inverse = self.choleskytrsm(a)
+        a_inverse = self.matmul(l_inverse, l_inverse)
+        return a_inverse
+
+
+class MatDet(Cell):
+    """
+    Calculate the determinant of Positive-Definite Hermitian matrix using Cholesky decomposition.
+
+    Supported Platforms:
+        ``GPU``
+
+    Inputs:
+        - **a** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
+          With float16 or float32 data type.
+
+    Outputs:
+        Tensor, has the same dtype as the `a`.
+
+    Examples:
+        >>> input_a = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
+        >>> op = nn.MatDet()
+        >>> output = op(input_a)
+        >>> print(output)
+        35.999996
+    """
+    def __init__(self):
+        super(MatDet, self).__init__()
+        self.dtype = P.DType()
+        self.cholesky = P.Cholesky()
+        self.det_triangle = P.DetTriangle()
+        self.square = P.Square()
+
+    def construct(self, a):
+        input_dtype = self.dtype(a)
+        _check_input_dtype("input_a", input_dtype, [mstype.float16, mstype.float32], self.cls_name)
+        l = self.cholesky(a)
+        l_det = self.det_triangle(l)
+        a_det = self.square(l_det)
+        return a_det
