@@ -2521,6 +2521,7 @@ class ConcatDataset(DatasetOp):
             if isinstance(child, BatchDataset):
                 raise TypeError("The parameter %s of concat must not be BatchDataset!" % (child))
 
+            # if child is mappable and the length is greater than 0
             if not self._children_flag_and_nums[index][0] and self._children_flag_and_nums[index][1]:
 
                 tem_value = cumulative_samples_nums + self._children_flag_and_nums[index][1]

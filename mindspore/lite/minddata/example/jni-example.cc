@@ -20,7 +20,6 @@
 #include <iostream>
 #include <memory>
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
 #include "minddata/dataset/util/path.h"
 #if defined(__ANDROID__) || defined(ANDROID)
 #include <android/log.h>

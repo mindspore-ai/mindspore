@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace dataset {
-/// \brief Base class of CSV Record
 /// \brief Record type for CSV
 enum CsvType : uint8_t { INT = 0, FLOAT, STRING };
 
+/// \brief Base class of CSV Record
 class CsvBase {
  public:
   CsvBase() = default;

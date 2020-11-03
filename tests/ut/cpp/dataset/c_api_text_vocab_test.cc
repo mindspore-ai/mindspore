@@ -23,21 +23,12 @@
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/text.h"
 
-// IR non-leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
-#include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
-#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
-#include "minddata/dataset/engine/ir/datasetops/map_node.h"
-#include "minddata/dataset/engine/ir/datasetops/project_node.h"
-#include "minddata/dataset/engine/ir/datasetops/rename_node.h"
-#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
-#include "minddata/dataset/engine/ir/datasetops/skip_node.h"
-#include "minddata/dataset/engine/ir/datasetops/zip_node.h"
-
-// IR leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
-
 using namespace mindspore::dataset;
+using mindspore::dataset::DataType;
+using mindspore::dataset::ShuffleMode;
+using mindspore::dataset::Status;
+using mindspore::dataset::Tensor;
+using mindspore::dataset::Vocab;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

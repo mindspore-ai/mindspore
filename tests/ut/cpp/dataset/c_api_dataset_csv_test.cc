@@ -14,39 +14,11 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/include/datasets.h"
 
-// IR non-leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/batch_node.h"
-#include "minddata/dataset/engine/ir/datasetops/bucket_batch_by_length_node.h"
-#include "minddata/dataset/engine/ir/datasetops/build_vocab_node.h"
-#include "minddata/dataset/engine/ir/datasetops/concat_node.h"
-#include "minddata/dataset/engine/ir/datasetops/map_node.h"
-#include "minddata/dataset/engine/ir/datasetops/project_node.h"
-#include "minddata/dataset/engine/ir/datasetops/rename_node.h"
-#include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
-#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
-#include "minddata/dataset/engine/ir/datasetops/skip_node.h"
-#include "minddata/dataset/engine/ir/datasetops/take_node.h"
-#include "minddata/dataset/engine/ir/datasetops/zip_node.h"
-
-// IR leaf nodes
-#include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
+// need for CsvRecord
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 
 using namespace mindspore::dataset;
 
