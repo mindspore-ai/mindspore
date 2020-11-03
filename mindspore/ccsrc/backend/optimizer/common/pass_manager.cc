@@ -67,8 +67,11 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";
 #endif
       if (save_graphs) {
-        auto file_name = "hwopt_" + name() + "_" + std::to_string(num) + "_" + pass->name() + ".ir";
-        DumpIR(file_name, func_graph, true);
+        std::ostringstream oss;
+        oss << "verbose_ir_files"
+            << "/";
+        oss << "hwopt_" + name() + "_" + std::to_string(num) + "_" + pass->name() + ".ir";
+        DumpIR(oss.str(), func_graph, true);
       }
       num++;
     }

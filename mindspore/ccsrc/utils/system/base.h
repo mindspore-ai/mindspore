@@ -49,7 +49,7 @@ using uint64 = uint64_t;
 
 #define SYSTEM_ENV_POSIX
 
-#elif defined(_WIN32)
+#elif defined(_WIN32) || defined(_WIN64)
 
 #define SYSTEM_ENV_WINDOWS
 

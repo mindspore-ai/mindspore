@@ -28,6 +28,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "pipeline/jit/base.h"
+#include "debug/common.h"
 
 namespace mindspore {
 const std::string ToShortString(const TypeId &typeId) {
@@ -483,35 +484,23 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   if (graph == nullptr) {
     return;
   }
-  auto real_filename = pipeline::GetSaveGraphsPathName(AddGlobalId(filename));
-  if (real_filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << real_filename << " is too long.";
+  auto path = pipeline::GetSaveGraphsPathName(AddGlobalId(filename));
+  auto realpath = Common::GetRealPath(path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << path;
     return;
   }
-  char real_path[PATH_MAX] = {0};
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, filename.c_str(), PATH_MAX) == nullptr) {
-    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
-  }
-#else
-  if (nullptr == realpath(real_filename.c_str(), real_path)) {
-    MS_LOG(DEBUG) << "Dir " << real_filename << " does not exit.";
-  }
-#endif
 
-  OrderedMap<AnfNodePtr, int32_t> para_map;
-  std::string path_string = real_path;
-  ChangeFileMode(path_string, S_IRWXU);
-  std::ofstream fout(real_path);
+  ChangeFileMode(realpath.value(), S_IRWXU);
+  std::ofstream fout(realpath.value());
   std::ostringstream buffer;
-
   if (!fout.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path << "' failed!";
+    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!";
     return;
   }
 
   auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
-
+  OrderedMap<AnfNodePtr, int32_t> para_map;
   // dump global info
   DumpGlobalInfoEntry(graph, buffer);
   DumpParams(graph, buffer, &para_map);
@@ -528,7 +517,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
 
   fout.close();
   // set file mode to read only by user
-  ChangeFileMode(path_string, S_IRUSR);
+  ChangeFileMode(realpath.value(), S_IRUSR);
 }
 #else
 void DumpIR(const std::string &, const FuncGraphPtr &, bool) {
