@@ -37,6 +37,7 @@ struct QuantArg {
   float mean_corr{0};
   bool inited;
   std::vector<float> clusters{};
+  int bitNum;
 };
 
 class Tensor : public mindspore::tensor::MSTensor {

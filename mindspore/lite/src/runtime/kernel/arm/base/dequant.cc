@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cmath>
 #include "src/runtime/kernel/arm/base/dequant.h"
 
 namespace mindspore::kernel {
@@ -30,6 +31,20 @@ float *DequantUtil::DequantWeight(lite::Tensor *input_tensor) {
     return DequantData<int16_t>(input_tensor);
   } else {
     return DequantData<int8_t>(input_tensor);
+  }
+}
+
+void DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_int_data) {
+  auto quant_params = input_tensor->quantParams();
+  if (quant_params == nullptr) {
+    MS_LOG(ERROR) << "low bits quantparams is empty.";
+    return;
+  }
+  int origin_bit = quant_params->Get(0)->numBits();
+  if (origin_bit < 8 && origin_bit > 0) {
+    UnPackUtil<int8_t, uint8_t>(input_tensor, origin_bit, unpack_int_data);
+  } else if (origin_bit < 16 && origin_bit > 8) {
+    UnPackUtil<int16_t, uint16_t>(input_tensor, origin_bit, unpack_int_data);
   }
 }
 }  // namespace mindspore::kernel

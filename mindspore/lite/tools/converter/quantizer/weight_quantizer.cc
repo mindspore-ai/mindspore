@@ -48,8 +48,13 @@ STATUS WeightQuantizer::WeightQuantInputCheck(const converter::Flags *config) {
     MS_LOG(ERROR) << "quantSize must be valid pos num.";
     return RET_ERROR;
   }
-  if (!WeightQuantizer::IsPosNum(config->bitNum) || (config->bitNum != "8" && config->bitNum != "16")) {
-    MS_LOG(ERROR) << "bitNum must be valid pos num, current only support 8 or 16 bit weight quant.";
+  if (!WeightQuantizer::IsPosNum(config->bitNum)) {
+    MS_LOG(ERROR) << "bitNum must be valid pos num.";
+    return RET_ERROR;
+  }
+  int bitNum = std::stoi(config->bitNum);
+  if (bitNum <= 0 || bitNum > 16) {
+    MS_LOG(ERROR) << "bitNum should be more than 0 and less than 16 currently.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -63,10 +68,13 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const string &weightSize,
   mStrategy.reset(new QuantStrategy(quantSize, convQuantWeightChannelThreshold));
   quant_max = (1 << (unsigned int)(this->bitNum - 1)) - 1;
   quant_min = -(1 << (unsigned int)(this->bitNum - 1));
-  if (this->bitNum == 8) {
+  // parse type_id
+  if (this->bitNum > 0 && this->bitNum <= 8) {
     type_id = kNumberTypeInt8;
-  } else if (this->bitNum == 16) {
+  } else if (this->bitNum <= 16) {
     type_id = kNumberTypeInt16;
+  } else {
+    MS_LOG(ERROR) << "invalid input bits";
   }
 }
 
@@ -100,7 +108,6 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
       MS_LOG(ERROR) << "model weight data type invalid which is " << param_value->tensor_type();
       return RET_ERROR;
     }
-
     auto status = RET_ERROR;
     if (type_id == kNumberTypeInt8) {
       status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
@@ -127,7 +134,6 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
     abstractTensor->element()->set_type(TypeIdToType(type_id));
     primitive_c->SetQuantType(schema::QuantType_WeightQuant);
   }
-
   return RET_OK;
 }
 
@@ -136,7 +142,6 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
     if (!mStrategy->CanMulOpQuantized(node)) {
       continue;
     }
-    auto already_quant = false;
     ParamValueLitePtr param_value = nullptr;
     ParameterPtr param_node = nullptr;
     for (size_t i = 1; i < node->size(); i++) {
@@ -146,16 +151,8 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
         if ((param_node != nullptr) && param_node->has_default()) {
           param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
           if ((param_value == nullptr) || (param_value->tensor_size() == 0) ||
-              (param_value->tensor_addr() == nullptr)) {
-            param_value = nullptr;
-            continue;
-          } else if (param_value->tensor_type() == mindspore::kNumberTypeInt8 ||
-                     param_value->tensor_type() == mindspore::kNumberTypeInt16) {
-            MS_LOG(INFO) << "the node: " << node->fullname_with_scope() << " input_i: " << i << "has been "
-                         << " quantized";
-            already_quant = true;
-            break;
-          } else if (param_value->tensor_type() != mindspore::kNumberTypeFloat32) {
+              (param_value->tensor_addr() == nullptr) ||
+              (param_value->tensor_type() != mindspore::kNumberTypeFloat32)) {
             param_value = nullptr;
             continue;
           } else {
@@ -164,11 +161,6 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
         }
       }
     }
-
-    if (already_quant) {
-      continue;
-    }
-
     if (param_value == nullptr) {
       MS_LOG(ERROR) << "No valid input param node !";
       return RET_ERROR;

@@ -27,6 +27,7 @@
 #include "src/common/graph_util.h"
 #include "src/kernel_registry.h"
 #include "src/model_common.h"
+#include "mindspore/lite/src/runtime/kernel/arm/base/dequant.h"
 
 namespace mindspore {
 namespace lite {
@@ -95,13 +96,26 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
         memcpy(dst_data, srcTensor->data()->data(), dstTensor->Size());
         copyed_tensor_idxes_.emplace_back(i);
       } else {
-        dstTensor->set_data(const_cast<unsigned char *>(srcTensor->data()->data()));
+        int pack_size = srcTensor->data()->size();
+        int org_size = dstTensor->Size();
+        if (pack_size != org_size && (dataType == kNumberTypeInt8 || dataType == kNumberTypeInt16)) {
+          auto ret = dstTensor->MallocData();
+          if (ret != RET_OK) {
+            MS_LOG(ERROR) << "Malloc data for " << i << "tensor failed ";
+            delete dstTensor;
+            return RET_ERROR;
+          }
+          kernel::DequantUtil::UnPackToInt(srcTensor, dstTensor->MutableData());
+        } else {
+          dstTensor->set_data(const_cast<unsigned char *>(srcTensor->data()->data()));
+        }
       }
     }
     auto quant_params = srcTensor->quantParams();
     if (quant_params != nullptr) {
       for (size_t j = 0; j < quant_params->size(); j++) {
         QuantArg quant_arg{};
+        quant_arg.bitNum = quant_params->Get(j)->numBits();
         quant_arg.scale = quant_params->Get(j)->scale();
         quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
         quant_arg.var_corr = quant_params->Get(j)->varCorr();

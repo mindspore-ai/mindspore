@@ -18,6 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEQUANT_H_
 
 #include <vector>
+#include <queue>
+#include <cmath>
 #include "src/lite_kernel.h"
 #include "src/common/utils.h"
 #include "src/tensor.h"
@@ -26,6 +28,8 @@ namespace mindspore::kernel {
 class DequantUtil {
  public:
   static float *DequantWeight(lite::Tensor *input_tensor);
+
+  static void UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
 
   template <typename T>
   static float *DequantData(lite::Tensor *input_tensor) {
@@ -98,6 +102,62 @@ class DequantUtil {
       }
     }
     return dequant_datas;
+  }
+
+ private:
+  template <typename T1, typename T2>
+  static void UnPackData(int origin_bit, const T2 &packed_data, std::queue<bool> *unpack_bit_data, void *unpack_int,
+                         size_t *count, bool is_last) {
+    T2 uint_result = 0;
+    T1 result = 0;
+    UnPackFromUintToOrigin<T2>(packed_data, unpack_bit_data);
+    while (static_cast<int>(unpack_bit_data->size()) >= origin_bit) {
+      for (int k = 0; k < origin_bit; k++) {
+        bool bit_tmp = unpack_bit_data->front();
+        uint_result = (static_cast<int>(bit_tmp) << k) + uint_result;
+        unpack_bit_data->pop();
+      }
+      result = uint_result - static_cast<T2>(pow(2, origin_bit - 1));
+      (static_cast<T1 *>(unpack_int))[*count] = result;
+      uint_result = 0;
+      (*count)++;
+    }
+    if (is_last) {
+      int remainder = unpack_bit_data->size();
+      for (int i = 0; i < remainder; i++) {
+        bool bit = unpack_bit_data->front();
+        uint_result = (static_cast<int>(bit) << i) + uint_result;
+        unpack_bit_data->pop();
+      }
+      result = static_cast<T1>(uint_result - static_cast<T2>(pow(2, origin_bit - 1)));
+      (static_cast<T1 *>(unpack_int))[*count] = result;
+    }
+  }
+
+  template <typename T1, typename T2>
+  static void UnPackUtil(const schema::Tensor *input_tensor, int origin_bit, void *unpack_int_data) {
+    auto weight_data = input_tensor->data()->data();
+    int pack_size =
+      input_tensor->dataType() == kNumberTypeInt8 ? input_tensor->data()->size() : input_tensor->data()->size() / 2;
+    std::queue<bool> unpack_bit_data;
+    size_t count = 0;
+    for (int i = 0; i < pack_size; ++i) {
+      T2 pack_data = (static_cast<const T2 *>(static_cast<const void *>(weight_data)))[i];
+      bool is_last = i == pack_size - 1;
+      UnPackData<T1, T2>(origin_bit, pack_data, &unpack_bit_data, unpack_int_data, &count, is_last);
+    }
+  }
+
+  template <typename T2>
+  static void UnPackFromUintToOrigin(const T2 &packed_data, std::queue<bool> *unpack_bit_data) {
+    auto n = packed_data;
+    size_t bit_count = 0;
+    while (bit_count < sizeof(T2) * 8) {
+      bool a = n % 2;
+      n = n >> 1;
+      bit_count++;
+      unpack_bit_data->push(a);
+    }
   }
 };
 }  // namespace mindspore::kernel
