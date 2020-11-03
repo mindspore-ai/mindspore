@@ -1095,9 +1095,9 @@ class DynamicRNNGrad(PrimitiveWithInfer):
     def __init__(self,
                  cell_type='LSTM',
                  direction='UNIDIRECTIONAL',
-                 cell_depth=0,
+                 cell_depth=1,
                  use_peephole=False,
-                 keep_prob=-1.0,
+                 keep_prob=1.0,
                  cell_clip=-1.0,
                  num_proj=0,
                  time_major=True,
@@ -1133,6 +1133,147 @@ class DynamicRNNGrad(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype, w_dtype, b_dtype, y_dtype, init_h_dtype, init_c_dtype, h_dtype,
                     c_dtype, dy_dtype, dh_dtype, dc_dtype, i_dtype, j_dtype, f_dtype, o_dtype, tanhc_dtype):
         return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
+
+
+class DynamicGRUV2Grad(PrimitiveWithInfer):
+    r"""
+    Computes the input gradients of DynamicGRUV2.
+
+    Args:
+        direction (str): A string identifying the direction in the op. Default: 'UNIDIRECTIONAL'.
+            Only 'UNIDIRECTIONAL' is currently supported.
+        cell_depth (int): An integer identifying the cell depth in the op. Default: 1.
+        keep_prob (float): A float identifying the keep prob in the op. Default: 1.0.
+        cell_clip (float): A float identifying the cell clip in the op. Default: -1.0.
+        num_proj (int): An integer identifying the num proj in the op. Default: 0.
+        time_major (bool): A bool identifying the time major in the op. Default: True.
+        bias_type (str): An string identifying the type of bias_type function in the op. Default to "double_bias".
+        gate_order (str): An string identifying the gate order in weight and bias. Default: 'rzh.
+            'zrh' is another option.
+        reset_after (bool): An bool identifying whether to apply reset gate after matrix multiplication. Default: True.
+
+    Inputs:
+        - **x** (Tensor) - Current words. Tensor of shape :math:`({num_step, batch_size, input_size)`.
+          The data type must be float16 or float32.
+        - **weight_input** (Tensor) - Weight. Tensor of shape :math:`(input_size, 3 x hidden_size)`.
+          The data type must be float16 or float32.
+        - **weight_hidden** (Tensor) - Bias. Tensor of shape :math:`(hidden_size, 3 x hidden_size)`.
+          The data type must be float16 or float32.
+        - **y** (Tensor) - A Tensor of shape :math:
+          if num_proj > 0 `(num_step, batch_size, min(hidden_size, num_proj)`,
+          if num_proj == 0 `(num_step, batch_size, hidden_size)`.
+          The data type must be float16 or float32.
+        - **init_h** (Tensor) - Hidden state of initial time.
+          Tensor of shape :math:`(batch_size, hidden_size)`, or None.
+          The data type must be float16 or float32.
+        - **h** (Tensor) - A Tensor of shape :math:`({num_step, batch_size, hidden_size)`.
+          The data type must be float16 or float32.
+        - **dy** (Tensor) - Gradient of `y`, has the same shape and data type as `y`.
+        - **dh** (Tensor) - Gradient of `h`, has the same shape and data type as `h`.
+        - **update** (Tensor) - A Tensor of shape :math:`({num_step, batch_size, hidden_size)`.
+          The data type must be float16 or float32.
+        - **reset** (Tensor) - A Tensor of shape :math:`({num_step, batch_size, hidden_size)`.
+          The data type must be float16 or float32.
+        - **new** (Tensor) - A Tensor of shape :math:`({num_step, batch_size, hidden_size)`.
+          The data type must be float16 or float32.
+        - **hidden_new** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
+          The data type must be float16 or float32.
+        - **seq_length** (Tensor) - The length of each batch. Tensor of shape :math:`(batch_size)`.
+          Only `None` is currently supported.
+        - **mask** (Tensor) - A 4-D Tensor. The data type must be float16 or float32.
+
+    Outputs:
+        - **dw_input** (Tensor) - A Tensor has the same shape as `weight_input`.
+          Has the same type with input `x`.
+        - **dw_hidden** (Tensor) - A Tensor has the same shape as `weight_hidden`.
+          Has the same type with input `x`.
+        - **db_input** (Tensor) - A Tensor of shape :math:`(3 x hidden_size)`.
+          Has the same type with input `x`.
+        - **db_hidden** (Tensor) - A Tensor of shape :math:`(3 x hidden_size)`.
+          Has the same type with input `x`.
+        - **dx** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
+          Has the same type with input `x`.
+        - **dh_prev** (Tensor) - A Tensor of shape :math:`(batch_size, hidden_size)`.
+          Has the same type with input `x`.
+    """
+
+    @prim_attr_register
+    def __init__(self,
+                 direction='UNIDIRECTIONAL',
+                 cell_depth=1,
+                 keep_prob=1.0,
+                 cell_clip=-1.0,
+                 num_proj=0,
+                 time_major=True,
+                 bias_type="double_bias",
+                 gate_order="zrh",
+                 reset_after=True):
+        self.cell_depth = validator.check_value_type("cell_depth", cell_depth, [int], self.name)
+        self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
+        self.cell_clip = validator.check_value_type("cell_clip", cell_clip, [float], self.name)
+        self.num_proj = validator.check_non_negative_int(num_proj, "num_proj", self.name)
+        self.time_major = validator.check_value_type("time_major", time_major, [bool], self.name)
+        self.direction = validator.check_string(direction, ['UNIDIRECTIONAL'], "direction", self.name)
+        self.bias_type = validator.check_string(bias_type,
+                                                ['no_bias', 'single_bias', 'double_bias'], "bias_type", self.name)
+        self.gate_order = validator.check_string(gate_order, ['zrh', 'rzh'], "gate_order", self.name)
+        self.reset_after = validator.check_value_type("reset_after", reset_after, [bool], self.name)
+        self.add_prim_attr("io_format", "ND")
+
+    def infer_shape(self, x_shape, winput_shape, whidden_shape, y_shape, init_h_shape, h_shape,
+                    dy_shape, dh_shape, update_shape, reset_shape, new_shape, hnew_shape, seq_shape, mask_shape):
+        validator.check_int(len(x_shape), 3, Rel.EQ, "x shape", self.name)
+        validator.check_int(len(winput_shape), 2, Rel.EQ, "weight input shape rank", self.name)
+        validator.check_int(len(whidden_shape), 2, Rel.EQ, "weight hidden shape rank", self.name)
+        validator.check_int(len(y_shape), 3, Rel.EQ, "y shape rank", self.name)
+        num_step, batch_size, input_size = x_shape
+        hidden_size = whidden_shape[0]
+        validator.check("weight_hidden_shape[-1]", whidden_shape[-1], "3 * hidden_size",
+                        3 * hidden_size, Rel.EQ, self.name)
+        validator.check("weight_input_shape", winput_shape, "excepted shape",
+                        [input_size, 3 * hidden_size], Rel.EQ, self.name)
+        if self.num_proj > 0:
+            valid_y_shape = [num_step, batch_size, min(hidden_size, self.num_proj)]
+        else:
+            valid_y_shape = [num_step, batch_size, hidden_size]
+        validator.check("y_shape", y_shape, "excepted shape", valid_y_shape, Rel.EQ, self.name)
+
+        validator.check("init_h_shape", init_h_shape, "excepted shape",
+                        [batch_size, hidden_size], Rel.EQ, self.name)
+        valid_shape = [num_step, batch_size, hidden_size]
+        validator.check("h_shape", h_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
+        validator.check("dy_shape", dy_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
+        validator.check("dh_shape", dh_shape, "excepted shape",
+                        [batch_size, hidden_size], Rel.EQ, self.name)
+        validator.check("update_shape", update_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
+        validator.check("reset_shape", reset_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
+        validator.check("new_shape", new_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
+        validator.check("hnew_shape", hnew_shape, "excepted shape", valid_shape, Rel.EQ, self.name)
+        if seq_shape is not None:
+            validator.check("seq_shape", seq_shape, "batch_size", batch_size, Rel.EQ, self.name)
+
+        dx_shape = (num_step, batch_size, input_size)
+        dh_shape = (batch_size, hidden_size)
+        dwinput_shape = (input_size, 3 * hidden_size)
+        dwhidden_shape = (hidden_size, 3 * hidden_size)
+        db_shape = (3 * hidden_size,)
+        return dwinput_shape, dwhidden_shape, db_shape, db_shape, dx_shape, dh_shape
+
+    def infer_dtype(self, x_dtype, winput_dtype, whidden_dtype, y_dtype, init_h_dtype, h_dtype,
+                    dy_dtype, dh_dtype, update_dtype, reset_dtype, new_dtype, hnew_dtype, seq_dtype, mask_dtype):
+        valid_types = (mstype.float16, mstype.float32)
+        args = {"y_dtype": y_dtype, "init_h_dtype": init_h_dtype, "h_dtype": h_dtype,
+                "dy_dtype": dy_dtype, "dh_dtype": dh_dtype, "update_dtype": update_dtype,
+                "reset_dtype": reset_dtype, "new_dtype": new_dtype, "hnew_dtype": hnew_dtype}
+        validator.check_tensor_type_same({"x_dtype": x_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"winput_dtype": winput_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"whidden_dtype": whidden_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same(args, valid_types, self.name)
+        if seq_dtype is not None:
+            validator.check_tensor_type_same({"seq_dtype": seq_dtype}, (mstype.float32, mstype.float16), self.name)
+        if mask_dtype is not None:
+            validator.check_tensor_type_same({"mask_dtype": mask_dtype}, (mstype.float32, mstype.float16), self.name)
+        return x_dtype, x_dtype, x_dtype, x_dtype, x_dtype, x_dtype
 
 
 class PReLUGrad(PrimitiveWithInfer):

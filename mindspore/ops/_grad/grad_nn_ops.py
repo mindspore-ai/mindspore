@@ -849,7 +849,16 @@ def get_bprop_lstm(self):
 @bprop_getters.register(P.DynamicRNN)
 def get_bprop_dynamic_rnn(self):
     """Grad definition for `DynamicRNN` operation."""
-    dynamic_rnn_grad = G.DynamicRNNGrad(forget_bias=self.forget_bias)
+    dynamic_rnn_grad = G.DynamicRNNGrad(cell_type=self.cell_type,
+                                        direction=self.direction,
+                                        cell_depth=self.cell_depth,
+                                        use_peephole=self.use_peephole,
+                                        keep_prob=self.keep_prob,
+                                        cell_clip=self.cell_clip,
+                                        num_proj=self.num_proj,
+                                        time_major=self.time_major,
+                                        forget_bias=self.forget_bias)
+    expand_dims = P.ExpandDims()
 
     def bprop(x, w, b, seq_length, init_h, init_c, out, dout):
         dy, dh, dc, _, _, _, _, _, = dout
@@ -858,7 +867,27 @@ def get_bprop_dynamic_rnn(self):
         y, h, c, i, j, f, o, tanhct = out
         dw, db, dx, dh_prev, dc_prev = dynamic_rnn_grad(x, w, b, y, init_h[0], init_c[0], h,
                                                         c, dy, dh, dc, i, j, f, o, tanhct)
+        dh_prev = expand_dims(dh_prev, 0)
+        dc_prev = expand_dims(dc_prev, 0)
         return dx, dw, db, (0), dh_prev, dc_prev
+    return bprop
+
+
+@bprop_getters.register(inner.DynamicGRUV2)
+def get_bprop_dynamic_gru_v2(self):
+    """Grad definition for `DynamicGRUV2` operation."""
+    dynamic_gru_v2_grad = G.DynamicGRUV2Grad(self.direction, self.cell_depth, self.keep_prob, self.cell_clip,
+                                             self.num_proj, self.time_major, 'double_bias', self.gate_order,
+                                             self.reset_after)
+
+    def bprop(x, winput, whidden, binput, bhidden, seq, init_h, out, dout):
+        y, out_h, update, reset, new, hidden_new = out
+        dy, dout_h, _, _, _, _ = dout
+
+        dw_input, dw_hidden, db_input, db_hidden, dx, dh_prev = dynamic_gru_v2_grad(x, winput, whidden, y, init_h,
+                                                                                    out_h, dy, dout_h[-1], update,
+                                                                                    reset, new, hidden_new, None, None)
+        return dx, dw_input, dw_hidden, db_input, db_hidden, (0), dh_prev
     return bprop
 
 
