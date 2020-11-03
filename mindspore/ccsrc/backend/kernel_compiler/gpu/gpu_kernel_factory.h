@@ -57,7 +57,7 @@ class GpuKernelFactory {
   GpuKernelFactory &operator=(const GpuKernelFactory &);
 
   std::pair<bool, size_t> GpuKernelAttrCheck(const std::string &kernel_name, const KernelBuildInfo *kernel_info);
-  void CheckIOParam(const std::string &kernel_name, const KernelBuildInfo *kernel_info,
+  bool CheckIOParam(const std::string &kernel_name, const KernelBuildInfo *kernel_info,
                     std::vector<std::pair<KernelAttr, GpuKernelCreater>> *iter_second, size_t attr_index);
   // map to maintain kernel and creater, KernelAttr object and creater must be registered as a pair.
   std::map<std::string, std::vector<std::pair<KernelAttr, GpuKernelCreater>>> map_kernel_name_to_creater_;
