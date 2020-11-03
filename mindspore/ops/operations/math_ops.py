@@ -2422,6 +2422,11 @@ class Equal(_LogicBinaryOp):
     def infer_dtype(self, x_dtype, y_dtype):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,), self.name)
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            return Tensor(x.asnumpy() == y.asnumpy())
+        return None
+
 
 class ApproximateEqual(_LogicBinaryOp):
     """
