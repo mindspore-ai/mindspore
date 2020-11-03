@@ -16,17 +16,29 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_MATMUL_BIASADD_FUSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_MATMUL_BIASADD_FUSION_H_
 
+#include <memory>
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
 namespace opt {
 class MatmulBiasaddFusion : public PatternProcessPass {
  public:
-  explicit MatmulBiasaddFusion(bool multigraph = true) : PatternProcessPass("matmul_biasadd_fusion", multigraph) {}
+  explicit MatmulBiasaddFusion(bool multigraph = true) : PatternProcessPass("matmul_biasadd_fusion", multigraph) {
+    x0_ = std::make_shared<Var>();
+    x1_ = std::make_shared<Var>();
+    x2_ = std::make_shared<Var>();
+    matmul_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimMatMul->name()));
+  }
 
   ~MatmulBiasaddFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  VarPtr x0_;
+  VarPtr x1_;
+  VarPtr x2_;
+  VarPtr matmul_var_;
 };
 }  // namespace opt
 }  // namespace mindspore
