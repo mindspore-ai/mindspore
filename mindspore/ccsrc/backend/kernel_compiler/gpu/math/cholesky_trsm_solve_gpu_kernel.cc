@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/math/cholesky_solve_gpu_kernel.h"
+#include "backend/kernel_compiler/gpu/math/cholesky_trsm_solve_gpu_kernel.h"
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(Cholesky, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                      CholeskyGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(CholeskyTrsm, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                      CholeskyTrsmGpuKernel, float)
 }  // namespace kernel
 }  // namespace mindspore
