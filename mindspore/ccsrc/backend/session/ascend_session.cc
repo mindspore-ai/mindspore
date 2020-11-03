@@ -231,8 +231,6 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
     if (!graph->executable()) {
       return;
     }
-    // insert assigns to child graph
-    InsertAllAssigns();
     SetFinalGraphSummaryFlag(graph);
     // OptChildGraphs
     auto graph_order = GetGraphOrder(final_graph_id_);
@@ -658,37 +656,6 @@ void AscendSession::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
 }
 
-void AscendSession::InsertAllAssigns() {
-  std::vector<std::pair<AnfNodePtr, AnfNodePtr>> assigns;
-  for (auto assign : assigns_) {
-    auto front_anf = std::get<0>(assign);
-    auto to_graph_id = std::get<1>(assign);
-    auto input_idx = std::get<2>(assign);
-    auto to_graph = GetGraph(to_graph_id);
-    MS_EXCEPTION_IF_NULL(to_graph);
-    std::vector<AnfNodePtr> graph_inputs = to_graph->inputs();
-    if (input_idx >= graph_inputs.size()) {
-      MS_LOG(EXCEPTION) << "Input_index " << input_idx << " out of range size " << graph_inputs.size();
-    }
-    auto backend_parameter = graph_inputs[input_idx];
-    assigns.emplace_back(std::pair<AnfNodePtr, AnfNodePtr>(front_anf, backend_parameter));
-  }
-  // erase the repeat assign
-  std::set<std::pair<AnfNodePtr, AnfNodePtr>> inserted_nodes;
-  for (auto &assign : assigns) {
-    auto front_anf = assign.first;
-    auto backend_parameter = assign.second;
-    auto from_graph_id = GetGraphIdByNode(front_anf);
-    auto from_graph = GetGraph(from_graph_id);
-    MS_EXCEPTION_IF_NULL(from_graph);
-    auto backend_arg = from_graph->GetBackendAnfByFrontAnf(front_anf);
-    if (inserted_nodes.find(assign) == inserted_nodes.end()) {
-      InsertAssignToGraph(from_graph_id, backend_arg, backend_parameter);
-      (void)inserted_nodes.insert(assign);
-    }
-  }
-}
-
 GraphId AscendSession::GetGraphIdByNode(const AnfNodePtr &front_anf) const {
   for (const auto &graph_item : graphs_) {
     auto graph = graph_item.second;
@@ -757,30 +724,6 @@ void AscendSession::MergeGraphExecOrder() {
   MS_EXCEPTION_IF_NULL(final_graph);
   DumpGraphExeOrder(final_exec_order);
   final_graph->set_execution_order(final_exec_order);
-}
-
-void AscendSession::InsertAssignToGraph(GraphId graph_id, const AnfNodePtr &from, const AnfNodePtr &to) {
-  MS_EXCEPTION_IF_NULL(from);
-  MS_EXCEPTION_IF_NULL(to);
-  if (AnfAlgo::OutputAddrExist(from, 0) && AnfAlgo::OutputAddrExist(to, 0) &&
-      AnfAlgo::GetOutputAddr(from, 0) == AnfAlgo::GetOutputAddr(to, 0)) {
-    return;
-  }
-  if (from.get() == to.get()) {
-    return;
-  }
-  MS_LOG(INFO) << "Insert assign to graph " << graph_id << " from " << from->DebugString() << " to "
-               << to->DebugString();
-  auto graph = graphs_[graph_id];
-  MS_EXCEPTION_IF_NULL(graph);
-  // config inputs of assign node
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>("Assign")), to, from};
-  // generate a new cnode
-  auto assign_node = graph->NewCNode(inputs);
-  MS_EXCEPTION_IF_NULL(assign_node);
-  assign_node->set_abstract(to->abstract());
-  // append the assign at the end of from graph
-  AscendControlParser::InsertDependToGraph(NOT_NULL(graph), NOT_NULL(assign_node));
 }
 
 const std::vector<GraphId> &AscendSession::GetGraphOrder(GraphId final_graph_id) const {

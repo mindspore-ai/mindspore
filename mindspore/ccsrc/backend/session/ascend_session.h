@@ -107,16 +107,12 @@ class AscendSession : public SessionBasic {
   void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
   // merge execution order list of child graphs
   void MergeGraphExecOrder();
-  // insert assion op to sync data bettween different graphs
-  void InsertAssignToGraph(GraphId graph_id, const AnfNodePtr &from, const AnfNodePtr &to);
   // get graph order vector by graph id
   const std::vector<GraphId> &GetGraphOrder(GraphId final_graph_id) const;
   // get graph order type vector by graph id
   const std::vector<GraphType> &GetGraphOrderType(GraphId final_graph_id) const;
   // check if graph cache exist
   bool GraphCacheExist(const GraphInfo &graph_info) const;
-  // insert all assign to child graph
-  void InsertAllAssigns();
   // sync intial tensors' data to device
   void SyncInitialTenosrToDevice();
   void SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph);
@@ -134,8 +130,6 @@ class AscendSession : public SessionBasic {
   std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
   // key is final_graph_id,value is the graph types of child graphs
   std::unordered_map<GraphId, std::vector<GraphType>> graph_order_types_;
-  // share parameters
-  std::vector<std::tuple<AnfNodePtr, GraphId, size_t>> assigns_;
   // initial tensors, these tensor will sync data to device before run graph
   std::map<std::pair<GraphId, size_t>, tensor::TensorPtr> initial_tenosrs_;
   // final_graph_id is used in every root graph has it's own session situation
