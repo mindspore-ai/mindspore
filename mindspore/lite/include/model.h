@@ -29,13 +29,20 @@ struct MS_API Model {
     Uint32Vector output_indices_;
   };
   using NodePtrVector = std::vector<Node *>;
+  struct SubGraph {
+    String name_;
+    Uint32Vector input_indices_;
+    Uint32Vector output_indices_;
+    Uint32Vector node_indices_;
+    Uint32Vector tensor_indices_;
+  };
+  using SubGraphPtrVector = std::vector<SubGraph *>;
   String name_;
   String version_;
   TensorPtrVector all_tensors_;
-  Uint32Vector input_indices_;
-  Uint32Vector output_indices_;
-  NodePtrVector nodes_;
+  NodePtrVector all_nodes_;
   char *buf;
+  SubGraphPtrVector sub_graphs_;
 
   /// \brief Static method to create a Model pointer.
   ///

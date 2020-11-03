@@ -53,7 +53,7 @@ bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model) {
         node->output_indices_.push_back(size_t(c_node->outputIndex()->GetAs<uint32_t>(j)));
       }
     }
-    model->nodes_.push_back(node);
+    model->all_nodes_.push_back(node);
   }
   return true;
 }
@@ -69,6 +69,66 @@ bool ConvertTensors(const schema::MetaGraph *meta_graph, Model *model) {
     model->all_tensors_.push_back(const_cast<mindspore::schema::Tensor *>(tensor));
   }
   return true;
+}
+
+int ConvertSubGraph(const schema::SubGraph *sub_graph, Model *model) {
+  MS_ASSERT(model != nullptr);
+  MS_ASSERT(sub_graph != nullptr);
+  auto *sub_graph_temp = new (std::nothrow) Model::SubGraph();
+  if (sub_graph_temp == nullptr) {
+    MS_LOG(ERROR) << "new subGraph fail!";
+    return RET_ERROR;
+  }
+  sub_graph_temp->name_ = sub_graph->name()->c_str();
+  auto in_count = sub_graph->inputIndices()->size();
+  for (uint32_t i = 0; i < in_count; ++i) {
+    sub_graph_temp->input_indices_.push_back(size_t(sub_graph->inputIndices()->GetAs<uint32_t>(i)));
+  }
+  auto out_count = sub_graph->outputIndices()->size();
+  for (uint32_t i = 0; i < out_count; ++i) {
+    sub_graph_temp->output_indices_.push_back(size_t(sub_graph->outputIndices()->GetAs<uint32_t>(i)));
+  }
+  auto node_count = sub_graph->nodeIndices()->size();
+  for (uint32_t i = 0; i < node_count; ++i) {
+    sub_graph_temp->node_indices_.push_back(size_t(sub_graph->nodeIndices()->GetAs<uint32_t>(i)));
+  }
+  auto tensor_count = sub_graph->nodeIndices()->size();
+  for (uint32_t i = 0; i < tensor_count; ++i) {
+    sub_graph_temp->tensor_indices_.push_back(size_t(sub_graph->tensorIndices()->GetAs<uint32_t>(i)));
+  }
+  model->sub_graphs_.push_back(sub_graph_temp);
+  return RET_OK;
+}
+
+int MetaGraphMappingSubGraph(const mindspore::schema::MetaGraph *meta_graph, Model *model) {
+  MS_ASSERT(model != nullptr);
+  MS_ASSERT(meta_graph != nullptr);
+  auto *sub_graph_temp = new (std::nothrow) Model::SubGraph();
+  if (sub_graph_temp == nullptr) {
+    MS_LOG(ERROR) << "new subGraph fail!";
+    return RET_ERROR;
+  }
+  if (meta_graph->name() != nullptr) {
+    sub_graph_temp->name_ = meta_graph->name()->c_str();
+  }
+  auto in_count = meta_graph->inputIndex()->size();
+  for (uint32_t i = 0; i < in_count; ++i) {
+    sub_graph_temp->input_indices_.push_back(size_t(meta_graph->inputIndex()->GetAs<uint32_t>(i)));
+  }
+  auto out_count = meta_graph->outputIndex()->size();
+  for (uint32_t i = 0; i < out_count; ++i) {
+    sub_graph_temp->output_indices_.push_back(size_t(meta_graph->outputIndex()->GetAs<uint32_t>(i)));
+  }
+  auto node_count = meta_graph->nodes()->size();
+  for (uint32_t i = 0; i < node_count; ++i) {
+    sub_graph_temp->node_indices_.push_back(i);
+  }
+  auto tensor_count = meta_graph->nodes()->size();
+  for (uint32_t i = 0; i < tensor_count; ++i) {
+    sub_graph_temp->tensor_indices_.push_back(i);
+  }
+  model->sub_graphs_.push_back(sub_graph_temp);
+  return RET_OK;
 }
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
@@ -121,15 +181,6 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
     MS_LOG(WARNING) << "model version is " << model->version_ << ", inference version is " << Version() << " not equal";
   }
 
-  auto in_count = meta_graph->inputIndex()->size();
-  for (uint32_t i = 0; i < in_count; ++i) {
-    model->input_indices_.push_back(size_t(meta_graph->inputIndex()->GetAs<uint32_t>(i)));
-  }
-
-  auto out_count = meta_graph->outputIndex()->size();
-  for (uint32_t i = 0; i < out_count; ++i) {
-    model->output_indices_.push_back(size_t(meta_graph->outputIndex()->GetAs<uint32_t>(i)));
-  }
   if (!ConvertNodes(meta_graph, model)) {
     delete model;
     return nullptr;
@@ -137,6 +188,28 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
 
   if (!ConvertTensors(meta_graph, model)) {
     delete model;
+    return nullptr;
+  }
+
+  if (meta_graph->subGraph() == nullptr) {
+    int ret = MetaGraphMappingSubGraph(meta_graph, model);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "converter old version model wrong.";
+      return nullptr;
+    }
+  } else {
+    auto sub_graphs = meta_graph->subGraph();
+    auto sub_graph_size = sub_graphs->size();
+    for (size_t i = 0; i < sub_graph_size; i++) {
+      auto sub_graph = sub_graphs->GetAs<schema::SubGraph>(i);
+      int ret = ConvertSubGraph(sub_graph, model);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "converter subgraph wrong.";
+        return nullptr;
+      }
+    }
+  }
+  if (model->sub_graphs_.empty()) {
     return nullptr;
   }
   return model;

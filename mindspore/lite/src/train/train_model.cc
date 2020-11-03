@@ -18,6 +18,7 @@
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
+#include "src/model_common.h"
 
 namespace mindspore::lite {
 
@@ -61,15 +62,6 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   if (meta_graph->version() != nullptr) {
     model->version_ = meta_graph->version()->c_str();
   }
-  auto in_count = meta_graph->inputIndex()->size();
-  for (uint32_t i = 0; i < in_count; ++i) {
-    model->input_indices_.push_back(size_t(meta_graph->inputIndex()->GetAs<uint32_t>(i)));
-  }
-
-  auto out_count = meta_graph->outputIndex()->size();
-  for (uint32_t i = 0; i < out_count; ++i) {
-    model->output_indices_.push_back(size_t(meta_graph->outputIndex()->GetAs<uint32_t>(i)));
-  }
   if (!ConvertNodes(meta_graph, model)) {
     delete model;
     return nullptr;
@@ -78,6 +70,25 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   if (!ConvertTensors(meta_graph, model)) {
     delete model;
     return nullptr;
+  }
+
+  if (meta_graph->subGraph() == nullptr) {
+    int ret = MetaGraphMappingSubGraph(meta_graph, model);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "converter old version model wrong.";
+      return nullptr;
+    }
+  } else {
+    auto sub_graphs = meta_graph->subGraph();
+    auto sub_graph_size = sub_graphs->size();
+    for (size_t i = 0; i < sub_graph_size; i++) {
+      auto sub_graph = sub_graphs->GetAs<schema::SubGraph>(i);
+      int ret = ConvertSubGraph(sub_graph, model);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "converter subgraph wrong.";
+        return nullptr;
+      }
+    }
   }
   return model;
 }
