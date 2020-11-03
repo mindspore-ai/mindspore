@@ -34,6 +34,8 @@ typedef struct ScaleParameter {
   int offset_zp_;
   int output_zp_;
   int activation_type_;
+  int output_activation_min_;
+  int output_activation_max_;
 } ScaleParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_SCALE_H_
