@@ -36,11 +36,11 @@ class ReduceLogSumExp(Cell):
     The dtype of the tensor to be reduced is number.
 
     Args:
+        axis (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+            Only constant value is allowed.
         keep_dims (bool): If True, keep these reduced dimensions and the length is 1.
             If False, don't keep these dimensions.
             Default : False.
-        axis (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
-            Only constant value is allowed.
 
     Inputs:
         - **input_x** (Tensor[Number]) - The input tensor. With float16 or float32 data type.
@@ -57,7 +57,7 @@ class ReduceLogSumExp(Cell):
 
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = nn.ReduceLogSumExp(keep_dims=True, 1)
+        >>> op = nn.ReduceLogSumExp(1, keep_dims=True)
         >>> output = op(input_x)
         >>> output.shape
         (3, 1, 5, 6)
