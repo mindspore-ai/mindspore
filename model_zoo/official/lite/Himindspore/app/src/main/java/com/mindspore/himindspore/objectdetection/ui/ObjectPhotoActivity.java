@@ -113,7 +113,7 @@ public class ObjectPhotoActivity extends AppCompatActivity {
         String result = trackingMobile.MindSpore_runnet(bitmap);
         long endTime = System.currentTimeMillis();
 
-        Log.d(TAG, "RUNNET 耗时："+(endTime-startTime)+"ms");
+        Log.d(TAG, "RUNNET CONSUMING："+(endTime-startTime)+"ms");
         Log.d(TAG, "result："+ result);
 
         recognitionObjectBeanList = getRecognitionList(result);
@@ -127,7 +127,7 @@ public class ObjectPhotoActivity extends AppCompatActivity {
         Canvas canvas = new Canvas(bitmap);
         Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setTextSize(DisplayUtil.sp2px(this,16));
-        //只绘制图形轮廓(描边)
+        //Draw only outline (stroke)
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeWidth(DisplayUtil.dip2px(this,2));
 

@@ -46,7 +46,7 @@ public class ObjectDetectionMainActivity extends AppCompatActivity implements Vi
     }
 
     /**
-     * 权限申请结果回调
+     * Authority application result callback
      */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

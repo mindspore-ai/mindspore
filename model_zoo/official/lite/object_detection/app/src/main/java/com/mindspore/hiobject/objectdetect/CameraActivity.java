@@ -8,9 +8,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.mindspore.hiobject.R;
 
 /**
- * [入口主页面]
+ * Main page of entrance
  *
- * 向JNI传入图片，测试MindSpore模型加载推理等.
+ * Pass in pictures to JNI, test mindspore model, load reasoning, etc
  */
 
 public class CameraActivity extends AppCompatActivity {
@@ -25,7 +25,6 @@ public class CameraActivity extends AppCompatActivity {
         setContentView(R.layout.activity_camera);
 
         if (savedInstanceState != null && this.clearFragmentsTag()) {
-            // 重建时清除 fragment的状态
             savedInstanceState.remove(BUNDLE_FRAGMENTS_KEY);
         }
 
@@ -37,7 +36,6 @@ public class CameraActivity extends AppCompatActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         if (outState != null && this.clearFragmentsTag()) {
-            // 销毁时不保存fragment的状态
             outState.remove(BUNDLE_FRAGMENTS_KEY);
         }
     }

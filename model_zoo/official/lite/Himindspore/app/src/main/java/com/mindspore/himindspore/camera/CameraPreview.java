@@ -58,14 +58,14 @@ public class CameraPreview extends TextureView {
 
     private static final String TAG = "CameraPreview";
 
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();//从屏幕旋转转换为JPEG方向
-    private static final int MAX_PREVIEW_WIDTH = 1920;//Camera2 API 保证的最大预览宽高
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();//From screen rotation to JPEG orientation
+    private static final int MAX_PREVIEW_WIDTH = 1920;//Camera2 API Guaranteed maximum preview width and height
     private static final int MAX_PREVIEW_HEIGHT = 1080;
-    private static final int STATE_PREVIEW = 0;//显示相机预览
-    private static final int STATE_WAITING_LOCK = 1;//焦点锁定中
-    private static final int STATE_WAITING_PRE_CAPTURE = 2;//拍照中
-    private static final int STATE_WAITING_NON_PRE_CAPTURE = 3;//其它状态
-    private static final int STATE_PICTURE_TAKEN = 4;//拍照完毕
+    private static final int STATE_PREVIEW = 0;//Show camera preview
+    private static final int STATE_WAITING_LOCK = 1;//Focus locked
+    private static final int STATE_WAITING_PRE_CAPTURE = 2;//Taking pictures
+    private static final int STATE_WAITING_NON_PRE_CAPTURE = 3;//Other states
+    private static final int STATE_PICTURE_TAKEN = 4;//Photo finished
 
     public static final int OPEN_TYPE_IMAGE = 1;
     public static final int OPEN_TYPE_IMAGE_CUSTOM = 11;
@@ -78,7 +78,7 @@ public class CameraPreview extends TextureView {
     private int mSensorOrientation;
     private boolean mFlashSupported;
 
-    private Semaphore mCameraOpenCloseLock = new Semaphore(1);//使用信号量 Semaphore 进行多线程任务调度
+    private Semaphore mCameraOpenCloseLock = new Semaphore(1);//Multithreading task scheduling using Semaphore 
     private Activity activity;
     private File mFile;
     private HandlerThread mBackgroundThread;
@@ -153,7 +153,7 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * 处理生命周期内的回调事件
+     * Handle callback events in the lifecycle
      */
     private final SurfaceTextureListener mSurfaceTextureListener = new SurfaceTextureListener() {
 
@@ -178,14 +178,14 @@ public class CameraPreview extends TextureView {
     };
 
     /**
-     * 相机状态改变回调
+     * Camera state change callback
      */
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
 
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
             mCameraOpenCloseLock.release();
-            Log.d(TAG, "相机已打开");
+            Log.d(TAG, "open camera");
             mCameraDevice = cameraDevice;
             createCameraPreviewSession();
         }
@@ -209,7 +209,7 @@ public class CameraPreview extends TextureView {
     };
 
     /**
-     * 处理与照片捕获相关的事件
+     * Handle events related to photo capture
      */
     private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
 
@@ -289,7 +289,7 @@ public class CameraPreview extends TextureView {
             }
         }
         startBackgroundThread();
-        //当Activity或Fragment OnResume()时,可以冲洗打开一个相机并开始预览,否则,这个Surface已经准备就绪
+        //When activity or fragment onresume(), you can open a camera and start previewing, otherwise, the surface is ready
         if (this.isAvailable()) {
             openCamera(this.getWidth(), this.getHeight());
         } else {
@@ -396,7 +396,7 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * 根据mCameraId打开相机
+     * Turn on the camera according to the mcameraid
      */
     private void openCamera(int width, int height) {
         setUpCameraOutputs(width, height);
@@ -420,10 +420,10 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * 设置相机相关的属性或变量
+     * Set camera related properties or variables
      *
-     * @param width  相机预览的可用尺寸的宽度
-     * @param height 相机预览的可用尺寸的高度
+     * @param width  The width of the available size for the camera preview
+     * @param height The height of the available size for the camera preview
      */
     @SuppressWarnings("SuspiciousNameCombination")
     private void setUpCameraOutputs(int width, int height) {
@@ -431,7 +431,7 @@ public class CameraPreview extends TextureView {
         try {
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-                // 在这个例子中不使用前置摄像头
+                // In this example, the front camera is not used
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
                     continue;
@@ -510,15 +510,15 @@ public class CameraPreview extends TextureView {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
-            Log.e(TAG, "设备不支持Camera2");
+            Log.e(TAG, "Device not supported Camera2");
         }
     }
 
     /**
-     * 在确定相机预览大小后应调用此方法
+     * This method should be called after determining the camera preview size
      *
-     * @param viewWidth  宽
-     * @param viewHeight 高
+     * @param viewWidth  width
+     * @param viewHeight height
      */
     private void configureTransform(int viewWidth, int viewHeight) {
         if (null == mPreviewSize || null == activity) {
@@ -546,15 +546,15 @@ public class CameraPreview extends TextureView {
 
 
     /**
-     * 获取一个合适的相机预览尺寸
+     * Get a suitable camera preview size
      *
-     * @param choices           支持的预览尺寸列表
-     * @param textureViewWidth  相对宽度
-     * @param textureViewHeight 相对高度
-     * @param maxWidth          可以选择的最大宽度
-     * @param maxHeight         可以选择的最大高度
-     * @param aspectRatio       宽高比
-     * @return 最佳预览尺寸
+     * @param choices           List of supported preview sizes
+     * @param textureViewWidth  Relative width
+     * @param textureViewHeight Relative height
+     * @param maxWidth          Maximum width that can be selected
+     * @param maxHeight         Maximum height that can be selected
+     * @param aspectRatio       Aspect ratio
+     * @return Best preview size
      */
     private static Size chooseOptimalSize(Size[] choices, int textureViewWidth, int textureViewHeight,
                                           int maxWidth, int maxHeight, Size aspectRatio) {
@@ -584,18 +584,18 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * 为相机预览创建新的CameraCaptureSession
+     * Create new for camera CameraCaptureSession
      */
     private void createCameraPreviewSession() {
         try {
             SurfaceTexture texture = this.getSurfaceTexture();
             assert texture != null;
-            // 将默认缓冲区的大小配置为想要的相机预览的大小
+            // Configure the size of the default buffer to the size of the desired camera preview
             texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
             Surface surface = new Surface(texture);
             mPreviewRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface);
-            // 我们创建一个 CameraCaptureSession 来进行相机预览
+            // We create a camera capture session to preview the camera
             mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
 
@@ -604,7 +604,7 @@ public class CameraPreview extends TextureView {
                             if (null == mCameraDevice) {
                                 return;
                             }
-                            // 会话准备好后，我们开始显示预览
+                            // When the session is ready, we begin to display the preview
                             mCaptureSession = cameraCaptureSession;
                             try {
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
@@ -628,23 +628,23 @@ public class CameraPreview extends TextureView {
 
 
     /**
-     * 从指定的屏幕旋转中检索照片方向
+     * Retrieve the photo orientation from the specified screen rotation
      *
-     * @param rotation 屏幕方向
-     * @return 照片方向（0,90,270,360）
+     * @param rotation Screen orientation
+     * @return Photo orientation（0,90,270,360）
      */
     private int getOrientation(int rotation) {
         return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
     }
 
     /**
-     * 锁定焦点
+     * Lock focus
      */
     private void lockFocus() {
         try {
-            // 如何通知相机锁定焦点
+            // How to tell the camera to lock the focus
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START);
-            // 通知mCaptureCallback等待锁定
+            // Inform mcapture callback to wait for lock
             mState = STATE_WAITING_LOCK;
             mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
@@ -653,7 +653,7 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * 解锁焦点
+     * Unlock focus
      */
     private void unlockFocus() {
         try {
@@ -671,7 +671,7 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * 拍摄静态图片
+     * Take still pictures
      */
     private void captureStillPicture() {
         try {
@@ -684,7 +684,7 @@ public class CameraPreview extends TextureView {
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             setAutoFlash(captureBuilder);
-            // 方向
+            // direction
             int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
             CameraCaptureSession.CaptureCallback captureCallback
@@ -725,11 +725,11 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * 运行preCapture序列来捕获静止图像
+     * Run the precapture sequence to capture still images
      */
     private void runPreCaptureSequence() {
         try {
-            // 设置拍照参数请求
+            // Set Photo parameter request
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                     CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
             mState = STATE_WAITING_PRE_CAPTURE;
@@ -740,7 +740,7 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * 比较两者大小
+     * Compare the size of the two
      */
     private static class CompareSizesByArea implements Comparator<Size> {
 
@@ -752,7 +752,7 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * ImageReader的回调对象
+     * Callback object for imagereader
      */
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
             = new ImageReader.OnImageAvailableListener() {
@@ -764,7 +764,7 @@ public class CameraPreview extends TextureView {
     };
 
     /**
-     * 将捕获到的图像保存到指定的文件中
+     * Save the captured image to the specified file
      */
     private static class ImageSaver implements Runnable {
 
@@ -809,7 +809,7 @@ public class CameraPreview extends TextureView {
     }
 
     /**
-     * 关闭相机
+     * closeCamera
      */
     private void closeCamera() {
         try {

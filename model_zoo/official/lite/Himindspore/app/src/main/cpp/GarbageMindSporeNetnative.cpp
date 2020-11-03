@@ -37,39 +37,39 @@ using mindspore::dataset::LDataType;
 
 
 static const int RET_GARBAGE_SORT_SUM = 4;
-static const char *labels_name_grbage_sort_map[RET_GARBAGE_SORT_SUM] = {{"可回收物"},
-                                                                        {"干垃圾"},
-                                                                        {"有害垃圾"},
-                                                                        {"湿垃圾"}};
+static const char *labels_name_grbage_sort_map[RET_GARBAGE_SORT_SUM] = {"可回收物",
+                                                                        "干垃圾",
+                                                                        "有害垃圾",
+                                                                        "湿垃圾"};
 
 static const int RET_GARBAGE_DETAILED_SUM = 26;
 static const char *labels_name_grbage_detailed_map[RET_GARBAGE_DETAILED_SUM] = {
-        {"塑料瓶"},
-        {"帽子"},
-        {"报纸"},
-        {"易拉罐"},
-        {"玻璃制品"},
-        {"玻璃瓶"},
-        {"硬纸板"},
-        {"篮球"},
-        {"纸张"},
-        {"金属制品"},
-        {"一次性筷子"},
-        {"打火机"},
-        {"扫把"},
-        {"旧镜子"},
-        {"牙刷"},
-        {"脏污衣服"},
-        {"贝壳"},
-        {"陶瓷碗"},
-        {"油漆桶"},
-        {"电池"},
-        {"荧光灯"},
-        {"药片胶囊"},
-        {"橙皮"},
-        {"菜叶"},
-        {"蛋壳"},
-        {"香蕉皮"}};
+        "塑料瓶",
+        "帽子",
+        "报纸",
+        "易拉罐",
+        "玻璃制品",
+        "玻璃瓶",
+        "硬纸板",
+        "篮球",
+        "纸张",
+        "金属制品",
+        "一次性筷子",
+        "打火机",
+        "扫把",
+        "旧镜子",
+        "牙刷",
+        "脏污衣服",
+        "贝壳",
+        "陶瓷碗",
+        "油漆桶",
+        "电池",
+        "荧光灯",
+        "药片胶囊",
+        "橙皮",
+        "菜叶",
+        "蛋壳",
+        "香蕉皮"};
 
 
 char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {

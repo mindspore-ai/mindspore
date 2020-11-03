@@ -19,9 +19,9 @@ import static com.mindspore.himindspore.objectdetection.bean.RecognitionObjectBe
 
 
 /**
- * [入口主页面]
+ * main page of entrance
  *
- * 向JNI传入图片，测试MindSpore模型加载推理等.
+ * Pass in pictures to JNI, test mindspore model, load reasoning, etc
  */
 
 public class ObjectCameraActivity extends AppCompatActivity implements CameraPreview.RecognitionDataCallBack {
