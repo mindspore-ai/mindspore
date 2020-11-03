@@ -172,3 +172,132 @@ class NoRepeatNGram(PrimitiveWithInfer):
         valid_values = (mstype.float16, mstype.float32, mstype.float64)
         validator.check_type_name("log_type", log_type, valid_values, self.name)
         return log_type
+
+
+class LambApplyOptimizerAssign(PrimitiveWithInfer):
+    r"""
+    Updates gradients by LAMB optimizer algorithm. Get the compute ratio.
+
+    The Lamb optimzier is proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes
+    <https://arxiv.org/abs/1904.00962>`_.
+
+    The updating formulas are as follows,
+
+    .. math::
+        \begin{array}{ll} \\
+            m = \beta_1 * m + (1 - \beta_1) * g \\
+            v = \beta_2 * v + (1 - \beta_2) * g * g \\
+            m = \frac{m}{1 - \beta_1^t} \\
+            v = \frac{v}{1 - \beta_2^t} \\
+            r = \frac{m}{\sqrt{v} + \epsilon} \\
+            w = w - l * \frac{\left \| w \right \|}{\left \| r \right \|} * (r + \lambda * w))
+        \end{array}
+
+    :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
+    `gradient`, :math:`l` represents learning rate `lr`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
+    :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent `beta1_power` and
+    `beta2_power`, :math:`\lambda` represents `weight_decay`, :math:`w` represents `var`, :math:`\epsilon` represents
+    `epsilon`.
+
+    Inputs:
+        - **gradient** (Tensor) - Gradient of parameters, float32/float16.
+        - **v** (Tensor) - the 2nd moment vector in the updating formula, has the same type as `gradient`.
+        - **m** (Tensor) - The 1st moment vector in the updating formula, has the same type as `gradient`.
+        - **var** (Tensor) - Weights to be updated, has the same type as `gradient`.
+        - **beta1** (Tensor) - :math:`beta_1` in the updating formula, float32/float16.
+        - **sub1** (Tensor) - :math:`1-beta_1` in the updating formula, has the same type as `beta1`.
+        - **beta2** (Tensor) - :math:`beta_2` in the updating formula, has the same type as `beta1`.
+        - **sub2** (Tensor) - :math:`1-beta_2` in the updating formula, has the same type as `beta1`.
+        - **epsilon** (Tensor) - Term added to the denominator, has the same type as `beta1`.
+        - **steps** (Tensor) - :math:`t` in the updating formula, global step, has the same type as `beta1`.
+        - **lr** (Tensor) - :math:`l` in the updating formula, learning rate, has the same type as `beta1`.
+        - **decay_flag** (Tensor) -Specify whether param upadte with weight decay, has the same type as `beta1`.
+        - **weight_decay** (Tensor) - :math:`\lambda` in the updating formula, has the same type as `beta1`.
+
+    Outputs:
+        Tensor, the compute ratio r.
+        - **update** (Tensor) - :math:`r + \lambda * w` in the updating formula. The same shape and data type as `m`.
+        - **v** (Tensor) - the 2nd moment vector in the updating formula after updated inplace,
+                           has the same type as `gradient`.
+        - **m** (Tensor) - The 1st moment vector in the updating formula after updated inplace,
+                           has the same type as `gradient`.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize LambApplyOptimizerAssign"""
+
+    def infer_shape(self, grad_shape, v_shape, m_shape, var_shape, beta1_shape, sub1_shape,
+                    beta2_shape, sub2_shape, eps_shape, steps_shape, use_weight_shape, weight_decay_shape):
+        validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
+        validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        return m_shape, v_shape, m_shape
+
+    def infer_dtype(self, grad_dtype, v_dtype, m_dtype, var_dtype, beta1_dtype, sub1_dtype,
+                    beta2_dtype, sub2_dtype, eps_dtype, steps_dtype, use_weight_dtype, weight_decay_dtype):
+        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "grad": grad_dtype}
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
+
+        args = {"beta1": beta1_dtype, "sub1": sub1_dtype, "beta2": beta2_dtype, "sub2": sub2_dtype,
+                "eps": eps_dtype, "steps": steps_dtype, "use_weight": use_weight_dtype,
+                "weight_decay": weight_decay_dtype}
+        validator.check_scalar_or_tensor_types_same(args, [mstype.float16, mstype.float32], self.name, True)
+        return m_dtype, v_dtype, v_dtype
+
+
+class LambApplyWeightAssign(PrimitiveWithInfer):
+    r"""
+    Updates gradients by LAMB optimizer algorithm. The weight update part.
+
+    The Lamb optimzier is proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes
+    <https://arxiv.org/abs/1904.00962>`_.
+
+    The updating formulas are as follows,
+
+    .. math::
+        \begin{array}{ll} \\
+            m = \beta_1 * m + (1 - \beta_1) * g \\
+            v = \beta_2 * v + (1 - \beta_2) * g * g \\
+            m = \frac{m}{1 - \beta_1^t} \\
+            v = \frac{v}{1 - \beta_2^t} \\
+            r = \frac{m}{\sqrt{v} + \epsilon} \\
+            w = w - l * \frac{\left \| w \right \|}{\left \| r \right \|} * (r + \lambda * w))
+        \end{array}
+
+    :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
+    `gradient`, :math:`l` represents learning rate `lr`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
+    :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent `beta1_power` and
+    `beta2_power`, :math:`\lambda` represents `weight_decay`, :math:`w` represents `var`, :math:`\epsilon` represents
+    `epsilon`.
+
+    Inputs:
+        - **w_norm** (Tensor) - :math:`\left \| w \right \|` in the updating formula, float32/float16.
+        - **g_norm** (Tensor) - :math:`\left \| r \right \|` in the updating formula, has the same type as `w_norm`.
+        - **lr** (Tensor) - :math:`l` in the updating formula, the learning rate, float32/float16.
+        - **update** (Tensor) -:math:`r + \lambda * w`in the updating formula, float32/float16.
+        - **var** (Tensor) - Weights to be updated, the same shape and type as `update`.
+
+    Outputs:
+        - **var** (Tensor) - Weights to be updated in place, the same shape and type as `var` in inputs.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize LambApplyWeightAssign"""
+
+    def infer_shape(self, w_norm_shape, g_norm_shape, lr_shape, update_shape, var_shape):
+        validator.check("var_shape", var_shape, "update_shape", update_shape, Rel.EQ, self.name)
+        return var_shape
+
+    def infer_dtype(self, w_norm_dtype, g_norm_dtype, lr_dtype, update_dtype, var_dtype):
+        args = {"var": var_dtype, "update": update_dtype}
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
+
+        args = {"w_norm": w_norm_dtype, "g_norm": g_norm_dtype, "lr": lr_dtype}
+        validator.check_scalar_or_tensor_types_same(args, [mstype.float16, mstype.float32], self.name, True)
+        return var_dtype

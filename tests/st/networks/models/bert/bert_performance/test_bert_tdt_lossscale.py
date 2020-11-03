@@ -229,7 +229,7 @@ def test_bert_performance():
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)
-    expect_loss_value = [10.235566, 10.207392, 10.206976]
+    expect_loss_value = [11.325791, 11.285011, 11.284766]
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 
@@ -239,7 +239,7 @@ def test_bert_performance():
     assert (overflow == expect_overflow).all()
 
     loss_scale = np.array(callback.lossscale_list)
-    expect_loss_scale = [262144.0, 262144.0, 262144.0]
+    expect_loss_scale = [65536.0, 65536.0, 65536.0]
     print("loss scale: {}".format(loss_scale))
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
