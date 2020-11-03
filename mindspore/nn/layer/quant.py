@@ -80,13 +80,13 @@ class Conv2dBnAct(Cell):
             Initializer and string are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
         has_bn (bool): Specifies to used batchnorm or not. Default: False.
-        momentum (float): Momentum for moving average.Momentum value must be [0, 1].Default:0.9
-        eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
-                     1e-5.
+        momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default:0.9
+        eps (float): Term added to the denominator to improve numerical stability for batchnorm, should be greater
+            than 0. Default: 1e-5.
         activation (Union[str, Cell, Primitive]): Specifies activation type. The optional values are as following:
             'softmax', 'logsoftmax', 'relu', 'relu6', 'tanh', 'gelu', 'sigmoid',
             'prelu', 'leakyrelu', 'hswish', 'hsigmoid'. Default: None.
-        alpha (float): Slope of the activation function at x < 0. Default: 0.2.
+        alpha (float): Slope of the activation function at x < 0 for LeakyReLU. Default: 0.2.
         after_fake(bool): Determine whether there must be a fake quantization operation after Cond2dBnAct.
 
     Inputs:
@@ -136,7 +136,7 @@ class Conv2dBnAct(Cell):
                               bias_init=bias_init)
         self.has_bn = Validator.check_bool(has_bn, "has_bn")
         self.has_act = activation is not None
-        self.after_fake = after_fake
+        self.after_fake = Validator.check_bool(after_fake, "after_fake")
         if has_bn:
             self.batchnorm = BatchNorm2d(out_channels, eps, momentum)
         if activation == "leakyrelu":
@@ -171,9 +171,13 @@ class DenseBnAct(Cell):
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (Cell): The regularization function applied to the output of the layer, eg. 'ReLU'. Default: None.
         has_bn (bool): Specifies to use batchnorm or not. Default: False.
+        momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default:0.9
+        eps (float): Term added to the denominator to improve numerical stability for batchnorm, should be greater
+            than 0. Default: 1e-5.
         activation (Union[str, Cell, Primitive]): Specifies activation type. The optional values are as following:
             'Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid',
             'PReLU', 'LeakyReLU', 'h-Swish', and 'h-Sigmoid'. Default: None.
+        alpha (float): Slope of the activation function at x < 0 for LeakyReLU. Default: 0.2.
         after_fake(bool): Determine whether there must be a fake quantization operation after DenseBnAct.
 
     Inputs:
@@ -197,7 +201,10 @@ class DenseBnAct(Cell):
                  bias_init='zeros',
                  has_bias=True,
                  has_bn=False,
+                 momentum=0.9,
+                 eps=1e-5,
                  activation=None,
+                 alpha=0.2,
                  after_fake=True):
         super(DenseBnAct, self).__init__()
         self.dense = nn.Dense(
@@ -208,9 +215,11 @@ class DenseBnAct(Cell):
             has_bias)
         self.has_bn = Validator.check_bool(has_bn, "has_bn")
         self.has_act = activation is not None
-        self.after_fake = after_fake
+        self.after_fake = Validator.check_bool(after_fake, "after_fake")
         if has_bn:
-            self.batchnorm = BatchNorm1d(out_channels)
+            self.batchnorm = BatchNorm1d(out_channels, eps, momentum)
+        if activation == "leakyrelu":
+            self.activation = LeakyReLU(alpha)
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
         if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
             raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
