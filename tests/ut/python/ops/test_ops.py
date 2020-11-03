@@ -1648,6 +1648,11 @@ test_case_nn_ops = [
         'desc_const': [4],
         'desc_inputs': [[3, 2, 1, 3], Tensor(np.array([1, 2, 3]).astype(np.int32))],
         'desc_bprop': [[4, 2, 1, 3]]}),
+    ('UnsortedSegmentMax', {
+        'block': P.UnsortedSegmentMax(),
+        'desc_const': [4],
+        'desc_inputs': [[3, 2, 1, 3], Tensor(np.array([1, 2, 3]).astype(np.int32))],
+        'desc_bprop': [[4, 2, 1, 3]]}),
     ('UnsortedSegmentProd', {
         'block': P.UnsortedSegmentProd(),
         'desc_const': [4],
