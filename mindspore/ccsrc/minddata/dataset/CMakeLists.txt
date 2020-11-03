@@ -60,7 +60,44 @@ add_subdirectory(engine)
 add_subdirectory(api)
 add_subdirectory(text)
 add_subdirectory(callback)
+######################################################################
+add_dependencies(utils core)
+add_dependencies(kernels-image core)
+add_dependencies(kernels-data core)
+add_dependencies(kernels-soft-dvpp-image core soft-dvpp-utils)
+add_dependencies(kernels core)
+add_dependencies(engine-datasetops-source core)
+add_dependencies(engine-datasetops-source-sampler core)
+add_dependencies(engine-datasetops core)
+add_dependencies(engine-datasetops-mapop core)
+add_dependencies(engine-opt core)
+add_dependencies(engine-perf core)
+add_dependencies(engine-gnn core)
+add_dependencies(engine core)
+add_dependencies(callback core)
+add_dependencies(text core)
+add_dependencies(text-kernels core)
+add_dependencies(cpp-API core)
+add_dependencies(engine-ir-datasetops core)
+add_dependencies(engine-ir-datasetops-source core)
+add_dependencies(engine-ir-cache core)
 
+if (ENABLE_PYTHON)
+    add_dependencies(APItoPython core)
+endif()
+if (ENABLE_TDTQUE)
+    add_dependencies(engine-tdt core)
+endif ()
+if (ENABLE_CACHE)
+    add_dependencies(APItoPython engine-cache-client)
+    add_dependencies(cpp-API engine-cache-client)
+    add_dependencies(engine-ir-cache engine-cache-client)
+    add_dependencies(engine-ir-datasetops engine-cache-client)
+    add_dependencies(engine-opt engine-cache-client)
+    add_dependencies(engine-datasetops engine-cache-client)
+    add_dependencies(engine-cache-client core)
+    add_dependencies(engine-cache-server core)
+endif ()
 ################### Create _c_dataengine Library ######################
 set(submodules
     $<TARGET_OBJECTS:core>
@@ -72,9 +109,9 @@ set(submodules
     $<TARGET_OBJECTS:kernels-data>
     $<TARGET_OBJECTS:cpp-API>
     $<TARGET_OBJECTS:engine-ir-datasetops>
-    $<TARGET_OBJECTS:engine-ir-datasetops-source>
-    $<TARGET_OBJECTS:engine-ir-cache>
-    $<TARGET_OBJECTS:kernels-soft-dvpp-image>
+        $<TARGET_OBJECTS:engine-ir-datasetops-source>
+        $<TARGET_OBJECTS:engine-ir-cache>
+        $<TARGET_OBJECTS:kernels-soft-dvpp-image>
     $<TARGET_OBJECTS:soft-dvpp-utils>
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>
@@ -166,12 +203,4 @@ endif()
 
 if (MS_BUILD_GRPC)
     target_link_libraries(_c_dataengine PRIVATE mindspore::grpc++)
-endif()
-
-add_dependencies(_c_dataengine core_generated_proto)
-add_dependencies(_c_dataengine cache_generated_fbb)
-if (ENABLE_CACHE)
-    add_dependencies(_c_dataengine cache_generated_grpc)
-else()
-    add_dependencies(_c_dataengine cache_generated_proto)
 endif()
