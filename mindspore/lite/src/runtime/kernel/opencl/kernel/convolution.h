@@ -31,7 +31,7 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
  public:
   ConvolutionOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+      : OpenCLKernel(parameter, inputs, outputs), param_(reinterpret_cast<ConvParameter *>(parameter)) {}
   ~ConvolutionOpenCLKernel() override = default;
 
   int Init() override;
@@ -39,26 +39,32 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   int InitBuffer() override;
 
  private:
+  void SetBlockSize();
+  void SetGlobalLocal();
   int InitWeight();
   int InitBias();
   int GenerateWinogradWeight();
-  int SetGlobalLocalConv(std::vector<size_t> *global, std::vector<size_t> *local);
-
-  size_t sizeof_FLT() const { return use_fp16_ ? sizeof(float16_t) : sizeof(float); }
 
   bool UseWinograd4x4To6x6() {
-    auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
-    const bool attr_valid = param->kernel_h_ == 3 && param->kernel_w_ == 3 && param->stride_h_ == 1 &&
-                            param->stride_w_ == 1 && param->pad_u_ == 1 && param->pad_d_ == 1 && param->pad_l_ == 1 &&
-                            param->pad_r_ == 1 && param->dilation_h_ == 1 && param->dilation_w_ == 1 && IH_ == OH_ &&
-                            IW_ == OW_ && batch_size_ == 1;
+    const bool attr_valid = param_->kernel_h_ == 3 && param_->kernel_w_ == 3 && param_->stride_h_ == 1 &&
+                            param_->stride_w_ == 1 && param_->pad_u_ == 1 && param_->pad_d_ == 1 &&
+                            param_->pad_l_ == 1 && param_->pad_r_ == 1 && param_->dilation_h_ == 1 &&
+                            param_->dilation_w_ == 1 && IH_ == OH_ && IW_ == OW_ && batch_size_ == 1;
     const bool channel_good = CI_SLICES_ >= 8 && CO_SLICES_ >= 8;
     const bool hw_good = TILES_X_ * TILES_Y_ >= 16;
     return attr_valid && channel_good && hw_good;
   }
 
-  bool use_fp16_{false};
+  cl::Kernel kernel_4x4to36_;
+  cl::Kernel kernel_conv_;
+  cl::Kernel kernel_36to4x4_;
+  std::vector<size_t> global_;
+  std::vector<size_t> local_;
 
+  bool use_fp16_{false};
+  size_t sizeof_FLT_{4};
+
+  ConvParameter *param_{nullptr};
   int batch_size_{};
   int CI_{};
   int IH_{};
@@ -81,9 +87,11 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   void *winograd_mem0_{nullptr};
   void *winograd_mem1_{nullptr};
 
-  cl::Kernel kernel_4x4to36_;
-  cl::Kernel kernel_conv_;
-  cl::Kernel kernel_36to4x4_;
+  struct {
+    int H{1};
+    int W{1};
+    int C{1};
+  } block_size_;
 };
 }  // namespace mindspore::kernel
 
