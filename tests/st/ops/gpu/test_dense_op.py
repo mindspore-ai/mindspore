@@ -131,6 +131,47 @@ def test_dx():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_dx_ND():
+    x = np.array([[[0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4]],
+                  [[0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4]]
+                  ]).astype(np.float32)
+    dy = np.array([[[1, 1],
+                    [1, 1],
+                    [1, 1]],
+                   [[1, 1],
+                    [1, 1],
+                    [1, 1]]]).astype(np.float32)
+    dx_expect = np.array([[[1.1, 1.8, 1.1, 1.1],
+                           [1.1, 1.8, 1.1, 1.1],
+                           [1.1, 1.8, 1.1, 1.1]],
+                          [[1.1, 1.8, 1.1, 1.1],
+                           [1.1, 1.8, 1.1, 1.1],
+                           [1.1, 1.8, 1.1, 1.1]]
+                          ]).astype(np.float32)
+    error = np.ones(shape=[2, 3, 4]) * 1.0e-6
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    net = GradData(DenseNet())
+    dx = net(Tensor(x), Tensor(dy))
+    diff = dx[0].asnumpy() - dx_expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = GradData(DenseNet())
+    dx = net(Tensor(x), Tensor(dy))
+    diff = dx[0].asnumpy() - dx_expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_dw():
     x = np.array([[0.1, 0.2, 0.3, 0.4],
                   [0.1, 0.2, 0.3, 0.4],
@@ -142,6 +183,49 @@ def test_dw():
                           [0.3, 0.6, 0.9, 1.2]]).astype(np.float32)
     dw_error = np.ones(shape=[2, 4]) * 1.0e-6
     db_expect = np.array([3, 3]).astype(np.float32)
+    db_error = np.ones(shape=[2]) * 1.0e-6
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    net = GradWeight(DenseNet())
+    dw, db = net(Tensor(x), Tensor(dy))
+    diff = dw.asnumpy() - dw_expect
+    assert np.all(diff < dw_error)
+    assert np.all(-diff < dw_error)
+    diff = db.asnumpy() - db_expect
+    assert np.all(diff < db_error)
+    assert np.all(-diff < db_error)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = GradWeight(DenseNet())
+    dw, db = net(Tensor(x), Tensor(dy))
+    diff = dw.asnumpy() - dw_expect
+    assert np.all(diff < dw_error)
+    assert np.all(-diff < dw_error)
+    diff = db.asnumpy() - db_expect
+    assert np.all(diff < db_error)
+    assert np.all(-diff < db_error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dw_ND():
+    x = np.array([[[0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4]],
+                  [[0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4],
+                   [0.1, 0.2, 0.3, 0.4]]]).astype(np.float32)
+    dy = np.array([[[1, 1],
+                    [1, 1],
+                    [1, 1]],
+                   [[1, 1],
+                    [1, 1],
+                    [1, 1]]]).astype(np.float32)
+    dw_expect = 2 * np.array([[0.3, 0.6, 0.9, 1.2],
+                              [0.3, 0.6, 0.9, 1.2]]).astype(np.float32)
+    dw_error = np.ones(shape=[2, 4]) * 1.0e-6
+    db_expect = 2 * np.array([3, 3]).astype(np.float32)
     db_error = np.ones(shape=[2]) * 1.0e-6
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")

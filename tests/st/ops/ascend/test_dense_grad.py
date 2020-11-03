@@ -49,3 +49,10 @@ def test_net():
     net = Grad(Net())
     output = net(Tensor(x), Tensor(sens))
     print(output.asnumpy())
+
+def test_net_ND():
+    x = np.random.randn(2, 32, 2048).astype(np.float32)
+    sens = np.random.randn(2, 32, 1001).astype(np.float32)
+    net = Grad(Net())
+    output = net(Tensor(x), Tensor(sens))
+    print(output.asnumpy())
