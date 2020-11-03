@@ -90,5 +90,5 @@ kernel::LiteKernel *CpuHashtableLookupKernelCreator(const std::vector<lite::Tens
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_HashtableLookup, CpuHashtableLookupKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_HashtableLookup, CpuHashtableLookupKernelCreator)
 }  // namespace mindspore::kernel
