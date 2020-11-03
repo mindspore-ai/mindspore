@@ -29,6 +29,7 @@ namespace mindspore {
 namespace kernel {
 enum UnaryOptype {
   UNARY_OP_EXP = 0,
+  UNARY_OP_EXPM1,
   UNARY_OP_LOG,
   UNARY_OP_LOG1P,
   UNARY_OP_ERF,
@@ -48,6 +49,7 @@ enum UnaryOptype {
   UNARY_OP_INVALID_TYPE = 255
 };
 static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY_OP_EXP},
+                                                                   {"Expm1", UNARY_OP_EXPM1},
                                                                    {"Log", UNARY_OP_LOG},
                                                                    {"Log1p", UNARY_OP_LOG1P},
                                                                    {"Erf", UNARY_OP_ERF},
@@ -88,6 +90,10 @@ class UnaryOpGpuKernel : public GpuKernel {
     switch (unary_op_type_) {
       case UNARY_OP_EXP: {
         Exponential(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_EXPM1: {
+        Expm1(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
       case UNARY_OP_LOG: {

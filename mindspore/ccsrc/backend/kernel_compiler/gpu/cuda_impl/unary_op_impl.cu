@@ -30,6 +30,13 @@ __global__ void ExponentialKernel(const half *input, half *output, const size_t 
   return;
 }
 template <typename T>
+__global__ void Expm1Kernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = static_cast<T>(expm1f(static_cast<float>(input[i])));
+  }
+  return;
+}
+template <typename T>
 __global__ void LogarithmKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = logf(input[i]);
@@ -46,21 +53,21 @@ __global__ void LogarithmKernel(const half *input, half *output, const size_t co
 template <typename T>
 __global__ void Log1pKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = static_cast<T>(log1p(static_cast<double>(input[i])));
+    output[i] = static_cast<T>(log1pf(static_cast<float>(input[i])));
   }
   return;
 }
 template <typename T>
 __global__ void ErfKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = static_cast<T>(erf(static_cast<float>(input[i])));
+    output[i] = static_cast<T>(erff(static_cast<float>(input[i])));
   }
   return;
 }
 template <typename T>
 __global__ void ErfcKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = static_cast<T>(erfc(static_cast<float>(input[i])));
+    output[i] = static_cast<T>(erfcf(static_cast<float>(input[i])));
   }
   return;
 }
@@ -204,13 +211,13 @@ void Exponential(const T *input, T *output, const size_t count, cudaStream_t cud
   return;
 }
 template <typename T>
-void Logarithm(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
-  LogarithmKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+void Expm1(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  Expm1Kernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
 template <typename T>
-void Negative(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
-  NegativeKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+void Logarithm(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  LogarithmKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
 template <typename T>
@@ -226,6 +233,11 @@ void Erf(const T *input, T *output, const size_t count, cudaStream_t cuda_stream
 template <typename T>
 void Erfc(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   ErfcKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Negative(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  NegativeKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
 template <typename T>
@@ -290,11 +302,12 @@ void Floor(const T *input, T *output, const size_t count, cudaStream_t cuda_stre
 }
 
 template void Exponential<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Expm1<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Logarithm<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
-template void Negative<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Log1p<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Erf<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Erfc<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Negative<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Reciprocal<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Square<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Sqrt<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
@@ -307,11 +320,12 @@ template void Zeroslike<float>(float *output, const size_t count, cudaStream_t c
 template void Abs<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Floor<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Exponential<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Expm1<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Logarithm<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
-template void Negative<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Log1p<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Erf<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Erfc<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Negative<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Reciprocal<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Square<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Sqrt<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
