@@ -143,17 +143,17 @@ void InsertStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &kernel_
     size_t recv_node_offset = pair.recv_node_offset;
     CNodePtr send_node = nullptr;
     CNodePtr recv_node = nullptr;
-    // Step 1: generate Send and Recv CNodes.
+    // Step 1: Generate stream Send and Recv CNodes.
     if (stream_switch_type == kAllReduceStreamSwitch) {
       if (!GenSendRecvCNodesForAllReduce(kernel_graph, mock_send_node, mock_recv_node, &send_node, &recv_node)) {
         MS_LOG(EXCEPTION) << "Generating CNodes for send and recv failed. Stream switch type: kAllReduceStreamSwitch";
       }
     }
-    // Step 2: sort send and recv CNodes by offset.
+    // Step 2: Sort send and recv CNodes by offset.
     ordered_stream_switch_nodes.insert({send_node_offset, send_node});
     ordered_stream_switch_nodes.insert({recv_node_offset, recv_node});
   }
-  // Step 3: insert stream switch CNodes into execution kernel list.
+  // Step 3: Insert stream switch CNodes into execution kernel list.
   auto execution_kernels = kernel_graph->execution_order();
   for (auto node = ordered_stream_switch_nodes.rbegin(); node != ordered_stream_switch_nodes.rend(); node++) {
     execution_kernels.insert(execution_kernels.begin() + node->offset, node->cnode);

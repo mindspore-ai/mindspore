@@ -68,7 +68,7 @@ bool MPIWrapper::CreateCommGroup(const std::string &group_name, const std::vecto
     return false;
   }
 
-  NcclGroupInfo nccl_group = {static_cast<int>(ranks.size()), group_rank[0], group_unique_id, nullptr};
+  NcclGroupInfo nccl_group = {static_cast<int>(ranks.size()), group_rank[0], group_unique_id, nullptr, ranks};
   NCCLWrapper::instance().AddGroupInfo(group_name, &nccl_group);
   return true;
 }
@@ -122,7 +122,11 @@ void MPIWrapper::Init() {
   CHECK_RET(MPI_Bcast(reinterpret_cast<void *>(&unique_id), sizeof(unique_id), MPI_BYTE, 0, MPI_COMM_WORLD),
             MPI_SUCCESS, "Failed to broadcast nccl unique id.");
 
-  NcclGroupInfo world_group = {rank_size_, rank_id_, unique_id, nullptr};
+  std::vector<int> world_group_ranks = {};
+  for (int global_rank = 0; global_rank < rank_size_; global_rank++) {
+    world_group_ranks.push_back(global_rank);
+  }
+  NcclGroupInfo world_group = {rank_size_, rank_id_, unique_id, nullptr, world_group_ranks};
   NCCLWrapper::instance().AddGroupInfo(NCCL_WORLD_GROUP, &world_group);
   return;
 }

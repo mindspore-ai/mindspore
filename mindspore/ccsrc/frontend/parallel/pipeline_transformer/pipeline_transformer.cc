@@ -207,7 +207,7 @@ SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNod
   auto dest_rank = global_rank_ + (user_node_stage - node_stage) * per_stage_rank_num_;
   Attr attr_rank = std::make_pair("dest_rank", MakeValue(dest_rank));
   OperatorAttrs attrs = {attr_tag, attr_rank};
-  auto send_op = CreatOpInstance(attrs, "_Send", "send");
+  auto send_op = CreatOpInstance(attrs, "Send", "send");
   auto send_node = NewValueNode(send_op);
   auto prim = GetValueNode<PrimitivePtr>(send_node);
   auto shape_type_pair = GetShapeType(parameter);
@@ -233,7 +233,7 @@ void PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const AnfNode
   Attr attr_shape = std::make_pair("shape", shape_type_pair.first);
   Attr attr_dtype = std::make_pair("dtype", shape_type_pair.second);
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype};
-  auto recv_op = CreatOpInstance(attrs, "_Receive", "recv");
+  auto recv_op = CreatOpInstance(attrs, "Receive", "recv");
   std::vector<AnfNodePtr> recv_input = {NewValueNode(recv_op), virtual_param_};
   auto recv = graph->NewCNode(recv_input);
   manager_->SetEdge(use_node, index, recv);

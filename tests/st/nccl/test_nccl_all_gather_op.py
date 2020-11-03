@@ -48,7 +48,7 @@ def test_AllGather():
     for i in range(size - 1):
         tmp = np.ones([1, 1, 3, 3]).astype(np.float32) * 0.01 * (i + 2)
         expect = np.concatenate((expect, tmp))
-    diff = output.asnumpy() - expect
+    diff = np.absolute(output.asnumpy() - expect)
     error = np.ones(shape=expect.shape) * 1.0e-5
     assert np.all(diff < error)
     assert output.shape == expect.shape

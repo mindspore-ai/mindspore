@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_COLLECTIVE_COMMON_H_
 
 #include <nccl.h>
+#include <vector>
 #include <sstream>
 #include "pybind11/pybind11.h"
 
@@ -31,6 +32,7 @@ struct NcclGroupInfo {
   int rank;
   ncclUniqueId unique_id;
   ncclComm_t comm;
+  std::vector<int> group_ranks;
 };
 #define CHECK_RET(expression, result, message)                                                                         \
   {                                                                                                                    \
