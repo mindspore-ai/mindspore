@@ -113,5 +113,5 @@ kernel::LiteKernel *CpuPredictKernelCreator(const std::vector<lite::Tensor *> &i
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_CustomPredict, CpuPredictKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_CustomPredict, CpuPredictKernelCreator)
 }  // namespace mindspore::kernel
