@@ -1,7 +1,7 @@
 add_subdirectory(perf EXCLUDE_FROM_ALL)
 include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
 set(MD_FLATBUFFER_OU "${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
-ms_build_flatbuffers("de_tensor.fbs" ${CMAKE_CURRENT_SOURCE_DIR} cache_generated_fbb ${MD_FLATBUFFER_OU})
+ms_build_flatbuffers("de_tensor.fbs" ${CMAKE_CURRENT_SOURCE_DIR} generated_engine_files ${MD_FLATBUFFER_OU})
 
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
@@ -25,7 +25,6 @@ add_library(engine-cache-client OBJECT
 
 if (ENABLE_CACHE)
   ms_grpc_generate(CACHE_GRPC_SRCS CACHE_GRPC_HDRS cache_grpc.proto)
-  add_custom_target(cache_generated_grpc ALL DEPENDS ${CACHE_GRPC_SRCS} ${CACHE_GRPC_HDRS} VERBATIM)
   target_sources(engine-cache-client PUBLIC ${CACHE_GRPC_SRCS}
       cache_grpc_client.cc
       cache_ipc.cc)
@@ -69,15 +68,11 @@ if (ENABLE_CACHE)
     target_link_libraries(cache_admin mindspore::glog)
   endif ()
 
-  add_dependencies(engine-cache-server cache_generated_fbb)
-  add_dependencies(engine-cache-server cache_generated_grpc)
-  add_dependencies(engine-cache-client cache_generated_grpc)
+  add_dependencies(engine-cache-server generated_engine_files)
 
 else ()
   ms_protobuf_generate(CACHE_PROTO_SRCS CACHE_PROTO_HDRS cache_grpc.proto)
-  add_custom_target(cache_generated_proto ALL DEPENDS ${CACHE_PROTO_SRCS} ${CACHE_PROTO_HDRS} VERBATIM)
   target_sources(engine-cache-client PUBLIC ${CACHE_PROTO_SRCS})
-  add_dependencies(engine-cache-client cache_generated_proto)
 endif ()
 
-add_dependencies(engine-cache-client cache_generated_fbb)
+add_dependencies(engine-cache-client generated_engine_files)
