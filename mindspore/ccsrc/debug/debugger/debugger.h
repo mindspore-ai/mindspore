@@ -33,6 +33,7 @@ using debugger::GraphProto;
 using debugger::ModelProto;
 using debugger::TensorProto;
 using debugger::WatchCondition;
+using debugger::WatchCondition_Parameter;
 using debugger::WatchNode;
 using debugger::WatchpointHit;
 
@@ -73,9 +74,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // don't need a graph_ptr because it is saved during pre_execute
   void PostExecute();
 
-  bool ReadNodeDataRequired();
+  bool ReadNodeDataRequired(const CNodePtr &kernel);
 
-  void PostExecuteNode();
+  void PostExecuteNode(const CNodePtr &kernel);
 
   // suspend the execution after a debug_op
   void PostDebugOp();
@@ -148,7 +149,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void CommandLoop();
 
   // set what nodes and conditions to watch
-  void SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id);
+  void SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id,
+                     const ProtoVector<WatchCondition_Parameter> &parameters);
 
   // remove watchpoint with id
   void RemoveWatchpoint(const int32_t id);
@@ -161,7 +163,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   // analyze tensors and check watchpoint conditions
   // return names of tensors and what condition they hit
-  std::list<WatchpointHit> CheckWatchpoints(const std::string &watchnode = std::string());
+  std::list<WatchpointHit> CheckWatchpoints(const std::string &watchnode = std::string(),
+                                            const CNodePtr &kernel = NULL);
 
   // send watchpoints that hit
   void SendWatchpoints(const std::list<WatchpointHit> &points);
@@ -192,6 +195,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_task_to_opname_;
   double last_overflow_bin_;
   std::string overflow_bin_path_;
+  // flag to keep track of the very first suspension of debugger
+  bool initial_suspend_;
   // singleton
   static std::mutex instance_lock_;
   static std::shared_ptr<Debugger> debugger_;
@@ -210,6 +215,7 @@ DataType GetDebuggerNumberDataType(const TypePtr &type);
 DebuggerCommand GetCommand(const EventReply &reply);
 
 // parse other data out of EventReply
+ProtoVector<WatchCondition_Parameter> GetParameters(const EventReply &reply);
 ProtoVector<WatchNode> GetWatchnodes(const EventReply &reply);
 std::string GetNodeName(const EventReply &reply);
 std::string GetRunLevel(const EventReply &reply);
