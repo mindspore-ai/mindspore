@@ -302,6 +302,11 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   StartKernelRT();
   // Assign CUDA streams
   AssignStream(graph);
+  // Dump .pb graph before remove nop nodes
+  if (save_graphs) {
+    DumpIRProto(graph, "before_removeNop_" + std::to_string(graph_id));
+  }
+
   // Hide NopOp from execution graph
   opt::HideNopNode(graph.get());
   // Build kernel if node is cnode
