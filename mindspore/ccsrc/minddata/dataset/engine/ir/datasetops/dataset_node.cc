@@ -20,6 +20,7 @@
 #include <memory>
 #include <set>
 
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {
@@ -227,6 +228,7 @@ std::shared_ptr<DatasetNode> DatasetNode::SetNumWorkers(int32_t num_workers) {
   num_workers_ = num_workers;
   return shared_from_this();
 }
+
 DatasetNode::DatasetNode() {
   // Fetch some default value from config manager
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
@@ -236,5 +238,17 @@ DatasetNode::DatasetNode() {
   worker_connector_size_ = cfg->worker_connector_size();
 }
 
+// In DFS tree traversal, each node is visited twice. Accept is called on the first visit.
+Status DatasetNode::Accept(NodePass *p, bool *modified) {
+  // This method will only be called if its derived class does not implement one.
+  return p->Visit(shared_from_this(), modified);
+}
+
+// In DFS tree traversal, each node is visited twice. AcceptAfter is called on the second visit
+// after all child nodes are visited.
+Status DatasetNode::AcceptAfter(NodePass *p, bool *modified) {
+  // This method will only be called if its derived class does not implement one.
+  return p->VisitAfter(shared_from_this(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

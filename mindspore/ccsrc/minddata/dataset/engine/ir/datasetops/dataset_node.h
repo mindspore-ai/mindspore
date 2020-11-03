@@ -31,6 +31,7 @@ namespace dataset {
 
 class Dataset;
 class SamplerObj;
+class NodePass;
 
 #define RETURN_EMPTY_IF_ERROR(_s) \
   do {                            \
@@ -106,6 +107,24 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \param[in] num_workers The number of threads in this operator
   /// \return Shared pointer to the original object
   std::shared_ptr<DatasetNode> SetNumWorkers(int32_t num_workers);
+
+  /// \brief Base method for NodePass visit. A tree walk consists of walking down the tree and also walking back up
+  ///     in a depth-first order. Accept is the node visit on the way down, whereas AcceptAfter is the node
+  ///     visit on the way back up the tree after its descendants are visited.
+  /// \notes Subclass needs to override this if it requires special node visit access.
+  ///     Check "dataset/engine/opt/pass.h" for more details.
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  virtual Status Accept(NodePass *p, bool *modified);
+
+  /// \brief Base method for NodePass visit on the way back up the tree after its descendants are visited.
+  /// \notes Subclass needs to override this if it requires special node visit access.
+  ///     Check "dataset/engine/opt/pass.h" for more details.
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  virtual Status AcceptAfter(NodePass *p, bool *modified);
 
  protected:
   std::vector<std::shared_ptr<DatasetNode>> children;
