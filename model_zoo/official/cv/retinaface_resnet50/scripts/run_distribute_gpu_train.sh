@@ -17,7 +17,7 @@
 echo "=============================================================================================================="
 echo "Please run the script as: "
 echo "bash run_distribute_gpu_train.sh DEVICE_NUM CUDA_VISIBLE_DEVICES"
-echo "for example: bash run_distribute_gpu_train.sh 3 0,1,2"
+echo "for example: bash run_distribute_gpu_train.sh 4 0,1,2,3"
 echo "=============================================================================================================="
 
 RANK_SIZE=$1

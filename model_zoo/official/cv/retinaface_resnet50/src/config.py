@@ -25,30 +25,34 @@ cfg_res50 = {
     'batch_size': 8,
     'num_workers': 8,
     'num_anchor': 29126,
-    'ngpu': 3,
-    'epoch': 100,
-    'decay1': 70,
-    'decay2': 90,
+    'ngpu': 4,
     'image_size': 840,
     'return_layers': {'layer2': 1, 'layer3': 2, 'layer4': 3},
     'in_channel': 256,
     'out_channel': 256,
     'match_thresh': 0.35,
-    'optim': 'sgd',
-    'warmup_epoch': -1,
-    'initial_lr': 0.001,
     'network': 'resnet50',
 
     # opt
+    'optim': 'sgd',
     'momentum': 0.9,
     'weight_decay': 5e-4,
 
+    # seed
+    'seed': 1,
+
     # lr
+    'epoch': 100,
+    'decay1': 70,
+    'decay2': 90,
+    'lr_type': 'dynamic_lr',
+    'initial_lr': 0.01,
+    'warmup_epoch': 5,
     'gamma': 0.1,
 
     # checkpoint
     'ckpt_path': './checkpoint/',
-    'save_checkpoint_steps': 1000,
+    'save_checkpoint_steps': 2000,
     'keep_checkpoint_max': 1,
     'resume_net': None,
 
