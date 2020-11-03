@@ -119,7 +119,7 @@ class Bernoulli(Distribution):
         param = dict(locals())
         param['param_dict'] = {'probs': probs}
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
-        Validator.check_type(type(self).__name__, dtype, valid_dtype)
+        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
         super(Bernoulli, self).__init__(seed, dtype, name, param)
 
         self._probs = self._add_parameter(probs, 'probs')

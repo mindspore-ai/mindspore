@@ -132,8 +132,7 @@ class GeSwitch(PrimitiveWithInfer):
     def infer_dtype(self, data_type, pred_type):
         validator.check_subclass(
             "data", data_type, (mstype.tensor,) + mstype.number_type, self.name)
-        validator.check_tensor_type_same(
-            {"pred": pred_type}, [mstype.bool_], self.name)
+        validator.check_tensor_dtype_valid("pred", pred_type, [mstype.bool_], self.name)
         return (data_type, data_type)
 
 
@@ -171,5 +170,5 @@ class Merge(PrimitiveWithInfer):
         for i, item in enumerate(inputs):
             args['inputs[%d]' % i] = item
 
-        validator.check_scalar_or_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
+        validator.check_scalar_or_tensor_types_same(args, (mstype.bool_,) + mstype.number_type, self.name)
         return (inputs[0], mstype.int32)

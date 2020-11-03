@@ -165,7 +165,7 @@ class CusFusedAbsMax1(PrimitiveWithInfer):
     def infer_shape(self, data1_shape):
         ll = []
         if len(data1_shape) == 2:
-            ll = [1,]
+            ll = [1]
         else:
             ll = [32, 64]
         return ll
@@ -497,6 +497,7 @@ class Im2Col(PrimitiveWithInfer):
         >>> img2col = P.CusMatMulCubeDenseLeft(kernel_size=7, pad=3, stride=2)
         >>> output = img2col(input_x)
     """
+
     @prim_attr_register
     def __init__(self,
                  kernel_size,
@@ -556,9 +557,8 @@ class Im2Col(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, x_dtype):
-        args = {'x': x_dtype}
-        valid_types = [mstype.float16, mstype.float32]
-        validator.check_tensor_type_same(args, valid_types, self.name)
+        valid_dtypes = [mstype.float16, mstype.float32]
+        validator.check_tensor_dtype_valid('x', x_dtype, valid_dtypes, self.name)
         return x_dtype
 
 
@@ -602,14 +602,17 @@ class UpdateThorGradient(PrimitiveWithInfer):
         return x2_shape
 
     def infer_dtype(self, x1_dtype, x2_dtype, x3_dtype):
-        validator.check_tensor_type_same({'x1_dtype': x1_dtype, 'x2_dtype': x2_dtype, 'x3_dtype': x3_dtype},
-                                         [mstype.float32], self.name)
+        validator.check_tensors_dtypes_same_and_valid(
+            {'x1_dtype': x1_dtype, 'x2_dtype': x2_dtype, 'x3_dtype': x3_dtype},
+            [mstype.float32], self.name)
         return x2_dtype
+
 
 class Cholesky(PrimitiveWithInfer):
     """
     Inner API for resnet50 THOR GPU backend
     """
+
     @prim_attr_register
     def __init__(self, split_dim=0):
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
@@ -634,13 +637,15 @@ class Cholesky(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, x1_dtype):
-        validator.check_tensor_type_same({'x1_dtype': x1_dtype}, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('x1', x1_dtype, [mstype.float32], self.name)
         return x1_dtype
+
 
 class DetTriangle(PrimitiveWithInfer):
     """
     Calculate the determinant of triangle matrices
     """
+
     @prim_attr_register
     def __init__(self, fill_mode=0):
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
@@ -653,5 +658,5 @@ class DetTriangle(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, x1_dtype):
-        validator.check_tensor_type_same({'x1_dtype': x1_dtype}, [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('x1', x1_dtype, [mstype.float32], self.name)
         return x1_dtype

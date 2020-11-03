@@ -415,37 +415,20 @@ class Validator:
                 break
         if not hit:
             type_str = (type(type_).__name__ if isinstance(type_, (tuple, list)) else "") + str(type_)
-            raise TypeError(f'For \'{prim_name}\' the type of `{arg_name}` should be subclass'
-                            f' of {",".join((str(x) for x in template_types))}, but got {type_str}.')
+            raise TypeError(f'For \'{prim_name}\', the type of `{arg_name}` should be subclass'
+                            f' of {", ".join((str(x) for x in template_types))}, but got {type_str}.')
 
     @staticmethod
     def check_const_input(arg_name, arg_value, prim_name):
         """Checks valid value."""
         if arg_value is None:
-            raise ValueError(f'For \'{prim_name}\' the `{arg_name}` must be a const input, but got {arg_value}.')
+            raise ValueError(f'For \'{prim_name}\', the `{arg_name}` must be a const input, but got {arg_value}.')
         return arg_value
 
     @staticmethod
-    def check_type(arg_name, arg_value, valid_types):
-        """Type checking."""
-        def raise_error_msg():
-            """func for raising error message when check failed"""
-            raise TypeError(f'The type of `{arg_name}` should be in {valid_types}, but got {type(arg_value).__name__}.')
-
-        if isinstance(arg_value, type(mstype.tensor)):
-            arg_value = arg_value.element_type()
-        if isinstance(arg_value, bool) and bool not in tuple(valid_types):
-            raise_error_msg()
-        if arg_value in valid_types:
-            return arg_value
-        if isinstance(arg_value, tuple(valid_types)):
-            return arg_value
-        raise_error_msg()
-
-    @staticmethod
-    def check_type_same(args, valid_values, prim_name):
-        """Checks whether the types of inputs are the same."""
-        def _check_tensor_type(arg):
+    def check_types_same_and_valid(args, valid_values, prim_name):
+        """Checks whether the types of inputs are the same and valid."""
+        def _check_type_valid(arg):
             arg_key, arg_val = arg
             elem_type = arg_val
             Validator.check_subclass(arg_key, elem_type, valid_values, prim_name)
@@ -455,21 +438,27 @@ class Validator:
             arg1_name, arg1_type = arg1
             arg2_name, arg2_type = arg2
             if arg1_type != arg2_type:
-                raise TypeError(f'For \'{prim_name}\' type of `{arg2_name}` should be same as `{arg1_name}`,'
+                raise TypeError(f'For \'{prim_name}\', type of `{arg2_name}` should be same as `{arg1_name}`,'
                                 f' but `{arg1_name}` with type {arg1_type} and `{arg2_name}` with type {arg2_type}.')
             return arg1
 
-        elem_types = map(_check_tensor_type, args.items())
+        elem_types = map(_check_type_valid, args.items())
         reduce(_check_types_same, elem_types)
 
     @staticmethod
-    def check_tensor_type_same(args, valid_values, prim_name):
-        """Checks whether the element types of input tensors are the same."""
-        tensor_types = [mstype.tensor_type(t) for t in valid_values]
-        Validator.check_type_same(args, tensor_types, prim_name)
+    def check_tensors_dtypes_same_and_valid(args, valid_dtypes, prim_name):
+        """Checks whether the element types of input tensors are the same and valid."""
+        tensor_types = [mstype.tensor_type(t) for t in valid_dtypes]
+        Validator.check_types_same_and_valid(args, tensor_types, prim_name)
 
     @staticmethod
-    def check_scalar_or_tensor_type_same(args, valid_values, prim_name, allow_mix=False):
+    def check_tensor_dtype_valid(arg_name, arg_type, valid_dtypes, prim_name):
+        """Checks whether the element types of input tensors are valid."""
+        tensor_types = [mstype.tensor_type(t) for t in valid_dtypes]
+        Validator.check_subclass(arg_name, arg_type, tensor_types, prim_name)
+
+    @staticmethod
+    def check_scalar_or_tensor_types_same(args, valid_values, prim_name, allow_mix=False):
         """
         Checks whether the types of inputs are the same. If the input args are tensors, checks their element types.
         If `allow_mix` is True, Tensor(float32) and float32 are type compatible, otherwise an exception will be raised.
@@ -480,7 +469,7 @@ class Validator:
             if isinstance(arg_val, type(mstype.tensor)):
                 arg_val = arg_val.element_type()
             if not arg_val in valid_values:
-                raise TypeError(f'For \'{prim_name}\' the `{arg_key}` should be in {valid_values},'
+                raise TypeError(f'For \'{prim_name}\', the `{arg_key}` should be in {valid_values},'
                                 f' but `{arg_key}` is {arg_val}.')
             return arg
 
@@ -512,40 +501,40 @@ class Validator:
 
         def raise_error_msg():
             """func for raising error message when check failed"""
-            type_names = [t.__name__ for t in valid_types]
+            type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in valid_types]
             num_types = len(valid_types)
-            msg_prefix = f'For \'{prim_name}\' the' if prim_name else 'The'
+            msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
             raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
-                            f'{type_names if num_types > 1 else type_names[0]}, but got {type(arg_value).__name__}.')
+                            f'{type_names if num_types > 1 else type_names[0]}, '
+                            f'but got {arg_value} with type {type(arg_value).__name__}.')
 
         # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
         #         `check_value_type('x', True, [bool, int])` will check pass
         if isinstance(arg_value, bool) and bool not in tuple(valid_types):
             raise_error_msg()
-        if isinstance(arg_value, tuple(valid_types)):
-            return arg_value
-        raise_error_msg()
+        if not isinstance(arg_value, tuple(valid_types)):
+            raise_error_msg()
+        return arg_value
 
     @staticmethod
     def check_type_name(arg_name, arg_type, valid_types, prim_name):
         """Checks whether a type in some specified types"""
         valid_types = valid_types if isinstance(valid_types, Iterable) else (valid_types,)
 
-        def get_typename(t):
-            return t.__name__ if hasattr(t, '__name__') else str(t)
+        def raise_error_msg():
+            """func for raising error message when check failed"""
+            type_names = [t.__name__ if hasattr(t, '__name__') else t for t in valid_types]
+            num_types = len(valid_types)
+            msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+            raise TypeError(f"{msg_prefix} '{arg_name}' should be {'one of ' if num_types > 1 else ''}"
+                            f"{type_names if num_types > 1 else type_names[0]}, "
+                            f"but got {arg_type.__name__ if hasattr(arg_type, '__name__') else repr(arg_type)}.")
 
         if isinstance(arg_type, type(mstype.tensor)):
             arg_type = arg_type.element_type()
-
-        if arg_type in valid_types:
-            return arg_type
-        type_names = [get_typename(t) for t in valid_types]
-        msg_prefix = f'For \'{prim_name}\' the' if prim_name else 'The'
-        if len(valid_types) == 1:
-            raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {type_names[0]},'
-                            f' but got {get_typename(arg_type)}.')
-        raise TypeError(f'{msg_prefix} type of `{arg_name}` should be one of {type_names},'
-                        f' but got {get_typename(arg_type)}.')
+        if arg_type not in valid_types:
+            raise_error_msg()
+        return arg_type
 
     @staticmethod
     def check_reduce_shape(ori_shape, shape, axis, prim_name):
@@ -611,65 +600,6 @@ def check_output_data(data):
 once = _expand_tuple(1)
 twice = _expand_tuple(2)
 triple = _expand_tuple(3)
-valid_data_types = (int, float, np.int8, np.int16, np.int32, np.int64,
-                    np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
-                    np.float32, np.float64, bool, np.bool_)
-
-
-def check_type(arg_name, arg_value, valid_types):
-    """Check value type."""
-    # if input type is Tensor ,get element type
-    if isinstance(arg_value, type(mstype.tensor)):
-        arg_value = arg_value.element_type()
-
-    # First, check if arg_value has argvalid_types
-    if isinstance(arg_value, tuple(valid_types)):
-        return type(arg_value).__name__
-
-    # Second, wrap arg_value with numpy array so that it can be checked through numpy api
-    if isinstance(arg_value, (list, tuple)):
-        arg_value = np.array(arg_value)
-
-    # Thirdly, check the data type by numpy's dtype api
-    valid = False
-    if isinstance(arg_value, np.ndarray):
-        valid = arg_value.dtype in valid_data_types
-
-    # Notice: bool is subclass of int, so `check_type('x', True, [int])` will check fail, and
-    #         `check_type('x', True, [bool, int])` will check pass
-    if isinstance(arg_value, bool) and bool not in tuple(valid_types):
-        valid = False
-
-    if not valid:
-        type_names = [t.__name__ for t in valid_types]
-        if len(valid_types) == 1:
-            raise TypeError(f'The type of `{arg_name}` should be {type_names[0]},'
-                            f' but got {type(arg_value).__name__}.')
-        raise TypeError(f'The type of `{arg_name}` should be one of {type_names},'
-                        f' but got {type(arg_value).__name__}.')
-
-    return type(arg_value).__name__
-
-
-def check_typename(arg_name, arg_type, valid_types):
-    """Check type name."""
-
-    def get_typename(t):
-        return t.__name__ if hasattr(t, '__name__') else str(t)
-
-    if isinstance(arg_type, type(mstype.tensor)):
-        arg_type = arg_type.element_type()
-
-    if arg_type in valid_types:
-        return arg_type
-    if isinstance(arg_type, tuple(valid_types)):
-        return arg_type
-    type_names = [get_typename(t) for t in valid_types]
-    if len(valid_types) == 1:
-        raise TypeError(f'The type of `{arg_name}` should be {type_names[0]},'
-                        f' but got {get_typename(arg_type)}.')
-    raise TypeError(f'The type of `{arg_name}` should be one of {type_names},'
-                    f' but got {get_typename(arg_type)}.')
 
 
 def args_type_check(*type_args, **type_kwargs):
