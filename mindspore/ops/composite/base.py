@@ -337,6 +337,9 @@ class GradOperation(GradOperation_):
             else:
                 @_wrap_func
                 def after_grad(*args, **kwargs):
+                    if _pynative_exec.check_graph(fn, *args, **kwargs):
+                        print("Another grad step is running")
+                        fn.already_run = False
                     self._pynative_forward_run(args, kwargs, fn)
                     _pynative_exec.grad(grad_, fn, weights, *args, **kwargs)
                     out = _pynative_exec(*args, **kwargs)

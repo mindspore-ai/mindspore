@@ -22,6 +22,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include <stack>
 #include <set>
@@ -61,113 +62,134 @@ void ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args, py::tupl
 void ClearPyNativeSession();
 
 struct GraphInfo {
-  std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int>>> param_map;
-  std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int>>> obj_node_map;
+  std::unordered_set<std::string> params;  // hold inpout parameters and cell weigths
+  std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int>>> node_map;
   AnfNodePtr output;
   std::vector<std::string> objects;
 };
 
 class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
- private:
-  MsBackendPolicy InitEnv(const OpExecInfoPtr &op_exec_info);
-  py::tuple RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_exec_info);
-  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
-                       abstract::AbstractBasePtrList *args_spec_list);
-  void RunParameterAutoMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
-
  public:
   static std::shared_ptr<PynativeExecutor> GetInstance() {
     std::lock_guard<std::mutex> i_lock(instance_lock_);
     if (executor_ == nullptr) {
       executor_ = std::shared_ptr<PynativeExecutor>(new (std::nothrow) PynativeExecutor());
-      resource_ = std::make_shared<pipeline::Resource>();
     }
     return executor_;
   }
-  void NewGraph(const py::object &cell, const py::args &args);
-  void NewGraphInner(const py::object &cell, const py::args &args);
-  void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
-  void EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
-  void EndGraphByOutId(const std::string &out_id, const py::object &cell, const py::object &out, const py::args &args);
-  std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights);
-  abstract::AbstractBasePtrList GetArgsSpec(const py::args &args);
-  void GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights, const py::args &args);
-  void GradNetInner(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
-                    const py::args &args);
-  void Clear(const std::string &flag = "");
-  void Clean();
-  void ClearRes();
-  bool grad_flag() { return grad_flag_; }
-  void set_grad_flag(bool flag) { grad_flag_ = flag; }
-  AnfNodePtr GetInput(const py::object &obj, bool op_mask);
-  AnfNodePtr GetObjNode(const py::object &obj);
-  AnfNodePtr GetParamNode(const py::object &obj);
-  std::string GetCellId(const py::object &obj, const py::args &args);
-  FuncGraphPtr curr_g() { return curr_g_; }
-  void set_pyobj(FuncGraphPtr g, const std::string obj) { graph_info_map_[g].objects.push_back(obj); }
-  void set_obj_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node) {
-    graph_info_map_[g].obj_node_map[obj] = std::make_pair(node, std::vector<int>{-1});
-  }
-  void set_obj_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, int index) {
-    graph_info_map_[g].obj_node_map[obj] = std::make_pair(node, std::vector<int>{index});
-  }
-  void set_obj_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, std::vector<int> index) {
-    graph_info_map_[g].obj_node_map[obj] = std::make_pair(node, index);
-  }
-
-  void set_param_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node) {
-    graph_info_map_[g].param_map[obj] = std::make_pair(node, std::vector<int>{-1});
-  }
-  void set_param_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, int index) {
-    graph_info_map_[g].param_map[obj] = std::make_pair(node, std::vector<int>{index});
-  }
-  void set_param_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, std::vector<int> index) {
-    graph_info_map_[g].param_map[obj] = std::make_pair(node, index);
-  }
-  void MakeCNode(const OpExecInfoPtr &op_exec_info, const py::object &out, const AnfNodePtr &cnode);
-  ValuePtr GetForwardValue(const OpExecInfoPtr &op_exec_info);
-  void SaveOpForwardValue(const std::string &id, const ValuePtr &value,
-                          std::map<std::string, tensor::TensorPtr> *t_map);
-  void SaveForwardResult(const CNodePtr &cnode, const py::object &out);
-  void SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out);
-
-  py::object Run(const py::tuple &args, const py::object &phase);
-
-  void Pushp();
-  void Popp();
-  FuncGraphPtr GradGraph(FuncGraphPtr g, const GradOperationPtr &grad_op, const std::vector<AnfNodePtr> &weights,
-                         size_t arg_size);
-  void SetTupleOutput(const py::object &obj, const AnfNodePtr &cnode, std::vector<int> idx);
-  void SetTupleParam(const py::object &obj, const AnfNodePtr &para_node, std::vector<int> idx);
-  AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
-  py::tuple RunOpInner(const py::args &args);
-
   ~PynativeExecutor();
 
+  bool grad_flag() { return grad_flag_; }
+  void set_grad_flag(bool flag) { grad_flag_ = flag; }
+
+  py::tuple RunOpInner(const py::args &args);
+  void NewGraph(const py::object &cell, const py::args &args);
+  py::object Run(const py::tuple &args, const py::object &phase);
+  py::object CheckGraph(const py::object &cell, const py::args &args);
+  void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
+  void GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights, const py::args &args);
+  void SaveOpForwardValue(const std::string &id, const ValuePtr &value,
+                          std::map<std::string, tensor::TensorPtr> *t_map);
+
+  // Call by python
+  void Clear(const std::string &flag = "");
+  // Abnormal existed
+  void Clean();
+  // Destrcut call
+  void ClearRes();
+
  private:
-  PynativeExecutor();
+  PynativeExecutor() = default;
+  PynativeExecutor(const PynativeExecutor &) = delete;
+  PynativeExecutor &operator=(const PynativeExecutor &) = delete;
+
+  // run op
+  AnfNodePtr GetInput(const py::object &obj, bool op_mask);
+  MsBackendPolicy InitEnv(const OpExecInfoPtr &op_exec_info);
+  py::tuple RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_exec_info);
+  void RunParameterAutoMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
+  py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
+  py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info,
+                                    PynativeStatusCode *const status);
+  AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
+  AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
+  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
+                       abstract::AbstractBasePtrList *args_spec_list);
+  void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);
+
+  // replace for grad graph
+  ValuePtr CleanTupleAddr(const ValueTuplePtr &tuple);
+  ValuePtr GetForwardValue(const OpExecInfoPtr &op_exec_info);
+  void SaveForwardResult(const CNodePtr &cnode, const py::object &out);
+  void GenTupleMap(const ValueTuplePtr &tuple, std::map<std::string, tensor::TensorPtr> *t_map);
+  void SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out);
+
+  // construct grad graph
+  void Pushp();
+  void Popp();
+  void NewGraphInner(const py::object &cell, const py::args &args);
+  void MakeNewTopGraph(const string &cell_id, const py::args &args, const FuncGraphPtr &g);
+  void EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
+  void EndGraphByOutId(const std::string &out_id, const py::object &cell, const py::object &out, const py::args &args);
+  FuncGraphPtr MakeGradGraph(const py::object &cell, const py::args &args);
+  void GradNetInner(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
+                    const py::args &args);
+  std::string GetCellId(const py::object &obj, const py::args &args);
+  std::string CheckCellChanged(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
+                               const py::args &args, std::pair<bool, bool> *sens_weights_changed);
+  void SetGradGraphParams(size_t size, const std::string &cell_id, const std::pair<bool, bool> &sens_weights_changed);
+  void GradGraph(FuncGraphPtr g, const GradOperationPtr &grad_op, const std::vector<AnfNodePtr> &weights,
+                 size_t arg_size);
+  std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights);
+  abstract::AbstractBasePtrList GetArgsSpec(const py::args &args);
+
+  // hold graph(forward and grad) info
+  void set_pyobj(FuncGraphPtr g, const std::string obj) { graph_info_map_[g].objects.push_back(obj); }
+  void set_node_map(const FuncGraphPtr &g, const py::object &node, const AnfNodePtr &cnode, bool is_param = false);
+  void set_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node) {
+    graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int>{-1});
+  }
+  void set_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, int index) {
+    graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int>{index});
+  }
+  void set_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, std::vector<int> index) {
+    graph_info_map_[g].node_map[obj] = std::make_pair(node, index);
+  }
+  void set_tuple_node_map(const FuncGraphPtr &g, const py::object &node, const AnfNodePtr &cnode,
+                          const std::vector<int> &idx, bool is_param = false);
+
   static std::shared_ptr<PynativeExecutor> executor_;
   static std::mutex instance_lock_;
-  static ResourcePtr resource_;
   static int graph_id_;
-  bool grad_flag_;
-  bool first_grad_step_;
-  std::unordered_map<std::string, FuncGraphPtr> graph_map_;
-  std::unordered_map<std::string, FuncGraphPtr> cell_graph_map_;
-  std::unordered_map<std::string, ResourcePtr> cell_resource_map_;
+  bool grad_flag_{false};
+  bool first_grad_step_{false};
+  bool grad_is_running{false};
+  bool dynamic_shape{false};
+
+  // Used for construct grad graph
+  FuncGraphPtr top_g_{nullptr};
+  FuncGraphPtr curr_g_{nullptr};
+  FuncGraphPtr df_builder_{nullptr};
+  ResourcePtr resource_{nullptr};
+  // Records forwrad graph, the bottom is top graph
+  std::stack<FuncGraphPtr> graph_context_;
+  std::unordered_set<std::string> top_graph_cells_;
+
+  // record all info of a graph
   std::unordered_map<FuncGraphPtr, GraphInfo> graph_info_map_;
+  std::unordered_map<std::string, ResourcePtr> cell_resource_map_;
+  std::unordered_map<std::string, std::pair<FuncGraphPtr, bool>> cell_graph_map_;
+  // key: cell_id, value: (send_id, weigths_id), cache for sens and weight change
+  std::unordered_map<std::string, std::pair<std::string, std::string>> cell_sw_map_;
+  // key: cell_id, value: (forward graph, grad graph)
+  std::unordered_map<std::string, std::pair<FuncGraphPtr, FuncGraphPtr>> df_builder_map_;
+
+  // used for runop and replace forward result of grad graph
   std::unordered_map<std::string, ValuePtr> op_forward_map_;
   std::unordered_map<std::string, size_t> op_id_map_;
   std::unordered_map<std::string, std::string> obj_to_forward_id_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
-  std::unordered_map<std::string, FuncGraphPtr> df_builder_map_;
-  // the stack that records the context of graph created, the bottom is the top graph
-  std::stack<FuncGraphPtr> graph_context_;
-  FuncGraphPtr top_g_;
-  FuncGraphPtr df_builder_;
-  FuncGraphPtr curr_g_;
   std::unordered_map<std::string, AbstractListMap> prim_abs_list_;
-  std::set<std::string> top_graph_cells_;
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;
