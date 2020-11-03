@@ -302,20 +302,20 @@ void KernelGraph::GetLoopNodesByDFS(AnfNodePtr node, uint32_t *loop_num) {
     } else {
       AnfNodePtr node_iter = node;
       MS_EXCEPTION_IF_NULL(node_iter);
-      MS_LOG(DEBUG) << "Print loop nodes start:";
+      MS_LOG(INFO) << "Print loop nodes start:";
       for (; node_iter != input_edge.first && node_iter != nullptr; node_iter = edge_to_[node_iter]) {
         loop_nodes_.push(node_iter);
         node_input_num_[node_iter]--;
-        MS_LOG(DEBUG) << "Get loop node:" << node_iter->DebugString();
+        MS_LOG(INFO) << "Get loop node:" << node_iter->DebugString();
       }
       if (node_iter != nullptr) {
         loop_nodes_.push(node_iter);
         loop_nodes_.push(node);
         (*loop_num)++;
         node_input_num_[node_iter]--;
-        MS_LOG(DEBUG) << "Get loop node:" << node_iter->DebugString();
-        MS_LOG(DEBUG) << "Get loop node:" << node->DebugString();
-        MS_LOG(DEBUG) << "Print loop nodes end, Loop num:" << *loop_num;
+        MS_LOG(INFO) << "Get loop node:" << node_iter->DebugString();
+        MS_LOG(INFO) << "Get loop node:" << node->DebugString();
+        MS_LOG(INFO) << "Print loop nodes end, Loop num:" << *loop_num;
         while (!loop_nodes_.empty()) {
           loop_nodes_.pop();
         }

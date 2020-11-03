@@ -866,13 +866,20 @@ void SessionBasic::CreateCNodeKernelGraph(const AnfNodePtr node, KernelGraphPtr 
   auto new_cnode = CreateNewCNode(cnode, graph.get());
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
-  new_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
+  std::string fullname;
+  if (cnode->input(kAnfPrimitiveIndex)->isa<CNode>()) {
+    fullname = cnode->input(kAnfPrimitiveIndex)->fullname_with_scope();
+  } else {
+    fullname = cnode->fullname_with_scope();
+  }
+  new_cnode->set_fullname_with_scope(fullname);
   new_cnode->set_scope(cnode->scope());
   graph->FrontBackendlMapAdd(node, new_cnode);
   if (AnfAlgo::CheckPrimitiveType(new_cnode, prim::kPrimReturn)) {
     graph->set_return(new_cnode);
   }
 }
+
 std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                                 std::vector<KernelGraphPtr> *all_out_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
