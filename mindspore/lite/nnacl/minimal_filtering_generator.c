@@ -121,7 +121,7 @@ int B(const float *poly_array, float *matrix_b, int in_unit) {
   return NNACL_OK;
 }
 
-#ifndef ENABLE_ARM
+#if !defined(ENABLE_ARM) && !defined(ENABLE_X86_64_SSE)
 void MatrixMultiplyWinograd(const float *matix_a, const float *matrix_b, float *matrix_c, int m, int k, int n,
                             int in_channel, int c4_channel) {
   int cnt = 0;
