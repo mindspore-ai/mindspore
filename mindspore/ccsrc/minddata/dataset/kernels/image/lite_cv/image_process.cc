@@ -19,8 +19,6 @@
 #include <string.h>
 #include <cmath>
 #include <vector>
-#include <algorithm>
-#include <limits>
 
 namespace mindspore {
 namespace dataset {
@@ -549,73 +547,39 @@ template <typename T>
 static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, const int bottom, const int left,
                             const int right, const PaddBorderType pad_type, uint8_t fill_b_or_gray, uint8_t fill_g,
                             uint8_t fill_r) {
-  dst.Init(src.width_ + left + right, src.height_ + top + bottom, src.channel_, src.data_type_);
-  const T *src_start_p = src;
-  T *dst_start_p = dst;
-  // padd top
-  for (int h = 0; h < top; h++) {
-    for (int w = 0; w < dst.width_; w++) {
-      uint32_t index = (h * dst.width_ + w) * dst.channel_;
-      if (dst.channel_ == 1) {
-        dst_start_p[index] = fill_b_or_gray;
-      } else if (dst.channel_ == 3) {
-        dst_start_p[index] = fill_b_or_gray;
-        dst_start_p[index + 1] = fill_g;
-        dst_start_p[index + 2] = fill_r;
-      } else {
-      }
+  std::vector<uint8_t> row_buffer(dst.width_ * dst.channel_);
+  uint8_t *const_ptr = row_buffer.data();
+  int src_step = src.width_ * dst.channel_;
+  int dst_step = dst.width_ * dst.channel_;
+  if (dst.channel_ == 1) {
+    for (int i = 0; i < dst_step; i++) {
+      const_ptr[i] = fill_b_or_gray;
     }
-  }
-  // padd bottom
-  for (int h = dst.height_ - bottom; h < dst.height_; h++) {
-    for (int w = 0; w < dst.width_; w++) {
-      uint32_t index = (h * dst.width_ + w) * dst.channel_;
-      if (dst.channel_ == 1) {
-        dst_start_p[index] = fill_b_or_gray;
-      } else if (dst.channel_ == 3) {
-        dst_start_p[index] = fill_b_or_gray;
-        dst_start_p[index + 1] = fill_g;
-        dst_start_p[index + 2] = fill_r;
-      } else {
-      }
+  } else if (dst.channel_ == 3) {
+    for (int i = 0; i < dst.width_; i++) {
+      const_ptr[i * dst.channel_] = fill_b_or_gray;
+      const_ptr[i * dst.channel_ + 1] = fill_g;
+      const_ptr[i * dst.channel_ + 2] = fill_r;
     }
   }
 
-  // padd left
-  for (int h = top; h < dst.height_ - bottom; h++) {
-    for (int w = 0; w < left; w++) {
-      uint32_t index = (h * dst.width_ + w) * dst.channel_;
-      if (dst.channel_ == 1) {
-        dst_start_p[index] = fill_b_or_gray;
-      } else if (dst.channel_ == 3) {
-        dst_start_p[index] = fill_b_or_gray;
-        dst_start_p[index + 1] = fill_g;
-        dst_start_p[index + 2] = fill_r;
-      } else {
-      }
-    }
+  uint8_t *dst_ptr = reinterpret_cast<uint8_t *>(dst.data_ptr_);
+  uint8_t *src_ptr = reinterpret_cast<uint8_t *>(src.data_ptr_);
+  for (int i = 0; i < top; i++) {
+    memcpy(dst_ptr + i * dst_step, const_ptr, dst_step);
   }
 
-  // padd right
-  for (int h = top; h < dst.height_ - bottom; h++) {
-    for (int w = dst.width_ - right; w < dst.width_; w++) {
-      uint32_t index = (h * dst.width_ + w) * dst.channel_;
-      if (dst.channel_ == 1) {
-        dst_start_p[index] = fill_b_or_gray;
-      } else if (dst.channel_ == 3) {
-        dst_start_p[index] = fill_b_or_gray;
-        dst_start_p[index + 1] = fill_g;
-        dst_start_p[index + 2] = fill_r;
-      } else {
-      }
-    }
+  int left_size = left * dst.channel_;
+  int right_size = right * dst.channel_;
+  uint8_t *dst_raw_data = dst_ptr + top * dst_step + left_size;
+  for (int i = 0; i < src.width_; i++, dst_raw_data += dst_step, src_ptr += src_step) {
+    memcpy(dst_raw_data, src_ptr, src_step);
+    memcpy(dst_raw_data - left_size, const_ptr, left_size);
+    memcpy(dst_raw_data + src_step, const_ptr, right_size);
   }
-  // image data
-  dst_start_p = dst_start_p + (top * dst.width_ + left) * dst.channel_;
-  for (int i_h = 0; i_h < src.height_; i_h++) {
-    const T *src_index_p = src_start_p + i_h * src.width_ * src.channel_;
-    T *dst_index_p = dst_start_p + i_h * dst.width_ * dst.channel_;
-    (void)memcpy(dst_index_p, src_index_p, src.width_ * src.channel_ * sizeof(T));
+
+  for (int i = dst.height_ - bottom; i < dst.height_; i++) {
+    memcpy(dst_ptr + i * dst_step, const_ptr, dst_step);
   }
 }
 
@@ -756,6 +720,15 @@ bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int ri
     return false;
   }
   if (src.IsEmpty()) {
+    return false;
+  }
+  int dst_width = src.width_ + left + right;
+  int dst_height = src.height_ + top + bottom;
+  if (dst.IsEmpty()) {
+    dst.Init(dst_width, dst_height, src.channel_, src.data_type_);
+  } else if (dst.width_ != dst_width || dst.height_ != dst_height || src.channel_ != dst.channel_) {
+    return false;
+  } else if (src.data_type_ != dst.data_type_) {
     return false;
   }
   if (pad_type == PADD_BORDER_CONSTANT && src.data_type_ == LDataType::FLOAT32) {
@@ -919,168 +892,6 @@ bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_
 
 bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue) {
   return ImplementAffine(src, out_img, M, dsize, borderValue);
-}
-
-template <typename T>
-inline void SubtractImpl(const T *src1_ptr, const T *src2_ptr, T *dst, size_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
-    dst[i] = src1_ptr[i] - src2_ptr[i];
-  }
-}
-
-template <>
-inline void SubtractImpl(const uint8_t *src1_ptr, const uint8_t *src2_ptr, uint8_t *dst, size_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
-    int val = static_cast<int>(src1_ptr[i]) - src2_ptr[i];
-    dst[i] =
-      std::max<int>(std::numeric_limits<uint8_t>::min(), std::min<int>(std::numeric_limits<uint8_t>::max(), val));
-  }
-}
-
-template <>
-inline void SubtractImpl(const uint16_t *src1_ptr, const uint16_t *src2_ptr, uint16_t *dst, size_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
-    int val = static_cast<int>(src1_ptr[i]) - src2_ptr[i];
-    dst[i] =
-      std::max<int>(std::numeric_limits<uint16_t>::min(), std::min<int>(std::numeric_limits<uint16_t>::max(), val));
-  }
-}
-
-template <>
-inline void SubtractImpl(const uint32_t *src1_ptr, const uint32_t *src2_ptr, uint32_t *dst, size_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
-    int64_t val = static_cast<int64_t>(src1_ptr[i]) - src2_ptr[i];
-    dst[i] = std::max<int64_t>(std::numeric_limits<uint32_t>::min(),
-                               std::min<int64_t>(std::numeric_limits<uint32_t>::max(), val));
-  }
-}
-
-bool Subtract(const LiteMat &src1, const LiteMat &src2, LiteMat &dst) {
-  if (src1.width_ != src2.width_ || src1.height_ != src2.height_ || src1.channel_ != src2.channel_) {
-    return false;
-  }
-
-  if (src1.data_type_ != src2.data_type_) {
-    return false;
-  }
-
-  if (dst.IsEmpty()) {
-    dst.Init(src1.width_, src1.height_, src1.channel_, src1.data_type_);
-  } else if (src1.width_ != dst.width_ || src1.height_ != dst.height_ || src1.channel_ != dst.channel_) {
-    return false;
-  } else if (src1.data_type_ != dst.data_type_) {
-    return false;
-  }
-
-  size_t total_size = src1.height_ * src1.width_ * src1.channel_;
-
-  if (src1.data_type_ == LDataType::BOOL) {
-    SubtractImpl<bool>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::INT8) {
-    SubtractImpl<int8_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::UINT8) {
-    SubtractImpl<uint8_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::INT16) {
-    SubtractImpl<int16_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::UINT16) {
-    SubtractImpl<uint16_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::INT32) {
-    SubtractImpl<int32_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::UINT32) {
-    SubtractImpl<uint32_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::INT64) {
-    SubtractImpl<int64_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::UINT64) {
-    SubtractImpl<uint64_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::FLOAT32) {
-    SubtractImpl<float>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::FLOAT64) {
-    SubtractImpl<double>(src1, src2, dst, total_size);
-  } else {
-    return false;
-  }
-
-  return true;
-}
-
-template <typename T>
-inline void DivideImpl(const T *src1_ptr, const T *src2_ptr, T *dst, size_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
-    dst[i] = src1_ptr[i] / (src2_ptr[i] + std::numeric_limits<float>::min());
-  }
-}
-
-template <>
-inline void DivideImpl(const uint8_t *src1_ptr, const uint8_t *src2_ptr, uint8_t *dst, size_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
-    int val = std::round(src1_ptr[i] / (src2_ptr[i] + std::numeric_limits<float>::min()));
-    dst[i] =
-      std::max<int>(std::numeric_limits<uint8_t>::min(), std::min<int>(std::numeric_limits<uint8_t>::max(), val));
-  }
-}
-
-template <>
-inline void DivideImpl(const uint16_t *src1_ptr, const uint16_t *src2_ptr, uint16_t *dst, size_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
-    int val = std::round(src1_ptr[i] / (src2_ptr[i] + std::numeric_limits<float>::min()));
-    dst[i] =
-      std::max<int>(std::numeric_limits<uint16_t>::min(), std::min<int>(std::numeric_limits<uint16_t>::max(), val));
-  }
-}
-
-template <>
-inline void DivideImpl(const uint32_t *src1_ptr, const uint32_t *src2_ptr, uint32_t *dst, size_t total_size) {
-  for (size_t i = 0; i < total_size; i++) {
-    int64_t val = std::round(src1_ptr[i] / (src2_ptr[i] + std::numeric_limits<double>::min()));
-    dst[i] = std::max<int64_t>(std::numeric_limits<uint32_t>::min(),
-                               std::min<int64_t>(std::numeric_limits<uint32_t>::max(), val));
-  }
-}
-
-bool Divide(const LiteMat &src1, const LiteMat &src2, LiteMat &dst) {
-  if (src1.width_ != src2.width_ || src1.height_ != src2.height_ || src1.channel_ != src2.channel_) {
-    return false;
-  }
-
-  if (src1.data_type_ != src2.data_type_) {
-    return false;
-  }
-
-  if (dst.IsEmpty()) {
-    dst.Init(src1.width_, src1.height_, src1.channel_, src1.data_type_);
-  } else if (src1.width_ != dst.width_ || src1.height_ != dst.height_ || src1.channel_ != dst.channel_) {
-    return false;
-  } else if (src1.data_type_ != dst.data_type_) {
-    return false;
-  }
-
-  size_t total_size = src1.height_ * src1.width_ * src1.channel_;
-
-  if (src1.data_type_ == LDataType::INT8) {
-    DivideImpl<int8_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::UINT8) {
-    DivideImpl<uint8_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::INT16) {
-    DivideImpl<int16_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::UINT16) {
-    DivideImpl<uint16_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::INT32) {
-    DivideImpl<int32_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::UINT32) {
-    DivideImpl<uint32_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::INT64) {
-    DivideImpl<int64_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::UINT64) {
-    DivideImpl<uint64_t>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::FLOAT32) {
-    DivideImpl<float>(src1, src2, dst, total_size);
-  } else if (src1.data_type_ == LDataType::FLOAT64) {
-    DivideImpl<double>(src1, src2, dst, total_size);
-  } else {
-    return false;
-  }
-
-  return true;
 }
 
 }  // namespace dataset
