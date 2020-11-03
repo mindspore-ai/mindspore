@@ -262,7 +262,7 @@ void PrintTensor(const lite::Tensor *tensor, OpenCLMemType mem_type, int n, cons
     auto row_size = img_info.width * img_info.FLT4_size;
     for (int i = 0; i < img_info.height; ++i) {
       memcpy(reinterpret_cast<char *>(data.data()) + i * row_size,
-             static_cast<char *>(tensor->data_c()) + i * img_info.row_pitch, row_size);
+             static_cast<char *>(tensor->data_c()) + i * img_info.RowPitch(), row_size);
     }
   }
   allocator->UnmapBuffer(tensor->data_c());
