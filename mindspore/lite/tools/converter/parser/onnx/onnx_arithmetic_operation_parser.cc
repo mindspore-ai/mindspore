@@ -234,13 +234,13 @@ STATUS OnnxMinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::MinT> attr = std::make_unique<schema::MinT>();
+  std::unique_ptr<schema::MinimumT> attr = std::make_unique<schema::MinimumT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
 
-  op->primitive->value.type = schema::PrimitiveType_Min;
+  op->primitive->value.type = schema::PrimitiveType_Minimum;
   op->primitive->value.value = attr.release();
   return RET_OK;
 }
