@@ -17,7 +17,7 @@ Layer.
 
 The high-level components(Cells) used to construct the neural network.
 """
-from . import activation, normalization, container, conv, lstm, basic, embedding, pooling, image, quant, math
+from . import activation, normalization, container, conv, lstm, basic, embedding, pooling, image, quant, math, combined
 from .activation import *
 from .normalization import *
 from .container import *
@@ -29,6 +29,7 @@ from .pooling import *
 from .image import *
 from .quant import *
 from .math import *
+from .combined import *
 
 __all__ = []
 __all__.extend(activation.__all__)
@@ -42,3 +43,4 @@ __all__.extend(pooling.__all__)
 __all__.extend(image.__all__)
 __all__.extend(quant.__all__)
 __all__.extend(math.__all__)
+__all__.extend(combined.__all__)
