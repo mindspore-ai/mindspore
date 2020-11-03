@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 class ConcatNode : public DatasetNode {
  public:
@@ -44,7 +43,6 @@ class ConcatNode : public DatasetNode {
   Status ValidateParams() override;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_CONCAT_NODE_H_

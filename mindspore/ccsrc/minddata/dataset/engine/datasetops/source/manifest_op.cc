@@ -43,7 +43,7 @@ Status ManifestOp::Builder::Build(std::shared_ptr<ManifestOp> *ptr) {
   if (builder_sampler_ == nullptr) {
     const int64_t num_samples = 0;
     const int64_t start_index = 0;
-    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
+    builder_sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(
@@ -67,7 +67,7 @@ Status ManifestOp::Builder::SanityCheck() {
 
 ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, bool decode,
                        const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
-                       std::shared_ptr<Sampler> sampler, std::string usage)
+                       std::shared_ptr<SamplerRT> sampler, std::string usage)
     : ParallelOp(num_works, queue_size, std::move(sampler)),
       rows_per_buffer_(rows_per_buffer),
       io_block_pushed_(0),

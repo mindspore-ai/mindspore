@@ -26,7 +26,6 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Constructor for Cifar10Node
 Cifar10Node::Cifar10Node(const std::string &dataset_dir, const std::string &usage, std::shared_ptr<SamplerObj> sampler,
@@ -71,6 +70,5 @@ Status Cifar10Node::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

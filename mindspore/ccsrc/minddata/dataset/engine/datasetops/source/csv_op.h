@@ -243,7 +243,7 @@ class CsvOp : public ParallelOp {
     // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       builder_sampler_ = std::move(sampler);
       return *this;
     }
@@ -261,7 +261,7 @@ class CsvOp : public ParallelOp {
     char builder_field_delim_;
     std::vector<std::shared_ptr<CsvOp::BaseRecord>> builder_column_default_list_;
     std::vector<std::string> builder_column_name_list_;
-    std::shared_ptr<Sampler> builder_sampler_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
   };
 
   // Constructor of CsvOp
@@ -271,7 +271,7 @@ class CsvOp : public ParallelOp {
         const std::vector<std::shared_ptr<BaseRecord>> &column_default, const std::vector<std::string> &column_name,
         int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
         int32_t op_connector_size, bool shuffle_files, int32_t num_devices, int32_t device_id,
-        std::shared_ptr<Sampler> sampler);
+        std::shared_ptr<SamplerRT> sampler);
 
   // Default destructor
   ~CsvOp() = default;

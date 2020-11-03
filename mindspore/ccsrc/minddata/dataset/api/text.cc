@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Transform operations for text.
 namespace text {
@@ -130,6 +129,5 @@ std::shared_ptr<TensorOp> SentencePieceTokenizerOperation::Build() {
 }
 
 }  // namespace text
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

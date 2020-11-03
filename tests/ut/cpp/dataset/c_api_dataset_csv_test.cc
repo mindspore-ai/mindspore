@@ -48,10 +48,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 
-using namespace mindspore::dataset::api;
-using mindspore::dataset::GlobalContext;
-using mindspore::dataset::ShuffleMode;
-using mindspore::dataset::Tensor;
+using namespace mindspore::dataset;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

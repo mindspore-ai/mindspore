@@ -35,7 +35,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 #define RETURN_NULL_IF_ERROR(_s) \
   do {                           \
@@ -151,10 +150,10 @@ bool DistributedSamplerObj::ValidateParams() {
   return true;
 }
 
-std::shared_ptr<Sampler> DistributedSamplerObj::Build() {
+std::shared_ptr<SamplerRT> DistributedSamplerObj::Build() {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::DistributedSampler>(num_samples_, num_shards_, shard_id_, shuffle_, seed_,
-                                                               offset_, even_dist_);
+  auto sampler = std::make_shared<dataset::DistributedSamplerRT>(num_samples_, num_shards_, shard_id_, shuffle_, seed_,
+                                                                 offset_, even_dist_);
   return sampler;
 }
 
@@ -184,9 +183,9 @@ bool PKSamplerObj::ValidateParams() {
   return true;
 }
 
-std::shared_ptr<Sampler> PKSamplerObj::Build() {
+std::shared_ptr<SamplerRT> PKSamplerObj::Build() {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::PKSampler>(num_samples_, num_val_, shuffle_);
+  auto sampler = std::make_shared<dataset::PKSamplerRT>(num_samples_, num_val_, shuffle_);
 
   return sampler;
 }
@@ -218,10 +217,10 @@ bool RandomSamplerObj::ValidateParams() {
   return true;
 }
 
-std::shared_ptr<Sampler> RandomSamplerObj::Build() {
+std::shared_ptr<SamplerRT> RandomSamplerObj::Build() {
   // runtime sampler object
   bool reshuffle_each_epoch = true;
-  auto sampler = std::make_shared<dataset::RandomSampler>(num_samples_, replacement_, reshuffle_each_epoch);
+  auto sampler = std::make_shared<dataset::RandomSamplerRT>(num_samples_, replacement_, reshuffle_each_epoch);
 
   return sampler;
 }
@@ -255,9 +254,9 @@ bool SequentialSamplerObj::ValidateParams() {
   return true;
 }
 
-std::shared_ptr<Sampler> SequentialSamplerObj::Build() {
+std::shared_ptr<SamplerRT> SequentialSamplerObj::Build() {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::SequentialSampler>(num_samples_, start_index_);
+  auto sampler = std::make_shared<dataset::SequentialSamplerRT>(num_samples_, start_index_);
 
   return sampler;
 }
@@ -284,9 +283,9 @@ bool SubsetRandomSamplerObj::ValidateParams() {
   return true;
 }
 
-std::shared_ptr<Sampler> SubsetRandomSamplerObj::Build() {
+std::shared_ptr<SamplerRT> SubsetRandomSamplerObj::Build() {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::SubsetRandomSampler>(num_samples_, indices_);
+  auto sampler = std::make_shared<dataset::SubsetRandomSamplerRT>(num_samples_, indices_);
 
   return sampler;
 }
@@ -330,11 +329,10 @@ bool WeightedRandomSamplerObj::ValidateParams() {
   return true;
 }
 
-std::shared_ptr<Sampler> WeightedRandomSamplerObj::Build() {
-  auto sampler = std::make_shared<dataset::WeightedRandomSampler>(num_samples_, weights_, replacement_);
+std::shared_ptr<SamplerRT> WeightedRandomSamplerObj::Build() {
+  auto sampler = std::make_shared<dataset::WeightedRandomSamplerRT>(num_samples_, weights_, replacement_);
   return sampler;
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

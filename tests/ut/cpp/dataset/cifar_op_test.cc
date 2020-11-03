@@ -44,12 +44,16 @@ std::shared_ptr<RepeatOp> Repeat(int repeatCnt);
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
 std::shared_ptr<CifarOp> Cifarop(uint64_t num_works, uint64_t rows, uint64_t conns, std::string path,
-                                 std::shared_ptr<Sampler> sampler = nullptr, bool cifar10 = true) {
+                                 std::shared_ptr<SamplerRT> sampler = nullptr, bool cifar10 = true) {
   std::shared_ptr<CifarOp> so;
   CifarOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_works).SetCifarDir(path).SetRowsPerBuffer(rows)
-                     .SetOpConnectorSize(conns).SetSampler(std::move(sampler)).SetCifarType(cifar10)
-                     .Build(&so);
+  Status rc = builder.SetNumWorkers(num_works)
+                .SetCifarDir(path)
+                .SetRowsPerBuffer(rows)
+                .SetOpConnectorSize(conns)
+                .SetSampler(std::move(sampler))
+                .SetCifarType(cifar10)
+                .Build(&so);
   return so;
 }
 
@@ -91,7 +95,7 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar10) {
 TEST_F(MindDataTestCifarOp, TestRandomSamplerCifar10) {
   uint32_t original_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(0);
-  std::shared_ptr<Sampler> sampler = std::make_unique<RandomSampler>(12, true, true);
+  std::shared_ptr<SamplerRT> sampler = std::make_unique<RandomSamplerRT>(12, true, true);
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   auto tree = Build({Cifarop(16, 2, 32, folder_path, std::move(sampler))});
   tree->Prepare();

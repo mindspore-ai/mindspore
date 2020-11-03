@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 class VOCNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -63,7 +63,7 @@ class VOCNode : public DatasetNode {
   bool decode_;
   std::shared_ptr<SamplerObj> sampler_;
 };
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_VOC_NODE_H_

@@ -37,12 +37,7 @@
 // IR leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 
-using namespace mindspore::dataset::api;
-using mindspore::dataset::DataType;
-using mindspore::dataset::ShuffleMode;
-using mindspore::dataset::Status;
-using mindspore::dataset::Tensor;
-using mindspore::dataset::Vocab;
+using namespace mindspore::dataset;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

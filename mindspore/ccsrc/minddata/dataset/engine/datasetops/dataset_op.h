@@ -62,7 +62,7 @@ class DataBuffer;
 
 class NodePass;
 
-class Sampler;
+class SamplerRT;
 
 /// \brief The base class DatasetOp is the main tree node.  It is an abstract class, so
 /// the actual implementation of the operators will be derived from here.
@@ -80,7 +80,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// Constructor
   /// \param op_connector_size - The size for the output connector of this operator.
   /// \param sampler - The sampler for the op
-  explicit DatasetOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler);
+  explicit DatasetOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampler);
 
   /// Destructor
   virtual ~DatasetOp() { tree_ = nullptr; }
@@ -347,12 +347,12 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   /// Getter for the sampler
   /// \return Shared pointer to the sampler (may return nullptr)
-  std::shared_ptr<Sampler> sampler() { return sampler_; }
+  std::shared_ptr<SamplerRT> sampler() { return sampler_; }
 
   /// \brief Getter for the sampler, and it also removes the sampler from the op
   /// \param[out] sampler A pointer to the output sampler that was removed
   /// \return Status error code
-  Status FetchRemoveSampler(std::shared_ptr<Sampler> *sampler);
+  Status FetchRemoveSampler(std::shared_ptr<SamplerRT> *sampler);
 
 #ifndef ENABLE_ANDROID
   // Computes a CRC value for the operator
@@ -368,7 +368,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   }
 
   /// \brief Setter for the sampler.  Allows you to overwrite a previous sampler with a new one.
-  void SetSampler(std::shared_ptr<Sampler> sampler) { sampler_ = sampler; }
+  void SetSampler(std::shared_ptr<SamplerRT> sampler) { sampler_ = sampler; }
 
   /// \brief Checks if this is a leaf node (0 children)
   /// \return boolean returns true if it's a leaf
@@ -409,7 +409,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   std::vector<std::shared_ptr<DatasetOp>> child_;                // Child nodes
   std::vector<DatasetOp *> parent_;                              // Parent nodes. No ownership
-  std::shared_ptr<Sampler> sampler_;                             // Some leaf ops might have a sampler
+  std::shared_ptr<SamplerRT> sampler_;                           // Some leaf ops might have a sampler
   int32_t oc_queue_size_;                                        // Capacity for each out_connector_
   int32_t operator_id_;                                          // Generated id for the node
   ExecutionTree *tree_;                                          // Back pointer to our tree.

@@ -77,7 +77,7 @@ CsvOp::CsvOp(const std::vector<std::string> &csv_files_list, char field_delim,
              const std::vector<std::shared_ptr<BaseRecord>> &column_default,
              const std::vector<std::string> &column_name, int32_t num_workers, int64_t rows_per_buffer,
              int64_t num_samples, int32_t worker_connector_size, int32_t op_connector_size, bool shuffle_files,
-             int32_t num_device, int32_t device_id, std::shared_ptr<Sampler> sampler)
+             int32_t num_device, int32_t device_id, std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
       csv_files_list_(std::move(csv_files_list)),
       field_delim_(field_delim),

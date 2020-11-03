@@ -50,7 +50,7 @@ Status CifarOp::Builder::Build(std::shared_ptr<CifarOp> *ptr) {
   if (sampler_ == nullptr) {
     const int64_t num_samples = 0;
     const int64_t start_index = 0;
-    sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
+    sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   }
   schema_ = std::make_unique<DataSchema>();
   TensorShape scalar = TensorShape::CreateScalar();
@@ -88,7 +88,7 @@ Status CifarOp::Builder::SanityCheck() {
 
 CifarOp::CifarOp(CifarType type, const std::string &usage, int32_t num_works, int32_t rows_per_buf,
                  const std::string &file_dir, int32_t queue_size, std::unique_ptr<DataSchema> data_schema,
-                 std::shared_ptr<Sampler> sampler)
+                 std::shared_ptr<SamplerRT> sampler)
     : ParallelOp(num_works, queue_size, std::move(sampler)),
       cifar_type_(type),
       usage_(usage),

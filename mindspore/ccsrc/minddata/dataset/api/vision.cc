@@ -65,7 +65,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Transform operations for computer vision.
 namespace vision {
@@ -1702,6 +1701,5 @@ std::shared_ptr<TensorOp> UniformAugOperation::Build() {
 #endif
 
 }  // namespace vision
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

@@ -28,7 +28,6 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Constructor for CLUENode
 CLUENode::CLUENode(const std::vector<std::string> clue_files, std::string task, std::string usage, int64_t num_samples,
@@ -226,6 +225,5 @@ Status CLUENode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

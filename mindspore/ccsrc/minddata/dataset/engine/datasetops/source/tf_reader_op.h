@@ -156,14 +156,14 @@ class TFReaderOp : public ParallelOp {
     // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       builder_sampler_ = std::move(sampler);
       return *this;
     }
 
    private:
     std::unique_ptr<DataSchema> builder_data_schema_;
-    std::shared_ptr<Sampler> builder_sampler_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
     int32_t builder_device_id_;
     int32_t builder_num_devices_;
     int32_t builder_num_workers_;
@@ -193,7 +193,7 @@ class TFReaderOp : public ParallelOp {
   TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t rows_per_buffer, int64_t total_num_rows,
              std::vector<std::string> dataset_files_list, std::unique_ptr<DataSchema> data_schema,
              int32_t op_connector_size, std::vector<std::string> columns_to_load, bool shuffle_files,
-             int32_t num_devices, int32_t device_id, bool equal_rows_per_shard, std::shared_ptr<Sampler> sampler);
+             int32_t num_devices, int32_t device_id, bool equal_rows_per_shard, std::shared_ptr<SamplerRT> sampler);
 
   // Default destructor
   ~TFReaderOp() = default;
@@ -261,6 +261,8 @@ class TFReaderOp : public ParallelOp {
   /// \param[out] dataset_size the size of the dataset
   /// \return Status of the function
   Status GetDatasetSize(int64_t *dataset_size) override;
+
+  static bool ValidateFirstRowCrc(const std::string &filename);
 
  private:
   // The entry point for when workers are launched.

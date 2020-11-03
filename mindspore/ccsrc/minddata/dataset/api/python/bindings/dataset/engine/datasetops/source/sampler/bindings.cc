@@ -27,59 +27,59 @@
 namespace mindspore {
 namespace dataset {
 
-PYBIND_REGISTER(Sampler, 0, ([](const py::module *m) {
-                  (void)py::class_<Sampler, std::shared_ptr<Sampler>>(*m, "Sampler")
+PYBIND_REGISTER(SamplerRT, 0, ([](const py::module *m) {
+                  (void)py::class_<SamplerRT, std::shared_ptr<SamplerRT>>(*m, "Sampler")
                     .def("set_num_rows",
-                         [](Sampler &self, int64_t rows) { THROW_IF_ERROR(self.SetNumRowsInDataset(rows)); })
+                         [](SamplerRT &self, int64_t rows) { THROW_IF_ERROR(self.SetNumRowsInDataset(rows)); })
                     .def("set_num_samples",
-                         [](Sampler &self, int64_t samples) { THROW_IF_ERROR(self.SetNumSamples(samples)); })
-                    .def("initialize", [](Sampler &self) { THROW_IF_ERROR(self.InitSampler()); })
+                         [](SamplerRT &self, int64_t samples) { THROW_IF_ERROR(self.SetNumSamples(samples)); })
+                    .def("initialize", [](SamplerRT &self) { THROW_IF_ERROR(self.InitSampler()); })
                     .def("get_indices",
-                         [](Sampler &self) {
+                         [](SamplerRT &self) {
                            py::array ret;
                            THROW_IF_ERROR(self.GetAllIdsThenReset(&ret));
                            return ret;
                          })
-                    .def("add_child", [](std::shared_ptr<Sampler> self, std::shared_ptr<Sampler> child) {
+                    .def("add_child", [](std::shared_ptr<SamplerRT> self, std::shared_ptr<SamplerRT> child) {
                       THROW_IF_ERROR(self->AddChild(child));
                     });
                 }));
 
-PYBIND_REGISTER(DistributedSampler, 1, ([](const py::module *m) {
-                  (void)py::class_<DistributedSampler, Sampler, std::shared_ptr<DistributedSampler>>(
+PYBIND_REGISTER(DistributedSamplerRT, 1, ([](const py::module *m) {
+                  (void)py::class_<DistributedSamplerRT, SamplerRT, std::shared_ptr<DistributedSamplerRT>>(
                     *m, "DistributedSampler")
                     .def(py::init<int64_t, int64_t, int64_t, bool, uint32_t, int64_t>());
                 }));
 
-PYBIND_REGISTER(PKSampler, 1, ([](const py::module *m) {
-                  (void)py::class_<PKSampler, Sampler, std::shared_ptr<PKSampler>>(*m, "PKSampler")
+PYBIND_REGISTER(PKSamplerRT, 1, ([](const py::module *m) {
+                  (void)py::class_<PKSamplerRT, SamplerRT, std::shared_ptr<PKSamplerRT>>(*m, "PKSampler")
                     .def(py::init<int64_t, int64_t, bool>());
                 }));
 
-PYBIND_REGISTER(PythonSampler, 1, ([](const py::module *m) {
-                  (void)py::class_<PythonSampler, Sampler, std::shared_ptr<PythonSampler>>(*m, "PythonSampler")
+PYBIND_REGISTER(PythonSamplerRT, 1, ([](const py::module *m) {
+                  (void)py::class_<PythonSamplerRT, SamplerRT, std::shared_ptr<PythonSamplerRT>>(*m, "PythonSampler")
                     .def(py::init<int64_t, py::object>());
                 }));
 
-PYBIND_REGISTER(RandomSampler, 1, ([](const py::module *m) {
-                  (void)py::class_<RandomSampler, Sampler, std::shared_ptr<RandomSampler>>(*m, "RandomSampler")
+PYBIND_REGISTER(RandomSamplerRT, 1, ([](const py::module *m) {
+                  (void)py::class_<RandomSamplerRT, SamplerRT, std::shared_ptr<RandomSamplerRT>>(*m, "RandomSampler")
                     .def(py::init<int64_t, bool, bool>());
                 }));
 
-PYBIND_REGISTER(SequentialSampler, 1, ([](const py::module *m) {
-                  (void)py::class_<SequentialSampler, Sampler, std::shared_ptr<SequentialSampler>>(*m,
-                                                                                                   "SequentialSampler")
+PYBIND_REGISTER(SequentialSamplerRT, 1, ([](const py::module *m) {
+                  (void)py::class_<SequentialSamplerRT, SamplerRT, std::shared_ptr<SequentialSamplerRT>>(
+                    *m, "SequentialSampler")
                     .def(py::init<int64_t, int64_t>());
                 }));
 
-PYBIND_REGISTER(SubsetRandomSampler, 1, ([](const py::module *m) {
-                  (void)py::class_<SubsetRandomSampler, Sampler, std::shared_ptr<SubsetRandomSampler>>(
+PYBIND_REGISTER(SubsetRandomSamplerRT, 1, ([](const py::module *m) {
+                  (void)py::class_<SubsetRandomSamplerRT, SamplerRT, std::shared_ptr<SubsetRandomSamplerRT>>(
                     *m, "SubsetRandomSampler")
                     .def(py::init<int64_t, std::vector<int64_t>>());
                 }));
 
-PYBIND_REGISTER(WeightedRandomSampler, 1, ([](const py::module *m) {
-                  (void)py::class_<WeightedRandomSampler, Sampler, std::shared_ptr<WeightedRandomSampler>>(
+PYBIND_REGISTER(WeightedRandomSamplerRT, 1, ([](const py::module *m) {
+                  (void)py::class_<WeightedRandomSamplerRT, SamplerRT, std::shared_ptr<WeightedRandomSamplerRT>>(
                     *m, "WeightedRandomSampler")
                     .def(py::init<int64_t, std::vector<double>, bool>());
                 }));

@@ -85,7 +85,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CacheOp> node, b
       // We're a cache op but no sampler was saved from leaf, so create a default sampler
       const int64_t num_samples = 0;
       const int64_t start_index = 0;
-      sampler_ = std::make_shared<SequentialSampler>(num_samples, start_index);
+      sampler_ = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
       node->SetSampler(std::move(sampler_));
       MS_LOG(INFO) << "Cache transform pass: Creating default sequential sampler for cache op.";
     }
@@ -128,7 +128,7 @@ Status CacheTransformPass::CachePass::NonMappableCacheLeafSetup(std::shared_ptr<
   } else {
     // If we are a non-mappable leaf and are not in a cache tree, then this sampler is not used so we can
     // remove it here.  The leaf itself will provide it's own methods of fetching the data (not sampler-based)
-    std::shared_ptr<Sampler> sampler_from_leaf;
+    std::shared_ptr<SamplerRT> sampler_from_leaf;
     RETURN_IF_NOT_OK(leaf_op->FetchRemoveSampler(&sampler_from_leaf));
   }
   return Status::OK();
@@ -278,7 +278,7 @@ Status CacheTransformPass::ExecuteCacheTransform(ExecutionTree *tree, std::share
   cache_op->Parent(&cache_parent, 0);  // fetch the cache op's parent
 
   // Extract the sampler from the leaf.  We will overwrite this sampler with the lookup op later.
-  std::shared_ptr<Sampler> leaf_sampler = leaf_op->sampler();
+  std::shared_ptr<SamplerRT> leaf_sampler = leaf_op->sampler();
 
   // Construct the merge op with defaults
   std::shared_ptr<CacheMergeOp> merge_op;

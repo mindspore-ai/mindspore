@@ -28,7 +28,6 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler,
                                  bool recursive, std::set<std::string> extensions,
@@ -78,6 +77,5 @@ Status ImageFolderNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

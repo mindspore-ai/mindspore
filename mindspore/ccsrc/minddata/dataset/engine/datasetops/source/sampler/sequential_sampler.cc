@@ -20,10 +20,10 @@
 
 namespace mindspore {
 namespace dataset {
-SequentialSampler::SequentialSampler(int64_t num_samples, int64_t start_index, int64_t samples_per_buffer)
-    : Sampler(num_samples, samples_per_buffer), start_index_(start_index), current_id_(start_index), id_count_(0) {}
+SequentialSamplerRT::SequentialSamplerRT(int64_t num_samples, int64_t start_index, int64_t samples_per_buffer)
+    : SamplerRT(num_samples, samples_per_buffer), start_index_(start_index), current_id_(start_index), id_count_(0) {}
 
-Status SequentialSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status SequentialSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (id_count_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED("SequentialSampler Internal Error");
   } else if (id_count_ == num_samples_) {
@@ -62,7 +62,7 @@ Status SequentialSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer)
   return Status::OK();
 }
 
-Status SequentialSampler::InitSampler() {
+Status SequentialSamplerRT::InitSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(start_index_ >= 0,
                                "Invalid parameter, start_index must be greater than or equal to 0, but got " +
                                  std::to_string(start_index_) + ".\n");
@@ -85,7 +85,7 @@ Status SequentialSampler::InitSampler() {
   return Status::OK();
 }
 
-Status SequentialSampler::ResetSampler() {
+Status SequentialSamplerRT::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(id_count_ == num_samples_, "ERROR Reset() called early/late");
   current_id_ = start_index_;
   id_count_ = 0;
@@ -97,11 +97,11 @@ Status SequentialSampler::ResetSampler() {
   return Status::OK();
 }
 
-void SequentialSampler::Print(std::ostream &out, bool show_all) const {
+void SequentialSamplerRT::Print(std::ostream &out, bool show_all) const {
   out << "\nSampler: SequentialSampler";
   if (show_all) {
     // Call the super class for displaying any common detailed info
-    Sampler::Print(out, show_all);
+    SamplerRT::Print(out, show_all);
     // Then add our own info
     out << "\nStart index: " << start_index_;
   }

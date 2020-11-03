@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Get the next row from the data pipeline.
 bool Iterator::GetNextRow(TensorMap *row) {
@@ -45,19 +44,18 @@ bool Iterator::GetNextRow(TensorVec *row) {
 }
 
 // Shut down the data pipeline.
-void Iterator::Stop() { runtime_context->Terminate(); }
+void Iterator::Stop() { runtime_context_->Terminate(); }
 
 // Function to build and launch the execution tree.
 Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
-  runtime_context = std::make_unique<RuntimeContext>();
-  RETURN_IF_NOT_OK(runtime_context->Init());
+  runtime_context_ = std::make_unique<RuntimeContext>();
+  RETURN_IF_NOT_OK(runtime_context_->Init());
   auto consumer = std::make_unique<IteratorConsumer>();
   consumer_ = consumer.get();
   RETURN_IF_NOT_OK(consumer->Init(ds->IRNode()));
-  runtime_context->AssignConsumer(std::move(consumer));
+  runtime_context_->AssignConsumer(std::move(consumer));
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

@@ -26,7 +26,7 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 // ValidateParams for RandomNode
 Status RandomNode::ValidateParams() {
   if (total_rows_ < 0) {
@@ -106,6 +106,5 @@ Status RandomNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Config operations for setting and getting the configuration.
 namespace config {
@@ -76,7 +75,6 @@ int32_t get_callback_timeout();
 bool load(std::string file);
 
 }  // namespace config
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 

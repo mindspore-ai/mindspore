@@ -115,7 +115,7 @@ class TextFileOp : public ParallelOp {
     // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       builder_sampler_ = std::move(sampler);
       return *this;
     }
@@ -131,7 +131,7 @@ class TextFileOp : public ParallelOp {
     std::vector<std::string> builder_text_files_list_;
     bool builder_shuffle_files_;
     std::unique_ptr<DataSchema> builder_schema_;
-    std::shared_ptr<Sampler> builder_sampler_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
   };
 
   // Constructor of TextFileOp
@@ -148,7 +148,7 @@ class TextFileOp : public ParallelOp {
   // @param sampler - allow a sampler.  Only valid if a cache exists in ascendent tree nodes
   TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t total_rows, int32_t worker_connector_size,
              std::unique_ptr<DataSchema>, std::vector<std::string> text_files_list, int32_t op_connector_size,
-             bool shuffle_files, int32_t num_devices, int32_t device_id, std::shared_ptr<Sampler> sampler);
+             bool shuffle_files, int32_t num_devices, int32_t device_id, std::shared_ptr<SamplerRT> sampler);
 
   // Default destructor
   ~TextFileOp() = default;

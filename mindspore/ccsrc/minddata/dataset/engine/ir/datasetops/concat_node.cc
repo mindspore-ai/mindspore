@@ -25,7 +25,7 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 // Function to build ConcatOp
 ConcatNode::ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets) { this->children = datasets; }
 
@@ -53,6 +53,5 @@ std::vector<std::shared_ptr<DatasetOp>> ConcatNode::Build() {
   return node_ops;
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

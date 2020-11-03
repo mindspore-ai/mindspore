@@ -36,7 +36,7 @@ ConcatOp::Builder::Builder() {
 // The builder "build" method creates the final object.
 Status ConcatOp::Builder::Build(std::shared_ptr<ConcatOp> *ptr) {
   if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<DistributedSampler>(0, 1, 0, false);
+    builder_sampler_ = std::make_shared<DistributedSamplerRT>(0, 1, 0, false);
   }
   *ptr = std::make_shared<ConcatOp>(builder_op_connector_size_, builder_sampler_, children_flag_and_nums_,
                                     children_start_end_index_);
@@ -44,7 +44,7 @@ Status ConcatOp::Builder::Build(std::shared_ptr<ConcatOp> *ptr) {
 }
 
 // Constructor of the ConcatOp.
-ConcatOp::ConcatOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler,
+ConcatOp::ConcatOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampler,
                    std::vector<std::pair<int, int>> children_flag_and_nums,
                    std::vector<std::pair<int, int>> children_start_end_index)
     : PipelineOp(op_connector_size),
@@ -80,7 +80,7 @@ Status ConcatOp::operator()() {
   bool is_not_mappable = true;
   int num_shard = 1;
   int shard_index = 0;
-  std::shared_ptr<DistributedSampler> distribute_sampler = std::dynamic_pointer_cast<DistributedSampler>(sampler_);
+  std::shared_ptr<DistributedSamplerRT> distribute_sampler = std::dynamic_pointer_cast<DistributedSamplerRT>(sampler_);
   if (distribute_sampler != nullptr) {
     num_shard = distribute_sampler->GetDeviceNum();
     shard_index = distribute_sampler->GetDeviceID();

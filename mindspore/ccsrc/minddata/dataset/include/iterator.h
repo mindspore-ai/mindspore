@@ -35,7 +35,6 @@ class Tensor;
 
 class RuntimeContext;
 class IteratorConsumer;
-namespace api {
 
 class Dataset;
 
@@ -114,10 +113,9 @@ class Iterator {
   _Iterator end() { return _Iterator(nullptr); }
 
  private:
-  std::unique_ptr<RuntimeContext> runtime_context;
+  std::unique_ptr<RuntimeContext> runtime_context_;
   IteratorConsumer *consumer_;
 };
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_ITERATOR_H_

@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 class MindDataNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -73,7 +73,6 @@ class MindDataNode : public DatasetNode {
   int64_t num_padded_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_MINDDATA_NODE_H_

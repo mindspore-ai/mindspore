@@ -29,8 +29,6 @@
 namespace mindspore {
 namespace dataset {
 
-namespace api {
-
 /// \class ImageFolderNode
 /// \brief A Dataset derived class to represent ImageFolder dataset
 class ImageFolderNode : public DatasetNode {
@@ -63,7 +61,7 @@ class ImageFolderNode : public DatasetNode {
   std::map<std::string, int32_t> class_indexing_;
   std::set<std::string> exts_;
 };
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_IMAGE_FOLDER_NODE_H_

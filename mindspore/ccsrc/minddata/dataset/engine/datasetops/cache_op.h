@@ -81,7 +81,7 @@ class CacheOp : public CacheBase, public RandomAccessOp {
     /// \brief Setter method
     /// \param sampler
     /// \return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       build_sampler_ = std::move(sampler);
       return *this;
     }
@@ -96,7 +96,7 @@ class CacheOp : public CacheBase, public RandomAccessOp {
     int32_t rows_per_buffer_;
     int32_t build_op_connector_size_;
     std::shared_ptr<CacheClient> build_cache_client_;
-    std::shared_ptr<Sampler> build_sampler_;
+    std::shared_ptr<SamplerRT> build_sampler_;
 
     /// \brief Check if the required parameters are set by the builder.
     /// \return Status The error code return
@@ -108,7 +108,7 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   /// \param num_workers The number of worker threads.
   /// \param op_connector_size The size of each queue in the connector.
   CacheOp(int32_t num_workers, int32_t op_connector_size, int32_t rows_per_buf,
-          std::shared_ptr<CacheClient> cache_client, std::shared_ptr<Sampler> sampler);
+          std::shared_ptr<CacheClient> cache_client, std::shared_ptr<SamplerRT> sampler);
 
   // Destructor
   ~CacheOp();

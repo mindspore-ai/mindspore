@@ -41,7 +41,7 @@ class ParallelOp : public DatasetOp {
   // @param num_workers
   // @param op_connector_size - size of the output connector for this operator
   // @param sampler - The sampler for the op
-  ParallelOp(int32_t num_workers, int32_t op_connector_size, std::shared_ptr<Sampler> sampler = nullptr);
+  ParallelOp(int32_t num_workers, int32_t op_connector_size, std::shared_ptr<SamplerRT> sampler = nullptr);
 
   // Destructor
   ~ParallelOp() = default;

@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Config operations for setting and getting the configuration.
 namespace config {
@@ -104,6 +103,5 @@ bool load(std::string file) {
 }
 
 }  // namespace config
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

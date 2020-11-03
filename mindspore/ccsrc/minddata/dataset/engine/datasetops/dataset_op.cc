@@ -40,7 +40,7 @@
 namespace mindspore {
 namespace dataset {
 // Constructor
-DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<Sampler> sampler)
+DatasetOp::DatasetOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampler)
     : oc_queue_size_(op_connector_size),
       sampler_(sampler),
       operator_id_(kInvalidOperatorId),
@@ -409,7 +409,7 @@ Status DatasetOp::Accept(NodePass *p, bool *modified) {
 }
 
 // Getter for the sampler, and it also removes the sampler from the op
-Status DatasetOp::FetchRemoveSampler(std::shared_ptr<Sampler> *sampler) {
+Status DatasetOp::FetchRemoveSampler(std::shared_ptr<SamplerRT> *sampler) {
   *sampler = sampler_;  // It's okay if it sampler_ points to nullptr
   sampler_.reset();     // clear our member-copy of this pointer.  We no longer have this sampler
   return Status::OK();

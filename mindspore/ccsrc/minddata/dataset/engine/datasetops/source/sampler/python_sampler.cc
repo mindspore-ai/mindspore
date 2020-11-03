@@ -20,10 +20,10 @@
 namespace mindspore {
 namespace dataset {
 
-PythonSampler::PythonSampler(int64_t num_samples, py::object py_sampler_instance, int64_t samples_per_buffer)
-    : Sampler(num_samples, samples_per_buffer), py_sampler_instance(py_sampler_instance), need_to_reset_(false) {}
+PythonSamplerRT::PythonSamplerRT(int64_t num_samples, py::object py_sampler_instance, int64_t samples_per_buffer)
+    : SamplerRT(num_samples, samples_per_buffer), py_sampler_instance(py_sampler_instance), need_to_reset_(false) {}
 
-Status PythonSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
+Status PythonSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (need_to_reset_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
@@ -64,7 +64,7 @@ Status PythonSampler::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   return Status::OK();
 }
 
-Status PythonSampler::InitSampler() {
+Status PythonSamplerRT::InitSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(
     num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0, but got " + std::to_string(num_rows_));
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
@@ -86,7 +86,7 @@ Status PythonSampler::InitSampler() {
   return Status::OK();
 }
 
-Status PythonSampler::ResetSampler() {
+Status PythonSamplerRT::ResetSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(need_to_reset_, "ERROR Reset() called not at end of an epoch");
   need_to_reset_ = false;
   py::gil_scoped_acquire gil_acquire;
@@ -106,11 +106,11 @@ Status PythonSampler::ResetSampler() {
   return Status::OK();
 }
 
-void PythonSampler::Print(std::ostream &out, bool show_all) const {
+void PythonSamplerRT::Print(std::ostream &out, bool show_all) const {
   out << "\nSampler: PythonSampler";
   if (show_all) {
     // Call the super class for displaying any common detailed info
-    Sampler::Print(out, show_all);
+    SamplerRT::Print(out, show_all);
     // Then add our own info if any
   }
 }

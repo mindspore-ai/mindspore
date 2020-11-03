@@ -27,7 +27,7 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 // Constructor for TextFileNode
 TextFileNode::TextFileNode(std::vector<std::string> dataset_files, int32_t num_samples, ShuffleMode shuffle,
                            int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache)
@@ -108,6 +108,5 @@ Status TextFileNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

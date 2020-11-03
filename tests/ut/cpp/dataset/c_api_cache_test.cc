@@ -33,7 +33,6 @@
 #include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 
 using namespace mindspore::dataset;
-using namespace mindspore::dataset::api;
 
 // Helper function to get the session id from SESSION_ID env variable
 Status GetSessionFromEnv(session_id_type *session_id);
@@ -744,4 +743,3 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheClueCApi) {
   // Manually terminate the pipeline
   iter->Stop();
 }
-

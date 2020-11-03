@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace dataset {
-class DistributedSampler : public Sampler {
+class DistributedSamplerRT : public SamplerRT {
  public:
   /// \brief Constructor
   /// \param[in] num_samples The total number of rows in the dataset
@@ -40,11 +40,12 @@ class DistributedSampler : public Sampler {
   ///     This option is not exposed in the python API. Current behavior is that the remainder will always
   ///     be handled by the first n shards, n being the corresponding device id. Please notice that when offset is set,
   ///     even_dist will be forcibly converted to false for sending rest datasets in concatdataset scenario.
-  DistributedSampler(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
-                     uint32_t seed = std::numeric_limits<uint32_t>::max(), int64_t offset = -1, bool even_dist = true);
+  DistributedSamplerRT(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
+                       uint32_t seed = std::numeric_limits<uint32_t>::max(), int64_t offset = -1,
+                       bool even_dist = true);
 
   /// \brief default destructor
-  ~DistributedSampler() = default;
+  ~DistributedSamplerRT() = default;
 
   /// \param std::unique_ptr<DataBuffer> * pBuffer
   /// \param int32_t workerId

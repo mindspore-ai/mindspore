@@ -29,10 +29,7 @@
 namespace mindspore::dataset {
 // Forward declare
 class TreeAdapter;
-
-namespace api {
 class DatasetNode;
-}
 
 /// A base class for tree consumers which would fetch rows from the tree pipeline
 class TreeConsumer {
@@ -42,7 +39,7 @@ class TreeConsumer {
   /// Initializes the consumer, this involves constructing and preparing the tree.
   /// \param d The dataset node that represent the root of the IR tree.
   /// \return Status error code.
-  virtual Status Init(std::shared_ptr<api::DatasetNode> d);
+  virtual Status Init(std::shared_ptr<DatasetNode> d);
 
   Status Terminate();
 
@@ -61,7 +58,7 @@ class IteratorConsumer : public TreeConsumer {
   /// \param num_epochs number of epochs. Default to -1 (infinite epochs).
   explicit IteratorConsumer(int32_t num_epochs = -1) : TreeConsumer(), num_epochs_(num_epochs) {}
 
-  Status Init(std::shared_ptr<api::DatasetNode> d) override;
+  Status Init(std::shared_ptr<DatasetNode> d) override;
 
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
@@ -133,7 +130,7 @@ class ToDevice : public TreeConsumer {
   explicit ToDevice(bool send_epoch_end, int32_t num_epochs = -1)
       : TreeConsumer(), send_epoch_end_(send_epoch_end), num_epochs_(num_epochs) {}
 
-  Status Init(std::shared_ptr<api::DatasetNode> d) override;
+  Status Init(std::shared_ptr<DatasetNode> d) override;
 
   /// Send the data to device
   /// \return  Status error code
@@ -162,7 +159,7 @@ class ToDevice : public TreeConsumer {
 class TreeGetters : public TreeConsumer {
  public:
   TreeGetters();
-  Status Init(std::shared_ptr<api::DatasetNode> d) override;
+  Status Init(std::shared_ptr<DatasetNode> d) override;
   Status GetDatasetSize(int64_t *size);
   Status GetOutputTypes(std::vector<DataType> *types);
   Status GetOutputShapes(std::vector<TensorShape> *shapes);
@@ -185,10 +182,9 @@ class BuildVocabConsumer : public TreeConsumer {
   /// BuildVocabConsumer Constructor which will call the base class default constructor.
   BuildVocabConsumer() = default;
 
-  Status Init(std::shared_ptr<api::DatasetNode> d) override;
+  Status Init(std::shared_ptr<DatasetNode> d) override;
 
-  /// Save the given dataset to MindRecord format on disk. This is a blocking method (i.e., after returning, all rows
-  /// would be written to disk)
+  /// Start consuming
   /// \return  Status error code
   Status Start();
 

@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 class BucketBatchByLengthNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -58,7 +58,6 @@ class BucketBatchByLengthNode : public DatasetNode {
   bool drop_remainder_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_BUCKET_BATCH_BY_LENGTH_NODE_H_

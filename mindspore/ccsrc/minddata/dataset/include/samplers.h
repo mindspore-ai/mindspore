@@ -29,9 +29,7 @@ namespace mindspore {
 namespace dataset {
 
 // Internal Sampler class forward declaration
-class Sampler;
-
-namespace api {
+class SamplerRT;
 
 class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
  public:
@@ -47,7 +45,7 @@ class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
 
   /// \brief Pure virtual function to convert a SamplerObj class into a runtime sampler object
   /// \return Shared pointers to the newly created Sampler
-  virtual std::shared_ptr<Sampler> Build() = 0;
+  virtual std::shared_ptr<SamplerRT> Build() = 0;
 
   /// \brief Function for derived class to get the shard id of sampler
   /// \return The shard id of the derived sampler
@@ -131,7 +129,7 @@ class DistributedSamplerObj : public SamplerObj {
 
   ~DistributedSamplerObj() = default;
 
-  std::shared_ptr<Sampler> Build() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -159,7 +157,7 @@ class PKSamplerObj : public SamplerObj {
 
   ~PKSamplerObj() = default;
 
-  std::shared_ptr<Sampler> Build() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -179,7 +177,7 @@ class RandomSamplerObj : public SamplerObj {
 
   ~RandomSamplerObj() = default;
 
-  std::shared_ptr<Sampler> Build() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -198,7 +196,7 @@ class SequentialSamplerObj : public SamplerObj {
 
   ~SequentialSamplerObj() = default;
 
-  std::shared_ptr<Sampler> Build() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -217,7 +215,7 @@ class SubsetRandomSamplerObj : public SamplerObj {
 
   ~SubsetRandomSamplerObj() = default;
 
-  std::shared_ptr<Sampler> Build() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -236,7 +234,7 @@ class WeightedRandomSamplerObj : public SamplerObj {
 
   ~WeightedRandomSamplerObj() = default;
 
-  std::shared_ptr<Sampler> Build() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
   bool ValidateParams() override;
 
@@ -245,7 +243,6 @@ class WeightedRandomSamplerObj : public SamplerObj {
   int64_t num_samples_;
   bool replacement_;
 };
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_SAMPLERS_H_

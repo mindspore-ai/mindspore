@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 class RandomNode : public DatasetNode {
  public:
@@ -84,7 +83,6 @@ class RandomNode : public DatasetNode {
   std::mt19937 rand_gen_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_RANDOM_NODE_H_

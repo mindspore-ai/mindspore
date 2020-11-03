@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 BuildSentenceVocabNode::BuildSentenceVocabNode(std::shared_ptr<DatasetNode> child,
                                                std::shared_ptr<SentencePieceVocab> vocab,
@@ -77,6 +76,6 @@ Status BuildSentenceVocabNode::ValidateParams() {
 
   return Status::OK();
 }
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore

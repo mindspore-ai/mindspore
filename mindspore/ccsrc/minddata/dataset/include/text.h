@@ -32,7 +32,6 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {
 
 // Transform operations for text
 namespace text {
@@ -103,7 +102,6 @@ class SentencePieceTokenizerOperation : public TensorOperation {
   SPieceTokenizerOutType out_type_;
 };
 }  // namespace text
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_

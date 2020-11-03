@@ -34,12 +34,12 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_example_mindsporepredict_MainActiv
   return env->NewStringUTF(hello.c_str());
 }
 
-using Dataset = mindspore::dataset::api::Dataset;
-using Iterator = mindspore::dataset::api::Iterator;
+using Dataset = mindspore::dataset::Dataset;
+using Iterator = mindspore::dataset::Iterator;
+using mindspore::dataset::Cifar10;
 using mindspore::dataset::Path;
+using mindspore::dataset::RandomSampler;
 using mindspore::dataset::Tensor;
-using mindspore::dataset::api::Cifar10;
-using mindspore::dataset::api::RandomSampler;
 
 extern "C" JNIEXPORT void JNICALL Java_com_example_mindsporepredict_MainActivity_pathTest(JNIEnv *env,
                                                                                           jobject /* this */,

@@ -26,8 +26,6 @@
 namespace mindspore {
 namespace dataset {
 
-namespace api {
-
 class RenameNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -50,7 +48,6 @@ class RenameNode : public DatasetNode {
   std::vector<std::string> output_columns_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_RENAME_NODE_H_

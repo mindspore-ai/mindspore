@@ -27,7 +27,7 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 BucketBatchByLengthNode::BucketBatchByLengthNode(
   std::shared_ptr<DatasetNode> child, const std::vector<std::string> &column_names,
   const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
@@ -121,6 +121,5 @@ Status BucketBatchByLengthNode::ValidateParams() {
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

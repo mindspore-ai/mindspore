@@ -27,7 +27,7 @@
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
-namespace api {
+
 ManifestNode::ManifestNode(const std::string &dataset_file, const std::string &usage,
                            const std::shared_ptr<SamplerObj> &sampler,
                            const std::map<std::string, int32_t> &class_indexing, bool decode,
@@ -93,6 +93,5 @@ Status ManifestNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore

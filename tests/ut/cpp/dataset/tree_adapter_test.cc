@@ -48,7 +48,7 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<api::Dataset> ds = Mnist(folder_path, "all", api::SequentialSampler(0, 4));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", SequentialSampler(0, 4));
   EXPECT_NE(ds, nullptr);
 
   ds = ds->Batch(2);
@@ -83,7 +83,7 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<api::Dataset> ds = Mnist(folder_path, "all", api::SequentialSampler(0, 3));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", SequentialSampler(0, 3));
   EXPECT_NE(ds, nullptr);
 
   ds = ds->Batch(2, false);
@@ -115,11 +115,11 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<api::Dataset> ds = ImageFolder(folder_path, true, api::SequentialSampler(0, 2));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(0, 2));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<api::TensorOperation> one_hot = api::transforms::OneHot(10);
+  std::shared_ptr<TensorOperation> one_hot = transforms::OneHot(10);
   EXPECT_NE(one_hot, nullptr);
 
   // Create a Map operation, this will automatically add a project after map

@@ -95,7 +95,7 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
     // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
+    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
       builder_sampler_ = std::move(sampler);
       return *this;
     }
@@ -131,7 +131,7 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
     int32_t builder_rows_per_buffer_;
     int32_t builder_op_connector_size_;
     std::set<std::string> builder_extensions_;
-    std::shared_ptr<Sampler> builder_sampler_;
+    std::shared_ptr<SamplerRT> builder_sampler_;
     std::unique_ptr<DataSchema> builder_schema_;
     std::string builder_usage_;
   };
@@ -144,7 +144,7 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   // @param std::unique_ptr<Sampler> sampler - sampler tells CelebAOp what to read
   CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size, bool decode,
            const std::string &usage, const std::set<std::string> &exts, std::unique_ptr<DataSchema> schema,
-           std::shared_ptr<Sampler> sampler);
+           std::shared_ptr<SamplerRT> sampler);
 
   ~CelebAOp() override = default;
 

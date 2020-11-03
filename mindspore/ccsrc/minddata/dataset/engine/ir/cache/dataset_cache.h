@@ -21,7 +21,7 @@
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 
-namespace mindspore::dataset::api {
+namespace mindspore::dataset {
 
 class DatasetCache {
  public:
@@ -29,6 +29,6 @@ class DatasetCache {
   virtual Status ValidateParams() = 0;
   virtual Status CreateCacheOp(int num_workers, std::shared_ptr<DatasetOp> *ds_op) = 0;
 };
-}  // namespace mindspore::dataset::api
+}  // namespace mindspore::dataset
 
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_CACHE_DATASET_CACHE_H_

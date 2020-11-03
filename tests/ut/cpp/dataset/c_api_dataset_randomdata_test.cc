@@ -34,10 +34,6 @@
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 
 using namespace mindspore::dataset;
-using namespace mindspore::dataset::api;
-using mindspore::dataset::DataType;
-using mindspore::dataset::Tensor;
-using mindspore::dataset::TensorShape;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:

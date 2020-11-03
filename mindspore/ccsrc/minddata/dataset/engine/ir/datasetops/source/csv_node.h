@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace dataset {
-namespace api {  /// \brief Base class of CSV Record
+/// \brief Base class of CSV Record
 /// \brief Record type for CSV
 enum CsvType : uint8_t { INT = 0, FLOAT, STRING };
 
@@ -80,7 +80,7 @@ class CSVNode : public DatasetNode {
   int32_t num_shards_;
   int32_t shard_id_;
 };
-}  // namespace api
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_CSV_NODE_H_

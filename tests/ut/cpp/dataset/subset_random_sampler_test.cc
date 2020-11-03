@@ -41,7 +41,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestAllAtOnce) {
   std::vector<int64_t> in({0, 1, 2, 3, 4});
   std::unordered_set<int64_t> in_set(in.begin(), in.end());
   int64_t num_samples = 0;
-  SubsetRandomSampler sampler(num_samples, in);
+  SubsetRandomSamplerRT sampler(num_samples, in);
 
   DummyRandomAccessOp dummyRandomAccessOp(5);
   sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
@@ -70,7 +70,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestGetNextBuffer) {
   int64_t samples_per_buffer = 10;
   int64_t num_samples = 0;
   std::vector<int64_t> input(total_samples, 1);
-  SubsetRandomSampler sampler(num_samples, input, samples_per_buffer);
+  SubsetRandomSamplerRT sampler(num_samples, input, samples_per_buffer);
 
   DummyRandomAccessOp dummyRandomAccessOp(total_samples);
   sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
@@ -102,7 +102,7 @@ TEST_F(MindDataTestSubsetRandomSampler, TestReset) {
   std::vector<int64_t> in({0, 1, 2, 3, 4});
   std::unordered_set<int64_t> in_set(in.begin(), in.end());
   int64_t num_samples = 0;
-  SubsetRandomSampler sampler(num_samples, in);
+  SubsetRandomSamplerRT sampler(num_samples, in);
 
   DummyRandomAccessOp dummyRandomAccessOp(5);
   sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);

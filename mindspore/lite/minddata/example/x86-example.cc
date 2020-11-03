@@ -22,11 +22,11 @@
 #include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
 #include "minddata/dataset/util/path.h"
 
-using Dataset = mindspore::dataset::api::Dataset;
-using Iterator = mindspore::dataset::api::Iterator;
+using Dataset = mindspore::dataset::Dataset;
+using Iterator = mindspore::dataset::Iterator;
+using mindspore::dataset::Cifar10;
+using mindspore::dataset::RandomSampler;
 using mindspore::dataset::Tensor;
-using mindspore::dataset::api::Cifar10;
-using mindspore::dataset::api::RandomSampler;
 
 int main() {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10Dataset.";

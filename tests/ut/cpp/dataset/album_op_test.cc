@@ -47,9 +47,8 @@ std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
-std::shared_ptr<AlbumOp> Album(int64_t num_works, int64_t rows, int64_t conns, std::string path,
-                                           bool shuf = false, std::unique_ptr<Sampler> sampler = nullptr,
-                                           bool decode = false) {
+std::shared_ptr<AlbumOp> Album(int64_t num_works, int64_t rows, int64_t conns, std::string path, bool shuf = false,
+                               std::unique_ptr<SamplerRT> sampler = nullptr, bool decode = false) {
   std::shared_ptr<AlbumOp> so;
   AlbumOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_works)
@@ -64,9 +63,9 @@ std::shared_ptr<AlbumOp> Album(int64_t num_works, int64_t rows, int64_t conns, s
 }
 
 std::shared_ptr<AlbumOp> AlbumSchema(int64_t num_works, int64_t rows, int64_t conns, std::string path,
-                                       std::string schema_file, std::vector<std::string> column_names = {},
-                                       bool shuf = false, std::unique_ptr<Sampler> sampler = nullptr,
-                                       bool decode = false) {
+                                     std::string schema_file, std::vector<std::string> column_names = {},
+                                     bool shuf = false, std::unique_ptr<SamplerRT> sampler = nullptr,
+                                     bool decode = false) {
   std::shared_ptr<AlbumOp> so;
   AlbumOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_works)

@@ -51,21 +51,21 @@ class RandomAccessOp {
  protected:
   // The amount of rows in the dataset itself. This is the before-sampling value, the
   // total count of rows.  A sampler may choose to sample less than this amount.
-  int64_t num_rows_;
+  int64_t num_rows_ = -1;
 };
 
-class Sampler {
+class SamplerRT {
  public:
   // Constructor
   // @param int64_t num_samples: the user-requested number of samples ids to generate. A value of 0
   //                indicates that the sampler should produce the complete set of ids.
   // @param int64_t samplesPerBuffer: Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit Sampler(int64_t num_samples, int64_t samples_per_buffer);
+  explicit SamplerRT(int64_t num_samples, int64_t samples_per_buffer);
 
-  Sampler(const Sampler &s) : Sampler(s.num_samples_, s.samples_per_buffer_) {}
+  SamplerRT(const SamplerRT &s) : SamplerRT(s.num_samples_, s.samples_per_buffer_) {}
 
   // default destructor
-  ~Sampler() = default;
+  ~SamplerRT() = default;
 
   // Get a list of sample ids.
   // @note It is Sampler responsibility to make sure that the id is not out of bound.
@@ -111,7 +111,7 @@ class Sampler {
   // Adds a sampler to become our child.
   // @param std::shared_ptr<DatasetOp> - The sampler to add as a child.
   // @return - The error code returned.
-  Status AddChild(std::shared_ptr<Sampler> child);
+  Status AddChild(std::shared_ptr<SamplerRT> child);
 
   // A helper function to create a int64_t 1-D Tensor specifically used to hold sampleIds for Sampler
   // @param std::shared_ptr<Tensor>* sampleIds
@@ -129,7 +129,7 @@ class Sampler {
   // @param out - reference to the output stream being overloaded
   // @param sampler - reference to teh sampler to print
   // @return - the output stream must be returned
-  friend std::ostream &operator<<(std::ostream &out, const Sampler &sampler) {
+  friend std::ostream &operator<<(std::ostream &out, const SamplerRT &sampler) {
     sampler.Print(out, false);
     return out;
   }
@@ -158,7 +158,7 @@ class Sampler {
 
   int64_t samples_per_buffer_;
   std::unique_ptr<ColDescriptor> col_desc_;
-  std::vector<std::shared_ptr<Sampler>> child_;  // Child nodes
+  std::vector<std::shared_ptr<SamplerRT>> child_;  // Child nodes
   std::unique_ptr<DataBuffer> child_ids_;
 };
 }  // namespace dataset

@@ -28,8 +28,6 @@
 namespace mindspore {
 namespace dataset {
 
-namespace api {
-
 class RepeatNode : public DatasetNode {
  public:
   /// \brief Constructor
@@ -50,7 +48,6 @@ class RepeatNode : public DatasetNode {
   int32_t repeat_count_;
 };
 
-}  // namespace api
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_REPEAT_NODE_H_
