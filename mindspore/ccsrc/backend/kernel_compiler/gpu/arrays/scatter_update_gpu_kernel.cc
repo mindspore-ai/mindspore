@@ -32,5 +32,12 @@ MS_REG_GPU_KERNEL_ONE(ScatterUpdate,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
                       ScatterUpdateKernel, half)
+MS_REG_GPU_KERNEL_ONE(ScatterUpdate,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      ScatterUpdateKernel, int)
 }  // namespace kernel
 }  // namespace mindspore
