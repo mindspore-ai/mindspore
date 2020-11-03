@@ -185,6 +185,9 @@ void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value
   } else if (val->isa<Int>()) {
     value_proto->set_dtype(irpb::DT_TYPE);
     value_proto->mutable_type_val()->set_data_type(irpb::DT_BASE_INT);
+  } else if (val->isa<UInt>()) {
+    value_proto->set_dtype(irpb::DT_TYPE);
+    value_proto->mutable_type_val()->set_data_type(irpb::DT_BASE_UINT);
   } else if (val->isa<Float>()) {
     value_proto->set_dtype(irpb::DT_TYPE);
     value_proto->mutable_type_val()->set_data_type(irpb::DT_BASE_FLOAT);
