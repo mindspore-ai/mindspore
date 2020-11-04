@@ -24,14 +24,14 @@ _ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
 
 
 @_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
-                    "RowTensor", "Tensor", "Tensor", "Bool")
+                    "RowTensor", "Tensor", "Tensor", "Bool", "Bool")
 def _tensor_run_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                                gradient, weight, moment, ps_parameter):
+                                gradient, weight, moment, ps_parameter, cache_enable):
     """Apply sparse ftrl optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices
     values = gradient.values
-    if ps_parameter:
+    if ps_parameter and not cache_enable:
         op_shape = P.Shape()
         shapes = (op_shape(weight), op_shape(moment), op_shape(linear), op_shape(values), op_shape(indices))
         success = F.depend(success, pull(push((values, indices), shapes), weight))
@@ -41,12 +41,12 @@ def _tensor_run_opt_with_sparse(opt, spars_opt, push, pull, l1, l2, lr_power, le
 
 
 @_ftrl_opt.register("Function", "Function", "Function", "Function", "Number", "Number", "Number", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Bool")
+                    "Tensor", "Tensor", "Tensor", "Bool", "Bool")
 def _tensor_run_opt(opt, spars_opt, push, pull, l1, l2, lr_power, learning_rate, linear,
-                    gradient, weight, moment, ps_parameter):
+                    gradient, weight, moment, ps_parameter, cache_enable):
     """Apply ftrl optimizer to the weight parameter."""
     success = True
-    if ps_parameter:
+    if ps_parameter and not cache_enable:
         op_shape = P.Shape()
         success = F.depend(success, pull(push((gradient, learning_rate, l1, l2, lr_power),
                                               (op_shape(weight), op_shape(moment), op_shape(linear))), weight))
@@ -185,7 +185,7 @@ class FTRL(Optimizer):
 
         success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
                                       self.l1, self.l2, self.lr_power, lr),
-                            linear, grads, params, moments, self.ps_parameters)
+                            linear, grads, params, moments, self.ps_parameters, self.cache_enable)
         return success
 
     @Optimizer.target.setter

@@ -30,6 +30,7 @@ def argparse_init():
     parser.add_argument("--eval_batch_size", type=int, default=16000, help="Eval batch size.")
     parser.add_argument("--field_size", type=int, default=39, help="The number of features.")
     parser.add_argument("--vocab_size", type=int, default=200000, help="The total features of dataset.")
+    parser.add_argument("--vocab_cache_size", type=int, default=0, help="The total features of hash table.")
     parser.add_argument("--emb_dim", type=int, default=80, help="The dense embedding dimension of sparse feature.")
     parser.add_argument("--deep_layer_dim", type=int, nargs='+', default=[1024, 512, 256, 128],
                         help="The dimension of all deep layers.")
@@ -66,6 +67,7 @@ class WideDeepConfig():
         self.eval_batch_size = 16000
         self.field_size = 39
         self.vocab_size = 200000
+        self.vocab_cache_size = 100000
         self.emb_dim = 80
         self.deep_layer_dim = [1024, 512, 256, 128]
         self.deep_layer_act = 'relu'
@@ -103,6 +105,7 @@ class WideDeepConfig():
         self.eval_batch_size = args.eval_batch_size
         self.field_size = args.field_size
         self.vocab_size = args.vocab_size
+        self.vocab_cache_size = args.vocab_cache_size
         self.emb_dim = args.emb_dim
         self.deep_layer_dim = args.deep_layer_dim
         self.deep_layer_act = args.deep_layer_act

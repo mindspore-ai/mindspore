@@ -21,6 +21,9 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/comm_manager.h"
 #include "utils/scoped_long_running.h"
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "ps/ps_cache/ps_cache_manager.h"
+#endif
 
 namespace mindspore {
 namespace session {

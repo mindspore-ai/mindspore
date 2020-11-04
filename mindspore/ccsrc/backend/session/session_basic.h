@@ -99,9 +99,9 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   // get graph id in child graphs by ME front anf node pointer
   virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const;
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
-  void CheckPSModeConsistence(const KernelGraphPtr &Kernel_graph);
   void AssignParamKey(const KernelGraphPtr &kernel_graph);
   void InitPSParamAndOptim(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &inputs_const);
+  bool IsGetNextGraph(const GraphId &graph_id, std::string *channel_name);
   virtual bool CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                 std::string *error_msg) const {
     return true;
@@ -195,6 +195,11 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list);
   void UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &root_graph);
   void UpdateAllGraphDynamicShapeAttr(const std::vector<KernelGraphPtr> &all_graphs);
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  void CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const;
+  void GetBatchElements(const AnfNodePtr &kernel_node) const;
+  void InitPsWorker(const KernelGraphPtr &kernel_graph);
+#endif
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
@@ -206,6 +211,9 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::shared_ptr<Executor> executor_;
 #if !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
+#endif
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  bool initialized_ps_cache_{false};
 #endif
 };
 

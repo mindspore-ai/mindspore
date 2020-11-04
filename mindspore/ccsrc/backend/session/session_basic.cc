@@ -41,8 +41,10 @@
 #include "utils/trace_base.h"
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-#include "ps/worker.h"
+#include "ps/ps_cache/ps_cache_manager.h"
+#include "ps/common.h"
 #include "ps/util.h"
+#include "abstract/abstract_value.h"
 #endif
 
 namespace mindspore {
@@ -1125,6 +1127,12 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
       size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());
     }
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0) && TensorNeedSync(input_node, tensor)) {
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+      const std::string &param_name = input_node->fullname_with_scope();
+      if (ps::ps_cache_instance.IsHashTable(param_name)) {
+        continue;
+      }
+#endif
       auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
       MS_EXCEPTION_IF_NULL(device_address);
       if (size != 0 && !device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(input_node, 0), size,
@@ -1715,8 +1723,64 @@ void SessionBasic::CleanUselessTensorsImpl(const std::shared_ptr<std::vector<ten
   }
 }
 
+bool SessionBasic::IsGetNextGraph(const GraphId &graph_id, std::string *channel_name) {
+  auto kernel_graph = graphs_[graph_id];
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  for (const auto &kernel_node : kernel_graph->execution_order()) {
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    if (kernel_name == kGetNextOpName) {
+      auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
+      MS_EXCEPTION_IF_NULL(prim);
+      *channel_name = GetValue<std::string>(prim->GetAttr("shared_name"));
+      return true;
+    }
+  }
+  return false;
+}
+
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-void SessionBasic::CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) {
+void SessionBasic::InitPsWorker(const KernelGraphPtr &kernel_graph) {
+  if (!ps::Util::IsRoleOfWorker()) {
+    return;
+  }
+  CheckPSModeConsistence(kernel_graph);
+  if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+    if (!ps::ps_cache_instance.initialized_ps_cache()) {
+      auto context_ptr = MsContext::GetInstance();
+      MS_EXCEPTION_IF_NULL(context_ptr);
+      auto devcie_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+      auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(devcie_target, device_id_);
+      MS_EXCEPTION_IF_NULL(runtime_instance);
+      auto context = runtime_instance->context();
+      const auto &kernels = kernel_graph->execution_order();
+      if (kernels.size() > 0 && AnfAlgo::GetCNodeName(kernels[0]) == "InitDataSetQueue") {
+        GetBatchElements(kernels[0]);
+        ps::ps_cache_instance.Initialize();
+      }
+      ps::ps_cache_instance.DoProcessData(device_id_, context);
+    }
+  } else {
+    // Assign parameter keys.
+    AssignParamKey(kernel_graph);
+  }
+}
+
+void SessionBasic::GetBatchElements(const AnfNodePtr &kernel_node) const {
+  auto shapes = AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
+  auto types = AnfAlgo::GetNodeAttr<std::vector<TypePtr>>(kernel_node, "types");
+  if (shapes.size() != types.size() || shapes.size() == 0 || types.size() == 0) {
+    MS_LOG(EXCEPTION) << "Invalid shapes of op[InitDataSetQueue]: shapes size " << shapes.size() << ", types size "
+                      << types;
+  }
+  size_t batch_elements = 1;
+  const auto &shape = shapes[0];
+  for (size_t i = 0; i < shape.size(); ++i) {
+    batch_elements *= shape[i];
+  }
+  ps::ps_cache_instance.set_batch_elements(batch_elements);
+}
+
+void SessionBasic::CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const {
   auto input_nodes = kernel_graph->inputs();
   for (const auto &input_node : input_nodes) {
     if (!input_node->isa<Parameter>()) {
@@ -1725,8 +1789,9 @@ void SessionBasic::CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) {
     auto pk_node = input_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(pk_node);
     auto param_info_ptr = pk_node->param_info();
-    if (param_info_ptr != nullptr && param_info_ptr->init_in_server()) {
-      const std::string &param_name = pk_node->fullname_with_scope();
+    const std::string &param_name = pk_node->fullname_with_scope();
+    if (param_info_ptr != nullptr && param_info_ptr->init_in_server() &&
+        !ps::ps_cache_instance.IsHashTable(param_name)) {
       MS_LOG(EXCEPTION) << "Can not initialize the parameter[" << param_name
                         << "] in server, this parameter is used by kernel which executes in device";
     }
@@ -1734,10 +1799,6 @@ void SessionBasic::CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) {
 }
 
 void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
-  if (!ps::Util::IsRoleOfWorker()) {
-    MS_LOG(INFO) << "Not parameter server mode.";
-    return;
-  }
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph->get_return());
   for (auto &node : node_list) {
@@ -1775,16 +1836,8 @@ void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
     return;
   }
   std::vector<tensor::TensorPtr> inputs(inputs_const);
-  size_t input_ctrl_size = 1;
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  if (kernel_graph->input_ctrl_tensors()) {
-    input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
-  }
   auto input_nodes = kernel_graph->inputs();
-  if ((inputs.size() + input_ctrl_size) - 1 != input_nodes.size()) {
-    MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
-                      << ", input_ctrl_size:" << input_ctrl_size;
-  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   for (size_t i = 0; i < inputs.size(); ++i) {

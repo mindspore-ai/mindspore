@@ -75,6 +75,9 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
   if (kCustAiCpuKernelOps.find(node_name_) != kCustAiCpuKernelOps.end()) {
     node_so_ = CUST_AICPU_OPS_SO_NAME;
     node_name_ = kCustRunApi;
+  } else if (kCacheKernelOps.find(node_name_) != kCacheKernelOps.end()) {
+    node_so_ = AICPU_OPS_SO_NAME;
+    node_name_ = kCustRunApi;
   } else {
     node_so_ = AICPU_OPS_SO_NAME;
   }
@@ -160,6 +163,9 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
   stream_id_ = stream_id;
   if (kCustAiCpuKernelOps.find(node_name_) != kCustAiCpuKernelOps.end()) {
     node_so_ = CUST_AICPU_OPS_SO_NAME;
+    node_name_ = kCustRunApi;
+  } else if (kCacheKernelOps.find(node_name_) != kCacheKernelOps.end()) {
+    node_so_ = AICPU_OPS_SO_NAME;
     node_name_ = kCustRunApi;
   } else {
     node_so_ = AICPU_OPS_SO_NAME;

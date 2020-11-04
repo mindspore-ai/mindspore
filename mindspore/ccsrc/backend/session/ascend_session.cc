@@ -56,6 +56,7 @@
 #include "toolchain/adx_datadump_server.h"
 #if ENABLE_CPU && ENABLE_D
 #include "ps/util.h"
+#include "ps/ps_cache/ps_cache_manager.h"
 #endif
 
 namespace mindspore {
@@ -487,11 +488,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   // adjust kernel
   AdjustKernel(root_graph);
 #if ENABLE_CPU && ENABLE_D
-  if (ps::Util::IsParamServerMode()) {
-    CheckPSModeConsistence(root_graph);
-    // Assign parameter keys.
-    AssignParamKey(root_graph);
-  }
+  InitPsWorker(root_graph);
 #endif
   // assign stream
   AssignStream(NOT_NULL(root_graph));
@@ -568,6 +565,9 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   }
   // adjust execution order because  merge child graph and other special operations
   AdjustKernel(graph);
+#if ENABLE_CPU && ENABLE_D
+  InitPsWorker(graph);
+#endif
   // Reorder optimizer order
   auto execution_order = graph->execution_order();
   Reorder(&execution_order);
@@ -644,6 +644,10 @@ void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tens
 #if ENABLE_CPU && ENABLE_D
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
+  std::string channel_name;
+  if (ps::PsDataPrefetch::GetInstance().cache_enable() && IsGetNextGraph(graph_id, &channel_name)) {
+    ps::ps_cache_instance.IncreaseGraphStep(channel_name);
+  }
 #endif
   {
     // run task on device

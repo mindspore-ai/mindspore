@@ -64,6 +64,7 @@
 #include "utils/ms_context.h"
 #if ENABLE_CPU && ENABLE_GPU
 #include "ps/util.h"
+#include "ps/ps_cache/ps_cache_manager.h"
 #endif
 
 namespace mindspore {
@@ -237,6 +238,12 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
     auto input_node = input_nodes[i];
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
+#if ENABLE_CPU && ENABLE_GPU
+      const std::string &param_name = input_node->fullname_with_scope();
+      if (ps::ps_cache_instance.IsHashTable(param_name)) {
+        continue;
+      }
+#endif
       auto pk_node = input_node->cast<ParameterPtr>();
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
       auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
@@ -300,16 +307,11 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   HardwareOptimize(graph);
   // Graph kernel fusion optimization
   GraphKernelOptimize(graph);
-
-#if ENABLE_CPU && ENABLE_GPU
-  if (ps::Util::IsParamServerMode()) {
-    CheckPSModeConsistence(graph);
-    // Assign parameter keys.
-    AssignParamKey(graph);
-  }
-#endif
   // Start gpu kernel runtime
   StartKernelRT();
+#if ENABLE_CPU && ENABLE_GPU
+  InitPsWorker(graph);
+#endif
   // Assign CUDA streams
   AssignStream(graph);
   // Dump .pb graph before remove nop nodes
@@ -374,6 +376,12 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
   int kernel_num = kernel_graph->execution_order().size();
   int64_t loopsize = (kernel_num > 1) ? ConfigManager::GetInstance().gpu_loopsink_size() : 1;
   for (int64_t i = 0; i < loopsize; i++) {
+#if ENABLE_CPU && ENABLE_GPU
+    std::string channel_name;
+    if (ps::PsDataPrefetch::GetInstance().cache_enable() && IsGetNextGraph(graph_id, &channel_name)) {
+      ps::ps_cache_instance.IncreaseGraphStep(channel_name);
+    }
+#endif
     Execute(kernel_graph);
   }
   // In pynative mode, device addresses of tensors in value nodes need be clean.

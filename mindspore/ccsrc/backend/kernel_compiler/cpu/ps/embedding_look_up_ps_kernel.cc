@@ -72,6 +72,23 @@ bool EmbeddingLookUpPSKernel::Execute(const std::vector<AddressPtr> &inputs, con
   return Launch(inputs, workspace, outputs);
 }
 
+void EmbeddingLookUpPSKernel::UpdateEmbeddings(float *embedding_table, const size_t *lookup_ids,
+                                               const float *update_vals, size_t ids_size) {
+  size_t copy_lens = outer_dim_size_ * sizeof(float);
+  for (size_t i = 0; i < ids_size; ++i) {
+    int index = lookup_ids[i] - offset_;
+    if (index >= 0 && index < SizeToInt(first_dim_size_)) {
+      auto ret =
+        memcpy_s(embedding_table + index * outer_dim_size_, copy_lens, update_vals + i * outer_dim_size_, copy_lens);
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "LookUpTable task memcpy failed.";
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "UpdateEmbeddings index invalid.";
+    }
+  }
+}
+
 const std::vector<size_t> &EmbeddingLookUpPSKernel::input_sizes() const { return input_shape_; }
 
 const std::vector<size_t> &EmbeddingLookUpPSKernel::output_sizes() const { return GetOutputSizeList(); }

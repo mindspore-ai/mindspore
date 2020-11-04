@@ -73,6 +73,8 @@ inline size_t FloatToSize(float u) {
 }
 inline float IntToFloat(int32_t v) { return static_cast<float>(v); }
 
+inline float SizeToFloat(size_t v) { return static_cast<float>(v); }
+
 inline double LongToDouble(int64_t v) { return static_cast<double>(v); }
 
 inline double FloatToDouble(float v) { return static_cast<double>(v); }

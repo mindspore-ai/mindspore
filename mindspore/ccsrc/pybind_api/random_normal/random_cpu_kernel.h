@@ -19,8 +19,7 @@
 #include "pybind_api/random_normal/philox_generator.h"
 #include "pybind11/pybind11.h"
 #include "pybind_api/api_register.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "utils/log_adapter.h"
 
 namespace py = pybind11;
 

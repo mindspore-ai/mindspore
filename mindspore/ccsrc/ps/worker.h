@@ -32,6 +32,7 @@
 #include "ps/common.h"
 #include "ps/worker_proxy.h"
 #include "utils/shape_utils.h"
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 
 namespace mindspore {
 namespace ps {
@@ -47,15 +48,19 @@ class Worker {
   void Push(const std::vector<size_t> &keys, std::vector<uintptr_t> addrs, const ShapeVector &sizes);
   void Pull(const size_t key, void *dev_addr, const size_t size);
   size_t SetParamKey(const std::string &param_name);
+  size_t GetParamKey(const std::string &param_name);
   void SetParamInitInServer(const std::string &param_name, bool init_in_server);
   bool GetParamInitInServer(const std::string &param_name);
   void SetKeyOptimId(size_t key, const std::string &optimizer_name);
   void SetOptimInputShapes(size_t key, const ShapeVector &shape);
   void AddEmbeddingTable(const ::ps::Key &key, const size_t &row_count);
-  void InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes, const ShapeVector &sizes);
+  void InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<T> shapes, const ShapeVector &sizes);
   void InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::TensorPtr &tensor);
   void DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
                            const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int64_t cmd);
+  void UpdateEmbeddingTable(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
+                            const ::ps::SArray<T> &vals);
+  bool running() { return running_; }
   void Finalize();
 
  private:
@@ -65,7 +70,6 @@ class Worker {
   Worker &operator=(const Worker &) = delete;
 
   bool IsKeyInit(const size_t key);
-  size_t GetParamKey(const std::string &param_name);
   void InitPSOptimId(const size_t param_key);
   void InitPSOptimInputShapes(const size_t key);
   void InitPSParamData(const std::vector<size_t> &keys, void *origin_addr, size_t size);
@@ -188,6 +192,12 @@ void Worker<T>::DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const :
 }
 
 template <typename T>
+void Worker<T>::UpdateEmbeddingTable(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
+                                     const ::ps::SArray<T> &vals) {
+  kv_worker_->UpdateEmbeddingTable(keys, lookup_ids, vals);
+}
+
+template <typename T>
 void Worker<T>::Finalize() {
   if (running_) {
     MS_LOG(INFO) << "Worker starts finalizing...";
@@ -286,7 +296,7 @@ size_t Worker<T>::GetParamKey(const std::string &param_name) {
   size_t key = kInvalidKey;
   if (param_to_key_.find(param_name) != param_to_key_.end()) {
     key = param_to_key_[param_name];
-    MS_LOG(INFO) << "Get key of parameter " << param_name << " key is " << key;
+    MS_LOG(DEBUG) << "Get key of parameter " << param_name << " key is " << key;
   }
   return key;
 }
@@ -310,8 +320,7 @@ void Worker<T>::InitPSOptimId(const size_t param_key) {
 }
 
 template <typename T>
-void Worker<T>::InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes,
-                                     const ShapeVector &sizes) {
+void Worker<T>::InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<T> shapes, const ShapeVector &sizes) {
   bool has_init = IsKeyInit(keys[0]);
   if (has_init) {
     MS_LOG(DEBUG) << "The key embedding table of key " << keys[0] << " is initialized.";
@@ -319,7 +328,7 @@ void Worker<T>::InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vecto
   }
   ::ps::SArray<T> shapes_val;
   for (auto dim : shapes) {
-    shapes_val.push_back(static_cast<T>(dim));
+    shapes_val.push_back(dim);
   }
   std::vector<int> sizes_int;
   (void)std::transform(sizes.begin(), sizes.end(), std::back_inserter(sizes_int),
@@ -337,9 +346,6 @@ void Worker<T>::InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::
   const std::string &param_name = pk_node->fullname_with_scope();
   void *param_data = tensor->data_c();
   size_t param_size = LongToSize(tensor->data().nbytes());
-  if (param_size > INT_MAX) {
-    MS_LOG(EXCEPTION) << "PS mode max weight size is " << INT_MAX << ", " << param_name << " size is " << param_size;
-  }
 
   size_t param_key = GetParamKey(param_name);
   if (param_key == kInvalidKey) {
@@ -357,11 +363,17 @@ void Worker<T>::InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::
     MS_LOG(INFO) << "Init paramter and optimizer in parameter server side for " << param_name
                  << ", whether init in server: " << init_in_server;
     kv_worker_->AddKeyToServerId(param_key);
-    if (!init_in_server) {
-      InitPSParamData({param_key}, param_data, param_size);
+    if (!PsDataPrefetch::GetInstance().cache_enable()) {
+      if (!init_in_server) {
+        if (param_size > INT_MAX) {
+          MS_LOG(EXCEPTION) << "PS mode max weight size is " << INT_MAX << ", " << param_name << " size is "
+                            << param_size;
+        }
+        InitPSParamData({param_key}, param_data, param_size);
+      }
+      InitPSOptimId(param_key);
+      InitPSOptimInputShapes(param_key);
     }
-    InitPSOptimId(param_key);
-    InitPSOptimInputShapes(param_key);
   }
 }
 

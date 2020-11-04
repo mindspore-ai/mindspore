@@ -24,6 +24,7 @@
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/util/status.h"
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 
 #ifdef ENABLE_TDTQUE
 #include "minddata/dataset/util/queue.h"

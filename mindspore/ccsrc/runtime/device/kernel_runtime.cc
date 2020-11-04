@@ -30,6 +30,10 @@
 #include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
 #include "utils/utils.h"
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "ps/ps_cache/ps_cache_manager.h"
+#endif
+
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
 
@@ -331,15 +335,27 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
         MS_LOG(WARNING) << "It is not suggested to use a lonely weight parameter as the output of graph";
         continue;
       }
+      DeviceAddressPtr device_address = nullptr;
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+      const std::string &param_name = item->fullname_with_scope();
+      if (ps::ps_cache_instance.IsHashTable(param_name)) {
+        const auto &address = ps::ps_cache_instance.QueryHashTableAddr(param_name);
+        MS_EXCEPTION_IF_NULL(address.addr);
+        device_address =
+          CreateDeviceAddress(address.addr, address.size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
+        AnfAlgo::SetOutputAddr(device_address, index, item.get());
+        continue;
+      }
+#endif
       auto tensor_size = CountNodeDeviceMemorySize(item, index);
-      auto address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
+      device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
       MS_LOG(DEBUG) << "Malloc static memory for " << item->fullname_with_scope();
-      if (mem_manager_->MallocMem(kStaticMem, tensor_size, address) == nullptr) {
+      if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
       MS_LOG(INFO) << "Malloc Input for graph " << graph->graph_id() << ", node: " << item->fullname_with_scope()
                    << " index: " << index << " size: " << tensor_size;
-      AnfAlgo::SetOutputAddr(address, index, item.get());
+      AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
   }
   MS_LOG(INFO) << "AssignStaticMemoryInput end";

@@ -35,7 +35,8 @@ class EmbeddingLookUpPSKernel : public EmbeddingLookUpCPUKernel, public PServerK
 
   bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;
-
+  void UpdateEmbeddings(float *embedding_table, const size_t *lookup_ids, const float *update_vals,
+                        size_t ids_size) override;
   const std::vector<size_t> &input_sizes() const override;
   const std::vector<size_t> &output_sizes() const override;
   const std::vector<size_t> &workspace_sizes() const override;

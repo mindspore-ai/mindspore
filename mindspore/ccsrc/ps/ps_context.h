@@ -44,6 +44,14 @@ class PSContext {
   bool is_role_sched() const;
   void SetPSRankId(int rank_id);
   int ps_rank_id() const;
+  void InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,
+                           size_t vocab_size) const;
+  void ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name,
+                             size_t cache_vocab_size, size_t embedding_size) const;
+  void InsertWeightInitInfo(const std::string &param_name, size_t global_seed, size_t op_seed) const;
+  void InsertAccumuInitInfo(const std::string &param_name, float init_val) const;
+  void CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name) const;
+  void set_cache_enable(bool cache_enable) const;
 
  private:
   PSContext() : ps_enabled_(false), is_worker_(false), is_pserver_(false), is_sched_(false), rank_id_(-1) {}

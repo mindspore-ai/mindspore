@@ -55,6 +55,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool SyncStream() override;
   void SetContext() override;
   void CreateContext() override;
+  void *context() const override { return rt_context_; }
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,

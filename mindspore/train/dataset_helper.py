@@ -92,6 +92,10 @@ def connect_network_with_dataset(network, dataset_helper):
     if isinstance(dataset_iter, _DatasetIterNormal):
         raise RuntimeError("Dataset should be connected with network only in sink mode.")
 
+    ms_role = os.getenv("MS_ROLE")
+    if ms_role in ("MS_PSERVER", "MS_SCHED"):
+        return network
+
     if (hasattr(dataset_iter, "sink_size") and dataset_iter.sink_size == 1) \
             and (hasattr(dataset_iter, "sink_count") and dataset_iter.sink_count == 1) \
             and context.get_context("device_target") == "Ascend" \
@@ -166,14 +170,14 @@ class DatasetHelper:
                 iterclass = _DatasetIterGE
             else:
                 if context.get_context("mode") == context.GRAPH_MODE:
-                    if context.get_context("device_target") == "Ascend":
+                    ms_role = os.getenv("MS_ROLE")
+                    if ms_role in ("MS_PSERVER", "MS_SCHED"):
+                        iterclass = _DatasetIterPSServer
+                    elif ms_role == "MS_WORKER":
+                        iterclass = _DatasetIterPSWork
+                    elif (context.get_context("device_target") == "Ascend") or \
+                         (context.get_context("device_target") == "GPU"):
                         iterclass = _DatasetIterMSLoopSink
-                    elif context.get_context("device_target") == "GPU":
-                        ms_role = os.getenv("MS_ROLE")
-                        if ms_role in ("MS_PSERVER", "MS_SCHED"):
-                            iterclass = _DatasetIterPSLite
-                        else:
-                            iterclass = _DatasetIterMSLoopSink
                     elif context.get_context("device_target") == "CPU":
                         raise RuntimeError(
                             "Currently dataset sink mode is not supported when the device target is CPU.")
@@ -218,7 +222,10 @@ class _DatasetIter:
 
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
-                self.sink_size = dataset.__loop_size__
+                ms_role = os.getenv("MS_ROLE")
+                # PS mode does not support loop sink and need get the real sink size.
+                if ms_role != "MS_WORKER":
+                    self.sink_size = dataset.__loop_size__
             create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and context.get_context(
                 "device_target") == "Ascend")
             dataset.__transfer_dataset__ = _exec_datagraph(dataset, self.sink_size,
@@ -260,8 +267,12 @@ class _DatasetIter:
     def get_sink_size(self):
         """get sink_size to device"""
         sink_size = 1
+        ms_role = os.getenv("MS_ROLE")
         if hasattr(self.dataset, '__loop_size__'):
             sink_size = self.dataset.__loop_size__
+        elif ms_role == "MS_WORKER":
+            # PS mode does not support loop sink.
+            sink_size = 1
         else:
             if context.get_context("enable_ge") or context.get_context("device_target") == "Ascend" \
                     or context.get_context("device_target") == "GPU":
@@ -311,9 +322,6 @@ class _DatasetIterMSLoopSink(_DatasetIter):
     def __init__(self, dataset, sink_size, epoch_num):
         super().__init__(dataset, sink_size, epoch_num)
         self.sink_count = self.get_sink_count(dataset)
-        ms_role = os.getenv("MS_ROLE")
-        if ms_role in ("MS_PSERVER", "MS_SCHED"):
-            self.sink_count = 1
         # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, and not using full_batch,
         # use a complete tensor to compile, and slice tensor to run. The batch dimension of tensors for
         # compile is device_number times the batch dimension of tensors for run. Now only support LoopSink.
@@ -341,8 +349,8 @@ class _DatasetIterMS(_DatasetIter):
         self.op = GetNextSingleOp(self.dataset_types, self.dataset_shapes, queue_name)
 
 
-class _DatasetIterPSLite(_DatasetIter):
-    """Iter for context (device_target=GPU) on MS_PSERVER or MS_SCHED"""
+class _DatasetIterPSServer(_DatasetIter):
+    """Iter for context on MS_PSERVER or MS_SCHED"""
 
     def __init__(self, dataset, sink_size, epoch_num):
         super().__init__(dataset, sink_size, epoch_num)
@@ -355,6 +363,20 @@ class _DatasetIterPSLite(_DatasetIter):
 
         self.op = op
 
+class _DatasetIterPSWork(_DatasetIter):
+    """Iter for context on MS_WORKER"""
+
+    def __init__(self, dataset, sink_size, epoch_num):
+        super().__init__(dataset, sink_size, epoch_num)
+        if sink_size > 0:
+            self.sink_count = sink_size
+        else:
+            self.sink_count = dataset.get_dataset_size()
+
+        def op():
+            return tuple()
+
+        self.op = op
 
 class _DatasetIterNormal:
     """Iter for normal(non sink) mode, feed the data from host."""
