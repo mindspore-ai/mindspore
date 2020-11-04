@@ -495,6 +495,8 @@ class ReduceMax(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMax(keep_dims=True)
         >>> output = op(input_x, 1)
+        >>> output.shape
+        (3, 1, 5, 6)
     """
 
     @prim_attr_register
@@ -572,6 +574,8 @@ class ReduceProd(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceProd(keep_dims=True)
         >>> output = op(input_x, 1)
+        >>> output.shape
+        (3, 1, 5, 6)
     """
 
 
@@ -730,8 +734,7 @@ class BatchMatMul(MatMul):
         [[[[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]]
-
+          [[3. 3. 3. 3.]]],
          [[[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
@@ -744,8 +747,7 @@ class BatchMatMul(MatMul):
         [[[[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
-          [[3. 3. 3. 3.]]]
-
+          [[3. 3. 3. 3.]]],
          [[[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
@@ -3683,11 +3685,11 @@ class IFMR(PrimitiveWithInfer):
     The TFMR(Input Feature Map Reconstruction).
 
     Args:
-        min_percentile (float): Min init percentile.
-        max_percentile (float): Max init percentile.
-        search_range Union[list(float), tuple(float)]: Range of searching.
-        search_step (float): Step size of searching.
-        with_offset (bool): Whether using offset.
+        min_percentile (float): Min init percentile. Default: 0.999999.
+        max_percentile (float): Max init percentile. Default: 0.999999.
+        search_range Union[list(float), tuple(float)]: Range of searching. Default: [0.7, 1.3].
+        search_step (float): Step size of searching. Default: 0.01.
+        with_offset (bool): Whether using offset. Default: True.
 
     Inputs:
         - **data** (Tensor) - A Tensor of feature map. With float16 or float32 data type.
@@ -3709,10 +3711,12 @@ class IFMR(PrimitiveWithInfer):
         >>> ifmr = P.IFMR(min_percentile=0.2, max_percentile=0.9, search_range=(1.0, 2.0),
                           search_step=1.0, with_offset=False)
         >>> output = ifmr(data, data_min, data_max, cumsum)
+        ([7.87401572e-03], [0.00000000e+00])
     """
 
     @prim_attr_register
-    def __init__(self, min_percentile, max_percentile, search_range, search_step, with_offset):
+    def __init__(self, min_percentile=0.999999, max_percentile=0.999999, search_range=(0.7, 1.3), search_step=0.01,
+                 with_offset=True):
         validator.check_value_type("min_percentile", min_percentile, [float], self.name)
         validator.check_value_type("max_percentile", max_percentile, [float], self.name)
         validator.check_value_type("search_range", search_range, [list, tuple], self.name)

@@ -45,7 +45,7 @@ class Assign(PrimitiveWithCheck):
         >>>
         >>>     def construct(self, x):
         >>>         P.Assign()(self.y, x)
-        >>>         return x
+        >>>         return self.y
         >>> x = Tensor([2.0], mindspore.float32)
         >>> net = Net()
         >>> net(x)

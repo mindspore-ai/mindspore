@@ -1125,6 +1125,7 @@ class ScalarToArray(PrimitiveWithInfer):
         >>> op = P.ScalarToArray()
         >>> data = 1.0
         >>> output = op(data)
+        1.0
     """
 
     @prim_attr_register
@@ -1156,6 +1157,7 @@ class ScalarToTensor(PrimitiveWithInfer):
         >>> op = P.ScalarToTensor()
         >>> data = 1
         >>> output = op(data, mindspore.float32)
+        1.0
     """
 
     @prim_attr_register
@@ -2987,7 +2989,7 @@ class ScatterMul(_ScatterOp):
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
-        >>> updates = Tensor(np.ones([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
+        >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
         >>> scatter_mul = P.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         [[2.0, 2.0, 2.0], [4.0, 4.0, 4.0]]
@@ -3496,7 +3498,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
 
     This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
     is the corresponding number of blocks after division. The output tensor's H, W dimension is product of original H, W
-    dimension and block_shape with given amount to crop from dimension, respectively.B
+    dimension and block_shape with given amount to crop from dimension, respectively.
 
     Args:
         block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value >= 1.

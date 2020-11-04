@@ -319,6 +319,8 @@ class ReLU6(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu6 = P.ReLU6()
         >>> result = relu6(input_x)
+        [[0. 4. 0.]
+         [2. 0. 6.]]
     """
 
     @prim_attr_register
@@ -352,7 +354,7 @@ class ReLUV2(PrimitiveWithInfer):
         >>> relu_v2 = P.ReLUV2()
         >>> output = relu_v2(input_x)
         ([[[[1., 0.], [0., 4.]], [[0., 6.], [7., 0.]]]],
-         [[[[1, 0], [2, 0]], [[2, 0], [1, 0]]]])
+         [[[[[1, 0], [2, 0]], [[2, 0], [1, 0]]]]])
     """
 
     @prim_attr_register
@@ -892,7 +894,7 @@ class BatchNorm(PrimitiveWithInfer):
         - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
 
     Examples:
-        >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
+        >>> input_x = Tensor(np.ones([32, 64]), mindspore.float32)
         >>> scale = Tensor(np.ones([64]), mindspore.float32)
         >>> bias = Tensor(np.ones([64]), mindspore.float32)
         >>> mean = Tensor(np.ones([64]), mindspore.float32)
@@ -2558,7 +2560,11 @@ class ResizeBilinear(PrimitiveWithInfer):
         >>> tensor = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
         >>> resize_bilinear = P.ResizeBilinear((5, 5))
         >>> result = resize_bilinear(tensor)
-        >>> assert result.shape == (1, 1, 5, 5)
+        [[[[1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]]]]
     """
 
     @prim_attr_register

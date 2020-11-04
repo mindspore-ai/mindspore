@@ -35,6 +35,7 @@ class ScalarCast(PrimitiveWithInfer):
     Examples:
         >>> scalar_cast = P.ScalarCast()
         >>> output = scalar_cast(255.0, mindspore.int32)
+        255
     """
 
     @prim_attr_register
