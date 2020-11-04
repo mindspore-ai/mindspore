@@ -34,12 +34,12 @@ namespace mindspore::dataset {
 // TreeConsumer
 TreeConsumer::TreeConsumer() { tree_adapter_ = std::make_unique<TreeAdapter>(); }
 
-Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->BuildAndPrepare(std::move(d)); }
+Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d)); }
 Status TreeConsumer::Terminate() { return tree_adapter_->AllTasks()->DoServiceStop(); }
 
 // IteratorConsumer
 Status IteratorConsumer::Init(std::shared_ptr<DatasetNode> d) {
-  return tree_adapter_->BuildAndPrepare(std::move(d), num_epochs_);
+  return tree_adapter_->Compile(std::move(d), num_epochs_);
 }
 
 Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *out) {
@@ -74,9 +74,7 @@ Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr>
 }
 
 // ToDevice
-Status ToDevice::Init(std::shared_ptr<DatasetNode> d) {
-  return tree_adapter_->BuildAndPrepare(std::move(d), num_epochs_);
-}
+Status ToDevice::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d), num_epochs_); }
 
 Status ToDevice::Send() {
   std::unique_ptr<DataBuffer> db;
@@ -386,7 +384,7 @@ TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), row_flag_(fal
 }
 
 Status TreeGetters::Init(std::shared_ptr<DatasetNode> d) {
-  Status s = tree_adapter_->BuildAndPrepare(std::move(d), 1);
+  Status s = tree_adapter_->Compile(std::move(d), 1);
   if (!s.IsError()) {
     init_flag_ = true;
   }
@@ -464,9 +462,9 @@ Status TreeGetters::GetNumClasses(int64_t *num_classes) {
   RETURN_IF_NOT_OK(root->GetNumClasses(num_classes));
   return Status::OK();
 }
-Status BuildVocabConsumer::Init(std::shared_ptr<DatasetNode> d) {
-  return tree_adapter_->BuildAndPrepare(std::move(d), 1);
-}
+
+Status BuildVocabConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d), 1); }
+
 Status BuildVocabConsumer::Start() {
   // Getting one row would trigger building the vocab
   TensorRow row;

@@ -6,6 +6,7 @@ add_library(engine-opt OBJECT
           pre/cache_error_pass.cc
           pre/cache_transform_pass.cc
           pre/epoch_injection_pass.cc
+          pre/input_validation_pass.cc
           pre/removal_pass.cc
           optional/tensor_op_fusion_pass.cc
           util/printer_pass.cc
