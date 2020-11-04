@@ -66,7 +66,7 @@ Status RemovalPass::RunOnTree(ExecutionTree *tree, bool *modified) {
 
   // Then, execute the removal of any nodes that were set up for removal
   for (auto node : removal_nodes->nodes_to_remove()) {
-    node->Remove();
+    RETURN_IF_NOT_OK(node->Remove());
   }
   MS_LOG(INFO) << "Pre pass: removal pass complete.";
   return Status::OK();

@@ -153,7 +153,7 @@ TEST_F(MindDataTestDataHelper, MindDataTestTensorWriteFloat) {
   // create buffer using system mempool
   DataHelper dh;
   void *data = malloc(t->SizeInBytes());
-  auto bytes_copied = dh.DumpTensor(std::move(t), data, t->SizeInBytes());
+  auto bytes_copied = dh.DumpData(t->GetBuffer(), t->SizeInBytes(), data, t->SizeInBytes());
   if (bytes_copied != t->SizeInBytes()) {
     EXPECT_TRUE(false);
   }
@@ -177,7 +177,7 @@ TEST_F(MindDataTestDataHelper, MindDataTestTensorWriteUInt) {
   // create buffer using system mempool
   DataHelper dh;
   void *data = malloc(t->SizeInBytes());
-  auto bytes_copied = dh.DumpTensor(t, data, t->SizeInBytes());
+  auto bytes_copied = dh.DumpData(t->GetBuffer(), t->SizeInBytes(), data, t->SizeInBytes());
   if (bytes_copied != t->SizeInBytes()) {
     EXPECT_TRUE(false);
   }
