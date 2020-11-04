@@ -42,37 +42,34 @@ class NetROIAlignGrad(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_roi_align_grad():
-    rois = Tensor(np.array([[0, -2.0, -2.0, 22.0, 22.0]], np.float32))
+    def roi_align_grad_case(data_type):
+        rois = Tensor(np.array([[0, -2.0, -2.0, 21.0, 21.0]], data_type))
 
-    dy = Tensor(np.array([[[
-        [.1, .2, .3],
-        [.1, .2, .3],
-        [.1, .2, .3]
-    ]]], np.float32))
+        dy = Tensor(np.array([[[
+            [.1, .2, .3],
+            [.1, .2, .3],
+            [.1, .2, .3]
+        ]]], data_type))
 
-    xdiff_shape = (1, 1, 6, 6)
-    pooled_height, pooled_width, spatial_scale, sample_num = 3, 3, 0.25, 2
+        xdiff_shape = (1, 1, 6, 6)
+        pooled_height, pooled_width, spatial_scale, sample_num = 3, 3, 0.25, 2
+        context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    roi_align_grad = NetROIAlignGrad(
-        xdiff_shape,
-        pooled_height,
-        pooled_width,
-        spatial_scale,
-        sample_num)
-    output = roi_align_grad(dy, rois)
-    print(output)
-    # the out if aligned is True
-    # expect = ([[[[0.0563, 0.0563, 0.0750, 0.0938, 0.1125, 0.0563],
-    #              [0.0375, 0.0375, 0.0500, 0.0625, 0.0750, 0.0375],
-    #              [0.0375, 0.0375, 0.0500, 0.0625, 0.0750, 0.0375],
-    #              [0.0375, 0.0375, 0.0500, 0.0625, 0.0750, 0.0375],
-    #              [0.0375, 0.0375, 0.0500, 0.0625, 0.0750, 0.0375],
-    #              [0.0188, 0.0188, 0.0250, 0.0312, 0.0375, 0.0188]]]])
-    expect = ([[[[0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
-                 [0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
-                 [0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
-                 [0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
-                 [0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
-                 [0.025, 0.025, 0.05, 0.05, 0.075, 0.075]]]])
-    np.testing.assert_almost_equal(output.asnumpy(), expect, decimal=4)
+        roi_align_grad = NetROIAlignGrad(
+            xdiff_shape,
+            pooled_height,
+            pooled_width,
+            spatial_scale,
+            sample_num)
+        output = roi_align_grad(dy, rois)
+        print(output)
+        expect = ([[[[0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
+                     [0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
+                     [0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
+                     [0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
+                     [0.025, 0.025, 0.05, 0.05, 0.075, 0.075],
+                     [0.025, 0.025, 0.05, 0.05, 0.075, 0.075]]]])
+        np.testing.assert_almost_equal(output.asnumpy(), expect, decimal=4)
+
+    roi_align_grad_case(np.float32)
+    roi_align_grad_case(np.float16)
