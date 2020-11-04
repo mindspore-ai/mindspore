@@ -181,11 +181,11 @@ class ExportToQuantInferNetwork:
             cell_core = None
             fake_quant_act = None
             activation = None
-            if isinstance(subcell, quant.Conv2dBnAct):
+            if isinstance(subcell, nn.Conv2dBnAct):
                 cell_core = subcell.conv
                 activation = subcell.activation
                 fake_quant_act = activation.fake_quant_act if hasattr(activation, "fake_quant_act") else None
-            elif isinstance(subcell, quant.DenseBnAct):
+            elif isinstance(subcell, nn.DenseBnAct):
                 cell_core = subcell.dense
                 activation = subcell.activation
                 fake_quant_act = activation.fake_quant_act if hasattr(activation, "fake_quant_act") else None
@@ -240,9 +240,9 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
             subcell = cells[name]
             if subcell == network:
                 continue
-            if isinstance(subcell, quant.Conv2dBnAct):
+            if isinstance(subcell, nn.Conv2dBnAct):
                 network, change = self._convert_subcell(network, change, name, subcell)
-            elif isinstance(subcell, quant.DenseBnAct):
+            elif isinstance(subcell, nn.DenseBnAct):
                 network, change = self._convert_subcell(network, change, name, subcell, conv=False)
             elif isinstance(subcell, (quant.Conv2dBnFoldQuant, quant.Conv2dBnWithoutFoldQuant,
                                       quant.Conv2dQuant, quant.DenseQuant)):

@@ -36,7 +36,7 @@ from .quantizer import Quantizer, OptimizeOption
 __all__ = ["QuantizationAwareTraining", "create_quant_config"]
 
 
-def create_quant_config(quant_observer=(quant.FakeQuantWithMinMaxObserver, quant.FakeQuantWithMinMaxObserver),
+def create_quant_config(quant_observer=(nn.FakeQuantWithMinMaxObserver, nn.FakeQuantWithMinMaxObserver),
                         quant_delay=(0, 0),
                         quant_dtype=(QuantDtype.INT8, QuantDtype.INT8),
                         per_channel=(False, False),
@@ -48,7 +48,7 @@ def create_quant_config(quant_observer=(quant.FakeQuantWithMinMaxObserver, quant
     Args:
         quant_observer (Observer, list or tuple): The oberser type to do quantization. The first element represent
             weights and second element represent data flow.
-            Default: (quant.FakeQuantWithMinMaxObserver, quant.FakeQuantWithMinMaxObserver)
+            Default: (nn.FakeQuantWithMinMaxObserver, nn.FakeQuantWithMinMaxObserver)
         quant_delay (int, list or tuple): Number of steps after which weights and activations are quantized during
             eval. The first element represent weights and second element represent data flow. Default: (0, 0)
         quant_dtype (QuantDtype, list or tuple): Datatype to use for quantize weights and activations. The first
@@ -210,8 +210,8 @@ class QuantizationAwareTraining(Quantizer):
         self.act_symmetric = Validator.check_bool(symmetric[-1], "symmetric")
         self.weight_range = Validator.check_bool(narrow_range[0], "narrow range")
         self.act_range = Validator.check_bool(narrow_range[-1], "narrow range")
-        self._convert_method_map = {quant.Conv2dBnAct: self._convert_conv,
-                                    quant.DenseBnAct: self._convert_dense}
+        self._convert_method_map = {nn.Conv2dBnAct: self._convert_conv,
+                                    nn.DenseBnAct: self._convert_dense}
         self.quant_config = create_quant_config(quant_delay=quant_delay,
                                                 quant_dtype=quant_dtype,
                                                 per_channel=per_channel,
@@ -257,7 +257,7 @@ class QuantizationAwareTraining(Quantizer):
             subcell = cells[name]
             if subcell == network:
                 continue
-            elif isinstance(subcell, (quant.Conv2dBnAct, quant.DenseBnAct)):
+            elif isinstance(subcell, (nn.Conv2dBnAct, nn.DenseBnAct)):
                 prefix = subcell.param_prefix
                 new_subcell = self._convert_method_map[type(subcell)](subcell)
                 new_subcell.update_parameters_name(prefix + '.')
