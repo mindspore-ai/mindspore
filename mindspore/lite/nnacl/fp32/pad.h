@@ -31,6 +31,9 @@ void Pad(const float *input_data, float *output_data, const int *input_shape, co
          const int *paddings, const int tid, const int thread_num);
 void MirrorPad(const float *input_data, float *output_data, const int *input_shape, const PadParameter *pad_param,
                int begin, int end);
+
+int TransOut2InputDimIndex(int out_dim_index, int left_pad, int in_dim, int offset);
+int GetInputFlattenIndex(int out_flatten_index, const int *input_shape, const PadParameter *pad_param);
 #ifdef __cplusplus
 }
 #endif

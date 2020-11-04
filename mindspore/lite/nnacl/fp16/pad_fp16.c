@@ -33,3 +33,10 @@ void PadFp16(const float16_t *input_data, float16_t *output_data, const int *inp
     }
   }
 }
+
+void MirrorPadFp16(const float16_t *input_data, float16_t *output_data, const int *input_shape,
+                   const PadParameter *pad_param, int begin, int end) {
+  for (int i = begin; i < end; ++i) {
+    output_data[i] = input_data[GetInputFlattenIndex(i, input_shape, pad_param)];
+  }
+}
