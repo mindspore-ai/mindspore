@@ -19,12 +19,15 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
+#include "nnacl/fp32/pad.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void PadFp16(const float16_t *input_data, float16_t *output_data, const int *input_shape, const int *output_shape,
              const int *paddings, const int tid, const int thread_num);
+void MirrorPadFp16(const float16_t *input_data, float16_t *output_data, const int *input_shape,
+                   const PadParameter *pad_param, int begin, int end);
 #ifdef __cplusplus
 }
 #endif

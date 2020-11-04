@@ -32,6 +32,7 @@ class PadFp16CPUKernel : public PadCPUKernel {
 
   int Run() override;
   int RunImpl(int task_id) override;
+  int RunMirrorPadImpl(int task_id) override;
 
  private:
   void FreeInputAndOutput();
