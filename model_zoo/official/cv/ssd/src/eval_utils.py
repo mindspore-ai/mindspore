@@ -14,7 +14,6 @@
 # ============================================================================
 """Coco metrics utils"""
 
-import os
 import json
 import numpy as np
 from .config import config
@@ -56,22 +55,17 @@ def apply_nms(all_boxes, all_scores, thres, max_boxes):
     return keep
 
 
-def metrics(pred_data):
+def metrics(pred_data, anno_json):
     """Calculate mAP of predicted bboxes."""
     from pycocotools.coco import COCO
     from pycocotools.cocoeval import COCOeval
     num_classes = config.num_classes
 
-    coco_root = config.coco_root
-    data_type = config.val_data_type
-
     #Classes need to train or test.
-    val_cls = config.coco_classes
+    val_cls = config.classes
     val_cls_dict = {}
     for i, cls in enumerate(val_cls):
         val_cls_dict[i] = cls
-
-    anno_json = os.path.join(coco_root, config.instances_set.format(data_type))
     coco_gt = COCO(anno_json)
     classs_dict = {}
     cat_ids = coco_gt.loadCats(coco_gt.getCatIds())
