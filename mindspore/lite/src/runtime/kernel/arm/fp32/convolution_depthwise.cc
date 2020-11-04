@@ -123,8 +123,8 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
 
   auto *weight_tensor = inputs.at(kWeightIndex);
-  auto *restore_data = weight_tensor->MutableData();
-
+  auto *restore_data = weight_tensor->data_c();
+  auto restore_type = weight_tensor->data_type();
   if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
     auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
@@ -147,6 +147,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
     if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
       weight_tensor->FreeData();
       weight_tensor->set_data(restore_data);
+      weight_tensor->set_data_type(restore_type);
     }
     free(opParameter);
     return nullptr;
@@ -159,6 +160,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
     if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
       weight_tensor->FreeData();
       weight_tensor->set_data(restore_data);
+      weight_tensor->set_data_type(restore_type);
     }
     return nullptr;
   }
@@ -166,6 +168,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
   if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
     weight_tensor->FreeData();
     weight_tensor->set_data(restore_data);
+    weight_tensor->set_data_type(restore_type);
   }
 
   return kernel;

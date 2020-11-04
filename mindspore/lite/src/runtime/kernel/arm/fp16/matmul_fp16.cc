@@ -251,6 +251,7 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
                                                const mindspore::lite::PrimitiveC *primitive) {
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->data_c();
+  auto restore_type = weight_tensor->data_type();
   bool dequant_flag = !weight_tensor->GetQuantParams().empty() && weight_tensor->GetQuantParams().front().inited &&
                       restore_data != nullptr;
   if (dequant_flag) {
@@ -268,6 +269,7 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
     if (dequant_flag) {
       weight_tensor->FreeData();
       weight_tensor->set_data(restore_data);
+      weight_tensor->set_data_type(restore_type);
     }
     free(opParameter);
     return nullptr;
@@ -280,12 +282,14 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
     if (dequant_flag) {
       weight_tensor->FreeData();
       weight_tensor->set_data(restore_data);
+      weight_tensor->set_data_type(restore_type);
     }
     return nullptr;
   }
   if (dequant_flag) {
     weight_tensor->FreeData();
     weight_tensor->set_data(restore_data);
+    weight_tensor->set_data_type(restore_type);
   }
   return kernel;
 }
