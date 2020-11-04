@@ -169,6 +169,25 @@ ConvParameter *CreateNewConvParameter(ConvParameter *parameter) {
   return conv_parameter;
 }
 
+void FreeMemoryFp32(std::vector<kernel::LiteKernel *> group_convs, std::vector<lite::Tensor *> new_inputs,
+                    std::vector<lite::Tensor *> new_outputs) {
+  for (auto sub_conv : group_convs) {
+    if (sub_conv != nullptr) {
+      delete sub_conv;
+    }
+  }
+  for (auto in_tensor : new_inputs) {
+    if (in_tensor != nullptr) {
+      delete in_tensor;
+    }
+  }
+  for (auto out_tensor : new_outputs) {
+    if (out_tensor != nullptr) {
+      delete out_tensor;
+    }
+  }
+}
+
 kernel::LiteKernel *CpuConvFp32KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                             const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
@@ -201,6 +220,7 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
   int new_out_channel = 0;
   if (group == 0) {
     MS_LOG(ERROR) << "Divisor 'group' cannot be 0.";
+    return nullptr;
   } else {
     new_out_channel = out_channel / group;
   }
@@ -211,8 +231,9 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
   bool has_bias = input_num == 3;
   bool use_winograd = false;
   int out_unit;
+  bool infered_flag = primitive != nullptr && primitive->GetInferFlag();
 
-  if (primitive != nullptr && primitive->GetInferFlag()) {
+  if (infered_flag) {
     int batch = inputs.front()->Batch();
     int in_h = inputs.front()->Height();
     int in_w = inputs.front()->Width();
@@ -232,21 +253,48 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
     std::vector<lite::Tensor *> new_outputs;
     auto new_conv_parameter = CreateNewConvParameter(conv_param);
     if (new_conv_parameter == nullptr) {
+      FreeMemoryFp32(group_convs, new_inputs, new_outputs);
       MS_LOG(ERROR) << "Get new conv parameter failed.";
       return nullptr;
     }
     // get new input for each group
     auto in_tensor =
       new (std::nothrow) lite::Tensor(inputs.front()->data_type(), in_shape, Format_NHWC, lite::Tensor::Category::VAR);
-    if (primitive != nullptr && primitive->GetInferFlag()) {
-      in_tensor->MallocData();
+    if (in_tensor == nullptr) {
+      delete new_conv_parameter;
+      FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+      MS_LOG(ERROR) << "new in_tensor failed.";
+      return nullptr;
+    }
+    if (infered_flag) {
+      auto ret = in_tensor->MallocData();
+      if (ret != RET_OK) {
+        delete new_conv_parameter;
+        delete in_tensor;
+        FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+        MS_LOG(ERROR) << "in tensor malloc failed.";
+        return nullptr;
+      }
     }
     new_inputs.emplace_back(in_tensor);
 
-    // nwe weight
+    // new weight
     auto filter_tensor = new (std::nothrow) lite::Tensor(inputs.at(kWeightIndex)->data_type(), filter_shape,
                                                          Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
-    filter_tensor->MallocData();
+    if (filter_tensor == nullptr) {
+      delete new_conv_parameter;
+      FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+      MS_LOG(ERROR) << "new filter_tensor failed.";
+      return nullptr;
+    }
+    auto ret = filter_tensor->MallocData();
+    if (ret != RET_OK) {
+      delete new_conv_parameter;
+      delete filter_tensor;
+      FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+      MS_LOG(ERROR) << "filter_tensor malloc failed.";
+      return nullptr;
+    }
     int copy_length = kernel_h * kernel_w * new_in_channel * new_out_channel;
     memcpy(filter_tensor->data_c(), origin_weight + i * copy_length, copy_length * sizeof(float));
     new_inputs.emplace_back(filter_tensor);
@@ -256,7 +304,20 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
       auto *origin_bias = reinterpret_cast<float *>(inputs.at(kBiasIndex)->data_c());
       auto bias_tensor = new (std::nothrow)
         lite::Tensor(inputs.at(kBiasIndex)->data_type(), bias_shape, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
-      bias_tensor->MallocData();
+      if (bias_tensor == nullptr) {
+        delete new_conv_parameter;
+        FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+        MS_LOG(ERROR) << "new bias_tensor failed.";
+        return nullptr;
+      }
+      ret = bias_tensor->MallocData();
+      if (ret != RET_OK) {
+        delete new_conv_parameter;
+        delete bias_tensor;
+        FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+        MS_LOG(ERROR) << "bias_tensor malloc failed.";
+        return nullptr;
+      }
       memcpy(bias_tensor->data_c(), origin_bias + i * new_out_channel, new_out_channel * sizeof(float));
       new_inputs.emplace_back(bias_tensor);
     }
@@ -264,11 +325,24 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
     // set new output tensor
     for (int j = 0; j < output_num; ++j) {
       auto tmp_out_tensor = new (std::nothrow) lite::Tensor();
+      if (tmp_out_tensor == nullptr) {
+        delete new_conv_parameter;
+        FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+        MS_LOG(ERROR) << "new tmp_out_tensor failed.";
+        return nullptr;
+      }
       tmp_out_tensor->set_data_type(outputs.at(j)->data_type());
       tmp_out_tensor->SetFormat(outputs.at(j)->GetFormat());
-      if (primitive != nullptr && primitive->GetInferFlag()) {
+      if (infered_flag) {
         tmp_out_tensor->set_shape(out_shape);
-        tmp_out_tensor->MallocData();
+        ret = tmp_out_tensor->MallocData();
+        if (ret != RET_OK) {
+          delete new_conv_parameter;
+          delete tmp_out_tensor;
+          FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+          MS_LOG(ERROR) << "tmp_out_tensor malloc data failed.";
+          return nullptr;
+        }
       }
       new_outputs.emplace_back(tmp_out_tensor);
     }
@@ -287,6 +361,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
                                              const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
+  MS_ASSERT(desc.data_type == kNumberTypeFloat32);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   int group = conv_param->group_;
   bool use_winograd = false;
