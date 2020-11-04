@@ -37,6 +37,7 @@
 #include "proto/onnx.pb.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/protobuf_utils.h"
+#include "tools/common/graph_util.h"
 
 using string = std::string;
 using int32 = int32_t;
@@ -844,8 +845,14 @@ int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
 
 onnx::ModelProto *AnfImporterFromProtobuf::ReadOnnxFromBinary(const std::string &model_path) {
   auto onnx_model = new onnx::ModelProto;
+  if (RET_OK != ValidateFileStr(model_path, ".mindir")) {
+    MS_LOG(ERROR) << "Input illegal: modelFile must be *.mindir";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_INPUT_PARAM_INVALID);
+    return nullptr;
+  }
   if (ReadProtoFromBinaryFile((const char *)model_path.c_str(), onnx_model) != RET_OK) {
     MS_LOG(ERROR) << "Read onnx model file failed, model path: " << model_path;
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
     return nullptr;
   }
   return onnx_model;

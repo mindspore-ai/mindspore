@@ -33,7 +33,6 @@
 #include "proto/onnx.pb.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
-#include "tools/common//graph_util.h"
 #include "include/version.h"
 
 namespace mindspore {
@@ -128,14 +127,10 @@ int RunConverter(int argc, const char **argv) {
   switch (flags->fmk) {
     case FmkType::FmkType_MS: {
       auto graph = std::make_shared<FuncGraph>();
-      if (RET_OK != ValidateFileStr(flags->modelFile, ".mindir")) {
-        MS_LOG(ERROR) << "Input illegal: modelFile must be *.mindir";
-        return RET_INPUT_PARAM_INVALID;
-      }
       auto onnx_graph = AnfImporterFromProtobuf::ReadOnnxFromBinary(flags->modelFile);
       if (onnx_graph == nullptr) {
-        MS_LOG(ERROR) << "Read MINDIR model from binary failed";
-        return RET_INPUT_PARAM_INVALID;
+        MS_LOG(ERROR) << "Read MINDIR  from binary return nullptr";
+        break;
       }
       MindsporeImporter mindsporeImporter(onnx_graph, graph);
       fb_graph = mindsporeImporter.Convert(flags.get());

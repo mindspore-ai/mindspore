@@ -85,6 +85,7 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
   if (pre_type_ == PrimitiveType_NONE && post_type_ == PrimitiveType_NONE) {
     return false;
   }
+
   auto total_node_count = input_node_indexes.size() + output_node_indexes.size();
   size_t half_count = total_node_count / 2;
   if (GetCNodeTType(*node) == schema::PrimitiveType_Activation) {
