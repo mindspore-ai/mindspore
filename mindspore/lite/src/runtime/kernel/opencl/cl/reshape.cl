@@ -27,7 +27,7 @@ __kernel void reshape_NHWC4(__read_only image2d_t src_data, __write_only image2d
     int start = ((X / CO4 * dst_size.z + min(dst_size.z, (X % CO4) * C4NUM)) + dst_size.w * Y);
     gcnt = start / src_size.x * CI4 + (start % src_size.x) / C4NUM;
     start = start % src_size.x % C4NUM;
-    for (int i = 0,  n = 0, j = start; i < C4NUM; ++n, j = 0) {
+    for (int i = 0, n = 0, j = start; i < C4NUM; ++n, j = 0) {
       int X_src = (gcnt + n) % in_img_x;
       res = READ_IMAGE(src_data, smp_zero, (int2)(X_src, (gcnt + n) / in_img_x));
       tmp[0] = res.x;

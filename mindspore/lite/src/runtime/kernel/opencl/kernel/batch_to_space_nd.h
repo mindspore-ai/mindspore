@@ -31,9 +31,12 @@ class BatchToSpaceNDOpenCLKernel : public OpenCLKernel {
 
   ~BatchToSpaceNDOpenCLKernel() override = default;
 
-  int Init() override;
-
   int Run() override;
+  int Prepare() override;
+
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
   cl::Kernel kernel_;

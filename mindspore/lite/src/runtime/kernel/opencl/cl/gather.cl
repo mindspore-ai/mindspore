@@ -1,6 +1,6 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
-__kernel void gather_NHWC4(__read_only image2d_t src_data, __global int *indices, __write_only image2d_t dst_data,
+__kernel void gather_NHWC4(__write_only image2d_t dst_data, __read_only image2d_t src_data, __global int *indices,
                            int4 src_size, int4 dst_size, int indices_num, int axis) {
   int X = get_global_id(0);  // w
   int Y = get_global_id(1);  // n*h
@@ -41,7 +41,7 @@ __kernel void gather_NHWC4(__read_only image2d_t src_data, __global int *indices
   WRITE_IMAGE(dst_data, (int2)(X * dst_size.z + Z, batch * dst_size.y + height), res_data);
 }
 
-__kernel void gather_NC4HW4(__read_only image2d_t src_data, __global int *indices, __write_only image2d_t dst_data,
+__kernel void gather_NC4HW4(__write_only image2d_t dst_data, __read_only image2d_t src_data, __global int *indices,
                             int4 src_size, int4 dst_size, int indices_num, int axis) {
   int X = get_global_id(0);  // w
   int Y = get_global_id(1);  // n*h

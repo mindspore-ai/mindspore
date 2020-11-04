@@ -31,8 +31,11 @@ using mindspore::schema::PrimitiveType_SpaceToBatchND;
 
 namespace mindspore::kernel {
 
-int SpaceToBatchNDOpenCLKernel::Init() {
-  std::string kernel_name = "space_to_batch_nd_NHWC4";
+int SpaceToBatchNDOpenCLKernel::CheckSpecs() {
+  if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   if (in_tensors_[0]->shape().size() != 4 && out_tensors_[0]->shape().size() != 4) {
     MS_LOG(ERROR) << "input/output shape size must be 4, actual: " << in_tensors_[0]->shape().size() << ", "
                   << out_tensors_[0]->shape().size();
@@ -53,6 +56,35 @@ int SpaceToBatchNDOpenCLKernel::Init() {
     MS_LOG(ERROR) << "padded shape must be multiple of block!";
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+void SpaceToBatchNDOpenCLKernel::SetConstArgs() {
+  auto param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
+  cl_int4 src_size = {(cl_int)CI4, in_tensors_[0]->Width(), in_tensors_[0]->Height(), in_tensors_[0]->Batch()};
+  cl_int4 dst_size = {(cl_int)CO4, out_tensors_[0]->Width(), out_tensors_[0]->Height(), out_tensors_[0]->Batch()};
+  cl_int2 block_size = {param->block_sizes_[0], param->block_sizes_[1]};
+  cl_int4 paddings = {param->paddings_[0], param->paddings_[1], param->paddings_[2], param->paddings_[3]};
+
+  int arg_cnt = 2;
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, block_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, paddings);
+}
+
+void SpaceToBatchNDOpenCLKernel::SetGlobalLocal() {
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  cl_int4 dst_size = {(cl_int)CO4, out_tensors_[0]->Width(), out_tensors_[0]->Height(), out_tensors_[0]->Batch()};
+  std::vector<size_t> local = {1, 1, 1};
+  std::vector<size_t> global = {(size_t)dst_size.s[0], (size_t)dst_size.s[1], (size_t)dst_size.s[2]};
+  OpenCLKernel::AlignGlobalLocal(global, local);
+}
+
+int SpaceToBatchNDOpenCLKernel::Prepare() {
+  std::string kernel_name = "space_to_batch_nd_NHWC4";
 
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
@@ -64,57 +96,26 @@ int SpaceToBatchNDOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+
+  SetGlobalLocal();
+  SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
 int SpaceToBatchNDOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  auto param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
 
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
-  cl_int4 src_size = {(cl_int)CI4, in_tensors_[0]->Width(), in_tensors_[0]->Height(), in_tensors_[0]->Batch()};
-  cl_int4 dst_size = {(cl_int)CO4, out_tensors_[0]->Width(), out_tensors_[0]->Height(), out_tensors_[0]->Batch()};
-  cl_int2 block_size = {param->block_sizes_[0], param->block_sizes_[1]};
-  cl_int4 paddings = {param->paddings_[0], param->paddings_[1], param->paddings_[2], param->paddings_[3]};
-  std::vector<size_t> local = {1, 1, 1};
-  std::vector<size_t> global = {(size_t)dst_size.s[0], (size_t)dst_size.s[1], (size_t)dst_size.s[2]};
-  int arg_cn = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, src_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, dst_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, block_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, paddings);
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
 
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLSpaceToBatchNDKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                      const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
-                                                      const kernel::KernelKey &desc,
-                                                      const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) SpaceToBatchNDOpenCLKernel(opParameter, inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Kernel " << opParameter->name_ << " new failed.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Kernel " << opParameter->name_ << " init failed.";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatchND, OpenCLSpaceToBatchNDKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatchND, OpenCLSpaceToBatchNDKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatch, OpenCLSpaceToBatchNDKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatch, OpenCLSpaceToBatchNDKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatchND, OpenCLKernelCreator<SpaceToBatchNDOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatchND, OpenCLKernelCreator<SpaceToBatchNDOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToBatch, OpenCLKernelCreator<SpaceToBatchNDOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SpaceToBatch, OpenCLKernelCreator<SpaceToBatchNDOpenCLKernel>);
 
 }  // namespace mindspore::kernel
