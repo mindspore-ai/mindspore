@@ -276,6 +276,7 @@ std::vector<TypePtr> ExtractOutputTypeByNode(const CNodePtr &node) {
 }
 
 bool IsElementWiseOperator(const std::string &op_name) {
+  // clang-format off
   static const std::set<std::string> elementwise_op = {ACTIVATION, GELU,         TANH,
                                                        SOFTMAX,    LOG_SOFTMAX,  RELU,
                                                        SQRT,       CAST,         POW,
@@ -294,7 +295,9 @@ bool IsElementWiseOperator(const std::string &op_name) {
                                                        DIVNONAN,   LOGICALAND,   ELU,
                                                        LOGICALOR,  RELU6,        SOFTPLUS,
                                                        SOFTSIGN,   LESS,         LESSEQUAL,
-                                                       BESSELI1E,  GREATEREQUAL, APPROXIMATEEQUAL};
+                                                       BESSELI1E,  GREATEREQUAL, APPROXIMATEEQUAL,
+                                                       REPEAT_ELEMENTS};
+  // clang-format on
   auto iter = elementwise_op.find(op_name);
   return (iter != elementwise_op.end());
 }
@@ -313,7 +316,7 @@ bool IsSplittableOperator(const std::string &op_name) {
      EXPM1, LOG1P, SIN, SINH, TAN, RSQRT, INV, RECIPROCAL, ROUND, FLOOR, SIGN, ERF, ERFC, ZEROSLIKE, ONESLIKE,
      BESSELI0E, BESSELI1E, FLOORMOD, ASSIGN, ASSIGN_ADD, ATAN2, DIVNONAN, LOGICALAND, LOGICALOR, ELU, RELU6, RELUV2,
      SOFTPLUS, SOFTSIGN, GREATEREQUAL, LESSEQUAL, LESS, APPROXIMATEEQUAL, MOD, UNIQUE, UNSORTED_SEGMENT_SUM,
-     UNSORTED_SEGMENT_MIN};
+     UNSORTED_SEGMENT_MIN, REPEAT_ELEMENTS, TENSOR_DOT};
   // clang-format on
 
   auto iter = splittable_op.find(op_name);

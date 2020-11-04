@@ -3174,6 +3174,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   (void)gettimeofday(&end_time, nullptr);
   uint64_t time = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+
   MS_LOG(INFO) << "Now leaving step parallel, used time: " << time << " us";
   return changes;
 }

@@ -814,6 +814,7 @@ class TensorDot(PrimitiveWithInfer):
                 raise ValueError("Axes have to be the same size/length")
             if len(self.axes[0]) != len(set(self.axes[0])) or len(self.axes[1]) != len(set(self.axes[1])):
                 raise ValueError("Axes cannot have duplicating values")
+            self.add_prim_attr("axes", self.axes)
 
     def int_to_tuple_conv(self):
         """

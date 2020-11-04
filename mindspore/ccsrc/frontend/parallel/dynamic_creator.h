@@ -133,6 +133,8 @@ REGISTER(LogicalAndInfo);
 REGISTER(LogicalOrInfo);
 REGISTER(EluInfo);
 REGISTER(ReLUInfo);
+REGISTER(RepeatElementsInfo);
+REGISTER(TensorDotInfo);
 REGISTER(ReLU6Info);
 REGISTER(ReLUV2Info);
 REGISTER(SoftplusInfo);

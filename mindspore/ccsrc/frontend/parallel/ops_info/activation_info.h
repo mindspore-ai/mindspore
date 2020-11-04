@@ -146,6 +146,14 @@ class ReLUInfo : public ActivationOther {
   ~ReLUInfo() override = default;
 };
 
+class RepeatElementsInfo : public ActivationOther {
+ public:
+  RepeatElementsInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                     const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~RepeatElementsInfo() override = default;
+};
+
 class ReLU6Info : public ActivationOther {
  public:
   ReLU6Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
