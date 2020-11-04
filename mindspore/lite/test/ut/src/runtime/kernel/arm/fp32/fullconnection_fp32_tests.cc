@@ -21,7 +21,7 @@
 #include "nnacl/fp32/matmul.h"
 #include "src/common/file_utils.h"
 #include "src/common/log_adapter.h"
-#include "src/runtime/kernel/arm/fp32/fullconnection.h"
+#include "src/runtime/kernel/arm/fp32/fullconnection_fp32.h"
 
 namespace mindspore {
 using mindspore::lite::Tensor;

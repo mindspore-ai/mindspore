@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/arm/base/batch_to_space_base.h"
 #include "nnacl/batch_to_space.h"
-#include "src/runtime/kernel/arm/fp32/batch_to_space.h"
+#include "src/runtime/kernel/arm/fp32/batch_to_space_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

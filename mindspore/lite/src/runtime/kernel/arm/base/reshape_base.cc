@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/arm/base/reshape_base.h"
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/reshape.h"
+#include "src/runtime/kernel/arm/fp32/reshape_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

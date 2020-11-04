@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/arm/base/arg_min_max_base.h"
 #include "nnacl/arg_min_max.h"
-#include "src/runtime/kernel/arm/fp32/argminmax.h"
+#include "src/runtime/kernel/arm/fp32/argminmax_fp32.h"
 #include "nnacl/arithmetic_common.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"

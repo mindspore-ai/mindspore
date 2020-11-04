@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/arm/base/crop_base.h"
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/crop.h"
+#include "src/runtime/kernel/arm/fp32/crop_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

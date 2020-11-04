@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_L2_NORM_INT8_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/l2_norm.h"
+#include "src/runtime/kernel/arm/fp32/l2_norm_fp32.h"
 #include "nnacl/int8/l2_norm_int8.h"
 
 namespace mindspore::kernel {

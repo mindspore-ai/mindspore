@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/arm/fp16/concat_fp16.h"
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
-#include "src/runtime/kernel/arm/fp32/concat.h"
+#include "src/runtime/kernel/arm/fp32/concat_fp32.h"
 #include "nnacl/fp16/concat_fp16.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

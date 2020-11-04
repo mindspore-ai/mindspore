@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_SLICE_FP16_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/slice.h"
+#include "src/runtime/kernel/arm/fp32/slice_fp32.h"
 
 namespace mindspore::kernel {
 class SliceFp16CPUKernel : public SliceCPUKernel {

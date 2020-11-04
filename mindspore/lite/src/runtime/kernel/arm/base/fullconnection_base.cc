@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/base/fullconnection_base.h"
-#include "src/runtime/kernel/arm/fp32/fullconnection.h"
+#include "src/runtime/kernel/arm/fp32/fullconnection_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

@@ -15,7 +15,7 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/fp32/constant_of_shape.h"
+#include "mindspore/lite/src/runtime/kernel/arm/fp32/constant_of_shape_fp32.h"
 #include "src/kernel_registry.h"
 #include "src/lite_kernel.h"
 

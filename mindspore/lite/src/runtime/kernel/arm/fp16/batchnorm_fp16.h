@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_BATCHNORM_FP16_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/batchnorm.h"
+#include "src/runtime/kernel/arm/fp32/batchnorm_fp32.h"
 
 namespace mindspore::kernel {
 class BatchnormFp16CPUKernel : public BatchnormCPUKernel {
