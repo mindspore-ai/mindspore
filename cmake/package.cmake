@@ -59,6 +59,12 @@ install(
 )
 
 install(
+    TARGETS mindspore_shared_lib
+    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+    COMPONENT mindspore
+)
+
+install(
     TARGETS mindspore_gvar
     DESTINATION ${INSTALL_LIB_DIR}
     COMPONENT mindspore
@@ -194,7 +200,7 @@ if (ENABLE_SERVING OR ENABLE_TESTCASES)
 endif ()
 
 if (NOT ENABLE_GE)
-    if (ENABLE_D)
+    if (ENABLE_D OR ENABLE_ACL)
         if (DEFINED ENV{ASCEND_CUSTOM_PATH})
             set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
         else ()
@@ -203,19 +209,26 @@ if (NOT ENABLE_GE)
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
 
         install(
-            FILES
-                ${CMAKE_BINARY_DIR}/graphengine/src/common/graph/libgraph.so
-                ${CMAKE_BINARY_DIR}/graphengine/src/ge/common/libge_common.so
-                ${CMAKE_BINARY_DIR}/graphengine/src/ge/ge_runtime/libge_runtime.so
-                ${CMAKE_SOURCE_DIR}/build/graphengine/libc_sec.so
+            FILES ${CMAKE_SOURCE_DIR}/build/graphengine/libc_sec.so
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
-        install(
-            TARGETS ms_profile
-            DESTINATION ${INSTALL_LIB_DIR}
-            COMPONENT mindspore
-        )
+
+        if (ENABLE_D)
+            install(
+                TARGETS ms_profile
+                DESTINATION ${INSTALL_LIB_DIR}
+                COMPONENT mindspore
+            )
+            install(
+                FILES
+                    ${CMAKE_BINARY_DIR}/graphengine/src/common/graph/libgraph.so
+                    ${CMAKE_BINARY_DIR}/graphengine/src/ge/common/libge_common.so
+                    ${CMAKE_BINARY_DIR}/graphengine/src/ge/ge_runtime/libge_runtime.so
+                DESTINATION ${INSTALL_LIB_DIR}
+                COMPONENT mindspore
+            )
+        endif ()
     elseif (ENABLE_TESTCASES)
         install(
             FILES
@@ -287,6 +300,13 @@ if (EXISTS ${CMAKE_SOURCE_DIR}/mindspore/dataset)
     )
 endif ()
 
+## Public header files
+install(
+    DIRECTORY ${CMAKE_SOURCE_DIR}/include
+    DESTINATION ${INSTALL_BASE_DIR}
+    COMPONENT mindspore
+)
+
 if (ENABLE_SERVING)
     install(
         TARGETS ms_serving
@@ -308,8 +328,8 @@ if (ENABLE_SERVING)
     )
 
     install(
-            FILES ${LIBEVENT_LIB_LIST}
-            DESTINATION ${INSTALL_LIB_DIR}
-            COMPONENT mindspore
+        FILES ${LIBEVENT_LIB_LIST}
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
     )
 endif ()

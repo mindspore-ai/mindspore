@@ -1579,7 +1579,6 @@ OperatorPtr DfGraphConvertor::ConvertParameter(const AnfNodePtr node) {
   // build index for parameter using name
   std::string name = std::static_pointer_cast<Parameter>(node)->name();
   params_[name] = node;
-
   std::ostringstream ss;
   ss << "op" << node.get();
   op_draw_name_[node.get()] = ss.str();

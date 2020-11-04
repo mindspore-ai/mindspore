@@ -23,9 +23,9 @@ usage()
 {
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
-  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
+  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu|acl] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
-  echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
+  echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
   echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|off] \\"
   echo ""
   echo "Options:"
@@ -45,7 +45,7 @@ usage()
   echo "    -i Enable increment building, default off"
   echo "    -L Enable load ANF-IR as input of 'infer', default off"
   echo "    -j[n] Set the threads when building (Default: -j8)"
-  echo "    -e Use gpu, d or cpu"
+  echo "    -e Use cpu, gpu, ascend or acl"
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
@@ -55,7 +55,6 @@ usage()
   echo "    -I Enable compiling mindspore lite for arm64, arm32 or x86_64, default disable mindspore lite compilation"
   echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
-  echo "    -w Enable acl module, default off"
   echo "    -B Enable debugger, default on"
   echo "    -E Enable IBVERBS for parameter server, default off"
   echo "    -l Compile with python dependency, default on"
@@ -225,6 +224,9 @@ checkopts()
           ENABLE_D="on"
           ENABLE_CPU="on"
           ENABLE_SERVING="on"
+        elif [[ "X$OPTARG" == "Xacl" ]]; then
+          ENABLE_SERVING="on"
+          ENABLE_ACL="on"
         elif [[ "X$OPTARG" == "Xcpu" ]]; then
           ENABLE_CPU="on"
         else

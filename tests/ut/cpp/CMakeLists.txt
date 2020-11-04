@@ -56,6 +56,7 @@ if(ENABLE_MINDDATA)
             ./utils/*.cc
             ./vm/*.cc
             ./ps/*.cc
+            ./cxx_api/*.cc
             )
    
     if(NOT ENABLE_PYTHON)
@@ -176,7 +177,7 @@ if (USE_GLOG)
     target_link_libraries(ut_tests PRIVATE mindspore::glog)
 endif()
 
-target_link_libraries(ut_tests PRIVATE mindspore securec graph)
+target_link_libraries(ut_tests PRIVATE mindspore mindspore_shared_lib securec graph)
 
 # link grpc
 if (EXISTS ${grpc_ROOT}/lib64)
