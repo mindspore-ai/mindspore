@@ -28,6 +28,7 @@
 using mindspore::schema::ReduceMode;
 
 namespace mindspore::kernel {
+enum Four_DIMENSION_REDUCE_TEMPLATE { N, H, W, C, NH, NW, NC, HW, HC, WC, NHW, NHC, NWC, HWC, NHWC };
 class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const int32_t *src_data,
                          int32_t *dst_data, const ReduceQuantArg *quant, const int tid, const int thread_num);
@@ -38,7 +39,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   ReduceInt8CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
-      : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive) {}
+      : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive), ctx_(ctx) {}
   ~ReduceInt8CPUKernel() {
     for (auto qm : mean_multipliers_) {
       delete qm;
@@ -59,6 +60,8 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int Fast4DReduceMeanHWImpl();
+  int Reduce4DExecute(int task_id);
   int CallReduceUnit(int task_id);
   int ReduceLastAxis(int task_id);
 
@@ -68,22 +71,31 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
  private:
   int MallocTmpBuffer();
   void FreeTmpBuffer();
-
+  void Match4DReducePattern();
+  void OneAxis();
+  void TwoAxes();
+  void ThreeAxes();
+  void ReduceMean4DCalQuantParam();
   int CalculateQuantArgs();
   void GetQuantArgs(size_t i);
 
  private:
   ReduceParameter *param_ = nullptr;
   ReduceQuantArg quant_arg_;
+  int8_t *nchw_in_data_ = nullptr;
+  int32_t bias_;
 
  private:
+  const lite::InnerContext *ctx_;
   int32_t *begin_src_data_ = nullptr;
   int8_t *last_dst_data_ = nullptr;
   std::vector<int32_t *> data_buffers_;
   const int32_t *src_data_ = nullptr;
   int32_t *dst_data_ = nullptr;
   bool valid_shape_ = false;
-
+  bool pattern_impl_ = false;
+  Four_DIMENSION_REDUCE_TEMPLATE pattern_;
+  QuantMulArg reduce_mean_quant_param_;  // used in reduce mean 4D situation
   Reducer reducer_ = nullptr;
   LastReducer last_reducer_ = nullptr;
   std::vector<QuantMulArg *> mean_multipliers_;

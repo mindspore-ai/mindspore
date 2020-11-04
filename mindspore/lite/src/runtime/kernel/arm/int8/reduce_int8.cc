@@ -19,6 +19,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "nnacl/quantization/quantize.h"
+#include "nnacl/pack.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
@@ -38,11 +39,77 @@ using mindspore::schema::PrimitiveType_Mean;
 using mindspore::schema::PrimitiveType_Reduce;
 
 namespace mindspore::kernel {
+void ReduceInt8CPUKernel::OneAxis() {
+  auto axis_info = axes_[0];
+  if (axis_info == 0) {
+    pattern_ = kernel::N;
+  } else if (axis_info == 1) {
+    pattern_ = kernel::H;
+  } else if (axis_info == 2) {
+    pattern_ = kernel::W;
+  } else {
+    pattern_ = kernel::C;
+  }
+}
+
+void ReduceInt8CPUKernel::TwoAxes() {
+  auto axis_info1 = axes_[0];
+  auto axis_info2 = axes_[1];
+  auto axis_sum = axis_info1 + axis_info2;
+  if (axis_sum == 1) {
+    pattern_ = kernel::NH;
+  } else if (axis_sum == 2) {
+    pattern_ = kernel::NW;
+  } else if (axis_sum == 3) {
+    if (axis_info1 == 0) {
+      pattern_ = kernel::NC;
+    } else {
+      pattern_ = kernel::HW;
+    }
+  } else if (axis_sum == 4) {
+    pattern_ = kernel::HC;
+  } else {
+    MS_ASSERT(axis_sum == 5);
+    pattern_ = kernel::WC;
+  }
+}
+
+void ReduceInt8CPUKernel::ThreeAxes() {
+  auto axis_info1 = axes_[0];
+  auto axis_info2 = axes_[1];
+  auto axis_info3 = axes_[2];
+  auto axis_sum = axis_info1 + axis_info2 + axis_info3;
+  if (axis_sum == 3) {
+    pattern_ = kernel::NHW;
+  } else if (axis_sum == 4) {
+    pattern_ = kernel::NHC;
+  } else if (axis_sum == 5) {
+    pattern_ = kernel::NWC;
+  } else {
+    MS_ASSERT(axis_sum == 6);
+    pattern_ = kernel::HWC;
+  }
+}
+
+void ReduceInt8CPUKernel::Match4DReducePattern() {
+  if (num_axes_ == 1) {
+    OneAxis();
+  } else if (num_axes_ == 2) {
+    TwoAxes();
+  } else if (num_axes_ == 3) {
+    ThreeAxes();
+  } else {
+    MS_ASSERT(num_axes_ == 4);
+    pattern_ = kernel::NHWC;
+  }
+}
+
 int ReduceInt8CPUKernel::Init() {
   auto ret = ReduceBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
+  Match4DReducePattern();
   if (!this->in_tensors_[0]->shape().empty()) {
     this->valid_shape_ = true;
     ret = CalculateQuantArgs();
@@ -96,6 +163,64 @@ int ReduceInt8CPUKernel::Init() {
   return ReSize();
 }
 
+void ReduceInt8CPUKernel::ReduceMean4DCalQuantParam() {
+  int reduce_num = 1;
+  auto in_shape = in_tensors_.front()->shape();
+  switch (pattern_) {
+    case N:
+      reduce_num = in_shape[0];
+      break;
+    case H:
+      reduce_num = in_shape[1];
+      break;
+    case W:
+      reduce_num = in_shape[2];
+      break;
+    case C:
+      reduce_num = in_shape[3];
+      break;
+    case NH:
+      reduce_num = in_shape[0] * in_shape[1];
+      break;
+    case NW:
+      reduce_num = in_shape[0] * in_shape[2];
+      break;
+    case NC:
+      reduce_num = in_shape[0] * in_shape[3];
+      break;
+    case HW:
+      reduce_num = in_shape[1] * in_shape[2];
+      break;
+    case HC:
+      reduce_num = in_shape[1] * in_shape[3];
+      break;
+    case WC:
+      reduce_num = in_shape[2] * in_shape[3];
+      break;
+    case NHW:
+      reduce_num = in_shape[0] * in_shape[1] * in_shape[2];
+      break;
+    case NHC:
+      reduce_num = in_shape[0] * in_shape[1] * in_shape[3];
+      break;
+    case NWC:
+      reduce_num = in_shape[0] * in_shape[2] * in_shape[3];
+      break;
+    case HWC:
+      reduce_num = in_shape[1] * in_shape[2] * in_shape[3];
+      break;
+    case NHWC:
+      reduce_num = in_shape[0] * in_shape[1] * in_shape[2] * in_shape[3];
+      break;
+  }
+  bias_ = quant_arg_.out_zp_ - quant_arg_.in_zp_ * quant_arg_.in_scale_ / quant_arg_.out_scale_;
+  int shift;
+  double reciprocal = quant_arg_.in_scale_ / (quant_arg_.out_scale_ * reduce_num);
+  QuantizeMultiplierSmallerThanOne(reciprocal, &reduce_mean_quant_param_.multiplier_, &shift);
+  reduce_mean_quant_param_.left_shift_ = shift < 0 ? -shift : 0;
+  reduce_mean_quant_param_.right_shift_ = shift > 0 ? shift : 0;
+}
+
 int ReduceInt8CPUKernel::CalculateQuantArgs() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
@@ -117,18 +242,24 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
   // (quant_out - zp_out)*scale_out = sum((quant_in -zp)*scale_in) * (1/num) for each axis in axes
   // quant_out = sum(quant_in-zp) * (scale_in/scale_out) * (1/num)
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
-    for (auto i = 0; i < num_axes_; i++) {
-      auto axis = axes_[i];
-      double reciprocal = 1.0 / in_tensors_.at(0)->shape()[axis];
-      QuantMulArg *qm = new (std::nothrow) QuantMulArg;
-      if (qm == nullptr) {
-        MS_LOG(ERROR) << "Reduce new QuantMulArg failed.";
-        return RET_NULL_PTR;
+    if (input->shape().size() == 4 && pattern_ == kernel::HW) {
+      // special case, can use pattern
+      ReduceMean4DCalQuantParam();
+      pattern_impl_ = true;
+    } else {
+      for (auto i = 0; i < num_axes_; i++) {
+        auto axis = axes_[i];
+        double reciprocal = 1.0 / in_tensors_.at(0)->shape()[axis];
+        QuantMulArg *qm = new (std::nothrow) QuantMulArg;
+        if (qm == nullptr) {
+          MS_LOG(ERROR) << "Reduce new QuantMulArg failed.";
+          return RET_NULL_PTR;
+        }
+        QuantizeMultiplierSmallerThanOne(reciprocal, &qm->multiplier_, &shift);
+        qm->left_shift_ = shift < 0 ? -shift : 0;
+        qm->right_shift_ = shift > 0 ? shift : 0;
+        mean_multipliers_.push_back(qm);
       }
-      QuantizeMultiplierSmallerThanOne(reciprocal, &qm->multiplier_, &shift);
-      qm->left_shift_ = shift < 0 ? -shift : 0;
-      qm->right_shift_ = shift > 0 ? shift : 0;
-      mean_multipliers_.push_back(qm);
     }
   }
 
@@ -230,6 +361,16 @@ int ReduceInt8Impl(void *cdata, int task_id) {
   return RET_OK;
 }
 
+int ReduceMeanPatternInt8Impl(void *cdata, int task_id) {
+  auto reduce = reinterpret_cast<ReduceInt8CPUKernel *>(cdata);
+  auto error_code = reduce->Reduce4DExecute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "Reduce Run error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 void ReduceInt8CPUKernel::GetQuantArgs(size_t i) {
   MS_ASSERT(i < static_cast<size_t>(num_axis_));
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
@@ -250,6 +391,78 @@ void ReduceInt8CPUKernel::GetQuantArgs(size_t i) {
   }
 }
 
+int ReduceInt8CPUKernel::Reduce4DExecute(int task_id) {
+  auto input = in_tensors_.at(0);
+  auto in_data = reinterpret_cast<int8_t *>(input->data_c());
+  auto in_shape = input->shape();
+  MS_ASSERT(in_shape.size() == 4);
+  int n = in_shape.at(0);
+  int h = in_shape.at(1);
+  int w = in_shape.at(2);
+  int c = in_shape.at(3);
+  auto output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
+  switch (pattern_) {
+    case N:
+      return ReduceMeanN(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case H:
+      return ReduceMeanH(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case W:
+      return ReduceMeanW(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case C:
+      return ReduceMeanC(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case NH:
+      return ReduceMeanNH(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case NW:
+      return ReduceMeanNW(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case NC:
+      return ReduceMeanNC(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case HW: {
+      // data has been convert into NCHW format for efficiently
+      int num = UP_DIV(c, ctx_->thread_num_);
+      int count = c - task_id * num;
+      count = count > num ? num : count;
+      int plane = h * w;
+      return ReduceMeanHW(n, plane, count, c, nchw_in_data_ + task_id * num * plane, output_data + task_id * num,
+                          reduce_mean_quant_param_, bias_);
+    }
+    case HC:
+      return ReduceMeanHC(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case WC:
+      return ReduceMeanWC(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case NHW:
+      return ReduceMeanNHW(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case NHC:
+      return ReduceMeanNHC(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case NWC:
+      return ReduceMeanNWC(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case HWC:
+      return ReduceMeanHWC(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+    case NHWC:
+      return ReduceMeanNHWC(n, h, w, c, in_data, output_data, reduce_mean_quant_param_);
+  }
+  return RET_OK;
+}
+
+int ReduceInt8CPUKernel::Fast4DReduceMeanHWImpl() {
+  auto input = in_tensors_.at(0);
+  auto input_data = reinterpret_cast<int8_t *>(input->data_c());
+  nchw_in_data_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(input->ElementsNum()));
+  if (nchw_in_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc nchw_in_data_ failed.";
+    return RET_ERROR;
+  }
+  PackNHWCToNCHWInt8(reinterpret_cast<void *>(input_data), reinterpret_cast<void *>(nchw_in_data_), input->Batch(),
+                     input->Height() * input->Width(), input->Channel());
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ReduceMeanPatternInt8Impl, this, context_->thread_num_);
+  if (ret != RET_OK) {
+    ctx_->allocator->Free(nchw_in_data_);
+    MS_LOG(ERROR) << "Reduce run error, error_code[" << ret << "]";
+    return RET_ERROR;
+  }
+  ctx_->allocator->Free(nchw_in_data_);
+  return RET_OK;
+}
+
 int ReduceInt8CPUKernel::Run() {
   if (!this->valid_shape_) {
     auto ret = CalculateQuantArgs();
@@ -257,6 +470,11 @@ int ReduceInt8CPUKernel::Run() {
       return ret;
     }
   }
+  // now only implement reduce mean mode 4d reduce HW case, otherwise go into reference impl
+  if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean) && pattern_impl_ && pattern_ == kernel::HW) {
+    return Fast4DReduceMeanHWImpl();
+  }
+
   auto ret = MallocTmpBuffer();
   if (ret != RET_OK) {
     FreeTmpBuffer();
@@ -313,6 +531,7 @@ int ReduceInt8CPUKernel::CallReduceUnit(int task_id) {
   }
   return ret;
 }
+
 kernel::LiteKernel *CpuReduceInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                const lite::InnerContext *ctx, const kernel::KernelKey &desc,

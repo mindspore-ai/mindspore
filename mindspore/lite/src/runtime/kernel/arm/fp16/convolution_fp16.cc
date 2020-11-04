@@ -201,8 +201,8 @@ kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &i
   return nullptr;
 }
 
-void FreeMemoryFp16(std::vector<kernel::LiteKernel *> group_convs, std::vector<lite::Tensor *> new_inputs,
-                    std::vector<lite::Tensor *> new_outputs) {
+void FreeMemoryFp16(const std::vector<kernel::LiteKernel *> &group_convs, const std::vector<lite::Tensor *> &new_inputs,
+                    const std::vector<lite::Tensor *> &new_outputs) {
   for (auto sub_conv : group_convs) {
     if (sub_conv != nullptr) {
       delete sub_conv;
@@ -220,49 +220,131 @@ void FreeMemoryFp16(std::vector<kernel::LiteKernel *> group_convs, std::vector<l
   }
 }
 
+lite::Tensor *CreateInputTensor(TypeId data_type, std::vector<int> in_shape, bool infered_flag) {
+  auto in_tensor = new (std::nothrow) lite::Tensor(data_type, in_shape, Format_NHWC, lite::Tensor::Category::VAR);
+  if (in_tensor == nullptr) {
+    MS_LOG(ERROR) << "new in_tensor failed.";
+    return nullptr;
+  }
+  if (infered_flag) {
+    auto ret = in_tensor->MallocData();
+    if (ret != RET_OK) {
+      delete in_tensor;
+      MS_LOG(ERROR) << "in tensor malloc failed.";
+      return nullptr;
+    }
+  }
+  return in_tensor;
+}
+
+lite::Tensor *CreateFilterTensor(TypeId data_type, std::vector<int> filter_shape,
+                                 const std::vector<lite::Tensor *> &inputs, int copy_length, int index) {
+  auto filter_tensor =
+    new (std::nothrow) lite::Tensor(data_type, filter_shape, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
+  if (filter_tensor == nullptr) {
+    MS_LOG(ERROR) << "new filter_tensor failed.";
+    return nullptr;
+  }
+  auto ret = filter_tensor->MallocData();
+  if (ret != RET_OK) {
+    delete filter_tensor;
+    MS_LOG(ERROR) << "filter_tensor malloc failed.";
+    return nullptr;
+  }
+  if (data_type == kNumberTypeFloat16) {
+    auto *origin_weight = reinterpret_cast<float16_t *>(inputs.at(kWeightIndex)->data_c());
+    memcpy(filter_tensor->data_c(), origin_weight + index * copy_length, copy_length * sizeof(float16_t));
+  } else {
+    MS_ASSERT(data_type == kNumberTypeFloat32);
+    auto *origin_weight = reinterpret_cast<float *>(inputs.at(kWeightIndex)->data_c());
+    memcpy(filter_tensor->data_c(), origin_weight + index * copy_length, copy_length * sizeof(float));
+  }
+  return filter_tensor;
+}
+
+lite::Tensor *CreateBiasTensor(TypeId data_type, std::vector<int> bias_shape, const std::vector<lite::Tensor *> &inputs,
+                               int new_out_channel, int index) {
+  auto *origin_bias = inputs.at(kBiasIndex)->data_c();
+  auto bias_tensor =
+    new (std::nothrow) lite::Tensor(data_type, bias_shape, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
+  if (bias_tensor == nullptr) {
+    MS_LOG(ERROR) << "new bias_tensor failed.";
+    return nullptr;
+  }
+  auto ret = bias_tensor->MallocData();
+  if (ret != RET_OK) {
+    delete bias_tensor;
+    MS_LOG(ERROR) << "bias_tensor malloc failed.";
+    return nullptr;
+  }
+  if (data_type == kNumberTypeFloat16) {
+    auto bias_data = reinterpret_cast<float16_t *>(origin_bias);
+    memcpy(bias_tensor->data_c(), bias_data + index * new_out_channel, new_out_channel * sizeof(float16_t));
+  } else {
+    MS_ASSERT(data_type == kNumberTypeFloat32);
+    auto bias_data = reinterpret_cast<float *>(origin_bias);
+    memcpy(bias_tensor->data_c(), bias_data + index * new_out_channel, new_out_channel * sizeof(float));
+  }
+  return bias_tensor;
+}
+
+lite::Tensor *CreateOutputTensor(std::vector<int> out_shape, const std::vector<lite::Tensor *> &outputs,
+                                 bool infered_flag, int index) {
+  auto out_tensor = new (std::nothrow) lite::Tensor();
+  if (out_tensor == nullptr) {
+    MS_LOG(ERROR) << "new tmp_out_tensor failed.";
+    return nullptr;
+  }
+  out_tensor->set_data_type(outputs.at(index)->data_type());
+  out_tensor->SetFormat(outputs.at(index)->GetFormat());
+  if (infered_flag) {
+    out_tensor->set_shape(out_shape);
+    auto ret = out_tensor->MallocData();
+    if (ret != RET_OK) {
+      delete out_tensor;
+      MS_LOG(ERROR) << "out_tensor malloc data failed.";
+      return nullptr;
+    }
+  }
+  return out_tensor;
+}
+
 kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                   const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
                                                   int group) {
-  std::vector<kernel::LiteKernel *> group_convs;
-  std::vector<int> in_shape;
-  std::vector<int> filter_shape;
-  std::vector<int> bias_shape;
-  std::vector<int> out_shape;
-
+  int out_unit;
+  bool has_bias = inputs.size() == 3;
+  bool use_winograd = false;
+  bool infered_flag = (primitive != nullptr && primitive->GetInferFlag());
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-  int out_channel = inputs.at(kWeightIndex)->Batch();
+
+  // update new shape info for each sub kernel
   int new_in_channel = inputs.at(kWeightIndex)->Channel();
   int new_out_channel = 0;
   if (group == 0) {
     MS_LOG(ERROR) << "Divisor 'group' cannot be 0.";
     return nullptr;
   } else {
-    new_out_channel = out_channel / group;
+    new_out_channel = inputs.at(kWeightIndex)->Batch() / group;
   }
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int input_num = inputs.size();
-  int output_num = outputs.size();
-  bool has_bias = input_num == 3;
-  bool use_winograd = false;
-  int out_unit;
-  bool infered_flag = (primitive != nullptr && primitive->GetInferFlag());
 
+  std::vector<int> in_shape;
+  std::vector<int> out_shape;
   if (infered_flag) {
     int batch = inputs.front()->Batch();
-    int in_h = inputs.front()->Height();
-    int in_w = inputs.front()->Width();
     conv_param->input_channel_ = new_in_channel;
     conv_param->output_channel_ = new_out_channel;
     CheckIfUseWinogradFp16(&use_winograd, &out_unit, conv_param);
-    in_shape = {batch, in_h, in_w, new_in_channel};
+    in_shape = {batch, inputs.front()->Height(), inputs.front()->Width(), new_in_channel};
     out_shape = {batch, conv_param->output_h_, conv_param->output_w_, new_out_channel};
   }
+  std::vector<int> filter_shape = {new_out_channel, conv_param->kernel_h_, conv_param->kernel_w_, new_in_channel};
+  std::vector<int> bias_shape = {new_out_channel};
 
-  filter_shape = {new_out_channel, kernel_h, kernel_w, new_in_channel};
-  bias_shape = {new_out_channel};
-
+  // new group conv op
+  std::vector<kernel::LiteKernel *> group_convs;
+  // create tensors for every sub conv kernel
   for (int i = 0; i < group; ++i) {
     std::vector<lite::Tensor *> new_inputs;
     std::vector<lite::Tensor *> new_outputs;
@@ -272,116 +354,56 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
       MS_LOG(ERROR) << "Get new conv parameter failed.";
       return nullptr;
     }
-    // get new input for each group
-    auto in_tensor =
-      new (std::nothrow) lite::Tensor(inputs.front()->data_type(), in_shape, Format_NHWC, lite::Tensor::Category::VAR);
+
+    // create new input for each group
+    auto in_tensor = CreateInputTensor(inputs.front()->data_type(), in_shape, infered_flag);
     if (in_tensor == nullptr) {
       delete new_conv_parameter;
       FreeMemoryFp16(group_convs, new_inputs, new_outputs);
-      MS_LOG(ERROR) << "new in_tensor failed.";
+      MS_LOG(ERROR) << "create input tensor failed.";
       return nullptr;
-    }
-    if (infered_flag) {
-      auto ret = in_tensor->MallocData();
-      if (ret != RET_OK) {
-        delete new_conv_parameter;
-        delete in_tensor;
-        FreeMemoryFp16(group_convs, new_inputs, new_outputs);
-        MS_LOG(ERROR) << "in tensor malloc failed.";
-        return nullptr;
-      }
     }
     new_inputs.emplace_back(in_tensor);
 
-    // new weight
-    auto filter_tensor = new (std::nothrow) lite::Tensor(inputs.at(kWeightIndex)->data_type(), filter_shape,
-                                                         Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
+    // create new weight
+    int copy_length = conv_param->kernel_h_ * conv_param->kernel_w_ * new_in_channel * new_out_channel;
+    auto filter_tensor = CreateFilterTensor(inputs.at(kWeightIndex)->data_type(), filter_shape, inputs, copy_length, i);
     if (filter_tensor == nullptr) {
       delete new_conv_parameter;
       FreeMemoryFp16(group_convs, new_inputs, new_outputs);
-      MS_LOG(ERROR) << "new filter_tensor failed.";
+      MS_LOG(ERROR) << "create filter tensor failed.";
       return nullptr;
-    }
-    auto ret = filter_tensor->MallocData();
-    if (ret != RET_OK) {
-      delete new_conv_parameter;
-      delete filter_tensor;
-      FreeMemoryFp16(group_convs, new_inputs, new_outputs);
-      MS_LOG(ERROR) << "filter_tensor malloc failed.";
-      return nullptr;
-    }
-    int copy_length = kernel_h * kernel_w * new_in_channel * new_out_channel;
-    auto filter_data_type = inputs.at(kWeightIndex)->data_type();
-    if (filter_data_type == kNumberTypeFloat16) {
-      auto *origin_weight = reinterpret_cast<float16_t *>(inputs.at(kWeightIndex)->data_c());
-      memcpy(filter_tensor->data_c(), origin_weight + i * copy_length, copy_length * sizeof(float16_t));
-    } else {
-      MS_ASSERT(filter_data_type == kNumberTypeFloat32);
-      auto *origin_weight = reinterpret_cast<float *>(inputs.at(kWeightIndex)->data_c());
-      memcpy(filter_tensor->data_c(), origin_weight + i * copy_length, copy_length * sizeof(float));
     }
     new_inputs.emplace_back(filter_tensor);
 
-    // if has bias, set new bias
+    // if has bias, create new bias
     if (has_bias) {
-      auto *origin_bias = inputs.at(kBiasIndex)->data_c();
-      auto bias_data_type = inputs.at(kBiasIndex)->data_type();
-      auto bias_tensor = new (std::nothrow)
-        lite::Tensor(inputs.at(kBiasIndex)->data_type(), bias_shape, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
+      auto bias_tensor = CreateBiasTensor(inputs.at(kBiasIndex)->data_type(), bias_shape, inputs, new_out_channel, i);
       if (bias_tensor == nullptr) {
         delete new_conv_parameter;
         FreeMemoryFp16(group_convs, new_inputs, new_outputs);
-        MS_LOG(ERROR) << "new bias_tensor failed.";
+        MS_LOG(ERROR) << "create bias_tensor failed.";
         return nullptr;
-      }
-      ret = bias_tensor->MallocData();
-      if (ret != RET_OK) {
-        delete new_conv_parameter;
-        delete bias_tensor;
-        FreeMemoryFp16(group_convs, new_inputs, new_outputs);
-        MS_LOG(ERROR) << "bias_tensor malloc failed.";
-        return nullptr;
-      }
-      if (bias_data_type == kNumberTypeFloat16) {
-        auto bias_data = reinterpret_cast<float16_t *>(origin_bias);
-        memcpy(bias_tensor->data_c(), bias_data + i * new_out_channel, new_out_channel * sizeof(float16_t));
-      } else {
-        MS_ASSERT(bias_data_type == kNumberTypeFloat32);
-        auto bias_data = reinterpret_cast<float *>(origin_bias);
-        memcpy(bias_tensor->data_c(), bias_data + i * new_out_channel, new_out_channel * sizeof(float));
       }
       new_inputs.emplace_back(bias_tensor);
     }
 
-    // set new output tensor
-    for (int j = 0; j < output_num; ++j) {
-      auto tmp_out_tensor = new (std::nothrow) lite::Tensor();
-      if (tmp_out_tensor == nullptr) {
+    // create new output tensors
+    for (size_t j = 0; j < outputs.size(); ++j) {
+      auto out_tensor = CreateOutputTensor(out_shape, outputs, infered_flag, j);
+      if (out_tensor == nullptr) {
         delete new_conv_parameter;
         FreeMemoryFp16(group_convs, new_inputs, new_outputs);
-        MS_LOG(ERROR) << "new tmp_out_tensor failed.";
+        MS_LOG(ERROR) << "new out_tensor failed.";
         return nullptr;
       }
-      tmp_out_tensor->set_data_type(outputs.at(j)->data_type());
-      tmp_out_tensor->SetFormat(outputs.at(j)->GetFormat());
-      if (infered_flag) {
-        tmp_out_tensor->set_shape(out_shape);
-        ret = tmp_out_tensor->MallocData();
-        if (ret != RET_OK) {
-          delete new_conv_parameter;
-          delete tmp_out_tensor;
-          FreeMemoryFp16(group_convs, new_inputs, new_outputs);
-          MS_LOG(ERROR) << "tmp_out_tensor malloc data failed.";
-          return nullptr;
-        }
-      }
-      new_outputs.emplace_back(tmp_out_tensor);
+      new_outputs.emplace_back(out_tensor);
     }
-
     group_convs.emplace_back(CpuConvFp16KernelSelect(new_inputs, new_outputs,
                                                      reinterpret_cast<OpParameter *>(new_conv_parameter), ctx,
                                                      primitive, use_winograd, out_unit));
   }
+
   return new (std::nothrow)
     GroupConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive, group_convs, group);
 }
