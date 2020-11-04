@@ -94,6 +94,4 @@ kernel::LiteKernel *CpuPadFp16KernelCreator(const std::vector<lite::Tensor *> &i
   }
   return kernel;
 }
-
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Pad, CpuPadFp16KernelCreator)
 }  // namespace mindspore::kernel
