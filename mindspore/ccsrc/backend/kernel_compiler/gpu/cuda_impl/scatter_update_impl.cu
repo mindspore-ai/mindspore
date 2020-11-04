@@ -17,29 +17,27 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/scatter_update_impl.cuh"
 
 template <typename T>
-__global__ void ScatterUpdate(const int input_size, const int inner_size, const int indices_size, const T *input,
-                              const int *indices, const T *updates, T *output) {
-  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < input_size; pos += blockDim.x * gridDim.x) {
-    output[pos] = input[pos];
+__global__ void ScatterUpdate(const int inner_size, const int updates_size, const int *indices, const T *updates,
+                              T *output) {
+  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const int index = pos / inner_size;
     const int offset = pos % inner_size;
-    for (int i = 0; i < indices_size; i++) {
-      const int update_pos = i * inner_size + offset;
-      output[pos] = (indices[i] == index ? updates[update_pos] : output[pos]);
-    }
+    const int current_pos = indices[index] * inner_size + offset;
+    output[current_pos] = updates[pos];
   }
 }
 
 template <typename T>
-void CalScatterUpdate(const int &input_size, const int &inner_size, const int &indices_size, const T *input,
-                      const int *indices, const T *updates, T *output, cudaStream_t cuda_stream) {
-  ScatterUpdate<<<GET_BLOCKS(input_size), GET_THREADS, 0, cuda_stream>>>(input_size, inner_size, indices_size, input,
-                                                                         indices, updates, output);
+void CalScatterUpdate(const int &inner_size, const int &indices_size, const int *indices, const T *updates, T *output,
+                      cudaStream_t cuda_stream) {
+  const int updates_size = inner_size * indices_size;
+  ScatterUpdate<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(inner_size, updates_size, indices, updates,
+                                                                           output);
 }
 
-template void CalScatterUpdate<float>(const int &input_size, const int &inner_size, const int &indices_size,
-                                      const float *input, const int *indices, const float *updates, float *output,
-                                      cudaStream_t cuda_stream);
-template void CalScatterUpdate<half>(const int &input_size, const int &inner_size, const int &indices_size,
-                                     const half *input, const int *indices, const half *updates, half *output,
-                                     cudaStream_t cuda_stream);
+template void CalScatterUpdate<float>(const int &inner_size, const int &indices_size, const int *indices,
+                                      const float *updates, float *output, cudaStream_t cuda_stream);
+template void CalScatterUpdate<half>(const int &inner_size, const int &indices_size, const int *indices,
+                                     const half *updates, half *output, cudaStream_t cuda_stream);
+template void CalScatterUpdate<int>(const int &inner_size, const int &indices_size, const int *indices,
+                                    const int *updates, int *output, cudaStream_t cuda_stream);
