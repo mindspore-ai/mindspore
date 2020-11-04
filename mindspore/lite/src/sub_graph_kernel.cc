@@ -147,6 +147,10 @@ int SubGraphKernel::ReSize(bool is_interrupt) {
       }
     }
   }
+  if (is_interrupt) {
+    MS_LOG(INFO) << "Infer shape failed.";
+    return RET_INFER_INVALID;
+  }
   return RET_OK;
 }
 
