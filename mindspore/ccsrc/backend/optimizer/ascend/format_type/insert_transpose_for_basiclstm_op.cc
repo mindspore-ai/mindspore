@@ -50,7 +50,7 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
     CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
     MS_EXCEPTION_IF_NULL(transpose);
     AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {dst_shape}, transpose.get());
-    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int>{1, 0}), transpose);
+    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
     AnfAlgo::SetNodeInput(cnode, transpose, 1);
     if (kernel_graph == nullptr) {
       new_node = std::make_shared<CNode>(*cnode);
@@ -70,7 +70,7 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
         CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
         MS_EXCEPTION_IF_NULL(transpose);
         AnfAlgo::SetOutputInferTypeAndShape({dtype}, {dst_shape}, transpose.get());
-        AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int>{1, 0}), transpose);
+        AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{1, 0}), transpose);
         make_tuple_inputs.push_back(transpose);
       } else {
         make_tuple_inputs.push_back(tuple_getitem);

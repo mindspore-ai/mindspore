@@ -27,8 +27,14 @@ void PoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   src_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   dst_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<int> kernel_sizes = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, KSIZE);
-  std::vector<int> strides = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDES);
+  std::vector<int> kernel_sizes;
+  std::vector<int> strides;
+  auto kernel_sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KSIZE);
+  auto strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+  (void)std::transform(kernel_sizes_me.begin(), kernel_sizes_me.end(), std::back_inserter(kernel_sizes),
+                       [](const int64_t &value) { return static_cast<int>(value); });
+  (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   if (kernel_sizes.size() != 4 || strides.size() != 4 || src_shape_.size() != 4 || dst_shape_.size() != 4) {
     MS_LOG(EXCEPTION) << "pooling grad invalid input size";
   }

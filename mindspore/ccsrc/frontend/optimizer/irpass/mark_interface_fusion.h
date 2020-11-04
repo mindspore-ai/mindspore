@@ -32,7 +32,7 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-static int count = 0;
+static int64_t count = 0;
 
 std::string GetFusionNumber() {
   std::stringstream ss;

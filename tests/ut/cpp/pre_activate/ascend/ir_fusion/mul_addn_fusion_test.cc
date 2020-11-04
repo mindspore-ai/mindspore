@@ -30,7 +30,7 @@ class TestHWMulAddNFusion : public BackendCommon {
 
 TEST_F(TestHWMulAddNFusion, test_mul_addn_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_mul_addn_fusion", "before");
-  std::vector<int> shp{2, 2, 2, 2};
+  std::vector<int64_t> shp{2, 2, 2, 2};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list({x_abstract, x_abstract});
   auto fg = GetKernelGraph(g, args_spec_list);
@@ -47,7 +47,7 @@ TEST_F(TestHWMulAddNFusion, test_mul_addn_fusion) {
 
 TEST_F(TestHWMulAddNFusion, test_unmatch) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_mul_addn_fusion", "unmatch");
-  std::vector<int> shp{2, 2, 2, 2};
+  std::vector<int64_t> shp{2, 2, 2, 2};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list({x_abstract, x_abstract, x_abstract});
   auto fg = GetKernelGraph(g, args_spec_list);

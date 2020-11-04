@@ -52,9 +52,9 @@ CNodePtr GetRealPrevCNode(const AnfNodePtr &node, size_t index, std::vector<Kern
     MS_EXCEPTION_IF_NULL(input2);
     auto value_node = input2->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    int item_idx = GetValue<int>(value_node->value());
+    auto item_idx = GetValue<int64_t>(value_node->value());
     pass_vector->push_back(make_pair(cnode, IntToSize(1)));
-    return GetRealPrevCNode(cnode->input(1), IntToSize(item_idx), pass_vector);
+    return GetRealPrevCNode(cnode->input(1), LongToSize(item_idx), pass_vector);
   } else if (IsPrimitive(input0, prim::kPrimDepend) || IsPrimitive(input0, prim::kPrimControlDepend)) {
     pass_vector->push_back(make_pair(cnode, IntToSize(1)));
     return GetRealPrevCNode(cnode->input(1), 0, pass_vector);

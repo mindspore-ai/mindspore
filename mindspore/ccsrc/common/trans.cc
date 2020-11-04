@@ -71,6 +71,7 @@ enum DataTypeTransMode {
   FROM_INT32_TO_FLOAT16,
   FROM_INT32_TO_UINT8,
   FROM_INT32_TO_INT8,
+  FROM_INT32_TO_INT64,
   FROM_INT32_TO_BOOL,
   FROM_UINT8_TO_FLOAT,
   FROM_UINT8_TO_INT32,
@@ -100,6 +101,7 @@ const std::map<std::pair<TypeId, TypeId>, DataTypeTransMode> mode_map{
   {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeFloat16), FROM_INT32_TO_FLOAT16},
   {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeUInt8), FROM_INT32_TO_UINT8},
   {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeInt8), FROM_INT32_TO_INT8},
+  {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeInt64), FROM_INT32_TO_INT64},
   {std::pair<TypeId, TypeId>(kNumberTypeInt32, kNumberTypeBool), FROM_INT32_TO_BOOL},
   {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeFloat32), FROM_UINT8_TO_FLOAT},
   {std::pair<TypeId, TypeId>(kNumberTypeUInt8, kNumberTypeInt32), FROM_UINT8_TO_INT32},
@@ -154,6 +156,7 @@ bool CastKernel(const TypeIdArgs &args, void *dst, const size_t data_size, const
     {FROM_FLOAT16_TO_UINT8, TransDataSrc2Dst<float16, uint8_t>},
     {FROM_INT32_TO_FLOAT, TransDataSrc2Dst<int32_t, float>},
     {FROM_INT32_TO_INT8, TransDataSrc2Dst<int32_t, int8_t>},
+    {FROM_INT32_TO_INT64, TransDataSrc2Dst<int32_t, int64_t>},
     {FROM_INT32_TO_UINT8, TransDataSrc2Dst<int32_t, uint8_t>},
     {FROM_INT32_TO_BOOL, TransDataSrc2Dst<int32_t, int8_t>},
     {FROM_INT32_TO_FLOAT16, TransDataSrc2Fp16<int32_t>},
@@ -385,7 +388,7 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
       MS_LOG(EXCEPTION) << " The node[ " << node->DebugString() << "]'s cannot convert ";
     }
     auto shape_temp = tensor->shape();
-    (void)std::transform(shape_temp.begin(), shape_temp.end(), std::back_inserter(host_shape), IntToSize);
+    (void)std::transform(shape_temp.begin(), shape_temp.end(), std::back_inserter(host_shape), LongToSize);
     if (host_shape.empty()) {
       host_shape.push_back(1);
     }
@@ -395,7 +398,7 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
   if (trans::IsNeedPadding(AnfAlgo::GetOutputFormat(node, index), host_shape.size())) {
     host_shape = trans::PaddingShapeTo4d(host_shape, AnfAlgo::GetOutputReshapeType(node, index));
   }
-  std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(shape), SizeToInt);
+  std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(shape), SizeToLong);
   return shape;
 }
 

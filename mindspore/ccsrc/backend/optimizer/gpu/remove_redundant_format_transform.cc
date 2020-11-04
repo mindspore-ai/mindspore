@@ -48,8 +48,8 @@ const AnfNodePtr RemoveRedundantFormatTransform::Process(const FuncGraphPtr &gra
       break;
     }
   }
-  auto first_transpose_perm = AnfAlgo::GetNodeAttr<std::vector<int>>(first_transpose, "perm");
-  auto node_perm = AnfAlgo::GetNodeAttr<std::vector<int>>(node, "perm");
+  auto first_transpose_perm = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(first_transpose, "perm");
+  auto node_perm = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "perm");
   if ((first_transpose != node) && (first_transpose_perm == node_perm)) {
     return first_transpose;
   }

@@ -32,9 +32,9 @@ Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  int32_t stage = strategy->GetInputStage();
+  int64_t stage = strategy->GetInputStage();
   CheckGlobalDeviceManager();
-  int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(stage).size());
+  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(stage).size());
   dev_num_ = dev_num;
 
   size_t strategy_size = strategy->GetInputNumber();
@@ -175,7 +175,7 @@ Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status BatchParallelInfo::GenerateStrategies(int32_t stage_id) {
+Status BatchParallelInfo::GenerateStrategies(int64_t stage_id) {
   CheckGlobalDeviceManager();
   size_t total_dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
   StrategyPtr sp;
@@ -183,7 +183,7 @@ Status BatchParallelInfo::GenerateStrategies(int32_t stage_id) {
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     Shape temp(inputs_shape_[i].size(), 1);
     if (split_flag_list_[i]) {
-      temp[0] = SizeToInt(total_dev_num);
+      temp[0] = SizeToLong(total_dev_num);
     }
     strategy.push_back(temp);
   }

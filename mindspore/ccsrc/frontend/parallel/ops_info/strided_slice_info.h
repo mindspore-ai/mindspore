@@ -39,7 +39,7 @@ class StridedSliceInfo : public OperatorInfo {
 
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
-  Status GenerateStrategies(int32_t) override;
+  Status GenerateStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;
 
@@ -51,17 +51,17 @@ class StridedSliceInfo : public OperatorInfo {
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status GetMask(const std::string &mask_name, int32_t *mask_value);
+  Status GetMask(const std::string &mask_name, int64_t *mask_value);
 
  private:
-  std::vector<int32_t> begin_;
-  std::vector<int32_t> end_;
-  std::vector<int32_t> strides_;
-  int32_t begin_mask_ = 0;
-  int32_t end_mask_ = 0;
-  int32_t ellipsis_mask_ = 0;
-  int32_t new_axis_mask_ = 0;
-  int32_t shrink_axis_mask_ = 0;
+  std::vector<int64_t> begin_;
+  std::vector<int64_t> end_;
+  std::vector<int64_t> strides_;
+  int64_t begin_mask_ = 0;
+  int64_t end_mask_ = 0;
+  int64_t ellipsis_mask_ = 0;
+  int64_t new_axis_mask_ = 0;
+  int64_t shrink_axis_mask_ = 0;
   bool has_mask_ = false;
 };
 

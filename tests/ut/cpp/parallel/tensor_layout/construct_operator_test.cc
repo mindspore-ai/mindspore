@@ -41,7 +41,7 @@ class TestConstructOperator : public UT::Common {
 void TestConstructOperator::SetUp() {
   RankList dev_list;
 
-  for (int32_t i = 0; i < 1050; i++) {
+  for (int64_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
   RankList stage_map;
@@ -98,14 +98,8 @@ TEST_F(TestConstructOperator, TestStridedSliceOP) {
   OperatorParams params = op.second.second;
   ValuePtr begin_ptr = params[0].first.second;
   ValuePtr end_ptr = params[1].first.second;
-  std::vector<int32_t> begin_int = GetValue<const std::vector<int32_t>>(begin_ptr);
-  std::vector<int32_t> end_int = GetValue<const std::vector<int32_t>>(end_ptr);
-  Shape begin;
-  Shape end;
-  (void)std::transform(begin_int.begin(), begin_int.end(), std::back_inserter(begin),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
-  (void)std::transform(end_int.begin(), end_int.end(), std::back_inserter(end),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  Shape begin = GetValue<const std::vector<int64_t>>(begin_ptr);
+  Shape end = GetValue<const std::vector<int64_t>>(end_ptr);
   for (size_t i = 0; i < begin.size(); i++) {
     int64_t diff = end[i] - begin[i];
     int64_t num = shape[i];
@@ -118,25 +112,25 @@ TEST_F(TestConstructOperator, TestStridedSliceOP) {
 }
 
 TEST_F(TestConstructOperator, TestAllGatherOP) {
-  int32_t dev_dim = 2;
+  int64_t dev_dim = 2;
   ASSERT_EQ(constructor.AllGatherOP(dev_dim), Status::SUCCESS);
 }
 
 TEST_F(TestConstructOperator, TestConcatOP) {
-  int32_t concat_dim = 0;
+  int64_t concat_dim = 0;
   ASSERT_EQ(constructor.ConcatOP(concat_dim), Status::SUCCESS);
 }
 
 TEST_F(TestConstructOperator, TestSplitOP) {
-  int32_t split_count = 2;
+  int64_t split_count = 2;
   ASSERT_EQ(constructor.SplitOP(split_count), Status::SUCCESS);
 }
 
 TEST_F(TestConstructOperator, TestAlltoAllOP) {
-  int32_t split_count = 2;
-  int32_t split_dim = 0;
-  int32_t concat_dim = 1;
-  int32_t dev_dim = 3;
+  int64_t split_count = 2;
+  int64_t split_dim = 0;
+  int64_t concat_dim = 1;
+  int64_t dev_dim = 3;
   Args args = {split_count, split_dim, concat_dim, dev_dim};
   ASSERT_EQ(constructor.AlltoAllOP(args), Status::SUCCESS);
 }

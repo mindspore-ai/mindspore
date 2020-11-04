@@ -1576,7 +1576,8 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.tensor, mstype.number], self.name)
         if isinstance(num_segments_type, type(mstype.tensor)):
-            validator.check_tensor_dtype_valid("num_segments", num_segments_type, [mstype.int32], self.name)
+            validator.check_tensor_dtype_valid("num_segments", num_segments_type, [mstype.int32, mstype.int64],
+                                               self.name)
             shp = [-1]
         else:
             validator.check_value_type('num_segments', num_segments_v, [int], self.name)
@@ -4074,7 +4075,7 @@ class GatherD(PrimitiveWithInfer):
     def __infer__(self, x, dim, index):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         validator.check_tensor_dtype_valid("index", index['dtype'], [mstype.int32, mstype.int64], self.name)
-        validator.check_subclass("dim", dim['dtype'], mstype.int32, self.name)
+        validator.check_subclass("dim", dim['dtype'], [mstype.int32, mstype.int64], self.name)
         x_shp = x['shape']
         idx_shp = index['shape']
         x_rank = len(x_shp)

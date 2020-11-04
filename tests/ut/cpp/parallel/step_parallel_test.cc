@@ -52,27 +52,18 @@ void Init_Device_Manager() {
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
 }
 
-CNodePtr Make_Node(Shape x, Shape y, Shape out, int condition = 0) {
-  std::vector<int32_t> x_shape;
-  std::vector<int32_t> y_shape;
-  std::vector<int32_t> out_shape;
+CNodePtr Make_Node(Shape x, Shape y, Shape out, int64_t condition = 0) {
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   ParameterPtr param1 = func_graph->add_parameter();
   ParameterPtr param2 = func_graph->add_parameter();
-  (void)std::transform(x.begin(), x.end(), std::back_inserter(x_shape),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  (void)std::transform(y.begin(), y.end(), std::back_inserter(y_shape),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  (void)std::transform(out.begin(), out.end(), std::back_inserter(out_shape),
-                       [](const int64_t &value) { return static_cast<int>(value); });
   param1->set_name("x");
   param2->set_name("y");
   BaseShapePtr shape1 = std::make_shared<abstract::Shape>(x);
   BaseShapePtr shape2 = std::make_shared<abstract::Shape>(y);
   BaseShapePtr shape3 = std::make_shared<abstract::Shape>(out);
-  std::shared_ptr<tensor::Tensor> inputs_x = std::make_shared<tensor::Tensor>(kNumberTypeInt32, x_shape);
-  std::shared_ptr<tensor::Tensor> inputs_y = std::make_shared<tensor::Tensor>(kNumberTypeInt32, y_shape);
-  std::shared_ptr<tensor::Tensor> inputs_out = std::make_shared<tensor::Tensor>(kNumberTypeInt32, out_shape);
+  std::shared_ptr<tensor::Tensor> inputs_x = std::make_shared<tensor::Tensor>(kNumberTypeInt32, x);
+  std::shared_ptr<tensor::Tensor> inputs_y = std::make_shared<tensor::Tensor>(kNumberTypeInt32, y);
+  std::shared_ptr<tensor::Tensor> inputs_out = std::make_shared<tensor::Tensor>(kNumberTypeInt32, out);
   AbstractBasePtr abstract1 = abstract::FromValue(inputs_x, true);
   AbstractBasePtr abstract2 = abstract::FromValue(inputs_y, true);
   AbstractBasePtr abstract3 = abstract::FromValue(inputs_out, true);
@@ -96,7 +87,7 @@ CNodePtr Make_Node(Shape x, Shape y, Shape out, int condition = 0) {
       abstract2->set_shape(shape2);
       param1->set_abstract(abstract1);
       param2->set_abstract(abstract2);
-      abstract3 = abstract::FromValue(1, false);
+      abstract3 = abstract::FromValue(static_cast<int64_t>(1), false);
       break;
     }
     case 3: {
@@ -121,12 +112,12 @@ CNodePtr Make_Node(Shape x, Shape y, Shape out, int condition = 0) {
   return node;
 }
 
-FuncGraphManagerPtr Make_Manager(int condition = 0) {
-  std::vector<int32_t> inputs_x = {64, 32};
-  std::vector<int32_t> inputs_y = {32, 64};
-  std::vector<int32_t> inputs_z = {64, 128};
-  std::vector<int32_t> outputs_1 = {64, 64};
-  std::vector<int32_t> outputs_2 = {64, 128};
+FuncGraphManagerPtr Make_Manager(int64_t condition = 0) {
+  std::vector<int64_t> inputs_x = {64, 32};
+  std::vector<int64_t> inputs_y = {32, 64};
+  std::vector<int64_t> inputs_z = {64, 128};
+  std::vector<int64_t> outputs_1 = {64, 64};
+  std::vector<int64_t> outputs_2 = {64, 128};
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   ParameterPtr param1 = func_graph->add_parameter();
   ParameterPtr param2 = func_graph->add_parameter();
@@ -186,11 +177,11 @@ FuncGraphManagerPtr Make_Manager(int condition = 0) {
   prim2->AddAttr("strategy", var2);
   switch (condition) {
     case 1: {
-      prim1->set_attr("strategy", MakeValue(0));
+      prim1->set_attr("strategy", MakeValue(static_cast<int64_t>(0)));
       break;
     }
     case 2: {
-      std::vector<ValuePtr> elements_t = {MakeValue(0)};
+      std::vector<ValuePtr> elements_t = {MakeValue(static_cast<int64_t>(0))};
       ValueTuplePtr var_t = std::make_shared<ValueTuple>(elements_t);
       prim1->set_attr("strategy", var_t);
       break;

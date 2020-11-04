@@ -444,7 +444,7 @@ bool KeepValueNodeDuplication(const AnfNodePtr &value_node, const ResourcePtr &r
   auto &node_users = res->manager()->node_users();
   auto &users = node_users[value_node];
   auto used_by_keep_value_prim =
-    std::any_of(users.begin(), users.end(), [](const std::pair<AnfNodePtr, int> &user) -> bool {
+    std::any_of(users.begin(), users.end(), [](const std::pair<AnfNodePtr, int64_t> &user) -> bool {
       MS_EXCEPTION_IF_NULL(user.first);
       auto cnode = user.first->cast<CNodePtr>();
       if (cnode == nullptr) {

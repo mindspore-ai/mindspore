@@ -80,8 +80,8 @@ class RandomChoiceWithMaskGpuKernel : public GpuKernel {
       input_shape_5D_.insert(input_shape_5D_.begin(), 1);
     }
     // init seedc_
-    int seed = GetAttr<int>(kernel_node, "seed");
-    int seed2 = GetAttr<int>(kernel_node, "seed2");
+    int seed = static_cast<int>(GetAttr<int64_t>(kernel_node, "seed"));
+    int seed2 = static_cast<int>(GetAttr<int64_t>(kernel_node, "seed2"));
     if (seed2 != 0)
       seedc_ = seed2;
     else if (seed != 0)
@@ -92,7 +92,7 @@ class RandomChoiceWithMaskGpuKernel : public GpuKernel {
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
     }
-    count_ = GetAttr<int>(kernel_node, "count");
+    count_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "count"));
     // upper ceiling for input for ceil_power2
     ceil_power2_ = RcwmRoundUpPower2(input_size_);
     InitSizeLists();

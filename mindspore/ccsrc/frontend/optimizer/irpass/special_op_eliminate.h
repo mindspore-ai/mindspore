@@ -172,16 +172,16 @@ class ZeroLikeFillZero : public AnfVisitor {
       auto fg = node->func_graph();
       auto dtype = fg->NewCNode({NewValueNode(PrimDType_), y_});
       auto shape = fg->NewCNode({NewValueNode(PrimShape_), y_});
-      return fg->NewCNode({NewValueNode(PrimFill_), dtype, shape, NewValueNode(MakeValue(0))});
+      return fg->NewCNode({NewValueNode(PrimFill_), dtype, shape, NewValueNode(MakeValue(static_cast<int64_t>(0)))});
     }
 
     abstract::AbstractTensorPtr tensor_abstract = y_->abstract()->cast<abstract::AbstractTensorPtr>();
 
     TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
-    std::vector<int> tensor_shape = tensor_abstract->shape()->shape();
+    std::vector<int64_t> tensor_shape = tensor_abstract->shape()->shape();
 
     tensor::TensorPtr new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
-    size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
+    size_t mem_size = GetTypeByte(tensor_type_ptr) * LongToSize(new_tensor_ptr->ElementsNum());
     char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());
     (void)memset_s(data, mem_size, 0, mem_size);
 
@@ -237,7 +237,7 @@ class PynativeEliminater : public OptimizerCaller {
 
   ValuePtr FillGetItem(const ValuePtr &value, const ValuePtr &idx) {
     MS_LOG(DEBUG) << "Start FillGetItem" << value->ToString() << idx->ToString();
-    if (!idx->isa<Int32Imm>()) {
+    if (!idx->isa<Int64Imm>()) {
       MS_LOG(EXCEPTION) << "Getitem idx must int:" << idx->ToString();
     }
 
@@ -246,7 +246,7 @@ class PynativeEliminater : public OptimizerCaller {
     }
 
     auto value_tuple = value->cast<ValueTuplePtr>();
-    int idx_t = idx->cast<Int32ImmPtr>()->value();
+    int idx_t = idx->cast<Int64ImmPtr>()->value();
     MS_LOG(DEBUG) << "Fill getitem" << idx_t << (*value_tuple)[idx_t]->ToString();
     return (*value_tuple)[idx_t];
   }
@@ -254,8 +254,8 @@ class PynativeEliminater : public OptimizerCaller {
   ValuePtr FillZero(const ValuePtr &value) {
     MS_LOG(DEBUG) << "Start FillZero";
     ValuePtr out = nullptr;
-    if (value->isa<Int32Imm>()) {
-      return MakeValue(value->cast<Int32ImmPtr>()->value());
+    if (value->isa<Int64Imm>()) {
+      return MakeValue(value->cast<Int64ImmPtr>()->value());
     }
 
     if (value->isa<tensor::Tensor>()) {
@@ -375,7 +375,7 @@ class AllReduceConstElim : public OptimizerCaller {
       auto group = primitive->GetAttr("group")->ToString();
       // For sum operation, multiply constant tensor by number of devices
       if (reduce_op->ToString() == "sum") {
-        unsigned int num_of_devices;
+        uint32_t num_of_devices;
         // Get number of devices
         if (!CommManager::GetInstance().GetRankSize(group, &num_of_devices)) {
           MS_LOG(EXCEPTION) << "Failed to get num of devices for group [" + group + "]";

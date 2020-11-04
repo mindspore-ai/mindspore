@@ -39,11 +39,11 @@ class PushKernel : public CPUKernel {
     }
     std::vector<size_t> keys;
     std::vector<uintptr_t> addrs;
-    std::vector<int> sizes;
+    std::vector<int64_t> sizes;
     for (auto input : inputs) {
       keys.push_back(key_);
       addrs.push_back(reinterpret_cast<uintptr_t>(input->addr));
-      sizes.push_back(SizeToInt(input->size) / sizeof(T));
+      sizes.push_back(SizeToLong(input->size) / sizeof(T));
     }
     mindspore::ps::worker.Push(keys, addrs, sizes);
     auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, &key_, sizeof(size_t));
@@ -56,8 +56,9 @@ class PushKernel : public CPUKernel {
 
   void Init(const CNodePtr &kernel_node) {
     key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
-    auto optim_input_shapes = AnfAlgo::GetNodeAttr<std::vector<std::vector<int>>>(kernel_node, "optim_input_shapes");
-    std::vector<int> only_shape_indices = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "only_shape_indices");
+    auto optim_input_shapes =
+      AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "optim_input_shapes");
+    auto only_shape_indices = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "only_shape_indices");
     MS_LOG(INFO) << "Key " << key_ << " optimizer input shapes are:" << optim_input_shapes;
     MS_LOG(INFO) << "Only init shape indices are " << only_shape_indices;
     for (size_t i = 0; i < optim_input_shapes.size(); i++) {
@@ -66,7 +67,7 @@ class PushKernel : public CPUKernel {
       if (std::count(only_shape_indices.begin(), only_shape_indices.end(), i) == 0) {
         size_t size = sizeof(T);
         for (size_t j = 0; j < shape.size(); j++) {
-          size *= shape[j];
+          size *= LongToSize(shape[j]);
         }
         input_size_list_.push_back(size);
       }

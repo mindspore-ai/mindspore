@@ -361,7 +361,7 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
 
 void GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                              const std::vector<tensor::TensorPtr> &input_tensors,
-                             const std::vector<int> &tensors_mask) {
+                             const std::vector<int64_t> &tensors_mask) {
   // Check if the graph cache exists.
   if (run_op_graphs_.find(graph_info) != run_op_graphs_.end()) {
     return;

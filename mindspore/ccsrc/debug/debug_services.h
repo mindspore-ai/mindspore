@@ -181,7 +181,7 @@ class DebugServices {
 
   void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
-                        std::vector<TypePtr> *dtype, std::vector<std::vector<int>> *shape);
+                        std::vector<TypePtr> *dtype, std::vector<std::vector<int64_t>> *shape);
 
   bool IsWatchPoint(std::string kernel_name, const CNodePtr &kernel = nullptr);
 

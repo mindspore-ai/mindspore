@@ -20,9 +20,9 @@
 namespace mindspore {
 class TensorConstructUtils {
  public:
-  static tensor::TensorPtr CreateZerosTensor(TypeId type, const std::vector<int> &shape);
-  static tensor::TensorPtr CreateOnesTensor(TypeId type, const std::vector<int> &shape);
-  static tensor::TensorPtr CreateTensor(TypeId type, const std::vector<int> &shape, void *data);
+  static tensor::TensorPtr CreateZerosTensor(TypeId type, const std::vector<int64_t> &shape);
+  static tensor::TensorPtr CreateOnesTensor(TypeId type, const std::vector<int64_t> &shape);
+  static tensor::TensorPtr CreateTensor(TypeId type, const std::vector<int64_t> &shape, void *data);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_TENSOR_CONSTRUCT_UTILS_H_

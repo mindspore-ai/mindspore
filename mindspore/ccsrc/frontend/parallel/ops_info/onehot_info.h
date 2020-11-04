@@ -38,7 +38,7 @@ class OneHotInfo : public OperatorInfo {
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
 
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;
@@ -57,12 +57,12 @@ class OneHotInfo : public OperatorInfo {
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 
   int axis_ = -1;
-  int32_t rank_ = 0;
-  int32_t total_class_number_ = 1;
-  int32_t classes_each_device_ = 1;
-  int32_t old_dev_matrix_back_ = 1;
+  int64_t rank_ = 0;
+  int64_t total_class_number_ = 1;
+  int64_t classes_each_device_ = 1;
+  int64_t old_dev_matrix_back_ = 1;
   ValuePtr axis_value_ptr_;
-  int32_t mod_rank_ = 0;
+  int64_t mod_rank_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore

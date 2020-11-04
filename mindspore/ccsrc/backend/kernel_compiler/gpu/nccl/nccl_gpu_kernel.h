@@ -195,7 +195,7 @@ class NcclGpuKernel : public GpuKernel {
 
     auto root_rank = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(kAttrRootRank);
     if (root_rank) {
-      root_ = GetValue<int>(root_rank);
+      root_ = static_cast<int>(GetValue<int64_t>(root_rank));
     }
     return;
   }

@@ -229,7 +229,7 @@ AbstractBasePtr InferTupleOrListOrDictLen(const std::string &op_name, const Abst
   // Inputs: a tuple or list or dict.
   CheckArgsSize(op_name, args_spec_list, 1);
   auto arg = CheckArg<T>(op_name, args_spec_list, 0);
-  return std::make_shared<AbstractScalar>(SizeToInt(arg->size()));
+  return std::make_shared<AbstractScalar>(SizeToLong(arg->size()));
 }
 }  // namespace abstract
 }  // namespace mindspore

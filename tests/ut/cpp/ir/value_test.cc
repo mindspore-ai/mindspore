@@ -34,9 +34,9 @@ class TestValue : public UT::Common {
   TestValue() {}
 };
 
-TEST_F(TestValue, test_int32) {
-  auto i32a = std::make_shared<Int32Imm>(2);
-  ASSERT_TRUE(i32a != nullptr);
+TEST_F(TestValue, test_int64) {
+  auto i64a = std::make_shared<Int64Imm>(2);
+  ASSERT_TRUE(i64a != nullptr);
 }
 
 TEST_F(TestValue, testToAbstract) {
@@ -46,13 +46,13 @@ TEST_F(TestValue, testToAbstract) {
   ASSERT_TRUE(ret);
   ASSERT_EQ(*(ret), *(boola));
   ASSERT_FALSE(*(ret) == *(std::make_shared<AbstractScalar>(false)));
-  ASSERT_FALSE(*(ret) == *(std::make_shared<AbstractScalar>(2)));
+  ASSERT_FALSE(*(ret) == *(std::make_shared<AbstractScalar>(static_cast<int64_t>(2))));
 
-  ValuePtr i32v = std::make_shared<Int32Imm>(2);
-  AbstractBasePtr i32a = std::make_shared<AbstractScalar>(2);
-  ret = i32v->ToAbstract();
+  ValuePtr i64v = std::make_shared<Int64Imm>(2);
+  AbstractBasePtr i64a = std::make_shared<AbstractScalar>(static_cast<int64_t>(2));
+  ret = i64v->ToAbstract();
   ASSERT_TRUE(ret);
-  ASSERT_EQ(*(ret), *(i32a));
+  ASSERT_EQ(*(ret), *(i64a));
 
   ValuePtr f32v = std::make_shared<FP32Imm>(1.0);
   AbstractBasePtr f32a = std::make_shared<AbstractScalar>(1.0f);
@@ -72,8 +72,8 @@ TEST_F(TestValue, testToAbstract) {
   ASSERT_TRUE(ret);
   ASSERT_EQ(*(ret), *(va));
 
-  ValuePtr tv = std::make_shared<ValueTuple>(std::vector<ValuePtr>({boolv, i32v, f32v, sv, vv}));
-  AbstractBasePtr ta = std::make_shared<AbstractTuple>(AbstractBasePtrList({boola, i32a, f32a, sa, va}));
+  ValuePtr tv = std::make_shared<ValueTuple>(std::vector<ValuePtr>({boolv, i64v, f32v, sv, vv}));
+  AbstractBasePtr ta = std::make_shared<AbstractTuple>(AbstractBasePtrList({boola, i64a, f32a, sa, va}));
   ret = tv->ToAbstract();
   ASSERT_TRUE(ret);
   ASSERT_EQ(*(ret), *(ta));

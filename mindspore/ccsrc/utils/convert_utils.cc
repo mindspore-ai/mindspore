@@ -59,14 +59,22 @@ bool ValueToBool(const ValuePtr &v, bool *value) {
   return true;
 }
 
-bool BaseRefToInt(const ValuePtr &v, int *value) {
+bool BaseRefToInt(const ValuePtr &v, int64_t *value) {
   MS_EXCEPTION_IF_NULL(v);
   if (v->isa<tensor::Tensor>()) {
     auto tensor = v->cast<tensor::TensorPtr>();
     (void)tensor->data_sync();
-    int *tensor_data = static_cast<int *>(tensor->data_c());
-    auto vb = tensor_data[0];
-    *value = vb;
+    if (tensor->Dtype()->ToString() == "Int32") {
+      int32_t *tensor_data = static_cast<int32_t *>(tensor->data_c());
+      auto vb = tensor_data[0];
+      *value = static_cast<int64_t>(vb);
+    } else if (tensor->Dtype()->ToString() == "Int64") {
+      int64_t *tensor_data = static_cast<int64_t *>(tensor->data_c());
+      auto vb = tensor_data[0];
+      *value = vb;
+    } else {
+      MS_LOG(ERROR) << "Index must be Int type.";
+    }
     return true;
   }
   MS_LOG(ERROR) << "Index must be tensor type.";

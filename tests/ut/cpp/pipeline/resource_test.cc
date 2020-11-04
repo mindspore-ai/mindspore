@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace pipeline {
 
-using MethodMap = std::unordered_map<int, std::unordered_map<std::string, Any>>;
+using MethodMap = std::unordered_map<int64_t, std::unordered_map<std::string, Any>>;
 
 extern MethodMap& GetMethodMap();
 

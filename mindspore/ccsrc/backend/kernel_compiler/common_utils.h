@@ -100,7 +100,7 @@ void GetFuncGraphOutputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNode
 bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *const node_json);
 void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, size_t>> *node_list);
 bool IsWeightBoundary(const AnfNodePtr &node);
-std::vector<int> GetReduceAttrAxis(const CNodePtr &cnode);
+std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode);
 std::string GetProcessorStr(const AnfNodePtr &anf_node);
 
 template <typename T>

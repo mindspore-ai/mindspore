@@ -108,9 +108,9 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
       MS_EXCEPTION(TypeError) << "MakeSlice eval " << index << " parameter is neither AbstractScalar nor AbstractNone.";
     }
     if (args_spec_list[index]->isa<AbstractScalar>() &&
-        !dyn_cast<AbstractScalar>(args_spec_list[index])->BuildValue()->isa<Int32Imm>()) {
+        !dyn_cast<AbstractScalar>(args_spec_list[index])->BuildValue()->isa<Int64Imm>()) {
       MS_EXCEPTION(TypeError) << "MakeSlice eval " << index
-                              << " parameter is an AbstractScalar, but is not an int32 number.";
+                              << " parameter is an AbstractScalar, but is not an int64 number.";
     }
   }
   // Slice: start, end, step
@@ -125,50 +125,50 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
   AbstractScalarPtr index = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
   ValuePtr index_value = index->BuildValue();
-  if (!index_value->isa<Int32Imm>()) {
+  if (!index_value->isa<Int64Imm>()) {
     // when index_value is an AnyValue and args_spec_list[0] is a scalar, try to return the type of the first element
     //  and continue
     if (dyn_cast<AbstractScalar>(queue->elements()[0]) != nullptr) {
       return std::make_shared<AbstractScalar>(queue->elements()[0]->BuildType());
     }
-    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int32 number, but got "
+    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got "
                              << index_value->ToString();
   }
-  int idx_v = GetValue<int>(index_value);
+  int64_t idx_v = GetValue<int64_t>(index_value);
   std::size_t nelems = queue->elements().size();
-  if (idx_v >= SizeToInt(nelems) || idx_v < -SizeToInt(nelems)) {
-    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be in range[-" << SizeToInt(nelems) << ", "
-                             << SizeToInt(nelems) << "), but got " << idx_v << ".";
+  if (idx_v >= SizeToLong(nelems) || idx_v < -SizeToLong(nelems)) {
+    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be in range[-" << SizeToLong(nelems) << ", "
+                             << SizeToLong(nelems) << "), but got " << idx_v << ".";
   }
 
   std::size_t uidx_v = 0;
   if (idx_v >= 0) {
-    uidx_v = IntToSize(idx_v);
+    uidx_v = LongToSize(idx_v);
   } else {
-    uidx_v = IntToSize(idx_v + SizeToInt(nelems));
+    uidx_v = LongToSize(idx_v + SizeToLong(nelems));
   }
   return queue->elements()[uidx_v];
 }
 
 template <typename T>
 AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tuple or list, a scalar whose value is an int32 number and an object of a subclass of AbstractBase.
+  // Inputs: a tuple or list, a scalar whose value is an int64 number and an object of a subclass of AbstractBase.
   CheckArgsSize(op_name, args_spec_list, 3);
   auto queue = CheckArg<T>(op_name, args_spec_list, 0);
   AbstractScalarPtr index = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
   ValuePtr index_value = index->BuildValue();
-  if (!index_value->isa<Int32Imm>()) {
-    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int32 number, but got "
+  if (!index_value->isa<Int64Imm>()) {
+    MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got "
                              << index_value->ToString();
   }
-  int idx_v = GetValue<int>(index_value);
+  int64_t idx_v = GetValue<int64_t>(index_value);
   if (idx_v < 0) {
     MS_EXCEPTION(IndexError) << "The index of " << typeid(T).name() << " should be positive number, but got " << idx_v
                              << ".";
   }
 
-  size_t uidx_v = IntToSize(idx_v);
+  size_t uidx_v = LongToSize(idx_v);
   AbstractBasePtrList elements = queue->elements();
   std::size_t nelems = elements.size();
   if (uidx_v >= nelems) {
@@ -241,8 +241,8 @@ AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(args_spec_list[2]);
   auto new_ele = std::make_pair(key_str, args_spec_list[2]);
   if (it != dict_elems.end()) {
-    int index = it - dict_elems.begin();
-    dict_elems[IntToSize(index)] = new_ele;
+    int64_t index = it - dict_elems.begin();
+    dict_elems[LongToSize(index)] = new_ele;
   } else {
     dict_elems.push_back(new_ele);
   }

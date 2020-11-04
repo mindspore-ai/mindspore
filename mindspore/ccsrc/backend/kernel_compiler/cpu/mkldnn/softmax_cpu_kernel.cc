@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/mkldnn/softmax_cpu_kernel.h"
+#include <algorithm>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
@@ -23,7 +24,10 @@ namespace kernel {
 void SoftmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<int> axis_list = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, AXIS);
+  std::vector<int> axis_list;
+  std::vector<int64_t> axis_list_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
+  (void)std::transform(axis_list_me.begin(), axis_list_me.end(), std::back_inserter(axis_list),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   if (axis_list.size() != 1) {
     MS_LOG(EXCEPTION) << "cpu softmax only support input axis size 1";
   }

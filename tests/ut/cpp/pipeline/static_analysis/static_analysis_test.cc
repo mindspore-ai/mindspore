@@ -129,7 +129,7 @@ static FuncGraphPtr MakeFuncGraph(PrimitivePtr prim) {
    * @mindspore
    * def f(x, y):
    *     return x + y
-   * print(f(1,2))
+   * print64_t(f(1,2))
    */
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   ParameterPtr x = func_graph->add_parameter();
@@ -153,8 +153,8 @@ void TestInfer::TearDown() {
 
 TEST_F(TestInfer, test_inferred_scalar_add) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 1;
-  int v2 = 2;
+  int64_t v1 = 1;
+  int64_t v2 = 2;
 
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   AbstractBasePtr abstract_v2 = FromValue(v2, false);
@@ -259,7 +259,7 @@ TEST_F(TestInferGraph, test_inferred) {
   AbstractBasePtrList args_spec_list;
   MS_LOG(INFO) << "Begin TestInferGraph call other graph.";
   MS_LOG(INFO) << "" << graph_f_->get_return()->ToString();
-  AbstractBasePtr abstract_v1 = FromValue(1, false);
+  AbstractBasePtr abstract_v1 = FromValue(static_cast<int64_t>(1), false);
   args_spec_list.push_back(abstract_v1);
   AbstractBasePtr abs_base_got = engine_->Run(graph_f_, args_spec_list).inferred->abstract();
   ASSERT_TRUE(abs_base_got.get() == abstract_v1.get());
@@ -268,7 +268,7 @@ TEST_F(TestInferGraph, test_inferred) {
   MS_LOG(INFO) << "Begin TestInferGraph closure.";
   MS_LOG(INFO) << "" << graph_alpha_->get_return()->ToString();
 
-  AbstractBasePtr abstract_v2 = FromValue(2, false);
+  AbstractBasePtr abstract_v2 = FromValue(static_cast<int64_t>(2), false);
   args_spec_list.clear();
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
@@ -351,7 +351,7 @@ void TestInferMetaGraph::TearDown() {
 
 TEST_F(TestInferMetaGraph, test_inferred) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 1;
+  int64_t v1 = 1;
   std::cout << "Begin TestInferGraph." << std::endl;
   std::cout << func_graph_->get_return()->ToString() << std::endl;
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
@@ -380,8 +380,8 @@ void TestInferUniform::TearDown() {
 
 TEST_F(TestInferUniform, test_inferred_scalar_add) {
   AbstractBasePtrList args_spec;
-  int v1 = 1;
-  int v2 = 2;
+  int64_t v1 = 1;
+  int64_t v2 = 2;
 
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   AbstractBasePtr abstract_v2 = FromValue(v2, false);
@@ -392,7 +392,7 @@ TEST_F(TestInferUniform, test_inferred_scalar_add) {
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
   AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec).inferred->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_v1->GetTypeTrack()));
-  ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeInt32);
+  ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeInt64);
 }
 
 
@@ -427,7 +427,7 @@ TEST_F(TestEvalOnePrim, test_scalar_add) {
 
 class TestGraphEval : public UT::Common {
  public:
-  TestGraphEval() : getPyFun("gtest_input.pipeline.infer.infer_test", true){}; 
+  TestGraphEval() : getPyFun("gtest_input.pipeline.infer.infer_test", true){};
   void SetUp();
   void TearDown();
   AnalysisEnginePtr engine_;

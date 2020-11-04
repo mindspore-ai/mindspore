@@ -22,6 +22,7 @@
 #include "ir/func_graph.h"
 #include "base/core_ops.h"
 #include "utils/utils.h"
+#include "utils/shape_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "runtime/device/device_address.h"
 #include "backend/optimizer/common/helper.h"
@@ -54,12 +55,13 @@ std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
   std::vector<size_t> shape_size_t;
   if (IsShapeDynamic(shape)) {
     if (std::all_of(shape->max_shape().begin(), shape->max_shape().end(), [](int s) { return s >= 0; })) {
-      std::transform(shape->max_shape().begin(), shape->max_shape().end(), std::back_inserter(shape_size_t), IntToSize);
+      std::transform(shape->max_shape().begin(), shape->max_shape().end(), std::back_inserter(shape_size_t),
+                     LongToSize);
     } else {
       MS_LOG(EXCEPTION) << "Invalid Max Shape";
     }
   } else {
-    std::transform(shape->shape().begin(), shape->shape().end(), std::back_inserter(shape_size_t), IntToSize);
+    std::transform(shape->shape().begin(), shape->shape().end(), std::back_inserter(shape_size_t), LongToSize);
   }
   return shape_size_t;
 }
@@ -84,7 +86,7 @@ size_t AnfRuntimeAlgorithm::GetTupleGetItemOutIndex(const CNodePtr &tuple_get_it
   MS_EXCEPTION_IF_NULL(output_index_value_node);
   auto value_node = output_index_value_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
-  return IntToSize(GetValue<int>(value_node->value()));
+  return LongToSize(GetValue<int64_t>(value_node->value()));
 }
 
 KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, size_t index) {
@@ -110,8 +112,8 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, siz
       MS_EXCEPTION_IF_NULL(input2);
       auto value_node = input2->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
-      int item_idx = GetValue<int>(value_node->value());
-      return VisitKernel(cnode->input(kRealInputNodeIndexInTupleGetItem), IntToSize(item_idx));
+      auto item_idx = GetValue<int64_t>(value_node->value());
+      return VisitKernel(cnode->input(kRealInputNodeIndexInTupleGetItem), LongToSize(item_idx));
     } else if (IsPrimitive(input0, prim::kPrimDepend) || IsPrimitive(input0, prim::kPrimControlDepend)) {
       return VisitKernel(cnode->input(kRealInputIndexInDepend), 0);
     } else {
@@ -791,16 +793,16 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
   } else if (shapes.size() == 1) {
     // single output handle
-    std::vector<int> shape_int;
-    std::transform(shapes[0].begin(), shapes[0].end(), std::back_inserter(shape_int), SizeToInt);
+    ShapeVector shape_int;
+    std::transform(shapes[0].begin(), shapes[0].end(), std::back_inserter(shape_int), SizeToLong);
     auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shape_int);
     node->set_abstract(abstract);
   } else {
     // multiple output handle
     std::vector<AbstractBasePtr> abstract_list;
     for (size_t i = 0; i < types.size(); ++i) {
-      std::vector<int> shape_int;
-      std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToInt);
+      ShapeVector shape_int;
+      std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToLong);
       abstract_list.emplace_back(std::make_shared<AbstractTensor>(TypeIdToType(types[i]), shape_int));
     }
     auto abstract_tuple = std::make_shared<AbstractTuple>(abstract_list);
@@ -1251,7 +1253,7 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
     return false;
   }
 
-  uint32_t input_nums = AnfAlgo::GetInputTensorNum(node);
+  size_t input_nums = AnfAlgo::GetInputTensorNum(node);
   if (input_nums == 0) {
     return true;
   }
@@ -1295,8 +1297,8 @@ void AnfRuntimeAlgorithm::GetRealDynamicShape(const std::vector<size_t> &shape,
   }
 }
 
-std::vector<int> GetShapeFromSequeueShape(const abstract::SequeueShapePtr &sequeue_shape_ptr, size_t index,
-                                          ShapeType type) {
+std::vector<int64_t> GetShapeFromSequeueShape(const abstract::SequeueShapePtr &sequeue_shape_ptr, size_t index,
+                                              ShapeType type) {
   MS_EXCEPTION_IF_NULL(sequeue_shape_ptr);
   auto shape_list = sequeue_shape_ptr->shape();
   if (index >= shape_list.size()) {
@@ -1317,17 +1319,17 @@ std::vector<int> GetShapeFromSequeueShape(const abstract::SequeueShapePtr &seque
   }
 }
 
-std::vector<int> AnfRuntimeAlgorithm::GetInputMaxShape(const AnfNodePtr &anf_node, size_t index) {
+std::vector<int64_t> AnfRuntimeAlgorithm::GetInputMaxShape(const AnfNodePtr &anf_node, size_t index) {
   auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
   return GetOutputMaxShape(input_node_with_index.first, input_node_with_index.second);
 }
 
-std::vector<int> AnfRuntimeAlgorithm::GetInputMinShape(const AnfNodePtr &anf_node, size_t index) {
+std::vector<int64_t> AnfRuntimeAlgorithm::GetInputMinShape(const AnfNodePtr &anf_node, size_t index) {
   auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
   return GetOutputMinShape(input_node_with_index.first, input_node_with_index.second);
 }
 
-std::vector<int> AnfRuntimeAlgorithm::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index) {
+std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto shape = anf_node->Shape();
   MS_EXCEPTION_IF_NULL(shape);
@@ -1344,7 +1346,7 @@ std::vector<int> AnfRuntimeAlgorithm::GetOutputMaxShape(const AnfNodePtr &anf_no
   }
 }
 
-std::vector<int> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &anf_node, size_t index) {
+std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto shape = anf_node->Shape();
   MS_EXCEPTION_IF_NULL(shape);

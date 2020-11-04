@@ -165,18 +165,20 @@ void DFunctor::BackPropagateSwitchLayer(const CNodePtr &cnode_morph, const CNode
 }
 
 void DFunctor::BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app, const AdjointPtr &node_adjoint) {
-  auto bprop = k_graph_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), k_app, NewValueNode(1)});
+  auto bprop =
+    k_graph_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), k_app, NewValueNode(static_cast<int64_t>(1))});
   // Call with delimited continuation dout.
   auto bprop_app = tape_->NewCNode({bprop, node_adjoint->dout()});
   node_adjoint->RegisterDoutUser(bprop_app, 1);
   // Special case for switch_layer
   if (IsPrimitiveCNode(cnode_morph, prim::kPrimSwitchLayer)) {
-    auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(0)});
+    auto din =
+      tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(static_cast<int64_t>(0))});
     BackPropagateSwitchLayer(cnode_morph, din);
     return;
   }
   for (size_t i = 0; i < cnode_morph->size(); i++) {
-    auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToInt(i))});
+    auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToLong(i))});
     auto input = cnode_morph->input(i);
     // Backprop sens wrt fvs.
     if (IsValueNode<FuncGraph>(input)) {
@@ -252,7 +254,8 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   }
 
   // Do forward computation
-  auto foward_app = k_graph_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), k_app, NewValueNode(0)});
+  auto foward_app =
+    k_graph_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), k_app, NewValueNode(static_cast<int64_t>(0))});
   // K:: cnode -> forward_app
   auto node_adjoint = std::make_shared<Adjoint>(morph, foward_app, tape_);
   UpdateAdjoint(node_adjoint);
@@ -783,8 +786,8 @@ bool DFunctor::AllReferencesStopped(const CNodePtr &node) {
 // To replace the primal graph with k graph
 void DFunctor::EliminatePrimalGraph() {
   auto k_vnode = NewValueNode(k_graph_);
-  auto idx0 = NewValueNode(SizeToInt(0));
-  auto imm0 = std::make_shared<Int32Imm>(0);
+  auto idx0 = NewValueNode(SizeToLong(0));
+  auto imm0 = std::make_shared<Int64Imm>(0);
   idx0->set_abstract(std::make_shared<abstract::AbstractScalar>(imm0));
   auto manager = primal_graph_->manager();
   auto users = primal_graph_->func_graph_cnodes_index();

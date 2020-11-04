@@ -157,10 +157,17 @@ class PoolingGpuFwdKernel : public GpuKernel {
   }
   void SetPad(const CNodePtr &kernel_node) {
     pad_mode_ = GetValue<std::string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("padding"));
-    auto window = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ksize"));
+    std::vector<int> window;
+    std::vector<int64_t> window_me =
+      GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ksize"));
+    (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     int window_height = window[2];
     int window_width = window[3];
-    stride_ = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
+    std::vector<int64_t> stride_me =
+      GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
+    (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     int windowDimA[2] = {window_height, window_width};
     int paddingA[2] = {0, 0};
     int strideA[2] = {stride_[2], stride_[3]};

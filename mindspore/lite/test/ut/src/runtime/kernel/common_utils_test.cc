@@ -34,7 +34,7 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient1) {
    * 0
    * 3
    */
-  std::vector<int> indices{0, 0, 1, 1, 0, 3};
+  std::vector<int64_t> indices{0, 0, 1, 1, 0, 3};
   /* 0 1
    * 2 3
    * 4 5
@@ -46,9 +46,9 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient1) {
   for (int i = 0; i < 6 * 2; i++) {
     grad.push_back(i);
   }
-  std::vector<int> unique_indices(6);
+  std::vector<int64_t> unique_indices(6);
   std::vector<float> summed_grad(12);
-  std::vector<int> tmp_indices(6);
+  std::vector<int64_t> tmp_indices(6);
   std::vector<float> tmp_grad(12);
 
   SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 6});
@@ -64,7 +64,7 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient1) {
   BucketReduceSparseGradient(param);
 
   EXPECT_EQ(unique_grad.indices_size_, 3);
-  std::vector<int> expect_indices({0, 1, 3});
+  std::vector<int64_t> expect_indices({0, 1, 3});
   for (size_t i = 0; i < unique_grad.indices_size_; ++i) {
     EXPECT_EQ(unique_grad.indices_[i], expect_indices[i]);
   }
@@ -72,7 +72,7 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient1) {
    * 10 12
    * 10 11
    */
-  std::vector<int> expect_value({10, 13, 10, 12, 10, 11});
+  std::vector<int64_t> expect_value({10, 13, 10, 12, 10, 11});
   for (size_t i = 0; i < unique_grad.indices_size_ * 2; ++i) {
     EXPECT_EQ(unique_grad.value_[i], expect_value[i]);
   }
@@ -87,7 +87,7 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient2) {
    * 0
    * 6
    */
-  std::vector<int> indices{0, 0, 1, 1, 0, 6};
+  std::vector<int64_t> indices{0, 0, 1, 1, 0, 6};
   /* 0 1
    * 2 3
    * 4 5
@@ -99,9 +99,9 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient2) {
   for (int i = 0; i < 6 * 2; i++) {
     grad.push_back(i);
   }
-  std::vector<int> unique_indices(6);
+  std::vector<int64_t> unique_indices(6);
   std::vector<float> summed_grad(12);
-  std::vector<int> tmp_indices(6);
+  std::vector<int64_t> tmp_indices(6);
   std::vector<float> tmp_grad(12);
   SparseGradient unique_grad({summed_grad.data(), unique_indices.data(), 6});
   SparseGradient workspace_grad({tmp_grad.data(), tmp_indices.data(), 6});
@@ -117,7 +117,7 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient2) {
 
   EXPECT_EQ(unique_grad.indices_size_, 2);
 
-  std::vector<int> expect_indices({0, 1});
+  std::vector<int64_t> expect_indices({0, 1});
   for (size_t i = 0; i < unique_grad.indices_size_; ++i) {
     EXPECT_EQ(unique_grad.indices_[i], expect_indices[i]);
   }
@@ -125,7 +125,7 @@ TEST_F(CommonUtilTest, BucketReduceSparseGradient2) {
   /* 10 13
    * 10 12
    */
-  std::vector<int> expect_value({10, 13, 10, 12});
+  std::vector<int64_t> expect_value({10, 13, 10, 12});
   for (size_t i = 0; i < unique_grad.indices_size_ * 2; ++i) {
     EXPECT_EQ(unique_grad.value_[i], expect_value[i]);
   }

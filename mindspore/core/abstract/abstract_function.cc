@@ -65,7 +65,7 @@ AbstractFuncUnion::AbstractFuncUnion(const AbstractFunctionPtr &first, const Abs
 std::string AbstractFuncUnion::ToString() const {
   std::ostringstream buffer;
   buffer << "AbstractFuncUnion({";
-  int i = 0;
+  int64_t i = 0;
   for (const auto &func : func_list_) {
     MS_EXCEPTION_IF_NULL(func);
     buffer << "[" << i << "]: " << func->ToString() << ", ";
@@ -278,7 +278,7 @@ std::size_t VirtualAbstractClosure::hash() const {
 std::string VirtualAbstractClosure::ToString() const {
   std::ostringstream buffer;
   buffer << "VirtualAbstractClosure(args: {";
-  int i = 0;
+  int64_t i = 0;
   for (const auto &arg : args_spec_list_) {
     MS_EXCEPTION_IF_NULL(arg);
     buffer << "[" << i << "]: " << arg->ToString() << ", ";
@@ -317,7 +317,7 @@ std::size_t TypedPrimitiveAbstractClosure::hash() const {
 std::string TypedPrimitiveAbstractClosure::ToString() const {
   std::ostringstream buffer;
   buffer << "TypedPrimitiveAbstractClosure: primitive: " << prim_->name() << "(args: {";
-  int i = 0;
+  int64_t i = 0;
   for (const auto &arg : args_spec_list_) {
     MS_EXCEPTION_IF_NULL(arg);
     buffer << "[" << i << "]: " << arg->ToString() << ", ";

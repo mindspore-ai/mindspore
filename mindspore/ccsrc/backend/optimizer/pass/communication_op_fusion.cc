@@ -74,7 +74,7 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
   if (attr_fusion == nullptr) {
     return "";
   }
-  int fusion = GetValue<int>(attr_fusion);
+  int64_t fusion = GetValue<int64_t>(attr_fusion);
   if (fusion == 0) {
     return "";
   }
@@ -226,9 +226,9 @@ bool CommunicationOpFusion::DoFusion(const FuncGraphPtr &func_graph, const Commu
       std::vector<AnfNodePtr> tuple_getitem_input;
       tuple_getitem_input.push_back(NewValueNode(prim::kPrimTupleGetItem));
       tuple_getitem_input.push_back(new_communication_op);
-      auto index = NewValueNode(SizeToInt(idx - start_index));
+      auto index = NewValueNode(SizeToLong(idx - start_index));
       MS_EXCEPTION_IF_NULL(index);
-      auto imm = std::make_shared<Int32Imm>(idx - start_index);
+      auto imm = std::make_shared<Int64Imm>(idx - start_index);
       MS_EXCEPTION_IF_NULL(imm);
       auto abstract_scalar = std::make_shared<abstract::AbstractScalar>();
       MS_EXCEPTION_IF_NULL(abstract_scalar);
@@ -278,10 +278,11 @@ bool CommunicationOpFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto first_node = it.second.communication_op_nodes[0];
-    if (AnfAlgo::HasNodeAttr(kAttrIndex, first_node) && AnfAlgo::GetNodeAttr<int>(first_node, kAttrIndex) > 0) {
+    if (AnfAlgo::HasNodeAttr(kAttrIndex, first_node) && AnfAlgo::GetNodeAttr<int64_t>(first_node, kAttrIndex) > 0) {
       std::stable_sort(it.second.communication_op_nodes.begin(), it.second.communication_op_nodes.end(),
                        [](const CNodePtr &a, const CNodePtr &b) {
-                         return AnfAlgo::GetNodeAttr<int>(a, kAttrIndex) < AnfAlgo::GetNodeAttr<int>(b, kAttrIndex);
+                         return AnfAlgo::GetNodeAttr<int64_t>(a, kAttrIndex) <
+                                AnfAlgo::GetNodeAttr<int64_t>(b, kAttrIndex);
                        });
     }
     size_t segment_num = 0;

@@ -29,13 +29,13 @@ class FusionIdAllocator {
   FusionIdAllocator &operator=(const FusionIdAllocator &in) = delete;
 
   void Init();
-  int32_t AllocateFusionId();
+  int64_t AllocateFusionId();
   bool HasFusionIdAttr(const AnfNodePtr &node);
-  int32_t GetFusionId(const AnfNodePtr &node);
-  void SetFusionId(const AnfNodePtr &node, int32_t id);
+  int64_t GetFusionId(const AnfNodePtr &node);
+  void SetFusionId(const AnfNodePtr &node, int64_t id);
 
  private:
-  int32_t fusion_id;
+  int64_t fusion_id;
 };
 using FusionIdAllocatorPtr = std::shared_ptr<FusionIdAllocator>;
 }  // namespace opt

@@ -28,13 +28,13 @@ Status LayerNormInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": Can not find the attr of begin norm axis";
     return FAILED;
   }
-  if ((iter->second == nullptr) || !iter->second->isa<Int32Imm>()) {
-    MS_LOG(ERROR) << name_ << ": The axis type is not int";
+  if ((iter->second == nullptr) || !iter->second->isa<Int64Imm>()) {
+    MS_LOG(ERROR) << name_ << ": The axis type is not int64_t";
     return FAILED;
   }
 
-  int32_t dim = SizeToInt(input_shape_.size());
-  auto axis = GetValue<int32_t>(iter->second);
+  int64_t dim = SizeToLong(input_shape_.size());
+  auto axis = GetValue<int64_t>(iter->second);
   if ((axis >= dim) || (axis < -dim)) {
     MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << -dim << ", " << dim - 1 << "]";
     return FAILED;
@@ -43,7 +43,7 @@ Status LayerNormInfo::GetAttrs() {
   if (axis < 0) {
     axis = axis + dim;
   }
-  begin_norm_axis_ = IntToSize(axis);
+  begin_norm_axis_ = LongToSize(axis);
   return SUCCESS;
 }
 
@@ -121,7 +121,7 @@ Status LayerNormInfo::CreateTensorMap(size_t input_index) {
   Shape shape = inputs_shape_[input_index];
   Shape tensor_map;
   for (size_t i = 0; i < shape.size(); ++i) {
-    tensor_map.push_back(SizeToInt(shape.size() - i - 1));
+    tensor_map.push_back(SizeToLong(shape.size() - i - 1));
   }
   inputs_tensor_map_.push_back(tensor_map);
   outputs_tensor_map_.push_back(tensor_map);
@@ -239,7 +239,7 @@ Status LayerNormInfo::GenerateGammaAndBetaStrategies(const std::vector<StrategyP
   return SUCCESS;
 }
 
-Status LayerNormInfo::GenerateStrategies(int32_t stage_id) {
+Status LayerNormInfo::GenerateStrategies(int64_t stage_id) {
   if (InitShapes() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init shapes failed";
     return FAILED;

@@ -35,7 +35,10 @@ std::vector<int> GetDynInputSize(const AnfNodePtr &anf_node) {
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (primitive->HasAttr(kAttrDynInputSizes)) {
-    dyn_input_sizes = GetValue<const std::vector<int>>(primitive->GetAttr(kAttrDynInputSizes));
+    std::vector<int64_t> dyn_input_sizes_me =
+      GetValue<const std::vector<int64_t>>(primitive->GetAttr(kAttrDynInputSizes));
+    (void)std::transform(dyn_input_sizes_me.begin(), dyn_input_sizes_me.end(), std::back_inserter(dyn_input_sizes),
+                         [](const int64_t &value) { return static_cast<int>(value); });
   }
   return dyn_input_sizes;
 }
@@ -256,7 +259,7 @@ void AkgKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::
   std::string type = op_attr->type();
   (*attr_json)[kJsonKeyDataType] = type;
   if (type == "int") {
-    (*attr_json)[kJsonKeyValue] = GetValue<int>(attr_value);
+    (*attr_json)[kJsonKeyValue] = static_cast<int>(GetValue<int64_t>(attr_value));
   } else if (type == "str") {
     (*attr_json)[kJsonKeyValue] = GetValue<std::string>(attr_value);
   } else if (type == "bool") {
@@ -264,7 +267,11 @@ void AkgKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std::
   } else if (type == "float") {
     (*attr_json)[kJsonKeyValue] = GetValue<float>(attr_value);
   } else if (type == "listInt") {
-    (*attr_json)[kJsonKeyValue] = GetValue<std::vector<int>>(attr_value);
+    std::vector<int> list_int;
+    std::vector<int64_t> list_int_me = GetValue<std::vector<int64_t>>(attr_value);
+    (void)std::transform(list_int_me.begin(), list_int_me.end(), std::back_inserter(list_int),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (*attr_json)[kJsonKeyValue] = list_int;
   } else if (type == "listStr") {
     std::vector<std::string> data_format;
     if (op_attr->name() == kArgDataformat) {

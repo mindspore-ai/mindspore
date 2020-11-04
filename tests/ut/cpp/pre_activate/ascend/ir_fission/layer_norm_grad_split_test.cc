@@ -43,8 +43,8 @@ TEST_F(TestHWLayerNormGradSplit, test_layer_norm_grad_split) {
   get_py_fun_.SetDoResolve(true);
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_layer_norm_grad_split", "before");
   ASSERT_TRUE(g != nullptr);
-  std::vector<int> shp_x{1, 64, 112, 112};
-  std::vector<int> shp_b{64};
+  std::vector<int64_t> shp_x{1, 64, 112, 112};
+  std::vector<int64_t> shp_b{64};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   auto b_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_b);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, b_abstract, b_abstract, b_abstract};

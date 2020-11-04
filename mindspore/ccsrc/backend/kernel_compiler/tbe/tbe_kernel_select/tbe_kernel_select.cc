@@ -92,9 +92,9 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
   // get dynamic inputs
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode_ptr_);
   MS_EXCEPTION_IF_NULL(primitive);
-  std::vector<int> dyn_input_sizes;
+  std::vector<int64_t> dyn_input_sizes;
   if (primitive->HasAttr(kAttrDynInputSizes)) {
-    dyn_input_sizes = GetValue<std::vector<int>>(primitive->GetAttr(kAttrDynInputSizes));
+    dyn_input_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrDynInputSizes));
   }
   // get real input/output num
   size_t real_input_tensor_num = AnfAlgo::GetInputTensorNum(cnode_ptr_);
@@ -335,7 +335,7 @@ void TbeKernelSelect::SetTbeBuildCommonInfo(const mindspore::kernel::OpInfo &op_
 
 bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_index, size_t real_io_tensor_num,
                                      const std::vector<std::shared_ptr<OpIOInfo>> &ios_info,
-                                     const std::vector<int> &dyn_input_sizes, std::vector<std::string> *formats,
+                                     const std::vector<int64_t> &dyn_input_sizes, std::vector<std::string> *formats,
                                      std::vector<TypeId> *device_types, std::vector<std::vector<Axis>> *reshape_types) {
   MS_EXCEPTION_IF_NULL(formats);
   MS_EXCEPTION_IF_NULL(device_types);
@@ -361,8 +361,8 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
           MS_LOG(EXCEPTION) << "dyn_input_sizes attr set error, dynamic_input_index: " << dynamic_input_index
                             << ", dyn_input_sizes size: " << dyn_input_sizes.size();
         }
-        int dynamic_input_size = dyn_input_sizes[dynamic_input_index];
-        for (int i = 0; i < dynamic_input_size; ++i) {
+        int64_t dynamic_input_size = dyn_input_sizes[dynamic_input_index];
+        for (int64_t i = 0; i < dynamic_input_size; ++i) {
           device_types->emplace_back(tbe::DtypeToTypeId(kernel_build_info_dtype));
           formats->emplace_back(kernel_build_info_format);
           reshape_types->emplace_back(reshape_type);

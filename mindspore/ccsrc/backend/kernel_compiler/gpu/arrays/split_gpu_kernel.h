@@ -57,12 +57,12 @@ class SplitGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    axis_ = GetAttr<int>(kernel_node, "axis");
+    axis_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
       axis_ += SizeToInt(input_shape.size());
     }
-    output_num_ = GetAttr<int>(kernel_node, "output_num");
+    output_num_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "output_num"));
 
     if (!CheckParam(kernel_node)) {
       return false;

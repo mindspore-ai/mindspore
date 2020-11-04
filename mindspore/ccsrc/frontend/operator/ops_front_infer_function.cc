@@ -38,9 +38,9 @@ enum State {
 };
 
 struct SlideInfo {
-  int start;
-  int step;
-  int stop;
+  int64_t start;
+  int64_t step;
+  int64_t stop;
 };
 
 template <typename T>
@@ -56,33 +56,33 @@ AbstractBasePtr InferImplTupleOrListEqual(const std::string &op_name, const Abst
 }
 
 void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) {
-  int arg1 = 0;
-  int arg2 = 0;
+  int64_t arg1 = 0;
+  int64_t arg2 = 0;
   if (!args_spec_list.empty()) {
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     auto arg_value = args_spec_list[0]->BuildValue();
-    if (!arg_value->isa<Int32Imm>()) {
-      MS_LOG(EXCEPTION) << "Only supported input an int32 number.";
+    if (!arg_value->isa<Int64Imm>()) {
+      MS_LOG(EXCEPTION) << "Only supported input an int64 number.";
     }
-    arg1 = GetValue<int>(arg_value);
+    arg1 = GetValue<int64_t>(arg_value);
   }
 
   if (args_spec_list.size() >= 2) {
     MS_EXCEPTION_IF_NULL(args_spec_list[1]);
     auto arg_value = args_spec_list[1]->BuildValue();
-    if (!arg_value->isa<Int32Imm>()) {
-      MS_LOG(EXCEPTION) << "Only supported input an int32 number.";
+    if (!arg_value->isa<Int64Imm>()) {
+      MS_LOG(EXCEPTION) << "Only supported input an int64 number.";
     }
-    arg2 = GetValue<int>(arg_value);
+    arg2 = GetValue<int64_t>(arg_value);
   }
 
   if (args_spec_list.size() == 3) {
     MS_EXCEPTION_IF_NULL(args_spec_list[2]);
     auto arg_value = args_spec_list[2]->BuildValue();
-    if (!arg_value->isa<Int32Imm>()) {
-      MS_LOG(EXCEPTION) << "Only supported input an int32 number.";
+    if (!arg_value->isa<Int64Imm>()) {
+      MS_LOG(EXCEPTION) << "Only supported input an int64 number.";
     }
-    slide->step = GetValue<int>(arg_value);
+    slide->step = GetValue<int64_t>(arg_value);
     slide->start = arg1;
     slide->stop = arg2;
   }
@@ -97,14 +97,14 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
   }
 }
 
-void ComputeReduceIndex(const std::vector<int> &reverse_x, const std::vector<int> &reverse_y,
-                        std::vector<int> *grad_x_reduce_idx, std::vector<int> *grad_y_reduce_idy) {
+void ComputeReduceIndex(const std::vector<int64_t> &reverse_x, const std::vector<int64_t> &reverse_y,
+                        std::vector<int64_t> *grad_x_reduce_idx, std::vector<int64_t> *grad_y_reduce_idy) {
   const size_t n = reverse_x.size();
   for (size_t i = 0; i < n; ++i) {
     State curr;
-    const int32_t x_i = reverse_x[i];
-    const int32_t y_i = reverse_y[i];
-    const int reduce_idx = SizeToInt(n - 1 - i);
+    const int64_t x_i = reverse_x[i];
+    const int64_t y_i = reverse_y[i];
+    const int64_t reduce_idx = SizeToLong(n - 1 - i);
     if (x_i == y_i) {
       curr = SAME;
     } else if (x_i == 1) {
@@ -128,13 +128,13 @@ void ComputeReduceIndex(const std::vector<int> &reverse_x, const std::vector<int
 }
 
 AbstractBasePtr BroadcastGradientArgsDiff(const std::vector<ValuePtr> &x_shape, const std::vector<ValuePtr> &y_shape) {
-  std::vector<int> reverse_x;
-  std::vector<int> reverse_y;
+  std::vector<int64_t> reverse_x;
+  std::vector<int64_t> reverse_y;
 
   (void)std::transform(x_shape.rbegin(), x_shape.rend(), std::back_inserter(reverse_x),
-                       [](const ValuePtr &v) { return v->cast<Int32ImmPtr>()->value(); });
+                       [](const ValuePtr &v) { return v->cast<Int64ImmPtr>()->value(); });
   (void)std::transform(y_shape.rbegin(), y_shape.rend(), std::back_inserter(reverse_y),
-                       [](const ValuePtr &v) { return v->cast<Int32ImmPtr>()->value(); });
+                       [](const ValuePtr &v) { return v->cast<Int64ImmPtr>()->value(); });
 
   if (reverse_x.size() > reverse_y.size()) {
     reverse_y.resize(reverse_x.size(), 1);
@@ -142,16 +142,16 @@ AbstractBasePtr BroadcastGradientArgsDiff(const std::vector<ValuePtr> &x_shape, 
     reverse_x.resize(reverse_y.size(), 1);
   }
 
-  std::vector<int> grad_x_reduce_idx;
-  std::vector<int> grad_y_reduce_idy;
+  std::vector<int64_t> grad_x_reduce_idx;
+  std::vector<int64_t> grad_y_reduce_idy;
   ComputeReduceIndex(reverse_x, reverse_y, &grad_x_reduce_idx, &grad_y_reduce_idy);
 
   AbstractBasePtrList abs_list_x;
   AbstractBasePtrList abs_list_y;
   (void)std::transform(grad_x_reduce_idx.begin(), grad_x_reduce_idx.end(), std::back_inserter(abs_list_x),
-                       [](int v) { return abstract::FromValue(v); });
+                       [](int64_t v) { return abstract::FromValue(v); });
   (void)std::transform(grad_y_reduce_idy.begin(), grad_y_reduce_idy.end(), std::back_inserter(abs_list_y),
-                       [](int v) { return abstract::FromValue(v); });
+                       [](int64_t v) { return abstract::FromValue(v); });
   auto x_reduce_idx = std::make_shared<AbstractTuple>(abs_list_x);
   auto y_reduce_idx = std::make_shared<AbstractTuple>(abs_list_y);
   AbstractBasePtrList elem_list;
@@ -199,7 +199,7 @@ bool CompareShape(const std::vector<ValuePtr> &x_shape, const std::vector<ValueP
   }
 
   for (size_t i = 0; i < x_shape.size(); ++i) {
-    if (GetValue<int>(x_shape[i]) != GetValue<int>(y_shape[i])) {
+    if (GetValue<int64_t>(x_shape[i]) != GetValue<int64_t>(y_shape[i])) {
       return false;
     }
   }
@@ -210,16 +210,16 @@ bool CompareShape(const std::vector<ValuePtr> &x_shape, const std::vector<ValueP
 AbstractBasePtr DoInferReduceShape(const AbstractTuplePtr &x_shape, const ValuePtr &x_shp_value,
                                    const ValueSequeuePtr &axis_value_ptr, const PrimitivePtr &primitive) {
   size_t x_rank = x_shape->size();
-  std::set<int> axis_set;
+  std::set<int64_t> axis_set;
   auto axis_data = axis_value_ptr->value();
   if (axis_data.empty()) {
-    int size = 1;
+    int64_t size = 1;
     AbstractBasePtrList values(x_rank, std::make_shared<AbstractScalar>(size));
     return std::make_shared<AbstractTuple>(values);
   }
 
   for (auto &elem : axis_data) {
-    int e_value = CheckAxis(primitive->name(), elem, -SizeToInt(x_rank), SizeToInt(x_rank) - 1);
+    int64_t e_value = CheckAxis(primitive->name(), elem, -SizeToLong(x_rank), SizeToLong(x_rank) - 1);
     (void)axis_set.insert(e_value);
   }
 
@@ -229,11 +229,11 @@ AbstractBasePtr DoInferReduceShape(const AbstractTuplePtr &x_shape, const ValueP
   }
   AbstractBasePtrList values;
   for (size_t i = 0; i < x_rank; i++) {
-    if (axis_set.count(SizeToInt(i)) || axis_set.count(SizeToInt(i) - SizeToInt(x_rank))) {
-      auto axis_v = MakeValue(1);
+    if (axis_set.count(SizeToLong(i)) || axis_set.count(SizeToLong(i) - SizeToLong(x_rank))) {
+      auto axis_v = MakeValue(static_cast<int64_t>(1));
       values.push_back(std::make_shared<AbstractScalar>(axis_v, axis_v->type()));
     } else {
-      int dim_value = x_shp_data[i]->cast<Int32ImmPtr>()->value();
+      int64_t dim_value = x_shp_data[i]->cast<Int64ImmPtr>()->value();
       auto dim = MakeValue(dim_value);
       values.push_back(std::make_shared<AbstractScalar>(dim, dim->type()));
     }
@@ -404,20 +404,20 @@ AbstractBasePtr InferImplTupleDiv(const AnalysisEnginePtr &, const PrimitivePtr 
   AbstractBasePtrList values;
 
   for (size_t i = 0; i < div_shp_data.size(); i++) {
-    if (div_shp_data[i]->cast<Int32ImmPtr>() == nullptr) {
-      MS_LOG(EXCEPTION) << "div_shp_shape data should be an int32 number, but it's " << args_spec_list[1]->ToString();
+    if (div_shp_data[i]->cast<Int64ImmPtr>() == nullptr) {
+      MS_LOG(EXCEPTION) << "div_shp_shape data should be an int64 number, but it's " << args_spec_list[1]->ToString();
     }
-    int shapex_value = GetValue<int>(shpx_data[i]);
-    int div_value = GetValue<int>(div_shp_data[i]);
+    int64_t shapex_value = GetValue<int64_t>(shpx_data[i]);
+    int64_t div_value = GetValue<int64_t>(div_shp_data[i]);
     MS_LOG(DEBUG) << "div_shp_shape data shapex_value :" << shapex_value << " div_value: " << div_value;
     if (div_value == 0) {
       MS_LOG(EXCEPTION) << "error: division value should not be 0!";
     }
     if ((shapex_value % div_value) != 0) {
-      MS_LOG(EXCEPTION) << "div_shp_shape data shapex must div int:" << shapex_value << " div_value: " << div_value;
+      MS_LOG(EXCEPTION) << "div_shp_shape data shapex must div int64_t:" << shapex_value << " div_value: " << div_value;
     }
 
-    int result = shapex_value / div_value;
+    int64_t result = shapex_value / div_value;
     auto result_v = MakeValue(result);
     values.push_back(std::make_shared<AbstractScalar>(result_v, result_v->type()));
   }
@@ -456,9 +456,9 @@ AbstractBasePtr InferImplShapeMul(const AnalysisEnginePtr &, const PrimitivePtr 
 
   auto shpx_data = shpx_value->cast<ValueTuplePtr>()->value();
 
-  int result = 1;
+  int64_t result = 1;
   for (size_t i = 0; i < shpx_data.size(); i++) {
-    int value = GetValue<int>(shpx_data[i]);
+    int64_t value = GetValue<int64_t>(shpx_data[i]);
     result = IntMulWithOverflowCheck(result, value);
   }
 
@@ -490,7 +490,7 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
       MS_LOG(EXCEPTION) << "Error slice[" << slide.start << ", " << slide.stop << ", " << slide.step << "]";
     }
 
-    for (int i = slide.start; i < slide.stop; i += slide.step) {
+    for (int64_t i = slide.start; i < slide.stop; i += slide.step) {
       args.push_back(abstract::FromValue(i));
       if (i > 0 && INT_MAX - i < slide.step) {
         MS_EXCEPTION(ValueError) << "For make range, the required cycles number is greater than max cycles number, "
@@ -502,7 +502,7 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
       MS_LOG(EXCEPTION) << "Error slice[" << slide.start << ", " << slide.stop << ", " << slide.step << "]";
     }
 
-    for (int i = slide.start; i > slide.stop; i += slide.step) {
+    for (int64_t i = slide.start; i > slide.stop; i += slide.step) {
       args.push_back(abstract::FromValue(i));
       if (i < 0 && INT_MIN - i > slide.step) {
         MS_EXCEPTION(ValueError) << "For make range, the required cycles number is greater than max cycles number, "

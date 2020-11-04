@@ -50,9 +50,9 @@ class TensorLayout {
 
   void set_layout_transfer(bool flag) { layout_transfer_ = flag; }
 
-  int32_t get_field_size() const { return field_size_; }
+  int64_t get_field_size() const { return field_size_; }
 
-  void set_field_size(int32_t field_size) { field_size_ = field_size; }
+  void set_field_size(int64_t field_size) { field_size_ = field_size; }
 
   bool uniform_split() const { return uniform_split_; }
 
@@ -113,10 +113,10 @@ class TensorLayout {
   std::shared_ptr<Arrangement> ComputeArrangementByExpandedShape(const Arrangement &tensor_shape) const;
   bool IsValidTensorLayout() const;
   void RemoveElementEqualToOneInDeviceArrangement();
-  int32_t GetSliceDeviceDimensionByTensorDimensionIndex(uint32_t idx) const;
-  int32_t GetSliceNumByTensorDimensionIndex(uint32_t idx) const;
+  int64_t GetSliceDeviceDimensionByTensorDimensionIndex(uint64_t idx) const;
+  int64_t GetSliceNumByTensorDimensionIndex(uint64_t idx) const;
   bool TensorShapeDimensionIsDividedBySplitDeviceDimension() const;
-  int32_t GetTensorDimensionIndexByDeviceDimensionIndex(int64_t idx) const;
+  int64_t GetTensorDimensionIndexByDeviceDimensionIndex(int64_t idx) const;
 
   Arrangement device_arrangement_origin_;
   Arrangement tensor_shape_origin_;

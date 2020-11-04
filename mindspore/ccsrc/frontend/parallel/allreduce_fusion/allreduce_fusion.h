@@ -28,8 +28,8 @@ namespace mindspore {
 namespace parallel {
 using CNodeCostMap = std::unordered_map<CNodePtr, double>;
 
-constexpr int32_t DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALGORITHM = 0;
-constexpr int32_t DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TIMES = 0;
+constexpr int64_t DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALGORITHM = 0;
+constexpr int64_t DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TIMES = 0;
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TAIL_PERCENT = 0.1;
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TAIL_TIME = 0.1;
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALLREDUCE_INHERENT_TIME = 0.1;
@@ -37,7 +37,7 @@ constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALLREDUCE_BANDWIDTH = 0.1;
 constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_COMPUTATION_TIME_PARAMETER = 0.1;
 
 constexpr char PARAMETER[] = "parameter";
-const uint32_t MAX_RECURSIVE_CALL_TIMES = 100;
+const uint64_t MAX_RECURSIVE_CALL_TIMES = 100;
 class AllreduceFusion {
  public:
   AllreduceFusion()
@@ -54,12 +54,12 @@ class AllreduceFusion {
 
  private:
   Status AddNodeToGraph();
-  CNodeCostMap FindCNode(const AnfNodePtr &from, uint32_t recursive_times = 0) const;
-  CNodeCostMap FindNextCNodes(const CNodePtr &from, uint32_t recursive_times = 0) const;
+  CNodeCostMap FindCNode(const AnfNodePtr &from, uint64_t recursive_times = 0) const;
+  CNodeCostMap FindNextCNodes(const CNodePtr &from, uint64_t recursive_times = 0) const;
   Status AddEdgeToGraph();
-  std::vector<double> GenerateCostMap(int32_t fusion_times, double tail_percent) const;
+  std::vector<double> GenerateCostMap(int64_t fusion_times, double tail_percent) const;
   Status SetFusion(const std::vector<double> &cost_map);
-  Status SetFusionByAlgorithm(int32_t algorithm);
+  Status SetFusionByAlgorithm(int64_t algorithm);
   Status SetFusionByBackwardCompTime();
   Status SetFusionByBackwardCompAndAllreduceTime();
   Status GetSetFusionByBackwardCompAndAllreduceTimeParams();

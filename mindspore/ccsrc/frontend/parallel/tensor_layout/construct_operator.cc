@@ -32,10 +32,7 @@ Status ConstructOperator::Init(const RankList &dev_list, const Shape &dev_matrix
 // skip redistribution for reshape operator
 OperatorVector ConstructOperator::SkipRedisReshapeOP(Shape shape) {
   OperatorAttrs attrs;
-  std::vector<int32_t> shape_int;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_int),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  ValuePtr param_value = MakeValue(shape_int);
+  ValuePtr param_value = MakeValue(shape);
   Attr param = std::make_pair(SHAPE, param_value);
   OperatorParams params = {std::make_pair(param, 2)};
   OperatorArgs args = std::make_pair(attrs, params);
@@ -55,10 +52,7 @@ Status ConstructOperator::ReshapeOP(Shape shape) {
     return Status::INVALID_ARGUMENT;
   }
   OperatorAttrs attrs;
-  std::vector<int32_t> shape_int;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_int),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  ValuePtr param_value = MakeValue(shape_int);
+  ValuePtr param_value = MakeValue(shape);
   Attr param = std::make_pair(SHAPE, param_value);
   OperatorParams params = {std::make_pair(param, 2)};
   OperatorArgs args = std::make_pair(attrs, params);
@@ -66,7 +60,7 @@ Status ConstructOperator::ReshapeOP(Shape shape) {
   return Status::SUCCESS;
 }
 
-Operator CreateStridedSliceOp(int32_t value, const Shape &begin, const Shape &end, const Shape &strides) {
+Operator CreateStridedSliceOp(int64_t value, const Shape &begin, const Shape &end, const Shape &strides) {
   ValuePtr attr_value = MakeValue(value);
   Attr attr_begin_mask = std::make_pair(BEGIN_MASK, attr_value);
   Attr attr_end_mask = std::make_pair(END_MASK, attr_value);
@@ -75,21 +69,12 @@ Operator CreateStridedSliceOp(int32_t value, const Shape &begin, const Shape &en
   Attr attr_shrink_axis_mask = std::make_pair(SHRINK_AXIS_MASK, attr_value);
   OperatorAttrs attrs = {attr_begin_mask, attr_end_mask, attr_ellipsis_mask, attr_new_axis_mask, attr_shrink_axis_mask};
 
-  std::vector<int32_t> begin_int;
-  (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_int),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  ValuePtr param_begin_value = MakeValue(begin_int);
+  ValuePtr param_begin_value = MakeValue(begin);
   Param param_begin = std::make_pair(std::make_pair(BEGIN, param_begin_value), 2);
-  std::vector<int32_t> end_int;
-  (void)std::transform(end.begin(), end.end(), std::back_inserter(end_int),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  ValuePtr param_end_value = MakeValue(end_int);
+  ValuePtr param_end_value = MakeValue(end);
   Param param_end = std::make_pair(std::make_pair(END, param_end_value), 3);
 
-  std::vector<int32_t> strides_int;
-  (void)std::transform(strides.begin(), strides.end(), std::back_inserter(strides_int),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  ValuePtr param_strides_value = MakeValue(strides_int);
+  ValuePtr param_strides_value = MakeValue(strides);
   Param param_strides = std::make_pair(std::make_pair(STRIDES, param_strides_value), 4);
   OperatorParams params = {param_begin, param_end, param_strides};
   OperatorArgs op_args = std::make_pair(attrs, params);
@@ -152,13 +137,13 @@ Status ConstructOperator::StridedSliceOP(Args args) {
 }
 
 Status ConstructOperator::AllGatherOP(int64_t dev_dim) {
-  if ((IntToSize(dev_dim) >= dev_size_) || (dev_dim < 0)) {
+  if ((LongToSize(dev_dim) >= dev_size_) || (dev_dim < 0)) {
     MS_LOG(ERROR) << "Invalid device dimension " << dev_dim << " when construct AllGather operator!";
     return Status::INVALID_ARGUMENT;
   }
 
   std::vector<Group> group_list;
-  if (CreateGroupByDim(dev_size_ - IntToSize(dev_dim) - 1, &group_list) != SUCCESS) {
+  if (CreateGroupByDim(dev_size_ - LongToSize(dev_dim) - 1, &group_list) != SUCCESS) {
     MS_LOG(ERROR) << "AllGather op: create group failed";
     return FAILED;
   } else if (group_list.empty()) {  // this group only has one device, don't need do allgather
@@ -177,7 +162,7 @@ Status ConstructOperator::AllGatherOP(int64_t dev_dim) {
 }
 
 Status ConstructOperator::ConcatOP(int64_t concat_dim) {
-  if (IntToSize(concat_dim) >= tensor_shape_.size()) {
+  if (LongToSize(concat_dim) >= tensor_shape_.size()) {
     MS_LOG(ERROR) << "Invalid tensor dimension " << concat_dim << " when construct Concat operator!";
     return Status::INVALID_ARGUMENT;
   }
@@ -263,10 +248,10 @@ Status ConstructOperator::CreateGroupByDim(size_t axis, std::vector<Group> *grou
   MS_EXCEPTION_IF_NULL(group);
   CheckGlobalDeviceManager();
   MS_EXCEPTION_IF_NULL(g_device_manager);
-  int32_t rank = g_device_manager->global_rank();
+  int64_t rank = g_device_manager->global_rank();
   DeviceMatrix dev_matrix(rank, dev_list_, dev_matrix_shape_);
   RankList group_devices;
-  if (dev_matrix.GetDevicesAlongDim(SizeToUint(axis), &group_devices) != SUCCESS) {
+  if (dev_matrix.GetDevicesAlongDim(SizeToUlong(axis), &group_devices) != SUCCESS) {
     return FAILED;
   }
   // this group only has one device, don't need create the group

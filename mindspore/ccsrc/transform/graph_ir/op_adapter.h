@@ -302,7 +302,7 @@ class OpAdapter : public BaseOpAdapter {
 
   // specialization for int
   static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<int64_t>) {
-    return static_cast<int64_t>(GetValue<int>(value));
+    return static_cast<int64_t>(GetValue<int64_t>(value));
   }
 
   // specialization for int or tuple broadcast to Vector
@@ -329,7 +329,7 @@ class OpAdapter : public BaseOpAdapter {
       auto sub_vector = it->cast<ValueTuplePtr>();
       std::vector<int64_t> sublist;
       for (auto &item : sub_vector->value()) {
-        sublist.push_back(static_cast<int64_t>(GetValue<int>(item)));
+        sublist.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
       }
       list.push_back(sublist);
     }
@@ -352,7 +352,7 @@ class OpAdapter : public BaseOpAdapter {
       }
       auto sub_vector = it->cast<ValueListPtr>();
       for (auto &item : sub_vector->value()) {
-        list.push_back(static_cast<int64_t>(GetValue<int>(item)));
+        list.push_back(static_cast<int64_t>(GetValue<int64_t>(item)));
       }
     }
     return list;
@@ -367,12 +367,12 @@ class OpAdapter : public BaseOpAdapter {
       auto vec = value->cast<ValueSequeuePtr>();
       MS_EXCEPTION_IF_NULL(vec);
       for (auto &it : vec->value()) {
-        list.push_back(static_cast<int64_t>(GetValue<int>(it)));
+        list.push_back(static_cast<int64_t>(GetValue<int64_t>(it)));
       }
       return list;
     }
     if (value->isa<Scalar>()) {
-      list.push_back(static_cast<int64_t>(GetValue<int>(value)));
+      list.push_back(static_cast<int64_t>(GetValue<int64_t>(value)));
       return list;
     }
     MS_LOG(EXCEPTION) << "Value should be ValueTuple or Scalar, but got " << value->type_name();

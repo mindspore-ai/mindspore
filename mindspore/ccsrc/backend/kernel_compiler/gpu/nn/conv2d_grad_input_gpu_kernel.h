@@ -130,10 +130,13 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
     Set4DDesc(dy_shape, input_shape, filter_shape);
 
-    group_ = GetAttr<int>(kernel_node, "group");
+    group_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "group"));
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetConvolutionGroupCount(conv_desc_, group_), "cudnnSetConvGroupCount failed");
 
-    auto pad_list = GetAttr<std::vector<int>>(kernel_node, "pad_list");
+    std::vector<int> pad_list;
+    std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
+    (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     pad_height_ = pad_list[0];
     pad_width_ = pad_list[2];
     auto symmetry_pad = (pad_height_ == pad_list[1]) && (pad_width_ == pad_list[3]);
@@ -263,7 +266,10 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     return true;
   }
   void SetPad(const std::vector<int> &input_shape, const CNodePtr &kernel_node) {
-    auto pad_list = GetAttr<std::vector<int>>(kernel_node, "pad_list");
+    std::vector<int> pad_list;
+    std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
+    (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
+                         [](const int64_t &value) { return static_cast<int>(value); });
   }
   void SelectAlgorithm(cudnnTensorDescriptor_t dx_desc_real) {
     if (group_ > 1 || CUDNN_MAJOR < 7) {
@@ -288,7 +294,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
     auto shp_tuple_x = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("input_sizes")->cast<ValueTuplePtr>()->value();
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
-                         [](const ValuePtr &e) -> size_t { return e->cast<Int32ImmPtr>()->value(); });
+                         [](const ValuePtr &e) -> size_t { return static_cast<int>(e->cast<Int64ImmPtr>()->value()); });
   }
   void Set4DDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &input_shape,
                  const std::vector<size_t> &filter_shape) {
@@ -313,8 +319,12 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
                                 "cudnnSetTensorNdDescriptor failed");
   }
   void SetStrideAndDilation(const CNodePtr &kernel_node) {
-    stride_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "stride");
-    dilation_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "dilation");
+    std::vector<int64_t> stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "stride");
+    std::vector<int64_t> dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "dilation");
+    (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != 2) {
       MS_LOG(EXCEPTION) << "ConvGradInputGpuBkwKernel's stride must be 2d!";
     }

@@ -85,7 +85,7 @@ Status RedistributionOperatorInfer::InferRedistributionOperator() {
       size_t index = map_.begin()->first;
       int64_t in_dim = map_[index];
       map_[index] = NONE;
-      Args args = {SizeToInt(index), in_dim, dev_mat_.GetDimByReverseIdx(LongToSize(in_dim))};
+      Args args = {SizeToLong(index), in_dim, dev_mat_.GetDimByReverseIdx(LongToSize(in_dim))};
       if (InsertOperator(CONCAT_BY_AXIS, args) == Status::FAILED) {
         return Status::FAILED;
       }
@@ -96,7 +96,7 @@ Status RedistributionOperatorInfer::InferRedistributionOperator() {
 
 Status RedistributionOperatorInfer::InferSplitByAxis() {
   for (auto iter = map_.begin(); iter != map_.end();) {
-    uint32_t index = iter->first;
+    uint64_t index = iter->first;
     int64_t in_dim = iter->second;
     int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
     if (in_dim == out_dim) {
@@ -106,7 +106,7 @@ Status RedistributionOperatorInfer::InferSplitByAxis() {
     if (in_dim == NONE &&
         !std::any_of(map_.begin(), map_.end(),
                      [out_dim](const RedistributionOperatorMap::value_type &a) { return a.second == out_dim; })) {
-      Args args = {dev_mat_.GetDimByReverseIdx(IntToUint(out_dim)), UintToInt(index), out_dim};
+      Args args = {dev_mat_.GetDimByReverseIdx(LongToUlong(out_dim)), UlongToLong(index), out_dim};
       if (InsertOperator(SPLIT_BY_AXIS, args) == Status::FAILED) {
         MS_LOG(ERROR) << "Insert SplitByAxis Error!";
         return Status::FAILED;
@@ -121,7 +121,7 @@ Status RedistributionOperatorInfer::InferSplitByAxis() {
 
 Status RedistributionOperatorInfer::InferPermuteByAxis() {
   for (auto iter = map_.begin(); iter != map_.end();) {
-    uint32_t index = iter->first;
+    uint64_t index = iter->first;
     int64_t in_dim = map_[index];
     int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
     if (in_dim == out_dim) {
@@ -131,11 +131,11 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
     if (in_dim == NONE &&
         std::any_of(map_.begin(), map_.end(),
                     [out_dim](const RedistributionOperatorMap::value_type &a) { return a.second == out_dim; })) {
-      int32_t cat_dim = in_tensor_map_.GetIndexByValue(out_dim);
+      int64_t cat_dim = in_tensor_map_.GetIndexByValue(out_dim);
       int64_t dev_num = dev_mat_.GetDimByReverseIdx(LongToSize(out_dim));
       if (is_cost_model_) {
-        int64_t dev_dim = in_tensor_map_.GetDimByIdx(IntToUint(cat_dim));
-        Args args_alltoall = {dev_mat_.GetDimByReverseIdx(IntToUint(dev_dim)), UintToInt(index), cat_dim, dev_dim,
+        int64_t dev_dim = in_tensor_map_.GetDimByIdx(LongToUlong(cat_dim));
+        Args args_alltoall = {dev_mat_.GetDimByReverseIdx(LongToUlong(dev_dim)), UlongToLong(index), cat_dim, dev_dim,
                               dev_num};
         if (InsertOperator(PERMUTE_BY_AXIS, args_alltoall) == Status::FAILED) {
           MS_LOG(ERROR) << "Insert PermuteByAxis Error!";
@@ -143,7 +143,7 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
         }
       } else {
         Args args_allconcat = {cat_dim, out_dim, dev_num};
-        Args args_allsplit = {dev_num, UintToInt(index), out_dim};
+        Args args_allsplit = {dev_num, UlongToLong(index), out_dim};
         if (InsertOperator(CONCAT_BY_AXIS, args_allconcat) == Status::FAILED) {
           MS_LOG(ERROR) << "Insert ConcatByAxis Error!";
           return Status::FAILED;
@@ -154,7 +154,7 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
         }
       }
       (void)map_.erase(iter++);
-      map_[IntToSize(cat_dim)] = NONE;
+      map_[LongToSize(cat_dim)] = NONE;
     } else {
       (void)++iter;
     }
@@ -164,11 +164,11 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
 
 Status RedistributionOperatorInfer::InferConcatByAxis() {
   for (auto iter = map_.begin(); iter != map_.end();) {
-    uint32_t index = iter->first;
+    uint64_t index = iter->first;
     int64_t in_dim = map_[index];
     int64_t out_dim = out_tensor_map_.GetDimByIdx(index);
     if (in_dim != NONE && out_tensor_map_.GetIndexByValue(in_dim) == NONE) {
-      Args args = {SizeToInt(index), in_dim, dev_mat_.GetDimByReverseIdx(LongToSize(in_dim))};
+      Args args = {SizeToLong(index), in_dim, dev_mat_.GetDimByReverseIdx(LongToSize(in_dim))};
       if (InsertOperator(CONCAT_BY_AXIS, args) == Status::FAILED) {
         MS_LOG(ERROR) << "Insert ConcatByAxis Error!";
         return Status::FAILED;

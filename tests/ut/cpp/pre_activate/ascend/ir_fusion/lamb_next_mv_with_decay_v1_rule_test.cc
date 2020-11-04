@@ -30,7 +30,7 @@ class TestHWLambNextMVWithDecayV1Rule : public BackendCommon {
 
 TEST_F(TestHWLambNextMVWithDecayV1Rule, test_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_with_decay_v1_rule", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 13; ++i) {
@@ -50,7 +50,7 @@ TEST_F(TestHWLambNextMVWithDecayV1Rule, test_fusion) {
 
 TEST_F(TestHWLambNextMVWithDecayV1Rule, test_no_match1) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_with_decay_v1_rule", "no_match1");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 13; ++i) {
@@ -70,7 +70,7 @@ TEST_F(TestHWLambNextMVWithDecayV1Rule, test_no_match1) {
 
 TEST_F(TestHWLambNextMVWithDecayV1Rule, test_no_match2) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_with_decay_v1_rule", "no_match2");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 13; ++i) {
@@ -90,7 +90,7 @@ TEST_F(TestHWLambNextMVWithDecayV1Rule, test_no_match2) {
 
 TEST_F(TestHWLambNextMVWithDecayV1Rule, test_no_match3) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_with_decay_v1_rule", "no_match3");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 13; ++i) {

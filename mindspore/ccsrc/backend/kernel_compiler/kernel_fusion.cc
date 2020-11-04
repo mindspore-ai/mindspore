@@ -28,9 +28,9 @@
 namespace mindspore {
 namespace kernel {
 using mindspore::kernel::tbe::TbeUtils;
-std::map<int32_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> &fusion_scopes) {
+std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> &fusion_scopes) {
   MS_LOG(INFO) << "kernel fusion build start, scope size:" << fusion_scopes.size();
-  std::map<int32_t, KernelModPtr> kernel_mod_ret;
+  std::map<int64_t, KernelModPtr> kernel_mod_ret;
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
   for (const auto &fusion_scope_iter : fusion_scopes) {

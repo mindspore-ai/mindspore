@@ -321,7 +321,7 @@ void ReclaimOptimizer() {
 
 bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
   if (res->func_graph() == nullptr) {
-    MS_LOG(ERROR) << "Opt passes int error";
+    MS_LOG(ERROR) << "Opt passes int64_t error";
     return false;
   }
 

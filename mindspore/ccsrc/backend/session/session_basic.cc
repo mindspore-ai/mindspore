@@ -71,7 +71,7 @@ tensor::TensorPtr CreateCNodeOutputTensor(const session::KernelWithIndex &node_o
     type_id = AnfAlgo::GetOutputInferDataType(node, output_index);
   }
   tensor::TensorPtr tensor = nullptr;
-  std::vector<int> temp_shape;
+  std::vector<int64_t> temp_shape;
   if (graph->IsUniqueTargetInternalOutput(node, output_index)) {
     temp_shape.emplace_back(1);
     tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
@@ -247,7 +247,7 @@ ValueNodePtr ConstructRunOpValueNode(const std::shared_ptr<KernelGraph> &graph, 
 }
 
 ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor,
-                                     int tensor_mask) {
+                                     int64_t tensor_mask) {
   MS_EXCEPTION_IF_NULL(graph);
   auto param = graph->NewParameter();
   MS_EXCEPTION_IF_NULL(param);
@@ -551,12 +551,12 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
       }
       continue;
     } else if (optimize_control_depend) {
-      cnode_inputs->push_back(NewValueNode(MakeValue(SizeToInt(input_idx))));
+      cnode_inputs->push_back(NewValueNode(MakeValue(SizeToLong(input_idx))));
     } else {
       // the input node is a cnode from other graph
       auto parameter_from_cnode = CreateNewParameterFromCNode(anf, graph);
       if (parameter_from_cnode == nullptr) {
-        parameter_from_cnode = NewValueNode(MakeValue(SizeToInt(input_idx)));
+        parameter_from_cnode = NewValueNode(MakeValue(SizeToLong(input_idx)));
       }
       cnode_inputs->push_back(parameter_from_cnode);
       (*other_graph_cnode)[anf] = parameter_from_cnode;
@@ -1092,7 +1092,7 @@ void SessionBasic::RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<
         node->set_abstract(abstract);
       } else {
         node->set_abstract(
-          std::make_shared<tensor::Tensor>(kNumberTypeFloat32, std::vector<int>{32, 64, 218, 218})->ToAbstract());
+          std::make_shared<tensor::Tensor>(kNumberTypeFloat32, std::vector<int64_t>{32, 64, 218, 218})->ToAbstract());
       }
     } else if (node->isa<Parameter>()) {
       if (tensor_index > inputs.size()) {
@@ -1159,7 +1159,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
     auto address = AnfAlgo::GetOutputAddr(node, index);
     auto shape = AnfAlgo::GetOutputInferShape(node, index);
     TypeId type_id = AnfAlgo::GetOutputInferDataType(node, index);
-    std::vector<int> temp_shape;
+    std::vector<int64_t> temp_shape;
     (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
     tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
     MS_EXCEPTION_IF_NULL(address);
@@ -1299,9 +1299,9 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
   MS_EXCEPTION_IF_NULL(graph);
   if (AnfRuntimeAlgorithm::GetOutputTensorNum(cnode) > 1) {
     for (size_t output_index = 0; output_index < AnfRuntimeAlgorithm::GetOutputTensorNum(cnode); output_index++) {
-      auto idx = NewValueNode(SizeToInt(output_index));
+      auto idx = NewValueNode(SizeToLong(output_index));
       MS_EXCEPTION_IF_NULL(idx);
-      auto imm = std::make_shared<Int32Imm>(output_index);
+      auto imm = std::make_shared<Int64Imm>(output_index);
       idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
       auto getitem = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode, idx});
       std::vector<TypeId> types = {AnfAlgo::GetOutputInferDataType(cnode, output_index)};
@@ -1320,7 +1320,7 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
 
 std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInfo &op_run_info,
                                                                   const std::vector<tensor::TensorPtr> &input_tensors,
-                                                                  const std::vector<int> &tensors_mask) {
+                                                                  const std::vector<int64_t> &tensors_mask) {
   auto graph = std::make_shared<KernelGraph>();
   graph->set_graph_id(run_op_graph_id_);
   run_op_graph_id_++;
@@ -1404,7 +1404,8 @@ void SessionBasic::BuildGraph(GraphId graph_id) {
 }
 
 void SessionBasic::BuildOp(OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                           const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {
+                           const std::vector<tensor::TensorPtr> &input_tensors,
+                           const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(executor_);
   executor_->BuildOp(shared_from_this(), op_run_info, graph_info, input_tensors, tensors_mask);
 }

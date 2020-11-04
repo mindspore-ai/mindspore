@@ -86,8 +86,8 @@ TEST_F(TestOpAdapter, TestSetAttr_Conv2d_Primitive) {
     });
     ASSERT_EQ(prim->name(), prim::kPrimConv2D->name());
 
-    Int32Imm strides(3);
-    Int32Imm padding(1);
+    Int64Imm strides(3);
+    Int64Imm padding(1);
     ASSERT_EQ(*(prim->GetAttr("strides")), strides);
     ASSERT_EQ(*(prim->GetAttr("padding")), padding);
 

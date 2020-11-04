@@ -27,7 +27,7 @@ void ArgmaxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   batch_size_ = shape[0];
   class_num_ = shape[1];
 
-  int axis = AnfAlgo::GetNodeAttr<int>(kernel_node, AXIS);
+  int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis != -1 && axis != 1) {
     MS_LOG(EXCEPTION) << "argmax kernel not support axis " << axis;
   }

@@ -78,11 +78,11 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
       return false;
     }
     // getting attrs
-    num_true_ = GetAttr<int>(kernel_node, "num_true");
-    num_sampled_ = GetAttr<int>(kernel_node, "num_sampled");
+    num_true_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "num_true"));
+    num_sampled_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "num_sampled"));
     unique_ = GetAttr<bool>(kernel_node, "unique");
-    range_max_ = GetAttr<int>(kernel_node, "range_max");
-    int seed = GetAttr<int>(kernel_node, "seed");
+    range_max_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "range_max"));
+    int seed = static_cast<int>(GetAttr<int64_t>(kernel_node, "seed"));
     remove_accidental_hits_ = GetAttr<bool>(kernel_node, "remove_accidental_hits");
     if (seed == 0) seed = time(NULL);
     generator_.seed(seed);

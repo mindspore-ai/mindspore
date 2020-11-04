@@ -374,13 +374,13 @@ TEST_F(TestOps, Conv2dTest) {
 TEST_F(TestOps, Conv2dAttrTest) {
   Primitive prim("Conv2D");
   prim.SetAttrs({
-    {"stride", MakeValue(3)},
-    {"pad", MakeValue(1)},
+    {"stride", MakeValue(static_cast<int64_t>(3))},
+    {"pad", MakeValue(static_cast<int64_t>(1))},
   });
   ASSERT_EQ(prim.name(), kPrimConv2D->name());
 
-  Int32Imm stride(3);
-  Int32Imm pad(1);
+  Int64Imm stride(3);
+  Int64Imm pad(1);
   ASSERT_EQ(*prim.GetAttr("stride"), stride);
   ASSERT_EQ(*prim.GetAttr("pad"), pad);
 }
@@ -388,8 +388,8 @@ TEST_F(TestOps, Conv2dAttrTest) {
 TEST_F(TestOps, CustomOpAttrTest) {
   Primitive prim("CustomOp", true, kPrimTypePyInferShape);
   prim.SetAttrs({
-    {"attr1", MakeValue(3)},
-    {"attr2", MakeValue(1)},
+    {"attr1", MakeValue(static_cast<int64_t>(3))},
+    {"attr2", MakeValue(static_cast<int64_t>(1))},
   });
   ASSERT_EQ(prim.name(), std::string("CustomOp"));
   ASSERT_EQ(prim.prim_type(), kPrimTypePyInferShape);

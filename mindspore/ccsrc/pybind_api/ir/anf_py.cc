@@ -22,7 +22,7 @@ namespace mindspore {
 // Define python 'RefKey' class.
 REGISTER_PYBIND_DEFINE(CNode, ([](const pybind11::module *m) {
                          (void)py::class_<CNode, CNodePtr>(*m, "CNode")
-                           .def("expanded_str", (std::string(CNode::*)(int) const) & CNode::DebugString,
+                           .def("expanded_str", (std::string(CNode::*)(int32_t) const) & CNode::DebugString,
                                 "Get CNode string representation with specified expansion level.");
                        }));
 }  // namespace mindspore

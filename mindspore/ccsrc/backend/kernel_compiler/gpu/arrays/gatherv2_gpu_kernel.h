@@ -56,7 +56,7 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
-    axis_ = GetAttr<int>(kernel_node, "axis");
+    axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       axis_ = axis_ + SizeToInt(input_shapes_.size());
     }

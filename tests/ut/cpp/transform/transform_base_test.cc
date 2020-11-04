@@ -97,8 +97,8 @@ FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam) {
   return func_graph;
 }
 
-MeTensorPtr MakeTensor(const TypePtr& t, std::initializer_list<int> shp) {
-  auto shape = std::vector<int>(shp);
+MeTensorPtr MakeTensor(const TypePtr& t, std::initializer_list<int64_t> shp) {
+  auto shape = std::vector<int64_t>(shp);
   auto tensor = std::make_shared<tensor::Tensor>(t->type_id(), shape);
   return tensor;
 }

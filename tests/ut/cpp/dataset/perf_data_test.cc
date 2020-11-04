@@ -28,10 +28,10 @@ class MindDataTestPerfData : public UT::Common {
 };
 
 TEST_F(MindDataTestPerfData, Test1) {
-  PerfData<std::vector<int>> p1(2, 3);
+  PerfData<std::vector<int64_t>> p1(2, 3);
   PerfData<CyclicArray<int>> p2(2, 3);
   EXPECT_EQ(p1.capacity(), p2.capacity());
-  std::vector<int> row = {1, 2, 3};
+  std::vector<int64_t> row = {1, 2, 3};
   p1.AddSample(row);
   p2.AddSample(row);
   EXPECT_EQ(p1.size(), 1);
@@ -40,7 +40,7 @@ TEST_F(MindDataTestPerfData, Test1) {
   p2.AddSample(row);
   EXPECT_EQ(p1.size(), 2);
   EXPECT_EQ(p1.size(), p2.size());
-  std::vector<int> row1 = {4, 5, 6};
+  std::vector<int64_t> row1 = {4, 5, 6};
   p2.AddSample(row1);
   EXPECT_EQ(p2.size(), 2);
   auto r1 = p2.Row<int>(static_cast<int64_t>(0));

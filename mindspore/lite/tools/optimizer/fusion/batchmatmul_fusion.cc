@@ -16,6 +16,7 @@
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include <memory>
 #include <vector>
+#include <algorithm>
 #include "src/ops/primitive_c.h"
 #include "src/param_value_lite.h"
 #include "schema/inner/model_generated.h"
@@ -91,7 +92,10 @@ STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPt
   }
   rmatmul_input_shape.insert(rmatmul_input_shape.begin(), joint_fullconnect_size);
   auto type_ptr = TypeIdToType(fc_weight_param->tensor_type());
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, rmatmul_input_shape);
+  std::vector<int64_t> shape_vector;
+  (void)std::transform(rmatmul_input_shape.begin(), rmatmul_input_shape.end(), std::back_inserter(shape_vector),
+                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
   rmatmul_input->set_abstract(abstract_tensor);
   rmatmul_input->set_name(stack_node->fullname_with_scope() + "right_parameter");
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();

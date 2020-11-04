@@ -370,14 +370,14 @@ bool MSANFModelParser::ObtainValueNodeInScalarForm(const std::string &value_node
   ValuePtr value_ptr = nullptr;
   switch (attr_tensor_type) {
     case onnx::TensorProto_DataType_INT32: {
-      std::vector<int32> add_data;
+      std::vector<int64_t> add_data;
       for (int i = 0; i < attr_tensor.int32_data_size(); ++i) {
         add_data.push_back(attr_tensor.int32_data(i));
       }
       if (add_data.size() == 1) {
         value_ptr = MakeValue(add_data[0]);
       } else if (!add_data.empty()) {
-        value_ptr = MakeValue<std::vector<int32>>(add_data);
+        value_ptr = MakeValue<std::vector<int64_t>>(add_data);
       }
       break;
     }

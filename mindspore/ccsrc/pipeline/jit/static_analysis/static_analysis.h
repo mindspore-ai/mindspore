@@ -244,7 +244,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
     function_call_depth_--;
   }
 
-  unsigned int function_call_depth() { return function_call_depth_; }
+  uint64_t function_call_depth() { return function_call_depth_; }
 
  private:
   void SetUndeterminedFlag(const EvaluatorPtr &evaluator);
@@ -273,7 +273,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvalResultPtr ExecuteMultipleEvaluators(const std::vector<EvaluatorPtr> &evaluators, const AnfNodeConfigPtr &out_conf,
                                           const ConfigPtrList &args_conf_list);
   // record current depth of function call statck
-  unsigned int function_call_depth_;
+  uint64_t function_call_depth_;
 
 #ifdef DEBUG
   std::vector<AnfNodePtr> compute_conf_stack_;

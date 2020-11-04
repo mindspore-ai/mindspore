@@ -52,7 +52,7 @@ FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
   outputs.push_back(NewValueNode(fake_bprop));
 
   py::object code_obj = py::getattr(bprop_func, "__code__");
-  size_t inputs_num = py::cast<int>(py::getattr(code_obj, "co_argcount")) - 3;
+  size_t inputs_num = py::cast<int64_t>(py::getattr(code_obj, "co_argcount")) - 3;
   for (size_t i = 0; i < inputs_num; ++i) {
     auto param = bprop_graph->add_parameter();
     outputs.push_back(param);
@@ -211,10 +211,10 @@ bool ConvertSlice(const py::object &obj, ValuePtr *const data) {
     if (py::isinstance<py::none>(py_attr)) {
       return kNone;
     } else if (py::isinstance<py::int_>(py_attr)) {
-      int value = py::cast<int>(py_attr);
+      int64_t value = py::cast<int64_t>(py_attr);
       return MakeValue(value);
     } else {
-      MS_LOG(EXCEPTION) << "Slice should contain only int or none";
+      MS_LOG(EXCEPTION) << "Slice should contain only int64_t or none";
     }
   };
   ValuePtr start = convert_func("start");
@@ -300,7 +300,7 @@ bool ConvertNumberWithType(const T &obj, ValuePtr *const data, TypePtr dtype) {
         *data = std::make_shared<Int64Imm>(obj);
         break;
       default:
-        *data = std::make_shared<Int32Imm>(obj);
+        *data = std::make_shared<Int64Imm>(obj);
     }
     return true;
   }
@@ -344,13 +344,13 @@ bool ConvertNumberWithType(const T &obj, ValuePtr *const data, TypePtr dtype) {
   return false;
 }
 
-bool ConvertIntegerWithType(const int &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
+bool ConvertIntegerWithType(const int64_t &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
   if (dtype == nullptr) {
-    *data = std::make_shared<Int32Imm>(obj);
+    *data = std::make_shared<Int64Imm>(obj);
     return true;
   }
 
-  return ConvertNumberWithType<int>(obj, data, dtype);
+  return ConvertNumberWithType<int64_t>(obj, data, dtype);
 }
 
 bool ConvertFloatWithType(const float &obj, ValuePtr *const data, TypePtr dtype = nullptr) {
@@ -377,7 +377,7 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
   } else if (py::isinstance<py::bool_>(obj)) {
     converted = std::make_shared<BoolImm>(py::cast<bool>(obj));
   } else if (py::isinstance<py::int_>(obj)) {
-    ret = ConvertIntegerWithType(py::cast<int>(obj), &converted, dtype);
+    ret = ConvertIntegerWithType(py::cast<int64_t>(obj), &converted, dtype);
   } else if (py::isinstance<py::float_>(obj)) {
     ret = ConvertFloatWithType(py::cast<float>(obj), &converted, dtype);
   } else if (py::isinstance<py::str>(obj)) {

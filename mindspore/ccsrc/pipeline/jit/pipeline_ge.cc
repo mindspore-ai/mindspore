@@ -156,11 +156,11 @@ void ConvertObjectToTensors(const py::dict &dict, TensorOrderMap *const tensors)
     std::string name = py::cast<std::string>(item.first);
     if (py::isinstance<py::float_>(item.second.attr("data"))) {
       // convert float to tensor with shape([1])
-      tensor = std::make_shared<Tensor>(kNumberTypeFloat32, std::vector<int>({1}));
+      tensor = std::make_shared<Tensor>(kNumberTypeFloat32, std::vector<int64_t>({1}));
       *(static_cast<float *>(tensor->data_c())) = py::cast<float>(item.second.attr("data"));
     } else if (py::isinstance<py::int_>(item.second.attr("data"))) {
-      // convert int to tensor with shape([1])
-      tensor = std::make_shared<Tensor>(kNumberTypeInt32, std::vector<int>({1}));
+      // convert int64_t to tensor with shape([1])
+      tensor = std::make_shared<Tensor>(kNumberTypeInt32, std::vector<int64_t>({1}));
       *(static_cast<float *>(tensor->data_c())) = py::cast<float>(item.second.attr("data"));
     } else if (py::isinstance<Tensor>(item.second.attr("data"))) {
       // cast tensor

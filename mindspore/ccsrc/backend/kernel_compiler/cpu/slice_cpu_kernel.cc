@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include "backend/kernel_compiler/cpu/slice_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
@@ -21,17 +22,26 @@ namespace kernel {
 void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  begin_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, BEGIN);
+  std::vector<int64_t> begin_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
+  (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   auto strides = prim->GetAttr(STRIDES);
   if (strides != nullptr) {
-    strides_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDES);
-    end_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, END);
+    std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+    std::vector<int64_t> end_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
+    (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     TransArg();
     ClipBegin();
   } else {
-    auto sizes = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, SIZE);
+    std::vector<int> sizes;
+    std::vector<int64_t> sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
+    (void)std::transform(sizes_me.begin(), sizes_me.end(), std::back_inserter(sizes),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     if (sizes.size() != input_shape_.size() || begin_.size() != input_shape_.size()) {
       MS_LOG(EXCEPTION) << "begin|size|input size must be equal";
     }

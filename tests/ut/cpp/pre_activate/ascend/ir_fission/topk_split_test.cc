@@ -68,7 +68,7 @@ TEST_F(TestHWTopKSplit, test_topk_split) {
    *     return output
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_topk_split", "before");
-  std::vector<int> shp{4, 4};
+  std::vector<int64_t> shp{4, 4};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kernel_graph = GetKernelGraph(g, args_spec_list);
@@ -100,7 +100,7 @@ TEST_F(TestHWTopKSplit, test_topk_no_split) {
    *     return output
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_topk_split", "before");
-  std::vector<int> shp{4, 4};
+  std::vector<int64_t> shp{4, 4};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kernel_graph = GetKernelGraph(g, args_spec_list);

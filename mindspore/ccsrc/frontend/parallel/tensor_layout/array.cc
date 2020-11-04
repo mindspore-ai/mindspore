@@ -58,7 +58,7 @@ bool Array::operator==(const Array &shape) const {
   if (GetDimSize() != shape.GetDimSize()) {
     return false;
   }
-  for (uint32_t i = 0; i < GetDimSize(); i++) {
+  for (uint64_t i = 0; i < GetDimSize(); i++) {
     if (GetDimByIdx(i) != shape.GetDimByIdx(i)) {
       return false;
     }

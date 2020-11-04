@@ -173,9 +173,9 @@ size_t GetLengthOfDataType(const TypePtr &type) {
     case kNumberTypeFloat64:
       return sizeof(double);
     case kNumberTypeInt:
-      return sizeof(int);
+      return sizeof(int64_t);
     case kNumberTypeUInt:
-      return sizeof(unsigned int);
+      return sizeof(unsigned int64_t);
     case kNumberTypeFloat:
       return sizeof(float);
     default:
@@ -431,7 +431,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
         MS_LOG(EXCEPTION) << "Failure: operator " << prim->name() << " SetCostUnderStrategy failed";
       } else if (FULLY_USE_DEVICES) {
         // If configured to fully use devices, then checking for the user-specified strategy
-        int32_t used_devices = operator_info->used_devices();
+        int64_t used_devices = operator_info->used_devices();
         MS_EXCEPTION_IF_NULL(g_device_manager);
         auto total_device_num = g_device_manager->GetDeviceListByStageId(0).size();
         // 'used_devices == 1' means that ALL-1 strategy, which is valid in auto-parallel
@@ -439,7 +439,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
           return operator_info;
         }
         // 'used_devices == -1' means that 'used_devices_' is not set
-        if ((used_devices == -1) || IntToSize(used_devices) != total_device_num) {
+        if ((used_devices == -1) || LongToSize(used_devices) != total_device_num) {
           MS_LOG(EXCEPTION) << "In configuration 'FULLY_USE_DEVICES' = True, "
                             << "but the specified strategy uses device: " << used_devices
                             << ", total devices: " << total_device_num;
@@ -666,7 +666,7 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
           // In this case, 'prev_anf_node' is 'tuple_getitem', the actual precursor node is node before
           // this 'tuple_getitem'
           MS_LOG(INFO) << "Jumping the 'tuple_getitem' operator.";
-          output_index = IntToSize(GetValue<int>(GetValueNode(prev_cnode->input(2))));
+          output_index = LongToSize(GetValue<int64_t>(GetValueNode(prev_cnode->input(2))));
           prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
           bool bool_result_tuple = (prev_cnode == nullptr) || (!IsValueNode<Primitive>(prev_cnode->input(0)));
           if (bool_result_tuple) {
@@ -756,10 +756,7 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       if (input_shape == nullptr) {
         MS_LOG(EXCEPTION) << "Failure: input_shape is nullptr";
       }
-      std::vector<int> shape_int = input_shape->shape();
-      Shape shape;
-      (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(shape),
-                           [](int sub_shape) { return static_cast<int64_t>(sub_shape); });
+      Shape shape = input_shape->shape();
       Shapes inputs_shape = {shape};
       Shapes outputs_shape = {shape};
       // 2) init the attr
@@ -806,7 +803,7 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
 
       std::string edge_name = std::string(IDENTITY_INFO) + OPERATOR_TO_OPERATOR_CONNECTOR + target_op_info->name();
       // If the edge between these two operators already has been added, then the edge will not be added again.
-      if (entire_costgraph->IsEdgeInCostGraph(edge_name, 0, IntToSize(input_index - 1))) {
+      if (entire_costgraph->IsEdgeInCostGraph(edge_name, 0, LongToSize(input_index - 1))) {
         continue;
       }
       std::shared_ptr<Edge> edge_ptr =
@@ -857,7 +854,7 @@ bool FindReshape(const CNodePtr &cnode, std::unordered_set<std::string> *op_cach
 }
 
 // find previous node, then obtain its strategy_cost_ vector to get its layout vector.
-bool FindPreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int32_t *out_index) {
+bool FindPreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int64_t *out_index) {
   // if previous node is a parameter, handle it in the outsize.
   if (node->isa<Parameter>()) {
     return false;
@@ -907,7 +904,7 @@ bool FindPreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_
 
 // find next node, then obtain its strategy_cost_ vector to get its layout vector.
 // if reshape's output connect to several primitive, return the first layout found
-bool FindNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int32_t *in_index) {
+bool FindNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
   FuncGraphManagerPtr manager = cnode->func_graph()->manager();
@@ -953,7 +950,7 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     MS_ASSERT(cnode->inputs().size() == 3);
     // get previous node's strategy_cost_
     auto pre_node = cnode->input(1);
-    int32_t out_index = 0;
+    int64_t out_index = 0;
     OperatorInfoPtr pre_operator_info;
     std::vector<std::shared_ptr<StrategyWithCost>> pre_stra_costs;
     auto operator_info = cnode->user_data<OperatorInfo>();
@@ -969,7 +966,7 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
       pre_stra_costs = pre_operator_info->strategy_cost();
     }
     // get next node's strategy_cost_
-    int32_t in_index = 0;
+    int64_t in_index = 0;
     OperatorInfoPtr next_operator_info;
     std::vector<std::shared_ptr<StrategyWithCost>> next_stra_costs;
     bool find_next_node = FindNextNodeStraCosts(cnode, &next_operator_info, &in_index);

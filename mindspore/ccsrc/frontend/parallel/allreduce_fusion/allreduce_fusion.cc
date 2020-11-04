@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace parallel {
-std::unordered_set<CNodePtr> FindCNodesWithPara(const AnfNodePtr &para, uint32_t recursive_times = 0) {
+std::unordered_set<CNodePtr> FindCNodesWithPara(const AnfNodePtr &para, uint64_t recursive_times = 0) {
   if (recursive_times > MAX_RECURSIVE_CALL_TIMES) {
     MS_LOG(EXCEPTION) << "FindCNodesWithPara exceeds max recursive call times! Max recursive call times is "
                       << MAX_RECURSIVE_CALL_TIMES;
@@ -83,7 +83,7 @@ Status AllreduceFusion::AddNodeToGraph() {
   return SUCCESS;
 }
 
-CNodeCostMap AllreduceFusion::FindCNode(const AnfNodePtr &from, uint32_t recursive_times) const {
+CNodeCostMap AllreduceFusion::FindCNode(const AnfNodePtr &from, uint64_t recursive_times) const {
   if (recursive_times > MAX_RECURSIVE_CALL_TIMES) {
     MS_LOG(EXCEPTION) << "FindCNode exceeds max recursive call times! Max recursive call times is "
                       << MAX_RECURSIVE_CALL_TIMES;
@@ -124,7 +124,7 @@ CNodeCostMap AllreduceFusion::FindCNode(const AnfNodePtr &from, uint32_t recursi
   return cnode_dist;
 }
 
-CNodeCostMap AllreduceFusion::FindNextCNodes(const CNodePtr &from, uint32_t recursive_times) const {
+CNodeCostMap AllreduceFusion::FindNextCNodes(const CNodePtr &from, uint64_t recursive_times) const {
   if (recursive_times > MAX_RECURSIVE_CALL_TIMES) {
     MS_LOG(EXCEPTION) << "FindNextCNodes exceeds max recursive call times! Max recursive call times is "
                       << MAX_RECURSIVE_CALL_TIMES;
@@ -142,7 +142,7 @@ CNodeCostMap AllreduceFusion::FindNextCNodes(const CNodePtr &from, uint32_t recu
 }
 
 Status AllreduceFusion::AddEdgeToGraph() {
-  std::unordered_map<CNodePtr, int32_t> cnode_state_map;
+  std::unordered_map<CNodePtr, int64_t> cnode_state_map;
   const auto &cnodes = allreduce_graph_.cnode_set();
   for (auto &cnode : cnodes) {
     cnode_state_map[cnode] = 0;
@@ -174,7 +174,7 @@ Status AllreduceFusion::AddEdgeToGraph() {
   return SUCCESS;
 }
 
-std::vector<CNodePtr> FindMirror(const AnfNodePtr &para, uint32_t recursive_times = 0) {
+std::vector<CNodePtr> FindMirror(const AnfNodePtr &para, uint64_t recursive_times = 0) {
   if (recursive_times > MAX_RECURSIVE_CALL_TIMES) {
     MS_LOG(EXCEPTION) << "FindMirror exceeds max recursive call times! Max recursive call times is "
                       << MAX_RECURSIVE_CALL_TIMES;
@@ -211,24 +211,24 @@ std::vector<CNodePtr> FindMirror(const AnfNodePtr &para, uint32_t recursive_time
   return cnode_list;
 }
 
-void SetMirrorFusion(const CNodePtr &mirror_cnode, int32_t fusion, const std::string &parameter_name) {
+void SetMirrorFusion(const CNodePtr &mirror_cnode, int64_t fusion, const std::string &parameter_name) {
   MS_EXCEPTION_IF_NULL(mirror_cnode);
   MS_LOG(DEBUG) << "Set Mirror " << mirror_cnode->DebugString() << " fusion " << fusion;
   auto node_prim = GetValueNode<PrimitivePtr>(mirror_cnode->input(0));
   auto old_value_ptr = node_prim->GetAttr(FUSION);
   if (old_value_ptr != nullptr) {
-    if (old_value_ptr->isa<Int32Imm>()) {
-      int32_t old_value = old_value_ptr->cast<Int32ImmPtr>()->value();
+    if (old_value_ptr->isa<Int64Imm>()) {
+      int64_t old_value = old_value_ptr->cast<Int64ImmPtr>()->value();
       if (old_value < fusion) {
         return;
       }
     }
   }
-  (void)node_prim->AddAttr(FUSION, MakeValue(std::make_shared<Int32Imm>(fusion)));
+  (void)node_prim->AddAttr(FUSION, MakeValue(std::make_shared<Int64Imm>(fusion)));
   (void)node_prim->AddAttr(PARAMETER, MakeValue(std::make_shared<StringImm>(parameter_name)));
 }
 
-Status FindMirrorAndSetFusion(const AnfNodePtr &para, int32_t fusion) {
+Status FindMirrorAndSetFusion(const AnfNodePtr &para, int64_t fusion) {
   auto mirror_cnodes = FindMirror(para);
   if (mirror_cnodes.empty()) {
     MS_LOG(WARNING) << para->ToString() << " 0 Mirror CNode found.";
@@ -251,7 +251,7 @@ Status FindMirrorAndSetFusion(const AnfNodePtr &para, int32_t fusion) {
   return SUCCESS;
 }
 
-Status FindMirrorAndSetFusion(const std::vector<AnfNodePtr> &paras, int32_t fusion) {
+Status FindMirrorAndSetFusion(const std::vector<AnfNodePtr> &paras, int64_t fusion) {
   for (auto &param_node : paras) {
     if (FindMirrorAndSetFusion(param_node, fusion) != SUCCESS) {
       MS_LOG(ERROR) << "FindMirrorAndSetFusion failed";
@@ -266,7 +266,7 @@ Status AllreduceFusion::SetFusion(const std::vector<double> &cost_map) {
     MS_LOG(ERROR) << "cost_map must has at least 2 items, cost_map size is " << cost_map.size();
     return FAILED;
   }
-  int32_t fusion = 1;
+  int64_t fusion = 1;
   for (auto cost_iter = cost_map.end() - 1; cost_iter != cost_map.begin(); --cost_iter) {
     auto paras = allreduce_graph_.GetParaByCost(*(cost_iter - 1), *cost_iter);
     if (FindMirrorAndSetFusion(paras, fusion) != SUCCESS) {
@@ -278,7 +278,7 @@ Status AllreduceFusion::SetFusion(const std::vector<double> &cost_map) {
   return SUCCESS;
 }
 
-std::vector<double> AllreduceFusion::GenerateCostMap(int32_t fusion_times, double tail_percent) const {
+std::vector<double> AllreduceFusion::GenerateCostMap(int64_t fusion_times, double tail_percent) const {
   double offset = allreduce_graph_.max() * (1 - tail_percent) / (fusion_times - 1);
   MS_LOG(DEBUG) << "max = " << allreduce_graph_.max() << ", offset = " << offset;
   std::vector<double> cost_map;
@@ -361,7 +361,7 @@ Status AllreduceFusion::SetFusionByBackwardCompAndAllreduceTime() {
   }
   double para_size = (tail_time_ - allreduce_inherent_time_) / allreduce_bandwidth_;
   double to_cost = allreduce_graph_.max();
-  int32_t fusion = 1;
+  int64_t fusion = 1;
   while (to_cost != 0) {
     MS_LOG(INFO) << "to_cost: " << to_cost << " para_size: " << para_size;
     auto node_cost_pair = allreduce_graph_.GetParaByParaSize(to_cost, para_size);
@@ -380,7 +380,7 @@ Status AllreduceFusion::SetFusionByBackwardCompAndAllreduceTime() {
   return SUCCESS;
 }
 
-Status AllreduceFusion::SetFusionByAlgorithm(int32_t algorithm) {
+Status AllreduceFusion::SetFusionByAlgorithm(int64_t algorithm) {
   if (algorithm == 1) {
     return SetFusionByBackwardCompTime();
   }

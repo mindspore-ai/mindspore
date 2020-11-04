@@ -22,7 +22,7 @@ namespace mindspore {
 namespace kernel {
 void EmbeddingLookUpCommGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
-  split_num_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "split_num");
+  split_num_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "split_num");
   MS_LOG(INFO) << "split_num: " << split_num_;
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape[0] % split_num_ != 0) {
@@ -47,9 +47,9 @@ bool EmbeddingLookUpCommGradCPUKernel::Launch(const std::vector<kernel::AddressP
   MS_LOG(DEBUG) << "output addr: " << output_addr << "output size: " << output_size;
   memset_s(output_addr, output_size, 0, output_size);
   const std::vector<int> &rank_group = {0, 1, 2, 3, 4, 5, 6, 7};
-  size_t input_split_lens = input_size / split_num_ / sizeof(float_t);
-  size_t output_split_lens = output_size / split_num_ / sizeof(float_t);
-  for (int i = 0; i < split_num_; i++) {
+  size_t input_split_lens = input_size / LongToSize(split_num_) / sizeof(float_t);
+  size_t output_split_lens = output_size / LongToSize(split_num_) / sizeof(float_t);
+  for (int64_t i = 0; i < split_num_; i++) {
     MPIAllGather(input_addr + i * input_split_lens, output_addr + i * output_split_lens, rank_group, input_split_lens);
   }
 #if defined(_WIN32) || defined(_WIN64)

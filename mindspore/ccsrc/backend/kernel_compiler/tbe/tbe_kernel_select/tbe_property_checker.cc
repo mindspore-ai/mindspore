@@ -34,14 +34,14 @@ constexpr char kAttrShrinkAxisMask[] = "shrink_axis_mask";
 static bool CheckStridedSlice(const CNodePtr &cnode) {
   // check stride[-1] != 1
   if (AnfAlgo::HasNodeAttr(kAttrStrides, cnode)) {
-    auto strides = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode, kAttrStrides);
+    auto strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrStrides);
     if (!strides.empty() && strides[strides.size() - 1] != 1) {
       return false;
     }
   }
   // check reduction on the last dimension
   if (AnfAlgo::HasNodeAttr(kAttrShrinkAxisMask, cnode)) {
-    auto shrink_axis_mask = AnfAlgo::GetNodeAttr<int>(cnode, kAttrShrinkAxisMask);
+    auto shrink_axis_mask = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrShrinkAxisMask));
     AnfNodePtr input = cnode->input(1);
     int input_dims = 0;
     if (input->isa<ValueNode>()) {

@@ -61,7 +61,7 @@ void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     indices_lens_ *= shape;
   }
   if (AnfAlgo::HasNodeAttr(kAttrOffset, kernel_node)) {
-    offset_ = AnfAlgo::GetNodeAttr<int>(kernel_node, kAttrOffset);
+    offset_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrOffset);
   }
   indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
 }

@@ -39,10 +39,10 @@ class TestHWTupleOutputToMakeTuple : public BackendCommon {
 TEST_F(TestHWTupleOutputToMakeTuple, test_convert_tuple_output_to_maketuple) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_convert_tuple_output_to_maketuple", "before");
   ASSERT_TRUE(g != nullptr);
-  std::vector<int> shp_x{5, 2, 10};
-  std::vector<int> shp_h{1, 2, 2};
-  std::vector<int> shp_c{1, 2, 2};
-  std::vector<int> shp_w{112, 1, 1};
+  std::vector<int64_t> shp_x{5, 2, 10};
+  std::vector<int64_t> shp_h{1, 2, 2};
+  std::vector<int64_t> shp_c{1, 2, 2};
+  std::vector<int64_t> shp_w{112, 1, 1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   auto h_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_h);
   auto c_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_c);

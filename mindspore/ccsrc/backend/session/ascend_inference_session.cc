@@ -147,7 +147,7 @@ bool AscendInferenceSession::CompareInput(const tensor::TensorPtr &input, const 
   auto input_shape = input->shape();
   vector<size_t> trans_input;
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(trans_input),
-                       [](const int dim) { return static_cast<size_t>(dim); });
+                       [](const int64_t dim) { return static_cast<size_t>(dim); });
   auto is_scalar_shape = [](const vector<size_t> &shape) {
     return shape.empty() || (shape.size() == 1 && shape[0] == 1);
   };
@@ -227,10 +227,10 @@ void AscendInferenceSession::GetModelInputsInfo(uint32_t graph_id, std::vector<t
     }
     auto parameter = kernel_graph_inputs[i]->cast<ParameterPtr>();
     if (!AnfAlgo::IsParameterWeight(parameter)) {
-      vector<int> input_shape;
+      vector<int64_t> input_shape;
       auto parameter_shape = AnfAlgo::GetOutputDeviceShape(parameter, 0);
       (void)std::transform(parameter_shape.begin(), parameter_shape.end(), std::back_inserter(input_shape),
-                           [](const size_t dim) { return static_cast<int>(dim); });
+                           [](const size_t dim) { return SizeToLong(dim); });
       auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
       auto data_type = kernel_build_info->GetOutputDeviceType(0);
       auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);

@@ -48,7 +48,7 @@ class TestHWBufferFusion : public BackendCommon {
 
 TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_1) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_tbe_eltwise_fusion_1", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
@@ -107,8 +107,8 @@ TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_1) {
 
 TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_2) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_tbe_eltwise_fusion_2", "before");
-  std::vector<int> shp{32, 10};
-  std::vector<int> shp_bias{10};
+  std::vector<int64_t> shp{32, 10};
+  std::vector<int64_t> shp_bias{10};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_bias);
   AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
@@ -199,7 +199,7 @@ TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_2) {
 
 TEST_F(TestHWBufferFusion, test_tbe_reduce_eltwise_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_tbe_reduce_eltwise_fusion", "before");
-  std::vector<int> shp{32, 10};
+  std::vector<int64_t> shp{32, 10};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
@@ -289,8 +289,8 @@ TEST_F(TestHWBufferFusion, test_tbe_reduce_eltwise_fusion) {
 
 TEST_F(TestHWBufferFusion, test_tbe_matmul_eltwise_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_tbe_matmul_eltwise_fusion", "before");
-  std::vector<int> x_shp{2048, 768};
-  std::vector<int> y_shp{768, 768};
+  std::vector<int64_t> x_shp{2048, 768};
+  std::vector<int64_t> y_shp{768, 768};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, x_shp);
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, y_shp);
   AbstractBasePtrList args_spec_list{x_abstract, y_abstract};

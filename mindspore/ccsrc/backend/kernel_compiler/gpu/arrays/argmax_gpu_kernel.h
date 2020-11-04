@@ -64,7 +64,7 @@ class ArgmaxGpuKernel : public GpuKernel {
                         << "-D inputs.";
     }
 
-    axis_ = GetAttr<int>(kernel_node, "axis");
+    axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       axis_ += SizeToInt(input_shape.size());
     }

@@ -44,7 +44,7 @@ class MockOpFinder : public OpFinder {
 TEST_F(TestHWAddInputToOutput, test_add_input_to_output) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_add_input_to_output", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 5; ++i) {

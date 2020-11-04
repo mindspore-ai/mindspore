@@ -44,7 +44,7 @@ class SparseApplyAdamCpuKernelTest : public UT::Common {
     return kernel_addr;
   }
 
-  void CreateInputAddress(std::vector<int> &indices) {
+  void CreateInputAddress(std::vector<int64_t> &indices) {
     inputs_.push_back(CreateKernelAddress(var_.data()));
     inputs_.push_back(CreateKernelAddress(m_.data()));
     inputs_.push_back(CreateKernelAddress(v_.data()));
@@ -58,8 +58,9 @@ class SparseApplyAdamCpuKernelTest : public UT::Common {
     inputs_.push_back(CreateKernelAddress(indices.data()));
   }
 
-  void CreateWorkspaceAddress(std::vector<float> &new_grad, std::vector<int> &new_indices, std::vector<float> &tmp_grad,
-                              std::vector<int> &tmp_indices, std::vector<float> &m_t) {
+  void CreateWorkspaceAddress(std::vector<float> &new_grad, std::vector<int64_t> &new_indices,
+                              std::vector<float> &tmp_grad, std::vector<int64_t> &tmp_indices,
+                              std::vector<float> &m_t) {
     workspace_.push_back(CreateKernelAddress(new_grad.data()));
     workspace_.push_back(CreateKernelAddress(new_indices.data()));
     workspace_.push_back(CreateKernelAddress(tmp_grad.data()));
@@ -93,13 +94,14 @@ TEST_F(SparseApplyAdamCpuKernelTest, dense_test) {
   sparse_adam_->indices_size_ = 3;
   sparse_adam_->var_first_dim_size_ = 3;
   sparse_adam_->var_outer_dim_size_ = 9;
+  sparse_adam_->indices_data_type_ = kNumberTypeInt64;
 
-  std::vector<int> indices{0, 1, 2};
+  std::vector<int64_t> indices{0, 1, 2};
   CreateInputAddress(indices);
   std::vector<float> new_grad(3 * 3 * 3);
-  std::vector<int> new_indices(3);
+  std::vector<int64_t> new_indices(3);
   std::vector<float> tmp_grad(3 * 3 * 3);
-  std::vector<int> tmp_indices(3);
+  std::vector<int64_t> tmp_indices(3);
   std::vector<float> m_t(3 * 3 * 3);
   CreateWorkspaceAddress(new_grad, new_indices, tmp_grad, tmp_indices, m_t);
   sparse_adam_->Launch(inputs_, workspace_, outputs_);
@@ -120,13 +122,14 @@ TEST_F(SparseApplyAdamCpuKernelTest, sparse_test1) {
   sparse_adam_->indices_size_ = 2;
   sparse_adam_->var_first_dim_size_ = 3;
   sparse_adam_->var_outer_dim_size_ = 9;
+  sparse_adam_->indices_data_type_ = kNumberTypeInt64;
 
-  std::vector<int> indices{0, 2};
+  std::vector<int64_t> indices{0, 2};
   CreateInputAddress(indices);
   std::vector<float> new_grad(3 * 3 * 3);
-  std::vector<int> new_indices(3);
+  std::vector<int64_t> new_indices(3);
   std::vector<float> tmp_grad(3 * 3 * 3);
-  std::vector<int> tmp_indices(3);
+  std::vector<int64_t> tmp_indices(3);
   std::vector<float> m_t(3 * 3 * 3);
   CreateWorkspaceAddress(new_grad, new_indices, tmp_grad, tmp_indices, m_t);
   sparse_adam_->Launch(inputs_, workspace_, outputs_);
@@ -151,13 +154,14 @@ TEST_F(SparseApplyAdamCpuKernelTest, sparse_test2) {
   sparse_adam_->indices_size_ = 3;
   sparse_adam_->var_first_dim_size_ = 3;
   sparse_adam_->var_outer_dim_size_ = 9;
+  sparse_adam_->indices_data_type_ = kNumberTypeInt64;
 
-  std::vector<int> indices{2, 2, 1};
+  std::vector<int64_t> indices{2, 2, 1};
   CreateInputAddress(indices);
   std::vector<float> new_grad(3 * 3 * 3);
-  std::vector<int> new_indices(3);
+  std::vector<int64_t> new_indices(3);
   std::vector<float> tmp_grad(3 * 3 * 3);
-  std::vector<int> tmp_indices(3);
+  std::vector<int64_t> tmp_indices(3);
   std::vector<float> m_t(3 * 3 * 3);
   CreateWorkspaceAddress(new_grad, new_indices, tmp_grad, tmp_indices, m_t);
   sparse_adam_->Launch(inputs_, workspace_, outputs_);

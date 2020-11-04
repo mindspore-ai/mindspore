@@ -36,9 +36,9 @@ class KernelGraphTest : public UT::Common {
 
 TEST_F(KernelGraphTest, NewValueNode) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  auto add_value = NewValueNode(MakeValue(0));
+  auto add_value = NewValueNode(MakeValue(static_cast<int64_t>(0)));
   MS_EXCEPTION_IF_NULL(add_value);
-  std::vector<int> shape = {1};
+  std::vector<int64_t> shape = {1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
   add_value->set_abstract(x_abstract);
   add_value->set_kernel_info(std::make_shared<KernelInfo>());
@@ -66,7 +66,7 @@ TEST_F(KernelGraphTest, NewParameter) {
   EXPECT_EQ(AnfAlgo::GetOutputFormat(new_paramter, 0), kOpFormat_DEFAULT);
   EXPECT_EQ(AnfAlgo::GetOutputDeviceDataType(new_paramter, 0), kMetaTypeNone);
   // test non-weight parameter node as input
-  std::vector<int> shape = {2, 32, 224, 224};
+  std::vector<int64_t> shape = {2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
   auto non_weight_parameter = anf_graph->add_parameter();
   MS_EXCEPTION_IF_NULL(non_weight_parameter);
@@ -138,7 +138,7 @@ TEST_F(KernelGraphTest, SetExecOrderByDefault) {
    *              return
    */
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<int> shape = {2, 32, 224, 224};
+  std::vector<int64_t> shape = {2, 32, 224, 224};
   auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
 
   auto x_parameter = kernel_graph->NewParameter();

@@ -195,7 +195,7 @@ AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const Abstrac
     auto &items = x->elements();
     std::vector<AnfNodePtr> nodes;
     nodes.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    int idx = 0;
+    int64_t idx = 0;
     for (const auto &item : items) {
       AnfNodePtr tuple_node =
         func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), source_node, NewValueNode(idx)});
@@ -419,12 +419,12 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
   }
   if (prim_py->IsCustomPrim()) {
     // Raise error if output_num is not match the infer result.
-    int output_num = GetValue<int>(prim_py->GetAttr("output_num"));
+    int64_t output_num = GetValue<int64_t>(prim_py->GetAttr("output_num"));
     if (res_spec->isa<AbstractTensor>() && output_num != 1) {
       MS_LOG(EXCEPTION) << "Custom primitive " << prim_py->ToString() << " output_num " << output_num
                         << " not matches the infer result.";
     } else if (res_spec->isa<AbstractTuple>() &&
-               (res_spec->cast<AbstractTuplePtr>()->size() != IntToSize(output_num))) {
+               (res_spec->cast<AbstractTuplePtr>()->size() != LongToSize(output_num))) {
       MS_LOG(EXCEPTION) << "Custom primitive " << prim_py->ToString() << " output_num " << output_num
                         << " not matches the infer result.";
     }
@@ -607,10 +607,10 @@ EvaluatorPtr InitUniformPrimEvaluator(const PrimitivePtr &primitive, PrimitiveIm
   return uniform_primitive_evaluator;
 }
 
-const int kResolveCaseUserDefineClass = 1;
-const int kResolveCaseBuiltInType = 2;
-const int kResolveCaseFunction = 3;
-int GetResolveCase(const TypePtr &data_type) {
+const int64_t kResolveCaseUserDefineClass = 1;
+const int64_t kResolveCaseBuiltInType = 2;
+const int64_t kResolveCaseFunction = 3;
+int64_t GetResolveCase(const TypePtr &data_type) {
   MS_EXCEPTION_IF_NULL(data_type);
   if (data_type->type_id() == kObjectTypeClass) {
     return kResolveCaseUserDefineClass;
@@ -814,7 +814,7 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 
-  int case_v = GetResolveCase(data_type);
+  int64_t case_v = GetResolveCase(data_type);
   if (case_v == kResolveCaseUserDefineClass) {
     return GetEvaluatedValueForClassAttrOrMethod(engine, args_spec_list, item_value, data_conf, out_conf);
   } else if (case_v == kResolveCaseBuiltInType) {

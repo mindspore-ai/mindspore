@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_OTHER_BOUNDINGBOX_DECODE_GPU_KERNEL_H
 
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/cuda_impl/boundingbox_decode_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -92,7 +93,7 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
         AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueList>()) {
       means_ = GetAttr<std::vector<float>>(kernel_node, "means");
     } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<FloatImm>()) {
-      float mean = GetAttr<int>(kernel_node, "means");
+      float mean = GetAttr<float>(kernel_node, "means");
       for (size_t i = 0; i < coordinate_size; i++) {
         means_.emplace_back(mean);
       }
@@ -104,7 +105,7 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
         AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueList>()) {
       stds_ = GetAttr<std::vector<float>>(kernel_node, "stds");
     } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<FloatImm>()) {
-      float std = GetAttr<int>(kernel_node, "stds");
+      float std = GetAttr<float>(kernel_node, "stds");
       for (size_t i = 0; i < coordinate_size; i++) {
         stds_.emplace_back(std);
       }
@@ -112,7 +113,9 @@ class BoundingBoxDecodeGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "Attribute stds type is invalid.";
     }
 
-    max_shape_ = GetAttr<std::vector<int>>(kernel_node, "max_shape");
+    std::vector<int64_t> max_shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "max_shape");
+    (void)std::transform(max_shape_me.begin(), max_shape_me.end(), std::back_inserter(max_shape_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     wh_ratio_clip_ = GetAttr<float>(kernel_node, "wh_ratio_clip");
 
     if (means_.size() < coordinate_size || stds_.size() < coordinate_size) {

@@ -40,7 +40,7 @@ void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnod
     auto depthwise_conv = cnode->input(1);
     MS_EXCEPTION_IF_NULL(depthwise_conv);
     if (cnode->isa<CNode>() && IsPrimitiveCNode(depthwise_conv, prim::kPrimDepthwiseConv2dNative)) {
-      std::vector<int> output_used_num{SizeToInt(manager->node_users()[depthwise_conv].size())};
+      std::vector<int64_t> output_used_num{SizeToLong(manager->node_users()[depthwise_conv].size())};
       AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), depthwise_conv);
       std::unordered_set<AnfNodePtr> record{cnode, depthwise_conv};
       candidate_fusion->push_back(record);
@@ -51,7 +51,7 @@ void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnod
     auto relu = cnode->input(1);
     MS_EXCEPTION_IF_NULL(relu);
     if (cnode->isa<CNode>() && (IsPrimitiveCNode(relu, prim::kPrimRelu) || IsPrimitiveCNode(relu, prim::kPrimReluV2))) {
-      std::vector<int> output_used_num{SizeToInt(manager->node_users()[relu].size())};
+      std::vector<int64_t> output_used_num{SizeToLong(manager->node_users()[relu].size())};
       AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), relu);
       std::unordered_set<AnfNodePtr> record{cnode, relu};
       candidate_fusion->push_back(record);

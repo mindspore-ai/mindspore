@@ -899,7 +899,7 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
     return;
   }
   auto normal_shape_ptr = dyn_cast<abstract::Shape>(node->Shape());
-  vector<int> shape;
+  std::vector<int64_t> shape;
   if (normal_shape_ptr == nullptr) {
     MS_LOG(INFO) << "Invalid shape to update data op descriptor.";
     return;
@@ -1150,7 +1150,7 @@ void DfGraphConvertor::ConvertMakeTuple(const CNodePtr node) {
   tuple_out_handle_cache_[node.get()] = tuple_items;
 }
 
-AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, unsigned int *index) {
+AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, uint64_t *index) {
   const int TUPLE_GET_ITEM_INDEX = 2;
   if (node->inputs().size() < 3) {  // "tuple_getitem" primitive must have 3 inputs
     MS_LOG(EXCEPTION) << "length of inputs of TupleGetItem is less than 3";
@@ -1160,7 +1160,7 @@ AnfNodePtr DfGraphConvertor::TraceTupleGetItem(const CNodePtr &node, unsigned in
     error_ = INVALID_ARGUMENT;
     MS_LOG(EXCEPTION) << "can't convert get item with non-constant index";
   }
-  *index = IntToUint(GetValue<int>(GetValueNode(index_node)));
+  *index = LongToUlong(GetValue<int64_t>(GetValueNode(index_node)));
   return node->inputs()[1];
 }
 
@@ -1172,14 +1172,14 @@ AnfNodePtr DfGraphConvertor::TraceDepend(const CNodePtr &node) {
   return cnode->inputs()[1];
 }
 
-AnfNodePtr DfGraphConvertor::TraceMakeTuple(const CNodePtr &node, unsigned int index) {
+AnfNodePtr DfGraphConvertor::TraceMakeTuple(const CNodePtr &node, uint64_t index) {
   if (index + 1 >= node->inputs().size()) {
     MS_LOG(EXCEPTION) << "length of make_tuple is less than index: " << index;
   }
   return node->inputs()[index + 1];
 }
 
-OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node, const std::stack<unsigned int> &index_stack,
+OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node, const std::stack<uint64_t> &index_stack,
                                         AnfNode *const draw_index) {
   if (node == nullptr) {
     MS_LOG(ERROR) << "Get nullptr while trace real op";
@@ -1212,12 +1212,12 @@ OutHandler DfGraphConvertor::GetHandler(const AnfNodePtr &node, const std::stack
 OutHandler DfGraphConvertor::TraceRealOp(AnfNodePtr node) {
   bool flag = IsPrimitiveCNode(node, prim::kPrimTupleGetItem) || IsPrimitiveCNode(node, prim::kPrimMakeTuple) ||
               IsPrimitiveCNode(node, prim::kPrimDepend);
-  std::stack<unsigned int> index_stack;
+  std::stack<uint64_t> index_stack;
   auto draw_index = node.get();
   while (flag) {
     flag = false;
     if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-      unsigned int index;
+      uint64_t index;
       node = TraceTupleGetItem(node->cast<CNodePtr>(), &index);
       index_stack.push(index);
       flag = true;
@@ -1268,7 +1268,7 @@ AnfNodePtr DfGraphConvertor::GetRealOpNode(AnfNodePtr node) {
       error_ = FAILED;
       return node;
     }
-    int index = value_ptr->value();
+    int64_t index = value_ptr->value();
 
     // make_tuple apply inputs:make_tuple, [tuple_items,]
     if (IsPrimitiveCNode(node_inputs[1], prim::kPrimMakeTuple)) {

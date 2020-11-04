@@ -119,9 +119,9 @@ void AddControlEdge(const FuncGraphPtr &graph, const AnfNodePtr &node,
   PrimitivePtr prim_ptr = GetValueNode<PrimitivePtr>(input_cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim_ptr);
   ValuePtr mode_ptr = prim_ptr->GetAttr("depend_mode");
-  int depend_mode = 0;
+  int64_t depend_mode = 0;
   if (mode_ptr != nullptr) {
-    depend_mode = GetValue<int>(mode_ptr);
+    depend_mode = GetValue<int64_t>(mode_ptr);
   }
   if ((prior_node->isa<Parameter>() || depend_node->isa<Parameter>()) && depend_mode == 0) {
     return;
@@ -448,7 +448,7 @@ void CompileGraph::Push(const AnfNodePtr &node) {
   set_height(height_ + 1);
 }
 
-void CompileGraph::AddInst(const Instruction &inst, const int &arg) {
+void CompileGraph::AddInst(const Instruction &inst, const int64_t &arg) {
   VectorRef args;
   args.push_back(arg);
   AddInst(inst, args);
@@ -466,7 +466,7 @@ void CompileGraph::AddInst(const Instruction &inst, const VectorRef &args) {
 
 // Gets the stack reference for the node value. If the node is a constant,
 // it may actually cause the push in to not be mentioned before.
-int CompileGraph::Ref(const AnfNodePtr &node) {
+int64_t CompileGraph::Ref(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Start Ref node " << node->DebugString(true) << " height_: " << height_;
   if (slots_.count(node) == 0 && node->isa<ValueNode>()) {
@@ -501,7 +501,7 @@ void CompileGraph::AddInput(const AnfNodePtr &node) {
 }
 
 // Call back effect in stack
-void CompileGraph::Ret(int nargs) { set_height(height_ - nargs); }
+void CompileGraph::Ret(int64_t nargs) { set_height(height_ - nargs); }
 
 void CompileGraph::PushParameters(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -512,7 +512,8 @@ void CompileGraph::PushParameters(const FuncGraphPtr &graph) {
   }
 }
 
-int CompileGraph::LinConvert(const FuncGraphPtr &graph, const AnfNodePtrList &node_list, const std::string &target) {
+int64_t CompileGraph::LinConvert(const FuncGraphPtr &graph, const AnfNodePtrList &node_list,
+                                 const std::string &target) {
   MS_LOG(DEBUG) << "LinConvert start";
   LinConvertResult result;
 
@@ -543,7 +544,7 @@ int CompileGraph::LinConvert(const FuncGraphPtr &graph, const AnfNodePtrList &no
   return RET_SUCCESS;
 }
 
-int CompileGraph::InterpretNode(const FuncGraphPtr &graph, const CNodePtr &node) {
+int64_t CompileGraph::InterpretNode(const FuncGraphPtr &graph, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(DEBUG) << "Interpret node: " << node->DebugString(true);
   std::vector<AnfNodePtr> node_inputs = node->inputs();
@@ -573,7 +574,7 @@ int CompileGraph::InterpretNode(const FuncGraphPtr &graph, const CNodePtr &node)
       AddPrimitive(node, value);
     }
   } else {
-    int ret = AddCall(graph, node);
+    int64_t ret = AddCall(graph, node);
     if (ret == RET_BREAK) {
       return ret;
     }
@@ -589,7 +590,7 @@ bool CompileGraph::SplitGraph(const FuncGraphPtr &graph) {
 
   MS_LOG(DEBUG) << "Split nodes size:" << splits.size();
   for (auto &split : splits) {
-    int ret = RET_SUCCESS;
+    int64_t ret = RET_SUCCESS;
     if (utils::isa<VectorRef>(split)) {
       MS_LOG(DEBUG) << "Start a extern LinConvert";
       std::vector<AnfNodePtr> args;
@@ -631,7 +632,7 @@ InstSet CompileGraph::Run(const FuncGraphPtr &graph) {
 
   Reset();
   PushParameters(graph);
-  int param_height = height_;
+  int64_t param_height = height_;
   MS_LOG(DEBUG) << "'param_height': " << height_ << " to split graph: " << graph->get_return()->DebugString(true);
 
   if (!SplitGraph(graph)) {
@@ -644,8 +645,8 @@ InstSet CompileGraph::Run(const FuncGraphPtr &graph) {
   return ret;
 }
 
-void CompileGraph::AddPadStack(int param_height) {
-  int stack_sizes = max_height_ - param_height;
+void CompileGraph::AddPadStack(int64_t param_height) {
+  int64_t stack_sizes = max_height_ - param_height;
   MS_LOG(DEBUG) << "Pad stack max_height_:" << max_height_ << " param:" << param_height
                 << " need_stack:" << stack_sizes;
   if (stack_sizes > 0) {
@@ -658,7 +659,7 @@ void CompileGraph::AddTailCall(const AnfNodePtr &fn, size_t size) {
   VectorRef args;
   args.emplace_back(Ref(fn));
   args.emplace_back(height_);
-  args.emplace_back(static_cast<int>(size - 1));
+  args.emplace_back(static_cast<int64_t>(size - 1));
   MS_LOG(DEBUG) << "Tail call:" << Ref(fn) << ", " << height_ << ", " << size - 1;
   AddInst(Instruction::kTailCall, args);
 }
@@ -725,7 +726,7 @@ void CompileGraph::AddPrimitive(const CNodePtr &node, const PrimitivePtr &prim) 
   AddInst(Instruction::kPrim, args);
 }
 
-int CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
+int64_t CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
   auto inputs = node->inputs();
   AnfNodePtr fn = inputs[0];
   (void)Ref(fn);
@@ -739,7 +740,7 @@ int CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
   }
   MS_LOG(DEBUG) << "Call:" << Ref(fn) << ", " << height_ << ", " << size - 1;
   AddInst(Instruction::kCall, Ref(fn));
-  Ret(static_cast<int>(size - 1));
+  Ret(static_cast<int64_t>(size - 1));
   return RET_SUCCESS;
 }
 
@@ -770,7 +771,7 @@ void TraverseGraphMap(
           if (node->func_graph() != fg) {
             continue;
           }
-          int key = use.second;
+          int64_t key = use.second;
           if (key != 0) {
             MS_EXCEPTION_IF_NULL(node->input(0));
             bool key_is_const = node->input(0)->isa<ValueNode>();
@@ -842,7 +843,7 @@ CompileGraphs::CompileGraphs(const BackendPtr &backend, const std::vector<Primit
 // Convert graphs to unlinked instructions.
 void CompileGraphs::Compile(const FuncGraphPtr &graph) {
   MS_LOG(DEBUG) << "Start";
-  mapping_[graph] = static_cast<int>(insts_.size());
+  mapping_[graph] = static_cast<int64_t>(insts_.size());
   if (transform_ != nullptr) {
     InstSet insts = transform_->Run(graph);
     if (!insts.empty()) {

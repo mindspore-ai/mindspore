@@ -42,7 +42,7 @@ class TestHWRemoveInternalOutput : public BackendCommon {
 
   KernelGraphPtr GetSingleOutputGraph(const std::string &func_name, const std::string &sub_func_name) {
     FuncGraphPtr g = getPyFun_.CallAndParseRet(func_name, sub_func_name);
-    std::vector<int> shp{2, 32, 224, 224};
+    std::vector<int64_t> shp{2, 32, 224, 224};
     auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
     AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
     auto kg = GetKernelGraph(g, args_spec_list);
@@ -64,7 +64,7 @@ class TestHWRemoveInternalOutput : public BackendCommon {
 
   KernelGraphPtr GetMutilpleOutputGraph(const std::string &func_name, const std::string &sub_func_name) {
     FuncGraphPtr g = getPyFun_.CallAndParseRet(func_name, sub_func_name);
-    std::vector<int> shp{2, 32, 224, 224};
+    std::vector<int64_t> shp{2, 32, 224, 224};
     auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
     AbstractBasePtrList args_spec_list{x_abstract};
     auto kg = GetKernelGraph(g, args_spec_list);

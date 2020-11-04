@@ -145,7 +145,7 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   map["cat"] = 111;  // forward slash is not good, but we need to add this somewhere, also in windows, its a '\'
   map["dog"] = 222;  // forward slash is not good, but we need to add this somewhere, also in windows, its a '\'
   map["wrong folder name"] = 1234;  // this is skipped
-  std::vector<int> expected_label = {111, 222};
+  std::vector<int64_t> expected_label = {111, 222};
 
   // Create a Manifest Dataset
   std::shared_ptr<Dataset> ds = Manifest(file_path, "train", RandomSampler(), map, true);

@@ -32,13 +32,13 @@ class AvgPool : public PrimitiveC {
   AvgPool() : PrimitiveC(kNameAvgPool) { InitIOName({"x"}, {"output"}); }
   ~AvgPool() = default;
   MS_DECLARE_PARENT(AvgPool, PrimitiveC);
-  void Init(const std::vector<int> &kernel_size = {1}, const std::vector<int> &stride = {1},
+  void Init(const std::vector<int64_t> &kernel_size = {1}, const std::vector<int64_t> &stride = {1},
             const std::string &padding = "valid");
   void set_padding(const std::string &pad);
-  void set_kernel_size(const std::vector<int> &kernel_size);
-  void set_strides(const std::vector<int> &strides);
-  std::vector<int> get_kernel_size() const;
-  std::vector<int> get_strides() const;
+  void set_kernel_size(const std::vector<int64_t> &kernel_size);
+  void set_strides(const std::vector<int64_t> &strides);
+  std::vector<int64_t> get_kernel_size() const;
+  std::vector<int64_t> get_strides() const;
   std::string get_padding() const;
 };
 

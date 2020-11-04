@@ -62,7 +62,7 @@ std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const Anf
   auto &elements = abs->elements();
   std::vector<AnfNodePtr> tuple_node_expanded;
   for (size_t i = 0; i < elements.size(); i++) {
-    auto elem_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(SizeToInt(i))});
+    auto elem_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, NewValueNode(SizeToLong(i))});
     elem_node->set_abstract(elements[i]);
     if (elements[i]->isa<abstract::AbstractTuple>()) {
       auto nodes = TransformTupleArgument(fg, elem_node, elements[i]->cast<abstract::AbstractTuplePtr>());

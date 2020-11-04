@@ -86,7 +86,10 @@ class Im2ColGpuFwdKernel : public GpuKernel {
       return false;
     }
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto filter_shape = GetAttr<std::vector<int>>(kernel_node, "kernel_size");
+    std::vector<int> filter_shape;
+    std::vector<int64_t> filter_shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "kernel_size");
+    (void)std::transform(filter_shape_me.begin(), filter_shape_me.end(), std::back_inserter(filter_shape),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(in_shape);
     if (is_null_input_) {
@@ -96,7 +99,7 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     }
     Set4DDesc(in_shape, filter_shape, output_shape);
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetConvolutionGroupCount(conv_desc_, 1), "cudnnSetConvGroupCount failed");
-    pad_height_ = GetAttr<int>(kernel_node, "pad");
+    pad_height_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pad"));
     pad_width_ = pad_height_;
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
@@ -173,7 +176,10 @@ class Im2ColGpuFwdKernel : public GpuKernel {
     return true;
   }
   void SetPad(const std::vector<size_t> &in_shape, const CNodePtr &kernel_node) {
-    auto pad_list = GetAttr<std::vector<int>>(kernel_node, "pad_list");
+    std::vector<int> pad_list;
+    std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
+    (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
+                         [](const int64_t &value) { return static_cast<int>(value); });
 
     n_ = SizeToInt(in_shape[0]);
     c_ = SizeToInt(in_shape[1]);
@@ -217,8 +223,12 @@ class Im2ColGpuFwdKernel : public GpuKernel {
   }
 
   void SetStrideAndDilation(const CNodePtr &kernel_node) {
-    stride_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "stride");
-    dilation_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "dilation");
+    std::vector<int64_t> stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "stride");
+    std::vector<int64_t> dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "dilation");
+    (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != 4) {
       MS_LOG(EXCEPTION) << "Im2Col's stride must be 4d!";
     }

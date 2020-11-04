@@ -35,7 +35,7 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   auto x_length = x_shape.size();
   auto y_length = y_shape.size();
   auto length = x_length < y_length ? x_length : y_length;
-  std::vector<int> broadcast_shape;
+  std::vector<int64_t> broadcast_shape;
   if (x_length == length) {
     std::copy(y_shape.begin(), y_shape.end() - length, std::back_inserter(broadcast_shape));
   } else {

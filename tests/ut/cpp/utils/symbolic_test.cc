@@ -28,12 +28,12 @@ class TestSymbolic : public UT::Common {
 };
 
 TEST_F(TestSymbolic, test_env) {
-  auto sk1 = std::make_shared<SymbolicKeyInstance>(NewValueNode(1), abstract::FromValue(1234));
-  auto sk1b = std::make_shared<SymbolicKeyInstance>(NewValueNode(1), abstract::FromValue(1234));
+  auto sk1 = std::make_shared<SymbolicKeyInstance>(NewValueNode(static_cast<int64_t>(1)), abstract::FromValue(1234));
+  auto sk1b = std::make_shared<SymbolicKeyInstance>(NewValueNode(static_cast<int64_t>(1)), abstract::FromValue(1234));
 
   ASSERT_EQ(*sk1, *sk1b);
 
-  auto sk2 = std::make_shared<SymbolicKeyInstance>(NewValueNode(2), abstract::FromValue(1234));
+  auto sk2 = std::make_shared<SymbolicKeyInstance>(NewValueNode(static_cast<int64_t>(2)), abstract::FromValue(1234));
 
   EnvInstance e = newenv->Set(sk1, 100);
   ASSERT_FALSE(e == *newenv);

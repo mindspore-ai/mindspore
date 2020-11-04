@@ -48,19 +48,19 @@ class CostMatMul {
   double GetMinCostIn(const OperatorRec &op);
 
  private:
-  double StrConcatDimI(int32_t a, int32_t b) {
+  double StrConcatDimI(int64_t a, int64_t b) {
     cost_in_i_ = (static_cast<double>(a) * static_cast<double>(b)) / 2.0;
 
     return cost_in_i_;
   }
 
-  double StrConcatDimJ(int32_t a, int32_t b) {
+  double StrConcatDimJ(int64_t a, int64_t b) {
     cost_in_j_ = (static_cast<double>(a) * static_cast<double>(b)) / 2.0;
 
     return cost_in_j_;
   }
 
-  double StrReduceDimK(int32_t a, int32_t b) {
+  double StrReduceDimK(int64_t a, int64_t b) {
     cost_in_k_ = (static_cast<double>(a) * static_cast<double>(b)) / 2.0;
 
     return cost_in_k_;
@@ -85,43 +85,43 @@ class CostConvolution {
   double GetMinCostIn(const Graph::NodeType &node);
 
  private:
-  double StrDimB(int32_t TensorFilter) {
+  double StrDimB(int64_t TensorFilter) {
     cost_in_b_ = static_cast<double>((TensorFilter) / 2.0);
 
     return cost_in_b_;
   }
 
-  double StrDimI(int32_t TensorIn, int32_t TensorFilter) {
+  double StrDimI(int64_t TensorIn, int64_t TensorFilter) {
     cost_in_i_ = static_cast<double>((TensorIn + TensorFilter) / 2.0);
 
     return cost_in_i_;
   }
 
-  double StrDimJ(int32_t TensorIn, int32_t TensorFilter) {
+  double StrDimJ(int64_t TensorIn, int64_t TensorFilter) {
     cost_in_j_ = static_cast<double>((TensorIn + TensorFilter) / 2.0);
 
     return cost_in_j_;
   }
 
-  double StrDimK(int32_t TensorIn) {
+  double StrDimK(int64_t TensorIn) {
     cost_in_k_ = static_cast<double>((TensorIn) / 2.0);
 
     return cost_in_k_;
   }
 
-  double StrDimDI(int32_t TensorIn, int32_t TensorOut) {
+  double StrDimDI(int64_t TensorIn, int64_t TensorOut) {
     cost_in_di_ = static_cast<double>((TensorIn + TensorOut) / 2.0);
 
     return cost_in_di_;
   }
 
-  double StrDimDJ(int32_t TensorIn, int32_t TensorOut) {
+  double StrDimDJ(int64_t TensorIn, int64_t TensorOut) {
     cost_in_dj_ = static_cast<double>((TensorIn + TensorOut) / 2.0);
 
     return cost_in_dj_;
   }
 
-  double StrDimQ(int32_t TensorOut) {
+  double StrDimQ(int64_t TensorOut) {
     cost_in_q_ = static_cast<double>((TensorOut) / 2.0);
 
     return cost_in_q_;

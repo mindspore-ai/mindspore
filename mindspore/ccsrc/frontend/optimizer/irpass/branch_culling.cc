@@ -28,7 +28,7 @@ namespace opt {
 namespace irpass {
 namespace internal {
 AnfNodePtr GenerateSwitchNode(const FuncGraphPtr &graph, const AnfNodePtr &cond, const AnfNodePtr &data,
-                              int switch_idx) {
+                              int64_t switch_idx) {
   auto switch_node = prim::GetPythonOps("geswitch", "mindspore.ops.functional")->cast<PrimitivePtr>();
   std::vector<AnfNodePtr> switch_nodes{NewValueNode(switch_node), data, cond};
   auto switch_apply = graph->NewCNode(switch_nodes);
@@ -186,11 +186,11 @@ struct SharedOp {
 inline tensor::TensorPtr GetConstData() { return MergeNetOutput.const_data; }
 inline void SetConstData(const tensor::TensorPtr &const_value) { MergeNetOutput.const_data = const_value; }
 
-inline CNodePtr GetSquareOp(int switch_idx) { return MergeNetOutput.square_ops[switch_idx]; }
-inline void SetSquareOp(int switch_idx, const CNodePtr &op) { MergeNetOutput.square_ops[switch_idx] = op; }
+inline CNodePtr GetSquareOp(int64_t switch_idx) { return MergeNetOutput.square_ops[switch_idx]; }
+inline void SetSquareOp(int64_t switch_idx, const CNodePtr &op) { MergeNetOutput.square_ops[switch_idx] = op; }
 
-inline CNodePtr GetMergeOp(int switch_idx) { return MergeNetOutput.merge_ops[switch_idx]; }
-inline void SetMergeOp(int switch_idx, const CNodePtr &op) { MergeNetOutput.merge_ops[switch_idx] = op; }
+inline CNodePtr GetMergeOp(int64_t switch_idx) { return MergeNetOutput.merge_ops[switch_idx]; }
+inline void SetMergeOp(int64_t switch_idx, const CNodePtr &op) { MergeNetOutput.merge_ops[switch_idx] = op; }
 
 inline void ResetSharedOp() {
   SetConstData(nullptr);
@@ -201,14 +201,14 @@ inline void ResetSharedOp() {
 }
 
 tensor::TensorPtr ConstData() {
-  std::vector<int> shp = {1};
-  tensor::TensorPtr const_data = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  auto *val = static_cast<int32_t *>(const_data->data_c());
+  std::vector<int64_t> shp = {1};
+  tensor::TensorPtr const_data = std::make_shared<tensor::Tensor>(kInt64->type_id(), shp);
+  auto *val = static_cast<int64_t *>(const_data->data_c());
   *val = 0;
   return const_data;
 }
 
-CNodePtr SquareOp(const FuncGraphPtr &graph, const AnfNodePtr &cond, int switch_idx,
+CNodePtr SquareOp(const FuncGraphPtr &graph, const AnfNodePtr &cond, int64_t switch_idx,
                   const tensor::TensorPtr &const_data) {
   auto PrimSquare = prim::GetPythonOps("square", "mindspore.ops.functional")->cast<PrimitivePtr>();
   // for the depended node , add two const data to merge the flow ,one for depended node with same switch,
@@ -222,7 +222,7 @@ CNodePtr SquareOp(const FuncGraphPtr &graph, const AnfNodePtr &cond, int switch_
   return square_op;
 }
 
-CNodePtr MergeNode(const FuncGraphPtr &graph, const AnfNodePtr &cond, int switch_idx,
+CNodePtr MergeNode(const FuncGraphPtr &graph, const AnfNodePtr &cond, int64_t switch_idx,
                    const tensor::TensorPtr &const_data, const CNodePtr &square_op) {
   // for the depended node , add two const data to merge the flow ,one for depended node with same switch,
   // the other use the opposite
@@ -242,7 +242,7 @@ CNodePtr MergeNode(const FuncGraphPtr &graph, const AnfNodePtr &cond, int switch
 // construct a depend node with merge output node, merge(square_op(switch(ctrl_data)), switch(opposite_ctrl_data))
 // control_depend(output_node, square_op)
 AnfNodePtr GenerateSwitchDependNode(const FuncGraphPtr &graph, const AnfNodePtr &cond, const AnfNodePtr &output_node,
-                                    int switch_idx) {
+                                    int64_t switch_idx) {
   tensor::TensorPtr const_data = GetConstData();
   if (const_data == nullptr) {
     const_data = ConstData();
@@ -274,12 +274,12 @@ AnfNodePtr GenerateSwitchDependNode(const FuncGraphPtr &graph, const AnfNodePtr 
 // we need to reserve the control_depend node, besides the generated merge node and control_depend node
 CNodePtr GenerateSwitchControlDependNode(const FuncGraphPtr &graph, const AnfNodePtr &cond,
                                          const AnfNodePtr &ctrl_dep_node, const AnfNodePtr &ctrl_depend_dst,
-                                         int switch_idx) {
+                                         int64_t switch_idx) {
   auto PrimMerge = prim::GetPythonOps("merge", "mindspore.ops.functional")->cast<PrimitivePtr>();
   auto PrimSquare = prim::GetPythonOps("square", "mindspore.ops.functional")->cast<PrimitivePtr>();
-  std::vector<int> shp = {1};
-  tensor::TensorPtr const_data = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
-  auto *val = static_cast<int32_t *>(const_data->data_c());
+  std::vector<int64_t> shp = {1};
+  tensor::TensorPtr const_data = std::make_shared<tensor::Tensor>(kInt64->type_id(), shp);
+  auto *val = static_cast<int64_t *>(const_data->data_c());
   *val = 0;
   // for the control_depend netoutput node , add two const data to merge the flow ,one for depended node with same
   // switch the other use the opposite
@@ -542,7 +542,8 @@ AnfNodePtr GenerateMergeNodes(const AnfNodePtr &true_output_node, const AnfNodeP
     std::vector<AnfNodePtr> make_tuple_nodes{NewValueNode(prim::kPrimMakeTuple), true_output_node, false_output_node};
     merge_nodes.push_back(switch_graph->NewCNode(make_tuple_nodes));
     std::vector<AnfNodePtr> tuple_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem),
-                                                switch_graph->NewCNode(merge_nodes), NewValueNode(MakeValue(0))};
+                                                switch_graph->NewCNode(merge_nodes),
+                                                NewValueNode(MakeValue(static_cast<int64_t>(0)))};
     return switch_graph->NewCNode(tuple_getitem_nodes);
   } else {
     abstract::AbstractTuplePtr true_branch_tuple = true_graph_output_abs->cast<abstract::AbstractTuplePtr>();
@@ -552,10 +553,10 @@ AnfNodePtr GenerateMergeNodes(const AnfNodePtr &true_output_node, const AnfNodeP
     make_tuple_nodes.push_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t i = 0; i < true_branch_tuple->elements().size(); i++) {
       std::vector<AnfNodePtr> true_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem), true_output_node,
-                                                 NewValueNode(MakeValue(SizeToInt(i)))};
+                                                 NewValueNode(MakeValue(SizeToLong(i)))};
       auto true_node = switch_graph->NewCNode(true_getitem_nodes);
       std::vector<AnfNodePtr> false_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem), false_output_node,
-                                                  NewValueNode(MakeValue(SizeToInt(i)))};
+                                                  NewValueNode(MakeValue(SizeToLong(i)))};
       auto false_node = switch_graph->NewCNode(false_getitem_nodes);
 
       auto merge_node = GenerateMergeNodes(true_node, false_node, true_branch_tuple->elements()[i],

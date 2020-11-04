@@ -1349,7 +1349,10 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
 
         ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
         MS_ASSERT(param_value != nullptr);
-        param_value->set_tensor_shape(shape);
+        std::vector<int32_t> shape_vector;
+        (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                             [](const int64_t &value) { return static_cast<int32_t>(value); });
+        param_value->set_tensor_shape(shape_vector);
         param_value->set_tensor_type(kNumberTypeFloat32);
 
         auto size = sizeof(float) * bias_diff.size();

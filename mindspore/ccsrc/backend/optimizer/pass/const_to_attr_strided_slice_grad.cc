@@ -66,12 +66,18 @@ bool CheckValues(const ValuePtrList &strides_values) {
     if (value->isa<Scalar>()) {
       auto scalar = value->cast<ScalarPtr>();
       MS_EXCEPTION_IF_NULL(scalar);
-      if (!scalar->isa<Int32Imm>()) {
+      if (scalar->isa<Int32Imm>()) {
+        if (GetValue<int>(scalar) != 1) {
+          MS_LOG(DEBUG) << "StridedSliceGrad has no 1 value";
+          return false;
+        }
+      } else if (scalar->isa<Int64Imm>()) {
+        if (GetValue<int64_t>(scalar) != 1) {
+          MS_LOG(DEBUG) << "StridedSliceGrad has no 1 value";
+          return false;
+        }
+      } else {
         MS_LOG(DEBUG) << "strides value is not a Integer";
-        return false;
-      }
-      if (GetValue<int>(scalar) != 1) {
-        MS_LOG(DEBUG) << "StridedSliceGrad has no 1 value";
         return false;
       }
     } else {
@@ -89,8 +95,8 @@ bool CheckAttrs(const CNodePtr &strided_slice_grad) {
     MS_LOG(INFO) << "new_axis_mask or shrink_axis_mask not exist in cnode[" + strided_slice_grad->DebugString() + "]";
     return false;
   }
-  auto new_axis_mask = AnfAlgo::GetNodeAttr<int>(strided_slice_grad, kAttrNewAxisMask);
-  auto shrink_axis_mask = AnfAlgo::GetNodeAttr<int>(strided_slice_grad, kAttrShrinkAxisMask);
+  auto new_axis_mask = AnfAlgo::GetNodeAttr<int64_t>(strided_slice_grad, kAttrNewAxisMask);
+  auto shrink_axis_mask = AnfAlgo::GetNodeAttr<int64_t>(strided_slice_grad, kAttrShrinkAxisMask);
   if (new_axis_mask != 0 || shrink_axis_mask != 0) {
     MS_LOG(INFO) << "new_axis_mask or shrink_axis_mask not equal 0";
     return false;

@@ -43,9 +43,9 @@ template <typename T>
 void UniqueCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto x_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto y_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  auto idx_addr = reinterpret_cast<int *>(outputs[1]->addr);
+  auto idx_addr = reinterpret_cast<int64_t *>(outputs[1]->addr);
 
-  std::unordered_map<T, int> uniq;
+  std::unordered_map<T, int64_t> uniq;
   int n = SizeToInt(n_);
   uniq.reserve(n * 2);
   for (int i = 0, j = 0; i < n; ++i) {

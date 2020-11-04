@@ -35,7 +35,7 @@ void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePt
     return;
   }
   std::vector<AnfNodePtr> plant_inputs;
-  std::vector<int> dyn_input_sizes;
+  std::vector<int64_t> dyn_input_sizes;
   plant_inputs.push_back(AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(cnode_ptr); ++i) {
     auto input_node = AnfAlgo::GetInputNode(cnode_ptr, i);
@@ -64,7 +64,7 @@ void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePt
     }
   }
   // If there is dynamic input, set the dyn_input_sizes as an attribute and update the inputs.
-  if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int s) { return s >= 0; })) {
+  if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
     AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode_ptr);
     cnode_ptr->set_inputs(plant_inputs);
   }

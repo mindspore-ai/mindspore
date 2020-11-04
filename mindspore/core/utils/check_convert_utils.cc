@@ -48,7 +48,7 @@ const std::map<CompareRange, std::pair<std::string, std::string>> kCompareRangeT
   {kIncludeRight, {"in (", "]"}},
   {kIncludeBoth, {"in [", "]"}}};
 }  // namespace
-bool CheckAndConvertUtils::IsEqualVector(const std::vector<int> &vec_1, const std::vector<int> &vec_2) {
+bool CheckAndConvertUtils::IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2) {
   if (vec_1.size() != vec_2.size()) {
     return false;
   }
@@ -60,10 +60,10 @@ bool CheckAndConvertUtils::IsEqualVector(const std::vector<int> &vec_1, const st
   return true;
 }
 
-std::vector<int> CheckAndConvertUtils::CheckPositiveVector(const std::string &arg_name,
-                                                           const std::vector<int> &arg_value,
-                                                           const std::string &prim_name, bool allow_four,
-                                                           bool ret_four) {
+std::vector<int64_t> CheckAndConvertUtils::CheckPositiveVector(const std::string &arg_name,
+                                                               const std::vector<int64_t> &arg_value,
+                                                               const std::string &prim_name, bool allow_four,
+                                                               bool ret_four) {
   auto raise_message = [allow_four, prim_name, arg_value, arg_name]() -> void {
     std::ostringstream buffer;
     buffer << "For " << prim_name << " attr " << arg_name << " should be a positive vector of size two ";
@@ -83,12 +83,13 @@ std::vector<int> CheckAndConvertUtils::CheckPositiveVector(const std::string &ar
     }
   }
   if (arg_value.size() == 1) {
-    return ret_four ? std::vector<int>{1, 1, arg_value[0], arg_value[0]} : std::vector<int>{arg_value[0], arg_value[0]};
+    return ret_four ? std::vector<int64_t>{1, 1, arg_value[0], arg_value[0]}
+                    : std::vector<int64_t>{arg_value[0], arg_value[0]};
   }
   if (arg_value.size() == 2) {
-    return ret_four ? std::vector<int>{1, 1, arg_value[0], arg_value[1]} : arg_value;
+    return ret_four ? std::vector<int64_t>{1, 1, arg_value[0], arg_value[1]} : arg_value;
   } else if (arg_value.size() == 4 && allow_four) {
-    return ret_four ? arg_value : std::vector<int>{arg_value[2], arg_value[3]};
+    return ret_four ? arg_value : std::vector<int64_t>{arg_value[2], arg_value[3]};
   }
   raise_message();
   return arg_value;
@@ -167,8 +168,9 @@ void CheckAndConvertUtils::CheckInRange(const std::string &arg_name, int arg_val
   MS_EXCEPTION(ValueError) << buffer.str();
 }
 
-std::vector<int> CheckAndConvertUtils::ConvertShapePtrToShape(const std::string &arg_name, const BaseShapePtr &shape,
-                                                              const std::string &prim_name) {
+std::vector<int64_t> CheckAndConvertUtils::ConvertShapePtrToShape(const std::string &arg_name,
+                                                                  const BaseShapePtr &shape,
+                                                                  const std::string &prim_name) {
   MS_EXCEPTION_IF_NULL(shape);
   if (!shape->isa<abstract::Shape>()) {
     MS_EXCEPTION(ValueError) << "The " << arg_name << "'s shape is " << shape->ToString()
@@ -202,9 +204,9 @@ void CheckAndConvertUtils::Check(const string &arg_name, int arg_value, CompareE
   MS_EXCEPTION(exception_type) << buffer.str() << arg_name << " should be " << iter_to_string->second << value
                                << " but got " << arg_value;
 }
-void CheckAndConvertUtils::Check(const string &arg_name, const std::vector<int> &arg_value, CompareEnum compare_type,
-                                 const string &value_name, const std::vector<int> &value, const string &prim_name,
-                                 ExceptionType exception_type) {
+void CheckAndConvertUtils::Check(const string &arg_name, const std::vector<int64_t> &arg_value,
+                                 CompareEnum compare_type, const string &value_name, const std::vector<int64_t> &value,
+                                 const string &prim_name, ExceptionType exception_type) {
   if (compare_type != kEqual) {
     auto iter = kCompareToString.find(compare_type);
     if (iter != kCompareToString.end()) {

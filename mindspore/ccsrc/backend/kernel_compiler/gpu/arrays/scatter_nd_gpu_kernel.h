@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_SCATTER_ND_GPU_KERNEL_H
 
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/cuda_impl/scatter_nd.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
@@ -98,7 +99,9 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
     indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
-    vec_work_shape_ = GetAttr<std::vector<S>>(kernel_node, "shape");
+    std::vector<int64_t> shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "shape");
+    (void)std::transform(shape_me.begin(), shape_me.end(), std::back_inserter(vec_work_shape_),
+                         [](const int64_t &value) { return static_cast<S>(value); });
 
     GetSize();
 

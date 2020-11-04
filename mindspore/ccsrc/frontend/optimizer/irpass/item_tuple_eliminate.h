@@ -53,12 +53,12 @@ class GetitemEliminater : public AnfVisitor {
   }
 
   void Visit(const ValueNodePtr &vnode) override {
-    if (tuple_ != nullptr && IsValueNode<Int32Imm>(vnode)) {
-      int idx = GetValue<int>(vnode->value());
+    if (tuple_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
+      int64_t idx = GetValue<int64_t>(vnode->value());
       if (idx < 0) {
         idx = idx + tuple_->size() - 1;
       }
-      id_ = IntToSize(idx + 1);
+      id_ = LongToSize(idx + 1);
       if (tuple_->size() > id_) {
         is_match_ = true;
       }
@@ -100,8 +100,8 @@ class GetitemConstEliminater : public AnfVisitor {
       tuple_ = GetValueNode<ValueTuplePtr>(vnode);
       has_new_value_ = vnode->has_new_value();
     }
-    if (tuple_ != nullptr && IsValueNode<Int32Imm>(vnode)) {
-      id_ = IntToSize(GetValue<int>(vnode->value()));
+    if (tuple_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
+      id_ = LongToSize(GetValue<int64_t>(vnode->value()));
       if (tuple_->size() > id_) {
         is_match_ = true;
       }
@@ -155,8 +155,8 @@ class SetitemEliminater : public AnfVisitor {
   }
 
   void Visit(const ValueNodePtr &vnode) override {
-    if (args_.size() > 0 && IsValueNode<Int32Imm>(vnode)) {
-      id_ = IntToSize(GetValue<int>(vnode->value()) + 1);
+    if (args_.size() > 0 && IsValueNode<Int64Imm>(vnode)) {
+      id_ = LongToSize(GetValue<int64_t>(vnode->value()) + 1);
       if (id_ < args_.size()) {
         is_match_ = true;
       }
@@ -211,8 +211,8 @@ class GetSetitemEliminater : public AnfVisitor {
   }
 
   void Visit(const ValueNodePtr &vnode) override {
-    if (IsValueNode<Int32Imm>(vnode)) {
-      auto key = GetValue<int>(vnode->value());
+    if (IsValueNode<Int64Imm>(vnode)) {
+      auto key = GetValue<int64_t>(vnode->value());
       if (is_in_set_) {
         key1_ = key;
       } else {
@@ -233,7 +233,7 @@ class GetSetitemEliminater : public AnfVisitor {
 
  private:
   bool is_in_set_{false};
-  int key1_{-1}, key2_{-1};
+  int64_t key1_{-1}, key2_{-1};
   AnfNodePtr tuple_{nullptr}, last_{nullptr}, c2_{nullptr};
 };
 
@@ -243,8 +243,8 @@ class GetitemDependReorder : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
-    AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsValueNode<Int32Imm>})(node);
-    AnfVisitor::Match(prim::kPrimListGetItem, {IsCNode, IsValueNode<Int32Imm>})(node);
+    AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsValueNode<Int64Imm>})(node);
+    AnfVisitor::Match(prim::kPrimListGetItem, {IsCNode, IsValueNode<Int64Imm>})(node);
     if (x_ == nullptr) {
       return nullptr;
     }

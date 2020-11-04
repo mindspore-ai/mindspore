@@ -44,7 +44,7 @@ class Backend {
   LinkFuncType convert_fn() { return convert_fn_; }
   std::string name() { return name_; }
   virtual bool GetCond(const BaseRef &c, bool *value);
-  virtual bool GetIndex(const BaseRef &c, int *value);
+  virtual bool GetIndex(const BaseRef &c, int64_t *value);
   virtual GraphId CompileGraph(NotNull<FuncGraphPtr> fg) { return kInvalidGraphId; }
   virtual void Link(GraphId) {}
   virtual void SetDebugger() {}

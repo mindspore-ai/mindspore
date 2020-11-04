@@ -85,7 +85,7 @@ void SetAttrTupleValueToProto(const ValuePtr &value, onnx::AttributeProto_Attrib
   switch (attr_type) {
     case onnx::AttributeProto_AttributeType_INTS:
       for (size_t i = beg_idx; i < tuple_ptr->size(); ++i) {
-        attr_proto->add_ints(GetValue<int>((*tuple_ptr)[i]));
+        attr_proto->add_ints(GetValue<int64_t>((*tuple_ptr)[i]));
       }
       break;
     case onnx::AttributeProto_AttributeType_FLOATS:
@@ -180,7 +180,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(
   Conv2D, Conv,
   OpNameInfo()
     .Attr("dilation", "dilations", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<2>)
-    .Attr("group", "group", onnx::AttributeProto_AttributeType_INT, SetAttrValueToProto<Int32Imm>)
+    .Attr("group", "group", onnx::AttributeProto_AttributeType_INT, SetAttrValueToProto<Int64Imm>)
     .Attr("kernel_size", "kernel_shape", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<0>)
     .Attr("pad_mode", "auto_pad", onnx::AttributeProto_AttributeType_STRING,
           [](ValuePtr value, onnx::AttributeProto_AttributeType, onnx::AttributeProto *const attr_proto,
@@ -217,7 +217,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(PReLU, PRelu, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Argmax, ArgMax,
                              OpNameInfo()
                                .Attr("axis", "axis", onnx::AttributeProto_AttributeType_INT,
-                                     SetAttrValueToProto<Int32Imm>)
+                                     SetAttrValueToProto<Int64Imm>)
                                .Attr("", "keepdims", onnx::AttributeProto_AttributeType_INT,
                                      [](ValuePtr, onnx::AttributeProto_AttributeType,
                                         onnx::AttributeProto *const attr_proto, const PrimitivePtr &) {
@@ -374,10 +374,10 @@ class OnnxExporter {
 
   void ResetNodeIndex() { onnx_node_index_ = 0; }
 
-  static int GetInt32Value(const AnfNodePtr &node) {
+  static int64_t GetInt64Value(const AnfNodePtr &node) {
     auto value_node_ptr = dyn_cast<ValueNode>(node);
     MS_EXCEPTION_IF_NULL(value_node_ptr);
-    return GetValue<int>(value_node_ptr->value());
+    return GetValue<int64_t>(value_node_ptr->value());
   }
 
   onnx::ModelProto model_;
@@ -546,13 +546,13 @@ void OnnxExporter::MatchAndMark(const FuncGraphPtr &func_graph, const std::vecto
       op_merged_infos[cnode->input(1)].referred_count -= 1;
     } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
                IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("BatchNorm")) &&
-               GetInt32Value(cnode->input(2)) == 0) {
+               GetInt64Value(cnode->input(2)) == 0) {
       op_merged_infos[cnode].mode = OP_MERGE_BATCH_NORM;
       op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
       op_merged_infos[cnode->input(1)].referred_count -= 1;
     } else if (cnode->IsApply(prim::kPrimTupleGetItem) &&
                IsPrimitiveCNode(cnode->input(1), std::make_shared<Primitive>("MaxPoolWithArgmax")) &&
-               GetInt32Value(cnode->input(2)) == 0) {
+               GetInt64Value(cnode->input(2)) == 0) {
       op_merged_infos[cnode].mode = OP_MERGE_MAXPOOL_WITH_ARGMAX;
       op_merged_infos[cnode->input(1)].mode = OP_MERGE_IGNORE;
       op_merged_infos[cnode->input(1)].referred_count -= 1;
@@ -671,7 +671,7 @@ void OnnxExporter::ExportPrimReduce(const FuncGraphPtr & /*func_graph*/, const C
       auto tuple_ptr = dyn_cast<ValueTuple>(axis_value);
       MS_EXCEPTION_IF_NULL(tuple_ptr);
       for (size_t i = 0; i < tuple_ptr->size(); ++i) {
-        attr_proto->add_ints(GetValue<int>((*tuple_ptr)[i]));
+        attr_proto->add_ints(GetValue<int64_t>((*tuple_ptr)[i]));
       }
     } else {
       attr_proto->add_ints(int_ptr->value());
@@ -925,7 +925,7 @@ void OnnxExporter::ExportPrimGatherV2(const FuncGraphPtr &func_graph, const CNod
   node_proto->add_input(name_indices);
   onnx::AttributeProto *attr_proto = node_proto->add_attribute();
   attr_proto->set_type(onnx::AttributeProto_AttributeType_INT);
-  attr_proto->set_i(static_cast<::google::protobuf::int64>(dyn_cast<Int32Imm>(axis)->value()));
+  attr_proto->set_i(static_cast<::google::protobuf::int64>(dyn_cast<Int64Imm>(axis)->value()));
 }
 
 void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,

@@ -437,9 +437,9 @@ CNodePtr KernelAdjust::CreateStreamActiveOp(const std::shared_ptr<session::Kerne
 
 CNodePtr KernelAdjust::CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                              const CNodePtr &node, size_t output_idx) {
-  auto idx = NewValueNode(SizeToInt(output_idx));
+  auto idx = NewValueNode(SizeToLong(output_idx));
   MS_EXCEPTION_IF_NULL(idx);
-  auto imm = std::make_shared<Int32Imm>(SizeToInt(output_idx));
+  auto imm = std::make_shared<Int64Imm>(SizeToInt(output_idx));
   auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
   idx->set_abstract(abstract_scalar);
   CNodePtr tuple_getitem = kernel_graph_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});

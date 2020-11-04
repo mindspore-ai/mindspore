@@ -111,8 +111,8 @@ TEST_F(TestOptLib, test_inline) {
   // add infer and renormalize
   std::shared_ptr<mindspore::pipeline::Resource> res = std::make_shared<mindspore::pipeline::Resource>();
   AbstractBasePtrList args_spec_list;
-  AbstractBasePtr abstract_v1 = abstract::FromValue(1, true);
-  AbstractBasePtr abstract_v2 = abstract::FromValue(2, true);
+  AbstractBasePtr abstract_v1 = abstract::FromValue(static_cast<int64_t>(1), true);
+  AbstractBasePtr abstract_v2 = abstract::FromValue(static_cast<int64_t>(2), true);
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
   AnalysisResult result = pipeline::AbstractAnalyze(res, before1, args_spec_list);
@@ -190,7 +190,7 @@ TEST_F(TestOptLib, test_elim_cast_same_dtype) {
     cast_py->set_attr("DstT", TypeIdToType(kNumberTypeFloat32));
 
     auto x_node = inputs[1];
-    std::vector<int> shp = {2, 3};
+    std::vector<int64_t> shp = {2, 3};
     tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp);
     auto x_abstract = x_tensor->ToAbstract();
     x_node->set_abstract(x_abstract);
@@ -220,7 +220,7 @@ TEST_F(TestOptLib, test_elim_reshape_same_shape) {
   auto &inputs = before->output()->cast<CNodePtr>()->inputs();
   if (inputs.size() > 1) {
     auto x_node = inputs[1];
-    std::vector<int> shp = {2, 3};
+    std::vector<int64_t> shp = {2, 3};
     tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp);
     auto x_abstract = x_tensor->ToAbstract();
     x_node->set_abstract(x_abstract);
@@ -230,7 +230,7 @@ TEST_F(TestOptLib, test_elim_reshape_same_shape) {
   ASSERT_TRUE(CheckOpt(before, after, patterns));
   if (inputs.size() > 1) {
     auto x_node = inputs[1];
-    std::vector<int> shp = {3, 2};
+    std::vector<int64_t> shp = {3, 2};
     tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp);
     auto x_abstract = x_tensor->ToAbstract();
     x_node->set_abstract(x_abstract);
@@ -286,7 +286,7 @@ TEST_F(TestOptLib, test_elim_reduce_mean_shape_one) {
   auto inputs = before->output()->cast<CNodePtr>()->inputs();
   if (inputs.size() > 2) {
     auto x_node = inputs[1];
-    std::vector<int> shp = {1};
+    std::vector<int64_t> shp = {1};
     tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp);
     auto x_abstract = x_tensor->ToAbstract();
     x_node->set_abstract(x_abstract);
@@ -308,7 +308,7 @@ TEST_F(TestOptLib, test_elim_all_shape_one) {
   auto inputs = before->output()->cast<CNodePtr>()->inputs();
   if (inputs.size() > 2) {
     auto x_node = inputs[1];
-    std::vector<int> shp = {1};
+    std::vector<int64_t> shp = {1};
     tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp);
     auto x_abstract = x_tensor->ToAbstract();
     x_node->set_abstract(x_abstract);
@@ -329,7 +329,7 @@ TEST_F(TestOptLib, test_elim_sum_shape_one) {
   auto inputs = before->output()->cast<CNodePtr>()->inputs();
   if (inputs.size() > 2) {
     auto x_node = inputs[1];
-    std::vector<int> shp = {1};
+    std::vector<int64_t> shp = {1};
     tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp);
     auto x_abstract = x_tensor->ToAbstract();
     x_node->set_abstract(x_abstract);
@@ -349,9 +349,9 @@ TEST_F(TestOptLib, test_tuple_getitem) {
   FuncGraphPtr after_1 = getPyFun.CallAndParseRet("test_tuple_getitem", "after_1");
 
   FuncGraphPtr make_get_const = std::make_shared<FuncGraph>();
-  auto value_node_1 = NewValueNode(1);
-  auto value_node_2 = NewValueNode(2);
-  std::vector<int> vec{1, 2};
+  auto value_node_1 = NewValueNode(static_cast<int64_t>(1));
+  auto value_node_2 = NewValueNode(static_cast<int64_t>(2));
+  std::vector<int64_t> vec{1, 2};
   auto value_node_tuple = NewValueNode(MakeValue(vec));
   std::vector<AnfNodePtr> node_list{NewValueNode(prim::kPrimTupleGetItem), value_node_tuple, value_node_1};
   auto get_item = make_get_const->NewCNode(node_list);
@@ -515,11 +515,11 @@ TEST_F(TestOptLib, test_reducesum_one) {
   FuncGraphPtr after3 = getPyFun.CallAndParseRet("test_reducesum_one", "after_3");
   auto patterns = std::vector<SubstitutionPtr>({irpass.reduce_eliminate_});
 
-  std::vector<int> shp = {3, 2, 2, 1};
+  std::vector<int64_t> shp = {3, 2, 2, 1};
   tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp);
   auto x_abstract = x_tensor->ToAbstract();
 
-  std::vector<int> shp2 = {3, 2, 1, 1};
+  std::vector<int64_t> shp2 = {3, 2, 1, 1};
   tensor::TensorPtr x_tensor2 = std::make_shared<tensor::Tensor>(kFloat32->type_id(), shp2);
   auto x_abstract2 = x_tensor2->ToAbstract();
 

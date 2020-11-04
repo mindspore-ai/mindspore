@@ -46,7 +46,7 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_single_output) {
    *     return res
    */
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_insert_cast_op_for_single_output", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);
@@ -103,7 +103,7 @@ TEST_F(TestHWInsertCast, test_insert_cast_op_for_multiple_output) {
    *     return res
    */
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_insert_cast_op_for_multiple_output", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);

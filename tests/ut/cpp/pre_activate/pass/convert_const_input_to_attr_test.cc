@@ -40,7 +40,7 @@ TEST_F(TestHWConstInputToAttr, test_reshape) {
   ASSERT_TRUE(g != nullptr);
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_convert_reshape_input_to_attr", "after");
   ASSERT_TRUE(g_after != nullptr);
-  std::vector<int> shp_x{2, 3};
+  std::vector<int64_t> shp_x{2, 3};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);
@@ -54,7 +54,7 @@ TEST_F(TestHWConstInputToAttr, test_cast) {
   ASSERT_TRUE(g != nullptr);
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_convert_cast_input_to_attr", "after");
   ASSERT_TRUE(g_after != nullptr);
-  std::vector<int> shp_x{2, 3};
+  std::vector<int64_t> shp_x{2, 3};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);
@@ -68,7 +68,7 @@ TEST_F(TestHWConstInputToAttr, test_transpose) {
   ASSERT_TRUE(g != nullptr);
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_convert_transpose_input_to_attr", "after");
   ASSERT_TRUE(g_after != nullptr);
-  std::vector<int> shp_x{2, 2, 3};
+  std::vector<int64_t> shp_x{2, 2, 3};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);
@@ -91,7 +91,7 @@ TEST_F(TestHWConstInputToAttr, test_onehot) {
   EXPECT_FALSE(AnfAlgo::HasNodeAttr("depth", cnode));
   EXPECT_FALSE(CheckEqualGraph(g, g_after));
 
-  std::vector<int> shp_x{16};
+  std::vector<int64_t> shp_x{16};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);

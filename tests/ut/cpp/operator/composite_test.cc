@@ -64,8 +64,8 @@ void TestComposite::TearDown() {
 
 class UTCompositeUtils {
  public:
-  static AbstractTensorPtr ArrayInt32Of(std::initializer_list<int> shp) {
-    auto ele = std::make_shared<AbstractScalar>(kAnyValue, kInt32);
+  static AbstractTensorPtr ArrayInt32Of(std::initializer_list<int64_t> shp) {
+    auto ele = std::make_shared<AbstractScalar>(kAnyValue, kInt64);
     return std::make_shared<AbstractTensor>(ele, std::make_shared<Shape>(shp));
   }
   static FuncGraphPtr MakeFuncGraph(const MetaFuncGraphPtr &metaFuncGraphPtr, size_t nparam) {
@@ -96,8 +96,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_two_numbers) {
     eles.push_back(tensor);
   }
   auto tuple_tensor = std::make_shared<AbstractTuple>(eles);
-  auto start_index = std::make_shared<AbstractScalar>(1);
-  auto stop_index = std::make_shared<AbstractScalar>(5);
+  auto start_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(1));
+  auto stop_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(5));
   AbstractBasePtrList args_spec_list = {tuple_tensor, start_index, stop_index};
 
   try {
@@ -121,7 +121,7 @@ TEST_F(TestComposite, test_TupleSlice_arg_one_number) {
     eles.push_back(tensor);
   }
   auto tuple_tensor = std::make_shared<AbstractTuple>(eles);
-  auto start_index = std::make_shared<AbstractScalar>(1);
+  auto start_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(1));
   AbstractBasePtrList args_spec_list = {tuple_tensor, start_index};
 
   try {
@@ -153,9 +153,9 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice) {
     eles.push_back(tensor);
   }
   auto tuple_tensor = std::make_shared<AbstractTuple>(eles);
-  auto start_index = std::make_shared<AbstractScalar>(1);
-  auto stop_index = std::make_shared<AbstractScalar>(6);
-  auto step = std::make_shared<AbstractScalar>(2);
+  auto start_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(1));
+  auto stop_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(6));
+  auto step = std::make_shared<AbstractScalar>(static_cast<int64_t>(2));
   auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
   AbstractBasePtrList args_spec_list = {tuple_tensor, slice};
 
@@ -179,8 +179,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_none) {
     eles.push_back(tensor);
   }
   auto tuple_tensor = std::make_shared<AbstractTuple>(eles);
-  auto start_index = std::make_shared<AbstractScalar>(1);
-  auto stop_index = std::make_shared<AbstractScalar>(5);
+  auto start_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(1));
+  auto stop_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(5));
   auto step = std::make_shared<AbstractNone>();
   auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
   AbstractBasePtrList args_spec_list = {tuple_tensor, slice};
@@ -207,7 +207,7 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_negative) {
   auto tuple_tensor = std::make_shared<AbstractTuple>(eles);
   auto start_index = std::make_shared<AbstractNone>();
   auto stop_index = std::make_shared<AbstractNone>();
-  auto step = std::make_shared<AbstractScalar>(-1);
+  auto step = std::make_shared<AbstractScalar>(static_cast<int64_t>(-1));
   auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
   AbstractBasePtrList args_spec_list = {tuple_tensor, slice};
 
@@ -231,9 +231,9 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_positive) {
     eles.push_back(tensor);
   }
   auto tuple_tensor = std::make_shared<AbstractTuple>(eles);
-  auto start_index = std::make_shared<AbstractScalar>(-2);
+  auto start_index = std::make_shared<AbstractScalar>(static_cast<int64_t>(-2));
   auto stop_index = std::make_shared<AbstractNone>();
-  auto step = std::make_shared<AbstractScalar>(-1);
+  auto step = std::make_shared<AbstractScalar>(static_cast<int64_t>(-1));
   auto slice = std::make_shared<AbstractSlice>(start_index, stop_index, step);
   AbstractBasePtrList args_spec_list = {tuple_tensor, slice};
 

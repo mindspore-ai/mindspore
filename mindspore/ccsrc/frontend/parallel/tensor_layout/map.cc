@@ -44,7 +44,7 @@ bool Map::IsValidMap() {
   // check that all none -1 value in array_ is different
   Shape sorted_array = array_;
   std::sort(sorted_array.begin(), sorted_array.end());
-  int32_t value = MAP_NONE;
+  int64_t value = MAP_NONE;
   for (auto &element : sorted_array) {
     if (element == MAP_NONE) {
       continue;
@@ -65,10 +65,10 @@ int64_t Map::GetMaxItem() const {
   }
 }
 
-int32_t Map::GetIndexByValue(int64_t value) const {
+int64_t Map::GetIndexByValue(int64_t value) const {
   auto iter = find(array_.begin(), array_.end(), value);
   if (iter != array_.end()) {
-    return static_cast<int32_t>(std::distance(array_.begin(), iter));
+    return static_cast<int64_t>(std::distance(array_.begin(), iter));
   } else {
     return MAP_NONE;
   }
@@ -115,7 +115,7 @@ std::shared_ptr<Map> Map::ExpandMapByDecreaseNumber(const Arrangement &expand_nu
     } else {
       int64_t start_map =
         expand_num_list.ComputeReverseAccumulateSumInReverseOrder()[static_cast<size_t>(GetDimByIdx(i))];
-      for (int32_t k = expand_num_list.GetDimByReverseIdx(static_cast<size_t>(GetDimByIdx(i))) - 1; k >= 0; k--) {
+      for (int64_t k = expand_num_list.GetDimByReverseIdx(static_cast<size_t>(GetDimByIdx(i))) - 1; k >= 0; k--) {
         new_shape.push_back(k + start_map);
       }
     }

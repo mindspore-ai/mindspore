@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-void AddOutputs(const AnfNodePtr &node, int rank_size) {
+void AddOutputs(const AnfNodePtr &node, int64_t rank_size) {
   MS_EXCEPTION_IF_NULL(node);
   auto origin_abstract = node->abstract();
   MS_EXCEPTION_IF_NULL(origin_abstract);
@@ -31,7 +31,7 @@ void AddOutputs(const AnfNodePtr &node, int rank_size) {
   AbstractBasePtrList abstract_list;
   std::vector<TypeId> outputs_device_type;
   std::vector<std::string> outputs_device_format;
-  for (int i = 0; i < rank_size; ++i) {
+  for (int64_t i = 0; i < rank_size; ++i) {
     for (size_t j = 0; j < origin_abstracts.size(); ++j) {
       abstract_list.push_back(origin_abstracts[j]);
       outputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(node, j));
@@ -52,21 +52,21 @@ void AddOutputs(const AnfNodePtr &node, int rank_size) {
 
 AnfNodePtr ConcatOutputsForAllGather::InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                             const std::vector<AnfNodePtr> &new_tuple_getitems,
-                                                            int rank_size) const {
+                                                            int64_t rank_size) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> make_tuple_inputs;
   size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
   for (size_t i = 0; i < inputs_size; ++i) {
-    for (size_t j = 0, idx = i; j < IntToSize(rank_size); ++j, idx += inputs_size) {
+    for (size_t j = 0, idx = i; j < LongToSize(rank_size); ++j, idx += inputs_size) {
       std::vector<AnfNodePtr> concat_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name()))};
       concat_inputs.push_back(new_tuple_getitems[idx]);
       auto concat = func_graph->NewCNode(concat_inputs);
       MS_EXCEPTION_IF_NULL(concat);
       MS_EXCEPTION_IF_NULL(new_tuple_getitems[idx]);
       concat->set_abstract(new_tuple_getitems[idx]->abstract());
-      AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(0), concat);
+      AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(static_cast<int64_t>(0)), concat);
       AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(rank_size), concat);
-      std::vector<int> dyn_input_size{rank_size};
+      std::vector<int64_t> dyn_input_size{rank_size};
       AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat);
       kernel_select_->SelectKernel(concat);
       make_tuple_inputs.push_back(concat);
@@ -90,11 +90,11 @@ const AnfNodePtr ConcatOutputsForAllGather::Process(const FuncGraphPtr &func_gra
   if (!AnfAlgo::HasNodeAttr(kAttrFusion, cnode) || !AnfAlgo::HasNodeAttr(kAttrRankSize, cnode)) {
     return nullptr;
   }
-  auto fusion = AnfAlgo::GetNodeAttr<int>(cnode, kAttrFusion);
+  auto fusion = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
   if (fusion <= 0) {
     return nullptr;
   }
-  auto rank_size = AnfAlgo::GetNodeAttr<int>(node, kAttrRankSize);
+  auto rank_size = AnfAlgo::GetNodeAttr<int64_t>(node, kAttrRankSize);
   AddOutputs(node, rank_size);
   std::vector<AnfNodePtr> new_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, node, AnfAlgo::GetOutputTensorNum(node), &new_outputs);

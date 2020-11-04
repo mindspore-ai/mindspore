@@ -73,7 +73,7 @@ const AnfNodePtr RemoveInternalOutput::Process(const FuncGraphPtr &func_graph, c
   } else {
     auto tuple_getitem = input_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(tuple_getitem);
-    int idx = AnfAlgo::GetTupleGetItemOutIndex(tuple_getitem);
+    int64_t idx = SizeToLong(AnfAlgo::GetTupleGetItemOutIndex(tuple_getitem));
     AnfNodePtr real_input_node = AnfAlgo::GetTupleGetItemRealInput(tuple_getitem);
     kernel_graph->ReplaceInternalOutput(node, real_input_node, 0, idx);
   }

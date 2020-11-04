@@ -33,9 +33,9 @@ class TestHWOptTensorScatterUpdateFission : public BackendCommon {
 TEST_F(TestHWOptTensorScatterUpdateFission, test_fission) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_tensor_scatter_update_fission", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp1{2, 3};
-  std::vector<int> shp2{2, 2};
-  std::vector<int> shp3{2};
+  std::vector<int64_t> shp1{2, 3};
+  std::vector<int64_t> shp2{2, 2};
+  std::vector<int64_t> shp3{2};
   auto inputx = std::make_shared<abstract::AbstractTensor>(kFloat32, shp1);
   auto indices = std::make_shared<abstract::AbstractTensor>(kInt32, shp2);
   auto update = std::make_shared<abstract::AbstractTensor>(kFloat32, shp3);

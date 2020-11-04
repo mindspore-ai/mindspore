@@ -55,8 +55,8 @@ class PrimToFunction {
  private:
   PrimToFunction();
   // Get the number of primitive arguments
-  int GetPrimType(const PrimitivePtr &prim) const;
-  const std::unordered_map<std::string, int> prim_func_type_map_;
+  int64_t GetPrimType(const PrimitivePtr &prim) const;
+  const std::unordered_map<std::string, int64_t> prim_func_type_map_;
 };
 }  // namespace prim
 }  // namespace mindspore

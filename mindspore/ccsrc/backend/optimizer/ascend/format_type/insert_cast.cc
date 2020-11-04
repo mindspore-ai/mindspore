@@ -43,9 +43,9 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
     AnfNodePtr replace_node = nullptr;
     const auto origin_shape = AnfAlgo::GetOutputInferShape(cnode, output_idx);
     const auto infer_type = AnfAlgo::GetOutputInferDataType(cnode, output_idx);
-    auto idx = NewValueNode(SizeToInt(output_idx));
+    auto idx = NewValueNode(SizeToLong(output_idx));
     MS_EXCEPTION_IF_NULL(idx);
-    auto imm = std::make_shared<Int32Imm>(output_idx);
+    auto imm = std::make_shared<Int64Imm>(output_idx);
     idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
     auto getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode, idx});
     AnfAlgo::SetOutputInferTypeAndShape({infer_type}, {origin_shape}, getitem.get());

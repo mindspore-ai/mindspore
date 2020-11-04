@@ -67,12 +67,12 @@ void ParallelContext::Reset() {
   pipeline_stage_split_num_ = 0;
 }
 
-void ParallelContext::set_device_num(int32_t device_num) {
+void ParallelContext::set_device_num(int64_t device_num) {
   device_num_ = device_num;
   device_num_is_set_ = true;
 }
 
-void ParallelContext::set_global_rank(int32_t global_rank) {
+void ParallelContext::set_global_rank(int64_t global_rank) {
   global_rank_ = global_rank;
   global_rank_is_set_ = true;
 }
@@ -85,9 +85,9 @@ void ParallelContext::set_gradient_fp32_sync(bool gradient_fp32_sync) { gradient
 
 void ParallelContext::set_loss_repeated_mean(bool loss_repeated_mean) { loss_repeated_mean_ = loss_repeated_mean; }
 
-void ParallelContext::set_pipeline_stage_split_num(const int32_t stage_num) { pipeline_stage_split_num_ = stage_num; }
+void ParallelContext::set_pipeline_stage_split_num(const int64_t stage_num) { pipeline_stage_split_num_ = stage_num; }
 
-void ParallelContext::set_stage(const std::vector<int32_t> &stages) { stages_ = stages; }
+void ParallelContext::set_stage(const std::vector<int64_t> &stages) { stages_ = stages; }
 
 bool ParallelContext::set_parallel_mode(const std::string &parallel_mode) {
   auto iter = std::find(PARALLEL_MODE_LIST.begin(), PARALLEL_MODE_LIST.end(), parallel_mode);
@@ -187,10 +187,7 @@ void ParallelParameterContextCkptInTraining(const FuncGraphPtr &func_graph, cons
     return;
   }
 
-  std::vector<int> shape_int = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
-  Shape shape;
-  (void)std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(shape),
-                       [](const int &value) { return static_cast<int64_t>(value); });
+  std::vector<int64_t> shape = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
   auto ret = param_shapes.try_emplace(param_node->name(), shape);
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "The shape for parameter name " << param_node->name() << " is existed";

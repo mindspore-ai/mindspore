@@ -80,7 +80,7 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
         return FAILED;
       }
 
-      if ((IntToUint(strategy_value) & IntToUint(strategy_value - 1)) != 0) {
+      if ((LongToUlong(strategy_value) & LongToUlong(strategy_value - 1)) != 0) {
         if (is_auto_parallel_) {
           MS_LOG(DEBUG) << name_ << ": Invalid Strategy value it is not the power of 2, " << strategy_value;
         } else {
@@ -132,7 +132,7 @@ Status OperatorInfo::InferAttrs() {
 }
 
 void OperatorInfo::SetDeviceListByStrategy() {
-  int32_t stage = strategy_->GetInputStage();
+  int64_t stage = strategy_->GetInputStage();
   CheckGlobalDeviceManager();
   global_device_list_ = g_device_manager->GetDeviceListByStageId(stage);
 }
@@ -149,7 +149,7 @@ Status OperatorInfo::InferRepeatedCalcInfo() {
   if (g_dev_list_size == dev_matrix_size) {
     repeated_calc_num_ = 1;
   } else if (g_dev_list_size % dev_matrix_size == 0) {
-    repeated_calc_num_ = ((int32_t)(g_dev_list_size / dev_matrix_size));
+    repeated_calc_num_ = ((int64_t)(g_dev_list_size / dev_matrix_size));
   } else {
     MS_LOG(ERROR) << name_ << ": Dev list size " << g_dev_list_size << " can not be divisible by dev matrix size "
                   << dev_matrix_size;
@@ -157,8 +157,8 @@ Status OperatorInfo::InferRepeatedCalcInfo() {
   }
 
   CheckGlobalDeviceManager();
-  int32_t rank = g_device_manager->global_rank();
-  int32_t stage = strategy_->GetInputStage();
+  int64_t rank = g_device_manager->global_rank();
+  int64_t stage = strategy_->GetInputStage();
   local_device_list_ = g_device_manager->global_device_list(stage, rank, repeated_calc_num_);
 
   return SUCCESS;
@@ -206,7 +206,7 @@ void OperatorInfo::ResetTensorMapIfRepeatedCalc() {
 }
 
 // use for loss repeated calculation
-Operator CreateVirtualDivOp(int32_t div_num) {
+Operator CreateVirtualDivOp(int64_t div_num) {
   OperatorName operator_name = VIRTUAL_DIV;
   ValuePtr attr0_value = MakeValue(div_num);
   Attr attr0 = std::make_pair(DIVISOR, attr0_value);
@@ -301,7 +301,7 @@ OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num) {
 
   OperatorName operator_name = MIRROR_OPERATOR;
   ValuePtr attr0_value = MakeValue(group_name);
-  ValuePtr attr1_value = MakeValue(SizeToInt(dev_num));
+  ValuePtr attr1_value = MakeValue(SizeToLong(dev_num));
   ValuePtr attr2_value = MakeValue(mean_flag);
 
   Attr attr0 = std::make_pair(GROUP, attr0_value);
@@ -330,7 +330,7 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
     return FAILED;
   }
   CheckGlobalDeviceManager();
-  int32_t rank = g_device_manager->global_rank();
+  int64_t rank = g_device_manager->global_rank();
   DeviceMatrix dev_matrix(rank, global_device_list_, dev_matrix_shape_);
   RankList group_devices;
   if (dev_matrix.GetDevicesByTensorMap(tensor_map, &group_devices) != SUCCESS) {
@@ -353,10 +353,10 @@ Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
     return FAILED;
   }
   CheckGlobalDeviceManager();
-  int32_t rank = g_device_manager->global_rank();
+  int64_t rank = g_device_manager->global_rank();
   DeviceMatrix dev_matrix(rank, global_device_list_, dev_matrix_shape_);
   RankList group_devices;
-  if (dev_matrix.GetDevicesAlongDim(SizeToUint(axis), &group_devices) != SUCCESS) {
+  if (dev_matrix.GetDevicesAlongDim(SizeToUlong(axis), &group_devices) != SUCCESS) {
     return FAILED;
   }
 
@@ -477,7 +477,7 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strat
   }
 
   used_devices_ =
-    ((int32_t)(std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>())));
+    ((int64_t)(std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>())));
 
   // must be after InferDevMatrixShape
   if (InferRepeatedCalcInfo() != SUCCESS) {
@@ -703,7 +703,7 @@ std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shap
     return nullptr;
   }
   CheckGlobalDeviceManager();
-  int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(0).size());
+  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(0).size());
   Strategys strategy_v;
   for (size_t i = 0; i != shapes.size(); i++) {
     if (shapes[i].empty()) {
@@ -736,7 +736,7 @@ void OperatorInfo::ComputeBatchSplitFlagList() {
 }
 
 // This is a common method for checking whether the generated stragegy has the correct number of devuces.
-Status PrepareStrategyBase(int32_t stage_id, size_t dev_num, const Shapes &inputs_partitions, StrategyPtr *const sp) {
+Status PrepareStrategyBase(int64_t stage_id, size_t dev_num, const Shapes &inputs_partitions, StrategyPtr *const sp) {
   if (sp == nullptr) {
     MS_LOG(ERROR) << "The strategy is null.";
     return FAILED;
@@ -787,7 +787,7 @@ void PrintStrategy(const StrategyPtr &strategy) {
 }
 
 // generate strategies for that each dimension of input0 and input1 is relevant, such as: ([a, b, c, d], [a, b, c, d])
-Status GenerateStrategiesForTwoEqualInputs(int32_t stage_id, const Shapes &inputs_shape,
+Status GenerateStrategiesForTwoEqualInputs(int64_t stage_id, const Shapes &inputs_shape,
                                            const Shapes &splittable_inputs, std::vector<StrategyPtr> *const sp_vector) {
   if (sp_vector == nullptr) {
     MS_LOG(ERROR) << "The sp_vector is null.";
@@ -820,7 +820,7 @@ Status GenerateStrategiesForTwoEqualInputs(int32_t stage_id, const Shapes &input
 
 // generate strategies for that input0 and input1 have relevant dimensions, and input0 needs to broadcast
 // such as: ([b, c, d], [a, b, c, d]) or ([1, c, d], [a, b, c, d])
-Status GenerateStrategiesForBroadcastLeft(int32_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
+Status GenerateStrategiesForBroadcastLeft(int64_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
                                           std::vector<StrategyPtr> *const sp_vector) {
   if (sp_vector == nullptr) {
     MS_LOG(ERROR) << "The sp_vector is null.";
@@ -869,7 +869,7 @@ Status GenerateStrategiesForBroadcastLeft(int32_t stage_id, const Shapes &inputs
 
 // generate strategies for that input0 and input1 have relevant dimensions, and input1 needs to broadcast
 // such as: ([a, b, c, d], [b, c, d]) or ([a, b, c, d], [1, c, d])
-Status GenerateStrategiesForBroadcastRight(int32_t stage_id, const Shapes &inputs_shape,
+Status GenerateStrategiesForBroadcastRight(int64_t stage_id, const Shapes &inputs_shape,
                                            const Shapes &splittable_inputs, std::vector<StrategyPtr> *const sp_vector) {
   if (sp_vector == nullptr) {
     MS_LOG(ERROR) << "The sp_vector is null.";
@@ -919,7 +919,7 @@ Status GenerateStrategiesForBroadcastRight(int32_t stage_id, const Shapes &input
 
 // generate strategies for that input0 and input1 have same size, and input0 or input1 needs to broadcast
 // such as: ([a, 1], [1, b]) or ([a, b, c, d], [1, b, c, d]) or ([a, b, c, 1], [1, b, c, d])
-Status GenerateStrategiesForBroadcastBoth(int32_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
+Status GenerateStrategiesForBroadcastBoth(int64_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
                                           std::vector<StrategyPtr> *const sp_vector) {
   if (sp_vector == nullptr) {
     MS_LOG(ERROR) << "The sp_vector is null.";
@@ -975,7 +975,7 @@ Status GenerateStrategiesForBroadcastBoth(int32_t stage_id, const Shapes &inputs
 // dimension is splittable. 'inputs_partitions' is the result of partitions.
 // NOTE: This implementation would partition all splittable dimensions in all inputs. Some operators requiring
 // specific dimensions in inputs have the identical partition should have individual implementation.
-Status GenerateStrategiesForIndependentInputs(int32_t stage_id, const Shapes &inputs_shape,
+Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &inputs_shape,
                                               const Shapes &splittable_inputs,
                                               std::vector<StrategyPtr> *const sp_vector) {
   if (sp_vector == nullptr) {
@@ -996,9 +996,9 @@ Status GenerateStrategiesForIndependentInputs(int32_t stage_id, const Shapes &in
     (void)combined_splittable_inputs.insert(combined_splittable_inputs.end(), splittable_inputs[j].begin(),
                                             splittable_inputs[j].end());
   }
-  std::function<void(uint32_t, size_t)> recursive = [&stage_id, &dev_num, &sp_vector, &combined_inputs_shape,
+  std::function<void(uint64_t, size_t)> recursive = [&stage_id, &dev_num, &sp_vector, &combined_inputs_shape,
                                                      &combined_splittable_inputs, &combined_partitions, &recursive,
-                                                     &inputs_shape](uint32_t current_index, size_t n) {
+                                                     &inputs_shape](uint64_t current_index, size_t n) {
     if (current_index == combined_inputs_shape.size()) {
       MS_LOG(DEBUG) << "The value of combined_splittable_inputs.size is: " << combined_splittable_inputs.size();
       Shapes inputs_partitions;
@@ -1023,8 +1023,8 @@ Status GenerateStrategiesForIndependentInputs(int32_t stage_id, const Shapes &in
         recursive(current_index + 1, n / MIN_SLICE_NUM);
         combined_partitions.pop_back();
       } else if (combined_splittable_inputs[current_index] == 1) {
-        for (uint32_t i = 1; i <= n; i *= 2) {
-          if (n % i == 0 && IntToSize(combined_inputs_shape[current_index]) % i == 0) {
+        for (uint64_t i = 1; i <= n; i *= 2) {
+          if (n % i == 0 && LongToSize(combined_inputs_shape[current_index]) % i == 0) {
             combined_partitions.push_back(i);
             recursive(current_index + 1, n / i);
             combined_partitions.pop_back();
@@ -1045,7 +1045,7 @@ Status GenerateStrategiesForIndependentInputs(int32_t stage_id, const Shapes &in
 // such as: ([a, b, c, d], [a, b, c, d]) or ([b, c, d], [a, b, c, d]) or ([1, c, d], [a, b, c, d])
 // or ([a, b, c, d], [b, c, d]) or ([a, b, c, d], [1, c, d])
 // or ([a, 1], [1, b]) or ([a, b, c, d], [1, b, c, d]) or ([a, b, c, 1], [1, b, c, d])
-Status GenerateStrategiesWithBroadcast(int32_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
+Status GenerateStrategiesWithBroadcast(int64_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
                                        std::vector<StrategyPtr> *const sp_vector) {
   if (sp_vector == nullptr) {
     MS_LOG(ERROR) << "The sp_vector is null.";
@@ -1105,7 +1105,7 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr &strategy) {
     }
     return FAILED;
   }
-  int32_t stage_id = strategy->GetInputStage();
+  int64_t stage_id = strategy->GetInputStage();
   double computation_cost =
     operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   double communication_cost = operator_cost()->GetCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
@@ -1191,7 +1191,7 @@ void OperatorInfo::ExactStrategiesAndRelatedEdges() {
   }
 }
 
-int OperatorInfo::ComputeOpAndPrevEdgeParameterInvolved() {
+int64_t OperatorInfo::ComputeOpAndPrevEdgeParameterInvolved() {
   if (is_output_parameter_involve_ != -1) {
     return is_output_parameter_involve_;
   }
@@ -1280,8 +1280,8 @@ Status OperatorInfo::CorrectMemoryCost(size_t input_index) {
   return SUCCESS;
 }
 
-int32_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map) {
-  int32_t ret = -1;
+int64_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map) {
+  int64_t ret = -1;
 
   // The number of repetitions is equal to the number of all devices divided by the number of devices use for
   // tensor map.
@@ -1290,12 +1290,12 @@ int32_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const S
     // -1 means the corresponding dimension is not split.
     if (element == MAP_NONE) {
       continue;
-    } else if ((element < 0) || (IntToSize(element) >= dev_matrix_shape.size())) {
+    } else if ((element < 0) || (LongToSize(element) >= dev_matrix_shape.size())) {
       MS_LOG(ERROR) << "Invalid tensor map: " << ShapeToString(tensor_map) << ", the dev matrix shape is "
                     << ShapeToString(dev_matrix_shape);
       return ret;
     } else {
-      size_t index = dev_matrix_shape.size() - IntToSize(element) - 1;
+      size_t index = dev_matrix_shape.size() - LongToSize(element) - 1;
       if (dev_matrix_shape[index] <= 0) {
         MS_LOG(ERROR) << "Invalid dev matrix shape: " << ShapeToString(dev_matrix_shape);
         return ret;
@@ -1304,7 +1304,7 @@ int32_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const S
     }
   }
 
-  return (int32_t)device_num;
+  return (int64_t)device_num;
 }
 
 Status OperatorInfo::InferAsLossDivisor() {
@@ -1325,7 +1325,7 @@ Status OperatorInfo::InferAsLossDivisor() {
   }
 
   if (outputs_tensor_map_[0].empty()) {
-    as_loss_divisor_ = SizeToInt(global_device_list_.size());
+    as_loss_divisor_ = SizeToLong(global_device_list_.size());
     MS_LOG(INFO) << name_ << ": The output is a scalar, use the dev size " << as_loss_divisor_ << ", loss divisor.";
     return SUCCESS;
   }
@@ -1410,7 +1410,7 @@ void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr &stra
   if (!stra->GetInputDim().empty() && !stra->GetInputDim()[0].empty()) {
     CheckGlobalDeviceManager();
     auto total_device_num = g_device_manager->GetDeviceListByStageId(stra->GetInputStage()).size();
-    if (IntToSize(stra->GetInputDim()[0][0]) == total_device_num) {
+    if (LongToSize(stra->GetInputDim()[0][0]) == total_device_num) {
       if (cost->computation_cost_ > 1.0) {
         cost->computation_cost_ -= 1.0;
       }

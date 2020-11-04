@@ -58,7 +58,7 @@ AnfNodePtrList GetOutput(const AnfNodePtrList &lst, const NodeUsersMap &users, c
     std::begin(lst), std::end(lst), std::back_inserter(output), [&users, &seen](AnfNodePtr n) -> AnfNodePtr {
       auto usersn = users.find(n);
       bool is_referred_out_of_segment = std::any_of(
-        std::begin(usersn->second), std::end(usersn->second), [&seen](const std::pair<AnfNodePtr, int> &u) -> bool {
+        std::begin(usersn->second), std::end(usersn->second), [&seen](const std::pair<AnfNodePtr, int64_t> &u) -> bool {
           return std::find(std::begin(seen), std::end(seen), u.first) == std::end(seen);
         });
       if (n->isa<CNode>() && is_referred_out_of_segment) {

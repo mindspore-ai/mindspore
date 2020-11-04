@@ -19,6 +19,7 @@
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/cuda_impl/identity_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/matrix_split_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -105,7 +106,7 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    split_dim = GetAttr<int>(kernel_node, "split_dim");
+    split_dim = static_cast<int>(GetAttr<int64_t>(kernel_node, "split_dim"));
     if (split_dim == 0) {
       use_split_matrix = false;
       if (in_shape.size() == 2) {

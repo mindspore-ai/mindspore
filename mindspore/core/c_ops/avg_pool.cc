@@ -30,20 +30,23 @@ std::string AvgPool::get_padding() const {
   auto value_ptr = GetAttr("padding");
   return GetValue<std::string>(value_ptr);
 }
-void AvgPool::set_kernel_size(const std::vector<int> &kernel_size) { this->AddAttr("k_size", MakeValue(kernel_size)); }
+void AvgPool::set_kernel_size(const std::vector<int64_t> &kernel_size) {
+  this->AddAttr("k_size", MakeValue(kernel_size));
+}
 
-std::vector<int> AvgPool::get_kernel_size() const {
+std::vector<int64_t> AvgPool::get_kernel_size() const {
   auto value_ptr = GetAttr("k_size");
-  return GetValue<std::vector<int>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
-void AvgPool::set_strides(const std::vector<int> &strides) { this->AddAttr("strides", MakeValue(strides)); }
+void AvgPool::set_strides(const std::vector<int64_t> &strides) { this->AddAttr("strides", MakeValue(strides)); }
 
-std::vector<int> AvgPool::get_strides() const {
+std::vector<int64_t> AvgPool::get_strides() const {
   auto value_ptr = GetAttr("strides");
-  return GetValue<std::vector<int>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void AvgPool::Init(const std::vector<int> &kernel_size, const std::vector<int> &stride, const std::string &padding) {
+void AvgPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
+                   const std::string &padding) {
   auto prim_name = this->name();
   this->AddAttr("data_format", MakeValue("NCHW"));
   this->set_padding(CheckAndConvertUtils::CheckString("padding", padding, {"valid", "same"}, prim_name));
@@ -70,8 +73,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto kernel_w = kernel_size[3];
   auto stride_h = strides[2];
   auto stride_w = strides[3];
-  int out_h = -1;
-  int out_w = -1;
+  int64_t out_h = -1;
+  int64_t out_w = -1;
   if (pad_mode == "valid") {
     out_h = ceil((in_h - (kernel_h - 1)) / stride_h);
     out_w = ceil((in_w - (kernel_w - 1)) / stride_w);
@@ -79,7 +82,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     out_h = ceil(in_h / stride_h);
     out_w = ceil(in_w / stride_w);
   }
-  std::vector<int> out_shape = {batch, channel, out_h, out_w};
+  std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int a) { return a <= 0; })) {
     MS_LOG(EXCEPTION) << "Kernel size is not valid.";
   }

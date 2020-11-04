@@ -124,7 +124,7 @@ TEST_F(TestSpecializeGraph, test_specialize) {
   AbstractBasePtrList args_spec_list;
   MS_LOG(INFO) << "Begin TestSpecializeGraph call other graph.";
   MS_LOG(INFO) << "" << graph_f_->get_return()->ToString();
-  AbstractBasePtr abstract_v1 = FromValue(1, false);
+  AbstractBasePtr abstract_v1 = FromValue(static_cast<int64_t>(1), false);
   args_spec_list.push_back(abstract_v1);
 
   AnalysisResult result = engine_->Run(graph_f_, args_spec_list);
@@ -133,8 +133,8 @@ TEST_F(TestSpecializeGraph, test_specialize) {
 
 TEST_F(TestSpecializeGraph, test_specialize1) {
   AbstractBasePtrList args_spec_list;
-  AbstractBasePtr abstract_v1 = FromValue(1, true);
-  AbstractBasePtr abstract_v2 = FromValue(2, true);
+  AbstractBasePtr abstract_v1 = FromValue(static_cast<int64_t>(1), true);
+  AbstractBasePtr abstract_v2 = FromValue(static_cast<int64_t>(2), true);
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
   AnalysisResult result = engine_->Run(graph_alpha_, args_spec_list);
@@ -214,8 +214,8 @@ void TestSpecializeMetaFuncGraph::TearDown() {}
 TEST_F(TestSpecializeMetaFuncGraph, test_specialize) {
   AbstractBasePtrList args_spec_list;
   std::cout << graph_->get_return()->ToString() << std::endl;
-  AbstractBasePtr abstract_v1 = FromValue(1, true);
-  AbstractBasePtr abstract_v2 = FromValue(2, true);
+  AbstractBasePtr abstract_v1 = FromValue(static_cast<int64_t>(1), true);
+  AbstractBasePtr abstract_v2 = FromValue(static_cast<int64_t>(2), true);
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
   AnalysisResult result = engine_->Run(graph_, args_spec_list);

@@ -120,8 +120,8 @@ bool CastAllFusion::Run(const FuncGraphPtr &graph) {
       std::vector<AnfNodePtr> tuple_getitem_input;
       tuple_getitem_input.push_back(NewValueNode(prim::kPrimTupleGetItem));
       tuple_getitem_input.push_back(cast_all);
-      auto index = NewValueNode(SizeToInt(idx));
-      auto imm = std::make_shared<Int32Imm>(idx);
+      auto index = NewValueNode(SizeToLong(idx));
+      auto imm = std::make_shared<Int64Imm>(idx);
       auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
       MS_EXCEPTION_IF_NULL(abstract_scalar);
       index->set_abstract(abstract_scalar);

@@ -39,7 +39,7 @@ Status GetNextInfo::InferTensorMap() {
       if (full_batch) {
         out_tensor_map.push_back(MAP_NONE);
       } else {
-        out_tensor_map.push_back(SizeToInt(dev_matrix_shape_.size() - i - 1));
+        out_tensor_map.push_back(SizeToLong(dev_matrix_shape_.size() - i - 1));
       }
     }
     outputs_tensor_map_.push_back(out_tensor_map);
@@ -125,8 +125,8 @@ Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
   }
-  int32_t stage = strategy->GetInputStage();
-  int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(stage).size());
+  int64_t stage = strategy->GetInputStage();
+  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(stage).size());
   dev_num_ = dev_num;
   return SUCCESS;
 }
@@ -172,10 +172,10 @@ Status GetNextInfo::GetAttrOutPutNum() {
   auto iter = attrs_.find(GETNEXT_NUM);
   if (iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
-    if (iter->second->isa<Int32Imm>()) {
-      output_num_ = iter->second->cast<Int32ImmPtr>()->value();
+    if (iter->second->isa<Int64Imm>()) {
+      output_num_ = iter->second->cast<Int64ImmPtr>()->value();
     } else {
-      MS_LOG(ERROR) << name_ << " : The value of output_num is not int.";
+      MS_LOG(ERROR) << name_ << " : The value of output_num is not int64_t.";
       return FAILED;
     }
   }
@@ -186,7 +186,7 @@ Status GetNextInfo::GetAttrs() {
   if (GetAttrTypes() == FAILED || GetAttrShapes() == FAILED || GetAttrOutPutNum() == FAILED) {
     return FAILED;
   }
-  if (types_.size() != IntToSize(output_num_) || shapes_.size() != IntToSize(output_num_) || output_num_ == 0) {
+  if (types_.size() != LongToSize(output_num_) || shapes_.size() != LongToSize(output_num_) || output_num_ == 0) {
     MS_LOG(ERROR) << name_ << " : The output_num is not equal to shapes size.";
     return FAILED;
   }
@@ -211,15 +211,7 @@ Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
       out_shapes[i][0] = out_shapes[i][0] / dev_num_;
     }
   }
-  std::vector<std::vector<int32_t>> out_shapes_int;
-  (void)std::transform(out_shapes.begin(), out_shapes.end(), std::back_inserter(out_shapes_int),
-                       [](const std::vector<int64_t> &shape) {
-                         std::vector<int32_t> shape_int;
-                         (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_int),
-                                              [](const int64_t &v) { return static_cast<int32_t>(v); });
-                         return shape_int;
-                       });
-  ValuePtr new_shapes = MakeValue(out_shapes_int);
+  ValuePtr new_shapes = MakeValue(out_shapes);
   Attr attr_types = std::make_pair(TYPES, attrs_[TYPES]);
   Attr attr_shapes = std::make_pair(SHAPES, new_shapes);
   Attr attr_num = std::make_pair(GETNEXT_NUM, attrs_[GETNEXT_NUM]);
@@ -242,7 +234,7 @@ Status GetNextInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status GetNextInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status GetNextInfo::GenerateStrategies(int32_t stage_id) {
+Status GetNextInfo::GenerateStrategies(int64_t stage_id) {
   Strategys stra;
   StrategyPtr sp = std::make_shared<Strategy>(stage_id, stra);
   if (SetCostUnderStrategy(sp) == SUCCESS) {

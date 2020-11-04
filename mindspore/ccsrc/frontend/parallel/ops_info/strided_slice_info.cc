@@ -28,24 +28,24 @@
 
 namespace mindspore {
 namespace parallel {
-Status StridedSliceInfo::GetMask(const std::string &mask_name, int32_t *mask_value) {
+Status StridedSliceInfo::GetMask(const std::string &mask_name, int64_t *mask_value) {
   if (mask_value == nullptr) {
     return FAILED;
   }
   auto mask_iter = attrs_.find(mask_name);
   if (mask_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(mask_iter->second);
-    if (mask_iter->second->isa<Int32Imm>()) {
-      *mask_value = mask_iter->second->cast<Int32ImmPtr>()->value();
+    if (mask_iter->second->isa<Int64Imm>()) {
+      *mask_value = mask_iter->second->cast<Int64ImmPtr>()->value();
     } else {
-      MS_LOG(ERROR) << name_ << ": The value of " << mask_name << " is not int";
+      MS_LOG(ERROR) << name_ << ": The value of " << mask_name << " is not int64_t";
       return FAILED;
     }
   }
   return SUCCESS;
 }
 
-Status GetInput(const ValuePtr &input_value, std::vector<int32_t> *input) {
+Status GetInput(const ValuePtr &input_value, std::vector<int64_t> *input) {
   MS_EXCEPTION_IF_NULL(input_value);
   ValueTuplePtr value_tuple = input_value->cast<ValueTuplePtr>();
   if (value_tuple == nullptr) {
@@ -55,8 +55,8 @@ Status GetInput(const ValuePtr &input_value, std::vector<int32_t> *input) {
 
   for (auto &element : value_tuple->value()) {
     MS_EXCEPTION_IF_NULL(element);
-    if (element->isa<Int32Imm>()) {
-      int32_t value = element->cast<Int32ImmPtr>()->value();
+    if (element->isa<Int64Imm>()) {
+      int64_t value = element->cast<Int64ImmPtr>()->value();
       input->push_back(value);
     } else {
       MS_LOG(ERROR) << "The value must be int32";
@@ -110,7 +110,7 @@ Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   Dimensions strategy_value = stra[0];
-  bool has_split = std::any_of(strategy_value.begin(), strategy_value.end(), [](int32_t v) { return v > 1; });
+  bool has_split = std::any_of(strategy_value.begin(), strategy_value.end(), [](int64_t v) { return v > 1; });
   if (has_split && has_mask_) {
     MS_LOG(ERROR) << name_ << ": When there is a mask, the input is not supported to be split";
     return FAILED;
@@ -164,8 +164,8 @@ Status StridedSliceInfo::InferTensorMap() {
   }
 
   // cannot use dev_matrix_shape_ replace inputs_shape_[0], because it may not be fully split in all devices.
-  int32_t size = SizeToInt(inputs_shape_[0].size());
-  for (int i = 0; i < size; ++i) {
+  int64_t size = SizeToLong(inputs_shape_[0].size());
+  for (int64_t i = 0; i < size; ++i) {
     tensor_map.push_back(size - i - 1);
   }
 
@@ -235,7 +235,7 @@ Status StridedSliceInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status StridedSliceInfo::GenerateStrategies(int32_t stage_id) {
+Status StridedSliceInfo::GenerateStrategies(int64_t stage_id) {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Infer attrs failed";
     return FAILED;

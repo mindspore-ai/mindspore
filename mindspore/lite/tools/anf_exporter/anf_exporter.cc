@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "src/ops/quant_dtype_cast.h"
 #include "abstract/abstract_value.h"
@@ -360,7 +361,11 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> input_anod
     MS_LOG(ERROR) << "Shape of Abstract of parameter should be ShapePtr, " << paramNode->name();
     return RET_PARAM_INVALID;
   }
-  paramTensor->dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
+  auto shape_vector = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
+  std::vector<int32_t> dims;
+  (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(dims),
+                       [](const int64_t &value) { return static_cast<int32_t>(value); });
+  paramTensor->dims = dims;
   auto paramValue = std::dynamic_pointer_cast<ParamValueLite>(paramNode->default_param());
   if (paramValue != nullptr) {
     paramTensor->data.resize(paramValue->tensor_size());
@@ -385,7 +390,11 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(valueAbstract);
     auto typePtr = abstractTensor->element()->GetTypeTrack();
     paramTensor->dataType = typePtr->type_id();
-    paramTensor->dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
+    auto shape_vector = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
+    std::vector<int32_t> dims;
+    (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(dims),
+                         [](const int64_t &value) { return static_cast<int32_t>(value); });
+    paramTensor->dims = dims;
 #ifdef SUPPORT_TRAIN
     if (paramTensor->dims.size() == 0) paramTensor->dims = {1};
 #endif

@@ -234,7 +234,7 @@ Resource::~Resource() {
 }
 
 Any GetMethodOrAttr(const string &name, const TypeId &type_id, const BuiltInTypeMap &method_map) {
-  auto type_method_map = method_map.find(static_cast<int>(type_id));
+  auto type_method_map = method_map.find(static_cast<int64_t>(type_id));
   if (type_method_map == method_map.end()) {
     return Any();
   }
@@ -248,10 +248,10 @@ Any GetMethodOrAttr(const string &name, const TypeId &type_id, const BuiltInType
 bool Resource::IsTypeInBuiltInMap(const TypeId &type) {
   TypeId type_id = NormalizeTypeId(type);
   const BuiltInTypeMap &method_map = GetMethodMap();
-  auto iter = method_map.find(static_cast<int>(type_id));
+  auto iter = method_map.find(static_cast<int64_t>(type_id));
   if (iter == method_map.end()) {
     const BuiltInTypeMap &attr_map = GetAttrMap();
-    iter = attr_map.find(static_cast<int>(type_id));
+    iter = attr_map.find(static_cast<int64_t>(type_id));
     if (iter == attr_map.end()) {
       return false;
     }

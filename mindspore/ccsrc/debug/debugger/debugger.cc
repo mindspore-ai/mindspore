@@ -598,7 +598,7 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
   std::vector<char *> data_ptr;
   std::vector<unsigned int> data_size;
   std::vector<TypePtr> dtype;
-  std::vector<std::vector<int>> shape;
+  std::vector<std::vector<int64_t>> shape;
 
   std::transform(tensors.begin(), tensors.end(), std::back_inserter(name), GetTensorFullName);
 

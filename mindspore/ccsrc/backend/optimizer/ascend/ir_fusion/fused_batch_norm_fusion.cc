@@ -283,7 +283,7 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
     MS_EXCEPTION_IF_NULL(index_node);
     auto value_node = index_node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    int index = GetValue<int>(value_node->value());
+    auto index = GetValue<int64_t>(value_node->value());
     if (index == kReplaceOutputIndex0 || index == kReplaceOutputIndex1) {
       (void)manager->Replace(output, bn_training_update_outputs[index]);
     }

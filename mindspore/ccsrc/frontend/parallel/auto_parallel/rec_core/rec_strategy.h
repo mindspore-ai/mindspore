@@ -31,7 +31,7 @@ struct TensorStr4D {
 struct StrategyRec {
   TensorStr4D inputTensor[MAX_INPUT_NUM];
   TensorStr4D outputTensor;
-  int32_t cut_counter = 0;
+  int64_t cut_counter = 0;
   double cost = 0;
 };
 }  // namespace parallel

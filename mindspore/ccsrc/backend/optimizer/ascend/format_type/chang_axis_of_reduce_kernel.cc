@@ -36,7 +36,7 @@ const size_t kAxis_6HD_H = 1;
 const size_t kAxis_6HD_W = 2;
 const std::map<std::string, ConvertFunction> kReduceConvertMap = {{kOpFormat_FRAC_Z, ConvertReduceAttrFraczAnd6HD},
                                                                   {kOpFormat_C1HWNCoC0, ConvertReduceAttrFraczAnd6HD}};
-void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int> &reduce_axis) {
+void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int64_t> &reduce_axis) {
   if (reduce_axis.empty()) {
     MS_LOG(EXCEPTION) << "The node " << cnode->DebugString() << "'s reduce axis got a empty vector";
   }
@@ -54,7 +54,7 @@ void SafeCheckFunction(const CNodePtr &cnode, const std::vector<int> &reduce_axi
 
 void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
   auto axis = kernel::GetReduceAttrAxis(cnode);
-  std::vector<int> convert_axis;
+  std::vector<int64_t> convert_axis;
   SafeCheckFunction(cnode, axis);
   auto format = AnfAlgo::GetInputFormat(cnode, 0);
   if (format != kOpFormat_FRAC_Z || format != kOpFormat_C1HWNCoC0) {

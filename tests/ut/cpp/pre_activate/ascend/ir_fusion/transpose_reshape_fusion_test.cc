@@ -39,7 +39,7 @@ TEST_F(TestHWTransposeReshapeFusion, test_transpose_reshape_fusion) {
    * return transpose
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_transpose_reshape_fusion", "before");
-  std::vector<int> shp{2, 2, 16, 16};
+  std::vector<int64_t> shp{2, 2, 16, 16};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
@@ -70,7 +70,7 @@ TEST_F(TestHWTransposeReshapeFusion, test_transpose_reshape_no_fusion) {
    * return transpose
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_transpose_reshape_fusion", "before");
-  std::vector<int> shp{2, 4, 8, 16};
+  std::vector<int64_t> shp{2, 4, 8, 16};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);

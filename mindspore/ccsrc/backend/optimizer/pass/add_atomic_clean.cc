@@ -39,9 +39,9 @@ bool HasAtomic(const AnfNodePtr &input) {
   return false;
 }
 
-std::vector<int> CalCleanSize(const CNodePtr &pre_node) {
+std::vector<int64_t> CalCleanSize(const CNodePtr &pre_node) {
   MS_EXCEPTION_IF_NULL(pre_node);
-  std::vector<int> clean_size_list;
+  std::vector<int64_t> clean_size_list;
   // clean output
   for (auto &index : g_output_idx) {
     TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(pre_node, index);

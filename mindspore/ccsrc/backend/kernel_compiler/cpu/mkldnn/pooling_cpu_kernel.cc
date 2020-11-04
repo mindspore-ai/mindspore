@@ -28,8 +28,14 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
-  std::vector<int> origin_kernel_sizes = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, KSIZE);
-  std::vector<int> strides = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDES);
+  std::vector<int> origin_kernel_sizes;
+  std::vector<int> strides;
+  std::vector<int64_t> kernel_sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KSIZE);
+  std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+  (void)std::transform(kernel_sizes_me.begin(), kernel_sizes_me.end(), std::back_inserter(origin_kernel_sizes),
+                       [](const int64_t &value) { return static_cast<int>(value); });
+  (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   if (origin_kernel_sizes.size() != 4 || strides.size() != 4) {
     MS_LOG(EXCEPTION) << "invalid kernel size " << origin_kernel_sizes.size() << " or stride size " << strides.size();
   }

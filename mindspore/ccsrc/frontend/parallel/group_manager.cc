@@ -37,7 +37,7 @@ Status Group::Init(const std::string &name, const std::vector<Device> &devices) 
 
 std::vector<Device> Group::GetDevicesList() const { return devices_; }
 
-bool Group::IsInThisGroup(int32_t device_rank) {
+bool Group::IsInThisGroup(int64_t device_rank) {
   for (auto &device : devices_) {
     if (device.rank() == device_rank) {
       return true;
@@ -50,7 +50,7 @@ bool Group::IsInThisGroup(int32_t device_rank) {
 Status Group::GetIndex(size_t *index) {
   size_t pos = 0;
   CheckGlobalDeviceManager();
-  int32_t rank = g_device_manager->global_rank();
+  int64_t rank = g_device_manager->global_rank();
   for (auto &device : devices_) {
     if (device.rank() == rank) {
       *index = pos;
@@ -151,7 +151,7 @@ Status GroupManager::DestroyAllGroups() {
   return Status::SUCCESS;
 }
 
-Status GroupManager::GetRankID(const std::string &name, unsigned int *const rank_id) {
+Status GroupManager::GetRankID(const std::string &name, uint32_t *const rank_id) {
   auto it = groups_.find(name);
   if (it == groups_.end()) {
     MS_LOG(ERROR) << "Could not find group name :" << name;
@@ -164,7 +164,7 @@ Status GroupManager::GetRankID(const std::string &name, unsigned int *const rank
   return Status::SUCCESS;
 }
 
-Status GroupManager::GetRankSize(const std::string &name, unsigned int *const rank_size) {
+Status GroupManager::GetRankSize(const std::string &name, uint32_t *const rank_size) {
   auto it = groups_.find(name);
   if (it == groups_.end()) {
     MS_LOG(ERROR) << "Could not find group name :" << name;

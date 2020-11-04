@@ -35,8 +35,8 @@ Status SplitInfo::GetAttrs() {
   auto axis_iter = attrs_.find(AXIS);
   if (axis_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(axis_iter->second);
-    if (axis_iter->second->isa<Int32Imm>()) {
-      axis = axis_iter->second->cast<Int32ImmPtr>()->value();
+    if (axis_iter->second->isa<Int64Imm>()) {
+      axis = axis_iter->second->cast<Int64ImmPtr>()->value();
     } else {
       MS_LOG(ERROR) << name_ << ": The value of axis is not int";
       return FAILED;
@@ -59,8 +59,8 @@ Status SplitInfo::GetAttrs() {
   auto output_num_iter = attrs_.find(OUTPUT_NUM);
   if (output_num_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(output_num_iter->second);
-    if (output_num_iter->second->isa<Int32Imm>()) {
-      output_num = output_num_iter->second->cast<Int32ImmPtr>()->value();
+    if (output_num_iter->second->isa<Int64Imm>()) {
+      output_num = output_num_iter->second->cast<Int64ImmPtr>()->value();
     } else {
       MS_LOG(ERROR) << name_ << ": The value of output_num is not int";
       return FAILED;
@@ -190,7 +190,7 @@ Status SplitInfo::InferTensorInfo() {
 
 Status SplitInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status SplitInfo::GenerateStrategies(int32_t stage_id) {
+Status SplitInfo::GenerateStrategies(int64_t stage_id) {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Infer attrs failed";
     return FAILED;

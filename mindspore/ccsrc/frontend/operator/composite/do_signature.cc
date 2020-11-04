@@ -203,8 +203,8 @@ void DoAutoCast(const std::string &func_name, const std::vector<Signature> &sign
   std::vector<SignatureEnumDType> dtypes;
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
                        [](const Signature &sig) { return sig.dtype; });
-  int empty_dtype_count = std::count(dtypes.begin(), dtypes.end(), SignatureEnumDType::kDTypeEmptyDefaultValue);
-  if (dtypes.empty() || static_cast<int>(dtypes.size()) == empty_dtype_count) {
+  int64_t empty_dtype_count = std::count(dtypes.begin(), dtypes.end(), SignatureEnumDType::kDTypeEmptyDefaultValue);
+  if (dtypes.empty() || static_cast<int64_t>(dtypes.size()) == empty_dtype_count) {
     return;
   }
   // Stat the index of the arguments with the largest type in the same SignatureEnumDType.

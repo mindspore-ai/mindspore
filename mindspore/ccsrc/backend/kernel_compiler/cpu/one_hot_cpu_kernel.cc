@@ -24,14 +24,14 @@ void OneHotCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (output_shape.size() < 2) {
     MS_LOG(EXCEPTION) << "invalid output shape size: " << output_shape.size();
   }
-  int axis = AnfAlgo::GetNodeAttr<int>(kernel_node, AXIS);
-  if (axis != -1 && IntToSize(axis) >= output_shape.size()) {
+  int64_t axis = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
     MS_LOG(EXCEPTION) << "invalid axis: " << axis;
   }
   if (axis == -1) {
     axis_ = output_shape.size() - 1;
   } else {
-    axis_ = IntToSize(axis);
+    axis_ = LongToSize(axis);
   }
   depth_ = output_shape[axis_];
   stride_ = 1;

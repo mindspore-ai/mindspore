@@ -22,7 +22,7 @@ namespace irpass {
 #define UPPER_FLT_LIMIT (FLT_MAX / 2.0)
 #define LOWER_FLT_LIMIT (-FLT_MAX / 2.0)
 // Define the checking mode
-enum ScalarCheckingMode : int { GREATER_EQUAL = 0, LESS };
+enum ScalarCheckingMode : int64_t { GREATER_EQUAL = 0, LESS };
 
 bool IsNodeScalarTrueWith(const AnfNodePtr &node, const ScalarCheckingMode &checking_mode, const float &check_value) {
   auto value_node = node->cast<ValueNodePtr>();

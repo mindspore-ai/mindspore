@@ -191,7 +191,7 @@ Status PReLUInfo::InitForCostModel(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status PReLUInfo::GenerateStrategies(int32_t stage_id) {
+Status PReLUInfo::GenerateStrategies(int64_t stage_id) {
   if (inputs_shape_.size() != PRELU_INPUTS_SIZE) {
     return FAILED;
   }

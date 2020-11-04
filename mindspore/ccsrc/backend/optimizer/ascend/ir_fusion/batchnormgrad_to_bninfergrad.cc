@@ -45,12 +45,12 @@ CNodePtr CreateBNInferGrad(const FuncGraphPtr &graph, const CNodePtr &batchnormg
 
 bool CheckIndex(const AnfNodePtr &index_node) {
   MS_EXCEPTION_IF_NULL(index_node);
-  if (!IsValueNode<Int32Imm>(index_node)) {
+  if (!IsValueNode<Int64Imm>(index_node)) {
     return false;
   }
   ValueNodePtr value_node = index_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
-  int index = GetValue<int>(value_node->value());
+  int64_t index = GetValue<int64_t>(value_node->value());
   if (index != 0) {
     MS_LOG(DEBUG) << "tuple_getitem must be 0th output of BatchNormGrad";
     return false;

@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_TRANSPOSE_H_
 
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/transpose_impl.cuh"
@@ -75,7 +76,10 @@ class TransposeGpuFwdKernel : public GpuKernel {
     }
     input_size_ *= sizeof(T);
     output_size_ = input_size_;
-    auto perm = GetAttr<std::vector<int>>(kernel_node, "perm");
+    std::vector<int> perm;
+    std::vector<int64_t> perm_me = GetAttr<std::vector<int64_t>>(kernel_node, "perm");
+    (void)std::transform(perm_me.begin(), perm_me.end(), std::back_inserter(perm),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     for (size_t j = 0; j < perm.size(); j++) {
       input_axis_.push_back(perm[j]);
     }

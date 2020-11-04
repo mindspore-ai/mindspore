@@ -110,8 +110,8 @@ Status UniqueInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
   }
-  int32_t stage = strategy->GetInputStage();
-  int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(stage).size());
+  int64_t stage = strategy->GetInputStage();
+  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(stage).size());
   dev_num_ = dev_num;
   if (stras[0][0] != 1) {
     MS_LOG(ERROR) << "Currently, unique only support repeat calculate in all devices";
@@ -163,7 +163,7 @@ Status UniqueInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status UniqueInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status UniqueInfo::GenerateStrategies(int32_t stage_id) {
+Status UniqueInfo::GenerateStrategies(int64_t stage_id) {
   if (inputs_shape_.size() != UNIQUE_INPUTS_SIZE) {
     return FAILED;
   }

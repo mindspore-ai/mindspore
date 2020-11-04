@@ -58,7 +58,7 @@ class TbeKernelBuild {
   static bool GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
                                         std::vector<std::vector<mindspore::AnfNodePtr>>::iterator *layer_iter,
                                         std::vector<nlohmann::json> *input_desc_list, size_t *index);
-  static std::vector<size_t> GetDescOutputIndex(const std::vector<int> &output_used_nums);
+  static std::vector<size_t> GetDescOutputIndex(const std::vector<int64_t> &output_used_nums);
   static bool GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode,
                                          std::vector<nlohmann::json> *output_desc_list);
   static void GenPreDescJson(nlohmann::json *output_desc);

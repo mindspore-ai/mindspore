@@ -30,7 +30,7 @@ class SplitFission : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  int outputs_divisor_;
+  int64_t outputs_divisor_;
 };
 }  // namespace opt
 }  // namespace mindspore

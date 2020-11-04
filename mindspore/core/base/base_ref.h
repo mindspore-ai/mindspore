@@ -65,13 +65,13 @@ inline std::shared_ptr<VectorRef> MakeNode(std::initializer_list<BaseRef> elemen
 // Anfnode, Funcgraph and some not value node class
 template <typename T,
           typename std::enable_if<is_shared_ptr<remove_const_t<T>>::value && is_base<typename T::element_type>::value,
-                                  int>::type = 0>
+                                  int64_t>::type = static_cast<int64_t>(0)>
 inline BasePtr MakeNode(const T &v) {
   return v;
 }
 
-template <typename T,
-          typename std::enable_if<!is_shared_ptr<remove_const_t<T>>::value && !is_base_ref<T>::value, int>::type = 0>
+template <typename T, typename std::enable_if<!is_shared_ptr<remove_const_t<T>>::value && !is_base_ref<T>::value,
+                                              int64_t>::type = static_cast<int64_t>(0)>
 inline BasePtr MakeNode(const T &v) {
   return MakeValue(v);
 }
@@ -145,7 +145,8 @@ struct BaseRefLess {
 namespace utils {
 // judge isa relation
 // examples: isa<Int32Imm>(handle), isa<FuncGraph>(handle)
-template <typename T, typename std::enable_if<is_base<T>::value && !is_base_ref<T>::value, int>::type = 0>
+template <typename T,
+          typename std::enable_if<is_base<T>::value && !is_base_ref<T>::value, int64_t>::type = static_cast<int64_t>(0)>
 bool isa(const BaseRef &handle) {
   if (!handle.m_ptr) {
     return false;
@@ -155,7 +156,7 @@ bool isa(const BaseRef &handle) {
 
 // noderef isa ptr isa<AnfNodePtr>(x) or isa<SeqPtr>()
 template <typename T, typename U = typename std::enable_if<is_shared_ptr<T>::value, typename T::element_type>::type,
-          typename std::enable_if<is_base<U>::value || is_base_ref<U>::value, int>::type = 0>
+          typename std::enable_if<is_base<U>::value || is_base_ref<U>::value, int64_t>::type = static_cast<int64_t>(0)>
 bool isa(const BaseRef &handle) {
   if (handle.m_ptr == nullptr) {
     return typeid(handle.m_ptr) == typeid(T);
@@ -179,15 +180,16 @@ bool isa(const BaseRef &handle) {
 }
 
 // isa<BaseRef>(handle), judge reference or ptr
-template <typename T, typename std::enable_if<is_base_ref<T>::value, int>::type = 0>
+template <typename T, typename std::enable_if<is_base_ref<T>::value, int64_t>::type = static_cast<int64_t>(0)>
 bool isa(const BaseRef &handle) {
   static const uint32_t tid = Base::GetTypeId(typeid(T).name());
   return handle.IsFromTypeId(tid) || (handle.m_ptr && handle.m_ptr->isa<T>());
 }
 
 // valueref -> C++ type
-// cast<int>(handle)
-template <typename T, typename std::enable_if<!is_base_ref<T>::value && !is_shared_ptr<T>::value, int>::type = 0>
+// cast<int64_t>(handle)
+template <typename T, typename std::enable_if<!is_base_ref<T>::value && !is_shared_ptr<T>::value, int64_t>::type =
+                        static_cast<int64_t>(0)>
 T cast(const BaseRef &handle) {
   T ret = GetValue<T>(std::static_pointer_cast<Value>(handle.m_ptr));
   return std::move(ret);
@@ -195,7 +197,7 @@ T cast(const BaseRef &handle) {
 
 // valueref -> valueref type
 // cast<VectorRef>(handle)
-template <typename T, typename std::enable_if<is_base_ref<T>::value, int>::type = 0>
+template <typename T, typename std::enable_if<is_base_ref<T>::value, int64_t>::type = static_cast<int64_t>(0)>
 const T &cast(const BaseRef &handle) {
   if (handle.m_ptr) {
     return static_cast<const T &>(*handle.m_ptr);
@@ -208,7 +210,7 @@ const T &cast(const BaseRef &handle) {
 // cast<FuncGraphPtr>(handle)
 template <typename T, typename U = typename std::enable_if<is_shared_ptr<T>::value, typename T::element_type>::type,
           typename std::enable_if<is_shared_ptr<T>::value && std::is_base_of<Base, typename T::element_type>::value,
-                                  int>::type = 0>
+                                  int64_t>::type = static_cast<int64_t>(0)>
 T cast(const BaseRef &handle) {
   if (!handle.m_ptr) {
     MS_LOG(EXCEPTION) << "Can not cast to " << typeid(T).name() << ", pointer is null";

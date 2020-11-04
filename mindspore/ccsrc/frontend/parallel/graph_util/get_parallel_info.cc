@@ -71,10 +71,10 @@ py::dict GetAllreduceFusion(const FuncGraphPtr &graph) {
       MS_LOG(EXCEPTION) << "name is not StringImm";
     }
     auto name = name_ptr->cast<StringImmPtr>()->value();
-    if (!fusion_ptr->isa<Int32Imm>()) {
-      MS_LOG(EXCEPTION) << "fusion is not Int32Imm";
+    if (!fusion_ptr->isa<Int64Imm>()) {
+      MS_LOG(EXCEPTION) << "fusion is not Int64Imm";
     }
-    int32_t fusion = fusion_ptr->cast<Int32ImmPtr>()->value();
+    int64_t fusion = fusion_ptr->cast<Int64ImmPtr>()->value();
     dict[py::str(name)] = fusion;
   }
   return dict;

@@ -41,9 +41,9 @@ class MatMulBase : public OperatorInfo {
   Status InitForCostModel(const StrategyPtr &strategy) override;
 
   // Generate all strategies and the corresponding cost for this MatMul operator
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  Status PrepareStrategy(int32_t stage_id, size_t dev_num, Dimensions combined_partitions, size_t input0_shape_size,
+  Status PrepareStrategy(int64_t stage_id, size_t dev_num, Dimensions combined_partitions, size_t input0_shape_size,
                          size_t input1_shape_size, StrategyPtr *sp);
 
   Status SwapLastTwoElements(Shape *shape);
@@ -62,7 +62,7 @@ class MatMulBase : public OperatorInfo {
   bool transpose_a_ = false;
   bool transpose_b_ = false;
   bool forward_reduce_scatter_ = false;
-  int32_t field_size_ = 0;
+  int64_t field_size_ = 0;
   size_t mat_a_dimension_ = 0;
   size_t mat_b_dimension_ = 0;
   Shape origin_dev_matrix_shape_;

@@ -47,7 +47,7 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
     std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
     int dims = shape.size();
-    int axis = GetAttr<int>(kernel_node, "axis");
+    int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis < 0) {
       axis += dims;
     }

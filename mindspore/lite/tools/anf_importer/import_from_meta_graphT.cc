@@ -41,7 +41,10 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
     std::copy(tensor->dims.begin(), tensor->dims.end(), shape.begin());
     auto type_id = static_cast<TypeId>(tensor->dataType);
     auto type_ptr = TypeIdToType(type_id);
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
+    std::vector<int64_t> shape_vector;
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                         [](const int32_t &value) { return static_cast<int64_t>(value); });
+    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
     parameter->set_abstract(abstract_tensor);
     parameter->set_name("const_" + std::to_string(i) + "_parameter");
 
@@ -114,7 +117,10 @@ abstract::AbstractTensorPtr AnfImporterFromMetaGraphT::ConvertTensorToAbstractTe
   std::copy(tensor->dims.begin(), tensor->dims.end(), shape.begin());
   auto type_id = static_cast<TypeId>(tensor->dataType);
   auto type_ptr = TypeIdToType(type_id);
-  return std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
+  std::vector<int64_t> shape_vector;
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  return std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
 }
 
 int AnfImporterFromMetaGraphT::ConvertAbstract(const std::unique_ptr<schema::CNodeT> &src_cnode,

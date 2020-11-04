@@ -69,8 +69,8 @@ AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr) {
   return value_node->cast<AnfNodePtr>();
 }
 
-static std::unordered_map<int32_t, AnfNodePtr> int_tensor_map = {};
-AnfNodePtr CreateInt32Tensor(int32_t value) {
+static std::unordered_map<int64_t, AnfNodePtr> int_tensor_map = {};
+AnfNodePtr CreateInt32Tensor(int64_t value) {
   auto it = int_tensor_map.find(value);
   if (it != int_tensor_map.end()) {
     return it->second;
@@ -82,13 +82,13 @@ AnfNodePtr CreateInt32Tensor(int32_t value) {
   return anf_node_ptr;
 }
 
-AnfNodePtr CreatTypeInt(int32_t value) {
+AnfNodePtr CreatTypeInt(int64_t value) {
   ValuePtr value_ptr = MakeValue(std::make_shared<Int>(value));
   return ValuePtrToAnfNodePtr(value_ptr);
 }
 
-AnfNodePtr CreatInt32Imm(int32_t value) {
-  ValuePtr value_ptr = MakeValue(std::make_shared<Int32Imm>(value));
+AnfNodePtr CreatInt64Imm(int64_t value) {
+  ValuePtr value_ptr = MakeValue(std::make_shared<Int64Imm>(value));
   return ValuePtrToAnfNodePtr(value_ptr);
 }
 

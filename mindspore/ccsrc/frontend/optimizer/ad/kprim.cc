@@ -236,7 +236,7 @@ FuncGraphPtr KPrim::BpropCut(const ValueNodePtr &value_node, const pipeline::Res
   auto &node_users = resources->manager()->node_users();
 
   auto &users = node_users[value_node];
-  auto cnode = std::find_if(users.begin(), users.end(), [&prim](const std::pair<AnfNodePtr, int> &user) -> bool {
+  auto cnode = std::find_if(users.begin(), users.end(), [&prim](const std::pair<AnfNodePtr, int64_t> &user) -> bool {
     return IsPrimitiveCNode(user.first, prim);
   });
   if (cnode == users.end()) {
@@ -276,7 +276,7 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
   auto &node_users = resources->manager()->node_users();
 
   auto &users = node_users[value_node];
-  auto cnode = std::find_if(users.begin(), users.end(), [&prim](const std::pair<AnfNodePtr, int> &user) -> bool {
+  auto cnode = std::find_if(users.begin(), users.end(), [&prim](const std::pair<AnfNodePtr, int64_t> &user) -> bool {
     return IsPrimitiveCNode(user.first, prim);
   });
   if (cnode == users.end()) {

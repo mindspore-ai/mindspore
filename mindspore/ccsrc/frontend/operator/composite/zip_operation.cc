@@ -72,7 +72,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
     ValuePtr op = prim::GetPythonOps("getitem", module_name);
     for (size_t arg_idx = 0; arg_idx < args_spec_list.size(); arg_idx++) {
       std::vector<AnfNodePtr> tuple_get_item_nodes{NewValueNode(op), ret_graph->parameters()[arg_idx],
-                                                   NewValueNode(SizeToInt(idx))};
+                                                   NewValueNode(SizeToLong(idx))};
       auto tuple_get_item_op = ret_graph->NewCNode(tuple_get_item_nodes);
       make_tuple_zip_nodes.push_back(tuple_get_item_op);
     }

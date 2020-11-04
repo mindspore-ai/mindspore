@@ -256,15 +256,15 @@ class AddNEliminater : public AnfVisitor {
         MS_EXCEPTION(ArgumentError) << "Inputs size of AddN less than 2. " << cnode->DebugString(2);
       }
 
-      int valuenode_num =
-        std::accumulate(tuple_inputs.begin() + 1, tuple_inputs.end(), 0, [](int accumulator, const AnfNodePtr &node) {
-          if (IsValueNode<tensor::Tensor>(node)) {
-            return accumulator + 1;
-          } else {
-            return accumulator;
-          }
-        });
-      if (IntToSize(valuenode_num) == tuple_inputs.size()) {
+      int64_t valuenode_num = std::accumulate(tuple_inputs.begin() + 1, tuple_inputs.end(), 0,
+                                              [](int64_t accumulator, const AnfNodePtr &node) {
+                                                if (IsValueNode<tensor::Tensor>(node)) {
+                                                  return accumulator + 1;
+                                                } else {
+                                                  return accumulator;
+                                                }
+                                              });
+      if (LongToSize(valuenode_num) == tuple_inputs.size()) {
         // case1: all inputs is ValueNode, error
         MS_EXCEPTION(ArgumentError) << "All inputs of AddN is ValueNode. " << cnode->DebugString(2);
       }

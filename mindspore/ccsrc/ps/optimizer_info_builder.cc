@@ -96,7 +96,7 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
   void *src_data = reinterpret_cast<T *>(ps_data) + addr_data_offset;
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
-  int ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+  int64_t ret = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     delete[] buffer;
@@ -119,7 +119,7 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
   accumulate->addr = new float[weight->size()];
   MS_EXCEPTION_IF_NULL(accumulate->addr);
   accumulate->size = weight->size() * sizeof(float);
-  int ret = memset_s(accumulate->addr, accumulate->size, 0x00, accumulate->size);
+  int64_t ret = memset_s(accumulate->addr, accumulate->size, 0x00, accumulate->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(accumulate->addr);
@@ -146,7 +146,7 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   m->addr = new float[weight->size()];
   MS_EXCEPTION_IF_NULL(m->addr);
   m->size = weight->size() * sizeof(float);
-  int ret = memset_s(m->addr, m->size, 0x00, m->size);
+  int64_t ret = memset_s(m->addr, m->size, 0x00, m->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(m->addr);
@@ -205,7 +205,7 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   MS_EXCEPTION_IF_NULL(linear);
   linear->addr = new float[weight->size()];
   MS_EXCEPTION_IF_NULL(linear->addr);
-  int ret = memset_s(linear->addr, weight->size() * sizeof(float), 0x00, weight->size() * sizeof(float));
+  int64_t ret = memset_s(linear->addr, weight->size() * sizeof(float), 0x00, weight->size() * sizeof(float));
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     delete[] reinterpret_cast<float *>(linear->addr);

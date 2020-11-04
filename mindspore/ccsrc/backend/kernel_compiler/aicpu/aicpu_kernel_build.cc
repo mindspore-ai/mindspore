@@ -116,7 +116,7 @@ void ParseAttrValue(const std::string &type, const std::string &attr_name, const
   MS_EXCEPTION_IF_NULL(node_attr);
   MS_EXCEPTION_IF_NULL(value);
   if (type == "int") {
-    auto attr_value = GetValue<int>(value);
+    auto attr_value = static_cast<int>(GetValue<int64_t>(value));
     (*node_attr)[attr_name].set_i(attr_value);
   } else if (type == "str") {
     auto attr_value = GetValue<std::string>(value);
@@ -128,15 +128,15 @@ void ParseAttrValue(const std::string &type, const std::string &attr_name, const
     auto attr_value = GetValue<float>(value);
     (*node_attr)[attr_name].set_f(attr_value);
   } else if (type == "listInt") {
-    std::vector<int> attr_value;
+    std::vector<int64_t> attr_value;
     auto value_type = value->type();
     MS_EXCEPTION_IF_NULL(value_type);
     auto value_type_str = value_type->ToString();
-    if (value_type_str == "Int32") {
-      int data = GetValue<int>(value);
+    if (value_type_str == "Int64") {
+      int64_t data = GetValue<int64_t>(value);
       attr_value.push_back(data);
     } else {
-      attr_value = GetValue<std::vector<int>>(value);
+      attr_value = GetValue<std::vector<int64_t>>(value);
     }
     mindspore::AttrValue input_shape_attr;
     mindspore::AttrValue_ArrayValue *input_shape_attr_list = input_shape_attr.mutable_array();

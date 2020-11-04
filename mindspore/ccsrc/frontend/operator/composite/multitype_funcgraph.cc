@@ -123,7 +123,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   std::ostringstream oss;
   oss << "There are " << fn_cache_py_.size() << " prototypes for overload function `" << name_
       << "`, corresponding location info:\n";
-  int idx = 0;
+  int64_t idx = 0;
   for (auto &item : fn_cache_py_) {
     FuncGraphPtr func_graph = parse::ParsePythonCode(item.second);
     if (func_graph == nullptr) {

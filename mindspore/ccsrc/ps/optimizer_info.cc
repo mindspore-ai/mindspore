@@ -67,7 +67,7 @@ void OptimizerInfo::UpdateOptimInputValue(const std::string &optim_type, const s
   T *src_data = reinterpret_cast<T *>(data) + offset;
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
-  int ret = memcpy_s(optim_input->addr, optim_input->size, src_data, size);
+  int64_t ret = memcpy_s(optim_input->addr, optim_input->size, src_data, size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
@@ -104,7 +104,7 @@ void DenseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &, size_
 
 void DenseOptimInfo::Reset() {
   MS_EXCEPTION_IF_NULL(gradient()->addr);
-  int ret = memset_s(gradient()->addr, gradient()->size, 0x00, gradient()->size);
+  int64_t ret = memset_s(gradient()->addr, gradient()->size, 0x00, gradient()->size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memset_s error, errorno(" << ret << ")";
     return;
@@ -131,7 +131,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   void *src_data = incr_grad_data;
   MS_EXCEPTION_IF_NULL(dst_data);
   MS_EXCEPTION_IF_NULL(src_data);
-  auto ret = memcpy_s(dst_data, dst_size, src_data, src_size);
+  int64_t ret = memcpy_s(dst_data, dst_size, src_data, src_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
@@ -172,7 +172,7 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
   MS_EXCEPTION_IF_NULL(gradient());
   MS_EXCEPTION_IF_NULL(indices());
   size_t indices_size = static_cast<size_t>(indices()->size / sizeof(int));
-  int segment_size = gradient()->size / indices()->size;
+  size_t segment_size = gradient()->size / indices()->size;
 
   std::vector<float> new_grad(indices_size * segment_size);
   std::vector<int> new_indices(indices_size);
@@ -185,8 +185,8 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
   if (input_shapes.size() == 0) {
     MS_LOG(EXCEPTION) << "Invalid input shapes";
   }
-  int first_dim_size = input_shapes.front();
-  int outer_dim_size = segment_size;
+  size_t first_dim_size = input_shapes.front();
+  size_t outer_dim_size = segment_size;
 
   if (first_dim_size == 0 || outer_dim_size == 0) {
     MS_LOG(ERROR) << "Invalid first dim size";
@@ -200,7 +200,7 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
   size_t original_row_count = input_shapes.front();
   if (original_row_count > 0) {
     size_t offset = 0;
-    std::map<int, int> rank_dims = Util::AllRankLocalShard(original_row_count, rank_id, server_num);
+    std::map<int64_t, int64_t> rank_dims = Util::AllRankLocalShard(original_row_count, rank_id, server_num);
     for (size_t i = 0; i < rank_id; i++) {
       if (rank_dims.count(i) == 0) {
         MS_LOG(EXCEPTION) << "No local shard number for rank " << i;
@@ -215,20 +215,15 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
   Util::ReduceSparseGradient(grad_data, indices_data, indices_size, segment_size, first_dim_size, outer_dim_size,
                              &unique_sparse_grad);
 
-  int reduced_grad_size = unique_sparse_grad.indices_size_ * segment_size * sizeof(float);
+  int64_t reduced_grad_size = unique_sparse_grad.indices_size_ * segment_size * sizeof(float);
   MS_EXCEPTION_IF_NULL(unique_sparse_grad.value_);
-  auto ret = memcpy_s(gradient()->addr, gradient()->size, unique_sparse_grad.value_, reduced_grad_size);
+  int64_t ret = memcpy_s(gradient()->addr, gradient()->size, unique_sparse_grad.value_, reduced_grad_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
-  int reduced_indice_size = unique_sparse_grad.indices_size_ * sizeof(int);
+  int64_t reduced_indice_size = unique_sparse_grad.indices_size_ * sizeof(int);
   MS_EXCEPTION_IF_NULL(unique_sparse_grad.indices_);
-  ret = memcpy_s(indices()->addr, indices()->size, unique_sparse_grad.indices_, reduced_indice_size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-    return;
-  }
 
   gradient()->size = reduced_grad_size;
   indices()->size = reduced_indice_size;
@@ -295,7 +290,7 @@ SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const Address
   inputs_.push_back(grad);
   inputs_.push_back(indices);
   grads_offset_ = grad->size / sizeof(float);
-  indices_offset_ = indices->size / sizeof(int);
+  indices_offset_ = indices->size / sizeof(int64_t);
 }
 
 void SparseAdamOptimInfo::Update(const Values &values, const Lengths &lens) {
@@ -339,7 +334,7 @@ SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const Address
   inputs_.push_back(grad);
   inputs_.push_back(indices);
   grads_offset_ = grad->size / sizeof(float);
-  indices_offset_ = indices->size / sizeof(int);
+  indices_offset_ = indices->size / sizeof(int64_t);
 }
 
 const AddressPtr &SparseFtrlOptimInfo::gradient() {

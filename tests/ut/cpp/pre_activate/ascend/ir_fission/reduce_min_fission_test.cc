@@ -36,7 +36,7 @@ class TestHWOptReduceMinFission : public BackendCommon {
 TEST_F(TestHWOptReduceMinFission, test_fission) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_reduce_min_fission", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp{32, 32, 32, 32};
+  std::vector<int64_t> shp{32, 32, 32, 32};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   args_spec_list.push_back(x_abstract);

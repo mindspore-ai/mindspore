@@ -82,7 +82,7 @@ bool Shape::operator==(const BaseShape &other) const {
   return shape_ == static_cast<const Shape &>(other).shape_;
 }
 
-const int Shape::SHP_ANY;
+const int64_t Shape::SHP_ANY;
 void Shape::Broaden() {
   for (size_t i = 0; i < shape_.size(); i++) {
     shape_[i] = SHP_ANY;
@@ -122,7 +122,7 @@ bool SequeueShape::SequeueEqual(const BaseShape &other) const {
   if (other_shapes.size() != p_shapes_.size()) {
     return false;
   }
-  for (unsigned int i = 0; i < p_shapes_.size(); ++i) {
+  for (uint64_t i = 0; i < p_shapes_.size(); ++i) {
     if (!(*p_shapes_[i] == *other_shapes[i])) {
       return false;
     }

@@ -117,7 +117,9 @@ enum ConvBn1Output {
   kMean,
 };
 
-std::vector<int> Convert2Int(const std::vector<size_t> &v);
+std::vector<int64_t> Convert2Int(const std::vector<size_t> &v);
+
+std::vector<int64_t> Convert2Long(const std::vector<size_t> &v);
 
 // check whether node depends on either of nodes or not
 bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes);
@@ -126,12 +128,8 @@ bool UnVisited(const BaseRef &n);
 
 bool Visited(const BaseRef &n);
 
-// check if the input node is CNode, then check it's input_size, if meet condition above, return true, otherwise return
-// false. cnode can only be used when return true.
-bool CheckIfCNodeAndInputSize(const AnfNodePtr &node, int input_size, CNodePtr *cnode);
-
 // check if the input node is CNode, then check it's input_size, return CNodePtr if check success.
-CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, int input_size);
+CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size);
 
 void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_size);
 

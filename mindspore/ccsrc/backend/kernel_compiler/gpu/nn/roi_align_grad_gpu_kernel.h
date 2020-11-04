@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_ROI_ALIGN_GRAD_GPU_KERNEL_H
 
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/roi_align_impl.cuh"
@@ -83,11 +84,13 @@ class ROIAlignGradGpuFwdKernel : public GpuKernel {
     rois_size_ = roi_rows_ * roi_cols_ * sizeof(T);
 
     // Get primitive args
-    xdiff_shape_ = GetAttr<std::vector<int>>(kernel_node, "xdiff_shape");
-    pooled_height_ = GetAttr<int>(kernel_node, "pooled_height");
-    pooled_width_ = GetAttr<int>(kernel_node, "pooled_width");
+    std::vector<int64_t> xdiff_shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "xdiff_shape");
+    (void)std::transform(xdiff_shape_me.begin(), xdiff_shape_me.end(), std::back_inserter(xdiff_shape_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    pooled_height_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pooled_height"));
+    pooled_width_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pooled_width"));
     spatial_scale_ = static_cast<T>(GetAttr<float>(kernel_node, "spatial_scale"));
-    sample_num_ = GetAttr<int>(kernel_node, "sample_num");
+    sample_num_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "sample_num"));
     roi_end_mode_ = 1;
 
     // Get channels, height & width

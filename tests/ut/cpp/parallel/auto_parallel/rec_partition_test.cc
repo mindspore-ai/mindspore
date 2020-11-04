@@ -29,7 +29,7 @@ namespace parallel {
 
 class TestPartition : public UT::Common {
  public:
-  void Create(std::shared_ptr<Graph> graph, int node_num, std::vector<int> edge_head, std::vector<int> edge_tail);
+  void Create(std::shared_ptr<Graph> graph, int node_num, std::vector<int64_t> edge_head, std::vector<int64_t> edge_tail);
   void InitEdge(std::shared_ptr<Graph> graph, int vHead, int vTail);
   void InitNode(std::shared_ptr<Graph> graph, int num_node);
   TensorParam *MakeTensor(int n, int c, int h, int w);
@@ -37,8 +37,8 @@ class TestPartition : public UT::Common {
 };
 
 // Local function to create test input graph with nodes
-void TestPartition::Create(std::shared_ptr<Graph> graph, int node_num, std::vector<int> edge_head,
-                           std::vector<int> edge_tail) {
+void TestPartition::Create(std::shared_ptr<Graph> graph, int node_num, std::vector<int64_t> edge_head,
+                           std::vector<int64_t> edge_tail) {
   TestPartition::InitNode(graph, node_num);
   unsigned int edge_num = edge_head.size();
   if (edge_num != edge_tail.size()) {
@@ -93,8 +93,8 @@ std::shared_ptr<Graph> TestPartition::MakeMatMulData(int numNode) {
     edgeNum = 0;
   };
 
-  std::vector<int> edgeHead(edgeNum);  // int edgeHead[8] = {0,2,4,6,1,3,5,7};
-  std::vector<int> edgeTail(edgeNum);  // int edgeTail[8] = {2,4,6,8,2,4,6,8};
+  std::vector<int64_t> edgeHead(edgeNum);  // int edgeHead[8] = {0,2,4,6,1,3,5,7};
+  std::vector<int64_t> edgeTail(edgeNum);  // int edgeTail[8] = {2,4,6,8,2,4,6,8};
 
   for (int i = 0; i < edgeNum; i++) {
     edgeHead[i] = i;

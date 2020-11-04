@@ -192,7 +192,7 @@ const AbstractBasePtr AbstractSequeue::operator[](const std::size_t &dim) const 
 
 std::string AbstractSequeue::ToString() const {
   std::ostringstream buffer;
-  int i = 0;
+  int64_t i = 0;
   for (const auto &ele : elements_) {
     MS_EXCEPTION_IF_NULL(ele);
     buffer << "element[" << i << "]: " << ele->ToString() << ",";

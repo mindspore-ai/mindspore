@@ -24,10 +24,10 @@ namespace parallel {
 enum TensorType { kInt8, kFloat16, kFloat32, kDouble64 };
 
 struct Shape4D {
-  int32_t shape_n = 1;
-  int32_t shape_c = 1;
-  int32_t shape_h = 1;
-  int32_t shape_w = 1;
+  int64_t shape_n = 1;
+  int64_t shape_c = 1;
+  int64_t shape_h = 1;
+  int64_t shape_w = 1;
 };
 
 struct TensorParam {

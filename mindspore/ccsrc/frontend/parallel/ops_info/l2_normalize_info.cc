@@ -33,13 +33,13 @@ Status L2NormalizeInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   Strategys stra = strategy->GetInputDim();
   Dimensions input_strategy = stra.at(0);
-  int32_t axis_index = axis_;
+  int64_t axis_index = axis_;
   if (axis_ < 0) {
     size_t input_dim = inputs_shape_.at(0).size();
-    axis_index = static_cast<int32_t>(input_dim) + axis_;
+    axis_index = static_cast<int64_t>(input_dim) + axis_;
   }
 
-  if (input_strategy[IntToSize(axis_index)] != 1) {
+  if (input_strategy[LongToSize(axis_index)] != 1) {
     MS_LOG(ERROR) << name_ << " : The dim " << axis_index << " of input strategy must be 1.";
     return FAILED;
   }
@@ -51,10 +51,10 @@ Status L2NormalizeInfo::GetAttrs() {
   auto iter = attrs_.find(AXIS);
   if (iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
-    if (iter->second->isa<Int32Imm>()) {
-      axis_ = iter->second->cast<Int32ImmPtr>()->value();
+    if (iter->second->isa<Int64Imm>()) {
+      axis_ = iter->second->cast<Int64ImmPtr>()->value();
     } else {
-      MS_LOG(ERROR) << name_ << " : The value of axis is not int.";
+      MS_LOG(ERROR) << name_ << " : The value of axis is not int64_t.";
       return FAILED;
     }
   }
@@ -84,16 +84,16 @@ Status L2NormalizeInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-Status L2NormalizeInfo::GenerateStrategies(int32_t stage_id) {
+Status L2NormalizeInfo::GenerateStrategies(int64_t stage_id) {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : GetAttrs failed.";
     return FAILED;
   }
   Shape input0_split(inputs_shape_[0].size() - 1, 1);
-  int32_t axis_index = axis_;
+  int64_t axis_index = axis_;
   if (axis_ < 0) {
     size_t input_dim = inputs_shape_.at(0).size();
-    axis_index = static_cast<int32_t>(input_dim) + axis_;
+    axis_index = static_cast<int64_t>(input_dim) + axis_;
   }
   (void)input0_split.insert(input0_split.begin() + axis_index, 0);
   Shapes splittable_inputs = {input0_split};

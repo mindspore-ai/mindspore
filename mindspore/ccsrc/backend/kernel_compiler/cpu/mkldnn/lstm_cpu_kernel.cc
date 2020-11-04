@@ -76,9 +76,9 @@ void LstmCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
   bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
-  input_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "input_size");
-  hidden_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "hidden_size");
-  num_layers_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "num_layers");
+  input_size_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size"));
+  hidden_size_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size"));
+  num_layers_ = static_cast<int>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers"));
   has_bias_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
   batch_size_ = SizeToInt(src_shape[1]);
   seq_len_ = SizeToInt(src_shape[0]);

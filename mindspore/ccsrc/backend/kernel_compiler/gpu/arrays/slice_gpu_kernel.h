@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <utility>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/slice_impl.cuh"
@@ -106,8 +107,12 @@ class SliceGpuFwdKernel : public GpuKernel {
       MS_LOG(ERROR) << "Input dims is " << input_shape.size() << ", scalar is not supported.";
       return false;
     }
-    size_ = GetAttr<std::vector<int>>(kernel_node, "size");
-    begin_ = GetAttr<std::vector<int>>(kernel_node, "begin");
+    std::vector<int64_t> size_me = GetAttr<std::vector<int64_t>>(kernel_node, "size");
+    std::vector<int64_t> begin_me = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
+    (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     for (size_t i = 0; i < input_shape.size(); i++) {
       if (input_shape[i] <= 0 || size_[i] <= 0) {
         MS_LOG(WARNING) << "Slice output is null.";

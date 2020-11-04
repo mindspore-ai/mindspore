@@ -57,7 +57,7 @@ void TestReduceSumInfo::SetUp() {
 
   Shapes inputs_shape = {{16, 32, 64}};
   Shapes outputs_shape = {{16, 32}};
-  ValuePtr value = MakeValue(-1);
+  ValuePtr value = MakeValue(static_cast<int64_t>(-1));
   ValuePtr value0;
   std::vector<ValuePtr> val = {value0, value};
   ValuePtr keep_dims = MakeValue(false);

@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/cpu/tile_cpu_kernel.h"
+#include <algorithm>
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
@@ -23,7 +24,9 @@ void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   x_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   y_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  multiples_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "multiples");
+  std::vector<int64_t> multiples_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
+  (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
 

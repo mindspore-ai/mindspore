@@ -31,11 +31,11 @@ class TestHWMatmulBiasaddFusion : public BackendCommon {
 TEST_F(TestHWMatmulBiasaddFusion, test_matmul_biasadd_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_matmul_biasadd_fusion", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shpx{1, 3};
+  std::vector<int64_t> shpx{1, 3};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shpx);
-  std::vector<int> shpy{3, 4};
+  std::vector<int64_t> shpy{3, 4};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shpy);
-  std::vector<int> shp_bias{4};
+  std::vector<int64_t> shp_bias{4};
   auto bias_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_bias);
   AbstractBasePtrList args_spec_list;
   args_spec_list.push_back(x_abstract);

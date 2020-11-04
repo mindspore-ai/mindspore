@@ -96,7 +96,7 @@ Status TmpIdentityInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status TmpIdentityInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status TmpIdentityInfo::GenerateStrategies(int32_t stage_id) {
+Status TmpIdentityInfo::GenerateStrategies(int64_t stage_id) {
   if ((inputs_shape_.size() != 1) || (outputs_shape_.size() != 1)) {
     MS_LOG(ERROR) << name_ << ": Inputs shape size or outputs shape size is wrong, " << inputs_shape_.size() << ", "
                   << outputs_shape_.size();

@@ -116,7 +116,7 @@ AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr &node) {
 
   auto ct = dyn_cast<AbstractClass>(dt);
   const auto &cmap = ct->attributes();
-  int count = 0;
+  int64_t count = 0;
   for (auto &item : cmap) {
     if (cons_is_str && item.first == cons_str) {
       break;
@@ -125,7 +125,7 @@ AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr &node) {
   }
 
   auto idx_c = NewValueNode(count);
-  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(count));
+  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(count));
   idx_c->set_abstract(aptr);
 
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, idx_c});
@@ -154,7 +154,7 @@ AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) {
 
   auto ct = dyn_cast<abstract::AbstractDictionary>(dt);
   const auto &cmap = ct->elements();
-  int count = 0;
+  int64_t count = 0;
   for (auto &item : cmap) {
     if (cons_is_str && item.first == cons_str) {
       break;
@@ -163,7 +163,7 @@ AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) {
   }
 
   auto idx_c = NewValueNode(count);
-  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(count));
+  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(count));
   idx_c->set_abstract(aptr);
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, idx_c});
 }
@@ -192,21 +192,21 @@ AnfNodePtr ConvertDictSetItemToTupleSetItem(const CNodePtr &node) {
 
   auto ct = dyn_cast<abstract::AbstractDictionary>(dt);
   const auto &cmap = ct->elements();
-  int count = 0;
+  int64_t count = 0;
   for (auto &item : cmap) {
     if (cons_is_str && item.first == cons_str) {
       break;
     }
     count++;
   }
-  if (IntToSize(count) >= cmap.size()) {
+  if (LongToSize(count) >= cmap.size()) {
     // for dictionary set, if the key does not exist, we should create a new item
     auto tuple_add_op = std::make_shared<prim::TupleAdd>("tuple_add");
     auto tuple_new_item = node->func_graph()->NewCNode({NewValueNode(prim::kPrimMakeTuple), item_value});
     return node->func_graph()->NewCNode({NewValueNode(tuple_add_op), data, tuple_new_item});
   }
   auto idx_c = NewValueNode(count);
-  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(count));
+  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(count));
   idx_c->set_abstract(aptr);
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, idx_c, item_value});
 }
@@ -327,8 +327,8 @@ AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) {
   return inputs[2];
 }
 
-ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr &value_list, int depth) {
-  const int DEPTH_MAX = 5;
+ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr &value_list, int64_t depth) {
+  const int64_t DEPTH_MAX = 5;
   if (depth > DEPTH_MAX) {
     MS_LOG(EXCEPTION) << "List nesting is not allowed more than 5 levels.";
   }
@@ -350,7 +350,7 @@ AnfNodePtr ConvertValueListNodeToValueTupleNode(const ValueNodePtr &node) {
   ValuePtr value = node->value();
   auto value_list = value->cast<ValueListPtr>();
   MS_EXCEPTION_IF_NULL(value_list);
-  int depth = 0;
+  int64_t depth = 0;
   return std::make_shared<ValueNode>(ConvertValueListToValueTuple(value_list, depth));
 }
 
@@ -424,7 +424,7 @@ AnfNodePtr ConvertMakeSparseToMakeTuple(const CNodePtr &node) {
   return node->func_graph()->NewCNode(inputs);
 }
 
-AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node, const int &index) {
+AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node, const int64_t &index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->func_graph());
 
@@ -437,7 +437,7 @@ AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node, const int &i
   AnfNodePtr sparse = inputs[1];
   MS_EXCEPTION_IF_NULL(sparse);
   auto cons_node = NewValueNode(index);
-  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(index));
+  AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(index));
   cons_node->set_abstract(aptr);
 
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), sparse, cons_node});
@@ -559,12 +559,12 @@ static std::vector<AnfNodePtr> ExpandTuplesC(const FuncGraphPtr &graph, const st
       continue;
     }
 
-    int idx = 0;
+    int64_t idx = 0;
     std::vector<AnfNodePtr> new_input;
     auto abs_tuple = dyn_cast<AbstractTuple>(input_abs);
     for (auto &elem : abs_tuple->elements()) {
       auto c_node = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, NewValueNode(idx)});
-      AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(idx));
+      AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(idx));
       c_node->input(2)->set_abstract(aptr);
       c_node->set_abstract(elem);
       new_input.emplace_back(c_node);

@@ -25,6 +25,8 @@
 #include <stack>
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
+
 #include "src/ops/primitive_c.h"
 #include "frontend/operator/ops.h"
 #include "include/errorcode.h"
@@ -233,7 +235,10 @@ int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node
   }
 
   auto type_ptr = TypeIdToType(kDefaultValueSwitchMap[tensor_typeproto.elem_type()]);
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
+  std::vector<int64_t> shape_vector;
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
   node->set_abstract(abstract_tensor);
 
   if (default_para_map_.find(value_proto.name()) != default_para_map_.end()) {
@@ -359,7 +364,11 @@ bool AnfImporterFromProtobuf::ObtainCNodeAttrInTensorForm(const PrimitivePtr &pr
     for (int i = 0; i < attr_tensor.dims_size(); ++i) {
       shape.push_back(attr_tensor.dims(i));
     }
-    tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+    std::vector<int64_t> shape_vector;
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                         [](const int32_t &value) { return static_cast<int64_t>(value); });
+    tensor::TensorPtr tensor_info =
+      std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape_vector);
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
     ret = memcpy_s(tensor_data_buf, tensor_info->Size(), tensor_buf.data(), tensor_buf.size());
     prim->set_attr(attr_name, MakeValue(tensor_info));
@@ -442,7 +451,11 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInTensorForm(const std::string &val
   for (int i = 0; i < attr_tensor.dims_size(); ++i) {
     shape.push_back(attr_tensor.dims(i));
   }
-  tensor::TensorPtr tensor_info = std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape);
+  std::vector<int64_t> shape_vector;
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  tensor::TensorPtr tensor_info =
+    std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape_vector);
   const std::string &tensor_buf = attr_tensor.raw_data();
   auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   auto ret = memcpy_s(tensor_data_buf, tensor_info->Size(), tensor_buf.data(), tensor_buf.size());
@@ -455,7 +468,7 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInTensorForm(const std::string &val
     return false;
   }
   auto type_ptr = TypeIdToType(kDefaultValueSwitchMap[attr_tensor_type]);
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
   new_value_node->set_abstract(abstract_tensor);
   anfnode_build_map_[value_node_name] = new_value_node;
   return true;
@@ -542,13 +555,16 @@ std::unordered_map<std::string, abstract::AbstractTensorPtr> AnfImporterFromProt
   const onnx::AttributeProto &attr_proto) {
   std::unordered_map<std::string, abstract::AbstractTensorPtr> kv;
   for (int i = 0; i < attr_proto.tensors_size(); i++) {
-    std::vector<int> shape_vec;
+    std::vector<int> shape;
     const onnx::TensorProto &attr_tensor = attr_proto.tensors(i);
     for (int j = 0; j < attr_tensor.dims_size(); ++j) {
-      shape_vec.push_back(attr_tensor.dims(j));
+      shape.push_back(attr_tensor.dims(j));
     }
+    std::vector<int64_t> shape_vector;
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                         [](const int32_t &value) { return static_cast<int64_t>(value); });
     auto type_ptr = TypeIdToType(kDefaultValueSwitchMap[attr_tensor.data_type()]);
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vec);
+    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
     kv.insert(std::pair<string, abstract::AbstractTensorPtr>(attr_tensor.name(), abstract_tensor));
   }
   return kv;
@@ -692,8 +708,11 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
     for (int i = 0; i < output_typeproto.tensor_type().shape().dim_size(); ++i) {
       output_shape.push_back(output_typeproto.tensor_type().shape().dim(i).dim_value());
     }
+    std::vector<int64_t> shape_vector;
+    (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(shape_vector),
+                         [](const int32_t &value) { return static_cast<int64_t>(value); });
     auto type_ptr = TypeIdToType(kDefaultValueSwitchMap[output_type]);
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, output_shape);
+    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
     inputs.clear();
     auto primReturn = std::make_unique<schema::PrimitiveT>();
     MS_ASSERT(primReturn != nullptr);

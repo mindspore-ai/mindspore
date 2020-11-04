@@ -49,7 +49,7 @@ TEST_F(TestMatchEngine, Var) {
   VarPtr v3 = std::make_shared<Var>("name");
   ASSERT_TRUE(!(v1 == v2));
   ASSERT_TRUE(v1->matches(v2));
-  ASSERT_TRUE(v1->matches(1));
+  ASSERT_TRUE(v1->matches(static_cast<int64_t>(1)));
   ASSERT_EQ(v3->ToString(), "Var(name)");
   ASSERT_NE(v1->tag(), v2->tag());
 }
@@ -61,6 +61,8 @@ TEST_F(TestMatchEngine, CondVar) {
       v = utils::cast<float>(any);
     } else if (utils::isa<int>(any)) {
       v = utils::cast<int>(any);
+    } else if (utils::isa<int64_t>(any)) {
+      v = utils::cast<int64_t>(any);
     } else {
       return false;
     }
@@ -74,9 +76,9 @@ TEST_F(TestMatchEngine, CondVar) {
 }
 
 TEST_F(TestMatchEngine, Seq) {
-  auto seq = Seq({1, 2, 3});
+  auto seq = Seq({static_cast<int64_t>(1), static_cast<int64_t>(2), static_cast<int64_t>(3)});
   MS_LOG(INFO) << "seq:" << seq.ToString();
-  ASSERT_EQ(seq.ToString(), "vector[Int32Imm value:1, Int32Imm value:2, Int32Imm value:3]");
+  ASSERT_EQ(seq.ToString(), "vector[Int64Imm value:1, Int64Imm value:2, Int64Imm value:3]");
 }
 
 TEST_F(TestMatchEngine, SeqVar) {

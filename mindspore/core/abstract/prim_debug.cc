@@ -29,7 +29,7 @@ AbstractBasePtr InferImplDebug(const AnalysisEnginePtr &, const PrimitivePtr &pr
   CheckArgsSize(op_name, args_spec_list, 1);
   auto tensor_value = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
 
-  int tensor_rank = SizeToInt(tensor_value->shape()->shape().size());
+  int64_t tensor_rank = SizeToLong(tensor_value->shape()->shape().size());
   if (tensor_rank == 0) {
     MS_LOG(EXCEPTION) << op_name << " summary evaluator second arg should be an tensor, but got a scalar, rank is 0";
   }

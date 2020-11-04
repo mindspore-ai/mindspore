@@ -32,9 +32,9 @@ class TestHWOptimizeBatchNorm2BNInfer : public BackendCommon {
 TEST_F(TestHWOptimizeBatchNorm2BNInfer, test_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_batchnorm_to_bninfer", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{32, 64, 112, 112};
+  std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  std::vector<int> shp_y{64};
+  std::vector<int64_t> shp_y{64};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
   AbstractBasePtrList args_spec_list{x_abstract, y_abstract, y_abstract, y_abstract, y_abstract};
   auto fg = GetKernelGraph(g, args_spec_list);
@@ -52,9 +52,9 @@ TEST_F(TestHWOptimizeBatchNorm2BNInfer, test_fusion) {
 TEST_F(TestHWOptimizeBatchNorm2BNInfer, test_no_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_batchnorm_to_bninfer", "no_fusion");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{32, 64, 112, 112};
+  std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  std::vector<int> shp_y{64};
+  std::vector<int64_t> shp_y{64};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
   AbstractBasePtrList args_spec_list{x_abstract, y_abstract, y_abstract, y_abstract, y_abstract};
   auto fg = GetKernelGraph(g, args_spec_list);

@@ -54,7 +54,7 @@ bool GetBatchNormOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, s
     MS_EXCEPTION_IF_NULL(index_node);
     auto value_node = index_node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    int index = GetValue<int>(value_node->value());
+    int index = static_cast<int>(GetValue<int64_t>(value_node->value()));
     if (std::find(kOutputIndex.begin(), kOutputIndex.end(), index) == kOutputIndex.end()) {
       return false;
     }

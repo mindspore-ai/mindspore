@@ -62,9 +62,9 @@ Status BiasAddInfo::InferTensorMap() {
   Dimensions sub_a_strategy = stra.at(0);
   size_t sub_a_strategy_size = sub_a_strategy.size();
   for (size_t i = 0; i < sub_a_strategy_size; ++i) {
-    sub_a_tensor_map.push_back((int32_t)(LAST_INDEX(sub_a_strategy_size) - i));
+    sub_a_tensor_map.push_back((int64_t)(LAST_INDEX(sub_a_strategy_size) - i));
   }
-  sub_b_tensor_map.push_back((int32_t)(LAST_INDEX(sub_a_strategy_size) - 1));
+  sub_b_tensor_map.push_back((int64_t)(LAST_INDEX(sub_a_strategy_size) - 1));
 
   inputs_tensor_map_.push_back(sub_a_tensor_map);
   inputs_tensor_map_.push_back(sub_b_tensor_map);
@@ -178,7 +178,7 @@ Status BiasAddInfo::InferTensorInfo() {
 
 Status BiasAddInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status BiasAddInfo::GenerateStrategies(int32_t stage_id) {
+Status BiasAddInfo::GenerateStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split, input0_split};
 

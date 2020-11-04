@@ -141,7 +141,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {ASSIGN_SUB, OperatorType::kRecElmWiseOp},
   {"AssignAdd", OperatorType::kRecElmWiseOp}};
 
-const TensorParam MakeTensor(int n, int c, int h, int w);
+const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);
 
 Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops, size_t iter_ops);
 

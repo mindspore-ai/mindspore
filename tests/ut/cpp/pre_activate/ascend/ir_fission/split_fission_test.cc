@@ -35,7 +35,7 @@ class TestHWSplitFission : public BackendCommon {
 TEST_F(TestHWSplitFission, test_split_fission_divided_by_3) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_split_fission", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp{512, 3, 1};
+  std::vector<int64_t> shp{512, 3, 1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   args_spec_list.push_back(x_abstract);

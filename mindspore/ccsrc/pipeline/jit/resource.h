@@ -46,7 +46,7 @@ const char kPynativeGraphId[] = "graph_id";
 
 class InferenceResource;
 
-using BuiltInTypeMap = std::unordered_map<int, std::unordered_map<std::string, Any>>;
+using BuiltInTypeMap = std::unordered_map<int64_t, std::unordered_map<std::string, Any>>;
 
 BuiltInTypeMap &GetMethodMap();
 

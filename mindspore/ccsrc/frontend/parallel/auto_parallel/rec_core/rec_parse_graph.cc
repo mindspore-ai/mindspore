@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace parallel {
-const TensorParam MakeTensor(int n, int c, int h, int w) {
+const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w) {
   TensorParam new_tensor;
   new_tensor.tensor_type = kFloat32;
   new_tensor.tensor_shape.shape_n = n;

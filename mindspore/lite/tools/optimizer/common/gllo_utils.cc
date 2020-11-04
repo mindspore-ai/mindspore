@@ -348,7 +348,11 @@ ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, in
   auto bias_parameter = func_graph->add_parameter();
   MS_ASSERT(bias_parameter != nullptr);
   std::vector<int> shape = {kernel_num};
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(weight_tensor->tensor_type()), shape);
+  std::vector<int64_t> shape_vector;
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  auto abstract_tensor =
+    std::make_shared<abstract::AbstractTensor>(TypeIdToType(weight_tensor->tensor_type()), shape_vector);
   bias_parameter->set_abstract(abstract_tensor);
 
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();

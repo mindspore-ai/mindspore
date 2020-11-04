@@ -566,9 +566,9 @@ AnfNodePtr KernelGraph::TransParameterTuple(const AbstractBasePtr &abstract) {
 }
 
 AnfNodePtr KernelGraph::CreatTupleGetItemNode(const AnfNodePtr &node, size_t output_idx) {
-  auto idx = mindspore::NewValueNode(SizeToInt(output_idx));
+  auto idx = mindspore::NewValueNode(SizeToLong(output_idx));
   MS_EXCEPTION_IF_NULL(idx);
-  auto imm = std::make_shared<Int32Imm>(SizeToInt(output_idx));
+  auto imm = std::make_shared<Int64Imm>(SizeToLong(output_idx));
   auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
   idx->set_abstract(abstract_scalar);
   AnfNodePtr tuple_getitem = NewCNode({mindspore::NewValueNode(prim::kPrimTupleGetItem), node, idx});
@@ -788,7 +788,7 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
     std::vector<AnfNodePtr> depend_nodes = {depend_node};
     int depend_mode = 0;
     if (AnfAlgo::HasNodeAttr(kControlDependMode, cnode)) {
-      depend_mode = AnfAlgo::GetNodeAttr<int>(cnode, kControlDependMode);
+      depend_mode = AnfAlgo::GetNodeAttr<int64_t>(cnode, kControlDependMode);
     }
     MS_LOG(DEBUG) << "Prior node[" << prior_node->DebugString() << "], depend node[" << depend_node->DebugString()
                   << "], depend_mode :" << depend_mode << ".";
@@ -1112,8 +1112,7 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
     return;
   }
   // Move specified front node to new node mapping
-  int index = SizeToInt(src_output_idx);
-  auto front_node_iter = front_nodes.find(index);
+  auto front_node_iter = front_nodes.find(src_output_idx);
   if (front_node_iter == front_nodes.end()) {
     MS_LOG(INFO) << "The output " << src_output_idx << " of node " << node->DebugString() << " is not an internal node";
     return;
@@ -1121,7 +1120,7 @@ void KernelGraph::ReplaceInternalOutput(const AnfNodePtr &node, const AnfNodePtr
   auto front_node_pair = front_node_iter->second;
   internal_outputs_to_front_map_[new_node][dst_output_idx] = front_node_pair;
   front_to_internal_outputs_map_[front_node_pair.first] = new_node;
-  front_nodes.erase(index);
+  front_nodes.erase(src_output_idx);
   if (front_nodes.empty()) {
     internal_outputs_to_front_map_.erase(iter);
   }

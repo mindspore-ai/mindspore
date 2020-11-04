@@ -63,7 +63,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
     if (!CheckParam(kernel_node)) {
       return false;
     }
-    axis_ = GetAttr<int>(kernel_node, "axis");
+    axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
       axis_ += SizeToInt(input_shape.size());

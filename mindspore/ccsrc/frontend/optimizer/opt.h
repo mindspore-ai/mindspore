@@ -33,7 +33,7 @@ namespace opt {
 // Define the interaction mode between an Optimize pass and Renormalize pass
 // FORCE_RENORM: if the pass modified the graph then the next Renormalize will be executed
 // CHECK_RENORM: check if the new node is un-typed to decide if the next Renormalize will be executted
-enum RenormAction : int { FORCE_RENORM = 0, CHECK_RENORM };
+enum RenormAction : int64_t { FORCE_RENORM = 0, CHECK_RENORM };
 
 class Substitution {
  public:

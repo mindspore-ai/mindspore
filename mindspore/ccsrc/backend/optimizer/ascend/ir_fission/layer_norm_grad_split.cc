@@ -70,7 +70,7 @@ void LayerNormGradSplit::CreateOutputsOfLayerNormBetaGammaBackprop(
 
   // get device shape of LayerNormGrad's 5th Input, and convert it to attr
   std::vector<size_t> shape_gamma = AnfAlgo::GetPrevNodeOutputInferShape(layer_norm_grad, 4);
-  AnfAlgo::SetNodeAttr(kAttrShapeGamma, MakeValue(opt::Convert2Int(shape_gamma)), layer_norm_beta_gamma_backprop);
+  AnfAlgo::SetNodeAttr(kAttrShapeGamma, MakeValue(opt::Convert2Long(shape_gamma)), layer_norm_beta_gamma_backprop);
 
   CreateMultipleOutputsOfAnfNode(graph, layer_norm_beta_gamma_backprop, kLayerNormBetaGammaBackpropOutputNum,
                                  layer_norm_beta_gamma_backprop_outputs);

@@ -31,9 +31,9 @@ class TestHWFusedBatchNormFusion : public BackendCommon {
 TEST_F(TestHWFusedBatchNormFusion, test_fused_batch_norm_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_fused_batch_norm_fusion", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{32, 64, 112, 112};
+  std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  std::vector<int> shp_y{64};
+  std::vector<int64_t> shp_y{64};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
   AbstractBasePtrList args_spec_list{x_abstract};
   for (size_t i = 0; i < 6; ++i) {
@@ -54,9 +54,9 @@ TEST_F(TestHWFusedBatchNormFusion, test_fused_batch_norm_fusion) {
 TEST_F(TestHWFusedBatchNormFusion, test_fused_batch_norm_mix_precision_fusion0) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_fused_batch_norm_fusion", "before_mix_precision0");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{32, 64, 112, 112};
+  std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  std::vector<int> shp_y{64};
+  std::vector<int64_t> shp_y{64};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
   AbstractBasePtrList args_spec_list{x_abstract};
   for (size_t i = 0; i < 6; ++i) {
@@ -77,9 +77,9 @@ TEST_F(TestHWFusedBatchNormFusion, test_fused_batch_norm_mix_precision_fusion0) 
 TEST_F(TestHWFusedBatchNormFusion, test_fused_batch_norm_mix_precision_fusion1) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_fused_batch_norm_fusion", "before_mix_precision1");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{32, 64, 112, 112};
+  std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  std::vector<int> shp_y{64};
+  std::vector<int64_t> shp_y{64};
   auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
   AbstractBasePtrList args_spec_list{x_abstract};
   for (size_t i = 0; i < 6; ++i) {

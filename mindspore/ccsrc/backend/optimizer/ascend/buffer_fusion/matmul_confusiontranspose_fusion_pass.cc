@@ -37,7 +37,7 @@ void MatmulConfusionTranposeFusionPass::MatchMatmulConfusionTranpose(const CNode
   auto matmul = cnode->input(1);
   MS_EXCEPTION_IF_NULL(matmul);
   if (matmul->isa<CNode>() && AnfAlgo::CheckPrimitiveType(matmul, prim::kPrimMatMul)) {
-    std::vector<int> output_used_num{SizeToInt(manager->node_users()[matmul].size())};
+    std::vector<int64_t> output_used_num{SizeToLong(manager->node_users()[matmul].size())};
     AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), matmul);
     std::unordered_set<AnfNodePtr> record{cnode, matmul};
     candidate_fusion->push_back(record);

@@ -28,14 +28,14 @@ namespace py = pybind11;
 namespace mindspore {
 namespace parse {
 // define the node type
-enum AstMainType : int {
+enum AstMainType : int64_t {
   AST_MAIN_TYPE_STMT = 0,       // ast.Stmt
   AST_MAIN_TYPE_EXPR = 1,       // ast.Expr
   AST_MAIN_TYPE_SLICE = 2,      // ast.Slice
   AST_MAIN_TYPE_UNKNOWN = 0xFF  // Error
 };
 
-enum AstSubType : int {
+enum AstSubType : int64_t {
   AST_SUB_TYPE_AND = 3,        // ast.And
   AST_SUB_TYPE_OR = 4,         // ast.Or
   AST_SUB_TYPE_NAME = 5,       // ast.Name
@@ -111,7 +111,7 @@ const char PYTHON_EXTERN_PARSE_METHOD[] = "__parse_method__";
 const char PYTHON_EXTERN_MINDSPORE_FLAG[] = "_mindspore_flags";
 
 // define the parse constant
-const int MAX_COMPARISON_OPS_SUPPORTED = 1;
+const int64_t MAX_COMPARISON_OPS_SUPPORTED = 1;
 const char CUSTOM_BPROP_NAME[] = "bprop";
 
 // define the Namespace name
@@ -122,7 +122,7 @@ const char RESOLVE_NAMESPACE_NAME_COMMON_OPS[] = "CommonOPS";      // for common
 const char RESOLVE_NAMESPACE_NAME_MODULE[] = "Module";             // fro Module namespace
 
 // define Resolve type
-enum ResolveTypeDef : int {
+enum ResolveTypeDef : int64_t {
   RESOLVE_TYPE_NONE = 0,            // resolve None
   RESOLVE_TYPE_FUNCTION = 1,        // reslove function
   RESOLVE_TYPE_METHOD = 2,          // resolve class method

@@ -48,7 +48,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_fusion) {
    *    return output
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_fusion", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {
@@ -86,7 +86,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_cond1_fusion) {
    *    return output
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_fusion", "before_cond1");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {
@@ -124,7 +124,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_cond2_fusion) {
    *    return output
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_fusion", "before_cond2");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {
@@ -162,7 +162,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_cond3_fusion) {
    *    return output
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_fusion", "before_cond3");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {
@@ -200,7 +200,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_cond4_fusion) {
    *    return output
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_fusion", "before_cond4");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {
@@ -220,7 +220,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_cond4_fusion) {
 
 TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_assign_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_assign_fusion", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {
@@ -240,7 +240,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_assign_fusion) {
 
 TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_assign_cond1_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_assign_fusion", "before_cond1");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {
@@ -260,7 +260,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_assign_cond1_fusion) {
 
 TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_assign_cond2_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_assign_fusion", "before_cond2");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {
@@ -280,7 +280,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_assign_cond2_fusion) {
 
 TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_assign_cond3_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_assign_fusion", "before_cond3");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {
@@ -300,7 +300,7 @@ TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_assign_cond3_fusion) {
 
 TEST_F(TestHWAdamApplyOneFusion, test_adam_apply_one_assign_cond4_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_adam_apply_one_assign_fusion", "before_cond4");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 10; ++i) {

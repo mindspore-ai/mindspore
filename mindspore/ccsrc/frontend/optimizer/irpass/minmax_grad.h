@@ -54,7 +54,7 @@ class MinMaximumGrad : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     Reset();
-    AnfVisitor::Match(prim::kPrimTupleGetItem, {internal::IsOriginMaxMinGrad, IsValueNode<Int32Imm>})(node);
+    AnfVisitor::Match(prim::kPrimTupleGetItem, {internal::IsOriginMaxMinGrad, IsValueNode<Int64Imm>})(node);
     if (grad_ == nullptr || idx_ < 0 || idx_ > 1 || node->func_graph() == nullptr) {
       return nullptr;
     }
@@ -93,7 +93,7 @@ class MinMaximumGrad : public AnfVisitor {
 
   void Visit(const CNodePtr &cnode) override { grad_ = cnode; }
 
-  void Visit(const ValueNodePtr &vnode) override { idx_ = GetValue<int>(vnode->value()); }
+  void Visit(const ValueNodePtr &vnode) override { idx_ = GetValue<int64_t>(vnode->value()); }
 
   void Reset() {
     idx_ = -1;
@@ -101,7 +101,7 @@ class MinMaximumGrad : public AnfVisitor {
   }
 
  private:
-  int idx_{-1};
+  int64_t idx_{-1};
   CNodePtr grad_{nullptr};
 };
 }  // namespace irpass

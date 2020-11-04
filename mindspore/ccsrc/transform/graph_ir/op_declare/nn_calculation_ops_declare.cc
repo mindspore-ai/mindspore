@@ -31,7 +31,7 @@ ATTR_MAP(Conv2D) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())},
+  {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
 };
 OUTPUT_MAP(Conv2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2D, prim::kPrimConv2D->name(), ADPT_DESC(Conv2D))
@@ -45,7 +45,7 @@ ATTR_MAP(Conv2DBackpropInputD) = {
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())},
+  {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
 };
 OUTPUT_MAP(Conv2DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2DBackpropInputD, prim::kPrimConv2DBackpropInput->name(), ADPT_DESC(Conv2DBackpropInputD))
@@ -59,7 +59,7 @@ ATTR_MAP(Conv2DBackpropFilterD) = {
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())},
+  {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
 };
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Conv2DBackpropFilterD, prim::kPrimConv2DBackpropFilter->name(), ADPT_DESC(Conv2DBackpropFilterD))

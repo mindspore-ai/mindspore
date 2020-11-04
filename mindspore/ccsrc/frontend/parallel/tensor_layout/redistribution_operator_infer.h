@@ -31,14 +31,14 @@ namespace parallel {
 using DeviceArrangement = Shape;
 using TensorMap = Shape;
 using TensorShape = Shape;
-using RedistributionOperatorMap = std::unordered_map<uint32_t, int64_t>;
+using RedistributionOperatorMap = std::unordered_map<uint64_t, int64_t>;
 using OperatorR = std::pair<OperatorName, Args>;
 using OperatorC = std::pair<OperatorR, Shape>;
 using OperatorList = std::vector<OperatorC>;
 
 class RedistributionOperatorInfer {
  public:
-  const int NONE = -1;
+  const int64_t NONE = -1;
   explicit RedistributionOperatorInfer(bool construct_op_flag = true)
       : construct_op_flag_(construct_op_flag), is_cost_model_(false) {}
   Status Init(const TensorLayout &tensor_layout, const Map &out_tensor_map, RankList dev_list,

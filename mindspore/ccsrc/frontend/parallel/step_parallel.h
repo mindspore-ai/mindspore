@@ -40,7 +40,7 @@ const int32_t RECURSION_LIMIT = 3;
 
 struct LossNodeInfo {
   bool has_tuple_getitem = false;
-  int dout_index = 0;  // now don't support the sens is a tuple
+  int64_t dout_index = 0;  // now don't support the sens is a tuple
   CNodePtr loss_node = nullptr;
 };
 
@@ -49,15 +49,15 @@ std::string CreateInstanceName(const CNodePtr &node, size_t index);
 void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node);
 
 void InsertRedistribution(const RedistributionOpListPtr &redistribution_oplist_ptr, const CNodePtr &node,
-                          const FuncGraphPtr &func_graph, int pos, const CNodePtr &pre_node);
+                          const FuncGraphPtr &func_graph, int64_t pos, const CNodePtr &pre_node);
 
 TensorLayout GetTensorInLayout(const CNodePtr &pre_node, const PrimitivePtr &pre_prim,
                                const OperatorInfoPtr &distribute_operator_pre);
 
 OperatorInfoPtr GetDistributeOperator(const CNodePtr &node);
 
-void Redistribution(const std::pair<AnfNodePtr, int> &node_pair, const OperatorInfoPtr &distribute_operator,
-                    const CNodePtr &middle_node, int index, TensorRedistribution tensor_redistribution,
+void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const OperatorInfoPtr &distribute_operator,
+                    const CNodePtr &middle_node, int64_t index, TensorRedistribution tensor_redistribution,
                     const CNodePtr &pre_node);
 
 bool StrategyFound(std::unordered_map<std::string, ValuePtr> attrs);
@@ -106,10 +106,10 @@ std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr &node, const 
 std::vector<Shapes> ExtractShape(const CNodePtr &node);
 
 // Find finally sub graph
-std::pair<AnfNodePtr, int> FindSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &parameter);
+std::pair<AnfNodePtr, int64_t> FindSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &parameter);
 
 // Set distribute shape for parameters abstract
-std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int> &res);
+std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int64_t> &res);
 
 // change parameters'shape in resource
 void CoverSliceShape(const FuncGraphPtr &root);
@@ -119,7 +119,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node);
 // Creat parallel operator for primitive node(has strategy)
 void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_training = true);
 
-TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int> &node_pair);
+TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_pair);
 
 std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &node);
 
@@ -135,14 +135,14 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes);
 void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                            const FuncGraphManagerPtr &manager);
 
-std::vector<std::pair<std::string, int>> NodeParameterName(const CNodePtr &node);
+std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node);
 
 void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes);
 
 // main step of Parallel
 bool StepParallel(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer);
 
-int32_t GetTupleGetItemIndex(const CNodePtr &cnode);
+int64_t GetTupleGetItemIndex(const CNodePtr &cnode);
 
 Status ParallelInit();
 

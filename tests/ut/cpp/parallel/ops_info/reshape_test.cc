@@ -58,7 +58,7 @@ void TestReshapeInfo::SetUp() {
 
   Shapes inputs_shape = {{32, 512, 7, 7}};
   Shapes outputs_shape = {{32, 25088}};
-  std::vector<int> axis = {32, 25088};
+  std::vector<int64_t> axis = {32, 25088};
   ValuePtr val0;
   ValuePtr val1 = MakeValue(axis);
   std::vector<ValuePtr> val = {val0, val1};

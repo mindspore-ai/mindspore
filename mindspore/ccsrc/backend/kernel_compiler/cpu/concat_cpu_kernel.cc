@@ -22,12 +22,12 @@ namespace kernel {
 void ConcatCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
 
-  axis_ = AnfAlgo::GetNodeAttr<int>(kernel_node, AXIS);
+  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   auto input_1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (axis_ < 0) {
-    axis_ = axis_ + SizeToInt(input_1_shape.size());
+    axis_ = axis_ + SizeToLong(input_1_shape.size());
   }
-  axis_ += 4 - input_1_shape.size();
+  axis_ += 4 - SizeToLong(input_1_shape.size());
 
   auto input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   for (size_t i = 0; i < input_num; i++) {

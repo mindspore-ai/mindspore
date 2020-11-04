@@ -52,7 +52,7 @@ void TestClean::SetUp() {
   // build the nodes
   AnfNodePtr valuenode_next = NewValueNode(std::string("ms_next"));
   ParameterPtr parameter = std::make_shared<Parameter>(me_graph);
-  AbstractBasePtr para_scalar = std::make_shared<AbstractScalar>(0);
+  AbstractBasePtr para_scalar = std::make_shared<AbstractScalar>(static_cast<int64_t>(0));
   AbstractBasePtr para_list = std::make_shared<AbstractList>(
     AbstractBasePtrList({std::make_shared<AbstractScalar>(kFloat64), std::make_shared<AbstractScalar>(kFloat64)}));
   AbstractBasePtrList para_elem{para_scalar, para_list};

@@ -33,7 +33,7 @@ class TestHWOptimizeLambUpdateWithLRRuleFusion : public BackendCommon {
 TEST_F(TestHWOptimizeLambUpdateWithLRRuleFusion, test_lamb_update_with_lr_rule_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_update_with_lr_rule_fusion", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 9; ++i) {

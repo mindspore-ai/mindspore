@@ -114,16 +114,16 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
     }
 
     if (AnfAlgo::GetCNodeName(anf_node) == kReduceScatterOpName) {
-      int32_t rank_size;
+      int64_t rank_size;
       auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
       MS_EXCEPTION_IF_NULL(primitive);
       if (primitive->GetAttr("rank_size") != nullptr) {
-        rank_size = GetValue<int32_t>(primitive->GetAttr("rank_size"));
+        rank_size = GetValue<int64_t>(primitive->GetAttr("rank_size"));
       } else {
         MS_LOG(ERROR) << "Get rank size failed";
         return false;
       }
-      block_size = input_size / IntToSize(rank_size);
+      block_size = input_size / LongToSize(rank_size);
       total_size = total_size + block_size;
     } else {
       if (AnfAlgo::GetCNodeName(anf_node) == kAllGatherOpName) {
@@ -175,7 +175,7 @@ bool HcomUtil::GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id) {
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (primitive->GetAttr("root_rank") != nullptr) {
-    *root_id = (uint32_t)GetValue<int>(primitive->GetAttr("root_rank"));
+    *root_id = (uint32_t)GetValue<int64_t>(primitive->GetAttr("root_rank"));
   } else {
     MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_ROOT_INDEX fail, not support!";
     return false;

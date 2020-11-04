@@ -114,8 +114,8 @@ bool CanConvertDefaultShapeToNZ(const std::vector<size_t> &shape) {
   return true;
 }
 
-std::vector<int> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, const std::vector<int> &axis) {
-  std::vector<int> frac_nz_axis = axis;
+std::vector<int64_t> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, const std::vector<int64_t> &axis) {
+  std::vector<int64_t> frac_nz_axis = axis;
   auto shape_len = ori_shape.size();
   for (size_t i = 0; i < axis.size(); ++i) {
     auto axis_idx = (frac_nz_axis[i] + shape_len) % shape_len;
@@ -132,7 +132,7 @@ std::vector<int> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, const
   return frac_nz_axis;
 }
 
-std::vector<size_t> GetReducedFracNZShape(const std::vector<size_t> &ori_shape, const std::vector<int> &axis,
+std::vector<size_t> GetReducedFracNZShape(const std::vector<size_t> &ori_shape, const std::vector<int64_t> &axis,
                                           bool keep_dims) {
   std::vector<size_t> result;
   std::set<size_t> positive_idx;
@@ -160,27 +160,31 @@ void UpdateFracNZReduceOp(const CNodePtr &cnode) {
     cnode->set_input(0, new_prim_node);
 
     auto axis_value = new_prim->GetAttr(kAttrAxis);
-    std::vector<int> default_axis;
+    std::vector<int64_t> default_axis;
     if (axis_value->isa<ValueList>()) {
       auto value_list = dyn_cast<ValueList>(axis_value);
       for (const auto &item : value_list->value()) {
-        if (item->isa<Int32Imm>()) {
-          default_axis.push_back(GetValue<int32_t>(item));
+        if (item->isa<Int64Imm>()) {
+          default_axis.push_back(GetValue<int64_t>(item));
+        } else {
+          MS_LOG(EXCEPTION) << "GetValue type should be int64";
         }
       }
     } else if (axis_value->isa<ValueTuple>()) {
       auto value_tuple = dyn_cast<ValueTuple>(axis_value);
       for (const auto &item : value_tuple->value()) {
-        if (item->isa<Int32Imm>()) {
-          default_axis.push_back(GetValue<int32_t>(item));
+        if (item->isa<Int64Imm>()) {
+          default_axis.push_back(GetValue<int64_t>(item));
+        } else {
+          MS_LOG(EXCEPTION) << "GetValue type should be int64";
         }
       }
     } else {
       MS_LOG(ERROR) << "Axis attr type is not correct!";
     }
     auto infer_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
-    std::vector<int> frac_nz_axis = DefaultToFracNZAxis(infer_shape, default_axis);
-    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<std::vector<int>>(frac_nz_axis), cnode);
+    std::vector<int64_t> frac_nz_axis = DefaultToFracNZAxis(infer_shape, default_axis);
+    AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<std::vector<int64_t>>(frac_nz_axis), cnode);
     auto output_shape = AnfAlgo::GetOutputInferShape(cnode, 0);
     if (output_shape.size() == 1) {
       AnfAlgo::SetNodeAttr(kAttrOutputDefault, MakeValue<bool>(true), cnode);

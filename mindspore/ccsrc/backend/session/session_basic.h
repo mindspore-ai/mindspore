@@ -74,7 +74,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   void RunGraphAsync(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   void BuildOp(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
-               const std::vector<int> &tensors_mask);
+               const std::vector<int64_t> &tensors_mask);
   void RunOp(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs);
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
@@ -142,7 +142,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                             VectorRef *outputs) = 0;
   virtual void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                           const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {}
+                           const std::vector<tensor::TensorPtr> &input_tensors,
+                           const std::vector<int64_t> &tensors_mask) {}
   virtual void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                          const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {}
   void RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs);
@@ -163,7 +164,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   // create a single run op graph
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
                                                       const std::vector<tensor::TensorPtr> &input_tensors,
-                                                      const std::vector<int> &tensors_mask);
+                                                      const std::vector<int64_t> &tensors_mask);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
   std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);

@@ -41,14 +41,14 @@ Status SoftmaxCrossEntropyWithLogitsInfo::CheckStrategy(const mindspore::paralle
     return FAILED;
   }
 
-  int32_t axis_index = axis_;
+  int64_t axis_index = axis_;
   if (axis_ < 0) {
     size_t input_dim = inputs_shape_.at(0).size();
-    axis_index = static_cast<int32_t>(input_dim) + axis_;
+    axis_index = static_cast<int64_t>(input_dim) + axis_;
   }
 
-  int64_t input_axis_strategy = input_strategy.at(IntToSize(axis_index));
-  int64_t label_axis_strategy = label_strategy.at(IntToSize(axis_index));
+  int64_t input_axis_strategy = input_strategy.at(LongToSize(axis_index));
+  int64_t label_axis_strategy = label_strategy.at(LongToSize(axis_index));
   // Dimension corresponding to axis is un-splittable
   if ((input_axis_strategy != MIN_SLICE_NUM) && (label_axis_strategy != MIN_SLICE_NUM)) {
     MS_LOG(ERROR) << name_ << " : The strategy corresponding to axis dimension is not 1, input: " << input_axis_strategy
@@ -166,20 +166,20 @@ void SoftmaxCrossEntropyWithLogitsInfo::ReComputeBatchSplitFlagList() {
   }
 }
 
-Status SoftmaxCrossEntropyWithLogitsInfo::GenerateStrategies(int32_t stage_id) {
+Status SoftmaxCrossEntropyWithLogitsInfo::GenerateStrategies(int64_t stage_id) {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : GetAttrs failed.";
     return FAILED;
   }
-  int32_t axis_index = axis_;
+  int64_t axis_index = axis_;
   if (axis_ < 0) {
     size_t input_dim = inputs_shape_[0].size();
-    axis_index = static_cast<int32_t>(input_dim) + axis_;
+    axis_index = static_cast<int64_t>(input_dim) + axis_;
   }
 
   Shape input0_split;
   (void)input0_split.insert(input0_split.begin(), inputs_shape_[0].size(), 1);
-  input0_split[IntToSize(axis_index)] = 0;
+  input0_split[LongToSize(axis_index)] = 0;
   Shapes splittable_inputs = {input0_split, input0_split};
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesWithBroadcast(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {

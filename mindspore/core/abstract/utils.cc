@@ -23,7 +23,6 @@
 #include <memory>
 #include "utils/symbolic.h"
 #include "abstract/param_validator.h"
-#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -200,9 +199,9 @@ TypePtr CheckTypeList(const TypePtr &predicate, const TypePtrList &args_type_lis
   return TypeJoin(args_type_list);
 }
 
-int GetPositiveAxis(int axis_value, size_t increment) {
+int64_t GetPositiveAxis(int64_t axis_value, size_t increment) {
   if (axis_value < 0) {
-    axis_value = axis_value + SizeToInt(increment);
+    axis_value = axis_value + SizeToLong(increment);
   }
 
   if (axis_value < 0) {
@@ -224,9 +223,9 @@ ShapeVector RealBroadcast(const std::string &op, ShapeVector x_shape, ShapeVecto
 
   ShapeVector broadcast_shape;
   for (size_t i = 0; i < std_len; i++) {
-    int x_i = x_shape[i];  // i-th dimension of x
-    int y_i = y_shape[i];  // i-th dimension of y
-    int output_i = 0;      // i-th dimension of the output
+    int64_t x_i = x_shape[i];  // i-th dimension of x
+    int64_t y_i = y_shape[i];  // i-th dimension of y
+    int64_t output_i = 0;      // i-th dimension of the output
     if (x_i == y_i) {
       output_i = x_i;
     } else if (x_i == 1) {
