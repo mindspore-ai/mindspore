@@ -25,11 +25,7 @@
 #include <unordered_map>
 #include <vector>
 #include <nlohmann/json.hpp>
-
-#include "minddata/dataset/core/constants.h"
-#include "minddata/dataset/core/data_type.h"
-#include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/core/tensor_shape.h"
+#include "./securec.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
@@ -181,11 +177,12 @@ class DataHelper {
 
   /// \brief Helper function to copy content of a tensor to buffer
   /// \note This function iterates over the tensor in bytes, since
-  /// \param[in] input The tensor to copy value from
+  /// \param[in] tensor_addr The memory held by a tensor, e.g. tensor->GetBuffer()
+  /// \param[in] tensor_size The amount of data in bytes in tensor_addr, e.g. tensor->SizeInBytes()
   /// \param[out] addr The address to copy tensor data to
   /// \param[in] buffer_size The buffer size of addr
   /// \return The size of the tensor (bytes copied
-  size_t DumpTensor(const std::shared_ptr<Tensor> &input, void *addr, const size_t &buffer_size);
+  size_t DumpData(const unsigned char *tensor_addr, const size_t &tensor_size, void *addr, const size_t &buffer_size);
 
   /// \brief Helper function to delete key in json file
   /// note This function will return okay even if key not found

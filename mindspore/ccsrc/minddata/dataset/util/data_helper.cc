@@ -23,8 +23,6 @@
 #include <sstream>
 #include <nlohmann/json.hpp>
 
-#include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
@@ -122,12 +120,8 @@ Status DataHelper::RemoveKey(const std::string &in_file, const std::string &key,
   return Status::OK();
 }
 
-size_t DataHelper::DumpTensor(const std::shared_ptr<Tensor> &input, void *addr, const size_t &buffer_size) {
-  // get tensor size
-  size_t tensor_size = input->SizeInBytes();
-  // iterate over entire tensor
-  const unsigned char *tensor_addr = input->GetBuffer();
-  // tensor iterator print
+size_t DataHelper::DumpData(const unsigned char *tensor_addr, const size_t &tensor_size, void *addr,
+                            const size_t &buffer_size) {
   // write to address, input order is: destination, source
   errno_t ret = memcpy_s(addr, buffer_size, tensor_addr, tensor_size);
   if (ret != 0) {
