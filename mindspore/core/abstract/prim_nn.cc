@@ -462,5 +462,13 @@ AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, c
   }
   return std::make_shared<AbstractTuple>(elements);
 }
+
+AbstractBasePtr InferImplSGD(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const AbstractBasePtrList &args_spec_list) {
+  CheckArgsSize(primitive->name(), args_spec_list, 6);
+  AbstractBasePtrList elements;
+  elements.push_back(args_spec_list[0]->Clone()->Broaden());
+  return std::make_shared<AbstractTuple>(elements);
+}
 }  // namespace abstract
 }  // namespace mindspore
