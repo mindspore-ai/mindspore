@@ -88,7 +88,7 @@ def classification_dataset(data_dir, image_size, per_batch_size, rank=0, group_s
     Args:
         data_dir (str): Path to the root directory that contains the dataset for "input_mode="folder"".
             Or path of the textfile that contains every image's path of the dataset.
-        image_size (str): Size of the input images.
+        image_size (Union(int, sequence)): Size of the input images.
         per_batch_size (int): the batch size of evey step during training.
         rank (int): The shard ID within num_shards (default=None).
         group_size (int): Number of shards that the dataset should be divided
@@ -107,15 +107,15 @@ def classification_dataset(data_dir, image_size, per_batch_size, rank=0, group_s
             unique index starting from 0).
 
     Examples:
-        >>> from mindvision.common.datasets.classification import classification_dataset
+        >>> from src.dataset import classification_dataset
         >>> # path to imagefolder directory. This directory needs to contain sub-directories which contain the images
-        >>> dataset_dir = "/path/to/imagefolder_directory"
-        >>> de_dataset = classification_dataset(train_data_dir, image_size=[224, 244],
+        >>> data_dir = "/path/to/imagefolder_directory"
+        >>> de_dataset = classification_dataset(data_dir, image_size=[224, 244],
         >>>                               per_batch_size=64, rank=0, group_size=4)
         >>> # Path of the textfile that contains every image's path of the dataset.
-        >>> dataset_dir = "/path/to/dataset/images/train.txt"
+        >>> data_dir = "/path/to/dataset/images/train.txt"
         >>> images_dir = "/path/to/dataset/images"
-        >>> de_dataset = classification_dataset(train_data_dir, image_size=[224, 244],
+        >>> de_dataset = classification_dataset(data_dir, image_size=[224, 244],
         >>>                               per_batch_size=64, rank=0, group_size=4,
         >>>                               input_mode="txt", root=images_dir)
     """
