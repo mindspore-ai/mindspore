@@ -1315,6 +1315,8 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
                                                                   const std::vector<tensor::TensorPtr> &input_tensors,
                                                                   const std::vector<int> &tensors_mask) {
   auto graph = std::make_shared<KernelGraph>();
+  graph->set_graph_id(run_op_graph_id_);
+  run_op_graph_id_++;
   std::vector<AnfNodePtr> inputs;
   // set input[0]
   PrimitivePtr op_prim = op_run_info.primitive;
@@ -1343,9 +1345,12 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   MS_EXCEPTION_IF_NULL(cnode);
   // set abstract,which include inferred shapes and types
   cnode->set_abstract(op_run_info.abstract);
+  // get output dynamic shape info
+  AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(op_run_info.is_dynamic_shape), cnode);
   // set execution order
   std::vector<CNodePtr> exe_order = {cnode};
   graph->set_execution_order(exe_order);
+  graph->UpdateGraphDynamicAttr();
   // set output
   CreateOutputNode(cnode, graph);
   graph->SetInputNodes();

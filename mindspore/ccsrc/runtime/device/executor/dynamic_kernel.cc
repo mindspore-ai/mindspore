@@ -28,7 +28,7 @@ void DynamicKernel::Initialize() {
   MS_LOG(INFO) << "Init Start";
   is_dynamic_shape_ = AnfAlgo::IsDynamicShape(cnode_ptr_);
   if (!is_dynamic_shape_) {
-    MS_LOG(INFO) << "cnode is not dynamic shape:" << cnode_ptr_->fullname_with_scope();
+    MS_LOG(DEBUG) << "cnode is not dynamic shape:" << cnode_ptr_->fullname_with_scope();
     return;
   }
 
@@ -37,7 +37,7 @@ void DynamicKernel::Initialize() {
 
   auto have_depends = AnfAlgo::HasNodeAttr(kDynamicShapeDepends, cnode_ptr_);
   if (!have_depends) {
-    MS_LOG(WARNING) << "No dynamic_shape_depends found";
+    MS_LOG(DEBUG) << "No dynamic_shape_depends found";
     return;
   }
   MS_LOG(INFO) << "Have depends";

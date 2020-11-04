@@ -799,18 +799,38 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
 
 bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
   auto &kernels = graph.execution_order();
-  for (const auto &kernel : kernels) {
-    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-
-    AddressPtrList kernel_inputs;
-    AddressPtrList kernel_workspaces;
-    AddressPtrList kernel_outputs;
-    GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
-    auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
-    if (!ret) {
-      MS_LOG(ERROR) << "Launch kernel failed.";
-      return false;
+  std::vector<DynamicKernelPtr> dynamic_kernel_list;
+  auto iter = graph_dynamic_kernel_map_.find(graph.graph_id());
+  if (iter != graph_dynamic_kernel_map_.end()) {
+    dynamic_kernel_list = iter->second;
+  }
+  if (!dynamic_kernel_list.empty() && dynamic_kernel_list.size() != kernels.size()) {
+    MS_LOG(EXCEPTION) << "The size of dynamic kernels " << dynamic_kernel_list.size()
+                      << " should be equal to the size of kernels " << kernels.size();
+  }
+  for (size_t i = 0; i < kernels.size(); ++i) {
+    if (!dynamic_kernel_list.empty() && dynamic_kernel_list[i] != nullptr &&
+        dynamic_kernel_list[i]->is_dynamic_shape()) {
+      dynamic_kernel_list[i]->InferShape();
+      dynamic_kernel_list[i]->UpdateArgs();
+      dynamic_kernel_list[i]->Execute();
+      if (!SyncStream()) {
+        MS_LOG(ERROR) << "SyncStream failed";
+        return false;
+      }
+      dynamic_kernel_list[i]->PostExecute();
+    } else {
+      auto kernel_mod = AnfAlgo::GetKernelMod(kernels[i]);
+      MS_EXCEPTION_IF_NULL(kernel_mod);
+      AddressPtrList kernel_inputs;
+      AddressPtrList kernel_workspaces;
+      AddressPtrList kernel_outputs;
+      GenLaunchArgs(*kernel_mod, kernels[i], &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+      auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+      if (!ret) {
+        MS_LOG(ERROR) << "Launch kernel failed.";
+        return false;
+      }
     }
   }
   return true;

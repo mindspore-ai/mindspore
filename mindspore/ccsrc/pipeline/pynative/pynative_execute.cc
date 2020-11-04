@@ -758,6 +758,13 @@ py::tuple PynativeExecutor::RunOpInner(const py::args &args) {
     cnode->set_abstract(op_exec_info->abstract);
   }
 
+  // get output dynamic shape info
+  MS_EXCEPTION_IF_NULL(op_exec_info->abstract);
+  auto abstract_info = op_exec_info->abstract->ToString();
+  if (abstract_info.find("-1") != string::npos) {
+    op_exec_info->is_dynamic_shape = true;
+  }
+
   op_exec_info->inputs_mask = op_masks;
   MS_EXCEPTION_IF_NULL(op_exec_info);
   if (op_exec_info->abstract != nullptr) {
@@ -1301,7 +1308,7 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
   // get graph info for checking it whether existing in the cache
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
   session::OpRunInfo op_run_info = {op_exec_info->op_name, op_exec_info->py_primitive, op_exec_info->abstract,
-                                    op_exec_info->value};
+                                    op_exec_info->value, op_exec_info->is_dynamic_shape};
   session->BuildOp(&op_run_info, graph_info, input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, &input_tensors);
   VectorRef outputs;

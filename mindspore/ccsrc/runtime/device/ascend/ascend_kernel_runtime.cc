@@ -358,16 +358,13 @@ bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(cnode);
     MS_LOG(INFO) << "Generate node:" << cnode->fullname_with_scope() << " dynamic kernel";
     auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
     auto dynamic_kernel = kernel_mod->GenDynamicKernel(cnode, stream_);
     MS_EXCEPTION_IF_NULL(dynamic_kernel);
     dynamic_kernel->Initialize();
     dynamic_kernels.emplace_back(dynamic_kernel);
   }
-  auto ret = graph_dynamic_kernel_map_.try_emplace(graph->graph_id(), dynamic_kernels);
-  if (!ret.second) {
-    MS_LOG(ERROR) << "Graph:" << graph->graph_id() << " already generator executor";
-    return false;
-  }
+  graph_dynamic_kernel_map_[graph->graph_id()] = dynamic_kernels;
   MS_LOG(INFO) << "GenDynamicKernel end";
   return true;
 }

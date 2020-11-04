@@ -390,6 +390,8 @@ void AscendSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &gra
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " start!";
   // malloc mem
   RunOpMemoryAlloc(op_run_info.value, input_tensors, graph.get());
+  // Build dynamic kernel
+  BuildDynamicKernel(graph);
   // load input data to device
   LoadInputData(graph, input_tensors);
   // run op
@@ -507,6 +509,17 @@ void AscendSession::BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "KernelBuild run in  " << PRIu64 << " us " << cost;
+  MS_LOG(INFO) << "Finish!";
+}
+
+void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  MS_LOG(INFO) << "Start!";
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  if (!runtime_instance->GenDynamicKernel(kernel_graph.get())) {
+    MS_LOG(DEBUG) << "Graph:" << kernel_graph->graph_id() << " failed to generate dynamic kernel!";
+  }
   MS_LOG(INFO) << "Finish!";
 }
 
