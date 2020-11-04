@@ -176,3 +176,27 @@ def get_bprop_fakequant_with_minmax_per_channel_update(self):
         return zeros_like(x), zeros_like(x_min), zeros_like(x_max)
 
     return bprop
+
+
+@bprop_getters.register(Q.ActsULQ)
+def get_bprop_acts_ulq(self):
+    """Grad definition for 'ActsULQ' operation"""
+    op = Q.ActsULQInputGrad()
+    op1 = Q.ActULQClampMinGrad()
+    op2 = Q.ActULQClampMaxGrad()
+    def bprop(x, clamp_min, clamp_max, out, dout):
+        dx = op(dout[0], out[1], out[2])
+        dx1 = op1(dout[0], out[1], out[3])
+        dx2 = op2(dout[0], out[2], out[3])
+        return (dx, dx1, dx2)
+
+    return bprop
+
+
+@bprop_getters.register(Q.WtsARQ)
+def get_bprop_wts_arq(self):
+    """Grad definition for 'WtsArq' operation"""
+    def bprop(w, w_min, w_max, out, dout):
+        return (dout, zeros_like(w_min), zeros_like(w_max))
+
+    return bprop
