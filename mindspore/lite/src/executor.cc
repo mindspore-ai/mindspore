@@ -43,10 +43,11 @@ int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_
     return ret;
   }
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
+#ifdef SUPPORT_TRAIN
   for (auto out_tensor : out_tensors) {  // increase RefCount of output tensors, such that Run will not free them
     out_tensor->set_ref_count(out_tensor->ref_count() + 1);
   }
-
+#endif
   for (auto *kernel : kernels) {
     MS_ASSERT(nullptr != kernel);
     ret = kernel->PreProcess();
