@@ -32,6 +32,11 @@ if (PLATFORM_ARM32)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
+if ("${X86_64_SIMD}" STREQUAL "sse")
+    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/x86_64_sse/*.c)
+    set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+endif()
+
 ########################### build nnacl static library ########################
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 add_library(nnacl STATIC ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})

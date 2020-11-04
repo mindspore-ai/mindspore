@@ -20,6 +20,7 @@ option(SUPPORT_GPU "if support gpu" off)
 option(OFFLINE_COMPILE "if offline compile OpenCL kernel" off)
 option(BUILD_MINDDATA_EXAMPLE "" on)
 option(ENABLE_VERBOSE "" off)
+option(ENABLE_X86_64_SSE "if x86_64 support SSE instruction set" off)
 
 set(DIR_PREFIX mindspore-lite)
 set(MS_VERSION ${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})
@@ -173,6 +174,12 @@ if (PLATFORM_ARM32 OR PLATFORM_ARM64)
     set(BUILD_MINDDATA "off")
   endif()
 endif()
+
+if (NOT PLATFORM_ARM32 AND NOT PLATFORM_ARM64)
+    if ("${X86_64_SIMD}" STREQUAL "sse")
+        add_compile_definitions(ENABLE_X86_64_SSE)
+    endif ()
+endif ()
 
 if (BUILD_MINDDATA STREQUAL "lite" OR BUILD_MINDDATA STREQUAL "full")
     # add sentencepiece dependency

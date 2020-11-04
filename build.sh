@@ -26,7 +26,7 @@ usage()
   echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-w on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
-  echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] [-k on|off] \\"
+  echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|off] \\"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -65,6 +65,7 @@ usage()
   echo "    -o Enable mindspore lite tools compilation, enabled when -I is specified, default on"
   echo "    -S Enable enable download cmake compile dependency from gitee , default off"
   echo "    -k Enable make clean, clean up compilation generated cache "
+  echo "    -W Enable x86_64 SSE or AVX instruction set, use [sse|avx|neon|off], default off"
 }
 
 # check value of input is 'on' or 'off'
@@ -118,9 +119,10 @@ checkopts()
   ENABLE_GITEE="off"
   ANDROID_STL="c++_shared"
   ENABLE_MAKE_CLEAN="off"
+  X86_64_SIMD="off"
 
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:S:k:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:S:k:W:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -340,6 +342,16 @@ checkopts()
       o)
         check_on_off $OPTARG o
         ENABLE_TOOLS="$OPTARG"
+        ;;
+      W)
+        if [[ "$OPTARG" != "sse" && "$OPTARG" != "off" && "$OPTARG" != "avx" && "$OPTARG" != "neon" ]]; then
+          echo "Invalid value ${OPTARG} for option -W, -W parameter must be sse|neon|avx|off"
+          usage
+          exit 1
+        fi
+        if [[ "$OPTARG" == "sse" || "$OPTARG" == "avx" ]]; then
+          X86_64_SIMD="$OPTARG"
+        fi
         ;;
       *)
         echo "Unknown option ${opt}!"
@@ -702,7 +714,7 @@ build_lite()
         -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
         -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp  \
         -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
-        -DENABLE_VERBOSE=${ENABLE_VERBOSE}  "${BASEPATH}/mindspore/lite"
+        -DENABLE_VERBOSE=${ENABLE_VERBOSE} -DX86_64_SIMD=${X86_64_SIMD} "${BASEPATH}/mindspore/lite"
     fi
     make -j$THREAD_NUM && make install && make package
     COMPILE_RET=$?
