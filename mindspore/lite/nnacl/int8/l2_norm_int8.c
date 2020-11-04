@@ -42,7 +42,7 @@ void GetSqrtQuantMultiplierExp(int32_t input, int reverse_shift, int32_t *multip
                     SaturatingRoundingDoublingHighMul(fp_f3_half_input, tmp3),
                   6, 3);
   }
-  int32_t fp_f0_half_sqrt_2 = 1518500250;  // sqrt(2) / 2
+  const int32_t fp_f0_half_sqrt_2 = 1518500250;  // sqrt(2) / 2
   tmp = SaturatingRoundingDoublingHighMul(tmp, fp_f0_half_sqrt_2);
   *multiplier = tmp;
   if (*shift < 0) {
