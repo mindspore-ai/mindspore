@@ -137,7 +137,7 @@ int Flags::Init(int argc, const char **argv) {
   } else if (this->quantTypeIn.empty()) {
     this->quantType = QuantType_QUANT_NONE;
   } else {
-    std::cerr << "INPUT ILLEGAL: quantType must be AwareTraining|WeightQuant|PostTraining";
+    std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining";
     return RET_INPUT_PARAM_INVALID;
   }
 
