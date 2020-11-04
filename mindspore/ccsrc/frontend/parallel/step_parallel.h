@@ -161,6 +161,8 @@ std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node);
 
 ParameterUsersInfo FindParameterUsers(const AnfNodePtr &node, bool (*IsCareNode)(const CNodePtr &));
 
+bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter);
+
 void ApplyParallelOptOnParam(TensorLayout *tensor_layout, const OperatorInfoPtr &distribute_operator,
                              const CNodePtr &cnode, const AnfNodePtr &parameter, size_t index);
 }  // namespace parallel
