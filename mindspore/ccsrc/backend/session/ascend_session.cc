@@ -170,6 +170,14 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   InsertMakeTupleForOutput(NOT_NULL(root_graph));
   // root root_graph valiate,include genearte execute order and so on
   RootGraphExecutorValidate(NOT_NULL(root_graph));
+  // dump graph before remove nop nodes
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    DumpIRProto(root_graph, "before_removeNop_" + std::to_string(graph_sum_));
+  }
+
   // adjust kernel
   AdjustKernel(root_graph);
 #if ENABLE_CPU && ENABLE_D
