@@ -56,13 +56,10 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
 
 py::tuple RunOp(const py::args &args);
 
-void ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args, py::tuple *const out_args,
-                   py::list *const out_args_list);
-
 void ClearPyNativeSession();
 
 struct GraphInfo {
-  std::unordered_set<std::string> params;  // hold inpout parameters and cell weigths
+  std::unordered_set<std::string> params;  // hold input parameters and cell weigths
   std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int>>> node_map;
   AnfNodePtr output;
   std::vector<std::string> objects;
@@ -78,6 +75,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
     return executor_;
   }
   ~PynativeExecutor();
+  PynativeExecutor(const PynativeExecutor &) = delete;
+  PynativeExecutor &operator=(const PynativeExecutor &) = delete;
 
   bool grad_flag() { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
@@ -100,8 +99,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
  private:
   PynativeExecutor() = default;
-  PynativeExecutor(const PynativeExecutor &) = delete;
-  PynativeExecutor &operator=(const PynativeExecutor &) = delete;
 
   // run op
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
@@ -146,13 +143,13 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // hold graph(forward and grad) info
   void set_pyobj(FuncGraphPtr g, const std::string obj) { graph_info_map_[g].objects.push_back(obj); }
   void set_node_map(const FuncGraphPtr &g, const py::object &node, const AnfNodePtr &cnode, bool is_param = false);
-  void set_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node) {
+  void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node) {
     graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int>{-1});
   }
-  void set_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, int index) {
+  void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node, int index) {
     graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int>{index});
   }
-  void set_node_map(FuncGraphPtr g, const std::string obj, AnfNodePtr node, std::vector<int> index) {
+  void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node, std::vector<int> index) {
     graph_info_map_[g].node_map[obj] = std::make_pair(node, index);
   }
   void set_tuple_node_map(const FuncGraphPtr &g, const py::object &node, const AnfNodePtr &cnode,
