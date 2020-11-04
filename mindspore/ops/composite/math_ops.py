@@ -41,22 +41,22 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     Count number of nonzero elements across axis of input tensor
 
     Args:
-        - **x** (Tensor[Number]) - Input data is used to count non-zero numbers.
-        - **axis** (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Only constant value is allowed.
-                                                         Default: (), reduce all dimensions.
-
-        - **keep_dims** (bool) - If true, keep these reduced dimensions and the length is 1.
-                                 If false, don't keep these dimensions. Default: False.
-        - **dtype** (Union[Number, mstype.bool_]) - The data type of the output tensor. Only constant value is allowed.
-                                                    Default: mstype.int32
+        x (Union(tuple[Tensor], list[Tensor])): Input data is used to count non-zero numbers.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Only constant value is allowed.
+                                                  Default: (), reduce all dimensions.
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
+        dtype (Union[Number, mstype.bool_]): The data type of the output tensor. Only constant value is allowed.
+                                             Default: mstype.int32
 
     Returns:
           Tensor, number of nonzero element. The data type is dtype.
 
     Examples:
-        >>> input_tensor = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
+        >>> input_x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
         >>> nonzero_num = count_nonzero(x=input_x, axis=[0, 1], keep_dims=True, dtype=mstype.int32)
-        nonzero_num: [[3]]
+        >>> print(nonzero_num)
+        [[3]]
     """
 
     const_utils.check_valid_type(F.dtype(x), mstype.number_type, 'input x')
