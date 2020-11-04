@@ -40,6 +40,7 @@ class Conv2D : public PrimitiveC {
   std::vector<int> get_dilation() const;
   std::string get_pad_mode() const;
   std::vector<int> get_pad() const;
+  std::vector<int> get_pad_list() const;
   int get_mode() const;
   int get_group() const;
   int get_output_channel() const;

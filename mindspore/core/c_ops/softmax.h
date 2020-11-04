@@ -32,8 +32,9 @@ class Softmax : public PrimitiveC {
   Softmax() : PrimitiveC(kNameSoftmax) { InitIOName({"x"}, {"output"}); }
   ~Softmax() = default;
   MS_DECLARE_PARENT(Softmax, PrimitiveC);
-  void Init(int axis = 1);
+  void Init(int axis = -1);
   void set_axis(const std::vector<int> &axis);
+  std::vector<int> get_axis() const;
 };
 
 AbstractBasePtr SoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

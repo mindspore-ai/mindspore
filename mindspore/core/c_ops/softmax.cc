@@ -27,6 +27,11 @@
 namespace mindspore {
 void Softmax::set_axis(const std::vector<int> &axis) { this->set_attr(kAxis, MakeValue(axis)); }
 
+std::vector<int> Softmax::get_axis() const {
+  auto value_ptr = GetAttr(kAxis);
+  return GetValue<std::vector<int>>(value_ptr);
+}
+
 void Softmax::Init(int axis) {
   auto op_name = this->name();
   std::vector<int> axis_vec = {axis};
@@ -43,7 +48,12 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto softmax_prim = primitive->cast<PrimSoftmaxPtr>();
   MS_EXCEPTION_IF_NULL(softmax_prim);
   auto op_name = softmax_prim->name();
+  auto axis = softmax_prim->get_axis();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->GetShapeTrack(), op_name);
+  auto rank = in_shape.size();
+  for (auto &item : axis) {
+    CheckAndConvertUtils::CheckInRange("axis", item, kIncludeLeft, {-rank, rank}, op_name);
+  }
   return std::make_shared<abstract::Shape>(in_shape);
 }
 
