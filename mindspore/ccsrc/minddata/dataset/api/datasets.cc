@@ -111,7 +111,7 @@ bool Dataset::DeviceQueue(bool send_epoch_end) {
   Status rc;
 
   // Build and launch tree
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "Failed to init runtime context. Error status: " << rc;
@@ -147,7 +147,7 @@ bool Dataset::Save(std::string dataset_path, int32_t num_files, std::string data
   Status rc;
   // Build and launch tree
   auto ds = shared_from_this();
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "CreateSaver failed." << rc;
@@ -193,7 +193,7 @@ Dataset::Dataset() { tree_getters_ = std::make_shared<TreeGetters>(); }
 int64_t Dataset::GetDatasetSize() {
   int64_t dataset_size;
   Status rc;
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "GetDatasetSize: Initializing RuntimeContext failed.";
@@ -213,7 +213,7 @@ int64_t Dataset::GetDatasetSize() {
 std::vector<DataType> Dataset::GetOutputTypes() {
   std::vector<DataType> types;
   Status rc;
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "GetOutputTypes: Initializing RuntimeContext failed.";
@@ -240,7 +240,7 @@ std::vector<DataType> Dataset::GetOutputTypes() {
 std::vector<TensorShape> Dataset::GetOutputShapes() {
   std::vector<TensorShape> shapes;
   Status rc;
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "GetOutputShapes: Initializing RuntimeContext failed.";
@@ -268,7 +268,7 @@ int64_t Dataset::GetNumClasses() {
   int64_t num_classes;
   auto ds = shared_from_this();
   Status rc;
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "GetNumClasses: Initializing RuntimeContext failed.";
@@ -562,7 +562,7 @@ int64_t Dataset::GetBatchSize() {
   int64_t batch_size;
   auto ds = shared_from_this();
   Status rc;
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "GetBatchSize: Initializing RuntimeContext failed.";
@@ -583,7 +583,7 @@ int64_t Dataset::GetRepeatCount() {
   int64_t repeat_count;
   auto ds = shared_from_this();
   Status rc;
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "GetRepeatCount: Initializing RuntimeContext failed.";
@@ -613,7 +613,7 @@ std::shared_ptr<SentencePieceVocab> Dataset::BuildSentencePieceVocab(
   auto ds = std::make_shared<BuildSentenceVocabNode>(IRNode(), vocab, col_names, vocab_size, character_coverage,
                                                      model_type, params);
 
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   Status rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "BuildSentencePieceVocab: Failed to init runtime context. Error status: " << rc;
@@ -645,7 +645,7 @@ std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &colum
   auto ds =
     std::make_shared<BuildVocabNode>(IRNode(), vocab, columns, freq_range, top_k, special_tokens, special_first);
 
-  std::unique_ptr<RuntimeContext> runtime_context = std::make_unique<RuntimeContext>();
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   Status rc = runtime_context->Init();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "BuildVocab: Failed to init runtime context. Error status: " << rc;

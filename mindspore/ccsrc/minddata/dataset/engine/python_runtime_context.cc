@@ -19,9 +19,24 @@
 
 namespace mindspore::dataset {
 
-Status PythonRuntimeContext::Terminate() {
+Status PythonRuntimeContext::Terminate() { return TerminateImpl(); }
+
+Status PythonRuntimeContext::TerminateImpl() {
+  CHECK_FAIL_RETURN_UNEXPECTED(tree_consumer_ != nullptr, " Tree Consumer is not initialized");
   // Release GIL before joining all threads
   py::gil_scoped_release gil_release;
   return tree_consumer_->Terminate();
+}
+
+PythonRuntimeContext::~PythonRuntimeContext() {
+  TerminateImpl();
+  {
+    py::gil_scoped_acquire gil_acquire;
+    tree_consumer_.reset();
+  }
+}
+
+PythonIteratorConsumer *PythonRuntimeContext::GetPythonConsumer() {
+  return dynamic_cast<PythonIteratorConsumer *>(tree_consumer_.get());
 }
 }  // namespace mindspore::dataset

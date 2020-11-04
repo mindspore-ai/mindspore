@@ -48,7 +48,7 @@ void Iterator::Stop() { runtime_context_->Terminate(); }
 
 // Function to build and launch the execution tree.
 Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
-  runtime_context_ = std::make_unique<RuntimeContext>();
+  runtime_context_ = std::make_unique<NativeRuntimeContext>();
   RETURN_IF_NOT_OK(runtime_context_->Init());
   auto consumer = std::make_unique<IteratorConsumer>();
   consumer_ = consumer.get();
