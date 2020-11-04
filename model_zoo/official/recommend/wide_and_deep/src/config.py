@@ -47,6 +47,7 @@ def argparse_init():
     parser.add_argument("--dataset_type", type=str, default="tfrecord", help="tfrecord/mindrecord/hd5")
     parser.add_argument("--parameter_server", type=int, default=0, help="Open parameter server of not")
     parser.add_argument("--field_slice", type=int, default=0, help="Enable split field mode or not")
+    parser.add_argument("--sparse", type=int, default=0, help="Enable sparse or not")
     return parser
 
 
@@ -84,6 +85,7 @@ class WideDeepConfig():
         self.parameter_server = 0
         self.field_slice = False
         self.manual_shape = None
+        self.sparse = False
 
     def argparse_init(self):
         """
@@ -118,3 +120,6 @@ class WideDeepConfig():
         self.dataset_type = args.dataset_type
         self.parameter_server = args.parameter_server
         self.field_slice = bool(args.field_slice)
+        self.sparse = bool(args.sparse)
+        if self.host_device_mix == 1:
+            self.sparse = True

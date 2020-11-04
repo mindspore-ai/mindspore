@@ -168,13 +168,19 @@ class EmbeddingLookup(Cell):
     TABLE_COLUMN_SLICE = "table_column_slice"
 
     def __init__(self, vocab_size, embedding_size, param_init='normal',
-                 target='CPU', slice_mode='batch_slice', manual_shapes=None, max_norm=None):
+                 target='CPU', slice_mode='batch_slice', manual_shapes=None,
+                 max_norm=None, sparse=True):
         super(EmbeddingLookup, self).__init__()
         self.target = target
         if target not in ('CPU', 'DEVICE'):
             raise ValueError('Attr \'target\' of \'EmbeddingLookup\' Op passed '
                              + str(target) + ', should be one of values in \'CPU\', \'DEVICE\'.')
-        self.gatherv2 = P.GatherV2()
+        if not sparse and target == 'CPU':
+            raise ValueError('When target is CPU, embedding_lookup must be sparse.')
+        if sparse:
+            self.gatherv2 = P.SparseGatherV2()
+        else:
+            self.gatherv2 = P.GatherV2()
         self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
         self.vocab_size = validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
         self.embedding_size = validator.check_value_type('embedding_size', embedding_size, [int], self.cls_name)

@@ -144,6 +144,7 @@ class WideDeepModel(nn.Cell):
         if is_auto_parallel:
             self.batch_size = self.batch_size * get_group_size()
         is_field_slice = config.field_slice
+        sparse = config.sparse
         self.field_size = config.field_size
         self.vocab_size = config.vocab_size
         self.emb_dim = config.emb_dim
@@ -197,13 +198,16 @@ class WideDeepModel(nn.Cell):
         self.tile = P.Tile()
         self.concat = P.Concat(axis=1)
         self.cast = P.Cast()
-        if is_auto_parallel and host_device_mix and not is_field_slice:
+        if is_auto_parallel and sparse and not is_field_slice:
             self.dense_layer_1.dropout.dropout_do_mask.shard(((1, get_group_size()),))
             self.dense_layer_1.dropout.dropout.shard(((1, get_group_size()),))
             self.dense_layer_1.matmul.shard(((1, get_group_size()), (get_group_size(), 1)))
-            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
+            target = 'DEVICE'
+            if host_device_mix:
+                target = 'CPU'
+            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target=target,
                                                            slice_mode=nn.EmbeddingLookup.TABLE_COLUMN_SLICE)
-            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
+            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1, target=target,
                                                            slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE)
             self.deep_mul.shard(((1, 1, get_group_size()), (1, 1, 1)))
             self.deep_reshape.add_prim_attr("skip_redistribution", True)
@@ -231,8 +235,10 @@ class WideDeepModel(nn.Cell):
             self.deep_embeddinglookup.embedding_table.set_param_ps()
             self.wide_embeddinglookup.embedding_table.set_param_ps()
         else:
-            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target='DEVICE')
-            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1, target='DEVICE')
+            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim,
+                                                           target='DEVICE', sparse=sparse)
+            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1,
+                                                           target='DEVICE', sparse=sparse)
             self.embedding_table = self.deep_embeddinglookup.embedding_table
 
     def construct(self, id_hldr, wt_hldr):
@@ -272,9 +278,13 @@ class NetWithLossClass(nn.Cell):
         super(NetWithLossClass, self).__init__(auto_prefix=False)
         host_device_mix = bool(config.host_device_mix)
         parameter_server = bool(config.parameter_server)
+        sparse = config.sparse
         parallel_mode = context.get_auto_parallel_context("parallel_mode")
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
-        self.no_l2loss = (is_auto_parallel if (host_device_mix or config.field_slice) else parameter_server)
+        self.no_l2loss = (is_auto_parallel if (host_device_mix or config.field_slice)
+                          else parameter_server)
+        if sparse:
+            self.no_l2loss = True
         self.network = network
         self.l2_coef = config.l2_coef
         self.loss = P.SigmoidCrossEntropyWithLogits()
@@ -323,7 +333,7 @@ class TrainStepWrap(nn.Cell):
         parameter_server (Bool): Whether run in parameter server mode. Default: False
     """
 
-    def __init__(self, network, sens=1024.0, host_device_mix=False, parameter_server=False):
+    def __init__(self, network, sens=1024.0, host_device_mix=False, parameter_server=False, sparse=False):
         super(TrainStepWrap, self).__init__()
         parallel_mode = context.get_auto_parallel_context("parallel_mode")
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
@@ -340,13 +350,14 @@ class TrainStepWrap(nn.Cell):
         self.weights_w = ParameterTuple(weights_w)
         self.weights_d = ParameterTuple(weights_d)
 
-        if (host_device_mix and is_auto_parallel) or parameter_server:
+        if (sparse and is_auto_parallel) or parameter_server:
             self.optimizer_d = LazyAdam(
                 self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)
             self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
                                     l1=1e-8, l2=1e-8, initial_accum=1.0, loss_scale=sens)
-            self.optimizer_w.target = "CPU"
-            self.optimizer_d.target = "CPU"
+            if host_device_mix or parameter_server:
+                self.optimizer_w.target = "CPU"
+                self.optimizer_d.target = "CPU"
         else:
             self.optimizer_d = Adam(
                 self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)

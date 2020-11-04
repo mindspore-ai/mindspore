@@ -41,7 +41,7 @@ def get_WideDeep_net(config):
     loss_net = NetWithLossClass(WideDeep_net, config)
     loss_net = VirtualDatasetCellTriple(loss_net)
     train_net = TrainStepWrap(
-        loss_net, host_device_mix=bool(config.host_device_mix))
+        loss_net, host_device_mix=bool(config.host_device_mix), sparse=config.sparse)
     eval_net = PredictWithSigmoid(WideDeep_net)
     eval_net = VirtualDatasetCellTriple(eval_net)
     return train_net, eval_net
@@ -84,6 +84,7 @@ def train_and_eval(config):
     else:
         dataset_type = DataType.H5
     host_device_mix = bool(config.host_device_mix)
+    sparse = config.sparse
     print("epochs is {}".format(epochs))
     if config.full_batch:
         context.set_auto_parallel_context(full_batch=True)
@@ -134,7 +135,7 @@ def train_and_eval(config):
     if not host_device_mix:
         callback_list.append(ckpoint_cb)
     model.train(epochs, ds_train, callbacks=callback_list,
-                dataset_sink_mode=(not host_device_mix))
+                dataset_sink_mode=(not sparse))
 
 
 if __name__ == "__main__":
