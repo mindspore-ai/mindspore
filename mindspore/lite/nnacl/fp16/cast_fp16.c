@@ -27,6 +27,18 @@ void Uint8ToFloat16(const uint8_t *input, float16_t *output, int number) {
   }
 }
 
+void Float16ToInt32(const float16_t *input, int32_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int32_t)input[i];
+  }
+}
+
+void Float16ToInt64(const float16_t *input, int64_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int64_t)input[i];
+  }
+}
+
 #ifndef ENABLE_ARM64
 void Float32ToFloat16(const float *input, float16_t *output, int number) {
   for (int i = 0; i < number; ++i) {

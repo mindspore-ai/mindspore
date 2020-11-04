@@ -24,6 +24,8 @@ extern "C" {
 #endif
 void BoolToFloat16(const bool *input, float16_t *output, int number);
 void Uint8ToFloat16(const uint8_t *input, float16_t *output, int number);
+void Float16ToInt32(const float16_t *input, int32_t *output, int number);
+void Float16ToInt64(const float16_t *input, int64_t *output, int number);
 void Float32ToFloat16(const float *input, float16_t *output, int number);
 void Float16ToFloat32(const float16_t *input, float *output, int number);
 #ifdef __cplusplus
