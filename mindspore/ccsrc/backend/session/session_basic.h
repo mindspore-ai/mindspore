@@ -90,7 +90,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   CNodePtr CreateNewCNode(CNodePtr cnode, KernelGraph *graph);
 
   // get graph id in child graphs by ME front anf node pointer
-  virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const { return kInvalidGraphId; }
+  virtual GraphId GetGraphIdByNode(const AnfNodePtr &) const;
   virtual GraphId GetFinalRunGraph() const { return kInvalidGraphId; }
   void CheckPSModeConsistence(const KernelGraphPtr &Kernel_graph);
   void AssignParamKey(const KernelGraphPtr &kernel_graph);

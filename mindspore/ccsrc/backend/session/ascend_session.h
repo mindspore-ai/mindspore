@@ -62,8 +62,6 @@ class AscendSession : public SessionBasic {
     }
   }
 
-  // get graph id in child graphs by ME front anf node pointer
-  GraphId GetGraphIdByNode(const AnfNodePtr &front_anf) const override;
   // get graph id of final graph
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
 
