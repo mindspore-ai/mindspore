@@ -71,7 +71,7 @@ public class PhotoActivity extends AppCompatActivity {
         String result = trackingMobile.MindSpore_runnet(bitmap);
         long endTime = System.currentTimeMillis();
 
-        Log.d(TAG, "RUNNET 耗时："+(endTime-startTime)+"ms");
+        Log.d(TAG, "RUNNET CONSUMING："+(endTime-startTime)+"ms");
         Log.d(TAG, "result："+ result);
 
         recognitionObjectBeanList = getRecognitionList(result);

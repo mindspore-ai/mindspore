@@ -16,9 +16,6 @@ import android.provider.MediaStore;
 import java.io.IOException;
 
 public class ImageDegreeHelper {
-    /**
-     * 专为Android4.4及以上设计的从Uri获取文件绝对路径，以前的方法已不好使
-     */
     @SuppressLint("NewApi")
     public static String getPath(final Context context, final Uri uri) {
 
@@ -136,10 +133,10 @@ public class ImageDegreeHelper {
     }
 
     /**
-     * 读取照片旋转角度
+     * Read photo rotation angle
      *
-     * @param path 照片路径
-     * @return 角度
+     * @param path Photo path
+     * @return angle
      */
     public static int readPictureDegree(String path) {
         int degree = 0;
@@ -166,11 +163,11 @@ public class ImageDegreeHelper {
 
     public static Bitmap rotaingImageView(int angle, Bitmap bitmap) {
         Bitmap returnBm = null;
-        // 根据旋转角度，生成旋转矩阵
+        // According to the rotation angle, the rotation matrix is generated
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
         try {
-            // 将原始图片按照旋转矩阵进行旋转，并得到新的图片
+            // The original image is rotated according to the rotation matrix, and a new image is obtained
             returnBm = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
         } catch (OutOfMemoryError e) {
         }

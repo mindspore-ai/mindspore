@@ -50,7 +50,7 @@ public class SplashActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     /**
-     * 权限申请结果回调
+     * Authority application result callback
      */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {

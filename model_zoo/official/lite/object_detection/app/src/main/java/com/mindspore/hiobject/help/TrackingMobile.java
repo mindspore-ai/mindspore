@@ -35,52 +35,50 @@ public class TrackingMobile {
     }
 
     /**
-     * jni加载模型
+     * JNI loading model
      *
      * @param assetManager assetManager
      * @param buffer buffer
      * @param numThread numThread
-     * @return 加载模型数据
+     * @return Load model data
      */
     public native long loadModel(AssetManager assetManager, ByteBuffer buffer, int numThread);
 
     /**
-     * jni运行模型
+     *  JNI run model
      * 
-     * @param netEnv 加载模型数据
-     * @param img 当前图片
-     * @return 运行模型数据
+     * @param netEnv Load model data
+     * @param img Current picture
+     * @return Run model data
      */
     public native String runNet(long netEnv, Bitmap img);
 
     /**
-     * 解绑模型数据
+     * Unbind model data
      * 
-     * @param netEnv 模型数据
-     * @return 解绑状态
+     * @param netEnv model data
+     * @return Unbound state
      */
     public native boolean unloadModel(long netEnv);
 
     /**
-     * C++侧封装成了MSNetWorks类的方法
+     * C++ Methods encapsulated into the msnetworks class
      * 
-     * @param assetManager 模型文件位置
-     * @return 加载模型文件状态
+     * @param assetManager Model file location
+     * @return Loading model file status
      */
     public boolean loadModelFromBuf(AssetManager assetManager) {
-//        String ModelPath = "model/model_hebing_3branch.ms";
         String ModelPath = "model/ssd.ms";
-
         ByteBuffer buffer = loadModelFile(ModelPath);
         netEnv = loadModel(assetManager, buffer, 2);
         return true;
     }
 
     /**
-     * 运行Mindspore
+     * Run Mindspore
      * 
-     * @param img 当前图片识别
-     * @return 识别出来的文字信息
+     * @param img Current image recognition
+     * @return Recognized text information
      */
     public String MindSpore_runnet(Bitmap img) {
         String ret_str = runNet(netEnv, img);
@@ -88,7 +86,7 @@ public class TrackingMobile {
     }
 
     /**
-     * 解绑模型
+     * Unbound model
      * @return true
      */
     public boolean unloadModel() {
@@ -97,9 +95,9 @@ public class TrackingMobile {
     }
 
     /**
-     * 加载模型文件流
-     * @param modelPath 模型文件路径
-     * @return  加载模型文件流
+     * Load model file stream
+     * @param modelPath Model file path
+     * @return  Load model file stream
      */
     public ByteBuffer loadModelFile(String modelPath) {
         InputStream is = null;

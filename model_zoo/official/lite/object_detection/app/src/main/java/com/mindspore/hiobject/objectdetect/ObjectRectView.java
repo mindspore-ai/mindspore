@@ -16,11 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 针对物体检测的矩形框绘制类
- * <p>
- * 使用的API：
- * 1. Canvas：代表“依附”于指定View的画布，用它的方法来绘制各种图形.
- * 2. Paint：代表Canvas上的画笔，用于设置画笔颜色、画笔粗细、填充风格等.
+ * Rectangle drawing class for object detection
+ *
+ * 1. Canvas：Represents the canvas attached to the specified view and uses its method to draw various graphics
+ * 2. Paint：Represents the brush on canvas and is used to set brush color, brush thickness, fill style, etc
  */
 
 public class ObjectRectView extends View {
@@ -30,7 +29,7 @@ public class ObjectRectView extends View {
     private List<RecognitionObjectBean> mRecognitions = new ArrayList<>();
     private Paint mPaint = null;
 
-    // 画框区域.
+    // Frame area
     private RectF mObjRectF;
 
 
@@ -58,13 +57,13 @@ public class ObjectRectView extends View {
 
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setTextSize(50);
-        //只绘制图形轮廓(描边)
+        //Draw only outline (stroke)
         mPaint.setStyle(Style.STROKE);
         mPaint.setStrokeWidth(5);
     }
 
     /**
-     * 传入需绘制信息
+     * Input information to be drawn
      *
      * @param recognitions
      */
@@ -74,13 +73,11 @@ public class ObjectRectView extends View {
         mRecognitions.clear();
         mRecognitions.addAll(recognitions);
 
-        //重新draw().
         invalidate();
     }
 
     public void clearCanvas(){
         mRecognitions.clear();
-        //重新draw().
         invalidate();
     }
 

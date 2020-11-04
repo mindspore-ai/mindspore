@@ -362,7 +362,6 @@ public class CameraFragment extends Fragment {
 
     @SuppressLint("MissingPermission")
     private void openCamera(int width, int height) {
-        Log.e("AAA","height>>"+height);
         setPreviewSize(width, height, streamConfigurationMap, largest);
         configureTransform(width, height);
 
