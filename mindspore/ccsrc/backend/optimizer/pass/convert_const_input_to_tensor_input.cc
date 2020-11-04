@@ -92,6 +92,9 @@ AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePt
     new_cnode->set_abstract(cnode->abstract());
     new_cnode->set_scope(cnode->scope());
     AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
+    if (kernel_graph != nullptr) {
+      kernel_graph->FrontBackendlMapUpdate(cnode, new_cnode);
+    }
     return new_cnode;
   }
   return nullptr;

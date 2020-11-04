@@ -474,9 +474,6 @@ CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
     FrontBackendlMapUpdate(cnode, new_cnode);
   }
   AnfAlgo::SetGraphId(graph_id_, cnode.get());
-  if (IsInternalOutput(cnode)) {
-    ReplaceInternalOutput(cnode, new_cnode);
-  }
   return new_cnode;
 }
 
@@ -655,6 +652,9 @@ void KernelGraph::FrontBackendlMapUpdate(const AnfNodePtr &old_backend_anf, cons
   }
   if (front_backend_anf_map_.find(backend_front_anf_map_[old_backend_anf]) == front_backend_anf_map_.end()) {
     MS_LOG(EXCEPTION) << "Anf is not exist in the map ,old " << old_backend_anf->DebugString();
+  }
+  if (IsInternalOutput(old_backend_anf)) {
+    ReplaceInternalOutput(old_backend_anf, new_backend_anf);
   }
   front_backend_anf_map_[backend_front_anf_map_[old_backend_anf]] = new_backend_anf;
   backend_front_anf_map_[new_backend_anf] = backend_front_anf_map_[old_backend_anf];
