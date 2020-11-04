@@ -1846,8 +1846,9 @@ void MapClear(T *map, const std::string &flag) {
 void PynativeExecutor::Clear(const std::string &flag) {
   if (!flag.empty()) {
     MS_LOG(DEBUG) << "Clear cell res";
-    MapClear<std::unordered_map<std::string, std::pair<FuncGraphPtr, bool>>>(&cell_graph_map_, flag);
     MapClear<std::unordered_map<std::string, ResourcePtr>>(&cell_resource_map_, flag);
+    MapClear<std::unordered_map<std::string, std::pair<FuncGraphPtr, bool>>>(&cell_graph_map_, flag);
+    MapClear<std::unordered_map<std::string, std::pair<std::string, std::string>>>(&cell_sw_map_, flag);
     MapClear<std::unordered_map<std::string, std::pair<FuncGraphPtr, FuncGraphPtr>>>(&df_builder_map_, flag);
 
     // Maybe exit in the pynative runing op, so need reset pynative flag.
@@ -1886,11 +1887,13 @@ void PynativeExecutor::Clean() {
 
 void PynativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "PynativeExecutor destruct";
+  Clean();
+  cell_sw_map_.clear();
   df_builder_map_.clear();
   cell_graph_map_.clear();
   cell_resource_map_.clear();
   node_abs_map_.clear();
-  Clean();
+  top_graph_cells_.clear();
 }
 
 void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
