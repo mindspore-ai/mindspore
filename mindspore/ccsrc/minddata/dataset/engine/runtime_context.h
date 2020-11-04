@@ -23,8 +23,7 @@
 
 namespace mindspore::dataset {
 class TreeConsumer;
-
-/// Class the represents single runtime instance which can consume data from a data pipeline
+/// Class that represents single runtime instance which can consume data from a data pipeline
 class RuntimeContext {
  public:
   /// Default constructor
@@ -32,11 +31,7 @@ class RuntimeContext {
 
   /// Initialize the runtime, for now we just call the global init
   /// \return Status error code
-  Status Init() { return GlobalInit(); }
-
-  /// Method to terminate the runtime, this will not release the resources
-  /// \return Status error code
-  virtual Status Terminate() { return Status::OK(); }
+  Status Init();
 
   /// Set the tree consumer
   /// \param tree_consumer to be assigned
@@ -44,12 +39,31 @@ class RuntimeContext {
 
   /// Get the tree consumer
   /// \return Raw pointer to the tree consumer.
-  TreeConsumer *GetConsumer() { return tree_consumer_.get(); }
+  TreeConsumer *GetConsumer();
 
-  ~RuntimeContext() { Terminate(); }
+  /// Method to terminate the runtime, this will not release the resources
+  /// \return Status error code
+  virtual Status Terminate() = 0;
+
+  virtual ~RuntimeContext() = default;
 
  protected:
   std::shared_ptr<TreeConsumer> tree_consumer_;
+};
+
+/// Class that represents C++ single runtime instance which can consume data from a data pipeline
+class NativeRuntimeContext : public RuntimeContext {
+ public:
+  /// Method to terminate the runtime, this will not release the resources
+  /// \return Status error code
+  Status Terminate() override;
+
+  ~NativeRuntimeContext() override;
+
+ private:
+  /// Internal function to perform the termination
+  /// \return Status error code
+  Status TerminateImpl();
 };
 
 }  // namespace mindspore::dataset

@@ -24,25 +24,24 @@
 #include "minddata/dataset/engine/runtime_context.h"
 
 namespace mindspore::dataset {
-class RuntimeContext;
+class NativeRuntimeContext;
 
-/// Class that represents single runtime instance which can consume data from a data pipeline
+/// Class that represents Python single runtime instance which can consume data from a data pipeline
 class PythonRuntimeContext : public RuntimeContext {
  public:
   /// Method to terminate the runtime, this will not release the resources
   /// \return Status error code
   Status Terminate() override;
 
-  // Safe destructing the tree that includes python objects
-  ~PythonRuntimeContext() {
-    Terminate();
-    {
-      py::gil_scoped_acquire gil_acquire;
-      tree_consumer_.reset();
-    }
-  }
+  /// Safe destructing the tree that includes python objects
+  ~PythonRuntimeContext() override;
 
-  PythonIteratorConsumer *GetPythonConsumer() { return dynamic_cast<PythonIteratorConsumer *>(tree_consumer_.get()); }
+  PythonIteratorConsumer *GetPythonConsumer();
+
+ private:
+  /// Internal function to perform the termination
+  /// \return Status error code
+  Status TerminateImpl();
 };
 
 }  // namespace mindspore::dataset

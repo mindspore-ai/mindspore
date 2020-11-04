@@ -33,7 +33,7 @@ class DatasetIterator;
 class DatasetOp;
 class Tensor;
 
-class RuntimeContext;
+class NativeRuntimeContext;
 class IteratorConsumer;
 
 class Dataset;
@@ -113,7 +113,7 @@ class Iterator {
   _Iterator end() { return _Iterator(nullptr); }
 
  private:
-  std::unique_ptr<RuntimeContext> runtime_context_;
+  std::unique_ptr<NativeRuntimeContext> runtime_context_;
   IteratorConsumer *consumer_;
 };
 }  // namespace dataset
