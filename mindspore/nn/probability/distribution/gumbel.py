@@ -22,7 +22,7 @@ import mindspore.nn.probability.bijector as msb
 import mindspore.nn.probability.distribution as msd
 from .transformed_distribution import TransformedDistribution
 from ._utils.utils import check_distribution_name
-from ._utils.custom_ops import exp_generic, expm1_generic, log_generic
+from ._utils.custom_ops import exp_generic, log_generic
 
 class Gumbel(TransformedDistribution):
     """
@@ -120,7 +120,7 @@ class Gumbel(TransformedDistribution):
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
         self.exp = exp_generic
-        self.expm1 = expm1_generic
+        self.expm1 = P.Expm1()
         self.fill = P.Fill()
         self.lgamma = nn.LGamma()
         self.log = log_generic

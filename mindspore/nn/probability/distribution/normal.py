@@ -20,7 +20,7 @@ from mindspore._checkparam import Validator
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import check_greater_zero, check_distribution_name
-from ._utils.custom_ops import exp_generic, expm1_generic, log_generic
+from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Normal(Distribution):
@@ -137,7 +137,7 @@ class Normal(Distribution):
 
         # ops needed for the class
         self.exp = exp_generic
-        self.expm1 = expm1_generic
+        self.expm1 = P.Expm1()
         self.log = log_generic
         self.erf = P.Erf()
         self.squeeze = P.Squeeze(0)
