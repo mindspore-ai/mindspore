@@ -28,6 +28,9 @@ ALL_TENSOR = 0
 NO_TENSOR = 1
 CONTAIN_TENSOR = 2
 ALL_SCALAR = 3
+ALL_INT = 4
+NO_INT = 5
+CONTAIN_INT = 6
 
 INT_ = 0
 BOOL_ = 1
@@ -70,6 +73,35 @@ def check_ellipsis_shape_size(data_shape, value_shape, data_size, value_size):
         return True
     raise ValueError("The value(shape={}), can not assign to tensor(shape={}).".format(
         value_shape, data_shape))
+
+
+@constexpr
+def restrict_int_index(data_shape, tuple_indexes):
+    """
+    Check the int index of tuple_indexes if value of index is out of the corresponding data shape
+    and turn the negtive int index to positive int index.
+
+    Inputs:
+        data_shape: the shape of data.
+        tuple_indexes(tuple[mstype.int32]): the tuple of index which will be used in setitem or getitem.
+
+    Outputs:
+        tuple_indexes_new(tuple[mstype.int32]): same purpose with tuple_indexes but only contain positive.
+    """
+    if tuple_indexes is None:
+        return tuple_indexes
+    tuple_indexes_new = ()
+    for i, index in enumerate(tuple_indexes):
+        if isinstance(index, mstype.Int):
+            if index < -data_shape[i] or index >= data_shape[i]:
+                const_utils.raise_index_error("The index is out of the data's special dimension range.")
+            elif index < 0:
+                tuple_indexes_new += (tuple_indexes[i]+data_shape[i],)
+            else:
+                tuple_indexes_new += (tuple_indexes[i],)
+        else:
+            tuple_indexes_new += (tuple_indexes[i],)
+    return tuple_indexes_new
 
 
 @constexpr
@@ -276,17 +308,17 @@ def tuple_element_is_int(indexs):
 
 
 @constexpr
-def tuple_index_elements_type(types, op_name):
-    """Judges the type of all elements of the tuple."""
-    tensors_number = 0
-    for ele in types:
-        if isinstance(ele, mstype.tensor_type):
-            tensors_number += 1
-    if tensors_number == len(types):
-        return ALL_TENSOR
-    if tensors_number == 0:
-        return NO_TENSOR
-    return CONTAIN_TENSOR
+def tuple_index_tensor_cnt(types, op_name):
+    """count the tensor type of types which contains the tuple elements' type."""
+    tensor_cnt = sum(isinstance(ele, mstype.tensor_type) for ele in types)
+    return ALL_TENSOR if tensor_cnt == len(types) else NO_TENSOR if tensor_cnt == 0 else CONTAIN_TENSOR
+
+
+@constexpr
+def tuple_index_int_cnt(types, op_name):
+    """count the int type of types which contains the tuple elements' type."""
+    int_cnt = sum(isinstance(ele, mstype.Int) for ele in types)
+    return ALL_INT if int_cnt == len(types) else NO_INT if int_cnt == 0 else CONTAIN_INT
 
 
 @constexpr
@@ -404,6 +436,12 @@ def compute_new_shape(origin_shape, indexes_shapes_info):
         else:
             new_shape.append(1)
     return tuple(new_shape)
+
+
+@constexpr
+def convert_int_to_slice(tuple_indexes):
+    tuple_indexes_new = tuple(slice(i, i+1, 1) for i in tuple_indexes)
+    return tuple_indexes_new
 
 
 @constexpr
