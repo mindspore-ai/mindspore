@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/fp32/stack.h"
+#include "src/runtime/kernel/arm/fp32/stack_fp32.h"
 
 namespace mindspore::kernel {
 class StackFp16CPUKernel : public StackCPUKernel {

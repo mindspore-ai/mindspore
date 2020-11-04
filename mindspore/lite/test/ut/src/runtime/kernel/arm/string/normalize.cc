@@ -15,7 +15,7 @@
  */
 
 #include <iostream>
-#include "src/runtime/kernel/arm/fp32/skip_gram.h"
+#include "src/runtime/kernel/arm/fp32/skip_gram_fp32.h"
 #include "src/runtime/kernel/arm/string/normalize.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "nnacl/fp32/skip_gram.h"

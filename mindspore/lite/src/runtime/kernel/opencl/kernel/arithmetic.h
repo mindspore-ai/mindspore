@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ARITHMETIC_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/arithmetic.h"
+#include "src/runtime/kernel/arm/fp32/arithmetic_fp32.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {

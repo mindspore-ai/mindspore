@@ -19,7 +19,7 @@
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
-#include "src/runtime/kernel/arm/fp32/reduce.h"
+#include "src/runtime/kernel/arm/fp32/reduce_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

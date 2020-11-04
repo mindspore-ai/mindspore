@@ -15,8 +15,8 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/fp32/l2_norm.h"
-#include "mindspore/lite/src/runtime/kernel/arm/fp32/non_max_suppression.h"
+#include "mindspore/lite/src/runtime/kernel/arm/fp32/l2_norm_fp32.h"
+#include "mindspore/lite/src/runtime/kernel/arm/fp32/non_max_suppression_fp32.h"
 #include "src/kernel_registry.h"
 #include "src/lite_kernel.h"
 using mindspore::schema::Format_NHWC;

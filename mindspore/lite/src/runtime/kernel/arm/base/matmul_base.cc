@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/base/matmul_base.h"
-#include "src/runtime/kernel/arm/fp32/matmul.h"
+#include "src/runtime/kernel/arm/fp32/matmul_fp32.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "include/context.h"

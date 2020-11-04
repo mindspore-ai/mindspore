@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_FUSED_BATCHNORM_FP16_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/fused_batchnorm.h"
+#include "src/runtime/kernel/arm/fp32/fused_batchnorm_fp32.h"
 
 namespace mindspore::kernel {
 class FusedBatchnormFp16CPUKernel : public FusedBatchnormCPUKernel {

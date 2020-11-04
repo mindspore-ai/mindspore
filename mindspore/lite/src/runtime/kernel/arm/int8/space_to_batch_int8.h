@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SPACE_TO_BATCH_INT8_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/space_to_batch.h"
+#include "src/runtime/kernel/arm/fp32/space_to_batch_fp32.h"
 
 namespace mindspore::kernel {
 class SpaceToBatchInt8CPUKernel : public SpaceToBatchCPUKernel {

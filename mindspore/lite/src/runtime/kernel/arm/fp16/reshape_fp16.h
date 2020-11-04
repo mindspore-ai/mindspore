@@ -21,7 +21,7 @@
 #include "src/lite_kernel.h"
 
 #include "include/context.h"
-#include "src/runtime/kernel/arm/fp32/reshape.h"
+#include "src/runtime/kernel/arm/fp32/reshape_fp32.h"
 
 using mindspore::lite::InnerContext;
 

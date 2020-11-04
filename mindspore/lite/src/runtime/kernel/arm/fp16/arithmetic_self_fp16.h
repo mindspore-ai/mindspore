@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_ARITHMETIC_SELF_FP16_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/fp32/arithmetic_self.h"
+#include "src/runtime/kernel/arm/fp32/arithmetic_self_fp32.h"
 
 namespace mindspore::kernel {
 typedef int (*ArithmeticSelfFp16Func)(float16_t *input, float16_t *output, int element_size);
