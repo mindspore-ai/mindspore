@@ -48,7 +48,8 @@ std::string CLErrorCode(cl_int error_code);
 
 int WriteToBin(const std::string &file_path, void *data, size_t size);
 
-void PrintTensor(const lite::Tensor *tensor, OpenCLMemType mem_type, int n = 10, const std::string &out_file = "");
+void PrintTensor(const lite::Tensor *tensor, lite::opencl::MemType mem_type, int n = 10,
+                 const std::string &out_file = "");
 
 void PrintKernelOutput(OpenCLKernel *kernel, int n = 10, const std::string &out_file = "");
 

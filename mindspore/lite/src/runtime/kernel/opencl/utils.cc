@@ -24,6 +24,7 @@
 #include "src/common/file_utils.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::opencl::MemType;
 
 namespace mindspore::lite {
 kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -243,20 +244,20 @@ int WriteToBin(const std::string &file_path, void *data, size_t size) {
   return 0;
 }
 
-void PrintTensor(const lite::Tensor *tensor, OpenCLMemType mem_type, int n, const std::string &out_file) {
+void PrintTensor(const lite::Tensor *tensor, MemType mem_type, int n, const std::string &out_file) {
   if (tensor->data_c() == nullptr) {
     return;
   }
 
   Image2DInfo img_info(tensor);
-  auto size = mem_type == OpenCLMemType::BUF ? img_info.OriginSize : img_info.Image2DSize;
+  auto size = mem_type == MemType::BUF ? img_info.OriginSize : img_info.Image2DSize;
   std::vector<char> data(size);
   auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
   auto runtime = runtime_wrapper.GetInstance();
   auto allocator = runtime->GetAllocator();
   runtime->SyncCommandQueue();
   allocator->MapBuffer(tensor->data_c(), CL_MAP_READ, nullptr, true);
-  if (mem_type == OpenCLMemType::BUF) {
+  if (mem_type == MemType::BUF) {
     memcpy(data.data(), tensor->data_c(), img_info.OriginSize);
   } else {
     auto row_size = img_info.width * img_info.FLT4_size;
@@ -277,7 +278,7 @@ void PrintTensor(const lite::Tensor *tensor, OpenCLMemType mem_type, int n, cons
   }
   printf(") ");
 
-  auto num = mem_type == OpenCLMemType::BUF ? img_info.ElementsNum : img_info.ElementsC4Num;
+  auto num = mem_type == MemType::BUF ? img_info.ElementsNum : img_info.ElementsC4Num;
   for (int i = 0; i < n && i < num; ++i) {
     if (tensor->data_type() == kNumberTypeFloat16) {
       printf("%d %7.3f | ", i, reinterpret_cast<float16_t *>(data.data())[i]);

@@ -42,7 +42,7 @@ int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &ou
     for (auto i = 0; i < cur_outputs.size(); ++i) {
       auto *output = cur_outputs.at(i);
       MS_ASSERT(nullptr != output);
-      if (op_kernel->GetMemType() == kernel::OpenCLMemType::IMG) {
+      if (op_kernel->GetMemType() == lite::opencl::MemType::IMG) {
         std::vector<size_t> img_size;
         op_kernel->GetImageSize(i, &img_size);
         auto data_ptr = allocator_->Malloc(output->Size(), img_size);

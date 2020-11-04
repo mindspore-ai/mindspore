@@ -32,7 +32,7 @@ class ScaleOpenCLKernel : public OpenCLKernel {
 
   int Init() override;
   int Run() override;
-  int InitBuffer() override;
+  int InitWeights() override;
 
  private:
   void Image2dGetWorkGroupSize();

@@ -35,7 +35,7 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
 
-int BiasAddOpenCLKernel::InitBuffer() {
+int BiasAddOpenCLKernel::InitWeights() {
   int C = in_tensors_[1]->shape()[0];
   int div_ci = UP_DIV(C, C4NUM);
   auto allocator = ocl_runtime_->GetAllocator();
@@ -70,7 +70,7 @@ int BiasAddOpenCLKernel::Init() {
     MS_LOG(ERROR) << "BiasAdd weight channel size:" << Bias_Size << " must be equal with in_teneors channel size:" << C;
     return mindspore::lite::RET_ERROR;
   }
-  InitBuffer();
+  InitWeights();
   std::set<std::string> build_options;
   std::string source = biasadd_source;
   std::string program_name = "BiasAdd";

@@ -37,13 +37,21 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::MemType;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 
-int DepthwiseConv2dOpenCLKernel::Init() {
+int DepthwiseConv2dOpenCLKernel::CheckSpecs() {
+  if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+int DepthwiseConv2dOpenCLKernel::Prepare() {
   std::string kernel_name = "DepthwiseConv2d";
-  if (out_mem_type_ == OpenCLMemType::BUF) {
+  if (out_mem_type_ == MemType::BUF) {
     kernel_name += "_BUF";
   } else {
     kernel_name += "_IMG";
@@ -66,14 +74,14 @@ int DepthwiseConv2dOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  InitBuffer();
-  GetGlobalSize(0, &global_size_);
-  GetLocalSize(0, global_size_, &local_size_);
+  InitWeights();
+  SetGlobalLocal();
+  SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(out_mem_type_);
   return mindspore::lite::RET_OK;
 }
 
-int DepthwiseConv2dOpenCLKernel::InitBuffer() {
+int DepthwiseConv2dOpenCLKernel::InitWeights() {
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto allocator = ocl_runtime_->GetAllocator();
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
@@ -138,28 +146,7 @@ int DepthwiseConv2dOpenCLKernel::InitBuffer() {
   }
   return mindspore::lite::RET_OK;
 }
-
-int DepthwiseConv2dOpenCLKernel::GetGlobalSize(size_t idx, std::vector<size_t> *global_size) {
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM * block_size_[2]);
-  std::vector<size_t> global = {CO4, (size_t)UP_DIV(out_tensors_[0]->Width(), block_size_[1]),
-                                (size_t)UP_DIV(out_tensors_[0]->Height(), block_size_[0])};
-  *global_size = std::move(global);
-  return mindspore::lite::RET_OK;
-}
-
-int DepthwiseConv2dOpenCLKernel::GetLocalSize(size_t idx, const std::vector<size_t> &global_size,
-                                              std::vector<size_t> *local_size) {
-  const int max_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
-  int z = global_size[0];
-  int y = std::min(max_group_size / z, GetMaxDivisorStrategy0(global_size[2], 8));
-  int x = std::max(1, std::min(static_cast<int>(global_size[1]), max_group_size / (y * z)));
-  local_size->clear();
-  *local_size = std::vector<size_t>({static_cast<size_t>(z), static_cast<size_t>(x), static_cast<size_t>(y)});
-  return mindspore::lite::RET_OK;
-}
-
-int DepthwiseConv2dOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " Running!";
+void DepthwiseConv2dOpenCLKernel::SetConstArgs() {
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
@@ -174,11 +161,9 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   cl_int4 dst_size = {(cl_int)out_tensors_[0]->Width(), (cl_int)out_tensors_[0]->Height(), (cl_int)CO4,
                       (cl_int)out_tensors_[0]->Batch()};
 
-  int arg_cnt = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
+  int arg_cnt = 2;
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, packed_weight_, lite::opencl::MemType::BUF);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, kernel_size);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, stride);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padding);
@@ -187,31 +172,31 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].first);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].second);
-  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
+}
+void DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
+  // set global
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM * block_size_[2]);
+  std::vector<size_t> global_size = {CO4, (size_t)UP_DIV(out_tensors_[0]->Width(), block_size_[1]),
+                                     (size_t)UP_DIV(out_tensors_[0]->Height(), block_size_[0])};
+  // set local
+  const int max_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
+  int z = global_size[0];
+  int y = std::min(max_group_size / z, GetMaxDivisorStrategy0(global_size[2], 8));
+  int x = std::max(1, std::min(static_cast<int>(global_size[1]), max_group_size / (y * z)));
+  std::vector<size_t> local_size =
+    std::vector<size_t>({static_cast<size_t>(z), static_cast<size_t>(x), static_cast<size_t>(y)});
+
+  OpenCLKernel::AlignGlobalLocal(global_size, local_size);
+}
+
+int DepthwiseConv2dOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->name() << " Running!";
+  ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_[0]->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
   return mindspore::lite::RET_OK;
 }
 
-kernel::LiteKernel *OpenCLDepthwiseConv2dKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                       const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
-                                                       const kernel::KernelKey &desc,
-                                                       const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel =
-    new (std::nothrow) DepthwiseConv2dOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != mindspore::lite::RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init DepthwiseConv2dOpenCLKernel failed!";
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_DepthwiseConv2D, OpenCLDepthwiseConv2dKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DepthwiseConv2D, OpenCLDepthwiseConv2dKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_DepthwiseConv2D, OpenCLKernelCreator<DepthwiseConv2dOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DepthwiseConv2D, OpenCLKernelCreator<DepthwiseConv2dOpenCLKernel>)
 }  // namespace mindspore::kernel

@@ -31,15 +31,13 @@ class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
 
   ~DepthwiseConv2dOpenCLKernel() override = default;
 
-  int Init() override;
-
   int Run() override;
+  int Prepare() override;
 
-  int InitBuffer() override;
-
-  int GetGlobalSize(size_t idx, std::vector<size_t> *global_size) override;
-
-  int GetLocalSize(size_t idx, const std::vector<size_t> &global_size, std::vector<size_t> *local_size) override;
+  int CheckSpecs() override;
+  int InitWeights() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
   void *packed_weight_{nullptr};

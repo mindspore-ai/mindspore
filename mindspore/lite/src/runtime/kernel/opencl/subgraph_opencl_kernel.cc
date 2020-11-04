@@ -24,20 +24,22 @@
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::MemType;
+
 SubGraphOpenCLKernel::~SubGraphOpenCLKernel() { UnInit(); }
 
 int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
   const std::vector<lite::Tensor *> &in_tensors, const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
-  OpenCLMemType mem_type) {
+  MemType mem_type) {
   for (size_t i = 0; i < in_tensors.size(); ++i) {
     for (auto &jv : in_kernels.at(i)) {
-      auto tensors = (mem_type == OpenCLMemType::IMG) ? jv->in_tensors() : jv->out_tensors();
+      auto tensors = (mem_type == MemType::IMG) ? jv->in_tensors() : jv->out_tensors();
       auto ft = std::find_if(tensors.begin(), tensors.end(),
                              [&in_tensors, &i](lite::Tensor *kv) { return kv == in_tensors.at(i); });
       if (ft != tensors.end()) {
         *ft = nullptr;
       }
-      auto kernels = (mem_type == OpenCLMemType::IMG) ? jv->in_kernels() : jv->out_kernels();
+      auto kernels = (mem_type == MemType::IMG) ? jv->in_kernels() : jv->out_kernels();
       std::replace_if(
         kernels.begin(), kernels.end(),
         [this, &in_tensors, &i](kernel::LiteKernel *kv) {
@@ -47,7 +49,7 @@ int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
                  this->nodes_set_.count(kv) == 0;
         },
         nullptr);
-      if (mem_type == OpenCLMemType::IMG) {
+      if (mem_type == MemType::IMG) {
         jv->set_in_tensors(tensors);
         jv->SetInKernel(kernels);
       } else {
@@ -61,25 +63,24 @@ int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
 int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
                                                              const std::vector<kernel::LiteKernel *> &in_kernels,
                                                              lite::Tensor *new_tensor,
-                                                             kernel::LiteKernel *in_convert_op,
-                                                             OpenCLMemType mem_type) {
+                                                             kernel::LiteKernel *in_convert_op, MemType mem_type) {
   auto in_opencl_op = reinterpret_cast<OpenCLKernel *>(in_convert_op);
   for (auto &iv : in_kernels) {
-    auto kernels = (mem_type == OpenCLMemType::IMG) ? iv->in_kernels() : iv->out_kernels();
+    auto kernels = (mem_type == MemType::IMG) ? iv->in_kernels() : iv->out_kernels();
     auto fk = std::find_if(kernels.begin(), kernels.end(), [&](kernel::LiteKernel *kv) { return kv == nullptr; });
     if (fk != kernels.end()) {
       *fk = in_convert_op;
     } else {
       kernels.emplace_back(in_convert_op);
     }
-    auto tensors = (mem_type == OpenCLMemType::IMG) ? iv->in_tensors() : iv->out_tensors();
+    auto tensors = (mem_type == MemType::IMG) ? iv->in_tensors() : iv->out_tensors();
     auto ft = std::find_if(tensors.begin(), tensors.end(), [&](lite::Tensor *kv) { return kv == nullptr; });
     if (ft != tensors.end()) {
       *ft = new_tensor;
     } else {
       tensors.emplace_back(new_tensor);
     }
-    if (mem_type == OpenCLMemType::IMG) {
+    if (mem_type == MemType::IMG) {
       iv->SetInKernel(kernels);
       iv->set_in_tensors(tensors);
       in_opencl_op->AddOutKernel(iv);
@@ -95,22 +96,22 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
                                         const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
                                         std::vector<lite::Tensor *> *out_tensors,
                                         std::vector<OpenCLToFormatParameter *> *out_parameters,
-                                        std::vector<LiteKernel *> *out_convert_ops, OpenCLMemType mem_type) {
+                                        std::vector<LiteKernel *> *out_convert_ops, MemType mem_type) {
   out_tensors->clear();
   out_parameters->clear();
   out_convert_ops->clear();
   MS_ASSERT(in_tensors.size() == to_kernels.size());
   MS_ASSERT(in_tensors.size() == from_kernels.size());
   std::vector<std::vector<kernel::LiteKernel *>> loop_kernels;
-  if (mem_type == OpenCLMemType::BUF) {
+  if (mem_type == MemType::BUF) {
     GetKernelFromToTensor(in_tensors, nodes_, &loop_kernels, true);
   }
 
   ReplaceOutTensorAndKernelToNull(in_tensors, in_kernels, mem_type);
 
   for (size_t i = 0; i < in_tensors.size(); ++i) {
-    auto dst_format = (mem_type == OpenCLMemType::IMG) ? schema::Format::Format_NHWC4 : schema::Format::Format_NHWC;
-    auto src_format = (mem_type == OpenCLMemType::IMG) ? schema::Format::Format_NHWC : schema::Format::Format_NHWC4;
+    auto dst_format = (mem_type == MemType::IMG) ? schema::Format::Format_NHWC4 : schema::Format::Format_NHWC;
+    auto src_format = (mem_type == MemType::IMG) ? schema::Format::Format_NHWC : schema::Format::Format_NHWC4;
     auto *new_tensor = new (std::nothrow) lite::Tensor();
     MS_ASSERT(new_tensor);
     if (new_tensor == nullptr) {
@@ -118,7 +119,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
       return RET_ERROR;
     }
     new_tensor->CopyTensor(*in_tensors[i]);
-    if (mem_type == OpenCLMemType::IMG) {
+    if (mem_type == MemType::IMG) {
       new_tensor->SetFormat(dst_format);
       in_tensors[i]->SetFormat(src_format);
     } else {
@@ -128,7 +129,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
 
     out_tensors->emplace_back(new_tensor);
     KernelKey desc{kGPU, kNumberTypeFloat32, schema::PrimitiveType_ToFormat};
-    if (mem_type == OpenCLMemType::IMG && ocl_runtime_->GetFp16Enable()) {
+    if (mem_type == MemType::IMG && ocl_runtime_->GetFp16Enable()) {
       desc.data_type = kNumberTypeFloat16;
       new_tensor->set_data_type(kNumberTypeFloat16);
     }
@@ -146,7 +147,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
     LiteKernel *in_convert_op = nullptr;
-    if (mem_type == OpenCLMemType::IMG) {
+    if (mem_type == MemType::IMG) {
       in_convert_op = lite::GetOpenCLKernel({in_tensors[i]}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter),
                                             context_, desc);
     } else {
@@ -166,7 +167,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     ReplaceOutTensorAndKernelToConvert(in_tensors.at(i), in_kernels.at(i), new_tensor, in_convert_op, mem_type);
 
     // replace in_tensor of inner kernel which use out tensor
-    if (mem_type == OpenCLMemType::BUF) {
+    if (mem_type == MemType::BUF) {
       for (auto &iv : loop_kernels[i]) {
         auto tensors = iv->in_tensors();
         auto jv = std::find(tensors.begin(), tensors.end(), in_tensors.at(i));
@@ -196,8 +197,8 @@ int SubGraphOpenCLKernel::Init() {
 
   std::vector<std::vector<kernel::LiteKernel *>> from_kernels_;
   GetKernelFromToTensor(in_tensors_, in_nodes_, &from_kernels_, true);
-  int ret = GenToFormatOp(in_tensors_, from_kernels_, &in_convert_tensors_, &in_parameters_, &in_convert_ops_,
-                          OpenCLMemType::IMG);
+  int ret =
+    GenToFormatOp(in_tensors_, from_kernels_, &in_convert_tensors_, &in_parameters_, &in_convert_ops_, MemType::IMG);
   if (ret != RET_OK) {
     return ret;
   }
@@ -205,8 +206,8 @@ int SubGraphOpenCLKernel::Init() {
 
   std::vector<std::vector<kernel::LiteKernel *>> to_kernels_;
   GetKernelFromToTensor(out_tensors_, out_nodes_, &to_kernels_, false);
-  ret = GenToFormatOp(out_tensors_, to_kernels_, &out_convert_tensors_, &out_parameters_, &out_convert_ops_,
-                      OpenCLMemType::BUF);
+  ret =
+    GenToFormatOp(out_tensors_, to_kernels_, &out_convert_tensors_, &out_parameters_, &out_convert_ops_, MemType::BUF);
   if (ret != RET_OK) {
     return ret;
   }
@@ -216,6 +217,11 @@ int SubGraphOpenCLKernel::Init() {
 
   MallocTensorWithReuse();
 
+  ret = SubGraphKernel::Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "OpenCL prepare fail";
+    return ret;
+  }
   return RET_OK;
 }
 
@@ -246,7 +252,7 @@ int SubGraphOpenCLKernel::MallocTensorWithReuse() {
     for (auto i = 0; i < outputs.size(); ++i) {
       auto *output = outputs.at(i);
       MS_ASSERT(nullptr != output);
-      if (op_kernel->GetMemType() == OpenCLMemType::IMG) {
+      if (op_kernel->GetMemType() == MemType::IMG) {
         std::vector<size_t> img_size;
         op_kernel->GetImageSize(i, &img_size);
         auto data_ptr = allocator_->Malloc(output->Size(), img_size);
@@ -326,11 +332,6 @@ int SubGraphOpenCLKernel::Prepare() {
   auto ret = Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "OpenCL subgraph init fail";
-    return ret;
-  }
-  ret = SubGraphKernel::Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "OpenCL prepare fail";
     return ret;
   }
   return RET_OK;

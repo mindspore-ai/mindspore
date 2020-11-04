@@ -30,6 +30,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::MemType;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
@@ -72,7 +73,7 @@ void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
   }
 }
 
-int ArithmeticOpenCLKernel::InitBuffer() {
+int ArithmeticOpenCLKernel::InitWeights() {
   auto fp16_enable = ocl_runtime_->GetFp16Enable();
   auto data_size = fp16_enable ? sizeof(float16_t) : sizeof(float);
   for (auto in_tensor_ : in_tensors_) {
@@ -255,7 +256,7 @@ int ArithmeticOpenCLKernel::Init() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  if (out_mem_type_ == OpenCLMemType::IMG) {
+  if (out_mem_type_ == MemType::IMG) {
     kernel_name += "_IMG";
   } else {
     kernel_name += "_BUF";
@@ -271,7 +272,7 @@ int ArithmeticOpenCLKernel::Init() {
   }
 
   Image2dGetWorkGroupSize();
-  InitBuffer();
+  InitWeights();
   SetArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;

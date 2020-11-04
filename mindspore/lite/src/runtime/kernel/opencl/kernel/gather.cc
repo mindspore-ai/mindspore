@@ -57,7 +57,7 @@ int GatherOpenCLKernel::Init() {
   return RET_OK;
 }
 
-int GatherOpenCLKernel::InitBuffer() {
+int GatherOpenCLKernel::InitWeights() {
   auto indices_tensor = in_tensors_.at(1);
   int indices_num = indices_tensor->ElementsNum();
   bool isIndicesInt32 = indices_tensor->data_type() == kNumberTypeInt32;
@@ -88,7 +88,7 @@ int GatherOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   auto param = reinterpret_cast<GatherParameter *>(this->op_parameter_);
 
-  if (InitBuffer() != RET_OK) {
+  if (InitWeights() != RET_OK) {
     return RET_ERROR;
   }
   auto input_shape = in_tensors_[0]->shape();

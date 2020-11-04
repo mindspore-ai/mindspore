@@ -416,7 +416,39 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
 #endif
   return RET_OK;
 }
+// Run Kernel with 1D, 2D, 3D group size, and local size can be empty.
+int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const cl::NDRange &global, const cl::NDRange &local,
+                             cl::CommandQueue *command_queue) {
+  if (command_queue == nullptr) {
+    command_queue = default_command_queue_;
+  }
+  MS_ASSERT(local.size() == 0 || local.size() == global.size());
 
+  cl::Event event;
+  cl_int ret = CL_SUCCESS;
+  ret = command_queue->enqueueNDRangeKernel(kernel, cl::NullRange, global, local, nullptr, &event);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(ret);
+    return RET_ERROR;
+  }
+  static int cnt = 0;
+  const int flush_period = 10;
+  if (cnt % flush_period == 0) {
+    command_queue->flush();
+  }
+  cnt++;
+  MS_LOG(DEBUG) << "RunKernel success!";
+#if MS_OPENCL_PROFILE
+  event.wait();
+  cl_ulong time_start;
+  cl_ulong time_end;
+  event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+  event.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
+  double nanoSeconds = time_end - time_start;
+  MS_LOG(INFO) << "OpenCl Execution time is: " << nanoSeconds / 1000000.0 << "ms";
+#endif
+  return RET_OK;
+}
 // get gpu divce type
 GpuInfo OpenCLRuntime::ParseGpuInfo(std::string device_name, std::string device_version) {
   GpuInfo info;

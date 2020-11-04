@@ -101,7 +101,7 @@ int ConvolutionOpenCLKernel::Init() {
     winograd_mem1_ = allocator->Malloc(size, {width, height, img_dtype});
   }
 
-  InitBuffer();
+  InitWeights();
 
   MS_LOG(DEBUG) << "Convolution Init Done!";
   return RET_OK;
@@ -236,7 +236,7 @@ int ConvolutionOpenCLKernel::InitBias() {
   return RET_OK;
 }
 
-int ConvolutionOpenCLKernel::InitBuffer() {
+int ConvolutionOpenCLKernel::InitWeights() {
   InitWeight();
   if (has_bias_) {
     InitBias();
@@ -360,10 +360,13 @@ int ConvolutionOpenCLKernel::Run() {
   }
 
   if (use_winograd_) {
-    ocl_runtime_->RunKernel(kernel_4x4to36_, {size_t(TILES_XY_), 6, size_t(CI_SLICES_)}, {8, 6, 4}, nullptr);
-    ocl_runtime_->RunKernel(kernel_conv_, {size_t(UP_DIV(TILES_XY_, 2)), 36, size_t(UP_DIV(CO_SLICES_, 2))}, {8, 6, 2},
-                            nullptr);
-    ocl_runtime_->RunKernel(kernel_36to4x4_, {size_t(TILES_XY_), 4, size_t(CO_SLICES_)}, {32, 4, 2}, nullptr);
+    ocl_runtime_->RunKernel(kernel_4x4to36_, std::vector<size_t>({size_t(TILES_XY_), 6, size_t(CI_SLICES_)}),
+                            std::vector<size_t>({8, 6, 4}), nullptr);
+    ocl_runtime_->RunKernel(kernel_conv_,
+                            std::vector<size_t>({size_t(UP_DIV(TILES_XY_, 2)), 36, size_t(UP_DIV(CO_SLICES_, 2))}),
+                            std::vector<size_t>({8, 6, 2}), nullptr);
+    ocl_runtime_->RunKernel(kernel_36to4x4_, std::vector<size_t>({size_t(TILES_XY_), 4, size_t(CO_SLICES_)}),
+                            std::vector<size_t>({32, 4, 2}), nullptr);
   } else {
     ocl_runtime_->RunKernel(kernel_conv_, global_, local_, nullptr);
   }

@@ -33,7 +33,7 @@ using mindspore::schema::PrimitiveType_PReLU;
 
 namespace mindspore::kernel {
 
-int PReluOpenCLKernel::InitBuffer() {
+int PReluOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto weight_tensor = in_tensors_[1];
   if (weight_is_scalar) {
@@ -110,7 +110,7 @@ int PReluOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 
-  InitBuffer();
+  InitWeights();
   MS_LOG(DEBUG) << program_name << " init Done!";
   return mindspore::lite::RET_OK;
 }

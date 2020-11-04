@@ -61,15 +61,15 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   int MallocTensorWithReuse();
   int ReplaceOutTensorAndKernelToNull(const std::vector<lite::Tensor *> &in_tensors,
                                       const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
-                                      OpenCLMemType mem_type);
+                                      lite::opencl::MemType mem_type);
   int ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
                                          const std::vector<kernel::LiteKernel *> &in_kernels, lite::Tensor *new_tensor,
-                                         kernel::LiteKernel *in_convert_op, OpenCLMemType mem_type);
+                                         kernel::LiteKernel *in_convert_op, lite::opencl::MemType mem_type);
   int GetInOutNodes();
   int GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
                     const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
                     std::vector<lite::Tensor *> *out_tensors, std::vector<OpenCLToFormatParameter *> *out_parameters,
-                    std::vector<LiteKernel *> *out_convert_ops, OpenCLMemType mem_type);
+                    std::vector<LiteKernel *> *out_convert_ops, lite::opencl::MemType mem_type);
   int GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
                             const std::vector<kernel::LiteKernel *> &in_kernels,
                             std::vector<std::vector<kernel::LiteKernel *>> *out_kernels, bool is_from);

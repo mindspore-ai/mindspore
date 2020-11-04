@@ -36,11 +36,11 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
 
   int Init() override;
   int Run() override;
-  int InitBuffer() override;
+  int InitWeights() override;
+  void SetGlobalLocal() override;
 
  private:
   void SetBlockSize();
-  void SetGlobalLocal();
   int InitWeight();
   int InitBias();
   int GenerateWinogradWeight();

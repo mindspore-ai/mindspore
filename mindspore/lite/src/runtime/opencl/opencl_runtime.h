@@ -73,11 +73,12 @@ class OpenCLRuntime {
                                                                                 const T value,
                                                                                 const MemType mem_type = MemType::IMG) {
     switch (mem_type) {
-      case MemType::SVM: {
-        MS_LOG(DEBUG) << "Set kernel arg[" << index << "] SVM pointer " << value;
-        return kernel.setArg(index, value);
-      }
       case MemType::BUF: {
+        auto svm_capabilities = GetSVMCapabilities();
+        if (svm_capabilities) {
+          MS_LOG(DEBUG) << "Set kernel arg[" << index << "] SVM pointer " << value;
+          return kernel.setArg(index, value);
+        }
         cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
         MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
         return kernel.setArg(index, *buffer);
@@ -113,6 +114,8 @@ class OpenCLRuntime {
   int BuildKernel(cl::Kernel &kernel, const std::string &program_name, const std::string &kernel_name,
                   const std::set<std::string> &build_options);
   int RunKernel(const cl::Kernel &kernel, const std::vector<size_t> &global, const std::vector<size_t> &local,
+                cl::CommandQueue *command_queue);  // !!!To be deleted
+  int RunKernel(const cl::Kernel &kernel, const cl::NDRange &global, const cl::NDRange &local,
                 cl::CommandQueue *command_queue);
   bool CopyDeviceMemToHost(void *dst, const void *src, size_t size, cl::CommandQueue *command_queue = nullptr,
                            bool sync = false) const;
