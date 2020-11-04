@@ -22,6 +22,7 @@
 // Kernel image headers (in alphabetical order)
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"
+#include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
 #include "minddata/dataset/kernels/image/center_crop_op.h"
 #endif
 #include "minddata/dataset/kernels/image/crop_op.h"
@@ -57,6 +58,7 @@
 #endif
 #include "minddata/dataset/kernels/image/resize_op.h"
 #ifndef ENABLE_ANDROID
+#include "minddata/dataset/kernels/image/resize_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/rgba_to_bgr_op.h"
 #include "minddata/dataset/kernels/image/rgba_to_rgb_op.h"
 #include "minddata/dataset/kernels/image/swap_red_blue_op.h"
@@ -75,6 +77,17 @@ namespace vision {
 // Function to create AutoContrastOperation.
 std::shared_ptr<AutoContrastOperation> AutoContrast(float cutoff, std::vector<uint32_t> ignore) {
   auto op = std::make_shared<AutoContrastOperation>(cutoff, ignore);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
+// Function to create BoundingBoxAugmentOperation.
+std::shared_ptr<BoundingBoxAugmentOperation> BoundingBoxAugment(std::shared_ptr<TensorOperation> transform,
+                                                                float ratio) {
+  auto op = std::make_shared<BoundingBoxAugmentOperation>(transform, ratio);
   // Input validation
   if (!op->ValidateParams()) {
     return nullptr;
@@ -381,6 +394,16 @@ std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size, Interpolation
 }
 
 #ifndef ENABLE_ANDROID
+// Function to create ResizeWithBBoxOperation.
+std::shared_ptr<ResizeWithBBoxOperation> ResizeWithBBox(std::vector<int32_t> size, InterpolationMode interpolation) {
+  auto op = std::make_shared<ResizeWithBBoxOperation>(size, interpolation);
+  // Input validation
+  if (!op->ValidateParams()) {
+    return nullptr;
+  }
+  return op;
+}
+
 // Function to create RgbaToBgrOperation.
 std::shared_ptr<RgbaToBgrOperation> RGBA2BGR() {
   auto op = std::make_shared<RgbaToBgrOperation>();
@@ -522,6 +545,30 @@ Status AutoContrastOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> AutoContrastOperation::Build() {
   std::shared_ptr<AutoContrastOp> tensor_op = std::make_shared<AutoContrastOp>(cutoff_, ignore_);
+  return tensor_op;
+}
+
+// BoundingBoxAugmentOperation
+BoundingBoxAugmentOperation::BoundingBoxAugmentOperation(std::shared_ptr<TensorOperation> transform, float ratio)
+    : transform_(transform), ratio_(ratio) {}
+
+Status BoundingBoxAugmentOperation::ValidateParams() {
+  if (transform_ == nullptr) {
+    std::string err_msg = "BoundingBoxAugment: transform must not be null.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (ratio_ < 0.0 || ratio_ > 1.0) {
+    std::string err_msg = "BoundingBoxAugment: ratio has to be between 0.0 and 1.0, got: " + std::to_string(ratio_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> BoundingBoxAugmentOperation::Build() {
+  std::shared_ptr<BoundingBoxAugmentOp> tensor_op = std::make_shared<BoundingBoxAugmentOp>(transform_->Build(), ratio_);
   return tensor_op;
 }
 
@@ -1634,6 +1681,35 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
 }
 
 #ifndef ENABLE_ANDROID
+// ResizeWithBBoxOperation
+ResizeWithBBoxOperation::ResizeWithBBoxOperation(std::vector<int32_t> size, InterpolationMode interpolation)
+    : size_(size), interpolation_(interpolation) {}
+
+Status ResizeWithBBoxOperation::ValidateParams() {
+  // size
+  if (size_.empty() || size_.size() > 2) {
+    std::string err_msg =
+      "ResizeWithBBox: size must be a vector of one or two values, got: " + std::to_string(size_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  RETURN_IF_NOT_OK(ValidateVectorPositive("Resize", size_));
+
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> ResizeWithBBoxOperation::Build() {
+  int32_t height = size_[0];
+  int32_t width = 0;
+
+  // User specified the width value.
+  if (size_.size() == 2) {
+    width = size_[1];
+  }
+
+  return std::make_shared<ResizeWithBBoxOp>(height, width, interpolation_);
+}
+
 // RgbaToBgrOperation.
 RgbaToBgrOperation::RgbaToBgrOperation() {}
 

@@ -32,6 +32,7 @@ namespace vision {
 // Transform Op classes (in alphabetical order)
 #ifndef ENABLE_ANDROID
 class AutoContrastOperation;
+class BoundingBoxAugmentOperation;
 class CenterCropOperation;
 #endif
 class CropOperation;
@@ -67,6 +68,7 @@ class RescaleOperation;
 #endif
 class ResizeOperation;
 #ifndef ENABLE_ANDROID
+class ResizeWithBBoxOperation;
 class RgbaToBgrOperation;
 class RgbaToRgbOperation;
 class SwapRedBlueOperation;
@@ -78,6 +80,14 @@ class UniformAugOperation;
 /// \param[in] ignore Pixel values to ignore.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<AutoContrastOperation> AutoContrast(float cutoff = 0.0, std::vector<uint32_t> ignore = {});
+
+/// \brief Function to create a BoundingBoxAugment TensorOperation.
+/// \notes  Apply a given image transform on a random selection of bounding box regions of a given image.
+/// \param[in] transform A TensorOperation transform.
+/// \param[in] ratio Ratio of bounding boxes to apply augmentation on. Range: [0, 1] (default=0.3).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<BoundingBoxAugmentOperation> BoundingBoxAugment(std::shared_ptr<TensorOperation> transform,
+                                                                float ratio = 0.3);
 
 /// \brief Function to create a CenterCrop TensorOperation.
 /// \notes Crops the input image at the center to the given size.
@@ -360,6 +370,16 @@ std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size,
                                         InterpolationMode interpolation = InterpolationMode::kLinear);
 
 #ifndef ENABLE_ANDROID
+/// \brief Function to create a ResizeWithBBox TensorOperation.
+/// \notes Resize the input image to the given size and adjust bounding boxes accordingly.
+/// \param[in] size The output size of the resized image.
+///     If size is an integer, smaller edge of the image will be resized to this value with the same image aspect ratio.
+///     If size is a sequence of length 2, it should be (height, width).
+/// \param[in] interpolation An enum for the mode of interpolation (default=InterpolationMode::kLinear).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<ResizeWithBBoxOperation> ResizeWithBBox(std::vector<int32_t> size,
+                                                        InterpolationMode interpolation = InterpolationMode::kLinear);
+
 /// \brief Function to create a RgbaToBgr TensorOperation.
 /// \notes Changes the input 4 channel RGBA tensor to 3 channel BGR.
 /// \return Shared pointer to the current TensorOperation.
@@ -398,6 +418,21 @@ class AutoContrastOperation : public TensorOperation {
  private:
   float cutoff_;
   std::vector<uint32_t> ignore_;
+};
+
+class BoundingBoxAugmentOperation : public TensorOperation {
+ public:
+  explicit BoundingBoxAugmentOperation(std::shared_ptr<TensorOperation> transform, float ratio = 0.3);
+
+  ~BoundingBoxAugmentOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::shared_ptr<TensorOperation> transform_;
+  float ratio_;
 };
 
 class CenterCropOperation : public TensorOperation {
@@ -829,6 +864,22 @@ class ResizeOperation : public TensorOperation {
 };
 
 #ifndef ENABLE_ANDROID
+class ResizeWithBBoxOperation : public TensorOperation {
+ public:
+  explicit ResizeWithBBoxOperation(std::vector<int32_t> size,
+                                   InterpolationMode interpolation_mode = InterpolationMode::kLinear);
+
+  ~ResizeWithBBoxOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::vector<int32_t> size_;
+  InterpolationMode interpolation_;
+};
+
 class RgbaToBgrOperation : public TensorOperation {
  public:
   RgbaToBgrOperation();

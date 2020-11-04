@@ -137,6 +137,56 @@ TEST_F(MindDataTestPipeline, TestAutoContrastFail) {
   EXPECT_EQ(auto_contrast2, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentSuccess.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> bound_box_augment = vision::BoundingBoxAugment(vision::RandomRotation({90.0}), 1.0);
+  EXPECT_NE(bound_box_augment, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({bound_box_augment}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 3);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentFail with invalid params.";
+  // Testing invalid ratio < 0.0
+  std::shared_ptr<TensorOperation> bound_box_augment = vision::BoundingBoxAugment(vision::RandomRotation({90.0}), -1.0);
+  EXPECT_EQ(bound_box_augment, nullptr);
+  // Testing invalid ratio > 1.0
+  std::shared_ptr<TensorOperation> bound_box_augment1 = vision::BoundingBoxAugment(vision::RandomRotation({90.0}), 2.0);
+  EXPECT_EQ(bound_box_augment1, nullptr);
+  // Testing invalid transform
+  std::shared_ptr<TensorOperation> bound_box_augment2 = vision::BoundingBoxAugment(nullptr, 0.5);
+  EXPECT_EQ(bound_box_augment2, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestCenterCrop) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCenterCrop with single integer input.";
 
@@ -1998,6 +2048,62 @@ TEST_F(MindDataTestPipeline, TestResizeFail) {
   // resize with 3 values
   resize_op = mindspore::dataset::vision::Resize({30, 20, 10});
   EXPECT_EQ(resize_op, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestResizeWithBBoxSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResizeWithBBoxSuccess.";
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> resize_with_bbox_op = vision::ResizeWithBBox({30});
+  EXPECT_NE(resize_with_bbox_op, nullptr);
+
+  std::shared_ptr<TensorOperation> resize_with_bbox_op1 = vision::ResizeWithBBox({30, 30});
+  EXPECT_NE(resize_with_bbox_op1, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({resize_with_bbox_op, resize_with_bbox_op1}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 3);
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestResizeWithBBoxFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResizeWithBBoxFail with invalid parameters.";
+  // Testing negative resize value
+  std::shared_ptr<TensorOperation> resize_with_bbox_op = vision::ResizeWithBBox({10, -10});
+  EXPECT_EQ(resize_with_bbox_op, nullptr);
+  // Testing negative resize value
+  std::shared_ptr<TensorOperation> resize_with_bbox_op1 = vision::ResizeWithBBox({-10});
+  EXPECT_EQ(resize_with_bbox_op1, nullptr);
+  // Testinig zero resize value
+  std::shared_ptr<TensorOperation> resize_with_bbox_op2 = vision::ResizeWithBBox({0, 10});
+  EXPECT_EQ(resize_with_bbox_op2, nullptr);
+  // Testing resize with 3 values
+  std::shared_ptr<TensorOperation> resize_with_bbox_op3 = vision::ResizeWithBBox({10, 10, 10});
+  EXPECT_EQ(resize_with_bbox_op3, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxSuccess) {
