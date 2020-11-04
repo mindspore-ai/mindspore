@@ -5815,7 +5815,7 @@ class LRN(PrimitiveWithInfer):
         return x_shape
 
 
-class UniformSampler(PrimitiveWithInfer):
+class UniformCandidateSampler(PrimitiveWithInfer):
     r"""
     Uniform candidate sampler.
 
@@ -5843,7 +5843,7 @@ class UniformSampler(PrimitiveWithInfer):
         sampled_candidates. Shape: (num_sampled, ).
 
     Examples:
-        >>> sampler = P.UniformSampler(1, 3, False, 4)
+        >>> sampler = P.UniformCandidateSampler(1, 3, False, 4)
         >>> SampledCandidates, TrueExpectedCount, SampledExpectedCount = sampler(Tensor(np.array([[1],[3],[4],[6],
         [3]], dtype=np.int32)))
         [1, 1, 3], [[0.75], [0.75], [0.75], [0.75], [0.75]], [0.75, 0.75, 0.75]
@@ -5851,7 +5851,7 @@ class UniformSampler(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, num_true, num_sampled, unique, range_max, seed=0, remove_accidental_hits=False):
-        """Initialize UniformSampler"""
+        """Initialize UniformCandidateSampler"""
         validator.check_value_type("num_true", num_true, [int], self.name)
         validator.check_value_type("num_sampled", num_sampled, [int], self.name)
         validator.check_value_type("unique", unique, [bool], self.name)

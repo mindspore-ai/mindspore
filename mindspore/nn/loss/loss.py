@@ -303,7 +303,7 @@ class SampledSoftmaxLoss(_Loss):
         self.sampled_values = sampled_values
         self.remove_accidental_hits = remove_accidental_hits
         self.seed = seed
-        self.sampler = P.UniformSampler(
+        self.sampler = P.UniformCandidateSampler(
             num_true,
             num_sampled,
             True,

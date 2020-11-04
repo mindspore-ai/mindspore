@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/nn/uniform_sampler_gpu_kernel.h"
+#include "backend/kernel_compiler/gpu/nn/uniform_candidate_sampler_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_TWO(UniformSampler,
+MS_REG_GPU_KERNEL_TWO(UniformCandidateSampler,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      UniformSamplerGpuKernel, int, float)
+                      UniformCandidateSamplerGpuKernel, int, float)
 }  // namespace kernel
 }  // namespace mindspore
