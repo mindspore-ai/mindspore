@@ -183,6 +183,7 @@ inline const PrimitivePtr kPrimAllReduce = std::make_shared<Primitive>("AllReduc
 inline const PrimitivePtr kPrimBroadcast = std::make_shared<Primitive>("Broadcast");
 inline const PrimitivePtr kPrimAllGather = std::make_shared<Primitive>("AllGather");
 inline const PrimitivePtr kPrimReduceScatter = std::make_shared<Primitive>("ReduceScatter");
+inline const PrimitivePtr kPrimMemCpyAsync = std::make_shared<Primitive>("memcpy_async");
 
 // RowTensor
 inline const PrimitivePtr kPrimMakeRowTensor = std::make_shared<Primitive>("MakeRowTensor");

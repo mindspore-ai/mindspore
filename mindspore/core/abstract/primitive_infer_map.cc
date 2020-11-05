@@ -127,6 +127,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimBroadcast, {InferImplBroadcast, true}},
     {prim::kPrimAllGather, {InferImplAllGather, true}},
     {prim::kPrimReduceScatter, {InferImplReduceScatter, true}},
+    {prim::kPrimMemCpyAsync, {InferImplMemCpyAsync, true}},
   };
   return prim_eval_implement_map;
 }

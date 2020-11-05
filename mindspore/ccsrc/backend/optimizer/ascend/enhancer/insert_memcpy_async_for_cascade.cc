@@ -78,6 +78,12 @@ AnfNodePtr InsertMemcpyAsyncForCascade::InsertMemcpyAsync(const FuncGraphPtr &gr
     // when input is also a hccl op and just part outputs of it linking with cur_hccl_op
     if (IsPartOutputsOfHcclOp(input, hccl_node, graph)) {
       auto memcpy_async = CreateMemcpyAsyncOp(graph, input);
+      if (memcpy_async == nullptr) {
+        MS_LOG(EXCEPTION) << "Create memcpy_async op failed.";
+      }
+      if (AnfAlgo::IsNodeDynamicShape(input)) {
+        AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), memcpy_async);
+      }
       auto kernel_info = std::make_shared<device::KernelInfo>();
       memcpy_async->set_kernel_info(kernel_info);
       MS_EXCEPTION_IF_NULL(kernel_select_);

@@ -229,6 +229,7 @@ class AnfRuntimeAlgorithm {
   static std::vector<int> GetInputMinShape(const AnfNodePtr &anf_node, size_t index);
   static std::vector<int> GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index);
   static std::vector<int> GetOutputMinShape(const AnfNodePtr &anf_node, size_t index);
+  static bool IsNodeDynamicShape(const AnfNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

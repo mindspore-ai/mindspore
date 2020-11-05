@@ -158,6 +158,12 @@ void InsertMemcpyAsyncForHcclOp::InsertMemcpyAsync(const FuncGraphPtr &graph, co
     auto input = hccl_node->input(i);
     if (NeedInsertMemcpy(graph, input, hccl_node)) {
       auto memcpy_async = CreateMemcpyAsyncOp(graph, input);
+      if (memcpy_async == nullptr) {
+        MS_LOG(EXCEPTION) << "Create memcpy_async op failed.";
+      }
+      if (AnfAlgo::IsNodeDynamicShape(input)) {
+        AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), memcpy_async);
+      }
       new_inputs.push_back(memcpy_async);
       memcpy_async_list.push_back(memcpy_async);
     } else {
