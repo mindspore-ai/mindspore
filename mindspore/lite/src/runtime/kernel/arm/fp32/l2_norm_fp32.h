@@ -51,14 +51,14 @@ class L2NormCPUKernel : public LiteKernel {
   int Run() override;
 
  protected:
-  L2NormParameter *l2_norm_param_;
+  L2NormParameter *l2_norm_param_ = nullptr;
 
  private:
   int MallocTmpBuffer();
   void FreeTmpBuffer();
-  float sqrt_sum_;
-  float *input_ptr_;
-  float *output_ptr_;
+  float sqrt_sum_ = 0;
+  float *input_ptr_ = nullptr;
+  float *output_ptr_ = nullptr;
   float *tmp_sum_ = nullptr;
 };
 }  // namespace mindspore::kernel
