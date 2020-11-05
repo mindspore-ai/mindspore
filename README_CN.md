@@ -227,6 +227,33 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 
 欢迎参与贡献。更多详情，请参阅我们的[贡献者Wiki](CONTRIBUTING.md)。
 
+## 分支维护策略
+MindSpore的版本分支有以下几种维护阶段：
+| **状态**       | **持续时间**    | **说明**                                          |
+|-------------|---------------|--------------------------------------------------|
+| Planning    | 1 - 3 months  | 特性规划。                     |
+| Development | 3 months      | 特性开发。                  |
+| Maintained  | 6 - 12 months | 允许所有问题修复的合入，并发布版本。 |
+| Unmaintained| 0 - 3 months  | 允许所有问题修复的合入，无专人维护，不再发布版本。                                                 |
+| End Of Life (EOL) |  N/A |  不再接受修改合入该分支。    |
+
+## 现有分支维护状态
+| **分支名** | **当前状态**       | **上线时间** | **后续状态**                        | **EOL 日期**   |
+|--------|--------------|----------------------|-----------------------------------|------------|
+| **r1.1**   | Development  | 2020-12-31 estimated | Maintained <br> 2020-12-31 estimated   |            |
+| **r1.0**   | Maintained   | 2020-09-24           | Unmaintained <br> 2021-03-30 estimated |            |
+| **r0.7**   | Maintained   | 2020-08-31           | Unmaintained <br> 2020-11-30 estimated |            |
+| **r0.6**   | Unmaintained | 2020-07-31           | End Of Life <br> 2020-12-30 estimated  |            |
+| **r0.5**   | Maintained   | 2020-06-30           | Unmaintained <br> 2021-06-30 estimated |            |
+| **r0.3**   | End Of Life  | 2020-05-31           |                                   | 2020-09-30 |
+| **r0.2**   | End Of Life  | 2020-04-30           |                                   | 2020-08-31 |
+| **r0.1**   | End Of Life  | 2020-03-28            |                                   | 2020-06-30 |
+
+
+
+
+
+
 ## 版本说明
 
 版本说明请参阅[RELEASE](RELEASE.md)。
