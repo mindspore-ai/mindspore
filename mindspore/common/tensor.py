@@ -465,7 +465,7 @@ class MetaTensor(MetaTensor_):
             def __exit__(self, ptype, value, trace):
                 if self.need_set_seed:
                     np.random.seed(self._np_seed)
-                    self.init.seed = self.seed
+                    self.init.seed, _ = self.seed
 
         with seed_context(self.init):
             self.init(arr)

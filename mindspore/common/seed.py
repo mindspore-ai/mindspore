@@ -18,6 +18,7 @@ import mindspore.dataset as de
 from mindspore._checkparam import Validator
 
 # constants
+DEFAULT_GRAPH_SEED = 87654321
 _MAXINT32 = 2**31 - 1
 keyConstant = [3528531795, 2654435769, 3449720151, 3144134277]
 
@@ -210,7 +211,9 @@ def _get_graph_seed(op_seed, kernel_name):
         >>> _get_graph_seed(seed, 'normal')
     """
     global_seed = get_seed()
-    if global_seed is None:
+    if global_seed == 0:
+        global_seed = DEFAULT_GRAPH_SEED
+    elif global_seed is None:
         global_seed = 0
     if op_seed is None:
         op_seed = 0
