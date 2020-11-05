@@ -30,8 +30,12 @@ class ToFormatOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~ToFormatOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
+  int Prepare() override;
+
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
   int InitNHWC();

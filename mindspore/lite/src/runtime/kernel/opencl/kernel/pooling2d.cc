@@ -20,7 +20,6 @@
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#include "src/runtime/kernel/opencl/image_format.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/avg_pool2d.cl.inc"
 #include "src/runtime/kernel/opencl/cl/max_pool2d.cl.inc"
@@ -32,6 +31,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INVALID_OP_NAME;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::MemType;
 using mindspore::schema::PrimitiveType_Pooling;
 
 namespace mindspore {
@@ -73,7 +73,7 @@ int PoolingOpenCLKernel::Init() {
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   kernel_name += "_NHWC4";
-  if (out_mem_type_ == OpenCLMemType::BUF) {
+  if (out_mem_type_ == MemType::BUF) {
     MS_LOG(ERROR) << "buffer output not support yet.";
     return mindspore::lite::RET_ERROR;
   } else {

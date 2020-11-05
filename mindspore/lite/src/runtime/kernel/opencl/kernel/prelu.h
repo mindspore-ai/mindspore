@@ -34,7 +34,7 @@ class PReluOpenCLKernel : public OpenCLKernel {
 
   int Init() override;
   int Run() override;
-  int InitBuffer() override;
+  int InitWeights() override;
 
  private:
   cl::Kernel kernel_;

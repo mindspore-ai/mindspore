@@ -41,7 +41,7 @@ struct OpenclMemory {
 };
 
 class OpenCLRuntime;
-enum class MemType : char { SVM, BUF, IMG };
+enum class MemType : char { BUF, IMG };
 
 class OpenCLAllocator : public Allocator {
  public:

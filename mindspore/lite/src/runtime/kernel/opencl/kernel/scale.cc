@@ -30,6 +30,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::MemType;
 using mindspore::schema::PrimitiveType_Scale;
 
 namespace mindspore::kernel {
@@ -52,7 +53,7 @@ void ScaleOpenCLKernel::Image2dGetWorkGroupSize() {
   global_size_ = {image2d_info.width, image2d_info.height};
 }
 
-int ScaleOpenCLKernel::InitBuffer() {
+int ScaleOpenCLKernel::InitWeights() {
   if (!weight_vector_flag_) {
     return RET_OK;
   }
@@ -178,7 +179,7 @@ int ScaleOpenCLKernel::Init() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  if (out_mem_type_ == OpenCLMemType::IMG) {
+  if (out_mem_type_ == MemType::IMG) {
     kernel_name += "_IMG";
   } else {
     kernel_name += "_BUF";
@@ -194,7 +195,7 @@ int ScaleOpenCLKernel::Init() {
   }
 
   Image2dGetWorkGroupSize();
-  InitBuffer();
+  InitWeights();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
