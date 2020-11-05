@@ -330,6 +330,8 @@ checkopts()
           LITE_LANGUAGE="java"
           ENABLE_CONVERTER="off"
           ANDROID_STL="c++_static"
+          RUN_TESTCASES="off"
+          ENABLE_TOOLS="off"
         elif [[ "$OPTARG" == "object-c" ]]; then
           LITE_LANGUAGE="object-c"
         else
