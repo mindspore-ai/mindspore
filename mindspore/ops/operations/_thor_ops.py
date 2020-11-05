@@ -608,7 +608,7 @@ class UpdateThorGradient(PrimitiveWithInfer):
         return x2_dtype
 
 
-class Cholesky(PrimitiveWithInfer):
+class CholeskyTrsm(PrimitiveWithInfer):
     """
     Inner API for resnet50 THOR GPU backend
     """

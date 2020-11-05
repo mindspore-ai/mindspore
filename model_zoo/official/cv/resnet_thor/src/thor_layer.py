@@ -198,7 +198,7 @@ class Conv2d_Thor_GPU(_Conv):
         self.damping = Parameter(Tensor(damping), name="damping_value", requires_grad=False)
         self.dampingA = Tensor(np.identity(self.matrix_A_dim), mstype.float32)
         self.dampingG = Tensor(np.identity(self.matrix_G_dim), mstype.float32)
-        self.cholesky = P.Cholesky(split_dim=split_dim)
+        self.cholesky = P.CholeskyTrsm(split_dim=split_dim)
         self.vector_matmul = P.BatchMatMul(transpose_a=True)
 
     def save_gradient(self, dout):
@@ -340,7 +340,7 @@ class Dense_Thor_GPU(Cell):
         self.axis = 0
         self.add = P.TensorAdd()
         self.sqrt = P.Sqrt()
-        self.cholesky = P.Cholesky(split_dim=split_dim)
+        self.cholesky = P.CholeskyTrsm(split_dim=split_dim)
         self.vector_matmul = P.BatchMatMul(transpose_a=True)
 
     def save_gradient(self, dout):
