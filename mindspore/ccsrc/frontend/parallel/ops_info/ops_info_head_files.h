@@ -40,6 +40,7 @@
 #include "frontend/parallel/ops_info/gather_v2_p_info.h"
 #include "frontend/parallel/ops_info/tile_info.h"
 #include "frontend/parallel/ops_info/strided_slice_info.h"
+#include "frontend/parallel/ops_info/slice_info.h"
 #include "frontend/parallel/ops_info/concat_info.h"
 #include "frontend/parallel/ops_info/split_info.h"
 #include "frontend/parallel/ops_info/tensordot_info.h"
