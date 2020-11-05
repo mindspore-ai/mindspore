@@ -377,5 +377,13 @@ AbstractBasePtr InferImplDynamicShape(const AnalysisEnginePtr &, const Primitive
 
   return tensor->ToAbstract();
 }
+
+AbstractBasePtr InferImplZerosLike(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a tensor.
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  return args_spec_list[0]->Broaden();
+}
+
 }  // namespace abstract
 }  // namespace mindspore

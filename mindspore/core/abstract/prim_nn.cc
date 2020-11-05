@@ -296,13 +296,6 @@ AbstractBasePtr InferImplRelu(const AnalysisEnginePtr &, const PrimitivePtr &pri
   return args_spec_list[0]->Broaden();
 }
 
-AbstractBasePtr InferImplZerosLike(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tensor.
-  CheckArgsSize(primitive->name(), args_spec_list, 1);
-  return args_spec_list[0]->Broaden();
-}
-
 AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor.
