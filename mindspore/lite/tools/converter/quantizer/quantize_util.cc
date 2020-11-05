@@ -108,6 +108,7 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
     schema::PrimitiveType_DeDepthwiseConv2D,
     schema::PrimitiveType_DeConv2D,
     schema::PrimitiveType_Activation,
+    schema::PrimitiveType_Transpose,
     schema::PrimitiveType_Eltwise,
   };
   bool contain = IsContain(int8OpList, type);

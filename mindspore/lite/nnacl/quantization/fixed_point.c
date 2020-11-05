@@ -54,6 +54,10 @@ int MultiplyByQuantizedMultiplier(int32_t value, int32_t multiplier, int32_t lef
   return RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(value * (1 << left_shift), multiplier), -right_shift);
 }
 
+int MultiplyByMultiplierAndRightShift(int32_t value, int32_t multiplier, int32_t right_shift) {
+  return RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(value, multiplier), right_shift);
+}
+
 int FractionsBits(int integer_bits) { return 8 * sizeof(int32_t) - 1 - integer_bits; }
 
 int FixedPoint_One(int integer_bits, int fractions_bits) {

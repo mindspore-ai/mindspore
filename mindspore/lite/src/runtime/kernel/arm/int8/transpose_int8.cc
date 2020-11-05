@@ -132,11 +132,14 @@ int TransposeInt8CPUKernel::Run() {
   auto in_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
 
+  auto in_dims = in_tensor->shape();
+  auto out_dims = out_tensor->shape();
+
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensor->data_c());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->data_c());
 
-  in_shape_ = in_tensor->shape().data();
-  out_shape_ = out_tensor->shape().data();
+  in_shape_ = in_dims.data();
+  out_shape_ = out_dims.data();
 
   int ret = MallocTmpBuf();
   if (ret != RET_OK) {
