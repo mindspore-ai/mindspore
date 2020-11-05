@@ -15,12 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/transpose_fp32.h"
-
-#include <vector>
-#include "nnacl/transpose.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
@@ -30,9 +26,6 @@ using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
-namespace {
-constexpr int maxDimSize = 5;
-}  // namespace
 
 int TransposeCPUKernel::Init() {
   if (!InferShapeDone()) {
@@ -103,9 +96,8 @@ int TransposeCPUKernel::TransposeParallel(int task_id) {
     size = this->dim_size_ + task_id * param->num_axes_;
     position = this->position_ + task_id * param->num_axes_;
   }
-
-  auto ret = DoTranspose(in_data_, out_data_, in_shape_, out_shape_, param, thread_offset,
-                         thread_offset + num_unit_thread, size, position);
+  auto ret = DoTransposeFp32(in_data_, out_data_, in_shape_, out_shape_, param, thread_offset,
+                             thread_offset + num_unit_thread, size, position);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Transpose error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -113,7 +105,7 @@ int TransposeCPUKernel::TransposeParallel(int task_id) {
   return RET_OK;
 }
 
-int TransposeRun(void *cdata, int task_id) {
+int TransposeFp32Run(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<TransposeCPUKernel *>(cdata);
   auto ret = g_kernel->TransposeParallel(task_id);
   if (ret != RET_OK) {
@@ -135,7 +127,7 @@ int TransposeCPUKernel::Run() {
   in_data_ = reinterpret_cast<float *>(in_tensor->MutableData());
   out_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
   int dims = out_tensor->shape().size();
-  if (dims > maxDimSize) {
+  if (dims > MAX_TRANSPOSE_DIM_SIZE) {
     dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * thread_h_num_ * sizeof(int)));
     if (dim_size_ == nullptr) {
       MS_LOG(ERROR) << "Malloc data failed";
@@ -150,8 +142,8 @@ int TransposeCPUKernel::Run() {
     }
   }
 
-  auto ret = ParallelLaunch(this->context_->thread_pool_, TransposeRun, this, thread_h_num_);
-  if (dims > maxDimSize) {
+  auto ret = ParallelLaunch(this->context_->thread_pool_, TransposeFp32Run, this, thread_h_num_);
+  if (dims > MAX_TRANSPOSE_DIM_SIZE) {
     context_->allocator->Free(dim_size_);
     context_->allocator->Free(position_);
     dim_size_ = nullptr;
@@ -162,7 +154,7 @@ int TransposeCPUKernel::Run() {
     return ret;
   }
   return ret;
-}  // namespace mindspore::kernel
+}
 
 kernel::LiteKernel *CpuTransposeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,

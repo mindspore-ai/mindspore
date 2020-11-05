@@ -52,6 +52,8 @@ int32_t ComputerReciprocal(int32_t x, int x_digits, int *recip_shift);
 
 int exp_on_negative_values(int a, const int tIntegerBits);
 
+void GetSqrtQuantMultiplierExp(int32_t input, int reverse_shift, int32_t *multiplier, int32_t *shift);
+
 #ifdef __cplusplus
 }
 #endif

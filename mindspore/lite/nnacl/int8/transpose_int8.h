@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_TRANSPOSE_H_
-#define MINDSPORE_LITE_NNACL_TRANSPOSE_H_
+#ifndef MINDSPORE_LITE_NNACL_INT8_TRANSPOSE_INT8_H_
+#define MINDSPORE_LITE_NNACL_INT8_TRANSPOSE_INT8_H_
 
-#include "nnacl/op_base.h"
+#include <string.h>
+#include "nnacl/transpose.h"
+#include "nnacl/errorcode.h"
 
-#define MAX_TRANSPOSE_DIM_SIZE 5
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef struct TransposeParameter {
-  OpParameter op_parameter_;
-  int perm_[8];
-  bool conjugate_;
-  int num_axes_;
-  int strides_[8];
-  int out_strides_[8];
-  int data_size_;
-} TransposeParameter;
+int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, int *input_shape, const int *output_shape,
+                    TransposeParameter *transpose_param, int h_start, int h_end, int *dim_size, int *position);
 
-#endif  // MINDSPORE_LITE_NNACL_TRANSPOSE_H_
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_INT8_TRANSPOSE_INT8_H_

@@ -64,7 +64,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes4) {
     param->out_strides_[i] = out_strides[i];
   }
 
-  auto ret = DoTranspose(in, out, input_shape, output_shape, param, 0, 3, nullptr, nullptr);
+  auto ret = DoTransposeFp32(in, out, input_shape, output_shape, param, 0, 3, nullptr, nullptr);
   ASSERT_EQ(ret, 0);
   delete param;
   CompareOutputData(out, correct, 24, 0.000001);
@@ -104,7 +104,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes3) {
     param->out_strides_[i] = out_strides[i];
   }
 
-  auto ret = DoTranspose(in, out, input_shape, output_shape, param, 0, 3, nullptr, nullptr);
+  auto ret = DoTransposeFp32(in, out, input_shape, output_shape, param, 0, 3, nullptr, nullptr);
   ASSERT_EQ(ret, 0);
   delete param;
   CompareOutputData(out, correct, 24, 0.000001);
@@ -145,7 +145,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes2) {
     param->out_strides_[i] = out_strides[i];
   }
 
-  auto ret = DoTranspose(in, out, input_shape, output_shape, param, 0, 6, nullptr, nullptr);
+  auto ret = DoTransposeFp32(in, out, input_shape, output_shape, param, 0, 6, nullptr, nullptr);
   ASSERT_EQ(ret, 0);
   delete param;
   CompareOutputData(out, correct, 24, 0.000001);

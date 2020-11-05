@@ -76,7 +76,7 @@ int LayerNormCPUKernel::Run() {
   dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto ret = ParallelLaunch(this->context_->thread_pool_, LayerNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "FillRun error error_code[" << ret << "]";
+    MS_LOG(ERROR) << "LayerNormRun error error_code[" << ret << "]";
     return ret;
   }
   return RET_OK;
