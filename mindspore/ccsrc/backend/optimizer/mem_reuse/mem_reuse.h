@@ -18,11 +18,13 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_MEM_REUSE_MEM_REUSE_H_
 #include <map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 #include "backend/optimizer/mem_reuse/kernel_refcount.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
+#include "utils/ms_context.h"
 using mindspore::kernel::tbe::TbeUtils;
 namespace mindspore {
 namespace memreuse {
@@ -85,6 +87,7 @@ class MemReuseUtil {
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
   bool is_all_nop_node() const { return is_all_nop_node_; }
+  session::KernelWithIndex VisitKernelWithReturnType(const AnfNodePtr &node, size_t i, bool visit_nop_node);
 
  private:
   int util_index_;
@@ -101,6 +104,11 @@ class MemReuseUtil {
   uint8_t *mem_base_{nullptr};
   // kernel_map_: key is the AnfNodePtr addr, value is the KernelDef
   std::map<KernelKey, KernelDefPtr> kernel_map_;
+
+  bool enable_visit_kernel_cache_{false};
+
+  std::unordered_map<AnfNodePtr, session::KernelWithIndex> visit_kernel_with_return_type_in0pos_cache_;
+  std::unordered_map<AnfNodePtr, session::KernelWithIndex> visit_kernel_with_return_type_in0pos_skip_nop_cache_;
 };
 using MemReuseUtilPtr = std::shared_ptr<MemReuseUtil>;
 }  // namespace memreuse

@@ -15,7 +15,10 @@
  */
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 
+#include <algorithm>
 #include <list>
+#include <utility>
+#include <vector>
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
