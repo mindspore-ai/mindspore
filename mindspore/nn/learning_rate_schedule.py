@@ -20,7 +20,6 @@ from ..common import dtype as mstype
 from ..ops import operations as P
 from .cell import Cell
 from .._checkparam import Validator as validator
-from .._checkparam import Rel
 
 
 class LearningRateSchedule(Cell):
@@ -246,7 +245,7 @@ class CosineDecayLR(LearningRateSchedule):
         >>> min_lr = 0.01
         >>> max_lr = 0.1
         >>> decay_steps = 4
-        >>> global_step = Tensor(2, mstype.int32)
+        >>> global_steps = Tensor(2, mstype.int32)
         >>> cosine_decay_lr = CosineDecayLR(min_lr, max_lr, decay_steps)
         >>> cosine_decay_lr(global_steps)
     """

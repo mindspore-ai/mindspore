@@ -185,7 +185,7 @@ class MaxPool1d(_PoolNd):
     Examples:
         >>> max_pool = nn.MaxPool1d(kernel_size=3, strides=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4]), mindspore.float32)
-        >>> output = pool(x)
+        >>> output = max_pool(x)
         >>> output.shape
         (1, 2, 2)
     """
