@@ -106,6 +106,10 @@ class ConfigManager {
 
   std::map<std::string, std::string> ge_initialize_options_;
 
+  int64_t gpu_loopsink_size() const { return gpu_loopsink_size_; }
+
+  void set_gpu_loopsink_size(const int64_t size) { gpu_loopsink_size_ = size; }
+
  private:
   ConfigManager() = default;
   ~ConfigManager() = default;
@@ -115,6 +119,7 @@ class ConfigManager {
   DatasetGraphParam dataset_param_{"", 0, 0, {}, {}, {}};
   int64_t iter_num_{1};
   std::string dataset_phase_{""};
+  int64_t gpu_loopsink_size_{1};
 };
 
 }  // namespace mindspore

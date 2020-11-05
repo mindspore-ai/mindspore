@@ -348,7 +348,12 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
   InitPSParamAndOptim(kernel_graph, inputs);
 #endif
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  Execute(kernel_graph);
+  // It's InitDataset graph if kernel_num == 1, skip the loop.
+  int kernel_num = kernel_graph->execution_order().size();
+  int64_t loopsize = (kernel_num > 1) ? ConfigManager::GetInstance().gpu_loopsink_size() : 1;
+  for (int64_t i = 0; i < loopsize; i++) {
+    Execute(kernel_graph);
+  }
   PostLoadTensor(kernel_graph);
   // Summary
   auto context_ptr = MsContext::GetInstance();

@@ -74,6 +74,9 @@ class Resource : public ResourceBase {
   const abstract::AbstractBasePtrList &args_spec() const { return args_spec_; }
   void set_args_spec(const abstract::AbstractBasePtrList &args_spec) { args_spec_ = args_spec; }
 
+  void set_gpu_loopsink_flag(const bool &flag) { gpu_loopsink_flag_ = flag; }
+  bool gpu_loopsink_flag() { return gpu_loopsink_flag_; }
+
   // Reclaim resource and clear the cache.
   // ExecutorPy::Compile() can be called multiple times, so cache
   // should be cleared.
@@ -85,6 +88,7 @@ class Resource : public ResourceBase {
   abstract::AbstractBasePtrList args_spec_;
   py::object input_;
   bool is_cleaned_;
+  bool gpu_loopsink_flag_{false};
 };
 
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;

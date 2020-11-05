@@ -526,7 +526,6 @@ static std::string PrintArgs(const py::tuple &args) {
 
 bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm) {
   bool ret_value = false;
-
   try {
     MS_LOG(DEBUG) << PrintArgs(args);
     ret_value = CompileInner(obj, args, phase, use_vm);
@@ -567,7 +566,6 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
     std::string exName(abi::__cxa_current_exception_type()->name());
     MS_LOG(EXCEPTION) << "Error occurred when compile graph. Exception name: " << exName;
   }
-
   return ret_value;
 }
 
@@ -648,6 +646,17 @@ void Pipeline::Run() {
 #endif
         MS_LOG(DEBUG) << "Action " << action.first << " end.";
       };
+      if (action.first == "task_emit") {
+        auto func_graph = resource_->func_graph();
+        if (func_graph != nullptr && func_graph->manager() != nullptr) {
+          auto manager = func_graph->manager();
+          size_t graph_nums = manager->func_graphs().size();
+          if (graph_nums == 1) {
+            resource_->set_gpu_loopsink_flag(true);
+            MS_LOG(INFO) << "Change gpu_loopsink_flag_ to true.";
+          }
+        }
+      }
       if (!result) {
         MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
       }
@@ -813,10 +822,22 @@ py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
   if (run == nullptr) {
     MS_LOG(EXCEPTION) << "Can't find run graph func for " << phase_s;
   }
+  // Set loopsink size for each phase.
+  bool is_loopsink = info_[phase_s]->resource->gpu_loopsink_flag();
+  int64_t sinksize = ConfigManager::GetInstance().iter_num();
+  ConfigManager::GetInstance().set_gpu_loopsink_size(is_loopsink ? sinksize : 1);
+  // If target is not gpu or is loopsink, keep vmloop 1.
+  bool g = (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  int64_t vm_loop = (!g || is_loopsink) ? 1 : sinksize;
+  MS_LOG(INFO) << "VM loop size " << vm_loop << ", loopsink size " << (is_loopsink ? sinksize : 1);
+  py::object ret;
   MS_LOG(DEBUG) << "Eval run" << backend;
-  BaseRef value = (*run)(execute_info->arg_list);
+  for (int64_t i = 0; i < vm_loop; i++) {
+    BaseRef value = (*run)(execute_info->arg_list);
+    ret = BaseRefToPyData(value);
+  }
   MS_LOG(DEBUG) << "Run end";
-  return BaseRefToPyData(value);
+  return ret;
 }
 
 FuncGraphPtr ExecutorPy::BuildGraph(const py::dict &init_params, const std::string &phase,
