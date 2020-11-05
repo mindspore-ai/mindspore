@@ -14,43 +14,43 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GROUP_CONVOLUTION_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GROUP_CONVOLUTION_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GROUP_CONVOLUTION_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GROUP_CONVOLUTION_FP16_H_
 
 #include <utility>
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/op_base.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "nnacl/fp32/conv.h"
+#include "nnacl/fp16/conv_fp16.h"
 
 namespace mindspore::kernel {
-class GroupConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
+class GroupConvolutionFP16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
-  GroupConvolutionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                            const mindspore::lite::PrimitiveC *primitive, std::vector<kernel::LiteKernel *> group_convs,
-                            const int group_num)
+  GroupConvolutionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                                const mindspore::lite::PrimitiveC *primitive,
+                                std::vector<kernel::LiteKernel *> group_convs, const int group_num)
       : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive),
         group_convs_(std::move(group_convs)),
         group_num_(group_num) {}  // opParameter(in channel, out channel) in this kernel has been split to groups, if
-                                  // you want to get real params, multiply in channel / out channel with group num
-  ~GroupConvolutionCPUKernel() override { FreeSubKernel(); }
+  // you want to get real params, multiply in channel / out channel with group num
+  ~GroupConvolutionFP16CPUKernel() override { FreeSubKernel(); }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int PreProcess() override;
-  void SeparateInput(int group_id);
+  int SeparateInput(int group_id);
   void PostConcat(int group_id);
   void FreeSubKernel();
 
  private:
   std::vector<kernel::LiteKernel *> group_convs_;
-  float *ori_in_data_ = nullptr;   // do not free
-  float *ori_out_data_ = nullptr;  // do not free
+  void *ori_in_data_ = nullptr;        // do not free
+  float16_t *ori_out_data_ = nullptr;  // do not free
   const int group_num_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GROUP_CONVOLUTION_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GROUP_CONVOLUTION_FP16_H_
