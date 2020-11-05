@@ -1182,3 +1182,205 @@ class BatchNormFold2GradReduce(PrimitiveWithInfer):
     def infer_dtype(self, dout_type, x_type):
         validator.check("dout type", dout_type, "x type", x_type)
         return dout_type, dout_type
+
+
+class ActsULQ(PrimitiveWithInfer):
+    """
+    The ActsULQ(Activation universal learnable quantization).
+
+    Args:
+        fixed_min (bool): whether fix clamp min to zero.
+        num_bits (int): The bits num used for quantize.
+
+    Inputs:
+        - **x** (Tensor) - A Tensor of feature map. With float16 or float32 data type.
+        - **clamp_min** (Tensor) - A Tensor of clamp min with the same type as x.
+        - **clamp_max** (Tensor) - A Tensor of clamp max with the same type as x.
+
+    Outputs:
+        - **y** (Tensor) - A tensor of fake quant of feature map with the same type as `w`.
+        - **clamp_min** (Tensor) - A tensor of boolean masks if data in feature map >= clamp_min.
+        - **clamp_max** (Tensor) - A tensor of boolean masks if data in feature map <= clamp_max.
+        - **x_clamped_loss** (Tensor) - A tensor of clamped loss.
+
+    Examples:
+        >>> data_type = np.float32
+        >>> x= np.random.uniform(-10, 10, (32, 120)).astype(data_type)
+        >>> clamp_max = 0.7 * np.max(x)
+        >>> clamp_min = 0.7 * np.min(x)
+        >>> clamp_max = np.array([clamp_max], dtype=data_type)
+        >>> clamp_min = np.array([clamp_min], dtype=data_type)
+        >>> acts_ulq = Q.ActsULQ(fixed_mini=True, num_bits=8)
+        >>> quant_x, clamp_min_mask, clamp_max_mask, x_clamped_loss = acts_ulq(Tensor(x), Tensor( clamp_min),
+                                                                               Tensor(clamp_max))
+    """
+    @prim_attr_register
+    def __init__(self, fixed_min=False, num_bits=8):
+        validator.check_value_type("fixed_min", fixed_min, [bool], self.name)
+        validator.check_value_type("num_bits", num_bits, [int], self.name)
+        validator.check_int(num_bits, 8, Rel.EQ, "value of num_bits", self.name)
+
+    def infer_shape(self, x_shape, clamp_min_shape, clamp_max_shape):
+        """infer shape of primitive"""
+        validator.check_int(len(clamp_min_shape), len(x_shape), Rel.EQ, "dims of clamp_min", self.name)
+        validator.check_int(len(clamp_max_shape), len(x_shape), Rel.EQ, "dims of clamp_max", self.name)
+
+        x_shape_len = len(x_shape)
+        for i in range(x_shape_len):
+            validator.check_int(clamp_min_shape[i], 1, Rel.EQ, "dims of clamp_min", self.name)
+            validator.check_int(clamp_max_shape[i], 1, Rel.EQ, "dims of clamp_max", self.name)
+
+        return x_shape, x_shape, x_shape, x_shape
+
+    def infer_dtype(self, x_dtype, clamp_min_dtype, clamp_max_dtype):
+        """infer dtype of primitive"""
+        valid_types = [mstype.float32, mstype.float16]
+        validator.check_tensor_type_same({"x": x_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"clamp_min": clamp_min_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"clamp_max": clamp_max_dtype}, valid_types, self.name)
+
+        return x_dtype, mstype.bool_, mstype.bool_, x_dtype
+
+
+class ActsULQInputGrad(PrimitiveWithInfer):
+    """
+    The ActsULQInputGrad(grad of ActsULQ).
+
+    Inputs:
+        - **y_grad** (Tensor) - A Tensor of grad. With float16 or float32 data type.
+
+    Outputs:
+        - **x_grad** (Tensor) - A tensor of data grad with the same type as `y_grad`.
+    """
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, y_grad_shape, clamp_min_mask_shape, clamp_max_mask_shape):
+        return y_grad_shape
+
+    def infer_dtype(self, y_grad_type, clamp_min_mask_type, clamp_max_mask_type):
+        valid_types = [mstype.float32, mstype.float16]
+        validator.check_tensor_type_same({"y_grad": y_grad_type}, valid_types, self.name)
+        return y_grad_type
+
+
+class ActULQClampMinGrad(PrimitiveWithInfer):
+    """
+    The ActULQClampMinGrad(Activation Universal Linear Quantization on Clamp Minimum Gradient)
+
+    Inputs:
+        - **y_grad** (Tensor) - A tensor of gradient, with float16 or float32 type.
+        - **clamp_min_mask** - A tensor of mask, only support int8 type.
+        - **x_clamped_loss** - A tensor of loss, with the same type as "y_grad".
+
+    Outputs:
+        - **clamp_min_grad** - A tensor of clamp minimum gradient, with the same type as "y_grad".
+          The length of tensor is 1.
+
+    Examples:
+        >>> data_type = np.float32
+        >>> y_grad = np.random.uniform(-10, 10, (32, 120)).astype(data_type)
+        >>> clamp_min_mask = np.where(np.random.rand(32, 120) >= 0.5, 1, 0)
+        >>> x_clamped_loss = np.random.uniform(-10, 10, (32, 120)).astype(data_type)
+        >>> act_ulq_clamp_min_grad = Q.ActULQClampMinGrad()
+        >>> clamp_min_grad = act_ulq_clamp_min_grad(Tensor(y_grad), Tensor(clamp_min_mask, mindspore.bool_),
+                                                           Tensor(x_clamped_loss))
+    """
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, input_x, input_y, input_z):
+        input_x_len = len(input_x)
+        output_shape = []
+        for _ in range(input_x_len):
+            output_shape.append(1)
+        return tuple(output_shape)
+
+    def infer_dtype(self, input_x, input_y, input_z):
+        return input_x
+
+
+class ActULQClampMaxGrad(PrimitiveWithInfer):
+    """
+    The ActULQClampMaxGrad(Activation Universal Linear Quantization on Clamp Maximum Gradient)
+
+    Inputs:
+        - **y_grad** (Tensor) - A tensor of gradient, with float16 or float32 type.
+        - **clamp_max_mask** - A tensor of mask, only support int8 type.
+        - **x_clamped_loss** - A tensor of loss, with the same type as "y_grad".
+
+    Outputs:
+        - **clamp_max_grad** - A tensor of clamp maximum gradient, with the same type as "y_grad".
+          The length of tensor is 1.
+
+    Examples:
+        >>> data_type = np.float32
+        >>> y_grad = np.random.uniform(-10, 10, (32, 120)).astype(data_type)
+        >>> clamp_max_mask = np.where(np.random.rand(32, 120) >= 0.5, 1, 0)
+        >>> x_clamped_loss = np.random.uniform(-10, 10, (32, 120)).astype(data_type)
+        >>> act_ulq_clamp_max_grad = Q.ActULQClampMaxGrad()
+        >>> clamp_max_grad = act_ulq_clamp_max_grad(Tensor(y_grad), Tensor(clamp_max_mask, mindspore.bool_),
+                                                    Tensor(x_clamped_loss))
+    """
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, input_x, input_y, input_z):
+        input_x_len = len(input_x)
+        output_shape = []
+        for _ in range(input_x_len):
+            output_shape.append(1)
+        return tuple(output_shape)
+
+    def infer_dtype(self, input_x, input_y, input_z):
+        return input_x
+
+
+class WtsARQ(PrimitiveWithInfer):
+    """
+    The WtsARQ(Weights Adaptive Range Quantization).
+
+    Args:
+        axes (list): Specify channels for ARQ algorithm.
+        num_bits (int): The bits num used for quantize.
+        offset_flag (bool): Whether use offset for quantize.
+
+    Inputs:
+        - **w** (Tensor) - A Tensor of weights. With float16 or float32 data type.
+
+    Outputs:
+        - **scale** (Tensor) - A tensor of optimal scale, has the same type as `w`.
+        - **offset** (Tensor) - A tensor of optimal offset, has the same type as `w`.
+        - If axis is [],
+          the shape of scale and offset is :math:`(1, )`.
+        - If axis is [0],
+          the shape of scale and offset is :math:`(w_1, )`.
+        - If axis is [1],
+          the shape of scale and offset is :math:`(w_2, )`.
+        - **y** (Tensor) - A tensor of fakequant weights, has the same type and shape as `w`.
+
+    Examples:
+        >>> data = Tensor(np.random.rand(1, 3, 6, 4).astype(np.float32))
+        >>> wts_arq = Q.WtsARQ(axes=[0], num_bits=8, offset_flag=False)
+        >>> scale, offset, y = wts_arq(data)
+    """
+    @prim_attr_register
+    def __init__(self, num_bits, offset_flag):
+        validator.check_value_type("num_bits", num_bits, [int], self.name)
+        validator.check_int(num_bits, 8, Rel.EQ, "value of num_bits", self.name)
+        validator.check_value_type("offset_flag", offset_flag, [bool], self.name)
+
+    def infer_shape(self, w_shape, w_min_shape, w_max_shape):
+        validator.check_int(len(w_min_shape), len(w_shape), Rel.EQ, "dims of w_min", self.name)
+        validator.check_int(len(w_max_shape), len(w_shape), Rel.EQ, "dims of w_max", self.name)
+        return w_shape
+
+    def infer_dtype(self, w_dtype, w_min_dtype, w_max_dtype):
+        valid_types = [mstype.float32, mstype.float16]
+        validator.check_tensor_type_same({"w": w_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"w_min": w_min_dtype}, valid_types, self.name)
+        validator.check_tensor_type_same({"w_max": w_max_dtype}, valid_types, self.name)
+        return w_dtype

@@ -326,6 +326,11 @@ from .parallel_concat import _parallel_concat_tbe
 from .adam_apply_one_assign import _adam_apply_one_assign_tbe
 from .adam_apply_one_with_decay_assign import _adam_apply_one_with_decay_assign_tbe
 from .ifmr import _ifmr_tbe
+from .acts_ulq import _acts_ulq_tbe
+from .acts_ulq_input_grad import _acts_ulq_input_grad_tbe
+from .act_ulq_clamp_min_grad import _act_ulq_clamp_min_grad_tbe
+from .act_ulq_clamp_max_grad import _act_ulq_clamp_max_grad_tbe
+from .wts_arq import _wts_arq_tbe
 from .fake_quant_with_min_max_vars import _fake_quant_with_min_max_vars_tbe
 from .fake_quant_with_min_max_vars_gradient import _fake_quant_with_min_max_vars_gradient_tbe
 from .fake_quant_with_min_max_vars_per_channel import _fake_quant_with_min_max_vars_per_channel_tbe
