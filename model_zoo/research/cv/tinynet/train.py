@@ -227,7 +227,7 @@ def main():
     net_ema.set_train(False)
     assert args.ema_decay > 0, "EMA should be used in tinynet training."
 
-    ema_cb = EmaEvalCallBack(model=model,
+    ema_cb = EmaEvalCallBack(network=net,
                              ema_network=net_ema,
                              loss_fn=loss,
                              eval_dataset=val_dataset,

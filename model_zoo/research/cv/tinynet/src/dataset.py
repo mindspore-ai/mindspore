@@ -65,12 +65,12 @@ def create_dataset(batch_size, train_data_url='', workers=8, distributed=False,
                                                          contrast=adjust_range,
                                                          saturation=adjust_range)
     to_tensor = py_vision.ToTensor()
-    nromlize_op = py_vision.Normalize(
+    normalize_op = py_vision.Normalize(
         IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD)
 
     # assemble all the transforms
     image_ops = py_transforms.Compose([decode_op, random_resize_crop_bicubic,
-                                       random_horizontal_flip_op, random_color_jitter_op, to_tensor, nromlize_op])
+                                       random_horizontal_flip_op, random_color_jitter_op, to_tensor, normalize_op])
 
     rank_id = get_rank() if distributed else 0
     rank_size = get_group_size() if distributed else 1
@@ -125,11 +125,11 @@ def create_dataset_val(batch_size=128, val_data_url='', workers=8, distributed=F
     resize_op = py_vision.Resize(size=scale_size, interpolation=Inter.BICUBIC)
     center_crop = py_vision.CenterCrop(size=input_size)
     to_tensor = py_vision.ToTensor()
-    nromlize_op = py_vision.Normalize(
+    normalize_op = py_vision.Normalize(
         IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD)
 
     image_ops = py_transforms.Compose([decode_op, resize_op, center_crop,
-                                       to_tensor, nromlize_op])
+                                       to_tensor, normalize_op])
 
     dataset = dataset.map(input_columns=["label"], operations=type_cast_op,
                           num_parallel_workers=workers)

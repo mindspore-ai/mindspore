@@ -36,7 +36,7 @@ def load_nparray_into_net(net, array_dict):
     for _, param in net.parameters_and_names():
         if param.name in array_dict:
             new_param = array_dict[param.name]
-            param.set_data(Parameter(new_param.copy(), name=param.name))
+            param.set_data(Parameter(Tensor(deepcopy(new_param)), name=param.name))
         else:
             param_not_load.append(param.name)
     return param_not_load
@@ -48,8 +48,8 @@ class EmaEvalCallBack(Callback):
     the end of training epoch.
 
     Args:
-        model: Mindspore model instance.
-        ema_network: step-wise exponential moving average for ema_network.
+        network: tinynet network instance.
+        ema_network: step-wise exponential moving average of network.
         eval_dataset: the evaluation daatset.
         decay (float): ema decay.
         save_epoch (int): defines how often to save checkpoint.
@@ -57,9 +57,9 @@ class EmaEvalCallBack(Callback):
         start_epoch (int): which epoch to start/resume training.
     """
 
-    def __init__(self, model, ema_network, eval_dataset, loss_fn, decay=0.999,
+    def __init__(self, network, ema_network, eval_dataset, loss_fn, decay=0.999,
                  save_epoch=1, dataset_sink_mode=True, start_epoch=0):
-        self.model = model
+        self.network = network
         self.ema_network = ema_network
         self.eval_dataset = eval_dataset
         self.loss_fn = loss_fn
@@ -80,14 +80,12 @@ class EmaEvalCallBack(Callback):
 
     def begin(self, run_context):
         """Initialize the EMA parameters """
-        cb_params = run_context.original_args()
-        for _, param in cb_params.network.parameters_and_names():
+        for _, param in self.network.parameters_and_names():
             self.shadow[param.name] = deepcopy(param.data.asnumpy())
 
     def step_end(self, run_context):
         """Update the EMA parameters"""
-        cb_params = run_context.original_args()
-        for _, param in cb_params.network.parameters_and_names():
+        for _, param in self.network.parameters_and_names():
             new_average = (1.0 - self.decay) * param.data.asnumpy().copy() + \
                 self.decay * self.shadow[param.name]
             self.shadow[param.name] = new_average
@@ -98,24 +96,20 @@ class EmaEvalCallBack(Callback):
         cur_epoch = cb_params.cur_epoch_num + self._start_epoch - 1
 
         save_ckpt = (cur_epoch % self.save_epoch == 0)
-
-        acc = self.model.eval(
-            self.eval_dataset, dataset_sink_mode=self.dataset_sink_mode)
-        print("Model Accuracy:", acc)
-
         load_nparray_into_net(self.ema_network, self.shadow)
-        self.ema_network.set_train(False)
-
+        model = Model(self.network, loss_fn=self.loss_fn, metrics=self.eval_metrics)
         model_ema = Model(self.ema_network, loss_fn=self.loss_fn,
                           metrics=self.eval_metrics)
+        acc = model.eval(
+            self.eval_dataset, dataset_sink_mode=self.dataset_sink_mode)
         ema_acc = model_ema.eval(
             self.eval_dataset, dataset_sink_mode=self.dataset_sink_mode)
-
+        print("Model Accuracy:", acc)
         print("EMA-Model Accuracy:", ema_acc)
-        self.ema_accuracy[cur_epoch] = ema_acc["Top1-Acc"]
+
         output = [{"name": k, "data": Tensor(v)}
                   for k, v in self.shadow.items()]
-
+        self.ema_accuracy[cur_epoch] = ema_acc["Top1-Acc"]
         if self.best_ema_accuracy < ema_acc["Top1-Acc"]:
             self.best_ema_accuracy = ema_acc["Top1-Acc"]
             self.best_ema_epoch = cur_epoch
