@@ -1427,35 +1427,12 @@ void SessionBasic::RunGraphAsync(const GraphId &graph_id, const std::vector<tens
 }
 
 bool IsDynamicShape(const NotNull<abstract::ShapePtr> &shape) {
-  return !std::all_of(shape->shape().begin(), shape->shape().end(), [](int s) { return s > 0; });
+  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int s) { return s < 0; });
 }
 
 bool IsNodeOutputDynamicShape(const CNodePtr &anf_node_ptr) {
   MS_EXCEPTION_IF_NULL(anf_node_ptr);
-  auto base_shape = anf_node_ptr->Shape();
-  if (base_shape == nullptr) {
-    MS_LOG(INFO) << "Invalid bash shape ptr, node:" << anf_node_ptr->fullname_with_scope();
-    return false;
-  }
-  if (base_shape->isa<abstract::Shape>()) {
-    if (IsDynamicShape(NOT_NULL(base_shape->cast<abstract::ShapePtr>()))) {
-      return true;
-    }
-  } else if (base_shape->isa<abstract::TupleShape>()) {
-    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_shape);
-
-    for (size_t i = 0; i < tuple_shape->size(); ++i) {
-      auto b_shp = (*tuple_shape)[i];
-      if (!b_shp->isa<abstract::Shape>()) {
-        continue;
-      }
-      if (IsDynamicShape(NOT_NULL(b_shp->cast<abstract::ShapePtr>()))) {
-        return true;
-      }
-    }
-  }
-  return false;
+  return AnfAlgo::IsNodeDynamicShape(anf_node_ptr);
 }
 
 bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
