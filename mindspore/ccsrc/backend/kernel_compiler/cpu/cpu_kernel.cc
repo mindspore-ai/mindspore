@@ -20,8 +20,9 @@ namespace kernel {
 void CPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  size_t type_size = sizeof(float);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
+    TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
+    size_t type_size = GetTypeByte(TypeIdToType(type_id));
     std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
@@ -29,6 +30,8 @@ void CPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   }
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    TypeId type_id = AnfAlgo::GetOutputDeviceDataType(kernel_node, output_index);
+    size_t type_size = GetTypeByte(TypeIdToType(type_id));
     std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(kernel_node, output_index);
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
