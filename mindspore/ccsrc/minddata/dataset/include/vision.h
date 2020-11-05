@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_VISION_H_
 
+#include <map>
 #include <memory>
+#include <utility>
 #include <vector>
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/include/transforms.h"
@@ -42,6 +44,7 @@ class CutOutOperation;
 #endif
 class DecodeOperation;
 #ifndef ENABLE_ANDROID
+class EqualizeOperation;
 class HwcToChwOperation;
 class InvertOperation;
 class MixUpBatchOperation;
@@ -58,8 +61,11 @@ class RandomCropWithBBoxOperation;
 class RandomHorizontalFlipOperation;
 class RandomHorizontalFlipWithBBoxOperation;
 class RandomPosterizeOperation;
+class RandomResizeOperation;
+class RandomResizeWithBBoxOperation;
 class RandomResizedCropOperation;
 class RandomRotationOperation;
+class RandomSelectSubpolicyOperation;
 class RandomSharpnessOperation;
 class RandomSolarizeOperation;
 class RandomVerticalFlipOperation;
@@ -71,6 +77,8 @@ class ResizeOperation;
 class ResizeWithBBoxOperation;
 class RgbaToBgrOperation;
 class RgbaToRgbOperation;
+class SoftDvppDecodeRandomCropResizeJpegOperation;
+class SoftDvppDecodeResizeJpegOperation;
 class SwapRedBlueOperation;
 class UniformAugOperation;
 
@@ -129,6 +137,12 @@ std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches = 1)
 std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
 
 #ifndef ENABLE_ANDROID
+
+/// \brief Function to create a Equalize TensorOperation.
+/// \notes Apply histogram equalization on input image.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<EqualizeOperation> Equalize();
+
 /// \brief Function to create a HwcToChw TensorOperation.
 /// \notes Transpose the input image; shape (H, W, C) to shape (C, H, W).
 /// \return Shared pointer to the current TensorOperation.
@@ -296,6 +310,21 @@ std::shared_ptr<RandomHorizontalFlipWithBBoxOperation> RandomHorizontalFlipWithB
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomPosterizeOperation> RandomPosterize(const std::vector<uint8_t> &bit_range = {4, 8});
 
+/// \brief Function to create a RandomResize TensorOperation.
+/// \notes Resize the input image using a randomly selected interpolation mode.
+/// \param[in] size A vector representing the output size of the resized image.
+///     If size is a single value, the smaller edge of the image will be resized to this value with
+//      the same image aspect ratio. If size has 2 values, it should be (height, width).
+std::shared_ptr<RandomResizeOperation> RandomResize(std::vector<int32_t> size);
+
+/// \brief Function to create a RandomResizeWithBBox TensorOperation.
+/// \notes Resize the input image using a randomly selected interpolation mode and adjust
+///     bounding boxes accordingly.
+/// \param[in] size A vector representing the output size of the resized image.
+///     If size is a single value, the smaller edge of the image will be resized to this value with
+//      the same image aspect ratio. If size has 2 values, it should be (height, width).
+std::shared_ptr<RandomResizeWithBBoxOperation> RandomResizeWithBBox(std::vector<int32_t> size);
+
 /// \brief Function to create a RandomResizedCrop TensorOperation.
 /// \notes Crop the input image to a random size and aspect ratio.
 /// \param[in] size A vector representing the output size of the cropped image.
@@ -324,6 +353,15 @@ std::shared_ptr<RandomResizedCropOperation> RandomResizedCrop(
 std::shared_ptr<RandomRotationOperation> RandomRotation(
   std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
   std::vector<float> center = {-1, -1}, std::vector<uint8_t> fill_value = {0, 0, 0});
+
+/// \brief Function to create a RandomSelectSubpolicy TensorOperation.
+/// \notes Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
+///     (op, prob), where op is a TensorOp operation and prob is the probability that this op will be applied. Once
+///     a sub-policy is selected, each op within the subpolicy with be applied in sequence according to its probability.
+/// \param[in] policy Vector of sub-policies to choose from.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomSelectSubpolicyOperation> RandomSelectSubpolicy(
+  std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy);
 
 /// \brief Function to create a RandomSharpness TensorOperation.
 /// \notes Tensor operation to perform random sharpness.
@@ -389,6 +427,35 @@ std::shared_ptr<RgbaToBgrOperation> RGBA2BGR();
 /// \notes Changes the input 4 channel RGBA tensor to 3 channel RGB.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RgbaToRgbOperation> RGBA2RGB();
+
+/// \brief Function to create a SoftDvppDecodeRandomCropResizeJpeg TensorOperation.
+/// \notes Tensor operation to decode, random crop and resize JPEG image using the simulation algorithm of
+///     Ascend series chip DVPP module. The usage scenario is consistent with SoftDvppDecodeResizeJpeg.
+///     The input image size should be in range [32*32, 8192*8192].
+///     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
+///     Only images with an even resolution can be output. The output of odd resolution is not supported.
+/// \param[in] size A vector representing the output size of the resized image.
+///     If size is a single value, smaller edge of the image will be resized to this value with
+///     the same image aspect ratio. If size has 2 values, it should be (height, width).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<SoftDvppDecodeRandomCropResizeJpegOperation> SoftDvppDecodeRandomCropResizeJpeg(
+  std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0}, std::vector<float> ratio = {3. / 4., 4. / 3.},
+  int32_t max_attempts = 10);
+
+/// \brief Function to create a SoftDvppDecodeResizeJpeg TensorOperation.
+/// \notes Tensor operation to decode and resize JPEG image using the simulation algorithm of Ascend series
+///     chip DVPP module. It is recommended to use this algorithm in the following scenarios:
+///     When training, the DVPP of the Ascend chip is not used,
+///     and the DVPP of the Ascend chip is used during inference,
+///     and the accuracy of inference is lower than the accuracy of training;
+///     and the input image size should be in range [32*32, 8192*8192].
+///     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
+///     Only images with an even resolution can be output. The output of odd resolution is not supported.
+/// \param[in] size A vector representing the output size of the resized image.
+///     If size is a single value, smaller edge of the image will be resized to this value with
+///     the same image aspect ratio. If size has 2 values, it should be (height, width).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<SoftDvppDecodeResizeJpegOperation> SoftDvppDecodeResizeJpeg(std::vector<int32_t> size);
 
 /// \brief Function to create a SwapRedBlue TensorOp
 /// \notes Swaps the red and blue channels in image
@@ -512,6 +579,15 @@ class DecodeOperation : public TensorOperation {
 };
 
 #ifndef ENABLE_ANDROID
+class EqualizeOperation : public TensorOperation {
+ public:
+  ~EqualizeOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+};
+
 class HwcToChwOperation : public TensorOperation {
  public:
   ~HwcToChwOperation() = default;
@@ -735,6 +811,34 @@ class RandomPosterizeOperation : public TensorOperation {
   std::vector<uint8_t> bit_range_;
 };
 
+class RandomResizeOperation : public TensorOperation {
+ public:
+  explicit RandomResizeOperation(std::vector<int32_t> size);
+
+  ~RandomResizeOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::vector<int32_t> size_;
+};
+
+class RandomResizeWithBBoxOperation : public TensorOperation {
+ public:
+  explicit RandomResizeWithBBoxOperation(std::vector<int32_t> size);
+
+  ~RandomResizeWithBBoxOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::vector<int32_t> size_;
+};
+
 class RandomResizedCropOperation : public TensorOperation {
  public:
   explicit RandomResizedCropOperation(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
@@ -773,6 +877,21 @@ class RandomRotationOperation : public TensorOperation {
   std::vector<float> center_;
   bool expand_;
   std::vector<uint8_t> fill_value_;
+};
+
+class RandomSelectSubpolicyOperation : public TensorOperation {
+ public:
+  explicit RandomSelectSubpolicyOperation(
+    std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy);
+
+  ~RandomSelectSubpolicyOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy_;
 };
 
 class RandomSharpnessOperation : public TensorOperation {
@@ -900,6 +1019,38 @@ class RgbaToRgbOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+};
+
+class SoftDvppDecodeRandomCropResizeJpegOperation : public TensorOperation {
+ public:
+  explicit SoftDvppDecodeRandomCropResizeJpegOperation(std::vector<int32_t> size, std::vector<float> scale,
+                                                       std::vector<float> ratio, int32_t max_attempts);
+
+  ~SoftDvppDecodeRandomCropResizeJpegOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::vector<int32_t> size_;
+  std::vector<float> scale_;
+  std::vector<float> ratio_;
+  int32_t max_attempts_;
+};
+
+class SoftDvppDecodeResizeJpegOperation : public TensorOperation {
+ public:
+  explicit SoftDvppDecodeResizeJpegOperation(std::vector<int32_t> size);
+
+  ~SoftDvppDecodeResizeJpegOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::vector<int32_t> size_;
 };
 
 class SwapRedBlueOperation : public TensorOperation {

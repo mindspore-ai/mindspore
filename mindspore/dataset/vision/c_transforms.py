@@ -1260,7 +1260,7 @@ class SoftDvppDecodeRandomCropResizeJpeg(cde.SoftDvppDecodeRandomCropResizeJpegO
     Tensor operation to decode, random crop and resize JPEG image using the simulation algorithm of
     Ascend series chip DVPP module.
 
-    The usage scenario is consistent with SoftDvppDecodeReiszeJpeg.
+    The usage scenario is consistent with SoftDvppDecodeResizeJpeg.
     The input image size should be in range [32*32, 8192*8192].
     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
     Only images with an even resolution can be output. The output of odd resolution is not supported.
