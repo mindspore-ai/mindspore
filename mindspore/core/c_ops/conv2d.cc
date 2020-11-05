@@ -150,6 +150,10 @@ std::vector<int> Conv2D::get_pad() const {
   auto value_ptr = this->GetAttr(kPad);
   return GetValue<std::vector<int>>(value_ptr);
 }
+std::vector<int> Conv2D::get_pad_list() const {
+  auto value_ptr = this->GetAttr(kPadList);
+  return GetValue<std::vector<int>>(value_ptr);
+}
 int Conv2D::get_mode() const {
   auto value_ptr = this->GetAttr(kMode);
   return GetValue<int>(value_ptr);

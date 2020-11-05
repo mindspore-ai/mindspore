@@ -82,6 +82,12 @@ std::vector<int> DepthWiseConv2D::get_pad() const {
   auto value_ptr = this->GetAttr(kPad);
   return GetValue<std::vector<int>>(value_ptr);
 }
+
+std::vector<int> DepthWiseConv2D::get_pads() const {
+  auto value_ptr = this->GetAttr(kPads);
+  return GetValue<std::vector<int>>(value_ptr);
+}
+
 int DepthWiseConv2D::get_mode() const {
   auto value_ptr = this->GetAttr(kMode);
   return GetValue<int>(value_ptr);
