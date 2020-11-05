@@ -66,7 +66,8 @@ template <typename T>
 DebugServices::tensor_stats DebugServices::SummarizeTensor(const T *start, const T *start_prev, unsigned int n,
                                                            bool need_min_max, bool need_mean_sd,
                                                            bool need_zero_percentage,
-                                                           bool need_tensor_update_ratio_mean, bool need_allclose) {
+                                                           bool need_tensor_update_ratio_mean, bool need_allclose,
+                                                           bool need_abs_mean) {
   tensor_stats stats;
   double zero_count = 0.0;
   double rtol = 1.0e-5;
@@ -97,12 +98,17 @@ DebugServices::tensor_stats DebugServices::SummarizeTensor(const T *start, const
       stats.m2 += delta * (val - stats.mean);
     }
 
+    if (need_abs_mean) {
+      double delta = std::abs(val) - stats.abs_mean;
+      stats.abs_mean += delta / (i + 1);
+    }
+
     if (need_zero_percentage) {
       if (val == 0) zero_count++;
     }
 
     if (need_tensor_update_ratio_mean && start_prev) {
-      update_ratio_sum += (std::abs(val) / (epsilon + std::abs(val_prev)));
+      update_ratio_sum += (std::abs(val - val_prev) / (epsilon + std::abs(val_prev)));
     }
 
     if (need_allclose && start_prev) {
@@ -143,6 +149,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
     bool zero_percentage_enabled = false;
     bool tensor_update_ratio_mean_enabled = false;
     bool allclose_enabled = false;
+    bool abs_mean_enabled = false;
     for (auto w_table_item : watchpoint_table) {
       auto wp = std::get<1>(w_table_item);
       if (wp.condition.type == INIT && !init_dbg_suspend) continue;
@@ -154,13 +161,14 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
         zero_percentage_enabled |= wp.zero_percentage_enabled();
         tensor_update_ratio_mean_enabled |= wp.tensor_update_ratio_mean_enabled();
         allclose_enabled |= wp.allclose_enabled();
+        abs_mean_enabled |= wp.abs_mean_enabled();
         watchpoints_to_check_table[w_table_item.second.id] = w_table_item.second;
       }
     }
     tensor_stats stats;
     uint num_elements = tensor_ptr->DataSize();
     if (min_max_enabled || mean_sd_enabled || inf_nan_enabled || zero_percentage_enabled ||
-        tensor_update_ratio_mean_enabled || allclose_enabled) {
+        tensor_update_ratio_mean_enabled || allclose_enabled || abs_mean_enabled) {
       bool need_prev = (tensor_update_ratio_mean_enabled || allclose_enabled);
       bool have_prev = tensor_loader_->GetPrevTensor(tensor_name) != NULL;
       switch (tensor_dtype) {
@@ -171,7 +179,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<uint8_t *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeInt8: {
@@ -181,7 +190,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<int8_t *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeUInt16: {
@@ -191,7 +201,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<uint16_t *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeInt16: {
@@ -201,7 +212,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<int16_t *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeUInt32: {
@@ -211,7 +223,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<uint32_t *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeInt32:
@@ -222,7 +235,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<int32_t *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeUInt64: {
@@ -232,7 +246,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<uint64_t *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeInt64: {
@@ -242,7 +257,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<int64_t *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeFloat16: {
@@ -252,7 +268,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<float16 *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeFloat32:
@@ -263,7 +280,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<float *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         case kNumberTypeFloat64: {
@@ -273,7 +291,8 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                ? reinterpret_cast<double *>(tensor_loader_->GetPrevTensor(tensor_name)->GetTensor()->data_c())
                : NULL);
           stats = SummarizeTensor(start_addr, start_addr_prev, num_elements, min_max_enabled, mean_sd_enabled,
-                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled);
+                                  zero_percentage_enabled, tensor_update_ratio_mean_enabled, allclose_enabled,
+                                  abs_mean_enabled);
           break;
         }
         default:
@@ -319,9 +338,9 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
               } else if (p.name == "mean_lt") {
                 p_hit = stats.parmLookup(STAT_MEAN) < p.value;
               } else if (p.name == "abs_mean_gt") {
-                p_hit = std::abs(stats.parmLookup(STAT_MEAN)) > p.value;
+                p_hit = stats.parmLookup(STAT_ABS_MEAN) > p.value;
               } else if (p.name == "abs_mean_lt") {
-                p_hit = std::abs(stats.parmLookup(STAT_MEAN)) < p.value;
+                p_hit = stats.parmLookup(STAT_ABS_MEAN) < p.value;
               } else if (p.name == "abs_update_ratio_mean_gt") {
                 p_hit = stats.parmLookup(STAT_TENSOR_UPDATE_RATIO_MEAN) > p.value;
               } else if (p.name == "abs_update_ratio_mean_lt") {
@@ -350,12 +369,18 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
         if (found_dot != std::string::npos && (tensor_name_no_slot.substr(found_dot + 1) == "weight" ||
                                                tensor_name_no_slot.substr(found_dot + 1) == "bias")) {
           auto check_node_list = watchpoint_table.find(*it_hit_id)->second.check_node_list;
+          bool found_match = false;
           for (auto check_node : check_node_list) {
             std::string w_name = std::get<0>(check_node);
             auto found_slash = w_name.find_last_of('/');
             if (found_slash != std::string::npos && w_name.substr(found_slash + 1) == tensor_name_no_slot) {
               name->push_back(w_name);
+              found_match = true;
+              break;
             }
+          }
+          if (!found_match) {
+            name->push_back(tensor_name_no_slot);
           }
         } else {
           name->push_back(tensor_name_no_slot);
@@ -439,12 +464,16 @@ void DebugServices::AddWeightsBiasInputs(std::vector<std::shared_ptr<TensorData>
     for (size_t j = 0; j < input_size; ++j) {
       auto input_kernel = kernel->input(j + 1);
       std::string input_kernel_name = input_kernel->fullname_with_scope();
-      std::string locate_tensor = input_kernel_name + ":0";
-      std::map<std::string, std::shared_ptr<TensorData>> tensor_map = tensor_loader_->GetTensorMap();
-      std::map<std::string, std::shared_ptr<TensorData>>::iterator iter;
-      iter = tensor_map.find(locate_tensor);
-      if (iter != tensor_map.end()) {
-        tensor_list->push_back(iter->second);
+      auto found_dot = input_kernel_name.find_last_of('.');
+      if (found_dot != std::string::npos &&
+          (input_kernel_name.substr(found_dot + 1) == "weight" || input_kernel_name.substr(found_dot + 1) == "bias")) {
+        std::string locate_tensor = input_kernel_name + ":0";
+        std::map<std::string, std::shared_ptr<TensorData>> tensor_map = tensor_loader_->GetTensorMap();
+        std::map<std::string, std::shared_ptr<TensorData>>::iterator iter;
+        iter = tensor_map.find(locate_tensor);
+        if (iter != tensor_map.end()) {
+          tensor_list->push_back(iter->second);
+        }
       }
     }
   }
