@@ -22,6 +22,7 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include "src/ops/primitive_c.h"
 #include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
 #include "schema/schema_generated.h"
@@ -30,8 +31,7 @@
 #include "include/errorcode.h"
 #include "tools/converter/parser/tflite/tflite_util.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 class TfliteNodeParser {
  public:
   explicit TfliteNodeParser(const std::string &node_name) : name(node_name) {}
@@ -41,6 +41,10 @@ class TfliteNodeParser {
   virtual STATUS Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                        const std::unique_ptr<tflite::ModelT> &tflite_model,
                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) = 0;
+  virtual STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                       const std::unique_ptr<tflite::ModelT> &tflite_model, PrimitiveC *primitiveC) {
+    return RET_OK;
+  }
 
   void AddOpInput(schema::CNodeT *op, TfliteTensorsInfo *tensors_info, int idx, int total, schema::Format format) {
     int new_idx = tensors_info->tensorsId.size();
@@ -158,7 +162,6 @@ class TfliteNodeParser {
     {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},
   };
 };
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_NODE_PARSER_H

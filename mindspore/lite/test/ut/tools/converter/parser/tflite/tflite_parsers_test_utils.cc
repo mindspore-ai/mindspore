@@ -23,7 +23,7 @@ namespace mindspore {
 
 schema::MetaGraphT *TestTfliteParser::LoadAndConvert(const string &model_path, const string &weight_path) {
   lite::TfliteModelParser parser;
-  meta_graph = parser.ParseToFb(model_path, weight_path);
+  meta_graph = parser.ParseToFb(model_path, weight_path, schema::QuantType_QUANT_NONE);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Parse to metaGraph return nullptr";
     return nullptr;

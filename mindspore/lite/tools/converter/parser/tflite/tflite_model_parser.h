@@ -33,8 +33,7 @@
 #include "tools/common/tensor_util.h"
 #include "schema/inner/model_generated.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 class TfliteModelParser : public ModelParser {
  public:
   TfliteModelParser();
@@ -42,9 +41,9 @@ class TfliteModelParser : public ModelParser {
   ~TfliteModelParser() override;
 
   schema::MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
-                                const QuantType &quantType = QuantType_QUANT_NONE) override;
+                                const QuantType &quantTyp) override;
 
- private:
+ protected:
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const char *model_path);
 
   STATUS CopyConstTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
@@ -64,6 +63,8 @@ class TfliteModelParser : public ModelParser {
 
   STATUS ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph);
 
+  QuantType quantType = QuantType_QUANT_NONE;
+  char *tfliteModelBuf = nullptr;
   std::unique_ptr<schema::MetaGraphT> ConstructMainGraph(const std::unique_ptr<tflite::ModelT> &tflite_model,
                                                          const QuantType &quant_type);
 
@@ -73,9 +74,6 @@ class TfliteModelParser : public ModelParser {
 
   std::map<std::string, schema::CNodeT *> opMap;
   std::map<const tflite::OperatorT *, schema::CNodeT *> tfliteOpMap;
-  QuantType quantType = QuantType_QUANT_NONE;
-  char *tfliteModelBuf = nullptr;
 };
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H
