@@ -88,6 +88,22 @@ class _AlgoParameterConfig():
         self.check_config_handle()
         return self._config_handle.get_tensor_slice_align_size()
 
+    def set_dp_algo_enable_approxi(self, enable_flag):
+        self.check_config_handle()
+        self._config_handle.set_dp_algo_enable_approxi(enable_flag)
+
+    def get_dp_algo_enable_approxi(self):
+        self.check_config_handle()
+        return self._config_handle.get_dp_algo_enable_approxi()
+
+    def set_dp_algo_approxi_epsilon(self, epsilon):
+        self.check_config_handle()
+        self._config_handle.set_dp_algo_approxi_epsilon(epsilon)
+
+    def get_dp_algo_approxi_epsilon(self):
+        self.check_config_handle()
+        return self._config_handle.get_dp_algo_approxi_epsilon()
+
     def reset_algo_parameters(self):
         self.check_config_handle()
         self._config_handle.reset_algo_parameters()
@@ -113,18 +129,23 @@ set_algo_parameters_config_func_map = {
     "fully_use_devices": _algo_parameter_config().set_fully_use_devices,
     "elementwise_op_strategy_follow": _algo_parameter_config().set_elementwise_op_strategy_follow,
     "tensor_slice_align_enable": _algo_parameter_config().set_tensor_slice_align_enable,
-    "tensor_slice_align_size": _algo_parameter_config().set_tensor_slice_align_size}
+    "tensor_slice_align_size": _algo_parameter_config().set_tensor_slice_align_size,
+    "enable_algo_approxi": _algo_parameter_config().set_dp_algo_enable_approxi,
+    "algo_approxi_epsilon": _algo_parameter_config().set_dp_algo_approxi_epsilon}
 
 
 get_algo_parameters_config_func_map = {
     "fully_use_devices": _algo_parameter_config().get_fully_use_devices,
     "elementwise_op_strategy_follow": _algo_parameter_config().get_elementwise_op_strategy_follow,
     "tensor_slice_align_enable": _algo_parameter_config().get_tensor_slice_align_enable,
-    "tensor_slice_align_size": _algo_parameter_config().get_tensor_slice_align_size}
+    "tensor_slice_align_size": _algo_parameter_config().get_tensor_slice_align_size,
+    "enable_algo_approxi": _algo_parameter_config().get_dp_algo_enable_approxi,
+    "algo_approxi_epsilon": _algo_parameter_config().get_dp_algo_approxi_epsilon}
 
 
 @args_type_check(tensor_slice_align_enable=bool, tensor_slice_align_size=int,
-                 fully_use_devices=bool, elementwise_op_strategy_follow=bool)
+                 fully_use_devices=bool, elementwise_op_strategy_follow=bool,
+                 enable_algo_approxi=bool, algo_approxi_epsilon=float)
 def set_algo_parameters(**kwargs):
     """
     Set algo parameter config.
@@ -139,6 +160,8 @@ def set_algo_parameters(**kwargs):
         fully_use_devices (bool): Whether ONLY generating strategies that fully use all available devices. Default: True
         elementwise_op_strategy_follow (bool): Whether the elementwise operator has the same strategies as its
             subsequent operators. Default: False
+        enable_algo_approxi (bool): Whether to enable the approximation in the DP algorithms.
+        algo_approxi_epsilon (float): The epsilon value used int the approximation DP algorithm.
 
     Raises:
         ValueError: If context keyword is not recognized.

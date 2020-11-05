@@ -41,6 +41,8 @@ bool ELEMENTWISE_OP_STRA_FOLLOW = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
 bool MULTI_SUBGRAPHS = DEFAULT_IS_MULTI_SUBGRAPHS;
 int32_t RUN_PHASE = DEFAULT_RUN_PHASE;
 bool TRIANGLE_STAR_STRATEGY_OVERWRITE = DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE;
+bool DP_ALGO_ENABLE_APPROX = DEFAULT_DP_ALGO_ENABLE_APPROX;
+double DP_ALGO_APPROX_EPSILON = DEFAULT_DP_ALGO_APPROX_EPSILON;
 
 void CostGraph::SetDeviceMemoryAndCostParameter() {
   MS_EXCEPTION_IF_NULL(CostModelContext::GetInstance());
@@ -170,6 +172,21 @@ void CostGraph::SetDeviceMemoryAndCostParameter() {
   }
   RUN_PHASE = phase;
   MS_LOG(INFO) << "run_phase: " << RUN_PHASE << ".";
+
+  auto enable_approx = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+  DP_ALGO_ENABLE_APPROX = enable_approx;
+  if (enable_approx) {
+    MS_LOG(INFO) << "dp_algo_enable_approx: true.";
+  } else {
+    MS_LOG(INFO) << "dp_algo_enable_approx: false.";
+  }
+
+  auto epsilon = CostModelContext::GetInstance()->dp_algo_approxi_epsilon();
+  if (epsilon <= 0 || epsilon > 1) {
+    MS_LOG(EXCEPTION) << "'epsilon' must be in (0, 1]";
+  }
+  DP_ALGO_APPROX_EPSILON = epsilon;
+  MS_LOG(INFO) << "epsilon: " << epsilon << ".";
 }
 
 void CostGraph::RemoveOperator(const OperatorInfoPtr &op) {
@@ -1900,6 +1917,32 @@ Status CostGraph::CalculateMemoryCost() {
     }
   }
   return SUCCESS;
+}
+
+void CostGraph::CheckApproximateCostGraphEdges() {
+  auto approximation = CostModelContext::GetInstance()->dp_algo_enable_approxi();
+  if (!approximation) {
+    return;
+  }
+  for (auto &s_edge : edges_) {
+    auto &edges_vector = s_edge.second;
+    for (auto &edge_ptr : edges_vector) {
+      MS_EXCEPTION_IF_NULL(edge_ptr);
+      if (edge_ptr->CheckStrategyCostPossibility()) {
+        continue;
+      }
+      MS_LOG(INFO) << "Checking StrategyCost for edge: " << edge_ptr->edge_name()
+                   << " impossible, re-initing the operators and edges";
+      auto prev_op = edge_ptr->prev_operator();
+      MS_EXCEPTION_IF_NULL(prev_op);
+      auto next_op = edge_ptr->next_operator();
+      MS_EXCEPTION_IF_NULL(next_op);
+      // Check the 'prev_op'
+      prev_op->ExactStrategiesAndRelatedEdges();
+      // Check the 'next_op'
+      next_op->ExactStrategiesAndRelatedEdges();
+    }
+  }
 }
 }  // namespace parallel
 }  // namespace mindspore

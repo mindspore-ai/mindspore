@@ -105,7 +105,8 @@ def test_two_matmul():
     assert costmodel_communi_bias == 1024.0
 
     set_algo_parameters(tensor_slice_align_enable=False, tensor_slice_align_size=32,
-                        fully_use_devices=False, elementwise_op_strategy_follow=False)
+                        fully_use_devices=False, elementwise_op_strategy_follow=False,
+                        enable_algo_approxi=True, algo_approxi_epsilon=0.001)
     para_slice_align_enable = get_algo_parameters("tensor_slice_align_enable")
     assert not para_slice_align_enable
     para_slice_align_size = get_algo_parameters("tensor_slice_align_size")
@@ -114,6 +115,10 @@ def test_two_matmul():
     assert not fully_use_devices
     elementwise_op_strategy_follow = get_algo_parameters("elementwise_op_strategy_follow")
     assert not elementwise_op_strategy_follow
+    enable_approxi = get_algo_parameters("enable_algo_approxi")
+    assert enable_approxi
+    algo_epsilon = get_algo_parameters("algo_approxi_epsilon")
+    assert algo_epsilon == 0.001
 
     reset_algo_parameters()
     para_slice_align_enable = get_algo_parameters("tensor_slice_align_enable")
@@ -124,6 +129,10 @@ def test_two_matmul():
     assert fully_use_devices
     elementwise_op_strategy_follow = get_algo_parameters("elementwise_op_strategy_follow")
     assert not elementwise_op_strategy_follow
+    enable_approxi = get_algo_parameters("enable_algo_approxi")
+    assert not enable_approxi
+    algo_epsilon = get_algo_parameters("algo_approxi_epsilon")
+    assert algo_epsilon == 0.1
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
