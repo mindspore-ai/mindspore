@@ -80,7 +80,7 @@ STATUS QuantCastFusionPass::DoFusion(MetaGraphT *graph, const std::string &patte
       return status;
     }
   } else {
-    dstAttr->srcT = srcAttr->dstT;
+    dstAttr->srcT = srcAttr->srcT;
   }
 
   return RET_OK;
