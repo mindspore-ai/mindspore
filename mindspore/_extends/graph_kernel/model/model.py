@@ -154,6 +154,8 @@ class PrimLib:
         'ControlDepend': Prim(CONTROL),
         'Assign': Prim(ELEMWISE),
         'Tanh': Prim(ELEMWISE),
+        'ExpandDims': Prim(ELEMWISE),
+        'InplaceAssign': Prim(ELEMWISE),
         '@ReduceInit': Prim(ELEMWISE),
     }
 

@@ -52,6 +52,7 @@ def CalGelu(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu():
+    np.random.seed(0)
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
 
     net = GeluNet()
@@ -67,6 +68,7 @@ def test_gelu():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelu_grad():
+    np.random.seed(0)
     input_dy = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     input_y = CalGelu(input_x)

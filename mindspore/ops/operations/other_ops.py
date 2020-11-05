@@ -65,6 +65,36 @@ class Assign(PrimitiveWithCheck):
         validator.check_scalar_or_tensor_types_same({"value": value}, mstype.number_type, self.name)
 
 
+class InplaceAssign(PrimitiveWithInfer):
+    """
+    Inplace assign `Parameter` with a value.
+    This primitive can only use in graph kernel.
+    Inputs:
+        - **variable** (Parameter) - The `Parameter`.
+        - **value** (Tensor) - The value to be assigned.
+        - **depend** (Tensor) - The dependent tensor to keep this op connected in graph.
+    Outputs:
+        Tensor, has the same type as original `variable`.
+    Examples:
+    >>> def construct(self, x):
+    >>> val = x - 1.0
+    >>> ret = x + 2.0
+    >>> return InplaceAssign()(x, val, ret)
+    >>> x = Tensor([2.0], mindspore.float32)
+    >>> net = Net()
+    >>> net(x)
+   """
+    @ prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x', 'y', 'z'], outputs=['output'])
+
+    def infer_shape(self, x, y, z):
+        return z
+
+    def infer_dtype(self, x, y, z):
+        return z
+
+
 class BoundingBoxEncode(PrimitiveWithInfer):
     """
     Encodes bounding boxes locations.
@@ -509,6 +539,7 @@ class PopulationCount(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid("x", x_dtype, (mstype.int16, mstype.uint16,), self.name)
         return mstype.tensor_type(mstype.uint8)
 
+
 class Push(PrimitiveWithInfer):
     """
     Pushes the inputs of the corresponding optimizer to parameter server.
@@ -539,6 +570,7 @@ class Push(PrimitiveWithInfer):
     def infer_dtype(self, inputs, shapes):
         return mstype.uint64
 
+
 class Pull(PrimitiveWithInfer):
     """
     Pulls weight from parameter server.
@@ -562,6 +594,7 @@ class Pull(PrimitiveWithInfer):
 
     def infer_dtype(self, key_dtype, weight_dtype):
         return mstype.float32
+
 
 class identity(Primitive):
     """

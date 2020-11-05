@@ -560,7 +560,7 @@ AnfNodePtr SimplifyReduce(const AnfNodePtr &node) {
   auto trans_reduce_lambda = [&node, &x](PrimitivePtr &operation) -> AnfNodePtr {
     auto shape = GetNodeShape(node);
     if (shape.size() != 0 && shape.size() != 1) {
-      return node;
+      return nullptr;
     } else {
       auto tmp_node = node->cast<CNodePtr>();
       auto transpose_node = tmp_node->input(1);
@@ -635,7 +635,7 @@ AnfNodePtr SimplifyReduce(const AnfNodePtr &node) {
       AnfAlgo::CopyNodeAttr("keep_dims", node, new_cnode);
       return new_cnode;
     }
-    return node;
+    return nullptr;
   };
   auto neg_reducesum_lambda = [&node, &x]() -> AnfNodePtr {
     auto arg_node = NewCNodeWithInfo({NewValueNode(prim::kPrimReduceSum), x.GetNode(node)}, node);

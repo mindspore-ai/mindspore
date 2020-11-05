@@ -70,6 +70,7 @@ class OpInfer:
 
     infer_shape_func = {
         # add special infer func here
+        'InplaceAssign': lambda inputs, attrs: inputs[2].shape
     }
     infer_dtype_func = {
         # add special infer func here
