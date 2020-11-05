@@ -36,18 +36,16 @@ namespace mindspore {
 namespace ps {
 namespace comm {
 
-TcpClient::TcpClient(std::string address, std::uint16_t port)
+TcpClient::TcpClient(const std::string &address, std::uint16_t port)
     : event_base_(nullptr),
       event_timeout_(nullptr),
       buffer_event_(nullptr),
       server_address_(std::move(address)),
       server_port_(port) {
-  message_handler_.SetCallback([this](const void *buf, size_t num) {
-    if (buf == nullptr) {
-      if (disconnected_callback_) disconnected_callback_(*this, 200);
-      Stop();
+  message_handler_.SetCallback([this](const CommMessage &message) {
+    if (message_callback_) {
+      message_callback_(*this, message);
     }
-    if (message_callback_) message_callback_(*this, buf, num);
   });
 }
 
@@ -63,7 +61,7 @@ void TcpClient::SetCallback(const OnConnected &conn, const OnDisconnected &disco
   timeout_callback_ = timeout;
 }
 
-void TcpClient::InitTcpClient() {
+void TcpClient::Init() {
   if (buffer_event_) {
     return;
   }
@@ -139,7 +137,7 @@ void TcpClient::SetTcpNoDelay(const evutil_socket_t &fd) {
 void TcpClient::TimeoutCallback(evutil_socket_t, std::int16_t, void *arg) {
   MS_EXCEPTION_IF_NULL(arg);
   auto tcp_client = reinterpret_cast<TcpClient *>(arg);
-  tcp_client->InitTcpClient();
+  tcp_client->Init();
 }
 
 void TcpClient::ReadCallback(struct bufferevent *bev, void *ctx) {
@@ -150,10 +148,10 @@ void TcpClient::ReadCallback(struct bufferevent *bev, void *ctx) {
   MS_EXCEPTION_IF_NULL(input);
 
   char read_buffer[4096];
-  int read = 0;
 
-  while ((read = EVBUFFER_LENGTH(input)) > 0) {
-    if (evbuffer_remove(input, &read_buffer, sizeof(read_buffer)) == -1) {
+  while (EVBUFFER_LENGTH(input) > 0) {
+    int read = evbuffer_remove(input, &read_buffer, sizeof(read_buffer));
+    if (read == -1) {
       MS_LOG(EXCEPTION) << "Can not drain data from the event buffer!";
     }
     tcp_client->OnReadHandler(read_buffer, read);
@@ -196,25 +194,38 @@ void TcpClient::EventCallback(struct bufferevent *bev, std::int16_t events, void
 void TcpClient::Start() {
   MS_EXCEPTION_IF_NULL(event_base_);
   int ret = event_base_dispatch(event_base_);
-  if (ret == 0) {
-    MS_LOG(INFO) << "Event base dispatch success!";
-  } else if (ret == 1) {
-    MS_LOG(ERROR) << "Event base dispatch failed with no events pending or active!";
-  } else if (ret == -1) {
-    MS_LOG(ERROR) << "Event base dispatch failed with error occurred!";
-  } else {
-    MS_LOG(EXCEPTION) << "Event base dispatch with unexpect error code!";
-  }
+  MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base dispatch success!";
+  MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType)
+    << "Event base dispatch failed with no events pending or active!";
+  MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base dispatch failed with error occurred!";
+  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base dispatch with unexpect error code!";
 }
 
-void TcpClient::ReceiveMessage(const OnMessage &cb) { message_callback_ = cb; }
+void TcpClient::StartWithNoBlock() {
+  MS_LOG(INFO) << "Start tcp client with no block!";
+  MS_EXCEPTION_IF_NULL(event_base_);
+  int ret = event_base_loop(event_base_, EVLOOP_NONBLOCK);
+  MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base loop success!";
+  MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType) << "Event base loop failed with no events pending or active!";
+  MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base loop failed with error occurred!";
+  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpect error code!";
+}
 
-void TcpClient::SendMessage(const void *buf, size_t num) const {
+void TcpClient::SetMessageCallback(const OnMessage &cb) { message_callback_ = cb; }
+
+void TcpClient::SendMessage(const CommMessage &message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
-  if (evbuffer_add(bufferevent_get_output(buffer_event_), buf, num) == -1) {
-    MS_LOG(EXCEPTION) << "Event buffer add failed!";
+  uint32_t buf_size = message.ByteSizeLong();
+  std::vector<unsigned char> serialized(buf_size);
+  message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
+  if (evbuffer_add(bufferevent_get_output(buffer_event_), &buf_size, sizeof(buf_size)) == -1) {
+    MS_LOG(EXCEPTION) << "Event buffer add header failed!";
+  }
+  if (evbuffer_add(bufferevent_get_output(buffer_event_), serialized.data(), buf_size) == -1) {
+    MS_LOG(EXCEPTION) << "Event buffer add protobuf data failed!";
   }
 }
+
 }  // namespace comm
 }  // namespace ps
 }  // namespace mindspore

@@ -23,6 +23,10 @@
 #include <event2/bufferevent.h>
 #include <functional>
 #include <string>
+#include <memory>
+#include <vector>
+
+#include "proto/comm.pb.h"
 
 namespace mindspore {
 namespace ps {
@@ -30,24 +34,25 @@ namespace comm {
 
 class TcpClient {
  public:
-  using OnMessage = std::function<void(const TcpClient &, const void *, size_t)>;
   using OnConnected = std::function<void(const TcpClient &)>;
   using OnDisconnected = std::function<void(const TcpClient &, int)>;
   using OnRead = std::function<void(const TcpClient &, const void *, size_t)>;
   using OnTimeout = std::function<void(const TcpClient &)>;
+  using OnMessage = std::function<void(const TcpClient &, const CommMessage &)>;
 
-  explicit TcpClient(std::string address, std::uint16_t port);
+  explicit TcpClient(const std::string &address, std::uint16_t port);
   virtual ~TcpClient();
 
   std::string GetServerAddress() const;
   void SetCallback(const OnConnected &conn, const OnDisconnected &disconn, const OnRead &read,
                    const OnTimeout &timeout);
-  void InitTcpClient();
+  void Init();
   void StartWithDelay(int seconds);
   void Stop();
-  void ReceiveMessage(const OnMessage &cb);
-  void SendMessage(const void *buf, size_t num) const;
   void Start();
+  void StartWithNoBlock();
+  void SetMessageCallback(const OnMessage &cb);
+  void SendMessage(const CommMessage &message) const;
 
  protected:
   static void SetTcpNoDelay(const evutil_socket_t &fd);
@@ -57,8 +62,9 @@ class TcpClient {
   virtual void OnReadHandler(const void *buf, size_t num);
 
  private:
-  TcpMessageHandler message_handler_;
   OnMessage message_callback_;
+  TcpMessageHandler message_handler_;
+
   OnConnected connected_callback_;
   OnDisconnected disconnected_callback_;
   OnRead read_callback_;
@@ -71,6 +77,7 @@ class TcpClient {
   std::string server_address_;
   std::uint16_t server_port_;
 };
+
 }  // namespace comm
 }  // namespace ps
 }  // namespace mindspore

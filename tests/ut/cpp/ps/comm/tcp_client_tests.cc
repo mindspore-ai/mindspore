@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <memory>
+
 #include "common/common_test.h"
 #include "ps/comm/tcp_client.h"
 
@@ -26,19 +28,19 @@ class TestTcpClient : public UT::Common {
 };
 
 TEST_F(TestTcpClient, InitClientIPError) {
-  auto client = new TcpClient("127.0.0.13543", 9000);
-  client->ReceiveMessage(
-    [](const TcpClient &client, const void *buffer, size_t num) { client.SendMessage(buffer, num); });
+  auto client = std::make_unique<TcpClient>("127.0.0.13543", 9000);
 
-  ASSERT_THROW(client->InitTcpClient(), std::exception);
+  client->SetMessageCallback([](const TcpClient &client, const CommMessage &message) { client.SendMessage(message); });
+
+  ASSERT_THROW(client->Init(), std::exception);
 }
 
 TEST_F(TestTcpClient, InitClientPortErrorNoException) {
-  auto client = new TcpClient("127.0.0.1", -1);
-  client->ReceiveMessage(
-    [](const TcpClient &client, const void *buffer, size_t num) { client.SendMessage(buffer, num); });
+  auto client = std::make_unique<TcpClient>("127.0.0.1", -1);
 
-  EXPECT_NO_THROW(client->InitTcpClient());
+  client->SetMessageCallback([](const TcpClient &client, const CommMessage &message) { client.SendMessage(message); });
+
+  EXPECT_NO_THROW(client->Init());
 }
 
 }  // namespace comm

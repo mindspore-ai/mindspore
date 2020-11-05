@@ -18,6 +18,7 @@
 #include "ps/comm/tcp_server.h"
 #include "common/common_test.h"
 
+#include <memory>
 #include <thread>
 
 namespace mindspore {
@@ -25,16 +26,20 @@ namespace ps {
 namespace comm {
 class TestTcpServer : public UT::Common {
  public:
-  TestTcpServer() = default;
+  TestTcpServer() : client_(nullptr), server_(nullptr) {}
+  virtual ~TestTcpServer() = default;
+
   void SetUp() override {
-    server_ = new TcpServer("127.0.0.1", 9000);
+    server_ = std::make_unique<TcpServer>("127.0.0.1", 9998);
     std::unique_ptr<std::thread> http_server_thread_(nullptr);
     http_server_thread_ = std::make_unique<std::thread>([&]() {
-      server_->ReceiveMessage([](const TcpServer &server, const TcpConnection &conn, const void *buffer, size_t num) {
-        EXPECT_STREQ(std::string(reinterpret_cast<const char *>(buffer), num).c_str(), "TCP_MESSAGE");
-        server.SendMessage(conn, buffer, num);
+      server_->SetMessageCallback([](const TcpServer &server, const TcpConnection &conn, const CommMessage &message) {
+        KVMessage kv_message;
+        kv_message.ParseFromString(message.data());
+        EXPECT_EQ(2, kv_message.keys_size());
+        server.SendMessage(conn, message);
       });
-      server_->InitServer();
+      server_->Init();
       server_->Start();
     });
     http_server_thread_->detach();
@@ -47,21 +52,32 @@ class TestTcpServer : public UT::Common {
     server_->Stop();
   }
 
-  TcpClient *client_;
-  TcpServer *server_;
-  const std::string test_message_ = "TCP_MESSAGE";
+  std::unique_ptr<TcpClient> client_;
+  std::unique_ptr<TcpServer> server_;
 };
 
 TEST_F(TestTcpServer, ServerSendMessage) {
-  client_ = new TcpClient("127.0.0.1", 9000);
+  client_ = std::make_unique<TcpClient>("127.0.0.1", 9998);
   std::unique_ptr<std::thread> http_client_thread(nullptr);
   http_client_thread = std::make_unique<std::thread>([&]() {
-    client_->ReceiveMessage([](const TcpClient &client, const void *buffer, size_t num) {
-      EXPECT_STREQ(std::string(reinterpret_cast<const char *>(buffer), num).c_str(), "TCP_MESSAGE");
+    client_->SetMessageCallback([](const TcpClient &client, const CommMessage &message) {
+      KVMessage kv_message;
+      kv_message.ParseFromString(message.data());
+      EXPECT_EQ(2, kv_message.keys_size());
     });
 
-    client_->InitTcpClient();
-    client_->SendMessage(test_message_.c_str(), test_message_.size());
+    client_->Init();
+
+    CommMessage comm_message;
+    KVMessage kv_message;
+    std::vector<int> keys{1, 2};
+    std::vector<int> values{3, 4};
+    *kv_message.mutable_keys() = {keys.begin(), keys.end()};
+    *kv_message.mutable_values() = {values.begin(), values.end()};
+
+    comm_message.set_data(kv_message.SerializeAsString());
+    client_->SendMessage(comm_message);
+
     client_->Start();
   });
   http_client_thread->detach();
