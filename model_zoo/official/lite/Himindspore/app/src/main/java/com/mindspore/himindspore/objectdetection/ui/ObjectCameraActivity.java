@@ -8,7 +8,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.mindspore.himindspore.R;
 import com.mindspore.himindspore.camera.CameraPreview;
-import com.mindspore.himindspore.imageclassification.help.ImageTrackingMobile;
 import com.mindspore.himindspore.objectdetection.bean.RecognitionObjectBean;
 import com.mindspore.himindspore.objectdetection.help.ObjectTrackingMobile;
 
@@ -20,7 +19,7 @@ import static com.mindspore.himindspore.objectdetection.bean.RecognitionObjectBe
 
 /**
  * main page of entrance
- *
+ * <p>
  * Pass in pictures to JNI, test mindspore model, load reasoning, etc
  */
 
@@ -29,7 +28,7 @@ public class ObjectCameraActivity extends AppCompatActivity implements CameraPre
     private final String TAG = "ObjectCameraActivity";
 
     private CameraPreview cameraPreview;
-    
+
     private ObjectTrackingMobile mTrackingMobile;
 
     private ObjectRectView mObjectRectView;
@@ -64,7 +63,7 @@ public class ObjectCameraActivity extends AppCompatActivity implements CameraPre
     @Override
     protected void onResume() {
         super.onResume();
-        cameraPreview.onResume(this,CameraPreview.OPEN_TYPE_OBJECT,mTrackingMobile);
+        cameraPreview.onResume(this, CameraPreview.OPEN_TYPE_OBJECT, mTrackingMobile);
 
     }
 
@@ -80,7 +79,7 @@ public class ObjectCameraActivity extends AppCompatActivity implements CameraPre
             mObjectRectView.clearCanvas();
             return;
         }
-        Log.d(TAG,result);
+        Log.d(TAG, result);
         recognitionObjectBeanList = getRecognitionList(result);
         mObjectRectView.setInfo(recognitionObjectBeanList);
     }

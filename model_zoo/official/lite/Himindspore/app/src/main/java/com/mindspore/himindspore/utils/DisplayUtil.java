@@ -5,9 +5,9 @@ import android.content.Context;
 public class DisplayUtil {
 
     private DisplayUtil() {
-    /* cannot be instantiated */
-    throw new UnsupportedOperationException("cannot be instantiated");
-}
+        /* cannot be instantiated */
+        throw new UnsupportedOperationException("cannot be instantiated");
+    }
 
 
     public static int px2dip(Context context, float pxValue) {

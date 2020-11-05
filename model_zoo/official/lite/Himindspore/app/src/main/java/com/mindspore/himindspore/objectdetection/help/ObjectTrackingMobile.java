@@ -5,7 +5,7 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.util.Log;
 
-import com.mindspore.himindspore.track.TrackListener;
+import com.mindspore.himindspore.base.TrackListener;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -40,24 +40,24 @@ public class ObjectTrackingMobile implements TrackListener {
      * jni Load model
      *
      * @param assetManager assetManager
-     * @param buffer buffer
-     * @param numThread numThread
+     * @param buffer       buffer
+     * @param numThread    numThread
      * @return Load model data
      */
     public native long loadModel(AssetManager assetManager, ByteBuffer buffer, int numThread);
 
     /**
      * jni Run model
-     * 
+     *
      * @param netEnv Load model data
-     * @param img Current picture
+     * @param img    Current picture
      * @return Run model data
      */
     public native String runNet(long netEnv, Bitmap img);
 
     /**
      * Unbind model data
-     * 
+     *
      * @param netEnv model data
      * @return Unbound state
      */
@@ -65,7 +65,7 @@ public class ObjectTrackingMobile implements TrackListener {
 
     /**
      * C++ encapsulated as a method of the msnetworks class
-     * 
+     *
      * @param assetManager Model file location
      * @return Loading model file status
      */
@@ -79,7 +79,7 @@ public class ObjectTrackingMobile implements TrackListener {
 
     /**
      * Run Mindspore
-     * 
+     *
      * @param img Current image recognition
      * @return Recognized text information
      */
@@ -90,6 +90,7 @@ public class ObjectTrackingMobile implements TrackListener {
 
     /**
      * Unbound model
+     *
      * @return true
      */
     public boolean unloadModel() {
@@ -99,8 +100,9 @@ public class ObjectTrackingMobile implements TrackListener {
 
     /**
      * Load model file stream
+     *
      * @param modelPath Model file path
-     * @return  Load model file stream
+     * @return Load model file stream
      */
     public ByteBuffer loadModelFile(String modelPath) {
         InputStream is = null;

@@ -15,7 +15,7 @@ public class RecognitionObjectBean {
     private float right;
     private float bottom;
 
-    private RecognitionObjectBean(Builder builder){
+    private RecognitionObjectBean(Builder builder) {
         this.rectID = builder.rectID;
         this.imgID = builder.imgID;
         this.objectName = builder.objectName;
@@ -37,7 +37,7 @@ public class RecognitionObjectBean {
         private float right;
         private float bottom;
 
-        public RecognitionObjectBean build(){
+        public RecognitionObjectBean build() {
             return new RecognitionObjectBean(this);
         }
 

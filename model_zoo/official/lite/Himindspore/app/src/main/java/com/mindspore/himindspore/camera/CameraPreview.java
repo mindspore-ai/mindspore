@@ -37,8 +37,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
+import com.mindspore.himindspore.base.TrackListener;
 import com.mindspore.himindspore.imageclassification.help.GarbageTrackingMobile;
-import com.mindspore.himindspore.track.TrackListener;
 import com.mindspore.himindspore.imageclassification.help.ImageTrackingMobile;
 import com.mindspore.himindspore.objectdetection.help.ObjectTrackingMobile;
 
@@ -283,7 +283,7 @@ public class CameraPreview extends TextureView {
             if (null != track) {
                 garbageTrackingMobile = (GarbageTrackingMobile) track;
             }
-        }else if (OPEN_TYPE_OBJECT == openType) {
+        } else if (OPEN_TYPE_OBJECT == openType) {
             if (null != track) {
                 objectTrackingMobile = (ObjectTrackingMobile) track;
             }
@@ -308,7 +308,7 @@ public class CameraPreview extends TextureView {
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
 
-        if (OPEN_TYPE_IMAGE == openType || OPEN_TYPE_OBJECT == openType || OPEN_TYPE_IMAGE_CUSTOM == openType ) {
+        if (OPEN_TYPE_IMAGE == openType || OPEN_TYPE_OBJECT == openType || OPEN_TYPE_IMAGE_CUSTOM == openType) {
             mImageBackgroundThread = new HandlerThread("MINDSPORE");
             mImageBackgroundThread.start();
             mImageBackgroundHandler = new Handler(mImageBackgroundThread.getLooper());
@@ -330,12 +330,12 @@ public class CameraPreview extends TextureView {
                 if (bitmap != null) {
                     long startTime = System.currentTimeMillis();
                     // The current bitmap performs the sending request identification operation
-                    String ret ="";
-                    if (OPEN_TYPE_IMAGE == openType){
+                    String ret = "";
+                    if (OPEN_TYPE_IMAGE == openType) {
                         ret = null == imageTrackingMobile ? "" : imageTrackingMobile.MindSpore_runnet(bitmap);
-                    }else if(OPEN_TYPE_IMAGE_CUSTOM == openType){
+                    } else if (OPEN_TYPE_IMAGE_CUSTOM == openType) {
                         ret = null == garbageTrackingMobile ? "" : garbageTrackingMobile.MindSpore_runnet(bitmap);
-                    }else if(OPEN_TYPE_OBJECT == openType){
+                    } else if (OPEN_TYPE_OBJECT == openType) {
                         ret = null == objectTrackingMobile ? "" : objectTrackingMobile.MindSpore_runnet(bitmap);
                     }
                     long endTime = System.currentTimeMillis();
@@ -348,7 +348,7 @@ public class CameraPreview extends TextureView {
                     }
                 }
                 if (mImageBackgroundHandler != null && !isPreBackgroundThreadPause) {
-                    mImageBackgroundHandler.postDelayed(classifyRunnable,1000);
+                    mImageBackgroundHandler.postDelayed(classifyRunnable, 1000);
                 }
             }
         }

@@ -17,11 +17,10 @@ import android.widget.ImageView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-
 import com.mindspore.himindspore.R;
+import com.mindspore.himindspore.objectdetection.bean.RecognitionObjectBean;
 import com.mindspore.himindspore.objectdetection.help.BitmapUtils;
 import com.mindspore.himindspore.objectdetection.help.ObjectTrackingMobile;
-import com.mindspore.himindspore.objectdetection.bean.RecognitionObjectBean;
 import com.mindspore.himindspore.utils.DisplayUtil;
 
 import java.io.FileNotFoundException;
@@ -33,7 +32,7 @@ import static com.mindspore.himindspore.objectdetection.bean.RecognitionObjectBe
 public class ObjectPhotoActivity extends AppCompatActivity {
 
     private static final String TAG = "ObjectPhotoActivity";
-    private static final int[] COLORS ={R.color.white,R.color.text_blue,R.color.text_yellow,R.color.text_orange,R.color.text_green};
+    private static final int[] COLORS = {R.color.white, R.color.text_blue, R.color.text_yellow, R.color.text_orange, R.color.text_green};
 
     private static final int RC_CHOOSE_PHOTO = 1;
 
@@ -61,7 +60,7 @@ public class ObjectPhotoActivity extends AppCompatActivity {
 
     }
 
-    private void openGallay(){
+    private void openGallay() {
         Intent intentToPickPic = new Intent(Intent.ACTION_PICK, null);
         intentToPickPic.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
         startActivityForResult(intentToPickPic, RC_CHOOSE_PHOTO);
@@ -76,14 +75,16 @@ public class ObjectPhotoActivity extends AppCompatActivity {
                 this.imageUri = data.getData();
                 showOriginImage();
             }
+        } else {
+            finish();
         }
     }
 
-    private void showOriginImage(){
+    private void showOriginImage() {
         Pair<Integer, Integer> targetedSize = this.getTargetSize();
         int targetWidth = targetedSize.first;
         int maxHeight = targetedSize.second;
-         originBitmap = BitmapUtils.loadFromPath(ObjectPhotoActivity.this, imageUri, targetWidth, maxHeight);
+        originBitmap = BitmapUtils.loadFromPath(ObjectPhotoActivity.this, imageUri, targetWidth, maxHeight);
         // Determine how much to scale down the image.
         Log.i(ObjectPhotoActivity.TAG, "resized image size width:" + originBitmap.getWidth() + ",height: " + originBitmap.getHeight());
 
@@ -113,8 +114,8 @@ public class ObjectPhotoActivity extends AppCompatActivity {
         String result = trackingMobile.MindSpore_runnet(bitmap);
         long endTime = System.currentTimeMillis();
 
-        Log.d(TAG, "RUNNET CONSUMING："+(endTime-startTime)+"ms");
-        Log.d(TAG, "result："+ result);
+        Log.d(TAG, "RUNNET CONSUMING：" + (endTime - startTime) + "ms");
+        Log.d(TAG, "result：" + result);
 
         recognitionObjectBeanList = getRecognitionList(result);
 
@@ -126,29 +127,31 @@ public class ObjectPhotoActivity extends AppCompatActivity {
     private void drawRect(Bitmap bitmap) {
         Canvas canvas = new Canvas(bitmap);
         Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaint.setTextSize(DisplayUtil.sp2px(this,16));
+        mPaint.setTextSize(DisplayUtil.sp2px(this, 16));
         //Draw only outline (stroke)
         mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(DisplayUtil.dip2px(this,2));
+        mPaint.setStrokeWidth(DisplayUtil.dip2px(this, 2));
 
         for (int i = 0; i < recognitionObjectBeanList.size(); i++) {
             RecognitionObjectBean objectBean = recognitionObjectBeanList.get(i);
             StringBuilder sb = new StringBuilder();
             sb.append(objectBean.getRectID()).append("_").append(objectBean.getObjectName()).append("_").append(String.format("%.2f", (100 * objectBean.getScore())) + "%");
 
-            int paintColor =getResources().getColor(COLORS[i % COLORS.length]);
+            int paintColor = getResources().getColor(COLORS[i % COLORS.length]);
             mPaint.setColor(paintColor);
 
             RectF rectF = new RectF(objectBean.getLeft(), objectBean.getTop(), objectBean.getRight(), objectBean.getBottom());
             canvas.drawRect(rectF, mPaint);
-            canvas.drawText(sb.toString(),objectBean.getLeft(), objectBean.getTop()-10,mPaint);
+            canvas.drawText(sb.toString(), objectBean.getLeft(), objectBean.getTop() - 10, mPaint);
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        trackingMobile.unloadModel();
+        if (trackingMobile != null) {
+            trackingMobile.unloadModel();
+        }
         BitmapUtils.recycleBitmap(originBitmap);
     }
 
