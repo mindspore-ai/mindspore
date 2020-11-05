@@ -36,10 +36,9 @@ class TreeAdapter {
 
   ~TreeAdapter() = default;
 
-  // This will construct an ExeTree from a Dataset root and Prepare() the ExeTree
-  // This function is only meant to be called once and needs to be called before GetNext
-  // ExeTree will be launched when the first GetNext is called
-  Status BuildAndPrepare(std::shared_ptr<DatasetNode> root, int32_t num_epoch = -1);
+  // This function performs syntax checking, semantics checking, optimizes, and then builds
+  // the Execution tree.
+  Status Compile(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs = -1);
 
   // This is the main method TreeConsumer uses to interact with TreeAdapter
   // 1. GetNext will Launch() the ExeTree on its first call by iterator (tree is already prepared)
@@ -58,14 +57,34 @@ class TreeAdapter {
 
   Status Launch() const;
 
+  // Set optional optimization pass
+  void SetOptimize(bool value) { optimize_ = value; }
+
+  // Optional optimizations status
+  bool OptimizationEnabled() const { return optimize_; }
+
+  // Getter function to get the total number of epochs to be run on this tree.
+  // @return total number of epochs
+  int32_t num_epochs() { return num_epochs_; }
+
  private:
-  // This RECURSIVE function converts IR nodes into DatasetOp in ExecutionTree. IR could build a vector of ops. In
-  // such case, the first node is returned. Op is added as child when the current function returns.
-  Status DFSBuildTree(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);
+  // This function runs a mandatory pass checking the syntax and semantics of the IR tree.
+  Status PrePass(std::shared_ptr<DatasetNode> ir);
+
+  // This function runs an optional optimization pass on the IR tree.
+  Status Optimize(std::shared_ptr<DatasetNode> ir);
+
+  // This function runs a mandatory pass augmenting the IR tree before the execution.
+  Status PostPass(std::shared_ptr<DatasetNode> ir);
+
+  // This RECURSIVE function walks the (optimized) IR tree in DFS to build its corresponding Execution tree.
+  Status BuildExecutionTree(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);
 
   std::unique_ptr<DataBuffer> cur_db_;
   std::unordered_map<std::string, int32_t> column_name_map_;
   std::unique_ptr<ExecutionTree> tree_;
+  int32_t num_epochs_;
+  bool optimize_;  // Flag to enable optional optimization pass
 };
 }  // namespace dataset
 }  // namespace mindspore
