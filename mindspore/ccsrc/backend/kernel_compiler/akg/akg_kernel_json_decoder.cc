@@ -168,7 +168,7 @@ class CNodeDecoder {
         output_formats_.push_back(output_desc[kJsonKeyFormat]);
         output_types_.push_back(DtypeToTypeId(output_desc[kJsonKeyDataType]));
         auto get_item =
-          func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode_, NewValueNode(SizeToInt(j))});
+          func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode_, NewValueNode(SizeToLong(j))});
         func_graph->AddNode(get_item);
         nodes_map_[output_desc[kJsonKeyTensorName]] = get_item;
       }

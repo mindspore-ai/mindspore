@@ -66,7 +66,7 @@ TEST_F(AnfRuntimeAlgorithmTest, VisitKernel) {
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), add, add_second};
   auto make_tuple = kernel_graph->NewCNode(make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple);
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(args_spec_list));
@@ -79,7 +79,8 @@ TEST_F(AnfRuntimeAlgorithmTest, VisitKernel) {
   EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add_second.get());
   EXPECT_EQ(kernel_with_index.second, 0);
   // test tuple get item node as input
-  std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), make_tuple, NewValueNode(1)};
+  std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), make_tuple,
+                                                NewValueNode(static_cast<int64_t>(1))};
   auto tuple_get_item = kernel_graph->NewCNode(tuple_get_item_inputs);
   kernel_with_index = AnfAlgo::VisitKernel(tuple_get_item, 0);
   EXPECT_NE(kernel_with_index.first->cast<CNodePtr>(), nullptr);
@@ -229,7 +230,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputTensorNum) {
   inputs.push_back(NewValueNode(prim::kPrimFusedBatchNorm));
   auto bn = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(bn);
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   bn->set_abstract(std::make_shared<abstract::AbstractTuple>(args_spec_list));
@@ -310,7 +311,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputFormat) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferShape) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto none_abstract = std::make_shared<abstract::AbstractNone>();
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, none_abstract, x_abstract};
@@ -345,7 +346,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferShape) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferShape) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   // test parameter node as input
   auto parameter_node = kernel_graph->NewParameter();
@@ -361,10 +362,10 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferShape) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceShape) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract};
-  args_spec_list.emplace_back(std::make_shared<abstract::AbstractTensor>(kFloat32, std::vector<int>{1, 2, 3, 4}));
+  args_spec_list.emplace_back(std::make_shared<abstract::AbstractTensor>(kFloat32, std::vector<int64_t>{1, 2, 3, 4}));
   auto tuple_abstract = std::make_shared<abstract::AbstractTuple>(args_spec_list);
   // test cnode as input
   std::vector<AnfNodePtr> inputs;
@@ -388,7 +389,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceShape) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceShape) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   auto parameter_one = kernel_graph->NewParameter();
   MS_EXCEPTION_IF_NULL(parameter_one);
@@ -422,7 +423,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferDataTypeTest) {
   inputs.push_back(NewValueNode(prim::kPrimFusedBatchNorm));
   auto bn = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(bn);
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   bn->set_abstract(std::make_shared<abstract::AbstractTuple>(args_spec_list));
@@ -437,7 +438,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferDataType) {
   pre_node_inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
   auto pre_add = kernel_graph->NewCNode(pre_node_inputs);
   MS_EXCEPTION_IF_NULL(pre_add);
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   pre_add->set_abstract(x_abstract);
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd), pre_add};

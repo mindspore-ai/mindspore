@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
@@ -97,7 +98,10 @@ class ArrayReduceGpuKernel : public GpuKernel {
 
     if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<ValueTuple>() ||
         AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<ValueList>()) {
-      auto attr_axis = GetAttr<std::vector<int>>(kernel_node, "axis");
+      std::vector<int> attr_axis;
+      std::vector<int64_t> attr_axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
+      (void)std::transform(attr_axis_me.begin(), attr_axis_me.end(), std::back_inserter(attr_axis),
+                           [](const int64_t &value) { return static_cast<int>(value); });
       if (attr_axis.empty()) {
         axis_.push_back(-1);
       } else {
@@ -105,8 +109,8 @@ class ArrayReduceGpuKernel : public GpuKernel {
           axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
         }
       }
-    } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<Int32Imm>()) {
-      int axis = GetAttr<int>(kernel_node, "axis");
+    } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<Int64Imm>()) {
+      int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
       axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
     } else {
       MS_LOG(EXCEPTION) << "Attribute axis type is invalid.";

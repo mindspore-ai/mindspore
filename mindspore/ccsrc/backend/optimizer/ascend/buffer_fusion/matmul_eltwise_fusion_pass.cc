@@ -33,7 +33,7 @@ void MatmulEltwiseFusionPass::MatchMatmulEltwise(const CNodePtr &cnode, const An
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
-  std::vector<int> output_used_num{SizeToInt(manager->node_users()[relu_input].size())};
+  std::vector<int64_t> output_used_num{SizeToLong(manager->node_users()[relu_input].size())};
   AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), relu_input);
   std::unordered_set<AnfNodePtr> record{cnode, relu_input};
   candidate_fusion->push_back(record);

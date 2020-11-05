@@ -132,7 +132,7 @@ class Edge {
 
   void set_selected_cost(const CostPtr &cost) { selected_cost_ = cost; }
   const CostPtr &selected_cost() const { return selected_cost_; }
-  void set_parameter_involve(int para_invol) { is_output_parameter_involve_ = para_invol; }
+  void set_parameter_involve(int64_t para_invol) { is_output_parameter_involve_ = para_invol; }
   // In the training phase, when the input of a operator contains WEIGHT or a output from other operators involving
   // WEIGHT, then these input should stay in memory until it is used in the backward phase, which is kept in memory
   // at the end of forward phase.
@@ -166,9 +166,9 @@ class Edge {
   CostPtr selected_cost_;
   // In the training phase, 'is_output_parameter_involve_' is used to mark whether the output of the previous operator
   // is parameter-involved
-  int is_output_parameter_involve_ = -1;  // -1: unset; 0: not parameter_involved; 1: parameter_involved
+  int64_t is_output_parameter_involve_ = -1;  // -1: unset; 0: not parameter_involved; 1: parameter_involved
   // In the inference phase, this is used to mark whether the output of the previous operator is critical.
-  int is_output_critical_ = 0;
+  int64_t is_output_critical_ = 0;
 };
 }  // namespace parallel
 }  // namespace mindspore

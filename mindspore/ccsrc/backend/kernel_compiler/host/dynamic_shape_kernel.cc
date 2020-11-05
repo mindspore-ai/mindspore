@@ -27,12 +27,12 @@ void DynamicShapeKernel::Execute() {
   }
 
   auto prev_output_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, 0);
-  auto output_shape = std::vector<int>(SizeToInt(prev_output_shape.size()));
+  auto output_shape = std::vector<int64_t>(SizeToLong(prev_output_shape.size()));
 
-  auto output_type = TypeId::kNumberTypeInt32;
+  auto output_type = TypeId::kNumberTypeInt64;
 
   auto output_tensor_for_sync = std::make_shared<tensor::Tensor>(output_type, output_shape);
-  auto data_ptr = static_cast<int32_t *>(output_tensor_for_sync->data_c());
+  auto data_ptr = static_cast<int64_t *>(output_tensor_for_sync->data_c());
   for (size_t i = 0; i < prev_output_shape.size(); ++i) {
     MS_LOG(INFO) << "DEBUG prev_output_shape[" << i << "]:" << prev_output_shape[i];
     *(data_ptr + i) = prev_output_shape[i];

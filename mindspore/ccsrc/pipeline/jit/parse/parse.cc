@@ -227,7 +227,7 @@ void Parser::GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py
   block->func_graph()->set_has_kwarg(!py::isinstance<py::none>(kw_arg_node));
 
   py::list kwonly_args = python_adapter::GetPyObjAttr(func_args, "kwonlyargs");
-  block->func_graph()->set_kwonlyargs_count(SizeToInt(kwonly_args.size()));
+  block->func_graph()->set_kwonlyargs_count(SizeToLong(kwonly_args.size()));
 
   MS_EXCEPTION_IF_NULL(ast_);
   py::list args = ast_->GetArgs(fn_node);
@@ -342,7 +342,7 @@ FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlo
 
 FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr fn_block, const py::object &nodes) {
   py::int_ pcount = python_adapter::CallPyObjMethod(nodes, "__len__");
-  size_t count = IntToSize(pcount);
+  size_t count = LongToSize(pcount);
   MS_LOG(DEBUG) << "The nodes count is " << count;
   for (size_t i = 0; i < count; i++) {
     auto node = py::cast<py::list>(nodes)[i];
@@ -383,7 +383,7 @@ FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py:
       MS_LOG(EXCEPTION) << "List size should not be less than 2.";
     }
     auto filename = location[0].cast<std::string>();
-    auto line_no = location[1].cast<int>();
+    auto line_no = location[1].cast<int64_t>();
     auto fn_loc = block->func_graph()->debug_info()->location();
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
                                                fn_loc->file_name(), fn_loc->line());
@@ -414,7 +414,7 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
     py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
     auto filename = ret[0].cast<std::string>();
-    auto line_no = ret[1].cast<int>();
+    auto line_no = ret[1].cast<int64_t>();
     auto fn_loc = block->func_graph()->debug_info()->location();
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
                                                fn_loc->file_name(), fn_loc->line());
@@ -460,8 +460,8 @@ LocationPtr Parser::GetLocation(const py::object &node) const {
     MS_LOG(EXCEPTION) << "List size should not be less than 5.";
   }
   // refer to Location::Location() for each member of ret: line, column, line_end, column_end.
-  auto location = std::make_shared<Location>(ret[0].cast<std::string>(), ret[1].cast<int>(), ret[2].cast<int>(),
-                                             ret[3].cast<int>(), ret[4].cast<int>());
+  auto location = std::make_shared<Location>(ret[0].cast<std::string>(), ret[1].cast<int64_t>(), ret[2].cast<int64_t>(),
+                                             ret[3].cast<int64_t>(), ret[4].cast<int64_t>());
   return location;
 }
 
@@ -540,8 +540,8 @@ AnfNodePtr Parser::ParseNum(const FunctionBlockPtr &, const py::object &node) {
   py::object obj = python_adapter::GetPyObjAttr(node, "n");
   TraceGuard trace_guard(GetLocation(node));
   if (py::isinstance<py::int_>(obj)) {
-    MS_LOG(INFO) << "The Num is int:" << (std::string)py::str(obj);
-    auto data = py::cast<int>(obj);
+    MS_LOG(INFO) << "The Num is int64_t:" << (std::string)py::str(obj);
+    auto data = py::cast<int64_t>(obj);
     return NewValueNode(data);
   } else if (py::isinstance<py::float_>(obj)) {
     MS_LOG(INFO) << "The Num is float:" << (std::string)py::str(obj);
@@ -1251,10 +1251,10 @@ FunctionBlockPtr Parser::ParseForIter(const FunctionBlockPtr &block, const py::o
   // generate the iterator next apply
   // process as following: `app = next(it); target = app[0]; it = app[1];`
   CNodePtr app = body_block->func_graph()->NewCNode({op_next, iter_param});
-  CNodePtr target_app = body_block->func_graph()->NewCNode({op_getitem, app, NewValueNode(0)});
+  CNodePtr target_app = body_block->func_graph()->NewCNode({op_getitem, app, NewValueNode(static_cast<int64_t>(0))});
   py::object target_node = python_adapter::GetPyObjAttr(node, "target");
 
-  CNodePtr iter2_app = body_block->func_graph()->NewCNode({op_getitem, app, NewValueNode(1)});
+  CNodePtr iter2_app = body_block->func_graph()->NewCNode({op_getitem, app, NewValueNode(static_cast<int64_t>(1))});
   WriteAssignVars(body_block, target_node, target_app);
 
   // link the variable name with the target
@@ -1341,8 +1341,8 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   CNodePtr target_var = body_block->func_graph()->NewCNode({op_getitem, iter_node, loop_var});
   WriteAssignVars(body_block, target_node, target_var);
   // create 'i = i + 1'
-  CNodePtr loop_var_inc =
-    body_block->func_graph()->NewCNode({NewValueNode(prim::kPrimScalarAdd), loop_var, NewValueNode(1)});
+  CNodePtr loop_var_inc = body_block->func_graph()->NewCNode(
+    {NewValueNode(prim::kPrimScalarAdd), loop_var, NewValueNode(static_cast<int64_t>(1))});
   body_block->WriteVariable(loop_var->name(), loop_var_inc);
 
   // link the variable name with the target
@@ -1356,7 +1356,7 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   TraceManager::EndTrace();
   after_block->AddPrevBlock(header_block);
 
-  block->Jump(header_block, NewValueNode(0));
+  block->Jump(header_block, NewValueNode(static_cast<int64_t>(0)));
   body_block->Mature();
 
   header_block->ConditionalJump(cond_node, body_block, after_block, false);
@@ -1447,7 +1447,8 @@ void Parser::HandleAssignTuple(const FunctionBlockPtr &block, const py::object &
   for (size_t i = 0; i < items.size(); i++) {
     // Use the Primitive replace the operation resolve node (getitem)
     // because the getitem will eventually be converted to Primitive node
-    CNodePtr item_apply = block->func_graph()->NewCNode({op_getitem, assigned_node, NewValueNode(static_cast<int>(i))});
+    CNodePtr item_apply =
+      block->func_graph()->NewCNode({op_getitem, assigned_node, NewValueNode(static_cast<int64_t>(i))});
 
     py::object elt = items[i];
     WriteAssignVars(block, elt, item_apply);
@@ -1471,7 +1472,7 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
     MS_LOG(EXCEPTION) << "List size should not be less than 2.";
   }
   auto filename = location[0].cast<std::string>();
-  auto line_no = location[1].cast<int>();
+  auto line_no = location[1].cast<int64_t>();
   // Now only support the self.xxx = yyy, where self.xxx must be a defined Parameter type
   if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
     MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but not defined, at " << filename << ":"
@@ -1546,7 +1547,7 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
   AnfNodePtr value_node = ParseExprNode(block, value_object);
   py::object targets_object = python_adapter::GetPyObjAttr(node, "targets");
   py::int_ pcount = python_adapter::CallPyObjMethod(targets_object, "__len__");
-  size_t count = IntToSize(pcount);
+  size_t count = LongToSize(pcount);
   MS_LOG(DEBUG) << "The nodes count is " << count;
   for (size_t i = 0; i < count; i++) {
     auto target_node = py::cast<py::list>(targets_object)[i];
@@ -1564,7 +1565,7 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
       MS_LOG(EXCEPTION) << "List size should not be less than 2.";
     }
     auto filename = location[0].cast<std::string>();
-    auto line_no = location[1].cast<int>();
+    auto line_no = location[1].cast<int64_t>();
     MS_LOG(EXCEPTION) << "Unexpected 'break' at " << filename << ":" << line_no;
   }
   // Get current loop.
@@ -1588,7 +1589,7 @@ FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::
       MS_LOG(EXCEPTION) << "List size should not be less than 2.";
     }
     auto filename = location[0].cast<std::string>();
-    auto line_no = location[1].cast<int>();
+    auto line_no = location[1].cast<int64_t>();
     MS_LOG(EXCEPTION) << "Unexpected 'continue' at " << filename << ":" << line_no;
   }
   // Jump to the header of the loop with iterator called.
@@ -1628,8 +1629,8 @@ void Parser::RemoveUnnecessaryPhis() {
   auto mng = Manage(func_graph_, false);
   // replace the nodes
   // remove from inside to outside
-  for (int idx = SizeToInt(phis.size() - 1); idx >= 0; idx--) {
-    auto phi = phis[IntToSize(idx)];
+  for (int64_t idx = SizeToLong(phis.size() - 1); idx >= 0; idx--) {
+    auto phi = phis[LongToSize(idx)];
     auto new_node = FindPhis(removable_phis, phi);
     MS_LOG(DEBUG) << "phi " << phi->DebugString() << " to " << new_node->DebugString();
     mng->Replace(phi, new_node);
@@ -1710,7 +1711,7 @@ bool ParseAst::InitParseAstInfo(const std::string &python_mod_get_parse_method) 
   function_module_ = py::cast<std::string>(python_adapter::GetPyObjAttr(parser_, "function_module"));
   function_name_ = py::cast<std::string>(python_adapter::GetPyObjAttr(parser_, "function_name"));
   function_filename_ = py::cast<std::string>(python_adapter::GetPyObjAttr(parser_, "filename"));
-  function_line_offset_ = py::cast<int>(python_adapter::GetPyObjAttr(parser_, "line_offset"));
+  function_line_offset_ = py::cast<int64_t>(python_adapter::GetPyObjAttr(parser_, "line_offset"));
 
   return true;
 }

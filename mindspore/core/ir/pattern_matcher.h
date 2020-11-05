@@ -464,7 +464,7 @@ class PPrimitive : public PBase<PPrimitive<TArgs...> > {
 template <typename T = AnfNodePtr>
 class PConstant : public PBase<PConstant<T> > {
  public:
-  explicit PConstant(const AnfNodePtr &as_node, const bool any_value = true, const int check_value = 0,
+  explicit PConstant(const AnfNodePtr &as_node, const bool any_value = true, const int64_t check_value = 0,
                      const bool is_scalar = false)
       : as_node_(as_node),
         captured_node_(as_node),
@@ -957,7 +957,7 @@ class PConstant : public PBase<PConstant<T> > {
   mutable AnfNodePtr as_node_;
   mutable AnfNodePtr captured_node_;
   bool any_value_{true};
-  int check_value_{0};
+  int64_t check_value_{0};
   bool is_scalar_{false};
   mutable bool is_new_value_node_{false};
   mutable bool captured_{false};

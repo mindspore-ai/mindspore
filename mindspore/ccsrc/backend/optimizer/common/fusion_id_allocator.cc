@@ -24,7 +24,7 @@ FusionIdAllocator::~FusionIdAllocator() {}
 
 void FusionIdAllocator::Init() { fusion_id = 0; }
 
-int32_t FusionIdAllocator::AllocateFusionId() {
+int64_t FusionIdAllocator::AllocateFusionId() {
   fusion_id++;
   return fusion_id;
 }
@@ -38,14 +38,14 @@ bool FusionIdAllocator::HasFusionIdAttr(const AnfNodePtr &node) {
   return AnfAlgo::HasNodeAttr(kAttrFusionId, cnode);
 }
 
-int32_t FusionIdAllocator::GetFusionId(const AnfNodePtr &node) {
+int64_t FusionIdAllocator::GetFusionId(const AnfNodePtr &node) {
   if (HasFusionIdAttr(node)) {
-    return AnfAlgo::GetNodeAttr<int32_t>(node, kAttrFusionId);
+    return AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFusionId);
   }
   return -1;
 }
 
-void FusionIdAllocator::SetFusionId(const AnfNodePtr &node, int32_t id) {
+void FusionIdAllocator::SetFusionId(const AnfNodePtr &node, int64_t id) {
   ValuePtr fusion_id_v = MakeValue(id);
   AnfAlgo::SetNodeAttr(kAttrFusionId, fusion_id_v, node);
 }

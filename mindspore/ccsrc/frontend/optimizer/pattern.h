@@ -62,7 +62,7 @@ class Pattern : public Base {
   static void reset_gid() { g_id_ = 0; }
 
  protected:
-  static int g_id_;
+  static int64_t g_id_;
   // NOTE: To ensure uniqueness of the name, raise g_id_ by 1 every time a pattern got constructed
   string unique_name_;
   vector<PatternPtr> inputs_;
@@ -251,7 +251,7 @@ class Imm : public Pattern {
   int value() { return value_; }
 
  private:
-  int value_;
+  int64_t value_;
 };
 
 class MatchResult {

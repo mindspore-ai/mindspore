@@ -40,7 +40,7 @@ TEST_F(TestHWConstInputToTensorInput, test_onehot_fg) {
   ASSERT_TRUE(g != nullptr);
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_convert_onehot_input_to_tensor1", "after_func_graph");
   ASSERT_TRUE(g_after != nullptr);
-  std::vector<int> shp_x{16};
+  std::vector<int64_t> shp_x{16};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto func_graph = GetFuncGraph(g, args_spec_list);
@@ -69,7 +69,7 @@ TEST_F(TestHWConstInputToTensorInput, test_onehot_kg) {
   FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_convert_onehot_input_to_tensor2", "after_kernel_graph");
   ASSERT_TRUE(g_after != nullptr);
   EXPECT_FALSE(CheckEqualGraph(g, g_after));
-  std::vector<int> shp_x{16};
+  std::vector<int64_t> shp_x{16};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);
@@ -87,7 +87,7 @@ TEST_F(TestHWConstInputToTensorInput, test_onehot_kg) {
 TEST_F(TestHWConstInputToTensorInput, test_value_tuple_tensor_input) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_convert_dropout_gen_mask_tuple_input_to_tensor", "before");
   ASSERT_TRUE(g != nullptr);
-  std::vector<int> shp_x{1};
+  std::vector<int64_t> shp_x{1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kernel_graph = GetKernelGraph(g, args_spec_list);
@@ -105,7 +105,7 @@ TEST_F(TestHWConstInputToTensorInput, test_value_tuple_tensor_input) {
   auto tensor = input1->cast<ValueNodePtr>()->value()->cast<tensor::TensorPtr>();
   ASSERT_TRUE(tensor != nullptr);
   auto data = tensor->data_c();
-  EXPECT_EQ(std::vector<int>((int *)data, (int *)data + 4), std::vector<int>({2, 4, 2, 2}));
+  EXPECT_EQ(std::vector<int64_t>((int64_t *)data, (int64_t *)data + 4), std::vector<int64_t>({2, 4, 2, 2}));
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -29,15 +29,15 @@ class Device {
   // This class abstract the 'device' information, used in Parallel module.
  public:
   Device() : rank_(0) { name_.clear(); }
-  explicit Device(int32_t rank) : rank_(rank) { name_.clear(); }
-  Device(std::string name, int32_t rank) : name_(std::move(name)), rank_(rank) {}
+  explicit Device(int64_t rank) : rank_(rank) { name_.clear(); }
+  Device(std::string name, int64_t rank) : name_(std::move(name)), rank_(rank) {}
   ~Device() = default;
   std::string name() const { return name_; }
-  int32_t rank() const { return rank_; }
+  int64_t rank() const { return rank_; }
 
  private:
   std::string name_;
-  int32_t rank_;
+  int64_t rank_;
 };
 }  // namespace parallel
 }  // namespace mindspore

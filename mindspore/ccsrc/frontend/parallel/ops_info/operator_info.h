@@ -45,9 +45,9 @@ using Ops = std::vector<OperatorVector>;
 using VirtualDivOp = OperatorVector;
 using TensorMaps = std::vector<Shape>;
 using TensorLayouts = std::vector<TensorLayout>;
-using different_type = std::vector<int32_t>::difference_type;
+using different_type = std::vector<int64_t>::difference_type;
 using PrimitiveAttrs = std::unordered_map<std::string, ValuePtr>;
-using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int>>, AnfNodePtr>>;
+using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>;
 
 class Edge;
 
@@ -82,7 +82,7 @@ class OperatorInfo {
 
   // Given the stage_id (which indicates the number of devices),
   // generate all strategies for this operator
-  virtual Status GenerateStrategies(int32_t stage_id) = 0;
+  virtual Status GenerateStrategies(int64_t stage_id) = 0;
   const OperatorCostPtr &operator_cost() const { return operator_cost_; }
   void set_cost(const OperatorCostPtr &cost) { operator_cost_ = cost; }
   virtual Status SetCostUnderStrategy(const StrategyPtr &strategy) = 0;
@@ -104,7 +104,7 @@ class OperatorInfo {
   // In the inference phase, the memory cost is incurred only when the operator is critical. The size is calculated
   // by the output
   Status CalculateMemoryCostForInference();
-  int ComputeOpAndPrevEdgeParameterInvolved();
+  int64_t ComputeOpAndPrevEdgeParameterInvolved();
 
   ForwardOp forward_op() const { return forward_op_; }
   ForwardOp replace_op() const { return replace_op_; }
@@ -160,11 +160,11 @@ class OperatorInfo {
   // When the output of a Parameter (require_grad) being used by multiple operators, the Parameter's cost is calculated
   // multiple times. This method is to correct this, and makes the cost is calulated only once.
   Status CorrectMemoryCost(size_t input_index);
-  int is_output_parameter_involve() const { return is_output_parameter_involve_; }
-  int is_output_critical() const { return is_output_critical_; }
+  int64_t is_output_parameter_involve() const { return is_output_parameter_involve_; }
+  int64_t is_output_critical() const { return is_output_critical_; }
   void mark_output_critical() { is_output_critical_ = 1; }
   void mark_output_not_critical() { is_output_critical_ = 0; }
-  int used_devices() const { return used_devices_; }
+  int64_t used_devices() const { return used_devices_; }
   // needed by rec_parser
   void set_type(const std::string &type) { type_ = type; }
   const std::string &type() const { return type_; }
@@ -220,8 +220,8 @@ class OperatorInfo {
   std::vector<TensorInfo> inputs_tensor_info_;
   std::vector<TensorInfo> outputs_tensor_info_;
   Shape dev_matrix_shape_;  // if repeated calculation, it contains the repeated_calc_num_
-  int32_t repeated_calc_num_ = 1;
-  int32_t as_loss_divisor_ = 1;
+  int64_t repeated_calc_num_ = 1;
+  int64_t as_loss_divisor_ = 1;
   TensorMaps inputs_tensor_map_;
   TensorMaps outputs_tensor_map_;
   ForwardOp forward_op_;
@@ -248,11 +248,11 @@ class OperatorInfo {
   // If any input is parameter-involved, the output is parameter-involved. This variable is used in calculating
   // peak memory cost in the training phase.
   // -1: unset; 0: not parameter_involved; 1: parameter_involved
-  int is_output_parameter_involve_ = -1;
+  int64_t is_output_parameter_involve_ = -1;
   // Whether this output is critical, which means that this output is included in calculating peak memory cost
   // in the inference phase.
   // -1 : unset; 0: not critical; 1: critical
-  int is_output_critical_ = -1;
+  int64_t is_output_critical_ = -1;
   double outputs_total_size_ = 0.0;
   bool is_calculated_outputs_size_ = false;
   // for each input and output, the followings record the number of bytes of each element
@@ -267,7 +267,7 @@ class OperatorInfo {
   std::vector<bool> split_flag_list_;
   std::string refkey_parameter_name_;
   CNodePtr cnode_;
-  int32_t used_devices_ = -1;
+  int64_t used_devices_ = -1;
   // the repeated_calc_num_ will be inserted to the last dimension of dev matrix in default
   bool repeated_num_in_dev_matrix_right_ = true;
   // Whether the list of available strategies is exact or approximate
@@ -280,26 +280,26 @@ class OperatorInfo {
 
 Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy);
 Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape, bool);
-Operator CreateVirtualDivOp(int32_t div_num);
+Operator CreateVirtualDivOp(int64_t div_num);
 Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &group);
 Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &group);
 Operator CreateAllGatherOp(const std::string &group);
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout);
 OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num);
-int32_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);
+int64_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);
 std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
                                                               const std::vector<bool> &split_flag_list);
 
 void PrintStrategy(const StrategyPtr &strategy);
 // generate strategies for that all inputs' dimensions are independent, such as: ([a, b, c, d])
-Status GenerateStrategiesForIndependentInputs(int32_t stage_id, const Shapes &inputs_shape,
+Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &inputs_shape,
                                               const Shapes &splittable_inputs, std::vector<StrategyPtr> *sp_vector);
 // generate strategies for that have two inputs, and input0 or input1 maybe broadcast,
 // and the corresponding dimensions that are not broadcast are all relevant dimensions
 // such as: ([a, b, c, d], [a, b, c, d]) or ([b, c, d], [a, b, c, d]) or ([1, c, d], [a, b, c, d])
 // or ([a, b, c, d], [b, c, d]) or ([a, b, c, d], [1, c, d])
 // or ([a, 1], [1, b]) or ([a, b, c, d], [1, b, c, d]) or ([a, b, c, 1], [1, b, c, d])
-Status GenerateStrategiesWithBroadcast(int32_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
+Status GenerateStrategiesWithBroadcast(int64_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
                                        std::vector<StrategyPtr> *sp_vector);
 
 Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph);

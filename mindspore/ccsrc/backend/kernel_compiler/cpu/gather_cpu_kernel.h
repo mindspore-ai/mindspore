@@ -39,7 +39,7 @@ class GatherV2CPUKernel : public CPUKernel {
   std::vector<size_t> input_shape_;
   std::vector<size_t> indices_shape_;
   std::vector<size_t> output_shape_;
-  int axis_;
+  int64_t axis_;
 };
 
 MS_REG_CPU_KERNEL(

@@ -43,12 +43,12 @@ class TileEliminater : public AnfVisitor {
     }
 
     auto value = GetValueNode(tuple_);
-    auto elements = GetValue<std::vector<int>>(value);
+    auto elements = GetValue<std::vector<int64_t>>(value);
     if (elements.empty()) {
       return x_;
     }
 
-    auto cmp = std::all_of(elements.cbegin(), elements.cend(), [](int i) { return i == 1; });
+    auto cmp = std::all_of(elements.cbegin(), elements.cend(), [](int64_t i) { return i == 1; });
     if (cmp) {
       return x_;
     }

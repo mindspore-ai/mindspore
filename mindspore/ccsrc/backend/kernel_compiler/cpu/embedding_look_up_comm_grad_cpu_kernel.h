@@ -34,7 +34,7 @@ class EmbeddingLookUpCommGradCPUKernel : public CPUKernel {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
-  int split_num_;
+  int64_t split_num_;
 };
 
 MS_REG_CPU_KERNEL(EmbeddingLookupCommGrad,

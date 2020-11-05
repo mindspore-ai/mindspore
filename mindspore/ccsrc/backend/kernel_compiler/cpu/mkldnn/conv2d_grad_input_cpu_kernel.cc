@@ -15,6 +15,7 @@
  */
 #include "backend/kernel_compiler/cpu/mkldnn/conv2d_grad_input_cpu_kernel.h"
 #include <string>
+#include <algorithm>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
@@ -30,7 +31,7 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "conv2d grad filter only support nchw input!";
   }
   std::vector<size_t> kernel_size({weight_shape[2], weight_shape[3]});
-  size_t group = IntToSize(AnfAlgo::GetNodeAttr<int>(kernel_node, GROUP));
+  size_t group = LongToSize(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group != 1) {
     if (src_shape[1] % group != 0) {
       MS_LOG(EXCEPTION) << "conv2d channels should be divided by group!";
@@ -42,8 +43,14 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc weights_desc = GetDefaultMemDesc(weight_shape);
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
 
-  auto stride_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDE);
-  auto dilation_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, DILATION);
+  std::vector<int> stride_ori;
+  std::vector<int> dilation_ori;
+  auto stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDE);
+  auto dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, DILATION);
+  (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_ori),
+                       [](const int64_t &value) { return static_cast<int>(value); });
+  (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_ori),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   if (stride_ori.size() != 2 || stride_ori[0] != stride_ori[1]) {
     MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel only support equal stride, and stride must be 2d!";
   }

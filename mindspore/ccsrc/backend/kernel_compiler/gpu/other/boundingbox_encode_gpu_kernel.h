@@ -92,7 +92,7 @@ class BoundingBoxEncodeGpuKernel : public GpuKernel {
         AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<ValueList>()) {
       means_ = GetAttr<std::vector<float>>(kernel_node, "means");
     } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("means")->isa<FloatImm>()) {
-      float mean = GetAttr<int>(kernel_node, "means");
+      float mean = GetAttr<float>(kernel_node, "means");
       for (size_t i = 0; i < coordinate_size; i++) {
         means_.emplace_back(mean);
       }
@@ -104,7 +104,7 @@ class BoundingBoxEncodeGpuKernel : public GpuKernel {
         AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueList>()) {
       stds_ = GetAttr<std::vector<float>>(kernel_node, "stds");
     } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<FloatImm>()) {
-      float std = GetAttr<int>(kernel_node, "stds");
+      float std = GetAttr<float>(kernel_node, "stds");
       for (size_t i = 0; i < coordinate_size; i++) {
         stds_.emplace_back(std);
       }

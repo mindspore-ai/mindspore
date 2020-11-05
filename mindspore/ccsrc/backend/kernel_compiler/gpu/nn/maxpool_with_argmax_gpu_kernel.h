@@ -90,10 +90,18 @@ class MaxPoolWithArgmaxGpuFwdKernel : public GpuKernel {
     input_width_ = SizeToInt(input_shape[3]);
     output_height_ = SizeToInt(output_shape[2]);
     output_width_ = SizeToInt(output_shape[3]);
-    auto window = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ksize"));
+    std::vector<int> window;
+    std::vector<int64_t> window_me =
+      GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ksize"));
+    (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     window_height_ = window[1];
     window_width_ = window[2];
-    auto stride = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
+    std::vector<int> stride;
+    std::vector<int64_t> stride_me =
+      GetValue<std::vector<int64_t>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
+    (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     stride_height_ = stride[1];
     stride_width_ = stride[2];
     pad_mode_ = GetValue<std::string>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("padding"));

@@ -20,6 +20,7 @@
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
@@ -135,9 +136,14 @@ class TensorDotGpuKernel : public GpuKernel {
     }
 
     // holding in temp values to convert to size_t vectors
-    auto x1_transpose_fwd_temp = GetAttr<std::vector<int>>(kernel_node, "x1_transpose_fwd");
-    auto x2_transpose_fwd_temp = GetAttr<std::vector<int>>(kernel_node, "x2_transpose_fwd");
-
+    std::vector<int> x1_transpose_fwd_temp;
+    std::vector<int64_t> x1_transpose_me = GetAttr<std::vector<int64_t>>(kernel_node, "x1_transpose_fwd");
+    (void)std::transform(x1_transpose_me.begin(), x1_transpose_me.end(), std::back_inserter(x1_transpose_fwd_temp),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    std::vector<int> x2_transpose_fwd_temp;
+    std::vector<int64_t> x2_transpose_me = GetAttr<std::vector<int64_t>>(kernel_node, "x2_transpose_fwd");
+    (void)std::transform(x2_transpose_me.begin(), x2_transpose_me.end(), std::back_inserter(x2_transpose_fwd_temp),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     for (size_t i = 0; i < x1_transpose_fwd_temp.size(); i++) {
       x1_transpose_fwd_.push_back(x1_transpose_fwd_temp[i]);
     }
@@ -147,8 +153,12 @@ class TensorDotGpuKernel : public GpuKernel {
     }
 
     // values to decide multiplication call specifics
-    x1_reshape_fwd_ = GetAttr<std::vector<int>>(kernel_node, "x1_reshape_fwd");
-    x2_reshape_fwd_ = GetAttr<std::vector<int>>(kernel_node, "x2_reshape_fwd");
+    std::vector<int64_t> x1_reshape_me = GetAttr<std::vector<int64_t>>(kernel_node, "x1_reshape_fwd");
+    (void)std::transform(x1_reshape_me.begin(), x1_reshape_me.end(), std::back_inserter(x1_reshape_fwd_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    std::vector<int64_t> x2_reshape_me = GetAttr<std::vector<int64_t>>(kernel_node, "x2_reshape_fwd");
+    (void)std::transform(x2_reshape_me.begin(), x2_reshape_me.end(), std::back_inserter(x2_reshape_fwd_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     output_size_ = sizeof(T);
     for (size_t i = 0; i < output_shape.size(); i++) {

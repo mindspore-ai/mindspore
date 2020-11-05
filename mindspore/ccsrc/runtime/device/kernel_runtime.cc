@@ -650,7 +650,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
-      ShapeVector shape = {1, SizeToInt(tensor_size)};
+      ShapeVector shape = {1, SizeToLong(tensor_size)};
       if (!address->SyncHostToDevice(shape, tensor_size, kNumberTypeUInt8, value.data())) {
         MS_LOG(EXCEPTION) << "kValueNode SyncHostToDevice fail!";
       }

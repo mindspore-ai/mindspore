@@ -79,7 +79,7 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_5to4_4to5) {
   ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_eliminate_5to4_4to5", "before");
   // Renormalize func_graph to infer and set shape and type information.
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
@@ -146,7 +146,7 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_cast) {
    */
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_eliminate_cast", "before");
   // Renormalize func_graph to infer and set shape and type information.
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
@@ -212,7 +212,7 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_cast_depend_cast) {
    */
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_eliminate_cast_depend_cast", "before");
   // Renormalize func_graph to infer and set shape and type information.
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);

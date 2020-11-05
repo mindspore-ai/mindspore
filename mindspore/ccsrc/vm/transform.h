@@ -57,11 +57,11 @@ class CompileGraph {
   bool IsCut(const AnfNodePtr &node);
   void Push(const AnfNodePtr &node);
   void Tie(const AnfNodePtr &n1, const AnfNodePtr &n2) { slots_[n2] = slots_[n1]; }
-  void Ret(int nargs);
-  int Ref(const AnfNodePtr &node);
+  void Ret(int64_t nargs);
+  int64_t Ref(const AnfNodePtr &node);
   VectorRef SplitNodes(const FuncGraphPtr &func_graph);
 
-  void set_height(int h) {
+  void set_height(int64_t h) {
     height_ = h;
     if (height_ > max_height_) {
       max_height_ = height_;
@@ -79,10 +79,10 @@ class CompileGraph {
   VectorRef SplitNodesWithTarget(const std::vector<AnfNodePtr> &input_nodes, const FuncGraphPtr &graph);
   void PushParameters(const FuncGraphPtr &func_graph);
   bool SplitGraph(const FuncGraphPtr &func_graph);
-  int LinConvert(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_list, const std::string &target = "");
-  int InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);
-  int AddCall(const FuncGraphPtr &graph, const CNodePtr &node);
-  void AddPadStack(int param_height);
+  int64_t LinConvert(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_list, const std::string &target = "");
+  int64_t InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);
+  int64_t AddCall(const FuncGraphPtr &graph, const CNodePtr &node);
+  void AddPadStack(int64_t param_height);
   void AddTailCall(const AnfNodePtr &fn, size_t size);
   void AddPartial(const CNodePtr &node);
   void AddMakeTuple(const CNodePtr &node);
@@ -92,17 +92,17 @@ class CompileGraph {
   void AddPrimitive(const CNodePtr &node, const PrimitivePtr &prim);
   void AddInput(const AnfNodePtr &node);
   void AddExternal(const LinConvertResult &result);
-  void AddInst(const Instruction &inst, const int &arg);
+  void AddInst(const Instruction &inst, const int64_t &arg);
   void AddInst(const Instruction &inst, const ValuePtr &arg);
   void AddInst(const Instruction &inst, const VectorRef &args);
 
   BackendPtr backend_;
   LinkFuncType lin_convert_;
   bool is_gevm_convert_;
-  int height_{0};
-  int max_height_{0};
+  int64_t height_{0};
+  int64_t max_height_{0};
   std::vector<PrimitivePtr> cut_list_;
-  std::unordered_map<AnfNodePtr, int> slots_;
+  std::unordered_map<AnfNodePtr, int64_t> slots_;
   InstSet inst_;
 };
 
@@ -127,7 +127,7 @@ class CompileGraphs {
 
  private:
   InstSet insts_;
-  std::unordered_map<FuncGraphPtr, int> mapping_;
+  std::unordered_map<FuncGraphPtr, int64_t> mapping_;
   CompileGraphPtr transform_;
   BackendPtr backend_;
 };

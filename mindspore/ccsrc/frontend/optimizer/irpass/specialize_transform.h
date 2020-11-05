@@ -251,14 +251,14 @@ class UnusedOutputEliminater : public AnfVisitor {
     if (node_users.count(node) == 0 || node_users[node].empty()) {
       return nullptr;
     }
-    std::unordered_set<int> used_output_idx;
-    std::vector<std::pair<AnfNodePtr, int>> all_users;
+    std::unordered_set<int64_t> used_output_idx;
+    std::vector<std::pair<AnfNodePtr, int64_t>> all_users;
     for (auto &node_user : node_users[node]) {
       if (!IsPrimitiveCNode(node_user.first, prim::kPrimTupleGetItem)) {
         return nullptr;
       }
       auto user_cnode = node_user.first->cast<CNodePtr>();
-      size_t used_idx = GetValue<int>(user_cnode->input(2)->cast<ValueNodePtr>()->value());
+      size_t used_idx = GetValue<int64_t>(user_cnode->input(2)->cast<ValueNodePtr>()->value());
       used_output_idx.insert(used_idx);
       all_users.push_back(std::make_pair(node_user.first, used_idx));
     }
@@ -281,9 +281,9 @@ class UnusedOutputEliminater : public AnfVisitor {
     } else {
       // after eliminate, create new multi output.
       std::vector<AnfNodePtr> new_output_inputs{output_cnode->input(0)};
-      std::unordered_map<int, int> new_idx_map;
+      std::unordered_map<int64_t, int64_t> new_idx_map;
       for (auto idx : used_output_idx) {
-        new_idx_map[idx] = SizeToInt(new_output_inputs.size() - 1);
+        new_idx_map[idx] = SizeToLong(new_output_inputs.size() - 1);
         new_output_inputs.push_back(output_cnode->input(idx + 1));
       }
       new_fg->set_output(new_fg->NewCNode(new_output_inputs));

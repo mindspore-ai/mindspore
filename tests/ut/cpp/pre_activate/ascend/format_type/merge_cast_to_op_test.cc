@@ -69,7 +69,7 @@ TEST_F(TestHWMergeCastToOp, test_merge_cast_to_next_op) {
   ASSERT_NE(g, nullptr);
 
   // set abstract because four2five node cannot infer
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   g->parameters()[0]->set_abstract(x_abstract);
   g->get_return()->set_abstract(x_abstract);
@@ -131,7 +131,7 @@ TEST_F(TestHWMergeCastToOp, test_merge_cast_to_prior_op) {
   ASSERT_NE(g, nullptr);
 
   // set abstract because five2four node cannot infer
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   g->parameters()[0]->set_abstract(x_abstract);
   g->get_return()->set_abstract(x_abstract);

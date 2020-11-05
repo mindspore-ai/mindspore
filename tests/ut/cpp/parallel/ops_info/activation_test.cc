@@ -59,7 +59,7 @@ void TestActivation::SetUp() {
   ValuePtr relu = MakeValue(std::string("relu"));
   std::unordered_map<std::string, ValuePtr> relu_attr = {{"activation_type", relu}};
   ValuePtr sm = MakeValue(std::string("softmax"));
-  ValuePtr axix = MakeValue(std::int32_t(2));
+  ValuePtr axix = MakeValue(std::int64_t(2));
   std::unordered_map<std::string, ValuePtr> softmax_attr = {{"activation_type", sm}, {"axis", axix}};
 
   Shapes relu_inputs_shape = {{2, 4, 8, 16}};

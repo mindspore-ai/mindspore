@@ -160,7 +160,7 @@ class Tensor : public MetaTensor {
   // param data_type [TypeId] data type
   explicit Tensor(const std::vector<double> &input, const TypePtr &data_type = nullptr);
 
-  // brief Create 0 dimension tensor from an int scalar.
+  // brief Create 0 dimension tensor from an int64_t scalar.
   //
   // param input [int64] the data for tensor
   // param data_type [TypeId] data type

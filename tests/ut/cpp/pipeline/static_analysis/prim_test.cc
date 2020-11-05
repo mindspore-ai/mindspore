@@ -45,22 +45,22 @@ class UTPrimUtils {
 
   static std::shared_ptr<AbstractType> TypeToAbstract(TypePtr t) { return std::make_shared<AbstractType>(t); }
 
-  static AbstractTensorPtr ArrayFloat64Of(std::initializer_list<int> shp) {
+  static AbstractTensorPtr ArrayFloat64Of(std::initializer_list<int64_t> shp) {
     auto ele = std::make_shared<AbstractScalar>(kAnyValue, kFloat64);
     return std::make_shared<AbstractTensor>(ele, std::make_shared<Shape>(shp));
   }
 
-  static AbstractTensorPtr ArrayFloat32Of(std::initializer_list<int> shp) {
+  static AbstractTensorPtr ArrayFloat32Of(std::initializer_list<int64_t> shp) {
     auto ele = std::make_shared<AbstractScalar>(kAnyValue, kFloat32);
     return std::make_shared<AbstractTensor>(ele, std::make_shared<Shape>(shp));
   }
 
-  static AbstractTensorPtr ArrayInt32Of(std::initializer_list<int> shp) {
-    auto ele = std::make_shared<AbstractScalar>(kAnyValue, kInt32);
+  static AbstractTensorPtr ArrayInt32Of(std::initializer_list<int64_t> shp) {
+    auto ele = std::make_shared<AbstractScalar>(kAnyValue, kInt64);
     return std::make_shared<AbstractTensor>(ele, std::make_shared<Shape>(shp));
   }
 
-  static AbstractTuplePtr ShapeOf(std::initializer_list<int> vals) {
+  static AbstractTuplePtr ShapeOf(std::initializer_list<int64_t> vals) {
     AbstractBasePtrList te;
     for (auto v : vals) {
       te.push_back(std::make_shared<AbstractScalar>(v));
@@ -68,7 +68,7 @@ class UTPrimUtils {
     return std::make_shared<AbstractTuple>(te);
   }
 
-  static AbstractListPtr ListShapeOf(std::initializer_list<int> vals) {
+  static AbstractListPtr ListShapeOf(std::initializer_list<int64_t> vals) {
     AbstractBasePtrList te;
     for (auto v : vals) {
       te.push_back(std::make_shared<AbstractScalar>(v));
@@ -83,8 +83,8 @@ const std::shared_ptr<Int> UTPrimUtils::kI64 = std::make_shared<Int>(64);
 const std::shared_ptr<UInt> UTPrimUtils::kU64 = std::make_shared<UInt>(64);
 namespace {
 /* skip ut test cases temporarily
-AbstractBasePtr ArrayOfTensor(const TypePtr &t, std::initializer_list<int> shp) {
-  auto shape = std::vector<int>(shp);
+AbstractBasePtr ArrayOfTensor(const TypePtr &t, std::initializer_list<int64_t> shp) {
+  auto shape = std::vector<int64_t>(shp);
   auto tensor = std::make_shared<tensor::Tensor>(t->type_id(), shape);
   return ToAbstract(tensor);
 }
@@ -106,7 +106,7 @@ void TestPrim::TearDown() {
   // destroy resource
 }
 
-static FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam) {
+static FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, uint64_t nparam) {
   // build the func_graph manually, eg:
   // MakeFuncGraph(std::make_shared<Primitive>("scalar_add"), 2) means:
   /* python source code:
@@ -117,7 +117,7 @@ static FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam) 
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim));
-  for (unsigned int i = 0; i < nparam; i++) {
+  for (uint64_t i = 0; i < nparam; i++) {
     inputs.push_back(func_graph->add_parameter());
   }
   CNodePtr cnode_prim = func_graph->NewCNode(inputs);
@@ -131,7 +131,7 @@ static FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam) 
 
 TEST_F(TestPrim, test_typeof) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 1;
+  int64_t v1 = 1;
 
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   args_spec_list.push_back(abstract_v1);
@@ -142,17 +142,17 @@ TEST_F(TestPrim, test_typeof) {
   res->dump();
   TypePtr res_value = res->GetValueTrack()->cast<TypePtr>();
   res_value->dump();
-  ASSERT_TRUE(*res_value == Int(32));
+  ASSERT_TRUE(*res_value == Int(64));
 }
 
 TEST_F(TestPrim, test_list_map) {
   AbstractBasePtrList args_spec_list;
 
-  AbstractBasePtr abstract_v1 = FromValue(1, false);
-  AbstractBasePtr abstract_u1 = FromValue(1, false);
+  AbstractBasePtr abstract_v1 = FromValue(static_cast<int64_t>(1), false);
+  AbstractBasePtr abstract_u1 = FromValue(static_cast<int64_t>(1), false);
   auto abstract_list1 = std::make_shared<AbstractList>(AbstractBasePtrList({abstract_v1, abstract_u1}));
-  AbstractBasePtr abstract_v2 = FromValue(2, false);
-  AbstractBasePtr abstract_u2 = FromValue(2, false);
+  AbstractBasePtr abstract_v2 = FromValue(static_cast<int64_t>(2), false);
+  AbstractBasePtr abstract_u2 = FromValue(static_cast<int64_t>(2), false);
   auto abstract_list2 = std::make_shared<AbstractList>(AbstractBasePtrList({abstract_v2, abstract_u2}));
   auto prim_scalar_add = std::make_shared<Primitive>("scalar_add");
   AbstractBasePtr abstract_func = ToAbstract(prim_scalar_add);
@@ -164,7 +164,8 @@ TEST_F(TestPrim, test_list_map) {
   auto prim_list_map = std::make_shared<Primitive>("list_map");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_list_map, 3);
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
-  auto expected = std::make_shared<AbstractList>(AbstractBasePtrList({FromValue(3, false), FromValue(3, false)}));
+  auto expected = std::make_shared<AbstractList>(
+    AbstractBasePtrList({FromValue(static_cast<int64_t>(3), false), FromValue(static_cast<int64_t>(3), false)}));
   res->dump();
   MS_LOG(INFO) << "result res: " << res->ToString();
   MS_LOG(INFO) << "result expected: " << expected->ToString();
@@ -173,7 +174,7 @@ TEST_F(TestPrim, test_list_map) {
 
 TEST_F(TestPrim, test_list_reduce) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 1;
+  int64_t v1 = 1;
 
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   AbstractBasePtr abstract_v2 = FromValue(v1, false);
@@ -191,12 +192,12 @@ TEST_F(TestPrim, test_list_reduce) {
   res->dump();
   TypePtr res_type = res->GetTypeTrack();
   res_type->dump();
-  ASSERT_TRUE(*res_type == Int(32));
+  ASSERT_TRUE(*res_type == Int(64));
 }
 
 TEST_F(TestPrim, test_scalar_to_array) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 1;
+  int64_t v1 = 1;
 
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
 
@@ -208,12 +209,12 @@ TEST_F(TestPrim, test_scalar_to_array) {
   res->dump();
   TypePtr res_type = res->BuildType();
   res_type->dump();
-  ASSERT_TRUE(*res_type == TensorType(std::make_shared<Int>(32)));
+  ASSERT_TRUE(*res_type == TensorType(std::make_shared<Int>(64)));
 }
 
 TEST_F(TestPrim, test_array_to_scalar) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 1;
+  int64_t v1 = 1;
 
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   auto abstract_a1 = std::make_shared<AbstractTensor>(abstract_v1, std::make_shared<Shape>());
@@ -226,12 +227,12 @@ TEST_F(TestPrim, test_array_to_scalar) {
   res->dump();
   TypePtr res_type = res->BuildType();
   res_type->dump();
-  ASSERT_TRUE(*res_type == Int(32));
+  ASSERT_TRUE(*res_type == Int(64));
 }
 
 TEST_F(TestPrim, test_J_1) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 1;
+  int64_t v1 = 1;
 
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   args_spec_list.push_back(abstract_v1);
@@ -276,7 +277,7 @@ TEST_F(TestPrim, test_J_2) {
   func_graph->set_return(cnode_return);
   draw::Draw("test_J_2.dot", func_graph);
 
-  int v1 = 1;
+  int64_t v1 = 1;
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   AbstractBasePtrList args_spec_list = {abstract_v1};
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
@@ -285,7 +286,7 @@ TEST_F(TestPrim, test_J_2) {
   ASSERT_TRUE(res_J != nullptr);
   auto res_J_0 = res_J->elements()[0];
   ASSERT_TRUE(res_J_0 != nullptr);
-  ASSERT_TRUE(*res_J_0 == *(FromValue(2, false)));
+  ASSERT_TRUE(*res_J_0 == *(FromValue(static_cast<int64_t>(2), false)));
   AbstractFunctionPtr res_J_1 = dyn_cast<AbstractFunction>(res_J->elements()[1]);
   ASSERT_TRUE(res_J_1 != nullptr);
 }
@@ -296,7 +297,7 @@ TEST_F(TestPrim, test_dot) {
 
   auto a1 = UTPrimUtils::ArrayFloat64Of({2, 3});
   auto a2 = UTPrimUtils::ArrayFloat64Of({3, 4});
-  std::vector<int> expectedA = {2, 4};
+  std::vector<int64_t> expectedA = {2, 4};
   auto expected = UTPrimUtils::ArrayFloat64Of({2, 4});
 
   AbstractBasePtrList args_spec_list = {a1, a2};
@@ -312,8 +313,8 @@ TEST_F(TestPrim, test_switch1) {
   FuncGraphPtr func_graph = MakeFuncGraph(switch_, 3);
 
   AbstractBasePtr arg0 = FromValue(true, false);
-  AbstractBasePtr arg1 = FromValue(1, false);
-  AbstractBasePtr arg2 = FromValue(2, false);
+  AbstractBasePtr arg1 = FromValue(static_cast<int64_t>(1), false);
+  AbstractBasePtr arg2 = FromValue(static_cast<int64_t>(2), false);
   AbstractBasePtrList args_spec_list = {arg0, arg1, arg2};
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
@@ -325,8 +326,8 @@ TEST_F(TestPrim, test_switch2) {
   FuncGraphPtr func_graph = MakeFuncGraph(switch_, 3);
 
   AbstractBasePtr arg0 = FromValue(false, false);
-  AbstractBasePtr arg1 = FromValue(1, false);
-  AbstractBasePtr arg2 = FromValue(2, false);
+  AbstractBasePtr arg1 = FromValue(static_cast<int64_t>(1), false);
+  AbstractBasePtr arg2 = FromValue(static_cast<int64_t>(2), false);
   AbstractBasePtrList args_spec_list = {arg0, arg1, arg2};
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
@@ -339,7 +340,7 @@ TEST_F(TestPrim, test_identity) {
   PrimitivePtr identity = std::make_shared<Primitive>("identity");
   FuncGraphPtr func_graph = MakeFuncGraph(identity, 1);
 
-  AbstractBasePtr abstract_v1 = FromValue(1, false);
+  AbstractBasePtr abstract_v1 = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtrList args_spec_list = {abstract_v1};
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
@@ -361,7 +362,7 @@ TEST_F(TestPrim, test_broadcast_shape) {
   auto ret = res->BuildValue()->cast<ValueTuplePtr>()->value();
   std::vector<ValuePtr> element_list = {MakeValue(Shape::SHP_ANY), MakeValue(Shape::SHP_ANY)};
   ASSERT_TRUE(ret.size() == element_list.size());
-  for (int i = 0; i < element_list.size(); i++) {
+  for (int64_t i = 0; i < element_list.size(); i++) {
     ASSERT_TRUE(*ret[i] == *element_list[i]);
   }
 }
@@ -372,8 +373,8 @@ TEST_F(TestPrim, test_partial) {
 
   PrimitivePtr add = prim::kPrimScalarAdd;
   AbstractBasePtr abstract_add = ToAbstract(add);
-  AbstractBasePtr abstract_v1 = FromValue(1, false);
-  AbstractBasePtr abstract_v2 = FromValue(1, false);
+  AbstractBasePtr abstract_v1 = FromValue(static_cast<int64_t>(1), false);
+  AbstractBasePtr abstract_v2 = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtrList args_spec_list = {abstract_add, abstract_v1, abstract_v2};
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
@@ -389,14 +390,14 @@ TEST_F(TestPrim, test_partial) {
 //     return env_setitem(newenv, embed(x), y)
 TEST_F(TestPrim, test_env_setitem) {
   FuncGraphPtr graph_embed = MakeFuncGraph(prim::kPrimEmbed, 1);
-  AbstractBasePtr abstract_x = FromValue(1, false);
+  AbstractBasePtr abstract_x = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtrList args_spec_list = {abstract_x};
   AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred->abstract();
 
   FuncGraphPtr func_graph = MakeFuncGraph(prim::kPrimEnvSetItem, 3);
 
   AbstractBasePtr abstract_env = ToAbstract(newenv);
-  AbstractBasePtr abstract_y = FromValue(2, false);
+  AbstractBasePtr abstract_y = FromValue(static_cast<int64_t>(2), false);
   args_spec_list = {abstract_env, embed_x, abstract_y};
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
@@ -409,14 +410,14 @@ TEST_F(TestPrim, test_env_setitem) {
 //     return env_getitem(e, embed(x), z)
 TEST_F(TestPrim, test_env_getitem) {
   FuncGraphPtr graph_embed = MakeFuncGraph(prim::kPrimEmbed, 1);
-  AbstractBasePtr abstract_x = FromValue(1, false);
+  AbstractBasePtr abstract_x = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtrList args_spec_list = {abstract_x};
   AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred->abstract();
 
   FuncGraphPtr graph_setitem = MakeFuncGraph(prim::kPrimEnvSetItem, 3);
 
   AbstractBasePtr abstract_env = ToAbstract(newenv);
-  AbstractBasePtr abstract_y = FromValue(2, false);
+  AbstractBasePtr abstract_y = FromValue(static_cast<int64_t>(2), false);
   args_spec_list = {abstract_env, embed_x, abstract_y};
 
   AbstractBasePtr res = engine_->Run(graph_setitem, args_spec_list).inferred->abstract();
@@ -425,7 +426,7 @@ TEST_F(TestPrim, test_env_getitem) {
 
   FuncGraphPtr graph_getitem = MakeFuncGraph(prim::kPrimEnvGetItem, 3);
 
-  AbstractBasePtr abstract_z = FromValue(3, false);
+  AbstractBasePtr abstract_z = FromValue(static_cast<int64_t>(3), false);
   args_spec_list = {res, embed_x, abstract_z};
 
   res = engine_->Run(graph_getitem, args_spec_list).inferred->abstract();
@@ -439,21 +440,21 @@ TEST_F(TestPrim, test_env_getitem) {
 //     return env_add(e1, e2)
 TEST_F(TestPrim, test_env_add) {
   FuncGraphPtr graph_embed = MakeFuncGraph(prim::kPrimEmbed, 1);
-  AbstractBasePtr abstract_x = FromValue(1, false);
+  AbstractBasePtr abstract_x = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtrList args_spec_list = {abstract_x};
   AbstractBasePtr embed_x = engine_->Run(graph_embed, args_spec_list).inferred->abstract();
 
   FuncGraphPtr graph_setitem = MakeFuncGraph(prim::kPrimEnvSetItem, 3);
 
   AbstractBasePtr abstract_env = ToAbstract(newenv);
-  AbstractBasePtr abstract_y = FromValue(2, false);
+  AbstractBasePtr abstract_y = FromValue(static_cast<int64_t>(2), false);
   args_spec_list = {abstract_env, embed_x, abstract_y};
 
   AbstractBasePtr abstract_e1 = engine_->Run(graph_setitem, args_spec_list).inferred->abstract();
   AbstractBasePtr exp = std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
   ASSERT_TRUE(*abstract_e1 == *exp);
 
-  AbstractBasePtr abstract_z = FromValue(3, false);
+  AbstractBasePtr abstract_z = FromValue(static_cast<int64_t>(3), false);
   args_spec_list = {abstract_env, embed_x, abstract_z};
 
   AbstractBasePtr abstract_e2 = engine_->Run(graph_setitem, args_spec_list).inferred->abstract();
@@ -468,7 +469,7 @@ TEST_F(TestPrim, test_env_add) {
 
 TEST_F(TestPrim, test_relu) {
   PrimitivePtr relu = prim::kPrimRelu;
-  relu->AddAttr("T", MakeValue(static_cast<int>(kNumberTypeFloat64)));
+  relu->AddAttr("T", MakeValue(static_cast<int64_t>(kNumberTypeFloat64)));
   FuncGraphPtr func_graph = MakeFuncGraph(relu, 1);
 
   AbstractBasePtr expected = UTPrimUtils::ArrayFloat64Of({2, 2, 2, 3});  // NCHW
@@ -501,8 +502,8 @@ TEST_F(TestPrim, test_conv2d1) {
   std::shared_ptr<FuncGraph> func_graph = getPyFun.CallAndParseRet("test_conv2d", 64, kernel_size, 0, 2, 1);
 
   // NCHW
-  std::vector<int> inputs_dims = {2, 20, 32, 32};
-  std::vector<int> weight_dims = {64, 20, 5, 5};
+  std::vector<int64_t> inputs_dims = {2, 20, 32, 32};
+  std::vector<int64_t> weight_dims = {64, 20, 5, 5};
 
   tensor::TensorPtr inputs = std::make_shared<tensor::Tensor>();
   inputs->set_data_type(kNumberTypeInt32);
@@ -518,7 +519,7 @@ TEST_F(TestPrim, test_conv2d1) {
 
   AbstractBasePtr expected = abstract_inputs->Clone();
   // NCHW
-  std::vector<int> shape = {2, 64, 14, 14};
+  std::vector<int64_t> shape = {2, 64, 14, 14};
   expected->set_shape(std::make_shared<Shape>(shape));
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
@@ -634,11 +635,11 @@ TEST_F(TestPrim, test_fused_batch_norm) {
   FuncGraphPtr func_graph = MakeFuncGraph(fused_batch_norm, 5);
 
   // NCHW
-  std::vector<int> inputs_dims = {128, 64, 32, 64};
-  std::vector<int> scale_dims = {64};
-  std::vector<int> offset_dims = {64};
-  std::vector<int> mean_dims = {64};
-  std::vector<int> variance_dims = {64};
+  std::vector<int64_t> inputs_dims = {128, 64, 32, 64};
+  std::vector<int64_t> scale_dims = {64};
+  std::vector<int64_t> offset_dims = {64};
+  std::vector<int64_t> mean_dims = {64};
+  std::vector<int64_t> variance_dims = {64};
 
   tensor::TensorPtr inputs = std::make_shared<tensor::Tensor>();
   inputs->set_data_type(kNumberTypeFloat32);
@@ -697,7 +698,7 @@ TEST_F(TestPrim, test_pooling) {
   pooling->AddAttr("ceil_mode", MakeValue(0));
   FuncGraphPtr func_graph = MakeFuncGraph(pooling, 1);
 
-  std::vector<int> inputs_dims = {8, 64, 3, 3};
+  std::vector<int64_t> inputs_dims = {8, 64, 3, 3};
   auto inputs = std::make_shared<tensor::Tensor>();
   inputs->set_data_type(kNumberTypeFloat32);
   inputs->set_shape(inputs_dims);
@@ -706,7 +707,7 @@ TEST_F(TestPrim, test_pooling) {
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
 
   AbstractBasePtr expected = abstract_input->Clone()->Broaden();
-  std::vector<int> expected_dims = {8, 64, 2, 2};
+  std::vector<int64_t> expected_dims = {8, 64, 2, 2};
   expected->set_shape(std::make_shared<Shape>(expected_dims));
   MS_LOG(INFO) << "result: " << res->ToString();
   MS_LOG(INFO) << "expected: " << expected->ToString();
@@ -715,7 +716,7 @@ TEST_F(TestPrim, test_pooling) {
 
 TEST_F(TestPrim, test_hastype) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 1;
+  int64_t v1 = 1;
   TypePtr v2 = std::make_shared<Number>();
 
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
@@ -791,8 +792,8 @@ TEST_F(TestPrim, test_tuple_reversed) {
 
 TEST_F(TestPrim, test_list_getitem) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 2;
-  int v2 = 1;
+  int64_t v1 = 2;
+  int64_t v2 = 1;
 
   AbstractBasePtr elem = FromValue(v1, false);
   AbstractBasePtr elem2 = FromValue(v2, false);
@@ -811,8 +812,8 @@ TEST_F(TestPrim, test_list_getitem) {
 }
 
 TEST_F(TestPrim, test_list_setitem) {
-  int v1 = 1;
-  int v2 = 2;
+  int64_t v1 = 1;
+  int64_t v2 = 2;
 
   AbstractBasePtr elem1 = FromValue(v1, false);
   AbstractBasePtr elem2 = FromValue(v2, false);
@@ -836,7 +837,7 @@ TEST_F(TestPrim, test_list_setitem) {
 }
 
 TEST_F(TestPrim, test_list_append) {
-  int v1 = 1;
+  int64_t v1 = 1;
 
   AbstractBasePtr elem1 = FromValue(v1, false);
   AbstractBasePtr elem2 = FromValue(v1, false);
@@ -857,8 +858,8 @@ TEST_F(TestPrim, test_list_append) {
 }
 
 TEST_F(TestPrim, test_tuple_setitem) {
-  int v1 = 1;
-  int v2 = 2;
+  int64_t v1 = 1;
+  int64_t v2 = 2;
 
   AbstractBasePtr elem1 = FromValue(v1, false);
   AbstractBasePtr elem2 = FromValue(v2, false);
@@ -883,8 +884,8 @@ TEST_F(TestPrim, test_tuple_setitem) {
 
 TEST_F(TestPrim, test_make_list) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 2;
-  int v2 = 2;
+  int64_t v1 = 2;
+  int64_t v2 = 2;
 
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   AbstractBasePtr abstract_v2 = FromValue(v2, false);
@@ -903,8 +904,8 @@ TEST_F(TestPrim, test_make_list) {
 
 TEST_F(TestPrim, test_make_range) {
   AbstractBasePtrList args_spec_list;
-  int v1 = 1;
-  int v2 = 4;
+  int64_t v1 = 1;
+  int64_t v2 = 4;
 
   AbstractBasePtr abstract_v1 = FromValue(v1);
   AbstractBasePtr abstract_v2 = FromValue(v2);
@@ -933,9 +934,9 @@ TEST_F(TestPrim, test_layernorm) {
 
   std::shared_ptr<FuncGraph> func_graph = MakeFuncGraph(layerNorm, 3);
 
-  std::vector<int> inputs_dims = {128, 64, 32, 64};
-  std::vector<int> mean_var_dims = {128, 64, 32, 1};
-  std::vector<int> params_dims = {64, 32, 64};
+  std::vector<int64_t> inputs_dims = {128, 64, 32, 64};
+  std::vector<int64_t> mean_var_dims = {128, 64, 32, 1};
+  std::vector<int64_t> params_dims = {64, 32, 64};
 
   tensor::TensorPtr inputs = std::make_shared<tensor::Tensor>();
   inputs->set_data_type(kNumberTypeFloat32);
@@ -993,7 +994,7 @@ TEST_F(TestPrim, test_DropoutGenMask) {
 
   auto arg0 = UTPrimUtils::ShapeOf({5, 5, 5, 5});
 
-  std::vector<int> keep_prob_shape = {};
+  std::vector<int64_t> keep_prob_shape = {};
   tensor::TensorPtr keep_prob = std::make_shared<tensor::Tensor>(0.5f);
   keep_prob->set_data_type(kNumberTypeFloat32);
   keep_prob->set_shape(keep_prob_shape);
@@ -1007,7 +1008,7 @@ TEST_F(TestPrim, test_DropoutGenMask) {
 
   // should return a tensor with on dimension of 79 elements
   AbstractBasePtr expected = std::make_shared<AbstractTensor>(std::make_shared<AbstractScalar>(kAnyValue, kUInt8),
-                                                              std::make_shared<Shape>(std::vector<int>{79}));
+                                                              std::make_shared<Shape>(std::vector<int64_t>{79}));
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   MS_LOG(INFO) << "res=" << res->ToString();
@@ -1019,14 +1020,14 @@ TEST_F(TestPrim, test_dropout) {
   std::shared_ptr<py::scoped_interpreter> env = python_adapter::set_python_scoped();
   std::shared_ptr<FuncGraph> func_graph = getPyFun.CallAndParseRet("test_dropout");
 
-  std::vector<int> inputs_dims = {2, 20, 32, 32};
+  std::vector<int64_t> inputs_dims = {2, 20, 32, 32};
 
   tensor::TensorPtr inputs = std::make_shared<tensor::Tensor>();
   inputs->set_data_type(kNumberTypeFloat32);
   inputs->set_shape(inputs_dims);
 
   AbstractBasePtr abstract_inputs = FromValue(inputs, true);
-  std::vector<int> keep_prob_shape = {};
+  std::vector<int64_t> keep_prob_shape = {};
   tensor::TensorPtr keep_prob = std::make_shared<tensor::Tensor>(0.5f);
   keep_prob->set_data_type(kNumberTypeFloat32);
   keep_prob->set_shape(keep_prob_shape);
@@ -1036,7 +1037,7 @@ TEST_F(TestPrim, test_dropout) {
   AbstractBasePtr expected = abstract_inputs->Clone();
 
   // NCHW
-  std::vector<int> shape = {2, 20, 32, 32};
+  std::vector<int64_t> shape = {2, 20, 32, 32};
   expected->set_shape(std::make_shared<Shape>(shape));
 
   AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).inferred->abstract();
@@ -1102,8 +1103,8 @@ TEST_F(TestPrim, test_DictGetItem) {
   std::shared_ptr<FuncGraph> func_graph = MakeFuncGraph(dictGetItem, 2);
 
   std::vector<std::pair<std::string, ValuePtr>> tensor_map = {
-    {"x", std::make_shared<tensor::Tensor>(kNumberTypeInt32, std::vector<int>{2, 3, 4})},
-    {"y", std::make_shared<tensor::Tensor>(kNumberTypeInt32, std::vector<int>{2, 1, 4})}};
+    {"x", std::make_shared<tensor::Tensor>(kNumberTypeInt32, std::vector<int64_t>{2, 3, 4})},
+    {"y", std::make_shared<tensor::Tensor>(kNumberTypeInt32, std::vector<int64_t>{2, 1, 4})}};
   ValueDictionary value_dict(tensor_map);
   AbstractBasePtr array_dict = value_dict.ToAbstract();
   AbstractBasePtr key = abstract::FromValue("x");

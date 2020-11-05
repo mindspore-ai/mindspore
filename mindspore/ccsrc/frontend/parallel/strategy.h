@@ -37,7 +37,7 @@ using StrategyPtr = std::shared_ptr<Strategy>;
 
 class Strategy {
  public:
-  Strategy(int32_t stage, Strategys inputs)
+  Strategy(int64_t stage, Strategys inputs)
       : stage_(stage), inputs_(std::move(inputs)), internal_size_(0), internal_stragies_() {}
 
   Strategy(const Strategy &another_stra) : stage_(another_stra.GetInputStage()) {
@@ -53,7 +53,7 @@ class Strategy {
   ~Strategy() = default;
   size_t GetInputNumber() const { return inputs_.size(); }
   Strategys GetInputDim() const { return inputs_; }
-  int32_t GetInputStage() const { return stage_; }
+  int64_t GetInputStage() const { return stage_; }
   void ExpandInputDimFromOneToTwo() {
     if (inputs_.size() == 1) {
       inputs_.push_back(inputs_[0]);
@@ -81,7 +81,7 @@ class Strategy {
   }
 
  private:
-  const int32_t stage_;
+  const int64_t stage_;
 
   // The size of Dimensions must equal to inputs_ tensor dimension.
   Strategys inputs_;
@@ -89,7 +89,7 @@ class Strategy {
   std::vector<StrategyPtr> internal_stragies_;
 };
 
-inline StrategyPtr NewStrategy(const int32_t stage, const Strategys &inputs) {
+inline StrategyPtr NewStrategy(const int64_t stage, const Strategys &inputs) {
   return std::make_shared<Strategy>(stage, inputs);
 }
 }  // namespace parallel

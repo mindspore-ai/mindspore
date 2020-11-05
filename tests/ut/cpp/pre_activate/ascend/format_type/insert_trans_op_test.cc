@@ -39,7 +39,7 @@ class TestHWInsertTransOp : public BackendCommon {
   ~TestHWInsertTransOp() override = default;
   FuncGraphPtr GetSingleOutputGraph(std::string func_name, std::string sub_func_name, std::string format) {
     FuncGraphPtr g = getPyFun_.CallAndParseRet(func_name, sub_func_name);
-    std::vector<int> shp{2, 32, 224, 224};
+    std::vector<int64_t> shp{2, 32, 224, 224};
     auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
     AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
     auto fg = GetKernelGraph(g, args_spec_list);
@@ -60,7 +60,7 @@ class TestHWInsertTransOp : public BackendCommon {
   }
   FuncGraphPtr GetMutilpleOutputGraph(std::string func_name, std::string sub_func_name, std::string format) {
     FuncGraphPtr g = getPyFun_.CallAndParseRet(func_name, sub_func_name);
-    std::vector<int> shp{2, 32, 224, 224};
+    std::vector<int64_t> shp{2, 32, 224, 224};
     auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
     AbstractBasePtrList args_spec_list{x_abstract};
     auto fg = GetKernelGraph(g, args_spec_list);

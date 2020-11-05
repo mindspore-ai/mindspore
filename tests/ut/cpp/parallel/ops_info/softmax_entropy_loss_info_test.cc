@@ -166,7 +166,7 @@ TEST_F(TestSoftmaxLoss, GetVirtualDivOPs1) {
 
   std::string arg0_name = operator_args.first.at(0).first;
   ValuePtr arg0_value = operator_args.first.at(0).second;
-  int32_t divisor = arg0_value->cast<Int32ImmPtr>()->value();
+  int64_t divisor = arg0_value->cast<Int64ImmPtr>()->value();
 
   ASSERT_EQ(virtual_div_op.at(0).first, "_VirtualDiv");
   ASSERT_EQ(virtual_div_op.size(), 1);

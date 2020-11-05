@@ -272,7 +272,7 @@ class AreaGraph {
       size_t input_area = node_area_map_[input_node];
       // if the input node is in a tuple, then we need to create a GetItem fot it.
       if (node_index_in_returned_tuple_.count(input_node) != 0) {
-        int idx_val = SizeToInt(node_index_in_returned_tuple_[input_node]);
+        int idx_val = SizeToLong(node_index_in_returned_tuple_[input_node]);
         auto idx = NewValueNode(idx_val);
         idx->set_abstract(std::make_shared<abstract::AbstractScalar>(idx_val));
         AnfNodePtrList getitem_inputs = {NewValueNode(prim::kPrimTupleGetItem), main_cnodes[input_area], idx};

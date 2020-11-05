@@ -75,13 +75,13 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
     new_transpose_node =
       NewTransOpNode(func_graph, new_transdata_node, kernel_select_, false, prim::kPrimTranspose->name());
     RefreshKernelBuildInfo(kOpFormat_HWCN, output_format, new_transpose_node);
-    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int>{3, 2, 0, 1}), new_transpose_node);
+    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{3, 2, 0, 1}), new_transpose_node);
     new_replace_node = new_transpose_node;
   } else {
     // trans default to hwcn
     new_transpose_node = NewTransOpNode(func_graph, AnfAlgo::GetInputNode(node->cast<CNodePtr>(), 0), kernel_select_,
                                         false, prim::kPrimTranspose->name());
-    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int>{2, 3, 1, 0}), new_transpose_node);
+    AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int64_t>{2, 3, 1, 0}), new_transpose_node);
     if (output_format == kOpFormat_FRACTAL_ZN_LSTM) {
       AnfAlgo::SetNodeAttr("nop_op", MakeValue(true), new_transpose_node);
     }

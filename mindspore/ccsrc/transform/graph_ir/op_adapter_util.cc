@@ -46,9 +46,9 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &na
     list[0] = 1;
     list[1] = 1;
     (void)std::transform(vec->value().begin(), vec->value().end(), list.begin() + 2,
-                         [](const ValuePtr &val) { return static_cast<int64_t>(GetValue<int>(val)); });
+                         [](const ValuePtr &val) { return static_cast<int64_t>(GetValue<int64_t>(val)); });
   } else {
-    int64_t data = GetValue<int>(value);
+    int64_t data = GetValue<int64_t>(value);
     int size = 2;  // 2 int in list
     list = TransformUtil::ConvertIntToList(data, size);
   }
@@ -68,7 +68,7 @@ std::string ConvertAnyUtil(const ValuePtr &value, const AnyTraits<std::vector<in
     if (i != 0) {
       buffer << ",";
     }
-    buffer << GetValue<int>(it);
+    buffer << GetValue<int64_t>(it);
     i++;
   }
   return buffer.str();
@@ -97,7 +97,7 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &fo
   std::vector<int64_t> list;
   list.resize(vec->value().size());
   (void)std::transform(vec->value().begin(), vec->value().end(), list.begin(),
-                       [](const ValuePtr &val) { return static_cast<int64_t>(GetValue<int>(val)); });
+                       [](const ValuePtr &val) { return static_cast<int64_t>(GetValue<int64_t>(val)); });
   if (format == kOpFormat_NHWC) {
     if (list.size() < 4) {
       MS_LOG(EXCEPTION) << "The size of list is less than 4";
@@ -143,6 +143,14 @@ GeTensor VectorToTensorUtil(const ValuePtr &value) {
       MS_LOG(EXCEPTION) << "Update conversion descriptor failed!";
     }
     return GeTensor(*desc, reinterpret_cast<uint8_t *>(data.data()), data.size() * sizeof(int32_t));
+  } else if (vec[0]->isa<Int64Imm>()) {
+    MS_LOG(INFO) << "convert value to tensor with data type = Int64";
+    auto data = ConvertAnyUtil(value, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>());
+    auto desc = TransformUtil::GetGeTensorDesc({static_cast<int>(vec.size())}, kNumberTypeInt64, kOpFormat_NCHW);
+    if (desc == nullptr) {
+      MS_LOG(EXCEPTION) << "Update conversion descriptor failed!";
+    }
+    return GeTensor(*desc, reinterpret_cast<uint8_t *>(data.data()), data.size() * sizeof(int64_t));
   } else if (vec[0]->isa<FP32Imm>()) {
     MS_LOG(INFO) << "convert value to tensor with data type = Float32";
     auto data = ConvertAnyUtil(value, AnyTraits<float>(), AnyTraits<std::vector<float>>());

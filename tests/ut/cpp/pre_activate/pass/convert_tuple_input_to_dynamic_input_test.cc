@@ -39,7 +39,7 @@ class TestHWConstTupleInputToDynamicInput : public BackendCommon {
 TEST_F(TestHWConstTupleInputToDynamicInput, test_convert_tuple_input_to_dynamic_input) {
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_convert_tuple_input_to_dynamic_input", "before");
   ASSERT_TRUE(g != nullptr);
-  std::vector<int> shp_x{1, 11, 20, 1, 2};
+  std::vector<int64_t> shp_x{1, 11, 20, 1, 2};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);

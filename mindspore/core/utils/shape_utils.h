@@ -18,6 +18,6 @@
 #define MINDSPORE_SHAPE_UTILS_INFO_H_
 
 #include <vector>
-using ShapeVector = std::vector<int>;
+using ShapeVector = std::vector<int64_t>;
 
 #endif  // MINDSPORE_SHAPE_UTILS_INFO_H_

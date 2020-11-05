@@ -147,7 +147,7 @@ std::shared_ptr<std::pair<std::vector<Arrangement>, Arrangement>> Arrangement::G
   Shape expand_num_list_shape;
   (void)std::transform(expand_shape_list_ptr->begin(), expand_shape_list_ptr->end(),
                        std::back_inserter(expand_num_list_shape),
-                       [](const Arrangement &arr) { return SizeToInt(arr.GetDimSize()); });
+                       [](const Arrangement &arr) { return SizeToLong(arr.GetDimSize()); });
   Arrangement expand_num_list;
   Status status = expand_num_list.Init(expand_num_list_shape);
   if (status != Status::SUCCESS) {
@@ -222,7 +222,7 @@ std::shared_ptr<Arrangement> Arrangement::GetUnifiedShape(const Arrangement &in2
 std::vector<size_t> Arrangement::GetSqueezeIdx() const {
   std::vector<size_t> out;
   for (size_t i = 0; i < GetDimSize(); i++) {
-    if (GetDimByIdx(SizeToUint(i)) == 1) {
+    if (GetDimByIdx(SizeToUlong(i)) == 1) {
       out.push_back(i);
     }
   }

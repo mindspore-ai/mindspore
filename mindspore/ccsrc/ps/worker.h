@@ -23,6 +23,7 @@
 #include <string>
 #include <numeric>
 #include <functional>
+#include <algorithm>
 #include <map>
 #include "ps/ps.h"
 #include "utils/log_adapter.h"
@@ -54,7 +55,7 @@ class Worker {
   void InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vector<size_t> shapes, const ShapeVector &sizes);
   void InitPSParamAndOptim(const AnfNodePtr &input_node, const tensor::TensorPtr &tensor);
   void DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
-                           const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd);
+                           const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int64_t cmd);
   void Finalize();
 
  private:
@@ -76,7 +77,7 @@ class Worker {
   size_t key_cnt_;
   std::map<std::string, size_t> param_to_key_;
   std::map<size_t, bool> init_keys_;
-  std::map<size_t, int> key_to_optimId_;
+  std::map<size_t, int64_t> key_to_optimId_;
   std::map<size_t, std::vector<ShapeVector>> key_to_optim_shapes_;
   std::map<std::string, bool> param_to_init_in_server_;
 };
@@ -106,13 +107,13 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
     MS_LOG(EXCEPTION) << "no optim id found for key" << keys[0];
   }
   Key key = keys[0];
-  int optim_id = key_to_optimId_[key];
+  int64_t optim_id = key_to_optimId_[key];
   bool is_sparse = false;
   if (optim_id == 1 || optim_id == 2 || optim_id == 3) {
     is_sparse = true;
   }
-  int grad_index = -1;
-  int indice_index = -1;
+  int64_t grad_index = -1;
+  int64_t indice_index = -1;
 
   // Sparse adam gradient
   if (optim_id == 1 || optim_id == 2) {
@@ -125,7 +126,7 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
     indice_index = 1;
   }
 
-  size_t total_size = std::accumulate(sizes.begin(), sizes.end(), 0, std::plus<int>());
+  size_t total_size = std::accumulate(sizes.begin(), sizes.end(), 0, std::plus<int64_t>());
   ::ps::SArray<T> total_buffer(total_size, 0);
   size_t offset = 0;
   size_t dst_size = 0;
@@ -148,13 +149,16 @@ void Worker<T>::Push(const std::vector<size_t> &keys, std::vector<uintptr_t> add
   while (!kv_worker_->IsReadyForPush(keys[0])) {
     continue;
   }
+  std::vector<int> sizes_int;
+  (void)std::transform(sizes.begin(), sizes.end(), std::back_inserter(sizes_int),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   if (!is_sparse) {
-    kv_worker_->PushData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes));
+    kv_worker_->PushData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes_int));
   } else {
-    std::vector<int> &var_shape = key_to_optim_shapes_[key][0];
-    int first_dim_size = var_shape[0];
-    int outer_dim_size = std::accumulate(var_shape.begin() + 1, var_shape.end(), 1, std::multiplies<int>());
-    kv_worker_->PushSparseData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes), grad_index,
+    std::vector<int64_t> &var_shape = key_to_optim_shapes_[key][0];
+    int64_t first_dim_size = var_shape[0];
+    int64_t outer_dim_size = std::accumulate(var_shape.begin() + 1, var_shape.end(), 1, std::multiplies<int64_t>());
+    kv_worker_->PushSparseData(::ps::SArray<::ps::Key>(keys), total_buffer, ::ps::SArray<int>(sizes_int), grad_index,
                                indice_index, first_dim_size, outer_dim_size);
   }
 }
@@ -178,7 +182,7 @@ void Worker<T>::Pull(const size_t key, void *dev_addr, const size_t size) {
 
 template <typename T>
 void Worker<T>::DoPSEmbeddingLookup(const ::ps::SArray<::ps::Key> &keys, const ::ps::SArray<int> &lookup_ids,
-                                    const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int cmd) {
+                                    const ::ps::SArray<int> &lens, ::ps::SArray<T> *lookup_result, int64_t cmd) {
   MS_EXCEPTION_IF_NULL(lookup_result);
   kv_worker_->EmbeddingLookup(keys, lookup_ids, lens, lookup_result, cmd);
 }
@@ -226,7 +230,7 @@ void Worker<T>::InitPSOptimInputShapes(const size_t key) {
       shape_len.push_back(1);
       all_shape.push_back(1);
     } else {
-      shape_len.push_back(SizeToInt(shape.size()));
+      shape_len.push_back(SizeToLong(shape.size()));
       for (auto dim : shape) {
         all_shape.push_back(static_cast<T>(dim));
       }
@@ -297,7 +301,7 @@ void Worker<T>::InitPSOptimId(const size_t param_key) {
   if (key_to_optimId_.count(param_key) == 0) {
     MS_LOG(EXCEPTION) << "Can't find optimizer id of parameter key " << param_key;
   }
-  int optim_id = key_to_optimId_[param_key];
+  int64_t optim_id = key_to_optimId_[param_key];
 
   ::ps::SArray<::ps::Key> keys = {param_key};
   ::ps::SArray<T> optim_id_vals = {static_cast<T>(optim_id)};
@@ -317,7 +321,11 @@ void Worker<T>::InitPSEmbeddingTable(const std::vector<size_t> &keys, std::vecto
   for (auto dim : shapes) {
     shapes_val.push_back(static_cast<T>(dim));
   }
-  kv_worker_->Wait(kv_worker_->InitEmbeddingTable(::ps::SArray<::ps::Key>(keys), shapes_val, ::ps::SArray<int>(sizes)));
+  std::vector<int> sizes_int;
+  (void)std::transform(sizes.begin(), sizes.end(), std::back_inserter(sizes_int),
+                       [](const int64_t &value) { return static_cast<int>(value); });
+  kv_worker_->Wait(
+    kv_worker_->InitEmbeddingTable(::ps::SArray<::ps::Key>(keys), shapes_val, ::ps::SArray<int>(sizes_int)));
 }
 
 template <typename T>

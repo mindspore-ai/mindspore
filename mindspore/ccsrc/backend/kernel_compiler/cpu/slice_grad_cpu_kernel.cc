@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/kernel_compiler/cpu/slice_grad_cpu_kernel.h"
+#include <algorithm>
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "ir/primitive.h"
 
@@ -22,19 +23,27 @@ namespace kernel {
 void SliceGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  begin_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, BEGIN);
+  std::vector<int64_t> begin_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
+  (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
   auto strides = prim->GetAttr(STRIDES);
   if (strides != nullptr) {
-    strides_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDES);
-    end_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, END);
+    std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
+    std::vector<int64_t> end_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);
+    (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "stride|end|input size must be equal";
     }
     FormatArgs(true);
   } else {
-    size_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, SIZE);
+    std::vector<int64_t> size_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
+    (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "begin|size|input size must be equal";
     }

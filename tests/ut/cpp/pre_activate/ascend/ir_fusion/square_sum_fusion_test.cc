@@ -32,7 +32,7 @@ class TestHWOptimizeSquareSumFusion : public BackendCommon {
 
 TEST_F(TestHWOptimizeSquareSumFusion, test_square_sumv1_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_square_sum_fusion", "before1");
-  std::vector<int> shp{1, 1, 1, 1};
+  std::vector<int64_t> shp{1, 1, 1, 1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 1; ++i) {
@@ -52,7 +52,7 @@ TEST_F(TestHWOptimizeSquareSumFusion, test_square_sumv1_fusion) {
 
 TEST_F(TestHWOptimizeSquareSumFusion, test_square_sumv2_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_square_sum_fusion", "before2");
-  std::vector<int> shp{1, 1, 1, 1};
+  std::vector<int64_t> shp{1, 1, 1, 1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 1; ++i) {

@@ -32,7 +32,7 @@
 namespace mindspore {
 namespace compile {
 bool Backend::GetCond(const BaseRef &c, bool *const value) { return BaseRefToBool(c, value); }
-bool Backend::GetIndex(const BaseRef &c, int *const value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
+bool Backend::GetIndex(const BaseRef &c, int64_t *const value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
 
 LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::string &target) {
   MS_LOG(DEBUG) << "MsConvert";

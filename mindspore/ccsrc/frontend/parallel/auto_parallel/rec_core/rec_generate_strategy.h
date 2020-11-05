@@ -64,7 +64,7 @@ Dimensions CopyIncomingOperatorOutputStrategy(const std::shared_ptr<Graph> &grap
                                               const size_t iter_ops, const size_t iter_graph);
 Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                 const size_t incoming_op_index);
-Dimensions GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const int iter_ops);
+Dimensions GetAxisList(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const int64_t iter_ops);
 Dimensions ModifyStrategyIfSqueezeIncoming(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                            const size_t incoming_op_index, Dimensions s);
 bool GetKeepDims(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops);

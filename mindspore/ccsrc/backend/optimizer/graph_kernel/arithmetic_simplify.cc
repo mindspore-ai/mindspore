@@ -424,9 +424,9 @@ AnfNodePtr SimplifyDiv(const AnfNodePtr &node) {
   }
 
 bool TryTransposeToReshape(const AnfNodePtr &node) {
-  auto perm = AnfAlgo::GetNodeAttr<std::vector<int>>(node, "perm");
+  auto perm = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, "perm");
   auto ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  std::vector<int> remove_one_perm;
+  std::vector<int64_t> remove_one_perm;
   for (auto idx : perm) {
     if (idx < 0 || IntToSize(idx) >= ori_shape.size()) {
       MS_EXCEPTION(ValueError);
@@ -498,23 +498,23 @@ ShapeVector TransAxisValueToVector(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   ShapeVector axis_vector;
   if (value->isa<Int32Imm>()) {
-    axis_vector.emplace_back(GetValue<int>(value));
+    axis_vector.emplace_back(GetValue<int64_t>(value));
   }
   if (value->isa<ValueTuple>() || value->isa<ValueList>()) {
-    axis_vector = GetValue<std::vector<int>>(value);
+    axis_vector = GetValue<std::vector<int64_t>>(value);
   }
   return axis_vector;
 }
 
 ShapeVector GetNodeShape(const AnfNodePtr &node) {
   auto base_shape = node->Shape()->cast<abstract::ShapePtr>();
-  std::vector<int> shape;
+  std::vector<int64_t> shape;
   std::transform(base_shape->shape().begin(), base_shape->shape().end(), std::back_inserter(shape), IntToSize);
   return shape;
 }
 
-std::vector<std::pair<int, int>> GetUnmodifiedDim(const ShapeVector &a, const ShapeVector &b) {
-  std::vector<std::pair<int, int>> unmodified;
+std::vector<std::pair<int64_t, int64_t>> GetUnmodifiedDim(const ShapeVector &a, const ShapeVector &b) {
+  std::vector<std::pair<int64_t, int64_t>> unmodified;
   for (size_t i = 0, j = 0, patial_a = 1, patial_b = 1;;) {
     if (i >= a.size() && j >= b.size()) {
       break;
@@ -564,11 +564,12 @@ AnfNodePtr SimplifyReduce(const AnfNodePtr &node) {
     } else {
       auto tmp_node = node->cast<CNodePtr>();
       auto transpose_node = tmp_node->input(1);
-      auto transpose_dimensions = GetValue<std::vector<int>>(AnfAlgo::GetNodeAttr<ValuePtr>(transpose_node, "perm"));
+      auto transpose_dimensions =
+        GetValue<std::vector<int64_t>>(AnfAlgo::GetNodeAttr<ValuePtr>(transpose_node, "perm"));
       ShapeVector new_dimensions;
       auto reduce_dimensions = TransAxisValueToVector(AnfAlgo::GetNodeAttr<ValuePtr>(tmp_node, "axis"));
       std::transform(reduce_dimensions.begin(), reduce_dimensions.end(), std::back_inserter(new_dimensions),
-                     [&transpose_dimensions](const int &dim) { return transpose_dimensions[dim]; });
+                     [&transpose_dimensions](const int64_t &dim) { return transpose_dimensions[dim]; });
       std::sort(new_dimensions.begin(), new_dimensions.end());
       auto new_cnode = NewCNodeWithInfo({NewValueNode(operation), x.GetNode(node)}, node);
       AnfAlgo::SetNodeAttr("axis", MakeValue(new_dimensions), new_cnode);

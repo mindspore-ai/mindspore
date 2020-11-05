@@ -40,7 +40,7 @@ TEST_F(SessionBasicTest, ConstructKernelGraph) {
    *              return
    */
   auto anf_graph = std::make_shared<FuncGraph>();
-  std::vector<int> shape = {2, 32, 224, 224};
+  std::vector<int64_t> shape = {2, 32, 224, 224};
   auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
   EXPECT_NE(abstract, nullptr);
 

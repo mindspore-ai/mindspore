@@ -16,8 +16,8 @@
 #include "backend/session/executor.h"
 #include <algorithm>
 #include <exception>
-#include "backend/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "backend/session/executor_manager.h"
 #include "utils/comm_manager.h"
 #include "utils/scoped_long_running.h"
 
@@ -312,7 +312,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
 }
 
 void Executor::BuildOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                       const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int> &tensors_mask) {
+                       const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int64_t> &tensors_mask) {
   auto task = std::make_shared<BuildOpTask>();
   task->session_ = session;
   task->op_run_info_ = op_run_info;

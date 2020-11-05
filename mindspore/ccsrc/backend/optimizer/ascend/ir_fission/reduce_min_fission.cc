@@ -32,7 +32,7 @@ CNodePtr CreateReduceMin(const FuncGraphPtr &graph, const AnfNodePtr &input, con
   return reduce_min;
 }
 
-bool NeedOptimize(const TypeId &dtype, const std::vector<size_t> &shape, const std::vector<int> &axis) {
+bool NeedOptimize(const TypeId &dtype, const std::vector<size_t> &shape, const std::vector<int64_t> &axis) {
   if (dtype != kNumberTypeFloat32) {
     MS_LOG(INFO) << "ReduceMin's input Dtype is not float32, no need optimize!";
     return false;
@@ -45,7 +45,7 @@ bool NeedOptimize(const TypeId &dtype, const std::vector<size_t> &shape, const s
     MS_LOG(INFO) << "ReduceMin axis size is 1, no need optimize!";
     return false;
   }
-  int last_dim = SizeToInt(shape.size() - 1);
+  int64_t last_dim = SizeToLong(shape.size() - 1);
   if (std::find(axis.begin(), axis.end(), -1) == axis.end() &&
       std::find(axis.begin(), axis.end(), last_dim) == axis.end()) {
     MS_LOG(INFO) << "Attribute of axis does not contain the last axis, not match!";
@@ -54,15 +54,15 @@ bool NeedOptimize(const TypeId &dtype, const std::vector<size_t> &shape, const s
   return true;
 }
 
-std::vector<int> CalFirstAxis(const std::vector<size_t> &shape, const std::vector<int> &axis) {
-  std::vector<int> axis_fisrt;
-  int last_dim = SizeToInt(shape.size() - 1);
+std::vector<int64_t> CalFirstAxis(const std::vector<size_t> &shape, const std::vector<int64_t> &axis) {
+  std::vector<int64_t> axis_fisrt;
+  int64_t last_dim = SizeToLong(shape.size() - 1);
   std::copy_if(axis.begin(), axis.end(), std::back_inserter(axis_fisrt),
-               [&last_dim](int v) { return v != -1 && v != last_dim; });
+               [&last_dim](int64_t v) { return v != -1 && v != last_dim; });
 
-  int dim_size = SizeToInt(shape.size());
+  int64_t dim_size = SizeToLong(shape.size());
   if (axis_fisrt.empty()) {
-    for (int i = 0; i < dim_size - 1; ++i) {
+    for (int64_t i = 0; i < dim_size - 1; ++i) {
       axis_fisrt.push_back(i);
     }
   }
@@ -78,7 +78,7 @@ std::vector<int> CalFirstAxis(const std::vector<size_t> &shape, const std::vecto
   return axis_fisrt;
 }
 
-std::vector<size_t> GetInferShape(const std::vector<size_t> &shape, const std::vector<int> &axis_first,
+std::vector<size_t> GetInferShape(const std::vector<size_t> &shape, const std::vector<int64_t> &axis_first,
                                   bool keep_dims) {
   std::vector<size_t> shape_first;
   for (size_t item = 0; item < shape.size(); ++item) {
@@ -124,7 +124,7 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   if (!axis_value->isa<ValueSequeue>()) {
     return nullptr;
   }
-  auto axis = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode, kAttrAxis);
+  auto axis = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrAxis);
   auto keep_dims = AnfAlgo::GetNodeAttr<bool>(cnode, kAttrKeepDims);
 
   if (!NeedOptimize(dtype, shape, axis)) {
@@ -134,7 +134,7 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
 
   // Create reduce_min1
   CNodePtr reduce_min1 = CreateReduceMin(graph, cnode->input(1), cnode);
-  std::vector<int> axis_first = CalFirstAxis(shape, axis);
+  std::vector<int64_t> axis_first = CalFirstAxis(shape, axis);
   std::vector<size_t> shape_first = GetInferShape(shape, axis_first, keep_dims);
   AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape_first}, reduce_min1.get());
   AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_first), reduce_min1);
@@ -142,7 +142,7 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   // Create reduce_min2
   CNodePtr reduce_min2 = CreateReduceMin(graph, reduce_min1, cnode);
   reduce_min2->set_abstract(cnode->abstract());
-  std::vector<int> axis_last = {-1};
+  std::vector<int64_t> axis_last = {-1};
   AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_last), reduce_min2);
   return reduce_min2;
 }

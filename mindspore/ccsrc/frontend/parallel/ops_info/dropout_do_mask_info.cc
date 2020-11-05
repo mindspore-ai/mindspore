@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
-static int32_t SEED_NUM = 1;
+static int64_t SEED_NUM = 1;
 
 Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (strategy == nullptr) {
@@ -79,7 +79,7 @@ Status DropoutDoMaskInfo::InferTensorMap() {
   size_t size = inputs_shape_[0].size();
   // if the dimension of input is 4, and tensor_map_index is [3, 2, 1, 0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back(SizeToInt(size - i - 1));
+    tensor_map_index.push_back(SizeToLong(size - i - 1));
   }
 
   // the input[1] do not need tensor map
@@ -124,7 +124,7 @@ Status DropoutDoMaskInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status DropoutDoMaskInfo::GenerateStrategies(int32_t stage_id) {
+Status DropoutDoMaskInfo::GenerateStrategies(int64_t stage_id) {
   if (inputs_shape_.empty()) {
     MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
     return FAILED;
@@ -154,7 +154,7 @@ std::shared_ptr<Strategys> DropoutDoMaskInfo::GenerateBatchStrategies() {
   CheckGlobalDeviceManager();
   size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   Dimensions strategy(inputs_shape_[0].size() - 1, 1);
-  (void)strategy.insert(strategy.begin(), SizeToInt(dev_num));
+  (void)strategy.insert(strategy.begin(), SizeToLong(dev_num));
   Strategys strategy_v = {strategy};
   return std::make_shared<Strategys>(strategy_v);
 }
@@ -236,10 +236,7 @@ void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
   if (manager == nullptr) {
     MS_LOG(EXCEPTION) << "Failure: AddNode error since manager is nullptr.";
   }
-  std::vector<int32_t> input_slice_shape_int;
-  (void)std::transform(input_slice_shape.begin(), input_slice_shape.end(), std::back_inserter(input_slice_shape_int),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  ValuePtr new_shape = MakeValue(input_slice_shape_int);
+  ValuePtr new_shape = MakeValue(input_slice_shape);
   AnfNodePtr val = NewValueNode(new_shape);
   (void)manager->Replace(dropout_gen_mask_cnode->input(1), val);
 }
@@ -274,8 +271,8 @@ std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodeP
   }
 
   Shape input_slice_shape = inputs_tensor_info_[0].slice_shape();
-  int32_t seed_0 = GetValue<int32_t>(attr[SEED0]);
-  int32_t seed_1 = GetValue<int32_t>(attr[SEED1]);
+  int64_t seed_0 = GetValue<int64_t>(attr[SEED0]);
+  int64_t seed_1 = GetValue<int64_t>(attr[SEED1]);
   if ((seed_0 == 0) && (seed_1 == 0) && (repeated_calc_num_ > 1)) {
     seed_0 = SEED_NUM;
     seed_1 = SEED_NUM;
@@ -285,10 +282,7 @@ std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodeP
     MS_LOG(DEBUG) << "The input slice shape droupout is " << ShapeToString(input_slice_shape);
     return replace_ops;
   }
-  std::vector<int32_t> input_slice_shape_int;
-  (void)std::transform(input_slice_shape.begin(), input_slice_shape.end(), std::back_inserter(input_slice_shape_int),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  ValuePtr new_shape = MakeValue(input_slice_shape_int);
+  ValuePtr new_shape = MakeValue(input_slice_shape);
   Attr attr_0 = std::make_pair(SEED0, MakeValue(seed_0));
   Attr attr_1 = std::make_pair(SEED1, MakeValue(seed_1));
   OperatorAttrs attrs = {attr_0, attr_1};

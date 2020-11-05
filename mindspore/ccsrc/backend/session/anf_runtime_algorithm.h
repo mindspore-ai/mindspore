@@ -225,10 +225,10 @@ class AnfRuntimeAlgorithm {
   static bool IsIndependentNode(const CNodePtr &node);
   static bool GetBooleanAttr(const AnfNodePtr &node, const std::string &attr);
   static void GetRealDynamicShape(const std::vector<size_t> &shape, NotNull<std::vector<int64_t> *> dynamic_shape);
-  static std::vector<int> GetInputMaxShape(const AnfNodePtr &anf_node, size_t index);
-  static std::vector<int> GetInputMinShape(const AnfNodePtr &anf_node, size_t index);
-  static std::vector<int> GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index);
-  static std::vector<int> GetOutputMinShape(const AnfNodePtr &anf_node, size_t index);
+  static std::vector<int64_t> GetInputMaxShape(const AnfNodePtr &anf_node, size_t index);
+  static std::vector<int64_t> GetInputMinShape(const AnfNodePtr &anf_node, size_t index);
+  static std::vector<int64_t> GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index);
+  static std::vector<int64_t> GetOutputMinShape(const AnfNodePtr &anf_node, size_t index);
   static bool IsNodeDynamicShape(const AnfNodePtr &node);
 };
 }  // namespace session

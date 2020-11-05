@@ -29,14 +29,14 @@
 namespace mindspore {
 namespace parallel {
 Status ConcatInfo::GetAttrs() {
-  int axis = 0;
+  int64_t axis = 0;
   auto axis_iter = attrs_.find(AXIS);
   if (axis_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(axis_iter->second);
-    if (axis_iter->second->isa<Int32Imm>()) {
-      axis = axis_iter->second->cast<Int32ImmPtr>()->value();
+    if (axis_iter->second->isa<Int64Imm>()) {
+      axis = axis_iter->second->cast<Int64ImmPtr>()->value();
     } else {
-      MS_LOG(ERROR) << name_ << ": The value of axis is not int";
+      MS_LOG(ERROR) << name_ << ": The value of axis is not int64_t";
       return FAILED;
     }
   } else {
@@ -48,13 +48,13 @@ Status ConcatInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
     return FAILED;
   }
-  int dim = SizeToInt(inputs_shape_[0].size());
+  int64_t dim = SizeToLong(inputs_shape_[0].size());
 
   if (axis < 0) {
     axis = axis + dim;
   }
 
-  axis_ = SizeToInt(axis);
+  axis_ = SizeToLong(axis);
   return SUCCESS;
 }
 
@@ -125,8 +125,8 @@ Status ConcatInfo::InferTensorMap() {
   }
 
   // cannot use dev_matrix_shape_ replace inputs_shape_[0], because it may not be fully split in all devices.
-  int32_t size = SizeToInt(inputs_shape_[0].size());
-  for (int i = 0; i < size; ++i) {
+  int64_t size = SizeToLong(inputs_shape_[0].size());
+  for (int64_t i = 0; i < size; ++i) {
     tensor_map.push_back(size - i - 1);
   }
 
@@ -199,7 +199,7 @@ void ConcatInfo::ReComputeBatchSplitFlagList() {
 
 Status ConcatInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status ConcatInfo::GenerateStrategies(int32_t stage_id) {
+Status ConcatInfo::GenerateStrategies(int64_t stage_id) {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Infer attrs failed";
     return FAILED;

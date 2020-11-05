@@ -42,7 +42,7 @@ class SoftmaxCrossEntropyWithLogitsInfo : public OperatorInfo {
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
 
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
 
@@ -59,7 +59,7 @@ class SoftmaxCrossEntropyWithLogitsInfo : public OperatorInfo {
   Status InferAsLossDivisor() override;
 
  private:
-  int32_t axis_ = -1;  // default -1
+  int64_t axis_ = -1;  // default -1
 };
 }  // namespace parallel
 }  // namespace mindspore

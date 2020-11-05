@@ -42,13 +42,13 @@ class TransposeSameIOEliminater : public AnfVisitor {
     }
 
     auto value = GetValueNode(tuple_);
-    auto elements = GetValue<std::vector<int>>(value);
+    auto elements = GetValue<std::vector<int64_t>>(value);
     if (elements.empty()) {
       return nullptr;
     }
 
-    int j = 0;
-    bool cmp = std::all_of(elements.cbegin(), elements.cend(), [&j](int i) { return i == j++; });
+    int64_t j = 0;
+    bool cmp = std::all_of(elements.cbegin(), elements.cend(), [&j](int64_t i) { return i == j++; });
     // same IO settings, eliminate this transpose
     if (cmp) {
       return x_;

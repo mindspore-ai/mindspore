@@ -124,10 +124,7 @@ Status MSInferSession::LoadModelFromFile(const std::string &file_name, uint32_t 
 Status MSInferSession::UnloadModel(uint32_t model_id) { return SUCCESS; }
 
 Status ServingTensor2MSTensor(size_t index, const InferTensorBase &out_tensor, tensor::TensorPtr &ms_tensor) {
-  std::vector<int> shape;
-  for (auto dim : out_tensor.shape()) {
-    shape.push_back(static_cast<int>(dim));
-  }
+  std::vector<int64_t> shape = out_tensor.shape();
   TypeId data_type;
   const std::map<inference::DataType, TypeId> type2id_map{
     {inference::kMSI_Unknown, TypeId::kNumberTypeBegin},   {inference::kMSI_Bool, TypeId::kNumberTypeBool},
@@ -167,10 +164,7 @@ Status ServingTensor2MSTensor(size_t index, const InferTensorBase &out_tensor, t
 }
 
 void MSTensor2ServingTensor(tensor::TensorPtr ms_tensor, InferTensorBase &out_tensor) {
-  vector<int64_t> shape;
-  for (auto dim : ms_tensor->shape()) {
-    shape.push_back(dim);
-  }
+  vector<int64_t> shape = ms_tensor->shape();
   out_tensor.set_shape(shape);
 
   const std::map<TypeId, inference::DataType> id2type_map{

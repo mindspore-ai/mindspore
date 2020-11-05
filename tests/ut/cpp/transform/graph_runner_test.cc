@@ -56,15 +56,15 @@ const std::shared_ptr<Float> TestGraphRunner::kF32 = std::make_shared<Float>(32)
 
 std::shared_ptr<DfGraphConvertor> MakeGeGraph() {
   PrimitivePtr conv2d = prim::kPrimConv2D;
-  conv2d->AddAttr("stride", MakeValue(1));
-  conv2d->AddAttr("pad", MakeValue(0));
+  conv2d->AddAttr("stride", MakeValue(static_cast<int64_t>(1)));
+  conv2d->AddAttr("pad", MakeValue(static_cast<int64_t>(0)));
   conv2d->AddAttr("pad_mode", MakeValue(std::string("pad")));
-  conv2d->AddAttr("dilation", MakeValue(1));
-  conv2d->AddAttr("group", MakeValue(1));
-  conv2d->AddAttr("mode", MakeValue(1));
-  conv2d->AddAttr("out_channel", MakeValue(2));
-  conv2d->AddAttr("kernel_size", MakeValue(std::vector<int>({2, 2})));
-  conv2d->AddAttr("dilation", MakeValue(1));
+  conv2d->AddAttr("dilation", MakeValue(static_cast<int64_t>(1)));
+  conv2d->AddAttr("group", MakeValue(static_cast<int64_t>(1)));
+  conv2d->AddAttr("mode", MakeValue(static_cast<int64_t>(1)));
+  conv2d->AddAttr("out_channel", MakeValue(static_cast<int64_t>(2)));
+  conv2d->AddAttr("kernel_size", MakeValue(std::vector<int64_t>({2, 2})));
+  conv2d->AddAttr("dilation", MakeValue(static_cast<int64_t>(1)));
   conv2d->AddAttr("data_format", MakeValue(kOpFormat_NCHW));
 
   FuncGraphPtr anf_graph = MakeFuncGraph(conv2d, 2);
@@ -89,10 +89,10 @@ std::shared_ptr<std::vector<MeTensorPtr>> DoExecGraph(const std::vector<MeTensor
     return nullptr;
   }
 
-  std::vector<std::vector<int>> request_dims;
-  std::vector<int> dims1 = {1, 1, 4, 4};
-  std::vector<int> dims2 = {2, 3, 4, 5};
-  std::vector<int> dims3 = {9, 9};
+  std::vector<std::vector<int64_t>> request_dims;
+  std::vector<int64_t> dims1 = {1, 1, 4, 4};
+  std::vector<int64_t> dims2 = {2, 3, 4, 5};
+  std::vector<int64_t> dims3 = {9, 9};
   request_dims.emplace_back(dims1);
   request_dims.emplace_back(dims2);
   request_dims.emplace_back(dims3);
@@ -109,7 +109,7 @@ TEST_F(TestGraphRunner, TestGeTensorConstructor) {
   float ge_tensor_data[] = {1.1, 2.2, 3.3, 4.4, 5.5, 6.6};
 
   // Create a Tensor with wanted data type and shape
-  MeTensor tensor = MeTensor(TypeId::kNumberTypeFloat32, std::vector<int>({1, 2, 3}));
+  MeTensor tensor = MeTensor(TypeId::kNumberTypeFloat32, std::vector<int64_t>({1, 2, 3}));
 
   // Get the writable data pointer from the tensor
   float *me_tensor_data = reinterpret_cast<float *>(tensor.data_c());
@@ -138,7 +138,8 @@ TEST_F(TestGraphRunner, TestRunGraphException) {
   graph_manager.ClearGraph();
 
   std::map<string, MeTensorPtr> dict;
-  MeTensorPtr init_tensor_ptr = MakeTensor(kF32, {2, 1, 2, 2});
+  std::initializer_list<int64_t> list0{2, 1, 2, 2};
+  MeTensorPtr init_tensor_ptr = MakeTensor(kF32, list0);
   dict["x1"] = init_tensor_ptr;
 
   std::shared_ptr<DfGraphConvertor> convertor = MakeGeGraph();
@@ -146,9 +147,11 @@ TEST_F(TestGraphRunner, TestRunGraphException) {
   auto df_graph = (*convertor).GetComputeGraph();
 
   graph_manager.AddGraph("test_graph", df_graph);
-  MeTensorPtr me_tensor_ptr = MakeTensor(kF32, {1, 1, 2, 3});
+  std::initializer_list<int64_t> list1{1, 1, 2, 3};
+  MeTensorPtr me_tensor_ptr = MakeTensor(kF32, list1);
 
-  MeTensorPtr input_ptr = MakeTensor(kF32, {1, 1, 4, 4});
+  std::initializer_list<int64_t> list2{1, 1, 4, 4};
+  MeTensorPtr input_ptr = MakeTensor(kF32, list2);
   std::vector<MeTensorPtr> me_inputs;
   me_inputs.emplace_back(input_ptr);
   std::vector<MeTensorPtr> me_outputs;
@@ -175,7 +178,8 @@ TEST_F(TestGraphRunner, TestRunGraph) {
 
   std::shared_ptr<DfGraphConvertor> convertor = MakeGeGraph();
   std::map<std::string, MeTensorPtr> dict;
-  dict.emplace("x1", MakeTensor(kF32, {2, 1, 2, 2}));
+  std::initializer_list<int64_t> list0{2, 1, 2, 2};
+  dict.emplace("x1", MakeTensor(kF32, list0));
 
   (*convertor).ConvertAllNode().InitParam(dict).BuildGraph();
   graph_manager.AddGraph("test_graph", (*convertor).GetComputeGraph());
@@ -212,15 +216,19 @@ TEST_F(TestGraphRunner, TestAPI) {
 
   std::shared_ptr<DfGraphConvertor> convertor = MakeGeGraph();
   std::map<std::string, MeTensorPtr> dict;
-  dict.emplace("x1", MakeTensor(kF32, {2, 1, 2, 2}));
+  std::initializer_list<int64_t> list0{2, 1, 2, 2};
+  dict.emplace("x1", MakeTensor(kF32, list0));
 
   (*convertor).ConvertAllNode().InitParam(dict).BuildGraph();
   (*convertor).DrawComputeGraph("TestGraphRunner_TestAPI_Training.dot");
   graph_manager.AddGraph("fp_bp_subgraph", (*convertor).GetComputeGraph());
 
-  MeTensorPtr input_ptr1 = MakeTensor(kF32, {1, 1, 4, 4});
-  MeTensorPtr input_ptr2 = MakeTensor(kF32, {2, 3, 4, 5});
-  MeTensorPtr input_ptr3 = MakeTensor(kF32, {9, 9, 1, 1});
+  std::initializer_list<int64_t> list1{1, 1, 4, 4};
+  std::initializer_list<int64_t> list2{2, 3, 4, 5};
+  std::initializer_list<int64_t> list3{9, 9, 1, 1};
+  MeTensorPtr input_ptr1 = MakeTensor(kF32, list1);
+  MeTensorPtr input_ptr2 = MakeTensor(kF32, list2);
+  MeTensorPtr input_ptr3 = MakeTensor(kF32, list3);
   std::vector<MeTensorPtr> me_inputs;
   std::vector<MeTensorPtr> me_outputs;
   me_inputs.emplace_back(input_ptr1);

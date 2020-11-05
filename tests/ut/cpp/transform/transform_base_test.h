@@ -38,7 +38,7 @@ namespace transform {
 std::vector<FuncGraphPtr> getAnfGraph(std::string package, std::string function);
 void PrintMeTensor(MeTensor* tensor);
 FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam);
-MeTensorPtr MakeTensor(const TypePtr& t, std::initializer_list<int> shp);
+MeTensorPtr MakeTensor(const TypePtr& t, std::initializer_list<int64_t> shp);
 }  // namespace transform
 }  // namespace mindspore
 

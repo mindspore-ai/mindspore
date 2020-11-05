@@ -48,7 +48,7 @@ class GatherV2Info : public OperatorInfo {
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
 
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;
 
@@ -64,9 +64,9 @@ class GatherV2Info : public OperatorInfo {
  private:
   Status InferTensorSubOps();
 
-  int32_t axis_;
+  int64_t axis_;
   size_t index_size_;
-  int32_t axis_strategy_;
+  int64_t axis_strategy_;
 };
 }  // namespace parallel
 }  // namespace mindspore

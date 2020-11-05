@@ -54,10 +54,10 @@ void TestSoftmaxInfo::SetUp() {
   g_device_manager = std::make_shared<DeviceManager>();
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
 
-  ValuePtr axis1 = MakeValue(-2);
+  ValuePtr axis1 = MakeValue(static_cast<int64_t>(-2));
   std::unordered_map<std::string, ValuePtr> attr1 = {{"axis", axis1}};
 
-  ValuePtr axis2 = MakeValue(4);
+  ValuePtr axis2 = MakeValue(static_cast<int64_t>(4));
   std::unordered_map<std::string, ValuePtr> attr2 = {{"axis", axis2}};
 
   Shapes inputs_shape = {{2, 4, 8, 16}};

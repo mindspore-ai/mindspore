@@ -29,13 +29,13 @@
 
 namespace mindspore {
 namespace parallel {
-DeviceMatrix::DeviceMatrix(int32_t rank, RankList dev_list, Shape dev_shape)
+DeviceMatrix::DeviceMatrix(int64_t rank, RankList dev_list, Shape dev_shape)
     : rank_(rank), dev_list_(std::move(dev_list)), dev_shape_(std::move(dev_shape)) {
-  if (!std::any_of(dev_list_.begin(), dev_list_.end(), [rank](int32_t a) { return a == rank; })) {
+  if (!std::any_of(dev_list_.begin(), dev_list_.end(), [rank](int64_t a) { return a == rank; })) {
     MS_LOG(EXCEPTION) << "Rank " << rank << " is not in the current stage!";
   }
-  int32_t total = std::accumulate(dev_shape_.begin(), dev_shape_.end(), 1, std::multiplies<int>());
-  if (IntToSize(total) != dev_list_.size()) {
+  int64_t total = std::accumulate(dev_shape_.begin(), dev_shape_.end(), 1, std::multiplies<int64_t>());
+  if (LongToSize(total) != dev_list_.size()) {
     MS_LOG(EXCEPTION) << "Device shape does not match the size of the device list!";
   }
 }
@@ -44,7 +44,7 @@ Status DeviceMatrix::CreateGroupList() {
   size_t size = dev_shape_.size();
   RankList group;
   for (size_t i = 0; i < size; i++) {
-    Status status = GetDevicesAlongDim(SizeToUint(i), &group);
+    Status status = GetDevicesAlongDim(SizeToUlong(i), &group);
     group_list_.push_back(group);
     if (status == Status::FAILED) {
       return Status::FAILED;
@@ -53,7 +53,7 @@ Status DeviceMatrix::CreateGroupList() {
   return Status::SUCCESS;
 }
 
-Status DeviceMatrix::GetDevicesAlongDim(const uint32_t &dim, RankList *devices) {
+Status DeviceMatrix::GetDevicesAlongDim(const uint64_t &dim, RankList *devices) {
   if (dim >= dev_shape_.size()) {
     MS_LOG(EXCEPTION) << "The dimension " << dim << " is out of the size of the device shape!";
   }
@@ -66,48 +66,48 @@ Status DeviceMatrix::GetDevicesAlongDim(const uint32_t &dim, RankList *devices) 
   std::vector<RankList> local_group_list;
 
   // lower than dim
-  int32_t step = 1;
-  for (uint32_t i = dim + 1; i < dev_shape_.size(); i++) {
+  int64_t step = 1;
+  for (uint64_t i = dim + 1; i < dev_shape_.size(); i++) {
     step = step * dev_shape_[i];
   }
-  int32_t num = *dev_list_.begin();
-  for (int32_t i = 0; i < dev_shape_[dim]; i++) {
+  int64_t num = *dev_list_.begin();
+  for (int64_t i = 0; i < dev_shape_[dim]; i++) {
     group.push_back(num);
     num += step;
   }
 
-  for (int32_t i = 0; i < step; i++) {
+  for (int64_t i = 0; i < step; i++) {
     local_group_list.push_back(group);
-    (void)std::for_each(group.begin(), group.end(), [](int32_t &a) { a++; });
+    (void)std::for_each(group.begin(), group.end(), [](int64_t &a) { a++; });
   }
 
   // higher than dim
   step = step * dev_shape_[dim];
-  int32_t len = SizeToInt(dev_list_.size()) / step;
+  int64_t len = SizeToLong(dev_list_.size()) / step;
 
   // search rank
-  int32_t target = rank_;
-  for (int32_t i = 0; i < len; i++) {
+  int64_t target = rank_;
+  for (int64_t i = 0; i < len; i++) {
     for (RankList &temp : local_group_list) {
-      if (std::any_of(temp.begin(), temp.end(), [target](int32_t a) { return a == target; })) {
+      if (std::any_of(temp.begin(), temp.end(), [target](int64_t a) { return a == target; })) {
         *devices = temp;
         return Status::SUCCESS;
       }
-      (void)std::for_each(temp.begin(), temp.end(), [step](int32_t &a) { a = a + step; });
+      (void)std::for_each(temp.begin(), temp.end(), [step](int64_t &a) { a = a + step; });
     }
   }
   MS_LOG(ERROR) << "Can't find groups for rank" << rank_ << " in device list!";
   return Status::FAILED;
 }
 
-Shape ConvertRankToCoordinate(int32_t rank, const Shape &dev_shape) {
+Shape ConvertRankToCoordinate(int64_t rank, const Shape &dev_shape) {
   Shape dev_coordinate;
   for (size_t i = 0; i < dev_shape.size(); ++i) {
-    int32_t size = dev_shape[dev_shape.size() - i - 1];
+    int64_t size = dev_shape[dev_shape.size() - i - 1];
     if (size == 0) {
       MS_LOG(EXCEPTION) << "Invalid dev shape: " << ShapeToString(dev_shape);
     } else {
-      int32_t index = rank % size;
+      int64_t index = rank % size;
       (void)dev_coordinate.insert(dev_coordinate.begin(), index);
       rank = rank / size;
     }
@@ -120,7 +120,7 @@ Status DeviceMatrix::GetDevicesByTensorMap(const Shape &tensor_map, RankList *ra
     // -1 means the corresponding dimension is not split.
     if (element == MAP_NONE) {
       continue;
-    } else if ((element < 0) || (IntToSize(element) >= dev_shape_.size())) {
+    } else if ((element < 0) || (LongToSize(element) >= dev_shape_.size())) {
       MS_LOG(ERROR) << "create group by tensor map: the tensor map is invalid";
       return FAILED;
     }
@@ -147,7 +147,7 @@ Status DeviceMatrix::GetDevicesByTensorMap(const Shape &tensor_map, RankList *ra
       if (map == MAP_NONE) {
         continue;
       }
-      size_t index = dev_shape_.size() - IntToSize(map) - 1;
+      size_t index = dev_shape_.size() - LongToSize(map) - 1;
       if (current_rank_coordinate[index] != tmp_rank_coordinate[index]) {
         matched = false;
         break;

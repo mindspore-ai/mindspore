@@ -94,11 +94,11 @@ class CostModelContext {
   void set_multi_subgraphs(bool);
   bool is_multi_subgraphs() const { return is_multi_subgraphs_; }
 
-  void set_costmodel_allreduce_fusion_algorithm(int32_t);
-  int32_t costmodel_allreduce_fusion_algorithm() const { return costmodel_allreduce_fusion_algorithm_; }
+  void set_costmodel_allreduce_fusion_algorithm(int64_t);
+  int64_t costmodel_allreduce_fusion_algorithm() const { return costmodel_allreduce_fusion_algorithm_; }
 
-  void set_costmodel_allreduce_fusion_times(int32_t);
-  int32_t costmodel_allreduce_fusion_times() const { return costmodel_allreduce_fusion_times_; }
+  void set_costmodel_allreduce_fusion_times(int64_t);
+  int64_t costmodel_allreduce_fusion_times() const { return costmodel_allreduce_fusion_times_; }
 
   void set_costmodel_allreduce_fusion_tail_percent(double);
   double costmodel_allreduce_fusion_tail_percent() const { return costmodel_allreduce_fusion_tail_percent_; }
@@ -140,8 +140,8 @@ class CostModelContext {
   void set_triangle_star_strategy_overwrite(bool);
   bool triangle_star_strategy_overwrite() const { return triangle_star_strategy_overwrite_; }
 
-  void set_run_phase(int32_t);
-  int32_t run_phase() const { return run_phase_; }
+  void set_run_phase(int64_t);
+  int64_t run_phase() const { return run_phase_; }
 
   void set_dp_algo_approxi_epsilon(double);
   double dp_algo_approxi_epsilon() const { return dp_algo_approxi_epsilon_; }
@@ -190,11 +190,11 @@ class CostModelContext {
   // When APPROXIMATION is enabled in the DP algorithm, the 'epsilon' value used in the APPROXIMATION.
   double dp_algo_approxi_epsilon_;
 
-  int32_t run_phase_;  // 0: 'training', 1: 'inference'
+  int64_t run_phase_;  // 0: 'training', 1: 'inference'
 
-  int32_t costmodel_allreduce_fusion_algorithm_;
+  int64_t costmodel_allreduce_fusion_algorithm_;
 
-  int32_t costmodel_allreduce_fusion_times_;
+  int64_t costmodel_allreduce_fusion_times_;
 
   double costmodel_allreduce_fusion_tail_percent_;
 

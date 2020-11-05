@@ -18,6 +18,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <algorithm>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "src/kernel_registry.h"
@@ -77,9 +78,12 @@ std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
 ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   auto parameter = func_graph->add_parameter();
   std::vector<int> shape(tensor->shape());
+  std::vector<int64_t> shape_vector;
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                       [](const int32_t &value) { return static_cast<int64_t>(value); });
   auto type_id = static_cast<TypeId>(tensor->data_type());
   auto type_ptr = TypeIdToType(type_id);
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
   parameter->set_abstract(abstract_tensor);
 
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();

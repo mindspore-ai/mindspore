@@ -102,6 +102,7 @@ class AbstractScalar : public AbstractBase {
   explicit AbstractScalar(const ValuePtr &value, const TypePtr &type) : AbstractBase(value, type) {}
   explicit AbstractScalar(const ValuePtr &value) : AbstractBase(value, value->type()) {}
   explicit AbstractScalar(int value) : AbstractBase(MakeValue(value), kInt32) {}
+  explicit AbstractScalar(int64_t value) : AbstractBase(MakeValue(value), kInt64) {}
   explicit AbstractScalar(float value) : AbstractBase(MakeValue(value), kFloat32) {}
   explicit AbstractScalar(double value) : AbstractBase(MakeValue(value), kFloat64) {}
   explicit AbstractScalar(bool value) : AbstractBase(MakeValue(value), kBool) {}
@@ -294,7 +295,7 @@ class AbstractTensor : public AbstractUndetermined {
     if (value != nullptr) {
       auto tensor = value->cast<tensor::TensorPtr>();
       if (tensor != nullptr) {
-        hash_sum = hash_combine(hash_sum, IntToSize(tensor->DataSize()));
+        hash_sum = hash_combine(hash_sum, LongToSize(tensor->DataSize()));
       }
     }
     return hash_sum;

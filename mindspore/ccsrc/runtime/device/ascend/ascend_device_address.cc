@@ -287,7 +287,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   SyncStream();
   bool sync_ok = false;
   std::vector<size_t> host_shape;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), IntToSize);
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), LongToSize);
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
@@ -301,7 +301,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
       auto shape_size = trans::ShapeSize(host_shape);
       auto host = std::vector<uint8_t>(size_);
       SyncMemory(host.data(), ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
-      const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
+      const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size_};
       sync_ok = trans::TransDataType(type_args, host_ptr);
       if (!sync_ok) {
         MS_LOG(ERROR) << "trans data type failed.";
@@ -460,7 +460,7 @@ std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *hos
       *host_shape = trans::PaddingShapeTo4d(*host_shape);
     } else {
       host_shape->clear();
-      (void)std::transform(host_shape_.begin(), host_shape_.end(), std::back_inserter(*host_shape), IntToSize);
+      (void)std::transform(host_shape_.begin(), host_shape_.end(), std::back_inserter(*host_shape), LongToSize);
     }
     device_shape = trans::TransShapeToDevice(*host_shape, format_);
   }
@@ -473,7 +473,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
   bool sync_ok = false;
   std::vector<size_t> host_shape;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), IntToSize);
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), LongToSize);
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
@@ -526,7 +526,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   SyncStream();
   bool sync_ok = false;
   std::vector<size_t> host_shape;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), IntToSize);
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), LongToSize);
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
@@ -569,7 +569,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
   MS_LOG(INFO) << "ConvertFormatAndSyncHostToDevice, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
   std::vector<size_t> host_shape;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), IntToSize);
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), LongToSize);
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }

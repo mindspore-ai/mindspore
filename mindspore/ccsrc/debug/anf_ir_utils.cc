@@ -33,6 +33,7 @@
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "utils/utils.h"
+#include "utils/shape_utils.h"
 #include "debug/trace.h"
 #include "utils/label.h"
 #include "utils/ms_context.h"
@@ -1310,7 +1311,7 @@ class IrParser {
     *ptr = std::make_shared<Tuple>(elems);
   }
 
-  void SetArrayType(TypePtr *const ptr, const TypePtr &elem_type, const std::vector<int> &) {
+  void SetArrayType(TypePtr *const ptr, const TypePtr &elem_type, const ShapeVector &) {
     if (ptr == nullptr) {
       return;
     }
@@ -1367,7 +1368,7 @@ class IrParser {
     *ptr = std::make_shared<abstract::AbstractTuple>(elems);
   }
 
-  void SetArrayType(AbstractBasePtr *const ptr, const TypePtr &elem_type, const std::vector<int> &shape) {
+  void SetArrayType(AbstractBasePtr *const ptr, const TypePtr &elem_type, const ShapeVector &shape) {
     if (ptr == nullptr) {
       return;
     }
@@ -1449,7 +1450,7 @@ class IrParser {
     }
     // process Array element type
     TypePtr elem_type = nullptr;
-    std::vector<int> shape;
+    ShapeVector shape;
     tok = ParseOneType(func_graph, lexer_.GetNextToken(), &elem_type);
     if (tok != TOK_RPARENTHESIS) {
       return TOK_ERROR;
@@ -1794,7 +1795,7 @@ class IrParser {
     }
 
     // parse shape
-    std::vector<int> shape;
+    ShapeVector shape;
     Token tok = lexer_.GetNextToken();
     if (tok != TOK_LBRACKET) {
       return TOK_ERROR;

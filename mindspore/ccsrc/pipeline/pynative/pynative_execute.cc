@@ -74,7 +74,7 @@ namespace pynative {
 static std::shared_ptr<session::SessionBasic> session = nullptr;
 PynativeExecutorPtr PynativeExecutor::executor_ = nullptr;
 std::mutex PynativeExecutor::instance_lock_;
-int PynativeExecutor::graph_id_ = 0;
+int64_t PynativeExecutor::graph_id_ = 0;
 
 template <typename... Args>
 void PynativeExecutorTry(PynativeExecutor *const executor, void (PynativeExecutor::*method)(Args...), Args &&... args) {
@@ -211,7 +211,7 @@ std::map<SignatureEnumDType, TypeId> GetDstType(const py::tuple &py_args,
     }
     if (max_type == TypeId::kNumberTypeBool) {
       if (has_int) {
-        max_type = TypeId::kNumberTypeInt32;
+        max_type = TypeId::kNumberTypeInt64;
       }
       if (has_float) {
         max_type = TypeId::kNumberTypeFloat32;
@@ -273,10 +273,10 @@ py::object DoParamMixPrecisionCast(bool *is_cast, const py::object obj) {
 
 py::object DoParamMixPrecisionCastTuple(bool *is_cast, const py::tuple tuple) {
   MS_EXCEPTION_IF_NULL(is_cast);
-  auto tuple_size = static_cast<int>(tuple.size());
+  auto tuple_size = static_cast<int64_t>(tuple.size());
   py::tuple result(tuple_size);
 
-  for (int i = 0; i < tuple_size; i++) {
+  for (int64_t i = 0; i < tuple_size; i++) {
     if (py::isinstance<tensor::MetaTensor>(tuple[i])) {
       MS_LOG(DEBUG) << "Call cast for item " << i;
       result[i] = DoParamMixPrecisionCast(is_cast, tuple[i]);
@@ -497,7 +497,7 @@ void PlantTensorTupleToVector(const py::tuple &tuple_inputs, const PrimitivePtr 
     MS_EXCEPTION_IF_NULL(tensor);
     input_tensors->emplace_back(tensor);
   }
-  op_prim->set_attr(kAttrDynInputSizes, MakeValue(std::vector<int>{SizeToInt(tuple_inputs.size())}));
+  op_prim->set_attr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(tuple_inputs.size())}));
 }
 
 void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tensor::TensorPtr> *input_tensors) {
@@ -515,7 +515,7 @@ void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tenso
 }
 
 void ConvertMultiPyObjectToTensor(const py::object &input_object, const PrimitivePtr &op_prim,
-                                  std::vector<tensor::TensorPtr> *input_tensors, int *tensor_mask) {
+                                  std::vector<tensor::TensorPtr> *input_tensors, int64_t *tensor_mask) {
   MS_EXCEPTION_IF_NULL(op_prim);
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(tensor_mask);
@@ -537,7 +537,7 @@ void ConvertMultiPyObjectToTensor(const py::object &input_object, const Primitiv
 }
 
 void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr &op_prim,
-                             std::vector<tensor::TensorPtr> *input_tensors, int *tensor_mask) {
+                             std::vector<tensor::TensorPtr> *input_tensors, int64_t *tensor_mask) {
   MS_EXCEPTION_IF_NULL(op_prim);
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(tensor_mask);
@@ -549,7 +549,7 @@ void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr 
     tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
     *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::int_>(input_object)) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::int_>(input_object), kInt32);
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::int_>(input_object), kInt64);
     *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::array>(input_object)) {
     tensor_ptr = TensorPy::MakeTensor(py::cast<py::array>(input_object), nullptr);
@@ -573,7 +573,7 @@ void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr 
   input_tensors->emplace_back(tensor_ptr);
 }
 
-void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int> *tensors_mask,
+void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t> *tensors_mask,
                           std::vector<tensor::TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(tensors_mask);
@@ -603,16 +603,16 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int> *te
       continue;
     }
     // convert const and tuple input to tensor
-    int tensor_mask = static_cast<int>(op_run_info->inputs_mask[index]);
+    int64_t tensor_mask = static_cast<int64_t>(op_run_info->inputs_mask[index]);
     ConvertPyObjectToTensor(op_run_info->op_inputs[index], op_prim, input_tensors, &tensor_mask);
     // mark tensors, data : 0, weight : 1, valuenode: 2
-    std::vector<int> new_mask(input_tensors->size() - tensors_mask->size(), tensor_mask);
+    std::vector<int64_t> new_mask(input_tensors->size() - tensors_mask->size(), tensor_mask);
     tensors_mask->insert(tensors_mask->end(), new_mask.begin(), new_mask.end());
   }
   op_prim->EndRecordAddAttr();
 }
 
-void EraseValueNodeTensor(const std::vector<int> &tensors_mask, std::vector<tensor::TensorPtr> *input_tensors) {
+void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask, std::vector<tensor::TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(input_tensors);
   if (input_tensors->size() != tensors_mask.size()) {
     MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size() << " should be equal to tensors mask size "
@@ -1056,7 +1056,7 @@ AnfNodePtr PynativeExecutor::MakeValueNode(const py::object &obj, const std::str
 
 ValuePtr PynativeExecutor::GetForwardValue(const OpExecInfoPtr &op_exec_info) {
   auto id = GetOpId(op_exec_info);
-  int graph_id = resource_->results()[pipeline::kPynativeGraphId].cast<int>();
+  int64_t graph_id = resource_->results()[pipeline::kPynativeGraphId].cast<int64_t>();
   auto op = std::to_string(graph_id) + id;
   op.append(std::to_string(op_id_map_[id]));
   auto iter = op_forward_map_.find(op);
@@ -1081,9 +1081,9 @@ void PynativeExecutor::SaveOutputNodeMap(const std::string &obj_id, const py::ob
 
   if (py::isinstance<py::tuple>(out_real)) {
     auto value = py::cast<py::tuple>(out_real);
-    auto size = static_cast<int>(value.size());
+    auto size = static_cast<int64_t>(value.size());
     if (size > 1) {
-      for (int i = 0; i < size; ++i) {
+      for (int64_t i = 0; i < size; ++i) {
         auto value_id = GetId(value[i]);
         set_node_map(curr_g_, value_id, cnode, i);
       }
@@ -1114,7 +1114,7 @@ void PynativeExecutor::SaveAllResult(const OpExecInfoPtr &op_exec_info, const CN
     }
   }
   std::string id = GetOpId(op_exec_info);
-  int graph_id = resource_->results()[pipeline::kPynativeGraphId].cast<int>();
+  int64_t graph_id = resource_->results()[pipeline::kPynativeGraphId].cast<int64_t>();
   auto op_id = std::to_string(graph_id) + id;
   op_id.append(std::to_string(op_id_map_[id]));
   cnode->set_forward(value, op_id);
@@ -1303,7 +1303,7 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
   }
 
   std::vector<tensor::TensorPtr> input_tensors;
-  std::vector<int> tensors_mask;
+  std::vector<int64_t> tensors_mask;
   ConstructInputTensor(op_exec_info, &tensors_mask, &input_tensors);
   // get graph info for checking it whether existing in the cache
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
@@ -1419,26 +1419,26 @@ void PynativeExecutor::set_node_map(const FuncGraphPtr &g, const py::object &nod
     return;
   }
   auto tuple = node.cast<py::tuple>();
-  auto tuple_size = static_cast<int>(tuple.size());
-  for (int i = 0; i < tuple_size; ++i) {
+  auto tuple_size = static_cast<int64_t>(tuple.size());
+  for (int64_t i = 0; i < tuple_size; ++i) {
     auto id = GetId(tuple[i]);
     if (is_param) {
       graph_info_map_[g].params.emplace(id);
     }
     set_node_map(g, id, cnode, i);
-    set_tuple_node_map(g, tuple[i], cnode, std::vector<int>{i}, is_param);
+    set_tuple_node_map(g, tuple[i], cnode, std::vector<int64_t>{i}, is_param);
   }
 }
 
 void PynativeExecutor::set_tuple_node_map(const FuncGraphPtr &g, const py::object &node, const AnfNodePtr &cnode,
-                                          const std::vector<int> &idx, bool is_param) {
+                                          const std::vector<int64_t> &idx, bool is_param) {
   if (!py::isinstance<py::tuple>(node)) {
     return;
   }
   auto tuple = node.cast<py::tuple>();
-  auto tuple_size = static_cast<int>(tuple.size());
-  for (int i = 0; i < tuple_size; ++i) {
-    std::vector<int> tmp = idx;
+  auto tuple_size = static_cast<int64_t>(tuple.size());
+  for (int64_t i = 0; i < tuple_size; ++i) {
+    std::vector<int64_t> tmp = idx;
     tmp.emplace_back(i);
     auto id = GetId(tuple[i]);
     if (is_param) {
@@ -1463,11 +1463,11 @@ void PynativeExecutor::EndGraphInner(const py::object &cell, const py::object &o
   if (graph_info_map_[curr_g_].node_map.find(out_id) == graph_info_map_[curr_g_].node_map.end()) {
     if (py::isinstance<py::tuple>(out)) {
       auto tuple = out.cast<py::tuple>();
-      auto tuple_size = static_cast<int>(tuple.size());
+      auto tuple_size = static_cast<int64_t>(tuple.size());
 
       std::vector<AnfNodePtr> inputs;
       inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-      for (int i = 0; i < tuple_size; i++) {
+      for (int64_t i = 0; i < tuple_size; i++) {
         inputs.emplace_back(GetInput(tuple[i], false));
       }
       auto cnode = curr_g_->NewCNode(inputs);

@@ -51,7 +51,7 @@ class CumSumGpuKernel : public GpuKernel {
     }
     input_size_0_ = sizeof(T);
     shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    axis_ = GetAttr<int>(kernel_node, "axis");
+    axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     exclusive_ = GetAttr<bool>(kernel_node, "exclusive");
     reverse_ = GetAttr<bool>(kernel_node, "reverse");
     int input_dim_length = SizeToInt(shape_.size());

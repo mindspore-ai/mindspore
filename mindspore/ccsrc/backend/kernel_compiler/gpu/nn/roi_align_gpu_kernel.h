@@ -85,11 +85,11 @@ class ROIAlignGpuFwdKernel : public GpuKernel {
     rois_shape_ = {roi_rows_, roi_cols_};
 
     // Get primitive args
-    pooled_height_ = GetAttr<int>(kernel_node, "pooled_height");
-    pooled_width_ = GetAttr<int>(kernel_node, "pooled_width");
+    pooled_height_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pooled_height"));
+    pooled_width_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pooled_width"));
     spatial_scale_ = static_cast<T>(GetAttr<float>(kernel_node, "spatial_scale"));
-    sample_num_ = GetAttr<int>(kernel_node, "sample_num");
-    roi_end_mode_ = GetAttr<int>(kernel_node, "roi_end_mode");
+    sample_num_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "sample_num"));
+    roi_end_mode_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "roi_end_mode"));
 
     // Get output_shape
     output_shape_ = {roi_rows_, channels_, pooled_height_, pooled_width_};

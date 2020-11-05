@@ -44,7 +44,7 @@ TEST_F(TestHWLambUpdateWithLrV2, test_lamb_update_with_lr_v2) {
    * return sub0
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_update_with_lr_v2", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 7; ++i) {

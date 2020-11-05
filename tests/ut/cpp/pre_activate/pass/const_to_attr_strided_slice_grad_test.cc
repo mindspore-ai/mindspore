@@ -52,7 +52,7 @@ TEST_F(TestHWConstToAttrStridedSliceGrad, test_strided_slice_grad) {
   EXPECT_FALSE(AnfAlgo::HasNodeAttr("strides", cnode));
   EXPECT_FALSE(CheckEqualGraph(g, g_after));
 
-  std::vector<int> shp_x{16, 1, 1024};
+  std::vector<int64_t> shp_x{16, 1, 1024};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);

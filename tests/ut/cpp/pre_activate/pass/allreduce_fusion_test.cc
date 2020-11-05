@@ -43,7 +43,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_all) {
   getPyFun_.SetDoResolve(true);
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_all_reduce_fusion_all", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{1, 64, 112, 112};
+  std::vector<int64_t> shp_x{1, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);
@@ -84,7 +84,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_group) {
   getPyFun_.SetDoResolve(true);
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_all_reduce_fusion_group", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{1, 64, 112, 112};
+  std::vector<int64_t> shp_x{1, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);
@@ -125,7 +125,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_op) {
   getPyFun_.SetDoResolve(true);
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_all_reduce_fusion_group", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{1, 64, 112, 112};
+  std::vector<int64_t> shp_x{1, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);
@@ -176,7 +176,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_sorted) {
   getPyFun_.SetDoResolve(true);
   FuncGraphPtr g = getPyFun_.CallAndParseRet("test_all_reduce_fusion_all", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{1, 64, 112, 112};
+  std::vector<int64_t> shp_x{1, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list{x_abstract, x_abstract, x_abstract, x_abstract, x_abstract};
   auto func_graph = GetKernelGraph(g, args_spec_list);
@@ -185,7 +185,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_sorted) {
   auto make_tuple = ret->input(1);
   auto make_tuple1 = make_tuple->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
   for (size_t i = 1; i < make_tuple1->inputs().size(); ++i) {
-    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue(SizeToInt(i)), make_tuple1->input(i));
+    AnfAlgo::SetNodeAttr(kAttrIndex, MakeValue(SizeToLong(i)), make_tuple1->input(i));
   }
   // set kernel build info
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;

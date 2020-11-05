@@ -79,12 +79,12 @@ ExecutorPyPtr ExecutorPy::executor_ = nullptr;
 std::mutex ExecutorPy::instance_lock_;
 bool ExecutorPy::debugger_terminate_ = false;
 
-std::unordered_map<abstract::AbstractBasePtrList, int, abstract::AbstractBasePtrListHasher,
+std::unordered_map<abstract::AbstractBasePtrList, int64_t, abstract::AbstractBasePtrListHasher,
                    abstract::AbstractBasePtrListEqual>
   g_args_cache;
 
 namespace {
-std::string GetBaseNameForIR(int stage_idx, const std::string &action_name) {
+std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) {
   std::ostringstream oss;
   oss << std::setfill('0') << std::setw(2) << stage_idx << "_" << action_name;
   return oss.str();
@@ -117,7 +117,7 @@ py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::str
     args_spec.push_back(abstract::FromValue(converted, true));
   }
   if (g_args_cache.count(args_spec) == 0) {
-    static int key = 0;
+    static int64_t key = 0;
     MS_LOG(INFO) << "Start new args and compile key:" << key;
     g_args_cache[args_spec] = key++;
   }
@@ -331,8 +331,8 @@ std::map<std::string, std::pair<PrimitivePyPtr, std::string>> ExecutorPy::FetchI
     }
     auto weight_name = weight_node->cast<ParameterPtr>()->name();
     // find the fakequant from input
-    int count = 0;
-    const int max_depth = 5;
+    int64_t count = 0;
+    const int64_t max_depth = 5;
     while (!is_quant_cnode(x)) {
       if (count >= max_depth) {
         break;
@@ -632,7 +632,7 @@ void Pipeline::Run() {
   FuncGraphPtr user_graph = nullptr;
 
   WITH(MsProfile::GetProfile())[&user_graph, this]() {
-    int i = 0;
+    int64_t i = 0;
     for (auto &action : actions_) {
 #ifdef ENABLE_TIMELINE
       DumpTime &dump_time = DumpTime::GetInstance();
@@ -886,19 +886,19 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   MS_LOG(INFO) << "Start InitDataSet Entry";
   ShapeVector int_input_indexes;
   (void)std::transform(input_indexes.begin(), input_indexes.end(), std::back_inserter(int_input_indexes),
-                       [](int64_t item) { return static_cast<int>(item); });
+                       [](int64_t item) { return static_cast<int64_t>(item); });
   std::vector<ShapeVector> int_shapes;
   (void)std::transform(shapes.begin(), shapes.end(), std::back_inserter(int_shapes),
                        [](const std::vector<int64_t> &item) {
                          ShapeVector vector_item;
                          (void)std::transform(item.begin(), item.end(), std::back_inserter(vector_item),
-                                              [](int64_t inner_item) { return static_cast<int>(inner_item); });
+                                              [](int64_t inner_item) { return static_cast<int64_t>(inner_item); });
                          return vector_item;
                        });
   auto p_init = std::make_shared<Primitive>("InitDataSetQueue");
   p_init->set_attr("queue_name", MakeValue(queue_name));
-  p_init->set_attr("size", MakeValue(static_cast<int>(size)));
-  p_init->set_attr("batch_size", MakeValue(static_cast<int>(batch_size)));
+  p_init->set_attr("size", MakeValue(static_cast<int64_t>(size)));
+  p_init->set_attr("batch_size", MakeValue(static_cast<int64_t>(batch_size)));
   p_init->set_attr("types", MakeValue(types));
   p_init->set_attr("shapes", MakeValue(int_shapes));
   p_init->set_attr("input_indexes", MakeValue(int_input_indexes));

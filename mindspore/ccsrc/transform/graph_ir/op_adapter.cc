@@ -392,7 +392,7 @@ std::shared_ptr<GeTensorDesc> OpAdapterImpl::CreateNodeDesc(const AnfNodePtr &no
     return nullptr;
   }
 
-  std::vector<int> shape;
+  std::vector<int64_t> shape;
   auto shape_ptr = dyn_cast<abstract::Shape>(node->Shape());
   if (nullptr != shape_ptr) {
     shape = shape_ptr->shape();
@@ -524,7 +524,7 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
   ValueType value_type = SINGLE_VALUE;
   for (auto item : prim->attrs()) {
     if (item.second->isa<Int32Imm>()) {
-      (void)op->SetAttr(item.first, GetValue<int>(item.second));
+      (void)op->SetAttr(item.first, GetValue<int64_t>(item.second));
     } else if (item.second->isa<StringImm>()) {
       (void)op->SetAttr(item.first, GetValue<std::string>(item.second));
     } else if (item.second->isa<BoolImm>()) {
@@ -538,8 +538,8 @@ int OpAdapterImpl::SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr 
         (void)op->SetAttr(item.first, GetValue<const std::vector<std::string>>(item.second));
       } else if ((*val_seq)[0]->isa<FP32Imm>()) {
         (void)op->SetAttr(item.first, GetValue<const std::vector<float>>(item.second));
-      } else if ((*val_seq)[0]->isa<Int32Imm>()) {
-        (void)op->SetAttr(item.first, GetValue<const std::vector<int>>(item.second));
+      } else if ((*val_seq)[0]->isa<Int64Imm>()) {
+        (void)op->SetAttr(item.first, GetValue<const std::vector<int64_t>>(item.second));
       } else if ((*val_seq)[0]->isa<BoolImm>()) {
         (void)op->SetAttr(item.first, GetValue<const std::vector<bool>>(item.second));
       } else {

@@ -105,7 +105,7 @@ class ParameterServer {
     ParameterServer *ps_;
     typedef void (ServerHandler::*RequestHandler)(const ::ps::KVMeta &req_meta, const ::ps::KVPairs<T> &req_data,
                                                   ::ps::KVPairs<T> *res);
-    std::unordered_map<int, RequestHandler> handlers_;
+    std::unordered_map<int64_t, RequestHandler> handlers_;
     std::unordered_map<Key, bool> init_weights_;
     std::unordered_map<Key, bool> init_weight_to_optim_;
     std::unordered_map<Key, bool> init_optim_info_;
@@ -113,7 +113,7 @@ class ParameterServer {
 
   bool Init(const FuncGraphPtr &func_graph);
   void InitOptimInfoBuilders();
-  void InitWeightKeyToOptims(const Key &key, const int &optim_id);
+  void InitWeightKeyToOptims(const Key &key, const int64_t &optim_id);
   void InitOptimInputsShape(const Keys &keys, const Values &values, const Lengths &lengths);
   void InitWeight(const Key &key, const WeightPtr &weight);
   void InitGrad(const Key &key, const GradPtr &grad);
@@ -293,13 +293,13 @@ void ParameterServer<T>::ServerHandler::HandleInitEmbeddings(const ::ps::KVMeta 
 
   const Lengths &lens = req_data.lens;
   size_t index = 0;
-  for (int i = 0; i < lens[0]; i++) {
+  for (int64_t i = 0; i < lens[0]; i++) {
     input_shape->push_back(static_cast<size_t>(req_data.vals[index++]));
   }
-  for (int j = 0; j < lens[1]; j++) {
+  for (int64_t j = 0; j < lens[1]; j++) {
     indices_shape->push_back(static_cast<size_t>(req_data.vals[index++]));
   }
-  for (int k = 0; k < lens[2]; k++) {
+  for (int64_t k = 0; k < lens[2]; k++) {
     output_shape->push_back(static_cast<size_t>(req_data.vals[index++]));
   }
   ps_->InitEmbeddingTable(key, shapes);
@@ -374,7 +374,7 @@ void ParameterServer<T>::InitOptimInfoBuilders() {
 }
 
 template <typename T>
-void ParameterServer<T>::InitWeightKeyToOptims(const Key &key, const int &optim_id) {
+void ParameterServer<T>::InitWeightKeyToOptims(const Key &key, const int64_t &optim_id) {
   if (weight_key_to_optims_.count(key) > 0 || Util::optimizer_name(optim_id) == "") {
     return;
   }
@@ -390,7 +390,7 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
   MS_EXCEPTION_IF_NULL(inputs_shape);
   InputsShapePtr original_inputs_shape = std::make_shared<InputsShape>();
   MS_EXCEPTION_IF_NULL(original_inputs_shape);
-  int val_idx = 0;
+  int64_t val_idx = 0;
   const Key &key = keys[0];
   MS_LOG(INFO) << "Initializing optimizer inputs shape for key:" << key;
   if (optim_inputs_shape_.count(key) == 0) {
@@ -405,7 +405,7 @@ void ParameterServer<T>::InitOptimInputsShape(const Keys &keys, const Values &va
     inputs_shape->push_back(shape);
     original_inputs_shape->push_back(original_shape);
 
-    for (int j = 0; j < lengths[i]; j++) {
+    for (int64_t j = 0; j < lengths[i]; j++) {
       shape->push_back(values[val_idx]);
       original_shape->push_back(values[val_idx++]);
     }
@@ -738,7 +738,7 @@ void ParameterServer<T>::SyncEmbeddingTables() {
     }
     auto lookup = embedding_lookup_ops_[key];
     const std::vector<size_t> &input_shapes = lookup->input_sizes();
-    std::vector<int> new_tensor_shape(input_shapes.begin(), input_shapes.end());
+    std::vector<int64_t> new_tensor_shape(input_shapes.begin(), input_shapes.end());
 
     tensor::TensorPtr new_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, new_tensor_shape);
     MS_EXCEPTION_IF_NULL(new_tensor);
@@ -751,7 +751,7 @@ void ParameterServer<T>::SyncEmbeddingTables() {
     }
     MS_EXCEPTION_IF_NULL(new_tensor_data_ptr);
     MS_EXCEPTION_IF_NULL(weights_[key]->data());
-    int ret = memcpy_s(new_tensor_data_ptr, new_tensor_size, weights_[key]->data(), embedding_table_size);
+    int64_t ret = memcpy_s(new_tensor_data_ptr, new_tensor_size, weights_[key]->data(), embedding_table_size);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
       return;

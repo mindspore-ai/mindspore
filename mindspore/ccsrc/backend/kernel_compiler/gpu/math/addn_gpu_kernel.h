@@ -85,7 +85,7 @@ class AddNGpuFwdKernel : public GpuKernel {
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    num_input_ = GetAttr<int>(kernel_node, "n");
+    num_input_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "n"));
     if (IntToSize(num_input_) != input_num) {
       MS_LOG(ERROR) << "Input number is " << num_input_ << " in attr, but got " << input_num << "input.";
       return false;

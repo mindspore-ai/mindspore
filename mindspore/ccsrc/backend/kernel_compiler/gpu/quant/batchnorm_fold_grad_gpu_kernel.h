@@ -109,7 +109,7 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
 
     epsilon_ = GetValue<T>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("epsilon"));
     is_training_ = GetValue<bool>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("is_training"));
-    freeze_bn_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("freeze_bn"));
+    freeze_bn_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("freeze_bn")));
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     if (input_shape.size() != 4) {

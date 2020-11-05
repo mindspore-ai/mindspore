@@ -50,7 +50,10 @@ class StridedSliceGradGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    auto shapex = GetAttr<std::vector<int>>(kernel_node, "shapex");
+    std::vector<int> shapex;
+    std::vector<int64_t> shapex_me = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
+    (void)std::transform(shapex_me.begin(), shapex_me.end(), std::back_inserter(shapex),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     for (auto x : shapex) {
       input_shape_.push_back(IntToSize(x));
     }
@@ -84,9 +87,15 @@ class StridedSliceGradGpuKernel : public GpuKernel {
 
  private:
   void FillEmptyDims(const CNodePtr &kernel_node) {
-    begin_ = GetAttr<std::vector<int>>(kernel_node, "begin");
-    end_ = GetAttr<std::vector<int>>(kernel_node, "end");
-    strides_ = GetAttr<std::vector<int>>(kernel_node, "strides");
+    std::vector<int64_t> begin_me = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
+    std::vector<int64_t> end_me = GetAttr<std::vector<int64_t>>(kernel_node, "end");
+    std::vector<int64_t> strides_me = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
+    (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
 
     for (size_t i = 0; i < MAX_DIMS; i++) {
       if (i < begin_.size()) {
@@ -114,7 +123,7 @@ class StridedSliceGradGpuKernel : public GpuKernel {
   }
 
   void ParseMasks(const CNodePtr &kernel_node) {
-    auto begin_mask_int = GetAttr<int>(kernel_node, "begin_mask");
+    auto begin_mask_int = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "begin_mask"));
     auto begin_mask = Dec2Bin(begin_mask_int);
     for (size_t i = 0; i < begin_mask.size(); i++) {
       if (begin_mask[i]) {
@@ -122,7 +131,7 @@ class StridedSliceGradGpuKernel : public GpuKernel {
       }
     }
 
-    auto end_mask_int = GetAttr<int>(kernel_node, "end_mask");
+    auto end_mask_int = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "end_mask"));
     auto end_mask = Dec2Bin(end_mask_int);
     for (size_t j = 0; j < end_mask.size(); j++) {
       if (end_mask[j]) {
@@ -130,7 +139,7 @@ class StridedSliceGradGpuKernel : public GpuKernel {
       }
     }
 
-    auto ellipsis_mask_int = GetAttr<int>(kernel_node, "ellipsis_mask");
+    auto ellipsis_mask_int = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "ellipsis_mask"));
     auto ellipsis_mask = Dec2Bin(ellipsis_mask_int);
     for (size_t k = 0; k < ellipsis_mask.size(); k++) {
       if (ellipsis_mask[k]) {
@@ -140,7 +149,7 @@ class StridedSliceGradGpuKernel : public GpuKernel {
       }
     }
 
-    auto shrink_axis_mask_str = GetAttr<int>(kernel_node, "shrink_axis_mask");
+    auto shrink_axis_mask_str = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "shrink_axis_mask"));
     auto shrink_axis_mask = Dec2Bin(shrink_axis_mask_str);
     for (size_t l = 0; l < shrink_axis_mask.size(); l++) {
       if (shrink_axis_mask[l]) {

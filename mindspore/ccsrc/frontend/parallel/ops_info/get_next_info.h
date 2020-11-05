@@ -38,7 +38,7 @@ class GetNextInfo : public OperatorInfo {
   Status Init(const StrategyPtr &strategy) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -57,10 +57,10 @@ class GetNextInfo : public OperatorInfo {
   Status InferAsLossDivisor() override { return SUCCESS; }
 
  private:
-  int32_t dev_num_ = 1;
+  int64_t dev_num_ = 1;
   std::vector<std::string> types_;
   Shapes shapes_;
-  int32_t output_num_ = 0;
+  int64_t output_num_ = 0;
   std::string shared_name_;
 };
 }  // namespace parallel

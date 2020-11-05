@@ -61,7 +61,7 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
       AnfNodePtr para_tuple = ret_graph->add_parameter();
       for (size_t i = 0; i < arg_tuple->size(); ++i) {
         elems.push_back(
-          ret_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), para_tuple, NewValueNode(SizeToInt(i))}));
+          ret_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), para_tuple, NewValueNode(SizeToLong(i))}));
       }
     } else if (args_spec_list[index]->isa<AbstractDictionary>()) {
       AbstractDictionaryPtr arg_dict = args_spec_list[index]->cast<AbstractDictionaryPtr>();

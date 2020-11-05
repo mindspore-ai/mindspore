@@ -16,6 +16,7 @@
 
 #include "runtime/device/executor/dynamic_kernel.h"
 #include <vector>
+#include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "common/trans.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
@@ -41,12 +42,15 @@ void DynamicKernel::Initialize() {
     return;
   }
   MS_LOG(INFO) << "Have depends";
-  auto depends_list = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode_ptr_, kDynamicShapeDepends);
+  std::vector<int> depends_list;
+  std::vector<int64_t> depends_list_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode_ptr_, kDynamicShapeDepends);
+  (void)std::transform(depends_list_me.begin(), depends_list_me.end(), std::back_inserter(depends_list),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   // Save depend input tensor. Sync data in InferShape.
   for (auto depend : depends_list) {
     auto pre_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode_ptr_, depend);
     auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode_ptr_, depend);
-    std::vector<int> shapes = trans::GetRuntimePaddingShape(pre_node_with_index.first, pre_node_with_index.second);
+    std::vector<int64_t> shapes = trans::GetRuntimePaddingShape(pre_node_with_index.first, pre_node_with_index.second);
     auto host_type = AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
     auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
     out_tensor->set_device_address(output_addr);

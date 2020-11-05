@@ -56,7 +56,7 @@ static KernelGraphPtr CreateKernelGraph() {
    */
   KernelGraphPtr g = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  std::vector<int> shp = {1, 3, 3, 4};
+  std::vector<int64_t> shp = {1, 3, 3, 4};
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat32);
   tensor::DeviceInfo device_info{kOpFormat_NCHW, tensor_type};
 
@@ -152,7 +152,7 @@ static KernelGraphPtr CreateGraphWithExecOrder() {
    *              return
    */
   auto anf_graph = std::make_shared<FuncGraph>();
-  std::vector<int> shape = {2, 32, 224, 224};
+  std::vector<int64_t> shape = {2, 32, 224, 224};
   auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
   EXPECT_NE(abstract, nullptr);
   auto original_x_parameter = anf_graph->add_parameter();

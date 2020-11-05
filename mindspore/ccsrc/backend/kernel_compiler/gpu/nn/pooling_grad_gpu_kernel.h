@@ -174,8 +174,13 @@ class PoolingGradGpuKernel : public GpuKernel {
   }
   void SetPad(const CNodePtr &kernel_node) {
     pad_mode_ = GetAttr<std::string>(kernel_node, "padding");
-    stride_ = GetAttr<std::vector<int>>(kernel_node, "strides");
-    auto window = GetAttr<std::vector<int>>(kernel_node, "ksize");
+    std::vector<int64_t> stride_me = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
+    std::vector<int> window;
+    std::vector<int64_t> window_me = GetAttr<std::vector<int64_t>>(kernel_node, "ksize");
+    (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
+                         [](const int64_t &value) { return static_cast<int>(value); });
+    (void)std::transform(window_me.begin(), window_me.end(), std::back_inserter(window),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     int window_height = window[2];
     int window_width = window[3];
     int stride_h = stride_[2];

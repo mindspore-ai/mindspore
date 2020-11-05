@@ -68,7 +68,7 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
     auto pad = InsertPadToGraph(func_graph, cur_input, origin_type, origin_shape);
     MS_EXCEPTION_IF_NULL(pad);
     pad->set_scope(cnode->scope());
-    AnfAlgo::SetNodeAttr("paddings", MakeValue(std::vector<std::vector<int>>{{0, 0}, {0, 3}}), pad);
+    AnfAlgo::SetNodeAttr("paddings", MakeValue(std::vector<std::vector<int64_t>>{{0, 0}, {0, 3}}), pad);
     new_inputs.push_back(pad);
   }
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();

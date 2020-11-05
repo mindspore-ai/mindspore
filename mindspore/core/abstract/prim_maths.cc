@@ -54,10 +54,10 @@ AbstractBasePtr InferImplMul(const AnalysisEnginePtr &, const PrimitivePtr &prim
   CheckArgsSize(op_name, args_spec_list, 2);
   ShapePtr shape_x = dyn_cast<Shape>(args_spec_list[0]->GetShapeTrack());
   MS_EXCEPTION_IF_NULL(shape_x);
-  std::vector<int> x_dims = shape_x->shape();
+  std::vector<int64_t> x_dims = shape_x->shape();
   ShapePtr shape_y = dyn_cast<Shape>(args_spec_list[1]->GetShapeTrack());
   MS_EXCEPTION_IF_NULL(shape_y);
-  std::vector<int> y_dims = shape_y->shape();
+  std::vector<int64_t> y_dims = shape_y->shape();
   auto broadcast_shape = BroadcastShape(x_dims, y_dims);
   if (broadcast_shape.empty()) {
     MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
@@ -75,10 +75,10 @@ AbstractBasePtr InferImplTensorAdd(const AnalysisEnginePtr &, const PrimitivePtr
   CheckArgsSize(op_name, args_spec_list, 2);
   ShapePtr shape_x = dyn_cast<Shape>(args_spec_list[0]->GetShapeTrack());
   MS_EXCEPTION_IF_NULL(shape_x);
-  std::vector<int> x_dims = shape_x->shape();
+  std::vector<int64_t> x_dims = shape_x->shape();
   ShapePtr shape_y = dyn_cast<Shape>(args_spec_list[1]->GetShapeTrack());
   MS_EXCEPTION_IF_NULL(shape_y);
-  std::vector<int> y_dims = shape_y->shape();
+  std::vector<int64_t> y_dims = shape_y->shape();
   auto broadcast_shape = BroadcastShape(x_dims, y_dims);
   if (broadcast_shape.empty()) {
     MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_spec_list[0]->ToString() << ","

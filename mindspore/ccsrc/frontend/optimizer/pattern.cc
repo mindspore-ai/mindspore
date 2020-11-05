@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace opt {
 namespace python_pass {
-int Pattern::g_id_ = 0;
+int64_t Pattern::g_id_ = 0;
 
 MatchResultPtr Prim::match(const AnfNodePtr &node) {
   if (!IsValueNode<Primitive>(node)) {
@@ -169,7 +169,7 @@ REGISTER_PYBIND_DEFINE(
       .def(py::init<tensor::TensorPtr>());
     (void)py::class_<NewParameter, std::shared_ptr<NewParameter>, Pattern>(*m, "NewParameter_")
       .def(py::init<string, tensor::TensorPtr, bool, bool>());
-    (void)py::class_<Imm, std::shared_ptr<Imm>, Pattern>(*m, "Imm").def(py::init<int>());
+    (void)py::class_<Imm, std::shared_ptr<Imm>, Pattern>(*m, "Imm").def(py::init<int64_t>());
   }));
 }  // namespace python_pass
 }  // namespace opt

@@ -29,7 +29,7 @@ void SetTensorData(void *data, float num, size_t data_length) {
   }
 }
 }  // namespace
-tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(TypeId type, const std::vector<int> &shape) {
+tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(TypeId type, const std::vector<int64_t> &shape) {
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, shape);
 
   size_t mem_size = GetTypeByte(tensor->type()) * IntToSize(tensor->ElementsNum());
@@ -41,7 +41,7 @@ tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(TypeId type, const std
   return tensor;
 }
 
-tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(TypeId type, const std::vector<int> &shape) {
+tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(TypeId type, const std::vector<int64_t> &shape) {
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, shape);
   auto mem_size = IntToSize(tensor->ElementsNum());
   if (tensor->data_type() == kNumberTypeFloat32) {
@@ -52,7 +52,7 @@ tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(TypeId type, const std:
   return tensor;
 }
 
-tensor::TensorPtr TensorConstructUtils::CreateTensor(TypeId type, const std::vector<int> &shape, void *data) {
+tensor::TensorPtr TensorConstructUtils::CreateTensor(TypeId type, const std::vector<int64_t> &shape, void *data) {
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, shape, data, type);
   return tensor;
 }

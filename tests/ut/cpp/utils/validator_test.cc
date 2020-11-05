@@ -42,8 +42,8 @@ TEST_F(TestValidator, ValidateOperation01) {
 }
 
 TEST_F(TestValidator, ValidateAbstract01) {
-  AnfNodePtr node = NewValueNode(1);
-  abstract::AbstractBasePtr abstract_v1 = abstract::FromValue(1, false);
+  AnfNodePtr node = NewValueNode(static_cast<int64_t>(1));
+  abstract::AbstractBasePtr abstract_v1 = abstract::FromValue(static_cast<int64_t>(1), false);
   node->set_abstract(abstract_v1);
   ValidateAbstract(node);
   // normally, the above statement should not exit, so expected the following statement execute

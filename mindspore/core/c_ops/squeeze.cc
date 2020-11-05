@@ -36,7 +36,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(squeeze_prim);
   auto op_name = squeeze_prim->name();
   auto axis = squeeze_prim->get_axis();
-  std::vector<int> infer_shape;
+  std::vector<int64_t> infer_shape;
 
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->GetShapeTrack(), op_name);
   auto len = in_shape.size();

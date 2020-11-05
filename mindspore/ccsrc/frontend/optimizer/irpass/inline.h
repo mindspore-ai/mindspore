@@ -80,9 +80,9 @@ bool IsTrivial(const FuncGraphPtr &fg, AnfNodePtr) {
 
 bool IsUniqueUse(const FuncGraphPtr &fg, AnfNodePtr) {
   auto &cnodes = fg->func_graph_cnodes_index();
-  int n_use =
-    std::accumulate(cnodes.begin(), cnodes.end(), 0,
-                    [](int sum, const std::pair<const CNodeIndexPairPtr, int> &item) { return sum + item.second; });
+  int64_t n_use = std::accumulate(
+    cnodes.begin(), cnodes.end(), 0,
+    [](int64_t sum, const std::pair<const CNodeIndexPairPtr, int64_t> &item) { return sum + item.second; });
   return n_use == 1;
 }
 
@@ -211,7 +211,7 @@ class InlinerBase : public AnfVisitor {
   // In most cases, it may be a `Module` or other constant input.
   AnfNodePtr TransformBranchCall(const FuncGraphPtr &fg, const AnfNodePtr &node, const std::vector<AnfNodePtr> &args) {
     auto &fg_params = fg->parameters();
-    std::vector<int> used_param_index;
+    std::vector<int64_t> used_param_index;
     auto mng = fg->manager();
     for (size_t i = 0; i < fg_params.size(); i++) {
       if (mng->node_users()[fg_params[i]].size() != 0) {

@@ -40,7 +40,7 @@ class ReduceMethod : public OperatorInfo {
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
 
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
@@ -53,7 +53,7 @@ class ReduceMethod : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferTensorInfo() override;
   Status InferMirrorOps() override;
-  virtual std::vector<int32_t> reduce_dim();
+  virtual std::vector<int64_t> reduce_dim();
   Status InferForwardCommunication() override;
   Status InferDevMatrixShape() override;
 };
@@ -79,10 +79,10 @@ class ArgMaxWithValueInfo : public ReduceMethod {
 
   ~ArgMaxWithValueInfo() override = default;
 
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
 
  protected:
-  std::vector<int32_t> reduce_dim() override;
+  std::vector<int64_t> reduce_dim() override;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferTensorMap() override;

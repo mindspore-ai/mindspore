@@ -222,8 +222,8 @@ AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const Primitiv
   auto shp = dense_shape_value->value();
   ShapeVector dense_shape_vec;
   (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
-                       [](const ValuePtr &e) -> int {
-                         auto elem = GetValue<int>(e);
+                       [](const ValuePtr &e) -> int64_t {
+                         auto elem = GetValue<int64_t>(e);
                          return elem;
                        });
   if (dense_shape_vec.size() != values_shp.size()) {
@@ -316,11 +316,11 @@ AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const Primi
   auto shp = dense_shape_value->value();
   ShapeVector dense_shape_vec;
   (void)std::transform(std::begin(shp), std::end(shp), std::back_inserter(dense_shape_vec),
-                       [](const ValuePtr &e) -> int {
-                         auto elem = GetValue<int>(e);
+                       [](const ValuePtr &e) -> int64_t {
+                         auto elem = GetValue<int64_t>(e);
                          return elem;
                        });
-  if (IntToSize(indices_shp[1]) != dense_shape_vec.size()) {
+  if (LongToSize(indices_shp[1]) != dense_shape_vec.size()) {
     MS_EXCEPTION(TypeError) << "The size of dense_shape must be equal with the second dimension of indices "
                             << indices_shp[1] << ", but got " << dense_shape_vec.size();
   }

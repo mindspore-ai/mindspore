@@ -31,7 +31,7 @@ namespace mindspore {
 namespace parallel {
 using StrategyMap = std::unordered_map<std::string, StrategyPtr>;
 using TensorInfoMap = std::unordered_map<std::string, TensorInfo>;
-using ManualShapeMap = std::unordered_map<std::string, std::vector<std::pair<int32_t, int32_t>>>;
+using ManualShapeMap = std::unordered_map<std::string, std::vector<std::pair<int64_t, int64_t>>>;
 class StrategyCheckpoint {
  public:
   StrategyCheckpoint() {
@@ -56,7 +56,7 @@ class StrategyCheckpoint {
   bool load_checkpoint_on_;
   bool save_checkpoint_on_;
   bool CheckPointExit(const std::string path) const;
-  int32_t current_stage_;
+  int64_t current_stage_;
 };
 }  // namespace parallel
 }  // namespace mindspore

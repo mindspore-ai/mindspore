@@ -60,11 +60,11 @@ class RepeatElementsGradGpuKernel : public GpuKernel {
     std::vector<size_t> dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     int dy_dim = dy_shape.size();
 
-    axis_ = GetAttr<int>(kernel_node, "axis");
+    axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       axis_ += dy_dim;
     }
-    rep_ = GetAttr<int>(kernel_node, "rep");
+    rep_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "rep"));
     if (axis_ >= dy_dim) {
       axis_ = dy_dim - 1;
       rep_ = 1;

@@ -59,18 +59,18 @@ constexpr char kSparseAdamOp[] = "Adam";
 constexpr char kSparseLazyAdamOp[] = "LazyAdam";
 constexpr char kSparseFtrlOp[] = "FTRL";
 
-constexpr int kInitWeightsCmd = 10;
-constexpr int kInitWeightToOptimIdCmd = 11;
-constexpr int kInitOptimInputsShapeCmd = 12;
-constexpr int kInitKeyToPushNodeIdCmd = 13;
-constexpr int kInitEmbeddingsCmd = 20;
-constexpr int kCheckReadyForPushCmd = 25;
-constexpr int kCheckReadyForPullCmd = 26;
-constexpr int kEmbeddingLookupCmd = 30;
-constexpr int kFinalizeCmd = 40;
+constexpr int64_t kInitWeightsCmd = 10;
+constexpr int64_t kInitWeightToOptimIdCmd = 11;
+constexpr int64_t kInitOptimInputsShapeCmd = 12;
+constexpr int64_t kInitKeyToPushNodeIdCmd = 13;
+constexpr int64_t kInitEmbeddingsCmd = 20;
+constexpr int64_t kCheckReadyForPushCmd = 25;
+constexpr int64_t kCheckReadyForPullCmd = 26;
+constexpr int64_t kEmbeddingLookupCmd = 30;
+constexpr int64_t kFinalizeCmd = 40;
 
 constexpr size_t kInvalidKey = UINT64_MAX;
-constexpr int kInvalidID = -1;
+constexpr int64_t kInvalidID = -1;
 
 using Key = ::ps::Key;
 using Keys = ::ps::SArray<Key>;

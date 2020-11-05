@@ -39,7 +39,7 @@ class BiasAddInfo : public OperatorInfo {
 
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
-  Status GenerateStrategies(int32_t) override;
+  Status GenerateStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
   void ReComputeBatchSplitFlagList() override;
 

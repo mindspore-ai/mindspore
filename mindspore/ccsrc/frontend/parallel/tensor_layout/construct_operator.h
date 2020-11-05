@@ -31,7 +31,7 @@ using Args = std::vector<std::int64_t>;
 
 class ConstructOperator {
  public:
-  const int32_t DEFAULT = 0;
+  const int64_t DEFAULT = 0;
   ConstructOperator() : dev_size_(0) {}
   ~ConstructOperator() = default;
   Status Init(const RankList &dev_list, const Shape &dev_matrix_shape);

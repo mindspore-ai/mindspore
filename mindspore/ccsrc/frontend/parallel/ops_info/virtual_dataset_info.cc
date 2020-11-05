@@ -66,10 +66,10 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
 Status VirtualDatasetInfo::InferDevMatrixShape() {
   Strategys stra = strategy_->GetInputDim();
   Dimensions strategy_first = stra.at(0);
-  int32_t stage = strategy_->GetInputStage();
+  int64_t stage = strategy_->GetInputStage();
   CheckGlobalDeviceManager();
-  int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(stage).size());
-  int32_t batch_split_num = ((int32_t)(strategy_first.at(0)));
+  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(stage).size());
+  int64_t batch_split_num = ((int64_t)(strategy_first.at(0)));
   dev_matrix_shape_.push_back(batch_split_num);
   if (dev_num > batch_split_num) {
     dev_matrix_shape_.push_back(dev_num / batch_split_num);
@@ -146,7 +146,7 @@ Status VirtualDatasetInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status VirtualDatasetInfo::GenerateStrategies(int32_t stage_id) {
+Status VirtualDatasetInfo::GenerateStrategies(int64_t stage_id) {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   bool full_batch = ParallelContext::GetInstance()->full_batch();
   size_t total_dev_num;
@@ -166,7 +166,7 @@ Status VirtualDatasetInfo::GenerateStrategies(int32_t stage_id) {
   Strategys strategy;
   for (auto &shape : inputs_shape_) {
     Shape temp;
-    temp.emplace_back(SizeToInt(total_dev_num));
+    temp.emplace_back(SizeToLong(total_dev_num));
     (void)temp.insert(temp.end(), shape.size() - 1, 1);
     strategy.push_back(temp);
   }

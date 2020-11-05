@@ -15,6 +15,7 @@
  */
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include <memory>
+#include <algorithm>
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType_CAFFE;
@@ -75,7 +76,11 @@ lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr
     }
     auto type_id = static_cast<TypeId>(weight_value->tensor_type());
     auto type_ptr = TypeIdToType(type_id);
-    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, weight_value->tensor_shape());
+    auto shape = weight_value->tensor_shape();
+    std::vector<int64_t> shape_vector;
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                         [](const int32_t &value) { return static_cast<int64_t>(value); });
+    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
     weight_node->set_abstract(abstract_tensor);
   }
   return RET_OK;

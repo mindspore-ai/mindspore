@@ -45,7 +45,7 @@ class OneHotGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    int axis = GetAttr<int>(kernel_node, "axis");
+    int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     auto input = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output = AnfAlgo::GetOutputInferShape(kernel_node, 0);
     int input_size = SizeToInt(input.size());

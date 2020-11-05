@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/gpu/data/dataset_init_kernel.h"
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/data/dataset_utils.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "runtime/device/gpu/gpu_memory_allocator.h"
@@ -34,7 +35,15 @@ const std::vector<size_t> &DatasetInitKernel::GetWorkspaceSizeList() const { ret
 
 bool DatasetInitKernel::Init(const CNodePtr &kernel_node) {
   queue_name_ = GetAttr<std::string>(kernel_node, "queue_name");
-  auto shapes = GetAttr<const std::vector<std::vector<int>>>(kernel_node, "shapes");
+  std::vector<std::vector<int>> shapes;
+  std::vector<std::vector<int64_t>> shapes_me = GetAttr<const std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
+  (void)std::transform(shapes_me.begin(), shapes_me.end(), std::back_inserter(shapes),
+                       [](const std::vector<int64_t> &values) {
+                         std::vector<int> shape;
+                         (void)std::transform(values.begin(), values.end(), std::back_inserter(shape),
+                                              [](const int64_t &value) { return static_cast<int>(value); });
+                         return shape;
+                       });
   auto types = GetAttr<const std::vector<TypePtr>>(kernel_node, "types");
   if (shapes.size() != types.size()) {
     MS_LOG(EXCEPTION) << "Invalid shapes: " << shapes << ", types: " << types;

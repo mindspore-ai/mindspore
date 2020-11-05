@@ -292,7 +292,7 @@ Status ArithmeticBase::InferTensorInfo() {
 
 Status ArithmeticBase::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status ArithmeticBase::GenerateStrategies(int32_t stage_id) {
+Status ArithmeticBase::GenerateStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shape input1_split(inputs_shape_[1].size(), 1);
   Shapes splittable_inputs = {input0_split, input1_split};

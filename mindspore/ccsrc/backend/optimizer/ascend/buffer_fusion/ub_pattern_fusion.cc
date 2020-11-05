@@ -129,9 +129,9 @@ kernel::KernelBuildInfoPtr CreateFusionOpKernelInfo(const std::vector<AnfNodePtr
       auto tuple_getitem = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(tuple_getitem);
       outputs_format.emplace_back(AnfAlgo::GetOutputFormat(
-        tuple_getitem->input(1), IntToSize(GetValue<int>(GetValueNode(tuple_getitem->input(2))))));
+        tuple_getitem->input(1), LongToSize(GetValue<int64_t>(GetValueNode(tuple_getitem->input(2))))));
       outputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(
-        tuple_getitem->input(1), IntToSize(GetValue<int>(GetValueNode(tuple_getitem->input(2))))));
+        tuple_getitem->input(1), LongToSize(GetValue<int64_t>(GetValueNode(tuple_getitem->input(2))))));
     } else {
       outputs_format.emplace_back(AnfAlgo::GetOutputFormat(output, 0));
       outputs_data_type.emplace_back(AnfAlgo::GetOutputDeviceDataType(output, 0));
@@ -151,10 +151,10 @@ AnfNodePtr CreateTupleGetItem(const AnfNodePtr &buffer_fusion_kernel, session::K
   std::vector<AnfNodePtr> tuple_getitem_inputs_list;
   auto value = std::make_shared<ValueNode>(prim::kPrimTupleGetItem);
   MS_EXCEPTION_IF_NULL(value);
-  auto idx = NewValueNode(SizeToInt(output_index));
+  auto idx = NewValueNode(SizeToLong(output_index));
   MS_EXCEPTION_IF_NULL(idx);
-  int temp = SizeToInt(output_index);
-  auto imm = std::make_shared<Int32Imm>(temp);
+  int64_t temp = SizeToLong(output_index);
+  auto imm = std::make_shared<Int64Imm>(temp);
   auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
   idx->set_abstract(abstract_scalar);
   tuple_getitem_inputs_list.push_back(value);
@@ -168,10 +168,10 @@ AnfNodePtr CreateTupleGetItem(const AnfNodePtr &buffer_fusion_kernel, session::K
   return tuple_item;
 }
 
-void ReplaceInputNodeInOtherFusionScope(std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos,
-                                        int32_t fusion_id, const AnfNodePtr &output_item,
+void ReplaceInputNodeInOtherFusionScope(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
+                                        int64_t fusion_id, const AnfNodePtr &output_item,
                                         const AnfNodePtr &replace_item) {
-  for (int32_t id = fusion_id + 1; id <= SizeToInt(buffer_fusion_infos->size()); ++id) {
+  for (int64_t id = fusion_id + 1; id <= SizeToLong(buffer_fusion_infos->size()); ++id) {
     auto itr = std::find((*buffer_fusion_infos)[id].inputs_list.begin(), (*buffer_fusion_infos)[id].inputs_list.end(),
                          output_item);
     if (itr != (*buffer_fusion_infos)[id].inputs_list.end()) {
@@ -181,7 +181,7 @@ void ReplaceInputNodeInOtherFusionScope(std::unordered_map<int32_t, BufferFusion
   }
 }
 
-void ReplaceOldNode(std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos, int32_t fusion_id,
+void ReplaceOldNode(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos, int64_t fusion_id,
                     const AnfNodePtr &buffer_fusion_kernel, session::KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto manager = kernel_graph->manager();
@@ -202,7 +202,7 @@ void ReplaceOldNode(std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusi
 }
 
 void GetFusionScopeComputeNodeList(session::KernelGraph *kernel_graph,
-                                   std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos) {
+                                   std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto nodes = TopoSort(kernel_graph->get_return());
@@ -213,14 +213,14 @@ void GetFusionScopeComputeNodeList(session::KernelGraph *kernel_graph,
     }
     auto cnode = node->cast<CNodePtr>();
     if (AnfAlgo::IsRealCNodeKernel(cnode) && AnfAlgo::HasNodeAttr(kOpAttrFusionId, cnode)) {
-      auto fusion_id = AnfAlgo::GetNodeAttr<int32_t>(cnode, kOpAttrFusionId);
+      auto fusion_id = AnfAlgo::GetNodeAttr<int64_t>(cnode, kOpAttrFusionId);
       (*buffer_fusion_infos)[fusion_id].anf_nodes.push_back(cnode);
     }
   }
 }
 
 void GetFusionScopeInputNodeList(const session::KernelGraph &kernel_graph,
-                                 std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos) {
+                                 std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -261,13 +261,13 @@ bool TupleGetitemNodeCompare(const AnfNodePtr &node1, const AnfNodePtr &node2) {
     MS_LOG(EXCEPTION) << "node's input size less than " << kTupleGetItemInputSize << ", getitem1["
                       << getitem2->DebugString() << "]";
   }
-  auto output_idx1 = GetValue<int>(GetValueNode(getitem1->input(2)));
-  auto output_idx2 = GetValue<int>(GetValueNode(getitem2->input(2)));
+  auto output_idx1 = GetValue<int64_t>(GetValueNode(getitem1->input(2)));
+  auto output_idx2 = GetValue<int64_t>(GetValueNode(getitem2->input(2)));
   return output_idx1 < output_idx2;
 }
 
 void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
-                                  std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos) {
+                                  std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto manager = kernel_graph->manager();
@@ -286,7 +286,7 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
           }
         }
       } else {
-        int prev_idx = 0;
+        int64_t prev_idx = 0;
         std::vector<AnfNodePtr> tuple_getitem_nodes;
         std::transform(manager->node_users()[node].begin(), manager->node_users()[node].end(),
                        std::back_inserter(tuple_getitem_nodes),
@@ -296,9 +296,9 @@ void GetFusionScopeOutputNodeList(session::KernelGraph *kernel_graph,
           MS_EXCEPTION_IF_NULL(getitem);
           auto getitem_ptr = getitem->cast<CNodePtr>();
           auto input2 = getitem_ptr->input(2);
-          auto output_idx = GetValue<int>(GetValueNode(input2));
-          for (int stub_idx = prev_idx; stub_idx < output_idx; ++stub_idx) {
-            auto stub_node = CreateTupleGetItem(node, kernel_graph, IntToSize(stub_idx));
+          auto output_idx = GetValue<int64_t>(GetValueNode(input2));
+          for (int64_t stub_idx = prev_idx; stub_idx < output_idx; ++stub_idx) {
+            auto stub_node = CreateTupleGetItem(node, kernel_graph, LongToSize(stub_idx));
             (*buffer_fusion_infos)[fusion_id].outputs_list.push_back(stub_node);
           }
           prev_idx = output_idx + 1;
@@ -328,7 +328,7 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
       auto output_cnode = output->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(output_cnode);
       auto input2 = output_cnode->input(2);
-      auto output_idx = GetValue<int>(GetValueNode(input2));
+      auto output_idx = GetValue<int64_t>(GetValueNode(input2));
       session::AnfWithOutIndex out_pair(real_output.first, output_idx);
       if (kernel_graph->IsInRefOutputMap(out_pair)) {
         auto origin_pair = kernel_graph->GetRefCorrespondOutput(out_pair);
@@ -348,7 +348,7 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
 }  // namespace
 
 void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
-                                          std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos) const {
+                                          std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) const {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   GetFusionScopeComputeNodeList(kernel_graph, buffer_fusion_infos);
   GetFusionScopeInputNodeList(*kernel_graph, buffer_fusion_infos);
@@ -362,19 +362,19 @@ void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
 bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   bool change = false;
-  std::unordered_map<int32_t, BufferFusionInfo_t> buffer_fusion_infos;
+  std::unordered_map<int64_t, BufferFusionInfo_t> buffer_fusion_infos;
   GetBufferFusionInfo(kernel_graph, &buffer_fusion_infos);
 
   std::vector<mindspore::kernel::FusionScopeInfo> fusion_scope_infos;
   std::transform(
     buffer_fusion_infos.begin(), buffer_fusion_infos.end(), std::back_inserter(fusion_scope_infos),
-    [](const std::pair<int32_t, BufferFusionInfo_t> &buffer_fusion_info) -> mindspore::kernel::FusionScopeInfo {
+    [](const std::pair<int64_t, BufferFusionInfo_t> &buffer_fusion_info) -> mindspore::kernel::FusionScopeInfo {
       return mindspore::kernel::FusionScopeInfo(buffer_fusion_info.first, buffer_fusion_info.second.inputs_list,
                                                 buffer_fusion_info.second.anf_nodes,
                                                 buffer_fusion_info.second.outputs_list);
     });
   auto kernel_mods = mindspore::kernel::KernelFusion(fusion_scope_infos);
-  std::set<int32_t> fusion_ids;
+  std::set<int64_t> fusion_ids;
   for (auto &buffer_fusion_info : buffer_fusion_infos) {
     MS_LOG(DEBUG) << "anf node size: " << buffer_fusion_info.second.anf_nodes.size()
                   << ", inputs_list size: " << buffer_fusion_info.second.inputs_list.size()
@@ -394,8 +394,8 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
   return change;
 }
 
-bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos,
-                                      int32_t fusion_id, const kernel::KernelModPtr &kernel_ptr,
+bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos,
+                                      int64_t fusion_id, const kernel::KernelModPtr &kernel_ptr,
                                       session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto buffer_fusion_info = (*buffer_fusion_infos)[fusion_id];

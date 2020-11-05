@@ -37,7 +37,7 @@ class EmbeddingLookUpCPUKernel : public CPUKernel {
 
  protected:
   void CheckParam(const CNodePtr &kernel_node);
-  int offset_{0};
+  int64_t offset_{0};
   size_t indices_lens_{1};
   size_t first_dim_size_{1};
   size_t outer_dim_size_{1};

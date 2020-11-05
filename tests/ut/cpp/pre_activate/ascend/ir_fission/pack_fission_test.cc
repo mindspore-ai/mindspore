@@ -35,7 +35,7 @@ class TestHWPackFission : public BackendCommon {
 TEST_F(TestHWPackFission, test_pack_fission_divided_by_3) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_pack_fission", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 9; ++i) {
@@ -59,7 +59,7 @@ TEST_F(TestHWPackFission, test_pack_fission_divided_by_3) {
 TEST_F(TestHWPackFission, test_pack_fission_divided_by_4) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_pack_fission", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 9; ++i) {

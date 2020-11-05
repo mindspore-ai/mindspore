@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-std::vector<int> TransposeAxis(const std::string &src_format, const std::string &dst_format) {
+std::vector<int64_t> TransposeAxis(const std::string &src_format, const std::string &dst_format) {
   if ((src_format == kOpFormat_NCHW) && (dst_format == kOpFormat_NHWC)) {
     return {0, 2, 3, 1};
   } else if ((src_format == kOpFormat_NHWC) && (dst_format == kOpFormat_NCHW)) {
@@ -42,12 +42,12 @@ std::vector<int> TransposeAxis(const std::string &src_format, const std::string 
 // 1. out_shape [x, 1, 1, y]
 // 2. out_shape [x, y, 1, 1]
 // 3. out_shape [x, 1, y, 1]
-bool IsFakeTranspose(const std::vector<size_t> &out_shape, const std::vector<int> &transpose_perm) {
+bool IsFakeTranspose(const std::vector<size_t> &out_shape, const std::vector<int64_t> &transpose_perm) {
   if (out_shape.size() != 4) {
     MS_LOG(EXCEPTION) << "Invalid data shape, 4-D data was needed, but get " << out_shape.size() << "-D.";
   }
-  std::vector<int> perm1 = {0, 2, 3, 1};
-  std::vector<int> perm2 = {0, 3, 1, 2};
+  std::vector<int64_t> perm1 = {0, 2, 3, 1};
+  std::vector<int64_t> perm2 = {0, 3, 1, 2};
   auto num = std::count(out_shape.begin(), out_shape.end(), 1);
   if ((transpose_perm == perm1) || (transpose_perm == perm2)) {
     if (num >= 2) {
@@ -74,7 +74,7 @@ void SetTransposeOpBuildInfo(const std::string &input_format, const std::string 
 
 // Insert transpose op between node and used_node whose position is used_node_index.
 CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &used_node,
-                           int used_node_index, const std::vector<int> &transpose_perm) {
+                           int used_node_index, const std::vector<int64_t> &transpose_perm) {
   MS_LOG(DEBUG) << "Node: " << node->fullname_with_scope() << ", used node: " << used_node->fullname_with_scope()
                 << ", index: " << used_node_index;
   MS_EXCEPTION_IF_NULL(graph);
@@ -161,7 +161,7 @@ const AnfNodePtr InsertFormatTransformOp::Process(const FuncGraphPtr &graph, con
 }
 
 void InsertFormatTransformOp::ProcessForTupleItem(const FuncGraphPtr &graph, const AnfNodePtr &node, int node_index,
-                                                  const std::vector<int> &transpose_perm,
+                                                  const std::vector<int64_t> &transpose_perm,
                                                   const std::string &transpose_format) const {
   auto used_node_list = GetRealNodeUsedListByOutputIdx(graph, node, node_index);
   for (size_t i = 0; i < used_node_list->size(); i++) {

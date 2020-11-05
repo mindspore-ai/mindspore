@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/ascend/ge_types_convert.h"
 #include "utils/utils.h"
@@ -103,7 +104,10 @@ void FeedTeOpConstTensor(const NotNull<CNodePtr> &cnode, const std::map<uint32_t
     return;
   }
 
-  auto depends_list = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode.get(), kDynamicShapeDepends);
+  std::vector<int> depends_list;
+  std::vector<int64_t> depends_list_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode.get(), kDynamicShapeDepends);
+  (void)std::transform(depends_list_me.begin(), depends_list_me.end(), std::back_inserter(depends_list),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   for (auto index : depends_list) {
     auto iter = depend_tensor_map.find(IntToSize(index));
     if (iter == depend_tensor_map.end()) {

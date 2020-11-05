@@ -216,7 +216,7 @@ void AscendControlParser::EraseParameter(NotNull<KernelGraphPtr> root_graph,
   std::set<CNodePtr> search_list(exec_order.begin(), exec_order.end());
   std::set<AnfNodePtr> root_inputs(root_graph->inputs().begin(), root_graph->inputs().end());
   auto ref_map = root_graph->GetRefMap();
-  ReferenceCounter parameter_count([](int32_t read, int32_t write) -> bool { return write == 1; });
+  ReferenceCounter parameter_count([](int64_t read, int64_t write) -> bool { return write == 1; });
   std::multimap<AnfNodePtr, std::tuple<size_t, AnfNodePtr, size_t>> ref_multimap;
   std::transform(ref_map.begin(), ref_map.end(), std::inserter(ref_multimap, ref_multimap.end()),
                  [](const std::pair<std::pair<AnfNodePtr, size_t>, std::pair<AnfNodePtr, size_t>> &p)
@@ -831,7 +831,7 @@ bool AscendControlParser::CheckLabelIndex(uint32_t index, uint32_t label_index, 
   }
 }
 
-void AscendControlParser::ReferenceCounter::AddReadCount(const AnfNodePtr &key, int32_t num) {
+void AscendControlParser::ReferenceCounter::AddReadCount(const AnfNodePtr &key, int64_t num) {
   auto iter = count_.find(key);
   if (iter != count_.end()) {
     iter->second.first += num;
@@ -840,7 +840,7 @@ void AscendControlParser::ReferenceCounter::AddReadCount(const AnfNodePtr &key, 
   }
 }
 
-void AscendControlParser::ReferenceCounter::AddWriteCount(const AnfNodePtr &key, int32_t num) {
+void AscendControlParser::ReferenceCounter::AddWriteCount(const AnfNodePtr &key, int64_t num) {
   auto iter = count_.find(key);
   if (iter != count_.end()) {
     iter->second.second += num;
@@ -860,7 +860,7 @@ bool AscendControlParser::ReferenceCounter::HasValidElem() const {
   return it != count_.end();
 }
 
-std::tuple<AnfNodePtr, int32_t, int32_t> AscendControlParser::ReferenceCounter::GetOneValidElem() const {
+std::tuple<AnfNodePtr, int64_t, int64_t> AscendControlParser::ReferenceCounter::GetOneValidElem() const {
   auto it = std::find_if(count_.begin(), count_.end(),
                          [this](const std::pair<AnfNodePtr, std::pair<uint32_t, uint32_t>> &p) -> bool {
                            auto &[read, written] = p.second;

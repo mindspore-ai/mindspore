@@ -58,14 +58,14 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   auto shp_tuple_x = value_tuple_x->value();
   ShapeVector shp_x;
   (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(shp_x),
-                       [](const ValuePtr &e) -> int { return GetValue<int>(e); });
+                       [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
 
   auto value_tuple_y = ys->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(value_tuple_y);
   auto shp_tuple_y = value_tuple_y->value();
   ShapeVector shp_y;
   (void)std::transform(std::begin(shp_tuple_y), std::end(shp_tuple_y), std::back_inserter(shp_y),
-                       [](const ValuePtr &e) -> int { return GetValue<int>(e); });
+                       [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
 
   ShapeVector res = BroadcastShape(shp_x, shp_y);
   if (res.empty()) {
@@ -74,8 +74,8 @@ AbstractBasePtr InferImplBroadCastShape(const AnalysisEnginePtr &, const Primiti
   }
 
   AbstractBasePtrList elems;
-  (void)std::transform(res.begin(), res.end(), std::back_inserter(elems), [](int n) -> AbstractBasePtr {
-    return std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(n), kInt32);
+  (void)std::transform(res.begin(), res.end(), std::back_inserter(elems), [](int64_t n) -> AbstractBasePtr {
+    return std::make_shared<AbstractScalar>(std::make_shared<Int64Imm>(n), kInt64);
   });
 
   return std::make_shared<AbstractTuple>(elems);
@@ -101,7 +101,7 @@ AbstractBasePtr InferImplTile(const AnalysisEnginePtr &, const PrimitivePtr &pri
   auto value_tuple_mul = mul_shp_value->cast<ValueTuplePtr>();
   auto mul_shp_data = value_tuple_mul->value();
   (void)std::transform(std::begin(mul_shp_data), std::end(mul_shp_data), std::back_inserter(mul_shp),
-                       [](const ValuePtr &e) -> int { return GetValue<int>(e); });
+                       [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   if (input_shape->shape().size() != mul_shp_data.size()) {
     MS_LOG(EXCEPTION) << "Tile requires input and multiples size equal, while the input size is "
                       << input_shape->shape().size() << ", value size is: " << mul_shp_data.size() << ".";
@@ -126,13 +126,13 @@ AbstractBasePtr InferImplPack(const AnalysisEnginePtr &, const PrimitivePtr &pri
 
   size_t tuple_len = arg->elements().size();
   AbstractTensorPtr tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
-  int rank_base = SizeToInt(tensor_base->shape()->shape().size());
+  int64_t rank_base = SizeToLong(tensor_base->shape()->shape().size());
 
   ValuePtr axis = primitive->GetAttr("axis");
   // Axis value should be in [-(rank_base + 1), rank_base).
-  int axis_value = CheckAxis(op_name, axis, -(rank_base + 1), rank_base);
+  int64_t axis_value = CheckAxis(op_name, axis, -(rank_base + 1), rank_base);
   // If axis is negative, add offset(rank_base + 1) to turn it to positive.
-  axis_value = GetPositiveAxis(axis_value, IntToSize(rank_base + 1));
+  axis_value = GetPositiveAxis(axis_value, LongToSize(rank_base + 1));
 
   for (size_t i = 1; i < tuple_len; ++i) {
     AbstractTensorPtr tensor = CheckArg<AbstractTensor>(op_name, arg->elements(), i);
@@ -140,7 +140,7 @@ AbstractBasePtr InferImplPack(const AnalysisEnginePtr &, const PrimitivePtr &pri
     (void)CheckShapeSame(op_name, tensor_base, tensor);
   }
 
-  primitive->set_attr("N", MakeValue(SizeToInt(tuple_len)));
+  primitive->set_attr("N", MakeValue(SizeToLong(tuple_len)));
   primitive->set_attr("T", tensor_base->element()->BuildType());
 
   AbstractTensorPtr ret = dyn_cast<AbstractTensor>(tensor_base->Broaden());
@@ -213,7 +213,7 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
   auto segment_ids_shape = segment_ids->shape()->shape();
   auto num_segments = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
 
-  std::vector<int> shape;
+  ShapeVector shape;
   auto num_segments_value = num_segments->BuildValue();
   MS_EXCEPTION_IF_NULL(num_segments_value);
   if (!num_segments_value->isa<tensor::Tensor>()) {
@@ -222,7 +222,7 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
     shape.emplace_back(-1);
   } else {
     auto num_segments_tensor = num_segments_value->cast<tensor::TensorPtr>();
-    int value = *(static_cast<int *>(num_segments_tensor->data_c()));
+    int64_t value = *(static_cast<int64_t *>(num_segments_tensor->data_c()));
     MS_LOG(INFO) << "Infer UnsortedSegmentSum output shape:" << value;
     shape.emplace_back(value);
   }
@@ -263,9 +263,9 @@ AbstractBasePtr InferImplDiv(const AnalysisEnginePtr &, const PrimitivePtr &prim
   MS_EXCEPTION_IF_NULL(x->shape());
   MS_EXCEPTION_IF_NULL(y);
   MS_EXCEPTION_IF_NULL(y->shape());
-  std::vector<int> x_shape = x->shape()->shape();
-  std::vector<int> y_shape = y->shape()->shape();
-  std::vector<int> out_shape = BroadcastShape(x_shape, y_shape);
+  ShapeVector x_shape = x->shape()->shape();
+  ShapeVector y_shape = y->shape()->shape();
+  ShapeVector out_shape = BroadcastShape(x_shape, y_shape);
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(out_shape));
 }
 
@@ -279,9 +279,9 @@ AbstractBasePtr InferImplRealDiv(const AnalysisEnginePtr &, const PrimitivePtr &
   MS_EXCEPTION_IF_NULL(x->shape());
   MS_EXCEPTION_IF_NULL(y);
   MS_EXCEPTION_IF_NULL(y->shape());
-  std::vector<int> x_shape = x->shape()->shape();
-  std::vector<int> y_shape = y->shape()->shape();
-  std::vector<int> out_shape = BroadcastShape(x_shape, y_shape);
+  ShapeVector x_shape = x->shape()->shape();
+  ShapeVector y_shape = y->shape()->shape();
+  ShapeVector out_shape = BroadcastShape(x_shape, y_shape);
   if (out_shape.empty()) {
     MS_LOG(EXCEPTION) << "BroadcastShape fail: " << args_spec_list[0]->ToString() << ","
                       << args_spec_list[1]->ToString();
@@ -296,7 +296,7 @@ AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr 
   AbstractTensorPtr params = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   AbstractTensorPtr indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
 
-  int axis_val = 0;
+  int64_t axis_val = 0;
   // 3rd input is a Tensor when GatherV2 is a dynamic shape operator
   if (args_spec_list[2]->isa<AbstractTensor>()) {
     auto axis = args_spec_list[2]->cast<AbstractTensorPtr>();
@@ -305,10 +305,10 @@ AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr 
     MS_EXCEPTION_IF_NULL(axis_value_ptr);
     auto axis_tensor = axis_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(axis_tensor);
-    axis_val = *static_cast<int *>(axis_tensor->data_c());
+    axis_val = *static_cast<int64_t *>(axis_tensor->data_c());
   } else if (args_spec_list[2]->isa<AbstractScalar>()) {
     auto axis = args_spec_list[2]->cast<AbstractScalarPtr>();
-    axis_val = GetValue<int>(axis->BuildValue());
+    axis_val = GetValue<int64_t>(axis->BuildValue());
   } else {
     MS_LOG(EXCEPTION) << "Invalid abstract type:" << args_spec_list[2]->type_name();
   }
@@ -316,7 +316,7 @@ AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr 
   auto params_shp = params->shape()->shape();
   auto indices_shp = indices->shape()->shape();
 
-  auto params_rank = static_cast<int>(params_shp.size());
+  auto params_rank = static_cast<int64_t>(params_shp.size());
   if (axis_val < 0) {
     axis_val += params_rank;
   }
@@ -350,7 +350,7 @@ AbstractBasePtr InferImplShape(const AnalysisEnginePtr &, const PrimitivePtr &pr
   AbstractBasePtrList elements;
   for (const auto &dim : shape) {
     if (dim == Shape::SHP_ANY) {
-      elements.push_back(std::make_shared<AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(32)));
+      elements.push_back(std::make_shared<AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(64)));
     } else {
       elements.push_back(std::make_shared<AbstractScalar>(dim));
     }
@@ -366,14 +366,14 @@ AbstractBasePtr InferImplDynamicShape(const AnalysisEnginePtr &, const Primitive
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto shape = input->shape()->shape();
 
-  bool has_dyn_shape = std::any_of(shape.begin(), shape.end(), [](int dim) { return dim == Shape::SHP_ANY; });
-  std::vector<int> tensor_shp({static_cast<int>(shape.size())});
+  bool has_dyn_shape = std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+  ShapeVector tensor_shp({static_cast<int64_t>(shape.size())});
   if (has_dyn_shape) {
-    auto elem = std::make_shared<AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(32));
+    auto elem = std::make_shared<AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(64));
     return std::make_shared<AbstractTensor>(elem, std::make_shared<Shape>(tensor_shp));
   }
-  auto shp_buf_size = sizeof(int) * shape.size();
-  auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, tensor_shp, shape.data(), shp_buf_size);
+  auto shp_buf_size = sizeof(int64_t) * shape.size();
+  auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, tensor_shp, shape.data(), shp_buf_size);
 
   return tensor->ToAbstract();
 }

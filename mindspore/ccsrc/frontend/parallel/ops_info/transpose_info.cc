@@ -68,8 +68,8 @@ Status TransposeInfo::ComputeAxis() {
   axis_v_.clear();
   for (auto &element : elements) {
     MS_EXCEPTION_IF_NULL(element);
-    if (element->isa<Int32Imm>()) {
-      int32_t axis = element->cast<Int32ImmPtr>()->value();
+    if (element->isa<Int64Imm>()) {
+      int64_t axis = element->cast<Int64ImmPtr>()->value();
       axis_v_.push_back(axis);
     } else {
       MS_LOG(ERROR) << name_ << ": The value of axis must be int32.";
@@ -77,7 +77,7 @@ Status TransposeInfo::ComputeAxis() {
     }
   }
 
-  for (int32_t i = 0; i < SizeToInt(axis_v_.size()); i++) {
+  for (int64_t i = 0; i < SizeToLong(axis_v_.size()); i++) {
     auto iter = std::find(axis_v_.begin(), axis_v_.end(), i);
     if (iter == axis_v_.end()) {
       MS_LOG(ERROR) << name_ << ": axis_v_ must be a permutation.";
@@ -96,13 +96,13 @@ Status TransposeInfo::InferTensorMap() {
 
   Shape tensor_map_index_input;
   for (size_t j = 0; j < inputs_shape_[0].size(); ++j) {
-    tensor_map_index_input.push_back(SizeToInt(inputs_shape_[0].size() - j - 1));
+    tensor_map_index_input.push_back(SizeToLong(inputs_shape_[0].size() - j - 1));
   }
   inputs_tensor_map_.push_back(tensor_map_index_input);
 
   Shape tensor_map_index_output = tensor_map_index_input;
-  for (uint32_t i = 0; i < tensor_map_index_output.size(); i++) {
-    tensor_map_index_output[i] = tensor_map_index_input[IntToUint(axis_v_[i])];
+  for (uint64_t i = 0; i < tensor_map_index_output.size(); i++) {
+    tensor_map_index_output[i] = tensor_map_index_input[LongToUlong(axis_v_[i])];
   }
   outputs_tensor_map_.push_back(tensor_map_index_output);
   return SUCCESS;
@@ -112,8 +112,8 @@ Status TransposeInfo::InferTensorMap() {
 Strategys TransposeInfo::GetOutputsStrategy() {
   Strategys outputs_strategy;
   Dimensions strategy = input_strategy_;
-  for (uint32_t i = 0; i < strategy.size(); i++) {
-    strategy[i] = input_strategy_[IntToUint(axis_v_[i])];
+  for (uint64_t i = 0; i < strategy.size(); i++) {
+    strategy[i] = input_strategy_[LongToUlong(axis_v_[i])];
   }
   outputs_strategy.push_back(strategy);
   return outputs_strategy;
@@ -191,7 +191,7 @@ Status TransposeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPt
   return SetCostUnderStrategyBase(strategy);
 }
 
-Status TransposeInfo::GenerateStrategies(int32_t stage_id) {
+Status TransposeInfo::GenerateStrategies(int64_t stage_id) {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": GetAttrs failed.";
     return FAILED;

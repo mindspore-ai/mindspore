@@ -32,7 +32,7 @@ class InsertFormatTransformOp : public PatternProcessPass {
 
  private:
   void ProcessForTupleItem(const FuncGraphPtr &graph, const AnfNodePtr &node, int node_index,
-                           const std::vector<int> &transpose_perm, const std::string &transpose_format) const;
+                           const std::vector<int64_t> &transpose_perm, const std::string &transpose_format) const;
 };
 }  // namespace opt
 }  // namespace mindspore

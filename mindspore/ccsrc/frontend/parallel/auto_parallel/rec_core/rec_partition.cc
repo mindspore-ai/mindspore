@@ -203,12 +203,12 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
   MS_EXCEPTION_IF_NULL(graph);
 
   // Comopute iter times
-  int iter_times = static_cast<int>(log2(num_device));
+  int64_t iter_times = static_cast<int64_t>(log2(num_device));
   if (iter_times > 10) {
     MS_LOG(EXCEPTION) << "ERROR: Number of iter_times can't be larger than 10.";
   }
   // N-cuts loop
-  for (int loop = 0; loop < iter_times; loop++) {
+  for (int64_t loop = 0; loop < iter_times; loop++) {
     // Sort by weights
     std::vector<size_t> reorder_node_list = SortByWeight(graph);
 
@@ -254,7 +254,7 @@ Graph::NodeType ApplyStrToTensor(Graph::NodeType Node) {
   Node.tensor_parm.tensor_str.str_w = Node.apply.str.outputTensor.str_w;
 
   // Set input tensors' tersor_parm
-  for (int i = 0; i < 2; i++) {
+  for (int64_t i = 0; i < 2; i++) {
     Node.apply.arguments[i].tensor_str.str_n = Node.apply.str.inputTensor[i].str_n;
     Node.apply.arguments[i].tensor_str.str_c = Node.apply.str.inputTensor[i].str_c;
     Node.apply.arguments[i].tensor_str.str_h = Node.apply.str.inputTensor[i].str_h;
@@ -275,7 +275,7 @@ Status DevicesMemoryControl(const size_t num_device, const double device_memory,
   for (uint64_t i_node = 0; i_node < iter_nodes; i_node++) {
     if (graph->nodes[i_node].info == 0) {
       Graph::NodeType &Node = graph->nodes[i_node];
-      for (int index = 0; index < 2; index++) {
+      for (int64_t index = 0; index < 2; index++) {
         used_memory += Node.apply.arguments[index].tensor_str.str_n * Node.apply.arguments[index].tensor_shape.shape_n *
                        Node.apply.arguments[index].tensor_str.str_c * Node.apply.arguments[index].tensor_shape.shape_c *
                        Node.apply.arguments[index].tensor_str.str_h * Node.apply.arguments[index].tensor_shape.shape_h *
@@ -296,7 +296,7 @@ Status DevicesMemoryControl(const size_t num_device, const double device_memory,
 size_t GetDataTypeSize(const TensorType &type) {
   switch (type) {
     case kInt8:
-      return sizeof(int);
+      return sizeof(int64_t);
     case kFloat16:
       return sizeof(float) / 2;
     case kFloat32:

@@ -58,7 +58,7 @@ void TestTransposeInfo::SetUp() {
 
   Shapes inputs_shape = {{128, 64}};
   Shapes outputs_shape = {{64, 128}};
-  std::vector<int> axis = {1, 0};
+  std::vector<int64_t> axis = {1, 0};
   ValuePtr val0;
   ValuePtr val1 = MakeValue(axis);
   std::vector<ValuePtr> val = {val0, val1};

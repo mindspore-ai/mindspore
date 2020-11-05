@@ -32,7 +32,7 @@ class TestHWBatchNormGradInferFission : public BackendCommon {
 TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_fission) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_batch_norm_grad_infer_fission", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{32, 64, 112, 112};
+  std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 5; ++i) {
@@ -53,7 +53,7 @@ TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_fission) {
 TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_no_fission1) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_batch_norm_grad_infer_fission", "before_is_training");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{32, 64, 112, 112};
+  std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 5; ++i) {
@@ -72,7 +72,7 @@ TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_no_fission1) 
 TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_no_fission2) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_batch_norm_grad_infer_fission", "before_output3_not_null");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp_x{32, 64, 112, 112};
+  std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 5; ++i) {

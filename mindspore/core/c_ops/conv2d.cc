@@ -40,7 +40,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
                               w_shape[1], conv_prim->name());
   auto out_channel = conv_prim->get_output_channel();
   CheckAndConvertUtils::Check("out_channel", out_channel, kEqual, "w_shape[0]", w_shape[0], conv_prim->name());
-  std::vector<int> temp_w;
+  std::vector<int64_t> temp_w;
   std::copy(w_shape.begin() + 2, w_shape.end(), std::back_inserter(temp_w));
   CheckAndConvertUtils::Check("kernel_size", conv_prim->get_kernel_size(), kEqual, "w_shape[2:4]", temp_w,
                               conv_prim->name());
@@ -53,9 +53,9 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   auto stride_w = stride[3];
   auto dilation_h = dilation[2];
   auto dilation_w = dilation[3];
-  int h_out = -1;
-  int w_out = -1;
-  std::vector<int> pad_list(4, 0);
+  int64_t h_out = -1;
+  int64_t w_out = -1;
+  std::vector<int64_t> pad_list(4, 0);
   auto pad_mode = conv_prim->get_pad_mode();
   if (pad_mode == "valid") {
     h_out = ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h);
@@ -64,10 +64,12 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
     h_out = ceil(x_shape[2] / stride_h);
     w_out = ceil(x_shape[3] / stride_w);
 
-    auto pad_needed_h = std::max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2]);
+    auto pad_needed_h =
+      std::max(static_cast<int64_t>(0), (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2]);
     pad_list.emplace_back(floor(pad_needed_h / 2));
     pad_list.emplace_back(pad_needed_h / 2);
-    auto pad_needed_w = std::max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3]);
+    auto pad_needed_w =
+      std::max(static_cast<int64_t>(0), (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3]);
     auto pad_left = floor(pad_needed_w / 2);
     pad_list.emplace_back(pad_left);
     pad_list.emplace_back(pad_needed_h - pad_left);
@@ -84,7 +86,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
     w_out = floor(w_out);
   }
   conv_prim->set_pad_list(pad_list);
-  std::vector<int> out_shape = {x_shape[0], out_channel, h_out, w_out};
+  std::vector<int64_t> out_shape = {x_shape[0], out_channel, h_out, w_out};
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
@@ -93,7 +95,8 @@ TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypeId> valid_types = {kNumberTypeInt8, kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeFloat32};
+  const std::set<TypeId> valid_types = {kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeFloat16,
+                                        kNumberTypeFloat32};
   std::map<std::string, TypePtr> types;
   types.emplace("x", input_args[0]->BuildType());
   types.emplace("w", input_args[1]->BuildType());
@@ -106,12 +109,12 @@ TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 }  // namespace
 Conv2D::Conv2D() : PrimitiveC(kConv2DName) { InitIOName({"x", "w"}, {"output"}); }
 
-void Conv2D::Init(int out_channel, const std::vector<int> &kernel_size, int mode, const std::string &pad_mode,
-                  const std::vector<int> &pad, const std::vector<int> &stride, const std::vector<int> &dilation,
-                  int group) {
+void Conv2D::Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode,
+                  const std::string &pad_mode, const std::vector<int64_t> &pad, const std::vector<int64_t> &stride,
+                  const std::vector<int64_t> &dilation, int64_t group) {
   auto prim_name = this->name();
   this->AddAttr("data_format", MakeValue("NCHW"));
-  this->AddAttr("offset_a", MakeValue(0));
+  this->AddAttr("offset_a", MakeValue(static_cast<int64_t>(0)));
   this->set_kernel_size(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, prim_name));
   this->set_stride(CheckAndConvertUtils::CheckPositiveVector(kStride, stride, this->name(), true, true));
   this->set_dilation(CheckAndConvertUtils::CheckPositiveVector(kDilation, dilation, this->name(), true, true));
@@ -130,55 +133,59 @@ void Conv2D::Init(int out_channel, const std::vector<int> &kernel_size, int mode
   this->set_group(CheckAndConvertUtils::CheckInteger("group", group, kGreaterThan, 0, prim_name));
 }
 
-std::vector<int> Conv2D::get_kernel_size() const {
+std::vector<int64_t> Conv2D::get_kernel_size() const {
   auto value_ptr = GetAttr(kKernelSize);
-  return GetValue<std::vector<int>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
-std::vector<int> Conv2D::get_stride() const {
+
+std::vector<int64_t> Conv2D::get_stride() const {
   auto value_ptr = GetAttr(kStride);
-  return GetValue<std::vector<int>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
-std::vector<int> Conv2D::get_dilation() const {
+
+std::vector<int64_t> Conv2D::get_dilation() const {
   auto value_ptr = GetAttr(kDilation);
-  return GetValue<std::vector<int>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
+
 std::string Conv2D::get_pad_mode() const {
   auto value_ptr = this->GetAttr(kPadMode);
   return GetValue<string>(value_ptr);
 }
-std::vector<int> Conv2D::get_pad() const {
+
+std::vector<int64_t> Conv2D::get_pad() const {
   auto value_ptr = this->GetAttr(kPad);
-  return GetValue<std::vector<int>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
-std::vector<int> Conv2D::get_pad_list() const {
+std::vector<int64_t> Conv2D::get_pad_list() const {
   auto value_ptr = this->GetAttr(kPadList);
-  return GetValue<std::vector<int>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
-int Conv2D::get_mode() const {
+int64_t Conv2D::get_mode() const {
   auto value_ptr = this->GetAttr(kMode);
-  return GetValue<int>(value_ptr);
+  return GetValue<int64_t>(value_ptr);
 }
 
-int Conv2D::get_group() const {
+int64_t Conv2D::get_group() const {
   auto value_ptr = this->GetAttr(kGroup);
-  return GetValue<int>(value_ptr);
+  return GetValue<int64_t>(value_ptr);
 }
-int Conv2D::get_output_channel() const {
+int64_t Conv2D::get_output_channel() const {
   auto value_ptr = this->GetAttr(kOutputChannel);
-  return GetValue<int>(value_ptr);
+  return GetValue<int64_t>(value_ptr);
 }
 
-void Conv2D::set_kernel_size(const std::vector<int> &kernel_size) {
+void Conv2D::set_kernel_size(const std::vector<int64_t> &kernel_size) {
   this->AddAttr(kKernelSize, MakeValue(kernel_size));
 }
-void Conv2D::set_stride(const std::vector<int> &stride) { this->AddAttr(kStride, MakeValue(stride)); }
-void Conv2D::set_dilation(const std::vector<int> &dilation) { this->AddAttr(kDilation, MakeValue(dilation)); }
+void Conv2D::set_stride(const std::vector<int64_t> &stride) { this->AddAttr(kStride, MakeValue(stride)); }
+void Conv2D::set_dilation(const std::vector<int64_t> &dilation) { this->AddAttr(kDilation, MakeValue(dilation)); }
 void Conv2D::set_pad_mode(const std::string &pad_mode) { this->AddAttr(kPadMode, MakeValue(pad_mode)); }
-void Conv2D::set_pad(const std::vector<int> &pad) { this->AddAttr(kPad, MakeValue(pad)); }
-void Conv2D::set_mode(int mode) { this->AddAttr(kMode, MakeValue(mode)); }
-void Conv2D::set_group(int group) { this->AddAttr(kGroup, MakeValue(group)); }
-void Conv2D::set_out_channel(int output_channel) { this->AddAttr(kOutputChannel, MakeValue(output_channel)); }
-void Conv2D::set_pad_list(const std::vector<int> &pad_list) { this->AddAttr(kPadList, MakeValue(pad_list)); }
+void Conv2D::set_pad(const std::vector<int64_t> &pad) { this->AddAttr(kPad, MakeValue(pad)); }
+void Conv2D::set_mode(int64_t mode) { this->AddAttr(kMode, MakeValue(mode)); }
+void Conv2D::set_group(int64_t group) { this->AddAttr(kGroup, MakeValue(group)); }
+void Conv2D::set_out_channel(int64_t output_channel) { this->AddAttr(kOutputChannel, MakeValue(output_channel)); }
+void Conv2D::set_pad_list(const std::vector<int64_t> &pad_list) { this->AddAttr(kPadList, MakeValue(pad_list)); }
 
 AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {

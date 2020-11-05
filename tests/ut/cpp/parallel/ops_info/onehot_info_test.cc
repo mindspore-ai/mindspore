@@ -54,7 +54,7 @@ void TestOneHotInfo::SetUp() {
   g_device_manager = std::make_shared<DeviceManager>();
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
 
-  ValuePtr axis = MakeValue(std::int32_t(-1));
+  ValuePtr axis = MakeValue(std::int64_t(-1));
   std::unordered_map<std::string, ValuePtr> attr = {{"axis", axis}};
 
   Shapes inputs_shape = {{64}, {}, {}};

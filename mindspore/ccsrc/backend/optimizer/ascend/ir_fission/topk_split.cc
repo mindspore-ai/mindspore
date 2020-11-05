@@ -35,7 +35,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   // 1 create tensor
   auto shape = AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   auto last_dim = shape[shape.size() - 1];
-  std::vector<int> indices_shape = {SizeToInt(last_dim * 2)};
+  std::vector<int64_t> indices_shape = {SizeToLong(last_dim * 2)};
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat16);
   MS_EXCEPTION_IF_NULL(tensor_type);
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};

@@ -33,7 +33,7 @@ class TestHWOptimizeClipByNormNodivsquaresumFusion : public BackendCommon {
 TEST_F(TestHWOptimizeClipByNormNodivsquaresumFusion, test_clip_by_norm_no_div_square_sum_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_clip_by_norm_no_div_square_sum_fusion", "before");
 
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 4; ++i) {

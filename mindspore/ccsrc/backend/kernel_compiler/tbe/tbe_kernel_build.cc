@@ -69,6 +69,7 @@ constexpr auto kVTypeBool = "bool";
 constexpr auto kVTypeFloat = "float";
 constexpr auto kVTypeListInt = "listInt";
 constexpr auto kVTypeInt32 = "Int32";
+constexpr auto kVTypeInt64 = "Int64";
 constexpr auto kVTypeListUInt64 = "listUInt64";
 constexpr auto kVTypeListFloat = "listFloat";
 constexpr auto kVTypeListListInt = "listListInt";
@@ -241,9 +242,9 @@ bool GetInputNameAndRealNum(const std::shared_ptr<AnfNode> &anf_node, const std:
   MS_EXCEPTION_IF_NULL(op_input_name);
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   // for dynamic input number, dyn_input_sizes has the info of dynamic input num for each input.
-  std::vector<int> dyn_input_sizes;
+  std::vector<int64_t> dyn_input_sizes;
   if (primitive->GetAttr(kAttrDynInputSizes) != nullptr) {
-    dyn_input_sizes = GetValue<const std::vector<int>>(primitive->GetAttr(kAttrDynInputSizes));
+    dyn_input_sizes = GetValue<const std::vector<int64_t>>(primitive->GetAttr(kAttrDynInputSizes));
   }
 
   if (input_ptr->param_type() == kParamDynamic) {
@@ -251,7 +252,7 @@ bool GetInputNameAndRealNum(const std::shared_ptr<AnfNode> &anf_node, const std:
       MS_LOG(ERROR) << "Dyn input index" << *dyn_input_index << "is over dyn input num" << dyn_input_sizes.size();
       return false;
     }
-    *input_num = IntToSize(dyn_input_sizes[*dyn_input_index]);
+    *input_num = LongToSize(dyn_input_sizes[*dyn_input_index]);
     *op_input_name = input_ptr->name() + "_dynamic_";
     (*dyn_input_index)++;
     // if optional input is exist
@@ -454,7 +455,15 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
   MS_EXCEPTION_IF_NULL(value);
   MS_EXCEPTION_IF_NULL(attr_obj);
   if (type == kVTypeInt) {
-    auto attr_value = GetValue<int>(value);
+    if (value->isa<Int32Imm>()) {
+      auto attr_value = GetValue<int>(value);
+      (*attr_obj)[kJValue] = attr_value;
+    } else {
+      auto attr_value = GetValue<int64_t>(value);
+      (*attr_obj)[kJValue] = attr_value;
+    }
+  } else if (type == kVTypeInt64) {
+    auto attr_value = GetValue<int64_t>(value);
     (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeStr) {
     auto attr_value = GetValue<std::string>(value);
@@ -469,15 +478,25 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
     auto attr_value = GetValue<float>(value);
     (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeListInt) {
-    std::vector<int> attr_value;
+    std::vector<int64_t> attr_value;
     auto value_type = value->type();
     MS_EXCEPTION_IF_NULL(value_type);
     auto value_type_str = value_type->ToString();
-    if (value_type_str == kVTypeInt32) {
-      int data = GetValue<int>(value);
+    if (value_type_str == kVTypeInt64) {
+      int64_t data = GetValue<int64_t>(value);
       attr_value.push_back(data);
     } else {
-      attr_value = GetValue<std::vector<int>>(value);
+      auto vec =
+        value->isa<ValueTuple>() ? value->cast<ValueTuplePtr>()->value() : value->cast<ValueListPtr>()->value();
+      if (!vec.empty()) {
+        if (vec[0]->isa<Int32Imm>()) {
+          std::vector<int32_t> attr_value_me = GetValue<std::vector<int32_t>>(value);
+          (void)std::transform(attr_value_me.begin(), attr_value_me.end(), std::back_inserter(attr_value),
+                               [](const int &value) { return static_cast<int64_t>(value); });
+        } else {
+          attr_value = GetValue<std::vector<int64_t>>(value);
+        }
+      }
     }
     (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeListFloat) {
@@ -496,7 +515,7 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
     auto attr_value = GetValue<std::vector<size_t>>(value);
     (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeListListInt) {
-    auto attr_value = GetValue<std::vector<std::vector<int>>>(value);
+    auto attr_value = GetValue<std::vector<std::vector<int64_t>>>(value);
     (*attr_obj)[kJValue] = attr_value;
   } else {
     MS_LOG(EXCEPTION) << "Type: " << type << "not support";
@@ -959,17 +978,17 @@ bool TbeKernelBuild::IsDynamicInput(const mindspore::CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(primitive);
   // for dynamic input number, dyn_input_sizes has the info of dynamic input num for each input.
   bool ret = false;
-  std::vector<int> dyn_input_sizes;
+  std::vector<int64_t> dyn_input_sizes;
   auto dynamic_input_attr = primitive->GetAttr(kAttrDynInputSizes);
   if (dynamic_input_attr != nullptr) {
-    dyn_input_sizes = GetValue<const std::vector<int>>(dynamic_input_attr);
+    dyn_input_sizes = GetValue<const std::vector<int64_t>>(dynamic_input_attr);
     auto real_input_size = cnode->inputs().size() - 1;
     auto dyn_input_size = dyn_input_sizes.size();
     if (dyn_input_size != 1) {
       MS_LOG(INFO) << "Fusion error: fusion build not support dyn_input_sizes > 1";
       return ret;
     }
-    if (IntToSize(dyn_input_sizes[0]) != real_input_size) {
+    if (LongToSize(dyn_input_sizes[0]) != real_input_size) {
       MS_LOG(INFO) << "Fusion error: dyn_input_size" << dyn_input_sizes[0] << "not equal real_input_size"
                    << real_input_size;
       return ret;
@@ -1069,7 +1088,7 @@ bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
   return true;
 }
 
-std::vector<size_t> TbeKernelBuild::GetDescOutputIndex(const std::vector<int> &output_used_nums) {
+std::vector<size_t> TbeKernelBuild::GetDescOutputIndex(const std::vector<int64_t> &output_used_nums) {
   std::vector<size_t> desc_output_index = {};
   for (size_t idx = 0; idx < output_used_nums.size(); ++idx) {
     auto output_use_num_item = output_used_nums[idx];
@@ -1087,7 +1106,7 @@ bool TbeKernelBuild::GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode
   MS_EXCEPTION_IF_NULL(output_desc_list);
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
   if (AnfAlgo::HasNodeAttr(kAttrOutputUsedNum, cnode)) {
-    auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode, kAttrOutputUsedNum);
+    auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrOutputUsedNum);
     MS_LOG(INFO) << "Fusion info: this node's output has been reused, node name: " << cnode->fullname_with_scope();
     if (output_used_nums.size() != output_size) {
       MS_LOG(INFO) << "Fusion error: output tenor num(" << output_size << ")"

@@ -47,7 +47,7 @@ extern bool ELEMENTWISE_OP_STRA_FOLLOW;
 extern bool MULTI_SUBGRAPHS;
 extern bool DP_ALGO_ENABLE_APPROX;
 extern double DP_ALGO_APPROX_EPSILON;
-extern int32_t RUN_PHASE;
+extern int64_t RUN_PHASE;
 extern bool TRIANGLE_STAR_STRATEGY_OVERWRITE;
 
 class CostGraph {
@@ -218,7 +218,7 @@ class CostGraph {
   void TopologyOrder(std::vector<OperatorInfoPtr> *);
   void DFSForTopoOrder(const OperatorInfoPtr &, std::map<OperatorInfoPtr, bool> *, std::vector<OperatorInfoPtr> *);
   Status DetermineCriticalOps(const std::vector<OperatorInfoPtr> &);
-  void MarkCriticalOpsAndEdges(const std::map<OperatorInfoPtr, int> &);
+  void MarkCriticalOpsAndEdges(const std::map<OperatorInfoPtr, int64_t> &);
   // Needed by rec_parser
   std::vector<std::vector<std::string>> inputs_tensor_name_list_;
   std::map<std::string, std::string> tuple_getitem_list_;

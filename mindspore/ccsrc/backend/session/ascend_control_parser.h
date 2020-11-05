@@ -82,17 +82,17 @@ class AscendControlParser {
 };
 class AscendControlParser::ReferenceCounter {
  public:
-  explicit ReferenceCounter(std::function<bool(int32_t, int32_t)> func) : predicate_(func), count_() {}
+  explicit ReferenceCounter(std::function<bool(int64_t, int64_t)> func) : predicate_(func), count_() {}
   ~ReferenceCounter() = default;
-  void AddReadCount(const AnfNodePtr &key, int32_t num);
-  void AddWriteCount(const AnfNodePtr &key, int32_t num);
+  void AddReadCount(const AnfNodePtr &key, int64_t num);
+  void AddWriteCount(const AnfNodePtr &key, int64_t num);
   void EraseElem(const AnfNodePtr &key);
   bool HasValidElem() const;
-  std::tuple<AnfNodePtr, int32_t, int32_t> GetOneValidElem() const;
+  std::tuple<AnfNodePtr, int64_t, int64_t> GetOneValidElem() const;
 
  private:
-  std::function<bool(int32_t, int32_t)> predicate_;
-  std::map<AnfNodePtr, std::pair<int32_t, int32_t>> count_;
+  std::function<bool(int64_t, int64_t)> predicate_;
+  std::map<AnfNodePtr, std::pair<int64_t, int64_t>> count_;
 };
 }  // namespace session
 }  // namespace mindspore

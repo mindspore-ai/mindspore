@@ -50,7 +50,7 @@ Status ReLUV2Info::CheckStrategy(const StrategyPtr &strategy) {
 
 Status ReLUV2Info::GetAttrs() { return SUCCESS; }
 
-Status ReLUV2Info::GenerateStrategies(int32_t stage_id) {
+Status ReLUV2Info::GenerateStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   // the second dimension is not splitable
   input0_split[1] = 0;

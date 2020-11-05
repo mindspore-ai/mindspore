@@ -55,7 +55,7 @@ void TestGetNextInfo::SetUp() {
   std::unordered_map<std::string, ValuePtr> attr;
   std::vector<std::string> types_ = {"float32", "int32"};
   Shapes shapes_ = {{64, 32}, {64}};
-  int32_t output_num_ = 2;
+  int64_t output_num_ = 2;
   std::string shared_name_ = "test_get_next";
   attr["types"] = MakeValue(types_);
   attr["shapes"] = MakeValue(shapes_);

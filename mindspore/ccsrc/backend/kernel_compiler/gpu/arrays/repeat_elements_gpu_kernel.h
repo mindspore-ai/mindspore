@@ -114,12 +114,12 @@ class RepeatElementsGpuKernel : public GpuKernel {
     }
     std::reverse(input_shape_cumulative_product_.begin(), input_shape_cumulative_product_.end());
 
-    axis_ = GetAttr<int>(kernel_node, "axis");
+    axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       axis_ += input_dim_;
     }
 
-    rep_ = GetAttr<int>(kernel_node, "rep");
+    rep_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "rep"));
     output_size_ = input_size_ * rep_;
     output_shape_ = input_shape_;
     output_shape_[axis_] *= rep_;

@@ -35,9 +35,15 @@
 namespace mindspore {
 namespace opt {
 constexpr size_t kType32Len = 4;
-std::vector<int> Convert2Int(const std::vector<size_t> &v) {
-  std::vector<int> result;
+std::vector<int64_t> Convert2Int(const std::vector<size_t> &v) {
+  std::vector<int64_t> result;
   (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToInt);
+  return result;
+}
+
+std::vector<int64_t> Convert2Long(const std::vector<size_t> &v) {
+  std::vector<int64_t> result;
+  (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToLong);
   return result;
 }
 
@@ -112,32 +118,14 @@ bool UnVisited(const BaseRef &n) {
   return false;
 }
 
-bool CheckIfCNodeAndInputSize(const AnfNodePtr &node, int input_size, CNodePtr *cnode) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (!node->isa<CNode>()) {
-    MS_LOG(ERROR) << "The node is expected to be a cnode";
-    return false;
-  }
-  *cnode = node->cast<CNodePtr>();
-  if (*cnode == nullptr) {
-    return false;
-  }
-  if ((*cnode)->inputs().size() < IntToSize(input_size)) {
-    auto op_name = AnfAlgo::GetCNodeName(*cnode);
-    MS_LOG(ERROR) << "op[" + op_name + "] has less than " << input_size << " inputs.";
-    return false;
-  }
-  return true;
-}
-
-CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, int input_size) {
+CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "The node is expected to be a cnode";
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() != IntToSize(input_size)) {
+  if (cnode->inputs().size() != input_size) {
     auto op_name = AnfAlgo::GetCNodeName(cnode);
     MS_LOG(EXCEPTION) << "op[" + op_name + "] has less than " << input_size << " inputs.";
   }
@@ -201,122 +189,16 @@ bool Visited(const BaseRef &n) {
   return false;
 }
 
-void CreateOutputsOfConvBn1(const FuncGraphPtr &func_graph, const CNodePtr &conv_cnode, const CNodePtr &bn_cnode,
-                            std::vector<AnfNodePtr> *conv_bn1_outputs) {
-  auto prim = std::make_shared<Primitive>(kConvBN1OpName);
-  std::vector<AnfNodePtr> conv_bn1_inputs = {NewValueNode(prim)};
-  MS_EXCEPTION_IF_NULL(conv_cnode);
-  // All the inputs of conv_bn1 are from the inputs of conv
-  for (size_t i = 1; i < conv_cnode->inputs().size(); i++) {
-    conv_bn1_inputs.push_back(conv_cnode->input(i));
-  }
-  MS_EXCEPTION_IF_NULL(func_graph);
-  CNodePtr conv_bn1_cnode = func_graph->NewCNode(conv_bn1_inputs);
-  MS_EXCEPTION_IF_NULL(conv_bn1_cnode);
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  conv_bn1_cnode->set_kernel_info(kernel_info);
-  // Set attr for conv_bn1
-  AnfAlgo::CopyNodeAttrs(conv_cnode, conv_bn1_cnode);
-  // Set abstract of conv_bn1
-  MS_EXCEPTION_IF_NULL(bn_cnode);
-  auto bn_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn_cnode->abstract());
-  MS_EXCEPTION_IF_NULL(bn_abstract_tuple);
-  AbstractBasePtrList conv_bn1_abstract_list;
-  conv_bn1_abstract_list.push_back(conv_cnode->abstract());
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(
-    kFloat32, Convert2Int(AnfAlgo::GetPrevNodeOutputInferShape(bn_cnode, kVariance - 1)));
-  conv_bn1_abstract_list.push_back(abstract_tensor);
-  conv_bn1_abstract_list.push_back(bn_abstract_tuple->elements()[kSaveMean]);
-  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(conv_bn1_abstract_list);
-  conv_bn1_cnode->set_abstract(abstract_tuple);
-
-  CreateMultipleOutputsOfAnfNode(func_graph, conv_bn1_cnode, kConvBn1OutputNum, conv_bn1_outputs);
-}
-
-void CreateOutputsOfFusedBn2(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &fused_bn1_outputs,
-                             const CNodePtr &bn_node, std::vector<AnfNodePtr> *fused_bn2_outputs) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(bn_node);
-  MS_EXCEPTION_IF_NULL(fused_bn2_outputs);
-  if (bn_node->inputs().size() != kBnInputNum) {
-    MS_LOG(EXCEPTION) << "BN node has wrong input size";
-  }
-  if (fused_bn1_outputs.size() != kBN1OutputNum) {
-    MS_LOG(EXCEPTION) << "BN1 outputs has wrong input size";
-  }
-
-  // the inputs of fused_bn2 are from the outputs of fused_bn1 and the inputs of bn
-  std::vector<AnfNodePtr> fused_bn2_inputs = {NewValueNode(std::make_shared<Primitive>(kFusedBN2OpName))};
-  fused_bn2_inputs.push_back(fused_bn1_outputs[0]);
-  fused_bn2_inputs.push_back(fused_bn1_outputs[1]);
-  fused_bn2_inputs.push_back(bn_node->input(4));
-  fused_bn2_inputs.push_back(bn_node->input(5));
-  auto fused_bn2 = graph->NewCNode(fused_bn2_inputs);
-  MS_EXCEPTION_IF_NULL(fused_bn2);
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  fused_bn2->set_kernel_info(kernel_info);
-  auto types = {AnfAlgo::GetOutputInferDataType(bn_node, 4), AnfAlgo::GetOutputInferDataType(bn_node, 1),
-                AnfAlgo::GetOutputInferDataType(bn_node, 2)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(bn_node, 4), AnfAlgo::GetOutputInferShape(bn_node, 1),
-                 AnfAlgo::GetOutputInferShape(bn_node, 2)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fused_bn2.get());
-  fused_bn2->set_scope(bn_node->scope());
-  AnfAlgo::CopyNodeAttr(kAttrMomentum, bn_node, fused_bn2);
-
-  CreateMultipleOutputsOfAnfNode(graph, fused_bn2, kBN2OutputNum, fused_bn2_outputs);
-}
-
-void CreateOutputsOfFusedBn3(const FuncGraphPtr &graph, const AnfNodePtr &data_input,
-                             const std::vector<AnfNodePtr> &fused_bn1_outputs,
-                             const std::vector<AnfNodePtr> &fused_bn2_outputs, const CNodePtr &bn_node,
-                             std::vector<AnfNodePtr> *fused_bn3_outputs) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(data_input);
-  MS_EXCEPTION_IF_NULL(bn_node);
-  MS_EXCEPTION_IF_NULL(fused_bn3_outputs);
-  if (bn_node->inputs().size() != kBnInputNum) {
-    MS_LOG(EXCEPTION) << "BN node has wrong input size";
-  }
-
-  if (fused_bn1_outputs.size() != kBN1OutputNum) {
-    MS_LOG(EXCEPTION) << "BN1 outputs has wrong input size";
-  }
-
-  if (fused_bn2_outputs.size() != kBN2OutputNum) {
-    MS_LOG(EXCEPTION) << "BN2 outputs has wrong input size";
-  }
-
-  // the inputs of fused_bn3 are from the outputs of fused_bn1 and the inputs of bn
-  std::vector<AnfNodePtr> fused_bn3_inputs = {NewValueNode(std::make_shared<Primitive>(kFusedBN3OpName))};
-  fused_bn3_inputs.push_back(data_input);
-  fused_bn3_inputs.push_back(fused_bn1_outputs[0]);
-  fused_bn3_inputs.push_back(fused_bn2_outputs[0]);
-  fused_bn3_inputs.push_back(bn_node->input(2));
-  fused_bn3_inputs.push_back(bn_node->input(3));
-  auto fused_bn3 = graph->NewCNode(fused_bn3_inputs);
-  MS_EXCEPTION_IF_NULL(fused_bn3);
-  auto kernel_info = std::make_shared<device::KernelInfo>();
-  fused_bn3->set_kernel_info(kernel_info);
-  auto types = {AnfAlgo::GetOutputInferDataType(bn_node, 0)};
-  auto shapes = {AnfAlgo::GetOutputInferShape(bn_node, 0)};
-  AnfAlgo::SetOutputInferTypeAndShape(types, shapes, fused_bn3.get());
-
-  fused_bn3->set_scope(bn_node->scope());
-  AnfAlgo::CopyNodeAttr(kAttrEpsilon, kAttrEps, bn_node, fused_bn3);
-
-  (*fused_bn3_outputs).push_back(fused_bn3);
-}
-
 void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_num,
                                     std::vector<AnfNodePtr> *outputs) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(outputs);
   for (size_t i = 0; i < output_num; i++) {
-    int temp = SizeToInt(i);
+    int64_t temp = SizeToLong(i);
     auto idx = NewValueNode(temp);
     MS_EXCEPTION_IF_NULL(idx);
-    auto imm = std::make_shared<Int32Imm>(temp);
+    auto imm = std::make_shared<Int64Imm>(temp);
     auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
     idx->set_abstract(abstract_scalar);
     auto tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
@@ -343,7 +225,7 @@ tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_pt
       return nullptr;
     }
   }
-  std::vector<int> tensor_shape = {SizeToInt(values.size())};
+  std::vector<int64_t> tensor_shape = {SizeToLong(values.size())};
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_ptr->type_id(), tensor_shape);
   MS_EXCEPTION_IF_NULL(tensor);
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, type_ptr};
@@ -600,9 +482,9 @@ bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
 }
 
 AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
-  auto idx = NewValueNode(SizeToInt(output_idx));
+  auto idx = NewValueNode(SizeToLong(output_idx));
   MS_EXCEPTION_IF_NULL(idx);
-  auto imm = std::make_shared<Int32Imm>(SizeToInt(output_idx));
+  auto imm = std::make_shared<Int64Imm>(SizeToLong(output_idx));
   auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
   idx->set_abstract(abstract_scalar);
   AnfNodePtr tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
@@ -848,7 +730,7 @@ bool CompareTupleGetitem(const AnfNodePtr &n1, const AnfNodePtr &n2) {
   MS_EXCEPTION_IF_NULL(index_input2);
   auto value_node2 = index_input2->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node2);
-  return GetValue<int>(value_node1->value()) < GetValue<int>(value_node2->value());
+  return GetValue<int64_t>(value_node1->value()) < GetValue<int64_t>(value_node2->value());
 }
 
 bool GetBoolAttr(const AnfNodePtr &node, const std::string &attr_name) {

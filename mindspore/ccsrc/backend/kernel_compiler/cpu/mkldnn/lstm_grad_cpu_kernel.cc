@@ -94,9 +94,9 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
   bidirectional_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
-  input_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "input_size");
-  hidden_size_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "hidden_size");
-  num_layers_ = AnfAlgo::GetNodeAttr<int>(kernel_node, "num_layers");
+  input_size_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size");
+  hidden_size_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size");
+  num_layers_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers");
   has_bias_ = AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
   batch_size_ = SizeToInt(src_shape[1]);
   seq_len_ = SizeToInt(src_shape[0]);
@@ -104,20 +104,20 @@ void LSTMGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
   if (bidirectional_) {
     num_directions_ = 2;
   }
-  const int gate_size = 4 * hidden_size_;
+  const int64_t gate_size = 4 * hidden_size_;
   if (num_layers_ <= 0) {
     MS_LOG(EXCEPTION) << "layers must be greater than zero!";
   }
   if (num_layers_ > kMaxLSTMLayer) {
     MS_LOG(EXCEPTION) << "layers must be lower than 100!";
   }
-  for (int i = 0; i < num_layers_; ++i) {
+  for (int64_t i = 0; i < num_layers_; ++i) {
     weight_size_ += gate_size * (i == 0 ? input_size_ : hidden_size_ * num_directions_);
     weight_h_size_ += gate_size * hidden_size_;
   }
   weight_size_ = weight_size_ * num_directions_;
   weight_h_size_ = weight_h_size_ * num_directions_;
-  if (num_directions_ * num_layers_ != SizeToInt(src_h_shape[0])) {
+  if (num_directions_ * num_layers_ != SizeToLong(src_h_shape[0])) {
     MS_LOG(EXCEPTION) << "error iteration shape!";
   }
   if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {

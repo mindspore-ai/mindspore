@@ -199,7 +199,7 @@ std::string AnalysisContext::ToString() const {
     buffer << "Func Graph: " << func_graph_->ToString();
   }
   buffer << " Args: ";
-  int i = 0;
+  int64_t i = 0;
   for (const auto &arg : args_spec_list_) {
     buffer << "[" << i << "]: " << arg->ToString() << ", ";
     i++;

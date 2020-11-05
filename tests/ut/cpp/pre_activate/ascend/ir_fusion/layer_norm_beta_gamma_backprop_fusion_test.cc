@@ -63,7 +63,7 @@ TEST_F(TestHWLayerNormBetaGammaBackpropFusion, layernorm_beta_gamma_backprop_fus
    *     return add
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_layer_norm_beta_gamma_backprop_fusion", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   auto ret = g->get_return();
   EXPECT_NE(ret, nullptr);
@@ -124,7 +124,7 @@ TEST_F(TestHWLayerNormBetaGammaBackpropFusion, layernorm_beta_gamma_backprop_fus
    */
   FuncGraphPtr g =
     get_py_fun_.CallAndParseRet("test_layer_norm_beta_gamma_backprop_fusion", "before_unmatched_inputs_size");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   auto ret = g->get_return();
   EXPECT_NE(ret, nullptr);
@@ -183,7 +183,7 @@ TEST_F(TestHWLayerNormBetaGammaBackpropFusion, layernorm_beta_gamma_backprop_fus
    *     return add
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_layer_norm_beta_gamma_backprop_fusion", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   auto ret = g->get_return();
   EXPECT_NE(ret, nullptr);
@@ -241,7 +241,7 @@ TEST_F(TestHWLayerNormBetaGammaBackpropFusion, layernorm_beta_gamma_backprop_fus
    */
   FuncGraphPtr g =
     get_py_fun_.CallAndParseRet("test_layer_norm_beta_gamma_backprop_fusion", "before_unmatched_outputs_size");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   auto ret = g->get_return();
   EXPECT_NE(ret, nullptr);
@@ -291,7 +291,7 @@ TEST_F(TestHWLayerNormBetaGammaBackpropFusion, layernorm_beta_gamma_backprop_fus
    *     return add
    */
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_layer_norm_beta_gamma_backprop_fusion", "before");
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   auto ret = g->get_return();
   EXPECT_NE(ret, nullptr);

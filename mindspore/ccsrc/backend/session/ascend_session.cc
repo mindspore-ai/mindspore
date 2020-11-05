@@ -367,7 +367,7 @@ bool AscendSession::GraphCacheExist(const GraphInfo &graph_info) const {
 
 void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                                 const std::vector<tensor::TensorPtr> &input_tensors,
-                                const std::vector<int> &tensors_mask) {
+                                const std::vector<int64_t> &tensors_mask) {
   MS_LOG(INFO) << "Build op " << op_run_info.op_name << " start !";
   if (GraphCacheExist(graph_info)) {
     MS_LOG(INFO) << "Build op " << op_run_info.op_name << " graph cache has existed !";

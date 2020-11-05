@@ -100,11 +100,11 @@ void CostModelContext::set_costmodel_communi_const(double cm_communi_const) {
 void CostModelContext::set_costmodel_communi_bias(double cm_communi_bias) { costmodel_communi_bias_ = cm_communi_bias; }
 
 void CostModelContext::set_multi_subgraphs(bool multi_graphs) { is_multi_subgraphs_ = multi_graphs; }
-void CostModelContext::set_costmodel_allreduce_fusion_algorithm(int32_t algorithm) {
+void CostModelContext::set_costmodel_allreduce_fusion_algorithm(int64_t algorithm) {
   costmodel_allreduce_fusion_algorithm_ = algorithm;
 }
 
-void CostModelContext::set_costmodel_allreduce_fusion_times(int32_t allreduce_fusion_times) {
+void CostModelContext::set_costmodel_allreduce_fusion_times(int64_t allreduce_fusion_times) {
   costmodel_allreduce_fusion_times_ = allreduce_fusion_times;
 }
 
@@ -144,7 +144,7 @@ void CostModelContext::set_triangle_star_strategy_overwrite(bool overwrite) {
   triangle_star_strategy_overwrite_ = overwrite;
 }
 
-void CostModelContext::set_run_phase(int32_t phase) { run_phase_ = phase; }
+void CostModelContext::set_run_phase(int64_t phase) { run_phase_ = phase; }
 
 struct CostRegister {
   CostRegister() {

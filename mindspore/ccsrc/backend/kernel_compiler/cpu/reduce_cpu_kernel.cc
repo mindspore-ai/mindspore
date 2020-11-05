@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/cpu/reduce_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
@@ -87,7 +88,10 @@ bool ReduceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 void ReduceCPUKernel::CheckAxis(const CNodePtr &kernel_node) {
   auto axis_addr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(AXIS);
   if (axis_addr->isa<ValueTuple>()) {
-    auto attr_axis = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, AXIS);
+    std::vector<int> attr_axis;
+    std::vector<int64_t> attr_axis_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
+    (void)std::transform(attr_axis_me.begin(), attr_axis_me.end(), std::back_inserter(attr_axis),
+                         [](const int64_t &value) { return static_cast<int>(value); });
     if (attr_axis.size() > shape_.size()) {
       MS_LOG(EXCEPTION) << "invalid axis size: " << axis_.size();
     } else if (attr_axis.empty()) {
@@ -105,8 +109,8 @@ void ReduceCPUKernel::CheckAxis(const CNodePtr &kernel_node) {
         axis_.push_back(IntToSize(axis));
       }
     }
-  } else if (axis_addr->isa<Int32Imm>()) {
-    int axis = AnfAlgo::GetNodeAttr<int>(kernel_node, AXIS);
+  } else if (axis_addr->isa<Int64Imm>()) {
+    int axis = static_cast<int64_t>(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
     while (axis < 0) {
       axis += SizeToInt(shape_.size());
     }

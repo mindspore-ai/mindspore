@@ -51,8 +51,8 @@ class LayerNormGradGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    int begin_norm_axis = GetAttr<int>(kernel_node, "begin_norm_axis");
-    int begin_params_axis = GetAttr<int>(kernel_node, "begin_params_axis");
+    int begin_norm_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_norm_axis"));
+    int begin_params_axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "begin_params_axis"));
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     if (begin_norm_axis < 0) {

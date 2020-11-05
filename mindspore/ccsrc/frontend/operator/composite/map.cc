@@ -84,7 +84,7 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeList));
 
-  for (int i = 0; i < SizeToInt(size); ++i) {
+  for (int64_t i = 0; i < SizeToLong(size); ++i) {
     MS_LOG(DEBUG) << "GenerateLeafFunc for the " << i << "th arg of the target";
     auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
     auto fn = NewValueNode(ptrGraph);
@@ -125,7 +125,7 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
 
-  for (int i = 0; i < SizeToInt(size); ++i) {
+  for (int64_t i = 0; i < SizeToLong(size); ++i) {
     MS_LOG(DEBUG) << "GenerateLeafFunc for the " << i << "th arg of the tuple inputs";
     auto ptrGraph = GenerateLeafFunc(arg_pairs.size());
     auto fn = NewValueNode(ptrGraph);
@@ -168,7 +168,7 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
       inputs2.push_back(fn_arg);
     }
 
-    int j = 0;
+    int64_t j = 0;
     for (auto item : arg_pairs) {
       inputs2.push_back(func_graph->NewCNode({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(j)}));
       j++;
@@ -209,7 +209,7 @@ AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, c
       std::ostringstream oss;
       oss << "There are " << arg_pairs.size() << " inputs of `" << name_ << "`, corresponding type info:\n"
           << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
-      int idx = 0;
+      int64_t idx = 0;
       for (auto &item : arg_pairs) {
         oss << ++idx << ": " << item.second->ToString() << "\n";
       }

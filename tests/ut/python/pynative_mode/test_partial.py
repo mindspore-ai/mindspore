@@ -45,7 +45,7 @@ def test_full_simple_add():
 MULTI_ADD = C.MultitypeFuncGraph('add')
 
 
-@MULTI_ADD.register("Int32", "Int32")
+@MULTI_ADD.register("Int64", "Int64")
 def add_int(x, y):
     return F.scalar_add(x, y)
 

@@ -69,12 +69,12 @@ const std::vector<std::string> inst_str{"call",          "tail_call", "return", 
 class StructPartial : public Base {
  public:
   // Initialize StructPartial.
-  StructPartial(int fn, const VectorRef &args, const FuncGraphPtr &fg = nullptr);
+  StructPartial(int64_t fn, const VectorRef &args, const FuncGraphPtr &fg = nullptr);
 
   virtual ~StructPartial() = default;
   MS_DECLARE_PARENT(StructPartial, Base)
 
-  int fn_;
+  int64_t fn_;
   VectorRef args_;
   FuncGraphPtr fg_;
 };
@@ -122,10 +122,10 @@ class FinalVM {
   BaseRef RunHook(const PrimitivePtr &prim, const VectorRef &arg);
 
  protected:
-  BaseRef Ref(int i);
+  BaseRef Ref(int64_t i);
   void Push(const BaseRef &v);
-  void Pop(int n = 1);
-  void MoveStack(int nitems, int height);
+  void Pop(int64_t n = 1);
+  void MoveStack(int64_t nitems, int64_t height);
   void Pushp();
   void Popp();
   void Pushsp();
@@ -136,10 +136,10 @@ class FinalVM {
  private:
   InstSet insts_;
   std::deque<BaseRef> insts_stack_;
-  std::stack<int> retp_;
-  std::stack<int> retsp_;
-  int pc_;
-  int sp_;
+  std::stack<int64_t> retp_;
+  std::stack<int64_t> retsp_;
+  int64_t pc_;
+  int64_t sp_;
   BackendPtr backend_;
   const InstFunctionMap inst_function_map = {
     {Instruction::kCall, [this](const VectorRef &args) { InstCall(args); }},

@@ -172,7 +172,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeList));
 
-  for (int i = 0; i < SizeToInt(size); ++i) {
+  for (int64_t i = 0; i < SizeToLong(size); ++i) {
     std::vector<AnfNodePtr> inputs2;
     inputs2.push_back(fn_rec);
     if (fn_arg != nullptr) {
@@ -211,7 +211,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
 
-  for (int i = 0; i < SizeToInt(size); ++i) {
+  for (int64_t i = 0; i < SizeToLong(size); ++i) {
     std::vector<AnfNodePtr> inputs2;
     inputs2.push_back(fn_rec);
     if (fn_arg != nullptr) {
@@ -248,7 +248,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGrap
       inputs2.push_back(fn_arg);
     }
 
-    int j = 0;
+    int64_t j = 0;
     for (auto item : arg_map) {
       inputs2.push_back(func_graph->NewCNode({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(j)}));
       j++;
@@ -284,7 +284,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_a
       std::ostringstream oss;
       oss << "There are " << arg_map.size() << " inputs of `" << name_ << "`, corresponding type info:\n"
           << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
-      int idx = 0;
+      int64_t idx = 0;
       for (auto &item : arg_map) {
         oss << ++idx << ": " << item.second->ToString() << "\n";
       }
@@ -395,8 +395,8 @@ FuncGraphPtr Tail::GenerateTupleFuncGraph(const abstract::AbstractTuplePtr &a_tu
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim::kPrimMakeTuple));
 
-  int tuple_size = SizeToInt(a_tuple->size());
-  for (int i = 1; i < tuple_size; ++i) {
+  int64_t tuple_size = SizeToLong(a_tuple->size());
+  for (int64_t i = 1; i < tuple_size; ++i) {
     elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), ptrTup, NewValueNode(i)}));
   }
 
@@ -415,8 +415,8 @@ FuncGraphPtr Tail::GenerateListFuncGraph(const abstract::AbstractListPtr &a_list
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim::kPrimMakeList));
 
-  int list_size = SizeToInt(a_list->size());
-  for (int i = 1; i < list_size; ++i) {
+  int64_t list_size = SizeToLong(a_list->size());
+  for (int64_t i = 1; i < list_size; ++i) {
     elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimListGetItem), ptrList, NewValueNode(i)}));
   }
 
@@ -449,7 +449,7 @@ REGISTER_PYBIND_DEFINE(
   }));
 
 FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  int tuple_size = SizeToInt(args_spec_list.size());
+  int64_t tuple_size = SizeToLong(args_spec_list.size());
 
   std::ostringstream ss;
   ss << "▶make_tuple_" << tuple_size;
@@ -458,7 +458,7 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
 
   std::vector<AnfNodePtr> params;
   params.push_back(NewValueNode(prim::kPrimMakeTuple));
-  for (int i = 0; i < tuple_size; ++i) {
+  for (int64_t i = 0; i < tuple_size; ++i) {
     params.push_back(fg->add_parameter());
   }
 
@@ -476,7 +476,7 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   std::vector<AnfNodePtr> grads;
   grads.push_back(NewValueNode(prim::kPrimMakeTuple));
   grads.push_back(NewValueNode(newenv));
-  for (int i = 0; i < tuple_size; ++i) {
+  for (int64_t i = 0; i < tuple_size; ++i) {
     grads.push_back(b->NewCNode({NewValueNode(prim::kPrimTupleGetItem), dout, NewValueNode(i)}));
   }
 
@@ -490,7 +490,7 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
 }
 
 FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  int list_size = SizeToInt(args_spec_list.size());
+  int64_t list_size = SizeToLong(args_spec_list.size());
 
   std::ostringstream ss;
   ss << "▶make_list_" << list_size;
@@ -499,7 +499,7 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
 
   std::vector<AnfNodePtr> params;
   params.push_back(NewValueNode(prim::kPrimMakeList));
-  for (int i = 0; i < list_size; ++i) {
+  for (int64_t i = 0; i < list_size; ++i) {
     params.push_back(fg->add_parameter());
   }
 
@@ -517,7 +517,7 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   std::vector<AnfNodePtr> grads;
   grads.push_back(NewValueNode(prim::kPrimMakeTuple));
   grads.push_back(NewValueNode(newenv));
-  for (int i = 0; i < list_size; ++i) {
+  for (int64_t i = 0; i < list_size; ++i) {
     grads.push_back(b->NewCNode({NewValueNode(prim::kPrimListGetItem), dout, NewValueNode(i)}));
   }
 
@@ -574,13 +574,13 @@ FuncGraphPtr GradOperation::GetGrad(AnfNodePtr node, const AnfNodePtr &weights,
   inputs.clear();
   inputs.push_back(opsTupleItem);
   inputs.push_back(cnode);
-  inputs.push_back(NewValueNode(0));
+  inputs.push_back(NewValueNode(static_cast<int64_t>(0)));
   auto out = ret->NewCNode(inputs);
 
   inputs.clear();
   inputs.push_back(opsTupleItem);
   inputs.push_back(cnode);
-  inputs.push_back(NewValueNode(1));
+  inputs.push_back(NewValueNode(static_cast<int64_t>(1)));
   AnfNodePtr ptr_bprop = ret->NewCNode(inputs);
 
   doGetGrad(ret, out, ptr_bprop, weights_node, opsTupleItem);
@@ -604,7 +604,8 @@ void GradOperation::doGetGrad(const FuncGraphPtr &func_graph, AnfNodePtr out, An
   CNodePtr fv_bprop = nullptr;
   if (get_by_list_) {
     // python code: grads = hyper_map(F.partial(env_get, env), weights)
-    AnfNodePtr env = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), ptr_bapp, NewValueNode(0)});
+    AnfNodePtr env =
+      func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), ptr_bapp, NewValueNode(static_cast<int64_t>(0))});
     AnfNodePtr partial_env_get =
       func_graph->NewCNode({NewValueNode(prim::kPrimPartial), NewValueNode(prim::GetPythonOps("env_get")), env});
     MetaFuncGraphPtr hyper_map = std::make_shared<HyperMap>();
@@ -636,7 +637,7 @@ void GradOperation::doGetGrad(const FuncGraphPtr &func_graph, AnfNodePtr out, An
 
   // Gradients wrt first input.
   // ptr_bapp returns (EnvInstance(grads wrt params), grads wrt input0, grads wrt input1, ...), so 1 is for first input
-  func_graph->set_output(func_graph->NewCNode({opsTupleItem, ptr_bapp, NewValueNode(1)}));
+  func_graph->set_output(func_graph->NewCNode({opsTupleItem, ptr_bapp, NewValueNode(static_cast<int64_t>(1))}));
 }
 
 // Generate the graph.
@@ -736,7 +737,7 @@ FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_lis
   });
 
   (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(iters), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(1)});
+    return fg_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(static_cast<int64_t>(1))});
   });
 
   (void)values.insert(values.begin(), fn);
@@ -820,7 +821,7 @@ void ListMap::MakeNext(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr 
 
   iters.clear();
   (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(iters), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(1)});
+    return fg_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(static_cast<int64_t>(1))});
   });
 
   (void)values.insert(values.begin(), fn);
@@ -867,13 +868,13 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim::kPrimMakeTuple));
 
-  int tuple_size = SizeToInt(a_tuple->size());
-  for (int i = 0; i < tuple_size; ++i) {
+  int64_t tuple_size = SizeToLong(a_tuple->size());
+  for (int64_t i = 0; i < tuple_size; ++i) {
     elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), p_tup_a, NewValueNode(i)}));
   }
 
-  tuple_size = SizeToInt(b_tuple->size());
-  for (int i = 0; i < tuple_size; ++i) {
+  tuple_size = SizeToLong(b_tuple->size());
+  for (int64_t i = 0; i < tuple_size; ++i) {
     elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), p_tup_b, NewValueNode(i)}));
   }
 
@@ -881,21 +882,21 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
   return ret;
 }
 
-int GetArgScalarValue(const abstract::AbstractScalarPtr &scalar, const std::string &) {
+int64_t GetArgScalarValue(const abstract::AbstractScalarPtr &scalar, const std::string &) {
   MS_EXCEPTION_IF_NULL(scalar);
-  return GetValue<int>(scalar->BuildValue());
+  return GetValue<int64_t>(scalar->BuildValue());
 }
 
-bool CheckIndexInRange(int index, int min, int max) { return (index >= min && index <= max); }
+bool CheckIndexInRange(int64_t index, int64_t min, int64_t max) { return (index >= min && index <= max); }
 
-int GetPositiveIndex(int index, int length) {
+int64_t GetPositiveIndex(int64_t index, int64_t length) {
   if (index < 0) {
     index += length;
   }
   return index;
 }
 
-int CheckSliceMember(const AbstractBasePtr &member, int default_value, const std::string &member_name) {
+int64_t CheckSliceMember(const AbstractBasePtr &member, int64_t default_value, const std::string &member_name) {
   MS_EXCEPTION_IF_NULL(member);
 
   if (member->isa<AbstractScalar>()) {
@@ -909,8 +910,8 @@ int CheckSliceMember(const AbstractBasePtr &member, int default_value, const std
   MS_LOG(EXCEPTION) << member_name << " should be a AbstractScalar or AbstractNone, but got " << member->ToString();
 }
 
-void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSlicePtr &slice, int *start_index,
-                                 int *stop_index, int *step_value) {
+void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSlicePtr &slice, int64_t *start_index,
+                                 int64_t *stop_index, int64_t *step_value) {
   MS_EXCEPTION_IF_NULL(tuple);
   MS_EXCEPTION_IF_NULL(slice);
   MS_EXCEPTION_IF_NULL(start_index);
@@ -921,10 +922,10 @@ void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSl
   const std::string stop_name("Slice stop index");
   const std::string step_name("Slice step value");
 
-  int tuple_size = SizeToInt(tuple->size());
-  int start_default = 0;
-  int stop_default = tuple_size;
-  int step_default = 1;
+  int64_t tuple_size = SizeToLong(tuple->size());
+  int64_t start_default = 0;
+  int64_t stop_default = tuple_size;
+  int64_t step_default = 1;
 
   *step_value = CheckSliceMember(slice->step(), step_default, step_name);
   if (*step_value == 0) {
@@ -958,9 +959,9 @@ FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   AbstractTuplePtr tuple = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
   AbstractSlicePtr slice = abstract::CheckArg<AbstractSlice>(op_name, args_spec_list, 1);
 
-  int start_index;
-  int stop_index;
-  int step_value;
+  int64_t start_index;
+  int64_t stop_index;
+  int64_t step_value;
   GenerateTupleSliceParameter(tuple, slice, &start_index, &stop_index, &step_value);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
@@ -971,11 +972,11 @@ FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim::kPrimMakeTuple));
   if (step_value > 0) {
-    for (int index = start_index; index < stop_index; index = index + step_value) {
+    for (int64_t index = start_index; index < stop_index; index = index + step_value) {
       elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), p_tuple, NewValueNode(index)}));
     }
   } else {
-    for (int index = start_index; index > stop_index; index = index + step_value) {
+    for (int64_t index = start_index; index > stop_index; index = index + step_value) {
       elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), p_tuple, NewValueNode(index)}));
     }
   }

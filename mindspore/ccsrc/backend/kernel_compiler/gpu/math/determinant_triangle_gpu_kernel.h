@@ -86,7 +86,7 @@ class DetTriangleGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "The maxtices should be in shape of square.";
       return false;
     }
-    fill_mode_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("fill_mode"));
+    fill_mode_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("fill_mode")));
     InitSizeLists();
     return true;
   }

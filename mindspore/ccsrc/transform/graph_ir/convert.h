@@ -135,11 +135,11 @@ class DfGraphConvertor {
   std::ostringstream restore_checkpoint_sout_;
   std::unordered_map<AnfNode *, std::string> op_draw_name_;
 
-  AnfNodePtr TraceTupleGetItem(const CNodePtr &node, unsigned int *index);
-  AnfNodePtr TraceMakeTuple(const CNodePtr &node, unsigned int index);
+  AnfNodePtr TraceTupleGetItem(const CNodePtr &node, uint64_t *index);
+  AnfNodePtr TraceMakeTuple(const CNodePtr &node, uint64_t index);
   AnfNodePtr TraceDepend(const CNodePtr &node);
   OutHandler TraceRealOp(AnfNodePtr node);
-  OutHandler GetHandler(const AnfNodePtr &node, const std::stack<unsigned int> &index_stack, AnfNode *const draw_index);
+  OutHandler GetHandler(const AnfNodePtr &node, const std::stack<uint64_t> &index_stack, AnfNode *const draw_index);
   OperatorPtr Convert(AnfNodePtr node);
   OperatorPtr ConvertCNode(CNodePtr node);
   std::vector<OperatorPtr> ConvertDependNode(AnfNodePtr node);

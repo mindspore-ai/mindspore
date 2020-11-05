@@ -32,7 +32,7 @@ class TestHWOptSoftmaxGradExtFusion : public BackendCommon {
 TEST_F(TestHWOptSoftmaxGradExtFusion, test_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_softmax_grad_ext_fusion", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp{1, 1, 1, 1};
+  std::vector<int64_t> shp{1, 1, 1, 1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 3; ++i) {
@@ -53,7 +53,7 @@ TEST_F(TestHWOptSoftmaxGradExtFusion, test_fusion) {
 TEST_F(TestHWOptSoftmaxGradExtFusion, test_fusion_v2) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_softmax_grad_ext_fusion_v2", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp{1, 1, 1, 1};
+  std::vector<int64_t> shp{1, 1, 1, 1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 3; ++i) {
@@ -74,7 +74,7 @@ TEST_F(TestHWOptSoftmaxGradExtFusion, test_fusion_v2) {
 TEST_F(TestHWOptSoftmaxGradExtFusion, test_fusion_v3) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_softmax_grad_ext_fusion_v3", "before");
   EXPECT_NE(g, nullptr);
-  std::vector<int> shp{1, 1, 1, 1};
+  std::vector<int64_t> shp{1, 1, 1, 1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < 3; ++i) {

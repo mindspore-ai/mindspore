@@ -31,7 +31,8 @@ namespace compile {
 //   fn_: Callable function.
 //   args_: Sequence of function args.
 //   fg_: Graph of function.
-StructPartial::StructPartial(int fn, const VectorRef &args, const FuncGraphPtr &fg) : fn_(fn), args_(args), fg_(fg) {}
+StructPartial::StructPartial(int64_t fn, const VectorRef &args, const FuncGraphPtr &fg)
+    : fn_(fn), args_(args), fg_(fg) {}
 
 std::ostream &operator<<(std::ostream &os, const StructPartial &other) {
   os << "partial(" << other.fn_ << ", " << other.args_.ToString() << ")";
@@ -54,7 +55,7 @@ bool operator==(const StructSimuSwitch &lhs, const StructSimuSwitch &rhs) {
 }
 
 std::ostream &operator<<(std::ostream &os, const SwitchCondStatus &other) {
-  os << "SwitchCondStatus(" << static_cast<int>(other) << ")";
+  os << "SwitchCondStatus(" << static_cast<int64_t>(other) << ")";
   return os;
 }
 
@@ -76,32 +77,32 @@ void FinalVM::Push(const BaseRef &v) {
   insts_stack_[IntToSize(sp_++)] = v;
 }
 
-void FinalVM::Pop(int n) {
+void FinalVM::Pop(int64_t n) {
   if (n > sp_) {
     MS_LOG(EXCEPTION) << "Invalid value of n " << n << ", it should be not more than " << sp_ - 1;
   }
-  for (int i = 0; i < n; i++) {
+  for (int64_t i = 0; i < n; i++) {
     insts_stack_[IntToSize(sp_ - i - 1)] = BaseRef();
   }
   sp_ -= n;
 }
 
-void FinalVM::MoveStack(int nitems, int height) {
+void FinalVM::MoveStack(int64_t nitems, int64_t height) {
   if (nitems > height || height > sp_) {
     MS_LOG(EXCEPTION) << "MoveStack arg error: nitems=" << nitems << " height=" << height;
   }
-  int n = height - nitems;
-  int src = sp_ - height;
-  int dst = sp_ - nitems;
-  for (int i = 0; i < nitems; i++) {
+  int64_t n = height - nitems;
+  int64_t src = sp_ - height;
+  int64_t dst = sp_ - nitems;
+  for (int64_t i = 0; i < nitems; i++) {
     insts_stack_[IntToSize(src + i)] = insts_stack_[IntToSize(dst + i)];
   }
   Pop(n);
 }
 
-BaseRef FinalVM::Ref(int i) {
+BaseRef FinalVM::Ref(int64_t i) {
   MS_LOG(DEBUG) << "Ref i:" << i << " sp_:" << sp_;
-  size_t sp_next = IntToSize(sp_ + i);
+  size_t sp_next = LongToSize(sp_ + i);
   if (sp_next < insts_stack_.size()) {
     if (utils::isa<PyObjectRef>(insts_stack_[sp_next])) {
       py::object value = utils::cast<PyObjectRef>(insts_stack_[sp_next]).object_;
@@ -129,7 +130,7 @@ void FinalVM::Popp() {
 void FinalVM::Pushsp() { retsp_.push(sp_); }
 
 void FinalVM::Popsp() {
-  int sp = retsp_.top();
+  int64_t sp = retsp_.top();
   MS_LOG(DEBUG) << "Current sp:" << sp_ << ", before sp:" << sp << ", " << sp_ - sp;
   if (sp_ >= sp) {
     Pop(sp_ - sp + 1);
@@ -147,7 +148,7 @@ void FinalVM::DoJmp(const BaseRef &jmp_orig) {
     MS_LOG(DEBUG) << "Start jump StructPartial";
     auto new_jmp = utils::cast<std::shared_ptr<StructPartial>>(jmp);
     auto args = new_jmp->args_;
-    InstPadStack(VectorRef(std::vector<BaseRef>{static_cast<int>(args.size())}));
+    InstPadStack(VectorRef(std::vector<BaseRef>{static_cast<int64_t>(args.size())}));
     auto iter = args.rbegin();
     for (; iter != args.rend(); ++iter) {
       Push(*iter);
@@ -156,10 +157,10 @@ void FinalVM::DoJmp(const BaseRef &jmp_orig) {
     return;
   }
 
-  if (!utils::isa<int>(jmp)) {
-    MS_LOG(EXCEPTION) << "Jmp inst should be a int";
+  if (!utils::isa<int64_t>(jmp)) {
+    MS_LOG(EXCEPTION) << "Jmp inst should be a int64_t";
   }
-  pc_ = utils::cast<int>(jmp);
+  pc_ = utils::cast<int64_t>(jmp);
   MS_LOG(DEBUG) << "End do jump pc_:" << pc_;
 }
 
@@ -167,7 +168,7 @@ BaseRef FinalVM::Eval(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start: " << args.size();
   insts_stack_.clear();
   insts_stack_.resize(args.size());
-  std::stack<int>().swap(retp_);
+  std::stack<int64_t>().swap(retp_);
   retp_.push(-1);
   pc_ = 0;
   sp_ = 0;
@@ -179,7 +180,7 @@ BaseRef FinalVM::Eval(const VectorRef &args) {
       py::object value = py_ref.object_;
       if (py::isinstance<py::bool_>(value)) {
         auto a = py::cast<bool>(value);
-        Push(static_cast<int>(a));
+        Push(static_cast<int64_t>(a));
         continue;
       }
     }
@@ -211,7 +212,7 @@ void FinalVM::InstCall(const VectorRef &args) {
     return;
   }
 
-  int jmp = utils::cast<int>(args[0]);
+  int64_t jmp = utils::cast<int64_t>(args[0]);
   MS_LOG(DEBUG) << "Call pushp:" << pc_ << ", jmp:" << jmp << ", sp:" << sp_;
   Pushp();
   DoJmp(Ref(jmp));
@@ -227,9 +228,9 @@ void FinalVM::InstTailCall(const VectorRef &args) {
     return;
   }
 
-  int jmp = utils::cast<int>(args[0]);
-  int height = utils::cast<int>(args[1]);
-  int nargs = utils::cast<int>(args[2]);
+  int64_t jmp = utils::cast<int64_t>(args[0]);
+  int64_t height = utils::cast<int64_t>(args[1]);
+  int64_t nargs = utils::cast<int64_t>(args[2]);
 
   auto new_jmp = Ref(jmp);
   MoveStack(nargs, height);
@@ -257,8 +258,8 @@ void FinalVM::InstReturn(const VectorRef &args) {
     return;
   }
 
-  int rpos = utils::cast<int>(args[0]);
-  int height = utils::cast<int>(args[1]);
+  int64_t rpos = utils::cast<int64_t>(args[0]);
+  int64_t height = utils::cast<int64_t>(args[1]);
 
   auto rv = Ref(rpos);
   Pop(height);
@@ -275,12 +276,12 @@ void FinalVM::InstRealPartial(const VectorRef &args) {
     return;
   }
 
-  int fn_ = utils::cast<int>(args[0]);
-  auto fn = utils::cast<int>(Ref(fn_));
+  int64_t fn_ = utils::cast<int64_t>(args[0]);
+  auto fn = utils::cast<int64_t>(Ref(fn_));
   MS_LOG(DEBUG) << "Partial argssize:" << args.size();
   std::vector<BaseRef> outs(args.size() - 1);
   (void)std::transform(args.begin() + 1, args.end(), outs.begin(),
-                       [&, this](const BaseRef &a) { return Ref(utils::cast<int>(a)); });
+                       [&, this](const BaseRef &a) { return Ref(utils::cast<int64_t>(a)); });
   Push(std::make_shared<StructPartial>(fn, VectorRef(outs)));
 }
 
@@ -298,9 +299,9 @@ void FinalVM::InstRealSwitch(const VectorRef &args) {
     return;
   }
 
-  int cond = utils::cast<int>(args[0]);
-  int vtrue = utils::cast<int>(args[1]);
-  int vfalse = utils::cast<int>(args[2]);
+  int64_t cond = utils::cast<int64_t>(args[0]);
+  int64_t vtrue = utils::cast<int64_t>(args[1]);
+  int64_t vfalse = utils::cast<int64_t>(args[2]);
 
   BaseRef c = Ref(cond);
   MS_LOG(DEBUG) << vtrue << " false:" << vfalse << " InstSwitch: " << c.ToString();
@@ -332,14 +333,14 @@ void FinalVM::InstSwitchLayer(const VectorRef &args) {
     return;
   }
 
-  int idx = utils::cast<int>(args[0]);
-  VectorRef branches = utils::cast<VectorRef>(Ref(utils::cast<int>(args[1])));
-  int size = static_cast<int>(branches.size());
+  int64_t idx = utils::cast<int64_t>(args[0]);
+  VectorRef branches = utils::cast<VectorRef>(Ref(utils::cast<int64_t>(args[1])));
+  int64_t size = static_cast<int64_t>(branches.size());
 
   BaseRef index = Ref(idx);
-  int idx_value = 0;
+  int64_t idx_value = 0;
   if (!backend_->GetIndex(index, &idx_value)) {
-    MS_LOG(EXCEPTION) << "Not supported type to be casted to int.";
+    MS_LOG(EXCEPTION) << "Not supported type to be casted to int64_t.";
   }
   auto ori_value = idx_value;
   if (idx_value < 0) {
@@ -360,7 +361,7 @@ void FinalVM::InstTuple(const VectorRef &args) {
   VectorRef tuple;
   auto iter = args.begin();
   for (; iter != args.end(); ++iter) {
-    auto a = utils::cast<int>(*iter);
+    auto a = utils::cast<int64_t>(*iter);
     tuple.push_back(Ref(a));
   }
   Push(tuple);
@@ -390,7 +391,7 @@ void FinalVM::InstInput(const VectorRef &args) {
     return;
   }
 
-  int rpos = utils::cast<int>(args[0]);
+  int64_t rpos = utils::cast<int64_t>(args[0]);
   Push(Ref(rpos));
   MS_LOG(DEBUG) << "End";
 }
@@ -404,10 +405,10 @@ void FinalVM::InstPadStack(const VectorRef &args) {
     return;
   }
 
-  int sz = utils::cast<int>(args[0]);
+  int64_t sz = utils::cast<int64_t>(args[0]);
   MS_LOG(DEBUG) << insts_stack_.size() << " need padstack " << sz << " sp_ " << sp_;
   size_t stack_size = insts_stack_.size();
-  int need = sz - (static_cast<int>(stack_size) - sp_);
+  int64_t need = sz - (static_cast<int64_t>(stack_size) - sp_);
   if (need > 0) {
     MS_LOG(DEBUG) << "InstPadStack resize: size:" << insts_stack_.size() << " need pad:" << need;
     insts_stack_.resize(stack_size + IntToSize(need));
@@ -426,7 +427,7 @@ void FinalVM::InstExternal(const VectorRef &args) {
   RunFunctionRef run_ref = utils::cast<RunFunctionRef>(args[0]);
   compile::RunFuncPtr fn = run_ref.func_;
   for (size_t i = 2; i < args.size(); ++i) {
-    auto index = utils::cast<int>(args[i]);
+    auto index = utils::cast<int64_t>(args[i]);
     tuple.push_back(Ref(index));
   }
 
@@ -455,7 +456,7 @@ void FinalVM::InstPushPrim(const VectorRef &args) {
   auto prim = utils::cast<PrimitivePtr>(args[0]);
   VectorRef tuple;
   for (size_t i = 1; i < args.size(); ++i) {
-    auto index = utils::cast<int>(args[i]);
+    auto index = utils::cast<int64_t>(args[i]);
     tuple.push_back(Ref(index));
   }
 

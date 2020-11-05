@@ -44,15 +44,15 @@ class TensorInfo {
   TensorLayout tensor_layout() const { return tensor_layout_; }
   Shape slice_shape() const { return slice_shape_; }
   Shape shape() const { return shape_; }
-  void set_reduce_dim(const std::vector<int32_t> &dim) { reduce_dim_ = dim; }
-  std::vector<int32_t> reduce_dim() const { return reduce_dim_; }
+  void set_reduce_dim(const std::vector<int64_t> &dim) { reduce_dim_ = dim; }
+  std::vector<int64_t> reduce_dim() const { return reduce_dim_; }
   Dimensions InferStrategy() const {
     Dimensions stra;
     for (size_t i = 0; i < shape_.size(); ++i) {
       if ((slice_shape_[i] == 0) || (shape_[i] % slice_shape_[i] != 0)) {
         return stra;
       }
-      int32_t dim = (int32_t)(shape_[i] / slice_shape_[i]);
+      int64_t dim = (int64_t)(shape_[i] / slice_shape_[i]);
       stra.push_back(dim);
     }
     return stra;
@@ -63,7 +63,7 @@ class TensorInfo {
   Shape shape_;
   Shape slice_shape_;
   // reduce method's reduce dim
-  std::vector<int32_t> reduce_dim_;
+  std::vector<int64_t> reduce_dim_;
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -86,7 +86,7 @@ bool SetInputsForSingleOpGraph(const OpExecInfoPtr &op_exec_info, const std::vec
     return false;
   }
 
-  int op_input_idx = 1;
+  int64_t op_input_idx = 1;
   size_t size = inputs.size();
   for (size_t i = 0; i < size; i++) {
     if (inputs[i] == nullptr) {
@@ -225,7 +225,7 @@ std::vector<MeTensorPtr> ConvertOutputTensors(const OpExecInfoPtr &op_exec_info,
                                               const std::vector<GeTensorPtr> &ge_tensors) {
   std::vector<MeTensorPtr> outputs;
   AbstractBasePtr abs_base = op_exec_info->abstract;
-  std::vector<std::vector<int>> shapes;
+  std::vector<std::vector<int64_t>> shapes;
   if (abs_base != nullptr && abs_base->isa<abstract::AbstractTensor>()) {
     auto arg_tensor = dyn_cast<abstract::AbstractTensor>(abs_base);
     shapes.emplace_back(arg_tensor->shape()->shape());

@@ -43,7 +43,7 @@ bool CheckOutputsIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(index_node);
     auto value_node = index_node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
-    int index = GetValue<int>(value_node->value());
+    auto index = GetValue<int64_t>(value_node->value());
     if (index == kBatchNormGradInferOutputNum || index == kBatchNormGradInferOutputNum + 1) {
       MS_LOG(DEBUG) << "The output " << index << " of node " << node->DebugString() << " is not null, no need change";
       return false;

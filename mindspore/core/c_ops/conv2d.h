@@ -32,27 +32,28 @@ class Conv2D : public PrimitiveC {
   Conv2D();
   ~Conv2D() = default;
   MS_DECLARE_PARENT(Conv2D, PrimitiveC);
-  void Init(int out_channel, const std::vector<int> &kernel_size, int mode = 1, const std::string &pad_mode = "valid",
-            const std::vector<int> &pad = {0, 0, 0, 0}, const std::vector<int> &stride = {1, 1, 1, 1},
-            const std::vector<int> &dilation = {1, 1, 1, 1}, int group = 1);
-  std::vector<int> get_kernel_size() const;
-  std::vector<int> get_stride() const;
-  std::vector<int> get_dilation() const;
+  void Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode = 1,
+            const std::string &pad_mode = "valid", const std::vector<int64_t> &pad = {0, 0, 0, 0},
+            const std::vector<int64_t> &stride = {1, 1, 1, 1}, const std::vector<int64_t> &dilation = {1, 1, 1, 1},
+            int64_t group = 1);
+  std::vector<int64_t> get_kernel_size() const;
+  std::vector<int64_t> get_stride() const;
+  std::vector<int64_t> get_dilation() const;
   std::string get_pad_mode() const;
-  std::vector<int> get_pad() const;
-  std::vector<int> get_pad_list() const;
-  int get_mode() const;
-  int get_group() const;
-  int get_output_channel() const;
-  void set_kernel_size(const std::vector<int> &kernel_size);
-  void set_stride(const std::vector<int> &stride);
-  void set_dilation(const std::vector<int> &dilation);
+  std::vector<int64_t> get_pad() const;
+  std::vector<int64_t> get_pad_list() const;
+  int64_t get_mode() const;
+  int64_t get_group() const;
+  int64_t get_output_channel() const;
+  void set_kernel_size(const std::vector<int64_t> &kernel_size);
+  void set_stride(const std::vector<int64_t> &stride);
+  void set_dilation(const std::vector<int64_t> &dilation);
   void set_pad_mode(const std::string &pad_mode);
-  void set_pad(const std::vector<int> &pad);
-  void set_mode(int mode);
-  void set_group(int group);
-  void set_out_channel(int output_channel);
-  void set_pad_list(const std::vector<int> &pad_list);
+  void set_pad(const std::vector<int64_t> &pad);
+  void set_mode(int64_t mode);
+  void set_group(int64_t group);
+  void set_out_channel(int64_t output_channel);
+  void set_pad_list(const std::vector<int64_t> &pad_list);
 };
 AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args);

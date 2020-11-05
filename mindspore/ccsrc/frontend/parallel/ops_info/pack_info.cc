@@ -33,8 +33,8 @@ Status PackInfo::GetAttrs() {
   auto axis_iter = attrs_.find(AXIS);
   if (axis_iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(axis_iter->second);
-    if (axis_iter->second->isa<Int32Imm>()) {
-      axis = axis_iter->second->cast<Int32ImmPtr>()->value();
+    if (axis_iter->second->isa<Int64Imm>()) {
+      axis = axis_iter->second->cast<Int64ImmPtr>()->value();
     } else {
       MS_LOG(ERROR) << name_ << ": The value of axis is not int";
       return FAILED;
@@ -181,7 +181,7 @@ void PackInfo::ReComputeBatchSplitFlagList() {
 
 Status PackInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status PackInfo::GenerateStrategies(int32_t stage_id) {
+Status PackInfo::GenerateStrategies(int64_t stage_id) {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Infer attrs failed";
     return FAILED;

@@ -40,11 +40,11 @@ Status BroadcastToInfo::GetAttrs() {
       return FAILED;
     }
     for (auto &ele : var->value()) {
-      if (!ele->isa<Int32Imm>()) {
+      if (!ele->isa<Int64Imm>()) {
         MS_LOG(ERROR) << name_ << ": The element of shape must be int";
         return FAILED;
       }
-      out_shape_.push_back(static_cast<int64_t>(GetValue<int>(ele)));
+      out_shape_.push_back(static_cast<int64_t>(GetValue<int64_t>(ele)));
     }
   } else {
     MS_LOG(ERROR) << name_ << ": Can not find the shape attr";
@@ -164,7 +164,7 @@ Status BroadcastToInfo::InferTensorInfo() {
 
 Status BroadcastToInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status BroadcastToInfo::GenerateStrategies(int32_t stage_id) {
+Status BroadcastToInfo::GenerateStrategies(int64_t stage_id) {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Infer attrs failed";
     return FAILED;
@@ -229,8 +229,8 @@ Status BroadcastToInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   Attr attr_shape = std::make_pair(SHAPE, MakeValue(to_shape));
   OperatorAttrs attrs = {attr_shape};
   auto new_broadcast_to = gen_g.PushBack({gen_g.NewOpInst(BROADCAST_TO, attrs), gen_g.virtual_input_node()});
-  std::vector<std::pair<AnfNodePtr, int>> input_nodes = {std::make_pair(new_broadcast_to, 1)};
-  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int>>, AnfNodePtr>>(
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(new_broadcast_to, 1)};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(input_nodes, new_broadcast_to));
 
   return SUCCESS;

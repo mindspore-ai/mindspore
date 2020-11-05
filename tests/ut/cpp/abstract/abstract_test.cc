@@ -77,7 +77,7 @@ TEST_F(TestAbstract, TestParseDataClass) {
   ASSERT_TRUE(foo != nullptr);
 
   AbstractBasePtr abstract_x = FromValue(1.1, true);
-  AbstractBasePtr abstract_y = FromValue(5, true);
+  AbstractBasePtr abstract_y = FromValue(static_cast<int64_t>(5), true);
 
   auto partical_func = dyn_cast<PartialAbstractClosure>(foo);
   AbstractBasePtrList args_spec_list = partical_func->args();

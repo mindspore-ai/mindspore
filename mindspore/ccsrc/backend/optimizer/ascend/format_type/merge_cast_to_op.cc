@@ -200,7 +200,7 @@ bool GetPriorOp(const AnfNodePtr &x_node, CNodePtr *prior_op, bool *single_outpu
       MS_EXCEPTION_IF_NULL(input2);
       auto value_ptr = input2->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_ptr);
-      *output_idx = IntToSize(GetValue<int>(value_ptr->value()));
+      *output_idx = LongToSize(GetValue<int64_t>(value_ptr->value()));
       *single_output = false;
     }
     return AnfAlgo::IsRealKernel(*prior_op);

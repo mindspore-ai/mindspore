@@ -97,7 +97,7 @@ class L2NormalizeGpuKernel : public GpuKernel {
     }
     int input_dim_length = SizeToInt(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0).size());
 
-    int axis = GetAttr<int>(kernel_node, "axis");
+    int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     axis_ = axis < 0 ? (axis + input_dim_length) : axis;
     epsilon_ = GetAttr<float>(kernel_node, "epsilon");
 

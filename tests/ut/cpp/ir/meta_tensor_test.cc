@@ -33,7 +33,7 @@ class TestMetaTensor : public UT::Common {
  public:
   TestMetaTensor() {}
   virtual void SetUp() {
-    std::vector<int> dimensions({2, 3});
+    std::vector<int64_t> dimensions({2, 3});
     meta_tensor_ = MetaTensor(TypeId::kNumberTypeFloat64, dimensions);
   }
 
@@ -42,7 +42,7 @@ class TestMetaTensor : public UT::Common {
 };
 
 TEST_F(TestMetaTensor, InitTest) {
-  std::vector<int> dimensions({2, 3});
+  std::vector<int64_t> dimensions({2, 3});
   MetaTensor meta_tensor(TypeId::kNumberTypeFloat64, dimensions);
 
   // Test type
@@ -65,7 +65,7 @@ TEST_F(TestMetaTensor, TypeTest) {
 
 // Test shape
 TEST_F(TestMetaTensor, ShapeTest) {
-  std::vector<int> dimensions({5, 6, 7});
+  std::vector<int64_t> dimensions({5, 6, 7});
   meta_tensor_.set_shape(dimensions);
 
   ASSERT_EQ(5, meta_tensor_.DimensionSize(0));
@@ -77,7 +77,7 @@ TEST_F(TestMetaTensor, ShapeTest) {
 }
 
 TEST_F(TestMetaTensor, EqualTest) {
-  std::vector<int> dimensions({2, 3});
+  std::vector<int64_t> dimensions({2, 3});
   MetaTensor meta_tensor_x(TypeId::kNumberTypeFloat64, dimensions);
   MetaTensor meta_tensor_y(meta_tensor_x);
 
@@ -110,7 +110,7 @@ py::array_t<float, py::array::c_style> BuildInputTensor() {
 }
 
 TEST_F(TestTensor, PyArrayScalarTest) {
-  std::vector<int> dimensions;
+  std::vector<int64_t> dimensions;
   py::array data = py::array_t<int64_t, py::array::c_style>(dimensions);
   uint8_t *data_buf = reinterpret_cast<uint8_t *>(data.request(true).ptr);
 
@@ -123,7 +123,7 @@ TEST_F(TestTensor, PyArrayScalarTest) {
 }
 
 TEST_F(TestTensor, InitScalarTest) {
-  std::vector<int> dimensions;
+  std::vector<int64_t> dimensions;
   Tensor tensor(TypeId::kNumberTypeInt64, dimensions);
   uint8_t *data_buf = reinterpret_cast<uint8_t *>(tensor.data_c());
 
@@ -142,7 +142,7 @@ TEST_F(TestTensor, InitScalarTest) {
 
   // Test shape
   ASSERT_EQ(0, tensor.shape().size());
-  std::vector<int> empty_shape;
+  std::vector<int64_t> empty_shape;
   ASSERT_EQ(empty_shape, tensor.shape());
 
   // Test number of elements
@@ -151,7 +151,7 @@ TEST_F(TestTensor, InitScalarTest) {
 }
 
 TEST_F(TestTensor, InitTensorPtrTest) {
-  std::vector<int> dimensions;
+  std::vector<int64_t> dimensions;
   Tensor tensor(TypeId::kNumberTypeInt64, dimensions);
 
   std::shared_ptr<Tensor> tensor_ptr = std::make_shared<Tensor>(tensor);
@@ -164,7 +164,7 @@ TEST_F(TestTensor, InitTensorPtrTest) {
 
   // Test shape
   ASSERT_EQ(0, tensor_ptr->shape().size());
-  std::vector<int> empty_shape;
+  std::vector<int64_t> empty_shape;
   ASSERT_EQ(empty_shape, tensor_ptr->shape());
 
   // Test number of elements
@@ -173,7 +173,7 @@ TEST_F(TestTensor, InitTensorPtrTest) {
 }
 
 TEST_F(TestTensor, InitByTupleTest) {
-  const std::vector<int> shape = {2, 3, 4};
+  const std::vector<int64_t> shape = {2, 3, 4};
   TypePtr data_type = kFloat32;
   Tensor tuple_tensor(data_type->type_id(), shape);
   ASSERT_EQ(2, tuple_tensor.DimensionSize(0));
@@ -232,7 +232,7 @@ TEST_F(TestTensor, ValueEqualTest) {
   ASSERT_TRUE(t1->ValueEqual(*t1));
   ASSERT_TRUE(t1->ValueEqual(*t2));
 
-  std::vector<int> shape = {6};
+  std::vector<int64_t> shape = {6};
   TensorPtr t3 = std::make_shared<Tensor>(kInt32->type_id(), shape);
   TensorPtr t4 = std::make_shared<Tensor>(kInt32->type_id(), shape);
   ASSERT_TRUE(t3->ValueEqual(*t3));
@@ -300,7 +300,7 @@ TEST_F(TestTensor, InitByFloatArrayDataTest) {
   std::cout << "Dim: " << tensor->DataDim() << std::endl;
   ASSERT_EQ(2, tensor->DataDim());
 
-  std::vector<int> dimensions = tensor->shape();
+  std::vector<int64_t> dimensions = tensor->shape();
   ASSERT_GT(dimensions.size(), 1);
   std::cout << "Dim0: " << dimensions[0] << std::endl;
   ASSERT_EQ(2, dimensions[0]);
@@ -341,7 +341,7 @@ TEST_F(TestTensor, TensorDataTest) {
   float ge_tensor_data[] = {1.1, 2.2, 3.3, 4.4, 5.5, 6.6};
 
   // Create a Tensor with wanted data type and shape
-  Tensor tensor(TypeId::kNumberTypeFloat32, std::vector<int>({2, 3}));
+  Tensor tensor(TypeId::kNumberTypeFloat32, std::vector<int64_t>({2, 3}));
 
   // Get the writable data pointer from the tensor
   float *me_tensor_data = reinterpret_cast<float *>(tensor.data_c());
@@ -363,7 +363,7 @@ TEST_F(TestTensor, TensorDataTest) {
 }
 
 TEST_F(TestTensor, TensorPyCast) {
-  std::vector<int> shape{2, 3, 4, 5};
+  std::vector<int64_t> shape{2, 3, 4, 5};
   py::tuple py_tuple = py::make_tuple(std::make_shared<Tensor>(kNumberTypeFloat32, shape));
   auto shape1 = py::cast<Tensor &>(py_tuple[0]).shape();
   const py::tuple &t = py_tuple;

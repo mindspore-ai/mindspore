@@ -85,7 +85,7 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_transpose_transdata_fusion", "before");
-  std::vector<int> shp{2, 4, 8, 16};
+  std::vector<int64_t> shp{2, 4, 8, 16};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list{x_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);

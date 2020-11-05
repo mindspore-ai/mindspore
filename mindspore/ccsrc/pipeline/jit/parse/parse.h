@@ -36,7 +36,7 @@ namespace mindspore {
 namespace parse {
 
 // Parse status define
-enum ParseStatusCode : int {
+enum ParseStatusCode : int64_t {
   PARSE_SUCCESS = 0,
   PARSE_FUNCTION_IS_NULL,            // python function is null
   PARSE_PARAMETER_INVALID,           // parameter is invalid
@@ -52,10 +52,10 @@ enum ParseStatusCode : int {
 // max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
 //  will be sunk(i.e. not unrolled)
 // NOTE: Since when the for loop was unrolled, it depends backend operators `tuple_getitem` and `scalar_add` which were
-//  not implemented, so here set MAX_FOR_LOOP_COUNT to int max limit to override default value `600`. This will make
+//  not implemented, so here set MAX_FOR_LOOP_COUNT to int64_t max limit to override default value `600`. This will make
 //  the for loop will always be unrolled, but don't worry about the memory were exhausted, an exception will be raised
 //  when function call depth execeeds the limit `context.get_context('max_call_depth')`.
-const int MAX_FOR_LOOP_COUNT = std::numeric_limits<int>::max();
+const int64_t MAX_FOR_LOOP_COUNT = std::numeric_limits<int64_t>::max();
 
 class AstNodeType;
 class ParseAst;
@@ -324,7 +324,7 @@ class ParseAst {
 
   const std::string &function_filename() const { return function_filename_; }
 
-  int function_line_offset() const { return function_line_offset_; }
+  int64_t function_line_offset() const { return function_line_offset_; }
 
   py::function function() { return function_; }
 
@@ -357,7 +357,7 @@ class ParseAst {
   std::string function_name_;
   std::string function_module_;
   std::string function_filename_;
-  int function_line_offset_;
+  int64_t function_line_offset_;
 };
 
 // update the graph flags

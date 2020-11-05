@@ -53,7 +53,7 @@ class Activation : public ActivationBase {
              const PrimitiveAttrs &attrs)
       : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationCost>(false)) {}
   ~Activation() override = default;
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
@@ -104,7 +104,7 @@ class Softmax : public ActivationBase {
                    const PrimitiveAttrs &attrs)
       : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftmaxCost>(false)) {}
   ~Softmax() override = default;
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
@@ -112,7 +112,7 @@ class Softmax : public ActivationBase {
   Status GetAttrs() override;
 
  private:
-  std::vector<int32_t> axis_;
+  std::vector<int64_t> axis_;
 };
 
 class SoftmaxInfo : public Softmax {
@@ -211,7 +211,7 @@ class ExpandDimsInfo : public ActivationOther {
   Status InferTensorStrategy();
 
  private:
-  int32_t positive_axis_ = -1;
+  int64_t positive_axis_ = -1;
   Strategys inputs_strategy_;
   Strategys outputs_strategy_;
 };
@@ -257,7 +257,7 @@ class DropoutInfo : public ActivationOther {
               const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~DropoutInfo() override = default;
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;

@@ -60,7 +60,7 @@ void ClearPyNativeSession();
 
 struct GraphInfo {
   std::unordered_set<std::string> params;  // hold input parameters and cell weigths
-  std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int>>> node_map;
+  std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int64_t>>> node_map;
   AnfNodePtr output;
   std::vector<std::string> objects;
 };
@@ -144,20 +144,20 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_pyobj(FuncGraphPtr g, const std::string obj) { graph_info_map_[g].objects.push_back(obj); }
   void set_node_map(const FuncGraphPtr &g, const py::object &node, const AnfNodePtr &cnode, bool is_param = false);
   void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node) {
-    graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int>{-1});
+    graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int64_t>{-1});
   }
   void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node, int index) {
-    graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int>{index});
+    graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int64_t>{index});
   }
-  void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node, std::vector<int> index) {
+  void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node, std::vector<int64_t> index) {
     graph_info_map_[g].node_map[obj] = std::make_pair(node, index);
   }
   void set_tuple_node_map(const FuncGraphPtr &g, const py::object &node, const AnfNodePtr &cnode,
-                          const std::vector<int> &idx, bool is_param = false);
+                          const std::vector<int64_t> &idx, bool is_param = false);
 
   static std::shared_ptr<PynativeExecutor> executor_;
   static std::mutex instance_lock_;
-  static int graph_id_;
+  static int64_t graph_id_;
   bool grad_flag_{false};
   bool first_grad_step_{false};
   bool grad_is_running{false};

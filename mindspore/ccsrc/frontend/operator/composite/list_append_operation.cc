@@ -43,7 +43,7 @@ FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   elems.push_back(NewValueNode(prim::kPrimMakeList));
   size_t arg0_length = arg0_list->size();
   for (size_t i = 0; i < arg0_length; ++i) {
-    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(SizeToInt(i))}));
+    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimListGetItem), arg0_node, NewValueNode(SizeToLong(i))}));
   }
   AnfNodePtr arg1_node = ret->add_parameter();
   elems.push_back(arg1_node);

@@ -62,19 +62,10 @@ extern const std::shared_ptr<NoShape> kNoShape;
 
 class Shape : public BaseShape {
  public:
-  static const int SHP_ANY = -1;
+  static const int64_t SHP_ANY = -1;
   Shape() : shape_() {}
-  Shape(const std::initializer_list<int> &list) : shape_(list) {}
-  Shape(const std::initializer_list<int64_t> &list) {
-    std::vector<int64_t> list_in(list);
-    (void)std::transform(list_in.begin(), list_in.end(), std::back_inserter(shape_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
-  }
+  Shape(const std::initializer_list<int64_t> &list) : shape_(list) {}
   explicit Shape(const ShapeVector &list) : shape_(list) {}
-  explicit Shape(const std::vector<int64_t> &list) {
-    (void)std::transform(list.begin(), list.end(), std::back_inserter(shape_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
-  }
   Shape(const ShapeVector &list, const ShapeVector &min_shape, const ShapeVector &max_shape)
       : shape_(list), min_shape_(min_shape), max_shape_(max_shape) {}
   ~Shape() override = default;

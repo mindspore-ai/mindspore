@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace parallel {
-constexpr int32_t MAP_NONE = -1;
+constexpr int64_t MAP_NONE = -1;
 
 class Map : public Array {
  public:
@@ -36,7 +36,7 @@ class Map : public Array {
   ~Map() override = default;
   Status Init(const Shape &array) override;
   int64_t GetMaxItem() const;
-  int32_t GetIndexByValue(int64_t value) const;
+  int64_t GetIndexByValue(int64_t value) const;
   std::shared_ptr<Map> ExpandMapByNone(const Arrangement &expand_num_list) const;
   std::shared_ptr<Map> ExpandMapByDecreaseNumber(const Arrangement &expand_num_list) const;
   std::shared_ptr<std::vector<Arrangement>> ReMapVector(const std::vector<Arrangement> &input_vector) const;

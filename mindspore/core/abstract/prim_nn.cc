@@ -35,15 +35,15 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
   if (input_shape->shape().size() != 4) {
     MS_LOG(EXCEPTION) << "Pooling input should be a 4-D tensor.";
   }
-  int h_input = input_shape->shape()[2];
-  int w_input = input_shape->shape()[3];
+  int64_t h_input = input_shape->shape()[2];
+  int64_t w_input = input_shape->shape()[3];
 
-  int window = primitive->GetAttr("window")->cast<Int32ImmPtr>()->value();
-  int stride = primitive->GetAttr("stride")->cast<Int32ImmPtr>()->value();
-  int padding = primitive->GetAttr("pad")->cast<Int32ImmPtr>()->value();
-  int nan_opt = primitive->GetAttr("nan_opt")->cast<Int32ImmPtr>()->value();
-  int data_mode = primitive->GetAttr("data_mode")->cast<Int32ImmPtr>()->value();
-  int ceil_mode = primitive->GetAttr("ceil_mode")->cast<Int32ImmPtr>()->value();
+  int64_t window = primitive->GetAttr("window")->cast<Int64ImmPtr>()->value();
+  int64_t stride = primitive->GetAttr("stride")->cast<Int64ImmPtr>()->value();
+  int64_t padding = primitive->GetAttr("pad")->cast<Int64ImmPtr>()->value();
+  int64_t nan_opt = primitive->GetAttr("nan_opt")->cast<Int64ImmPtr>()->value();
+  int64_t data_mode = primitive->GetAttr("data_mode")->cast<Int64ImmPtr>()->value();
+  int64_t ceil_mode = primitive->GetAttr("ceil_mode")->cast<Int64ImmPtr>()->value();
 
   if (stride <= 0) {
     MS_LOG(EXCEPTION) << "Invalid stride value: " << stride << ", should greater then 0";
@@ -81,8 +81,8 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
     }
   }
 
-  int h_out = ((h_input + 2 * padding - (window - 1) - 1) / stride) + 1;
-  int w_out = ((w_input + 2 * padding - (window - 1) - 1) / stride) + 1;
+  int64_t h_out = ((h_input + 2 * padding - (window - 1) - 1) / stride) + 1;
+  int64_t w_out = ((w_input + 2 * padding - (window - 1) - 1) / stride) + 1;
   ShapeVector shape_out = {input_shape->shape()[0], input_shape->shape()[1], h_out, w_out};
   AbstractBasePtr ret = input_tensor->Broaden();
   ret->set_shape(std::make_shared<Shape>(shape_out));
@@ -329,10 +329,10 @@ AbstractBasePtr InferImplLayerNorm(const AnalysisEnginePtr &, const PrimitivePtr
 
   // begin_norm_axis and begin_params_axis should be smaller than the size of input_x and >= -1
   ValuePtr bna_ptr = primitive->GetAttr("begin_norm_axis");
-  int begin_norm_axis = CheckAxis(op_name, bna_ptr, -1, SizeToInt(input_rank) - 1);
+  int64_t begin_norm_axis = CheckAxis(op_name, bna_ptr, -1, SizeToLong(input_rank) - 1);
 
   ValuePtr bpa_ptr = primitive->GetAttr("begin_params_axis");
-  int begin_params_axis = CheckAxis(op_name, bpa_ptr, -1, SizeToInt(input_rank) - 1);
+  int64_t begin_params_axis = CheckAxis(op_name, bpa_ptr, -1, SizeToLong(input_rank) - 1);
   begin_params_axis = GetPositiveAxis(begin_params_axis, input_rank);
 
   // the beta and gama shape should be x_shape[begin_params_axis:]
@@ -353,7 +353,7 @@ AbstractBasePtr InferImplLayerNorm(const AnalysisEnginePtr &, const PrimitivePtr
     MS_LOG(EXCEPTION) << "LayerNorm evaluator gamma or beta is a AbstractScalar that is not support.";
   }
 
-  size_t begin_params_axis_u = IntToSize(begin_params_axis);
+  size_t begin_params_axis_u = LongToSize(begin_params_axis);
   if ((begin_params_axis_u > input_shape_list.size()) ||
       (gamma_shape_list.size() + begin_params_axis_u < input_shape_list.size()) ||
       (beta_shape_list.size() + begin_params_axis_u < input_shape_list.size())) {
@@ -423,8 +423,6 @@ AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const Primiti
     int64_t e_value = 0;
     if (value_track->isa<Int64Imm>()) {
       e_value = GetValue<int64_t>(value_track);
-    } else if (value_track->isa<Int32Imm>()) {
-      e_value = static_cast<int64_t>(GetValue<int>(value_track));
     } else {
       MS_LOG(EXCEPTION) << "DropOutGenMask input x_shape elements is not int64 or int32, but "
                         << value_track->ToString() << ".";

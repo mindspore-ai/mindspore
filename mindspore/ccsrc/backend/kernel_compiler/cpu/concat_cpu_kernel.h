@@ -36,7 +36,7 @@ class ConcatCPUKernel : public CPUKernel {
   void CheckParam(const CNodePtr &kernel_node);
   void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1, size_t dim2,
                         float **output_addr, size_t *buff_size);
-  int axis_;
+  int64_t axis_;
   std::vector<std::vector<size_t>> input_shape_list_;
   std::vector<size_t> output_shape_;
 };

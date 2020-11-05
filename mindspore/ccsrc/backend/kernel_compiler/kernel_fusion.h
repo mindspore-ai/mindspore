@@ -26,15 +26,15 @@ namespace kernel {
  * @brief fuse op and return a callable mod
  */
 struct FusionScopeInfo {
-  FusionScopeInfo(int32_t id, std::vector<AnfNodePtr> in, std::vector<AnfNodePtr> comp, std::vector<AnfNodePtr> out)
+  FusionScopeInfo(int64_t id, std::vector<AnfNodePtr> in, std::vector<AnfNodePtr> comp, std::vector<AnfNodePtr> out)
       : scope_id(id), input_nodes(std::move(in)), compute_nodes(std::move(comp)), output_nodes(std::move(out)) {}
-  int32_t scope_id{};
+  int64_t scope_id{};
   std::vector<AnfNodePtr> input_nodes;
   std::vector<AnfNodePtr> compute_nodes;
   std::vector<AnfNodePtr> output_nodes;
 };
 
-std::map<int32_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> &fusion_scopes);
+std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> &fusion_scopes);
 }  // namespace kernel
 }  // namespace mindspore
 

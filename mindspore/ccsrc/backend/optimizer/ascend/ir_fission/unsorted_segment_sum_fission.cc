@@ -35,7 +35,7 @@ CNodePtr CreatePadding(const FuncGraphPtr &graph, const CNodePtr &origin_node, c
   shape[shape.size() - 1] = pad_dim_size;
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetPrevNodeOutputInferDataType(origin_node, 0)}, {shape},
                                       padding.get());
-  AnfAlgo::SetNodeAttr(kAttrPadDimSize, MakeValue(SizeToInt(pad_dim_size)), padding);
+  AnfAlgo::SetNodeAttr(kAttrPadDimSize, MakeValue(SizeToLong(pad_dim_size)), padding);
   return padding;
 }
 
@@ -53,7 +53,7 @@ CNodePtr CreateUnsortedSegmentSum(const FuncGraphPtr &graph, const CNodePtr &ori
   shape[shape.size() - 1] = pad_dim_size;
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape},
                                       unsorted_segment_sum.get());
-  AnfAlgo::SetNodeAttr(kAttrNumSegments, MakeValue(SizeToInt(shape[0])), unsorted_segment_sum);
+  AnfAlgo::SetNodeAttr(kAttrNumSegments, MakeValue(SizeToLong(shape[0])), unsorted_segment_sum);
   return unsorted_segment_sum;
 }
 
@@ -70,8 +70,8 @@ CNodePtr CreateSlice(const FuncGraphPtr &graph, const CNodePtr &unsort_segment_s
   slice->set_abstract(unsort_segment_sum->abstract());
   auto unsort_segment_sum_shape = AnfAlgo::GetOutputInferShape(unsort_segment_sum, 0);
   std::vector<size_t> offsets(unsort_segment_sum_shape.size(), 0);
-  AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Int(offsets)), slice);
-  AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(Convert2Int(unsort_segment_sum_shape)), slice);
+  AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(offsets)), slice);
+  AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(Convert2Long(unsort_segment_sum_shape)), slice);
   return slice;
 }
 }  // namespace

@@ -23,6 +23,7 @@
 
 #include "pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace tensor {

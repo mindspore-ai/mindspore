@@ -55,7 +55,7 @@ bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *const fu
   bool result = false;
 
   if (func != nullptr) {
-    int args_num = GetPrimType(prim);
+    int64_t args_num = GetPrimType(prim);
     std::vector<TypePtr> one_arg{std::make_shared<Number>()};
     std::vector<TypePtr> two_args{std::make_shared<Number>(), std::make_shared<Number>()};
     TypePtr retval = std::make_shared<Number>();
@@ -76,9 +76,9 @@ bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *const fu
   return result;
 }
 
-int PrimToFunction::GetPrimType(const PrimitivePtr &prim) const {
+int64_t PrimToFunction::GetPrimType(const PrimitivePtr &prim) const {
   MS_EXCEPTION_IF_NULL(prim);
-  int prim_type = static_cast<int>(kPrimTypeUnknown);
+  int64_t prim_type = static_cast<int64_t>(kPrimTypeUnknown);
 
   auto value = prim_func_type_map_.find(prim->name());
   if (value != prim_func_type_map_.end()) {

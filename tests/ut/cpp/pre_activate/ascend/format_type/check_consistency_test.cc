@@ -45,7 +45,7 @@ TEST_F(TestHWCheckConsistency, test_check_consistency_for_format) {
   get_py_fun_.SetDoResolve(true);
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_check_consistency", "graph");
   // renormalize func_graph to infer and set shape and type information.
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   g->parameters()[0]->set_abstract(x_abstract);
   auto g_cast = g->get_return()->input(1);
@@ -106,7 +106,7 @@ TEST_F(TestHWCheckConsistency, test_check_consistency_for_dtype) {
   get_py_fun_.SetDoResolve(true);
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_check_consistency", "graph");
   // Renormalize func_graph to infer and set shape and type information.
-  std::vector<int> shp{2, 32, 224, 224};
+  std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   g->parameters()[0]->set_abstract(x_abstract);
   auto g_cast = g->get_return()->input(1);

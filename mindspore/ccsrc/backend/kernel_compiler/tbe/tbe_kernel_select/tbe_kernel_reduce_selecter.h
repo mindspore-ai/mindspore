@@ -43,7 +43,7 @@ class TbeKernelReduceSelecter {
   CNodePtr cnode_ptr_;
   std::vector<size_t> input_shape_{};
   std::vector<size_t> output_shape_{};
-  std::vector<int> axis_{};
+  std::vector<int64_t> axis_{};
   bool keep_dims_ = false;
 };
 }  // namespace kernel

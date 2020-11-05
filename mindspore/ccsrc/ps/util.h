@@ -33,21 +33,21 @@ class Util {
   static bool IsRoleOfPServer();
   static bool IsRoleOfScheduler();
   static void SetInternalEnvVar();
-  static int optimizer_id(std::string name);
-  static std::string optimizer_name(int id);
-  static std::string optimizer_node_name(int id);
+  static int64_t optimizer_id(std::string name);
+  static std::string optimizer_name(int64_t id);
+  static std::string optimizer_node_name(int64_t id);
   static bool is_optimizer(std::string name);
-  static int LocalShard(int first_dim, int rank_id, int server_num);
-  static std::map<int, int> AllRankLocalShard(int first_dim, int rank_id, int server_num);
+  static int64_t LocalShard(int64_t first_dim, int64_t rank_id, int64_t server_num);
+  static std::map<int64_t, int64_t> AllRankLocalShard(int64_t first_dim, int64_t rank_id, int64_t server_num);
   static void ReduceSparseGradient(float *gradients, int *indices, const size_t indices_size, size_t segment_size,
                                    const size_t first_dim_size, const size_t outer_dim_size,
                                    mindspore::kernel::SparseGradient<int> *unique_sparse_grad);
 
  private:
-  static std::unordered_map<std::string, int> optimizer_to_ids;
-  static std::unordered_map<int, std::string> id_to_optimizers;
-  static std::unordered_map<int, std::string> id_to_optimizer_nodes;
-  static int rank_id_;
+  static std::unordered_map<std::string, int64_t> optimizer_to_ids;
+  static std::unordered_map<int64_t, std::string> id_to_optimizers;
+  static std::unordered_map<int64_t, std::string> id_to_optimizer_nodes;
+  static int64_t rank_id_;
 };
 }  // namespace ps
 }  // namespace mindspore

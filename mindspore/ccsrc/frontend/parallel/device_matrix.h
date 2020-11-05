@@ -26,21 +26,21 @@
 
 namespace mindspore {
 namespace parallel {
-using RankList = std::vector<int32_t>;
+using RankList = std::vector<int64_t>;
 using Shape = std::vector<int64_t>;
 
 class DeviceMatrix {
  public:
-  DeviceMatrix(int32_t rank, RankList devices, Shape dev_shape);
+  DeviceMatrix(int64_t rank, RankList devices, Shape dev_shape);
   DeviceMatrix() = default;
   ~DeviceMatrix() = default;
   std::vector<RankList> group_list() const { return group_list_; }
   Status CreateGroupList();
   Status GetDevicesByTensorMap(const Shape &tensor_map, RankList *rank_list);
-  Status GetDevicesAlongDim(const uint32_t &dim, RankList *devices);
+  Status GetDevicesAlongDim(const uint64_t &dim, RankList *devices);
 
  private:
-  int32_t rank_ = -1;
+  int64_t rank_ = -1;
   RankList dev_list_;
   // From low dim to high dim. eg: [D0 D1 D2 D3]
   Shape dev_shape_;

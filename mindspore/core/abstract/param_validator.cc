@@ -119,14 +119,14 @@ TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_ba
   return type_base;
 }
 
-int CheckAxis(const std::string &op, const ValuePtr &axis, int minimum, int max) {
+int64_t CheckAxis(const std::string &op, const ValuePtr &axis, int64_t minimum, int64_t max) {
   if (axis == nullptr) {
     MS_LOG(EXCEPTION) << op << " evaluator axis is null";
   }
-  if (!axis->isa<Int32Imm>()) {
-    MS_LOG(EXCEPTION) << op << " evaluator axis should be int, but got " << axis->type_name();
+  if (!axis->isa<Int64Imm>()) {
+    MS_LOG(EXCEPTION) << op << " evaluator axis should be int64_t, but got " << axis->type_name();
   }
-  int axis_value = GetValue<int>(axis);
+  int64_t axis_value = GetValue<int64_t>(axis);
   if (axis_value > max || axis_value < minimum) {
     MS_LOG(EXCEPTION) << op << " evaluator axis value should be in the range [" << minimum << ", " << max
                       << "], but get " << axis_value;

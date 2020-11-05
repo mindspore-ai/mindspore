@@ -23,9 +23,9 @@ void GatherV2CPUKernel::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indices_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  axis_ = AnfAlgo::GetNodeAttr<int>(kernel_node, AXIS);
+  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis_ < 0) {
-    axis_ = axis_ + SizeToInt(input_shape_.size());
+    axis_ = axis_ + SizeToLong(input_shape_.size());
   }
   axis_ += 4 - input_shape_.size();
   CPUKernelUtils::ExpandDimsTo4(&input_shape_);
@@ -75,7 +75,7 @@ void GatherV2CPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &
       MS_LOG(EXCEPTION) << "The indices value is less than 0.";
     }
     size_t index = IntToSize(indices_addr[i]);
-    if (index >= input_shape_[IntToSize(axis_)]) {
+    if (index >= input_shape_[LongToSize(axis_)]) {
       auto ret = memset_s(*output_addr, *buff_size, 0., num * sizeof(float));
       if (ret != EOK) {
         MS_LOG(EXCEPTION) << "memset failed.";

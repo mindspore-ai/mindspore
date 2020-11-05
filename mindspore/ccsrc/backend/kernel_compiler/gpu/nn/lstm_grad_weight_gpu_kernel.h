@@ -89,9 +89,9 @@ class LstmGradWeightGpuKernel : public GpuKernel {
     seq_len_ = SizeToInt(input_shape[0]);
     batch_size_ = SizeToInt(input_shape[1]);
 
-    input_size_ = GetAttr<int>(kernel_node, "input_size");
-    hidden_size_ = GetAttr<int>(kernel_node, "hidden_size");
-    num_layers_ = GetAttr<int>(kernel_node, "num_layers");
+    input_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "input_size"));
+    hidden_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "hidden_size"));
+    num_layers_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "num_layers"));
     has_bias_ = GetAttr<bool>(kernel_node, "has_bias");
     bidirectional_ = GetAttr<bool>(kernel_node, "bidirectional");
     dropout_ = GetAttr<float>(kernel_node, "dropout");

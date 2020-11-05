@@ -91,7 +91,7 @@ AnfNodePtr BuildNewParameter(const PatternPtr &pattern, const MatchResultPtr &re
   auto new_para_pattern = pattern->cast<NewParameterPtr>();
   MS_EXCEPTION_IF_NULL(new_para_pattern);
   if (!new_para_pattern->built()) {
-    static int parameter_id = 0;
+    static int64_t parameter_id = 0;
     auto para_name = new_para_pattern->para_name() + new_para_pattern->unique_name() + std::to_string(parameter_id++);
     auto para_node = std::make_shared<Parameter>(top_graph);
     MS_EXCEPTION_IF_NULL(para_node);
@@ -125,7 +125,7 @@ AnfNodePtr BuildImmNode(const PatternPtr &pattern, const MatchResultPtr &res) {
   auto imm_pattern = pattern->cast<ImmPtr>();
   MS_EXCEPTION_IF_NULL(imm_pattern);
   auto value = imm_pattern->value();
-  auto scalar_value_ptr = std::make_shared<Int32Imm>(value);
+  auto scalar_value_ptr = std::make_shared<Int64Imm>(value);
   return std::make_shared<ValueNode>(scalar_value_ptr);
 }
 

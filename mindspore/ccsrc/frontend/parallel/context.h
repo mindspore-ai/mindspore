@@ -64,17 +64,17 @@ class ParallelContext {
   void set_loss_repeated_mean(bool loss_repeated_mean);
   bool loss_repeated_mean() const { return loss_repeated_mean_; }
 
-  void set_device_num(int32_t device_num);
-  int32_t device_num() const { return device_num_; }
+  void set_device_num(int64_t device_num);
+  int64_t device_num() const { return device_num_; }
 
-  void set_pipeline_stage_split_num(const int32_t stages);
-  int32_t pipeline_stage_split_num() const { return pipeline_stage_split_num_; }
+  void set_pipeline_stage_split_num(const int64_t stages);
+  int64_t pipeline_stage_split_num() const { return pipeline_stage_split_num_; }
 
-  void set_stage(const std::vector<int32_t> &stages);
-  std::vector<int32_t> stage() const { return stages_; }
+  void set_stage(const std::vector<int64_t> &stages);
+  std::vector<int64_t> stage() const { return stages_; }
 
-  void set_global_rank(int32_t global_rank);
-  int32_t global_rank() const { return global_rank_; }
+  void set_global_rank(int64_t global_rank);
+  int64_t global_rank() const { return global_rank_; }
 
   bool set_parallel_mode(const std::string &parallel_mode);
   std::string parallel_mode() const { return parallel_mode_; }
@@ -117,11 +117,11 @@ class ParallelContext {
   bool full_batch_;
   bool gradient_fp32_sync_;
   bool loss_repeated_mean_;
-  int32_t device_num_;
-  int32_t global_rank_;
+  int64_t device_num_;
+  int64_t global_rank_;
   std::string parallel_mode_;
   std::string strategy_search_mode_;
-  std::vector<int32_t> stages_;
+  std::vector<int64_t> stages_;
   int32_t pipeline_stage_split_num_;
   bool parameter_broadcast_;
   bool device_num_is_set_;

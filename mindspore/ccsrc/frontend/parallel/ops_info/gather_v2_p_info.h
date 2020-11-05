@@ -43,7 +43,7 @@ class GatherV2PInfo : public OperatorInfo {
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
 
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
   std::shared_ptr<Strategys> GenerateBatchStrategies() override;
@@ -70,7 +70,7 @@ class GatherV2PInfo : public OperatorInfo {
   Status InferOffset();
   Status InferGroup();
 
-  int32_t axis_;
+  int64_t axis_;
   std::string target_ = DEVICE;
   int64_t bias_;
   int64_t index_offset_;

@@ -51,7 +51,7 @@ class UniqueCpuKernelTest : public UT::Common {
 
   std::vector<float> x_;
   std::vector<float> y_;
-  std::vector<int> idx_;
+  std::vector<int64_t> idx_;
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspace_;
   std::vector<AddressPtr> outputs_;
@@ -68,7 +68,7 @@ TEST_F(UniqueCpuKernelTest, compute_test) {
 
   // check compute result
   std::vector<float> expect_y{1, 2, 4, 7, 8};
-  std::vector<int> expect_idx{0, 0, 1, 2, 2, 2, 3, 4, 4};
+  std::vector<int64_t> expect_idx{0, 0, 1, 2, 2, 2, 3, 4, 4};
   EXPECT_TRUE(y_ == expect_y);
   EXPECT_TRUE(idx_ == expect_idx);
 }

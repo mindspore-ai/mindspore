@@ -40,7 +40,7 @@ class BatchParallelInfo : public OperatorInfo {
   ~BatchParallelInfo() override = default;
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
-  Status GenerateStrategies(int32_t stage_id) override;
+  Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
@@ -55,7 +55,7 @@ class BatchParallelInfo : public OperatorInfo {
   Status InferAsLossDivisor() override;
 
  private:
-  int32_t dev_num_;
+  int64_t dev_num_;
 };
 
 class SparseSoftmaxCrossEntropyWithLogitsInfo : public BatchParallelInfo {

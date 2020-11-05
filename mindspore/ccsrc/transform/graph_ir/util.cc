@@ -323,7 +323,7 @@ ShapeVector TransformUtil::ConvertGeShape(const GeShape &ge_shape) {
 }
 
 ShapeVector TransformUtil::ConvertGeShape(const GeShape &ge_shape, const ShapeVector &request_dims) {
-  vector<int> ret;
+  vector<int64_t> ret;
   if (ge_shape.GetDimNum() == 0) {
     MS_LOG(DEBUG) << "GeTensor's shape is scalar";
     return ret;
@@ -370,7 +370,7 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const 
 MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr &ge_tensor) {
   MS_EXCEPTION_IF_NULL(ge_tensor);
   GeShape ge_shape = ge_tensor->GetTensorDesc().GetShape();
-  vector<int> me_dims = ConvertGeShape(ge_shape);
+  vector<int64_t> me_dims = ConvertGeShape(ge_shape);
 
   TypeId type_id = ConvertGeDataType(ge_tensor->GetTensorDesc().GetDataType());
   if (type_id == MeDataType::kTypeUnknown) {
@@ -385,7 +385,7 @@ MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr &ge_tensor) {
 MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr ge_tensor, const ShapeVector &request_dims) {
   MS_EXCEPTION_IF_NULL(ge_tensor);
   GeShape ge_shape = ge_tensor->GetTensorDesc().GetShape();
-  vector<int> me_dims = ConvertGeShape(ge_shape, request_dims);
+  vector<int64_t> me_dims = ConvertGeShape(ge_shape, request_dims);
   MS_LOG(INFO) << "GE tensor type is " << static_cast<int>(ge_tensor->GetTensorDesc().GetDataType());
   // Create a tensor with wanted data type and shape
   TypeId type_id = ConvertGeDataType(ge_tensor->GetTensorDesc().GetDataType());

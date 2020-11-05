@@ -43,7 +43,7 @@ class GraphKernelReuse {
 
  private:
   std::unordered_map<std::string, std::vector<FuncGraphPtr>> graph_kernel_ops;
-  int count;
+  int64_t count;
 };
 }  // namespace opt
 }  // namespace mindspore

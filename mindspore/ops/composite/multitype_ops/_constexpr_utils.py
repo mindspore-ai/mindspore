@@ -675,7 +675,7 @@ def get_pos_of_int_index(indexes_types):
     """Get int index positions from the mixed tensors index which contains int, tensor, slice, and ellipsis."""
     int_positions = []
     for i, ele_type in enumerate(indexes_types):
-        if ele_type == mstype.int32:
+        if ele_type in (mstype.int32, mstype.int64):
             int_positions.append(i)
     return int_positions
 
@@ -695,7 +695,7 @@ def separate_mixed_tensors_index(indexes_types, op_name):
             ellipsis_position = i
         else:
             raise IndexError(f"For '{op_name}', the index elements only support "
-                             f"'Tensor', 'int32', 'Slice', 'Ellipsis', but got {ele_type}.")
+                             f"'Tensor', 'int32', 'int64', 'Slice', 'Ellipsis', but got {ele_type}.")
 
     return tensor_positions, slice_positions, ellipsis_position
 

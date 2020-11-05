@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SOFTMAX_GRAD_GPU_KERNEL_H_
 
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
@@ -123,11 +124,14 @@ class SoftmaxGradGpuKernel : public GpuKernel {
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "LogSoftmaxGrad") {
       algo_ = CUDNN_SOFTMAX_LOG;
-      auto axis = GetAttr<int>(kernel_node, "axis");
+      auto axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
       InitSizeByAxis(input_shape, axis);
     } else {
       algo_ = CUDNN_SOFTMAX_ACCURATE;
-      auto axis = GetAttr<std::vector<int>>(kernel_node, "axis");
+      std::vector<int> axis;
+      std::vector<int64_t> axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
+      (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
+                           [](const int64_t &value) { return static_cast<int>(value); });
       InitSizeByAxis(input_shape, axis[0]);
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(

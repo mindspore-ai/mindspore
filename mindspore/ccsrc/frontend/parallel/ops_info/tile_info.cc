@@ -53,8 +53,8 @@ Status TileInfo::GetAttrs() {
 
   for (auto &element : elements) {
     MS_EXCEPTION_IF_NULL(element);
-    if (element->isa<Int32Imm>()) {
-      int64_t axis = static_cast<int64_t>(element->cast<Int32ImmPtr>()->value());
+    if (element->isa<Int64Imm>()) {
+      int64_t axis = static_cast<int64_t>(element->cast<Int64ImmPtr>()->value());
       full_multiples_.push_back(axis);
     } else {
       MS_LOG(ERROR) << name_ << ": The value of axis must be int32.";
@@ -105,8 +105,8 @@ Status TileInfo::InferTensorMap() {
   }
 
   // cannot use dev_matrix_shape_ replace outputs_shape_[0], because it may not be fully split in all devices.
-  int32_t size = SizeToInt(outputs_shape_[0].size());
-  for (int i = 0; i < size; ++i) {
+  int64_t size = SizeToLong(outputs_shape_[0].size());
+  for (int64_t i = 0; i < size; ++i) {
     output_tensor_map.push_back(size - i - 1);
   }
 
@@ -175,10 +175,7 @@ void TileInfo::UpdateMultiples(const CNodePtr &cnode) {
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
 
-  std::vector<int32_t> slice_multiples_int;
-  (void)std::transform(slice_multiples_.begin(), slice_multiples_.end(), std::back_inserter(slice_multiples_int),
-                       [](const int64_t &value) { return static_cast<int32_t>(value); });
-  ValuePtr new_multiples = MakeValue(slice_multiples_int);
+  ValuePtr new_multiples = MakeValue(slice_multiples_);
   AnfNodePtr val = NewValueNode(new_multiples);
   (void)manager->Replace(cnode->input(2), val);
 }
@@ -194,7 +191,7 @@ std::shared_ptr<Strategys> TileInfo::GenerateBatchStrategies() {
 
 Status TileInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status TileInfo::GenerateStrategies(int32_t stage_id) {
+Status TileInfo::GenerateStrategies(int64_t stage_id) {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Infer attrs failed";
     return FAILED;

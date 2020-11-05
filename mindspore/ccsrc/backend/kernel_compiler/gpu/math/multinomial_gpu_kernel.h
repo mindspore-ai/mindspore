@@ -92,8 +92,8 @@ class MultinomialGpuKernel : public GpuKernel {
       output_size_ *= output_shape[i];
     }
     workspace_size_ = output_size_;
-    seed_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed"));
-    seed2_ = GetValue<int>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2"));
+    seed_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed")));
+    seed2_ = static_cast<int>(GetValue<int64_t>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2")));
     InitSizeLists();
     return true;
   }

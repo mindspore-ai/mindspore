@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/pad_impl.cuh"
@@ -77,7 +78,15 @@ class PadGpuFwdKernel : public GpuKernel {
       input_shape.insert(it, 2, 1);  // channel padding
       shape_size_ = 4;
     }
-    paddings = GetValue<std::vector<std::vector<int>>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("paddings"));
+    std::vector<std::vector<int64_t>> paddings_me =
+      GetValue<std::vector<std::vector<int64_t>>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("paddings"));
+    (void)std::transform(paddings_me.begin(), paddings_me.end(), std::back_inserter(paddings),
+                         [](const std::vector<int64_t> &values) {
+                           std::vector<int> shape;
+                           (void)std::transform(values.begin(), values.end(), std::back_inserter(shape),
+                                                [](const int64_t &value) { return static_cast<int>(value); });
+                           return shape;
+                         });
     // shape adjustement -> from 2d/3d to 4d to standardize
     if (paddings.size() == 4) {
     } else if (paddings.size() == 3) {

@@ -28,16 +28,16 @@ namespace mindspore {
 namespace parallel {
 DeviceManagerPtr g_device_manager = nullptr;
 
-Stage::Stage(const std::vector<mindspore::parallel::Device> &devices, int num, int rank)
+Stage::Stage(const std::vector<mindspore::parallel::Device> &devices, int64_t num, int64_t rank)
     : devices_(devices), number_(num), rank_(rank) {
   gm_ = GroupManager();
 }
 
 // NOTE: '-1' indicates ERROR
-int Stage::global_rank(Group *g) const { return ((g == nullptr) ? rank_ : -1); }
+int64_t Stage::global_rank(Group *g) const { return ((g == nullptr) ? rank_ : -1); }
 
-bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &backend,
-                const std::vector<int32_t> &stage) {
+bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &backend,
+                const std::vector<int64_t> &stage) {
   if (device_num <= 0) {
     MS_LOG(ERROR) << "'device_num' must be positive.";
     return false;
@@ -51,7 +51,7 @@ bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &back
     return false;
   }
   // 'device_num_converted' must be the power of 2
-  if ((IntToUint(device_num) & IntToUint(device_num - 1)) != 0) {
+  if ((LongToUlong(device_num) & LongToUlong(device_num - 1)) != 0) {
     MS_LOG(ERROR) << "'device_num' must be the power of 2.";
     return false;
   }
@@ -65,12 +65,12 @@ bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &back
   }
 
   RankList devices, stage_map;
-  for (int i = 0; i < device_num; ++i) {
+  for (int64_t i = 0; i < device_num; ++i) {
     devices.push_back(i);
   }
 
   if (stage.size()) {
-    int32_t summed_value = 0;
+    int64_t summed_value = 0;
     for (auto begin = stage.begin(); begin != stage.end(); ++begin) {
       if (*begin <= 0) {
         MS_LOG(ERROR) << "The value in the pipeline stages should be positive value";
@@ -109,9 +109,9 @@ void CheckGlobalDeviceManager() {
   }
 }
 
-int32_t GetListMemberByIndex(size_t index, const RankList &devices) {
+int64_t GetListMemberByIndex(size_t index, const RankList &devices) {
   size_t i = 0;
-  int32_t result = 0;
+  int64_t result = 0;
   if ((devices.empty()) || (index >= devices.size())) {
     MS_LOG(EXCEPTION) << "Index is out of the list scope";
   }
@@ -145,11 +145,11 @@ std::shared_ptr<Device> GetListMemberByIndex(size_t index, const std::vector<std
 
 // E.g. devices = [4, 5, 2, 1, 7, 8, 10], stage_map = [4, 3],
 // therefore the stage_devices_ = [[4, 5, 2, 1], [7, 8, 10]].
-Status DeviceManager::Init(const RankList &devices, int32_t global_device_rank, const RankList &stage_map,
+Status DeviceManager::Init(const RankList &devices, int64_t global_device_rank, const RankList &stage_map,
                            const std::string &backend) {
   auto dev_it = devices.begin();
   auto stage_it = stage_map.begin();
-  int32_t sum = 0;
+  int64_t sum = 0;
 
   if ((backend != HCCL_BACKEND) && (backend != NCCL_BACKEND) && (backend != UNDEFINED_BACKEND)) {
     MS_LOG(ERROR) << "Invalid backend: " << backend;
@@ -159,7 +159,7 @@ Status DeviceManager::Init(const RankList &devices, int32_t global_device_rank, 
   for (; stage_it != stage_map.end(); ++stage_it) {
     sum += (*stage_it);
   }
-  if (IntToSize(sum) != devices.size()) {
+  if (LongToSize(sum) != devices.size()) {
     MS_LOG(ERROR) << "The number of 'devices' in the list is not equal to the mentioned "
                   << "size of 'stage_map'";
     return Status::FAILED;
@@ -172,7 +172,7 @@ Status DeviceManager::Init(const RankList &devices, int32_t global_device_rank, 
 
   size_t global_index = 0;
   for (stage_it = stage_map.begin(); stage_it != stage_map.end(); ++stage_it) {
-    int num_device = *stage_it;
+    int64_t num_device = *stage_it;
     if (num_device > MAX_DEVICE_NUM) {
       MS_LOG(ERROR) << "The number of 'devices' in a stage must not be greater than " << MAX_DEVICE_NUM;
       return Status::FAILED;
@@ -182,7 +182,7 @@ Status DeviceManager::Init(const RankList &devices, int32_t global_device_rank, 
       return Status::FAILED;
     }
     RankList curr_dev_list;
-    for (int i = 0; i < num_device; ++i) {
+    for (int64_t i = 0; i < num_device; ++i) {
       curr_dev_list.push_back(GetListMemberByIndex(global_index, devices));
       global_index++;
     }
@@ -191,7 +191,7 @@ Status DeviceManager::Init(const RankList &devices, int32_t global_device_rank, 
 
   global_index = 0;
   for (stage_it = stage_map.begin(); stage_it != stage_map.end(); ++stage_it) {
-    int num_device = *stage_it;
+    int64_t num_device = *stage_it;
     if (num_device > MAX_DEVICE_NUM) {
       MS_LOG(ERROR) << "The number of 'devices' in a stage must be less than " << MAX_DEVICE_NUM;
       return Status::FAILED;
@@ -201,7 +201,7 @@ Status DeviceManager::Init(const RankList &devices, int32_t global_device_rank, 
       return Status::FAILED;
     }
     std::vector<Device> curr_dev_list;
-    for (int i = 0; i < num_device; ++i) {
+    for (int64_t i = 0; i < num_device; ++i) {
       curr_dev_list.push_back(*GetListMemberByIndex(global_index, devices_));
       global_index++;
     }
@@ -226,13 +226,13 @@ Status DeviceManager::Init(const RankList &devices, int32_t global_device_rank, 
   return Status::SUCCESS;
 }
 
-std::shared_ptr<Stage> DeviceManager::GetStageById(int32_t stage_id) {
+std::shared_ptr<Stage> DeviceManager::GetStageById(int64_t stage_id) {
   std::shared_ptr<Stage> res;
-  if (IntToSize(stage_id) >= stages_.size()) {
+  if (LongToSize(stage_id) >= stages_.size()) {
     MS_LOG(ERROR) << "the 'stage_id': " << stage_id << ", is out of the scope of 'stage_devices_': " << stages_.size();
     return res;
   }
-  int32_t index = 0;
+  int64_t index = 0;
   for (auto &stage : stages_) {
     if (index == stage_id) return stage;
     index++;
@@ -240,12 +240,12 @@ std::shared_ptr<Stage> DeviceManager::GetStageById(int32_t stage_id) {
   return res;
 }
 
-RankList DeviceManager::GetDeviceListByStageId(int32_t stage_id) const {
-  if (IntToSize(stage_id) >= stage_devices_.size())
+RankList DeviceManager::GetDeviceListByStageId(int64_t stage_id) const {
+  if (LongToSize(stage_id) >= stage_devices_.size())
     MS_LOG(ERROR) << "the 'stage_id': " << stage_id
                   << ", is out of the scope of 'stage_devices_': " << stage_devices_.size();
   RankList res;
-  int32_t index = 0;
+  int64_t index = 0;
   for (auto &stage : stage_devices_) {
     if (index == stage_id) {
       return stage;
@@ -255,31 +255,31 @@ RankList DeviceManager::GetDeviceListByStageId(int32_t stage_id) const {
   return res;
 }
 
-RankList DeviceManager::global_device_list(int32_t stage_id, int32_t rank, int32_t split_num) const {
+RankList DeviceManager::global_device_list(int64_t stage_id, int64_t rank, int64_t split_num) const {
   RankList res;
   if (split_num <= 0) {
     return res;
   }
-  if (IntToSize(stage_id) >= stage_devices_.size()) {
+  if (LongToSize(stage_id) >= stage_devices_.size()) {
     MS_LOG(ERROR) << "the 'stage_id': " << stage_id
                   << ", is out of the scope of 'stage_devices_': " << stage_devices_.size();
     return res;
   }
 
   RankList global_list = GetDeviceListByStageId(stage_id);
-  if (global_list.size() % IntToSize(split_num)) {
+  if (global_list.size() % LongToSize(split_num)) {
     MS_LOG(ERROR) << "dev list size(" << global_list.size() << ") can not be divisible by split num: " << stage_id;
     return res;
   }
 
-  std::vector<int32_t> dev_list;
+  std::vector<int64_t> dev_list;
   (void)std::copy(global_list.begin(), global_list.end(), std::back_inserter(dev_list));
 
   size_t index = 0;
-  size_t slice_size = dev_list.size() / IntToSize(split_num);
-  for (int32_t i = 0; i < split_num; ++i) {
+  size_t slice_size = dev_list.size() / LongToSize(split_num);
+  for (int64_t i = 0; i < split_num; ++i) {
     bool found = false;
-    index = slice_size * IntToSize(i);
+    index = slice_size * LongToSize(i);
     for (size_t j = 0; j < slice_size; ++j) {
       if (dev_list[index + j] == rank) {
         found = true;
@@ -298,7 +298,7 @@ RankList DeviceManager::global_device_list(int32_t stage_id, int32_t rank, int32
   return res;
 }
 
-Device DeviceManager::CreateNewDeviceByRank(int32_t rank) const { return Device(rank); }
+Device DeviceManager::CreateNewDeviceByRank(int64_t rank) const { return Device(rank); }
 
 std::vector<Device> DeviceManager::CreateDeviceListByRankList(RankList ranks) {
   std::vector<Device> dev_list;
@@ -334,7 +334,7 @@ std::string HashName(const std::string &origin_name) { return std::to_string(std
 // is '0-1-3-5-7'.
 std::string DeviceManager::GenerateGroupNameByRanks(RankList ranks) {
   std::string rank_list_name;
-  std::vector<int32_t>::iterator it;
+  std::vector<int64_t>::iterator it;
   std::sort(ranks.begin(), ranks.end());  // sorted in increasing order
   for (it = ranks.begin(); it != ranks.end(); ++it) {
     if (it == ranks.begin()) {
@@ -374,7 +374,7 @@ Group DeviceManager::CreateGroup(const std::string &group_name,
 
 // Create the group with only the given devices' ranks.
 Group DeviceManager::CreateGroup(const RankList &dev_ranks) {
-  std::unordered_set<int32_t> rank_set(dev_ranks.begin(), dev_ranks.end());
+  std::unordered_set<int64_t> rank_set(dev_ranks.begin(), dev_ranks.end());
   if (dev_ranks.size() != rank_set.size()) {
     MS_LOG(EXCEPTION) << "Invalid dev ranks(" << dev_ranks << "), it has the Duplicate elements in list";
   }

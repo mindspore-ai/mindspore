@@ -494,7 +494,7 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
       fn_inputs.clear();
       fn_inputs.push_back(NewValueNode(prim::kPrimTupleGetItem));
       fn_inputs.push_back(new_fuse_cnode);
-      fn_inputs.push_back(NewValueNode(MakeValue(SizeToInt(out_idx))));
+      fn_inputs.push_back(NewValueNode(MakeValue(SizeToLong(out_idx))));
       auto new_out = func_graph->NewCNode(fn_inputs);
       new_out->set_abstract(outputs[out_idx]->abstract());
       mng->Replace(outputs[out_idx], new_out);
@@ -514,7 +514,7 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
       auto value_node = value_input->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
       int item_idx = GetValue<int>(value_node->value());
-      int new_item_idx = SizeToInt(out_idx) + offset + item_idx;
+      int new_item_idx = SizeToLong(out_idx) + offset + item_idx;
       fn_inputs.clear();
       fn_inputs.push_back(NewValueNode(prim::kPrimTupleGetItem));
       fn_inputs.push_back(new_fuse_cnode);

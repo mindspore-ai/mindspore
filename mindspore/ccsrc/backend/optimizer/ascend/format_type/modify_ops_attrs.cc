@@ -49,7 +49,7 @@ AnfNodePtr ModifyTileOpAttrs(const CNodePtr &cnode) {
     return nullptr;
   }
 
-  auto multiples = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode, kAttrMultiples);
+  auto multiples = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrMultiples);
   if (multiples.size() == 4 && multiples[1] == 1) {
     multiples.push_back(1);
     AnfAlgo::SetNodeAttr(kAttrMultiples, MakeValue(multiples), cnode);

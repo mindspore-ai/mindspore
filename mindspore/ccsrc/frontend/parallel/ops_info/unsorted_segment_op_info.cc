@@ -54,7 +54,7 @@ Status UnsortedSegmentOpInfo::GetAttrs() {
     MS_LOG(ERROR) << name_ << ": input can not be a scalar!";
     return FAILED;
   }
-  int num_segments = GetValue<int>(input_value_.at(2));
+  auto num_segments = GetValue<int64_t>(input_value_.at(2));
   if (num_segments < 0) {
     MS_LOG(ERROR) << name_ << ": the number of segments should be non negative value.";
     return FAILED;
@@ -180,7 +180,7 @@ Status UnsortedSegmentOpInfo::InitForCostModel(const StrategyPtr &strategy) {
 }
 
 // Set the default strategy
-Status UnsortedSegmentOpInfo::GenerateStrategies(int32_t stage_id) {
+Status UnsortedSegmentOpInfo::GenerateStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
@@ -278,7 +278,7 @@ std::shared_ptr<Strategys> UnsortedSegmentOpInfo::GenerateBatchStrategies() {
 ReplaceGraphPtr UnsortedSegmentMinInfo::replace_graph(const CNodePtr &cnode) {
   auto input_id_strategy = strategy_->GetInputDim().at(1);
   // 1. the two input shapes are same, and the strategy is not all ones
-  if (std::any_of(input_id_strategy.begin(), input_id_strategy.end(), [](const int32_t &shard) { return shard > 1; })) {
+  if (std::any_of(input_id_strategy.begin(), input_id_strategy.end(), [](const int64_t &shard) { return shard > 1; })) {
     if (ComputeReplaceGraph(cnode) != SUCCESS) {
       MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
     }
@@ -293,17 +293,17 @@ Status UnsortedSegmentMinInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     return FAILED;
   }
   // Get the attributes of the UnsortedSegmentMin
-  auto num_segments = GetValue<int>(input_value_.at(2));
+  auto num_segments = GetValue<int64_t>(input_value_.at(2));
   // Step1: Output branch
   auto segment_min = gen_g.PushBack({gen_g.NewOpInst(UNSORTED_SEGMENT_MIN), gen_g.virtual_input_node(),
-                                     gen_g.virtual_input_node(), CreatInt32Imm(num_segments)});
-  auto expandim_output = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), segment_min, CreatInt32Imm(0)});
+                                     gen_g.virtual_input_node(), CreatInt64Imm(num_segments)});
+  auto expandim_output = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), segment_min, CreatInt64Imm(0)});
   auto all_gather_output = gen_g.PushBack({gen_g.NewOpInst(ALL_GATHER), expandim_output});
-  auto final_output = gen_g.PushBack({gen_g.NewOpInst(REDUCE_MIN), all_gather_output, CreatInt32Imm(0)});
+  auto final_output = gen_g.PushBack({gen_g.NewOpInst(REDUCE_MIN), all_gather_output, CreatInt64Imm(0)});
 
-  std::vector<std::pair<AnfNodePtr, int>> input_nodes = {std::make_pair(segment_min, 1),
-                                                         std::make_pair(segment_min, 2)};
-  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int>>, AnfNodePtr>>(
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(segment_min, 1),
+                                                             std::make_pair(segment_min, 2)};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(input_nodes, final_output));
 
   return SUCCESS;

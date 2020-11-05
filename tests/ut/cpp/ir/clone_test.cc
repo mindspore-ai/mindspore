@@ -29,9 +29,9 @@ namespace mindspore {
 class TestCloner : public UT::Common {
  public:
   TestCloner() : getPyFun("gtest_input.ir.clone_test", true) {
-    one = NewValueNode(1);
-    two = NewValueNode(2);
-    three = NewValueNode(3);
+    one = NewValueNode(static_cast<int64_t>(1));
+    two = NewValueNode(static_cast<int64_t>(2));
+    three = NewValueNode(static_cast<int64_t>(3));
   }
 
   FuncGraphPtr GraphForInline() { return nullptr; }

@@ -75,7 +75,7 @@ class ReduceOneEliminater : public AnfVisitor {
       auto node_abstract = node->abstract();
       // handle auto_parallel get nullptr abstract
       if (node_abstract != nullptr) {
-        auto new_base_shape = std::make_shared<abstract::Shape>(GetValue<std::vector<int>>(new_shape));
+        auto new_base_shape = std::make_shared<abstract::Shape>(GetValue<std::vector<int64_t>>(new_shape));
         node_abstract->set_shape(new_base_shape);
         auto new_node = node->func_graph()->NewCNode({NewValueNode(reshape_op), x_, NewValueNode(new_shape)});
         new_node->set_abstract(node_abstract);
@@ -115,33 +115,33 @@ class ReduceOneEliminater : public AnfVisitor {
       return;
     }
 
-    // axis : int
-    if (IsValueNode<Int32Imm>(vnode)) {
-      auto idx = GetValue<int>(vnode->value());
+    // axis : int64_t
+    if (IsValueNode<Int64Imm>(vnode)) {
+      auto idx = GetValue<int64_t>(vnode->value());
       // axis could be negative
       if (idx < 0) {
-        idx += SizeToInt(x_shape_.size());
+        idx += SizeToLong(x_shape_.size());
       }
-      if (SizeToInt(x_shape_.size()) > idx && x_shape_[IntToSize(idx)] == 1) {
+      if (SizeToLong(x_shape_.size()) > idx && x_shape_[LongToSize(idx)] == 1) {
         is_axis_one_ = true;
         axis_.push_back(idx);
       }
       return;
     }
 
-    // axis : tuple(int), default ()
+    // axis : tuple(int64_t), default ()
     if (IsValueNode<ValueTuple>(vnode)) {
-      auto axis = GetValue<std::vector<int>>(vnode->value());
+      auto axis = GetValue<std::vector<int64_t>>(vnode->value());
       if (axis.empty()) {
         return;
       }
 
-      auto cmp = std::all_of(axis.cbegin(), axis.cend(), [this](int idx) {
+      auto cmp = std::all_of(axis.cbegin(), axis.cend(), [this](int64_t idx) {
         // axis could be negative
         if (idx < 0) {
-          idx += SizeToInt(x_shape_.size());
+          idx += SizeToLong(x_shape_.size());
         }
-        return SizeToInt(this->x_shape_.size()) > idx && this->x_shape_[IntToSize(idx)] == 1;
+        return SizeToLong(this->x_shape_.size()) > idx && this->x_shape_[LongToSize(idx)] == 1;
       });
       if (cmp) {
         is_axis_one_ = true;
@@ -160,7 +160,7 @@ class ReduceOneEliminater : public AnfVisitor {
 
  private:
   bool is_axis_one_{false}, is_tensor_{false};
-  std::vector<int> axis_{}, x_shape_{};
+  std::vector<int64_t> axis_{}, x_shape_{};
   AnfNodePtr x_{nullptr};
 };
 }  // namespace irpass

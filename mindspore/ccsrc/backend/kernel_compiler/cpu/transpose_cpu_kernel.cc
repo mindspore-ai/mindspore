@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/cpu/transpose_cpu_kernel.h"
+#include <algorithm>
 #include "runtime/device/cpu/cpu_device_address.h"
 namespace mindspore {
 namespace kernel {
@@ -22,7 +23,9 @@ const size_t kMaxDim = 100;
 void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  axis_ = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "perm");
+  std::vector<int64_t> axis_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "perm");
+  (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis_),
+                       [](const int64_t &value) { return static_cast<int>(value); });
   if (shape_.size() != axis_.size()) {
     MS_LOG(EXCEPTION) << "The size of input shape and transpose axis shape must be equal.";
   }

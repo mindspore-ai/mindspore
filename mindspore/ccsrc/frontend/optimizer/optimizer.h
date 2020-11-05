@@ -143,7 +143,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
       return func_graph;
     }
     // Optimizer step counter;
-    int counter = 1;
+    int64_t counter = 1;
     bool changes = true;
 
     while (changes) {
@@ -223,7 +223,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   void set_enable(bool enable) { is_enable_ = enable; }
 
   struct {
-    int counter;
+    int64_t counter;
     std::string name;
   } CurPass_;
 

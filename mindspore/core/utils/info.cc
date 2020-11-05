@@ -25,11 +25,11 @@
 namespace mindspore {
 std::string HighLightLine(const std::string &line, int col_begin, int col_end, SourceLineTip tip) {
   std::string temp_line = line;
-  if (col_begin < col_end && col_begin != -1 && col_end <= SizeToInt(temp_line.length()) &&
+  if (col_begin < col_end && col_begin != -1 && col_end <= SizeToLong(temp_line.length()) &&
       tip != kSourceLineTipDiscard) {
-    std::string start = temp_line.substr(0, IntToSize(col_begin));
-    std::string trimmed = temp_line.substr(IntToSize(col_begin), IntToSize(col_end - col_begin));
-    std::string end = temp_line.substr(IntToSize(col_end), IntToSize(SizeToInt(temp_line.length()) - col_end));
+    std::string start = temp_line.substr(0, LongToSize(col_begin));
+    std::string trimmed = temp_line.substr(LongToSize(col_begin), LongToSize(col_end - col_begin));
+    std::string end = temp_line.substr(LongToSize(col_end), LongToSize(SizeToLong(temp_line.length()) - col_end));
     std::stringstream oss;
     std::stringstream tip_ss;
     std::string start_spaces(start.length(), ' ');

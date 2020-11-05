@@ -39,7 +39,7 @@ using TensorPtr = std::shared_ptr<Tensor>;
 }  // namespace tensor
 
 bool BaseRefToBool(const BaseRef &in, bool *out);
-bool BaseRefToInt(const ValuePtr &v, int *value);
+bool BaseRefToInt(const ValuePtr &v, int64_t *value);
 bool ValueToBool(const ValuePtr &in, bool *out);
 
 // Isomorphism
