@@ -68,7 +68,7 @@ Status EpochInjectionPass::RunOnTree(ExecutionTree *tree, bool *modified) {
     std::shared_ptr<EpochCtrlOp> epoch_ctrl_op;
     RETURN_IF_NOT_OK(EpochCtrlOp::Builder(num_epochs).Build(&epoch_ctrl_op));
     RETURN_IF_NOT_OK(tree->AssociateNode(epoch_ctrl_op));
-    epoch_inject_node->InsertAsParent(epoch_ctrl_op);
+    RETURN_IF_NOT_OK(epoch_inject_node->InsertAsParent(epoch_ctrl_op));
   }
 
   MS_LOG(INFO) << "Pre pass: Injection pass complete.";
