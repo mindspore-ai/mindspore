@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
-#include "backend/optimizer/ascend/ir_fission/dynamic_rnn_grad_fission.h"
+#include "backend/optimizer/ascend/ir_fission/dynamic_rnn_grad_fission_v2.h"
 #include "backend/optimizer/ascend/ir_fission/bn_split.h"
 #include "backend/optimizer/ascend/ir_fission/bn_grad_split.h"
 #include "backend/optimizer/ascend/ir_fission/batch_norm_grad_split.h"
@@ -61,6 +61,7 @@
 #include "backend/optimizer/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
+#include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_basiclstm_op.h"
 #include "backend/optimizer/ascend/format_type/rectify_do_mask_kernel_info.h"
 #include "backend/optimizer/ascend/format_type/chang_axis_of_reduce_kernel.h"
@@ -215,6 +216,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto data_layout_pm = std::make_shared<PassManager>("transop_pm");
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
+  data_layout_pm->AddPass(std::make_shared<DynamicRNNGradReformat>());
   data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
@@ -276,7 +278,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
-  ir_fusion_pm->AddPass(std::make_shared<DynamicRNNGradFission>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
 
