@@ -59,23 +59,36 @@ def test_enumerate_tuple_const():
     assert net() == (6, 110)
 
 
+def test_enumerate_tensor_const():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = Tensor(np.arange(2 * 3).reshape(2, 3))
+
+        def construct(self):
+            return enumerate(self.value)
+
+    net = Net()
+    net()
+
+
 def test_enumerate_list_parameter():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
 
-        def construct(self, x, y, z):
+        def construct(self, x, y):
             index_sum = 0
-            value = [x, y, z]
+            value = [x, y]
             ret = ()
             for i, j in enumerate(value):
                 index_sum += i
                 ret += (j,)
             return index_sum, ret
 
-    x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
+    x = Tensor(np.arange(4))
     net = Net()
-    net(x, x, x)
+    net(x, x)
 
 
 def test_enumerate_tuple_parameter():
@@ -83,18 +96,36 @@ def test_enumerate_tuple_parameter():
         def __init__(self):
             super(Net, self).__init__()
 
-        def construct(self, x, y, z):
+        def construct(self, x, y):
             index_sum = 0
-            value = (x, y, z)
+            value = (x, y)
             ret = ()
             for i, j in enumerate(value):
                 index_sum += i
                 ret += (j,)
             return index_sum, ret
 
-    x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
+    x = Tensor(np.arange(4))
     net = Net()
-    net(x, x, x)
+    net(x, x)
+
+
+def test_enumerate_tensor_parameter():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self, x):
+            index_sum = 0
+            ret = ()
+            for i, j in enumerate(x):
+                index_sum += i
+                ret += (j,)
+            return index_sum, ret
+
+    x = Tensor(np.arange(2 * 3).reshape(2, 3))
+    net = Net()
+    net(x)
 
 
 def test_enumerate_tuple_const_1():
@@ -115,23 +146,59 @@ def test_enumerate_tuple_const_1():
     assert net() == (6, 110)
 
 
+def test_enumerate_tensor_const_1():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = Tensor(np.arange(2*3).reshape(2, 3))
+
+        def construct(self):
+            index_sum = 0
+            ret = ()
+            for i in enumerate(self.value):
+                index_sum += i[0]
+                ret += (i[1],)
+            return index_sum, ret
+
+    net = Net()
+    net()
+
+
 def test_enumerate_tuple_parameter_1():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
 
-        def construct(self, x, y, z):
+        def construct(self, x, y):
             index_sum = 0
-            value = (x, y, z)
+            value = (x, y)
             ret = ()
             for i in enumerate(value):
                 index_sum += i[0]
                 ret += (i[1],)
             return index_sum, ret
 
-    x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
+    x = Tensor(np.arange(4))
     net = Net()
-    net(x, x, x)
+    net(x, x)
+
+
+def test_enumerate_tensor_parameter_1():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self, x):
+            index_sum = 0
+            ret = ()
+            for i in enumerate(x):
+                index_sum += i[0]
+                ret += (i[1],)
+            return index_sum, ret
+
+    x = Tensor(np.arange(2 * 3).reshape(2, 3))
+    net = Net()
+    net(x)
 
 
 def test_enumerate_tuple_const_2():
@@ -152,38 +219,59 @@ def test_enumerate_tuple_const_2():
     assert net() == (10, 110)
 
 
+def test_enumerate_tensor_const_2():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = Tensor(np.arange(2 * 3).reshape(2, 3))
+
+        def construct(self):
+            index_sum = 0
+            ret = ()
+            for i in enumerate(self.value, 1):
+                index_sum += i[0]
+                ret += (i[1],)
+            return index_sum, ret
+
+    net = Net()
+    net()
+
+
 def test_enumerate_tuple_parameter_2():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
 
-        def construct(self, x, y, z):
+        def construct(self, x, y):
             index_sum = 0
-            value = (x, y, z)
+            value = (x, y)
             ret = ()
-            for i in enumerate(value, 2):
+            for i in enumerate(value, 1):
                 index_sum += i[0]
                 ret += (i[1],)
             return index_sum, ret
 
-    x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
+    x = Tensor(np.arange(4))
     net = Net()
-    net(x, x, x)
+    net(x, x)
 
 
-def test_enumerate_first_input_type_error():
+def test_enumerate_tensor_parameter_2():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
 
         def construct(self, x):
-            return enumerate(x)
+            index_sum = 0
+            ret = ()
+            for i, j in enumerate(x, 1):
+                index_sum += i
+                ret += (j,)
+            return index_sum, ret
 
-    x = Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)))
+    x = Tensor(np.arange(2 * 3).reshape(2, 3))
     net = Net()
-    with pytest.raises(TypeError) as ex:
-        net(x)
-    assert "For 'enumerate', the 'first input'" in str(ex.value)
+    net(x)
 
 
 def test_enumerate_start_type_error():
