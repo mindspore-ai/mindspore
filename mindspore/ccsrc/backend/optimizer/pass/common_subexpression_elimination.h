@@ -31,6 +31,7 @@ class BackendCSE : public CSE {
  public:
   BackendCSE() = default;
   ~BackendCSE() override = default;
+  virtual bool CheckEqualCnodeInputs(const AnfNodePtr &main, const AnfNodePtr &node) const;
   bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node, bool check_side_effect = true) const override;
   virtual bool CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) const;
 };
