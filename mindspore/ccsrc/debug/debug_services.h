@@ -63,7 +63,15 @@ class DebugServices {
     NOT_CHANGED
   };
 
-  enum STAT_TYPE { STAT_MIN, STAT_MAX, STAT_MEAN, STAT_ZERO_PERCENTAGE, STAT_TENSOR_UPDATE_RATIO_MEAN, STAT_ALLCLOSE };
+  enum STAT_TYPE {
+    STAT_MIN,
+    STAT_MAX,
+    STAT_MEAN,
+    STAT_ZERO_PERCENTAGE,
+    STAT_TENSOR_UPDATE_RATIO_MEAN,
+    STAT_ALLCLOSE,
+    STAT_ABS_MEAN
+  };
 
   typedef struct condition {
     CONDITION_TYPE type;
@@ -113,9 +121,12 @@ class DebugServices {
     // mean or sd related condition set
     bool mean_sd_enabled() {
       return condition.type == MEAN_LT || condition.type == MEAN_GT || condition.type == SD_LT ||
-             condition.type == SD_GT ||
-             (condition.type == TOO_LARGE && (!parameter_list[0].disabled || !parameter_list[3].disabled)) ||
-             (condition.type == TOO_SMALL && (!parameter_list[0].disabled || !parameter_list[3].disabled));
+             condition.type == SD_GT || (condition.type == TOO_LARGE && !parameter_list[3].disabled) ||
+             (condition.type == TOO_SMALL && !parameter_list[3].disabled);
+    }
+    bool abs_mean_enabled() {
+      return (condition.type == TOO_LARGE && !parameter_list[0].disabled) ||
+             (condition.type == TOO_SMALL && !parameter_list[0].disabled);
     }
     bool zero_percentage_enabled() { return condition.type == ALL_ZERO || condition.type == INIT; }
     bool tensor_update_ratio_mean_enabled() {
@@ -135,6 +146,7 @@ class DebugServices {
     double zero_percentage = 0.0;
     double tensor_update_ratio_mean = -1;
     bool allclose = false;
+    double abs_mean = 0.0;
 
     double statLookup(CONDITION_TYPE type) const {
       if (type == MAX_GT || type == MAX_LT) return max;
@@ -152,6 +164,7 @@ class DebugServices {
       if (type == STAT_ZERO_PERCENTAGE) return zero_percentage;
       if (type == STAT_TENSOR_UPDATE_RATIO_MEAN) return tensor_update_ratio_mean;
       if (type == STAT_ALLCLOSE) return allclose;
+      if (type == STAT_ABS_MEAN) return abs_mean;
       return std::numeric_limits<double>::quiet_NaN();
     }
 
@@ -209,7 +222,7 @@ class DebugServices {
   template <typename T>
   static tensor_stats SummarizeTensor(const T *start, const T *start_prev, unsigned int n, bool need_min_max,
                                       bool need_mean_sd, bool need_zero_percentage, bool need_tensor_update_ratio_mean,
-                                      bool need_allclose);
+                                      bool need_allclose, bool need_abs_mean_sd);
 };
 }  // namespace mindspore
 
