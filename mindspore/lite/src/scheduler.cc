@@ -299,6 +299,9 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
 TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors) {
   for (const auto &tensor : in_tensors) {
     auto dtype = tensor->data_type();
+    if (dtype == kObjectTypeString) {
+      return kNumberTypeFloat32;
+    }
     if (dtype == kNumberTypeFloat32 || dtype == kNumberTypeFloat16 || dtype == kNumberTypeInt8 ||
         dtype == kNumberTypeInt32 || dtype == kNumberTypeBool) {
       return dtype;

@@ -42,12 +42,15 @@ constexpr float relativeTolerance = 1e-5;
 constexpr float absoluteTolerance = 1e-8;
 
 struct MS_API CheckTensor {
-  CheckTensor(const std::vector<size_t> &shape, const std::vector<float> &data) {
+  CheckTensor(const std::vector<size_t> &shape, const std::vector<float> &data,
+              const std::vector<std::string> &strings_data = {""}) {
     this->shape = shape;
     this->data = data;
+    this->strings_data = strings_data;
   }
   std::vector<size_t> shape;
   std::vector<float> data;
+  std::vector<std::string> strings_data;
 };
 
 class MS_API BenchmarkFlags : public virtual FlagParser {
@@ -127,27 +130,27 @@ class MS_API Benchmark {
 
   int ReadCalibData();
 
+  int ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name, const std::vector<size_t> &dims);
+
   int CompareOutput();
+
+  tensor::MSTensor *GetTensorByNodeOrTensorName(const std::string &node_or_tensor_name);
+
+  int CompareStringData(const std::string &name, tensor::MSTensor *tensor);
+
+  int CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
+                                     int *total_size);
 
   int InitCallbackParameter();
 
   int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 
-  template <typename T>
-  void PrintInputData(tensor::MSTensor *input) {
-    MS_ASSERT(input != nullptr);
-    static int i = 0;
-    auto inData = reinterpret_cast<T *>(input->MutableData());
-    std::cout << "InData" << i++ << ": ";
-    for (size_t j = 0; j < 20; j++) {
-      std::cout << static_cast<float>(inData[j]) << " ";
-    }
-    std::cout << std::endl;
-  }
+  int PrintInputData();
 
   // tensorData need to be converter first
   template <typename T>
-  float CompareData(const std::string &nodeName, std::vector<int> msShape, T *msTensorData) {
+  float CompareData(const std::string &nodeName, std::vector<int> msShape, const void *tensor_data) {
+    const T *msTensorData = static_cast<const T *>(tensor_data);
     auto iter = this->benchmark_data_.find(nodeName);
     if (iter != this->benchmark_data_.end()) {
       std::vector<size_t> castedMSShape;

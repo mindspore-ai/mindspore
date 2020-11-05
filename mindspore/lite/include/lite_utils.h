@@ -49,6 +49,6 @@ int MS_API StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MST
 /// \brief Get string vector from MSTensor.
 /// \param[in] MSTensor.
 /// \return string vector.
-std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor);
+std::vector<std::string> MS_API MSTensorToStrings(const tensor::MSTensor *tensor);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_INCLUDE_LITE_UTILS_H_

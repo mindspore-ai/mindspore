@@ -20,6 +20,7 @@
 #undef __STDC_FORMAT_MACROS
 #include <algorithm>
 #include <utility>
+#include <functional>
 #include "include/context.h"
 #include "include/ms_tensor.h"
 #include "include/version.h"
@@ -49,10 +50,13 @@ int Benchmark::GenerateInputData() {
       MS_LOG(ERROR) << "MallocData for inTensor failed";
       return RET_ERROR;
     }
-    MS_ASSERT(tensor->GetData() != nullptr);
-    auto tensor_byte_size = tensor->Size();
-    auto status = GenerateRandomData(tensor_byte_size, input_data);
-    if (status != 0) {
+    int status;
+    if (tensor->data_type() == kObjectTypeString) {
+      status = StringsToMSTensor({"you're the best."}, tensor);
+    } else {
+      status = GenerateRandomData(tensor->Size(), input_data);
+    }
+    if (status != RET_OK) {
       std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
       MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
       return status;
@@ -141,39 +145,64 @@ int Benchmark::ReadCalibData() {
     in_file.close();
     return RET_ERROR;
   }
-
-  std::string line;
-
   MS_LOG(INFO) << "Start reading calibData file";
+  std::string line;
   std::string tensor_name;
+
   while (!in_file.eof()) {
     getline(in_file, line);
     std::stringstream string_line1(line);
     size_t dim = 0;
     string_line1 >> tensor_name >> dim;
     std::vector<size_t> dims;
-    size_t shape_size = 1;
     for (size_t i = 0; i < dim; i++) {
       size_t tmp_dim;
       string_line1 >> tmp_dim;
       dims.push_back(tmp_dim);
-      shape_size *= tmp_dim;
     }
-
-    getline(in_file, line);
-    std::stringstream string_line2(line);
-    std::vector<float> tensor_data;
-    for (size_t i = 0; i < shape_size; i++) {
-      float tmp_data;
-      string_line2 >> tmp_data;
-      tensor_data.push_back(tmp_data);
+    auto ret = ReadTensorData(in_file, tensor_name, dims);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Read tensor data failed, tensor name: " << tensor_name;
+      return RET_ERROR;
     }
-
-    auto *check_tensor = new CheckTensor(dims, tensor_data);
-    this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
   }
   in_file.close();
   MS_LOG(INFO) << "Finish reading calibData file";
+  return RET_OK;
+}
+
+int Benchmark::ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name,
+                              const std::vector<size_t> &dims) {
+  std::string line;
+  getline(in_file_stream, line);
+  std::stringstream line_stream(line);
+  tensor::MSTensor *tensor = GetTensorByNodeOrTensorName(tensor_name);
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "Get tensor failed, tensor name: " << tensor_name;
+    return RET_ERROR;
+  }
+  std::vector<float> data;
+  std::vector<std::string> strings_data;
+  size_t shape_size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
+  if (tensor->data_type() == kObjectTypeString) {
+    strings_data.push_back(line);
+    for (size_t i = 1; i < shape_size; i++) {
+      getline(in_file_stream, line);
+      strings_data.push_back(line);
+    }
+  } else {
+    for (size_t i = 0; i < shape_size; i++) {
+      float tmp_data;
+      line_stream >> tmp_data;
+      data.push_back(tmp_data);
+    }
+  }
+  auto *check_tensor = new (std::nothrow) CheckTensor(dims, data, strings_data);
+  if (check_tensor == nullptr) {
+    MS_LOG(ERROR) << "Now CheckTensor failed, tensor name: " << tensor_name;
+    return RET_ERROR;
+  }
+  this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
   return RET_OK;
 }
 
@@ -181,80 +210,110 @@ int Benchmark::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
   float total_bias = 0;
   int total_size = 0;
-  bool has_error = false;
   for (const auto &calib_tensor : benchmark_data_) {
     std::string node_or_tensor_name = calib_tensor.first;
-    auto tensors = session_->GetOutputsByNodeName(node_or_tensor_name);
-    mindspore::tensor::MSTensor *tensor = nullptr;
-    if (tensors.empty() || tensors.size() != 1) {
-      MS_LOG(INFO) << "Cannot find output node: " << node_or_tensor_name
-                   << " or node has more than one output tensor, switch to GetOutputByTensorName";
-      tensor = session_->GetOutputByTensorName(node_or_tensor_name);
-      if (tensor == nullptr) {
-        MS_LOG(ERROR) << "Cannot find output tensor " << node_or_tensor_name << ", get model output failed";
-        return RET_ERROR;
-      }
-    } else {
-      tensor = tensors.front();
+    tensor::MSTensor *tensor = GetTensorByNodeOrTensorName(node_or_tensor_name);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "Get tensor failed, tensor name: " << node_or_tensor_name;
+      return RET_ERROR;
     }
-    MS_ASSERT(tensor->MutableData() != nullptr);
-    float bias = 0;
-    switch (msCalibDataType) {
-      case TypeId::kNumberTypeFloat: {
-        bias = CompareData<float>(node_or_tensor_name, tensor->shape(), static_cast<float *>(tensor->MutableData()));
-        break;
-      }
-      case TypeId::kNumberTypeInt8: {
-        bias = CompareData<int8_t>(node_or_tensor_name, tensor->shape(), static_cast<int8_t *>(tensor->MutableData()));
-        break;
-      }
-      case TypeId::kNumberTypeUInt8: {
-        bias =
-          CompareData<uint8_t>(node_or_tensor_name, tensor->shape(), static_cast<uint8_t *>(tensor->MutableData()));
-        break;
-      }
-      case TypeId::kNumberTypeInt32: {
-        bias =
-          CompareData<int32_t>(node_or_tensor_name, tensor->shape(), static_cast<int32_t *>(tensor->MutableData()));
-        break;
-      }
-      default:
-        MS_LOG(ERROR) << "Datatype " << msCalibDataType << " is not supported.";
-        return RET_ERROR;
-    }
-    if (bias >= 0) {
-      total_bias += bias;
-      total_size++;
+    int ret;
+    if (tensor->data_type() == kObjectTypeString) {
+      ret = CompareStringData(node_or_tensor_name, tensor);
     } else {
-      has_error = true;
-      break;
+      ret = CompareDataGetTotalBiasAndSize(node_or_tensor_name, tensor, &total_bias, &total_size);
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Error in CompareData";
+      std::cerr << "Error in CompareData" << std::endl;
+      std::cout << "=======================================================" << std::endl << std::endl;
+      return ret;
     }
   }
-
-  if (!has_error) {
-    float mean_bias;
-    if (total_size != 0) {
-      mean_bias = total_bias / total_size * 100;
-    } else {
-      mean_bias = 0;
-    }
-
-    std::cout << "Mean bias of all nodes/tensors: " << mean_bias << "%" << std::endl;
-    std::cout << "=======================================================" << std::endl << std::endl;
-
-    if (mean_bias > this->flags_->accuracy_threshold_) {
-      MS_LOG(ERROR) << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%";
-      std::cerr << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%" << std::endl;
-      return RET_ERROR;
-    } else {
-      return RET_OK;
-    }
+  float mean_bias;
+  if (total_size != 0) {
+    mean_bias = total_bias / total_size * 100;
   } else {
-    MS_LOG(ERROR) << "Error in CompareData";
-    std::cerr << "Error in CompareData" << std::endl;
-    std::cout << "=======================================================" << std::endl << std::endl;
+    mean_bias = 0;
+  }
+
+  std::cout << "Mean bias of all nodes/tensors: " << mean_bias << "%" << std::endl;
+  std::cout << "=======================================================" << std::endl << std::endl;
+
+  if (mean_bias > this->flags_->accuracy_threshold_) {
+    MS_LOG(ERROR) << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%";
+    std::cerr << "Mean bias of all nodes/tensors is too big: " << mean_bias << "%" << std::endl;
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+tensor::MSTensor *Benchmark::GetTensorByNodeOrTensorName(const std::string &node_or_tensor_name) {
+  tensor::MSTensor *tensor = nullptr;
+  auto tensors = session_->GetOutputsByNodeName(node_or_tensor_name);
+  if (tensors.empty() || tensors.size() != 1) {
+    MS_LOG(INFO) << "Cannot find output node: " << node_or_tensor_name
+                 << " or node has more than one output tensor, switch to GetOutputByTensorName";
+    tensor = session_->GetOutputByTensorName(node_or_tensor_name);
+  } else {
+    tensor = tensors.front();
+  }
+  return tensor;
+}
+
+int Benchmark::CompareStringData(const std::string &name, tensor::MSTensor *tensor) {
+  auto iter = this->benchmark_data_.find(name);
+  if (iter != this->benchmark_data_.end()) {
+    std::vector<std::string> calib_strings = iter->second->strings_data;
+    std::vector<std::string> output_strings = MSTensorToStrings(tensor);
+    size_t compare_num = std::min(calib_strings.size(), output_strings.size());
+    size_t print_num = std::min(compare_num, static_cast<size_t>(5));
+
+    std::cout << "Data of node " << name << " : " << std::endl;
+    for (size_t i = 0; i < compare_num; i++) {
+      if (i < print_num) {
+        std::cout << "  " << output_strings[i] << std::endl;
+      }
+      if (calib_strings[i] != output_strings[i]) {
+        MS_LOG(ERROR) << "";
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
+                                              int *total_size) {
+  float bias = 0;
+  switch (msCalibDataType) {
+    case TypeId::kNumberTypeFloat: {
+      bias = CompareData<float>(name, tensor->shape(), tensor->MutableData());
+      break;
+    }
+    case TypeId::kNumberTypeInt8: {
+      bias = CompareData<int8_t>(name, tensor->shape(), tensor->MutableData());
+      break;
+    }
+    case TypeId::kNumberTypeUInt8: {
+      bias = CompareData<uint8_t>(name, tensor->shape(), tensor->MutableData());
+      break;
+    }
+    case TypeId::kNumberTypeInt32: {
+      bias = CompareData<int32_t>(name, tensor->shape(), tensor->MutableData());
+      break;
+    }
+    default:
+      MS_LOG(ERROR) << "Datatype " << msCalibDataType << " is not supported.";
+      return RET_ERROR;
+  }
+  if (bias < 0) {
+    MS_LOG(ERROR) << "CompareData failed, name: " << name;
+    return RET_ERROR;
+  }
+  *total_bias += bias;
+  *total_size += 1;
+  return RET_OK;
 }
 
 int Benchmark::MarkPerformance() {
@@ -316,47 +375,67 @@ int Benchmark::MarkPerformance() {
 int Benchmark::MarkAccuracy() {
   MS_LOG(INFO) << "MarkAccuracy";
   std::cout << "MarkAccuracy" << std::endl;
-  for (auto &msInput : ms_inputs_) {
-    switch (msInput->data_type()) {
-      case TypeId::kNumberTypeFloat:
-        PrintInputData<float>(msInput);
-        break;
-      case TypeId::kNumberTypeFloat32:
-        PrintInputData<float>(msInput);
-        break;
-      case TypeId::kNumberTypeInt8:
-        PrintInputData<int8_t>(msInput);
-        break;
-      case TypeId::kNumberTypeUInt8:
-        PrintInputData<uint8_t>(msInput);
-        break;
-      case TypeId::kNumberTypeInt32:
-        PrintInputData<int>(msInput);
-        break;
-      default:
-        MS_LOG(ERROR) << "Datatype " << msInput->data_type() << " is not supported.";
-        return RET_ERROR;
-    }
+
+  auto status = PrintInputData();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "PrintInputData error " << status;
+    std::cerr << "PrintInputData error " << status << std::endl;
+    return status;
   }
-  auto status = session_->RunGraph();
+  status = session_->RunGraph();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Inference error " << status;
     std::cerr << "Inference error " << status << std::endl;
     return status;
   }
-
   status = ReadCalibData();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Read calib data error " << status;
     std::cerr << "Read calib data error " << status << std::endl;
     return status;
   }
-
   status = CompareOutput();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Compare output error " << status;
     std::cerr << "Compare output error " << status << std::endl;
     return status;
+  }
+  return RET_OK;
+}
+
+int Benchmark::PrintInputData() {
+  for (size_t i = 0; i < ms_inputs_.size(); i++) {
+    auto input = ms_inputs_[i];
+    MS_ASSERT(input != nullptr);
+    auto tensor_data_type = input->data_type();
+
+    std::cout << "InData" << i << ": ";
+    if (tensor_data_type == TypeId::kObjectTypeString) {
+      std::vector<std::string> output_strings = MSTensorToStrings(input);
+      size_t print_num = std::min(output_strings.size(), static_cast<size_t>(20));
+      for (size_t j = 0; j < print_num; j++) {
+        std::cout << output_strings[j] << std::endl;
+      }
+      continue;
+    }
+    size_t print_num = std::min(input->ElementsNum(), 20);
+    const void *in_data = input->MutableData();
+
+    for (size_t j = 0; j < print_num; j++) {
+      if (tensor_data_type == TypeId::kNumberTypeFloat32 || tensor_data_type == TypeId::kNumberTypeFloat) {
+        std::cout << static_cast<const float *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeInt8) {
+        std::cout << static_cast<const int8_t *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeUInt8) {
+        std::cout << static_cast<const uint8_t *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeInt32) {
+        std::cout << static_cast<const int32_t *>(in_data)[j] << " ";
+      } else {
+        MS_LOG(ERROR) << "Datatype: " << tensor_data_type << " is not supported.";
+        return RET_ERROR;
+      }
+    }
+    std::cout << std::endl;
   }
   return RET_OK;
 }
