@@ -1226,9 +1226,19 @@ void KernelGraph::SetOptimizerFlag() {
   has_optimizer_ = false;
   for (const auto &cnode : execution_order_) {
     MS_EXCEPTION_IF_NULL(cnode);
-    if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(cnode)) != kOptOperatorSet.end()) {
+    auto node_name = AnfAlgo::GetCNodeName(cnode);
+    if (kOptOperatorSet.find(node_name) != kOptOperatorSet.end()) {
       has_optimizer_ = true;
       return;
+    }
+    if (node_name.find("Assign") != string::npos) {
+      for (auto &input : cnode->inputs()) {
+        MS_EXCEPTION_IF_NULL(input);
+        if (input->isa<Parameter>() && AnfAlgo::IsParameterWeight(input->cast<ParameterPtr>())) {
+          has_optimizer_ = true;
+          return;
+        }
+      }
     }
   }
 }
