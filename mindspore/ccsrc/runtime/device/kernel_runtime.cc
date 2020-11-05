@@ -675,13 +675,16 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
 
   if (is_enable_mem_reuse) {
     MS_LOG(INFO) << "Memory Reuse is enable...";
-#ifdef MEM_REUSE_DEBUG
-    mem_manager_->MallocReusedDynamicMem(graph);
-    mem_type = kReuseDynamicMem;
-#else
-    mem_manager_->MallocSomasDynamicMem(graph);
-    mem_type = kSomasReuseDynamicMem;
-#endif
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    auto variable_memory_max_size = context->get_param<std::string>(MS_CTX_VARIABLE_MEMORY_MAX_SIZE);
+    if (variable_memory_max_size == "0") {
+      mem_manager_->MallocSomasDynamicMem(graph);
+      mem_type = kSomasReuseDynamicMem;
+    } else {
+      mem_manager_->MallocReusedDynamicMem(graph);
+      mem_type = kReuseDynamicMem;
+    }
   } else {
     MS_LOG(INFO) << "Memory Reuse is disable...";
   }

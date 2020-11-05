@@ -145,7 +145,6 @@ def run_pretrain():
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target,
                         device_id=args_opt.device_id, save_graphs=False)
     context.set_context(reserve_class_name_in_scope=False)
-    context.set_context(variable_memory_max_size="30GB")
     context.set_context(max_call_depth=3000)
     ckpt_save_dir = args_opt.save_checkpoint_path
     if args_opt.distribute == "true":

@@ -70,7 +70,6 @@ def run_general_distill():
         raise Exception("Target error, GPU or Ascend is supported.")
 
     context.set_context(reserve_class_name_in_scope=False)
-    context.set_context(variable_memory_max_size="30GB")
 
     save_ckpt_dir = os.path.join(args_opt.save_ckpt_path,
                                  datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
