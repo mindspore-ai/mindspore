@@ -76,6 +76,39 @@ STATUS TfliteArgminParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteArgminParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  const auto &tflite_subgraph = tflite_model->subgraphs.front();
+  std::unique_ptr<schema::ArgMinT> attr = std::make_unique<schema::ArgMinT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  attr->outMaxValue = false;
+  attr->topK = 1;
+  attr->keepDims = false;
+  attr->axisType = 1;
+
+  // get axis attr
+  auto axis_idx = tflite_op->inputs[1];
+  auto buffer_idx = tflite_subgraph->tensors[axis_idx]->buffer;
+  auto &buf_data = tflite_model->buffers[buffer_idx];
+  if (buf_data == nullptr) {
+    MS_LOG(ERROR) << "the buf data is null";
+    return nullptr;
+  }
+  auto data_ptr = buf_data->data.data();
+  if (data_ptr == nullptr) {
+    MS_LOG(ERROR) << "the data is null";
+    return nullptr;
+  }
+  attr->axis = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_ArgMin;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteArgminParser("Argmin", new TfliteArgminParser());
 }  // namespace lite

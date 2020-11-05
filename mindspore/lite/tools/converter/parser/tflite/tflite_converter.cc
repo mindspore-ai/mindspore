@@ -15,9 +15,8 @@
  */
 
 #include "tools/converter/parser/tflite/tflite_converter.h"
+#include "tools/converter/parser/tflite/tflite_model_parser.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 TfliteConverter::TfliteConverter() { modelParser = new TfliteModelParser(); }
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

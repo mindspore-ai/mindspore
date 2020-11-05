@@ -21,18 +21,15 @@
 #include <memory>
 #include <map>
 #include "tools/converter/converter.h"
-#include "tools/converter/parser/tflite/tflite_model_parser.h"
 #include "tools/converter/graphdef_transform.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 class TfliteConverter : public Converter {
  public:
   TfliteConverter();
 
   ~TfliteConverter() override = default;
 };
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_CONVERTER_H_

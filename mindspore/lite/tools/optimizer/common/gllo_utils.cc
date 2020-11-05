@@ -1182,6 +1182,29 @@ STATUS TransFilterFormat(const ParamValueLitePtr &tensor, schema::Format dst_for
           return RET_ERROR;
       }
     } break;
+    case schema::Format::Format_CHWK: {
+      switch (src_format) {
+        case schema::Format::Format_KHWC:
+          if (data_type == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kKHWC2CHWK);
+          } else if (data_type == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kKHWC2CHWK);
+          } else if (data_type == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kKHWC2CHWK);
+          } else if (data_type == kNumberTypeFloat16) {
+            status = TransFilterFormat<float16>(tensor, kKHWC2CHWK);
+          } else {
+            MS_LOG(ERROR) << "Unsupported data_type: " << data_type;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format::Format_CHWK:
+          return RET_OK;
+        default:
+          MS_LOG(ERROR) << "Unsupported transform from " << src_format << " to " << EnumNameFormat(dst_format);
+          return RET_ERROR;
+      }
+    } break;
     default:
       MS_LOG(ERROR) << "Unsupported transform from " << src_format << " to " << EnumNameFormat(dst_format);
       return RET_ERROR;

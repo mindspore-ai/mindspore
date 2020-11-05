@@ -74,6 +74,50 @@ STATUS TfliteQuantizeParser::Parse(TfliteTensorsInfo *tensors_info, const std::u
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteQuantizeParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto &tflite_subgraph = tflite_model->subgraphs.front();
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+
+  const auto &in_tensor = tflite_subgraph->tensors[tflite_op->inputs[0]];
+  if (in_tensor == nullptr) {
+    MS_LOG(ERROR) << "input tensor is null";
+    return nullptr;
+  }
+  const auto &out_tensor = tflite_subgraph->tensors[tflite_op->outputs[0]];
+  if (out_tensor == nullptr) {
+    MS_LOG(ERROR) << "output tensor is null";
+    return nullptr;
+  }
+  if (GetTfliteDataType(in_tensor->type) != GetTfliteDataType(out_tensor->type) &&
+      (GetTfliteDataType(out_tensor->type) == kNumberTypeInt8 ||
+       GetTfliteDataType(out_tensor->type) == kNumberTypeUInt8)) {
+    std::unique_ptr<schema::QuantDTypeCastT> attr = std::make_unique<schema::QuantDTypeCastT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return nullptr;
+    }
+    attr->srcT = GetTfliteDataType(in_tensor->type);
+    attr->dstT = GetTfliteDataType(out_tensor->type);
+    primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
+    primitive->value.value = attr.release();
+  } else {
+    std::unique_ptr<schema::CastT> attr = std::make_unique<schema::CastT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return nullptr;
+    }
+    attr->srcT = GetTfliteDataType(in_tensor->type);
+    attr->dstT = GetTfliteDataType(out_tensor->type);
+    primitive->value.type = schema::PrimitiveType_Cast;
+    primitive->value.value = attr.release();
+  }
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteQuantizeParser("QUANTIZE", new TfliteQuantizeParser());
 }  // namespace lite

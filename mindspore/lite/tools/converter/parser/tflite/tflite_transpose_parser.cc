@@ -57,6 +57,31 @@ STATUS TfliteTransposeParser::Parse(TfliteTensorsInfo *tensors_info,
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteTransposeParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                      const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto &tflite_subgraph = tflite_model->subgraphs.front();
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+
+  std::unique_ptr<schema::TransposeT> attr = std::make_unique<schema::TransposeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->perm)) {
+    MS_LOG(ERROR) << "get transpose -> perm failed";
+    return nullptr;
+  }
+
+  attr->conjugate = false;
+  primitive->value.type = schema::PrimitiveType_Transpose;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteTransposeParser("Transpose", new TfliteTransposeParser());
 }  // namespace lite

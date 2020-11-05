@@ -60,6 +60,34 @@ STATUS TfliteLRNParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteLRNParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+
+  std::unique_ptr<schema::LocalResponseNormalizationT> attr = std::make_unique<schema::LocalResponseNormalizationT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  const auto &tflite_attr = tflite_op->builtin_options.AsLocalResponseNormalizationOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op LRN attr failed";
+    return nullptr;
+  }
+  attr->depth_radius = tflite_attr->radius;
+  attr->alpha = tflite_attr->alpha;
+  attr->beta = tflite_attr->beta;
+  attr->bias = tflite_attr->bias;
+
+  primitive->value.type = schema::PrimitiveType_LocalResponseNormalization;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteLRNParser("LocalResponseNorm", new TfliteLRNParser());
 }  // namespace lite

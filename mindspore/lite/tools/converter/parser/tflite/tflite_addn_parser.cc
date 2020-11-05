@@ -18,9 +18,10 @@
 #include "tools/converter/parser/tflite/tflite_addn_parser.h"
 #include <vector>
 #include <memory>
+#include <map>
+#include "src/ops/addn.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 STATUS TfliteAddNParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                const std::unique_ptr<tflite::ModelT> &tflite_model,
                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
@@ -55,7 +56,18 @@ STATUS TfliteAddNParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniqu
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+lite::PrimitiveC *TfliteAddNParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto attr = std::make_unique<schema::AddNT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_AddN;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteAddNParser("AddN", new TfliteAddNParser());
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

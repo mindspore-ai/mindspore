@@ -623,9 +623,9 @@ int OnnxModelParser::ParseGraph(schema::MetaGraphT *dst_graph, schema::SubGraphT
   return RET_OK;
 }
 
-schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, const std::string &weightFile,
-                                               const QuantType &quantType) {
-  int status = ValidateFileStr(modelFile, ".onnx");
+schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
+                                               const QuantType &quant_type) {
+  int status = ValidateFileStr(model_file, ".onnx");
   if (status != RET_OK) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.onnx";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -633,9 +633,9 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
   }
 
   onnx::ModelProto onnx_model;
-  status = ReadProtoFromBinaryFile((const char *)modelFile.c_str(), &onnx_model);
+  status = ReadProtoFromBinaryFile((const char *)model_file.c_str(), &onnx_model);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Read onnx model file failed, model path: " << modelFile;
+    MS_LOG(ERROR) << "Read onnx model file failed, model path: " << model_file;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
@@ -645,13 +645,13 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
 
   auto dst_graph = std::make_unique<schema::MetaGraphT>();
   auto dst_sub_graph = std::make_unique<schema::SubGraphT>();
-  int ret = ParseGraph(dst_graph.get(), dst_sub_graph.get(), onnx_graph, quantType);
+  int ret = ParseGraph(dst_graph.get(), dst_sub_graph.get(), onnx_graph, quant_type);
   dst_graph->subGraph.push_back(std::move(dst_sub_graph));
   subGraphNum += 1;
   if (ret == RET_ERROR) {
     return nullptr;
   }
-  dst_graph->name = GetModelName(modelFile);
+  dst_graph->name = GetModelName(model_file);
 
   std::vector<uint32_t> input_temp_index;
   for (size_t i = 0; i < dst_graph->subGraph.front()->inputIndices.size(); i++) {

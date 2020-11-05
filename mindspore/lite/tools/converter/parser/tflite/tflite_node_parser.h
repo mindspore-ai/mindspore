@@ -41,9 +41,9 @@ class TfliteNodeParser {
   virtual STATUS Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                        const std::unique_ptr<tflite::ModelT> &tflite_model,
                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) = 0;
-  virtual STATUS Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                       const std::unique_ptr<tflite::ModelT> &tflite_model, PrimitiveC *primitiveC) {
-    return RET_OK;
+  virtual lite::PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
+    return nullptr;
   }
 
   static void AddOpInput(schema::CNodeT *op, TfliteTensorsInfo *tensors_info, int idx, int total,
