@@ -57,7 +57,8 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps, Tan)
 
 from .random_ops import (Randperm, RandomChoiceWithMask, StandardNormal, Gamma, Poisson, UniformInt, UniformReal,
-                         RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler)
+                         RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
+                         LogUniformCandidateSampler)
 from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
@@ -67,7 +68,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Adam
                      GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCGreedyDecoder,
                      LogSoftmax,
                      MaxPool, DataFormatDimMap,
-                     AvgPool, Conv2DBackpropInput,
+                     AvgPool, Conv2DBackpropInput, ComputeAccidentalHits,
                      MaxPoolWithArgmax, OneHot, Pad, MirrorPad, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid,
                      SigmoidCrossEntropyWithLogits,
@@ -342,6 +343,7 @@ __all__ = [
     "SpaceToDepth",
     "DepthToSpace",
     "Conv2DBackpropInput",
+    "ComputeAccidentalHits",
     "Sign",
     "LARSUpdate",
     "Round",
@@ -384,6 +386,7 @@ __all__ = [
     "InplaceUpdate",
     "InTopK",
     "UniformCandidateSampler",
+    "LogUniformCandidateSampler",
     "LRN",
     "Mod",
     "ConfusionMatrix",

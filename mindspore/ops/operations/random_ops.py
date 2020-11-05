@@ -634,3 +634,73 @@ class UniformCandidateSampler(PrimitiveWithInfer):
     def infer_shape(self, true_classes_shape):
         Validator.check("true_class.shape[1]", true_classes_shape[1], "num_true", self.num_true, Rel.EQ, self.name)
         return ([self.num_sampled], true_classes_shape, [self.num_sampled])
+
+
+class LogUniformCandidateSampler(PrimitiveWithInfer):
+    """
+    Generates random labels with a log-uniform distribution for sampled_candidates.
+
+    Random sampling a tensor of sampled classes from the range of integers [0, range_max).
+
+    Args:
+        num_true (int): The number of target classes per training example. Default: 1.
+        num_sampled (int): The number of classes to randomly sample. Default: 5.
+        unique (bool): Determines whether sample with rejection. If unique is True,
+            all sampled classes in a batch are unique. Default: True.
+        range_max (int): The number of possible classes. Default: 5.
+        seed (int): Random seed, must be non-negative.
+
+    Inputs:
+        - **true_classes** (Tensor) - The target classes. With data type of int64 and shape [batch_size, num_true].
+
+    Outputs:
+        Tuple of 3 Tensors.
+
+        - **sampled_candidates** (Tensor) - A Tensor with shape (num_sampled,) and the same type as `true_classes`.
+        - **true_expected_count** (Tensor) - A Tensor with the same shape as `true_classes and` type float32.
+        - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> sampler = ops.LogUniformCandidateSampler(1, 5, True, 5)
+        >>> output1, output2, output3 = sampler(Tensor(np.array([[1, 7], [0, 4], [3, 3]])))
+        >>> print(output1, output2, output3)
+        [3, 2, 0, 4, 1],
+        [[9.23129916e-01, 4.93363708e-01],
+         [9.92489874e-01, 6.58063710e-01],
+         [7.35534430e-01, 7.35534430e-01]],
+        [7.35534430e-01, 8.26258004e-01, 9.92489874e-01, 6.58063710e-01, 9.23129916e-01]
+
+    """
+
+    @prim_attr_register
+    def __init__(self, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0):
+        """Initialize LogUniformCandidateSampler"""
+        self.init_prim_io_names(inputs=['true_classes'],
+                                outputs=['sampled_candidates', 'true_expected_count', 'sampled_expected_count'])
+        Validator.check_value_type("num_true", num_true, [int], self.name)
+        Validator.check_value_type("num_sampled", num_sampled, [int], self.name)
+        Validator.check_value_type("unique", unique, [bool], self.name)
+        Validator.check_value_type("range_max", range_max, [int], self.name)
+        Validator.check_value_type("seed", seed, [int], self.name)
+        self.num_true = Validator.check_number("num_true", num_true, 1, Rel.GE, self.name)
+        self.num_sampled = Validator.check_number("num_sampled", num_sampled, 1, Rel.GE, self.name)
+        if unique:
+            Validator.check_number("range_max", range_max, num_sampled, Rel.GE, self.name)
+        self.range_max = range_max
+        self.unique = unique
+        self.seed = seed
+
+    def infer_shape(self, true_classes_shape):
+        Validator.check("true_classes shape rank", len(true_classes_shape), "expect", 2, Rel.EQ, self.name)
+        Validator.check_int(true_classes_shape[1], self.num_true, Rel.EQ, 'true_classes_shape', self.name)
+        return (self.num_sampled,), true_classes_shape, (self.num_sampled,)
+
+    def infer_dtype(self, true_classes_type):
+        Validator.check_subclass("true_classes_type", true_classes_type, mstype.tensor, self.name)
+        valid_types = (mstype.int64,)
+        Validator.check_tensor_dtype_valid("true_classes_type", true_classes_type, valid_types, self.name)
+        expected_type = mstype.float32
+        return true_classes_type, expected_type, expected_type
