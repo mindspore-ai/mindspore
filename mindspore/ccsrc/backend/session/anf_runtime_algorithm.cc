@@ -1361,10 +1361,6 @@ std::vector<int> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &anf_no
   }
 }
 
-bool CheckDynamic(const NotNull<abstract::ShapePtr> &shape) {
-  return !std::all_of(shape->shape().begin(), shape->shape().end(), [](int s) { return s > 0; });
-}
-
 bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto base_shape = node->Shape();
@@ -1373,7 +1369,7 @@ bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
     return false;
   }
   if (base_shape->isa<abstract::Shape>()) {
-    if (CheckDynamic(NOT_NULL(base_shape->cast<abstract::ShapePtr>()))) {
+    if (IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
       return true;
     }
   } else if (base_shape->isa<abstract::TupleShape>()) {
@@ -1384,7 +1380,7 @@ bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
       if (!b_shape->isa<abstract::Shape>()) {
         continue;
       }
-      if (CheckDynamic(NOT_NULL(b_shape->cast<abstract::ShapePtr>()))) {
+      if (IsShapeDynamic(b_shape->cast<abstract::ShapePtr>())) {
         return true;
       }
     }
