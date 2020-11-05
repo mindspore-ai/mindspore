@@ -114,7 +114,7 @@ HEIGHT1_LOOP:
     ld1 {v23.8b}, [x18], x4
     ssubl v18.8h, v18.8b, v28.8b
     smlal v26.4s, v1.4h, v12.4h
-    mov v9.8h, v13.8h
+    mov v9.16b, v13.16b
     ssubl v23.8h, v23.8b, v28.8b
     smlal2 v27.4s, v1.8h, v12.8h
     ld1 {v10.8b}, [x16], x4
@@ -128,7 +128,7 @@ HEIGHT1_LOOP:
 
     smlal v24.4s, v3.4h, v14.4h
     smlal2 v25.4s, v3.8h, v14.8h
-    mov v14.8h, v18.8h
+    mov v14.16b, v18.16b
     smlal v26.4s, v3.4h, v16.4h
     smlal2 v27.4s, v3.8h, v16.8h
     smlal v24.4s, v4.4h, v15.4h
@@ -146,7 +146,7 @@ HEIGHT1_LOOP:
 
     smlal v24.4s, v6.4h, v19.4h
     smlal2 v25.4s, v6.8h, v19.8h
-    mov v19.8h, v23.8h
+    mov v19.16b, v23.16b
     smlal v26.4s, v6.4h, v21.4h
     smlal2 v27.4s, v6.8h, v21.8h
     smlal v24.4s, v7.4h, v20.4h
