@@ -39,6 +39,10 @@ class MatmulFP16CPUKernel : public MatmulBaseCPUKernel {
   int RunImpl(int task_id);
 
  private:
+  int MallocMatrixABuffer();
+  int MallocMatrixBBuffer();
+  int InitBias();
+  int MallocFp16Output();
   void InitMatrixA(float *a_ptr, float16_t *a_pack_ptr);
   void InitMatrixA(float16_t *a_ptr, float16_t *a_pack_ptr);
   void InitMatrixB(float *b_ptr, float16_t *b_pack_ptr);
