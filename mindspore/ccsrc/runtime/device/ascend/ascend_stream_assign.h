@@ -22,6 +22,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <queue>
 #include <vector>
 #include <memory>
 #include <unordered_set>
@@ -35,6 +36,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 using std::map;
+using std::queue;
 using std::shared_ptr;
 using std::unordered_map;
 using std::unordered_set;
@@ -184,6 +186,7 @@ class AscendStreamAssign {
   void PrintStreamGroups();
   void FindEventRelations(const NotNull<KernelGraphPtr> &graph_ptr);
   bool IsSatisfiedEvent(uint32_t send_stream_id, uint32_t recv_stream_id) const;
+  vector<CNodePtr> GetInputKernels(const CNodePtr &node);
 
   bool independent_stream_activated_{false};
   bool hcom_stream_activated_{false};
@@ -195,8 +198,9 @@ class AscendStreamAssign {
   std::set<uint32_t> processed_streams_{};
   std::vector<uint32_t> need_first_active_streams_{};
   std::set<CNodeKey> independent_targets_;
+
+  std::map<std::string, std::map<uint32_t, std::set<uint32_t>>> group_hcom_graph_map_;
   // key:graph id, value:stream set
-  std::map<uint32_t, std::set<uint32_t>> hcom_graph_map_;
   std::map<uint32_t, std::set<uint32_t>> independent_graph_map_;
 
   // attr for memory copy reuse
