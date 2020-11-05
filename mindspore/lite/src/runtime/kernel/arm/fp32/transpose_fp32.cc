@@ -162,7 +162,7 @@ int TransposeCPUKernel::Run() {
     return ret;
   }
   return ret;
-}  // namespace mindspore::kernel
+}
 
 kernel::LiteKernel *CpuTransposeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,

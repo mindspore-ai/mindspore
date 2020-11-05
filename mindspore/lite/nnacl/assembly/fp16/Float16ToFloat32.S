@@ -14,6 +14,8 @@ Float16ToFloat32:
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved
     // whereas our coding style do not permit such amount of parameters
+    cmp x2, #0
+    beq LoopEnd
     cmp x2, #64
     blt Loop
     Loop64:
