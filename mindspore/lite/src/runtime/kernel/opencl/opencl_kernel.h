@@ -193,7 +193,7 @@ kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &input
   auto ret = kernel->CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {
     delete kernel;
-    MS_LOG(ERROR) << "Init " << opParameter->name_ << " failed!";
+    MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
     return nullptr;
   }
   return kernel;

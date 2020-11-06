@@ -30,7 +30,35 @@ using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
 
-int GatherOpenCLKernel::Init() {
+int GatherOpenCLKernel::CheckSpecs() { return RET_OK; }
+
+void GatherOpenCLKernel::SetConstArgs() {
+  auto param = reinterpret_cast<GatherParameter *>(this->op_parameter_);
+  param->axis_ = (param->axis_ + in_tensors_[0]->shape().size()) % in_tensors_[0]->shape().size();
+  auto input_shape = in_tensors_[0]->shape();
+  auto output_shape = out_tensors_[0]->shape();
+  int indices_num = in_tensors_[1]->ElementsNum();
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
+  cl_int4 src_size = {in_tensors_[0]->Width(), in_tensors_[0]->Height(), (cl_int)CI4, in_tensors_[0]->Batch()};
+  cl_int4 dst_size = {(cl_int)out_tensors_[0]->Width(), (cl_int)out_tensors_[0]->Height(), (cl_int)CO4,
+                      (cl_int)out_tensors_[0]->Batch()};
+  int arg_cnt = 3;
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, indices_num);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, param->axis_);
+}
+
+void GatherOpenCLKernel::SetGlobalLocal() {
+  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
+  std::vector<size_t> local = {1, 1, 1};
+  std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(),
+                                (size_t)out_tensors_[0]->Batch() * (size_t)out_tensors_[0]->Height(), CO4};
+  OpenCLKernel::AlignGlobalLocal(global, local);
+}
+
+int GatherOpenCLKernel::Prepare() {
   std::string kernel_name = "gather_NHWC4";
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
@@ -41,7 +69,15 @@ int GatherOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-  // init indices_data_
+
+  InitWeights();
+  SetGlobalLocal();
+  SetConstArgs();
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
+  return RET_OK;
+}
+
+int GatherOpenCLKernel::InitWeights() {
   auto indices_tensor = in_tensors_.at(1);
   int indices_num = indices_tensor->ElementsNum();
   bool isIndicesInt32 = indices_tensor->data_type() == kNumberTypeInt32;
@@ -53,11 +89,10 @@ int GatherOpenCLKernel::Init() {
       return RET_ERROR;
     }
   }
-  MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
-int GatherOpenCLKernel::InitWeights() {
+int GatherOpenCLKernel::UpdateWeights() {
   auto indices_tensor = in_tensors_.at(1);
   int indices_num = indices_tensor->ElementsNum();
   bool isIndicesInt32 = indices_tensor->data_type() == kNumberTypeInt32;
@@ -86,55 +121,20 @@ int GatherOpenCLKernel::InitWeights() {
 
 int GatherOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  auto param = reinterpret_cast<GatherParameter *>(this->op_parameter_);
 
-  if (InitWeights() != RET_OK) {
+  if (UpdateWeights() != RET_OK) {
     return RET_ERROR;
   }
-  auto input_shape = in_tensors_[0]->shape();
-  auto output_shape = out_tensors_[0]->shape();
-  int indices_num = in_tensors_[1]->ElementsNum();
-  size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
-  size_t CI4 = UP_DIV(in_tensors_[0]->Channel(), C4NUM);
-  cl_int4 src_size = {in_tensors_[0]->Width(), in_tensors_[0]->Height(), (cl_int)CI4, in_tensors_[0]->Batch()};
-  cl_int4 dst_size = {(cl_int)out_tensors_[0]->Width(), (cl_int)out_tensors_[0]->Height(), (cl_int)CO4,
-                      (cl_int)out_tensors_[0]->Batch()};
-  std::vector<size_t> local = {1, 1, 1};
-  std::vector<size_t> global = {(size_t)out_tensors_[0]->Width(),
-                                (size_t)out_tensors_[0]->Batch() * (size_t)out_tensors_[0]->Height(), CO4};
-  int arg_cn = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, indices_data_, lite::opencl::MemType::BUF);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, src_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, dst_size);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, indices_num);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param->axis_);
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+
+  ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
+  ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
+  ocl_runtime_->SetKernelArg(kernel_, 2, indices_data_, lite::opencl::MemType::BUF);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
 
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLGatherKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                              const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) GatherOpenCLKernel(opParameter, inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Kernel " << opParameter->name_ << " new failed.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Kernel " << opParameter->name_ << " init failed.";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Gather, OpenCLGatherKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Gather, OpenCLGatherKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Gather, OpenCLKernelCreator<GatherOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Gather, OpenCLKernelCreator<GatherOpenCLKernel>);
 
 }  // namespace mindspore::kernel

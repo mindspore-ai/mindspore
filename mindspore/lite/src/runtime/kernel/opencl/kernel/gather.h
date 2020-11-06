@@ -31,9 +31,16 @@ class GatherOpenCLKernel : public OpenCLKernel {
 
   ~GatherOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
   int InitWeights() override;
+  int Prepare() override;
+
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
+
+ protected:
+  int UpdateWeights();
 
  private:
   cl::Kernel kernel_;

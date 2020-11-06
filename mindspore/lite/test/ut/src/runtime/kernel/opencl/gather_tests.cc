@@ -34,7 +34,8 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
                       const std::vector<int> &indices, GatherParameter *param, TypeId data_type,
                       schema::Format format) {
   MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
+  auto ocl_wrp = lite::opencl::OpenCLRuntimeWrapper();
+  auto ocl_runtime = ocl_wrp.GetInstance();
   ocl_runtime->Init();
   auto allocator = ocl_runtime->GetAllocator();
 
@@ -64,7 +65,7 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
 
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{pkernel};
-  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel({&tensor_a}, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
     delete pkernel;
     MS_LOG(INFO) << " new SubGraphOpenCLKernel failed ";
@@ -82,6 +83,15 @@ void test_main_gather(void *input_data, void *correct_data, const std::vector<in
 
   std::cout << "==================output data================" << std::endl;
   auto *output_data = reinterpret_cast<T *>(outputs[0]->data_c());
+  for (size_t i = 0; i < outputs[0]->ElementsNum(); ++i) {
+    std::cout << output_data[i] << " ";
+  }
+  std::cout << std::endl;
+  std::cout << "==================expected data================" << std::endl;
+  for (size_t i = 0; i < outputs[0]->ElementsNum(); ++i) {
+    std::cout << static_cast<T *>(correct_data)[i] << " ";
+  }
+  std::cout << std::endl;
   CommonTest::CompareOutputData(output_data, static_cast<T *>(correct_data), outputs[0]->ElementsNum(), 0.0001);
 }
 TEST_F(TestGatherOpenCL, Axis0Fp16) {
