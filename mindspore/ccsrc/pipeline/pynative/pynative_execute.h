@@ -100,6 +100,14 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
  private:
   PynativeExecutor() = default;
 
+  // check cell struct
+  bool IsDynamicCell(const py::object &cell);
+  bool ParseIfWhileExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
+  bool ParseAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
+  bool ParseForExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
+  std::string ParseNodeName(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
+                            parse::AstMainType type);
+
   // run op
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   MsBackendPolicy InitEnv(const OpExecInfoPtr &op_exec_info);
@@ -158,9 +166,9 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static std::mutex instance_lock_;
   static int64_t graph_id_;
   bool grad_flag_{false};
+  bool dynamic_cell_{false};
   bool first_grad_step_{false};
   bool grad_is_running{false};
-  bool dynamic_shape{false};
 
   // Used for construct grad graph
   FuncGraphPtr top_g_{nullptr};
@@ -173,6 +181,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   // record all info of a graph
   std::unordered_map<FuncGraphPtr, GraphInfo> graph_info_map_;
+  std::unordered_map<std::string, bool> cell_dynamic_map_;
   std::unordered_map<std::string, ResourcePtr> cell_resource_map_;
   std::unordered_map<std::string, std::pair<FuncGraphPtr, bool>> cell_graph_map_;
   // key: cell_id, value: (send_id, weigths_id), cache for sens and weight change

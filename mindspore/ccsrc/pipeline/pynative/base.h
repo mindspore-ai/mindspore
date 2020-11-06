@@ -28,6 +28,7 @@
 #include "pybind11/pybind11.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/primitive_py.h"
+#include "pipeline/jit/parse/parse.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
@@ -65,6 +66,9 @@ OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
 const std::set<std::string> ignore_infer_prim = {"make_ref", "mixed_precision_cast"};
 const std::set<std::string> force_infer_prim = {"TopK", "DropoutGenMask"};
+const std::set<std::string> unchanged_named_primitive = {parse::NAMED_PRIMITIVE_ATTRIBUTE,
+                                                         parse::NAMED_PRIMITIVE_NAMECONSTANT,
+                                                         parse::NAMED_PRIMITIVE_NUM, parse::NAMED_PRIMITIVE_STR};
 }  // namespace pynative
 }  // namespace mindspore
 
