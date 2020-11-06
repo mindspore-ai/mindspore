@@ -22,7 +22,7 @@
 
 #define MS_PRINT(format, ...) __android_log_print(ANDROID_LOG_INFO, "MSJNI", format, ##__VA_ARGS__)
 
-MSNetWork::MSNetWork(void) : session_(nullptr) {}
+MSNetWork::MSNetWork(void) : session_(nullptr), model_(nullptr) {}
 
 MSNetWork::~MSNetWork(void) {}
 
@@ -34,21 +34,29 @@ void MSNetWork::CreateSessionMS(char *modelBuffer, size_t bufferLen, mindspore::
   }
 
   // Compile model.
-  auto model = mindspore::lite::Model::Import(modelBuffer, bufferLen);
-  if (model == nullptr) {
+  model_ = mindspore::lite::Model::Import(modelBuffer, bufferLen);
+  if (model_ == nullptr) {
+    ReleaseNets();
     MS_PRINT("Import model failed.");
     return;
   }
 
-  int ret = session_->CompileGraph(model);
+  int ret = session_->CompileGraph(model_);
   if (ret != mindspore::lite::RET_OK) {
+    ReleaseNets();
     MS_PRINT("CompileGraph failed.");
     return;
   }
 }
 
-int MSNetWork::ReleaseNets(void) {
-  delete session_;
-  return 0;
+void MSNetWork::ReleaseNets(void) {
+  if (model_ != nullptr) {
+    model_->Free();
+    delete model_;
+    model_ = nullptr;
+  }
+  if (session_ != nullptr) {
+    delete session_;
+    session_ = nullptr;
+  }
 }
-

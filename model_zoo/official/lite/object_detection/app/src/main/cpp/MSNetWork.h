@@ -50,10 +50,11 @@ class MSNetWork {
 
   void CreateSessionMS(char *modelBuffer, size_t bufferLen, mindspore::lite::Context *ctx);
 
-  int ReleaseNets(void);
+  void ReleaseNets(void);
 
   mindspore::session::LiteSession *session() const { return session_; }
  private:
   mindspore::session::LiteSession *session_;
+  mindspore::lite::Model *model_;
 };
 #endif
