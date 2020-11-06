@@ -483,7 +483,7 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
     MS_EXCEPTION_IF_NULL(value_type);
     auto value_type_str = value_type->ToString();
     if (value_type_str == kVTypeInt64) {
-      int64_t data = GetValue<int64_t>(value);
+      auto data = GetValue<int64_t>(value);
       attr_value.push_back(data);
     } else {
       auto vec =
@@ -737,10 +737,10 @@ void TbeKernelBuild::GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode
   (*compute_op_str)[kJtype] = type;
   auto kernel_name = op_info_ptr->kernel_name();
   (*compute_op_str)[kJFuncName] = kernel_name;
-  (*compute_op_str)[kJModuleName] = std::string("impl.") + type;
+  (*compute_op_str)[kJModuleName] = std::string("impl.") + kernel_name;
   (*compute_op_str)[kJName] = cnode->fullname_with_scope();
   (*compute_op_str)[kJPattern] = GetNodeFusionType(cnode);
-  (*compute_op_str)[kJPyModulePath] = "/usr/local/Ascend/opp/op_impl/build_in/ai_core/tbe";
+  (*compute_op_str)[kJPyModulePath] = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe";
   (void)(*fusion_kernel_name).append("_");
   (void)(*fusion_kernel_name).append(kernel_name);
 }
@@ -1034,6 +1034,8 @@ std::string TbeKernelBuild::GetNodeFusionType(const mindspore::CNodePtr &cnode) 
                                                                {kReluV2OpName, "ElemWise"},
                                                                {kTensorAddOpName, "ElemWise"},
                                                                {kConv2DBackpropInputOpName, "Conv2d_backprop_input"},
+                                                               {kConv2DBackpropFilterOpName, "Conv2d_backprop_filter"},
+                                                               {kDepthwiseConv2dNativeName, "DepthwiseConvolution"},
                                                                {kAddNOpName, "ElemWise"},
                                                                {kReluGradV2OpName, "ElemWise"},
                                                                {kRealDivOpName, "ElemWise"}};
