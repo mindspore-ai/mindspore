@@ -89,8 +89,6 @@ class CorrectionMulGradGpuKernel : public GpuKernel {
   void InitResource() override {}
 
  private:
-  void DestroyResource() noexcept {}
-
   size_t batch_size_;
   size_t channel_;
   size_t height_;

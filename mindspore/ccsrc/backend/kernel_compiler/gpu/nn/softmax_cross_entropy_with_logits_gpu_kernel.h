@@ -101,6 +101,13 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     return true;
   }
 
+  void DestroyResource() noexcept override {
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(softmax_output_descriptor_),
+                               "cudnnDestroyTensorDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(logits_descriptor_),
+                               "cudnnDestroyTensorDescriptor failed.");
+  }
+
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
@@ -118,12 +125,6 @@ class SoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
   }
 
  private:
-  void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(softmax_output_descriptor_),
-                               "cudnnDestroyTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(logits_descriptor_),
-                               "cudnnDestroyTensorDescriptor failed.");
-  }
   void InferInputOutputSize(const CNodePtr &kernel_node) {
     auto logits_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(logits_shape);

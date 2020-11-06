@@ -69,21 +69,15 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY
 template <typename T>
 class UnaryOpGpuKernel : public GpuKernel {
  public:
-  UnaryOpGpuKernel()
-      : unary_op_type_(UNARY_OP_INVALID_TYPE),
-        input_size_(sizeof(T)),
-        output_size_(sizeof(T)),
-        workspace_size_(0),
-        is_null_input_(false) {}
+  UnaryOpGpuKernel() { ResetResource(); }
   ~UnaryOpGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    VARIABLE_NOT_USED(workspace);
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
@@ -184,7 +178,7 @@ class UnaryOpGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but unary op needs 1 output.";
       return false;
     }
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shape);
     if (is_null_input_) {
       MS_LOG(WARNING) << "UnaryOpGpuKernel input is null";
@@ -197,6 +191,16 @@ class UnaryOpGpuKernel : public GpuKernel {
     output_size_ = input_size_;
     InitSizeLists();
     return true;
+  }
+  void ResetResource() noexcept override {
+    unary_op_type_ = UNARY_OP_INVALID_TYPE;
+    input_size_ = sizeof(T);
+    output_size_ = sizeof(T);
+    workspace_size_ = 0;
+    is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

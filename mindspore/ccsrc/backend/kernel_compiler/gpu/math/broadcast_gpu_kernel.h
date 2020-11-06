@@ -31,13 +31,7 @@ constexpr int MAX_DIMS = 7;
 template <typename T>
 class BroadcastOpGpuKernel : public GpuKernel {
  public:
-  BroadcastOpGpuKernel()
-      : op_type_(BROADCAST_TYPE_INVALID),
-        need_broadcast_(false),
-        is_comp_op_(false),
-        input1_num_(1),
-        input2_num_(1),
-        output_num_(1) {}
+  BroadcastOpGpuKernel() { ResetResource(); }
   ~BroadcastOpGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -71,9 +65,9 @@ class BroadcastOpGpuKernel : public GpuKernel {
   }
   bool Init(const CNodePtr &kernel_node) override {
     GetOpType(kernel_node);
-    auto shape1 = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    auto shape2 = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    auto shape3 = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    auto shape1 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    auto shape2 = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
+    auto shape3 = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
     need_broadcast_ = IsBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > 7) {
       MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
@@ -105,6 +99,20 @@ class BroadcastOpGpuKernel : public GpuKernel {
 
     InitSizeLists();
     return true;
+  }
+  void ResetResource() noexcept override {
+    op_type_ = BROADCAST_TYPE_INVALID;
+    need_broadcast_ = false;
+    is_comp_op_ = false;
+    input1_num_ = 1;
+    input2_num_ = 1;
+    output_num_ = 1;
+    lhs_shape_.clear();
+    rhs_shape_.clear();
+    output_shape_.clear();
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

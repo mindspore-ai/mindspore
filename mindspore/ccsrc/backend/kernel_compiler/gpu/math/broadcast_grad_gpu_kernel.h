@@ -30,14 +30,7 @@ namespace kernel {
 template <typename T>
 class BroadcastOpGradGpuKernel : public GpuKernel {
  public:
-  BroadcastOpGradGpuKernel()
-      : op_type_(BROADCAST_GRAD_TYPE_INVALID),
-        need_broadcast_(false),
-        input1_num_(1),
-        input2_num_(1),
-        output_num_(1),
-        grad_x_(false),
-        grad_y_(false) {}
+  BroadcastOpGradGpuKernel() { ResetResource(); }
   ~BroadcastOpGradGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -103,6 +96,22 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
 
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    op_type_ = BROADCAST_GRAD_TYPE_INVALID;
+    need_broadcast_ = false;
+    input1_num_ = 1;
+    input2_num_ = 1;
+    output_num_ = 1;
+    std::fill(x1_shape_, x1_shape_ + 4, 1);
+    std::fill(x2_shape_, x2_shape_ + 4, 1);
+    std::fill(dy_shape_, dy_shape_ + 4, 1);
+    grad_x_ = false;
+    grad_y_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

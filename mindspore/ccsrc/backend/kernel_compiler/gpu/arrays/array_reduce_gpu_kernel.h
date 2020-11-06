@@ -35,21 +35,7 @@ const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
 template <typename T>
 class ArrayReduceGpuKernel : public GpuKernel {
  public:
-  ArrayReduceGpuKernel()
-      : cudnn_handle_(nullptr),
-        reduce_tensor_op_(CUDNN_REDUCE_TENSOR_ADD),
-        data_type_(CUDNN_DATA_FLOAT),
-        nan_prop_(CUDNN_NOT_PROPAGATE_NAN),
-        reduce_indices_(CUDNN_REDUCE_TENSOR_NO_INDICES),
-        reduce_tensor_descriptor_(nullptr),
-        inputA_descriptor_(nullptr),
-        outputC_descriptor_(nullptr),
-        keep_dims_(false),
-        all_match_(false),
-        is_null_input_(false),
-        input_size_(0),
-        output_size_(0),
-        workspace_size_(0) {}
+  ArrayReduceGpuKernel() { ResetResource(); }
   ~ArrayReduceGpuKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -94,7 +80,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but reduce op needs 1 output.";
       return false;
     }
-    int input_dim_length = SizeToInt(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0).size());
+    int input_dim_length = SizeToInt(AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0).size());
 
     if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<ValueTuple>() ||
         AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<ValueList>()) {
@@ -117,8 +103,8 @@ class ArrayReduceGpuKernel : public GpuKernel {
     }
     keep_dims_ = GetAttr<bool>(kernel_node, "keep_dims");
 
-    auto inputA_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto outputC_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto inputA_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    auto outputC_shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(inputA_shape);
     if (is_null_input_) {
       MS_LOG(WARNING) << "ArrayReduceGpuKernel input is null";
@@ -130,6 +116,35 @@ class ArrayReduceGpuKernel : public GpuKernel {
 
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    reduce_tensor_op_ = CUDNN_REDUCE_TENSOR_ADD;
+    data_type_ = CUDNN_DATA_FLOAT;
+    nan_prop_ = CUDNN_NOT_PROPAGATE_NAN;
+    reduce_indices_ = CUDNN_REDUCE_TENSOR_NO_INDICES;
+    reduce_tensor_descriptor_ = nullptr;
+    inputA_descriptor_ = nullptr;
+    outputC_descriptor_ = nullptr;
+    keep_dims_ = false;
+    all_match_ = false;
+    is_null_input_ = false;
+    input_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
+  void DestroyResource() noexcept override {
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor_),
+                               "cudnnDestroyReduceTensorDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(inputA_descriptor_),
+                               "cudnnDestroyTensorDescriptor failed.");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(outputC_descriptor_),
+                               "cudnnDestroyTensorDescriptor failed.");
   }
 
  protected:
@@ -160,14 +175,6 @@ class ArrayReduceGpuKernel : public GpuKernel {
   }
 
  private:
-  void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor_),
-                               "cudnnDestroyReduceTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(inputA_descriptor_),
-                               "cudnnDestroyTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(outputC_descriptor_),
-                               "cudnnDestroyTensorDescriptor failed.");
-  }
   void InferArrayReduceType(const CNodePtr &kernel_node) {
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kReduceTypeMap.find(kernel_name);

@@ -36,6 +36,8 @@
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "utils/shape_utils.h"
 #include "debug/data_dump/dump_json_parser.h"
+#include "backend/kernel_compiler/gpu/gpu_kernel.h"
+#include "runtime/device/executor/executor_callback.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #endif
@@ -588,6 +590,29 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       MS_LOG(INFO) << "[inplace optimizer] skip node: " << kernel->DebugString();
       continue;
     }
+
+    // akg kernel do not support dynamic shape by now.
+    device::DynamicKernelPtr dynamic_kernel = nullptr;
+    kernel::GpuKernel *gpu_kernel = nullptr;
+    if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) != KernelType::AKG_KERNEL) {
+      gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
+      dynamic_kernel = gpu_kernel->DynamicKernel();
+    }
+
+    if (dynamic_kernel && dynamic_kernel->have_depends()) {
+      MS_LOG(INFO) << "Match Dynamic Kernel, Start SyncStream";
+      if (!SyncStream()) {
+        MS_LOG(ERROR) << "SyncStream failed";
+        return false;
+      }
+    }
+
+    if (dynamic_kernel && dynamic_kernel->is_dynamic_shape()) {
+      ExecutorCallback::GetInstance().Consume();
+      dynamic_kernel->InferShape();
+      dynamic_kernel->UpdateArgs();
+    }
+
     AddressPtrList kernel_inputs;
     AddressPtrList kernel_workspaces;
     AddressPtrList kernel_outputs;
@@ -615,6 +640,10 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       } else {
         LaunchKernelWithTimeProfiling(kernel, kernel_inputs, kernel_workspaces, kernel_outputs);
       }
+
+      ExecutorCallback::GetInstance().RegistCallback([&gpu_kernel] {
+        if (gpu_kernel) gpu_kernel->PostExecute();
+      });
       // called once per kernel to collect the outputs to the kernel (does a SyncDeviceToHost)
       LoadKernelData(debugger_.get(), kernel, kernel_inputs, kernel_workspaces, kernel_outputs, exec_order, stream_,
                      dump_enabled);
@@ -633,6 +662,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     // collect weights and bias for dump mode
     debugger_->LoadParametersAndConst();
     CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
+    ExecutorCallback::GetInstance().Consume();
   }
   ClearSwapInfo(mock);
   return true;

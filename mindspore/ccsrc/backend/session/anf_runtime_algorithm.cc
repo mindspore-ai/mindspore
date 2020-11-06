@@ -50,6 +50,10 @@ bool IsShapeDynamic(const abstract::ShapePtr &shape) {
   return std::any_of(shape->shape().begin(), shape->shape().end(), [](int s) { return s < 0; });
 }
 
+bool IsShapeDynamic(const std::vector<size_t> &shape) {
+  return std::any_of(shape.begin(), shape.end(), [](int s) { return s < 0; });
+}
+
 std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   std::vector<size_t> shape_size_t;
@@ -1388,6 +1392,30 @@ bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
     }
   }
   return false;
+}
+
+std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index) {
+  auto device_shape = GetInputDeviceShape(anf_node, index);
+  // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
+  if (IsShapeDynamic(device_shape)) {
+    auto max_shape = GetInputMaxShape(anf_node, index);
+    std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
+    auto format = GetInputFormat(anf_node, index);
+    trans::TransShapeToDevice(device_shape, format);
+  }
+  return device_shape;
+}
+
+std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index) {
+  auto device_shape = GetOutputDeviceShape(anf_node, index);
+  // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
+  if (IsShapeDynamic(device_shape)) {
+    auto max_shape = GetOutputMaxShape(anf_node, index);
+    std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
+    auto format = GetOutputFormat(anf_node, index);
+    trans::TransShapeToDevice(device_shape, format);
+  }
+  return device_shape;
 }
 }  // namespace session
 }  // namespace mindspore

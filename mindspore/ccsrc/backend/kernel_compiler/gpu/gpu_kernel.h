@@ -23,11 +23,13 @@
 #include <vector>
 #include <utility>
 #include <map>
+#include <memory>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
 #include "runtime/device/gpu/gpu_device_manager.h"
 #include "runtime/device/gpu/gpu_common.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "runtime/device/executor/dynamic_kernel.h"
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 
 namespace mindspore {
@@ -45,10 +47,28 @@ static std::map<int, int> kNHWCToNCHWAxisMap = {
   {3, 1},
 };
 
+class GpuDynamicKernel : public device::DynamicKernel {
+ public:
+  explicit GpuDynamicKernel(const CNodePtr &cnode_ptr) : DynamicKernel(nullptr, cnode_ptr) {}
+  ~GpuDynamicKernel() = default;
+
+  void UpdateArgs() override;
+  void PostExecute() final { MS_LOG(EXCEPTION) << "`PostExecute()` should not invoked with gpu backend"; };
+  void Execute() final { MS_LOG(EXCEPTION) << "`Execute()` should not invoked with gpu backend"; }
+};
+
 class GpuKernel : public KernelMod {
  public:
   virtual ~GpuKernel() = default;
   virtual bool Init(const CNodePtr &kernel_node) = 0;
+  virtual void ResetResource() noexcept {
+    MS_LOG(EXCEPTION) << "kernel must override the `ResetResource()` method when dynamic shape";
+  }
+  virtual void DestroyResource() noexcept {}
+  virtual void PostExecute() {}
+
+  void InitDynamicKernel(const CNodePtr &cnode_ptr) { dynamic_kernel_ = std::make_shared<GpuDynamicKernel>(cnode_ptr); }
+  device::DynamicKernelPtr DynamicKernel() const { return dynamic_kernel_; }
 
  protected:
   virtual void InitResource() {}
@@ -228,7 +248,10 @@ class GpuKernel : public KernelMod {
     }
     return type->second;
   }
+
+  device::DynamicKernelPtr dynamic_kernel_;
 };
+
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -237,6 +237,10 @@ void MemSwapManager::SaveUserKernelTopoOrder() {
         continue;
       }
 
+      if (opt::IsNopNode(user_kernel)) {
+        continue;
+      }
+
       size_t user_kernel_topo_sort = SearchKernelExecutionInfo(user_kernel).topo_order_;
       auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(user_kernel, node_pair.second - 1);
       auto &output_idx = kernel_with_index.second;

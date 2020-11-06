@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_EXECUTOR_EXECUTOR_CALLBACK_H_
-#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_EXECUTOR_EXECUTOR_CALLBACK_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_EXECUTOR_EXECUTOR_CALLBACK_H_
+#define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_EXECUTOR_EXECUTOR_CALLBACK_H_
 
 #include <queue>
 #include <mutex>
@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace device {
-namespace ascend {
 class ExecutorCallback {
  public:
   static ExecutorCallback &GetInstance() {
@@ -43,7 +42,6 @@ class ExecutorCallback {
   std::queue<std::function<void()>> callback_queue_;
   std::mutex lock_;
 };
-}  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_EXECUTOR_EXECUTOR_CALLBACK_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_EXECUTOR_EXECUTOR_CALLBACK_H_
