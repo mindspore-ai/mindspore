@@ -601,10 +601,10 @@ class FusedBatchNorm(Primitive):
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`.
-        - **scale** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **bias** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **mean** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **variance** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **scale** (Parameter) - Tensor of shape :math:`(C,)`.
+        - **bias** (Parameter) - Tensor of shape :math:`(C,)`.
+        - **mean** (Parameter) - Tensor of shape :math:`(C,)`.
+        - **variance** (Parameter) - Tensor of shape :math:`(C,)`.
 
     Outputs:
         Tuple of 5 Tensor, the normalized input and the updated parameters.
@@ -616,13 +616,30 @@ class FusedBatchNorm(Primitive):
         - **updated_moving_variance** (Tensor) - Tensor of shape :math:`(C,)`.
 
     Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class FusedBatchNormNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(FusedBatchNormNet, self).__init__()
+        >>>         self.fused_batch_norm = P.FusedBatchNorm()
+        >>>         self.scale = Parameter(Tensor(np.ones([64]), mindspore.float32), name="scale")
+        >>>         self.bias = Parameter(Tensor(np.ones([64]), mindspore.float32), name="bias")
+        >>>         self.mean = Parameter(Tensor(np.ones([64]), mindspore.float32), name="mean")
+        >>>         self.variance = Parameter(Tensor(np.ones([64]), mindspore.float32), name="variance")
+        >>>
+        >>>     def construct(self, input_x):
+        >>>         out = self.fused_batch_norm(input_x, self.scale, self.bias, self.mean, self.variance)
+        >>>         return out
+        >>>
         >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
-        >>> scale = Tensor(np.ones([64]), mindspore.float32)
-        >>> bias = Tensor(np.ones([64]), mindspore.float32)
-        >>> mean = Tensor(np.ones([64]), mindspore.float32)
-        >>> variance = Tensor(np.ones([64]), mindspore.float32)
-        >>> op = P.FusedBatchNorm()
-        >>> output = op(input_x, scale, bias, mean, variance)
+        >>> net = FusedBatchNormNet()
+        >>> output = net(input_x)
+        >>> output[0].shape
+        (128, 64, 32, 64)
     """
     __mindspore_signature__ = (
         sig.make_sig('input_x', dtype=sig.sig_dtype.T2),
@@ -673,12 +690,12 @@ class FusedBatchNormEx(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Tensor) - The input of FusedBatchNormEx, Tensor of shape :math:`(N, C)`,
           data type: float16 or float32.
-        - **scale** (Tensor) - Parameter scale, same with gamma above-mentioned, Tensor of shape :math:`(C,)`,
+        - **scale** (Parameter) - Parameter scale, same with gamma above-mentioned, Tensor of shape :math:`(C,)`,
           data type: float32.
-        - **bias** (Tensor) - Parameter bias, same with beta above-mentioned, Tensor of shape :math:`(C,)`,
+        - **bias** (Parameter) - Parameter bias, same with beta above-mentioned, Tensor of shape :math:`(C,)`,
           data type: float32.
-        - **mean** (Tensor) - mean value, Tensor of shape :math:`(C,)`, data type: float32.
-        - **variance** (Tensor) - variance value, Tensor of shape :math:`(C,)`, data type: float32.
+        - **mean** (Parameter) - mean value, Tensor of shape :math:`(C,)`, data type: float32.
+        - **variance** (Parameter) - variance value, Tensor of shape :math:`(C,)`, data type: float32.
 
     Outputs:
         Tuple of 6 Tensors, the normalized input, the updated parameters and reserve.
@@ -692,13 +709,30 @@ class FusedBatchNormEx(PrimitiveWithInfer):
         - **reserve** (Tensor) - reserve space, Tensor of shape :math:`(C,)`, data type: float32.
 
     Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class FusedBatchNormExNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(FusedBatchNormExNet, self).__init__()
+        >>>         self.fused_batch_norm_ex = P.FusedBatchNormEx()
+        >>>         self.scale = Parameter(Tensor(np.ones([64]), mindspore.float32), name="scale")
+        >>>         self.bias = Parameter(Tensor(np.ones([64]), mindspore.float32), name="bias")
+        >>>         self.mean = Parameter(Tensor(np.ones([64]), mindspore.float32), name="mean")
+        >>>         self.variance = Parameter(Tensor(np.ones([64]), mindspore.float32), name="variance")
+        >>>
+        >>>     def construct(self, input_x):
+        >>>         out = self.fused_batch_norm_ex(input_x, self.scale, self.bias, self.mean, self.variance)
+        >>>         return out
+        >>>
         >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
-        >>> scale = Tensor(np.ones([64]), mindspore.float32)
-        >>> bias = Tensor(np.ones([64]), mindspore.float32)
-        >>> mean = Tensor(np.ones([64]), mindspore.float32)
-        >>> variance = Tensor(np.ones([64]), mindspore.float32)
-        >>> op = P.FusedBatchNormEx()
-        >>> output = op(input_x, scale, bias, mean, variance)
+        >>> net = FusedBatchNormExNet()
+        >>> output = net(input_x)
+        >>> output[0].shape
+        (128, 64, 32, 64)
     """
     __mindspore_signature__ = (
         sig.make_sig('input_x', dtype=sig.sig_dtype.T2),
@@ -756,7 +790,7 @@ class BNTrainingReduce(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
-        >>> bn_training_reduce = P.BNTrainingReduce(input_x)
+        >>> bn_training_reduce = P.BNTrainingReduce()
         >>> output = bn_training_reduce(input_x)
     """
 
@@ -5657,13 +5691,30 @@ class DynamicRNN(PrimitiveWithInfer):
           Has the same type with input `b`.
 
     Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> import mindspore.context as context
+        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>> class DynamicRNNNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(DynamicRNNNet, self).__init__()
+        >>>         self.dynamic_rnn = P.DynamicRNN()
+        >>>
+        >>>     def construct(self, x, w, b, init_h, init_c):
+        >>>         out = self.dynamic_rnn(x, w, b, None, init_h, init_c)
+        >>>         return out
+        >>>
         >>> x = Tensor(np.random.rand(2, 16, 64).astype(np.float16))
         >>> w = Tensor(np.random.rand(96, 128).astype(np.float16))
         >>> b = Tensor(np.random.rand(128).astype(np.float16))
         >>> init_h = Tensor(np.random.rand(1, 16, 32).astype(np.float16))
         >>> init_c = Tensor(np.random.rand(1, 16, 32).astype(np.float16))
-        >>> dynamic_rnn = P.DynamicRNN()
-        >>> output = dynamic_rnn(x, w, b, None, init_h, init_c)
+        >>> net = DynamicRNNNet()
+        >>> output = net(x, w, b, init_h, init_c)
         >>> output[0].shape
         (2, 16, 32)
     """

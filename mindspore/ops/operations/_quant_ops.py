@@ -43,7 +43,8 @@ __all__ = ["MinMaxUpdatePerLayer",
            "BatchNormFoldGradD",
            "BatchNormFold2_D",
            "BatchNormFold2GradD",
-           "BatchNormFold2GradReduce"
+           "BatchNormFold2GradReduce",
+           "IFMR"
            ]
 
 
@@ -1384,3 +1385,66 @@ class WtsARQ(PrimitiveWithInfer):
         validator.check_tensor_type_same({"w_min": w_min_dtype}, valid_types, self.name)
         validator.check_tensor_type_same({"w_max": w_max_dtype}, valid_types, self.name)
         return w_dtype
+
+
+class IFMR(PrimitiveWithInfer):
+    """
+    The TFMR(Input Feature Map Reconstruction).
+
+    Args:
+        min_percentile (float): Min init percentile. Default: 0.999999.
+        max_percentile (float): Max init percentile. Default: 0.999999.
+        search_range Union[list(float), tuple(float)]: Range of searching. Default: [0.7, 1.3].
+        search_step (float): Step size of searching. Default: 0.01.
+        with_offset (bool): Whether using offset. Default: True.
+
+    Inputs:
+        - **data** (Tensor) - A Tensor of feature map. With float16 or float32 data type.
+        - **data_min** (Tensor) - A Tensor of min value of feature map, the shape is :math:`(1)`.
+          With float16 or float32 data type.
+        - **data_max** (Tensor) - A Tensor of max value of feature map, the shape is :math:`(1)`.
+          With float16 or float32 data type.
+        - **cumsum** (Tensor) - A `1-D` Tensor of cumsum bin of data. With int32 data type.
+
+    Outputs:
+        - **scale** (Tensor) - A tensor of optimal scale, the shape is :math:`(1)`. Data dtype is float32.
+        - **offset** (Tensor) - A tensor of optimal offset, the shape is :math:`(1)`. Data dtype is float32.
+
+    Examples:
+        >>> data = Tensor(np.random.rand(1, 3, 6, 4).astype(np.float32))
+        >>> data_min = Tensor([0.1], mstype.float32)
+        >>> data_max = Tensor([0.5], mstype.float32)
+        >>> cumsum = Tensor(np.random.rand(4).astype(np.int32))
+        >>> ifmr = Q.IFMR(min_percentile=0.2, max_percentile=0.9, search_range=(1.0, 2.0),
+        >>>               search_step=1.0, with_offset=False)
+        >>> output = ifmr(data, data_min, data_max, cumsum)
+        ([7.87401572e-03], [0.00000000e+00])
+    """
+
+    @prim_attr_register
+    def __init__(self, min_percentile=0.999999, max_percentile=0.999999, search_range=(0.7, 1.3), search_step=0.01,
+                 with_offset=True):
+        validator.check_value_type("min_percentile", min_percentile, [float], self.name)
+        validator.check_value_type("max_percentile", max_percentile, [float], self.name)
+        validator.check_value_type("search_range", search_range, [list, tuple], self.name)
+        for item in search_range:
+            validator.check_positive_float(item, "item of search_range", self.name)
+        validator.check('search_range[1]', search_range[1], 'search_range[0]', search_range[0], Rel.GE, self.name)
+        validator.check_value_type("search_step", search_step, [float], self.name)
+        validator.check_value_type("offset_flag", with_offset, [bool], self.name)
+
+    def infer_shape(self, data_shape, data_min_shape, data_max_shape, cumsum_shape):
+        validator.check_equal_int(len(data_min_shape), 1, "dims of data_min", self.name)
+        validator.check_equal_int(data_min_shape[0], 1, "data_min[0]", self.name)
+        validator.check_equal_int(len(data_max_shape), 1, "dims of data_max", self.name)
+        validator.check_equal_int(data_max_shape[0], 1, "data_max[0]", self.name)
+        validator.check_equal_int(len(cumsum_shape), 1, "dims of cumsum", self.name)
+        return (1,), (1,)
+
+    def infer_dtype(self, data_dtype, data_min_dtype, data_max_dtype, cumsum_dtype):
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ("input_value", "input_min", "input_max"),
+                  (data_dtype, data_min_dtype, data_max_dtype)))
+        validator.check_tensor_dtype_valid("input_bins", cumsum_dtype, [mstype.int32], self.name)
+        return mstype.tensor_type(mstype.float32), mstype.tensor_type(mstype.float32)
