@@ -101,7 +101,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   Softmax(ins, losses_, sum_data_, &sm_params_);
   if (is_train()) {
     GradPostExecute(labels, losses_, grads, out);
-  } else if (out != nullptr) {
+  } else {
     ForwardPostExecute(labels, losses_, out);
   }
   return RET_OK;
