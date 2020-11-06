@@ -53,6 +53,7 @@
 #include "profiler/device/ascend/ascend_profiling.h"
 #include "profiler/device/ascend/profiling_context.h"
 #include "profiler/device/ascend/rt_callback_manager.h"
+#include "utils/config_manager.h"
 
 using ge::model_runner::ModelRunner;
 using mindspore::device::ascend::ProfilingManager;
@@ -360,7 +361,9 @@ bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
     auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto dynamic_kernel = kernel_mod->GenDynamicKernel(cnode, stream_);
-    MS_EXCEPTION_IF_NULL(dynamic_kernel);
+    if (dynamic_kernel == nullptr) {
+      MS_LOG(EXCEPTION) << cnode->fullname_with_scope() << " does not support dynamic shape.";
+    }
     dynamic_kernel->Initialize();
     dynamic_kernels.emplace_back(dynamic_kernel);
   }
@@ -372,6 +375,13 @@ bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
 bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   InnerSetContext();
   if (graph->is_dynamic_shape()) {
+    if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+      MS_LOG(EXCEPTION)
+        << "Dynamic shape is not supported with dataset_sink_mode=True. Please set dataset_sink_mode=False";
+    }
+    if (DumpJsonParser::GetInstance().async_dump_enabled()) {
+      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with asyn dump. Please use other debugging methods.";
+    }
     MS_LOG(INFO) << "Dynamic Shape Graph Generate Dynamic kernel";
     return GenDynamicKernel(graph);
   }
@@ -580,7 +590,6 @@ bool AscendKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
 bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "RunExecutorAsync start. GraphId:" << graph->graph_id();
-
   auto iter = graph_dynamic_kernel_map_.find(graph->graph_id());
   if (iter == graph_dynamic_kernel_map_.end()) {
     MS_LOG(ERROR) << "GraphId:" << graph->graph_id() << " Not Found! Please generator executor first";
