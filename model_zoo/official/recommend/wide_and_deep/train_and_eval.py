@@ -31,7 +31,7 @@ def get_WideDeep_net(config):
     WideDeep_net = WideDeepModel(config)
 
     loss_net = NetWithLossClass(WideDeep_net, config)
-    train_net = TrainStepWrap(loss_net)
+    train_net = TrainStepWrap(loss_net, sparse=config.sparse)
     eval_net = PredictWithSigmoid(WideDeep_net)
 
     return train_net, eval_net
@@ -67,6 +67,7 @@ def test_train_eval(config):
     data_path = config.data_path
     batch_size = config.batch_size
     epochs = config.epochs
+    sparse = config.sparse
     if config.dataset_type == "tfrecord":
         dataset_type = DataType.TFRECORD
     elif config.dataset_type == "mindrecord":
@@ -97,7 +98,8 @@ def test_train_eval(config):
     out = model.eval(ds_eval)
     print("=====" * 5 + "model.eval() initialized: {}".format(out))
     model.train(epochs, ds_train,
-                callbacks=[TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback, ckpoint_cb])
+                callbacks=[TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback, ckpoint_cb],
+                dataset_sink_mode=(not sparse))
 
 
 if __name__ == "__main__":
@@ -105,4 +107,5 @@ if __name__ == "__main__":
     wide_deep_config.argparse_init()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target)
+    context.set_context(enable_sparse=wide_deep_config.sparse)
     test_train_eval(wide_deep_config)
