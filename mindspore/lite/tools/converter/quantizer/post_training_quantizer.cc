@@ -100,7 +100,7 @@ STATUS DivergInfo::ComputeThreshold() {
     return RET_OK;
   }
 
-  if (method_x == kMethodOutlier) {
+  if (method_x == kMethodOutlier && this->min_datas.size() > 0) {
     this->percent_result = OutlierMethod(min_datas, max_datas);
     this->best_T = std::max(std::fabs(percent_result.first), std::fabs(percent_result.second));
     return RET_OK;
