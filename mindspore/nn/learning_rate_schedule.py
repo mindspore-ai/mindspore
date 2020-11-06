@@ -199,7 +199,7 @@ class InverseDecayLR(LearningRateSchedule):
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
         >>> decay_steps = 4
-        >>> global_step = Tenosr(2, mstype.int32)
+        >>> global_step = Tensor(2, mstype.int32)
         >>> inverse_decay_lr = InverseDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> inverse_decay_lr(global_step)
     """

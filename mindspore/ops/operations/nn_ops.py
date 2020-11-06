@@ -4554,8 +4554,8 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
         >>>         self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        >>>         self.var = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="var")
+        >>>         self.accum = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="accum")
         >>>         self.lr = 0.01
         >>>         self.l1 = 0.0
         >>>         self.l2 = 0.0
@@ -4564,9 +4564,11 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
                                                              self.l2, grad, indices)
         >>>         return out
         >>> net = Net()
-        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-        >>> indices = Tensor(np.ones((3,), np.int32))
+        >>> grad = Tensor(np.random.rand(1, 3).astype(np.float32))
+        >>> indices = Tensor(np.ones((1,), np.int32))
         >>> output = net(grad, indices)
+        ([[6.94971561e-01, 5.24479389e-01, 5.52502394e-01]],
+         [[1.69961065e-01, 9.21632349e-01, 7.83344746e-01]])
     """
 
     __mindspore_signature__ = (
@@ -5267,18 +5269,21 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         >>>         super(SparseApplyFtrlV2Net, self).__init__()
         >>>         self.sparse_apply_ftrl_v2 = P.SparseApplyFtrlV2(lr=0.01, l1=0.0, l2=0.0,
                                                                     l2_shrinkage=0.0, lr_power=-0.5)
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
-        >>>         self.linear = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="linear")
+        >>>         self.var = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="var")
+        >>>         self.accum = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="accum")
+        >>>         self.linear = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="linear")
         >>>
         >>>     def construct(self, grad, indices):
         >>>         out = self.sparse_apply_ftrl_v2(self.var, self.accum, self.linear, grad, indices)
         >>>         return out
         >>>
         >>> net = SparseApplyFtrlV2Net()
-        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-        >>> indices = Tensor(np.ones([3]), mindspore.int32)
+        >>> grad = Tensor(np.random.rand(1, 3).astype(np.float32))
+        >>> indices = Tensor(np.ones([1]), mindspore.int32)
         >>> output = net(grad, indices)
+        ([[3.98493223e-02, 4.38684933e-02, 8.25387388e-02]],
+         [[6.40987396e-01, 7.19417334e-01, 1.52606890e-01]],
+         [[7.43463933e-01, 2.92334408e-01, 6.81572020e-01]])
     """
 
     __mindspore_signature__ = (

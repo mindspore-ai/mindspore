@@ -168,9 +168,8 @@ class MaxPool1d(_PoolNd):
         pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
-            - same: Adopts the way of completion. The height and width of the output will be the same as
-              the input. The total number of padding will be calculated in horizontal and vertical
-              directions and evenly distributed to top and bottom, left and right if possible.
+            - same: Adopts the way of completion. The total number of padding will be calculated in horizontal
+              and vertical directions and evenly distributed to top and bottom, left and right if possible.
               Otherwise, the last extra padding will be done from the bottom and the right side.
 
             - valid: Adopts the way of discarding. The possible largest height and width of output

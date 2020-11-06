@@ -38,6 +38,8 @@ class StandardNormal(PrimitiveWithInfer):
         >>> shape = (4, 16)
         >>> stdnormal = P.StandardNormal(seed=2)
         >>> output = stdnormal(shape)
+        >>> output.shape
+        (4, 16)
     """
 
     @prim_attr_register
@@ -83,6 +85,8 @@ class StandardLaplace(PrimitiveWithInfer):
         >>> shape = (4, 16)
         >>> stdlaplace = P.StandardLaplace(seed=2)
         >>> output = stdlaplace(shape)
+        >>> output.shape
+        (4, 16)
     """
 
     @prim_attr_register
@@ -238,11 +242,13 @@ class UniformInt(PrimitiveWithInfer):
         Tensor. The shape is the same as the input 'shape', and the data type is int32.
 
     Examples:
-        >>> shape = (4, 16)
+        >>> shape = (2, 4)
         >>> minval = Tensor(1, mstype.int32)
         >>> maxval = Tensor(5, mstype.int32)
         >>> uniform_int = P.UniformInt(seed=10)
         >>> output = uniform_int(shape, minval, maxval)
+        [[4 2 1 3]
+         [4 3 4 5]]
     """
 
     @prim_attr_register
@@ -287,9 +293,11 @@ class UniformReal(PrimitiveWithInfer):
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
 
     Examples:
-        >>> shape = (4, 16)
+        >>> shape = (2, 2)
         >>> uniformreal = P.UniformReal(seed=2)
         >>> output = uniformreal(shape)
+        [[0.4359949 0.18508208]
+         [0.02592623 0.93154085]]
     """
 
     @prim_attr_register
