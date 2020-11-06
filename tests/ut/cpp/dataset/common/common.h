@@ -17,7 +17,26 @@
 #define TESTS_DATASET_UT_CORE_COMMON_DE_UT_COMMON_H_
 
 #include "gtest/gtest.h"
+#include "minddata/dataset/util/status.h"
 #include "utils/log_adapter.h"
+
+#define ASSERT_OK(_s)                          \
+  do {                                         \
+    Status __rc = (_s);                        \
+    if (__rc.IsError()) {                      \
+      MS_LOG(ERROR) << __rc.ToString() << "."; \
+      ASSERT_TRUE(false);                      \
+    }                                          \
+  } while (false)
+
+#define EXPECT_OK(_s)                          \
+  do {                                         \
+    Status __rc = (_s);                        \
+    if (__rc.IsError()) {                      \
+      MS_LOG(ERROR) << __rc.ToString() << "."; \
+      EXPECT_TRUE(false);                      \
+    }                                          \
+  } while (false)
 
 namespace UT {
 class Common : public testing::Test {

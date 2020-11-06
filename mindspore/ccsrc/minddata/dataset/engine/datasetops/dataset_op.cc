@@ -108,7 +108,7 @@ Status DatasetOp::InsertAsParent(std::shared_ptr<DatasetOp> to_add) {
   }
   RETURN_IF_NOT_OK(to_add->AddChild(shared_from_this()));
   if (tree_->root()->id() == this->id()) {
-    tree_->AssignRoot(to_add);
+    RETURN_IF_NOT_OK(tree_->AssignRoot(to_add));
   }
   return Status::OK();
 }
@@ -156,7 +156,7 @@ Status DatasetOp::Remove() {
       // We don't have a parent, so we are the root node being removed.
       // clear the parent list of our child so that it becomes the new root.
       child_[0]->parent_.clear();
-      tree_->AssignRoot(child_[0]);
+      RETURN_IF_NOT_OK(tree_->AssignRoot(child_[0]));
     }
   }
 
