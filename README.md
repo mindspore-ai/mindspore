@@ -234,6 +234,34 @@ Check out how MindSpore Open Governance [works](https://gitee.com/mindspore/comm
 Welcome contributions. See our [Contributor Wiki](CONTRIBUTING.md) for
 more details.
 
+## Maintenance phases
+Project stable branches will be in one of the following states:
+| **State**       | **Time frame**    | **Summary**                                          |
+|-------------|---------------|--------------------------------------------------|
+| Planning    | 1 - 3 months  | Features are under planning.                     |
+| Development | 3 months      | Features are under development.                  |
+| Maintained  | 6 - 12 months | All bugfixes are appropriate. Releases produced. |
+| Unmaintained| 0 - 3 months  | All bugfixes are appropriate. No Maintainers and No Releases produced.                                                 |
+| End Of Life (EOL) |  N/A |  Branch no longer accepting changes.    |
+
+## Maintenance status
+| **Branch** | **Status**       | **Initial Release Date** | **Next Phase**                        | **EOL Date**   |
+|--------|--------------|----------------------|-----------------------------------|------------|
+| **r1.1**   | Development  | 2020-12-31 estimated | Maintained <br> 2020-12-31 estimated   |            |
+| **r1.0**   | Maintained   | 2020-09-24           | Unmaintained <br> 2021-03-30 estimated |            |
+| **r0.7**   | Maintained   | 2020-08-31           | Unmaintained <br> 2020-11-30 estimated |            |
+| **r0.6**   | Unmaintained | 2020-07-31           | End Of Life <br> 2020-12-30 estimated  |            |
+| **r0.5**   | Maintained   | 2020-06-30           | Unmaintained <br> 2021-06-30 estimated |            |
+| **r0.3**   | End Of Life  | 2020-05-31           |                                   | 2020-09-30 |
+| **r0.2**   | End Of Life  | 2020-04-30           |                                   | 2020-08-31 |
+| **r0.1**   | End Of Life  | 2020-03-28            |                                   | 2020-06-30 |
+
+
+
+
+
+
+
 ## Release Notes
 
 The release notes, see our [RELEASE](RELEASE.md).
