@@ -159,9 +159,11 @@ def run_transformer_train():
 
     hidden_size = transformer_net_cfg.hidden_size if args.device_target == "Ascend" \
         else transformer_net_cfg_gpu.hidden_size
+    learning_rate = cfg.lr_schedule.learning_rate if args.device_target == "Ascend" \
+        else 1.0
     lr = Tensor(create_dynamic_lr(schedule="constant*rsqrt_hidden*linear_warmup*rsqrt_decay",
                                   training_steps=dataset.get_dataset_size()*args.epoch_size,
-                                  learning_rate=cfg.lr_schedule.learning_rate,
+                                  learning_rate=learning_rate,
                                   warmup_steps=cfg.lr_schedule.warmup_steps,
                                   hidden_size=hidden_size,
                                   start_decay_step=cfg.lr_schedule.start_decay_step,
