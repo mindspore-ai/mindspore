@@ -78,7 +78,7 @@ lite::STATUS WeightFormatHardCodePass::HardCodeONNX(const AnfNodePtr &conv_node,
       // deconv (C x K/group x kH x kW) group = 1
       // dedepth (C x K/group x kH x kW) group = channelIn ==> (C, multiplier, H, W)
       if (op_type == schema::PrimitiveType_Conv2D || op_type == schema::PrimitiveType_DepthwiseConv2D ||
-          op_type == schema::PrimitiveType_DeConv2D) {
+          op_type == schema::PrimitiveType_DeConv2D || op_type == schema::PrimitiveType_DeDepthwiseConv2D) {
         param_value->set_format(schema::Format::Format_KCHW);
       } else {
         MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(op_type)

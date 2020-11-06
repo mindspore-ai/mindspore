@@ -394,8 +394,8 @@ void DeconvDwC8Fp16(float16_t *output_data, const float16_t *input_data, const f
       }
       DeconvDepthwisePostFuncFp16(dst_data, bias, sliding->block_channel_, conv_param);
     }  // output C8 loop
-    src += sliding->in_step_;
-    dst += sliding->out_step_;
+    src += sliding->out_step_;
+    dst += sliding->in_step_;
   }  // batch loop
   // output nchwc8
 }
