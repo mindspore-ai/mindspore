@@ -72,6 +72,7 @@ class SomasTensor {
 
   bool ref_overlap_;
   bool between_streams_;
+  bool contiguous_;
 
   lifetime_t lifetime_;
   TensorType type_;

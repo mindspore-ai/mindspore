@@ -563,7 +563,7 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
       MS_LOG(INFO) << "Already malloc index:" << i;
       continue;
     }
-    MS_LOG(DEBUG) << "Assign Node:" << node->fullname_with_scope() << " output memeory size:" << output_sizes[i];
+    MS_LOG(DEBUG) << "Assign Node:" << node->fullname_with_scope() << " output memory size:" << output_sizes[i];
     std::string output_format = AnfAlgo::GetOutputFormat(node, i);
     auto output_type = AnfAlgo::GetOutputDeviceDataType(node, i);
     auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type);
@@ -634,7 +634,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
     }
     auto &node_value = value_node->value();
     MS_EXCEPTION_IF_NULL(node_value);
-    MS_LOG(DEBUG) << "Malloc memeory for " << value_node->fullname_with_scope();
+    MS_LOG(DEBUG) << "Malloc memory for " << value_node->fullname_with_scope();
     if (node_value->isa<Tensor>() || node_value->isa<ValueTuple>()) {
       AssignValueNodeTensor(value_node, node_value, 0);
     } else if (node_value->isa<StringImm>()) {
@@ -690,7 +690,7 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
   // communication nodes first
   for (auto &node : execution_nodes) {
     if (AnfAlgo::IsCommunicationOp(node)) {
-      // skip if the memory is already alocated
+      // skip if the memory is already allocated
       AssignCommunicationNodeMem(mem_type, node);
     } else {
       compute_nodes.emplace_back(node);
@@ -770,8 +770,8 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
   auto pre_node = (cnode->inputs()[1])->cast<CNodePtr>();
   // set clean output address
   if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
-    auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
-    for (auto index : clean_output_indexs) {
+    auto clean_output_indexes = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
+    for (auto index : clean_output_indexes) {
       auto device_address = AnfAlgo::GetOutputAddr(pre_node, index);
       kernel::AddressPtr input = std::make_shared<kernel::Address>();
       MS_EXCEPTION_IF_NULL(input);
@@ -780,12 +780,12 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
       input->size = device_address->size_;
       kernel_inputs->emplace_back(input);
     }
-    MS_LOG(INFO) << "AtomicAddClean clean output size:" << clean_output_indexs.size();
+    MS_LOG(INFO) << "AtomicAddClean clean output size:" << clean_output_indexes.size();
   }
   // set clean workspace address
   if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
-    auto clean_workspaces_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
-    for (const auto &index : clean_workspaces_indexs) {
+    auto clean_workspaces_indexes = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
+    for (const auto &index : clean_workspaces_indexes) {
       auto device_address = AnfAlgo::GetWorkspaceAddr(pre_node, index);
       kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
       MS_EXCEPTION_IF_NULL(workspace);

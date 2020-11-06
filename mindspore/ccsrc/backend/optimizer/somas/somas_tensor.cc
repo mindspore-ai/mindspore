@@ -38,6 +38,7 @@ SomasTensor::SomasTensor(size_t id, SomasNodePtr source_node, SomasStreamPtr sou
 
   ref_overlap_ = false;
   between_streams_ = false;
+  contiguous_ = false;
   num_constraints_ = 0;
 }
 
