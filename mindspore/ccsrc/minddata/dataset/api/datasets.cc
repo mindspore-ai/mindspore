@@ -33,6 +33,7 @@
 // IR non-leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"
 #include "minddata/dataset/engine/ir/datasetops/concat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/filter_node.h"
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/ir/datasetops/project_node.h"
 #include "minddata/dataset/engine/ir/datasetops/rename_node.h"
@@ -486,6 +487,15 @@ ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datase
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
+
+#ifndef ENABLE_ANDROID
+FilterDataset::FilterDataset(std::shared_ptr<Dataset> input, std::function<TensorRow(TensorRow)> predicate,
+                             std::vector<std::string> input_columns) {
+  auto ds = std::make_shared<FilterNode>(input->IRNode(), predicate, input_columns);
+
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+#endif
 
 MapDataset::MapDataset(std::shared_ptr<Dataset> input, std::vector<std::shared_ptr<TensorOperation>> operations,
                        std::vector<std::string> input_columns, std::vector<std::string> output_columns,

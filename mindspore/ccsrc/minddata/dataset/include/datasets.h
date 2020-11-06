@@ -67,6 +67,7 @@ class CsvBase;
 class BatchDataset;
 #ifndef ENABLE_ANDROID
 class BucketBatchByLengthDataset;
+class FilterDataset;
 #endif
 class CSVDataset;
 class ConcatDataset;
@@ -241,6 +242,18 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     all_datasets.push_back(shared_from_this());
     return std::make_shared<ConcatDataset>(all_datasets);
   }
+
+#ifndef ENABLE_ANDROID
+  /// \brief Function to filter dataset by predicate
+  /// \notes If input_columns is not provided or empty, all columns will be used
+  /// \param[in] predicate Function callable which returns a boolean value. If false then filter the element
+  /// \param[in] input_columns List of names of the input columns to filter
+  /// \return Shared pointer to the current FilterNode
+  std::shared_ptr<FilterDataset> Filter(std::function<TensorRow(TensorRow)> predicate,
+                                        std::vector<std::string> input_columns = {}) {
+    return std::make_shared<FilterDataset>(shared_from_this(), predicate, input_columns);
+  }
+#endif
 
   /// \brief Function to create a MapDataset
   /// \notes Applies each operation in operations to this dataset
@@ -417,6 +430,14 @@ class ConcatDataset : public Dataset {
  public:
   explicit ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &input);
 };
+
+#ifndef ENABLE_ANDROID
+class FilterDataset : public Dataset {
+ public:
+  FilterDataset(std::shared_ptr<Dataset> input, std::function<TensorRow(TensorRow)> predicate,
+                std::vector<std::string> input_columns);
+};
+#endif
 
 class MapDataset : public Dataset {
  public:

@@ -35,6 +35,41 @@ mindspore::dataset::TensorRow BucketBatchTestFunction(mindspore::dataset::Tensor
   return output;
 }
 
+TensorRow Predicate1(TensorRow input) {
+  // Return true if input is equal to 3
+  uint64_t input_value;
+  input.at(0)->GetItemAt(&input_value, {0});
+  bool result = (input_value == 3);
+
+  // Convert from boolean to TensorRow
+  TensorRow output;
+  std::shared_ptr<Tensor> out;
+  Tensor::CreateEmpty(mindspore::dataset::TensorShape({1}),
+                      mindspore::dataset::DataType(mindspore::dataset::DataType::Type::DE_BOOL), &out);
+  out->SetItemAt({0}, result);
+  output.push_back(out);
+
+  return output;
+}
+
+TensorRow Predicate2(TensorRow input) {
+  // Return true if label is more than 1
+  // The index of label in input is 1
+  uint64_t input_value;
+  input.at(1)->GetItemAt(&input_value, {0});
+  bool result = (input_value > 1);
+
+  // Convert from boolean to TensorRow
+  TensorRow output;
+  std::shared_ptr<Tensor> out;
+  Tensor::CreateEmpty(mindspore::dataset::TensorShape({1}),
+                      mindspore::dataset::DataType(mindspore::dataset::DataType::Type::DE_BOOL), &out);
+  out->SetItemAt({0}, result);
+  output.push_back(out);
+
+  return output;
+}
+
 TEST_F(MindDataTestPipeline, TestBatchAndRepeat) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBatchAndRepeat.";
 
@@ -469,6 +504,180 @@ TEST_F(MindDataTestPipeline, TestConcatSuccess2) {
   EXPECT_EQ(i, 19);
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFilterSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterSuccess1.";
+  // Test basic filter api with specific predicate to judge if label is equal to 3
+
+  // Create a TFRecord Dataset
+  std::string data_file = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
+  std::string schema_file = datasets_root_path_ + "/test_tf_file_3_images/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label"}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> decode_op = vision::Decode(true);
+  EXPECT_NE(decode_op, nullptr);
+
+  std::shared_ptr<TensorOperation> resize_op = vision::Resize({64, 64});
+  EXPECT_NE(resize_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({decode_op, resize_op});
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Filter operation on ds
+  ds = ds->Filter(Predicate1, {"label"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // iterate over the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<uint64_t> label_list;
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto label = row["label"];
+    uint64_t label_value;
+    label->GetItemAt(&label_value, {0});
+    label_list.push_back(label_value);
+    iter->GetNextRow(&row);
+  }
+
+  // Only 1 column whose label is equal to 3
+  EXPECT_EQ(i, 1);
+  EXPECT_EQ(label_list.at(0), 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFilterSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterSuccess2.";
+  // Test filter api without input_columns
+
+  // Create a TFRecord Dataset
+  std::string data_file = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
+  std::string schema_file = datasets_root_path_ + "/test_tf_file_3_images/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label"}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Filter operation on ds
+  ds = ds->Filter(Predicate2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // iterate over the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<uint64_t> label_list;
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto label = row["label"];
+    uint64_t label_value;
+    label->GetItemAt(&label_value, {0});
+    label_list.push_back(label_value);
+    iter->GetNextRow(&row);
+  }
+
+  // There are 2 columns whose label is more than 1
+  EXPECT_EQ(i, 2);
+  EXPECT_EQ(label_list.at(0), 2);
+  EXPECT_EQ(label_list.at(1), 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFilterFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterFail1.";
+  // Test filter api with nullptr predicate
+
+  // Create a TFRecord Dataset
+  std::string data_file = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
+  std::string schema_file = datasets_root_path_ + "/test_tf_file_3_images/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label"}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  std::function<TensorRow(TensorRow)> predicate_null = nullptr;
+
+  // Create a Filter operation on ds
+  ds = ds->Filter(predicate_null);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Filter input with nullptr predicate
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestFilterFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterFail2.";
+  // Test filter api with wrong input_columns
+
+  // Create a TFRecord Dataset
+  std::string data_file = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
+  std::string schema_file = datasets_root_path_ + "/test_tf_file_3_images/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label"}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Filter operation on ds
+  ds = ds->Filter(Predicate1, {"not_exist"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // iterate over the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // Expect failure: column check fail and return nothing
+  EXPECT_EQ(i, 0);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestFilterFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFilterFail3.";
+  // Test filter api with empty input_columns
+
+  // Create a TFRecord Dataset
+  std::string data_file = datasets_root_path_ + "/test_tf_file_3_images/train-0000-of-0001.data";
+  std::string schema_file = datasets_root_path_ + "/test_tf_file_3_images/datasetSchema.json";
+  std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label"}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Filter operation on ds
+  ds = ds->Filter(Predicate1, {""});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Filter input with empty string of column name
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestImageFolderBatchAndRepeat) {
