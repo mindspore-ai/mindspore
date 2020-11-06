@@ -17,6 +17,7 @@
 #include "pipeline/jit/static_analysis/evaluator.h"
 
 #include <algorithm>
+#include <utility>
 #include <unordered_set>
 
 #include "ir/func_graph_cloner.h"
