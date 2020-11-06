@@ -340,6 +340,46 @@ TEST_F(MindDataTestPipeline, TestConcatFail2) {
   EXPECT_EQ(iter, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestConcatFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail3.";
+  // This case is expected to fail because the input dataset is nullptr.
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Concat operation on the ds
+  // Input dataset to concat is null
+  ds = ds->Concat({nullptr});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestConcatFail4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail4.";
+  // This case is expected to fail because the input dataset is nullptr.
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Concat operation on the ds
+  // Input dataset to concat is null
+  ds = ds + nullptr;
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Op input
+  EXPECT_EQ(iter, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestConcatSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatSuccess.";
 
