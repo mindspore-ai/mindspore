@@ -34,7 +34,7 @@ class BatchNode : public DatasetNode {
   /// \brief Constructor #1, for Python API to create a BatchNode
   BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, bool drop_remainder, bool pad,
             const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
-            py::function batch_size_func, py::function batch_map_func,
+            const std::vector<std::string> &col_order, py::function batch_size_func, py::function batch_map_func,
             std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map);
 #endif
 
@@ -58,6 +58,7 @@ class BatchNode : public DatasetNode {
   bool pad_;
   std::vector<std::string> in_col_names_;
   std::vector<std::string> out_col_names_;
+  std::vector<std::string> col_order_;
 #ifdef ENABLE_PYTHON
   py::function batch_size_func_;
   py::function batch_map_func_;

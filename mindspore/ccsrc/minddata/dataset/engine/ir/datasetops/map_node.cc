@@ -29,12 +29,14 @@ namespace dataset {
 
 MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
                  std::vector<std::string> input_columns, std::vector<std::string> output_columns,
-                 const std::vector<std::string> &project_columns, std::shared_ptr<DatasetCache> cache)
+                 const std::vector<std::string> &project_columns, std::shared_ptr<DatasetCache> cache,
+                 std::vector<std::shared_ptr<DSCallback>> callbacks)
     : operations_(operations),
       input_columns_(input_columns),
       output_columns_(output_columns),
       project_columns_(project_columns),
-      DatasetNode(std::move(cache)) {
+      DatasetNode(std::move(cache)),
+      callbacks_(callbacks) {
   this->children.push_back(child);
 }
 
@@ -53,6 +55,11 @@ std::vector<std::shared_ptr<DatasetOp>> MapNode::Build() {
   // This parameter will be removed with next rebase
   std::vector<std::string> col_orders;
   auto map_op = std::make_shared<MapOp>(input_columns_, output_columns_, tensor_ops, num_workers_, connector_que_size_);
+
+  if (!callbacks_.empty()) {
+    map_op->AddCallbacks(callbacks_);
+  }
+
   if (!project_columns_.empty()) {
     auto project_op = std::make_shared<ProjectOp>(project_columns_);
     node_ops.push_back(project_op);

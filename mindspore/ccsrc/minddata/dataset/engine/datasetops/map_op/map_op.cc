@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <vector>
 #include "minddata/dataset/core/config_manager.h"
@@ -26,8 +26,6 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"
 #include "minddata/dataset/engine/datasetops/map_op/gpu_map_job.h"
-#include "minddata/dataset/engine/datasetops/map_op/map_op.h"
-#include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/task_manager.h"
@@ -60,7 +58,7 @@ Status MapOp::Builder::Build(std::shared_ptr<MapOp> *ptr) {
   RETURN_IF_NOT_OK(sanityCheck());
   *ptr = std::make_shared<MapOp>(std::move(build_in_col_names_), std::move(build_out_col_names_),
                                  std::move(build_tensor_funcs_), build_num_workers_, build_op_connector_size_);
-  (*ptr)->callback_manager_.AddCallbacks(std::move(builder_callbacks_));
+  (*ptr)->AddCallbacks(std::move(builder_callbacks_));
   return Status::OK();
 }
 

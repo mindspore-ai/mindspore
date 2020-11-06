@@ -149,7 +149,7 @@ Status RepeatPass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
   // We finish the walk of this RepeatOp's descendent nodes.
   // The total repeats of nodes above this Repeat(n) have nothing to do with this RepeatOp's parameter n.
   // But num_repeats_ has been multiplied by n during this Repeat(n)'s PreRunOnNode,
-  // so we devide num_repeats_ by n to be able to correctly set total repeats for nodes above this RepeatOp.
+  // so we divide num_repeats_ by n to be able to correctly set total repeats for nodes above this RepeatOp.
   num_repeats_ /= node->num_repeats();
   return Status::OK();
 }

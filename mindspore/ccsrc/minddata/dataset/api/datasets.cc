@@ -499,9 +499,10 @@ FilterDataset::FilterDataset(std::shared_ptr<Dataset> input, std::function<Tenso
 
 MapDataset::MapDataset(std::shared_ptr<Dataset> input, std::vector<std::shared_ptr<TensorOperation>> operations,
                        std::vector<std::string> input_columns, std::vector<std::string> output_columns,
-                       const std::vector<std::string> &project_columns, const std::shared_ptr<DatasetCache> &cache) {
-  auto ds =
-    std::make_shared<MapNode>(input->IRNode(), operations, input_columns, output_columns, project_columns, cache);
+                       const std::vector<std::string> &project_columns, const std::shared_ptr<DatasetCache> &cache,
+                       std::vector<std::shared_ptr<DSCallback>> callbacks) {
+  auto ds = std::make_shared<MapNode>(input->IRNode(), operations, input_columns, output_columns, project_columns,
+                                      cache, callbacks);
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
