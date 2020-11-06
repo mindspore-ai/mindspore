@@ -42,16 +42,30 @@ if (ENABLE_CACHE)
       storage_container.cc)
 
   add_executable(cache_server cache_main.cc)
-  target_link_libraries(cache_server
-      engine-cache-server
-      _c_dataengine
-      _c_mindrecord
-      mindspore::protobuf
-      mindspore::grpc++
-      mindspore_gvar
-      ${PYTHON_LIBRARIES}
-      ${SECUREC_LIBRARY}
-      pthread)
+  if (ENABLE_GPU)
+    target_link_libraries(cache_server
+        engine-cache-server
+        _c_dataengine
+        _c_mindrecord
+        mindspore::protobuf
+        mindspore::grpc++
+        mindspore_gvar
+        ${CUDNN_LIBRARY_PATH}
+        ${PYTHON_LIBRARIES}
+        ${SECUREC_LIBRARY}
+        pthread)
+  else()
+    target_link_libraries(cache_server
+        engine-cache-server
+        _c_dataengine
+        _c_mindrecord
+        mindspore::protobuf
+        mindspore::grpc++
+        mindspore_gvar
+        ${PYTHON_LIBRARIES}
+        ${SECUREC_LIBRARY}
+        pthread)
+  endif()
 
   if (USE_GLOG)
     target_link_libraries(cache_server mindspore::glog)
