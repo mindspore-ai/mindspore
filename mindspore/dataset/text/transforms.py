@@ -348,12 +348,12 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
         >>> import mindspore.dataset.text as text
         >>>
         >>> # If with_offsets=False, default output one column {["text", dtype=str]}
-        >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token=['UNK'],
+        >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token='[UNK]',
         >>>                                       max_bytes_per_token=100, with_offsets=False)
         >>> data1 = data1.map(operations=tokenizer_op)
         >>> # If with_offsets=False, then output three columns {["token", dtype=str], ["offsets_start", dtype=uint32],
         >>> #                                                   ["offsets_limit", dtype=uint32]}
-        >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token=['UNK'],
+        >>> tokenizer_op = text.WordpieceTokenizer(vocab=vocab, unknown_token='[UNK]',
         >>>                                       max_bytes_per_token=100, with_offsets=True)
         >>> data2 = data2.map(operations=tokenizer_op,
         >>>                   input_columns=["text"], output_columns=["token", "offsets_start", "offsets_limit"],
@@ -607,19 +607,19 @@ if platform.system().lower() != 'windows':
             >>>
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
-            >>>                                   keep_whitespace=False,
-            >>>                                   normalization_form=NormalizeForm.NONE,
-            >>>                                   preserve_unused_token=True,
-            >>>                                   with_offsets=False)
+            >>>                                    keep_whitespace=False,
+            >>>                                    normalization_form=NormalizeForm.NONE,
+            >>>                                    preserve_unused_token=True,
+            >>>                                    with_offsets=False)
             >>> data1 = data1.map(operations=tokenizer_op)
             >>> # If with_offsets=False, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.BasicTokenizer(lower_case=False,
-            >>>                                   keep_whitespace=False,
-            >>>                                   normalization_form=NormalizeForm.NONE,
-            >>>                                   preserve_unused_token=True,
-            >>>                                   with_offsets=True)
+            >>>                                    keep_whitespace=False,
+            >>>                                    normalization_form=NormalizeForm.NONE,
+            >>>                                    preserve_unused_token=True,
+            >>>                                    with_offsets=True)
             >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
             >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
             >>>                   column_order=["token", "offsets_start", "offsets_limit"])
@@ -665,17 +665,17 @@ if platform.system().lower() != 'windows':
             >>>
             >>> # If with_offsets=False, default output one column {["text", dtype=str]}
             >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
-            >>>                                  unknown_token=100, lower_case=False, keep_whitespace=False,
-            >>>                                  normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
-            >>>                                  with_offsets=False)
+            >>>                                   unknown_token='[UNK]', lower_case=False, keep_whitespace=False,
+            >>>                                   normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
+            >>>                                   with_offsets=False)
             >>> data1 = data1.map(operations=tokenizer_op)
             >>> # If with_offsets=False, then output three columns {["token", dtype=str],
             >>> #                                                   ["offsets_start", dtype=uint32],
             >>> #                                                   ["offsets_limit", dtype=uint32]}
             >>> tokenizer_op = text.BertTokenizer(vocab=vocab, suffix_indicator='##', max_bytes_per_token=100,
-            >>>                                  unknown_token=100, lower_case=False, keep_whitespace=False,
-            >>>                                  normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
-            >>>                                  with_offsets=True)
+            >>>                                   unknown_token='[UNK]', lower_case=False, keep_whitespace=False,
+            >>>                                   normalization_form=NormalizeForm.NONE, preserve_unused_token=True,
+            >>>                                   with_offsets=True)
             >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
             >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
             >>>                   column_order=["token", "offsets_start", "offsets_limit"])
