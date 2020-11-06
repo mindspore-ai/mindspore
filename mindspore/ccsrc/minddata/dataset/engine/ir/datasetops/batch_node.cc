@@ -31,13 +31,15 @@ namespace dataset {
 // constructor #1, called by Pybind
 BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, bool drop_remainder, bool pad,
                      const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
-                     py::function batch_size_func, py::function batch_map_func,
+                     const std::vector<std::string> &col_order, py::function batch_size_func,
+                     py::function batch_map_func,
                      std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> pad_map)
     : batch_size_(batch_size),
       drop_remainder_(drop_remainder),
       pad_(pad),
       in_col_names_(in_col_names),
       out_col_names_(out_col_names),
+      col_order_(col_order),
       batch_size_func_(batch_size_func),
       batch_map_func_(batch_map_func),
       pad_map_(pad_map) {
@@ -83,8 +85,8 @@ std::vector<std::shared_ptr<DatasetOp>> BatchNode::Build() {
                                                in_col_names_, out_col_names_, batch_size_func_, batch_map_func_,
                                                pad_map_));
   // need to insert a project when per_batch_func changes the number of columns
-  if (!out_col_names_.empty()) {
-    auto project_op = std::make_shared<ProjectOp>(out_col_names_);
+  if (!col_order_.empty()) {
+    auto project_op = std::make_shared<ProjectOp>(col_order_);
     node_ops.push_back(project_op);
   }
 #else

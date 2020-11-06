@@ -21,6 +21,8 @@
 #include "minddata/dataset/callback/ds_callback.h"
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/kernels/data/no_op.h"
 #include "utils/log_adapter.h"
 
@@ -149,7 +151,7 @@ TEST_F(MindDataTestCallback, TestBasicCallback) {
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   TensorShape shape({});  // empty shape is a 1-value scalar Tensor
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
-  schema->AddColumn(col);
+  ASSERT_OK(schema->AddColumn(col));
   std::shared_ptr<RandomDataOp> leaf;
   rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(44).Build(&leaf);
   EXPECT_TRUE(rc.IsOk());
@@ -196,7 +198,7 @@ TEST_F(MindDataTestCallback, TestMutiEpochCallback) {
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   TensorShape shape({});  // empty shape is a 1-value scalar Tensor
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
-  schema->AddColumn(col);
+  ASSERT_OK(schema->AddColumn(col));
   std::shared_ptr<RandomDataOp> leaf;
   rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(4).Build(&leaf);
   EXPECT_TRUE(rc.IsOk());
@@ -253,7 +255,7 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   TensorShape shape({});  // empty shape is a 1-value scalar Tensor
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
-  schema->AddColumn(col);
+  ASSERT_OK(schema->AddColumn(col));
   std::shared_ptr<RandomDataOp> leaf;
   rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(4).Build(&leaf);
   EXPECT_TRUE(rc.IsOk());
@@ -295,4 +297,35 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   EXPECT_EQ(tst_cb->all_names(len), callback_names);
   EXPECT_EQ(tst_cb->all_ep_nums(len), all_epochs);
   EXPECT_EQ(tst_cb->all_step_nums(len), all_steps);
+}
+
+TEST_F(MindDataTestCallback, TestCAPICallback) {
+  MS_LOG(INFO) << "Doing: MindDataTestCallback-TestCAPICallback";
+  // config callback
+  std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(64);
+  std::shared_ptr<DSCallback> cb1 = tst_cb;
+  // config leaf_op, use random_data to avoid I/O
+  std::shared_ptr<SchemaObj> schema = std::make_shared<SchemaObj>();
+  ASSERT_TRUE(schema->add_column("label", "uint32", {}));
+  std::shared_ptr<Dataset> ds = RandomData(44, schema);
+  ds = ds->Map({transforms::TypeCast("uint64")}, {"label"}, {}, {}, nullptr, {cb1});
+  ds = ds->Repeat(2);
+
+  TreeAdapter tree_adapter;
+  // using tree_adapter to set num_epoch = 1
+  ASSERT_OK(tree_adapter.Compile(ds->IRNode(), 1));
+
+  TensorRow row;
+  ASSERT_OK(tree_adapter.GetNext(&row));
+  while (!row.empty()) {
+    ASSERT_OK(tree_adapter.GetNext(&row));
+  }
+  std::vector<std::string> callback_names = {"BGN", "EPBGN", "SPBGN", "SPEND", "SPBGN", "SPEND", "EPEND"};
+  std::vector<int64_t> all_steps = {0, 0, 1, 1, 65, 65, 88};
+  std::vector<int64_t> all_epochs = {0, 1, 1, 1, 1, 1, 1};
+  // doing resize to make sure no unexpected epoch_end or extra epoch_begin is called
+  size_t len = 7;
+  EXPECT_EQ(tst_cb->all_names(len), callback_names);
+  EXPECT_EQ(tst_cb->all_step_nums(len), all_steps);
+  EXPECT_EQ(tst_cb->all_ep_nums(len), all_epochs);
 }

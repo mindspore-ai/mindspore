@@ -31,7 +31,8 @@ class MapNode : public DatasetNode {
   /// \brief Constructor
   MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr<TensorOperation>> operations,
           std::vector<std::string> input_columns = {}, std::vector<std::string> output_columns = {},
-          const std::vector<std::string> &columns = {}, std::shared_ptr<DatasetCache> cache = nullptr);
+          const std::vector<std::string> &columns = {}, std::shared_ptr<DatasetCache> cache = nullptr,
+          std::vector<std::shared_ptr<DSCallback>> callbacks = {});
 
   /// \brief Destructor
   ~MapNode() = default;
@@ -49,6 +50,7 @@ class MapNode : public DatasetNode {
   std::vector<std::string> input_columns_;
   std::vector<std::string> output_columns_;
   std::vector<std::string> project_columns_;
+  std::vector<std::shared_ptr<DSCallback>> callbacks_;
 };
 
 }  // namespace dataset

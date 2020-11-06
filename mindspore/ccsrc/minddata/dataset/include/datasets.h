@@ -276,9 +276,10 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                   std::vector<std::string> input_columns = {},
                                   std::vector<std::string> output_columns = {},
                                   const std::vector<std::string> &project_columns = {},
-                                  const std::shared_ptr<DatasetCache> &cache = nullptr) {
+                                  const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
     return std::make_shared<MapDataset>(shared_from_this(), operations, input_columns, output_columns, project_columns,
-                                        cache);
+                                        cache, callbacks);
   }
 
   /// \brief Function to create a Project Dataset
@@ -443,7 +444,8 @@ class MapDataset : public Dataset {
  public:
   MapDataset(std::shared_ptr<Dataset> input, std::vector<std::shared_ptr<TensorOperation>> operations,
              std::vector<std::string> input_columns, std::vector<std::string> output_columns,
-             const std::vector<std::string> &project_columns, const std::shared_ptr<DatasetCache> &cache);
+             const std::vector<std::string> &project_columns, const std::shared_ptr<DatasetCache> &cache,
+             std::vector<std::shared_ptr<DSCallback>> callbacks);
 };
 
 class ProjectDataset : public Dataset {

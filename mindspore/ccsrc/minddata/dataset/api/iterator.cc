@@ -44,7 +44,12 @@ bool Iterator::GetNextRow(TensorVec *row) {
 }
 
 // Shut down the data pipeline.
-void Iterator::Stop() { runtime_context_->Terminate(); }
+void Iterator::Stop() {
+  Status rc = runtime_context_->Terminate();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << rc.ToString();
+  }
+}
 
 // Function to build and launch the execution tree.
 Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {

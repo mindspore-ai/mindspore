@@ -120,7 +120,7 @@ Status CacheTransformPass::CachePass::NonMappableCacheLeafSetup(std::shared_ptr<
     RETURN_STATUS_UNEXPECTED("There is currently no support for multiple leaf nodes under cache.");
   }
 
-  // Sampler for non mapable dataset only works if there is a downstream cache. Remove it from the leaf
+  // Sampler for non mappable dataset only works if there is a downstream cache. Remove it from the leaf
   // as save it for use by cache op in ascendant tree.
   if (is_caching_) {
     RETURN_IF_NOT_OK(leaf_op->FetchRemoveSampler(&sampler_));
@@ -261,7 +261,8 @@ Status CacheTransformPass::RunOnTree(ExecutionTree *tree, bool *modified) {
   // Then, execute the transform for each pair
   for (auto cache_pair : cache_pass.cache_pairs()) {
     MS_LOG(DEBUG) << "Cache transform pass: Executing a cache op mappable transform.";
-    ExecuteCacheTransform(tree, cache_pair.first, cache_pair.second, cache_pair.second->cache_client());
+    RETURN_IF_NOT_OK(
+      ExecuteCacheTransform(tree, cache_pair.first, cache_pair.second, cache_pair.second->cache_client()));
   }
   MS_LOG(INFO) << "Pre pass: Cache transform pass complete.";
   return Status::OK();
