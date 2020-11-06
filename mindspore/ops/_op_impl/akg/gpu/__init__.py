@@ -20,6 +20,7 @@ from .hsigmoid import _hsigmoid_akg
 from .hsigmoid_grad import _hsigmoid_grad_akg
 from .hswish import _hswish_akg
 from .hswish_grad import _hswish_grad_akg
+from .inplace_assign import _inplace_assign_akg
 from .lessequal import _lessequal_akg
 from .logical_and import _logical_and_akg
 from .logical_not import _logical_not_akg

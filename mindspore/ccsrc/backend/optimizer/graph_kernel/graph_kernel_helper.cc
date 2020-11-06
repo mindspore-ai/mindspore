@@ -702,7 +702,8 @@ FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNo
 
 std::unordered_set<PrimitivePtr> GetExpandOps() {
   std::unordered_set<PrimitivePtr> expand_ops = {
-    prim::kPrimSquare, prim::kPrimBiasAdd, prim::kPrimBiasAddGrad, prim::kPrimGelu, prim::kPrimGeluGrad,
+    prim::kPrimSquare,   prim::kPrimBiasAdd,   prim::kPrimBiasAddGrad,          prim::kPrimGelu,
+    prim::kPrimGeluGrad, prim::kPrimFusedAdam, prim::kPrimFusedAdamWeightDecay,
   };
   return expand_ops;
 }
@@ -729,7 +730,7 @@ std::vector<PrimitivePtr> GetFusibleOpList() {
     prim::kPrimRealDiv, prim::kPrimMul,    prim::kPrimMinimum,    prim::kPrimMaximum,   prim::kPrimLog,
     prim::kPrimPow,     prim::kPrimSub,    prim::kPrimRsqrt,      prim::kPrimSqrt,      prim::kPrimCast,
     prim::kPrimAddN,    prim::kPrimEqual,  prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,
-    prim::kPrimGreater, prim::kPrimAssign, prim::kPrimReduceSum,  prim::kPrimTanh};
+    prim::kPrimGreater, prim::kPrimAssign, prim::kPrimReduceSum,  prim::kPrimTanh,      prim::kPrimReshape};
   return fusible_basic_ops;
 }
 

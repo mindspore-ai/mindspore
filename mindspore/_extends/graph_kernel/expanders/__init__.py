@@ -21,3 +21,5 @@ from .softmax import expand_softmax
 from .square import expand_square
 from .bias_add import expand_biasadd
 from .bias_add_grad import expand_biasaddgrad
+from .fused_adam import expand_fusedadam
+from .fused_adam_weight_decay import expand_fusedadamweightdecay
