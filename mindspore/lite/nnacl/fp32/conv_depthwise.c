@@ -455,8 +455,8 @@ void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *we
       }
       DeconvDepthwisePostFunc(dst_data, bias, sliding->block_channel_, conv_param);
     }  // output C4 loop
-    src += sliding->in_step_;
-    dst += sliding->out_step_;
+    src += sliding->out_step_;
+    dst += sliding->in_step_;
   }  // batch loop
   // output nhwc4
 }

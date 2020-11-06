@@ -818,8 +818,8 @@ void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *in
                        conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
                        conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0]);
     }  // output C4 loop
-    src += sliding->in_step_;
-    dst += sliding->out_step_;
+    src += sliding->out_step_;
+    dst += sliding->in_step_;
   }  // batch loop
   // output nhwc4
 }
