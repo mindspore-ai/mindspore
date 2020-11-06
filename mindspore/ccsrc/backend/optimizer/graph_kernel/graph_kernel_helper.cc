@@ -513,8 +513,8 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
       MS_EXCEPTION_IF_NULL(value_input);
       auto value_node = value_input->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
-      int item_idx = GetValue<int>(value_node->value());
-      int new_item_idx = SizeToLong(out_idx) + offset + item_idx;
+      auto item_idx = GetValue<int64_t>(value_node->value());
+      int64_t new_item_idx = SizeToLong(out_idx) + offset + item_idx;
       fn_inputs.clear();
       fn_inputs.push_back(NewValueNode(prim::kPrimTupleGetItem));
       fn_inputs.push_back(new_fuse_cnode);
