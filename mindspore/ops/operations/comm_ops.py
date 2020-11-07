@@ -363,6 +363,7 @@ class Broadcast(PrimitiveWithInfer):
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
+        >>> import numpy as np
         >>>
         >>> init()
         >>> class Net(nn.Cell):
