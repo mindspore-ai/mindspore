@@ -75,6 +75,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   attr->dilateW = 1;
   attr->group = 1;
   attr->padMode = schema::PadMode_NOTSET;
+  attr->format = schema::Format::Format_NCHW;
   // set opdef each attr params
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
@@ -161,7 +162,6 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     attr->channelOut = dims[0];
     attr->channelIn = dims[3] * attr->group;
   }
-  attr->format = schema::Format::Format_NCHW;
   attr->hasBias = onnx_node.input().size() == 3;
   if (onnx_node.op_type() == "ConvRelu" || onnx_node.op_type() == "Int8ConvRelu") {
     attr->activationType = schema::ActivationType_RELU;

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/onnx/onnx_unuseful_node_parser.h"
+#include "tools/converter/parser/onnx/onnx_quantize_parser.h"
 #include <memory>
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxUnusefulNodeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                                     schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "onnx UnusefulNodeParser";
+STATUS OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+                                 schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx QuantizeDequantizeParser";
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -32,30 +32,27 @@ STATUS OnnxUnusefulNodeParser::Parse(const onnx::GraphProto &onnx_graph, const o
     return RET_NULL_PTR;
   }
 
+  std::unique_ptr<schema::QuantDTypeCastT> attr = std::make_unique<schema::QuantDTypeCastT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed.";
+    return RET_NULL_PTR;
+  }
   if (onnx_node.op_type() == "Int8Quantize") {
-    std::unique_ptr<schema::OnnxInt8QuantizeT> attr = std::make_unique<schema::OnnxInt8QuantizeT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return RET_NULL_PTR;
-    }
-    op->primitive->value.type = schema::PrimitiveType_OnnxInt8Quantize;
-    op->primitive->value.value = attr.release();
+    attr->srcT = kNumberTypeFloat32;
+    attr->dstT = kNumberTypeInt8;
   } else if (onnx_node.op_type() == "Int8Dequantize") {
-    std::unique_ptr<schema::OnnxInt8DequantizeT> attr = std::make_unique<schema::OnnxInt8DequantizeT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return RET_NULL_PTR;
-    }
-    op->primitive->value.type = schema::PrimitiveType_OnnxInt8Dequantize;
-    op->primitive->value.value = attr.release();
+    attr->srcT = kNumberTypeInt8;
+    attr->dstT = kNumberTypeFloat32;
   } else {
     MS_LOG(ERROR) << "Unsupported nodeType: " << onnx_node.op_type().c_str();
     return RET_ERROR;
   }
+  op->primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
+  op->primitive->value.value = attr.release();
   return RET_OK;
 }
 
-OnnxNodeRegistrar g_onnxInt8QuantizeParser("Int8Quantize", new OnnxUnusefulNodeParser());
-OnnxNodeRegistrar g_onnxInt8DequantizeParser("Int8Dequantize", new OnnxUnusefulNodeParser());
+OnnxNodeRegistrar g_onnxInt8QuantizeParser("Int8Quantize", new OnnxQuantizeParser());
+OnnxNodeRegistrar g_onnxInt8DequantizeParser("Int8Dequantize", new OnnxQuantizeParser());
 }  // namespace lite
 }  // namespace mindspore
