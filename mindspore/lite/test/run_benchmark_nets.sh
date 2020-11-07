@@ -974,7 +974,7 @@ process_unit_arm32=${suffix[0]}
 
 x86_path=${release_path}/ubuntu_x86
 mv ${x86_path}/*runtime-*train* ./train
-file_name=$(ls ${x86_path}/*runtime-x86*.tar.gz)
+file_name=$(ls ${x86_path}/*runtime-x86-cpu*.tar.gz)
 IFS="-" read -r -a file_name_array <<< "$file_name"
 IFS="." read -r -a suffix <<< "${file_name_array[-1]}"
 process_unit_x86=${suffix[0]}
@@ -1036,13 +1036,15 @@ else
     exit 1
 fi
 
-
 # Write benchmark result to temp file
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt
 echo ' ' > ${run_benchmark_result_file}
 
 run_x86_log_file=${basepath}/run_x86_log.txt
 echo 'run x86 logs: ' > ${run_x86_log_file}
+
+run_x86_sse_log_file=${basepath}/run_x86_sse_log.txt
+echo 'run x86 sse logs: ' > ${run_x86_sse_log_file}
 
 run_arm64_log_file=${basepath}/run_arm64_log.txt
 echo 'run arm64 logs: ' > ${run_arm64_log_file}
@@ -1111,6 +1113,6 @@ if [[ ${Run_arm32_status} != 0 ]];then
     exit 1
 fi
 
-echo "Run_x86 and Run_arm64 and Run_arm32 is ended"
+echo "Run_x86 and Run_x86_sse and Run_arm64 and Run_arm32 is ended"
 Print_Benchmark_Result
 exit 0
