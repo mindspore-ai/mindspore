@@ -585,7 +585,7 @@ class UpdateThorGradient(PrimitiveWithInfer):
         >>> temp_x3 = np.random.rand(8, 128, 128).astype(np.float32)
         >>> input_x3 = np.zeros(16,8,128,128).astype(np.float32)
         >>> for i in range(16):
-        >>>     input_x3[i,:,:,:] = temp_x3
+        ...     input_x3[i,:,:,:] = temp_x3
         >>> input_x3 = Tensor(input_x3)
         >>> update_thor_gradient = P.UpdateThorGradient(split_dim=128)
         >>> output = update_thor_gradient(input_x1, input_x2, input_x3)

@@ -40,7 +40,7 @@ class _OpSelector:
     Examples:
         >>> class A: pass
         >>> selected_op = _OpSelector(A, "GraphKernel",
-        >>>                           "graph_kernel.ops.pkg", "primitive.ops.pkg")
+        ...                           "graph_kernel.ops.pkg", "primitive.ops.pkg")
         >>> # selected_op() will call graph_kernel.ops.pkg.A()
     """
     GRAPH_KERNEL = "GraphKernel"
@@ -92,7 +92,7 @@ def new_ops_selector(primitive_pkg, graph_kernel_pkg):
 
     Examples:
         >>> op_selector = new_ops_selector("primitive_pkg.some.path",
-        >>>                                "graph_kernel_pkg.some.path")
+        ...                                "graph_kernel_pkg.some.path")
         >>> @op_selector
         >>> class ReduceSum: pass
     """

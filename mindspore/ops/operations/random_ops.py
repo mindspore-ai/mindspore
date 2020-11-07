@@ -250,6 +250,7 @@ class UniformInt(PrimitiveWithInfer):
         >>> maxval = Tensor(5, mstype.int32)
         >>> uniform_int = P.UniformInt(seed=10)
         >>> output = uniform_int(shape, minval, maxval)
+        >>> print(output)
         [[4 2 1 3]
          [4 3 4 5]]
     """
@@ -299,6 +300,7 @@ class UniformReal(PrimitiveWithInfer):
         >>> shape = (2, 2)
         >>> uniformreal = P.UniformReal(seed=2)
         >>> output = uniformreal(shape)
+        >>> print(output)
         [[0.4359949 0.18508208]
          [0.02592623 0.93154085]]
     """

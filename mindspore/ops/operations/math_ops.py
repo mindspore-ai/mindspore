@@ -460,6 +460,7 @@ class ReduceAny(_Reduce):
         >>> input_x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = P.ReduceAny(keep_dims=True)
         >>> output = op(input_x, 1)
+        >>> print(output)
         [[True],
          [True]]
     """
@@ -983,6 +984,7 @@ class Neg(PrimitiveWithInfer):
         >>> neg = P.Neg()
         >>> input_x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
         >>> result = neg(input_x)
+        >>> print(result)
         [-1.  -2.   1.  -2.   0.   3.5]
     """
 
@@ -2893,7 +2895,8 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         >>> init = alloc_status()
         >>> flag = get_status(init)
         >>> clear = clear_status(init)
-        Tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], shape=(8,), dtype=mindspore.float32)
+        >>> print(clear)
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     """
 
     @prim_attr_register
@@ -3144,6 +3147,7 @@ class Sign(PrimitiveWithInfer):
          >>> input_x = Tensor(np.array([[2.0, 0.0, -1.0]]), mindspore.float32)
          >>> sign = P.Sign()
          >>> output = sign(input_x)
+         >>> print(output)
          [[1.0, 0.0, -1.0]]
     """
 
@@ -3440,6 +3444,7 @@ class BesselI0e(PrimitiveWithInfer):
         >>> bessel_i0e = P.BesselI0e()
         >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = bessel_i0e(input_x)
+        >>> print(output)
         [0.7979961, 0.5144438, 0.75117415, 0.9157829]
     """
 
@@ -3470,6 +3475,7 @@ class BesselI1e(PrimitiveWithInfer):
         >>> bessel_i1e = P.BesselI1e()
         >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = bessel_i1e(input_x)
+        >>> print(output)
         [0.09507662, 0.19699717, 0.11505538, 0.04116856]
     """
 
@@ -3500,6 +3506,7 @@ class Inv(PrimitiveWithInfer):
         >>> inv = P.Inv()
         >>> input_x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
         >>> output = inv(input_x)
+        >>> print(output)
         [4., 2.5, 3.2258065, 1.923077]
     """
 
@@ -3530,6 +3537,7 @@ class Invert(PrimitiveWithInfer):
         >>> invert = P.Invert()
         >>> input_x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
         >>> output = invert(input_x)
+        >>> print(output)
         [-26, -5, -14, -10]
     """
 
@@ -3558,6 +3566,7 @@ class Eps(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor([4, 1, 2, 3], mindspore.float32)
         >>> out = P.Eps()(input_x)
+        >>> print(out)
         [1.52587891e-05, 1.52587891e-05, 1.52587891e-05, 1.52587891e-05]
     """
 

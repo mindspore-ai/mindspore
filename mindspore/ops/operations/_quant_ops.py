@@ -187,7 +187,7 @@ class FakeQuantWithMinMaxVars(PrimitiveWithInfer):
         >>> min_tensor = Tensor(np.array([-6]), mstype.float32)
         >>> max_tensor = Tensor(np.array([6]), mstype.float32)
         >>> output_tensor = FakeQuantWithMinMaxVars(num_bits=8, narrow_range=False)(
-        >>>                 input_tensor, min_tensor, max_tensor)
+        ...                 input_tensor, min_tensor, max_tensor)
         >>> output_tensor shape: (3, 16, 5, 5)  data type: mstype.float32
     """
 
@@ -249,7 +249,7 @@ class FakeQuantWithMinMaxVarsGradient(PrimitiveWithInfer):
         >>> min_tensor = Tensor(np.array([-6]), mstype.float32)
         >>> max_tensor = Tensor(np.array([6]), mstype.float32)
         >>> x_gradient, min_gradient, max_gradient = FakeQuantWithMinMaxVarsGradient(num_bits=8,narrow_range=False)
-        >>>                                          (gradients, input_tensor, min_tensor, max_tensor)
+        ...                                          (gradients, input_tensor, min_tensor, max_tensor)
         >>> x_gradient   shape: (3, 16, 5, 5)  data type: mstype.float32
         >>> min_gradient shape: (1,)           data type: mstype.float32
         >>> max_gradient shape: (1,)           data type: mstype.float32
@@ -310,7 +310,7 @@ class FakeQuantWithMinMaxVarsPerChannel(PrimitiveWithInfer):
         >>> min_tensor = Tensor(np.array([-6, -1, -2, -3]), mstype.float32)
         >>> max_tensor = Tensor(np.array([6, 1, 2, 3]), mstype.float32)
         >>> output_tensor = FakeQuantWithMinMaxVars(num_bits=8, narrow_range=False)(
-        >>>                 input_tensor, min_tensor, max_tensor)
+        ...                 input_tensor, min_tensor, max_tensor)
         >>> output_tensor shape: (3, 16, 3, 4)  data type: mstype.float32
     """
 
@@ -365,8 +365,8 @@ class FakeQuantWithMinMaxVarsPerChannelGradient(PrimitiveWithInfer):
         >>> min_tensor = Tensor(np.array([-6, -1, -2, -3]), mstype.float32)
         >>> max_tensor = Tensor(np.array([6, 1, 2, 3]), mstype.float32)
         >>> x_gradient, min_gradient, max_gradient = FakeQuantWithMinMaxVarsPerChannelGradient(
-        >>>                                          num_bits=8, narrow_range=False)(
-        >>>                                          gradients, input_tensor, min_tensor, max_tensor)
+        ...                                          num_bits=8, narrow_range=False)(
+        ...                                          gradients, input_tensor, min_tensor, max_tensor)
         >>> x_gradient   shape: (3, 16, 3, 4)  data type: mstype.float32
         >>> min_gradient shape: (4,)           data type: mstype.float32
         >>> max_gradient shape: (4,)           data type: mstype.float32

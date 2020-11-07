@@ -169,7 +169,7 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
         >>> deltas = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
         >>> boundingbox_decode = P.BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
-        >>>                                          max_shape=(768, 1280), wh_ratio_clip=0.016)
+        ...                                          max_shape=(768, 1280), wh_ratio_clip=0.016)
         >>> boundingbox_decode(anchor_box, deltas)
         [[4.1953125  0.  0.  5.1953125]
          [2.140625  0.  3.859375  60.59375]]
