@@ -266,6 +266,31 @@ class _CostModelContext:
             raise ValueError("Context handle is none in context!!!")
         return self._context_handle.get_run_phase()
 
+    def set_dp_algo_single_loop(self, single_loop):
+        """
+        Set the flag of generating a single suite of OperatorInfos in for-loop.
+
+        Args:
+            single_loop (bool): The parameter for the single loop flag.
+
+        Raises:
+            ValueError: If context handle is none.
+        """
+        if self._context_handle is None:
+            raise ValueError("Context handle is none in context!!!")
+        self._context_handle.set_dp_algo_single_loop(single_loop)
+
+    def get_dp_algo_single_loop(self):
+        """
+        Get the flag of whether or not generating a single suite of OperatorInfos in for-loop.
+
+        Raises:
+            ValueError: If context handle is none.
+        """
+        if self._context_handle is None:
+            raise ValueError("Context handle is none in context!!!")
+        return self._context_handle.get_dp_algo_single_loop()
+
     def set_costmodel_allreduce_fusion_algorithm(self, algorithm):
         """
         Set costmodel allreduce fusion algorithm.
@@ -602,4 +627,19 @@ def _get_multi_subgraphs():
     """
         Get the flag of ANF graph containing multiple subgraphs.
     """
-    cost_model_context().get_multi_subgraphs()
+    return cost_model_context().get_multi_subgraphs()
+
+def _set_algo_single_loop(single_loop=True):
+    """
+    Set the flag of generating a single suite of OperatorInfos in for-loop.
+
+    Args:
+        single_loop (bool): The parameter for the single loop flag.
+    """
+    cost_model_context().set_dp_algo_single_loop(single_loop)
+
+def _get_algo_single_loop():
+    """
+    Get the flag of whether or not generating a single suite of OperatorInfos in for-loop.
+    """
+    return cost_model_context().get_dp_algo_single_loop()

@@ -43,6 +43,7 @@ int64_t RUN_PHASE = DEFAULT_RUN_PHASE;
 bool TRIANGLE_STAR_STRATEGY_OVERWRITE = DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE;
 bool DP_ALGO_ENABLE_APPROX = DEFAULT_DP_ALGO_ENABLE_APPROX;
 double DP_ALGO_APPROX_EPSILON = DEFAULT_DP_ALGO_APPROX_EPSILON;
+bool DP_ALGO_SINGLE_LOOP = DEFAULT_DP_ALGO_SINGLE_LOOP;
 
 void CostGraph::SetDeviceMemoryAndCostParameter() {
   MS_EXCEPTION_IF_NULL(CostModelContext::GetInstance());
@@ -187,6 +188,14 @@ void CostGraph::SetDeviceMemoryAndCostParameter() {
   }
   DP_ALGO_APPROX_EPSILON = epsilon;
   MS_LOG(INFO) << "epsilon: " << epsilon << ".";
+
+  auto single_loop = CostModelContext::GetInstance()->dp_algo_single_loop();
+  DP_ALGO_SINGLE_LOOP = single_loop;
+  if (single_loop) {
+    MS_LOG(INFO) << "dp_algo_single_loop: true.";
+  } else {
+    MS_LOG(INFO) << "dp_algo_single_loop: false.";
+  }
 }
 
 void CostGraph::RemoveOperator(const OperatorInfoPtr &op) {

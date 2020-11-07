@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+#include <regex>
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/draw.h"
 #include "utils/ms_context.h"
 #include "ir/graph_utils.h"
+#include "pipeline/jit/pipeline.h"
 
 namespace mindspore {
 namespace parallel {
@@ -49,6 +51,27 @@ void DumpGraph(const FuncGraphPtr &root, const std::string &name) {
     DumpIR(name + ".ir", root);
     ExportIR(name + ".dat", "0", root);
   }
+}
+
+// Return true if the cnode is in a for-loop and loop_index indicates the i-th loop;
+// otherwise return false
+bool GetLoopIndexFromCNode(const CNodePtr &cnode, size_t *loop_index) {
+  std::regex pattern(CELLLIST_KEYWORD_PATTERN);
+  std::smatch result;
+  const auto &cnode_fullname = cnode->fullname_with_scope();
+  if (std::regex_search(cnode_fullname, result, pattern)) {
+    if (result.length() < 2) {
+      MS_LOG(EXCEPTION) << "Wrong format of fullname_with_scope: " << cnode_fullname;
+    }
+    *loop_index = std::stoi(result[1]);
+    return true;
+  }
+  return false;
+}
+
+void SetOpsNumToExecutor(size_t num_ops) {
+  auto executor = pipeline::ExecutorPy::GetInstance();
+  executor->SetNumOpsInfo(num_ops);
 }
 }  // namespace parallel
 }  // namespace mindspore

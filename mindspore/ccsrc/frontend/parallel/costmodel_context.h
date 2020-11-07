@@ -47,6 +47,7 @@ namespace parallel {
 #define DEFAULT_TRIANGLE_STAR_STRATEGY_OVERWRITE true;
 #define DEFAULT_DP_ALGO_ENABLE_APPROX false
 #define DEFAULT_DP_ALGO_APPROX_EPSILON 0.1
+#define DEFAULT_DP_ALGO_SINGLE_LOOP true
 
 class CostModelContext {
  public:
@@ -149,6 +150,9 @@ class CostModelContext {
   void set_dp_algo_enable_approxi(bool);
   bool dp_algo_enable_approxi() const { return dp_algo_enable_approxi_; }
 
+  void set_dp_algo_single_loop(bool);
+  bool dp_algo_single_loop() const { return dp_algo_single_loop_; }
+
  private:
   CostModelContext();
   static std::shared_ptr<CostModelContext> cm_context_inst_;
@@ -189,6 +193,9 @@ class CostModelContext {
 
   // When APPROXIMATION is enabled in the DP algorithm, the 'epsilon' value used in the APPROXIMATION.
   double dp_algo_approxi_epsilon_;
+
+  // Whether to generate a single suite of OperatorInfo for a loop.
+  bool dp_algo_single_loop_;
 
   int64_t run_phase_;  // 0: 'training', 1: 'inference'
 

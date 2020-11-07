@@ -252,6 +252,16 @@ void ExecutorPy::SetCNodeStrategy(const std::string &name, const parallel::Strat
   stra_dict_[phase_][py::str(name)] = strategy;
 }
 
+size_t ExecutorPy::GetNumOpsInfo(const std::string &phase) {
+  MS_LOG(DEBUG) << "GetNumOpsInfo!";
+  return phase_to_num_op_info_[phase];
+}
+
+void ExecutorPy::SetNumOpsInfo(size_t num_ops) {
+  MS_LOG(DEBUG) << "SetNumOpsInfo!";
+  phase_to_num_op_info_[phase_] = num_ops;
+}
+
 py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
   MS_LOG(INFO) << "GetAllreduceFusion!";
   auto graph = GetFuncGraph(phase);

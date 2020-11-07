@@ -22,6 +22,7 @@ from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.parallel import _cost_model_context as cost_model_context
+from mindspore.parallel._cost_model_context import _set_algo_single_loop, _get_algo_single_loop
 from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -119,6 +120,14 @@ def test_two_matmul():
     assert enable_approxi
     algo_epsilon = get_algo_parameters("algo_approxi_epsilon")
     assert algo_epsilon == 0.001
+
+    expecte_single_loop = True
+    signle_loop = _get_algo_single_loop()
+    assert expecte_single_loop == signle_loop
+    expecte_single_loop = False
+    _set_algo_single_loop(expecte_single_loop)
+    signle_loop = _get_algo_single_loop()
+    assert expecte_single_loop == signle_loop
 
     reset_algo_parameters()
     para_slice_align_enable = get_algo_parameters("tensor_slice_align_enable")

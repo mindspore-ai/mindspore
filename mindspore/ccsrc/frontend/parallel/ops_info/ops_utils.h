@@ -146,6 +146,7 @@ constexpr char FIELD_SIZE[] = "field_size";
 constexpr char OPTIMIZER_SUB_STRING[] = "optimizer";
 constexpr char DEVICE[] = "Device";
 constexpr char PARALLEL_OPTIMIZER_ALLGATHER[] = "parallel_optimizer_allgather";
+constexpr char CELLLIST_KEYWORD_PATTERN[] = "-CellList/(\\d+)-";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";

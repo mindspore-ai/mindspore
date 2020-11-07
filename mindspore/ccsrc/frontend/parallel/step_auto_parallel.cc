@@ -38,6 +38,7 @@
 #include "frontend/parallel/auto_parallel/rec_core/rec_partition.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/graph_util/node_info.h"
+#include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/ops_info/reshape_info.h"
 #include "frontend/parallel/ops_info/tmp_identity_info.h"
 #include "frontend/parallel/step_parallel.h"
@@ -346,6 +347,39 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
   return IsParallelCareNode(cnode) && IsSplittableOperator(prim->name());
 }
 
+// Recording the operators appearing in a for-loop.
+// Currently, we assume that the operators in different for-loops are identical, and their traversal
+// orderings are also identical.
+// Therefore, we create OperatorInfo objects for the operators in a loop (say, loop-3), and reuse them in
+// the rest of loops (loop-2, loop-1 and loop-0)
+std::set<std::string> ops_in_a_loop_;
+// Whether two operators are in different loops; if it is true, then return true.
+// If at least one of the two operators is not in the loop, then return false.
+// If two operators are in the same loop, the return false.
+bool IsOperatorsInTwoSeparateLoops(const CNodePtr &a_cnode, const CNodePtr &b_cnode) {
+  auto a_op_info = a_cnode->user_data<OperatorInfo>();
+  MS_EXCEPTION_IF_NULL(a_op_info);
+  auto b_op_info = b_cnode->user_data<OperatorInfo>();
+  MS_EXCEPTION_IF_NULL(b_op_info);
+  if ((ops_in_a_loop_.find(a_op_info->name()) == ops_in_a_loop_.end()) ||
+      (ops_in_a_loop_.find(b_op_info->name()) == ops_in_a_loop_.end())) {
+    return false;
+  }
+  size_t a_loop_index = 0, b_loop_index = 0;
+  const auto &a_fullname = a_cnode->fullname_with_scope();
+  if (!GetLoopIndexFromCNode(a_cnode, &a_loop_index)) {
+    MS_LOG(EXCEPTION) << "The operator with fullname_with_scope: " << a_fullname << " was not included in the set.";
+  }
+  const auto &b_fullname = b_cnode->fullname_with_scope();
+  if (!GetLoopIndexFromCNode(b_cnode, &b_loop_index)) {
+    MS_LOG(EXCEPTION) << "The operator with fullname_with_scope: " << b_fullname << " was not included in the set.";
+  }
+  if (a_loop_index == b_loop_index) {
+    return false;
+  }
+  return true;
+}
+
 OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode, StrategyMap *stra_map) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(cnode);
@@ -460,6 +494,10 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
   entire_costgraph->SetDeviceMemoryAndCostParameter();
   // The map from CNode's UniqueId to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
+  // The operator_infos in a loop
+  std::vector<OperatorInfoPtr> operators_in_forloop;
+  // Key: i-th loop; Value: index of 'operators_in_forloop'
+  std::map<size_t, size_t> loop_to_ops;
   // extract strategy from checkpoint for multi-train
   StrategyMap stra_map;
   if (StrategyCheckpoint::GetInstance().LoadCheckPointOn()) {
@@ -491,6 +529,27 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
 
     auto search_cnode = from_cnode_to_info.find(cnode->UniqueId());
     if (search_cnode == from_cnode_to_info.end()) {
+      size_t loop_index = 0;
+      bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
+      if (DP_ALGO_SINGLE_LOOP && is_in_loop && (loop_to_ops[loop_index] < operators_in_forloop.size())) {
+        const auto &current_op_ptr = operators_in_forloop[loop_to_ops[loop_index]];
+        bool is_find_wrong = (current_op_ptr->name().find(VIRTUAL_DATA_SET_INFO) == std::string::npos) &&
+                             (current_op_ptr->name().find(BATCH_PARALLEL) == std::string::npos) &&
+                             (current_op_ptr->name().find(prim->name()) == std::string::npos);
+        if (is_find_wrong) {
+          MS_LOG(EXCEPTION) << "The OperatorInfo: " << current_op_ptr->name()
+                            << " does not match the Prim: " << prim->name()
+                            << ". The fullname_with_scope: " << cnode->fullname_with_scope();
+        }
+        loop_to_ops[loop_index]++;
+        cnode->set_user_data<OperatorInfo>(current_op_ptr);
+        MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
+                     << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
+                     << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
+                     << " is set OperatorInfo: " << current_op_ptr->name() << ", Primitive: " << prim->name();
+        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId(), current_op_ptr));
+        continue;
+      }
       auto operator_info = CreateTheOperatorInfo(prim, cnode, &stra_map);
       if (operator_info == nullptr) {
         return FAILED;
@@ -503,8 +562,14 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
       cnode->set_user_data<OperatorInfo>(operator_info);
       MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
                    << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
+                   << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
-      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), operator_info));
+      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueId(), operator_info));
+      if (DP_ALGO_SINGLE_LOOP && is_in_loop) {
+        operators_in_forloop.push_back(operator_info);
+        ops_in_a_loop_.insert(operator_info->name());
+        loop_to_ops[loop_index]++;
+      }
       // Needed by rec_parser
       entire_costgraph->add_inputs_tensor_name(inputs_tensor_name);
     } else {
@@ -526,6 +591,10 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
   entire_costgraph->SetDeviceMemoryAndCostParameter();
   // The map from CNode's UniqueIdThroughCopy to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
+  // The operator_infos in a loop
+  std::vector<OperatorInfoPtr> operators_in_forloop;
+  // Key: i-th loop; Value: index of 'operators_in_forloop'
+  std::map<size_t, size_t> loop_to_ops;
   // extract strategy from checkpoint for multi-train
   StrategyMap stra_map;
   if (StrategyCheckpoint::GetInstance().LoadCheckPointOn()) {
@@ -556,6 +625,27 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
     // Find the operatorInfo if it exists
     auto search_cnode = from_cnode_to_info.find(cnode->UniqueIdThroughCopy());
     if (search_cnode == from_cnode_to_info.end()) {
+      size_t loop_index = 0;
+      bool is_in_loop = GetLoopIndexFromCNode(cnode, &loop_index);
+      if (DP_ALGO_SINGLE_LOOP && is_in_loop && (loop_to_ops[loop_index] < operators_in_forloop.size())) {
+        const auto &current_op_ptr = operators_in_forloop[loop_to_ops[loop_index]];
+        bool is_find_wrong = (current_op_ptr->name().find(VIRTUAL_DATA_SET_INFO) == std::string::npos) &&
+                             (current_op_ptr->name().find(BATCH_PARALLEL) == std::string::npos) &&
+                             (current_op_ptr->name().find(prim->name()) == std::string::npos);
+        if (is_find_wrong) {
+          MS_LOG(EXCEPTION) << "The OperatorInfo: " << current_op_ptr->name()
+                            << " does not match the Prim: " << prim->name()
+                            << ". The fullname_with_scope: " << cnode->fullname_with_scope();
+        }
+        loop_to_ops[loop_index]++;
+        cnode->set_user_data<OperatorInfo>(current_op_ptr);
+        MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
+                     << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
+                     << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
+                     << " is set OperatorInfo: " << current_op_ptr->name() << ", Primitive: " << prim->name();
+        (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), current_op_ptr));
+        continue;
+      }
       // In this case, the corresponding OperatorInfo is not created, create the new one.
       auto operator_info = CreateTheOperatorInfo(prim, cnode, &stra_map);
       if (operator_info == nullptr) {
@@ -569,8 +659,14 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
       cnode->set_user_data<OperatorInfo>(operator_info);
       MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
                    << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
+                   << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                    << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
       (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), operator_info));
+      if (DP_ALGO_SINGLE_LOOP && is_in_loop) {
+        operators_in_forloop.push_back(operator_info);
+        ops_in_a_loop_.insert(operator_info->name());
+        loop_to_ops[loop_index]++;
+      }
       // Needed by rec_parser
       entire_costgraph->add_inputs_tensor_name(inputs_tensor_name);
     } else {
@@ -642,7 +738,12 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
           }
           EdgePtr edge_ptr;
           MS_LOG(INFO) << "Creating edge: " << edge_name;
-
+          if (IsOperatorsInTwoSeparateLoops(prev_cnode, cnode)) {
+            MS_LOG(INFO) << "prev_cnode_fullname: " << prev_cnode->fullname_with_scope()
+                         << ", cnode_fullname: " << cnode->fullname_with_scope();
+            MS_LOG(INFO) << "The two operators in two separate for-loops, thus skip the edge.";
+            break;
+          }
           bool follow_strategy = (prim->name() == RESHAPE) || (prev_prim->name() == RESHAPE) ||
                                  (ELEMENTWISE_OP_STRA_FOLLOW && IsElementWiseOperator(prev_prim->name()));
           if (follow_strategy) {
@@ -1044,8 +1145,11 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
 
   // Step 3: Augment the costgraph.
   AugmentCostGraph(all_nodes);
-  MS_LOG(INFO) << "After the augmenting procedure, there are " << entire_costgraph->GetOperators().size()
-               << " operators, and " << entire_costgraph->GetNumEdges() << " edges.";
+  auto num_ops = entire_costgraph->GetOperators().size();
+  SetOpsNumToExecutor(num_ops);
+  auto num_edges = entire_costgraph->GetNumEdges();
+  MS_LOG(INFO) << "After the augmenting procedure, there are " << num_ops << " operators, and " << num_edges
+               << " edges.";
 
   // Step 3.1: Calculate the memory usage
   if (entire_costgraph->CalculateMemoryCost() != SUCCESS) {
@@ -1071,6 +1175,7 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
     MS_LOG(INFO) << op->name() << " : The strategy is:";
     PrintStrategy(s_strategy);
   }
+  ops_in_a_loop_.clear();
 
   return SUCCESS;
 }
