@@ -173,7 +173,7 @@ currently the containerized build options are supported as follows:
     Then you can pull and run the latest stable image using the below command:
     ```
     docker pull mindspore/mindspore-gpu:1.0.0
-    docker run -it --runtime=nvidia --privileged=true mindspore/mindspore-gpu:1.0.0 /bin/bash
+    docker run -it -v /dev/shm:/dev/shm --runtime=nvidia --privileged=true mindspore/mindspore-gpu:1.0.0 /bin/bash
     ```
 
     To test if the docker image works, please execute the python code below and check the output:
