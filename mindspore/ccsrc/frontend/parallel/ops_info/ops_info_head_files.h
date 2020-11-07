@@ -43,6 +43,7 @@
 #include "frontend/parallel/ops_info/concat_info.h"
 #include "frontend/parallel/ops_info/split_info.h"
 #include "frontend/parallel/ops_info/tensordot_info.h"
+#include "frontend/parallel/ops_info/range_info.h"
 #include "frontend/parallel/ops_info/pack_info.h"
 #include "frontend/parallel/ops_info/broadcast_to_info.h"
 #include "frontend/parallel/ops_info/unique_info.h"
