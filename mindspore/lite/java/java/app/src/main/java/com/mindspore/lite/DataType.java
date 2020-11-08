@@ -32,6 +32,4 @@ public class DataType {
     public static final int kNumberTypeFloat16 = 42;
     public static final int kNumberTypeFloat32 = 43;
     public static final int kNumberTypeFloat64 = 44;
-
-    public static native int elementSize(int elementType);
 }
