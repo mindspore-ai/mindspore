@@ -108,6 +108,9 @@ Status CacheServer::DoServiceStart() {
   try {
     comm_layer_ = std::make_shared<CacheServerGreeterImpl>(port_, shared_memory_sz_in_gb_);
     RETURN_IF_NOT_OK(comm_layer_->Run());
+    // Bring up a thread to monitor the unix socket in case it is removed.
+    auto inotify_f = std::bind(&CacheServerGreeterImpl::MonitorUnixSocket, comm_layer_.get());
+    RETURN_IF_NOT_OK(vg_.CreateAsyncTask("Monitor unix socket", inotify_f));
   } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED(e.what());
   }
@@ -153,6 +156,15 @@ Status CacheServer::DoServiceStop() {
       rc = rc2;
     }
     ++it;
+  }
+  // Also remove the path we use to generate ftok.
+  Path p(PortToUnixSocketPath(port_));
+  (void)p.Remove();
+  // Finally wake up cache_admin if it is waiting
+  for (int32_t qID : shutdown_qIDs_) {
+    SharedMessage msg(qID);
+    msg.RemoveResourcesOnExit();
+    // Let msg goes out of scope which will destroy the queue.
   }
   return rc;
 }
@@ -374,6 +386,68 @@ Status CacheServer::FastCacheRow(CacheRequest *rq, CacheReply *reply) {
   return rc;
 }
 
+Status CacheServer::BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuilder> &fbb, WritableSlice *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+  int32_t numQ = GetNumGrpcWorkers();
+  auto rng = GetRandomDevice();
+  std::uniform_int_distribution<session_id_type> distribution(0, numQ - 1);
+  int32_t qID = distribution(rng);
+  std::vector<CacheServerRequest *> cache_rq_list;
+  auto p = flatbuffers::GetRoot<BatchDataLocatorMsg>(fbb->GetBufferPointer());
+  const auto num_elements = p->rows()->size();
+  auto connection_id = p->connection_id();
+  cache_rq_list.reserve(num_elements);
+  int64_t data_offset = (num_elements + 1) * sizeof(int64_t);
+  auto *offset_array = reinterpret_cast<int64_t *>(out->GetMutablePointer());
+  offset_array[0] = data_offset;
+  for (auto i = 0; i < num_elements; ++i) {
+    auto data_locator = p->rows()->Get(i);
+    auto node_id = data_locator->node_id();
+    size_t sz = data_locator->size();
+    void *source_addr = reinterpret_cast<void *>(data_locator->addr());
+    auto key = data_locator->key();
+    // Please read the comment in CacheServer::BatchFetchRows where we allocate
+    // the buffer big enough so each thread (which we are going to dispatch) will
+    // not run into false sharing problem. We are going to round up sz to 4k.
+    auto sz_4k = round_up_4K(sz);
+    offset_array[i + 1] = offset_array[i] + sz_4k;
+    if (sz > 0) {
+      WritableSlice row_data(*out, offset_array[i], sz);
+      // Get a request and send to the proper worker (at some numa node) to do the fetch.
+      worker_id_t worker_id = IsNumaAffinityOn() ? GetWorkerByNumaId(node_id) : GetRandomWorker();
+      CacheServerRequest *cache_rq;
+      RETURN_IF_NOT_OK(GetFreeRequestTag(qID++ % numQ, &cache_rq));
+      cache_rq_list.push_back(cache_rq);
+      // Set up all the necessarily field.
+      cache_rq->type_ = BaseRequest::RequestType::kInternalFetchRow;
+      cache_rq->st_ = CacheServerRequest::STATE::PROCESS;
+      cache_rq->rq_.set_connection_id(connection_id);
+      cache_rq->rq_.set_type(static_cast<int16_t>(cache_rq->type_));
+      auto dest_addr = row_data.GetMutablePointer();
+      flatbuffers::FlatBufferBuilder fb2;
+      FetchRowMsgBuilder bld(fb2);
+      bld.add_key(key);
+      bld.add_size(sz);
+      bld.add_source_addr(reinterpret_cast<int64_t>(source_addr));
+      bld.add_dest_addr(reinterpret_cast<int64_t>(dest_addr));
+      auto offset = bld.Finish();
+      fb2.Finish(offset);
+      cache_rq->rq_.add_buf_data(fb2.GetBufferPointer(), fb2.GetSize());
+      RETURN_IF_NOT_OK(PushRequest(worker_id, cache_rq));
+    }
+  }
+  // Now wait for all of them to come back.
+  Status rc;
+  for (CacheServerRequest *rq : cache_rq_list) {
+    RETURN_IF_NOT_OK(rq->Wait());
+    if (rq->rc_.IsError() && !rq->rc_.IsInterrupted() && rc.IsOk()) {
+      rc = rq->rc_;
+    }
+    RETURN_IF_NOT_OK(ReturnRequestTag(rq));
+  }
+  return rc;
+}
+
 Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
   auto connection_id = rq->connection_id();
   // Hold the shared lock to prevent the cache from being dropped.
@@ -394,6 +468,9 @@ Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
     }
     std::shared_ptr<flatbuffers::FlatBufferBuilder> fbb = std::make_shared<flatbuffers::FlatBufferBuilder>();
     RETURN_IF_NOT_OK(cs->PreBatchFetch(connection_id, row_id, fbb));
+    // Let go of the shared lock. We don't need to interact with the CacheService anymore.
+    // We shouldn't be holding any lock while we can wait for a long time for the rows to come back.
+    lck.Unlock();
     auto locator = flatbuffers::GetRoot<BatchDataLocatorMsg>(fbb->GetBufferPointer());
     int64_t mem_sz = sizeof(int64_t) * (sz + 1);
     for (auto i = 0; i < sz; ++i) {
@@ -418,7 +495,7 @@ Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
       void *q = nullptr;
       RETURN_IF_NOT_OK(shared_pool->Allocate(mem_sz, &q));
       WritableSlice dest(q, mem_sz);
-      Status rc = cs->BatchFetch(fbb, &dest);
+      Status rc = BatchFetch(fbb, &dest);
       if (rc.IsError()) {
         shared_pool->Deallocate(q);
         return rc;
@@ -439,7 +516,7 @@ Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
         return Status(StatusCode::kOutOfMemory);
       }
       WritableSlice dest(mem.data(), mem_sz);
-      RETURN_IF_NOT_OK(cs->BatchFetch(fbb, &dest));
+      RETURN_IF_NOT_OK(BatchFetch(fbb, &dest));
       reply->set_result(std::move(mem));
     }
   }
@@ -721,7 +798,7 @@ Status CacheServer::ServerRequest(worker_id_t worker_id) {
       }
       case BaseRequest::RequestType::kStopService: {
         // This command shutdowns everything.
-        cache_req->rc_ = GlobalShutdown();
+        cache_req->rc_ = GlobalShutdown(cache_req);
         break;
       }
       case BaseRequest::RequestType::kHeartBeat: {
@@ -914,7 +991,25 @@ Status CacheServer::RpcRequest(worker_id_t worker_id) {
   return Status::OK();
 }
 
-Status CacheServer::GlobalShutdown() {
+Status CacheServer::GlobalShutdown(CacheServerRequest *cache_req) {
+  auto *rq = &cache_req->rq_;
+  auto *reply = &cache_req->reply_;
+  if (!rq->buf_data().empty()) {
+    // cache_admin sends us a message qID and we will destroy the
+    // queue in our destructor and this will wake up cache_admin.
+    // But we don't want the cache_admin blindly just block itself.
+    // So we will send back an ack before shutdown the comm layer.
+    try {
+      int32_t qID = std::stoi(rq->buf_data(0));
+      shutdown_qIDs_.push_back(qID);
+    } catch (const std::exception &e) {
+      // ignore it.
+    }
+  }
+  reply->set_result("OK");
+  Status2CacheReply(cache_req->rc_, reply);
+  cache_req->st_ = CacheServerRequest::STATE::FINISH;
+  cache_req->responder_.Finish(*reply, grpc::Status::OK, cache_req);
   // Let's shutdown in proper order.
   bool expected = false;
   if (global_shutdown_.compare_exchange_strong(expected, true)) {
@@ -939,7 +1034,7 @@ Status CacheServer::GlobalShutdown() {
   return Status::OK();
 }
 
-worker_id_t CacheServer::GetWorkerByNumaId(numa_id_t numa_id) {
+worker_id_t CacheServer::GetWorkerByNumaId(numa_id_t numa_id) const {
   auto num_numa_nodes = GetNumaNodeCount();
   MS_ASSERT(numa_id < num_numa_nodes);
   auto num_workers_per_node = GetNumWorkers() / num_numa_nodes;
@@ -951,7 +1046,7 @@ worker_id_t CacheServer::GetWorkerByNumaId(numa_id_t numa_id) {
   return worker_id;
 }
 
-worker_id_t CacheServer::GetRandomWorker() {
+worker_id_t CacheServer::GetRandomWorker() const {
   std::mt19937 gen = GetRandomDevice();
   std::uniform_int_distribution<worker_id_t> dist(0, num_workers_ - 1);
   return dist(gen);

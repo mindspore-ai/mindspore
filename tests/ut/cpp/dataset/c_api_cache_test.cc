@@ -42,7 +42,13 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiSamplerNull) {
   // Create an ImageFolder Dataset, this folder_path only has 2 images in it
   std::string folder_path = datasets_root_path_ + "/testImageNetData/train/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, nullptr, {}, {}, some_cache);
-  EXPECT_EQ(ds, nullptr);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  // Now the parameter check for ImageFolderNode would fail and we would end up with a nullptr iter.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestCacheOp, DISABLED_TestCacheImageFolderCApi) {

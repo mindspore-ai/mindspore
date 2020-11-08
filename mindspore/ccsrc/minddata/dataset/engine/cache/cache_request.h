@@ -394,6 +394,15 @@ class ToggleWriteModeRequest : public BaseRequest {
   ~ToggleWriteModeRequest() override = default;
 };
 
+class ServerStopRequest : public BaseRequest {
+ public:
+  friend class CacheServer;
+  explicit ServerStopRequest(int32_t qID) : BaseRequest(RequestType::kStopService) {
+    rq_.add_buf_data(std::to_string(qID));
+  }
+  Status PostReply() override;
+};
+
 class ConnectResetRequest : public BaseRequest {
  public:
   friend class CacheServer;

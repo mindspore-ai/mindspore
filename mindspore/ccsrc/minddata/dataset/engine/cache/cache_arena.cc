@@ -21,11 +21,7 @@ CachedSharedMemoryArena::CachedSharedMemoryArena(int32_t port, size_t val_in_GB)
   // We create the shared memory and we will destroy it. All other client just detach only.
   shm_.RemoveResourcesOnExit();
 }
-CachedSharedMemoryArena::~CachedSharedMemoryArena() {
-  // Also remove the path we use to generate ftok.
-  Path p(PortToUnixSocketPath(port_));
-  (void)p.Remove();
-}
+CachedSharedMemoryArena::~CachedSharedMemoryArena() {}
 
 Status CachedSharedMemoryArena::CreateArena(std::unique_ptr<CachedSharedMemoryArena> *out, int32_t port,
                                             size_t val_in_GB) {

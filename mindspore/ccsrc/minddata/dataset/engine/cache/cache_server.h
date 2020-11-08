@@ -187,11 +187,11 @@ class CacheServer : public Service {
 
   /// \brief Assign a worker by a numa id
   /// \return worker id
-  worker_id_t GetWorkerByNumaId(numa_id_t node_id);
+  worker_id_t GetWorkerByNumaId(numa_id_t node_id) const;
 
   /// \brief Randomly pick a worker
   /// \return worker id
-  worker_id_t GetRandomWorker();
+  worker_id_t GetRandomWorker() const;
 
   /// \brief Check if we bind threads to numa cores
   bool IsNumaAffinityOn() const { return numa_affinity_; }
@@ -227,6 +227,7 @@ class CacheServer : public Service {
   std::shared_ptr<CacheServerHW> hw_info_;
   std::map<worker_id_t, Task *> numa_tasks_;
   bool numa_affinity_;
+  std::vector<int32_t> shutdown_qIDs_;
 
   /// \brief Constructor
   /// \param spill_path Top directory for spilling buffers to.
@@ -314,7 +315,7 @@ class CacheServer : public Service {
 
   /// \brief A proper shutdown of the server
   /// \return Status object
-  Status GlobalShutdown();
+  Status GlobalShutdown(CacheServerRequest *);
 
   /// \brief Find keys that will be cache miss
   /// \return Status object
@@ -330,6 +331,13 @@ class CacheServer : public Service {
 
   /// \brief Connect request by a pipeline
   Status ConnectReset(CacheRequest *rq);
+
+  /// \brief Main function to fetch rows in batch. The output is a contiguous memory which will be decoded
+  /// by the CacheClient. Cache miss is not an error, and will be coded in the output to mark an empty row.
+  /// \param[in] v A vector of row id.
+  /// \param[out] out A contiguous memory buffer that holds the requested rows.
+  /// \return Status object
+  Status BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuilder> &fbb, WritableSlice *out);
 };
 }  // namespace dataset
 }  // namespace mindspore
