@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/comm/tcp_server.h"
+#include "ps/core/tcp_server.h"
 
 #include <arpa/inet.h>
 #include <event2/buffer.h>
@@ -27,11 +27,11 @@
 #include <csignal>
 #include <utility>
 
-#include "ps/comm/comm_util.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 void TcpConnection::InitConnection() {
   tcp_message_handler_.SetCallback([&](const CommMessage &message) {
@@ -88,7 +88,9 @@ void TcpServer::SetServerCallback(const OnConnected &client_conn, const OnDiscon
 void TcpServer::Init() {
   base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(base_);
-  CommUtil::CheckIp(server_address_);
+  if (!CommUtil::CheckIp(server_address_)) {
+    MS_LOG(EXCEPTION) << "The tcp server ip:" << server_address_ << " is illegal!";
+  }
 
   struct sockaddr_in sin {};
   if (memset_s(&sin, sizeof(sin), 0, sizeof(sin)) != EOK) {
@@ -103,6 +105,18 @@ void TcpServer::Init() {
                                       reinterpret_cast<struct sockaddr *>(&sin), sizeof(sin));
 
   MS_EXCEPTION_IF_NULL(listener_);
+
+  if (server_port_ == 0) {
+    struct sockaddr_in sin_bound {};
+    if (memset_s(&sin, sizeof(sin_bound), 0, sizeof(sin_bound)) != EOK) {
+      MS_LOG(EXCEPTION) << "Initialize sockaddr_in failed!";
+    }
+    socklen_t addr_len = sizeof(struct sockaddr_in);
+    if (getsockname(evconnlistener_get_fd(listener_), (struct sockaddr *)&sin_bound, &addr_len) != 0) {
+      MS_LOG(EXCEPTION) << "Get sock name failed!";
+    }
+    server_port_ = htons(sin_bound.sin_port);
+  }
 
   signal_event_ = evsignal_new(base_, SIGINT, SignalCallback, reinterpret_cast<void *>(this));
   MS_EXCEPTION_IF_NULL(signal_event_);
@@ -173,11 +187,13 @@ void TcpServer::RemoveConnection(const evutil_socket_t &fd) {
   connections_.erase(fd);
 }
 
-void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, struct sockaddr *, int, void *data) {
+void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, struct sockaddr *sockaddr, int,
+                                 void *data) {
   auto server = reinterpret_cast<class TcpServer *>(data);
   auto base = reinterpret_cast<struct event_base *>(server->base_);
   MS_EXCEPTION_IF_NULL(server);
   MS_EXCEPTION_IF_NULL(base);
+  MS_EXCEPTION_IF_NULL(sockaddr);
 
   struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
   if (!bev) {
@@ -279,8 +295,10 @@ void TcpServer::SendMessage(const CommMessage &message) {
   }
 }
 
+uint16_t TcpServer::BoundPort() const { return server_port_; }
+
 void TcpServer::SetMessageCallback(const OnServerReceiveMessage &cb) { message_callback_ = cb; }
 
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore

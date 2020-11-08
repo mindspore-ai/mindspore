@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+syntax = "proto3";
+package mindspore.ps.core;
+option optimize_for = LITE_RUNTIME;
+
 message KVMessage {
   repeated int32 keys = 1;
   repeated float values = 2;

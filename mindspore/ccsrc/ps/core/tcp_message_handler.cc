@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/comm/tcp_message_handler.h"
+#include "ps/core/tcp_message_handler.h"
 
 #include <arpa/inet.h>
 #include <iostream>
@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 void TcpMessageHandler::SetCallback(const messageReceive &message_receive) { message_callback_ = message_receive; }
 
@@ -37,16 +37,15 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
         --num;
         if (header_index_ == 3) {
           message_length_ = *reinterpret_cast<const uint32_t *>(header_);
-          message_length_ = ntohl(message_length_);
           remaining_length_ = message_length_;
           message_buffer_.reset(new unsigned char[remaining_length_]);
-          buffer_data += i;
+          buffer_data += (i + 1);
           break;
         }
       }
     }
 
-    if (remaining_length_ > 0) {
+    if (remaining_length_ > 0 && num > 0) {
       uint32_t copy_len = remaining_length_ <= num ? remaining_length_ : num;
       remaining_length_ -= copy_len;
       num -= copy_len;
@@ -60,19 +59,19 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
 
       if (remaining_length_ == 0) {
         CommMessage pb_message;
-        pb_message.ParseFromArray(reinterpret_cast<const void *>(message_buffer_.get()), message_length_);
+        pb_message.ParseFromArray(message_buffer_.get(), message_length_);
         if (message_callback_) {
           message_callback_(pb_message);
         }
         message_buffer_.reset();
         message_buffer_ = nullptr;
-        header_index_ = 0;
+        header_index_ = -1;
         last_copy_len_ = 0;
       }
     }
   }
 }
 
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore

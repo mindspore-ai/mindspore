@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "ps/comm/tcp_client.h"
-#include "ps/comm/tcp_server.h"
+#include "ps/core/tcp_client.h"
+#include "ps/core/tcp_server.h"
 #include "common/common_test.h"
 
 #include <memory>
@@ -23,14 +23,14 @@
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 class TestTcpServer : public UT::Common {
  public:
   TestTcpServer() : client_(nullptr), server_(nullptr) {}
   virtual ~TestTcpServer() = default;
 
   void SetUp() override {
-    server_ = std::make_unique<TcpServer>("127.0.0.1", 9998);
+    server_ = std::make_unique<TcpServer>("127.0.0.1", 0);
     std::unique_ptr<std::thread> http_server_thread_(nullptr);
     http_server_thread_ = std::make_unique<std::thread>([&]() {
       server_->SetMessageCallback([](const TcpServer &server, const TcpConnection &conn, const CommMessage &message) {
@@ -57,7 +57,7 @@ class TestTcpServer : public UT::Common {
 };
 
 TEST_F(TestTcpServer, ServerSendMessage) {
-  client_ = std::make_unique<TcpClient>("127.0.0.1", 9998);
+  client_ = std::make_unique<TcpClient>("127.0.0.1", server_->BoundPort());
   std::unique_ptr<std::thread> http_client_thread(nullptr);
   http_client_thread = std::make_unique<std::thread>([&]() {
     client_->SetMessageCallback([](const TcpClient &client, const CommMessage &message) {
@@ -82,6 +82,6 @@ TEST_F(TestTcpServer, ServerSendMessage) {
   });
   http_client_thread->detach();
 }
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore

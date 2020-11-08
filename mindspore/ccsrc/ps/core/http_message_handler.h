@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_COMM_HTTP_MESSAGE_HANDLER_H_
-#define MINDSPORE_CCSRC_PS_COMM_HTTP_MESSAGE_HANDLER_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_HTTP_MESSAGE_HANDLER_H_
+#define MINDSPORE_CCSRC_PS_CORE_HTTP_MESSAGE_HANDLER_H_
 
 #include <event2/buffer.h>
 #include <event2/event.h>
@@ -36,7 +36,7 @@
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 using HttpHeaders = std::map<std::string, std::list<std::string>>;
 
@@ -101,7 +101,7 @@ class HttpMessageHandler {
   void ParsePostParam();
 };
 
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_COMM_HTTP_MESSAGE_HANDLER_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_HTTP_MESSAGE_HANDLER_H_

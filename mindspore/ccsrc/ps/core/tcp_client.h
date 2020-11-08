@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_COMM_TCP_CLIENT_H_
-#define MINDSPORE_CCSRC_PS_COMM_TCP_CLIENT_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_TCP_CLIENT_H_
+#define MINDSPORE_CCSRC_PS_CORE_TCP_CLIENT_H_
 
-#include "ps/comm/tcp_message_handler.h"
+#include "ps/core/tcp_message_handler.h"
 
 #include <event2/event.h>
 #include <event2/bufferevent.h>
@@ -27,10 +27,11 @@
 #include <vector>
 
 #include "proto/comm.pb.h"
+#include "ps/core/cluster_config.h"
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 class TcpClient {
  public:
@@ -53,6 +54,7 @@ class TcpClient {
   void StartWithNoBlock();
   void SetMessageCallback(const OnMessage &cb);
   void SendMessage(const CommMessage &message) const;
+  void SendMessageWithTimer();
 
  protected:
   static void SetTcpNoDelay(const evutil_socket_t &fd);
@@ -60,6 +62,7 @@ class TcpClient {
   static void ReadCallback(struct bufferevent *bev, void *ctx);
   static void EventCallback(struct bufferevent *bev, std::int16_t events, void *ptr);
   virtual void OnReadHandler(const void *buf, size_t num);
+  static void SendHeartBeatCallback(evutil_socket_t fd, int16_t event, void *arg);
 
  private:
   OnMessage message_callback_;
@@ -78,7 +81,7 @@ class TcpClient {
   std::uint16_t server_port_;
 };
 
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_COMM_TCP_CLIENT_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_TCP_CLIENT_H_

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "ps/comm/http_server.h"
-#include "ps/comm/http_message_handler.h"
-#include "ps/comm/comm_util.h"
+#include "ps/core/http_server.h"
+#include "ps/core/http_message_handler.h"
+#include "ps/core/comm_util.h"
 
 #ifdef WIN32
 #include <WinSock2.h>
@@ -40,12 +40,14 @@
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 HttpServer::~HttpServer() { Stop(); }
 
 bool HttpServer::InitServer() {
-  CommUtil::CheckIp(server_address_);
+  if (!CommUtil::CheckIp(server_address_)) {
+    MS_LOG(EXCEPTION) << "The http server ip:" << server_address_ << " is illegal!";
+  }
 
   event_base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(event_base_);
@@ -154,6 +156,6 @@ void HttpServer::Stop() {
   }
 }
 
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore

@@ -14,8 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_COMM_COMM_UTIL_H_
-#define MINDSPORE_CCSRC_PS_COMM_COMM_UTIL_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_COMM_UTIL_H_
+#define MINDSPORE_CCSRC_PS_CORE_COMM_UTIL_H_
+
+#include <unistd.h>
+#ifdef _MSC_VER
+#include <tchar.h>
+#include <winsock2.h>
+#include <windows.h>
+#include <iphlpapi.h>
+#else
+#include <net/if.h>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <netinet/in.h>
+#endif
 
 #include <event2/buffer.h>
 #include <event2/event.h>
@@ -35,15 +48,16 @@
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 class CommUtil {
  public:
   static bool CheckIpWithRegex(const std::string &ip);
-  static void CheckIp(const std::string &ip);
+  static bool CheckIp(const std::string &ip);
+  static void GetAvailableInterfaceAndIP(std::string *interface, std::string *ip);
 };
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PS_COMM_COMM_UTIL_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_COMM_UTIL_H_

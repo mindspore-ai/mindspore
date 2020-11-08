@@ -15,34 +15,32 @@
  */
 
 #include <memory>
+#include <string>
 
 #include "common/common_test.h"
-#include "ps/comm/tcp_client.h"
+#include "ps/core/cluster_config.h"
 
 namespace mindspore {
 namespace ps {
-namespace comm {
-class TestTcpClient : public UT::Common {
+namespace core {
+class TestClusterConfig : public UT::Common {
  public:
-  TestTcpClient() = default;
+  TestClusterConfig() = default;
+  virtual ~TestClusterConfig() = default;
+
+  void SetUp() override {}
+  void TearDown() override {}
 };
 
-TEST_F(TestTcpClient, InitClientIPError) {
-  auto client = std::make_unique<TcpClient>("127.0.0.13543", 9000);
-
-  client->SetMessageCallback([](const TcpClient &client, const CommMessage &message) { client.SendMessage(message); });
-
-  ASSERT_THROW(client->Init(), std::exception);
+TEST_F(TestClusterConfig, HeartbeatInterval) {
+  ClusterConfig::Init(2, 2, std::make_unique<std::string>("127.0.0.1"), 8080);
+  EXPECT_TRUE(ClusterConfig::heartbeat_interval() == 3);
+  ClusterConfig::set_heartbeat_interval(100);
+  EXPECT_TRUE(ClusterConfig::heartbeat_interval() == 100);
+  EXPECT_STREQ(ClusterConfig::scheduler_host().c_str(), "127.0.0.1");
+  EXPECT_TRUE(ClusterConfig::scheduler_port() == 8080);
 }
 
-TEST_F(TestTcpClient, InitClientPortErrorNoException) {
-  auto client = std::make_unique<TcpClient>("127.0.0.1", -1);
-
-  client->SetMessageCallback([](const TcpClient &client, const CommMessage &message) { client.SendMessage(message); });
-
-  EXPECT_NO_THROW(client->Init());
-}
-
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore

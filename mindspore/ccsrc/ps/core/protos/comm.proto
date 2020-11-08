@@ -1,0 +1,57 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+import "google/protobuf/any.proto";
+package mindspore.ps.core;
+option optimize_for = LITE_RUNTIME;
+
+enum ClusterCommand {
+  TERMINATE = 0;
+  REGISTER = 1;
+  ACK = 2;
+  HEARTBEAT = 3;
+  FETCH_WORKERS = 4;
+  FETCH_SERVERS = 5;
+}
+
+enum Role {
+  SERVER = 0;
+  WORKER = 1;
+  SCHEDULER = 2;
+}
+
+message MessageMeta {
+  // hostname or ip
+  string hostname = 1;
+  // the port of this node
+  int32 port = 2;
+  // the command of this message,for example: register、heartbeat、data
+  int32 cmd = 3;
+  // the timestamp of this message
+  int32 timestamp = 4;
+  // data type of message
+  repeated int32 data_type = 5 [packed = true];
+  // message.data_size
+  int32 data_size = 6;
+}
+
+
+message CommMessage {
+  MessageMeta pb_meta = 1;
+  bytes data = 2;
+}
+

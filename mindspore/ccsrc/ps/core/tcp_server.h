@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_COMM_TCP_SERVER_H_
-#define MINDSPORE_CCSRC_PS_COMM_TCP_SERVER_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_TCP_SERVER_H_
+#define MINDSPORE_CCSRC_PS_CORE_TCP_SERVER_H_
 
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
@@ -31,11 +31,11 @@
 #include <vector>
 
 #include "utils/log_adapter.h"
-#include "ps/comm/tcp_message_handler.h"
+#include "ps/core/tcp_message_handler.h"
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 class TcpServer;
 class TcpConnection {
@@ -83,6 +83,7 @@ class TcpServer {
   void SetMessageCallback(const OnServerReceiveMessage &cb);
   static void SendMessage(const TcpConnection &conn, const CommMessage &message);
   void SendMessage(const CommMessage &message);
+  uint16_t BoundPort() const;
 
  protected:
   static void ListenerCallback(struct evconnlistener *listener, evutil_socket_t socket, struct sockaddr *saddr,
@@ -106,7 +107,7 @@ class TcpServer {
   OnServerReceiveMessage message_callback_;
 };
 
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_COMM_TCP_SERVER_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_TCP_SERVER_H_
