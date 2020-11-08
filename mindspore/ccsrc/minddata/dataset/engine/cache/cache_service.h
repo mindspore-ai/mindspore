@@ -91,6 +91,8 @@ class CacheService : public Service {
   /// \param[in/out] A pointer to a pre-allocated ServiceStat structure
   /// \return Status Object
   Status GetStat(ServiceStat *);
+  /// \brief Return the current state
+  CacheServiceState GetState() const { return st_.load(); }
   /// \brief Cache schema
   /// \param buf A Google Flatbuffer that contains the schema
   /// \param len size of the buffer
@@ -131,7 +133,7 @@ class CacheService : public Service {
   bool generate_id_;
   std::string cookie_;
   std::atomic<int32_t> num_clients_;
-  CacheServiceState st_;
+  std::atomic<CacheServiceState> st_;
   std::string schema_;
   std::shared_ptr<NumaMemoryPool> numa_pool_;
   // We also cache the result from calling FindKeysMiss because it is expensive. Besides user make

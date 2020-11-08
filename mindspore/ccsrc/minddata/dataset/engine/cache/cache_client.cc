@@ -19,6 +19,7 @@
 #include "minddata/dataset/engine/cache/cache_request.h"
 #include "minddata/dataset/engine/cache/cache_fbb.h"
 #include "minddata/dataset/util/bit.h"
+#include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {
 namespace dataset {
@@ -71,6 +72,10 @@ CacheClient::CacheClient(session_id_type session_id, uint64_t cache_mem_sz, bool
 
 CacheClient::~CacheClient() {
   cache_miss_keys_wp_.Set();
+  // Manually release the async buffer because we need the comm layer.
+  if (async_buffer_stream_) {
+    async_buffer_stream_->ReleaseBuffer();
+  }
   if (client_id_ != -1) {
     try {
       // Send a message to the server, saying I am done.
@@ -132,6 +137,42 @@ Status CacheClient::WriteBuffer(std::unique_ptr<DataBuffer> &&in) const {
   return Status::OK();
 }
 
+Status CacheClient::AsyncWriteRow(const TensorRow &row) {
+  if (async_buffer_stream_ == nullptr) {
+    return Status(StatusCode::kNotImplementedYet);
+  }
+  RETURN_IF_NOT_OK(async_buffer_stream_->AsyncWrite(row));
+  return Status::OK();
+}
+
+Status CacheClient::AsyncWriteBuffer(std::unique_ptr<DataBuffer> &&in) {
+  if (async_buffer_stream_ == nullptr) {
+    return Status(StatusCode::kNotImplementedYet);
+  } else {
+    Status rc;
+    std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
+    auto num_rows = in->NumRows();
+    if (num_rows > 0) {
+      for (auto i = 0; i < num_rows; ++i) {
+        TensorRow row;
+        RETURN_IF_NOT_OK(in->PopRow(&row));
+        rc = AsyncWriteRow(row);
+        if (rc.get_code() == StatusCode::kNotImplementedYet) {
+          tensor_table->push_back(row);
+        } else if (rc.IsError()) {
+          return rc;
+        }
+      }
+    }
+    // If not all of them can be sent async, return what's left back to the caller.
+    if (!tensor_table->empty()) {
+      in->set_tensor_table(std::move(tensor_table));
+      return Status(StatusCode::kNotImplementedYet);
+    }
+  }
+  return Status::OK();
+}
+
 Status CacheClient::GetRows(const std::vector<row_id_type> &row_id, TensorTable *out) const {
   RETURN_UNEXPECTED_IF_NULL(out);
   auto rq = std::make_shared<BatchFetchRequest>(this, row_id);
@@ -141,7 +182,7 @@ Status CacheClient::GetRows(const std::vector<row_id_type> &row_id, TensorTable 
   Status rc = rq->RestoreRows(out, comm_->SharedMemoryBaseAddr(), &mem_addr);
   // Free the memory by sending a request back to the server.
   if (mem_addr != -1) {
-    auto mfree_req = std::make_shared<FreeSharedBlockRequest>(server_connection_id_, mem_addr);
+    auto mfree_req = std::make_shared<FreeSharedBlockRequest>(server_connection_id_, client_id_, mem_addr);
     Status rc2 = PushRequest(mfree_req);
     // But we won't wait for the result for the sake of performance.
     if (rc.IsOk() && rc2.IsError()) {
@@ -211,6 +252,10 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
     if (success) {
       // Attach to shared memory for local client
       RETURN_IF_NOT_OK(comm_->AttachToSharedMemory(port_, &local_bypass_));
+      if (local_bypass_) {
+        async_buffer_stream_ = std::make_shared<AsyncBufferStream>();
+        RETURN_IF_NOT_OK(async_buffer_stream_->Init(this));
+      }
     }
     // We are not resetting the Duplicate key return code. We are passing it back to the CacheOp. This will tell the
     // CacheOp to bypass the build phase.
@@ -237,6 +282,17 @@ Status CacheClient::GetStat(CacheServiceStat *stat) {
   RETURN_IF_NOT_OK(PushRequest(rq));
   RETURN_IF_NOT_OK(rq->Wait());
   rq->GetStat(stat);
+  return Status::OK();
+}
+
+Status CacheClient::GetState(int8_t *out) {
+  SharedLock lck(&mux_);
+  RETURN_UNEXPECTED_IF_NULL(out);
+  CHECK_FAIL_RETURN_UNEXPECTED(server_connection_id_ != 0, "GetState called but the cache is not in use yet.");
+  auto rq = std::make_shared<GetCacheStateRequest>(server_connection_id_);
+  RETURN_IF_NOT_OK(PushRequest(rq));
+  RETURN_IF_NOT_OK(rq->Wait());
+  *out = rq->GetState();
   return Status::OK();
 }
 
@@ -333,6 +389,182 @@ bool CacheClient::CacheMissKeys::KeyIsCacheMiss(row_id_type key) {
     auto it = gap_.find(key);
     return it != gap_.end();
   }
+}
+
+CacheClient::AsyncBufferStream::AsyncBufferStream() : cc_(nullptr), offset_addr_(-1), cur_(0), next_addr_(0) {}
+
+CacheClient::AsyncBufferStream::~AsyncBufferStream() {
+  (void)vg_.ServiceStop();
+  writer_wp_.Set();
+  (void)ReleaseBuffer();
+}
+
+Status CacheClient::AsyncBufferStream::ReleaseBuffer() {
+  if (offset_addr_ != -1) {
+    auto mfree_req =
+      std::make_shared<FreeSharedBlockRequest>(cc_->server_connection_id_, cc_->GetClientId(), offset_addr_);
+    offset_addr_ = -1;
+    RETURN_IF_NOT_OK(cc_->PushRequest(mfree_req));
+    RETURN_IF_NOT_OK(mfree_req->Wait());
+  }
+  return Status::OK();
+}
+
+Status CacheClient::AsyncBufferStream::Init(CacheClient *cc) {
+  cc_ = cc;
+  // Allocate shared memory from the server
+  auto mem_rq = std::make_shared<AllocateSharedBlockRequest>(cc_->server_connection_id_, cc_->GetClientId(),
+                                                             kAsyncBufferSize * kNumAsyncBuffer);
+  RETURN_IF_NOT_OK(cc->PushRequest(mem_rq));
+  RETURN_IF_NOT_OK(mem_rq->Wait());
+  offset_addr_ = mem_rq->GetAddr();
+  // Now we need to add that to the base address of where we attach.
+  auto base = cc->SharedMemoryBaseAddr();
+  auto start = reinterpret_cast<int64_t>(base) + offset_addr_;
+  for (auto i = 0; i < kNumAsyncBuffer; ++i) {
+    // We only need to set the pointer during init. Other fields will be set dynamically.
+    buf_arr_[i].buffer_ = reinterpret_cast<void *>(start + i * kAsyncBufferSize);
+  }
+  buf_arr_[0].begin_addr_ = 0;
+  buf_arr_[0].end_addr_ = 0;
+  buf_arr_[0].bytes_avail_ = kAsyncBufferSize;
+  buf_arr_[0].num_ele_ = 0;
+  RETURN_IF_NOT_OK(vg_.ServiceStart());
+  RETURN_IF_NOT_OK(vg_.CreateAsyncTask("Async flush", std::bind(&CacheClient::AsyncBufferStream::AsyncFlush, this)));
+  return Status::OK();
+}
+
+Status CacheClient::AsyncBufferStream::AsyncWrite(const TensorRow &row) {
+  std::vector<ReadableSlice> v;
+  v.reserve(row.size() + 1);
+  std::shared_ptr<flatbuffers::FlatBufferBuilder> fbb;
+  RETURN_IF_NOT_OK(::mindspore::dataset::SerializeTensorRowHeader(row, &fbb));
+  int64_t sz = fbb->GetSize();
+  v.emplace_back(fbb->GetBufferPointer(), sz);
+  for (const auto &ts : row) {
+    sz += ts->SizeInBytes();
+    v.emplace_back(ts->GetBuffer(), ts->SizeInBytes());
+  }
+  // If the size is too big, tell the user to send it directly.
+  if (sz > kAsyncBufferSize) {
+    return Status(StatusCode::kNotImplementedYet);
+  }
+  // Find out where we are going to write in the (logical) buffer stream without acquiring the lock
+  // but only use the atomic variable.
+  auto write_addr = next_addr_.fetch_add(sz);
+  Status rc;
+  do {
+    SharedLock lock(&mux_);
+    // Check error from the server side while we have the lock;
+    RETURN_IF_NOT_OK(flush_rc_);
+    AsyncWriter *asyncWriter = &buf_arr_[cur_];
+    rc = asyncWriter->Write(write_addr, sz, v);
+    if (rc.get_code() == StatusCode::kNoSpace) {
+      // If no space, wake up the async flush thread
+      writer_wp_.Clear();
+      flush_wp_.Set();
+      // Let go of the lock before we wait.
+      lock.Unlock();
+      // Wait for the next window
+      RETURN_IF_NOT_OK(writer_wp_.Wait());
+    }
+  } while (rc.get_code() == StatusCode::kNoSpace);
+  return rc;
+}
+
+Status CacheClient::AsyncBufferStream::SyncFlush(bool blocking) {
+  bool retry = false;
+  do {
+    UniqueLock lock(&mux_);
+    flush_wp_.Clear();
+    auto *asyncWriter = &buf_arr_[cur_];
+    retry = false;
+    // Because the clients are copying async, we need to wait until all of them have written.
+    if (kAsyncBufferSize - (asyncWriter->end_addr_ - asyncWriter->begin_addr_) == asyncWriter->bytes_avail_) {
+      if (asyncWriter->num_ele_) {
+        asyncWriter->rq.reset(
+          new BatchCacheRowsRequest(cc_, offset_addr_ + cur_ * kAsyncBufferSize, asyncWriter->num_ele_));
+        flush_rc_ = cc_->PushRequest(asyncWriter->rq);
+        if (flush_rc_.IsOk()) {
+          // If we are asked to wait, say this is the final flush, just wait for its completion.
+          if (blocking) {
+            flush_rc_ = asyncWriter->rq->Wait();
+            asyncWriter->rq.reset();
+          }
+          // Prepare for the next buffer which will start from the end addr of the previous buffer.
+          int64_t previous_end_addr = asyncWriter->end_addr_;
+          cur_ = (cur_ + 1) % kNumAsyncBuffer;
+          asyncWriter = &buf_arr_[cur_];
+          // Update the cur_ while we have the lock.
+          // Before we do anything, make sure the cache server has done with this buffer, or we will corrupt its content
+          // Also we can also pick up any error from previous flush.
+          if (asyncWriter->rq) {
+            // Save the result into a common area, so worker can see it and quit.
+            flush_rc_ = asyncWriter->rq->Wait();
+            asyncWriter->rq.reset();
+          }
+          asyncWriter->bytes_avail_ = kAsyncBufferSize;
+          asyncWriter->num_ele_ = 0;
+          asyncWriter->begin_addr_ = previous_end_addr;
+          asyncWriter->end_addr_ = previous_end_addr;
+        }
+      }
+    } else {
+      // Some clients are late and aren't done yet. Let go of the lock.
+      lock.Unlock();
+      retry = true;
+      writer_wp_.Set();
+      std::this_thread::yield();
+    }
+  } while (retry);
+  // Wake up any writer that is waiting.
+  writer_wp_.Set();
+  return flush_rc_;
+}
+
+Status CacheClient::AsyncBufferStream::AsyncWriter::Write(int64_t write_addr, int64_t sz,
+                                                          const std::vector<ReadableSlice> &v) {
+  // Map our logical address to the real physical address in the buffer like where we start and
+  // where we end.
+  auto rel_write_addr = write_addr - begin_addr_;
+  auto rel_end_addr = rel_write_addr + sz;
+  // If not enough space, time to flush and swap.
+  if (rel_end_addr > kAsyncBufferSize) {
+    return Status(StatusCode::kNoSpace);
+  }
+  for (auto &p : v) {
+    auto write_sz = p.GetSize();
+    WritableSlice dest(reinterpret_cast<char *>(buffer_) + rel_write_addr, write_sz);
+    RETURN_IF_NOT_OK(WritableSlice::Copy(&dest, p));
+    bytes_avail_ -= write_sz;
+    rel_write_addr += write_sz;
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(rel_write_addr == rel_end_addr, "Programming error");
+  ++num_ele_;
+  // Update the end_addr if ours is better
+  int64_t new_end_addr = write_addr + sz;
+  int64_t expected = end_addr_;
+  while (expected < new_end_addr) {
+    if (!end_addr_.compare_exchange_weak(expected, new_end_addr)) {
+      expected = end_addr_;
+    }
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(end_addr_ >= new_end_addr, "Programming error");
+  return Status::OK();
+}
+
+Status CacheClient::AsyncBufferStream::AsyncFlush() {
+  TaskManager::FindMe()->Post();
+  Status rc;
+  do {
+    RETURN_IF_NOT_OK(flush_wp_.Wait());
+    RETURN_IF_INTERRUPTED();
+    rc = SyncFlush();
+    // Other than resource error, all other error we quit.
+  } while (rc.IsOk() || rc.IsOutofMemory() || rc.IsNoSpace());
+  // Make sure we wake up workers waiting for us.
+  writer_wp_.Set();
+  return rc;
 }
 }  // namespace dataset
 }  // namespace mindspore

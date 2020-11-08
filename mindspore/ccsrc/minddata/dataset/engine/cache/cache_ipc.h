@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace dataset {
 /// A message queue structure between the parent and the child process
-struct StatusMsgBuf {
+struct CacheMsgBuf {
   int64_t mtype;
   union {
     char mtext[1];

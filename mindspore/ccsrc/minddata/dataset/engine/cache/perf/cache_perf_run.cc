@@ -427,6 +427,7 @@ Status CachePerfRun::Run() {
   }
 
   // Now we create the children knowing all two sets of message queues are constructed.
+  auto start_tick = std::chrono::steady_clock::now();
   for (auto i = 0; i < num_pipelines_; ++i) {
     auto pid = fork();
     if (pid == 0) {
@@ -502,6 +503,10 @@ Status CachePerfRun::Run() {
 
   // Wait until all pipelines finish the first epoch.
   RETURN_IF_NOT_OK(pipeline_wp_.Wait());
+  auto end_tick = std::chrono::steady_clock::now();
+
+  int64_t elapse_time = std::chrono::duration_cast<std::chrono::seconds>(end_tick - start_tick).count();
+  std::cout << "Epoch one (build phase) elapsed time " << elapse_time << " seconds" << std::endl;
 
   std::cout << "Epoch one (build phase) per pipeline per worker summary. Buffer size = " << cfg_.rows_per_buffer()
             << std::endl;
@@ -543,6 +548,7 @@ Status CachePerfRun::Run() {
     epoch_sync_cnt_ = 0;
     pipeline_wp_.Clear();
     epoch_results_.clear();
+    start_tick = std::chrono::steady_clock::now();
     // Signal each pipeline to start
     for (auto msg_qid : msg_send_lists_) {
       CachePerfMsg msg;
@@ -551,6 +557,9 @@ Status CachePerfRun::Run() {
     }
     // Wait for the child to finish
     RETURN_IF_NOT_OK(pipeline_wp_.Wait());
+    end_tick = std::chrono::steady_clock::now();
+    elapse_time = std::chrono::duration_cast<std::chrono::seconds>(end_tick - start_tick).count();
+    std::cout << "Epoch " << epoch_num << " elapsed time " << elapse_time << " seconds" << std::endl;
     std::cout << "Epoch " << epoch_num
               << " (read phase) per pipeline per worker summary. Buffer size = " << cc_->GetPrefetchSize() << std::endl;
     PrintEpochSummary();

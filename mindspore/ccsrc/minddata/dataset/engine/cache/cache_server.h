@@ -25,12 +25,14 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
 #include <map>
 #include <set>
 #include <thread>
+#include "minddata/dataset/engine/cache/cache_arena.h"
 #include "minddata/dataset/engine/cache/cache_hw.h"
 #include "minddata/dataset/engine/cache/cache_numa.h"
 #include "minddata/dataset/engine/cache/cache_service.h"
@@ -196,14 +198,30 @@ class CacheServer : public Service {
   /// \brief Check if we bind threads to numa cores
   bool IsNumaAffinityOn() const { return numa_affinity_; }
 
-  /// \brief Internal function to do row batch fetch
-  /// \param rq Request
-  /// \param reply Reply
-  /// \return Status object
-  Status BatchFetchRows(CacheRequest *rq, CacheReply *reply);
-
   /// \brief Return the memory cap ratio
   float GetMemoryCapRatio() const { return memory_cap_ratio_; }
+
+  /// \brief How a request is handled.
+  /// \note that it can be process immediately by a grpc thread or routed to a server thread
+  /// which is pinned to some numa node core.
+  void ProcessRequest(CacheServerRequest *cache_req);
+
+  void GlobalShutdown();
+
+  /// \brief This returns where we attach to the shared memory.
+  /// Some gRPC requests will ask for a shared memory block, and
+  /// we can't return the absolute address as this makes no sense
+  /// in the client. So instead we will return an address relative
+  /// to the base address of the shared memory where we attach to.
+  /// \return Base address of the shared memory.
+  const void *SharedMemoryBaseAddr() const { return shm_->SharedMemoryBaseAddr(); }
+
+  /// \brief Return the public key of the shared memory.
+  int32_t GetKey() const { return shm_->GetKey(); }
+
+  Status AllocateSharedMemory(int32_t client_id, size_t sz, void **p);
+
+  void DeallocateSharedMemory(int32_t client_id, void *p);
 
  private:
   static std::once_flag init_instance_flag_;
@@ -228,6 +246,7 @@ class CacheServer : public Service {
   std::map<worker_id_t, Task *> numa_tasks_;
   bool numa_affinity_;
   std::vector<int32_t> shutdown_qIDs_;
+  std::unique_ptr<CachedSharedMemory> shm_;
 
   /// \brief Constructor
   /// \param spill_path Top directory for spilling buffers to.
@@ -315,7 +334,7 @@ class CacheServer : public Service {
 
   /// \brief A proper shutdown of the server
   /// \return Status object
-  Status GlobalShutdown(CacheServerRequest *);
+  Status AcknowledgeShutdown(CacheServerRequest *cache_req);
 
   /// \brief Find keys that will be cache miss
   /// \return Status object
@@ -332,12 +351,19 @@ class CacheServer : public Service {
   /// \brief Connect request by a pipeline
   Status ConnectReset(CacheRequest *rq);
 
+  /// \brief Internal function to do row batch fetch
+  /// \param rq Request
+  /// \param reply Reply
+  /// \return Status object
+  Status BatchFetchRows(CacheRequest *rq, CacheReply *reply);
+
   /// \brief Main function to fetch rows in batch. The output is a contiguous memory which will be decoded
   /// by the CacheClient. Cache miss is not an error, and will be coded in the output to mark an empty row.
   /// \param[in] v A vector of row id.
   /// \param[out] out A contiguous memory buffer that holds the requested rows.
   /// \return Status object
   Status BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuilder> &fbb, WritableSlice *out);
+  Status BatchCacheRows(CacheRequest *rq);
 };
 }  // namespace dataset
 }  // namespace mindspore
