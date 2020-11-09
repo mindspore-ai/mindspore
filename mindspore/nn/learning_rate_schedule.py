@@ -377,7 +377,7 @@ class WarmUpLR(LearningRateSchedule):
     Examples:
         >>> learning_rate = 0.1
         >>> warmup_steps = 2
-        >>> global_step = Tenosr(2, mstype.int32)
+        >>> global_step = Tensor(2, mstype.int32)
         >>> warmup_lr = WarmUpLR(learning_rate, warmup_steps)
         >>> warmup_lr(global_step)
     """
