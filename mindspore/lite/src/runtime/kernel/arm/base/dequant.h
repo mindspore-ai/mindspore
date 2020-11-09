@@ -122,9 +122,9 @@ class DequantUtil {
       uint_result = 0;
       (*count)++;
     }
-    if (is_last) {
-      int remainder = unpack_bit_data->size();
-      for (int i = 0; i < remainder; i++) {
+    size_t remainder = unpack_bit_data->size();
+    if (is_last && remainder > 0) {
+      for (size_t i = 0; i < remainder; i++) {
         bool bit = unpack_bit_data->front();
         uint_result = (static_cast<int>(bit) << i) + uint_result;
         unpack_bit_data->pop();
