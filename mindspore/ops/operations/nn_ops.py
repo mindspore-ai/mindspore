@@ -1741,8 +1741,8 @@ class TopK(PrimitiveWithInfer):
         >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16)
         >>> k = 3
         >>> values, indices = topk(input_x, k)
-        >>> assert values == Tensor(np.array([5, 4, 3]), mstype.float16)
-        >>> assert indices == Tensor(np.array([4, 3, 2]), mstype.int32)
+        >>> assert values == Tensor(np.array([5, 4, 3]), mstype.float16).all()
+        >>> assert indices == Tensor(np.array([4, 3, 2]), mstype.int32).all()
     """
 
     @prim_attr_register
