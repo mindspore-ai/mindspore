@@ -32,6 +32,7 @@ class GraphKernelBackendCSE : public BackendCSE {
   GraphKernelBackendCSE() = default;
   ~GraphKernelBackendCSE() override = default;
   bool CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) const override;
+  bool CheckEqualCnodeInputs(const AnfNodePtr &main, const AnfNodePtr &node) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
