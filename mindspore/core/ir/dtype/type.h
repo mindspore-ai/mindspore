@@ -127,6 +127,11 @@ const std::unordered_map<TypeId, std::string> type_name_map = {
   {kNumberTypeInt16, "int16"},     {kNumberTypeInt32, "int32"},     {kNumberTypeInt64, "int64"},
   {kNumberTypeFloat16, "float16"}, {kNumberTypeFloat32, "float32"}, {kNumberTypeFloat64, "float64"}};
 
+const std::unordered_map<TypeId, int> type_priority_map = {
+  {kNumberTypeBool, 0},    {kNumberTypeUInt8, 1},   {kNumberTypeInt8, 2},
+  {kNumberTypeInt16, 3},   {kNumberTypeInt32, 4},   {kNumberTypeInt64, 5},
+  {kNumberTypeFloat16, 6}, {kNumberTypeFloat32, 7}, {kNumberTypeFloat64, 8}};
+
 std::ostream &operator<<(std::ostream &os, const TypePtrList &types);
 }  // namespace mindspore
 
