@@ -54,7 +54,10 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
       }
       auto tensor = node_value->cast<TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
-      TypeId output_type_id = AnfAlgo::GetOutputInferDataType(item_node, 0);
+      TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item_node, 0);
+      if (output_type_id == kTypeUnknown) {
+        output_type_id = AnfAlgo::GetOutputInferDataType(item_node, 0);
+      }
       size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
       ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
