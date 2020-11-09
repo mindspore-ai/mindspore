@@ -20,17 +20,16 @@ import mindspore
 from mindspore import Tensor
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 
 
 class NetTensorDot(nn.Cell):
     def __init__(self, axes):
         super(NetTensorDot, self).__init__()
-        self.td = P.TensorDot(axes)
+        self.axes = axes
 
     def construct(self, x, y):
-        return self.td(x, y)
+        return C.TensorDot(x, y, self.axes)
 
 
 class GradNetwork(nn.Cell):
@@ -183,6 +182,7 @@ def test_tensor_dot_outer():
     x2_tensor = Tensor(x2, dtype=mindspore.float32)
 
     network = NetTensorDot(axes)
+
     ms_result_np = network(x1_tensor, x2_tensor).asnumpy()
     np_result = np.tensordot(x1, x2, axes)
     np.testing.assert_array_almost_equal(ms_result_np, np_result)
