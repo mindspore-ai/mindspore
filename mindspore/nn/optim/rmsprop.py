@@ -15,7 +15,6 @@
 """rmsprop"""
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore._checkparam import Validator as validator
-from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 
 _rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
