@@ -3304,6 +3304,7 @@ class Tan(PrimitiveWithInfer):
         >>> tan = P.Tan()
         >>> input_x = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
         >>> output = tan(input_x)
+        [-1.5574081 0. 1.5574081]
     """
 
     @prim_attr_register

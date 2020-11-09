@@ -247,12 +247,13 @@ class ReduceScatter(PrimitiveWithInfer):
         >>> from mindspore.ops.operations.comm_ops import ReduceOp
         >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as P
+        >>> import numpy as np
         >>>
         >>> init()
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.reducescatter = P.ReduceScatter(ReduceOp.SUM, group="nccl_world_group")
+        >>>         self.reducescatter = P.ReduceScatter(ReduceOp.SUM)
         >>>
         >>>     def construct(self, x):
         >>>         return self.reducescatter(x)

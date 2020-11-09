@@ -1082,6 +1082,7 @@ class TupleToArray(PrimitiveWithInfer):
 
     Examples:
         >>> type = P.TupleToArray()((1,2,3))
+        [1 2 3]
     """
 
     @prim_attr_register
@@ -1411,7 +1412,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
     Outputs:
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
         tensor.
-        - index (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
+        - index (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
         output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
         - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
@@ -3980,8 +3981,8 @@ class Sort(PrimitiveWithInfer):
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
         >>> sort = P.Sort()
         >>> sort(x)
-        >>> ([[1.0, 2.0, 8.0], [3.0, 5.0, 9.0], [4.0, 6.0 ,7.0]],
-             [[2, 1, 0], [2, 0, 1], [0, 1, 2]])
+        ([[1.0, 2.0, 8.0], [3.0, 5.0, 9.0], [4.0, 6.0 ,7.0]],
+         [[2, 1, 0], [2, 0, 1], [0, 1, 2]])
     """
 
     @prim_attr_register

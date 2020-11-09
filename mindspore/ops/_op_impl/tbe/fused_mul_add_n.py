@@ -35,6 +35,10 @@ fused_mul_add_n_op_info = TBERegOp("FusedMulAddN") \
     .dtype_format(DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_Default, DataType.F32_C1HWNCoC0) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_Default, DataType.F32_FracZ) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_5HD, DataType.I32_Default, DataType.I32_5HD) \
+    .dtype_format(DataType.I32_C1HWNCoC0, DataType.I32_C1HWNCoC0, DataType.I32_Default, DataType.I32_C1HWNCoC0) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_FracZ, DataType.I32_FracZ, DataType.I32_Default, DataType.I32_FracZ) \
     .get_op_info()
 
 
