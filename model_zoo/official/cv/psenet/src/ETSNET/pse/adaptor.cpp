@@ -28,6 +28,7 @@
 
 using std::vector;
 using std::queue;
+using std::swap;
 using cv::Mat;
 using cv::Point;
 

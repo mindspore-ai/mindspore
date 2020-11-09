@@ -105,7 +105,10 @@ sh scripts/run_eval_ascend.sh
                 ├── Makefile
 		├── config.py                       // parameter configuration 
 		├── dataset.py                      // creating dataset
+		├── lr_schedule.py                  // learning ratio generation
 		└── network_define.py               // PSENet architecture
+	├── export.py                           // export mindir file 
+	├── mindspore_hub_conf.py               // hub config file 
 	├── test.py                             // test script 
 	└── train.py                            // training script
 
@@ -132,6 +135,7 @@ Major parameters in train.py and config.py are:
 sh scripts/run_distribute_train.sh rank_table_file pretrained_model.ckpt
 ```
 
+rank_table_file which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 The above shell script will run distribute training in the background. You can view the results through the file 
 `device[X]/test_*.log`. The loss value will be achieved as follows:
 
