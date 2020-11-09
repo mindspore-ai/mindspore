@@ -65,7 +65,7 @@ int MatmulCPUKernel::MallocMatrixABuffer() {
   params_->row_4_ = UP_ROUND(params_->row_, C4NUM);
   params_->row_12_ = UP_ROUND(params_->row_, C12NUM);
 
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   a_pack_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * params_->row_4_ * params_->deep_ * sizeof(float)));
   if (a_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
@@ -176,7 +176,7 @@ void MatmulCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
 
   for (int i = 0; i < params_->batch; i++) {
     float *src = src_ptr + i * params_->deep_ * params_->row_;
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
     float *dst = dst_ptr + i * params_->deep_ * params_->row_4_;
     if (params_->a_transpose_) {
       RowMajor2Row4Major(src, dst, params_->deep_, params_->row_);

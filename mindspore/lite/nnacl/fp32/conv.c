@@ -34,7 +34,7 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
   int out_channel = conv_param->output_channel_;
   int thread_count = conv_param->thread_num_;
   int output_count = out_h * out_w;
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   const int cal_num = C4NUM;
 #else
   const int cal_num = C12NUM;
@@ -58,7 +58,7 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
 
       int out_offset = thread_id * cal_num * out_channel + out_batch_offset;
       float *gemm_output = output_data + out_offset;
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
       RowMajor2Col4Major(gemm_input, col_major_gemm_input, cal_num, deep);
 #else
       RowMajor2Col12Major(gemm_input, col_major_gemm_input, cal_num, deep);
@@ -112,7 +112,7 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
       float *dst_ptr = gemm_out + task_id * gemm_out_offset;
       float *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
       for (int i = 0; i < input_unit_square; ++i) {
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
         RowMajor2Col4Major(src_ptr + i * C12NUM * in_channel, tmp_col_ptr, C12NUM, in_channel);
 #else
         RowMajor2Col12Major(src_ptr + i * C12NUM * in_channel, tmp_col_ptr, C12NUM, in_channel);

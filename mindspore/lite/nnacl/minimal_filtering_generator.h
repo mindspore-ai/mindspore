@@ -52,8 +52,8 @@ void MatrixMultiplyWinograd(const float *matix_a, const float *matrix_b, float *
 int WinogradWeightTransform(const float *weight_data, float *winograd_data, float *matrix_g, const float *matrix_gt,
                             int oc_block, int input_unit_, int kernel_unit_, int channel, int batch, bool pack);
 
-#ifdef ENABLE_ARM
-void MatrixMultiplyVec(const float32x4_t *matrix_a, const float32x4_t *matrix_b, float32x4_t *matrix_c,
+#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
+void MatrixMultiplyVec(const MS_FLOAT32X4 *matrix_a, const MS_FLOAT32X4 *matrix_b, MS_FLOAT32X4 *matrix_c,
                        const float *bias, int m, int k, int n);
 #endif
 #ifdef __cplusplus

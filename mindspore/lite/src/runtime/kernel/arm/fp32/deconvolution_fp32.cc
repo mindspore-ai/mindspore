@@ -115,7 +115,7 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
     return RET_OK;
   }
 
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   auto tmp_buffer = tmp_buffer_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->row_4_;
   MatMulOpt(pack_input_, weight_ptr_ + task_id * thread_stride_ * C8NUM * kernel_plane_ * matmul_param_->deep_,
             tmp_buffer, nullptr, ActType_No, matmul_param_->deep_, matmul_param_->row_4_, oc * C8NUM * kernel_plane_,
@@ -169,7 +169,7 @@ int DeConvolutionCPUKernel::InitRunBuf() {
     return RET_NULL_PTR;
   }
 
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   tmp_buffer_ =
     reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_4_ * matmul_param_->col_8_ * sizeof(float)));
 #else
@@ -181,7 +181,7 @@ int DeConvolutionCPUKernel::InitRunBuf() {
     return RET_NULL_PTR;
   }
 
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   pack_input_ =
     reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_4_ * matmul_param_->deep_ * sizeof(float)));
 #else
@@ -209,7 +209,7 @@ int DeConvolutionCPUKernel::Run() {
     input_ptr_ = src_in + batch_index * input_plane_ * conv_param_->input_channel_;
     output_ptr_ = src_out + batch_index * output_plane_ * conv_param_->output_channel_;
 
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
     RowMajor2Col4Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
 #else
     RowMajor2Col12Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);

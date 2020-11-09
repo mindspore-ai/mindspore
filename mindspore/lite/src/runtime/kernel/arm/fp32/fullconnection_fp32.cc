@@ -71,7 +71,7 @@ int FullconnectionCPUKernel::ReSize() {
     memcpy(bias_ptr_, in_tensors_[2]->MutableData(), fc_param_->col_ * sizeof(float));
   }
 
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   a_pack_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_4_ * fc_param_->deep_ * sizeof(float)));
   if (a_pack_ptr_ == nullptr) {
     return RET_MEMORY_FAILED;
@@ -120,7 +120,7 @@ void FullconnectionCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
     return;
   }
 
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   RowMajor2Col4Major(src_ptr, a_pack_ptr_, fc_param_->row_, fc_param_->deep_);
 #else
   RowMajor2Col12Major(src_ptr, a_pack_ptr_, fc_param_->row_, fc_param_->deep_);
