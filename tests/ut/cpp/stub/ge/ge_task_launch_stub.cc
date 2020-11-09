@@ -15,7 +15,7 @@
  */
 #include <vector>
 #include "framework/ge_runtime/model_runner.h"
-#include "runtime/device/ascend/tasksink/runtime_utils.h"
+#include "runtime/hccl_adapter/hccl_adapter.h"
 
 namespace ge {
 namespace model_runner {
@@ -60,15 +60,12 @@ const std::map<std::string, std::shared_ptr<RuntimeInfo>> &ModelRunner::GetRunti
 }  // namespace ge
 
 namespace mindspore {
-namespace device {
-namespace ascend {
-namespace tasksink {
-bool RuntimeUtils::HcomBindModel(rtModel_t model, rtStream_t stream) { return true; }
-
-bool RuntimeUtils::HcomUnbindModel(rtModel_t model) { return true; }
-
-bool RuntimeUtils::HcomDistribute(const std::shared_ptr<HcclTaskInfo> &task_info, rtStream_t stream) { return true; }
-}  // namespace tasksink
-}  // namespace ascend
-}  // namespace device
+namespace hccl {
+bool InitHccl(uint32_t, std::string_view, std::string_view) { return true; }
+bool FinalizeHccl() { return true; }
+bool GenTask(const AnfNodePtr &, HcclDataType, std::vector<HcclTaskInfo> *) { return true; }
+bool CalcOpRunningParam(const AnfNodePtr &) { return true; }
+void *GetHcclOpsKernelInfoStore() { return nullptr; }
+std::string GetHcclType(const AnfNodePtr &) { return ""; }
+}  // namespace hccl
 }  // namespace mindspore

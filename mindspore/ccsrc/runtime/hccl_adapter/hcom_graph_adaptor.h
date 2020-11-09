@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/hccl/hcom_all_broadcast.h"
-#include <memory>
-#include "utils/ms_context.h"
+#ifndef MINDSPORE_RUNTIME_HCCL_ADAPTER_HCOM_GRAPH_ADAPTOR_H
+#define MINDSPORE_RUNTIME_HCCL_ADAPTER_HCOM_GRAPH_ADAPTOR_H
 
-namespace mindspore {
-namespace kernel {
-bool HcomAllBroadCastKernel::Launch(const std::vector<AddressPtr> & /*inputs*/,
-                                    const std::vector<AddressPtr> & /*workspace*/,
-                                    const std::vector<AddressPtr> & /*outputs*/, void * /*stream_ptr*/) {
-  MS_LOG(INFO) << "HcomAllBroadCast launch";
-  return true;
+#include <string>
+#include <map>
+#include <memory>
+#include "mindspore/core/ir/anf.h"
+#include "common/opskernel/ops_kernel_info_store.h"
+
+extern "C" {
+ge::Status Initialize(const std::map<std::string, std::string> &);
+ge::Status Finalize();
+void GetOpsKernelInfoStores(std::map<std::string, std::shared_ptr<ge::OpsKernelInfoStore>> &);
 }
-}  // namespace kernel
-}  // namespace mindspore
+
+#endif  // MINDSPORE_RUNTIME_HCCL_ADAPTER_HCOM_GRAPH_ADAPTOR_H

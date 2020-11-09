@@ -20,25 +20,10 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllReduceScatterKernel::Launch(const std::vector<AddressPtr> &inputs,
+bool HcomAllReduceScatterKernel::Launch(const std::vector<AddressPtr> & /*inputs*/,
                                         const std::vector<AddressPtr> & /*workspace*/,
-                                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
-    return true;
-  }
-  if (inputs.empty() || outputs.empty() || hccl_data_type_list_.empty()) {
-    MS_LOG(ERROR) << "ReduceScatter param is empty";
-    return false;
-  }
-  const char *tag = "Hccl-ReduceScatter";
-  HcclResult ret = hcom_reduce_scatter(tag, inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0],
-                                       op_type_, nullptr, stream_ptr);
-  if (ret != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcomReduceScatterOp : hcom_reduce_scatter fail, return: " << static_cast<int>(ret);
-    return false;
-  }
+                                        const std::vector<AddressPtr> & /*outputs*/, void * /*stream_ptr*/) {
+  MS_LOG(INFO) << "HcomAllReduceScatter launch";
   return true;
 }
 }  // namespace kernel

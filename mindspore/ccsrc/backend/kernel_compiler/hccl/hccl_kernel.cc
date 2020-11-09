@@ -17,16 +17,15 @@
 #include "backend/kernel_compiler/hccl/hccl_kernel.h"
 
 #include <map>
-#include "runtime/device/ascend/tasksink/runtime_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
+#include "runtime/hccl_adapter/hccl_adapter.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<ge::model_runner::HcclTaskInfo>;
 using ge::model_runner::HcclTaskInfo;
-using mindspore::device::ascend::tasksink::RuntimeUtils;
 
 namespace {
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
@@ -145,35 +144,45 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
 
 const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs,
-                                             const std::vector<AddressPtr> &workspace,
+std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                              const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Inputs or outputs is empty";
   }
   stream_id_ = stream_id;
-  std::string hccl_type = AnfAlgo::GetCNodeName(anf_node_);
   MS_EXCEPTION_IF_NULL(inputs.at(0));
   auto input_data_addr = inputs.at(0)->addr;
   MS_EXCEPTION_IF_NULL(outputs.at(0));
   auto output_data_addr = outputs.at(0)->addr;
-  void *workspace_address = nullptr;
-  const int64_t workspace_num = 0;
   std::vector<uint8_t> private_def;
   HcclDataType data_type = hccl_data_type_list_[0];
 
-  MS_LOG(INFO) << "HCCL Task : stream_id=" << stream_id << ", ws_num=" << workspace_num << ", count=" << hccl_count_
-               << ", root_id=" << root_id_ << ", op_type=" << static_cast<int>(op_type_)
-               << ", data_type=" << static_cast<int>(data_type);
+  std::vector<hccl::HcclTaskInfo> task_info;
+  bool ret = hccl::GenTask(anf_node_, data_type, &task_info);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Gen Task for " << anf_node_->DebugString() << " failed.";
+  }
 
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  HcclTaskInfoPtr task_info_ptr = std::make_shared<HcclTaskInfo>(
-    kernel_name_, stream_id, hccl_type, input_data_addr, output_data_addr, workspace_address, workspace_num, 0,
-    private_def, nullptr, hccl_count_, root_id_, op_type_, data_type, group_, RuntimeUtils::HcomBindModel,
-    RuntimeUtils::HcomUnbindModel, RuntimeUtils::HcomDistribute, NeedDump());
-  MS_EXCEPTION_IF_NULL(task_info_ptr);
-  return {task_info_ptr};
+  std::vector<TaskInfoPtr> results;
+  for (auto &task : task_info) {
+    MS_LOG(INFO) << "HCCL Task : stream_id=" << stream_id << ", count=" << hccl_count_ << ", root_id=" << root_id_
+                 << ", op_type=" << static_cast<int>(op_type_) << ", data_type=" << static_cast<int>(data_type)
+                 << ", workspace_size=" << task.workspace_size << ", stream_num=" << task.stream_num
+                 << ", private_def_size=" << task.private_def.size();
+
+    private_def.resize(task.private_def.size());
+    auto sec_ret = memcpy_s(private_def.data(), private_def.size(), task.private_def.data(), task.private_def.size());
+    if (sec_ret != 0) {
+      MS_LOG(EXCEPTION) << "Set data memcpy_s failed, ret = " << sec_ret;
+    }
+
+    results.emplace_back(std::make_shared<HcclTaskInfo>(
+      kernel_name_, stream_id, hccl::GetHcclType(anf_node_), input_data_addr, output_data_addr, task.workspace_size,
+      task.stream_num, private_def, hccl::GetHcclOpsKernelInfoStore(), hccl_count_, root_id_, op_type_, data_type,
+      group_, NeedDump()));
+  }
+
+  return results;
 }
 
 device::DynamicKernelPtr HcclKernel::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {

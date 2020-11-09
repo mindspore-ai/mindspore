@@ -55,6 +55,7 @@
 #include "profiler/device/ascend/rt_callback_manager.h"
 #include "utils/config_manager.h"
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
+#include "runtime/hccl_adapter/hccl_adapter.h"
 
 using ge::model_runner::ModelRunner;
 using mindspore::device::ascend::ProfilingManager;
@@ -796,10 +797,10 @@ bool AscendKernelRuntime::HcclInit() {
     return false;
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
-  HcclResult res = hcom_init(full_path, rank_id_str.c_str());
+  bool ret = hccl::InitHccl(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id_str, full_path);
   free(full_path);
-  if (res != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "Hcom init failed, res is " << static_cast<int>(res);
+  if (!ret) {
+    MS_LOG(ERROR) << "Hcom init failed.";
     return false;
   }
   return true;
@@ -816,12 +817,14 @@ bool AscendKernelRuntime::DestroyHccl() {
   if (!HcclExecutorManager::GetInstance().Finalize()) {
     MS_LOG(ERROR) << "Dynamic Shape Hccl Finalize Failed";
   }
-  HcclResult res = hcom_destroy();
-  if (res != HCCL_SUCCESS) {
+
+  bool res = hccl::FinalizeHccl();
+  if (!res) {
     MS_LOG(ERROR) << "Hccl destroy failed";
     return false;
   }
-  MS_LOG(INFO) << "Hccl destroy successful, status = " << res << ".";
+
+  MS_LOG(INFO) << "Hccl destroy successful.";
   context_ptr->set_param<bool>(MS_CTX_ENABLE_HCCL, false);
   return true;
 }
@@ -855,7 +858,7 @@ void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) 
   auto try_emplace_ret = stream_id_task_id_op_name_map_.try_emplace(stream_task_pair, kernel_name);
   if (!try_emplace_ret.second) {
     MS_LOG(WARNING) << "Profiling duplicate key, task_id:" << stream_task_pair.second
-                      << " stream_id:" << stream_task_pair.first << " name:" << kernel_name;
+                    << " stream_id:" << stream_task_pair.first << " name:" << kernel_name;
   }
   if (stream_id_task_id_op_name_map_.size() > kProfilingMaxTaskIdInStream) {
     MS_LOG(EXCEPTION) << "Too many profiling data";
