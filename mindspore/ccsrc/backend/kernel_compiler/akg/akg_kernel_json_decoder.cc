@@ -75,7 +75,7 @@ class CNodeDecoder {
       std::string value = attr_json[kJsonKeyValue];
       return MakeValue(value);
     } else if (type == "int") {
-      int value = attr_json[kJsonKeyValue];
+      int64_t value = attr_json[kJsonKeyValue];
       return MakeValue(value);
     } else if (type == "bool") {
       bool value = attr_json[kJsonKeyValue];
@@ -84,7 +84,7 @@ class CNodeDecoder {
       float value = attr_json[kJsonKeyValue];
       return MakeValue(value);
     } else if (type == "listInt") {
-      std::vector<int> value = attr_json[kJsonKeyValue];
+      std::vector<int64_t> value = attr_json[kJsonKeyValue];
       return MakeValue(value);
     } else if (type == "listStr") {
       std::vector<std::string> value = attr_json[kJsonKeyValue];
