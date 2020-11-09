@@ -17,6 +17,7 @@
 #include "tools/converter/converter_flags.h"
 #include <regex>
 #include <string>
+#include <algorithm>
 #include "ir/dtype/type_id.h"
 
 namespace mindspore {
@@ -77,6 +78,10 @@ int Flags::Init(int argc, const char **argv) {
     std::cerr << "INPUT ILLEGAL: outputFile must be a valid file path";
     return RET_INPUT_PARAM_INVALID;
   }
+
+#ifdef _WIN32
+  replace(this->outputFile.begin(), this->outputFile.end(), '/', '\\');
+#endif
 
   if (this->fmkIn.empty()) {
     std::cerr << "INPUT MISSING: fmk is necessary";
