@@ -168,8 +168,8 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
     ```
     使用以下命令获取并运行最新的稳定镜像：
     ```
-    docker pull mindspore/mindspore-gpu:1.0.1
-    docker run -it --runtime=nvidia --privileged=true mindspore/mindspore-gpu:1.0.1 /bin/bash
+    docker pull mindspore/mindspore-gpu:1.0.0
+    docker run -it -v /dev/shm:/dev/shm --runtime=nvidia --privileged=true mindspore/mindspore-gpu:1.0.0 /bin/bash
     ```
 
     要测试Docker是否正常工作，请运行下面的Python代码并检查输出：
