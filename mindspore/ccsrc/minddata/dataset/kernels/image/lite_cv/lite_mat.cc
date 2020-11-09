@@ -73,6 +73,20 @@ LiteMat::LiteMat(int width, int height, int channel, LDataType data_type) {
   Init(width, height, channel, data_type);
 }
 
+LiteMat::LiteMat(int width, int height, int channel, void *p_data, LDataType data_type) {
+  data_type_ = data_type;
+  InitElemSize(data_type);
+  width_ = width;
+  height_ = height;
+  dims_ = 3;
+  channel_ = channel;
+  c_step_ = height_ * width_;
+  size_ = c_step_ * channel_ * elem_size_;
+  data_ptr_ = p_data;
+  ref_count_ = new int[1];
+  *ref_count_ = 0;
+}
+
 LiteMat::~LiteMat() { Release(); }
 
 int LiteMat::addRef(int *p, int value) {

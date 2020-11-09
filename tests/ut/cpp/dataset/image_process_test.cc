@@ -107,6 +107,53 @@ TEST_F(MindDataImageProcess, testRGB) {
   cv::Mat dst_image(lite_mat_rgb.height_, lite_mat_rgb.width_, CV_8UC3, lite_mat_rgb.data_ptr_);
 }
 
+TEST_F(MindDataImageProcess, testLoadByMemPtr) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  cv::Mat rgba_mat;
+  cv::cvtColor(image, rgba_mat, CV_BGR2RGB);
+
+  bool ret = false;
+  int width = rgba_mat.cols;
+  int height = rgba_mat.rows;
+  uchar *p_rgb = (uchar *)malloc(width * height * 3 * sizeof(uchar));
+  for (int i = 0; i < height; i++) {
+    const uchar *current = rgba_mat.ptr<uchar>(i);
+    for (int j = 0; j < width; j++) {
+      p_rgb[i * width * 3 + 3 * j + 0] = current[3 * j + 0];
+      p_rgb[i * width * 3 + 3 * j + 1] = current[3 * j + 1];
+      p_rgb[i * width * 3 + 3 * j + 2] = current[3 * j + 2];
+    }
+  }
+
+  LiteMat lite_mat_rgb(width, height, 3, (void *)p_rgb, LDataType::UINT8);
+  LiteMat lite_mat_resize;
+  ret = ResizeBilinear(lite_mat_rgb, lite_mat_resize, 256, 256);
+  ASSERT_TRUE(ret == true);
+  LiteMat lite_mat_convert_float;
+  ret = ConvertTo(lite_mat_resize, lite_mat_convert_float, 1.0);
+  ASSERT_TRUE(ret == true);
+
+  LiteMat lite_mat_crop;
+  ret = Crop(lite_mat_convert_float, lite_mat_crop, 16, 16, 224, 224);
+  ASSERT_TRUE(ret == true);
+  std::vector<float> means = {0.485, 0.456, 0.406};
+  std::vector<float> stds = {0.229, 0.224, 0.225};
+  LiteMat lite_norm_mat_cut;
+  ret = SubStractMeanNormalize(lite_mat_crop, lite_norm_mat_cut, means, stds);
+
+  int pad_width = lite_norm_mat_cut.width_ + 20;
+  int pad_height = lite_norm_mat_cut.height_ + 20;
+  float *p_rgb_pad = (float *)malloc(pad_width * pad_height * 3 * sizeof(float));
+
+  LiteMat makeborder(pad_width, pad_height, 3, (void *)p_rgb_pad, LDataType::FLOAT32);
+  ret = Pad(lite_norm_mat_cut, makeborder, 10, 30, 40, 10, PaddBorderType::PADD_BORDER_CONSTANT, 255, 255, 255);
+  cv::Mat dst_image(pad_height, pad_width, CV_8UC3, p_rgb_pad);
+  free(p_rgb);
+  free(p_rgb_pad);
+}
+
 TEST_F(MindDataImageProcess, test3C) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -512,8 +559,7 @@ TEST_F(MindDataImageProcess, TestSubtractInt8) {
   LiteMat dst_int8;
   EXPECT_TRUE(Subtract(src1_int8, src2_int8, dst_int8));
   for (size_t i = 0; i < cols; i++) {
-    EXPECT_EQ(static_cast<INT8_C1 *>(expect_int8.data_ptr_)[i].c1,
-              static_cast<INT8_C1 *>(dst_int8.data_ptr_)[i].c1);
+    EXPECT_EQ(static_cast<INT8_C1 *>(expect_int8.data_ptr_)[i].c1, static_cast<INT8_C1 *>(dst_int8.data_ptr_)[i].c1);
   }
 }
 
@@ -645,8 +691,7 @@ TEST_F(MindDataImageProcess, TestDivideInt8) {
   LiteMat dst_int8;
   EXPECT_TRUE(Divide(src1_int8, src2_int8, dst_int8));
   for (size_t i = 0; i < cols; i++) {
-    EXPECT_EQ(static_cast<INT8_C1 *>(expect_int8.data_ptr_)[i].c1,
-              static_cast<INT8_C1 *>(dst_int8.data_ptr_)[i].c1);
+    EXPECT_EQ(static_cast<INT8_C1 *>(expect_int8.data_ptr_)[i].c1, static_cast<INT8_C1 *>(dst_int8.data_ptr_)[i].c1);
   }
 }
 

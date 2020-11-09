@@ -229,6 +229,11 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   if (input->Rank() != 3 && input->Rank() != 2) {
     RETURN_STATUS_UNEXPECTED("Shape not <H,W,C> or <H,W>");
   }
+
+  if (input->type() != DataType::DE_FLOAT32 || input->type() != DataType::DE_UINT8) {
+    RETURN_STATUS_UNEXPECTED("Only float32, uint8 support in Crop");
+  }
+
   // account for integer overflow
   if (y < 0 || (y + h) > input->shape()[0] || (y + h) < 0) {
     RETURN_STATUS_UNEXPECTED("Invalid y coordinate value for crop");
@@ -237,18 +242,17 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   if (x < 0 || (x + w) > input->shape()[1] || (x + w) < 0) {
     RETURN_STATUS_UNEXPECTED("Invalid x coordinate value for crop");
   }
-  // convert to lite Mat
-  LiteMat lite_mat_rgb;
-  // rows = height, this constructor takes: cols,rows
-  bool ret = InitFromPixel(input->GetBuffer(), LPixelType::RGB, LDataType::UINT8, input->shape()[1], input->shape()[0],
-                           lite_mat_rgb);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret, "Creation of lite cv failed");
+
+  LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], 3,
+                       const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())), LDataType::UINT8);
+
   try {
     TensorShape shape{h, w};
     int num_channels = input->shape()[2];
     if (input->Rank() == 3) shape = shape.AppendDim(num_channels);
     LiteMat lite_mat_cut;
-    ret = Crop(lite_mat_rgb, lite_mat_cut, x, y, x + w, y + h);
+
+    bool ret = Crop(lite_mat_rgb, lite_mat_cut, x, y, x + w, y + h);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Crop failed in lite cv");
     // create output Tensor based off of lite_mat_cut
     std::shared_ptr<Tensor> output_tensor;
@@ -287,14 +291,17 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   if (input->Rank() != 3) {
     RETURN_STATUS_UNEXPECTED("Input tensor rank isn't 3");
   }
-  LiteMat lite_mat_rgb;
-  // rows = height, this constructor takes: cols,rows
-  bool ret = InitFromPixel(input->GetBuffer(), LPixelType::RGB, LDataType::UINT8, input->shape()[1], input->shape()[0],
-                           lite_mat_rgb);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret, "Creation of lite cv failed");
+
+  if (input->type() != DataType::DE_UINT8) {
+    RETURN_STATUS_UNEXPECTED("Only uint8 support in Normalize");
+  }
+
+  LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], 3,
+                       const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())), LDataType::UINT8);
+
   LiteMat lite_mat_float;
   // change input to float
-  ret = ConvertTo(lite_mat_rgb, lite_mat_float, 1.0);
+  bool ret = ConvertTo(lite_mat_rgb, lite_mat_float, 1.0);
   CHECK_FAIL_RETURN_UNEXPECTED(ret, "Conversion of lite cv to float failed");
 
   mean->Squeeze();
@@ -337,6 +344,9 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   if (input->Rank() != 3) {
     RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C>");
   }
+  if (input->type() != DataType::DE_UINT8) {
+    RETURN_STATUS_UNEXPECTED("Only uint8 support in Resize");
+  }
   // resize image too large or too small
   if (output_height == 0 || output_height > input->shape()[0] * 1000 || output_width == 0 ||
       output_width > input->shape()[1] * 1000) {
@@ -345,10 +355,8 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       "1000 times the original image; 2) can not be 0.";
     return Status(StatusCode::kShapeMisMatch, err_msg);
   }
-  LiteMat lite_mat_rgb;
-  bool ret = InitFromPixel(input->GetBuffer(), LPixelType::RGB, LDataType::UINT8, input->shape()[1], input->shape()[0],
-                           lite_mat_rgb);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret, "Creation of lite cv failed");
+  LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], 3,
+                       const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())), LDataType::UINT8);
 
   try {
     TensorShape shape{output_height, output_width};
@@ -356,7 +364,7 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     if (input->Rank() == 3) shape = shape.AppendDim(num_channels);
 
     LiteMat lite_mat_resize;
-    ret = ResizeBilinear(lite_mat_rgb, lite_mat_resize, output_width, output_height);
+    bool ret = ResizeBilinear(lite_mat_rgb, lite_mat_resize, output_width, output_height);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Resize failed in lite cv");
     std::shared_ptr<Tensor> output_tensor;
     RETURN_IF_NOT_OK(
@@ -364,6 +372,40 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     *output = output_tensor;
   } catch (std::runtime_error &e) {
     RETURN_STATUS_UNEXPECTED("Error in image resize.");
+  }
+  return Status::OK();
+}
+
+Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const int32_t &pad_top,
+           const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
+           uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
+  if (input->Rank() != 3) {
+    RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C>");
+  }
+
+  if (input->type() != DataType::DE_FLOAT32 || input->type() != DataType::DE_UINT8) {
+    RETURN_STATUS_UNEXPECTED("Only float32, uint8 support in Pad");
+  }
+
+  if (pad_top <= 0 || pad_bottom <= 0 || pad_left <= 0 || pad_right <= 0) {
+    RETURN_STATUS_UNEXPECTED("The pad, top, bottom, left, right must be greater than 0");
+  }
+
+  try {
+    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], 3,
+                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())), LDataType::UINT8);
+
+    LiteMat lite_mat_pad;
+    bool ret = Pad(lite_mat_rgb, lite_mat_pad, pad_top, pad_bottom, pad_left, pad_right,
+                   PaddBorderType::PADD_BORDER_CONSTANT, fill_r, fill_g, fill_b);
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Pad failed in lite cv");
+
+    std::shared_ptr<Tensor> output_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(input->shape(), DataType(DataType::DE_FLOAT32),
+                                              static_cast<uchar *>(lite_mat_pad.data_ptr_), &output_tensor));
+    *output = output_tensor;
+  } catch (std::runtime_error &e) {
+    RETURN_STATUS_UNEXPECTED("Error in image Pad.");
   }
   return Status::OK();
 }

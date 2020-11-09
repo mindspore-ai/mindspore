@@ -95,6 +95,20 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               int32_t output_width, double fx = 0.0, double fy = 0.0,
               InterpolationMode mode = InterpolationMode::kLinear);
 
+/// \brief Pads the input image and puts the padded image in the output
+/// \param input: input Tensor
+/// \param output: padded Tensor
+/// \param pad_top: amount of padding done in top
+/// \param pad_bottom: amount of padding done in bottom
+/// \param pad_left: amount of padding done in left
+/// \param pad_right: amount of padding done in right
+/// \param border_types: the interpolation to be done in the border
+/// \param fill_r: red fill value for pad
+/// \param fill_g: green fill value for pad
+/// \param fill_b: blue fill value for pad.
+Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const int32_t &pad_top,
+           const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
+           uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_
