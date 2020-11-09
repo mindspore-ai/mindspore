@@ -31,14 +31,15 @@ class PoolingOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs), parameter_(reinterpret_cast<PoolingParameter *>(parameter)) {}
   ~PoolingOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
+  int Prepare() override;
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
-  void InitGlobalSize();
   PoolingParameter *parameter_;
   cl::Kernel kernel_;
-  bool enable_fp16_{false};
   std::vector<size_t> local_size_;
   std::vector<size_t> global_size_;
 };

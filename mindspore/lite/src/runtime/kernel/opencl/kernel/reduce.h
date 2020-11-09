@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_REDUCE_H_
 
 #include <vector>
-
+#include <string>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/reduce_parameter.h"
@@ -31,14 +31,16 @@ class ReduceOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~ReduceOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
-  void InitNHWCShape();
+  int Prepare() override;
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
+  static std::string GetReduceTypeStr(int type);
   cl::Kernel kernel_;
-  bool enable_fp16_{false};
-  std::vector<size_t> nhwc_shape_;
+  Image2DInfo outShape = Image2DInfo(nullptr);
   bool use_local_{false};
   bool wc_reduce_{false};
   static const size_t LOCAL_CACHE_THREAD{16};

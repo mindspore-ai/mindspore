@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ARITHMETIC_H_
 
 #include <vector>
+#include <string>
 #include "src/runtime/kernel/arm/fp32/arithmetic_fp32.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
@@ -30,24 +31,21 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~ArithmeticOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
+  int Prepare() override;
+  int CheckSpecs() override;
   int InitWeights() override;
-  int SetArgs();
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
-  std::vector<size_t> InitGlobalSize() const;
-  void Image2dGetWorkGroupSize();
-
   cl::Kernel kernel_;
   bool element_flag_{true};
   float activation_min_{-FLT_MAX};
   float activation_max_{FLT_MAX};
   std::vector<std::vector<int>> inputs_nhwc_shapes_;
   std::vector<void *> inputs_weight_ptrs_;
-
-  std::vector<size_t> local_size_;
-  std::vector<size_t> global_size_;
+  std::string kernel_name_;
 };
 }  // namespace mindspore::kernel
 

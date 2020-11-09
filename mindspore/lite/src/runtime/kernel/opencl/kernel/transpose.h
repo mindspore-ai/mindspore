@@ -34,12 +34,14 @@ class TransposeOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~TransposeOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
+  int Prepare() override;
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
   cl::Kernel kernel_;
-  bool enable_fp16_{false};
   TransposeType type{TransposeType::AXIS0312};
 };
 }  // namespace mindspore::kernel

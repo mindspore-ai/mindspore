@@ -75,14 +75,12 @@ void RunTestCaseSoftmax(const std::vector<int> &shape, void *input_data, void *o
     return;
   }
   opParameter->axis_ = axis;
-  auto arith_kernel_ptr =
-    std::make_unique<kernel::SoftmaxOpenCLKernel>(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  auto arith_kernel = arith_kernel_ptr.release();
+  auto arith_kernel = kernel::OpenCLKernelCreator<kernel::SoftmaxOpenCLKernel>(
+    inputs, outputs, reinterpret_cast<OpParameter *>(opParameter), nullptr, kernel::KernelKey(), nullptr);
   if (arith_kernel == nullptr) {
     MS_LOG(ERROR) << "arith_kernel create error.";
     return;
   }
-  arith_kernel->Init();
 
   inputs[0]->MallocData(allocator);
 

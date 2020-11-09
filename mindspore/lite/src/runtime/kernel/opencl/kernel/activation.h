@@ -18,26 +18,30 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_ACTIVATION_H_
 
 #include <vector>
+#include <string>
 
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/fp32/activation.h"
 
 namespace mindspore::kernel {
 
-class ActivationOpenClKernel : public OpenCLKernel {
+class ActivationOpenCLKernel : public OpenCLKernel {
  public:
-  ActivationOpenClKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+  ActivationOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs),
         type_(reinterpret_cast<ActivationParameter *>(parameter)->type_),
         alpha_(reinterpret_cast<ActivationParameter *>(parameter)->alpha_) {}
-  ~ActivationOpenClKernel() override = default;
+  ~ActivationOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
+  int Prepare() override;
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
-  int SetArgs();
+  static std::string GetActTypeString(int act_type);
   cl::Kernel kernel_;
   int type_;
   float alpha_;

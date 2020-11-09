@@ -2,8 +2,8 @@
 #define C4NUM 4
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
-__kernel void FullConnection_NHWC4(__read_only image2d_t input, __global FLT16 *weight, __read_only image2d_t bias,
-                                   __write_only image2d_t output, int4 in_shape, int2 out_shape, float act_min,
+__kernel void FullConnection_NHWC4(__read_only image2d_t input, __write_only image2d_t output, __global FLT16 *weight,
+                                   __read_only image2d_t bias, int4 in_shape, int2 out_shape, float act_min,
                                    float act_max) {
   int gidx = get_global_id(0);  // CO4
   int gidz = get_global_id(2);  // N

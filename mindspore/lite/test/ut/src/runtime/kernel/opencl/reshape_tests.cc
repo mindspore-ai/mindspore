@@ -54,13 +54,12 @@ void RunTestCaseReshape(const std::vector<int> &shape_in, const std::vector<int>
   }
   std::vector<lite::Tensor *> inputs{tensor_x};
   std::vector<lite::Tensor *> outputs{tensor_out};
-  auto arith_kernel_ptr = std::make_unique<kernel::ReshapeOpenCLKernel>(nullptr, inputs, outputs);
-  auto arith_kernel = arith_kernel_ptr.release();
+  auto arith_kernel = kernel::OpenCLKernelCreator<kernel::ReshapeOpenCLKernel>(inputs, outputs, nullptr, nullptr,
+                                                                               kernel::KernelKey(), nullptr);
   if (arith_kernel == nullptr) {
     MS_LOG(ERROR) << "arith_kernel create error.";
     return;
   }
-  arith_kernel->Init();
 
   inputs[0]->MallocData(allocator);
 

@@ -25,9 +25,9 @@
 
 namespace mindspore {
 
-class TestMaxPoolingOpenCL : public mindspore::CommonTest {};
+class TestPoolingOpenCL : public mindspore::CommonTest {};
 
-void InitMaxPoolingParam(PoolingParameter *param) {
+void InitPoolingParam(PoolingParameter *param) {
   param->input_batch_ = 1;
   param->input_h_ = 2;
   param->input_w_ = 2;
@@ -48,11 +48,10 @@ void InitMaxPoolingParam(PoolingParameter *param) {
   param->pad_d_ = 0;
   param->pad_l_ = 0;
   param->pad_r_ = 0;
-
-  param->pool_mode_ = PoolMode_MaxPool;
 }
 
-void RunTestCaseMaxPooling(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
+void RunTestCasePooling(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16,
+                        PoolMode pool_mode) {
   auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
   ocl_runtime->Init();
   size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
@@ -69,7 +68,8 @@ void RunTestCaseMaxPooling(const std::vector<int> &shape, void *input_data, void
     MS_LOG(ERROR) << "param create error.";
     return;
   }
-  InitMaxPoolingParam(param);
+  InitPoolingParam(param);
+  param->pool_mode_ = pool_mode;
   std::vector<int> input_shape = {n, h, w, c};
   auto tensor_x_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
                                                      input_shape, schema::Format_NHWC);
@@ -88,14 +88,12 @@ void RunTestCaseMaxPooling(const std::vector<int> &shape, void *input_data, void
   }
   std::vector<lite::Tensor *> inputs{tensor_x};
   std::vector<lite::Tensor *> outputs{tensor_out};
-  auto arith_kernel_ptr =
-    std::make_unique<kernel::PoolingOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  auto arith_kernel = arith_kernel_ptr.release();
+  auto arith_kernel = kernel::OpenCLKernelCreator<kernel::PoolingOpenCLKernel>(
+    inputs, outputs, reinterpret_cast<OpParameter *>(param), nullptr, kernel::KernelKey(), nullptr);
   if (arith_kernel == nullptr) {
     MS_LOG(ERROR) << "arith_kernel create error.";
     return;
   }
-  arith_kernel->Init();
 
   inputs[0]->MallocData(allocator);
 
@@ -116,6 +114,7 @@ void RunTestCaseMaxPooling(const std::vector<int> &shape, void *input_data, void
   } else {
     CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
   }
+
   for (auto t : inputs) {
     t->set_data(nullptr);
   }
@@ -123,10 +122,40 @@ void RunTestCaseMaxPooling(const std::vector<int> &shape, void *input_data, void
     t->set_data(nullptr);
   }
 
-  MS_LOG(INFO) << "Test MaxPool2d passed";
+  MS_LOG(INFO) << "Test AvgPool2d passed";
 }
 
-TEST_F(TestMaxPoolingOpenCL, MaxPoolingFp32) {
+TEST_F(TestPoolingOpenCL, AvgPoolingFp32) {
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int c = 4;
+  int oh = 1;
+  int ow = 1;
+  std::vector<int> shape = {n, h, w, c, oh, ow};
+  std::vector<float> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
+                                   8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
+  std::vector<float> output_data = {6.0f, 7.0f, 8.0f, 9.0f};
+
+  RunTestCasePooling(shape, input_data.data(), output_data.data(), false, PoolMode_AvgPool);
+}
+
+TEST_F(TestPoolingOpenCL, AvgPoolingFp16) {
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int c = 4;
+  int oh = 1;
+  int ow = 1;
+  std::vector<int> shape = {n, h, w, c, oh, ow};
+  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
+                                       8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
+  std::vector<float16_t> output_data = {6.0f, 7.0f, 8.0f, 9.0f};
+
+  RunTestCasePooling(shape, input_data.data(), output_data.data(), true, PoolMode_AvgPool);
+}
+
+TEST_F(TestPoolingOpenCL, MaxPoolingFp32) {
   int n = 1;
   int h = 2;
   int w = 2;
@@ -138,10 +167,10 @@ TEST_F(TestMaxPoolingOpenCL, MaxPoolingFp32) {
                                    8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
   std::vector<float> output_data = {12.0f, 13.0f, 14.0f, 15.0f};
 
-  RunTestCaseMaxPooling(shape, input_data.data(), output_data.data(), false);
+  RunTestCasePooling(shape, input_data.data(), output_data.data(), false, PoolMode_MaxPool);
 }
 
-TEST_F(TestMaxPoolingOpenCL, MaxPoolingFp16) {
+TEST_F(TestPoolingOpenCL, MaxPoolingFp16) {
   int n = 1;
   int h = 2;
   int w = 2;
@@ -153,6 +182,6 @@ TEST_F(TestMaxPoolingOpenCL, MaxPoolingFp16) {
                                        8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
   std::vector<float16_t> output_data = {12.0f, 13.0f, 14.0f, 15.0f};
 
-  RunTestCaseMaxPooling(shape, input_data.data(), output_data.data(), true);
+  RunTestCasePooling(shape, input_data.data(), output_data.data(), true, PoolMode_MaxPool);
 }
 }  // namespace mindspore

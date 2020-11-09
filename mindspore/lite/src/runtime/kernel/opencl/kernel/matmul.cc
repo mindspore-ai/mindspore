@@ -30,8 +30,7 @@ using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
 
-int MatMulOpenCLKernel::Init() {
-  std::string kernel_name = "MatMul_NHWC4";
+int MatMulOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   transposeA = param->a_transpose_;
   if (transposeA) {
@@ -45,6 +44,11 @@ int MatMulOpenCLKernel::Init() {
     MS_LOG(ERROR) << "matmul only support input shape size=2 or 4.";
     return mindspore::lite::RET_ERROR;
   }
+  return RET_OK;
+}
+
+int MatMulOpenCLKernel::Prepare() {
+  std::string kernel_name = "MatMul_NHWC4";
   dims = in_tensors_[0]->shape().size();
   for (int i = 0; i < dims; i++) {
     inShape[MAX_DIMS - dims + i] = in_tensors_[0]->shape()[i];
@@ -61,13 +65,14 @@ int MatMulOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-
-  PadWeight();
+  InitWeights();
+  SetConstArgs();
+  SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return mindspore::lite::RET_OK;
 }
 
-void MatMulOpenCLKernel::PadWeight() {
+int MatMulOpenCLKernel::InitWeights() {
   // ABMCI @ ABCICO = ABMCO
   auto allocator = ocl_runtime_->GetAllocator();
   int ci = inShape[3];
@@ -128,45 +133,36 @@ void MatMulOpenCLKernel::PadWeight() {
     }
   }
   allocator->UnmapBuffer(padWeight_);
+  return RET_OK;
 }
 
-int MatMulOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " Running!";
+void MatMulOpenCLKernel::SetGlobalLocal() {
   // local size should less than MAX_GROUP_SIZE
   std::vector<size_t> local = {32, 4, 1};
   std::vector<size_t> global = {UP_DIV(static_cast<size_t>(outShape[3]), C4NUM),
                                 4 * static_cast<size_t>(outShape[0]) * static_cast<size_t>(outShape[1]),
                                 static_cast<size_t>(outShape[2])};
-  int arg_count = 0;
+  AlignGlobalLocal(global, local);
+}
+
+void MatMulOpenCLKernel::SetConstArgs() {
+  int arg_count = 2;
   cl_int4 in_shape = {inShape[0], inShape[1], inShape[2], inShape[3]};
   cl_int4 out_shape = {outShape[0], outShape[1], outShape[2], outShape[3]};
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+}
+
+int MatMulOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->name() << " Running!";
+  int arg_count = 0;
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
   return mindspore::lite::RET_OK;
 }
 
-kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                              const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) MatMulOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != mindspore::lite::RET_OK) {
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_MatMul, OpenCLMatMulKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_MatMul, OpenCLMatMulKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_MatMul, OpenCLKernelCreator<MatMulOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_MatMul, OpenCLKernelCreator<MatMulOpenCLKernel>)
 }  // namespace mindspore::kernel

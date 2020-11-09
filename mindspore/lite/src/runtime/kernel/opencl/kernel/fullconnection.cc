@@ -34,7 +34,11 @@ using mindspore::schema::PrimitiveType_FullConnection;
 namespace mindspore::kernel {
 
 int FullConnectionOpenCLKernel::Init() {
-  std::string kernel_name = "FullConnection_NHWC4";
+  // deleted soon
+  return CheckSpecs();
+}
+
+int FullConnectionOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   transposeA = param->a_transpose_;
   if (transposeA) {
@@ -48,9 +52,6 @@ int FullConnectionOpenCLKernel::Init() {
     MS_LOG(ERROR) << "fullconnection only support input output shape size = 2 or 4";
     return RET_ERROR;
   }
-  // call default move constructor(elemwised moved)
-  inShape = Image2DInfo(in_tensors_[0]);
-  outShape = Image2DInfo(out_tensors_[0]);
   switch (param->act_type_) {
     case ActType_No:
       break;
@@ -65,6 +66,13 @@ int FullConnectionOpenCLKernel::Init() {
       MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
       return RET_ERROR;
   }
+  return RET_OK;
+}
+
+int FullConnectionOpenCLKernel::Prepare() {
+  std::string kernel_name = "FullConnection_NHWC4";
+  inShape = Image2DInfo(in_tensors_[0]);
+  outShape = Image2DInfo(out_tensors_[0]);
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
@@ -74,13 +82,14 @@ int FullConnectionOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
-
-  PadWeight();
+  InitWeights();
+  SetConstArgs();
+  SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
 
-void FullConnectionOpenCLKernel::PadWeight() {
+int FullConnectionOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   int ci = inShape.C;
   int ci4 = UP_DIV(ci, C4NUM);
@@ -167,48 +176,37 @@ void FullConnectionOpenCLKernel::PadWeight() {
     }
   }
   allocator->UnmapBuffer(bias_);
+  return RET_OK;
 }
 
-int FullConnectionOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " Running!";
+void FullConnectionOpenCLKernel::SetGlobalLocal() {
   std::vector<size_t> local = {32, 4, 1};
   std::vector<size_t> global = {UP_DIV(outShape.C, C4NUM), 4, outShape.N};
-  int arg_count = 0;
+  AlignGlobalLocal(global, local);
+}
+
+void FullConnectionOpenCLKernel::SetConstArgs() {
+  int arg_count = 2;
   cl_int4 in_shape = {static_cast<int>(inShape.N), static_cast<int>(inShape.H), static_cast<int>(inShape.W),
                       static_cast<int>(inShape.C)};
   cl_int2 out_shape = {static_cast<int>(outShape.N), static_cast<int>(outShape.C)};
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, activation_min_);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, activation_max_);
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+}
+
+int FullConnectionOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->name() << " Running!";
+  int arg_count = 0;
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLFullConnectionKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                      const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
-                                                      const kernel::KernelKey &desc,
-                                                      const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel =
-    new (std::nothrow) FullConnectionOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FullConnection, OpenCLFullConnectionKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_FullConnection, OpenCLFullConnectionKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FullConnection, OpenCLKernelCreator<FullConnectionOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_FullConnection, OpenCLKernelCreator<FullConnectionOpenCLKernel>)
 }  // namespace mindspore::kernel

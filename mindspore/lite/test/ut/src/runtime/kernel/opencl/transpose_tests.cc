@@ -67,14 +67,12 @@ void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *out
   }
   std::vector<lite::Tensor *> inputs{tensor_x};
   std::vector<lite::Tensor *> outputs{tensor_out};
-  auto arith_kernel_ptr =
-    std::make_unique<kernel::TransposeOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  auto arith_kernel = arith_kernel_ptr.release();
+  auto arith_kernel = kernel::OpenCLKernelCreator<kernel::TransposeOpenCLKernel>(
+    inputs, outputs, reinterpret_cast<OpParameter *>(param), nullptr, kernel::KernelKey(), nullptr);
   if (arith_kernel == nullptr) {
     MS_LOG(ERROR) << "arith_kernel create error.";
     return;
   }
-  arith_kernel->Init();
 
   inputs[0]->MallocData(allocator);
 

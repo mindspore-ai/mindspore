@@ -213,15 +213,15 @@ int SubGraphOpenCLKernel::Init() {
   }
   nodes_.insert(nodes_.end(), out_convert_ops_.begin(), out_convert_ops_.end());
 
-  UpdateTensorDataType();
-
-  MallocTensorWithReuse();
-
   ret = SubGraphKernel::Prepare();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "OpenCL prepare fail";
     return ret;
   }
+
+  UpdateTensorDataType();
+
+  MallocTensorWithReuse();
   return RET_OK;
 }
 
