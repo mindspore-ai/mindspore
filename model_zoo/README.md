@@ -27,15 +27,15 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
             - [AlexNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet/README.md)
             - [LeNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet/README.md)
             - [LeNet_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet_quant/README.md)
-            - [InceptionV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3/README.md)                       
+            - [MobileNetV2](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2/README.md)
+            - [MobileNetV2_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2_quant/README.md)
+            - [MobileNetV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv3/README.md)
+            - [InceptionV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3/README.md) 
         - [Object Detection and Segmentation](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
             - [DeepLabV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3/README.md)
             - [FasterRCNN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn/README.md)
             - [YoloV3-DarkNet53](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_darknet53/README.md)         
             - [YoloV3-ResNet18](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/yolov3_resnet18/README.md)
-            - [MobileNetV2](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2/README.md)
-            - [MobileNetV2_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2_quant/README.md)
-            - [MobileNetV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv3/README.md)
             - [MaskRCNN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/maskrcnn/README.md)            
             - [SSD](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd/README.md)
             - [Warp-CTC](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/warpctc/README.md)
@@ -59,6 +59,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 # Announcements
 | Date         | News                                                         |
 | ------------ | ------------------------------------------------------------ |
+| September 25, 2020 | Support [MindSpore v1.0.0](https://www.mindspore.cn/news/newschildren/en?id=262) |
 | September 01, 2020 | Support [MindSpore v0.7.0-beta](https://www.mindspore.cn/news/newschildren/en?id=246) |
 | July 31, 2020 | Support [MindSpore v0.6.0-beta](https://www.mindspore.cn/news/newschildren/en?id=237) |
 

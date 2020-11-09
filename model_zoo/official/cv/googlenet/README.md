@@ -36,7 +36,7 @@ GoogleNet, a 22 layers deep network, was proposed in 2014 and won the first plac
 
 # [Model Architecture](#contents)
 
-Specifically, the GoogleNet contains numerous inception modules, which are connected together to go deeper.  In general, an inception module with dimensionality reduction consists of **1×1 conv**, **3×3 conv**, **5×5 conv**, and **3×3 max pooling**, which are done altogether for the previous input, and stack together again at output.
+Specifically, the GoogleNet contains numerous inception modules, which are connected together to go deeper.  In general, an inception module with dimensionality reduction consists of **1×1 conv**, **3×3 conv**, **5×5 conv**, and **3×3 max pooling**, which are done altogether for the previous input, and stack together again at output. In our model architecture, the kernel size used in inception module is 3×3 instead of 5×5.
 
 
 
@@ -297,13 +297,14 @@ Parameters for both training and evaluation can be set in config.py
 ## [Performance](#contents)
 
 ### Evaluation Performance 
+#### GoogleNet on CIFAR-10
 
 | Parameters                 | Ascend                                                      | GPU                    |
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
 | Model Version              | Inception V1                                                | Inception V1           |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             | NV SMX2 V100-32G       |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             | NV SMX2 V100-32G       |
 | uploaded Date              | 10/28/2020 (month/day/year)                                 | 10/28/2020 (month/day/year) |
-| MindSpore Version          | 1.0.0                                                       | 1.0.0                  |
+| MindSpore Version          | 1.0.0                                                 | 1.0.0            |
 | Dataset                    | CIFAR-10                                                    | CIFAR-10               |
 | Training Parameters        | epoch=125, steps=390, batch_size = 128, lr=0.1              | epoch=125, steps=390, batch_size=128, lr=0.1    |
 | Optimizer                  | SGD                                                         | SGD                    |
@@ -317,8 +318,28 @@ Parameters for both training and evaluation can be set in config.py
 | Model for inference        | 21.50M (.onnx file),  21.60M(.air file)                     |      | 
 | Scripts                    | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/googlenet) | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/googlenet) |
 
+#### GoogleNet on 1200k images
+| Parameters                 | Ascend                                                      |
+| -------------------------- | ----------------------------------------------------------- |
+| Model Version              | Inception V1                                                |
+| Resource                   | Ascend 910, CPU 2.60GHz, 56cores, Memory 314G               |
+| uploaded Date              | 10/28/2020 (month/day/year)                                 |
+| MindSpore Version          | 1.0.0                                                 |
+| Dataset                    | 1200k images                                                |
+| Training Parameters        | epoch=300, steps=5000, batch_size=256, lr=0.1               |
+| Optimizer                  | Momentum                                                    |
+| Loss Function              | Softmax Cross Entropy                                       |
+| outputs                    | probability                                                 |
+| Loss                       | 2.0                                                         |
+| Speed                      | 1pc: 152 ms/step;  8pcs: 171 ms/step                        |
+| Total time                 | 8pcs: 8.8 hours                                             |
+| Parameters (M)             | 13.0                                                        |
+| Checkpoint for Fine tuning | 52M (.ckpt file)                                            |
+| Scripts                    | [googlenet script](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/googlenet) | 
+
 
 ### Inference Performance
+#### GoogleNet on CIFAR-10
 
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
@@ -331,6 +352,18 @@ Parameters for both training and evaluation can be set in config.py
 | outputs             | probability                 | probability                 |
 | Accuracy            | 1pc: 93.4%;  8pcs: 92.17%   | 1pc: 93%, 8pcs: 92.89%      |
 | Model for inference | 21.50M (.onnx file)         |  |
+
+#### GoogleNet on 1200k images
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | Inception V1                |
+| Resource            | Ascend 910                  |
+| Uploaded Date       | 10/28/2020 (month/day/year) |
+| MindSpore Version   | 1.0.0                       |
+| Dataset             | 1200k images                |
+| batch_size          | 256                         |
+| outputs             | probability                 |
+| Accuracy            | 8pcs: 71.81%                |
 
 ## [How to use](#contents)
 ### Inference
