@@ -28,6 +28,26 @@ if (MS_BUILD_GRPC)
     message(STATUS "Cache is enabled")
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # Try to find numa header file and its library
+    FIND_PATH(NUMA_INCLUDE_DIR numa.h)
+    MESSAGE("Numa include dir is: ${NUMA_INCLUDE_DIR}")
+
+    FIND_LIBRARY(NUMA_LIBRARY NAMES libnuma.so)
+    MESSAGE("Numa library is: ${NUMA_LIBRARY}")
+
+    FIND_PACKAGE_HANDLE_STANDARD_ARGS(NUMA DEFAULT_MSG
+            NUMA_INCLUDE_DIR
+            NUMA_LIBRARY
+            )
+    if (NUMA_FOUND)
+        ADD_DEFINITIONS(-DNUMA_ENABLED)
+        MESSAGE("Numa package found")
+    else()
+        MESSAGE(FATAL_ERROR "Numa package not found, try 'sudo yum install numactl-devel' or 'sudo apt-get install libnuma-dev'")
+    endif()
+endif ()
+
 # conde coverage
 # option(ENABLE_COVERAGE "Enable code coverage report" OFF)
 # if (ENABLE_COVERAGE)
@@ -177,14 +197,18 @@ else ()
         target_link_libraries(_c_dataengine PRIVATE -ldl ${SECUREC_LIBRARY})
     endif ()
     target_link_libraries(_c_dataengine PUBLIC mindspore::sentencepiece)
-endif ()
+    if (NUMA_FOUND)
+        target_link_libraries(_c_dataengine PUBLIC numa)
+    endif()
+endif()
+
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turbojpeg mindspore::opencv_core mindspore::opencv_imgcodecs
                        mindspore::opencv_imgproc mindspore::tinyxml2 mindspore::sentencepiece_train ${ICU_LIB})
 if (ENABLE_GPUQUE)
     target_link_libraries(_c_dataengine PRIVATE gpu_queue
-                                     ${CUDNN_LIBRARY_PATH}
-				     ${CUDA_PATH}/lib64/libcudart.so
-                                     ${CUDA_PATH}/lib64/stubs/libcuda.so)
+                                  ${CUDNN_LIBRARY_PATH}
+				                  ${CUDA_PATH}/lib64/libcudart.so
+                                  ${CUDA_PATH}/lib64/stubs/libcuda.so)
 endif ()
 
 if (ENABLE_TDTQUE)

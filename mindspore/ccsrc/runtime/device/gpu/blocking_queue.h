@@ -33,6 +33,7 @@ namespace device {
 enum BlockQueueStatus_T : int { SUCCESS = 0, QUEUE_NOT_EXIST, HANDLE_NOT_EXIST, ERROR_INPUT, INTERNAL_ERROR, TIMEOUT };
 
 struct DataItemGpu {
+  int32_t worker_id_;
   size_t data_len_;
   void *data_ptr_;
 };
@@ -42,7 +43,7 @@ class GpuQueue {
   GpuQueue(void *addr, const std::vector<size_t> &shape, const size_t &capacity);
   virtual ~GpuQueue();
 
-  void RegisterRelease(const std::function<void(void *)> &func) { host_release_ = func; }
+  void RegisterRelease(const std::function<void(void *, int32_t)> &func) { host_release_ = func; }
 
   inline bool IsEmpty() const { return size_ == 0; }
   inline bool IsFull() const { return size_ == capacity_; }
@@ -69,7 +70,7 @@ class GpuQueue {
   size_t capacity_;
   cudaStream_t stream_;
   std::unique_ptr<NodeInfo[]> node_info_;
-  std::function<void(void *)> host_release_;
+  std::function<void(void *, int32_t)> host_release_;
 
   GpuQueue(const GpuQueue &) = delete;
   GpuQueue &operator=(const GpuQueue &) = delete;
@@ -81,7 +82,7 @@ class BlockingQueue {
   ~BlockingQueue() = default;
 
   BlockQueueStatus_T Create(void *addr, const std::vector<size_t> &shape, const size_t &capacity);
-  void RegisterRelease(const std::function<void(void *)> &func);
+  void RegisterRelease(const std::function<void(void *, int32_t)> &func);
   BlockQueueStatus_T Push(const std::vector<DataItemGpu> &data, unsigned int timeout_in_sec);
   BlockQueueStatus_T Front(void **ptr, size_t *len);
   BlockQueueStatus_T Pop();

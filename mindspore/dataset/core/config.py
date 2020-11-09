@@ -16,6 +16,7 @@
 The configuration module provides various functions to set and get the supported
 configuration parameters, and read a configuration file.
 """
+import os
 import random
 import numpy
 import mindspore._c_dataengine as cde
@@ -29,6 +30,27 @@ UINT32_MAX = 4294967295
 
 _config = cde.GlobalContext.config_manager()
 
+def _init_device_info():
+    """
+    INTERNAL USE ONLY!
+    As rank_id need to pass into deep layer for numa and device_queue.
+    One process work with only one rank_id, In standalone scenario,
+    rank_id may come from env 'CUDA_VISIBLE_DEVICES', For distribute
+    scenario, rank_id come from _get_global_rank()
+    """
+    from mindspore import context
+    from mindspore.parallel._auto_parallel_context import auto_parallel_context
+    from mindspore.parallel._utils import _get_global_rank
+    if context.get_context("device_target") == "GPU":
+        rank_id = _get_global_rank()
+        parallel_mode = auto_parallel_context().get_parallel_mode()
+        if parallel_mode == "stand_alone":
+            cuda_device_info = os.getenv("CUDA_VISIBLE_DEVICES")
+            if cuda_device_info:
+                cuda_id = int(cuda_device_info.split(",")[0].strip())
+                if cuda_id != rank_id:
+                    rank_id = cuda_id
+        _config.set_rank_id(rank_id)
 
 def set_seed(seed):
     """

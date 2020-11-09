@@ -17,6 +17,10 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <limits>
+#if defined(NUMA_ENABLED) && defined(ENABLE_GPUQUE)
+#include <numa.h>
+#endif
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
@@ -42,6 +46,10 @@ ExecutionTree::ExecutionTree() : id_count_(0), pre_pass_override_(nullptr) {
   prepare_flags_ = kDePrepNone;
   profiling_manager_ = std::make_unique<ProfilingManager>(this);
   optimize_ = common::GetEnv("OPTIMIZE") == "true" ? true : false;
+#if defined(NUMA_ENABLED) && defined(ENABLE_GPUQUE)
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  rank_id_ = cfg->rank_id();
+#endif
 }
 
 // Destructor
@@ -137,6 +145,27 @@ Status ExecutionTree::Launch() {
   // opencv limit too many threads
 #ifndef ENABLE_ANDROID
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
+#if defined(NUMA_ENABLED) && defined(ENABLE_GPUQUE)
+  // Here we do numa bind for performance optimization, as our test result,
+  // if we do numa bind when get_dataset_size launch a tree, we'll get a
+  // better performance than only we do numa bind at the time _To_Device
+  // launch a tree. Our numa bind work is a process level bind, bind with
+  // both cpu and memory and we choose numa_node with a polling logic:
+  // numa_bind_id = rank_id_ % (numa_max_node() + 1)
+  // Now we only test pass in GPU scenario, we've not tested D scenario,
+  // without enough test we don't suggest numa feature open in D scenario
+  int numa_node_max_id = numa_max_node();
+  if (numa_node_max_id >= 0 && rank_id_ >= 0) {
+    uint32_t numa_bind_id = static_cast<uint32_t>(rank_id_ % (numa_node_max_id + 1));
+    auto bm = numa_allocate_nodemask();
+    numa_bitmask_clearall(bm);
+    numa_bitmask_setbit(bm, numa_bind_id);
+    numa_bind(bm);
+    numa_bitmask_free(bm);
+  } else {
+    RETURN_STATUS_UNEXPECTED("Get numa max node failed.");
+  }
+#endif
   int32_t thread_num = get_nprocs();
   if (thread_num == 0) {
     std::string err_msg = "Invalid thread number.";

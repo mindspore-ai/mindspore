@@ -6,26 +6,8 @@ ms_build_flatbuffers("de_tensor.fbs" ${CMAKE_CURRENT_SOURCE_DIR} generated_engin
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (NUMA_FOUND)
   ADD_DEFINITIONS(-DCACHE_LOCAL_CLIENT)
-
-  # Try to find numa header file and its library
-  FIND_PATH( NUMA_INCLUDE_DIR numa.h )
-  MESSAGE( "Numa include dir is: ${NUMA_INCLUDE_DIR}" )
-
-  FIND_LIBRARY( NUMA_LIBRARY NAMES libnuma.so )
-  MESSAGE( "Numa library is: ${NUMA_LIBRARY}" )
-
-  FIND_PACKAGE_HANDLE_STANDARD_ARGS( NUMA DEFAULT_MSG
-    NUMA_INCLUDE_DIR
-    NUMA_LIBRARY
-  )
-  if ( NUMA_FOUND )
-    ADD_DEFINITIONS(-DNUMA_ENABLED)
-    MESSAGE("Numa package found")
-  else()
-    MESSAGE(FATAL_ERROR "Numa package not found, try 'sudo yum install numactl-devel' or 'sudo apt-get install libnuma-dev'")
-  endif()
 endif ()
 
 add_library(engine-cache-client OBJECT
