@@ -91,15 +91,20 @@ __device__ void bin_box(int thread_idx, const T *roi_boxes, int roi_cols, const 
   }
 
   // Scale and shift ROI
-  T roi_offset = roi_end_mode == 0 ? static_cast<T>(0.5) : static_cast<T>(.0);
-  *roi_start_w = roi_box[0] * spatial_scale - roi_offset;
-  *roi_start_h = roi_box[1] * spatial_scale - roi_offset;
-  T roi_end_w = roi_box[2] * spatial_scale - roi_offset;
-  T roi_end_h = roi_box[3] * spatial_scale - roi_offset;
+  *roi_start_w = roi_box[0] * spatial_scale;
+  *roi_start_h = roi_box[1] * spatial_scale;
+  T roi_end_w = (roi_box[2] + static_cast<T>(roi_end_mode)) * spatial_scale;
+  T roi_end_h = (roi_box[3] + static_cast<T>(roi_end_mode)) * spatial_scale;
 
   // New ROI height/width
   T roi_width = roi_end_w - (*roi_start_w);
   T roi_height = roi_end_h - (*roi_start_h);
+
+  if (roi_end_mode == 0) {  // backward compatibility
+    // Force malformed ROIs to be 1x1
+    roi_width = roi_width > static_cast<T>(1.0) ? roi_width : static_cast<T>(1.0);
+    roi_height = roi_height > static_cast<T>(1.0) ? roi_height : static_cast<T>(1.0);
+  }
 
   // ratio of roi / pooled
   *bin_size_h = static_cast<T>(roi_height) / static_cast<T>(pooled_height);
