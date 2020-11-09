@@ -229,8 +229,8 @@ int Pooling::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
     }
   }
   auto input_shape = input->shape();
-  input_shape.at(1) = output_h;
-  input_shape.at(2) = output_w;
+  input_shape.at(1) = output_h > 0 ? output_h : 1;
+  input_shape.at(2) = output_w > 0 ? output_w : 1;
   output->set_shape(input_shape);
   return RET_OK;
 }
