@@ -108,7 +108,6 @@ int ReduceBaseCPUKernel::Init() {
   }
 
   mode_ = reduce_param->mode_;
-  memcpy(axes_, reduce_param->axes_, sizeof(reduce_param->axes_));
   reduce_to_end_ = reduce_param->reduce_to_end_;
 
   auto ret = CheckInputsOutputs();

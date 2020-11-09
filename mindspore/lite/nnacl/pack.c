@@ -929,13 +929,144 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
   return;
 }
 
-void PackNHWCToNCHWInt8(const void *src, void *dst, int batch, int plane, int channel) {
-  for (int n = 0; n < batch; n++) {
-    for (int c = 0; c < channel; c++) {
-      for (int hw = 0; hw < plane; hw++) {
-        int nhwc_index = n * channel * plane + hw * channel + c;
-        int nchw_index = n * channel * plane + c * plane + hw;
-        ((int8_t *)dst)[nchw_index] = ((int8_t *)src)[nhwc_index];
+void PackNHWCToNCHWInt8(const void *src, void *dst, int batches, int plane, int channel) {
+  int hw8 = plane / C8NUM * C8NUM;
+  int c8 = channel / C8NUM * C8NUM;
+  int batch = plane * channel;
+  for (int n = 0; n < batches; n++) {
+    const int8_t *src_batch = (const int8_t *)src + n * batch;
+    int8_t *dst_batch = (int8_t *)dst + n * batch;
+    int hw = 0;
+    for (; hw < hw8; hw += C8NUM) {
+      int c = 0;
+      for (; c < c8; c += C8NUM) {
+        const int8_t *src_ptr = src_batch + hw * channel + c;
+        int8_t *dst_ptr = dst_batch + c * plane + hw;
+#ifdef ENABLE_ARM64
+        size_t srcStride = channel * sizeof(int8_t);
+        size_t dstStride = plane * sizeof(int8_t);
+        asm volatile(
+          "mov x10, %[src_ptr]\n"
+          "mov x11, %[dst_ptr]\n"
+
+          "ld1 {v0.8b}, [x10], %[srcStride]\n"
+          "ld1 {v1.8b}, [x10], %[srcStride]\n"
+          "ld1 {v2.8b}, [x10], %[srcStride]\n"
+          "ld1 {v3.8b}, [x10], %[srcStride]\n"
+
+          "trn1 v4.8b, v0.8b, v1.8b\n"
+          "trn2 v5.8b, v0.8b, v1.8b\n"
+          "trn1 v6.8b, v2.8b, v3.8b\n"
+          "trn2 v7.8b, v2.8b, v3.8b\n"
+
+          "ld1 {v0.8b}, [x10], %[srcStride]\n"
+          "ld1 {v1.8b}, [x10], %[srcStride]\n"
+          "ld1 {v2.8b}, [x10], %[srcStride]\n"
+          "ld1 {v3.8b}, [x10], %[srcStride]\n"
+
+          "trn1 v8.4h, v4.4h, v6.4h\n"
+          "trn2 v9.4h, v4.4h, v6.4h\n"
+          "trn1 v10.4h, v5.4h, v7.4h\n"
+          "trn2 v11.4h, v5.4h, v7.4h\n"
+
+          "trn1 v4.8b, v0.8b, v1.8b\n"
+          "trn2 v5.8b, v0.8b, v1.8b\n"
+          "trn1 v6.8b, v2.8b, v3.8b\n"
+          "trn2 v7.8b, v2.8b, v3.8b\n"
+
+          "trn1 v12.4h, v4.4h, v6.4h\n"
+          "trn2 v13.4h, v4.4h, v6.4h\n"
+          "trn1 v14.4h, v5.4h, v7.4h\n"
+          "trn2 v15.4h, v5.4h, v7.4h\n"
+
+          "trn1 v0.2s, v8.2s, v12.2s\n"
+          "trn2 v4.2s, v8.2s, v12.2s\n"
+          "trn1 v1.2s, v10.2s, v14.2s\n"
+          "trn2 v5.2s, v10.2s, v14.2s\n"
+          "trn1 v2.2s, v9.2s, v13.2s\n"
+          "trn2 v6.2s, v9.2s, v13.2s\n"
+          "trn1 v3.2s, v11.2s, v15.2s\n"
+          "trn2 v7.2s, v11.2s, v15.2s\n"
+
+          "st1 {v0.8b}, [x11], %[dstStride]\n"
+          "st1 {v1.8b}, [x11], %[dstStride]\n"
+          "st1 {v2.8b}, [x11], %[dstStride]\n"
+          "st1 {v3.8b}, [x11], %[dstStride]\n"
+          "st1 {v4.8b}, [x11], %[dstStride]\n"
+          "st1 {v5.8b}, [x11], %[dstStride]\n"
+          "st1 {v6.8b}, [x11], %[dstStride]\n"
+          "st1 {v7.8b}, [x11], %[dstStride]\n"
+          :
+          :
+          [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
+          : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14",
+            "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29",
+            "v30", "v31");
+#elif ENABLE_ARM32
+        size_t srcStride = channel * sizeof(int8_t);
+        size_t dstStride = plane * sizeof(int8_t);
+        asm volatile(
+          "mov r10, %[src_ptr]\n"
+          "mov r12, %[dst_ptr]\n"
+
+          "vld1.8 {d0}, [r10], %[srcStride]\n"
+          "vld1.8 {d1}, [r10], %[srcStride]\n"
+          "vld1.8 {d2}, [r10], %[srcStride]\n"
+          "vld1.8 {d3}, [r10], %[srcStride]\n"
+          "vld1.8 {d4}, [r10], %[srcStride]\n"
+          "vld1.8 {d5}, [r10], %[srcStride]\n"
+          "vld1.8 {d6}, [r10], %[srcStride]\n"
+          "vld1.8 {d7}, [r10], %[srcStride]\n"
+
+          "vtrn.8 d0, d1\n"
+          "vtrn.8 d2, d3\n"
+          "vtrn.8 d4, d5\n"
+          "vtrn.8 d6, d7\n"
+
+          "vtrn.16 d0, d2\n"
+          "vtrn.16 d1, d3\n"
+          "vtrn.16 d4, d6\n"
+          "vtrn.16 d5, d7\n"
+
+          "vtrn.32 d0, d4\n"
+          "vtrn.32 d1, d5\n"
+          "vtrn.32 d2, d6\n"
+          "vtrn.32 d3, d7\n"
+
+          "vst1.8 {d0}, [r12], %[dstStride]\n"
+          "vst1.8 {d1}, [r12], %[dstStride]\n"
+          "vst1.8 {d2}, [r12], %[dstStride]\n"
+          "vst1.8 {d3}, [r12], %[dstStride]\n"
+          "vst1.8 {d4}, [r12], %[dstStride]\n"
+          "vst1.8 {d5}, [r12], %[dstStride]\n"
+          "vst1.8 {d6}, [r12], %[dstStride]\n"
+          "vst1.8 {d7}, [r12], %[dstStride]\n"
+          :
+          :
+          [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
+          : "r10", "r12", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14",
+            "q15");
+#else
+        for (int tr = 0; tr < C8NUM; tr++) {
+          for (int tc = 0; tc < C8NUM; tc++) {
+            dst_ptr[tc * plane + tr] = src_ptr[tr * channel + tc];
+          }
+        }
+#endif
+      }
+      for (; c < channel; c++) {
+        const int8_t *src_ptr = src_batch + hw * channel + c;
+        int8_t *dst_ptr = dst_batch + c * plane + hw;
+        for (size_t i = 0; i < C8NUM; i++) {
+          dst_ptr[i] = src_ptr[i * channel];
+        }
+      }
+    }
+    for (; hw < plane; hw++) {
+      const int8_t *src_ptr = src_batch + hw * channel;
+      int8_t *dst_ptr = dst_batch + hw;
+      for (size_t i = 0; i < channel; i++) {
+        dst_ptr[i * plane] = src_ptr[i];
       }
     }
   }
