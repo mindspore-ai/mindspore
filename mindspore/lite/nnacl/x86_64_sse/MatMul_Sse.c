@@ -55,10 +55,10 @@ void MatrixMultiplyWinograd(const float *matix_a, const float *matrix_b, float *
           src1_j += in_channel;
           src2_y += n;
         }
-        _mm_store_ps(matrix_c, dst1);
-        _mm_store_ps(matrix_c + 4, dst2);
-        _mm_store_ps(matrix_c + 8, dst3);
-        _mm_store_ps(matrix_c + 12, dst4);
+        _mm_storeu_ps(matrix_c, dst1);
+        _mm_storeu_ps(matrix_c + 4, dst2);
+        _mm_storeu_ps(matrix_c + 8, dst3);
+        _mm_storeu_ps(matrix_c + 12, dst4);
         src1_j -= in_channel * k;
         src1_j += C16NUM;
         matrix_c += C16NUM;
@@ -80,8 +80,8 @@ void MatrixMultiplyWinograd(const float *matix_a, const float *matrix_b, float *
           src1_j += in_channel;
           src2_y += n;
         }
-        _mm_store_ps(matrix_c, dst1);
-        _mm_store_ps(matrix_c + 4, dst2);
+        _mm_storeu_ps(matrix_c, dst1);
+        _mm_storeu_ps(matrix_c + 4, dst2);
         src1_j -= in_channel * k;
         src1_j += C8NUM;
         matrix_c += C8NUM;
@@ -185,26 +185,26 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
       }
       if (write_mode == 2) {  // WriteWino
         c = dst + WinoSteps2;
-        _mm_store_ps(dst, dst1);
-        _mm_store_ps(dst + 4, dst2);
+        _mm_storeu_ps(dst, dst1);
+        _mm_storeu_ps(dst + 4, dst2);
         dst += WinoSteps1;
-        _mm_store_ps(dst, dst3);
-        _mm_store_ps(dst + 4, dst4);
+        _mm_storeu_ps(dst, dst3);
+        _mm_storeu_ps(dst + 4, dst4);
         dst += WinoSteps1;
-        _mm_store_ps(dst, dst5);
-        _mm_store_ps(dst + 4, dst6);
+        _mm_storeu_ps(dst, dst5);
+        _mm_storeu_ps(dst + 4, dst6);
         dst += WinoSteps1;
-        _mm_store_ps(dst, dst7);
-        _mm_store_ps(dst + 4, dst8);
+        _mm_storeu_ps(dst, dst7);
+        _mm_storeu_ps(dst + 4, dst8);
       } else if (write_mode == 0) {  // WriteC8
-        _mm_store_ps(c, dst1);
-        _mm_store_ps(c + 4, dst2);
-        _mm_store_ps(c + 8, dst3);
-        _mm_store_ps(c + 12, dst4);
-        _mm_store_ps(c + 16, dst5);
-        _mm_store_ps(c + 20, dst6);
-        _mm_store_ps(c + 24, dst7);
-        _mm_store_ps(c + 28, dst8);
+        _mm_storeu_ps(c, dst1);
+        _mm_storeu_ps(c + 4, dst2);
+        _mm_storeu_ps(c + 8, dst3);
+        _mm_storeu_ps(c + 12, dst4);
+        _mm_storeu_ps(c + 16, dst5);
+        _mm_storeu_ps(c + 20, dst6);
+        _mm_storeu_ps(c + 24, dst7);
+        _mm_storeu_ps(c + 28, dst8);
         c += C8Steps;
       } else {
         switch (cc) {
@@ -288,39 +288,39 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
             break;
           case 4:  // write4
             c = dst + 4;
-            _mm_store_ps(dst, dst1);
+            _mm_storeu_ps(dst, dst1);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
+              _mm_storeu_ps(dst, dst3);
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
+              _mm_storeu_ps(dst, dst5);
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
+              _mm_storeu_ps(dst, dst7);
               dst += stride;
               dst += 4;
             }
             break;
           case 5:  // write5
             c = dst + 5;
-            _mm_store_ps(dst, dst1);
+            _mm_storeu_ps(dst, dst1);
             _mm_store_ss(dst + 4, dst2);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
+              _mm_storeu_ps(dst, dst3);
               _mm_store_ss(dst + 4, dst4);
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
+              _mm_storeu_ps(dst, dst5);
               _mm_store_ss(dst + 4, dst6);
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
+              _mm_storeu_ps(dst, dst7);
               _mm_store_ss(dst + 4, dst8);
               dst += stride;
               dst += 5;
@@ -328,27 +328,27 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
             break;
           case 6:  // write6
             c = dst + 6;
-            _mm_store_ps(dst, dst1);
+            _mm_storeu_ps(dst, dst1);
             _mm_store_ss(dst + 4, dst2);
             dst2 = _mm_shuffle_ps(dst2, dst2, _MM_SHUFFLE(0, 3, 2, 1));
             _mm_store_ss(dst + 5, dst2);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
+              _mm_storeu_ps(dst, dst3);
               _mm_store_ss(dst + 4, dst4);
               dst4 = _mm_shuffle_ps(dst4, dst4, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst4);
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
+              _mm_storeu_ps(dst, dst5);
               _mm_store_ss(dst + 4, dst6);
               dst6 = _mm_shuffle_ps(dst6, dst6, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst6);
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
+              _mm_storeu_ps(dst, dst7);
               _mm_store_ss(dst + 4, dst8);
               dst8 = _mm_shuffle_ps(dst8, dst8, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst8);
@@ -358,7 +358,7 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
             break;
           case 7:  // write7
             c = dst + 7;
-            _mm_store_ps(dst, dst1);
+            _mm_storeu_ps(dst, dst1);
             _mm_store_ss(dst + 4, dst2);
             dst2 = _mm_shuffle_ps(dst2, dst2, _MM_SHUFFLE(0, 3, 2, 1));
             _mm_store_ss(dst + 5, dst2);
@@ -366,7 +366,7 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
             _mm_store_ss(dst + 6, dst2);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
+              _mm_storeu_ps(dst, dst3);
               _mm_store_ss(dst + 4, dst4);
               dst4 = _mm_shuffle_ps(dst4, dst4, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst4);
@@ -375,7 +375,7 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
+              _mm_storeu_ps(dst, dst5);
               _mm_store_ss(dst + 4, dst6);
               dst6 = _mm_shuffle_ps(dst6, dst6, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst6);
@@ -384,7 +384,7 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
+              _mm_storeu_ps(dst, dst7);
               _mm_store_ss(dst + 4, dst8);
               dst8 = _mm_shuffle_ps(dst8, dst8, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst8);
@@ -396,22 +396,22 @@ void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *
             break;
           default:  // write8
             c = dst + C8NUM;
-            _mm_store_ps(dst, dst1);
-            _mm_store_ps(dst + 4, dst2);
+            _mm_storeu_ps(dst, dst1);
+            _mm_storeu_ps(dst + 4, dst2);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
-              _mm_store_ps(dst + 4, dst4);
+              _mm_storeu_ps(dst, dst3);
+              _mm_storeu_ps(dst + 4, dst4);
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
-              _mm_store_ps(dst + 4, dst6);
+              _mm_storeu_ps(dst, dst5);
+              _mm_storeu_ps(dst + 4, dst6);
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
-              _mm_store_ps(dst + 4, dst8);
+              _mm_storeu_ps(dst, dst7);
+              _mm_storeu_ps(dst + 4, dst8);
               dst += stride;
               dst += C8NUM;
             }
@@ -518,27 +518,27 @@ void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bia
         dst8 = _mm_max_ps(dst8, zero);
       }
       if (WriteWino != 0) {  // WriteWino
-        _mm_store_ps(dst, dst1);
-        _mm_store_ps(dst + 4, dst2);
+        _mm_storeu_ps(dst, dst1);
+        _mm_storeu_ps(dst + 4, dst2);
         dst += WriteWinoSteps;
-        _mm_store_ps(dst, dst3);
-        _mm_store_ps(dst + 4, dst4);
+        _mm_storeu_ps(dst, dst3);
+        _mm_storeu_ps(dst + 4, dst4);
         dst += WriteWinoSteps;
-        _mm_store_ps(dst, dst5);
-        _mm_store_ps(dst + 4, dst6);
+        _mm_storeu_ps(dst, dst5);
+        _mm_storeu_ps(dst + 4, dst6);
         dst += WriteWinoSteps;
-        _mm_store_ps(dst, dst7);
-        _mm_store_ps(dst + 4, dst8);
+        _mm_storeu_ps(dst, dst7);
+        _mm_storeu_ps(dst + 4, dst8);
         dst += WriteWinoSteps;
       } else if (writeNhwc == 0) {  // WriteC8
-        _mm_store_ps(dst, dst1);
-        _mm_store_ps(dst + 4, dst2);
-        _mm_store_ps(dst + 8, dst3);
-        _mm_store_ps(dst + 12, dst4);
-        _mm_store_ps(dst + 16, dst5);
-        _mm_store_ps(dst + 20, dst6);
-        _mm_store_ps(dst + 24, dst7);
-        _mm_store_ps(dst + 28, dst8);
+        _mm_storeu_ps(dst, dst1);
+        _mm_storeu_ps(dst + 4, dst2);
+        _mm_storeu_ps(dst + 8, dst3);
+        _mm_storeu_ps(dst + 12, dst4);
+        _mm_storeu_ps(dst + 16, dst5);
+        _mm_storeu_ps(dst + 20, dst6);
+        _mm_storeu_ps(dst + 24, dst7);
+        _mm_storeu_ps(dst + 28, dst8);
         dst += 32;
         c = dst;
       } else {
@@ -612,68 +612,68 @@ void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bia
               dst += stride;
             }
           case 4:  // write4
-            _mm_store_ps(dst, dst1);
+            _mm_storeu_ps(dst, dst1);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
+              _mm_storeu_ps(dst, dst3);
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
+              _mm_storeu_ps(dst, dst5);
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
+              _mm_storeu_ps(dst, dst7);
               dst += stride;
             }
           case 5:  // // write5
-            _mm_store_ps(dst, dst1);
+            _mm_storeu_ps(dst, dst1);
             _mm_store_ss(dst + 4, dst2);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
+              _mm_storeu_ps(dst, dst3);
               _mm_store_ss(dst + 4, dst4);
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
+              _mm_storeu_ps(dst, dst5);
               _mm_store_ss(dst + 4, dst6);
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
+              _mm_storeu_ps(dst, dst7);
               _mm_store_ss(dst + 4, dst8);
               dst += stride;
             }
           case 6:  // write6
-            _mm_store_ps(dst, dst1);
+            _mm_storeu_ps(dst, dst1);
             _mm_store_ss(dst + 4, dst2);
             dst2 = _mm_shuffle_ps(dst2, dst2, _MM_SHUFFLE(0, 3, 2, 1));
             _mm_store_ss(dst + 5, dst2);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
+              _mm_storeu_ps(dst, dst3);
               _mm_store_ss(dst + 4, dst4);
               dst4 = _mm_shuffle_ps(dst4, dst4, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst4);
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
+              _mm_storeu_ps(dst, dst5);
               _mm_store_ss(dst + 4, dst6);
               dst6 = _mm_shuffle_ps(dst6, dst6, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst6);
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
+              _mm_storeu_ps(dst, dst7);
               _mm_store_ss(dst + 4, dst8);
               dst8 = _mm_shuffle_ps(dst8, dst8, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst8);
               dst += stride;
             }
           case 7:  // write7
-            _mm_store_ps(dst, dst1);
+            _mm_storeu_ps(dst, dst1);
             _mm_store_ss(dst + 4, dst2);
             dst2 = _mm_shuffle_ps(dst2, dst2, _MM_SHUFFLE(0, 3, 2, 1));
             _mm_store_ss(dst + 5, dst2);
@@ -681,7 +681,7 @@ void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bia
             _mm_store_ss(dst + 6, dst2);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
+              _mm_storeu_ps(dst, dst3);
               _mm_store_ss(dst + 4, dst4);
               dst4 = _mm_shuffle_ps(dst4, dst4, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst4);
@@ -690,7 +690,7 @@ void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bia
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
+              _mm_storeu_ps(dst, dst5);
               _mm_store_ss(dst + 4, dst6);
               dst6 = _mm_shuffle_ps(dst6, dst6, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst6);
@@ -699,7 +699,7 @@ void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bia
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
+              _mm_storeu_ps(dst, dst7);
               _mm_store_ss(dst + 4, dst8);
               dst8 = _mm_shuffle_ps(dst8, dst8, _MM_SHUFFLE(0, 3, 2, 1));
               _mm_store_ss(dst + 5, dst8);
@@ -708,22 +708,22 @@ void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bia
               dst += stride;
             }
           default:  // write8
-            _mm_store_ps(dst, dst1);
-            _mm_store_ps(dst + 4, dst2);
+            _mm_storeu_ps(dst, dst1);
+            _mm_storeu_ps(dst + 4, dst2);
             if (r > 1) {
               dst += stride;
-              _mm_store_ps(dst, dst3);
-              _mm_store_ps(dst + 4, dst4);
+              _mm_storeu_ps(dst, dst3);
+              _mm_storeu_ps(dst + 4, dst4);
             }
             if (r > 2) {
               dst += stride;
-              _mm_store_ps(dst, dst5);
-              _mm_store_ps(dst + 4, dst6);
+              _mm_storeu_ps(dst, dst5);
+              _mm_storeu_ps(dst + 4, dst6);
             }
             if (r > 3) {
               dst += stride;
-              _mm_store_ps(dst, dst7);
-              _mm_store_ps(dst + 4, dst8);
+              _mm_storeu_ps(dst, dst7);
+              _mm_storeu_ps(dst + 4, dst8);
               dst += stride;
             }
         }

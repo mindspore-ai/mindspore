@@ -39,6 +39,13 @@ float ShortToFloat32(uint16_t src_value);
 
 uint16_t Float32ToShort(float src_value);
 
+#ifdef ENABLE_X86_64_SSE
+void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
+                        size_t plane_size, size_t stride, size_t relu_type);
+void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
+                        size_t plane_size, size_t plane_stride, size_t relu_type);
+#endif
+
 #ifdef ENABLE_ARM
 void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
                       size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,

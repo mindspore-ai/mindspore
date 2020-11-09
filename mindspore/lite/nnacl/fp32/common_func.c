@@ -68,7 +68,7 @@ void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bi
   return;
 }
 
-#ifndef ENABLE_ARM
+#if !defined(ENABLE_ARM) && !defined(ENABLE_X86_64_SSE)
 void WinogradTransLeft(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length) {
   const int unitStep = 4 * length;
   for (int y = 0; y < h; ++y) {
