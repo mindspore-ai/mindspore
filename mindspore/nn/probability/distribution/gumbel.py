@@ -103,16 +103,11 @@ class Gumbel(TransformedDistribution):
         """
         valid_dtype = mstype.float_type
         Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
-        gumbel_cdf = msb.GumbelCDF(loc, scale, dtype)
+        gumbel_cdf = msb.GumbelCDF(loc, scale)
         super(Gumbel, self).__init__(
             distribution=msd.Uniform(0.0, 1.0, dtype=dtype),
             bijector=msb.Invert(gumbel_cdf),
             seed=seed, name=name)
-
-        self.parameter_type = gumbel_cdf.parameter_type
-        self._broadcast_shape = gumbel_cdf.event_shape
-        if self._broadcast_shape != ():
-            self._is_scalar_batch = False
 
         # overwrite default_parameters and parameter_names
         self._reset_parameters()
@@ -202,6 +197,7 @@ class Gumbel(TransformedDistribution):
                 where z = \frac{x - loc}{scale}
         """
         value = self._check_value(value, 'value')
+        value = self.cast(value, self.dtype)
         z = (value - self.loc) / self.scale
         return -(z + self.exp(-z)) - self.log(self.scale)
 
@@ -210,6 +206,8 @@ class Gumbel(TransformedDistribution):
         .. math::
             cdf_pdf(X) = \exp(-\exp(-\frac{x - loc}{scale})
         """
+        value = self._check_value(value, 'value')
+        value = self.cast(value, self.dtype)
         return self._gumbel_bijector("forward", value)
 
     def _cross_entropy(self, dist, loc_b, scale_b):
@@ -251,12 +249,14 @@ class Gumbel(TransformedDistribution):
                self.expm1((loc_b - self.loc) / scale_b + self.lgamma(self.scale / scale_b + 1.))
 
     def _sample(self, shape=()):
+        shape = self.checktuple(shape, 'shape')
         origin_shape = shape + self._broadcast_shape
         if origin_shape == ():
             sample_shape = (1,)
         else:
             sample_shape = origin_shape
         org_sample = self.distribution("sample", sample_shape)
+        org_sample = self.cast(org_sample, self.dtype)
         value = self.bijector("forward", org_sample)
         if origin_shape == ():
             value = self.squeeze(value)

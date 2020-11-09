@@ -229,6 +229,11 @@ def raise_not_implemented_util(func_name, obj, *args, **kwargs):
     raise NotImplementedError(
         f"{func_name} is not implemented for {obj} distribution.")
 
+@constexpr
+def raise_type_error(name, cur_type, required_type):
+    raise TypeError(
+        f"For {name} , the type should be or be subclass of {required_type}, but got {cur_type}")
+
 
 @constexpr
 def check_distribution_name(name, expected_name):
@@ -304,7 +309,7 @@ def set_param_type(args, hint_type):
         TypeError: if tensors in args are not the same dtype.
     """
     int_type = mstype.int_type + mstype.uint_type
-    if hint_type in int_type:
+    if hint_type in int_type or hint_type is None:
         hint_type = mstype.float32
     common_dtype = None
     for name, arg in args.items():

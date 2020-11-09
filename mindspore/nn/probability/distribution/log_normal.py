@@ -137,6 +137,11 @@ class LogNormal(msd.TransformedDistribution):
                                         bijector=msb.Exp(),
                                         seed=seed, name=name)
 
+        # overwrite default_parameters and parameter_names
+        self._reset_parameters()
+        self._loc = self._add_parameter(loc, 'loc')
+        self._scale = self._add_parameter(scale, 'scale')
+
         self.log_2pi = np.log(2 * np.pi)
 
         #ops needed for the class
@@ -154,12 +159,12 @@ class LogNormal(msd.TransformedDistribution):
     @property
     def loc(self):
         """Distribution parameter for the pre-transformed mean."""
-        return self.distribution("mean")
+        return self._loc
 
     @property
     def scale(self):
         """Distribution parameter for the pre-transformed standard deviation."""
-        return self.distribution("sd")
+        return self._scale
 
     def _get_dist_type(self):
         return "LogNormal"
@@ -168,18 +173,18 @@ class LogNormal(msd.TransformedDistribution):
         if loc is not None:
             self.checktensor(loc, 'loc')
         else:
-            loc = self.distribution("mean")
+            loc = self.loc
         if scale is not None:
             self.checktensor(scale, 'scale')
         else:
-            scale = self.distribution("sd")
+            scale = self.scale
         return loc, scale
 
     def extend_repr(self):
         if self.is_scalar_batch:
-            s = f'loc = {self._mean_value}, scale = {self._sd_value}'
+            s = f'loc = {self.loc}, scale = {self.scale}'
         else:
-            s = f'batch_shape = {self._broadcast_shape}'
+            s = f'batch_shape = {self.broadcast_shape}'
         return s
 
     def _mean(self, loc=None, scale=None):

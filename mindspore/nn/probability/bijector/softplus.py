@@ -16,8 +16,6 @@
 import numpy as np
 from mindspore.ops import operations as P
 from mindspore.nn.layer.activation import LogSigmoid
-from mindspore._checkparam import Validator as validator
-from ..distribution._utils.utils import cast_to_tensor
 from ..distribution._utils.custom_ops import exp_generic, expm1_generic, log_generic
 from .bijector import Bijector
 
@@ -32,7 +30,7 @@ class Softplus(Bijector):
     where k is the sharpness factor.
 
     Args:
-        sharpness (float): The scale factor. Default: 1.0.
+        sharpness (float, list, numpy.ndarray, Tensor): The scale factor. Default: 1.0.
         name (str): The name of the Bijector. Default: 'Softplus'.
 
     Examples:
@@ -61,10 +59,9 @@ class Softplus(Bijector):
         Constructor of Softplus Bijector.
         """
         param = dict(locals())
-        validator.check_value_type('sharpness', sharpness,
-                                   [int, float], type(self).__name__)
-        super(Softplus, self).__init__(name=name, param=param)
-        self._sharpness = cast_to_tensor(sharpness)
+        param['param_dict'] = {'sharpness': sharpness}
+        super(Softplus, self).__init__(name=name, dtype=None, param=param)
+        self._sharpness = self._add_parameter(sharpness, 'sharpness')
 
         self.exp = exp_generic
         self.log = log_generic
@@ -118,13 +115,14 @@ class Softplus(Bijector):
         return self._sharpness
 
     def extend_repr(self):
-        return f'sharpness = {self.sharpness}'
-
-    def shape_mapping(self, shape):
-        return shape
+        if self.is_scalar_batch:
+            str_info = f'sharpness = {self.sharpness}'
+        else:
+            str_info = f'batch_shape = {self.batch_shape}'
+        return str_info
 
     def _forward(self, x):
-        x = self._check_value(x, 'value')
+        x = self._check_value_dtype(x)
         sharpness_local = self.cast_param_by_value(x, self.sharpness)
         scaled_value = sharpness_local * x
         forward_v = self.softplus(scaled_value) / sharpness_local
@@ -136,7 +134,7 @@ class Softplus(Bijector):
             f(x) = \frac{\log(1 + e^{kx}))}{k}
             f^{-1}(y) = \frac{\log(e^{ky} - 1)}{k}
         """
-        y = self._check_value(y, 'value')
+        y = self._check_value_dtype(y)
         sharpness_local = self.cast_param_by_value(y, self.sharpness)
         scaled_value = sharpness_local * y
         inverse_v = self.inverse_softplus(scaled_value) / sharpness_local
@@ -149,7 +147,7 @@ class Softplus(Bijector):
             f'(x) = \frac{e^{kx}}{ 1 + e^{kx}}
             \log(f'(x)) =  kx - \log(1 + e^{kx}) = kx - f(kx)
         """
-        x = self._check_value(x, 'value')
+        x = self._check_value_dtype(x)
         sharpness_local = self.cast_param_by_value(x, self.sharpness)
         scaled_value = sharpness_local * x
         forward_log_j = self.log_sigmoid(scaled_value)
@@ -162,7 +160,7 @@ class Softplus(Bijector):
             f'(y) = \frac{e^{ky}}{e^{ky} - 1}
             \log(f'(y)) = ky - \log(e^{ky} - 1) = ky - f(ky)
         """
-        y = self._check_value(y, 'value')
+        y = self._check_value_dtype(y)
         sharpness_local = self.cast_param_by_value(y, self.sharpness)
         scaled_value = sharpness_local * y
         inverse_log_j = scaled_value - self.inverse_softplus(scaled_value)

@@ -72,13 +72,12 @@ class Distribution(Cell):
             if not(k == 'self' or k.startswith('_')):
                 self._parameters[k] = param[k]
 
-        # some attributes
-        if 'distribution' in self.parameters.keys():
-            self.parameter_type = self.parameters['distribution'].parameter_type
-        else:
+        # if not a transformed distribution, set the following attribute
+        if 'distribution' not in self.parameters.keys():
             self.parameter_type = set_param_type(self.parameters['param_dict'], dtype)
-        self._broadcast_shape = self._calc_broadcast_shape()
-        self._is_scalar_batch = self._check_is_scalar_batch()
+            self._batch_shape = self._calc_batch_shape()
+            self._is_scalar_batch = self._check_is_scalar_batch()
+            self._broadcast_shape = self._batch_shape
 
         # set the function to call according to the derived class's attributes
         self._set_prob()
@@ -127,6 +126,10 @@ class Distribution(Cell):
     @property
     def is_scalar_batch(self):
         return self._is_scalar_batch
+
+    @property
+    def batch_shape(self):
+        return self._batch_shape
 
     @property
     def broadcast_shape(self):
@@ -208,8 +211,6 @@ class Distribution(Cell):
         """
         Check if the parameters used during initialization are scalars.
         """
-        if 'distribution' in self.parameters.keys():
-            return self.parameters['distribution'].is_scalar_batch
         param_dict = self.parameters['param_dict']
         for value in param_dict.values():
             if value is None:
@@ -218,12 +219,10 @@ class Distribution(Cell):
                 return False
         return True
 
-    def _calc_broadcast_shape(self):
+    def _calc_batch_shape(self):
         """
         Calculate the broadcast shape of the parameters used during initialization.
         """
-        if 'distribution' in self.parameters.keys():
-            return self.parameters['distribution'].broadcast_shape
         param_dict = self.parameters['param_dict']
         broadcast_shape_tensor = None
         for value in param_dict.values():
@@ -362,14 +361,14 @@ class Distribution(Cell):
         """
         return self._get_dist_args(*args, **kwargs)
 
-    def _get_dist_type(self, *args, **kwargs):
-        return raise_not_implemented_util('get_dist_type', self.name, *args, **kwargs)
+    def _get_dist_type(self):
+        return raise_not_implemented_util('get_dist_type', self.name)
 
-    def get_dist_type(self, *args, **kwargs):
+    def get_dist_type(self):
         """
         Return the type of the distribution.
         """
-        return self._get_dist_type(*args, **kwargs)
+        return self._get_dist_type()
 
     def _raise_not_implemented_error(self, func_name):
         name = self.name
@@ -751,5 +750,5 @@ class Distribution(Cell):
         if name == 'get_dist_args':
             return self._get_dist_args(*args, **kwargs)
         if name == 'get_dist_type':
-            return self._get_dist_type(*args, **kwargs)
+            return self._get_dist_type()
         return raise_not_implemented_util(name, self.name, *args, **kwargs)

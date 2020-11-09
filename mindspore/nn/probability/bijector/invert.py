@@ -53,22 +53,16 @@ class Invert(Bijector):
         name = (name + bijector.name) if name == 'Invert' else name
         super(Invert, self).__init__(is_constant_jacobian=bijector.is_constant_jacobian,
                                      is_injective=bijector.is_injective,
-                                     dtype=bijector.dtype,
                                      name=name,
+                                     dtype=bijector.dtype,
                                      param=param)
         self._bijector = bijector
-        if hasattr(self._bijector, 'event_shape'):
-            self._event_shape = self.bijector.event_shape
-        else:
-            self._event_shape = ()
+        self._batch_shape = self.bijector.batch_shape
+        self._is_scalar_batch = self.bijector.is_scalar_batch
 
     @property
     def bijector(self):
         return self._bijector
-
-    @property
-    def event_shape(self):
-        return self._event_shape
 
     def inverse(self, y):
         return self.bijector("forward", y)
