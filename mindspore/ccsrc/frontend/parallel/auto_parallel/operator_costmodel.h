@@ -684,6 +684,38 @@ class UniqueCost : public OperatorCost {
 
 using UniqueCostPtr = std::shared_ptr<UniqueCost>;
 
+class UniformCandidateSamplerCost : public OperatorCost {
+ public:
+  explicit UniformCandidateSamplerCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  UniformCandidateSamplerCost() : OperatorCost(false) {}
+  ~UniformCandidateSamplerCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                     int64_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override {
+    return 0;
+  }
+  double GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                             int64_t stage_id) const override {
+    return 0;
+  }
+  double GetComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                            int64_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                   int64_t stage_id) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                    int64_t) const override {
+    return 0.0;
+  }
+};
+
+using UniformCandidateSamplerCostPtr = std::shared_ptr<UniformCandidateSamplerCost>;
+
 class GatherV2Cost : public OperatorCost {
  public:
   explicit GatherV2Cost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}

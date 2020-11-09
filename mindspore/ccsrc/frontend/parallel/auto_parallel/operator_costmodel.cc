@@ -910,6 +910,21 @@ double GatherV2PCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs,
   return result;
 }
 
+double UniformCandidateSamplerCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                                              const std::vector<TensorInfo> &outputs,
+                                                              int64_t stage_id) const {
+  double result = 0.0;
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  if (inputs_type_lengths_.size() != inputs.size()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size()
+                      << " for UniformCandidateSampler cost";
+  }
+
+  result = ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+
+  return result;
+}
+
 double GatherV2PCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
                                                 const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
   double result = 0.0;
