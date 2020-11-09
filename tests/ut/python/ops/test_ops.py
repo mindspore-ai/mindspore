@@ -14,7 +14,6 @@
 # ============================================================================
 """ test ops """
 import functools
-import pytest
 
 import numpy as np
 
@@ -771,8 +770,6 @@ class StridedSliceNet(nn.Cell):
         return out_0, out_1, out_2, out_3
 
 
-# Constructing a tensor with 0 in shape is not support, excluding empty tensor.
-@pytest.mark.skip(reason='0 in shape is not support')
 def test_strided_slice_const():
     class StridedSLiceConstNet(nn.Cell):
         """StridedSLiceConstNet net definition"""
