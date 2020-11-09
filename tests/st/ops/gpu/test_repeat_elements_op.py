@@ -17,17 +17,18 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 import mindspore.nn as nn
 import mindspore.context as context
 
 class RepeatElementsNet(nn.Cell):
     def __init__(self, rep, axis):
         super(RepeatElementsNet, self).__init__()
-        self.repeat_elements = P.RepeatElements(rep, axis)
+        self.rep = rep
+        self.axis = axis
 
     def construct(self, x):
-        return self.repeat_elements(x)
+        return C.repeat_elements(x, self.rep, self.axis)
 
 
 def repeat_elements(x, rep, axis):

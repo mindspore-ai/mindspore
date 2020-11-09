@@ -882,13 +882,3 @@ def get_bprop_unique(self):
         dx = op(dout, out)
         return (dx,)
     return bprop
-
-
-@bprop_getters.register(P.RepeatElements)
-def get_bprop_repeat_elements(self):
-    """Generate bprop for RepeatElements"""
-    op = G.RepeatElementsGrad(self.rep, self.axis)
-    def bprop(x, y, dy):
-        dx = op(dy)
-        return (dx,)
-    return bprop
