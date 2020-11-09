@@ -495,28 +495,25 @@ void Debugger::CommandLoop() {
         break;
       case DebuggerCommand::kSetCMD:
         MS_LOG(INFO) << "SetCMD";
-        {
-          // print set cmd content
+        MS_LOG(INFO) << "id: " << GetWatchpointID(reply);
+        MS_LOG(INFO) << "delete: " << GetWatchpointDelete(reply);
+        if (GetWatchpointDelete(reply)) {
+          MS_LOG(INFO) << "Deleting watchpoint";
+          RemoveWatchpoint(GetWatchpointID(reply));
+        } else {
+          MS_LOG(INFO) << "Setting watchpoint";
+          MS_LOG(INFO) << "condition: " << GetWatchcondition(reply).condition();
           ProtoVector<WatchNode> recieved_nodes = GetWatchnodes(reply);
           for (const auto &node : recieved_nodes) {
             MS_LOG(INFO) << "node name: " << node.node_name();
             MS_LOG(INFO) << "node type: " << node.node_type();
           }
-
           ProtoVector<WatchCondition_Parameter> parameters = GetParameters(reply);
           for (const auto &parameter : parameters) {
             MS_LOG(INFO) << "parameter name: " << parameter.name();
             MS_LOG(INFO) << "parameter is disabled: " << parameter.disabled();
             MS_LOG(INFO) << "parameter value: " << parameter.value();
           }
-          MS_LOG(INFO) << "condition: " << GetWatchcondition(reply).condition();
-          MS_LOG(INFO) << "id: " << GetWatchpointID(reply);
-          MS_LOG(INFO) << "delete: " << GetWatchpointDelete(reply);
-        }
-        MS_LOG(INFO) << "Setting watchpoint";
-        if (GetWatchpointDelete(reply)) {
-          RemoveWatchpoint(GetWatchpointID(reply));
-        } else {
           SetWatchpoint(GetWatchnodes(reply), GetWatchcondition(reply), GetWatchpointID(reply), GetParameters(reply));
         }
         break;
