@@ -85,7 +85,7 @@ void TileCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const st
   std::vector<size_t> cargo_x(d, 1);
   std::vector<size_t> cargo_y = x_shape_;
   for (int i = d - 2; i >= 0; --i) {
-    cargo_x[i] = x_shape_[i + 1] * cargo_x[i];
+    cargo_x[i] = x_shape_[i + 1] * cargo_x[i + 1];
     cargo_y[i] *= cargo_y[i + 1] * multiples_[i + 1];
   }
   size_t offset = 0;
