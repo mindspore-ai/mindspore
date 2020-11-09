@@ -2902,7 +2902,7 @@ class ScatterSub(_ScatterOp):
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32)
+        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]]), mindspore.float32)
         >>> scatter_sub = P.ScatterSub()
         >>> output = scatter_sub(input_x, indices, updates)
         [[-1.0, -1.0, -1.0], [-1.0, -1.0, -1.0]]
