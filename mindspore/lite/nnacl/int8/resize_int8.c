@@ -19,129 +19,131 @@
 #include "nnacl/quantization/fixed_point.h"
 #include "nnacl/errorcode.h"
 
-int ResizeBilinearInt8(const int8_t *input_data, int8_t *output_data, const int *input_shape, const int *output_shape,
-                       const bool align_corners, QuantArg *quant_in, QuantArg *quant_out, const QuantMulArg *mul_arg,
-                       int tid, int thread_num) {
-  if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL) {
-    return NNACL_NULL_PTR;
-  }
-
-  int32_t in_n = input_shape[0];
-  int32_t in_h = input_shape[1];
-  int32_t in_w = input_shape[2];
-  int32_t in_c = input_shape[3];
-
-  int32_t new_height = output_shape[1];
-  int32_t new_width = output_shape[2];
-  int32_t height_scale = 0, width_scale = 0;
-  ComputeScale(in_h, new_height, align_corners, &height_scale);
-  ComputeScale(in_w, new_width, align_corners, &width_scale);
-
-  int n, h, w, c;
-  for (n = 0; n < in_n; n++) {
-    for (h = tid; h < new_height; h += thread_num) {
-      const int base_offset = 20;
-      int scaled_actual_y;
-      int bottom, top;
-      int scaled_bottom_weight, scaled_top_weight;
-      ComputeInterpolationArgs(h, height_scale, in_h, &scaled_actual_y, &bottom, &scaled_bottom_weight, &top,
-                               &scaled_top_weight);
-      for (w = 0; w < new_width; w++) {
-        int scaled_actual_x;
-        int left, right;
-        int scaled_left_weight, scaled_right_weight;
-        ComputeInterpolationArgs(w, width_scale, in_w, &scaled_actual_x, &left, &scaled_left_weight, &right,
-                                 &scaled_right_weight);
-        for (c = 0; c < in_c; c++) {
-          const int64_t bottom_left_value =
-            (int64_t)(input_data[offset(input_shape, n, bottom, left, c)] - quant_in->zp_) * scaled_bottom_weight *
-            scaled_left_weight;
-          const int64_t bottom_right_value =
-            (int64_t)(input_data[offset(input_shape, n, bottom, right, c)] - quant_in->zp_) * scaled_bottom_weight *
-            scaled_right_weight;
-          const int64_t top_left_value = (int64_t)(input_data[offset(input_shape, n, top, left, c)] - quant_in->zp_) *
-                                         scaled_top_weight * scaled_left_weight;
-          const int64_t top_right_value = (int64_t)(input_data[offset(input_shape, n, top, right, c)] - quant_in->zp_) *
-                                          scaled_top_weight * scaled_right_weight;
-          const int64_t scaled_interp_value = bottom_left_value + bottom_right_value + top_left_value + top_right_value;
-          int32_t interp_value;
-          if (scaled_interp_value >= 0) {
-            interp_value = (scaled_interp_value + (1 << 19)) / (1 << 20);
-          } else {
-            interp_value = (scaled_interp_value - (1 << 19)) / (1 << 20);
-          }
-
-          const int out_interp_value =
-            MultiplyByQuantizedMultiplier(interp_value, mul_arg->multiplier_, mul_arg->left_shift_ + base_offset,
-                                          mul_arg->right_shift_ - base_offset) +
-            quant_out->zp_;
-          int8_t out_value;
-          out_value = out_interp_value > INT8_MAX ? INT8_MAX : out_interp_value;
-          out_value = out_value < INT8_MIN ? INT8_MIN : out_value;
-          output_data[offset(output_shape, n, h, w, c)] = out_value;
-        }
+int ResizeBilinearInt8(const int8_t *input_ptr, int8_t *output_ptr, int batch, int in_h, int in_w, int out_h, int out_w,
+                       int channel, int index, int count, ResizeQuantArg quant_arg) {
+  int in_plane = in_h * in_w;
+  int out_plane = out_h * out_w;
+  for (int n = 0; n < batch; n++) {
+    const int8_t *in_b_ptr = input_ptr + n * in_plane * channel;
+    int8_t *out_b_ptr = output_ptr + n * out_plane * channel;
+    for (int t = 0; t < count; t++) {
+      int ori_out_h = (index + t) / out_w;
+      int ori_out_w = (index + t) % out_w;
+      int32_t x_lower_value = quant_arg.x_axis_lower_[ori_out_w];
+      int32_t x_upper_value = quant_arg.x_axis_upper_[ori_out_w];
+      int32_t y_lower_value = quant_arg.y_axis_lower_[ori_out_h];
+      int32_t y_upper_value = quant_arg.y_axis_upper_[ori_out_h];
+      int32_t weight_x = quant_arg.x_axis_index_[ori_out_w] - (1 << 10) * x_lower_value;
+      int32_t one_minus_weight_x = (1 << 10) - weight_x;
+      int32_t weight_y = quant_arg.y_axis_index_[ori_out_h] - (1 << 10) * y_lower_value;
+      int32_t one_minus_weight_y = (1 << 10) - weight_y;
+      int64_t left_bottom_coef = (int64_t)(one_minus_weight_x * one_minus_weight_y);
+      int64_t left_top_coef = (int64_t)(weight_y * one_minus_weight_x);
+      int64_t right_bottom_coef = (int64_t)(weight_x * one_minus_weight_y);
+      int64_t right_top_coef = (int64_t)(weight_x * weight_y);
+      int input_lb_index = (y_lower_value * in_w + x_lower_value) * channel;
+      int input_lt_index = (y_upper_value * in_w + x_lower_value) * channel;
+      int input_rb_index = (y_lower_value * in_w + x_upper_value) * channel;
+      int input_rt_index = (y_upper_value * in_w + x_upper_value) * channel;
+      int c = 0;
+      for (; c < channel; c++) {
+        int64_t out_left_bottom = left_bottom_coef * in_b_ptr[input_lb_index];
+        int64_t out_left_top = left_top_coef * in_b_ptr[input_lt_index];
+        int64_t out_right_bottom = right_bottom_coef * in_b_ptr[input_rb_index];
+        int64_t out_right_top = right_top_coef * in_b_ptr[input_rt_index];
+        int64_t out_value = out_left_bottom + out_left_top + out_right_bottom + out_right_top;
+        out_b_ptr[0] = (int8_t)((out_value + (1 << 19)) / (1 << 20));
+        input_lb_index++;
+        input_lt_index++;
+        input_rb_index++;
+        input_rt_index++;
+        out_b_ptr++;
       }
     }
   }
   return NNACL_OK;
 }
 
-int ResizeBilinearInt8WithFloatWeight(const int8_t *input_data, int8_t *output_data, const int *input_shape,
-                                      const int *output_shape, const bool align_corners, QuantArg *quant_in,
-                                      QuantArg *quant_out, const QuantMulArg *mul_arg, int tid, int thread_num) {
-  if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL) {
-    return NNACL_NULL_PTR;
-  }
-
-  int32_t in_n = input_shape[0];
-  int32_t in_h = input_shape[1];
-  int32_t in_w = input_shape[2];
-  int32_t in_c = input_shape[3];
-
-  int32_t new_height = output_shape[1];
-  int32_t new_width = output_shape[2];
-  float height_scale, width_scale;
-  int ret = ComputeScaleFloat(in_h, new_height, align_corners, &height_scale);
-  if (ret != NNACL_OK) {
-    return ret;
-  }
-  ret = ComputeScaleFloat(in_w, new_width, align_corners, &width_scale);
-  if (ret != NNACL_OK) {
-    return ret;
-  }
-
-  int n, h, w, c;
-  for (n = 0; n < in_n; n++) {
-    for (h = tid; h < new_height; h += thread_num) {
-      float actual_y;
-      int bottom, top;
-      float bottom_weight, top_weight;
-      ComputeInterpolationArgsFloatWeight(h, height_scale, in_h, &actual_y, &bottom, &bottom_weight, &top, &top_weight);
-      for (w = 0; w < new_width; w++) {
-        float actual_x;
-        int left, right;
-        float left_weight, right_weight;
-        ComputeInterpolationArgsFloatWeight(w, width_scale, in_w, &actual_x, &left, &left_weight, &right,
-                                            &right_weight);
-        for (c = 0; c < in_c; c++) {
-          float bottom_left_value = ((int32_t)input_data[offset(input_shape, n, bottom, left, c)] - quant_in->zp_) *
-                                    bottom_weight * left_weight;
-          float bottom_right_value = ((int32_t)input_data[offset(input_shape, n, bottom, right, c)] - quant_in->zp_) *
-                                     bottom_weight * right_weight;
-          float top_left_value =
-            ((int32_t)input_data[offset(input_shape, n, top, left, c)] - quant_in->zp_) * top_weight * left_weight;
-          float top_right_value =
-            ((int32_t)input_data[offset(input_shape, n, top, right, c)] - quant_in->zp_) * top_weight * right_weight;
-          float interp_value = bottom_left_value + bottom_right_value + top_left_value + top_right_value;
-
-          const int out_interp_value = MultiplyByQuantizedMultiplier((int32_t)interp_value, mul_arg->multiplier_,
-                                                                     mul_arg->left_shift_, mul_arg->right_shift_) +
-                                       quant_out->zp_;
-          int8_t out_value;
-          out_value = out_interp_value > INT8_MAX ? INT8_MAX : out_interp_value;
-          out_value = out_value < INT8_MIN ? INT8_MIN : out_value;
-          output_data[offset(output_shape, n, h, w, c)] = out_value;
-        }
+int ResizeBilinearWithFloatScaleInt8(const int8_t *input_ptr, int8_t *output_ptr, int batch, int in_h, int in_w,
+                                     int out_h, int out_w, int channel, int index, int count,
+                                     ResizeFloatScaleQuantArg quant_arg) {
+  int in_plane = in_h * in_w;
+  int out_plane = out_h * out_w;
+  for (int n = 0; n < batch; n++) {
+    const int8_t *in_b_ptr = input_ptr + n * in_plane * channel;
+    int8_t *out_b_ptr = output_ptr + n * out_plane * channel;
+    for (int t = 0; t < count; t++) {
+      int ori_out_h = (index + t) / out_w;
+      int ori_out_w = (index + t) % out_w;
+      int32_t x_lower_value = quant_arg.x_axis_lower_[ori_out_w];
+      int32_t x_upper_value = quant_arg.x_axis_upper_[ori_out_w];
+      int32_t y_lower_value = quant_arg.y_axis_lower_[ori_out_h];
+      int32_t y_upper_value = quant_arg.y_axis_upper_[ori_out_h];
+      float weight_x = quant_arg.x_axis_index_[ori_out_w] - x_lower_value;
+      float one_minus_weight_x = 1 - weight_x;
+      float weight_y = quant_arg.y_axis_index_[ori_out_h] - y_lower_value;
+      float one_minus_weight_y = 1 - weight_y;
+      float left_bottom_coef = one_minus_weight_x * one_minus_weight_y;
+      float left_top_coef = weight_y * one_minus_weight_x;
+      float right_bottom_coef = weight_x * one_minus_weight_y;
+      float right_top_coef = weight_x * weight_y;
+      int input_lb_index = (y_lower_value * in_w + x_lower_value) * channel;
+      int input_lt_index = (y_upper_value * in_w + x_lower_value) * channel;
+      int input_rb_index = (y_lower_value * in_w + x_upper_value) * channel;
+      int input_rt_index = (y_upper_value * in_w + x_upper_value) * channel;
+      int c = 0;
+#ifdef ENABLE_ARM
+      for (; c < channel; c += 4) {
+        float32x4_t in_lb;
+        in_lb[0] = (float)in_b_ptr[input_lb_index];
+        in_lb[1] = (float)in_b_ptr[input_lb_index + 1];
+        in_lb[2] = (float)in_b_ptr[input_lb_index + 2];
+        in_lb[3] = (float)in_b_ptr[input_lb_index + 3];
+        float32x4_t out_left_bottom = vmulq_n_f32(in_lb, left_bottom_coef);
+        float32x4_t in_lt;
+        in_lt[0] = (float)in_b_ptr[input_lt_index];
+        in_lt[1] = (float)in_b_ptr[input_lt_index + 1];
+        in_lt[2] = (float)in_b_ptr[input_lt_index + 2];
+        in_lt[3] = (float)in_b_ptr[input_lt_index + 3];
+        float32x4_t out_left_top = vmulq_n_f32(in_lt, left_top_coef);
+        float32x4_t in_rb;
+        in_rb[0] = (float)in_b_ptr[input_rb_index];
+        in_rb[1] = (float)in_b_ptr[input_rb_index + 1];
+        in_rb[2] = (float)in_b_ptr[input_rb_index + 2];
+        in_rb[3] = (float)in_b_ptr[input_rb_index + 3];
+        float32x4_t out_right_bottom = vmulq_n_f32(in_rb, right_bottom_coef);
+        float32x4_t in_rt;
+        in_rt[0] = (float)in_b_ptr[input_rt_index];
+        in_rt[1] = (float)in_b_ptr[input_rt_index + 1];
+        in_rt[2] = (float)in_b_ptr[input_rt_index + 2];
+        in_rt[3] = (float)in_b_ptr[input_rt_index + 3];
+        float32x4_t out_right_top = vmulq_n_f32(in_rt, right_top_coef);
+        float32x4_t out_value1 = vaddq_f32(out_left_bottom, out_left_top);
+        float32x4_t out_value2 = vaddq_f32(out_right_top, out_right_bottom);
+        float32x4_t out_value = vaddq_f32(out_value1, out_value2);
+        out_b_ptr[0] = (int8_t)(out_value[0]);
+        out_b_ptr[1] = (int8_t)(out_value[1]);
+        out_b_ptr[2] = (int8_t)(out_value[2]);
+        out_b_ptr[3] = (int8_t)(out_value[3]);
+        input_lb_index += 4;
+        input_lt_index += 4;
+        input_rb_index += 4;
+        input_rt_index += 4;
+        out_b_ptr += 4;
+      }
+#endif
+      for (; c < channel; c++) {
+        float out_left_bottom = left_bottom_coef * in_b_ptr[input_lb_index];
+        float out_left_top = left_top_coef * in_b_ptr[input_lt_index];
+        float out_right_bottom = right_bottom_coef * in_b_ptr[input_rb_index];
+        float out_right_top = right_top_coef * in_b_ptr[input_rt_index];
+        float out_value = out_left_bottom + out_left_top + out_right_bottom + out_right_top;
+        out_b_ptr[0] = (int8_t)(out_value);
+        input_lb_index++;
+        input_lt_index++;
+        input_rb_index++;
+        input_rt_index++;
+        out_b_ptr++;
       }
     }
   }
@@ -173,46 +175,6 @@ int ResizeNearestNeighborInt8Simple(const int8_t *input_data, int8_t *output_dat
   }
 
   return NNACL_OK;
-}
-
-void ComputeScale(const int32_t in_value, const int32_t out_value, const bool align_corners, int32_t *scale) {
-  if (out_value == 0) {
-    return;
-  }
-  *scale = (in_value * (1 << 10) + out_value / 2) / out_value;
-  if (align_corners && out_value > 1) {
-    *scale = ((in_value - 1) * (1 << 10) + (out_value - 1) / 2) / (out_value - 1);
-  }
-}
-
-void ComputeInterpolationArgs(const int32_t pos, const int32_t scale, const int32_t size, int32_t *scaled_pos,
-                              int32_t *low, int32_t *scaled_low_weight, int32_t *high, int32_t *scaled_high_weight) {
-  *scaled_pos = pos * scale;
-  int scale_back = *scaled_pos / (1 << 10);
-  *low = scale_back > 0 ? scale_back : 0;
-  *scaled_low_weight = (1 << 10) - (*scaled_pos - (1 << 10) * (*low));
-  *high = scale_back + 1 < size ? scale_back + 1 : size - 1;
-  *scaled_high_weight = *scaled_pos - (1 << 10) * (*low);
-}
-
-int ComputeScaleFloat(const int32_t in_value, const int32_t out_value, const bool align_corners, float *scale) {
-  if (out_value == 0) {
-    return NNACL_ERRCODE_DIVISOR_ZERO;
-  }
-  *scale = (float)in_value / out_value;
-  if (align_corners && out_value > 1) {
-    *scale = (float)(in_value - 1) / (out_value - 1);
-  }
-  return NNACL_OK;
-}
-
-void ComputeInterpolationArgsFloatWeight(const int32_t pos, const float scale, const int32_t size, float *actual_pos,
-                                         int32_t *low, float *low_weight, int32_t *high, float *high_weight) {
-  *actual_pos = pos * scale;
-  *low = *actual_pos > 0 ? floor(*actual_pos) : 0;
-  *low_weight = 1.0 - (*actual_pos - *low);
-  *high = *low + 1 < size ? *low + 1 : size - 1;
-  *high_weight = *actual_pos - (*low);
 }
 
 void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32_t new_size, const bool align_corners,

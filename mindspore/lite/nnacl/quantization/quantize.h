@@ -260,6 +260,28 @@ typedef struct LeakyReluQuantArg {
   int element_num;
 } LeakyReluQuantArg;
 
+typedef struct ResizeQuantArg {
+  int32_t ratio_x_;
+  int32_t ratio_y_;
+  int32_t *x_axis_index_;
+  int32_t *x_axis_lower_;
+  int32_t *x_axis_upper_;
+  int32_t *y_axis_index_;
+  int32_t *y_axis_lower_;
+  int32_t *y_axis_upper_;
+} ResizeQuantArg;
+
+typedef struct ResizeFloatScaleQuantArg {
+  float ratio_x_;
+  float ratio_y_;
+  float *x_axis_index_;
+  int32_t *x_axis_lower_;
+  int32_t *x_axis_upper_;
+  float *y_axis_index_;
+  int32_t *y_axis_lower_;
+  int32_t *y_axis_upper_;
+} ResizeFloatScaleQuantArg;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
