@@ -54,7 +54,6 @@ Registry SparseToDenseRegistry(schema::PrimitiveType_SparseToDense, SparseToDens
 
 int SparseToDense::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
-  MS_ASSERT(output_shape != nullptr);
   auto output = outputs_.front();
   if (output == nullptr) {
     MS_LOG(ERROR) << "output null pointer dereferencing.";

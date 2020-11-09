@@ -307,7 +307,7 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
       return dtype;
     }
   }
-  MS_ASSERT(in_tensors.size() > 0);
+  MS_ASSERT(!in_tensors.empty());
   return in_tensors[0]->data_type();
 }
 

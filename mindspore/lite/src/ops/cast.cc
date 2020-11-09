@@ -95,7 +95,6 @@ int Cast::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   }
   output->SetFormat(input->GetFormat());
 
-  MS_ASSERT(cast_prim != nullptr);
   output->set_data_type(static_cast<TypeId>(GetDstT()));
   if (!GetInferFlag()) {
     return RET_OK;

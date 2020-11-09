@@ -138,7 +138,6 @@ int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
     return RET_OK;
   }
 
-  MS_ASSERT(tile_prim != nullptr);
   std::vector<int> out_shape;
   std::vector<int> multiples = GetMultiples();
   const size_t in_dims = input->shape().size();

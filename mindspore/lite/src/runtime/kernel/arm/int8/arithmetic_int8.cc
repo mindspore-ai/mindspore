@@ -108,7 +108,7 @@ int ArithmeticInt8CPUKernel::DoArithmetic(int thread_id) {
   auto element_num = out_tensors_[0]->ElementsNum();
   auto param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
   if (param->broadcasting_ && arithmetic_run_ != nullptr) {
-    MS_ASSERT(opParameter->thread_num_ != 0);
+    MS_ASSERT(op_parameter_->thread_num_ != 0);
     int stride = UP_DIV(element_num, op_parameter_->thread_num_);
     int count = MSMIN(stride, element_num - stride * thread_id);
     if (count <= 0) {

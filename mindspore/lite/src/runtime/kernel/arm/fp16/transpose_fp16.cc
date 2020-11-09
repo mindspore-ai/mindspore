@@ -127,8 +127,8 @@ static int TransposeFp16Run(void *cdata, int task_id) {
 }
 
 int TransposeFp16CPUKernel::Run() {
-  MS_ASSERT(in_tensors_.size() == TransposeInputNum);
-  MS_ASSERT(out_tensors_.size() == TransposeOutputNum);
+  MS_ASSERT(in_tensors_.size() == 1);
+  MS_ASSERT(out_tensors_.size() == 1);
   auto &in_tensor = in_tensors_.front();
   auto &out_tensor = out_tensors_.front();
   if (in_tensor == nullptr || out_tensor == nullptr) {

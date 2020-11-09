@@ -200,7 +200,8 @@ int Conv2DGradInput::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor
 
   auto *in0 = inputs.at(0);
   auto *in = inputs.at(2);
-  MS_ASSERT(out != nullptr);
+  MS_ASSERT(in0 != nullptr);
+  MS_ASSERT(in != nullptr);
 
   std::vector<int> output_shape;
   int *out_shape = reinterpret_cast<int *>(in->MutableData());

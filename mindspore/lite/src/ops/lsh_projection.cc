@@ -65,7 +65,7 @@ int LshProjection::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor 
 
   if (inputs_.size() == kMultiNum) {
     MS_ASSERT(inputs_.at(2)->shape().size() == 1);
-    MS_ASSERT(inputs_.at(2)->DimensionSize(0) == in_value->DimensionSize(0));
+    MS_ASSERT(inputs_.at(2)->DimensionSize(0) == inputs_.at(1)->DimensionSize(0));
   }
 
   auto out_tensor = outputs_.front();

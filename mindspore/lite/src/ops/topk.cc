@@ -71,7 +71,6 @@ int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   if (!GetInferFlag()) {
     return RET_OK;
   }
-  MS_ASSERT(topk_prim != nullptr);
   auto out_shape = input->shape();
   out_shape[out_shape.size() - 1] = GetK();
   if (inputs_.size() == kDoubleNum && inputs_.at(1)->data_c() != nullptr) {

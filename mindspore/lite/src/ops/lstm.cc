@@ -60,7 +60,7 @@ int Lstm::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
   auto weight_i = inputs_[1];
-  MS_ASSERT(input0 != nullptr);
+  MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   for (int i = 0; i < kLstmOutputNum; i++) {

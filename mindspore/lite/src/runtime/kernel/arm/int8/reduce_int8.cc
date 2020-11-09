@@ -372,7 +372,7 @@ int ReduceMeanPatternInt8Impl(void *cdata, int task_id) {
 }
 
 void ReduceInt8CPUKernel::GetQuantArgs(size_t i) {
-  MS_ASSERT(i < static_cast<size_t>(num_axis_));
+  MS_ASSERT(i < static_cast<size_t>(num_axes_));
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
     quant_arg_.mean_multiplier_ = mean_multipliers_[i]->multiplier_;
     quant_arg_.mean_left_shift_ = mean_multipliers_[i]->left_shift_;

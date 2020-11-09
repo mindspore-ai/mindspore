@@ -104,7 +104,6 @@ int Split::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
-  MS_ASSERT(spilt_prim != nullptr);
   if (inputs_.size() != kSplitInputNum) {
     MS_LOG(ERROR) << "inputs number is not equal to " << kSplitInputNum;
     return RET_ERROR;

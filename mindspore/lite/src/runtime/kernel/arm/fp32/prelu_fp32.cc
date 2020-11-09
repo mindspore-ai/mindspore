@@ -107,7 +107,7 @@ int PReluCPUKernel::ProcessShareChannelInput() {
 }
 
 int PReluCPUKernel::Run() {
-  MS_ASSERT(in_shape.size() >= 2);
+  MS_ASSERT(in_tensors_.size() >= 2);
   auto input_tensor = in_tensors_[0];
   ori_input_ = reinterpret_cast<float *>(input_tensor->MutableData());
   output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());

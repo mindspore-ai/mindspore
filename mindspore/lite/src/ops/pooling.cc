@@ -186,7 +186,6 @@ int Pooling::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   int input_h = input->shape().at(1);
   int input_w = input->shape().at(2);
 
-  MS_ASSERT(pooling_prim != nullptr);
   auto window_h = GetWindowH();
   auto window_w = GetWindowW();
   if (GetGlobal()) {
