@@ -479,9 +479,10 @@ BucketBatchByLengthDataset::BucketBatchByLengthDataset(
 
 ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) {
   std::vector<std::shared_ptr<DatasetNode>> all_datasets;
-  (void)std::transform(
-    datasets.begin(), datasets.end(), std::back_inserter(all_datasets),
-    [](std::shared_ptr<Dataset> dataset) -> std::shared_ptr<DatasetNode> { return dataset->IRNode(); });
+  (void)std::transform(datasets.begin(), datasets.end(), std::back_inserter(all_datasets),
+                       [](std::shared_ptr<Dataset> dataset) -> std::shared_ptr<DatasetNode> {
+                         return (dataset != nullptr) ? dataset->IRNode() : nullptr;
+                       });
 
   auto ds = std::make_shared<ConcatNode>(all_datasets);
 
