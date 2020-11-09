@@ -1,0 +1,55 @@
+{
+  "training_platform": {
+    "modelarts": false
+  },
+  "dataset_config": {
+    "random_seed": 50,
+    "epochs": 6,
+    "batch_size": 128,
+    "dataset_schema": "/home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.json",
+    "pre_train_dataset": "/home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.tfrecord-001-of-001",
+    "fine_tune_dataset": null,
+    "test_dataset": null,
+    "valid_dataset": null,
+    "dataset_sink_mode": true,
+    "dataset_sink_step": 2
+  },
+  "model_config": {
+    "seq_length": 51,
+    "vocab_size": 32320,
+    "hidden_size": 1024,
+    "num_hidden_layers": 4,
+    "intermediate_size": 4096,
+    "hidden_dropout_prob": 0.2,
+    "attention_dropout_prob": 0.2,
+    "initializer_range": 0.1,
+    "label_smoothing": 0.1,
+    "beam_width": 2,
+    "length_penalty_weight": 0.6,
+    "max_decode_length": 50
+  },
+  "loss_scale_config": {
+    "init_loss_scale": 65536,
+    "loss_scale_factor": 2,
+    "scale_window": 1000
+  },
+  "learn_rate_config": {
+    "optimizer": "adam",
+    "lr": 2e-3,
+    "lr_scheduler": "WarmupMultiStepLR",
+    "lr_scheduler_power": 0.5,
+    "warmup_lr_remain_steps": 0.666,
+    "warmup_lr_decay_interval": -1,
+    "decay_steps": 4,
+    "decay_start_step": -1,
+    "warmup_steps": 200,
+    "min_lr": 1e-6
+  },
+  "checkpoint_options": {
+    "existed_ckpt": "",
+    "save_ckpt_steps": 3452,
+    "keep_ckpt_max": 6,
+    "ckpt_prefix": "gnmt",
+    "ckpt_path": "text_translation"
+  }
+}
