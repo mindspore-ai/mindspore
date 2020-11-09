@@ -50,6 +50,7 @@ from .batchnorm_grad import _batch_norm_grad_tbe
 from .bias_add import _bias_add_tbe
 from .bias_add_grad import _bias_add_grad_tbe
 from .cast import _cast_tbe
+from .cast_ds import _cast_ds_tbe
 from .conv2d import _conv2d_tbe
 from .conv2d_backprop_filter import _conv2d_backprop_filter_tbe
 from .conv2d_backprop_input import _conv2d_backprop_input_tbe
@@ -80,6 +81,7 @@ from .trans_data import _trans_data_tbe
 from .top_k import _top_k_tbe
 from .matmul import _matmul_tbe
 from .sub import _sub_tbe
+from .sub_ds import _sub_ds_tbe
 from .scatter_nd import _scatter_nd_tbe
 from .scatter_nd_d import _scatter_nd_d_tbe
 from .scatter_nd_add import _scatter_nd_add_tbe
@@ -121,6 +123,7 @@ from .npu_get_float_status import _npu_get_float_status_tbe
 from .npu_alloc_float_status import _npu_alloc_float_status_tbe
 from .one_hot import _one_hot_tbe
 from .equal import _equal_tbe
+from .equal_ds import _equal_ds_tbe
 from .less import _less_tbe
 from .less_equal import _less_equal_tbe
 from .logical_and import _logical_and_tbe
@@ -159,6 +162,7 @@ from .select import _select_tbe
 from .pow import _pow_tbe
 from .maximum import _maximum_tbe
 from .minimum import _minimum_tbe
+from .minimum_ds import _minimum_ds_tbe
 from .minimum_grad import _minimum_grad_tbe
 from .maximum_grad import _maximum_grad_tbe
 from .concat import _concat_tbe

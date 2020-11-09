@@ -37,12 +37,13 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     // Maths
     {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
     {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},
-
     {prim::kPrimMul, {InferImplMul, true}},
     {prim::kPrimTensorAdd, {InferImplTensorAdd, true}},
     {prim::kPrimSquare, {InferImplSquare, true}},
-
     {prim::kPrimSqrt, {InferImplSqrt, true}},
+    {prim::kPrimSub, {InferImplSub, true}},
+    {prim::kPrimEqual, {InferImplEqual, true}},
+    {prim::kPrimMinimum, {InferImplMinimum, true}},
     // Array
     {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
     {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
@@ -128,6 +129,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimAllGather, {InferImplAllGather, true}},
     {prim::kPrimReduceScatter, {InferImplReduceScatter, true}},
     {prim::kPrimMemCpyAsync, {InferImplMemCpyAsync, true}},
+    {prim::kPrimCast, {InferImplCast, true}},
+    {prim::kPrimExpandDims, {InferImplExpandDims, true}},
   };
   return prim_eval_implement_map;
 }

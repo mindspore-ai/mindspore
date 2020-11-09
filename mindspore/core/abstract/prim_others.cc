@@ -440,5 +440,52 @@ AbstractBasePtr InferImplMemCpyAsync(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(x->shape());
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(x->shape()->shape()));
 }
+
+AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(input_x);
+  MS_EXCEPTION_IF_NULL(input_x->shape());
+  auto input_type = primitive->GetAttr("dst_type")->cast<TypePtr>();
+  auto ret = std::make_shared<AbstractTensor>(input_type, input_x->shape()->shape());
+  return ret;
+}
+
+AbstractBasePtr InferImplExpandDims(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+
+  auto axis = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(axis);
+
+  std::vector<int64_t> shape;
+  std::vector<int64_t> x_shape = x->shape()->shape();
+  shape.insert(shape.end(), x_shape.begin(), x_shape.end());
+
+  auto axis_value = axis->BuildValue();
+  if (!axis_value->isa<tensor::Tensor>()) {
+    MS_LOG(EXCEPTION) << axis_value << " axis_value should be tensor, but got " << axis_value->type_name();
+  }
+  auto axis_tensor = axis_value->cast<tensor::TensorPtr>();
+  int value = *(static_cast<int *>(axis_tensor->data_c()));
+  if (value < -(SizeToInt(x_shape.size()) + 1) || value > SizeToInt(x_shape.size())) {
+    MS_LOG(EXCEPTION) << " axis value shoud be in range [-intput_x.dim-1,input_x.dim], but axis value is" << value
+                      << " and input_x.dim is" << x_shape.size();
+  }
+  if (value < 0) {
+    value = value + SizeToInt(x_shape.size()) + 1;
+  }
+  shape.insert(shape.begin() + value, 1);
+
+  auto ret = std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape));
+  return ret;
+}
+
 }  // namespace abstract
 }  // namespace mindspore
