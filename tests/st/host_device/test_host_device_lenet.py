@@ -21,8 +21,32 @@ from mindspore import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
+from mindspore.common.initializer import initializer
+from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+
+class DenseDevice(nn.Cell):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 device_target='Ascend',
+                 weight_init='normal',
+                 bias_init='zeros'):
+        super(DenseDevice, self).__init__()
+        self.device_target = device_target
+        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
+        self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
+        self.bias_add = P.BiasAdd()
+        self.matmul = P.MatMul(transpose_b=True)
+        self.matmul.add_prim_attr("primitive_target", self.device_target)
+        self.bias_add.add_prim_attr("primitive_target", self.device_target)
+
+    def construct(self, x):
+        x = self.matmul(x, self.weight)
+        x = self.bias_add(x, self.bias)
+        return x
 
 
 class LeNet(nn.Cell):
@@ -35,15 +59,9 @@ class LeNet(nn.Cell):
         self.conv2 = nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0, has_bias=False, pad_mode='valid')
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         self.reshape = P.Reshape()
-        self.fc1 = nn.Dense(400, 120)
-        self.fc1.matmul.add_prim_attr("primitive_target", "CPU")
-        self.fc1.bias_add.add_prim_attr("primitive_target", "CPU")
-        self.fc2 = nn.Dense(120, 84)
-        self.fc2.matmul.add_prim_attr("primitive_target", "CPU")
-        self.fc2.bias_add.add_prim_attr("primitive_target", "CPU")
-        self.fc3 = nn.Dense(84, 10)
-        self.fc3.matmul.add_prim_attr("primitive_target", "CPU")
-        self.fc3.bias_add.add_prim_attr("primitive_target", "CPU")
+        self.fc1 = DenseDevice(400, 120, device_target='CPU')
+        self.fc2 = DenseDevice(120, 84, device_target='CPU')
+        self.fc3 = DenseDevice(84, 10, device_target='CPU')
 
     def construct(self, input_x):
         output = self.conv1(input_x)

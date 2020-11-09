@@ -38,3 +38,11 @@ def test_net():
     output = net(Tensor(x))
     print(x)
     print(output.asnumpy())
+
+
+def test_net_ND():
+    x = np.random.randn(2, 332, 2048).astype(np.float32)
+    net = Net()
+    output = net(Tensor(x))
+    print(x)
+    print(output.asnumpy())

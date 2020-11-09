@@ -153,6 +153,22 @@ class Flatten(Cell):
         return F.reshape(x, (F.shape(x)[0], -1))
 
 
+def matmul_bias_select(x_shape, in_channel, out_channel):
+    """matmul and bias_add selection for different input"""
+    x_dim = len(x_shape)
+    broad_weight_shape = x_shape[:-2] + (out_channel, in_channel)
+    broad_bias_shape = x_shape[:-1] + (out_channel,)
+    weight_broadcast_to = P.BroadcastTo(broad_weight_shape)
+    bias_broadcast_to = P.BroadcastTo(broad_bias_shape)
+    if x_dim == 2:
+        matmul = P.MatMul(False, True)
+        bias_add = P.BiasAdd()
+    else:
+        matmul = P.BatchMatMul(False, True)
+        bias_add = P.TensorAdd()
+    return matmul, bias_add, weight_broadcast_to, bias_broadcast_to
+
+
 class Dense(Cell):
     r"""
     The dense connected layer.
@@ -206,6 +222,7 @@ class Dense(Cell):
         self.in_channels = Validator.check_positive_int(in_channels)
         self.out_channels = Validator.check_positive_int(out_channels)
         self.has_bias = Validator.check_bool(has_bias)
+        self.shape_op = P.Shape()
 
         if isinstance(weight_init, Tensor):
             if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
@@ -219,28 +236,33 @@ class Dense(Cell):
                 if bias_init.dim() != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError("Bias init shape error.")
             self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
-            self.bias_add = P.BiasAdd()
 
-        self.matmul = P.MatMul(transpose_b=True)
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
         if activation is not None and not isinstance(self.activation, (Cell, Primitive)):
             raise TypeError("The activation must be str or Cell or Primitive,"" but got {}.".format(activation))
         self.activation_flag = self.activation is not None
 
     def construct(self, x):
-        x = self.matmul(x, self.weight)
+        x_shape = self.shape_op(x)
+        x_dim = len(x_shape)
+        matmul, bias_add, weight_broadcast_to, bias_broadcast_to = matmul_bias_select(x_shape, self.in_channels,
+                                                                                      self.out_channels)
+        weight = self.weight if x_dim == 2 else weight_broadcast_to(self.weight)
+        x = matmul(x, weight)
         if self.has_bias:
-            x = self.bias_add(x, self.bias)
+            bias = self.bias if x_dim == 2 else bias_broadcast_to(self.bias)
+            x = bias_add(x, bias)
         if self.activation_flag:
             x = self.activation(x)
         return x
+
 
     def extend_repr(self):
         s = 'input_channels={}, output_channels={}'.format(self.in_channels, self.out_channels)
         if self.has_bias:
             s += ', has_bias={}'.format(self.has_bias)
         if self.activation_flag:
-            s += ', activation={}'.fomat(self.activation)
+            s += ', activation={}'.format(self.activation)
         return s
 
 
