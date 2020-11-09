@@ -30,7 +30,7 @@ do
   rm -rf ${execute_path}/sched_$i/
   mkdir ${execute_path}/sched_$i/
   cd ${execute_path}/sched_$i/ || exit
-  python ${self_path}/../test_cmp_sparse_embedding.py &
+  python ${self_path}/../test_cmp_sparse_embedding.py --device_target=$DEVICE_TARGET &
 done
 
 export MS_ROLE=MS_PSERVER
@@ -39,7 +39,7 @@ do
   rm -rf ${execute_path}/server_$i/
   mkdir ${execute_path}/server_$i/
   cd ${execute_path}/server_$i/ || exit
-  python ${self_path}/../test_cmp_sparse_embedding.py &
+  python ${self_path}/../test_cmp_sparse_embedding.py --device_target=$DEVICE_TARGET &
 done
 
 export MS_ROLE=MS_WORKER
@@ -48,7 +48,7 @@ do
   rm -rf ${execute_path}/worker_$i/
   mkdir ${execute_path}/worker_$i/
   cd ${execute_path}/worker_$i/ || exit
-  python ${self_path}/../test_cmp_sparse_embedding.py &
+  python ${self_path}/../test_cmp_sparse_embedding.py --device_target=$DEVICE_TARGET &
 done
 
 wait $!

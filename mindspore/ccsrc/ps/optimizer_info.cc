@@ -222,8 +222,14 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
     return;
   }
+
   int64_t reduced_indice_size = unique_sparse_grad.indices_size_ * sizeof(int);
   MS_EXCEPTION_IF_NULL(unique_sparse_grad.indices_);
+  ret = memcpy_s(indices()->addr, indices()->size, unique_sparse_grad.indices_, reduced_indice_size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+    return;
+  }
 
   gradient()->size = reduced_grad_size;
   indices()->size = reduced_indice_size;
