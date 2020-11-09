@@ -91,7 +91,7 @@ Status DeviceQueueOp::operator()() {
 #endif
   } else if (device_type_ == DeviceType::GPU) {
 #ifdef ENABLE_GPUQUE
-    RETURN_IF_NOT_OK(CircularPool::CreateCircularPool(&pool_));
+    RETURN_IF_NOT_OK(CircularPool::CreateCircularPool(&pool_, -1, 1024, false, true));
     RETURN_IF_NOT_OK(SendDataToGPU());
 #endif
   } else if (device_type_ == DeviceType::CPU) {

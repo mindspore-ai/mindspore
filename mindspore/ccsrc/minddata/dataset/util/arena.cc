@@ -235,14 +235,43 @@ std::ostream &operator<<(std::ostream &os, const ArenaImpl &s) {
 Status Arena::Init() {
   try {
     int64_t sz = size_in_MB_ * 1048576L;
+#ifdef ENABLE_GPUQUE
+    if (is_cuda_malloc_) {
+      auto ret = cudaHostAlloc(&ptr_, sz, cudaHostAllocDefault);
+      if (ret != cudaSuccess) {
+        MS_LOG(ERROR) << "cudaHostAlloc failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+        return Status(StatusCode::kOutOfMemory);
+      }
+      impl_ = std::make_unique<ArenaImpl>(ptr_, sz);
+    } else {
+      RETURN_IF_NOT_OK(DeMalloc(sz, &ptr_, false));
+      impl_ = std::make_unique<ArenaImpl>(ptr_, sz);
+    }
+#else
     RETURN_IF_NOT_OK(DeMalloc(sz, &ptr_, false));
     impl_ = std::make_unique<ArenaImpl>(ptr_, sz);
+#endif
   } catch (std::bad_alloc &e) {
     return Status(StatusCode::kOutOfMemory);
   }
   return Status::OK();
 }
 
+#ifdef ENABLE_GPUQUE
+Arena::Arena(size_t val_in_MB, bool is_cuda_malloc)
+    : ptr_(nullptr), size_in_MB_(val_in_MB), is_cuda_malloc_(is_cuda_malloc) {}
+
+Status Arena::CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB, bool is_cuda_malloc) {
+  RETURN_UNEXPECTED_IF_NULL(p_ba);
+  auto ba = new (std::nothrow) Arena(val_in_MB, is_cuda_malloc);
+  if (ba == nullptr) {
+    return Status(StatusCode::kOutOfMemory);
+  }
+  (*p_ba).reset(ba);
+  RETURN_IF_NOT_OK(ba->Init());
+  return Status::OK();
+}
+#else
 Arena::Arena(size_t val_in_MB) : ptr_(nullptr), size_in_MB_(val_in_MB) {}
 
 Status Arena::CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB) {
@@ -255,5 +284,6 @@ Status Arena::CreateArena(std::shared_ptr<Arena> *p_ba, size_t val_in_MB) {
   RETURN_IF_NOT_OK(ba->Init());
   return Status::OK();
 }
+#endif
 }  // namespace dataset
 }  // namespace mindspore

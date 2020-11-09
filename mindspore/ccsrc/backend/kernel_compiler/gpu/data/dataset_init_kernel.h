@@ -49,7 +49,7 @@ class DatasetInitKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
 
   // The capacity of buffer Q.
-  size_t buffer_q_capacity_{1};
+  size_t buffer_q_capacity_{2};
 };
 
 MS_REG_GPU_KERNEL(InitDataSetQueue, DatasetInitKernel)

@@ -85,8 +85,13 @@ class CircularPool : public MemoryPool {
     return os;
   }
 
+#ifdef ENABLE_GPUQUE
+  static Status CreateCircularPool(std::shared_ptr<MemoryPool> *out_pool, int max_size_in_gb = -1,
+                                   int arena_size = 4096, bool create_one_arena = false, bool is_cuda_malloc = false);
+#else
   static Status CreateCircularPool(std::shared_ptr<MemoryPool> *out_pool, int max_size_in_gb = -1,
                                    int arena_size = 4096, bool create_one_arena = false);
+#endif
 
  private:
   ListOfArenas mem_segments_;
@@ -96,9 +101,16 @@ class CircularPool : public MemoryPool {
   int arena_size_;
   int cur_size_in_mb_;
   RWLock rw_lock_;
+#ifdef ENABLE_GPU
+  bool is_cuda_malloc_;
+
+  // We can take negative or 0 as input which means unlimited.
+  CircularPool(int max_size_in_gb, int arena_size, bool is_cuda_malloc);
+#else
 
   // We can take negative or 0 as input which means unlimited.
   CircularPool(int max_size_in_gb, int arena_size);
+#endif
 
   Status AddOneArena();
 };
