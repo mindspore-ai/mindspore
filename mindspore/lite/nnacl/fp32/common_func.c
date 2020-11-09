@@ -43,7 +43,7 @@ void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_p
 
 void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
                         size_t plane_size, size_t stride, size_t relu_type) {
-#ifndef ENABLE_ARM
+#if !defined(ENABLE_ARM) && !defined(ENABLE_X86_64_SSE)
   PostConvFuncComm(c8_out_ptr, out_ptr, bias_ptr, output_channel, plane_size, plane_size, stride, relu_type, C8NUM);
 #else
   size_t oc8mod = output_channel % C8NUM;

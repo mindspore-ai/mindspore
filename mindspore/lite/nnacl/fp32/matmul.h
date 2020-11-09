@@ -47,6 +47,11 @@ void MatmulFloatNeon32(const float *a, const float *b, float *c, const float *bi
                        int col, int stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                           int col, int stride, int write_mode);
+#elif ENABLE_X86_64_SSE
+void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
+                      int col, int stride, size_t writeNhwc, size_t WriteWino);
+void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
+                         int col, int stride, int write_mode);
 #endif
 
 #ifdef ENABLE_NNACL_INFER_SHAPE

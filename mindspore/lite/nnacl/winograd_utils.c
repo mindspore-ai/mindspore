@@ -79,21 +79,21 @@ void GeneralInputTransformUnit(const float *src_data, float *dst_data, const flo
                                int src_step, int dst_step, int in_unit) {
   int len = in_unit * in_unit;
   if (len > MAX_LEN) return;
-#ifdef ENABLE_ARM
-  float32x4_t src[MAX_LEN];
-  float32x4_t t[MAX_LEN];
-  float32x4_t m[MAX_LEN];
-  float32x4_t vec_b[MAX_LEN];
-  float32x4_t vec_bt[MAX_LEN];
+#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
+  MS_FLOAT32X4 src[MAX_LEN];
+  MS_FLOAT32X4 t[MAX_LEN];
+  MS_FLOAT32X4 m[MAX_LEN];
+  MS_FLOAT32X4 vec_b[MAX_LEN];
+  MS_FLOAT32X4 vec_bt[MAX_LEN];
   for (int i = 0; i < len; i++) {
-    src[i] = vld1q_f32(src_data + i * src_step);
-    vec_b[i] = vdupq_n_f32(matrix_b[i]);
-    vec_bt[i] = vdupq_n_f32(matrix_bt[i]);
+    src[i] = MS_LDQ_F32(src_data + i * src_step);
+    vec_b[i] = MS_MOVQ_F32(matrix_b[i]);
+    vec_bt[i] = MS_MOVQ_F32(matrix_bt[i]);
   }
   MatrixMultiplyVec(vec_bt, src, t, NULL, in_unit, in_unit, in_unit);
   MatrixMultiplyVec(t, vec_b, m, NULL, in_unit, in_unit, in_unit);
   for (int i = 0; i < len; i++) {
-    vst1q_f32(dst_data + i * dst_step, m[i]);
+    MS_STQ_F32(dst_data + i * dst_step, m[i]);
   }
 #else
   float src[MAX_LEN];

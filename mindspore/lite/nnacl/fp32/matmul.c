@@ -190,6 +190,62 @@ void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col)
         :
         : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
         : "r10", "r12", "q0", "q1", "q2", "q3", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15");
+#elif ENABLE_X86_64_SSE
+      __m128 src1 = _mm_loadu_ps(src_c);
+      __m128 src2 = _mm_loadu_ps(src_c + col);
+      __m128 src3 = _mm_loadu_ps(src_c + 2 * col);
+      __m128 src4 = _mm_loadu_ps(src_c + 3 * col);
+      src_c += 4 * col;
+      __m128 src12L = _mm_unpacklo_ps(src1, src2);
+      __m128 src12H = _mm_unpackhi_ps(src1, src2);
+      __m128 src34L = _mm_unpacklo_ps(src3, src4);
+      __m128 src34H = _mm_unpackhi_ps(src3, src4);
+
+      __m128 dst0 = _mm_movelh_ps(src12L, src34L);
+      __m128 dst3 = _mm_movehl_ps(src34L, src12L);
+      __m128 dst6 = _mm_movelh_ps(src12H, src34H);
+      __m128 dst9 = _mm_movehl_ps(src34H, src12H);
+
+      __m128 src5 = _mm_loadu_ps(src_c);
+      __m128 src6 = _mm_loadu_ps(src_c + col);
+      __m128 src7 = _mm_loadu_ps(src_c + 2 * col);
+      __m128 src8 = _mm_loadu_ps(src_c + 3 * col);
+      src_c += 4 * col;
+      __m128 src56L = _mm_unpacklo_ps(src5, src6);
+      __m128 src56H = _mm_unpackhi_ps(src5, src6);
+      __m128 src78L = _mm_unpacklo_ps(src7, src8);
+      __m128 src78H = _mm_unpackhi_ps(src7, src8);
+      __m128 dst1 = _mm_movelh_ps(src56L, src78L);
+      __m128 dst4 = _mm_movehl_ps(src78L, src56L);
+      __m128 dst7 = _mm_movelh_ps(src56H, src78H);
+      __m128 dst10 = _mm_movehl_ps(src78H, src56H);
+
+      __m128 src9 = _mm_loadu_ps(src_c);
+      __m128 src10 = _mm_loadu_ps(src_c + col);
+      __m128 src11 = _mm_loadu_ps(src_c + 2 * col);
+      __m128 src12 = _mm_loadu_ps(src_c + 3 * col);
+      src_c += 4 * col;
+      __m128 src910L = _mm_unpacklo_ps(src9, src10);
+      __m128 src910H = _mm_unpackhi_ps(src9, src10);
+      __m128 src1112L = _mm_unpacklo_ps(src11, src12);
+      __m128 src1112H = _mm_unpackhi_ps(src11, src12);
+      __m128 dst2 = _mm_movelh_ps(src910L, src1112L);
+      __m128 dst5 = _mm_movehl_ps(src1112L, src910L);
+      __m128 dst8 = _mm_movelh_ps(src910H, src1112H);
+      __m128 dst11 = _mm_movehl_ps(src1112H, src910H);
+
+      _mm_storeu_ps(dst_c, dst0);
+      _mm_storeu_ps(dst_c + 4, dst1);
+      _mm_storeu_ps(dst_c + 8, dst2);
+      _mm_storeu_ps(dst_c + 12, dst3);
+      _mm_storeu_ps(dst_c + 16, dst4);
+      _mm_storeu_ps(dst_c + 20, dst5);
+      _mm_storeu_ps(dst_c + 24, dst6);
+      _mm_storeu_ps(dst_c + 28, dst7);
+      _mm_storeu_ps(dst_c + 32, dst8);
+      _mm_storeu_ps(dst_c + 36, dst9);
+      _mm_storeu_ps(dst_c + 40, dst10);
+      _mm_storeu_ps(dst_c + 44, dst11);
 #else
       for (int tr = 0; tr < C12NUM; tr++) {
         for (int tc = 0; tc < C4NUM; tc++) {
@@ -365,6 +421,35 @@ void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col) 
         :
         : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
         : "r10", "r11", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7");
+#elif ENABLE_X86_64_SSE
+      /* 8x4 row-major to col-major */
+      __m128 src1 = _mm_loadu_ps(src_c);
+      __m128 src2 = _mm_loadu_ps(src_c + col);
+      __m128 src3 = _mm_loadu_ps(src_c + 2 * col);
+      __m128 src4 = _mm_loadu_ps(src_c + 3 * col);
+      src_c += 4 * col;
+      __m128 src12L = _mm_unpacklo_ps(src1, src2);  // x5
+      __m128 src12H = _mm_unpackhi_ps(src1, src2);  // x1
+      __m128 src34L = _mm_unpacklo_ps(src3, src4);  // x
+      __m128 src34H = _mm_unpackhi_ps(src3, src4);
+      _mm_storeu_ps(dst_c, _mm_movelh_ps(src12L, src34L));
+      _mm_storeu_ps(dst_c + 8, _mm_movehl_ps(src34L, src12L));
+      _mm_storeu_ps(dst_c + 16, _mm_movelh_ps(src12H, src34H));
+      _mm_storeu_ps(dst_c + 24, _mm_movehl_ps(src34H, src12H));
+
+      __m128 src5 = _mm_loadu_ps(src_c);
+      __m128 src6 = _mm_loadu_ps(src_c + col);
+      __m128 src7 = _mm_loadu_ps(src_c + 2 * col);
+      __m128 src8 = _mm_loadu_ps(src_c + 3 * col);
+      src_c += 4 * col;
+      __m128 src56L = _mm_unpacklo_ps(src5, src6);
+      __m128 src56H = _mm_unpackhi_ps(src5, src6);
+      __m128 src78L = _mm_unpacklo_ps(src7, src8);
+      __m128 src78H = _mm_unpackhi_ps(src7, src8);
+      _mm_storeu_ps(dst_c + 4, _mm_movelh_ps(src56L, src78L));
+      _mm_storeu_ps(dst_c + 12, _mm_movehl_ps(src78L, src56L));
+      _mm_storeu_ps(dst_c + 20, _mm_movelh_ps(src56H, src78H));
+      _mm_storeu_ps(dst_c + 28, _mm_movehl_ps(src78H, src56H));
 #else
       for (int tr = 0; tr < 8; tr++) {
         for (int tc = 0; tc < 4; tc++) {
@@ -434,6 +519,26 @@ void RowMajor2Col4Major(float *src_ptr, float *dst_ptr, size_t row, size_t col) 
         :
         : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
         : "r10", "r12", "q0", "q1", "q2", "q3");
+#elif ENABLE_X86_64_SSE
+      __m128 src1 = _mm_loadu_ps(src_c);
+      __m128 src2 = _mm_loadu_ps(src_c + col);
+      __m128 src3 = _mm_loadu_ps(src_c + 2 * col);
+      __m128 src4 = _mm_loadu_ps(src_c + 3 * col);
+      src_c += 4 * col;
+      __m128 src12L = _mm_unpacklo_ps(src1, src2);
+      __m128 src12H = _mm_unpackhi_ps(src1, src2);
+      __m128 src34L = _mm_unpacklo_ps(src3, src4);
+      __m128 src34H = _mm_unpackhi_ps(src3, src4);
+
+      __m128 dst0 = _mm_movelh_ps(src12L, src34L);
+      __m128 dst1 = _mm_movehl_ps(src34L, src12L);
+      __m128 dst2 = _mm_movelh_ps(src12H, src34H);
+      __m128 dst3 = _mm_movehl_ps(src34H, src12H);
+
+      _mm_storeu_ps(dst_c, dst0);
+      _mm_storeu_ps(dst_c + 4, dst1);
+      _mm_storeu_ps(dst_c + 8, dst2);
+      _mm_storeu_ps(dst_c + 12, dst3);
 #else
       for (int tr = 0; tr < C4NUM; tr++) {
         for (int tc = 0; tc < C4NUM; tc++) {
@@ -564,6 +669,12 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
     MatmulFloatNeon32(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
   } else {
     MatmulFloatNeon32Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
+  }
+#elif ENABLE_X86_64_SSE
+  if (out_type == OutType_C8) {
+    MatmulFloatSse64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
+  } else {
+    MatmulFloatSse64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
   }
 #else
   MatMul12x8(a, b, c, bias, act_type, deep, row, col, stride, out_type);

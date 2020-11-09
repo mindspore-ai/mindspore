@@ -221,35 +221,23 @@ int CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *ma
   return NNACL_OK;
 }
 
-#ifdef ENABLE_ARM
-void MatrixMultiplyVec(const float32x4_t *matrix_a, const float32x4_t *matrix_b, float32x4_t *matrix_c,
+#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
+void MatrixMultiplyVec(const MS_FLOAT32X4 *matrix_a, const MS_FLOAT32X4 *matrix_b, MS_FLOAT32X4 *matrix_c,
                        const float *bias, int m, int k, int n) {
-  if (bias == NULL) {
-    int count = 0;
-    for (int h = 0; h < m; h++) {
-      int h_offset = h * k;
-      for (int w = 0; w < n; w++) {
-        float32x4_t res = vmovq_n_f32(0);
-        for (int i = 0; i < k; i++) {
-          res = vmlaq_f32(res, matrix_a[h_offset + i], matrix_b[w + i * n]);
-        }
-        matrix_c[count] = res;
-        count++;
+  int count = 0;
+  MS_FLOAT32X4 bias_ptr = MS_MOVQ_F32(0);
+  if (bias != NULL) {
+    bias_ptr = MS_LDQ_F32(bias);
+  }
+  for (int h = 0; h < m; h++) {
+    int h_offset = h * k;
+    for (int w = 0; w < n; w++) {
+      MS_FLOAT32X4 res = MS_MOVQ_F32(0);
+      for (int i = 0; i < k; i++) {
+        res = MS_MLAQ_F32(res, matrix_a[h_offset + i], matrix_b[w + i * n]);
       }
-    }
-  } else {
-    int count = 0;
-    float32x4_t bias_ptr = vld1q_f32(bias);
-    for (int h = 0; h < m; h++) {
-      int h_offset = h * k;
-      for (int w = 0; w < n; w++) {
-        float32x4_t res = vmovq_n_f32(0);
-        for (int i = 0; i < k; i++) {
-          res = vmlaq_f32(res, matrix_a[h_offset + i], matrix_b[w + i * n]);
-        }
-        matrix_c[count] = vaddq_f32(res, bias_ptr);
-        count++;
-      }
+      matrix_c[count] = MS_ADDQ_F32(res, bias_ptr);
+      count++;
     }
   }
 }

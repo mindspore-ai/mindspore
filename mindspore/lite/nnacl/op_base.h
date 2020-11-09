@@ -17,6 +17,14 @@
 #ifndef MINDSPORE_LITE_NNACL_OP_BASE_H_
 #define MINDSPORE_LITE_NNACL_OP_BASE_H_
 
+#ifdef ENABLE_ARM
+#include <arm_neon.h>
+#endif
+
+#ifdef ENABLE_X86_64_SSE
+#include <nmmintrin.h>
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -69,5 +77,31 @@ typedef struct OpParameter {
 } OpParameter;
 
 typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
+
+#ifdef ENABLE_ARM
+#define MS_FLOAT32X4 float32x4_t
+#define MS_LDQ_F32 vld1q_f32
+#define MS_ADDQ_F32 vaddq_f32
+#define MS_MOVQ_F32 vmovq_n_f32
+#define MS_DUPQ_F32 vdupq_n_f32  // It is recommended to replace with MS_MOVQ_F32.
+#define MS_SUBQ_F32 vsubq_f32
+#define MS_MLAQ_F32(src1, src2, src3) vmlaq_f32(src1, src2, src3)
+#define MS_STQ_F32 vst1q_f32
+#define MS_MAXQ_F32 vmaxq_f32
+#define MS_MINQ_F32 vminq_f32
+#define MS_MULQ_F32(src1, src2) vmulq_n_f32(src1, src2)
+#elif defined(ENABLE_X86_64_SSE)
+#define MS_FLOAT32X4 __m128
+#define MS_LDQ_F32 _mm_loadu_ps
+#define MS_ADDQ_F32 _mm_add_ps
+#define MS_MOVQ_F32 _mm_set_ps1
+#define MS_DUPQ_F32 _mm_load_ps1  // It is recommended to replace with MS_MOVQ_F32.
+#define MS_MLAQ_F32(src1, src2, src3) _mm_add_ps(src1, _mm_mul_ps(src2, src3))
+#define MS_STQ_F32 _mm_storeu_ps
+#define MS_SUBQ_F32 _mm_sub_ps
+#define MS_MAXQ_F32 _mm_max_ps
+#define MS_MINQ_F32 _mm_min_ps
+#define MS_MULQ_F32(src1, src2) _mm_mul_ps(src1, _mm_set_ps1(src2))
+#endif
 
 #endif  // MINDSPORE_LITE_NNACL_OP_BASE_H_

@@ -98,7 +98,7 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
 
 int Convolution1x1CPUKernel::InitConv1x1Param() {
   int hw_tile = C12NUM;
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   hw_tile = C4NUM;
 #endif
   if ((matmul_param_->row_ > (hw_tile * op_parameter_->thread_num_)) && (matmul_param_->row_ > matmul_param_->col_)) {
@@ -170,7 +170,7 @@ int Convolution1x1CPUKernel::DoConv1x1Hw(int task_id) {
   float *thread_input_ptr = input_ptr_ + task_id * thread_stride_ * matmul_param_->deep_;
   float *thread_pack_input = pack_input_ + task_id * thread_stride_ * matmul_param_->deep_;
 
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   RowMajor2Col4Major(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
 #else
   RowMajor2Col12Major(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
@@ -197,7 +197,7 @@ int Convolution1x1CPUKernel::Run() {
   auto src_in = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto src_out = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
 
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   pack_input_ =
     reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_4_ * matmul_param_->deep_ * sizeof(float)));
 #else
@@ -221,7 +221,7 @@ int Convolution1x1CPUKernel::Run() {
     if (multi_thread_by_hw_) {
       ParallelLaunch(this->context_->thread_pool_, Convolution1x1RunHw, this, thread_count_);
     } else {
-#ifdef ENABLE_ARM32
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
       RowMajor2Col4Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
 #else
       RowMajor2Col12Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
