@@ -262,6 +262,9 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   }
   // adjust execution order because  merge child graph and other special operations
   AdjustKernel(graph);
+  // Reorder optimizer order
+  auto execution_order = graph->execution_order();
+  Reorder(&execution_order);
   // Assign streams for control sink and hccl and so on
   AssignStream(NOT_NULL(graph));
 
