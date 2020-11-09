@@ -152,6 +152,11 @@ class BatchNormFoldGpuKernel : public GpuKernel {
     return true;
   }
 
+  void DestroyResource() noexcept override {
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(scale_bias_mean_var_desc_), "Destroy para desc failed");
+  }
+
  protected:
   void InitSizeLists() override {
     // x, mean, variance, current_step
@@ -177,11 +182,6 @@ class BatchNormFoldGpuKernel : public GpuKernel {
   }
 
  private:
-  void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(scale_bias_mean_var_desc_), "Destroy para desc failed");
-  }
-
   size_t input_size_;
   size_t output_size_;
   std::vector<size_t> input_size_list_;

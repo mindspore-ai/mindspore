@@ -111,6 +111,13 @@ class BiasAddGradGpuKernel : public GpuKernel {
     return true;
   }
 
+  void DestroyResource() noexcept override {
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnDestroyReduceTensorDescriptor(op_desc_),
+                                "cudnnDestroyReduceTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(db_desc_), "cudnnDestroyTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dy_desc_), "cudnnDestroyOpTensorDescriptor failed");
+  }
+
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
@@ -137,13 +144,6 @@ class BiasAddGradGpuKernel : public GpuKernel {
   }
 
  private:
-  void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnDestroyReduceTensorDescriptor(op_desc_),
-                                "cudnnDestroyReduceTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(db_desc_), "cudnnDestroyTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dy_desc_), "cudnnDestroyOpTensorDescriptor failed");
-  }
-
   bool same_dims_;
   cudnnHandle_t cudnn_handle_;
   cudnnDataType_t cudnn_data_type_;

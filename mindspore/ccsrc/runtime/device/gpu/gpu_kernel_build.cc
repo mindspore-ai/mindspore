@@ -67,6 +67,8 @@ void GpuBuild(const KernelGraphPtr &kernel_graph) {
       if (!gpu_kernel_ptr->Init(kernel)) {
         MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
       }
+      gpu_kernel_ptr->InitDynamicKernel(kernel);
+      gpu_kernel_ptr->DynamicKernel()->Initialize();
       session::AnfRuntimeAlgorithm::SetKernelMod((kernel::KernelModPtr)gpu_kernel_ptr, kernel.get());
     }
   }

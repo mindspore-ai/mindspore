@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T, typename S>
 class GatherV2GpuFwdKernel : public GpuKernel {
  public:
-  GatherV2GpuFwdKernel() : axis_(0), handle_(nullptr) {}
+  GatherV2GpuFwdKernel() { ResetResource(); }
   ~GatherV2GpuFwdKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -52,9 +52,9 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     if (input_num != 2) {
       MS_LOG(EXCEPTION) << "Argument number is " << input_num << ", but GatherGpuV2FwdKernel needs 2.";
     }
-    input_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    indices_shapes_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    output_shapes_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    input_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    indices_shapes_ = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
+    output_shapes_ = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
 
     axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
@@ -65,9 +65,18 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
+  void ResetResource() noexcept override {
+    input_shapes_.clear();
+    indices_shapes_.clear();
+    output_shapes_.clear();
+    std::fill(dims_, dims_ + 3, 0);
+    axis_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
 
  protected:
-  void InitResource() override { handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle(); }
   void InitSizeLists() override {
     size_t size = GetSize(input_shapes_);
     input_size_list_.push_back(size);
@@ -118,7 +127,6 @@ class GatherV2GpuFwdKernel : public GpuKernel {
 
   size_t dims_[3] = {};
   int axis_;
-  cudnnHandle_t handle_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

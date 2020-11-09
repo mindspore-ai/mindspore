@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class FlattenGardGpuBkwKernel : public GpuKernel {
  public:
-  FlattenGardGpuBkwKernel() : input_size_(0), output_size_(0), workspace_size_(0) {}
+  FlattenGardGpuBkwKernel() { ResetResource(); }
   ~FlattenGardGpuBkwKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -54,7 +54,7 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
       return false;
     }
 
-    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     for (size_t i = 0; i < shape.size(); ++i) {
       if (input_size_ == 0) {
         input_size_ = 1;
@@ -67,11 +67,17 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    input_size_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_);
-    output_size_ = input_size_;
-    output_size_list_.push_back(output_size_);
+    output_size_list_.push_back(input_size_);
   }
 
  private:
@@ -80,8 +86,6 @@ class FlattenGardGpuBkwKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
 
   size_t input_size_;
-  size_t output_size_;
-  size_t workspace_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -306,7 +306,9 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   if (save_graphs) {
     DumpIRProto(graph, "before_removeNop_" + std::to_string(graph_id));
   }
-
+  // Update Graph Dynamic Shape Attr.
+  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+  graph->UpdateGraphDynamicAttr();
   // Hide NopOp from execution graph
   opt::HideNopNode(graph.get());
   // Build kernel if node is cnode
@@ -317,13 +319,10 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   graph->set_execution_order(execution_order);
   // Get summary nodes.
   SetSummaryNodes(graph.get());
-  // Remove NopOp from execution graph
-  opt::RemoveNopNode(graph.get());
   // Dump .pb graph after graph optimization
   if (save_graphs) {
     DumpIRProto(graph, "after_opt_" + std::to_string(graph_id));
   }
-
   // Set graph manager.
   MS_EXCEPTION_IF_NULL(context_);
   FuncGraphManagerPtr manager = MakeManager({graph});

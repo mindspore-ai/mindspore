@@ -201,6 +201,21 @@ class FusedBatchNormGradExGpuKernel : public GpuKernel {
 
     workspace_size_list_.push_back(workspace_size_);
   }
+  void DestroyResource() noexcept override {
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
+    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
+      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
+      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyActivationDescriptor(activation_desc_),
+                                 "Destroy activation descriptor failed");
+    }
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dy_desc_), "Destroy dy desc failed");
+
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dx_desc_), "Destroy dx desc failed");
+    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
+      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dz_desc_), "Destroy z desc failed");
+    }
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(scale_bias_diff_desc_), "Destroy para desc failed");
+  }
 
  private:
   void SetTensorDescriptor(const std::string &format, const std::vector<size_t> &shape) {
@@ -253,22 +268,6 @@ class FusedBatchNormGradExGpuKernel : public GpuKernel {
         cudnnSetActivationDescriptor(activation_desc_, CUDNN_ACTIVATION_RELU, CUDNN_NOT_PROPAGATE_NAN, 0.0),
         "cudnnSetActivationDescriptor failed");
     }
-  }
-
-  void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
-    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
-      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyActivationDescriptor(activation_desc_),
-                                 "Destroy activation descriptor failed");
-    }
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dy_desc_), "Destroy dy desc failed");
-
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dx_desc_), "Destroy dx desc failed");
-    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dz_desc_), "Destroy z desc failed");
-    }
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(scale_bias_diff_desc_), "Destroy para desc failed");
   }
 
   size_t x_size_;

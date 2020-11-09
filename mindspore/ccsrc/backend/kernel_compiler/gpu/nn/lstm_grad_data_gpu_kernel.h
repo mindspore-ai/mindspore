@@ -150,6 +150,18 @@ class LstmGradDataGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
+  void DestroyResource() noexcept override {
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyRNNDescriptor(rnn_desc_), "destroy rnn_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyDropoutDescriptor(dropout_desc_), "destroy dropout_desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dcx_desc_), "destroy dcx_desc_ failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dhx_desc_), "destroy dhx_desc_ failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyFilterDescriptor(w_desc_), "destroy w_desc_ failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(cx_desc_), "destroy cx_desc_ failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(hx_desc_), "destroy hx_desc_ failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dcy_desc_), "destroy dcy_desc_ failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dhy_desc_), "destroy dhy_desc_ failed");
+    DestroyTensorDescGrp();
+  }
 
  protected:
   void InitResource() override {
@@ -195,18 +207,6 @@ class LstmGradDataGpuKernel : public GpuKernel {
   }
 
  private:
-  void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyRNNDescriptor(rnn_desc_), "destroy rnn_desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyDropoutDescriptor(dropout_desc_), "destroy dropout_desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dcx_desc_), "destroy dcx_desc_ failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dhx_desc_), "destroy dhx_desc_ failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyFilterDescriptor(w_desc_), "destroy w_desc_ failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(cx_desc_), "destroy cx_desc_ failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(hx_desc_), "destroy hx_desc_ failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dcy_desc_), "destroy dcy_desc_ failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(dhy_desc_), "destroy dhy_desc_ failed");
-    DestroyTensorDescGrp();
-  }
   void CreateTensorDescGrp() {
     int x_dims[3]{batch_size_, input_size_, 1};
     int y_dims[3]{batch_size_, hidden_size_ * (bidirectional_ ? 2 : 1), 1};

@@ -140,6 +140,20 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
     return true;
   }
 
+  void DestroyResource() noexcept override {
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(scale_bias_mean_var_desc_), "Destroy para desc failed");
+    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
+      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(z_desc_), "Destroy z desc failed");
+    }
+
+    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
+      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyActivationDescriptor(activation_desc_),
+                                 "Destroy activation descriptor failed");
+    }
+  }
+
  protected:
   void InitResource() override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
@@ -235,20 +249,6 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnSetActivationDescriptor(activation_desc_, CUDNN_ACTIVATION_RELU, CUDNN_NOT_PROPAGATE_NAN, 0.0),
         "cudnnSetActivationDescriptor failed");
-    }
-  }
-
-  void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(scale_bias_mean_var_desc_), "Destroy para desc failed");
-    if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(z_desc_), "Destroy z desc failed");
-    }
-
-    if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyActivationDescriptor(activation_desc_),
-                                 "Destroy activation descriptor failed");
     }
   }
 

@@ -27,8 +27,7 @@ namespace kernel {
 template <typename T, typename S>
 class UnsortedSegmentSumGpuKernel : public GpuKernel {
  public:
-  UnsortedSegmentSumGpuKernel()
-      : input_dim0_(1), input_dim1_(1), output_dim0_(1), output_dim1_(1), is_null_input_(false) {}
+  UnsortedSegmentSumGpuKernel() { ResetResource(); }
   ~UnsortedSegmentSumGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -53,15 +52,15 @@ class UnsortedSegmentSumGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shapes);
     if (is_null_input_) {
       MS_LOG(WARNING) << "UnsortedSegmentSum input is null";
       InitSizeLists();
       return true;
     }
-    auto ids_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto ids_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
+    auto output_shapes = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
 
     auto axis = ids_shapes.size();
     for (size_t i = 0; i < input_shapes.size(); i++) {
@@ -79,6 +78,17 @@ class UnsortedSegmentSumGpuKernel : public GpuKernel {
 
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    input_dim0_ = 1;
+    input_dim1_ = 1;
+    output_dim0_ = 1;
+    output_dim1_ = 1;
+    is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

@@ -29,14 +29,7 @@ namespace kernel {
 template <typename T>
 class ActivationGradGpuKernel : public GpuKernel {
  public:
-  ActivationGradGpuKernel()
-      : cudnn_handle_(nullptr),
-        activation_desc_(nullptr),
-        mode_(CUDNN_ACTIVATION_RELU),
-        data_descriptor_(nullptr),
-        is_null_input_(false),
-        cudnn_data_type_(CUDNN_DATA_FLOAT),
-        input_size_(0) {}
+  ActivationGradGpuKernel() { ResetResource(); }
   ~ActivationGradGpuKernel() override { DestroyResource(); }
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -117,6 +110,25 @@ class ActivationGradGpuKernel : public GpuKernel {
     return true;
   }
 
+  void DestroyResource() noexcept override {
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyActivationDescriptor(activation_desc_),
+                               "cudnnDestroyActivationDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(data_descriptor_), "cudnnDestroyTensorDescriptor failed");
+  }
+
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    activation_desc_ = nullptr;
+    mode_ = CUDNN_ACTIVATION_RELU;
+    data_descriptor_ = nullptr;
+    is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    input_size_ = 0;
+  }
+
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
@@ -135,12 +147,6 @@ class ActivationGradGpuKernel : public GpuKernel {
   }
 
  private:
-  void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyActivationDescriptor(activation_desc_),
-                               "cudnnDestroyActivationDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(data_descriptor_), "cudnnDestroyTensorDescriptor failed");
-  }
-
   std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReluGrad", CUDNN_ACTIVATION_RELU},
                                                              {"ReLU6Grad", CUDNN_ACTIVATION_CLIPPED_RELU},
                                                              {"TanhGrad", CUDNN_ACTIVATION_TANH},

@@ -113,8 +113,6 @@ class BatchNormFold2GpuKernel : public GpuKernel {
   }
 
  private:
-  void DestroyResource() noexcept {}
-
   cudnnHandle_t cudnn_handle_;
   bool is_null_input_;
   size_t batch_size_;

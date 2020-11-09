@@ -14,28 +14,23 @@
  * limitations under the License.
  */
 
-#include "runtime/device/ascend/executor/executor_callback.h"
-#include "utils/log_adapter.h"
+#include "backend/kernel_compiler/gpu/gpu_kernel.h"
 
 namespace mindspore {
-namespace device {
-namespace ascend {
-void ExecutorCallback::RegistCallback(const std::function<void()> &callback) {
-  std::lock_guard<std::mutex> guard(lock_);
-  callback_queue_.push(callback);
-}
-
-void ExecutorCallback::Consume() {
-  std::lock_guard<std::mutex> guard(lock_);
-  while (!callback_queue_.empty()) {
-    auto callback_func = callback_queue_.front();
-    callback_queue_.pop();
-    if (!callback_func) {
-      MS_LOG(EXCEPTION) << "callback_func is empty";
-    }
-    callback_func();
+namespace kernel {
+void GpuDynamicKernel::UpdateArgs() {
+  if (!is_input_dynamic_shape_ && is_output_dynamic_shape_ && !have_depends()) {
+    return;
   }
+
+  MS_LOG(INFO) << "Update Args: " << cnode_ptr_->fullname_with_scope();
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode_ptr_);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  auto gpu_kernel_mod = dynamic_cast<GpuKernel *>(kernel_mod);
+  MS_EXCEPTION_IF_NULL(gpu_kernel_mod);
+  gpu_kernel_mod->DestroyResource();
+  gpu_kernel_mod->ResetResource();
+  gpu_kernel_mod->Init(cnode_ptr_);
 }
-}  // namespace ascend
-}  // namespace device
+}  // namespace kernel
 }  // namespace mindspore
