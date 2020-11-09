@@ -835,6 +835,10 @@ ThreadPool *CreateThreadPool(int thread_num, int mode) {
   }
 #endif
   ThreadPool *thread_pool = (struct ThreadPool *)(malloc(sizeof(ThreadPool)));
+  if (thread_pool == NULL) {
+    LOG_ERROR("Malloc ThreadPool failed");
+    return NULL;
+  }
   thread_pool->thread_num = thread_num > MAX_THREAD_NUM ? MAX_THREAD_NUM : thread_num;
   thread_pool->is_alive = ATOMIC_VAR_INIT(true);
   thread_pool->mode = mode;

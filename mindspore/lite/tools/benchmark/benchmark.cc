@@ -275,7 +275,7 @@ int Benchmark::CompareStringData(const std::string &name, tensor::MSTensor *tens
         std::cout << "  " << output_strings[i] << std::endl;
       }
       if (calib_strings[i] != output_strings[i]) {
-        MS_LOG(ERROR) << "";
+        MS_LOG(ERROR) << "Compare failed, index: " << i;
         return RET_ERROR;
       }
     }
