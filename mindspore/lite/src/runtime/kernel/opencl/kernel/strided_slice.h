@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SLICE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SLICE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_STRIDED_SLICE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_STRIDED_SLICE_H_
 
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
@@ -31,12 +31,23 @@ class SliceOpenCLKernel : public OpenCLKernel {
 
   ~SliceOpenCLKernel() override = default;
 
-  int Init() override;
-
+  int Prepare() override;
   int Run() override;
 
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
+
  private:
+  int InitConstArgs();
+
   cl::Kernel kernel_;
+  cl_int4 input_shape_{};
+  cl_int4 output_shape_{};
+  cl_int2 io_slices_{};
+  cl_int4 begin_{};
+  cl_int4 stride_{{1, 1, 1, 1}};
+  cl_int4 size_{};
 };
 
 }  // namespace mindspore::kernel

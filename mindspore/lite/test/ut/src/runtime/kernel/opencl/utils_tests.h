@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <iostream>
-#include "tests/ut/cpp/common/common_test.h"
-#include "src/common/log_adapter.h"
-#include "mindspore/lite/src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-
 #ifndef TESTS_UT_OPENCL_KERNEL_TESTS_UTILS_H_
 #define TESTS_UT_OPENCL_KERNEL_TESTS_UTILS_H_
+
+#include <string>
+#include <iostream>
+#include <vector>
+#include <tuple>
+#include <map>
+#include "mindspore/lite/src/tensor.h"
+#include "mindspore/lite/src/common/file_utils.h"
+
+using mindspore::lite::Tensor;
 
 namespace mindspore {
 
@@ -62,6 +64,10 @@ void CompareOutput(lite::Tensor *output_tensor, const std::string &file_path, T 
   auto expect_data = mindspore::lite::ReadFile(file_path.c_str(), &output_size);
   CompareOutput(output_tensor->data_c(), expect_data, output_tensor->ElementsNum(), atol, rtol);
 }
+
+void TestMain(const std::vector<std::tuple<std::vector<int>, float *, Tensor::Category>> &input_infos,
+              std::tuple<std::vector<int>, float *> output_info, OpParameter *op_parameter, bool fp16_enable = false,
+              float atol = 10e-9, bool print_output = false);
 
 }  // namespace mindspore
 
