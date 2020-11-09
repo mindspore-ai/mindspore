@@ -67,41 +67,25 @@ def check_equal(param1, param2, msg="{},{}"):
 
 
 @constexpr
+def split_tuple_index_for_none(tuple_index):
+    """return the none_positions and the tuple_index_without_none whose None index is replaced by slice."""
+    none_positions, tuple_index_without_none = (), ()
+    for idx, item in enumerate(tuple_index):
+        if item is None:
+            none_positions += (idx,)
+            tuple_index_without_none += (slice(None, None, None),)
+        else:
+            tuple_index_without_none += (item,)
+    return none_positions, tuple_index_without_none
+
+
+@constexpr
 def check_ellipsis_shape_size(data_shape, value_shape, data_size, value_size):
     """Checks the shape and size of the sensor and value."""
     if data_shape == value_shape or data_size == value_size or value_size == 1:
         return True
     raise ValueError("The value(shape={}), can not assign to tensor(shape={}).".format(
         value_shape, data_shape))
-
-
-@constexpr
-def restrict_int_index(data_shape, tuple_indexes):
-    """
-    Check the int index of tuple_indexes if value of index is out of the corresponding data shape
-    and turn the negtive int index to positive int index.
-
-    Inputs:
-        data_shape: the shape of data.
-        tuple_indexes(tuple[mstype.int32]): the tuple of index which will be used in setitem or getitem.
-
-    Outputs:
-        tuple_indexes_new(tuple[mstype.int32]): same purpose with tuple_indexes but only contain positive.
-    """
-    if tuple_indexes is None:
-        return tuple_indexes
-    tuple_indexes_new = ()
-    for i, index in enumerate(tuple_indexes):
-        if isinstance(index, mstype.Int):
-            if index < -data_shape[i] or index >= data_shape[i]:
-                raise_index_error("The index is out of the data's special dimension range.")
-            elif index < 0:
-                tuple_indexes_new += (tuple_indexes[i]+data_shape[i],)
-            else:
-                tuple_indexes_new += (tuple_indexes[i],)
-        else:
-            tuple_indexes_new += (tuple_indexes[i],)
-    return tuple_indexes_new
 
 
 @constexpr

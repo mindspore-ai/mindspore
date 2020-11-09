@@ -19,6 +19,7 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int MAX_DIMS = 8;
 void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -205,7 +206,7 @@ void SliceCPUKernel::CheckParam(const CNodePtr &kernel_node) const {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but SliceCPUKernel needs 1 output.";
   }
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.size() > 4) {
+  if (input_shape.size() > MAX_DIMS) {
     MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but SliceCPUKernel olny support 4d or lower.";
   }
   if (input_shape.size() == 0) {
