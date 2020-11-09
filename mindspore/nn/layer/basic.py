@@ -538,11 +538,11 @@ class Unfold(Cell):
         and the shape is [out_batch, out_depth, out_row, out_col], the out_batch is the same as the in_batch.
 
     Examples:
-        >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 1, 1, 1], rates=[1, 1, 1, 1])
-        >>> image = Tensor(np.ones([1, 1, 3, 3]), dtype=mstype.float16)
+        >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 2, 2, 1], rates=[1, 2, 2, 1])
+        >>> image = Tensor(np.ones([2, 3, 6, 6]), dtype=mstype.float16)
         >>> net(image)
-        Tensor ([[[[1, 1] [1, 1]] [[1, 1], [1, 1]] [[1, 1] [1, 1]], [[1, 1], [1, 1]]]],
-                shape=(1, 4, 2, 2), dtype=mstype.float16)
+        Tensor ([[[[1, 1] [1, 1]] [[1, 1], [1, 1]] [[1, 1] [1, 1]], [[1, 1] [1, 1]], [[1, 1] [1, 1]],
+                [[1, 1], [1, 1]]]], shape=(2, 12, 2, 2), dtype=mstype.float16)
     """
 
     def __init__(self, ksizes, strides, rates, padding="valid"):
