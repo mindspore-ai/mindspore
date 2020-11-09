@@ -596,15 +596,26 @@ class CumProd(PrimitiveWithInfer):
         Tensor, has the same shape and dtype as the `input_x`.
 
     Examples:
+        >>> a = 1
+        >>> b = 2
+        >>> c = 3
         >>> input_x = Tensor(np.array([a, b, c]).astype(np.float32))
         >>> op0 = P.CumProd()
-        >>> output = op0(input_x, 0) # output=[a, a * b, a * b * c]
+        >>> output0 = op0(input_x, 0) # output=[a, a * b, a * b * c]
         >>> op1 = P.CumProd(exclusive=True)
-        >>> output = op1(input_x, 0) # output=[1, a, a * b]
+        >>> output1 = op1(input_x, 0) # output=[1, a, a * b]
         >>> op2 = P.CumProd(reverse=True)
-        >>> output = op2(input_x, 0) # output=[a * b * c, b * c, c]
+        >>> output2 = op2(input_x, 0) # output=[a * b * c, b * c, c]
         >>> op3 = P.CumProd(exclusive=True, reverse=True)
-        >>> output = op3(input_x, 0) # output=[b * c, c, 1]
+        >>> output3 = op3(input_x, 0) # output=[b * c, c, 1]
+        >>> print(output0)
+        [1. 2. 6.]
+        >>> print(output1)
+        [1. 1. 2.]
+        >>> print(output2)
+        [6. 6. 3.]
+        >>> print(output3)
+        [6. 3. 1.]
     """
 
     @prim_attr_register
@@ -3028,6 +3039,8 @@ class Cos(PrimitiveWithInfer):
         >>> cos = P.Cos()
         >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = cos(input_x)
+        >>> print(output)
+        [0.971338	0.67487574	0.95233357	0.9959527 ]
     """
 
     @prim_attr_register

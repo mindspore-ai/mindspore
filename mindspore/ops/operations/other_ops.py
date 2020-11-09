@@ -215,7 +215,7 @@ class CheckValid(PrimitiveWithInfer):
           Data type must be float16 or float32.
 
     Outputs:
-        Tensor, the valided tensor.
+        Tensor, with shape of (N,) and dtype of bool.
 
     Examples:
         >>> import mindspore
@@ -234,7 +234,8 @@ class CheckValid(PrimitiveWithInfer):
         >>> bboxes = Tensor(np.linspace(0, 6, 12).reshape(3, 4), mindspore.float32)
         >>> img_metas = Tensor(np.array([2, 1, 3]), mindspore.float32)
         >>> net = Net()
-        >>> result = net(bboxes, img_metas)
+        >>> output = net(bboxes, img_metas)
+        >>> print(output)
         [True   False   False]
     """
 
@@ -380,6 +381,9 @@ class Partial(Primitive):
 class Depend(Primitive):
     """
     Depend is used for processing side-effect operations.
+
+    Note:
+        Internal API, not for public use.
 
     Inputs:
         - **value** (Tensor) - the real value to return for depend operator.

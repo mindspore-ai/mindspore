@@ -162,7 +162,9 @@ class DType(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> type = P.DType()(input_tensor)
+        >>> output = P.DType()(input_tensor)
+        >>> print(output)
+        Float32
     """
 
     @prim_attr_register
@@ -238,7 +240,11 @@ class Cast(PrimitiveWithInfer):
         >>> input_x = Tensor(input_np)
         >>> type_dst = mindspore.float16
         >>> cast = P.Cast()
-        >>> result = cast(input_x, type_dst)
+        >>> output = cast(input_x, type_dst)
+        >>> print(output.dtype)
+        Float16
+        >>> print(output.shape)
+        (2, 3, 4, 5)
     """
 
     @prim_attr_register
@@ -2476,10 +2482,10 @@ class DiagPart(PrimitiveWithInfer):
     :math:`output[i_1,..., i_k] = input[i_1,..., i_k, i_1,..., i_k]`.
 
     Inputs:
-        - **input_x** (Tensor) - The input Tensor.
+        - **input_x** (Tensor) - tensor of rank k where k is even and not zero.
 
     Outputs:
-        Tensor.
+        Tensor, the extracted diagonal has the same dtype as the `input_x`.
 
     Examples
         >>> input_x = Tensor([[1, 0, 0, 0],
@@ -2487,7 +2493,8 @@ class DiagPart(PrimitiveWithInfer):
         >>>                   [0, 0, 3, 0],
         >>>                   [0, 0, 0, 4]])
         >>> diag_part = P.DiagPart()
-        >>> diag_part(input_x)
+        >>> output = diag_part(input_x)
+        >>> print(output)
         [1, 2, 3, 4]
     """
 
@@ -3215,17 +3222,18 @@ class DepthToSpace(PrimitiveWithInfer):
         block_size (int): The block size used to divide depth data. It must be >= 2.
 
     Inputs:
-        - **x** (Tensor) - The target tensor. It must be a 4-D tensor.
+        - **x** (Tensor) - The target tensor. It must be a 4-D tensor with shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
     Outputs:
-        Tensor, has the same shape and dtype as the 'x'.
+        Tensor of shape :math:`(N, C_{in} / \text{block_size}, H_{in} * \text{block_size}, W_{in} * \text{block_size})`.
 
     Examples:
         >>> x = Tensor(np.random.rand(1,12,1,1), mindspore.float32)
         >>> block_size = 2
         >>> op = P.DepthToSpace(block_size)
         >>> output = op(x)
-        >>> output.asnumpy().shape == (1,3,2,2)
+        >>> print(output.shape)
+        (1, 3, 2, 2)
     """
 
     @prim_attr_register
