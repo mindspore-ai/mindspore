@@ -130,7 +130,8 @@ class bbox_encode():
         self.match_thresh = cfg['match_thresh']
         self.variances = cfg['variance']
         self.priors = prior_box((cfg['image_size'], cfg['image_size']),
-                                cfg['min_sizes'], cfg['steps'],
+                                [[16, 32], [64, 128], [256, 512]],
+                                [8, 16, 32],
                                 cfg['clip'])
 
     def __call__(self, image, targets):
