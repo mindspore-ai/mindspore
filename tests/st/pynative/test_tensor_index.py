@@ -786,8 +786,8 @@ def test_tensor_assign_exception():
     t = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
     tck = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
     # Error for A[Slice] = Number
-    # 1. A[Slice] = Number,  0 in shape
-    with pytest.raises(ValueError):
+    # 1. A[Slice] = Number,  Slice error
+    with pytest.raises(IndexError):
         net_e2(t, 2)
 
     # Error for A[Slice] = U, U is a Tensor

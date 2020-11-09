@@ -33,6 +33,11 @@ class TensroAdd(nn.Cell):
 
         self.add = P.TensorAdd()
 
+        self.x = Parameter(initializer(
+            Tensor(np.random.randn(2, 0).astype(np.float32)), [2, 0]), name='x')
+        self.y = Parameter(initializer(
+            Tensor(np.random.randn(2, 1).astype(np.float32)), [2, 1]), name='y')
+
         self.x1 = Parameter(initializer(
             Tensor(np.arange(3).reshape(3).astype(np.float32)), [3]), name='x1')
         self.y1 = Parameter(initializer(
@@ -50,7 +55,9 @@ class TensroAdd(nn.Cell):
 
     @ms_function
     def construct(self):
-        return (self.add(self.x1, self.y1), self.add(self.x2, self.y2), self.add(self.x3, self.y3))
+        return (
+            self.add(self.x, self.y), self.add(self.x1, self.y1), self.add(self.x2, self.y2),
+            self.add(self.x3, self.y3))
 
 
 @pytest.mark.level0
@@ -59,8 +66,9 @@ class TensroAdd(nn.Cell):
 def test_TensorAdd():
     add = TensroAdd()
     output = add()
-    expect0 = np.array([2, 3, 4])
-    expect1 = np.array(
+    expect0 = np.array([])
+    expect1 = np.array([2, 3, 4])
+    expect2 = np.array(
         [[[[0., 2., 4.],
            [6., 8., 10.],
            [12., 14., 16.]],
@@ -88,7 +96,7 @@ def test_TensorAdd():
           [[144., 146., 148.],
            [150., 152., 154.],
            [156., 158., 160.]]]])
-    expect2 = np.array(
+    expect3 = np.array(
         [[[[0., 2., 4.],
            [6., 8., 10.],
            [12., 14., 16.]],
@@ -120,26 +128,4 @@ def test_TensorAdd():
     assert (output[0].asnumpy() == expect0).all()
     assert (output[1].asnumpy() == expect1).all()
     assert (output[2].asnumpy() == expect2).all()
-
-
-class TensorAdd2(nn.Cell):
-    def __init__(self):
-        super(TensorAdd2, self).__init__()
-        self.add = P.TensorAdd()
-        self.x = Parameter(initializer(
-            Tensor(np.random.randn(2, 0).astype(np.float32)), [2, 0]), name='x')
-        self.y = Parameter(initializer(
-            Tensor(np.random.randn(2, 1).astype(np.float32)), [2, 1]), name='y')
-
-    @ms_function
-    def construct(self):
-        return self.add(self.x, self.y)
-
-
-# Constructing a tensor with 0 in shape is not support, excluding empty tensor.
-@pytest.mark.skip(reason='0 in shape is not support')
-def test_TensorAdd_shape_has_zero():
-    add = TensorAdd2()
-    output = add()
-    expect = np.array([])
-    assert (output.asnumpy() == expect).all()
+    assert (output[3].asnumpy() == expect3).all()
