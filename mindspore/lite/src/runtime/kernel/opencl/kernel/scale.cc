@@ -65,8 +65,8 @@ int ScaleOpenCLKernel::InitWeights() {
     if (broadcast_flag_) {
       img_size[1] = 1;
       img_size[0] = UP_DIV(in_tensors_[1]->shape()[0], C4NUM);
-      scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
-      offset_ptr_ = allocator->CreateImageFromHost(in_tensors_[2]->data_c(), in_tensors_[2]->ElementsNum(), img_size);
+      scale_ptr_ = allocator->Malloc(in_tensors_[1]->ElementsNum(), img_size, in_tensors_[1]->data_c());
+      offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, in_tensors_[2]->data_c());
       return RET_OK;
     }
     auto image2d_info = Image2DInfo(in_tensors_[1]);
@@ -76,8 +76,8 @@ int ScaleOpenCLKernel::InitWeights() {
     int batch = image2d_info.N;
     if (in_tensors_[0]->GetFormat() == in_tensors_[1]->GetFormat()) {
       if (in_tensors_[0]->data_type() == in_tensors_[1]->data_type()) {
-        scale_ptr_ = allocator->CreateImageFromHost(in_tensors_[1]->data_c(), in_tensors_[1]->ElementsNum(), img_size);
-        offset_ptr_ = allocator->CreateImageFromHost(in_tensors_[2]->data_c(), in_tensors_[2]->ElementsNum(), img_size);
+        scale_ptr_ = allocator->Malloc(in_tensors_[1]->ElementsNum(), img_size, in_tensors_[1]->data_c());
+        offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, in_tensors_[2]->data_c());
       } else {
         MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
                       << in_tensors_[0]->data_type();
@@ -100,8 +100,8 @@ int ScaleOpenCLKernel::InitWeights() {
           std::function<float(float)> to_dtype = [](float x) -> float { return x; };
           PackNHWCToNHWC4<float, float>(in_tensors_[1]->data_c(), scale, batch, plane, channel, to_dtype);
           PackNHWCToNHWC4<float, float>(in_tensors_[2]->data_c(), offset, batch, plane, channel, to_dtype);
-          scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
-          offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
+          scale_ptr_ = allocator->Malloc(in_tensors_[1]->ElementsNum(), img_size, scale);
+          offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, offset);
           delete[] scale;
           delete[] offset;
         } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
@@ -119,8 +119,8 @@ int ScaleOpenCLKernel::InitWeights() {
           std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
           PackNHWCToNHWC4<float, float16_t>(in_tensors_[1]->data_c(), scale, batch, plane, channel, to_dtype);
           PackNHWCToNHWC4<float, float16_t>(in_tensors_[2]->data_c(), offset, batch, plane, channel, to_dtype);
-          scale_ptr_ = allocator->CreateImageFromHost(scale, in_tensors_[1]->ElementsNum(), img_size);
-          offset_ptr_ = allocator->CreateImageFromHost(offset, in_tensors_[2]->ElementsNum(), img_size);
+          scale_ptr_ = allocator->Malloc(in_tensors_[1]->ElementsNum(), img_size, scale);
+          offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, offset);
           delete[] scale;
           delete[] offset;
         } else {

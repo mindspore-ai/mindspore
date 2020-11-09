@@ -146,10 +146,11 @@ int OpenCLRuntime::Init() {
                                           CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(), 0};
   context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &ret);
 
-  if (ret != CL_SUCCESS || context_ == nullptr) {
+  if (ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Create special OpenCL context failed, Create common OpenCL context then.";
     context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
     if (context_ == nullptr) {
+      delete device_;
       MS_LOG(ERROR) << "Create OpenCL context failed!";
       return RET_ERROR;
     }
@@ -158,7 +159,8 @@ int OpenCLRuntime::Init() {
   MS_LOG(INFO) << "Create common opencl context";
   context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
 #endif
-  if (ret != CL_SUCCESS || context_ == nullptr) {
+  if (ret != CL_SUCCESS) {
+    delete device_;
     MS_LOG(ERROR) << "Context create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
@@ -205,13 +207,18 @@ int OpenCLRuntime::Init() {
 #endif
 
   default_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, properties, &ret);
-  if (ret != CL_SUCCESS || default_command_queue_ == nullptr) {
+  if (ret != CL_SUCCESS) {
+    delete device_;
+    delete context_;
     MS_LOG(ERROR) << "Command Queue create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
 
   allocator_ = new (std::nothrow) OpenCLAllocator(this);
   if (allocator_ == nullptr) {
+    delete device_;
+    delete context_;
+    delete default_command_queue_;
     MS_LOG(ERROR) << "Command OpenCL allocator failed!";
     return RET_ERROR;
   }
