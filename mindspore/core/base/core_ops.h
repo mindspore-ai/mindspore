@@ -176,6 +176,7 @@ inline const PrimitivePtr kPrimSparseApplyFtrl = std::make_shared<Primitive>("Sp
 inline const PrimitivePtr kPrimSparseApplyProximalAdagrad = std::make_shared<Primitive>("SparseApplyProximalAdagrad");
 inline const PrimitivePtr kPrimFusedAdam = std::make_shared<Primitive>("FusedAdam");
 inline const PrimitivePtr kPrimFusedAdamWeightDecay = std::make_shared<Primitive>("FusedAdamWeightDecay");
+inline const PrimitivePtr kPrimSGD = std::make_shared<Primitive>("SGD");
 
 // Comm ops
 inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");

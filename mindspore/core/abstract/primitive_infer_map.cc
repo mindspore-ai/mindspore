@@ -97,6 +97,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimDropoutGenMask, {InferImplDropoutGenMask, true}},
     {prim::kPrimSparseApplyFtrl, {InferImplSparseApplyFtrl, true}},
     {prim::kPrimSparseApplyProximalAdagrad, {InferImplSparseApplyProximalAdagrad, true}},
+    {prim::kPrimSGD, {InferImplSGD, true}},
     // Others
     {prim::kPrimIdentity, {InferImplIdentity, true}},
     // Set impl to null as it will use PartialEvaluator;
