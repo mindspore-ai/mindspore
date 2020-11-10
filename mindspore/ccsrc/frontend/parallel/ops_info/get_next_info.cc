@@ -203,11 +203,11 @@ Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
       MS_LOG(ERROR) << name_ << " : The dev num is 0.";
       return FAILED;
     }
-    if (out_shapes[i][0] % dev_num_ != 0) {
-      MS_LOG(ERROR) << name_ << " : batch num cannot floor div dev num.";
-      return FAILED;
-    }
     if (!full_batch) {
+      if (out_shapes[i][0] % dev_num_ != 0) {
+        MS_LOG(ERROR) << name_ << " : batch num cannot floor div dev num.";
+        return FAILED;
+      }
       out_shapes[i][0] = out_shapes[i][0] / dev_num_;
     }
   }
