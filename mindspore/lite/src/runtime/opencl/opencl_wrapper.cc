@@ -142,6 +142,7 @@ bool LoadLibraryFromPath(const std::string &library_path, void *handle) {
   LOAD_OPENCL_FUNCTION_PTR(clRetainDevice);
   LOAD_OPENCL_FUNCTION_PTR(clReleaseDevice);
   LOAD_OPENCL_FUNCTION_PTR(clCreateImage);
+  LOAD_OPENCL_FUNCTION_PTR(clEnqueueFillImage);
 #endif
 #if CL_HPP_TARGET_OPENCL_VERSION >= 200
   LOAD_OPENCL_FUNCTION_PTR(clCreateCommandQueueWithProperties);
@@ -228,6 +229,7 @@ CL_DEFINE_FUNC_PTR(clEnqueueCopyImageToBuffer);
 CL_DEFINE_FUNC_PTR(clRetainDevice);
 CL_DEFINE_FUNC_PTR(clReleaseDevice);
 CL_DEFINE_FUNC_PTR(clCreateImage);
+CL_DEFINE_FUNC_PTR(clEnqueueFillImage);
 #endif
 #if CL_HPP_TARGET_OPENCL_VERSION >= 200
 CL_DEFINE_FUNC_PTR(clGetKernelSubGroupInfoKHR);
@@ -664,6 +666,14 @@ cl_mem clCreateImage(cl_context context, cl_mem_flags flags, const cl_image_form
   auto func = mindspore::lite::opencl::clCreateImage;
   MS_ASSERT(func != nullptr);
   return func(context, flags, image_format, image_desc, host_ptr, errcode_ret);
+}
+
+cl_int clEnqueueFillImage(cl_command_queue command_queue, cl_mem image, const void *fill_color, const size_t *origin,
+                          const size_t *region, cl_uint num_events_in_wait_list, const cl_event *event_wait_list,
+                          cl_event *event) {
+  auto func = mindspore::lite::opencl::clEnqueueFillImage;
+  MS_ASSERT(func != nullptr);
+  return func(command_queue, image, fill_color, origin, region, num_events_in_wait_list, event_wait_list, event);
 }
 
 #endif
