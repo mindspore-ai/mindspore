@@ -18,12 +18,14 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_KERNEL_RUNTIME_H_
 
 #include <string>
+#include <map>
 #include <memory>
 #include <vector>
 #include <set>
 #include <utility>
 #include <unordered_map>
 #include <unordered_set>
+#include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "backend/optimizer/mem_reuse/mem_swap_manager.h"
@@ -96,6 +98,11 @@ class GPUKernelRuntime : public KernelRuntime {
   void UpdateHostSwapOutQueue(bool mock);
   void ClearSwapInfo(bool mock);
   void AllocInplaceNodeMemory(const session::KernelGraph *graph);
+
+  DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node);
+  DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node);
+  session::KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &node, size_t i);
+
   std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
   std::unordered_map<uint32_t, MemSwapManagerPtr> mem_swap_map_;
   std::unordered_map<uint32_t, bool> is_first_step_map_;
@@ -105,6 +112,14 @@ class GPUKernelRuntime : public KernelRuntime {
 
   MemReuseUtilPtr mem_reuse_util_{nullptr};
   MemSwapManagerPtr mem_swap_manager_{nullptr};
+
+  bool enable_relation_cache_{false};
+
+  std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>> prev_node_mut_output_addr_cache_;
+  std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>> prev_node_mut_output_addr_skip_nop_node_cache_;
+  std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>> mut_output_addr_cache_;
+  std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>> mut_output_addr_skip_nop_node_cache_;
+  std::unordered_map<AnfNodePtr, std::vector<session::KernelWithIndex>> prev_node_output_cache_;
 };
 MS_REG_KERNEL_RUNTIME(kGPUDevice, GPUKernelRuntime);
 }  // namespace gpu

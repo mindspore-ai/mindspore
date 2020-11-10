@@ -53,6 +53,10 @@ static const size_t PARAMETER_OUTPUT_INDEX = 0;
 bool GPUKernelRuntime::SyncStream() { return GPUDeviceManager::GetInstance().SyncStream(stream_); }
 
 bool GPUKernelRuntime::Init() {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  enable_relation_cache_ = context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL);
+
   if (device_init_ == true) {
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
     return true;
@@ -284,7 +288,7 @@ void GPUKernelRuntime::AllocInplaceNodeMemory(const session::KernelGraph *graph)
 
     auto primitive = AnfAlgo::GetCNodePrimitive(item[0]);
     auto output_index = GetValue<uint32_t>(primitive->GetAttr("inplace_output_index"));
-    auto device_address = AnfAlgo::GetMutableOutputAddr(item[0], output_index, false);
+    auto device_address = GetMutableOutputAddr(item[0], output_index, false);
     if (device_address->GetPtr() != nullptr) {
       continue;
     }
@@ -700,7 +704,7 @@ bool GPUKernelRuntime::AddMemorySwapTask(const AnfNodePtr &kernel, bool mock, bo
     MS_EXCEPTION_IF_NULL(need_swap_kernel);
     const HostAddress &host_address =
       mem_swap_manager_->QueryKernelHostAddr(need_swap_kernel, mem_swap_info.output_idx_);
-    auto device_address = AnfAlgo::GetMutableOutputAddr(need_swap_kernel, mem_swap_info.output_idx_, false);
+    auto device_address = GetMutableOutputAddr(need_swap_kernel, mem_swap_info.output_idx_, false);
 
     if (mem_swap_info.swap_kind_ == SwapKind::kDeviceToHost) {
       if (mem_swap_manager_->QueryKernelHostAddrIsDirty(need_swap_kernel, mem_swap_info.output_idx_)) {
@@ -851,10 +855,10 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
     DeviceAddressPtr device_address;
     if (mem_reuse_util_->is_all_nop_node()) {
       // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
-      device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+      device_address = GetPrevNodeMutableOutputAddr(kernel, i, false);
     } else {
       // Graph may be "nop node + depend + node",  the input of node is the depend, so this case need skip nop node.
-      device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
+      device_address = GetPrevNodeMutableOutputAddr(kernel, i, true);
     }
 
     // Get in-place output_address
@@ -863,7 +867,7 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
       auto input_index = GetValue<uint32_t>(primitive->GetAttr("aggregate_input_index"));
       if (i == input_index) {
         auto skip_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(kernel), input_index);
-        device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(skip_node, 0, false);
+        device_address = GetPrevNodeMutableOutputAddr(skip_node, 0, false);
         MS_LOG(INFO) << "[inplace optimizer] aggregate: " << kernel->DebugString()
                      << ", skip: " << skip_node->DebugString() << ", address: " << device_address->GetMutablePtr();
       }
@@ -889,7 +893,7 @@ bool GPUKernelRuntime::AllocKernelOutputDynamicRes(const mindspore::kernel::Kern
   UpdateHostSwapOutQueue(mock);
   auto output_sizes = kernel_mod.GetOutputSizeList();
   for (size_t i = 0; i < output_sizes.size(); ++i) {
-    auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
+    auto device_address = GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr && !AttemptMallocMem(device_address, output_sizes[i], mock)) {
       return false;
@@ -959,10 +963,10 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
     DeviceAddressPtr device_address;
     if (mem_reuse_util_->is_all_nop_node()) {
       // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
-      device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+      device_address = GetPrevNodeMutableOutputAddr(kernel, i, false);
     } else {
       // Graph may be "nop node + depend + node",  the input of node is the depend, so this case need skip nop node.
-      device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
+      device_address = GetPrevNodeMutableOutputAddr(kernel, i, true);
     }
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr) {
@@ -988,7 +992,7 @@ void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::Anf
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();
   for (size_t i = 0; i < output_sizes.size(); ++i) {
-    auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
+    auto device_address = GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr) {
       is_need_alloc_memory = true;
@@ -1043,7 +1047,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
       }
     }
 
-    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(kernel, i);
+    auto kernel_with_index = GetPrevNodeOutput(kernel, i);
     if (AnfAlgo::IsCommunicationOp(kernel_with_index.first)) {
       continue;
     }
@@ -1060,10 +1064,10 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
       DeviceAddressPtr device_address;
       if (mem_reuse_util_->is_all_nop_node()) {
         // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
-        device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, false);
+        device_address = GetPrevNodeMutableOutputAddr(kernel, i, false);
       } else {
         // Graph may be "nop node + depend + node",  the input of node is the depend, so this case need skip nop node.
-        device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i, true);
+        device_address = GetPrevNodeMutableOutputAddr(kernel, i, true);
       }
       mem_manager_->FreeMemFromMemPool(device_address);
       device_address->set_status(DeviceAddressStatus::kInDevice);
@@ -1076,7 +1080,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
       continue;
     }
     if (kernel_ref_count_ptr->ref_count_dynamic_use_ == 0) {
-      auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
+      auto device_address = GetMutableOutputAddr(kernel, i, false);
       mem_manager_->FreeMemFromMemPool(device_address);
       device_address->set_status(DeviceAddressStatus::kInDevice);
     }
@@ -1091,6 +1095,71 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
       mem_manager_->FreeMemFromMemPool(device_address);
     }
   }
+}
+
+DeviceAddressPtr GPUKernelRuntime::GetPrevNodeMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node) {
+  if (!enable_relation_cache_) {
+    return AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, visit_nop_node);
+  }
+
+  auto &addr_cache = visit_nop_node ? prev_node_mut_output_addr_cache_ : prev_node_mut_output_addr_skip_nop_node_cache_;
+  std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>>::iterator addr_iter;
+  if (auto iter = addr_cache.find(node); iter == addr_cache.end()) {
+    addr_iter = addr_cache.insert({node, {AnfAlgo::GetInputTensorNum(node), nullptr}}).first;
+  } else {
+    addr_iter = iter;
+  }
+
+  if (addr_iter->second[i] == nullptr) {
+    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i, visit_nop_node);
+    addr_iter->second[i] = device_address;
+  }
+
+  return addr_iter->second[i];
+}
+
+DeviceAddressPtr GPUKernelRuntime::GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node) {
+  if (!enable_relation_cache_) {
+    return AnfAlgo::GetMutableOutputAddr(node, i, visit_nop_node);
+  }
+
+  auto &addr_cache = visit_nop_node ? mut_output_addr_cache_ : mut_output_addr_skip_nop_node_cache_;
+  std::unordered_map<AnfNodePtr, std::vector<DeviceAddressPtr>>::iterator addr_iter;
+  if (auto iter = addr_cache.find(node); iter == addr_cache.end()) {
+    auto kernel_mod = AnfAlgo::GetKernelMod(node);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    auto output_sizes = kernel_mod->GetOutputSizeList();
+    addr_iter = addr_cache.insert({node, {output_sizes.size(), nullptr}}).first;
+  } else {
+    addr_iter = iter;
+  }
+
+  if (addr_iter->second[i] == nullptr) {
+    auto device_address = AnfAlgo::GetMutableOutputAddr(node, i, visit_nop_node);
+    addr_iter->second[i] = device_address;
+  }
+
+  return addr_iter->second[i];
+}
+
+session::KernelWithIndex GPUKernelRuntime::GetPrevNodeOutput(const AnfNodePtr &node, size_t i) {
+  if (!enable_relation_cache_) {
+    return AnfAlgo::GetPrevNodeOutput(node, i);
+  }
+
+  std::unordered_map<AnfNodePtr, std::vector<session::KernelWithIndex>>::iterator addr_iter;
+  if (auto iter = prev_node_output_cache_.find(node); iter == prev_node_output_cache_.end()) {
+    addr_iter = prev_node_output_cache_.insert({node, {AnfAlgo::GetInputTensorNum(node), {nullptr, 0}}}).first;
+  } else {
+    addr_iter = iter;
+  }
+
+  if (addr_iter->second[i].first == nullptr) {
+    auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
+    addr_iter->second[i] = kernel_with_index;
+  }
+
+  return addr_iter->second[i];
 }
 }  // namespace gpu
 }  // namespace device
