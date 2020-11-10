@@ -246,6 +246,10 @@ bool ConvertCellObjToFuncGraph(const CellPtr &cell, ValuePtr *const data) {
       func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
     }
   }
+  if (py::hasattr(obj, STAGE_NAME)) {
+    auto stage = py::cast<int>(py::getattr(obj, STAGE_NAME));
+    func_graph->set_stage(stage);
+  }
   *data = func_graph;
   return true;
 }

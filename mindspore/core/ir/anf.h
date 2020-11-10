@@ -98,7 +98,8 @@ class AnfNode : public Base {
         debug_info_(std::make_shared<NodeDebugInfo>()),
         fullname_with_scope_(""),
         hash_(std::hash<const AnfNode *>()),
-        kernel_info_(nullptr) {
+        kernel_info_(nullptr),
+        stage_(-1) {
     scope_ = ScopeManager::GetInstance().GetCurrentScope();
   }
 
@@ -184,6 +185,9 @@ class AnfNode : public Base {
     return user_data_.has(T::key);
   }
 
+  int64_t stage() { return stage_; }
+  void set_stage(const int &stage) { stage_ = stage; }
+
  protected:
   // Hold a weak ref to Graph as Graph also hold ref to AnfNode.
   // Otherwise, func_graph_ and AnfNode will make a reference cycle.
@@ -198,6 +202,7 @@ class AnfNode : public Base {
   ScopePtr scope_;
   KernelInfoDevicePtr kernel_info_;
   UserData user_data_;
+  int64_t stage_;
 };
 
 // CNode represents the complex node with a set of arguments.

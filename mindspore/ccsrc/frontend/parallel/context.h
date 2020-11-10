@@ -122,7 +122,7 @@ class ParallelContext {
   std::string parallel_mode_;
   std::string strategy_search_mode_;
   std::vector<int64_t> stages_;
-  int32_t pipeline_stage_split_num_;
+  int64_t pipeline_stage_split_num_ = 0;
   bool parameter_broadcast_;
   bool device_num_is_set_;
   bool global_rank_is_set_;

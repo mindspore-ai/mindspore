@@ -186,6 +186,7 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   MS_EXCEPTION_IF_NULL(target_func_graph);
   MS_EXCEPTION_IF_NULL(manager_);
 
+  target_func_graph->set_stage(func_graph->stage());
   auto old_return = func_graph->get_return();
   if (old_return != nullptr) {
     auto return_node = repl_node_[old_return]->cast<CNodePtr>();
@@ -668,6 +669,7 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
   if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
     new_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
   }
+  new_func_graph->set_stage(func_graph->stage());
 
   return new_func_graph;
 }

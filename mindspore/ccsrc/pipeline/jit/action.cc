@@ -302,6 +302,10 @@ bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes)
 }
 
 bool OptInlineAction(const ResourcePtr &res) {
+  if (parallel::ParallelContext::GetInstance()->parallel_mode() == "semi_auto_parallel" ||
+      parallel::ParallelContext::GetInstance()->parallel_mode() == "auto_parallel") {
+    return OptimizeAction(res, kInlinePasses);
+  }
   if (opt::python_pass::PyPassManager::GetInstance()->GetPassGroup(opt::python_pass::Phase::PREAD)->size() != 0) {
     return OptimizeAction(res, kInlinePasses);
   }
@@ -480,6 +484,7 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &res) {
   return true;
 }
 
+bool PipelineSplitAction(const ResourcePtr &res) { return PipelineSplitPass(res); }
 bool ValidateAction(const ResourcePtr &res) { return ValidatePass(res); }
 
 bool ActionPyStub(const ResourcePtr &res, opt::python_pass::Phase phase) {
@@ -559,6 +564,8 @@ static std::vector<ActionItem> CommonPipeline() {
   actions.emplace_back(std::make_pair("inline", OptInlineAction));
   // Add pre-ad, post-inline python pass stub
   actions.emplace_back(std::make_pair("py_pre_ad", PreAdActionPyStub));
+  // Do PipelineSplit
+  actions.emplace_back(std::make_pair("pipeline_split", PipelineSplitAction));
 
   return actions;
 }
