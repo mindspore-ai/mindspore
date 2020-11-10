@@ -137,6 +137,13 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
       MS_LOG(ERROR) << "Op should have " << kOutputNum << " output tensor";
       return RET_ERROR;
     }
+    void *attr = node->primitive->value.value;
+    if (node->primitive->value.type == schema::PrimitiveType_SpaceToDepth) {
+      reinterpret_cast<schema::SpaceToDepthT *>(attr)->format = schema::Format_NHWC;
+    }
+    if (node->primitive->value.type == schema::PrimitiveType_DepthToSpace) {
+      reinterpret_cast<schema::DepthToSpaceT *>(attr)->format = schema::Format_NHWC;
+    }
     STATUS status = RET_OK;
 #ifdef SUPPORT_TRAIN
     if (IsContain(GetNhwcAllInputOpList(), GetCNodeTType(**iter))) {

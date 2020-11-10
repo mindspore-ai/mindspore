@@ -37,6 +37,10 @@ class TransOpInsertPass : public FormatTransPass {
 
   STATUS FindOutTransType();
 
+  void TransformAttrByAxes(int *origin_attr, int *axes, int element_size);
+
+  STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node);
+
   STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node);
 
  private:
