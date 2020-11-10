@@ -42,24 +42,10 @@ void DynamicKernel::Initialize() {
     return;
   }
   MS_LOG(INFO) << "Have depends";
-  std::vector<int> depends_list;
   std::vector<int64_t> depends_list_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode_ptr_, kDynamicShapeDepends);
-  (void)std::transform(depends_list_me.begin(), depends_list_me.end(), std::back_inserter(depends_list),
+  (void)std::transform(depends_list_me.begin(), depends_list_me.end(), std::back_inserter(depend_list_),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  // Save depend input tensor. Sync data in InferShape.
-  for (auto depend : depends_list) {
-    auto pre_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode_ptr_, depend);
-    auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode_ptr_, depend);
-    std::vector<int64_t> shapes = trans::GetRuntimePaddingShape(pre_node_with_index.first, pre_node_with_index.second);
-    auto host_type = AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
-    auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
-    out_tensor->set_device_address(output_addr);
 
-    auto ret = depend_tensor_map_.try_emplace(depend, out_tensor);
-    if (!ret.second) {
-      MS_LOG(EXCEPTION) << "Insert map failed";
-    }
-  }
   MS_LOG(INFO) << "Init End";
 }
 
@@ -72,6 +58,22 @@ bool IsTupleGetItem(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto input0 = cnode->input(0);
   return IsPrimitive(input0, prim::kPrimTupleGetItem);
+}
+
+void DynamicKernel::RebuildDependTensor() {
+  depend_tensor_map_.clear();
+  for (auto depend : depend_list_) {
+    auto pre_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode_ptr_, depend);
+    auto output_addr = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode_ptr_, depend);
+    std::vector<int64_t> shapes = trans::GetRuntimePaddingShape(pre_node_with_index.first, pre_node_with_index.second);
+    auto host_type = AnfAlgo::GetOutputInferDataType(pre_node_with_index.first, pre_node_with_index.second);
+    auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
+    out_tensor->set_device_address(output_addr);
+    auto ret = depend_tensor_map_.try_emplace(depend, out_tensor);
+    if (!ret.second) {
+      MS_LOG(EXCEPTION) << "Insert map failed";
+    }
+  }
 }
 
 void DynamicKernel::InferShape() {
@@ -88,12 +90,15 @@ void DynamicKernel::InferShape() {
   AbstractBasePtrList args_spec_list;
   auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
 
+  // rebuild depend tensor map for gpu dynamic memory allocation.
+  RebuildDependTensor();
+
   auto input_size = AnfAlgo::GetInputTensorNum(cnode_ptr_);
   for (size_t i = 0; i < input_size; ++i) {
     auto input_with_index = AnfAlgo::GetPrevNodeOutput(cnode_ptr_, i);
     auto real_input = input_with_index.first;
-
     MS_EXCEPTION_IF_NULL(real_input);
+
     auto ret = depend_tensor_map_.find(i);
     if (ret != depend_tensor_map_.end()) {
       auto tensor_ptr = ret->second;
