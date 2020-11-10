@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class ScatterUpdateKernel : public GpuKernel {
  public:
-  ScatterUpdateKernel() : input_size_(0), inner_size_(0), indices_size_(0), updates_size_(0) {}
+  ScatterUpdateKernel() { ResetResource(); }
   ~ScatterUpdateKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -73,6 +73,16 @@ class ScatterUpdateKernel : public GpuKernel {
     updates_size_ = indices_size_ * inner_size_;
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    input_size_ = 0;
+    inner_size_ = 0;
+    indices_size_ = 0;
+    updates_size_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

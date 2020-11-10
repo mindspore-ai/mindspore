@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class ScatterAddKernel : public GpuKernel {
  public:
-  ScatterAddKernel() : input_size_(0), inner_size_(0), indices_size_(0), updates_size_(0), use_locking_(true) {}
+  ScatterAddKernel() { ResetResource(); }
   ~ScatterAddKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -43,7 +43,7 @@ class ScatterAddKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync output failed");
-    CalScatterAdd(input_size_, inner_size_, indices_size_, use_locking_, input, indices, updates, output,
+    CalScatterAdd(inner_size_, indices_size_, use_locking_, indices, updates, output,
                   reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -75,6 +75,17 @@ class ScatterAddKernel : public GpuKernel {
     use_locking_ = GetAttr<bool>(kernel_node, "use_locking");
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    input_size_ = 0;
+    inner_size_ = 0;
+    indices_size_ = 0;
+    updates_size_ = 0;
+    use_locking_ = true;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:
