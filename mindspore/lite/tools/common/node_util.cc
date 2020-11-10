@@ -75,6 +75,7 @@ static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_Conv2D,
                                                               schema::PrimitiveType_DepthwiseConv2D,
                                                               schema::PrimitiveType_Add,
+                                                              schema::PrimitiveType_Transpose,
                                                               schema::PrimitiveType_Pooling,
                                                               schema::PrimitiveType_Concat,
                                                               schema::PrimitiveType_SoftMax,
