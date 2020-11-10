@@ -32,9 +32,11 @@ class TestHWUnsortedSegmentSumFission : public BackendCommon {
 TEST_F(TestHWUnsortedSegmentSumFission, test_fission) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_unsorted_segment_sum_fission", "before1");
   EXPECT_NE(g, nullptr);
-  std::vector<int64_t> shp_x{16, 1};
+  std::vector<int64_t> shp_x{3, 39, 1};
+  std::vector<int64_t> shp_y{3};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
+  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, shp_y);
+  AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
@@ -50,9 +52,11 @@ TEST_F(TestHWUnsortedSegmentSumFission, test_fission) {
 TEST_F(TestHWUnsortedSegmentSumFission, test_no_fission) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_unsorted_segment_sum_fission", "before2");
   EXPECT_NE(g, nullptr);
-  std::vector<int64_t> shp_x{16, 2};
+  std::vector<int64_t> shp_x{3, 39, 2};
+  std::vector<int64_t> shp_y{3};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  AbstractBasePtrList args_spec_list{x_abstract, x_abstract};
+  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, shp_y);
+  AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
   auto kg = GetKernelGraph(g, args_spec_list);
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
