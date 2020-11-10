@@ -542,5 +542,28 @@ Status VOCOp::GetDatasetSize(int64_t *dataset_size) {
   dataset_size_ = *dataset_size;
   return Status::OK();
 }
+
+Status VOCOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  if ((*output_class_indexing).empty()) {
+    if (task_type_ != TaskType::Detection) {
+      MS_LOG(ERROR) << "Class index only valid in \"Detection\" task.";
+      RETURN_STATUS_UNEXPECTED("GetClassIndexing: Get Class Index failed in VOCOp.");
+    }
+    std::shared_ptr<VOCOp> op;
+    RETURN_IF_NOT_OK(
+      Builder().SetDir(folder_path_).SetTask("Detection").SetUsage(usage_).SetClassIndex(class_index_).Build(&op));
+    RETURN_IF_NOT_OK(op->ParseImageIds());
+    RETURN_IF_NOT_OK(op->ParseAnnotationIds());
+    for (const auto label : op->label_index_) {
+      if (!class_index_.empty()) {
+        (*output_class_indexing)
+          .emplace_back(std::make_pair(label.first, std::vector<int32_t>(1, class_index_[label.first])));
+      } else {
+        (*output_class_indexing).emplace_back(std::make_pair(label.first, std::vector<int32_t>(1, label.second)));
+      }
+    }
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

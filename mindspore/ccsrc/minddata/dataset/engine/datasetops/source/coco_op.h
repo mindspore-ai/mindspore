@@ -218,6 +218,10 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   /// \return Status of the function
   Status GetDatasetSize(int64_t *dataset_size) override;
 
+  /// \brief Gets the class indexing
+  /// \return Status - The status code return
+  Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) override;
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

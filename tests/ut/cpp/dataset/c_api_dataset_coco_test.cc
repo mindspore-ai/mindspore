@@ -266,6 +266,28 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestCocoPanopticGetClassIndex) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoPanopticGetClassIndex.";
+  // Create a Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/panoptic.json";
+
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Panoptic", false, SequentialSampler(0, 2));
+  EXPECT_NE(ds, nullptr);
+  
+  std::vector<std::pair<std::string, std::vector<int32_t>>> class_index1 = ds->GetClassIndexing();
+  EXPECT_EQ(class_index1.size(), 3);
+  EXPECT_EQ(class_index1[0].first, "person");
+  EXPECT_EQ(class_index1[0].second[0], 1);
+  EXPECT_EQ(class_index1[0].second[1], 1);
+  EXPECT_EQ(class_index1[1].first, "bicycle");
+  EXPECT_EQ(class_index1[1].second[0], 2);
+  EXPECT_EQ(class_index1[1].second[1], 1);
+  EXPECT_EQ(class_index1[2].first, "car");
+  EXPECT_EQ(class_index1[2].second[0], 3);
+  EXPECT_EQ(class_index1[2].second[1], 1);
+}
+
 TEST_F(MindDataTestPipeline, TestCocoStuff) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoStuff.";
   // Create a Coco Dataset

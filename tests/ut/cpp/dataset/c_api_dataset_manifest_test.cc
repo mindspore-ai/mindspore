@@ -70,6 +70,22 @@ TEST_F(MindDataTestPipeline, TestManifestGetters) {
   EXPECT_NE(ds2, nullptr);
   EXPECT_EQ(ds2->GetDatasetSize(), 4);
   EXPECT_EQ(ds2->GetNumClasses(), 3);
+
+  std::vector<std::pair<std::string, std::vector<int32_t>>> class_index1 = ds1->GetClassIndexing();
+  EXPECT_EQ(class_index1.size(), 2);
+  EXPECT_EQ(class_index1[0].first, "cat");
+  EXPECT_EQ(class_index1[0].second[0], 0);
+  EXPECT_EQ(class_index1[1].first, "dog");
+  EXPECT_EQ(class_index1[1].second[0], 1);
+
+  std::vector<std::pair<std::string, std::vector<int32_t>>> class_index2 = ds2->GetClassIndexing();
+  EXPECT_EQ(class_index2.size(), 3);
+  EXPECT_EQ(class_index2[0].first, "cat");
+  EXPECT_EQ(class_index2[0].second[0], 0);
+  EXPECT_EQ(class_index2[1].first, "dog");
+  EXPECT_EQ(class_index2[1].second[0], 1);
+  EXPECT_EQ(class_index2[2].first, "flower");
+  EXPECT_EQ(class_index2[2].second[0], 2);
 }
 
 TEST_F(MindDataTestPipeline, TestManifestDecode) {
@@ -150,6 +166,13 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   // Create a Manifest Dataset
   std::shared_ptr<Dataset> ds = Manifest(file_path, "train", RandomSampler(), map, true);
   EXPECT_NE(ds, nullptr);
+
+  std::vector<std::pair<std::string, std::vector<int32_t>>> class_index1 = ds->GetClassIndexing();
+  EXPECT_EQ(class_index1.size(), 2);
+  EXPECT_EQ(class_index1[0].first, "cat");
+  EXPECT_EQ(class_index1[0].second[0], 111);
+  EXPECT_EQ(class_index1[1].first, "dog");
+  EXPECT_EQ(class_index1[1].second[0], 222);
 
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.

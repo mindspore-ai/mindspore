@@ -316,6 +316,14 @@ Status DatasetOp::GetNumClasses(int64_t *num_classes) {
   }
 }
 
+Status DatasetOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  if (!child_.empty()) {
+    return child_[0]->GetClassIndexing(output_class_indexing);
+  } else {
+    RETURN_STATUS_UNEXPECTED("Can't get the class index for the current tree.");
+  }
+}
+
 // Performs handling for when an eoe message is received.
 // The base class implementation simply flows the eoe message to output. Derived classes
 // may override if they need to perform special eoe handling.
