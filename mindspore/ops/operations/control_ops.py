@@ -33,8 +33,8 @@ class ControlDepend(Primitive):
     Note:
         This operation does not work in `PYNATIVE_MODE`.
     Args:
-        depend_mode (int): Use 0 for a normal dependency relation. Use 1 to depends on operations which using Parameter
-        as its input. Default: 0.
+        depend_mode (int): Use 0 for a normal dependency relation and 1 for a user-defined dependency relation.
+        Default: 0.
 
     Inputs:
         - **src** (Any) - The source input. It can be a tuple of operations output or a single operation output. We do
@@ -47,7 +47,7 @@ class ControlDepend(Primitive):
           used the parameter as input.
 
     Outputs:
-        Bool. This operation has no actual data output, it will be used to setup the order of relative operations.
+        This operation has no actual data output, it will be used to setup the order of relative operations.
 
     Examples:
         >>> class Net(nn.Cell):
@@ -65,6 +65,13 @@ class ControlDepend(Primitive):
         >>> y = Tensor(np.ones([4, 5]), dtype=mindspore.float32)
         >>> net = Net()
         >>> output = net(x, y)
+        >>> print(output)
+        [[1.	1.	1.	1.	1.]
+         [1.	1.	1.	1.	1.]
+         [1.	1.	1.	1.	1.]
+         [1.	1.	1.	1.	1.]]
+        >>> print(output.dtype)
+        Float32
     """
 
     @prim_attr_register

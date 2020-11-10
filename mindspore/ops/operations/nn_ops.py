@@ -1018,22 +1018,21 @@ class Conv2D(PrimitiveWithInfer):
         group (int): Splits input into groups. Default: 1.
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'. Default: "NCHW".
 
-    Returns:
-        Tensor, the value that applied 2D convolution.
-
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
           :math:`(C_{out}, C_{in}, K_1, K_2)`.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+        Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
         >>> input = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
         >>> conv2d = P.Conv2D(out_channel=32, kernel_size=3)
-        >>> conv2d(input, weight)
+        >>> output = conv2d(input, weight)
+        >>> print(output.shape)
+        (10, 32, 30, 30)
     """
 
     @prim_attr_register
@@ -1177,7 +1176,8 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         >>> weight = Tensor(np.ones([1, 32, 3, 3]), mindspore.float32)
         >>> depthwise_conv2d = P.DepthwiseConv2dNative(channel_multiplier = 3, kernel_size = (3, 3))
         >>> output = depthwise_conv2d(input, weight)
-        >>> output.shape == (10, 96, 30, 30)
+        >>> print(output.shape)
+        (10, 96, 30, 30)
     """
 
     @prim_attr_register
@@ -1571,15 +1571,25 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         data_format (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
             default is 'NCHW'.
 
-    Returns:
-        Tensor, the gradients of convolution.
+    Inputs:
+        - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
+          data_format :math:`(N, C_{out}, H_{out}, W_{out})`.
+        - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
+          :math:`(C_{out}, C_{in}, K_1, K_2)`.
+        - **input_size** (Tensor) - A tuple describes the shape of the input which conforms to the format
+          :math:`(N, C_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor, the gradients w.r.t the input of convolution. It has the same shape as the input.
 
     Examples:
         >>> dout = Tensor(np.ones([10, 32, 30, 30]), mindspore.float32)
         >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
         >>> x = Tensor(np.ones([10, 32, 32, 32]))
         >>> conv2d_backprop_input = P.Conv2DBackpropInput(out_channel=32, kernel_size=3)
-        >>> conv2d_backprop_input(dout, weight, F.shape(x))
+        >>> output = conv2d_backprop_input(dout, weight, F.shape(x))
+        >>> print(output.shape)
+        (10, 32, 32, 32)
     """
 
     @prim_attr_register
@@ -5365,15 +5375,20 @@ class Dropout(PrimitiveWithInfer):
           means dropping out 10% of input units.
 
     Inputs:
-        - **shape** (tuple[int]) - The shape of target mask.
+        - **input** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, the value of generated mask for input shape.
+        - **output** (Tensor) - with the same shape as the input tensor.
+        - **mask** (Tensor) - with the same shape as the input tensor.
 
     Examples:
         >>> dropout = P.Dropout(keep_prob=0.5)
-        >>> in = Tensor((20, 16, 50, 50))
-        >>> out = dropout(in)
+        >>> x = Tensor((20, 16, 50, 50), mindspore.float32)
+        >>> output, mask = dropout(x)
+        >>> print(output)
+        [ 0.	32.	0.	0.]
+        >>> print(mask)
+        [0.	1.	0.	0.]
     """
 
     @prim_attr_register
@@ -5427,7 +5442,15 @@ class CTCLoss(PrimitiveWithInfer):
         >>> labels_values = Tensor(np.array([2, 2]), mindspore.int32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> ctc_loss = P.CTCLoss()
-        >>> output = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
+        >>> loss, gradient = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
+        >>> print(loss)
+        [0.69121575	0.5381993 ]
+        >>> print(gradient)
+        [[[ 0.25831494	0.3623634	-0.62067937]
+          [ 0.25187883	0.2921483	-0.5440271 ]]
+
+         [[ 0.43522435	0.24408469	0.07787037 ]
+          [ 0.29642645	0.4232373 	0.06138104 ]]]
     """
 
     @prim_attr_register
