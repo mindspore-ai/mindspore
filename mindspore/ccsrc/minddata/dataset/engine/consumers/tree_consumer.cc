@@ -384,6 +384,9 @@ TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), row_flag_(fal
 }
 
 Status TreeGetters::Init(std::shared_ptr<DatasetNode> d) {
+  if (init_flag_) {
+    return Status::OK();
+  }
   Status s = tree_adapter_->Compile(std::move(d), 1);
   if (!s.IsError()) {
     init_flag_ = true;
@@ -460,6 +463,13 @@ Status TreeGetters::GetNumClasses(int64_t *num_classes) {
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
   RETURN_IF_NOT_OK(root->GetNumClasses(num_classes));
+  return Status::OK();
+}
+
+Status TreeGetters::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");
+  RETURN_IF_NOT_OK(root->GetClassIndexing(output_class_indexing));
   return Status::OK();
 }
 

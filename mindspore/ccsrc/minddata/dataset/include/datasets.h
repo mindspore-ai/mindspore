@@ -119,6 +119,10 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return number of classes. If failed, return -1
   int64_t GetNumClasses();
 
+  /// \brief Gets the class indexing
+  /// \return a map of ClassIndexing. If failed, return an empty map
+  std::vector<std::pair<std::string, std::vector<int32_t>>> GetClassIndexing();
+
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator
   /// \return Shared pointer to the original object

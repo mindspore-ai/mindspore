@@ -491,5 +491,25 @@ Status ManifestOp::GetNumClasses(int64_t *num_classes) {
   return Status::OK();
 }
 
+Status ManifestOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  if ((*output_class_indexing).empty()) {
+    std::shared_ptr<ManifestOp> op;
+    RETURN_IF_NOT_OK(Builder().SetManifestFile(file_).SetClassIndex(class_index_).SetUsage(usage_).Build(&op));
+    RETURN_IF_NOT_OK(op->ParseManifestFile());
+    RETURN_IF_NOT_OK(op->CountDatasetInfo());
+    uint32_t count = 0;
+    for (const auto label : op->label_index_) {
+      if (!class_index_.empty()) {
+        (*output_class_indexing)
+          .emplace_back(std::make_pair(label.first, std::vector<int32_t>(1, class_index_[label.first])));
+      } else {
+        (*output_class_indexing).emplace_back(std::make_pair(label.first, std::vector<int32_t>(1, count)));
+      }
+      count++;
+    }
+  }
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

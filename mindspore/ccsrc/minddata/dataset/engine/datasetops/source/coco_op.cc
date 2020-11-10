@@ -710,5 +710,30 @@ Status CocoOp::GetDatasetSize(int64_t *dataset_size) {
   dataset_size_ = *dataset_size;
   return Status::OK();
 }
+
+Status CocoOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
+  if ((*output_class_indexing).empty()) {
+    if ((task_type_ != TaskType::Detection) && (task_type_ != TaskType::Panoptic)) {
+      MS_LOG(ERROR) << "Class index only valid in \"Detection\" and \"Panoptic\" task.";
+      RETURN_STATUS_UNEXPECTED("GetClassIndexing: Get Class Index failed in CocoOp.");
+    }
+    std::shared_ptr<CocoOp> op;
+    std::string task_type;
+    switch (task_type_) {
+      case TaskType::Detection:
+        task_type = "Detection";
+        break;
+      case TaskType::Panoptic:
+        task_type = "Panoptic";
+        break;
+    }
+    RETURN_IF_NOT_OK(Builder().SetDir(image_folder_path_).SetFile(annotation_path_).SetTask(task_type).Build(&op));
+    RETURN_IF_NOT_OK(op->ParseAnnotationIds());
+    for (const auto label : op->label_index_) {
+      (*output_class_indexing).emplace_back(std::make_pair(label.first, label.second));
+    }
+  }
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

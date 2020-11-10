@@ -193,6 +193,10 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   /// \return Status of the function
   Status GetNumClasses(int64_t *num_classes) override;
 
+  /// \brief Gets the class indexing
+  /// \return Status - The status code return
+  Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) override;
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

@@ -21,6 +21,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 
 #include "minddata/dataset/callback/callback_manager.h"
 #include "minddata/dataset/core/constants.h"
@@ -194,6 +195,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \brief Gets the number of classes
   /// \return Status - The status code return
   virtual Status GetNumClasses(int64_t *num_classes);
+
+  /// \brief Gets the class indexing
+  /// \return Status - The status code return
+  virtual Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
 
   /// \brief Performs handling for when an eoe message is received.
   /// The base class implementation simply flows the eoe message to output. Derived classes
