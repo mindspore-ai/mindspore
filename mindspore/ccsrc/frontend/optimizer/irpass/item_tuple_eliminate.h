@@ -129,6 +129,7 @@ class SetitemEliminater : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimTupleSetItem, {IsCNode, IsVNode, IsNode})(node);
+    AnfVisitor::Match(prim::kPrimListSetItem, {IsCNode, IsVNode, IsNode})(node);
 
     auto fg = node->func_graph();
     if (fg != nullptr && z_ != nullptr) {
@@ -183,6 +184,7 @@ class GetSetitemEliminater : public AnfVisitor {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
     AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsVNode})(node);
+    AnfVisitor::Match(prim::kPrimListGetItem, {IsCNode, IsVNode})(node);
 
     auto fg = node->func_graph();
     if (fg != nullptr && key1_ >= 0 && key2_ >= 0) {
@@ -195,7 +197,7 @@ class GetSetitemEliminater : public AnfVisitor {
   }
 
   void Visit(const CNodePtr &cnode) override {
-    if (IsPrimitiveCNode(cnode, prim::kPrimTupleSetItem)) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimTupleSetItem) || IsPrimitiveCNode(cnode, prim::kPrimListSetItem)) {
       if (cnode->size() < 4) {
         return;
       }
