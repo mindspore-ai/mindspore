@@ -47,7 +47,7 @@ class UnsortedSegmentOpInfo : public OperatorInfo {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferForwardCommunication() override;
-  Status InferMirrorOps() override { return SUCCESS; }
+  Status InferMirrorOps() override;
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
