@@ -30,6 +30,8 @@ class GraphSplitByPattern:
             self.in_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.out_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.mode = self.MODE_BASIC
+            if self.pattern == PrimLib.TRANSFORM:
+                self.mode = self.MODE_COMPOSITE
 
         def __str__(self):
             return '<' + '-'.join([op.output.name for op in self.ops]) + '>'

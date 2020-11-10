@@ -726,11 +726,12 @@ std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &p
 
 std::vector<PrimitivePtr> GetFusibleOpList() {
   std::vector<PrimitivePtr> fusible_basic_ops = {
-    prim::kPrimAbs,     prim::kPrimRound,  prim::kPrimNeg,        prim::kPrimExp,       prim::kPrimTensorAdd,
-    prim::kPrimRealDiv, prim::kPrimMul,    prim::kPrimMinimum,    prim::kPrimMaximum,   prim::kPrimLog,
-    prim::kPrimPow,     prim::kPrimSub,    prim::kPrimRsqrt,      prim::kPrimSqrt,      prim::kPrimCast,
-    prim::kPrimAddN,    prim::kPrimEqual,  prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,
-    prim::kPrimGreater, prim::kPrimAssign, prim::kPrimReduceSum,  prim::kPrimTanh,      prim::kPrimReshape};
+    prim::kPrimAbs,      prim::kPrimRound,  prim::kPrimNeg,        prim::kPrimExp,       prim::kPrimTensorAdd,
+    prim::kPrimRealDiv,  prim::kPrimMul,    prim::kPrimMinimum,    prim::kPrimMaximum,   prim::kPrimLog,
+    prim::kPrimPow,      prim::kPrimSub,    prim::kPrimRsqrt,      prim::kPrimSqrt,      prim::kPrimCast,
+    prim::kPrimAddN,     prim::kPrimEqual,  prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,
+    prim::kPrimGreater,  prim::kPrimAssign, prim::kPrimReduceSum,  prim::kPrimTanh,      prim::kPrimReshape,
+    prim::kPrimTranspose};
   return fusible_basic_ops;
 }
 
