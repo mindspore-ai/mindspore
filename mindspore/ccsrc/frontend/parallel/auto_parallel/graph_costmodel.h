@@ -49,6 +49,7 @@ extern bool DP_ALGO_ENABLE_APPROX;
 extern double DP_ALGO_APPROX_EPSILON;
 extern int64_t RUN_PHASE;
 extern bool TRIANGLE_STAR_STRATEGY_OVERWRITE;
+extern bool DP_ALGO_SINGLE_LOOP;
 
 class CostGraph {
   // 'CostGraph' consists of Operators and edges between them. An edge is created between two Operators if they have

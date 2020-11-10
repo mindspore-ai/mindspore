@@ -455,6 +455,10 @@ class _Executor:
         real_phase = self.phase_prefix + obj.phase + '.' + str(obj.create_time)
         return self._executor.get_strategy(real_phase)
 
+    def _get_num_parallel_ops(self, obj):
+        real_phase = self.phase_prefix + obj.phase + '.' + str(obj.create_time)
+        return self._executor.get_num_parallel_ops(real_phase)
+
     def _get_allreduce_fusion(self, obj):
         real_phase = self.phase_prefix + obj.phase + '.' + str(obj.create_time)
         return self._executor.get_allreduce_fusion(real_phase)

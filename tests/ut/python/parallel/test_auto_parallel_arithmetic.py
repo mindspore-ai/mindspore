@@ -78,8 +78,8 @@ def test_auto_parallel_arithmetic():
     b = Tensor(np.ones([64, 128]), dtype=ms.float32)
     compile_net(net, x, y, b, phase='train')
     strategies = _executor._get_shard_strategy(net)
-    expected_strategies = {'Default/network-Net/FloorDiv-op1': [[2, 4], [2, 4]],
-                           'Default/network-Net/MatMul-op0': [[2, 1], [1, 4]]}
+    expected_strategies = {'Default/network-Net/FloorDiv-op0': [[2, 4], [2, 4]],
+                           'Default/network-Net/MatMul-op1': [[2, 1], [1, 4]]}
     assert strategies == expected_strategies
 
 
@@ -105,8 +105,8 @@ def test_auto_parallel_arithmetic_broadcast_both():
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
     compile_net(net, x, y, b, phase='train')
     strategies = _executor._get_shard_strategy(net)
-    expected_strategies = {'Default/network-Net/FloorDiv-op1': [[8, 1], [1, 1]],
-                           'Default/network-Net/MatMul-op0': [[8, 1], [1, 1]]}
+    expected_strategies = {'Default/network-Net/FloorDiv-op0': [[8, 1], [1, 1]],
+                           'Default/network-Net/MatMul-op1': [[8, 1], [1, 1]]}
     assert strategies == expected_strategies
 
 
@@ -132,8 +132,8 @@ def test_auto_parallel_arithmetic_broadcast_right():
     b = Tensor(np.ones([32]), dtype=ms.float32)
     compile_net(net, x, y, b, phase='train')
     strategies = _executor._get_shard_strategy(net)
-    expected_strategies = {'Default/network-Net/FloorDiv-op1': [[4, 2], [2]],
-                           'Default/network-Net/MatMul-op0': [[4, 1], [1, 2]]}
+    expected_strategies = {'Default/network-Net/FloorDiv-op0': [[4, 2], [2]],
+                           'Default/network-Net/MatMul-op1': [[4, 1], [1, 2]]}
     assert strategies == expected_strategies
 
 
@@ -159,6 +159,6 @@ def test_auto_parallel_arithmetic_broadcast_left():
     b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
     compile_net(net, x, y, b, phase="train")
     strategies = _executor._get_shard_strategy(net)
-    expected_strategies = {'Default/network-Net/FloorDiv-op1': [[4, 2], [1, 4, 2]],
-                           'Default/network-Net/MatMul-op0': [[4, 1], [1, 2]]}
+    expected_strategies = {'Default/network-Net/FloorDiv-op0': [[4, 2], [1, 4, 2]],
+                           'Default/network-Net/MatMul-op1': [[4, 1], [1, 2]]}
     assert strategies == expected_strategies

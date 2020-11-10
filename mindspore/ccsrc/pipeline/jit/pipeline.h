@@ -93,6 +93,8 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   py::dict GetParameterLayout(const std::string &phase);
   py::dict GetCNodeStrategy(const std::string &phase);
   void SetCNodeStrategy(const std::string &name, const parallel::Strategys &strategy);
+  size_t GetNumOpsInfo(const std::string &phase);
+  void SetNumOpsInfo(size_t);
   py::dict GetAllreduceFusion(const std::string &phase);
   void DelNetRes(const std::string &id);
   void ReleaseResource(const py::object &phase);
@@ -117,6 +119,7 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   static bool debugger_terminate_;
   std::map<std::string, py::dict> stra_dict_;
   std::string phase_ = "";
+  std::map<std::string, size_t> phase_to_num_op_info_;
 };
 using ExecutorPyPtr = std::shared_ptr<ExecutorPy>;
 

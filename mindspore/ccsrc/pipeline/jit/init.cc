@@ -82,6 +82,8 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get Parameter Tensor Layout Dictionary.")
     .def("get_strategy", &ExecutorPy::GetCNodeStrategy, py::arg("phase") = py::str("train"),
          "Get CNode Strategy Dictionary.")
+    .def("get_num_parallel_ops", &ExecutorPy::GetNumOpsInfo, py::arg("phase") = py::str("train"),
+         "Get the number of parallel operators.")
     .def("get_allreduce_fusion", &ExecutorPy::GetAllreduceFusion, py::arg("phase") = py::str("train"),
          "Get Allreduce Fusion Dictionary.")
     .def("fetch_info_for_quant_export", &ExecutorPy::FetchInfoForQuantExport, py::arg("phase") = py::str("train"),
@@ -254,6 +256,10 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the epsilon which is used in the approximation of DP algorithm.")
     .def("get_dp_algo_approxi_epsilon", &CostModelContext::dp_algo_approxi_epsilon,
          "Get the epsilon which is used in the approximation of DP algorithm.")
+    .def("set_dp_algo_single_loop", &CostModelContext::set_dp_algo_single_loop,
+         "Set the flag of generating a single suite of OperatorInfos in for-loop.")
+    .def("get_dp_algo_single_loop", &CostModelContext::dp_algo_single_loop,
+         "Get the flag of whether or not generating a single suite of OperatorInfos in for-loop.")
     .def("reset_cost_model", &CostModelContext::ResetCostModel, "Reset the CostModelContext.")
     .def("reset_algo_parameters", &CostModelContext::ResetAlgoParameters, "Reset the AlgoParameters.");
 

@@ -56,6 +56,7 @@ void CostModelContext::ResetCostModel() {
   costmodel_allreduce_fusion_allreduce_bandwidth_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALLREDUCE_BANDWIDTH;
   costmodel_allreduce_fusion_computation_time_parameter_ =
     DEFAULT_COST_MODEL_ALLREDUCE_FUSION_COMPUTATION_TIME_PARAMETER;
+  dp_algo_single_loop_ = DEFAULT_DP_ALGO_SINGLE_LOOP;
 }
 
 void CostModelContext::ResetAlgoParameters() {
@@ -145,6 +146,8 @@ void CostModelContext::set_triangle_star_strategy_overwrite(bool overwrite) {
 }
 
 void CostModelContext::set_run_phase(int64_t phase) { run_phase_ = phase; }
+
+void CostModelContext::set_dp_algo_single_loop(bool single_loop) { dp_algo_single_loop_ = single_loop; }
 
 struct CostRegister {
   CostRegister() {
