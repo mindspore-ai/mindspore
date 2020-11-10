@@ -595,9 +595,7 @@ class CumProd(PrimitiveWithInfer):
         Tensor, has the same shape and dtype as the `input_x`.
 
     Examples:
-        >>> a = 1
-        >>> b = 2
-        >>> c = 3
+        >>> a, b, c, = 1, 2, 3
         >>> input_x = Tensor(np.array([a, b, c]).astype(np.float32))
         >>> op0 = P.CumProd()
         >>> output0 = op0(input_x, 0) # output=[a, a * b, a * b * c]
