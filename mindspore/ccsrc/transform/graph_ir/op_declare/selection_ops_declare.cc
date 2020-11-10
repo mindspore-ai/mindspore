@@ -40,8 +40,8 @@ OUTPUT_MAP(CumprodD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumprodD, kNameCumProd, ADPT_DESC(CumprodD))
 
 INPUT_MAP(SliceD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(SliceD) = {{2, ATTR_DESC(offsets, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
-                          {3, ATTR_DESC(size, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(SliceD) = {{2, ATTR_DESC(offsets, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+                          {3, ATTR_DESC(size, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(SliceD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(SliceD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SliceD, kNameSlice, ADPT_DESC(SliceD))
@@ -54,7 +54,7 @@ REG_ADPT_DESC(TopK, kNameTopK, ADPT_DESC(TopK))
 
 // TileD
 INPUT_MAP(TileD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(TileD) = {{2, ATTR_DESC(multiples, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(TileD) = {{2, ATTR_DESC(multiples, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(TileD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(TileD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(TileD, kNameTile, ADPT_DESC(TileD))
@@ -136,7 +136,7 @@ REG_ADPT_DESC(UnsortedSegmentMin, prim::kPrimUnsortedSegmentMin->name(), ADPT_DE
 
 // ReverseV2
 INPUT_MAP(ReverseV2D) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ReverseV2D) = {{"axis", ATTR_DESC(axis, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(ReverseV2D) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(ReverseV2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReverseV2D, kNameReverseV2, ADPT_DESC(ReverseV2D))
 }  // namespace mindspore::transform

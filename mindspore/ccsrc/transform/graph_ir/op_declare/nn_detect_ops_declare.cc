@@ -59,11 +59,11 @@ REG_ADPT_DESC(CheckValid, kNameCheckValid, ADPT_DESC(CheckValid))
 // ROIAlign
 INPUT_MAP(ROIAlign) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(rois)}};
 OUTPUT_MAP(ROIAlign) = {{0, OUTPUT_DESC(y)}};
-ATTR_MAP(ROIAlign) = {{"pooled_height", ATTR_DESC(pooled_height, AnyTraits<int>())},
-                      {"pooled_width", ATTR_DESC(pooled_width, AnyTraits<int>())},
+ATTR_MAP(ROIAlign) = {{"pooled_height", ATTR_DESC(pooled_height, AnyTraits<int64_t>())},
+                      {"pooled_width", ATTR_DESC(pooled_width, AnyTraits<int64_t>())},
                       {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())},
-                      {"sample_num", ATTR_DESC(sample_num, AnyTraits<int>())},
-                      {"roi_end_mode", ATTR_DESC(roi_end_mode, AnyTraits<int>())}};
+                      {"sample_num", ATTR_DESC(sample_num, AnyTraits<int64_t>())},
+                      {"roi_end_mode", ATTR_DESC(roi_end_mode, AnyTraits<int64_t>())}};
 REG_ADPT_DESC(ROIAlign, kNameROIAlign, ADPT_DESC(ROIAlign))
 
 // ROIAlignGrad
@@ -71,9 +71,9 @@ INPUT_MAP(ROIAlignGrad) = {{1, INPUT_DESC(ydiff)}, {2, INPUT_DESC(rois)}};
 OUTPUT_MAP(ROIAlignGrad) = {{0, OUTPUT_DESC(xdiff)}};
 ATTR_MAP(ROIAlignGrad) = {
   {"xdiff_shape", ATTR_DESC(xdiff_shape, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"pooled_height", ATTR_DESC(pooled_height, AnyTraits<int>())},
-  {"pooled_width", ATTR_DESC(pooled_width, AnyTraits<int>())},
+  {"pooled_height", ATTR_DESC(pooled_height, AnyTraits<int64_t>())},
+  {"pooled_width", ATTR_DESC(pooled_width, AnyTraits<int64_t>())},
   {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())},
-  {"sample_num", ATTR_DESC(sample_num, AnyTraits<int>())}};
+  {"sample_num", ATTR_DESC(sample_num, AnyTraits<int64_t>())}};
 REG_ADPT_DESC(ROIAlignGrad, kNameROIAlignGrad, ADPT_DESC(ROIAlignGrad))
 }  // namespace mindspore::transform

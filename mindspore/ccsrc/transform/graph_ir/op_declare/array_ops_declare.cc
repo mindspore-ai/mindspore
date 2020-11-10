@@ -52,7 +52,7 @@ REG_ADPT_DESC(FlattenGrad, kNameFlattenGrad, ADPT_DESC(Reshape))
 
 // TransShape
 INPUT_MAP(TransShape) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(TransShape) = {{2, ATTR_DESC(outShape, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(TransShape) = {{2, ATTR_DESC(outShape, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(TransShape) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(TransShape) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(TransShape, kNameTransShape, ADPT_DESC(TransShape))
@@ -77,14 +77,14 @@ REG_ADPT_DESC(ExpandDims, kNameExpandDims, ADPT_DESC(ExpandDims))
 
 // Squeeze
 INPUT_MAP(Squeeze) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Squeeze) = {{"axis", ATTR_DESC(axis, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(Squeeze) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(Squeeze) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Squeeze, prim::kPrimSqueeze->name(), ADPT_DESC(Squeeze))
 
 // ReverseSequence
 INPUT_MAP(ReverseSequence) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(seq_lengths)}};
-ATTR_MAP(ReverseSequence) = {{"seq_dim", ATTR_DESC(seq_dim, AnyTraits<int>())},
-                             {"batch_dim", ATTR_DESC(batch_dim, AnyTraits<int>())}};
+ATTR_MAP(ReverseSequence) = {{"seq_dim", ATTR_DESC(seq_dim, AnyTraits<int64_t>())},
+                             {"batch_dim", ATTR_DESC(batch_dim, AnyTraits<int64_t>())}};
 OUTPUT_MAP(ReverseSequence) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ReverseSequence, kNameReverseSequence, ADPT_DESC(ReverseSequence))
 
