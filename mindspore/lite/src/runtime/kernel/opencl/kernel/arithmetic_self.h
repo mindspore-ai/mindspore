@@ -32,13 +32,17 @@ class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
 
   ~ArithmeticSelfOpenCLKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
+
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
   int Run() override;
 
  private:
   void GetKernelName(std::string *kernel_name, ArithmeticSelfParameter *param);
-
+  cl_int4 output_shape_ = {};
   cl::Kernel kernel_;
 };
 

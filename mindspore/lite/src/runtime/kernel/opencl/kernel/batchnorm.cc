@@ -30,16 +30,7 @@ using mindspore::schema::PrimitiveType_BatchNorm;
 
 namespace mindspore::kernel {
 
-int BatchNormOpenCLKernel::Init() {
-  std::string kernel_name = "Batch_normalization_NHWC4";
-  std::set<std::string> build_options;
-  std::string source = batchnorm_source;
-  std::string program_name = "Batch_normalization";
-  ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
-  MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return RET_OK;
-}
+int BatchNormOpenCLKernel::CheckSpecs() { return RET_OK; }
 
 void BatchNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
@@ -55,13 +46,17 @@ void BatchNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t
   local->push_back(z);
 }
 
-int BatchNormOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " Running! ";
+void BatchNormOpenCLKernel::SetConstArgs() {
+  int arg_cn = 6;
   auto param = reinterpret_cast<BatchNormParameter *>(this->op_parameter_);
   auto input0_shape = in_tensors_[0]->shape();
-  auto output_shape = out_tensors_[0]->shape();
   cl_int4 input_shape_ = {input0_shape[0], input0_shape[1], input0_shape[2], UP_DIV(input0_shape[3], C4NUM)};
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param->epsilon_);
+}
 
+void BatchNormOpenCLKernel::SetGlobalLocal() {
+  auto output_shape = out_tensors_[0]->shape();
   uint32_t OH = output_shape[1];
   uint32_t OW = output_shape[2];
   uint32_t OC = UP_DIV(output_shape[3], C4NUM);
@@ -70,6 +65,25 @@ int BatchNormOpenCLKernel::Run() {
   std::vector<size_t> local = {1, 1, 1};  // init local
   std::vector<size_t> global = {OH, OW, OC};
   BatchNormGetWorkGroup(global, &local, max_global[0]);
+  OpenCLKernel::AlignGlobalLocal(global, local);
+}
+
+int BatchNormOpenCLKernel::Prepare() {
+  std::string kernel_name = "Batch_normalization_NHWC4";
+  std::set<std::string> build_options;
+  std::string source = batchnorm_source;
+  std::string program_name = "Batch_normalization";
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
+  SetConstArgs();
+  SetGlobalLocal();
+
+  return RET_OK;
+}
+
+int BatchNormOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->name() << " Running! ";
   int arg_cn = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());   // input tensor
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());   // scale
@@ -77,32 +91,11 @@ int BatchNormOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->data_c());   // mean
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[4]->data_c());   // variance
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());  // out tensor
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, param->epsilon_);
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
 
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLBatchnormKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                 const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                 const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) BatchNormOpenCLKernel(opParameter, inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << " new BatchnormOpenCLKernel failed ";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << " Init kernel failed, name: Batchnorm ";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BatchNorm, OpenCLBatchnormKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_BatchNorm, OpenCLBatchnormKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BatchNorm, OpenCLKernelCreator<BatchNormOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_BatchNorm, OpenCLKernelCreator<BatchNormOpenCLKernel>)
 }  // namespace mindspore::kernel

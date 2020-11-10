@@ -31,8 +31,11 @@ class ConcatOpenCLKernel : public OpenCLKernel {
 
   ~ConcatOpenCLKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
 
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
   int Run() override;
 
  private:

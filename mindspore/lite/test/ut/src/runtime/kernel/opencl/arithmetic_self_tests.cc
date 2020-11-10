@@ -98,8 +98,8 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfOpenCLFp16) {
   }
   arithmeticself_kernel->Init();
   // to do allocate memory for inputs and outputs
-  for (auto &input_tensor : inputs) {
-    input_tensor->MallocData(allocator);
+  for (auto &input_tensor_ : inputs) {
+    input_tensor_->MallocData(allocator);
   }
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{arithmeticself_kernel};
@@ -186,8 +186,8 @@ TEST_F(TestArithmeticSelfOpenCLCI, ArithmeticSelfRound) {
   }
   arithmeticself_kernel->Init();
   // to do allocate memory for inputs and outputs
-  for (auto &input_tensor : inputs) {
-    input_tensor->MallocData(allocator);
+  for (auto &input_tensor_ : inputs) {
+    input_tensor_->MallocData(allocator);
   }
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{arithmeticself_kernel};
@@ -206,7 +206,6 @@ TEST_F(TestArithmeticSelfOpenCLCI, ArithmeticSelfRound) {
   }
   sub_graph->Init();
   MS_LOG(INFO) << " initialize input data ";
-  std::cout << sizeof(input_data1) / sizeof(float) << std::endl;
   memcpy(inputs[0]->data_c(), input_data1, sizeof(input_data1));
 
   std::cout << "==================output data================" << std::endl;
@@ -280,8 +279,8 @@ TEST_F(TestArithmeticSelfOpenCLfp16, ArithmeticSelfdim2Fp16) {
   }
   arithmeticself_kernel->Init();
   // to do allocate memory for inputs and outputs
-  for (auto &input_tensor : inputs) {
-    input_tensor->MallocData(allocator);
+  for (auto &input_tensor_ : inputs) {
+    input_tensor_->MallocData(allocator);
   }
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{arithmeticself_kernel};
