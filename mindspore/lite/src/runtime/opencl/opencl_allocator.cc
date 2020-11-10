@@ -44,24 +44,7 @@ void OpenCLAllocator::UnLock() {
   }
 }
 
-void *OpenCLAllocator::Malloc(size_t size) { return Malloc(size, std::vector<size_t>{}); }
-
-void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) {
-  auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
-
-  size_t img_pitch = 0;
-  size_t dtype_size = 1;
-  if (!img_size.empty()) {
-    dtype_size = img_size[2] == CL_FLOAT ? sizeof(cl_float4) : sizeof(cl_half4);
-    uint32_t image_alignment = ocl_runtime_->GetImagePitchAlignment();
-    img_pitch = (img_size[0] + image_alignment - 1) / image_alignment * image_alignment;
-    size = img_pitch * img_size[1] * dtype_size;
-  }
-  if (size > MAX_MALLOC_SIZE) {
-    MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
-    return nullptr;
-  }
-  Lock();
+void *OpenCLAllocator::MinimumFit(size_t size, const std::vector<size_t> &img_size) {
   auto iter = free_list_.lower_bound(size);
   while (iter != free_list_.end() && (iter->second->size_ >= size) && (iter->second->size_ < (size << shift_factor_))) {
     auto mem_buf = iter->second;
@@ -72,140 +55,127 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size) 
     if (is_match) {
       free_list_.erase(iter);
       allocated_list_[mem_buf->host_ptr_] = mem_buf;
-      UnLock();
-      MS_LOG(DEBUG) << "Malloc Image2D from free list. size: " << mem_buf->size_
-                    << ", host addr: " << mem_buf->host_ptr_ << ", device addr: " << mem_buf->device_ptr_;
+      MS_LOG(DEBUG) << "Find Mem from free list. size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
+                    << ", device addr: " << mem_buf->device_ptr_;
       return mem_buf->host_ptr_;
     }
     ++iter;
   }
-  void *host_ptr = nullptr;
-  void *device_ptr = nullptr;
-  void *image_ptr = nullptr;
+  return nullptr;
+}
+
+void *OpenCLAllocator::CreateBuffer(size_t size, void *data, size_t flags, cl::Buffer **buffer) {
+  cl_int ret = CL_SUCCESS;
+  *buffer = new (std::nothrow) cl::Buffer(*ocl_runtime_->Context(), flags, size, data, &ret);
+  if (*buffer == nullptr) {
+    MS_LOG(ERROR) << "Create OpenCL buffer failed! (ERROR CODE: " << ret << ")";
+    return nullptr;
+  }
+  void *host_ptr = ocl_runtime_->MapBuffer(**buffer, CL_MAP_READ | CL_MAP_WRITE, size);
+  if (host_ptr == nullptr) {
+    delete *buffer;
+    MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << *buffer << ", host_ptr=" << host_ptr;
+    return nullptr;
+  }
+  cl::Memory *mem = *buffer;
+  ocl_runtime_->UnmapBuffer(*mem, host_ptr);
+  return host_ptr;
+}
+
+void *OpenCLAllocator::CreateImage2D(size_t size, const std::vector<size_t> &img_size, void *data, size_t flags,
+                                     cl::Buffer **buffer, cl::Image2D **image) {
+  cl_int ret = CL_SUCCESS;
+  cl::ImageFormat image_format(CL_RGBA, img_size[2]);
+  if (data == nullptr) {
+    *image = new (std::nothrow)
+      cl::Image2D(*ocl_runtime_->Context(), image_format, **buffer, img_size[0], img_size[1], 0, &ret);
+  } else {
+    *image = new (std::nothrow) cl::Image2D(*ocl_runtime_->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                            image_format, img_size[0], img_size[1], 0, data, &ret);
+  }
+  if (*image == nullptr) {
+    delete *buffer;
+    MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
+    return nullptr;
+  }
+  MS_LOG(DEBUG) << "Malloc a new Image2D, width=" << img_size[0] << ", height=" << img_size[1];
+  std::vector<size_t> region{img_size[0], img_size[1], 1};
+  void *host_ptr = ocl_runtime_->MapBuffer(**image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
+  if (host_ptr == nullptr) {
+    delete *buffer;
+    delete *image;
+    MS_LOG(ERROR) << "Map image failed, can not found image :" << *image << ", host_ptr=" << host_ptr;
+    return nullptr;
+  }
+  cl::Memory *mem = *image;
+  ocl_runtime_->UnmapBuffer(*mem, host_ptr);
+  return host_ptr;
+}
+
+void *OpenCLAllocator::Malloc(size_t size) { return Malloc(size, std::vector<size_t>{}); }
+
+void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size, void *data) {
+  auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
+  MS_ASSERT(img_size.size() == 0 || img_size.size() == 3);
+  if (!img_size.empty()) {
+    size_t dtype_size = img_size[2] == CL_FLOAT ? sizeof(cl_float4) : sizeof(cl_half4);
+    uint32_t image_alignment = ocl_runtime_->GetImagePitchAlignment();
+    size = UP_ROUND(img_size[0], image_alignment) * img_size[1] * dtype_size;
+  }
+  if (size > MAX_MALLOC_SIZE) {
+    MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
+    return nullptr;
+  }
+  Lock();
+  void *host_ptr = MinimumFit(size, img_size);
+  if ((host_ptr != nullptr) && (data == nullptr)) {
+    UnLock();
+    return host_ptr;
+  }
   cl::Buffer *buffer = nullptr;
   cl::Image2D *image = nullptr;
-
+  cl_mem_flags flags = CL_MEM_READ_WRITE;
   if (svm_capabilities) {
-    cl_svm_mem_flags flags = (svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) ? CL_MEM_SVM_FINE_GRAIN_BUFFER : 0;
+    flags |= (svm_capabilities & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) ? CL_MEM_SVM_FINE_GRAIN_BUFFER : 0;
     flags |= (svm_capabilities & CL_DEVICE_SVM_ATOMICS) ? CL_MEM_SVM_ATOMICS : 0;
-    flags = flags | CL_MEM_READ_WRITE;
     host_ptr = clSVMAlloc((*ocl_runtime_->Context())(), flags, size, 0);
   } else {
-    cl_int ret = CL_SUCCESS;
-    buffer = new (std::nothrow)
-      cl::Buffer(*ocl_runtime_->Context(), CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, size, NULL, &ret);
-    if (buffer == nullptr || ret != CL_SUCCESS) {
-      UnLock();
-      MS_LOG(ERROR) << "Create OpenCL buffer failed! (ERROR CODE: " << ret << ")";
-      return nullptr;
-    }
-    device_ptr = static_cast<void *>(buffer);
-    host_ptr = ocl_runtime_->MapBuffer(*buffer, CL_MAP_READ | CL_MAP_WRITE, size);
-    if (host_ptr == nullptr) {
-      delete buffer;
-      UnLock();
-      MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << device_ptr << ", host_ptr=" << host_ptr;
-      return nullptr;
-    }
-    cl::Memory *mem = buffer;
-    ocl_runtime_->UnmapBuffer(*mem, host_ptr);
-    if (!img_size.empty()) {
-      cl::ImageFormat image_format(CL_RGBA, img_size[2]);
-      image = new (std::nothrow) cl::Image2D(*ocl_runtime_->Context(), image_format, *buffer, img_size[0], img_size[1],
-                                             img_pitch * dtype_size, &ret);
-      if (image == nullptr || ret != CL_SUCCESS) {
-        delete buffer;
+    flags |= (data == nullptr) ? CL_MEM_ALLOC_HOST_PTR : CL_MEM_COPY_HOST_PTR;
+    if (img_size.empty() || data == nullptr) {
+      host_ptr = CreateBuffer(size, data, flags, &buffer);
+      if (host_ptr == nullptr) {
         UnLock();
-        MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
         return nullptr;
       }
-      MS_LOG(DEBUG) << "Malloc a new Image2D, width=" << img_size[0] << ", height=" << img_size[1];
-      image_ptr = static_cast<void *>(image);
+    }
+    if (!img_size.empty()) {
+      host_ptr = CreateImage2D(size, img_size, data, flags, &buffer, &image);
+      if (host_ptr == nullptr) {
+        UnLock();
+        return nullptr;
+      }
     }
   }
   MemBuf *mem_buf = new (std::nothrow) MemBuf;
   if (mem_buf == nullptr) {
     delete buffer;
     delete image;
+    UnLock();
     return nullptr;
   }
   mem_buf->size_ = size;
-  mem_buf->device_ptr_ = device_ptr;
+  mem_buf->device_ptr_ = static_cast<void *>(buffer);
   mem_buf->host_ptr_ = host_ptr;
-  mem_buf->image_ptr_ = image_ptr;
+  mem_buf->image_ptr_ = static_cast<void *>(image);
   mem_buf->img_size = img_size;
-  std::string type_name = img_size.empty() ? "buffer" : "Image2D";
   allocated_list_[host_ptr] = mem_buf;
   UnLock();
+  std::string type_name = img_size.empty() ? "buffer" : "Image2D";
   MS_LOG(DEBUG) << "Malloc a new " << type_name << ". size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
-                << ", device addr: " << mem_buf->device_ptr_ << ", image_addr: " << image_ptr;
+                << ", device addr: " << mem_buf->device_ptr_ << ", image_addr: " << image;
   return host_ptr;
 }
 
-void *OpenCLAllocator::CreateImageFromHost(void *data, size_t size, const std::vector<size_t> &img_size) {
-  if (size > MAX_MALLOC_SIZE) {
-    MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
-    return nullptr;
-  }
-  Lock();
-  auto iter = free_list_.lower_bound(size);
-  while (iter != free_list_.end() && (iter->second->size_ >= size) && (iter->second->size_ < (size << shift_factor_))) {
-    auto mem_buf = iter->second;
-    bool is_match{mem_buf->img_size.size() == img_size.size()};
-    for (int i = 0; i < img_size.size() && is_match; ++i) {
-      is_match &= img_size[i] == mem_buf->img_size[i];
-    }
-    if (is_match) {
-      free_list_.erase(iter);
-      allocated_list_[mem_buf->host_ptr_] = mem_buf;
-      UnLock();
-      MS_LOG(DEBUG) << "Malloc Image2D from free list. size: " << mem_buf->size_
-                    << ", host addr: " << mem_buf->host_ptr_ << ", device addr: " << mem_buf->device_ptr_;
-      return mem_buf->host_ptr_;
-    }
-    ++iter;
-  }
-  void *host_ptr = nullptr;
-  void *device_ptr = nullptr;
-  void *image_ptr = nullptr;
-  cl_int ret = CL_SUCCESS;
-  // CL_HALF_FLOAT, CL_FLOAT
-  cl::ImageFormat image_format(CL_RGBA, img_size[2]);
-  cl::Image2D *image = new (std::nothrow) cl::Image2D(*ocl_runtime_->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                                      image_format, img_size[0], img_size[1], 0, data, &ret);
-  if (image == nullptr || ret != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
-    UnLock();
-    delete image;
-    return nullptr;
-  }
-  image_ptr = static_cast<void *>(image);
-  std::vector<size_t> region{img_size[0], img_size[1], 1};
-  host_ptr = ocl_runtime_->MapBuffer(*image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
-  if (host_ptr == nullptr) {
-    delete image;
-    UnLock();
-    MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << device_ptr << ", host_ptr=" << host_ptr;
-    return nullptr;
-  }
-  cl::Memory *mem = image;
-  ocl_runtime_->UnmapBuffer(*mem, host_ptr);
-  MemBuf *mem_buf = new (std::nothrow) MemBuf;
-  if (mem_buf == nullptr) {
-    delete image;
-    return nullptr;
-  }
-  mem_buf->size_ = size;
-  mem_buf->device_ptr_ = device_ptr;
-  mem_buf->image_ptr_ = image_ptr;
-  mem_buf->host_ptr_ = host_ptr;
-  mem_buf->img_size = img_size;
-  allocated_list_[host_ptr] = mem_buf;
-  UnLock();
-  MS_LOG(DEBUG) << "Malloc a new Image2D. size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
-                << ", device addr: " << mem_buf->device_ptr_ << ", image addr: " << mem_buf->image_ptr_;
-  return host_ptr;
-}
 void OpenCLAllocator::Free(void *buf) {
   if (buf == nullptr) {
     return;
@@ -423,5 +393,4 @@ int OpenCLAllocator::GetImageSize(void *host_ptr, std::vector<size_t> *img_size)
   UnLock();
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::opencl
