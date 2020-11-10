@@ -275,16 +275,6 @@ int ConvolutionDepthwiseSWInt8CPUKernel::Init() {
     MS_LOG(ERROR) << "new sliding window param.";
     return RET_ERROR;
   }
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  return ReSize();
-}
-
-int ConvolutionDepthwiseSWInt8CPUKernel::ReSize() {
-  ConvolutionBaseCPUKernel::Init();
-  InitSlidingParamConvDw(sliding_, conv_param_, C8NUM);
-
   auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set quant param failed.";
@@ -295,17 +285,25 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReSize() {
     MS_LOG(ERROR) << "reinit quant param failed.";
     return ret;
   }
-
   ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Depthwise int8 InitWeightBias error!";
     return ret;
   }
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int ConvolutionDepthwiseSWInt8CPUKernel::ReSize() {
+  ConvolutionBaseCPUKernel::Init();
+  InitSlidingParamConvDw(sliding_, conv_param_, C8NUM);
   return RET_OK;
 }
 
 int ConvolutionDepthwiseSWInt8CPUKernel::Execute(int task_id) {
-  ConvDwSWInt8(packed_output_, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), input_zp_,
+  ConvDwInt8SW(packed_output_, packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_), input_zp_,
                output_zp_, conv_param_, sliding_, task_id);
   return RET_OK;
 }

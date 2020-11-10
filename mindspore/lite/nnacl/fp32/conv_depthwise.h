@@ -42,13 +42,10 @@ void InitSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *co
 
 void AppendSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *conv_param, int block);
 
-void DepthwiseBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom,
-                     int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding);
-
-void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+void ConvDwSWFp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                   const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 
-void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+void DeconvDwSWFp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                     const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 
 #ifdef __cplusplus
