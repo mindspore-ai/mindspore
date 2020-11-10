@@ -93,7 +93,7 @@ def test_unique_row_split():
             self.embedding_lookp = P.GatherV2().shard(((8, 1), (1,)))
             self.embedding_table = Parameter(initializer('normal', [2000, 128]),
                                              name='embedding_table')
-            self.gatherv2 = P.GatherV2().shard(((1, 1), (8,)))
+            self.gatherv2 = P.GatherV2().shard(((1, 1), (1,)))
             self.reshape = P.Reshape()
             self.matmul = P.MatMul()
             self.mul_weight = Parameter(Tensor(np.full([32, 64, 1], 0.5, dtype=np.float32)), name="mul_weight")
@@ -108,7 +108,7 @@ def test_unique_row_split():
             return vx
 
     size = 8
-    context.set_auto_parallel_context(device_num=size, global_rank=0, parallel_mode="stand_alone")
+    context.set_auto_parallel_context(device_num=size, global_rank=0, parallel_mode="semi_auto_parallel")
     x = Tensor(np.ones([32, 64]), dtype=ms.int32)
     net = Net()
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)

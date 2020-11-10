@@ -126,6 +126,7 @@ class Parameter(MetaTensor_):
         self.is_param_ps = False
         self._cast_type = None
         self.init_in_server = False
+        self._unique = False
         self.is_in_parallel = _is_in_parallel_mode()
 
     @staticmethod
@@ -237,6 +238,15 @@ class Parameter(MetaTensor_):
     @sliced.setter
     def sliced(self, sliced_):
         self._sliced = sliced_
+
+    @property
+    def unique(self):
+        """whether the parameter is already unique or not."""
+        return self._unique
+
+    @unique.setter
+    def unique(self, unique_):
+        self._unique = unique_
 
     @property
     def is_init(self):

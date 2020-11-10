@@ -720,7 +720,7 @@ def _merge_param_with_strategy(sliced_data, parameter_name, strategy, is_even):
 
         if field_size > 0:
             from mindspore.parallel._tensor import _reshape_param_data_with_weight
-            merged_tensor = _reshape_param_data_with_weight(all_gather_tensor, dev_mat, [field_size])
+            merged_tensor = _reshape_param_data_with_weight(all_gather_tensor, dev_mat, field_size)
 
         else:
             from mindspore.parallel._tensor import _reshape_param_data

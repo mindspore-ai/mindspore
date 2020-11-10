@@ -67,6 +67,7 @@ from .mul_ds import _mul_ds_tbe
 from .real_div import _real_div_tbe
 from .real_div_ds import _real_div_ds_tbe
 from .relu import _relu_tbe
+from .relu_ds import _relu_ds_tbe
 from .relu_grad import _relu_grad_tbe
 from .relu6 import _relu6_tbe
 from .relu6_grad import _relu6_grad_tbe

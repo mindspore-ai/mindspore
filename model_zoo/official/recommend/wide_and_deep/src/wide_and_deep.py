@@ -198,19 +198,29 @@ class WideDeepModel(nn.Cell):
         self.tile = P.Tile()
         self.concat = P.Concat(axis=1)
         self.cast = P.Cast()
+        self.unique = P.Unique().shard(((1,),))
+        self.wide_gatherv2 = P.GatherV2()
+        self.deep_gatherv2 = P.GatherV2()
         if is_auto_parallel and sparse and not is_field_slice:
-            self.dense_layer_1.dropout.dropout_do_mask.shard(((1, get_group_size()),))
-            self.dense_layer_1.dropout.dropout.shard(((1, get_group_size()),))
-            self.dense_layer_1.matmul.shard(((1, get_group_size()), (get_group_size(), 1)))
             target = 'DEVICE'
             if host_device_mix:
                 target = 'CPU'
-            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target=target,
-                                                           slice_mode=nn.EmbeddingLookup.TABLE_COLUMN_SLICE)
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1, target=target,
                                                            slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE)
-            self.deep_mul.shard(((1, 1, get_group_size()), (1, 1, 1)))
-            self.deep_reshape.add_prim_attr("skip_redistribution", True)
+            if target == 'DEVICE':
+                self.wide_mul.shard(((1, 1, 1), (1, 1, 1)))
+            if config.deep_table_slice_mode == "column_slice":
+                self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target=target,
+                                                               slice_mode=nn.EmbeddingLookup.TABLE_COLUMN_SLICE)
+                self.dense_layer_1.dropout.dropout_do_mask.shard(((1, get_group_size()),))
+                self.dense_layer_1.dropout.dropout.shard(((1, get_group_size()),))
+                self.dense_layer_1.matmul.shard(((1, get_group_size()), (get_group_size(), 1)))
+                self.dense_layer_1.matmul.add_prim_attr("field_size", self.field_size)
+                self.deep_mul.shard(((1, 1, get_group_size()), (1, 1, 1)))
+                self.deep_reshape.add_prim_attr("skip_redistribution", True)
+            else:
+                self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target=target,
+                                                               slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE)
             self.reduce_sum.add_prim_attr("cross_batch", True)
             self.embedding_table = self.deep_embeddinglookup.embedding_table
         elif is_auto_parallel and host_device_mix and is_field_slice and config.full_batch and config.manual_shape:
@@ -247,13 +257,15 @@ class WideDeepModel(nn.Cell):
             id_hldr: batch ids;
             wt_hldr: batch weights;
         """
-        mask = self.reshape(wt_hldr, (self.batch_size, self.field_size, 1))
         # Wide layer
         wide_id_weight = self.wide_embeddinglookup(id_hldr)
+        # Deep layer
+        deep_id_embs = self.deep_embeddinglookup(id_hldr)
+        mask = self.reshape(wt_hldr, (self.batch_size, self.field_size, 1))
+        # Wide layer
         wx = self.wide_mul(wide_id_weight, mask)
         wide_out = self.reshape(self.reduce_sum(wx, 1) + self.wide_b, (-1, 1))
         # Deep layer
-        deep_id_embs = self.deep_embeddinglookup(id_hldr)
         vx = self.deep_mul(deep_id_embs, mask)
         deep_in = self.deep_reshape(vx, (-1, self.field_size * self.emb_dim))
         deep_in = self.dense_layer_1(deep_in)
@@ -333,7 +345,8 @@ class TrainStepWrap(nn.Cell):
         parameter_server (Bool): Whether run in parameter server mode. Default: False
     """
 
-    def __init__(self, network, sens=1024.0, host_device_mix=False, parameter_server=False, sparse=False):
+    def __init__(self, network, sens=1024.0, host_device_mix=False, parameter_server=False,
+                 sparse=False):
         super(TrainStepWrap, self).__init__()
         parallel_mode = context.get_auto_parallel_context("parallel_mode")
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)

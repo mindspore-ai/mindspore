@@ -405,10 +405,9 @@ AbstractBasePtr InferImplAllGather(const AnalysisEnginePtr &, const PrimitivePtr
   if (tmp_shape.empty()) {
     MS_LOG(EXCEPTION) << "shape size is 0";
   }
-  if (tmp_shape[0] % rank_size != 0) {
-    MS_LOG(EXCEPTION) << "first dimension of x should be divided by rank_size";
+  if (tmp_shape[0] > 0) {
+    tmp_shape[0] = tmp_shape[0] * rank_size;
   }
-  tmp_shape[0] = tmp_shape[0] / rank_size;
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(tmp_shape));
 }
 
