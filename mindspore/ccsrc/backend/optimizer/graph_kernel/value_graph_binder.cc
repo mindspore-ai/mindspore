@@ -29,12 +29,19 @@ bool BindValueToGraph::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto &value_nodes = kernel_graph->graph_value_nodes();
   bool changed = false;
+  auto mng = func_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(func_graph, true);
+    func_graph->set_manager(mng);
+  }
   for (auto node : todos) {
     if (!GetValueNode<tensor::TensorPtr>(node)) {
       continue;
     }
     if (auto vptr = node->cast<ValueNodePtr>(); value_nodes.count(vptr) == 0) {
-      kernel_graph->AddValueNodeToGraph(vptr);
+      auto new_node = kernel_graph->NewValueNode(vptr);
+      mng->Replace(vptr, new_node);
+      kernel_graph->AddValueNodeToGraph(new_node);
       changed = true;
     }
   }
