@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <set>
 #include <algorithm>
 #include <iterator>
 #include "abstract/infer_functions.h"
@@ -385,5 +386,35 @@ AbstractBasePtr InferImplZerosLike(const AnalysisEnginePtr &, const PrimitivePtr
   return args_spec_list[0]->Broaden();
 }
 
+AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  const std::string &op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto perm = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
+  auto input_shp = input->shape()->shape();
+  auto perm_val = perm->BuildValue();
+  if (perm_val->isa<AnyValue>()) {
+    MS_LOG(EXCEPTION) << "Perm can't be anything: " << args_spec_list[1]->ToString();
+  }
+  auto perm_val_data = perm_val->cast<ValueTuplePtr>()->value();
+  ShapeVector perm_vec;
+  (void)std::transform(std::begin(perm_val_data), std::end(perm_val_data), std::back_inserter(perm_vec),
+                       [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+  ShapeVector result_shp;
+  std::set<size_t> indices;
+  for (size_t i = 0; i < perm_vec.size(); i++) {
+    size_t idx = static_cast<size_t>(perm_vec[i]);
+    if (indices.find(idx) != indices.end()) {
+      MS_LOG(EXCEPTION) << "Perm values must be unique";
+    }
+    if (idx >= perm_vec.size()) {
+      MS_LOG(EXCEPTION) << "One value in perm is " << idx << ", not in range [0, " << perm_vec.size() << ")";
+    }
+    result_shp.push_back(input_shp[idx]);
+    indices.insert(idx);
+  }
+  return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp));
+}
 }  // namespace abstract
 }  // namespace mindspore

@@ -60,6 +60,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimRealDiv, {InferImplRealDiv, true}},
     {prim::kPrimShape, {InferImplShape, false}},
     {prim::kPrimDynamicShape, {InferImplDynamicShape, true}},
+    {prim::kPrimTranspose, {InferImplTranspose, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
     {prim::kPrimMakeList, {InferImplMakeList, true}},
