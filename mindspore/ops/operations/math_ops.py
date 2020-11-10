@@ -1772,7 +1772,7 @@ class Erfc(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
         >>> erfc = P.Erfc()
         >>> erfc(input_x)
-        [1.8427168, 0., 0.1572832, 0.00469124, 0.00002235]
+        [1.8427168, 1.0, 0.1572832, 0.00469124, 0.00002235]
     """
 
     @prim_attr_register
@@ -2895,6 +2895,8 @@ class FloatStatus(PrimitiveWithInfer):
         >>> float_status = P.FloatStatus()
         >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
         >>> result = float_status(input_x)
+        >>> print(result)
+        [1.]
     """
 
     @prim_attr_register
