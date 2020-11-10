@@ -747,7 +747,7 @@ py::tuple PynativeExecutor::RunOpInner(const py::args &args) {
     }
   }
 
-  if (op_exec_info->abstract == nullptr) {
+  if (op_exec_info->abstract == nullptr || force_infer_prim.find(op_exec_info->op_name) != force_infer_prim.end()) {
     // use python infer method
     if (ignore_infer_prim.find(op_exec_info->op_name) == ignore_infer_prim.end()) {
       PynativeInfer(prim, op_exec_info->op_inputs, op_exec_info.get(), args_spec_list);
