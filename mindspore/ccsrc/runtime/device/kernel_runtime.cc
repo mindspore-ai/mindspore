@@ -845,6 +845,15 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph) {
     MS_LOG(ERROR) << "LaunchKernelMod failed!";
     return false;
   }
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    if (!SyncStream()) {
+      MS_LOG(ERROR) << "SyncStream failed";
+      return false;
+    }
+  }
   return true;
 }
 
