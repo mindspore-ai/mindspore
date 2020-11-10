@@ -1970,7 +1970,8 @@ class SmoothL1Loss(PrimitiveWithInfer):
         >>> loss = P.SmoothL1Loss()
         >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> target_data = Tensor(np.array([1, 2, 2]), mindspore.float32)
-        >>> loss(input_data, target_data)
+        >>> output = loss(input_data, target_data)
+        >>> print(output)
         [0, 0, 0.5]
     """
 
@@ -2011,7 +2012,8 @@ class L2Loss(PrimitiveWithInfer):
     Examples
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
         >>> l2_loss = P.L2Loss()
-        >>> l2_loss(input_x)
+        >>> output = l2_loss(input_x)
+        >>> print(output)
         7.0
     """
 
@@ -2047,7 +2049,8 @@ class DataFormatDimMap(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor([0, 1, 2, 3], mindspore.int32)
         >>> dfdm = P.DataFormatDimMap()
-        >>> dfdm(x)
+        >>> output = dfdm(x)
+        >>> print(output)
         [0 3 1 2]
     """
 
@@ -2086,6 +2089,7 @@ class RNNTLoss(PrimitiveWithInfer):
 
     Examples:
         >>> B, T, U, V = 1, 2, 3, 5
+        >>> blank = 0
         >>> acts = np.random.random((B, T, U, V)).astype(np.float32)
         >>> labels = np.array([[1, 2]]).astype(np.int32)
         >>> input_length = np.array([T] * B).astype(np.int32)
@@ -2238,7 +2242,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
         >>> decay = 0.0
         >>> momentum = 1e-10
         >>> epsilon = 0.001
-        >>> result = apply_rms(input_x, mean_square, moment, learning_rate, grad, decay, momentum, epsilon)
+        >>> output = apply_rms(input_x, mean_square, moment, learning_rate, grad, decay, momentum, epsilon)
+        >>> print(output)
         (-2.9977674, 0.80999994, 1.9987665)
     """
 
@@ -2336,8 +2341,9 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         >>> decay = 0.0
         >>> momentum = 1e-10
         >>> epsilon = 0.05
-        >>> result = centered_rms_prop(input_x, mean_grad, mean_square, moment, grad,
+        >>> output = centered_rms_prop(input_x, mean_grad, mean_square, moment, grad,
         >>>                            learning_rate, decay, momentum, epsilon)
+        >>> print(output)
         [[[ -6.        -9.024922]
           [-12.049845 -15.074766]
           [-18.09969  -21.124613]]
@@ -2418,6 +2424,7 @@ class LayerNorm(Primitive):
         >>> beta = Tensor(np.ones([3]), mindspore.float32)
         >>> layer_norm = P.LayerNorm()
         >>> output = layer_norm(input_x, gamma, beta)
+        >>> print(output)
         ([[-0.22474492, 1., 2.2247488], [-0.22474492, 1., 2.2247488]],
          [[2.], [2.]], [[0.6666667], [0.6666667]])
     """
@@ -2453,7 +2460,8 @@ class L2Normalize(PrimitiveWithInfer):
     Examples:
         >>> l2_normalize = P.L2Normalize()
         >>> input_x = Tensor(np.random.randint(-256, 256, (2, 3, 4)), mindspore.float32)
-        >>> result = l2_normalize(input_x)
+        >>> output = l2_normalize(input_x)
+        >>> print(output)
         [[[-0.47247353   -0.30934513   -0.4991462   0.8185567 ]
           [-0.08070751   -0.9961299    -0.5741758   0.09262337]
           [-0.9916556    -0.3049123     0.5730487  -0.40579924]
@@ -2497,7 +2505,8 @@ class DropoutGenMask(Primitive):
         >>> dropout_gen_mask = P.DropoutGenMask()
         >>> shape = (2, 4, 5)
         >>> keep_prob = Tensor(0.5, mindspore.float32)
-        >>> mask = dropout_gen_mask(shape, keep_prob)
+        >>> output = dropout_gen_mask(shape, keep_prob)
+        >>> print(output)
         [249, 11, 134, 133, 143, 246, 89, 52, 169, 15, 94, 63, 146, 103, 7, 101]
     """
 
@@ -2601,7 +2610,8 @@ class ResizeBilinear(PrimitiveWithInfer):
     Examples:
         >>> tensor = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
         >>> resize_bilinear = P.ResizeBilinear((5, 5))
-        >>> result = resize_bilinear(tensor)
+        >>> output = resize_bilinear(tensor)
+        >>> print(output)
         [[[[1. 2. 3. 4. 5.]
            [1. 2. 3. 4. 5.]
            [1. 2. 3. 4. 5.]
@@ -2657,7 +2667,8 @@ class OneHot(PrimitiveWithInfer):
         >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
         >>> depth, on_value, off_value = 3, Tensor(1.0, mindspore.float32), Tensor(0.0, mindspore.float32)
         >>> onehot = P.OneHot()
-        >>> result = onehot(indices, depth, on_value, off_value)
+        >>> output = onehot(indices, depth, on_value, off_value)
+        >>> print(output)
         [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     """
 
@@ -2948,10 +2959,11 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
         Tensor, with the same shape and type as input `logits`.
 
     Examples:
-        >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float16))
-        >>> labels = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float16))
+        >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
+        >>> labels = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
         >>> sigmoid = P.SigmoidCrossEntropyWithLogits()
-        >>> sigmoid(logits, labels)
+        >>> output = sigmoid(logits, labels)
+        >>> print(output)
         [[0.6113 0.5034 0.263 ]
          [0.5845 0.553 -0.4365]]
     """
