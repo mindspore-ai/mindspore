@@ -19,8 +19,7 @@ import argparse
 import numpy as np
 
 import mindspore as ms
-from mindspore import Tensor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import Tensor, load_checkpoint, load_param_into_net, export
 
 from src.config import config_gpu as cfg
 from src.inception_v3 import InceptionV3

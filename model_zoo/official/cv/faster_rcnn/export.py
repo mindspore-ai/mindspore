@@ -17,8 +17,7 @@ import argparse
 import numpy as np
 
 import mindspore as ms
-from mindspore import Tensor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import Tensor, load_checkpoint, load_param_into_net, export
 
 from src.FasterRcnn.faster_rcnn_r50 import Faster_Rcnn_Resnet50
 from src.config import config

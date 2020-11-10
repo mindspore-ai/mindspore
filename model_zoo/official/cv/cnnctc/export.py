@@ -16,9 +16,8 @@
 import argparse
 import numpy as np
 
-from mindspore import Tensor, context
+from mindspore import Tensor, context, load_checkpoint, export
 import mindspore.common.dtype as mstype
-from mindspore.train.serialization import load_checkpoint, export
 
 from src.config import Config_CNNCTC
 from src.cnn_ctc import CNNCTC_Model

@@ -19,8 +19,7 @@ import argparse
 import numpy as np
 
 import mindspore as ms
-from mindspore import Tensor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import Tensor, load_checkpoint, load_param_into_net, export
 
 from src.config import nasnet_a_mobile_config_gpu as cfg
 from src.nasnet_a_mobile import NASNetAMobile

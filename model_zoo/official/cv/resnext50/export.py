@@ -17,8 +17,7 @@ resnext export mindir.
 """
 import argparse
 import numpy as np
-from mindspore import context, Tensor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
 from src.config import config
 from src.image_classification import get_network
 

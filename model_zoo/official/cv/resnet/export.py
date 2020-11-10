@@ -19,8 +19,7 @@ python export.py
 import argparse
 import numpy as np
 
-from mindspore import Tensor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import Tensor, load_checkpoint, load_param_into_net, export
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='resnet export')

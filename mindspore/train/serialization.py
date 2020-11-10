@@ -33,8 +33,6 @@ from mindspore._checkparam import check_input_data, Validator
 from mindspore.compression.export import quant_export
 import mindspore.context as context
 
-__all__ = ["save_checkpoint", "load_checkpoint", "load_param_into_net", "export", "parse_print",
-           "build_searched_strategy", "merge_sliced_parameter"]
 
 tensor_to_ms_type = {"Int8": mstype.int8, "Uint8": mstype.uint8, "Int16": mstype.int16, "Uint16": mstype.uint16,
                      "Int32": mstype.int32, "Uint32": mstype.uint32, "Int64": mstype.int64, "Uint64": mstype.uint64,

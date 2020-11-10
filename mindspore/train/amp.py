@@ -26,8 +26,6 @@ from .loss_scale_manager import DynamicLossScaleManager, LossScaleManager
 from ..context import ParallelMode
 from .. import context
 
-__all__ = ["build_train_network"]
-
 
 class OutputTo16(nn.Cell):
     "Wrap cell for amp. Cast network output back to float16"
