@@ -56,7 +56,7 @@ using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 class Executor;
 class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
  public:
-  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0), run_op_graph_id_(0) {
+  SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
 #if !defined(_WIN32) && !defined(_WIN64)
     debugger_ = nullptr;
 #endif
@@ -184,7 +184,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;
   uint32_t device_id_;
-  uint32_t run_op_graph_id_;
   std::shared_ptr<Executor> executor_;
 #if !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;

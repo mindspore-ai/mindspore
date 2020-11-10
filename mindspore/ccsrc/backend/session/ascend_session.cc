@@ -402,7 +402,9 @@ void AscendSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &gra
   // malloc mem
   RunOpMemoryAlloc(op_run_info.value, input_tensors, graph.get());
   // Build dynamic kernel
-  BuildDynamicKernel(graph);
+  if (op_run_info.is_dynamic_shape) {
+    BuildDynamicKernel(graph);
+  }
   // load input data to device
   LoadInputData(graph, input_tensors);
   // run op

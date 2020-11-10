@@ -1322,8 +1322,8 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
                                                                   const std::vector<tensor::TensorPtr> &input_tensors,
                                                                   const std::vector<int64_t> &tensors_mask) {
   auto graph = std::make_shared<KernelGraph>();
-  graph->set_graph_id(run_op_graph_id_);
-  run_op_graph_id_++;
+  graph->set_graph_id(graph_sum_);
+  graph_sum_++;
   std::vector<AnfNodePtr> inputs;
   // set input[0]
   PrimitivePtr op_prim = op_run_info.primitive;
