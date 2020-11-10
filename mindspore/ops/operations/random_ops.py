@@ -419,6 +419,8 @@ class RandomCategorical(PrimitiveWithInfer):
             raise ValueError("RandomCategorical shape should be 2-dimension.")
         ndim = len(x_shape) - 1
         x_shape[ndim] = num_samples_v
+        self.add_prim_attr('num_samples', num_samples_v)
+        self.add_prim_attr('seed', seed_v)
         return {'shape': (x_shape),
                 'dtype': (self.dtype),
                 'value': None}
