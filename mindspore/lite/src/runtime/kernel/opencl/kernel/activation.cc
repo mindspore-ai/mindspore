@@ -42,30 +42,41 @@ using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
 
-int ActivationOpenClKernel::Init() {
-  std::map<int, std::string> kernel_names{
+std::string ActivationOpenCLKernel::GetActTypeString(int act_type) {
+  static std::map<int, std::string> supported_act_type = {
     {ActivationType_LEAKY_RELU, "LeakyRelu"}, {ActivationType_RELU, "Relu"}, {ActivationType_SIGMOID, "Sigmoid"},
     {ActivationType_RELU6, "Relu6"},          {ActivationType_TANH, "Tanh"}, {ActivationType_SWISH, "Swish"},
     {ActivationType_HSWISH, "HSwish"}};
-  if (kernel_names.count(type_) == 0) {
-    MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
-    return mindspore::lite::RET_ERROR;
+  auto result_iter = supported_act_type.find(act_type);
+  if (result_iter != supported_act_type.end()) {
+    return result_iter->second;
   }
+  return "";
+}
+
+int ActivationOpenCLKernel::CheckSpecs() {
+  if (GetActTypeString(type_).empty()) {
+    MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int ActivationOpenCLKernel::Prepare() {
   outShape = Image2DInfo(out_tensors_[0]);
-  local_size_ = {};
-  global_size_ = {outShape.width, outShape.height};
   std::string source = activation_source;
   std::set<std::string> build_options;
   std::string program_name = "Activation";
   ocl_runtime_->LoadSource(program_name, source);
-  std::string kernel_name = kernel_names[type_];
+  std::string kernel_name = GetActTypeString(type_);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
-  SetArgs();
+  SetConstArgs();
+  SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " init Done!";
   return mindspore::lite::RET_OK;
 }
 
-int ActivationOpenClKernel::SetArgs() {
+void ActivationOpenCLKernel::SetConstArgs() {
   int arg_idx = 2;
   cl_int2 image_size = {static_cast<int>(outShape.width), static_cast<int>(outShape.height)};
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, image_size);
@@ -78,50 +89,26 @@ int ActivationOpenClKernel::SetArgs() {
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, c4);
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, last_c4);
   }
-  return RET_OK;
 }
 
-int ActivationOpenClKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " begin running!";
+void ActivationOpenCLKernel::SetGlobalLocal() {
+  local_range_ = cl::NullRange;
+  global_range_ = {outShape.width, outShape.height};
+}
+
+int ActivationOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  auto ret = ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
-  if (ret != mindspore::lite::RET_OK) {
+  auto ret = ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel:" << this->name() << " fail.";
-    return mindspore::lite::RET_ERROR;
+    return RET_ERROR;
   }
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
-kernel::LiteKernel *OpenClActivationKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                  const mindspore::lite::PrimitiveC *primitive) {
-  if (inputs.empty()) {
-    MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
-    return nullptr;
-  }
-  if (inputs[0]->shape().size() > 2 && inputs[0]->shape()[0] > 1) {
-    MS_LOG(ERROR) << "Activation kernel:" << opParameter->name_ << " failed: Unsupported multi-batch.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto *kernel =
-    new (std::nothrow) ActivationOpenClKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "New kernel:" << opParameter->name_ << "is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Init activation kernel:" << opParameter->name_ << " failed!";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Activation, OpenClActivationKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Activation, OpenClActivationKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Activation, OpenCLKernelCreator<ActivationOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Activation, OpenCLKernelCreator<ActivationOpenCLKernel>)
 }  // namespace mindspore::kernel

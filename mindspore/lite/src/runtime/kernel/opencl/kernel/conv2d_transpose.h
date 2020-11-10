@@ -32,12 +32,14 @@ class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~Conv2dTransposeOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
+  int Prepare() override;
+  int CheckSpecs() override;
+  int InitWeights() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
-  void PadWeight();
-
   cl::Kernel kernel_;
   void *padWeight_{nullptr};
   void *bias_{nullptr};

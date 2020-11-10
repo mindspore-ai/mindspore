@@ -31,12 +31,15 @@ class FullConnectionOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~FullConnectionOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
+  int Prepare() override;
+  int CheckSpecs() override;
+  int InitWeights() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
+  int Init() override;
 
  private:
-  void PadWeight();
-
   cl::Kernel kernel_;
   void *padWeight_{nullptr};
   void *bias_{nullptr};

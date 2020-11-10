@@ -40,14 +40,19 @@ using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 namespace mindspore::kernel {
 
-int ReduceOpenCLKernel::Init() {
-  InitNHWCShape();
-  auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
-  if (reduce_param == nullptr) {
-    return RET_NULL_PTR;
+std::string ReduceOpenCLKernel::GetReduceTypeStr(int type) {
+  static const std::map<int, std::string> reduce_type2str{{ReduceMode_ReduceMean, "mean"},
+                                                          {ReduceMode_ReduceSum, "sum"}};
+  auto result_iter = reduce_type2str.find(type);
+  if (result_iter != reduce_type2str.end()) {
+    return result_iter->second;
   }
-  std::map<int, std::string> reduce_type2str{{ReduceMode_ReduceMean, "mean"}, {ReduceMode_ReduceSum, "sum"}};
-  if (reduce_type2str.find(reduce_param->mode_) == reduce_type2str.end()) {
+  return "";
+}
+
+int ReduceOpenCLKernel::CheckSpecs() {
+  auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
+  if (GetReduceTypeStr(reduce_param->mode_).empty()) {
     MS_LOG(ERROR) << "not supported reduce type:" << reduce_param->mode_;
     return RET_PARAM_INVALID;
   }
@@ -67,7 +72,17 @@ int ReduceOpenCLKernel::Init() {
     MS_LOG(ERROR) << "reduce axis (2,3) should keep dims";
     return RET_PARAM_INVALID;
   }
-  std::string kernel_name = reduce_type2str.at(reduce_param->mode_);
+  return RET_OK;
+}
+
+int ReduceOpenCLKernel::Prepare() {
+  outShape = Image2DInfo(out_tensors_[0]);
+  auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
+  if (reduce_param == nullptr) {
+    return RET_NULL_PTR;
+  }
+
+  std::string kernel_name = GetReduceTypeStr(reduce_param->mode_);
   if (wc_reduce_) {
     kernel_name += "_WC";
   }
@@ -77,7 +92,6 @@ int ReduceOpenCLKernel::Init() {
     kernel_name += "_local";
   }
   kernel_name += "_NHWC4";
-  enable_fp16_ = ocl_runtime_->GetFp16Enable();
 
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
@@ -88,30 +102,24 @@ int ReduceOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
 #endif
+  SetConstArgs();
+  SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return mindspore::lite::RET_OK;
 }
-
-void ReduceOpenCLKernel::InitNHWCShape() {
-  std::vector<int> shapex = out_tensors_[0]->shape();
-  size_t n = 1, h = 1, w = 1, c = 1;
-  if (shapex.size() == 2) {
-    n = shapex[0];
-    c = shapex[1];
-  } else if (shapex.size() == 4) {
-    n = shapex[0];
-    h = shapex[1];
-    w = shapex[2];
-    c = shapex[3];
-  }
-  nhwc_shape_ = {n, h, w, c};
-}
-
-int ReduceOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " Running!";
+void ReduceOpenCLKernel::SetConstArgs() {
   std::vector<int> shapex = in_tensors_[0]->shape();
   int h = shapex[1];
   int w = shapex[2];
+  int c = shapex[3];
+  int c4 = UP_DIV(c, C4NUM);
+  cl_int4 size = {h, w, c4, c};
+  int arg_idx = 2;
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size);
+}
+void ReduceOpenCLKernel::SetGlobalLocal() {
+  std::vector<int> shapex = in_tensors_[0]->shape();
+  int h = shapex[1];
   int c = shapex[3];
   int c4 = UP_DIV(c, C4NUM);
   std::vector<size_t> local = {};
@@ -122,35 +130,20 @@ int ReduceOpenCLKernel::Run() {
   if (wc_reduce_) {
     global = {static_cast<size_t>(h), 1, 1};
   }
-  cl_int4 size = {h, w, c4, c};
+  AlignGlobalLocal(global, local);
+}
+
+int ReduceOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size);
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
   return mindspore::lite::RET_OK;
 }
 
-kernel::LiteKernel *OpenCLReduceKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                              const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) ReduceOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel " << opParameter->name_ << " create failed.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != mindspore::lite::RET_OK) {
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Mean, OpenCLReduceKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Mean, OpenCLReduceKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Reduce, OpenCLReduceKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Reduce, OpenCLReduceKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Mean, OpenCLKernelCreator<ReduceOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Mean, OpenCLKernelCreator<ReduceOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Reduce, OpenCLKernelCreator<ReduceOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Reduce, OpenCLKernelCreator<ReduceOpenCLKernel>)
 }  // namespace mindspore::kernel

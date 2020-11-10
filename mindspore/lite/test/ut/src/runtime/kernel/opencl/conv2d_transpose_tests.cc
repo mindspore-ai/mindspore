@@ -99,15 +99,13 @@ void RunTestCaseConv2dTranspose(const std::vector<int> &shape, void *input_data,
   opParameter->pad_l_ = pad;
   opParameter->input_channel_ = ci;
   opParameter->output_channel_ = co;
-  auto op_kernel_ptr = std::make_unique<kernel::Conv2dTransposeOpenCLKernel>(
-    reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  auto op_kernel = op_kernel_ptr.release();
+  auto op_kernel = kernel::OpenCLKernelCreator<kernel::Conv2dTransposeOpenCLKernel>(
+    inputs, outputs, reinterpret_cast<OpParameter *>(opParameter), nullptr, kernel::KernelKey(), nullptr);
   if (op_kernel == nullptr) {
     MS_LOG(ERROR) << "op_kernel create error.";
     return;
   }
   op_kernel->set_name("DeConv");
-  op_kernel->Init();
 
   inputs[0]->MallocData(allocator);
   std::vector<kernel::LiteKernel *> kernels{op_kernel};

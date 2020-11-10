@@ -35,41 +35,111 @@ using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 
-std::vector<size_t> ArithmeticOpenCLKernel::InitGlobalSize() const {
-  auto out_shape = out_tensors_[0]->shape();
-  if (out_shape.size() == 2) {
-    const size_t global_x = 1;
-    const size_t global_y = 1;
-    const size_t global_z = UP_ROUND_DIV(out_shape[1], C4NUM);
-    std::vector<size_t> global = {global_x, global_y, global_z};
-    return global;
+int ArithmeticOpenCLKernel::CheckSpecs() {
+  auto *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
+  if (arithmetic_parameter->broadcasting_) {
+    element_flag_ = false;
+    kernel_name_ = "BroadcastNHWC4";
+    if (out_tensors_[0]->shape()[0] > 1) {
+      MS_LOG(ERROR) << "Broadcasting don't support  N > 1";
+      return RET_ERROR;
+    }
   } else {
-    const size_t global_x = out_shape[2];
-    const size_t global_y = out_shape[1];
-    const size_t global_z = UP_ROUND_DIV(out_shape[3], C4NUM);
-    std::vector<size_t> global = {global_x, global_y, global_z};
-    return global;
+    kernel_name_ = "Element";
   }
+
+  switch (op_parameter_->type_) {
+    case PrimitiveType_Mul:
+      kernel_name_ += "Mul";
+      break;
+    case PrimitiveType_Add:
+      kernel_name_ += "Add";
+      break;
+    case PrimitiveType_Sub:
+      kernel_name_ += "Sub";
+      break;
+    case PrimitiveType_Div:
+      kernel_name_ += "Div";
+      break;
+    case PrimitiveType_LogicalAnd:
+      kernel_name_ += "And";
+      break;
+    case PrimitiveType_LogicalOr:
+      kernel_name_ += "Or";
+      break;
+    case PrimitiveType_Maximum:
+      kernel_name_ += "Max";
+      break;
+    case PrimitiveType_Minimum:
+      kernel_name_ += "Min";
+      break;
+    case PrimitiveType_FloorDiv:
+      kernel_name_ += "FloorDiv";
+      break;
+    case PrimitiveType_FloorMod:
+      kernel_name_ += "FloorMod";
+      break;
+    case PrimitiveType_SquaredDifference:
+      kernel_name_ += "SquaredDifference";
+      break;
+    case PrimitiveType_Equal:
+      kernel_name_ += "Equal";
+      break;
+    case PrimitiveType_NotEqual:
+      kernel_name_ += "NotEqual";
+      break;
+    case PrimitiveType_Less:
+      kernel_name_ += "Less";
+      break;
+    case PrimitiveType_LessEqual:
+      kernel_name_ += "LessEqual";
+      break;
+    case PrimitiveType_Greater:
+      kernel_name_ += "Greater";
+      break;
+    case PrimitiveType_GreaterEqual:
+      kernel_name_ += "GreaterEqual";
+      break;
+    default:
+      MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
+      return RET_ERROR;
+  }
+
+  switch (arithmetic_parameter->activation_type_) {
+    case schema::ActivationType_NO_ACTIVATION:
+      break;
+    case schema::ActivationType_RELU:
+      activation_min_ = 0.f;
+      break;
+    case schema::ActivationType_RELU6:
+      activation_min_ = 0.f;
+      activation_max_ = 6.f;
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupported activation type " << arithmetic_parameter->activation_type_;
+      return RET_ERROR;
+  }
+  return RET_OK;
 }
 
-void ArithmeticOpenCLKernel::Image2dGetWorkGroupSize() {
+void ArithmeticOpenCLKernel::SetGlobalLocal() {
   if (element_flag_) {
-    local_size_ = {16, 16};
+    local_range_ = {};
     auto out_shape = out_tensors_[0]->shape();
     if (out_shape.size() == 2) {
       size_t H = out_shape[0];
       size_t W = UP_DIV(out_shape[1], C4NUM);
-      global_size_ = {W, H};
+      global_range_ = {W, H};
     } else {
       size_t H = out_shape[0] * out_shape[1];
       size_t W = out_shape[2] * UP_DIV(out_shape[3], C4NUM);
-      global_size_ = {W, H};
+      global_range_ = {W, H};
     }
   } else {
-    local_size_ = {};
+    local_range_ = {};
     auto out_shape = GetNHWCShape(out_tensors_[0]->shape());
-    global_size_ = {static_cast<size_t>(UP_DIV(out_shape[3], C4NUM)), static_cast<size_t>(out_shape[2]),
-                    static_cast<size_t>(out_shape[1] * out_shape[0])};
+    global_range_ = {static_cast<size_t>(UP_DIV(out_shape[3], C4NUM)), static_cast<size_t>(out_shape[2]),
+                     static_cast<size_t>(out_shape[1] * out_shape[0])};
   }
 }
 
@@ -137,7 +207,7 @@ int ArithmeticOpenCLKernel::InitWeights() {
   return RET_OK;
 }
 
-int ArithmeticOpenCLKernel::SetArgs() {
+void ArithmeticOpenCLKernel::SetConstArgs() {
   int arg_idx = 3;
   if (!element_flag_) {
     cl_int4 input0_shape = {inputs_nhwc_shapes_[0][0], inputs_nhwc_shapes_[0][1], inputs_nhwc_shapes_[0][2],
@@ -157,124 +227,37 @@ int ArithmeticOpenCLKernel::SetArgs() {
     }
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, broadcastC_flag);
   } else {
-    cl_int2 output_shape{static_cast<int>(global_size_[0]), static_cast<int>(global_size_[1])};
+    cl_int2 output_shape{static_cast<int>(global_range_[0]), static_cast<int>(global_range_[1])};
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_min_);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, activation_max_);
-  return RET_OK;
 }
 
-int ArithmeticOpenCLKernel::Init() {
-  std::string kernel_name;
-  auto *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-
-  if (arithmetic_parameter->broadcasting_) {
-    element_flag_ = false;
-    kernel_name = "BroadcastNHWC4";
-    if (out_tensors_[0]->shape()[0] > 1) {
-      MS_LOG(ERROR) << "Broadcasting don't support  N > 1";
-      return RET_ERROR;
-    }
-  } else {
-    kernel_name = "Element";
-  }
-
-  switch (op_parameter_->type_) {
-    case PrimitiveType_Mul:
-      kernel_name += "Mul";
-      break;
-    case PrimitiveType_Add:
-      kernel_name += "Add";
-      break;
-    case PrimitiveType_Sub:
-      kernel_name += "Sub";
-      break;
-    case PrimitiveType_Div:
-      kernel_name += "Div";
-      break;
-    case PrimitiveType_LogicalAnd:
-      kernel_name += "And";
-      break;
-    case PrimitiveType_LogicalOr:
-      kernel_name += "Or";
-      break;
-    case PrimitiveType_Maximum:
-      kernel_name += "Max";
-      break;
-    case PrimitiveType_Minimum:
-      kernel_name += "Min";
-      break;
-    case PrimitiveType_FloorDiv:
-      kernel_name += "FloorDiv";
-      break;
-    case PrimitiveType_FloorMod:
-      kernel_name += "FloorMod";
-      break;
-    case PrimitiveType_SquaredDifference:
-      kernel_name += "SquaredDifference";
-      break;
-    case PrimitiveType_Equal:
-      kernel_name += "Equal";
-      break;
-    case PrimitiveType_NotEqual:
-      kernel_name += "NotEqual";
-      break;
-    case PrimitiveType_Less:
-      kernel_name += "Less";
-      break;
-    case PrimitiveType_LessEqual:
-      kernel_name += "LessEqual";
-      break;
-    case PrimitiveType_Greater:
-      kernel_name += "Greater";
-      break;
-    case PrimitiveType_GreaterEqual:
-      kernel_name += "GreaterEqual";
-      break;
-    default:
-      MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
-      return RET_ERROR;
-  }
-
-  switch (arithmetic_parameter->activation_type_) {
-    case schema::ActivationType_NO_ACTIVATION:
-      break;
-    case schema::ActivationType_RELU:
-      activation_min_ = 0.f;
-      break;
-    case schema::ActivationType_RELU6:
-      activation_min_ = 0.f;
-      activation_max_ = 6.f;
-      break;
-    default:
-      MS_LOG(ERROR) << "Unsupported activation type " << arithmetic_parameter->activation_type_;
-      return RET_ERROR;
-  }
-
+int ArithmeticOpenCLKernel::Prepare() {
   lite::STATUS error_code = RET_OK;
 #ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
+  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name_);
 #else
   if (out_mem_type_ == MemType::IMG) {
-    kernel_name += "_IMG";
+    kernel_name_ += "_IMG";
   } else {
-    kernel_name += "_BUF";
+    kernel_name_ += "_BUF";
   }
   std::string program_name = "Arithmetic";
   std::set<std::string> build_options;
   std::string source = arithmetic_source;
   ocl_runtime_->LoadSource(program_name, source);
-  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name_, build_options);
 #endif
   if (error_code != RET_OK) {
     return error_code;
   }
 
-  Image2dGetWorkGroupSize();
+  SetGlobalLocal();
   InitWeights();
-  SetArgs();
-  MS_LOG(DEBUG) << kernel_name << " Init Done!";
+  SetConstArgs();
+  MS_LOG(DEBUG) << kernel_name_ << " Init Done!";
   return RET_OK;
 }
 
@@ -287,64 +270,44 @@ int ArithmeticOpenCLKernel::Run() {
   auto input_1_ptr = inputs_weight_ptrs_[1] == nullptr ? in_tensors_[1]->data_c() : inputs_weight_ptrs_[1];
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_1_ptr);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLArithmeticKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                  const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel =
-    new (std::nothrow) ArithmeticOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Create OpenCL Arithmetic kernel failed!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: Arithmetic";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Mul, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Add, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Sub, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Div, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LogicalAnd, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LogicalOr, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Maximum, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Minimum, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FloorDiv, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FloorMod, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SquaredDifference, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Equal, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_NotEqual, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Less, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LessEqual, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Greater, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_GreaterEqual, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Eltwise, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Mul, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Add, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Sub, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Div, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LogicalAnd, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LogicalOr, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Maximum, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Minimum, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_FloorDiv, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_FloorMod, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SquaredDifference, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Equal, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_NotEqual, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Less, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LessEqual, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Greater, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_GreaterEqual, OpenCLArithmeticKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Eltwise, OpenCLArithmeticKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Mul, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Add, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Sub, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Div, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LogicalAnd, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LogicalOr, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Maximum, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Minimum, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FloorDiv, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_FloorMod, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SquaredDifference, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Equal, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_NotEqual, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Less, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LessEqual, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Greater, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_GreaterEqual, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Eltwise, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Mul, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Add, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Sub, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Div, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LogicalAnd, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LogicalOr, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Maximum, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Minimum, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_FloorDiv, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_FloorMod, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SquaredDifference, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Equal, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_NotEqual, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Less, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LessEqual, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Greater, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_GreaterEqual, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Eltwise, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 }  // namespace mindspore::kernel

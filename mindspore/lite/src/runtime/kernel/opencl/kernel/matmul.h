@@ -31,12 +31,14 @@ class MatMulOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~MatMulOpenCLKernel() override = default;
 
-  int Init() override;
   int Run() override;
+  int Prepare() override;
+  int CheckSpecs() override;
+  int InitWeights() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
  private:
-  void PadWeight();
-
   cl::Kernel kernel_;
   void *padWeight_{nullptr};
   bool enable_fp16_{false};

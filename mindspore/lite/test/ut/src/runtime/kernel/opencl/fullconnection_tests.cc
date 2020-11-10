@@ -63,6 +63,7 @@ void RunTestCaseFullConnection(const std::vector<int> &shape, void *input_data, 
   param->a_transpose_ = false;
   param->b_transpose_ = true;
   param->has_bias_ = true;
+  param->act_type_ = ActType_No;
   auto tensor_x_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
                                                      input_shape, dims == 2 ? schema::Format_NC : schema::Format_NHWC);
   auto tensor_x = tensor_x_ptr.get();
@@ -98,14 +99,12 @@ void RunTestCaseFullConnection(const std::vector<int> &shape, void *input_data, 
   }
   std::vector<lite::Tensor *> inputs{tensor_x, tensor_w, tensor_bias};
   std::vector<lite::Tensor *> outputs{tensor_out};
-  auto op_kernel_ptr =
-    std::make_unique<kernel::FullConnectionOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  auto op_kernel = op_kernel_ptr.release();
+  auto op_kernel = kernel::OpenCLKernelCreator<kernel::FullConnectionOpenCLKernel>(
+    inputs, outputs, reinterpret_cast<OpParameter *>(param), nullptr, kernel::KernelKey(), nullptr);
   if (op_kernel == nullptr) {
     MS_LOG(ERROR) << "op_kernel create error.";
     return;
   }
-  op_kernel->Init();
   inputs[0]->MallocData(allocator);
 
   std::vector<kernel::LiteKernel *> kernels{op_kernel};

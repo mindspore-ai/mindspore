@@ -87,14 +87,12 @@ void RunTestCaseMatMul(const std::vector<int> &shape, void *input_data, void *we
   }
   std::vector<lite::Tensor *> inputs{tensor_x, tensor_w};
   std::vector<lite::Tensor *> outputs{tensor_out};
-  auto op_kernel_ptr =
-    std::make_unique<kernel::MatMulOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  auto op_kernel = op_kernel_ptr.release();
+  auto op_kernel = kernel::OpenCLKernelCreator<kernel::MatMulOpenCLKernel>(
+    inputs, outputs, reinterpret_cast<OpParameter *>(param), nullptr, kernel::KernelKey(), nullptr);
   if (op_kernel == nullptr) {
     MS_LOG(ERROR) << "op_kernel create error.";
     return;
   }
-  op_kernel->Init();
   inputs[0]->MallocData(allocator);
 
   std::vector<kernel::LiteKernel *> kernels{op_kernel};
