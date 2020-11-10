@@ -162,7 +162,7 @@ kernel::LiteKernel *CpuFullConnectionInt8KernelCreator(const std::vector<lite::T
                                                        const kernel::KernelKey &desc,
                                                        const mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Concat);
+  MS_ASSERT(desc.type == schema::PrimitiveType_FullConnection);
   auto kernel = new (std::nothrow) FullconnectionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (!kernel) {
     MS_LOG(ERROR) << "kernel is nullptr.";
