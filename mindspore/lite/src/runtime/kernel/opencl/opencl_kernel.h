@@ -34,33 +34,67 @@ struct OpenCLToFormatParameter {
   lite::opencl::MemType out_mem_type{lite::opencl::MemType::IMG};
 };
 
+template <typename SrcT, typename DstT>
+void Broadcast2GpuShape(const SrcT *src, DstT *dst, int src_num) {
+  auto *N = dst;
+  auto *H = dst + 1;
+  auto *W = dst + 2;
+  auto *C = dst + 3;
+  if (src_num == 1) {
+    *N = src[0];
+  } else if (src_num == 2) {
+    *N = src[0];
+    *C = src[1];
+  } else if (src_num == 3) {
+    *N = src[0];
+    *W = src[1];
+    *C = src[2];
+  } else if (src_num == 4) {
+    *N = src[0];
+    *H = src[1];
+    *W = src[2];
+    *C = src[3];
+  } else if (src_num >= 5) {
+    MS_LOG(ERROR) << "GPU doesn't support ndim>=" << src_num;
+  }
+}
+
+template <typename SrcT, typename DstT>
+void Broadcast2GpuShape(const SrcT *src, DstT *dst, int src_num, DstT default_value) {
+  for (int i = 0; i < 4; ++i) {
+    dst[i] = default_value;
+  }
+  Broadcast2GpuShape(src, dst, src_num);
+}
+
 struct Image2DInfo {
   explicit Image2DInfo(const lite::Tensor *tensor) {
     if (tensor == nullptr) {
       return;
     }
-
     auto shape = tensor->shape();
-    if (shape.size() == 1) {
+    auto ndim = shape.size();
+    if (ndim == 1) {
       N = shape[0];
-    } else if (shape.size() == 2) {
+    } else if (ndim == 2) {
       N = shape[0];
       C = shape[1];
-    } else if (shape.size() == 3) {
+    } else if (ndim == 3) {
       N = shape[0];
       W = shape[1];
       C = shape[2];
-    } else if (shape.size() == 4) {
+    } else if (ndim == 4) {
       N = shape[0];
       H = shape[1];
       W = shape[2];
       C = shape[3];
-    } else if (shape.size() >= 5) {
-      MS_LOG(ERROR) << "GPU dont't support Tensor with dim=" << shape.size();
+    } else if (ndim >= 5) {
+      MS_LOG(ERROR) << "GPU doesn't support Tensor with ndim>=" << ndim;
     }
+    Slice = UP_DIV(C, C4NUM);
+
     FLT_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half) : sizeof(cl_float);
     FLT4_size = FLT_size * 4;
-    Slice = UP_DIV(C, C4NUM);
     if (W * Slice <= MAX_IMAGE2D_SIZE) {
       height = N * H;
       width = W * Slice;
