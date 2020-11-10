@@ -50,7 +50,7 @@ OpParameter *DefaultPopulateParameter(const mindspore::lite::PrimitiveC *primiti
 
   OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "new Param for primitive failed.";
+    MS_LOG(ERROR) << "malloc Param for primitive failed.";
     return nullptr;
   }
 
@@ -65,7 +65,7 @@ OpParameter *PopulateApplyMomentumParameter(const mindspore::lite::PrimitiveC *p
   }
   ApplyMomentumParameter *p = reinterpret_cast<ApplyMomentumParameter *>(malloc(sizeof(ApplyMomentumParameter)));
   if (p == nullptr) {
-    MS_LOG(ERROR) << "new ApplyMomentumParameter failed.";
+    MS_LOG(ERROR) << "malloc ApplyMomentumParameter failed.";
     return nullptr;
   }
   p->op_parameter_.type_ = primitive->Type();
@@ -128,7 +128,7 @@ OpParameter *PopulateSgdParameter(const mindspore::lite::PrimitiveC *primitive) 
   }
   SgdParameter *p = reinterpret_cast<SgdParameter *>(malloc(sizeof(SgdParameter)));
   if (p == nullptr) {
-    MS_LOG(ERROR) << "new SgdParameter failed.";
+    MS_LOG(ERROR) << "malloc SgdParameter failed.";
     return nullptr;
   }
   p->op_parameter_.type_ = primitive->Type();
@@ -150,7 +150,7 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const mindspore::lite::Primiti
   SoftmaxCrossEntropyParameter *sce_param =
     reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
   if (sce_param == nullptr) {
-    MS_LOG(ERROR) << "new SoftmaxCrossEntropyParameter failed.";
+    MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
     return nullptr;
   }
   sce_param->op_parameter_.type_ = primitive->Type();
@@ -164,7 +164,7 @@ OpParameter *PopulatePoolingGradParameter(const mindspore::lite::PrimitiveC *pri
   }
   PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   if (pooling_param == nullptr) {
-    MS_LOG(ERROR) << "new PoolingParameter failed.";
+    MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;
   }
   pooling_param->op_parameter_.type_ = primitive->Type();
@@ -217,7 +217,7 @@ OpParameter *PopulateActivationGradParameter(const mindspore::lite::PrimitiveC *
 
   ActivationParameter *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
   if (act_param == nullptr) {
-    MS_LOG(ERROR) << "new ActivationParameter failed.";
+    MS_LOG(ERROR) << "malloc ActivationParameter failed.";
     return nullptr;
   }
   act_param->op_parameter_.type_ = primitive->Type();
@@ -236,7 +236,7 @@ OpParameter *PopulateConvolutionGradFilterParameter(const mindspore::lite::Primi
 
   ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "new Param for conv grad filter failed.";
+    MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
     return nullptr;
   }
   param->op_parameter_.type_ = primitive->Type();
@@ -277,7 +277,7 @@ OpParameter *PopulateConvolutionGradInputParameter(const mindspore::lite::Primit
 
   ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
-    MS_LOG(ERROR) << "new Param for conv grad filter failed.";
+    MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
     return nullptr;
   }
   param->op_parameter_.type_ = primitive->Type();
@@ -359,7 +359,7 @@ OpParameter *PopulatePowerGradParameter(const mindspore::lite::PrimitiveC *primi
 
   PowerParameter *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
   if (power_param == nullptr) {
-    MS_LOG(ERROR) << "new PowerParameter failed.";
+    MS_LOG(ERROR) << "malloc PowerParameter failed.";
     return nullptr;
   }
   power_param->op_parameter_.type_ = primitive->Type();
@@ -378,7 +378,7 @@ OpParameter *PopulateBiasGradParameter(const mindspore::lite::PrimitiveC *primit
 
   ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (arithmetic_param == nullptr) {
-    MS_LOG(ERROR) << "new ArithmeticParameter failed.";
+    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
   arithmetic_param->op_parameter_.type_ = primitive->Type();
@@ -393,7 +393,7 @@ OpParameter *PopulateBNGradParameter(const mindspore::lite::PrimitiveC *primitiv
 
   BNGradParameter *bnGrad_param = reinterpret_cast<BNGradParameter *>(malloc(sizeof(BNGradParameter)));
   if (bnGrad_param == nullptr) {
-    MS_LOG(ERROR) << "new BNGradParameter failed.";
+    MS_LOG(ERROR) << "malloc BNGradParameter failed.";
     return nullptr;
   }
   bnGrad_param->op_parameter_.type_ = primitive->Type();

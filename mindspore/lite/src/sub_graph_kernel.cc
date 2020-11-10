@@ -239,7 +239,7 @@ int CpuFp16SubGraph::PostProcess() {
       tensor->set_data(nullptr);
       tensor->set_data_type(TypeId::kNumberTypeFloat32);
       auto ret = tensor->MallocData();
-      if (RET_OK != ret) {
+      if (ret != RET_OK) {
         MS_LOG(ERROR) << "malloc data failed";
         if (this->context_ != nullptr && this->context_->allocator != nullptr) {
           this->context_->allocator->Free(float16_data);
