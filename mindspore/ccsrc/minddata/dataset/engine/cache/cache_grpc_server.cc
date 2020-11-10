@@ -19,11 +19,8 @@
 #include "minddata/dataset/engine/cache/cache_server.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/task_manager.h"
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
+
 namespace mindspore {
 namespace dataset {
 CacheServerGreeterImpl::CacheServerGreeterImpl(int32_t port, int32_t shared_memory_sz_in_gb)

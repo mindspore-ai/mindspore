@@ -21,6 +21,7 @@
 #include <memory>
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/include/de_tensor.h"
+#include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/transforms.h"
 
 namespace mindspore {
@@ -38,6 +39,7 @@ class Execute {
   /// \param[inout] input - the tensor to be transformed
   /// \return - the output tensor, nullptr if Compute fails
   std::shared_ptr<tensor::MSTensor> operator()(std::shared_ptr<tensor::MSTensor> input);
+  std::shared_ptr<dataset::Tensor> operator()(std::shared_ptr<dataset::Tensor> input);
 
  private:
   std::shared_ptr<TensorOperation> op_;

@@ -26,11 +26,7 @@
 #include "utils/ms_utils.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/core/tensor_shape.h"
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {
