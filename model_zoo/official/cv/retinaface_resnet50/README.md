@@ -126,9 +126,6 @@ Parameters for both training and evaluation can be set in config.py
 - config for RetinaFace, WIDERFACE dataset
 
   ```python
-    'name': 'Resnet50',                                       # Backbone name
-    'min_sizes': [[16, 32], [64, 128], [256, 512]],           # Size distribution
-    'steps': [8, 16, 32],                                     # Each feature map steps
     'variance': [0.1, 0.2],                                   # Variance
     'clip': False,                                            # Clip
     'loc_weight': 2.0,                                        # Bbox regression loss weight
@@ -142,14 +139,10 @@ Parameters for both training and evaluation can be set in config.py
     'decay1': 70,                                             # Epoch number of the first weight attenuation
     'decay2': 90,                                             # Epoch number of the second weight attenuation
     'image_size': 840,                                        # Training image size
-    'return_layers': {'layer2': 1, 'layer3': 2, 'layer4': 3}, # Layer name of input feature pyramid
-    'in_channel': 256,                                        # Input channel of DetectionHead
-    'out_channel': 256,                                       # Output channel of DetectionHead
     'match_thresh': 0.35,                                     # Threshold for match box
     'optim': 'sgd',                                           # Optimizer type
     'warmup_epoch': 5,                                        # Warmup size, 0 means no warm-up
     'initial_lr': 0.01,                                       # Learning rate
-    'network': 'resnet50',                                    # Backbone name
     'momentum': 0.9,                                          # Momentum for Optimizer
     'weight_decay': 5e-4,                                     # Weight decay for Optimizer
     'gamma': 0.1,                                             # Attenuation ratio of learning rate
@@ -158,10 +151,10 @@ Parameters for both training and evaluation can be set in config.py
     'keep_checkpoint_max': 1,                                 # Number of reserved checkpoints
     'resume_net': None,                                       # Network for restart, default is None
     'training_dataset': '',                                   # Training dataset label path, like 'data/widerface/train/label.txt'
-    'pretrain': True,                                         # whether training based on the pre-trained backbone
+    'pretrain': True,                                         # Whether training based on the pre-trained backbone
     'pretrain_path': './data/res50_pretrain.ckpt',            # Pre-trained backbone checkpoint path
-    'seed': 1,                                                # setup train seed
-    'lr_type': 'dynamic_lr',
+    'seed': 1,                                                # Setup train seed
+    'lr_type': 'dynamic_lr',                                  # Learning rate decline function type, set dynamic_lr or standard_lr
   # val
     'val_model': './checkpoint/ckpt_0/RetinaFace-100_536.ckpt',   # Validation model path
     'val_dataset_folder': './data/widerface/val/',                # Validation dataset path
