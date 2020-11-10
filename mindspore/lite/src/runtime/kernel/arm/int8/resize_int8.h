@@ -32,17 +32,20 @@ class ResizeInt8CPUKernel : public ResizeBaseCPUKernel {
                       const mindspore::lite::PrimitiveC *primitive)
       : ResizeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~ResizeInt8CPUKernel() {
-    delete quant_out_;
-    quant_out_ = nullptr;
-    delete quant_in_;
-    quant_in_ = nullptr;
-    delete multiplier_;
-    multiplier_ = nullptr;
-  }
+  ~ResizeInt8CPUKernel() override;
 
   int Init() override;
-  int ReSize() override { return 0; };
+  int ReSize() override;
+  int InitResizeBiLinear();
+  int InitFloatResizeBiLinear();
+  int InitResizeQuantArg();
+  int CalRatio();
+  int CalInterpolationRange();
+  void FreeResizeBiLinear();
+  int InitResizeFloatQuantArg();
+  int CalFloatRatio();
+  int CalFloatInterpolationRange();
+  void FreeFloatResizeBiLinear();
   int Run() override;
   int RunImpl(int task_id);
 
@@ -50,6 +53,8 @@ class ResizeInt8CPUKernel : public ResizeBaseCPUKernel {
   QuantArg *quant_in_;
   QuantArg *quant_out_;
   QuantMulArg *multiplier_;
+  ResizeQuantArg resize_quant_arg_;
+  ResizeFloatScaleQuantArg resize_float_quant_arg_;
 };
 }  // namespace mindspore::kernel
 
