@@ -1501,7 +1501,7 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
   AnfNodePtr slice_node = ParseExprNode(block, slice_obj);
   CNodePtr setitem_app = block->func_graph()->NewCNode({op_setitem, value_node, slice_node, assigned_node});
   // getitem apply should return the sequence data structure itself
-  std::string var_name = "";
+  std::string var_name;
   if (ast_->IsClassMember(value_obj)) {
     std::string attr_name = value_obj.attr("attr").cast<std::string>();
     var_name = "self." + attr_name;
@@ -1515,9 +1515,18 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
                               << py::str(obj).cast<std::string>() << "' with type '"
                               << py::str(obj_type).cast<std::string>() << "'.";
     }
-  } else {
-    var_name = value_obj.attr("id").cast<std::string>();
+    block->WriteVariable(var_name, setitem_app);
+    return;
   }
+  if (AstSubType(py::cast<int32_t>(ast_->CallParserObjMethod(PYTHON_PARSE_GET_AST_TYPE, value_obj))) ==
+      AST_SUB_TYPE_SUBSCRIPT) {
+    HandleAssignSubscript(block, value_obj, setitem_app);
+    return;
+  }
+  if (!py::hasattr(value_obj, "id")) {
+    MS_EXCEPTION(TypeError) << "Attribute id not found in " << py::str(value_obj).cast<std::string>();
+  }
+  var_name = value_obj.attr("id").cast<std::string>();
   block->WriteVariable(var_name, setitem_app);
 }
 
