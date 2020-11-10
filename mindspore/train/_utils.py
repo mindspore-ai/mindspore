@@ -23,8 +23,11 @@ from mindspore.common.dtype import dtype_to_nptype, pytype_to_dtype
 from mindspore.common import dtype as mstype
 from mindspore import log as logger
 from mindspore.common.api import _executor
+from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
+from mindspore.train.anf_ir_pb2 import ModelProto as anf_model
 
 from .lineage_pb2 import DatasetGraph, TrainLineage, EvaluationLineage, UserDefinedInfo
+
 
 def _convert_type(types):
     """
@@ -203,3 +206,32 @@ def check_value_type(arg_name, arg_value, valid_types):
     if not is_valid:
         raise TypeError(f'For `{arg_name}` the type should be a valid type of {[t.__name__ for t in valid_types]}, '
                         f'bug got {type(arg_value).__name__}.')
+
+
+def read_proto(file_name, proto_format="MINDIR"):
+    """
+    Read protobuf file.
+
+    Args:
+        file_name (str): File name.
+        proto_format (str): Proto format.
+
+    Returns:
+        Object, proto object.
+    """
+
+    if proto_format == "MINDIR":
+        model = mindir_model()
+    elif model_format == "ANF":
+        model = anf_model()
+    else:
+        raise ValueError("Unsupported proto format.")
+
+    try:
+        with open(file_name, "rb") as f:
+            pb_content = f.read()
+            model.ParseFromString(pb_content)
+    except BaseException as e:
+        logger.error("Failed to read the file `%s`, please check the correct of the file.", file_name)
+        raise ValueError(e.__str__())
+    return model

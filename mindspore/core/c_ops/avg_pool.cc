@@ -102,4 +102,5 @@ AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                                                     InferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(AvgPool, prim::kPrimAvgPool, AvgPoolInfer);
+REGISTER_PRIMITIVE_C(AvgPool);
 }  // namespace mindspore

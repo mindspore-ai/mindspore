@@ -1,7 +1,7 @@
 # build mindspore_shared_lib
-set(LOAD_ONNX_SRC
-        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/utils/load_onnx/anf_converter.cc
-        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/utils/load_onnx/anf_model_parser.cc
+set(LOAD_MINDIR_SRC
+        ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/load_model.cc
+        ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/anf_model_parser.cc
         )
 file(GLOB_RECURSE API_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR} "ops/*.cc")
 
@@ -18,7 +18,7 @@ set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
         ${API_MS_INFER_SRC}
         ${API_ACL_SRC}
         ${API_OPS_SRC}
-        ${LOAD_ONNX_SRC})
+        ${LOAD_MINDIR_SRC})
 
 add_library(mindspore_shared_lib SHARED ${MSLIB_SRC})
 set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore PUBLIC_HEADER "${API_INCLUDE}")

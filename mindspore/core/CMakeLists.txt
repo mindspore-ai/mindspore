@@ -15,6 +15,7 @@ file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "c_ops/*.cc"
         "ir/*.cc"
         "utils/*.cc"
+        "load_mindir/*.cc"
 )
 set_property(SOURCE ${CORE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_CORE)
 add_library(mindspore_core STATIC ${CORE_SRC_LIST})

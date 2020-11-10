@@ -17,9 +17,9 @@
 #include "cxx_api/model/acl/model_converter.h"
 #include <memory>
 #include "pybind11/pybind11.h"
-#include "utils/load_onnx/anf_converter.h"
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/graph_runner.h"
+#include "core/load_mindir/load_model.h"
 #include "mindspore/core/utils/ms_context.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 
@@ -79,8 +79,7 @@ bool CreateSessionAndGraphRunner() {
 
 std::shared_ptr<FuncGraph> ModelConverter::ConvertMindIrToFuncGraph(const Buffer &model_data) {
   try {
-    auto anf_graph =
-      lite::AnfConverter::RunAnfConverter(reinterpret_cast<const char *>(model_data.Data()), model_data.DataSize());
+    auto anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(model_data.Data()), model_data.DataSize());
     return anf_graph;
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "Load MindIR failed.";
@@ -364,6 +363,7 @@ Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
 
 Buffer ModelConverter::LoadMindIRInner(const Buffer &model_data) {
   RegAllOp();
+  Py_Initialize();
   auto func_graph = ConvertMindIrToFuncGraph(model_data);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Convert MindIR to FuncGraph failed.";

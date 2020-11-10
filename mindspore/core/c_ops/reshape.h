@@ -36,7 +36,7 @@ class Reshape : public PrimitiveC {
 
 AbstractBasePtr ReshapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimTensorAddPtr = std::shared_ptr<Reshape>;
+using PrimReshapePtr = std::shared_ptr<Reshape>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_C_OPS_RESHAPE_H_

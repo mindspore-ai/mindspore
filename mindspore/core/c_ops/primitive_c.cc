@@ -31,4 +31,13 @@ AbstractBasePtr PrimitiveC::Infer(const AbstractBasePtrList &abstract_list) {
   auto infer_function = iter->second.impl_;
   return infer_function(nullptr, shared_from_base<Primitive>(), abstract_list);
 }
+
+OpPrimCRegister &OpPrimCRegister::GetInstance() {
+  static OpPrimCRegister instance;
+  return instance;
+}
+
+std::map<std::string, OpPrimCDefineFunc> OpPrimCRegister::GetPrimCMap() { return op_primc_fns_; }
+void OpPrimCRegister::SetPrimCMap(const std::string &name, const OpPrimCDefineFunc &fn) { op_primc_fns_[name] = fn; }
+
 }  // namespace mindspore

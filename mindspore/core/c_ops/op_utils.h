@@ -33,7 +33,7 @@ constexpr auto kPad = "pad";
 constexpr auto kPads = "pads";
 constexpr auto kMode = "mode";
 constexpr auto kGroup = "group";
-constexpr auto kOutputChannel = "output_channel";
+constexpr auto kOutputChannel = "out_channel";
 constexpr auto kPadList = "pad_list";
 constexpr auto kAxis = "axis";
 

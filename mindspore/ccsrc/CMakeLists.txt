@@ -125,7 +125,8 @@ if (ENABLE_DUMP_PROTO)
         "utils/lineage.proto"
         "utils/checkpoint.proto"
         "utils/print.proto"
-	"utils/node_strategy.proto"
+        "utils/node_strategy.proto"
+        "utils/mind_ir.proto"
     )
     ms_protobuf_generate_py(PY_SRCS PY_HDRS PY_PYS ${PROTO_PY})
 
@@ -156,7 +157,7 @@ endif()
 ## make sub objects
 set(SUB_COMP
         transform/graph_ir
-        transform/onnx
+        transform/express_ir
         backend/optimizer
         backend/kernel_compiler
         backend/session
@@ -344,13 +345,13 @@ if (ENABLE_MINDDATA)
 endif ()
 
 # build inference
-set(LOAD_ONNX_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils/load_onnx/anf_converter.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils/load_onnx/anf_model_parser.cc
+set(LOAD_MINDIR_SRC
+        ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/load_model.cc
+        ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/anf_model_parser.cc
         )
 add_library(inference SHARED
         ${CMAKE_CURRENT_SOURCE_DIR}/backend/session/infer_session.cc
-        ${LOAD_ONNX_SRC}
+        ${LOAD_MINDIR_SRC}
         )
 
 set_target_properties(inference PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})

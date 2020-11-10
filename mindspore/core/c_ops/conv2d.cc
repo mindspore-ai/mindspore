@@ -193,4 +193,5 @@ AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const Primitive
                                                     Conv2dInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Conv2D, prim::kPrimConv2D, Conv2dInfer);
+REGISTER_PRIMITIVE_C(Conv2D);
 }  // namespace mindspore

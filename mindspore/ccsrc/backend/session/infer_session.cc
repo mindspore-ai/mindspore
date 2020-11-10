@@ -20,11 +20,11 @@
 #include <fstream>
 
 #include "include/inference.h"
-#include "utils/load_onnx/anf_converter.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/session_factory.h"
 #include "backend/session/executor_manager.h"
 #include "base/base_ref_utils.h"
+#include "load_mindir/load_model.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "utils/context/context_extends.h"
 #include "runtime/device/kernel_runtime_manager.h"
@@ -58,46 +58,9 @@ std::shared_ptr<InferSession> InferSession::CreateSession(const std::string &dev
 MSInferSession::MSInferSession() = default;
 MSInferSession::~MSInferSession() = default;
 
-std::shared_ptr<std::vector<char>> MSInferSession::ReadFile(const std::string &file) {
-  if (file.empty()) {
-    MS_LOG(ERROR) << "file is nullptr";
-    return nullptr;
-  }
-  std::string realPath = file;
-  std::ifstream ifs(realPath);
-  if (!ifs.good()) {
-    MS_LOG(ERROR) << "file: " << realPath << " is not exist";
-    return nullptr;
-  }
-
-  if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "file: " << realPath << "open failed";
-    return nullptr;
-  }
-
-  ifs.seekg(0, std::ios::end);
-  size_t size = ifs.tellg();
-  std::shared_ptr<std::vector<char>> buf(new (std::nothrow) std::vector<char>(size));
-  if (buf == nullptr) {
-    MS_LOG(ERROR) << "malloc buf failed, file: " << realPath;
-    ifs.close();
-    return nullptr;
-  }
-
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(buf->data(), size);
-  ifs.close();
-
-  return buf;
-}
-
 Status MSInferSession::LoadModelFromFile(const std::string &file_name, uint32_t &model_id) {
-  auto graphBuf = ReadFile(file_name);
-  if (graphBuf == nullptr) {
-    MS_LOG(ERROR) << "Read model file failed, file name is " << file_name.c_str();
-    return FAILED;
-  }
-  auto graph = LoadModel(graphBuf->data(), graphBuf->size(), device_type_);
+  Py_Initialize();
+  auto graph = RunLoadMindIR(file_name);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Load graph model failed, file name is " << file_name.c_str();
     return FAILED;
@@ -213,6 +176,7 @@ Status MSInferSession::ExecuteModel(uint32_t model_id, const RequestBase &reques
     }
     inputs.push_back(input);
   }
+
   auto ret = CheckModelInputs(model_id, inputs);
   if (ret != SUCCESS) {
     MS_LOG(ERROR) << "Check Model " << model_id << " Inputs Failed";
@@ -248,16 +212,6 @@ Status MSInferSession::FinalizeEnv() {
     return FAILED;
   }
   return SUCCESS;
-}
-
-std::shared_ptr<FuncGraph> MSInferSession::LoadModel(const char *model_buf, size_t size, const std::string &device) {
-  try {
-    auto anf_graph = lite::AnfConverter::RunAnfConverter(model_buf, size);
-    return anf_graph;
-  } catch (std::exception &e) {
-    MS_LOG(ERROR) << "Inference LoadModel failed";
-    return nullptr;
-  }
 }
 
 void MSInferSession::RegAllOp() {

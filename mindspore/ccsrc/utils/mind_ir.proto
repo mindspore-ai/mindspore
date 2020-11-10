@@ -1,0 +1,119 @@
+syntax = "proto2";
+package mind_ir;
+
+message AttributeProto {
+  enum AttributeType {
+    UNDEFINED = 0;
+    FLOAT = 1;
+    UINT8 = 2;
+    INT8 = 3;
+    UINT16 = 4;
+    INT16 = 5;
+    INT32 = 6;
+    INT64 = 7;
+    STRING = 8;
+    BOOL = 9;
+    FLOAT16 = 10;
+    DOUBLE = 11;
+    UINT32 = 12;
+    UINT64 = 13;
+    COMPLEX64 = 14;
+    COMPLEX128 = 15;
+    BFLOAT16 = 16;
+    TENSOR = 17;
+    GRAPH = 18;
+    TENSORS = 19;
+  }
+  optional string name = 1;
+  optional float f = 2;
+  optional int64 i = 3;
+  optional double d = 4;
+  optional bytes s = 5;
+  optional TensorProto t = 6;
+  optional GraphProto g = 7;
+  repeated float floats = 8;
+  repeated double doubles = 9;
+  repeated int64 ints = 10;
+  repeated bytes strings = 11;
+  repeated TensorProto tensors = 12;
+  repeated GraphProto graphs = 13;
+  optional string doc_string = 14;
+  optional string ref_attr_name = 15;
+  optional AttributeType type = 16;
+}
+
+
+message ValueInfoProto {
+  optional string name = 1;
+  repeated TensorProto tensor = 2;
+  optional string doc_string = 3;
+  optional string denotation = 4;
+}
+
+
+message NodeProto {
+  repeated string input = 1;
+  repeated string output = 2;
+  optional string name = 3;
+  optional string op_type = 4;
+  repeated AttributeProto attribute = 5;
+  optional string doc_string = 6;
+  optional string domain = 7;
+}
+
+
+message ModelProto {
+  optional string ir_version = 1;
+  optional string producer_name = 2;
+  optional string producer_version = 3;
+  optional string domain = 4;
+  optional string model_version = 5;
+  optional string doc_string = 6;
+  optional GraphProto graph = 7;
+}
+
+
+message GraphProto {
+  repeated NodeProto node = 1;
+  optional string name = 2;
+  repeated TensorProto parameter = 3;
+  optional string doc_string = 4;
+  repeated ValueInfoProto input = 5;
+  repeated ValueInfoProto output = 6;
+}
+
+
+message TensorProto {
+  enum DataType {
+    UNDEFINED = 0;
+    // Basic types.
+    FLOAT = 1;   // float
+    UINT8 = 2;   // uint8_t
+    INT8 = 3;    // int8_t
+    UINT16 = 4;  // uint16_t
+    INT16 = 5;   // int16_t
+    INT32 = 6;   // int32_t
+    INT64 = 7;   // int64_t
+    STRING = 8;  // string
+    BOOL = 9;    // bool
+    FLOAT16 = 10;
+    DOUBLE = 11;
+    UINT32 = 12;
+    UINT64 = 13;
+    COMPLEX64 = 14;
+    COMPLEX128 = 15;
+    BFLOAT16 = 16;
+    FLOAT64 = 17;
+  }
+  repeated int64 dims = 1;
+  optional int32 data_type = 2;
+  repeated float float_data = 3;
+  repeated int32 int32_data = 4;
+  repeated bytes string_data = 5;
+  repeated int64 int64_data = 6;
+  optional string name = 7;
+  optional string doc_string = 8;
+  optional bytes raw_data = 9;
+  repeated double double_data = 10;
+  repeated uint64 uint64_data = 11;
+}

@@ -116,7 +116,9 @@ endif ()
 file(GLOB PROTO_FILE ""
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/caffe/caffe.proto
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf/proto/*.proto
-        ${CMAKE_CURRENT_SOURCE_DIR}/parser/onnx/onnx.proto)
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/onnx/onnx.proto
+        ${CCSRC_DIR}/utils/mind_ir.proto)
+
 ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${PROTO_FILE})
 add_library(proto_mid OBJECT ${PROTO_SRCS})
 set(TFLITE_FBS_FILES

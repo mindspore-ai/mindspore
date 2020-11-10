@@ -54,8 +54,6 @@ class MSInferSession : public InferSession {
   rtContext_t context_ = nullptr;
 #endif
 
-  std::shared_ptr<FuncGraph> LoadModel(const char *model_buf, size_t size, const std::string &device);
-  std::shared_ptr<std::vector<char>> ReadFile(const std::string &file);
   static void RegAllOp();
   string AjustTargetName(const std::string &device);
   Status CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr, uint32_t &model_id);

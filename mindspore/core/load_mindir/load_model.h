@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CORE_LOAD_MODEL_H
+#define MINDSPORE_CORE_LOAD_MODEL_H
 
-#ifndef MINDSPORE_CCSRC_UTILS_LOAD_ONNX_ANF_CONVERTER_H
-#define MINDSPORE_CCSRC_UTILS_LOAD_ONNX_ANF_CONVERTER_H
+#include <vector>
 #include <string>
 #include <memory>
-#include "google/protobuf/io/zero_copy_stream_impl.h"
-#include "proto/onnx.pb.h"
+
+#include "proto/mind_ir.pb.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {
-namespace lite {
-class AnfConverter {
- public:
-  static std::shared_ptr<FuncGraph> RunAnfConverter(const std::string &file_path);
-  static std::shared_ptr<FuncGraph> RunAnfConverter(const char *buf, const size_t buf_size);
-
- private:
-  static void Trim(std::string *input);
-  static int ValidateFileStr(const std::string &modelFile, std::string fileType);
-  static bool ReadOnnxFromBinary(const std::string &modelFile, google::protobuf::Message *onnx_model);
-};
-}  // namespace lite
+std::shared_ptr<FuncGraph> RunLoadMindIR(const std::string &file_name);
+std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file);
+std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size);
 }  // namespace mindspore
-#endif
+#endif  // MINDSPORE_CORE_LOAD_MODEL_H
