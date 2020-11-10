@@ -26,7 +26,7 @@ REG_ADPT_DESC(Print, kNamePrint, ADPT_DESC(Print))
 #ifdef ENABLE_GE
 INPUT_MAP(Assert) = {{1, INPUT_DESC(input_condition)}};
 DYN_INPUT_MAP(Assert) = {{2, DYN_INPUT_DESC(input_data)}};
-ATTR_MAP(Assert) = {{"summarize", ATTR_DESC(summarize, AnyTraits<int>())}};
+ATTR_MAP(Assert) = {{"summarize", ATTR_DESC(summarize, AnyTraits<int64_t>())}};
 REG_ADPT_DESC(Assert, kNameAssert, ADPT_DESC(Assert))
 #endif
 }  // namespace mindspore::transform

@@ -132,28 +132,28 @@ REG_ADPT_DESC(OnesLike, kNameOnesLike, ADPT_DESC(OnesLike))
 
 // ArgMaxD
 INPUT_MAP(ArgMaxD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMaxD) = {{"axis", ATTR_DESC(dimension, AnyTraits<int>())},
+ATTR_MAP(ArgMaxD) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
                      {"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMaxD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMaxD, kNameArgmax, ADPT_DESC(ArgMaxD))
 
 // ArgMinD
 INPUT_MAP(ArgMinD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMinD) = {{"axis", ATTR_DESC(dimension, AnyTraits<int>())},
+ATTR_MAP(ArgMinD) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
                      {"output_type", ATTR_DESC(dtype, AnyTraits<GEType>())}};
 OUTPUT_MAP(ArgMinD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ArgMinD, kNameArgmin, ADPT_DESC(ArgMinD))
 
 // ArgMaxWithValue
 INPUT_MAP(ArgMaxWithValue) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMaxWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int>())},
+ATTR_MAP(ArgMaxWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
                              {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ArgMaxWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMaxWithValue, kNameArgMaxWithValue, ADPT_DESC(ArgMaxWithValue))
 
 // ArgMinWithValue
 INPUT_MAP(ArgMinWithValue) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ArgMinWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int>())},
+ATTR_MAP(ArgMinWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int64_t>())},
                              {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ArgMinWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 REG_ADPT_DESC(ArgMinWithValue, kNameArgMinWithValue, ADPT_DESC(ArgMinWithValue))

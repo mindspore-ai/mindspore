@@ -22,14 +22,14 @@ INPUT_MAP(HcomAllReduce) = {{1, INPUT_DESC(x)}};
 OUTPUT_MAP(HcomAllReduce) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(HcomAllReduce) = {{"op", ATTR_DESC(reduction, AnyTraits<std::string>())},
                            {"group", ATTR_DESC(group, AnyTraits<std::string>())},
-                           {"fusion", ATTR_DESC(fusion, AnyTraits<int>())}};
+                           {"fusion", ATTR_DESC(fusion, AnyTraits<int64_t>())}};
 REG_ADPT_DESC(HcomAllReduce, kNameAllReduce, ADPT_DESC(HcomAllReduce))
 
 // HCOMBraodcast
 INPUT_MAP(HcomBroadcast) = EMPTY_INPUT_MAP;
 DYN_INPUT_MAP(HcomBroadcast) = {{1, DYN_INPUT_DESC(x)}};
 DYN_OUTPUT_MAP(HcomBroadcast) = {{0, DYN_OUTPUT_DESC(y)}};
-ATTR_MAP(HcomBroadcast) = {{"root_rank", ATTR_DESC(root_rank, AnyTraits<int>())},
+ATTR_MAP(HcomBroadcast) = {{"root_rank", ATTR_DESC(root_rank, AnyTraits<int64_t>())},
                            {"group", ATTR_DESC(group, AnyTraits<std::string>())}};
 REG_ADPT_DESC(HcomBroadcast, kNameBroadcast, ADPT_DESC(HcomBroadcast))
 
@@ -37,7 +37,7 @@ REG_ADPT_DESC(HcomBroadcast, kNameBroadcast, ADPT_DESC(HcomBroadcast))
 INPUT_MAP(HcomAllGather) = {{1, INPUT_DESC(x)}};
 OUTPUT_MAP(HcomAllGather) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(HcomAllGather) = {{"group", ATTR_DESC(group, AnyTraits<std::string>())},
-                           {"rank_size", ATTR_DESC(rank_size, AnyTraits<int>())}};
+                           {"rank_size", ATTR_DESC(rank_size, AnyTraits<int64_t>())}};
 REG_ADPT_DESC(HcomAllGather, kNameAllgather, ADPT_DESC(HcomAllGather))
 
 // HCOMReduceScatter
@@ -45,6 +45,6 @@ INPUT_MAP(HcomReduceScatter) = {{1, INPUT_DESC(x)}};
 OUTPUT_MAP(HcomReduceScatter) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(HcomReduceScatter) = {{"group", ATTR_DESC(group, AnyTraits<std::string>())},
                                {"op", ATTR_DESC(reduction, AnyTraits<std::string>())},
-                               {"rank_size", ATTR_DESC(rank_size, AnyTraits<int>())}};
+                               {"rank_size", ATTR_DESC(rank_size, AnyTraits<int64_t>())}};
 REG_ADPT_DESC(HcomReduceScatter, kNameReduceScatter, ADPT_DESC(HcomReduceScatter))
 }  // namespace mindspore::transform

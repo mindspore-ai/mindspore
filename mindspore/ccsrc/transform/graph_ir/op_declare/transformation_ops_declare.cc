@@ -26,22 +26,23 @@ REG_ADPT_DESC(Flatten, prim::kPrimFlatten->name(), ADPT_DESC(Flatten))
 
 // Unpack
 INPUT_MAP(Unpack) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(Unpack) = {{"axis", ATTR_DESC(axis, AnyTraits<int>())}, {"num", ATTR_DESC(num, AnyTraits<int>())}};
+ATTR_MAP(Unpack) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}, {"num", ATTR_DESC(num, AnyTraits<int64_t>())}};
 DYN_OUTPUT_MAP(Unpack) = {{0, DYN_OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Unpack, kNameUnpack, ADPT_DESC(Unpack))
 
 // ExtractImagePatches
 INPUT_MAP(ExtractImagePatches) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ExtractImagePatches) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
-                                 {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
-                                 {"rates", ATTR_DESC(rates, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
-                                 {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+ATTR_MAP(ExtractImagePatches) = {
+  {"ksizes", ATTR_DESC(ksizes, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"rates", ATTR_DESC(rates, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
+  {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
 OUTPUT_MAP(ExtractImagePatches) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ExtractImagePatches, kNameExtractImagePatches, ADPT_DESC(ExtractImagePatches))
 
 // Transpose
 INPUT_MAP(TransposeD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(TransposeD) = {{2, ATTR_DESC(perm, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())}};
+INPUT_ATTR_MAP(TransposeD) = {{2, ATTR_DESC(perm, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(TransposeD) = EMPTY_ATTR_MAP;
 // Do not set Transpose operator output descriptor
 REG_ADPT_DESC(TransposeD, prim::kPrimTranspose->name(), ADPT_DESC(TransposeD))
