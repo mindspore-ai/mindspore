@@ -160,7 +160,9 @@ int CpuSubGraph::Prepare() {
 
 void CpuFp16SubGraph::FreeOriginInputData() {
   for (auto *data_store : this->origin_input_data_) {
-    MS_ASSERT(data_store != nullptr);
+    if (data_store == nullptr) {
+      continue;
+    }
     // free data in data_store
     if (data_store->data_ != nullptr) {
       if (data_store->allocator_ == nullptr) {

@@ -65,19 +65,19 @@ struct DataStore {
   lite::Allocator *allocator_ = nullptr;
   static DataStore *CreateDataStore(void *data = nullptr, lite::Allocator *data_allocator = nullptr,
                                     lite::Allocator *allocator = nullptr) {
-    DataStore *tensor_data = nullptr;
+    DataStore *data_store = nullptr;
     if (allocator == nullptr) {
-      tensor_data = static_cast<DataStore *>(malloc(sizeof(DataStore)));
+      data_store = static_cast<DataStore *>(malloc(sizeof(DataStore)));
     } else {
-      tensor_data = static_cast<DataStore *>(allocator->Malloc(sizeof(DataStore)));
+      data_store = static_cast<DataStore *>(allocator->Malloc(sizeof(DataStore)));
     }
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "Malloc tensor_data failed";
+    if (data_store == nullptr) {
+      MS_LOG(ERROR) << "Malloc data_store failed";
       return nullptr;
     }
-    tensor_data->data_ = data;
-    tensor_data->allocator_ = data_allocator;
-    return tensor_data;
+    data_store->data_ = data;
+    data_store->allocator_ = data_allocator;
+    return data_store;
   }
 };
 
