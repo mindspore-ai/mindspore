@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX__UNUSEFUL_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX__UNUSEFUL_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_QUANTIZE_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_QUANTIZE_PARSER_H
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-class OnnxUnusefulNodeParser : public OnnxNodeParser {
+class OnnxQuantizeParser : public OnnxNodeParser {
  public:
-  OnnxUnusefulNodeParser() : OnnxNodeParser("UnusefulNode") {}
-  ~OnnxUnusefulNodeParser() override = default;
+  OnnxQuantizeParser() : OnnxNodeParser("Quantize") {}
+  ~OnnxQuantizeParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX__UNUSEFUL_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_QUANTIZE_PARSER_H

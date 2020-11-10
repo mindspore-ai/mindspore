@@ -24,7 +24,7 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
-
+#include "ir/dtype/type_id.h"
 namespace mindspore {
 namespace lite {
 class OnnxNodeParser {
