@@ -51,7 +51,7 @@ int ReshapeInt8CPUKernel::Init() {
 int ReshapeInt8CPUKernel::ReSize() { return 0; }
 
 int ReshapeInt8CPUKernel::Run() {
-  MS_ASSERT(in_tensors_.size() == 1);
+  MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
   MS_ASSERT(out_tensors_.size() == 1);
   input_data_ = static_cast<int8_t *>(in_tensors_.at(kInputIndex)->MutableData());
   output_data_ = static_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
