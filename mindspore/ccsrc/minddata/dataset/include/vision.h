@@ -35,8 +35,8 @@ namespace vision {
 #ifndef ENABLE_ANDROID
 class AutoContrastOperation;
 class BoundingBoxAugmentOperation;
-class CenterCropOperation;
 #endif
+class CenterCropOperation;
 class CropOperation;
 #ifndef ENABLE_ANDROID
 class CutMixBatchOperation;
@@ -96,6 +96,7 @@ std::shared_ptr<AutoContrastOperation> AutoContrast(float cutoff = 0.0, std::vec
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<BoundingBoxAugmentOperation> BoundingBoxAugment(std::shared_ptr<TensorOperation> transform,
                                                                 float ratio = 0.3);
+#endif
 
 /// \brief Function to create a CenterCrop TensorOperation.
 /// \notes Crops the input image at the center to the given size.
@@ -104,7 +105,7 @@ std::shared_ptr<BoundingBoxAugmentOperation> BoundingBoxAugment(std::shared_ptr<
 ///     If size has 2 values, it should be (height, width).
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size);
-#endif
+
 /// \brief Function to create a Crop TensorOp
 /// \notes Crop an image based on location and crop size
 /// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}
@@ -502,6 +503,8 @@ class BoundingBoxAugmentOperation : public TensorOperation {
   float ratio_;
 };
 
+#endif
+
 class CenterCropOperation : public TensorOperation {
  public:
   explicit CenterCropOperation(std::vector<int32_t> size);
@@ -515,7 +518,7 @@ class CenterCropOperation : public TensorOperation {
  private:
   std::vector<int32_t> size_;
 };
-#endif
+
 class CropOperation : public TensorOperation {
  public:
   CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size);

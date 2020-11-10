@@ -144,7 +144,6 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/kernels/image/auto_contrast_op.cc"
         "${MINDDATA_DIR}/kernels/image/bounding_box_op.cc"
         "${MINDDATA_DIR}/kernels/image/bounding_box_augment_op.cc"
-        "${MINDDATA_DIR}/kernels/image/center_crop_op.cc"
         "${MINDDATA_DIR}/kernels/image/concatenate_op.cc"
         "${MINDDATA_DIR}/kernels/image/cut_out_op.cc"
         "${MINDDATA_DIR}/kernels/image/cutmix_batch_op.cc"

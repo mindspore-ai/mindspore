@@ -195,6 +195,8 @@ class LiteMat {
 
   LiteMat(int width, int height, int channel, LDataType data_type = LDataType::UINT8);
 
+  LiteMat(int width, int height, int channel, void *p_data, LDataType data_type = LDataType::UINT8);
+
   ~LiteMat();
 
   LiteMat(const LiteMat &m);

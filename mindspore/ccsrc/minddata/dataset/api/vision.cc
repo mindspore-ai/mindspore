@@ -23,8 +23,8 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
-#include "minddata/dataset/kernels/image/center_crop_op.h"
 #endif
+#include "minddata/dataset/kernels/image/center_crop_op.h"
 #include "minddata/dataset/kernels/image/crop_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/cutmix_batch_op.h"
@@ -94,6 +94,7 @@ std::shared_ptr<BoundingBoxAugmentOperation> BoundingBoxAugment(std::shared_ptr<
   // Input validation
   return op->ValidateParams() ? op : nullptr;
 }
+#endif
 
 // Function to create CenterCropOperation.
 std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size) {
@@ -101,7 +102,6 @@ std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size) {
   // Input validation
   return op->ValidateParams() ? op : nullptr;
 }
-#endif
 
 // Function to create CropOperation.
 std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size) {
@@ -519,6 +519,7 @@ std::shared_ptr<TensorOp> BoundingBoxAugmentOperation::Build() {
   std::shared_ptr<BoundingBoxAugmentOp> tensor_op = std::make_shared<BoundingBoxAugmentOp>(transform_->Build(), ratio_);
   return tensor_op;
 }
+#endif
 
 // CenterCropOperation
 CenterCropOperation::CenterCropOperation(std::vector<int32_t> size) : size_(size) {}
@@ -558,7 +559,6 @@ std::shared_ptr<TensorOp> CenterCropOperation::Build() {
   return tensor_op;
 }
 
-#endif
 // CropOperation.
 CropOperation::CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size)
     : coordinates_(coordinates), size_(size) {}
