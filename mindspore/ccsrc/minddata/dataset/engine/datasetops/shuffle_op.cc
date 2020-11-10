@@ -31,14 +31,9 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/opt/pass.h"
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
-
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
 
 namespace mindspore {
 namespace dataset {

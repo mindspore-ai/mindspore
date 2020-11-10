@@ -17,12 +17,7 @@
 #include "minddata/dataset/engine/gnn/graph_shared_memory.h"
 
 #include <string>
-
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
 namespace dataset {

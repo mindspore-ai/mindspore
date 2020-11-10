@@ -29,11 +29,7 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#ifndef ENABLE_ANDROID
-#include "utils/log_adapter.h"
-#else
-#include "mindspore/lite/src/common/log_adapter.h"
-#endif
+#include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {

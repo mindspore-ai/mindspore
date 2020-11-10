@@ -265,8 +265,8 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
   fs.open(image_file_path, std::ios::binary | std::ios::in);
   if (fs.fail()) {
     MS_LOG(INFO) << "Image file not found:" << image_file_path << ".";
-    // If file doesn't exist, we don't flag this as error in input check, simply skip
-    return Status::OK();
+    // If file doesn't exist, we don't flag this as error in input check, simply push back empty tensor
+    RETURN_STATUS_UNEXPECTED("Invalid file_path, failed to read file: " + image_file_path);
   }
 
   MS_LOG(INFO) << "Image file found: " << image_file_path << ".";
