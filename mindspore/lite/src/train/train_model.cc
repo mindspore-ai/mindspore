@@ -22,9 +22,6 @@
 
 namespace mindspore::lite {
 
-bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model);
-bool ConvertTensors(const schema::MetaGraph *meta_graph, Model *model);
-
 TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "The model buf is nullptr";
@@ -62,18 +59,18 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   if (meta_graph->version() != nullptr) {
     model->version_ = meta_graph->version()->c_str();
   }
-  if (!ConvertNodes(meta_graph, model)) {
+  if (!ConvertNodes(*meta_graph, model)) {
     delete model;
     return nullptr;
   }
 
-  if (!ConvertTensors(meta_graph, model)) {
+  if (!ConvertTensors(*meta_graph, model)) {
     delete model;
     return nullptr;
   }
 
   if (meta_graph->subGraph() == nullptr) {
-    int ret = MetaGraphMappingSubGraph(meta_graph, model);
+    int ret = MetaGraphMappingSubGraph(*meta_graph, model);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "converter old version model wrong.";
       return nullptr;
@@ -83,7 +80,7 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
     auto sub_graph_size = sub_graphs->size();
     for (size_t i = 0; i < sub_graph_size; i++) {
       auto sub_graph = sub_graphs->GetAs<schema::SubGraph>(i);
-      int ret = ConvertSubGraph(sub_graph, model);
+      int ret = ConvertSubGraph(*sub_graph, model);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "converter subgraph wrong.";
         return nullptr;

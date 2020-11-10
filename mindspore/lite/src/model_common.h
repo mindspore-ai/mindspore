@@ -16,17 +16,149 @@
 
 #ifndef MINDSPORE_LITE_SRC_MODEL_COMMON_H_
 #define MINDSPORE_LITE_SRC_MODEL_COMMON_H_
+
+#include <string>
 #include "src/ops/primitive_c.h"
 #include "include/model.h"
+#include "include/version.h"
+#include "schema/model_generated.h"
+#include "src/common/common.h"
+#ifndef PRIMITIVE_WRITEABLE
+#include "src/ops/ops_register.h"
+#endif
 
 namespace mindspore::lite {
-bool ConvertNodes(const schema::MetaGraph *meta_graph, Model *model);
+int ConvertSubGraph(const schema::SubGraph &sub_graph, Model *model);
 
-bool ConvertTensors(const schema::MetaGraph *meta_graph, Model *model);
+template <typename T = schema::MetaGraph, typename U = schema::CNode>
+bool ConvertNodes(const T &meta_graph, Model *model, int schema_version = 0) {
+  MS_ASSERT(model != nullptr);
+  for (size_t i = 0; i < meta_graph.nodes()->size(); ++i) {
+    auto *node = new (std::nothrow) Model::Node();
+    if (node == nullptr) {
+      MS_LOG(ERROR) << "new node fail!";
+      return false;
+    }
+    auto c_node = meta_graph.nodes()->template GetAs<U>(i);
+    auto src_prim = reinterpret_cast<const schema::Primitive *>(c_node->primitive());
+#ifdef PRIMITIVE_WRITEABLE
+    node->primitive_ = PrimitiveC::Create(const_cast<schema::Primitive *>(src_prim));
+#else
+    auto primitive = const_cast<schema::Primitive *>(src_prim);
+    node->primitive_ = OpsRegistry::GetInstance()->getPrimitiveCreator(primitive->value_type())(primitive);
+#endif
+    if (node->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "unpack primitive == nullptr!";
+      delete node;
+      return false;
+    }
+    node->primitive_->SetQuantType(static_cast<schema::QuantType>(c_node->quantType()));
+    node->name_ = c_node->name()->c_str();
+    node->node_type_ = static_cast<NodeType>(c_node->nodeType());
+    auto count = c_node->inputIndex()->size();
+    for (uint32_t j = 0; j < count; ++j) {
+      node->input_indices_.push_back(size_t(c_node->inputIndex()->template GetAs<uint32_t>(j)));
+    }
+    if (c_node->outputIndex() != nullptr) {
+      count = c_node->outputIndex()->size();
+      for (uint32_t j = 0; j < count; ++j) {
+        node->output_indices_.push_back(size_t(c_node->outputIndex()->template GetAs<uint32_t>(j)));
+      }
+    }
+    model->all_nodes_.push_back(node);
+  }
+  return true;
+}
 
-int ConvertSubGraph(const schema::SubGraph *sub_graph, Model *model);
+template <typename T = schema::MetaGraph>
+bool ConvertTensors(const T &meta_graph, Model *model) {
+  MS_ASSERT(model != nullptr);
+  auto tensor_count = meta_graph.allTensors()->size();
+  for (uint32_t i = 0; i < tensor_count; ++i) {
+    auto *tensor = meta_graph.allTensors()->template GetAs<schema::Tensor>(i);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << i << "th tensor in model is nullptr";
+      return false;
+    }
+    model->all_tensors_.push_back(const_cast<mindspore::schema::Tensor *>(tensor));
+  }
+  return true;
+}
 
-int MetaGraphMappingSubGraph(const mindspore::schema::MetaGraph *meta_graph, Model *model);
+template <typename T = schema::MetaGraph>
+int MetaGraphMappingSubGraph(const T &meta_graph, Model *model) {
+  MS_ASSERT(model != nullptr);
+  auto *subgraph = new (std::nothrow) Model::SubGraph();
+  if (subgraph == nullptr) {
+    MS_LOG(ERROR) << "new subGraph fail!";
+    return RET_ERROR;
+  }
+  if (meta_graph.name() != nullptr) {
+    subgraph->name_ = meta_graph.name()->c_str();
+  }
+  auto in_count = meta_graph.inputIndex()->size();
+  for (uint32_t i = 0; i < in_count; ++i) {
+    subgraph->input_indices_.push_back(size_t(meta_graph.inputIndex()->template GetAs<uint32_t>(i)));
+  }
+  auto out_count = meta_graph.outputIndex()->size();
+  for (uint32_t i = 0; i < out_count; ++i) {
+    subgraph->output_indices_.push_back(size_t(meta_graph.outputIndex()->template GetAs<uint32_t>(i)));
+  }
+  auto node_count = meta_graph.nodes()->size();
+  for (uint32_t i = 0; i < node_count; ++i) {
+    subgraph->node_indices_.push_back(i);
+  }
+  auto tensor_count = meta_graph.nodes()->size();
+  for (uint32_t i = 0; i < tensor_count; ++i) {
+    subgraph->tensor_indices_.push_back(i);
+  }
+  model->sub_graphs_.push_back(subgraph);
+  return RET_OK;
+}
+
+template <typename T = schema::MetaGraph, typename U = schema::CNode>
+int GenerateModel(const T &meta_graph, Model *model, int schema_version = 0) {
+  MS_ASSERT(model != nullptr);
+  if (meta_graph.name() != nullptr) {
+    model->name_ = meta_graph.name()->c_str();
+  }
+  if (meta_graph.version() != nullptr) {
+    model->version_ = meta_graph.version()->c_str();
+  }
+  if (!ConvertNodes<T, U>(meta_graph, model, schema_version)) {
+    MS_LOG(ERROR) << "convert node failed";
+    return RET_ERROR;
+  }
+  if (!ConvertTensors<T>(meta_graph, model)) {
+    MS_LOG(ERROR) << "convert tensor failed";
+    return RET_ERROR;
+  }
+  if (meta_graph.subGraph() == nullptr) {
+    int ret = MetaGraphMappingSubGraph<T>(meta_graph, model);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "converter old version model wrong.";
+      return ret;
+    }
+  } else {
+    auto sub_graphs = meta_graph.subGraph();
+    auto sub_graph_size = sub_graphs->size();
+    for (size_t i = 0; i < sub_graph_size; i++) {
+      auto sub_graph = sub_graphs->template GetAs<schema::SubGraph>(i);
+      int ret = ConvertSubGraph(*sub_graph, model);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "converter subgraph wrong.";
+        return ret;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+int VersionVerify(flatbuffers::Verifier *verify);
+
+const void *GetMetaGraphByVerison(const char *buf, const int &schema_version);
+
+int GenerateModelByVersion(const void *meta_graph, Model *model, const int &schema_version);
 
 Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);
 }  // namespace mindspore::lite
