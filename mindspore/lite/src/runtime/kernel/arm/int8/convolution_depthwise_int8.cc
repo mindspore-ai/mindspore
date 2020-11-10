@@ -181,7 +181,7 @@ kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *>
       conv_param->output_w_ = outputs[kOutputIndex]->Width();
     }
     auto weight_quant_size = inputs[kWeightIndex]->GetQuantParams().size();
-    if (CheckConvDwInt8Use3X3(conv_param) && weight_quant_size == 1) {
+    if (CheckConvDwUse3X3(conv_param) && conv_param->input_channel_ % C8NUM == 0 && weight_quant_size == 1) {
 #ifdef ENABLE_ARM64
       kernel =
         new (std::nothrow) kernel::ConvolutionDepthwise3x3Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);

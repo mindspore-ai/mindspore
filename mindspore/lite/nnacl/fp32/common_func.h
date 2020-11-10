@@ -71,6 +71,21 @@ void ConvSwFp32Center(float *dst, const float *src, const float *weight, const f
                       size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t ic4,
                       size_t in_sh_step, size_t in_sw_step, size_t in_kh_step, size_t in_kw_step, size_t relu,
                       size_t relu6);
+
+void ConvDw3x3Stride1(float *output, const float *buffer, const float *weight, const float *bias, int col_size,
+                      int row_size, int channel, int output_h, int output_w, size_t relu, size_t relu6);
+
+void ConvDw3x3Stride2(float *output, const float *buffer, const float *weight, const float *bias, int col_size,
+                      int row_size, int channel, int output_h, int output_w, size_t relu, size_t relu6);
+
+void ConvDw3x3Corner(float *dst, const float *src, const float *weight, const float *bias, int in_kh_step,
+                     int in_kw_step, int channel, size_t relu, size_t relu6);
+
+void ConvDw3x3Vertical(float *dst, const float *src, const float *weight, const float *bias, int in_kh_step,
+                       int in_kw_step, int channel, size_t relu, size_t relu6);
+
+void ConvDw3x3Horizontal(float *dst, const float *src, const float *weight, const float *bias, int in_kh_step,
+                         int in_kw_step, int channel, size_t relu, size_t relu6);
 #endif
 
 #ifdef __cplusplus
