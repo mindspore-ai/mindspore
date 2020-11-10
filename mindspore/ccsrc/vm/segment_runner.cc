@@ -34,10 +34,6 @@
 #include "frontend/operator/ops.h"
 
 namespace mindspore {
-const char kMsConvert[] = "ms";
-const char kMsVm[] = "vm";
-const char kGeVm[] = "ge";
-
 namespace compile {
 // cached conversion
 ConvertCache g_ConvertCache;
@@ -194,8 +190,9 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
 //   This implementation will convert the nodes into a subgraph
 //   that will run using the MsVM.
 template <typename T>
-LinConvertResult Convert(const AnfNodePtrList &lst, const std::string &) {
-  auto cached = g_ConvertCache.find(lst);
+LinConvertResult Convert(const GraphSegmentPtr &segment, const std::string &) {
+  MS_EXCEPTION_IF_NULL(segment);
+  auto cached = g_ConvertCache.find(segment);
   if (cached != g_ConvertCache.end()) {
     return cached->second;
   }
@@ -206,7 +203,7 @@ LinConvertResult Convert(const AnfNodePtrList &lst, const std::string &) {
   AnfNodePtrList inputs;
   AnfNodePtrList outputs;
 
-  std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(lst);
+  std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
 
   // Clone in case g contains subgraphs that have a different manager
   fg = BasicClone(fg);
@@ -219,18 +216,15 @@ LinConvertResult Convert(const AnfNodePtrList &lst, const std::string &) {
   result.outputs = outputs;
   result.graph_id = UINT32_MAX;
 
-  (void)g_ConvertCache.emplace(lst, result);
+  (void)g_ConvertCache.emplace(segment, result);
   return result;
 }
 
 LinkFuncType MsVmConvert = Convert<VM>;
 
-std::unordered_map<std::string, LinkFuncType> backends = {{kMsVm, MsVmConvert}};
-
 std::set<std::string> backend_list = {
   kMsConvert,
   kMsVm,
 };
-
 }  // namespace compile
 }  // namespace mindspore

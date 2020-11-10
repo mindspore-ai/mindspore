@@ -647,6 +647,19 @@ ParameterPtr FuncGraph::add_weight(const tensor::MetaTensorPtr &meta_tensor) {
   return parameter;
 }
 
+bool FuncGraph::ContainMultiTarget() const {
+  auto graph_manager = manager();
+  MS_EXCEPTION_IF_NULL(graph_manager);
+  FuncGraphSet graphs = graph_manager->func_graphs();
+  for (auto &g : graphs) {
+    auto nodes = TopoSort(g->get_return());
+    if (mindspore::ContainMultiTarget(nodes)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 size_t NewFgSeenGeneration() {
   static size_t fg_seen_generation = 0;
   return ++fg_seen_generation;

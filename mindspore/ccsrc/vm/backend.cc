@@ -34,30 +34,34 @@ namespace compile {
 bool Backend::GetCond(const BaseRef &c, bool *const value) { return BaseRefToBool(c, value); }
 bool Backend::GetIndex(const BaseRef &c, int64_t *const value) { return BaseRefToInt(utils::cast<ValuePtr>(c), value); }
 
-LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::string &target) {
+Backend::Backend(const std::string &name) : name_(name) {
+  MS_LOG(DEBUG) << "select backend:" << name;
+  convert_fn_ = MsVmConvert;
+  is_multi_graph_sink_ = false;
+}
+
+LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std::string &target) {
   MS_LOG(DEBUG) << "MsConvert";
+  MS_EXCEPTION_IF_NULL(segment);
   MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  auto cached = g_ConvertCache.find(lst);
+  auto cached = g_ConvertCache.find(segment);
   if (cached != g_ConvertCache.end()) {
     return cached->second;
   }
-
   LinConvertResult result;
-
   FuncGraphPtr fg;
   AnfNodePtrList inputs;
   AnfNodePtrList outputs;
-
-  std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(lst);
+  std::tie(fg, inputs, outputs) = TransformSegmentToAnfGraph(segment->nodes_);
   result.inputs = inputs;
   result.outputs = outputs;
   result.graph_id = kInvalidGraphId;
   GraphId graph_id = kInvalidGraphId;
   if (target != target_device_ && !target.empty()) {
     CreateOtherSession(target);
-    graph_id = other_sess_->CompileGraph(lst, outputs);
+    graph_id = other_sess_->CompileGraph(segment, outputs);
   } else {
-    graph_id = target_sess_->CompileGraph(lst, outputs);
+    graph_id = target_sess_->CompileGraph(segment, outputs);
   }
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
@@ -79,7 +83,7 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst, const std::stri
   result.graph_id = graph_id;
 
   graph_id_map_[graph_id] = result;
-  (void)g_ConvertCache.emplace(lst, result);
+  (void)g_ConvertCache.emplace(segment, result);
   return result;
 }
 
@@ -154,12 +158,6 @@ void MsBackend::Link(GraphId graph_id) {
   target_sess_->BuildGraph(graph_id);
 }
 
-Backend::Backend(const std::string &name) : name_(name) {
-  MS_LOG(DEBUG) << "select backend:" << name;
-  convert_fn_ = backends[name_];
-  is_multi_graph_sink_ = false;
-}
-
 MsBackend::MsBackend(const std::string &name, const std::string &target, uint32_t device_id) : Backend(name) {
   convert_fn_ = std::bind(&MsBackend::MsConvert, this, std::placeholders::_1, std::placeholders::_2);
   target_sess_ = session::SessionFactory::Get().Create(target);
@@ -194,6 +192,5 @@ VectorRef MsBackend::RunGraph(GraphId graph_id, const VectorRef &args) { return 
 #ifdef ENABLE_DEBUGGER
 void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
 #endif
-
 }  // namespace compile
 }  // namespace mindspore
