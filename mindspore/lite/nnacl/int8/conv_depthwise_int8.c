@@ -139,7 +139,7 @@ void ConvDwInt8(int8_t *output_data, int32_t *row_buffer, const int8_t *input_da
 /*conv depthwise int8 end*/
 
 /*conv depthwise 3x3 int8 begin*/
-bool CheckIfUse3X3(const ConvParameter *conv_param) {
+bool CheckConvDwInt8Use3X3(const ConvParameter *conv_param) {
   bool use_3x3 = conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3 &&
                  (conv_param->stride_h_ == 1 || conv_param->stride_h_ == 2) &&
                  (conv_param->stride_w_ == 1 || conv_param->stride_w_ == 2) &&
@@ -158,8 +158,8 @@ bool CheckIfUse3X3(const ConvParameter *conv_param) {
   return use_3x3;
 }
 
-void InitInputBuffer(int8_t *buffer, const int8_t *input, const ConvParameter *conv_param, int block_input_h,
-                     int block_input_w) {
+void ConvDw3x3Int8InitBuffer(int8_t *buffer, const int8_t *input, const ConvParameter *conv_param, int block_input_h,
+                             int block_input_w) {
   for (int h = 0; h < block_input_h; h++) {
     const int8_t *src = input;
     for (int w = 0; w < block_input_w; w++) {
@@ -257,7 +257,7 @@ void ConvDw3x3Int8Row(int8_t *output, int8_t *buffer, const int8_t *input, const
       const int32_t *bias_ptr = bias;
       int c = 0;
       for (; c <= conv_param->output_channel_ - 64; c += 64) {
-        InitInputBuffer(buffer, input_ptr, conv_param, block_input_h, block_input_w);
+        ConvDw3x3Int8InitBuffer(buffer, input_ptr, conv_param, block_input_h, block_input_w);
         ConvDw3x3Int8Block(output_ptr, buffer, weight_ptr, bias_ptr, 0, 64, 64, ih_offset, conv_param->input_channel_,
                            block_output_h, block_output_w, in_zp, out_zp, out_multiplier, left_shift, right_shift,
                            acc_min, acc_max, conv_param->stride_h_);
@@ -489,10 +489,10 @@ void ConvDw3x3Int8Pad(int8_t *output_data, const int8_t *input_data, const int16
 /*conv depthwise 3x3 int8 end*/
 
 /*conv depthwise sliding window perchannel int8 begin*/
-void DepthwiseBorderPixelInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
-                              int width, int in_kh_step, int in_kw_step, int kernel_w, int8_t *input_zp,
-                              int32_t *out_zp, const int *out_multiplier, const int *left_shift, const int *right_shift,
-                              int32_t *acc_min, int32_t *acc_max) {
+void ConvDwInt8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
+                           int width, int in_kh_step, int in_kw_step, int kernel_w, int8_t *input_zp, int32_t *out_zp,
+                           const int *out_multiplier, const int *left_shift, const int *right_shift, int32_t *acc_min,
+                           int32_t *acc_max) {
   int tmp_buffer[C8NUM];
   for (int i = 0; i < C8NUM; i++) {
     tmp_buffer[i] = 0;
@@ -525,10 +525,10 @@ void DepthwiseBorderPixelInt8(int8_t *dst, const int8_t *src, const int16_t *wei
   }
 }
 
-void DepthwiseBorderInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int top,
-                         int bottom, int left, int right, const ConvParameter *conv_param,
-                         const SlidingWindowParam *sliding, int8_t *in_zp, int32_t *out_zp, const int *out_multiplier,
-                         const int *left_shift, const int *right_shift, int32_t *acc_min, int32_t *acc_max) {
+void ConvDwInt8Border(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int top, int bottom,
+                      int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding,
+                      int8_t *in_zp, int32_t *out_zp, const int *out_multiplier, const int *left_shift,
+                      const int *right_shift, int32_t *acc_min, int32_t *acc_max) {
   int8_t *dst_h = dst + top * sliding->out_h_step_;
   for (int oh = top; oh < bottom; oh++) {
     int ih = oh * conv_param->stride_h_ - conv_param->pad_u_;
@@ -546,9 +546,9 @@ void DepthwiseBorderInt8(int8_t *dst, const int8_t *src, const int16_t *weight, 
       const int8_t *src_kernel = src_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
       const int16_t *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C8NUM;
 
-      DepthwiseBorderPixelInt8(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
-                               sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_, in_zp, out_zp,
-                               out_multiplier, left_shift, right_shift, acc_min, acc_max);
+      ConvDwInt8BorderPixel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
+                            sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_, in_zp, out_zp,
+                            out_multiplier, left_shift, right_shift, acc_min, acc_max);
 
       dst_kernel += sliding->block_channel_;
     }  // width loop
@@ -556,12 +556,11 @@ void DepthwiseBorderInt8(int8_t *dst, const int8_t *src, const int16_t *weight, 
   }  // height loop
 }
 
-#ifndef ENABLE_ARM64
-void DepthwiseCenterInt8(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
-                         int width, int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step,
-                         int in_sw_step, int in_kh_step, int in_kw_step, int8_t *in_zp, int32_t *out_zp,
-                         int32_t *out_multiplier, int32_t *left_shift, int32_t *right_shift, int32_t *acc_min,
-                         int32_t *acc_max) {
+#ifndef ENABLE_ARM
+void ConvDwInt8Center(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height, int width,
+                      int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step,
+                      int in_kh_step, int in_kw_step, int8_t *in_zp, int32_t *out_zp, int32_t *out_multiplier,
+                      int32_t *left_shift, int32_t *right_shift, int32_t *acc_min, int32_t *acc_max) {
   int tmp_buffer[C8NUM];
   int8_t *dst_h = dst;
   const int8_t *src_h = src;
@@ -608,7 +607,7 @@ void DepthwiseCenterInt8(int8_t *dst, const int8_t *src, const int16_t *weight, 
 }
 #endif
 
-void ConvDwSWInt8(int8_t *output_data, const int8_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
+void ConvDwInt8SW(int8_t *output_data, const int8_t *input_data, const int16_t *weight_data, const int32_t *bias_data,
                   int8_t *input_zp, int32_t *output_zp, const ConvParameter *conv_param,
                   const SlidingWindowParam *sliding, int task_id) {
   const int8_t *src = input_data;
@@ -628,37 +627,26 @@ void ConvDwSWInt8(int8_t *output_data, const int8_t *input_data, const int16_t *
       int8_t *in_zp = input_zp + oc * C8NUM;
       int32_t *out_zp = output_zp + oc * C8NUM;
 
-      DepthwiseBorderInt8(dst_data, src_data, weight, bias, 0, sliding->top_, 0, conv_param->output_w_, conv_param,
-                          sliding, in_zp, out_zp, out_multiplier, left_shift, right_shift, acc_min, acc_max);
-      DepthwiseBorderInt8(dst_data, src_data, weight, bias, sliding->bottom_, conv_param->output_h_, 0,
-                          conv_param->output_w_, conv_param, sliding, in_zp, out_zp, out_multiplier, left_shift,
-                          right_shift, acc_min, acc_max);
-      DepthwiseBorderInt8(dst_data, src_data, weight, bias, sliding->top_, sliding->bottom_, 0, sliding->left_,
-                          conv_param, sliding, in_zp, out_zp, out_multiplier, left_shift, right_shift, acc_min,
-                          acc_max);
-      DepthwiseBorderInt8(dst_data, src_data, weight, bias, sliding->top_, sliding->bottom_, sliding->right_,
-                          conv_param->output_w_, conv_param, sliding, in_zp, out_zp, out_multiplier, left_shift,
-                          right_shift, acc_min, acc_max);
+      ConvDwInt8Border(dst_data, src_data, weight, bias, 0, sliding->top_, 0, conv_param->output_w_, conv_param,
+                       sliding, in_zp, out_zp, out_multiplier, left_shift, right_shift, acc_min, acc_max);
+      ConvDwInt8Border(dst_data, src_data, weight, bias, sliding->bottom_, conv_param->output_h_, 0,
+                       conv_param->output_w_, conv_param, sliding, in_zp, out_zp, out_multiplier, left_shift,
+                       right_shift, acc_min, acc_max);
+      ConvDwInt8Border(dst_data, src_data, weight, bias, sliding->top_, sliding->bottom_, 0, sliding->left_, conv_param,
+                       sliding, in_zp, out_zp, out_multiplier, left_shift, right_shift, acc_min, acc_max);
+      ConvDwInt8Border(dst_data, src_data, weight, bias, sliding->top_, sliding->bottom_, sliding->right_,
+                       conv_param->output_w_, conv_param, sliding, in_zp, out_zp, out_multiplier, left_shift,
+                       right_shift, acc_min, acc_max);
 
       if (sliding->right_ > sliding->left_ && sliding->bottom_ > sliding->top_) {
         int in_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_u_;
         int in_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_l_;
         const int8_t *in_t = src_data + in_h_start * sliding->in_h_step_ + in_w_start * sliding->block_channel_;
         int8_t *out_t = dst_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
-#ifdef ENABLE_ARM
         ConvDwInt8Center(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
-                         conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_ * sizeof(int8_t),
-                         sliding->block_channel_ * sizeof(int8_t), sliding->in_sh_step_ * sizeof(int8_t),
-                         sliding->in_sw_step_ * sizeof(int8_t), sliding->in_kh_step_ * sizeof(int8_t),
-                         sliding->in_kw_step_ * sizeof(int8_t), in_zp, out_zp, out_multiplier, left_shift, right_shift,
-                         acc_min, acc_max);
-#else
-        DepthwiseCenterInt8(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_,
-                            sliding->right_ - sliding->left_, conv_param->kernel_h_, conv_param->kernel_w_,
-                            sliding->out_h_step_, sliding->block_channel_, sliding->in_sh_step_, sliding->in_sw_step_,
-                            sliding->in_kh_step_, sliding->in_kw_step_, in_zp, out_zp, out_multiplier, left_shift,
-                            right_shift, acc_min, acc_max);
-#endif
+                         conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_, sliding->block_channel_,
+                         sliding->in_sh_step_, sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_, in_zp,
+                         out_zp, out_multiplier, left_shift, right_shift, acc_min, acc_max);
       }
     }  // output C8 loop
     src += sliding->in_step_;
@@ -669,8 +657,8 @@ void ConvDwSWInt8(int8_t *output_data, const int8_t *input_data, const int16_t *
 /*conv depthwise sliding window perchannel int8 end*/
 
 /*deconv depthwise int8 begin*/
-void DeconvDepthwiseBorderPixelInt8(int32_t *dst, const int16_t *src, const int16_t *weight, int height, int width,
-                                    int in_kh_step, int in_kw_step, int kernel_w) {
+void DeconvDwInt8BorderPixel(int32_t *dst, const int16_t *src, const int16_t *weight, int height, int width,
+                             int in_kh_step, int in_kw_step, int kernel_w) {
   int32_t *dst_kh = dst;
   const int16_t *weight_kh = weight;
   for (int kh = 0; kh < height; kh++) {
@@ -688,8 +676,8 @@ void DeconvDepthwiseBorderPixelInt8(int32_t *dst, const int16_t *src, const int1
   }  // kernel_h loop
 }
 
-void DeconvDepthwiseBorderInt8(int32_t *dst, const int16_t *src, const int16_t *weight, int top, int bottom, int left,
-                               int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
+void DeconvDwInt8Border(int32_t *dst, const int16_t *src, const int16_t *weight, int top, int bottom, int left,
+                        int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
   const int16_t *src_h = src + top * sliding->out_h_step_;
   for (int ih = top; ih < bottom; ih++) {
     int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
@@ -707,8 +695,8 @@ void DeconvDepthwiseBorderInt8(int32_t *dst, const int16_t *src, const int16_t *
       const int16_t *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C4NUM;
       int32_t *dst_kernel = dst_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
 
-      DeconvDepthwiseBorderPixelInt8(dst_kernel, src_kernel, weight_kernel, end_kh - start_kh, end_kw - start_kw,
-                                     sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_);
+      DeconvDwInt8BorderPixel(dst_kernel, src_kernel, weight_kernel, end_kh - start_kh, end_kw - start_kw,
+                              sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_);
       src_kernel += sliding->block_channel_;
     }  // width loop
     src_h += sliding->out_h_step_;
@@ -716,9 +704,9 @@ void DeconvDepthwiseBorderInt8(int32_t *dst, const int16_t *src, const int16_t *
 }
 
 #ifndef ENABLE_ARM64
-void DeconvDepthwiseCenterInt8(int32_t *dst, const int16_t *src, const int16_t *weight, int height, int width,
-                               int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step,
-                               int in_sw_step, int in_kh_step, int in_kw_step) {
+void DeconvDwInt8Center(int32_t *dst, const int16_t *src, const int16_t *weight, int height, int width, int kernel_h,
+                        int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step, int in_kh_step,
+                        int in_kw_step) {
   int32_t *dst_h = dst;
   const int16_t *src_h = src;
   for (int oh = 0; oh < height; oh++) {
@@ -784,14 +772,14 @@ void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *in
       const int16_t *weight = weight_data + oc * sliding->kernel_step_;
       const int32_t *bias = bias_data + oc * C4NUM;
       int8_t *dst_data = dst + oc * C4NUM;
-      DeconvDepthwiseBorderInt8(output_buffer, src_data, weight, 0, sliding->top_, 0, conv_param->input_w_, conv_param,
-                                sliding);
-      DeconvDepthwiseBorderInt8(output_buffer, src_data, weight, sliding->bottom_, conv_param->input_h_, 0,
-                                conv_param->input_w_, conv_param, sliding);
-      DeconvDepthwiseBorderInt8(output_buffer, src_data, weight, sliding->top_, sliding->bottom_, 0, sliding->left_,
-                                conv_param, sliding);
-      DeconvDepthwiseBorderInt8(output_buffer, src_data, weight, sliding->top_, sliding->bottom_, sliding->right_,
-                                conv_param->input_w_, conv_param, sliding);
+      DeconvDwInt8Border(output_buffer, src_data, weight, 0, sliding->top_, 0, conv_param->input_w_, conv_param,
+                         sliding);
+      DeconvDwInt8Border(output_buffer, src_data, weight, sliding->bottom_, conv_param->input_h_, 0,
+                         conv_param->input_w_, conv_param, sliding);
+      DeconvDwInt8Border(output_buffer, src_data, weight, sliding->top_, sliding->bottom_, 0, sliding->left_,
+                         conv_param, sliding);
+      DeconvDwInt8Border(output_buffer, src_data, weight, sliding->top_, sliding->bottom_, sliding->right_,
+                         conv_param->input_w_, conv_param, sliding);
 
       if (sliding->right_ > sliding->left_ && sliding->bottom_ > sliding->top_) {
         int oh_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_u_;
@@ -806,10 +794,9 @@ void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *in
                            sliding->in_sw_step_ * sizeof(int32_t), sliding->in_kh_step_ * sizeof(int32_t),
                            sliding->in_kw_step_ * sizeof(int32_t));
 #else
-        DeconvDepthwiseCenterInt8(out_t, in_t, weight, sliding->bottom_ - sliding->top_,
-                                  sliding->right_ - sliding->left_, conv_param->kernel_h_, conv_param->kernel_w_,
-                                  sliding->out_h_step_, sliding->block_channel_, sliding->in_sh_step_,
-                                  sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_);
+        DeconvDwInt8Center(out_t, in_t, weight, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
+                           conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_, sliding->block_channel_,
+                           sliding->in_sh_step_, sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_);
 #endif
       }
       DeconvDwInt8Post(dst_data, output_buffer, bias, sliding->block_channel_,

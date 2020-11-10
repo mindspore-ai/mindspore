@@ -118,7 +118,7 @@ int ConvolutionDepthwiseSWCPUKernel::ReSize() {
 }
 
 int ConvolutionDepthwiseSWCPUKernel::Execute(int task_id) {
-  ConvDwC4Fp32(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_,
+  ConvDwSWFp32(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_,
                sliding_, task_id);
   return RET_OK;
 }

@@ -99,6 +99,16 @@ int ConvolutionDepthwise3x3Int8CPUKernel::Init() {
     MS_LOG(ERROR) << "new sliding window param.";
     return RET_ERROR;
   }
+  auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set quant param failed.";
+    return ret;
+  }
+  ret = InitWeightBias();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Depthwise int8 InitWeightBias error!";
+    return ret;
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -108,17 +118,7 @@ int ConvolutionDepthwise3x3Int8CPUKernel::Init() {
 int ConvolutionDepthwise3x3Int8CPUKernel::ReSize() {
   ConvolutionBaseCPUKernel::Init();
   InitSlidingParamConvDw(sliding_, conv_param_, conv_param_->input_channel_);
-  auto ret = ConvolutionBaseCPUKernel::SetQuantParam();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Set quant param failed.";
-    return ret;
-  }
   conv_param_->thread_num_ = MSMIN(thread_count_, conv_param_->output_h_);
-  ret = InitWeightBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Depthwise int8 InitWeightBias error!";
-    return ret;
-  }
   return RET_OK;
 }
 

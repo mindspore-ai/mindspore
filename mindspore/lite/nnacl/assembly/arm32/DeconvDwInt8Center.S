@@ -1,4 +1,4 @@
-#ifdef __arm__
+#if 0
 #ifndef __aarch64__
 
 .text

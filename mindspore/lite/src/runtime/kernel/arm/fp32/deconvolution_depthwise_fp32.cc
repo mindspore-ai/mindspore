@@ -130,7 +130,7 @@ int DeconvolutionDepthwiseCPUKernel::ReSize() {
 }
 
 int DeconvolutionDepthwiseCPUKernel::Execute(int task_id) {
-  DeconvDwC4Fp32(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_,
+  DeconvDwSWFp32(packed_output_, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), conv_param_,
                  sliding_, task_id);
   return RET_OK;
 }

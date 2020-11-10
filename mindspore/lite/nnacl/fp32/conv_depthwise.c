@@ -152,9 +152,8 @@ void AppendSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *
 }
 
 /*conv depthwise fp32 begin*/
-#ifndef ENABLE_ARM64
-void DepthwiseBorderPixel(float *dst, const float *src, const float *weight, const float *bias, int height, int width,
-                          int in_kh_step, int in_kw_step, int kernel_w_step, bool is_relu, bool is_relu6) {
+void ConvDwBorderPixel(float *dst, const float *src, const float *weight, const float *bias, int height, int width,
+                       int in_kh_step, int in_kw_step, int kernel_w_step, bool is_relu, bool is_relu6) {
   const float *src_kh = src;
   const float *weight_kh = weight;
   for (int c = 0; c < C4NUM; c++) {
@@ -179,10 +178,9 @@ void DepthwiseBorderPixel(float *dst, const float *src, const float *weight, con
     dst[c] = (is_relu6) ? (MSMIN(6, MSMAX(0, dst[c]))) : (dst[c]);
   }
 }
-#endif
 
-void DepthwiseBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom,
-                     int left, int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
+void ConvDwBorder(float *dst, const float *src, const float *weight, const float *bias, int top, int bottom, int left,
+                  int right, const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
   bool relu = conv_param->act_type_ == ActType_Relu;
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
   float *dst_h = dst + top * sliding->out_h_step_;
@@ -207,8 +205,8 @@ void DepthwiseBorder(float *dst, const float *src, const float *weight, const fl
                        sliding->in_kh_step_ * sizeof(float), sliding->in_kw_step_ * sizeof(float),
                        conv_param->kernel_w_ * C4NUM * sizeof(float), relu, relu6);
 #else
-      DepthwiseBorderPixel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
-                           sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C4NUM, relu, relu6);
+      ConvDwBorderPixel(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
+                        sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C4NUM, relu, relu6);
 #endif
       dst_kernel += sliding->block_channel_;
     }  // width loop
@@ -217,9 +215,9 @@ void DepthwiseBorder(float *dst, const float *src, const float *weight, const fl
 }
 
 #ifndef ENABLE_ARM64
-void DepthwiseCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width,
-                     int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step,
-                     int in_kh_step, int in_kw_step, bool is_relu, bool is_relu6) {
+void ConvDwCenter(float *dst, const float *src, const float *weight, const float *bias, int height, int width,
+                  int kernel_h, int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step,
+                  int in_kh_step, int in_kw_step, bool is_relu, bool is_relu6) {
   float *dst_h = dst;
   const float *src_h = src;
   for (int oh = 0; oh < height; oh++) {
@@ -260,7 +258,7 @@ void DepthwiseCenter(float *dst, const float *src, const float *weight, const fl
 #endif
 
 // conv depthwise fp32: sliding window
-void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+void ConvDwSWFp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                   const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id) {
   bool relu = conv_param->act_type_ == ActType_Relu;
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
@@ -272,14 +270,13 @@ void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weig
       float *dst_data = dst + oc * C4NUM;
       const float *weight = weight_data + oc * sliding->kernel_step_;
       const float *bias = bias_data + oc * C4NUM;
-      DepthwiseBorder(dst_data, src_data, weight, bias, 0, sliding->top_, 0, conv_param->output_w_, conv_param,
-                      sliding);
-      DepthwiseBorder(dst_data, src_data, weight, bias, sliding->bottom_, conv_param->output_h_, 0,
-                      conv_param->output_w_, conv_param, sliding);
-      DepthwiseBorder(dst_data, src_data, weight, bias, sliding->top_, sliding->bottom_, 0, sliding->left_, conv_param,
-                      sliding);
-      DepthwiseBorder(dst_data, src_data, weight, bias, sliding->top_, sliding->bottom_, sliding->right_,
-                      conv_param->output_w_, conv_param, sliding);
+      ConvDwBorder(dst_data, src_data, weight, bias, 0, sliding->top_, 0, conv_param->output_w_, conv_param, sliding);
+      ConvDwBorder(dst_data, src_data, weight, bias, sliding->bottom_, conv_param->output_h_, 0, conv_param->output_w_,
+                   conv_param, sliding);
+      ConvDwBorder(dst_data, src_data, weight, bias, sliding->top_, sliding->bottom_, 0, sliding->left_, conv_param,
+                   sliding);
+      ConvDwBorder(dst_data, src_data, weight, bias, sliding->top_, sliding->bottom_, sliding->right_,
+                   conv_param->output_w_, conv_param, sliding);
 
       if (sliding->right_ > sliding->left_ && sliding->bottom_ > sliding->top_) {
         int in_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_u_;
@@ -293,10 +290,10 @@ void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weig
                          sliding->in_sw_step_ * sizeof(float), sliding->in_kh_step_ * sizeof(float),
                          sliding->in_kw_step_ * sizeof(float), relu, relu6);
 #else
-        DepthwiseCenter(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
-                        conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_, sliding->block_channel_,
-                        sliding->in_sh_step_, sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_, relu,
-                        relu6);
+        ConvDwCenter(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
+                     conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_, sliding->block_channel_,
+                     sliding->in_sh_step_, sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_, relu,
+                     relu6);
 #endif
       }
     }  // output C4 loop
@@ -308,8 +305,8 @@ void ConvDwC4Fp32(float *output_data, const float *input_data, const float *weig
 /*conv depthwise fp32 end*/
 
 /*deconv depthwise fp32 begin*/
-void DeconvDepthwiseBorderPixel(float *dst, const float *src, const float *weight, int height, int width,
-                                int in_kh_step, int in_kw_step, int kernel_w_step) {
+void DeconvDwBorderPixel(float *dst, const float *src, const float *weight, int height, int width, int in_kh_step,
+                         int in_kw_step, int kernel_w_step) {
   float *dst_kh = dst;
   const float *weight_kh = weight;
   for (int kh = 0; kh < height; kh++) {
@@ -335,8 +332,8 @@ void DeconvDepthwiseBorderPixel(float *dst, const float *src, const float *weigh
   }  // kernel_h loop
 }
 
-void DeconvDepthwiseBorder(float *dst, const float *src, const float *weight, int top, int bottom, int left, int right,
-                           const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
+void DeconvDwBorder(float *dst, const float *src, const float *weight, int top, int bottom, int left, int right,
+                    const ConvParameter *conv_param, const SlidingWindowParam *sliding) {
   const float *src_h = src + top * sliding->out_h_step_;
   for (int ih = top; ih < bottom; ih++) {
     int oh = ih * conv_param->stride_h_ - conv_param->pad_u_;
@@ -358,8 +355,8 @@ void DeconvDepthwiseBorder(float *dst, const float *src, const float *weight, in
                          sliding->in_kh_step_ * sizeof(float), sliding->in_kw_step_ * sizeof(float),
                          conv_param->kernel_w_ * C4NUM * sizeof(float));
 #else
-      DeconvDepthwiseBorderPixel(dst_kernel, src_kernel, weight_kernel, end_kh - start_kh, end_kw - start_kw,
-                                 sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C4NUM);
+      DeconvDwBorderPixel(dst_kernel, src_kernel, weight_kernel, end_kh - start_kh, end_kw - start_kw,
+                          sliding->in_kh_step_, sliding->in_kw_step_, conv_param->kernel_w_ * C4NUM);
 #endif
       src_kernel += sliding->block_channel_;
     }  // width loop
@@ -368,9 +365,9 @@ void DeconvDepthwiseBorder(float *dst, const float *src, const float *weight, in
 }
 
 #ifndef ENABLE_ARM64
-void DeconvDepthwiseCenter(float *dst, const float *src, const float *weight, int height, int width, int kernel_h,
-                           int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step,
-                           int in_kh_step, int in_kw_step) {
+void DeconvDwCenter(float *dst, const float *src, const float *weight, int height, int width, int kernel_h,
+                    int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step, int in_kh_step,
+                    int in_kw_step) {
   float *dst_h = dst;
   const float *src_h = src;
   for (int oh = 0; oh < height; oh++) {
@@ -401,7 +398,7 @@ void DeconvDepthwiseCenter(float *dst, const float *src, const float *weight, in
 }
 #endif
 
-void DeconvDepthwisePostFunc(float *dst, const float *bias, int block_channel, const ConvParameter *conv_param) {
+void DeconvDwPost(float *dst, const float *bias, int block_channel, const ConvParameter *conv_param) {
   bool relu = conv_param->act_type_ == ActType_Relu;
   bool relu6 = conv_param->act_type_ == ActType_Relu6;
   float *dst_k = dst;
@@ -416,7 +413,7 @@ void DeconvDepthwisePostFunc(float *dst, const float *bias, int block_channel, c
 }
 
 // deconv depthwise fp32: sliding window
-void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+void DeconvDwSWFp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                     const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id) {
   const float *src = input_data;
   float *dst = output_data;
@@ -426,13 +423,13 @@ void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *we
       float *dst_data = dst + oc * C4NUM;
       const float *weight = weight_data + oc * sliding->kernel_step_;
       const float *bias = bias_data + oc * C4NUM;
-      DeconvDepthwiseBorder(dst_data, src_data, weight, 0, sliding->top_, 0, conv_param->input_w_, conv_param, sliding);
-      DeconvDepthwiseBorder(dst_data, src_data, weight, sliding->bottom_, conv_param->input_h_, 0, conv_param->input_w_,
-                            conv_param, sliding);
-      DeconvDepthwiseBorder(dst_data, src_data, weight, sliding->top_, sliding->bottom_, 0, sliding->left_, conv_param,
-                            sliding);
-      DeconvDepthwiseBorder(dst_data, src_data, weight, sliding->top_, sliding->bottom_, sliding->right_,
-                            conv_param->input_w_, conv_param, sliding);
+      DeconvDwBorder(dst_data, src_data, weight, 0, sliding->top_, 0, conv_param->input_w_, conv_param, sliding);
+      DeconvDwBorder(dst_data, src_data, weight, sliding->bottom_, conv_param->input_h_, 0, conv_param->input_w_,
+                     conv_param, sliding);
+      DeconvDwBorder(dst_data, src_data, weight, sliding->top_, sliding->bottom_, 0, sliding->left_, conv_param,
+                     sliding);
+      DeconvDwBorder(dst_data, src_data, weight, sliding->top_, sliding->bottom_, sliding->right_, conv_param->input_w_,
+                     conv_param, sliding);
 
       if (sliding->right_ > sliding->left_ && sliding->bottom_ > sliding->top_) {
         int oh_h_start = sliding->top_ * conv_param->stride_h_ - conv_param->pad_u_;
@@ -447,13 +444,12 @@ void DeconvDwC4Fp32(float *output_data, const float *input_data, const float *we
                            sliding->in_sw_step_ * sizeof(float), sliding->in_kh_step_ * sizeof(float),
                            sliding->in_kw_step_ * sizeof(float));
 #else
-        DeconvDepthwiseCenter(out_t, in_t, weight, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
-                              conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_,
-                              sliding->block_channel_, sliding->in_sh_step_, sliding->in_sw_step_, sliding->in_kh_step_,
-                              sliding->in_kw_step_);
+        DeconvDwCenter(out_t, in_t, weight, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
+                       conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_, sliding->block_channel_,
+                       sliding->in_sh_step_, sliding->in_sw_step_, sliding->in_kh_step_, sliding->in_kw_step_);
 #endif
       }
-      DeconvDepthwisePostFunc(dst_data, bias, sliding->block_channel_, conv_param);
+      DeconvDwPost(dst_data, bias, sliding->block_channel_, conv_param);
     }  // output C4 loop
     src += sliding->out_step_;
     dst += sliding->in_step_;
