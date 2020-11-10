@@ -19,48 +19,32 @@
 
 namespace mindspore {
 namespace kernel {
-void UniqueWithPadCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  n_ = SizeToLong(input_shape[0]);
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
-}
-
 bool UniqueWithPadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                    const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                    const std::vector<kernel::AddressPtr> &workspace,
                                     const std::vector<kernel::AddressPtr> &outputs) {
+  UniqueCPUKernel::Launch(inputs, workspace, outputs);
   if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
+    PadOutput<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "Only unsupported int32 or int64 dtype";
+    PadOutput<int64_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat32) {
+    PadOutput<float>(inputs, outputs);
   }
   return true;
 }
 
 template <typename T>
-void UniqueWithPadCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                          const std::vector<AddressPtr> &outputs) {
-  T *a = reinterpret_cast<T *>(inputs[0]->addr);
+void UniqueWithPadCPUKernel::PadOutput(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  if (inputs.size() < 2) {
+    MS_LOG(EXCEPTION) << "Input size should be large than 1";
+  }
+  if (outputs.size() < 1) {
+    MS_LOG(EXCEPTION) << "Output size should be large than 0";
+  }
   T pad_num = *reinterpret_cast<T *>(inputs[1]->addr);
   T *out = reinterpret_cast<T *>(outputs[0]->addr);
-  T *idx_vec = reinterpret_cast<T *>(outputs[1]->addr);
-
-  for (int64_t i = 0; i < n_; ++i) {
+  for (size_t i = output_size_; i < input_size_; ++i) {
     out[i] = pad_num;
-  }
-  std::unordered_map<T, int> uniq;
-  uniq.reserve(n_);
-  for (int64_t i = 0, j = 0; i < n_; ++i) {
-    auto it = uniq.emplace(a[i], j);
-    idx_vec[i] = it.first->second;
-    if (it.second) {
-      ++j;
-    }
-  }
-  for (const auto &it : uniq) {
-    out[it.second] = it.first;
   }
 }
 

@@ -29,7 +29,7 @@ class UniqueCpuKernelTest : public UT::Common {
   UniqueCpuKernelTest() : unique_(std::make_shared<UniqueCPUKernel>()) {}
 
   void SetUp() override {
-    unique_->n_ = 9;
+    unique_->input_size_ = 9;
     unique_->dtype_ = kNumberTypeFloat32;
     inputs_.clear();
     workspace_.clear();
@@ -42,16 +42,19 @@ class UniqueCpuKernelTest : public UT::Common {
     return kernel_addr;
   }
 
-  void CreateInputAddress() { inputs_.push_back(CreateKernelAddress(x_.data())); }
-
-  void CreateOutputAddress() {
+  void CreateAddress() {
+    inputs_.push_back(CreateKernelAddress(x_.data()));
     outputs_.push_back(CreateKernelAddress(y_.data()));
     outputs_.push_back(CreateKernelAddress(idx_.data()));
+    workspace_.push_back(CreateKernelAddress(workspace_idx_.data()));
+    workspace_.push_back(CreateKernelAddress(workspace_idx_.data()));
+    workspace_.push_back(CreateKernelAddress(workspace_idx_.data()));
   }
 
   std::vector<float> x_;
   std::vector<float> y_;
-  std::vector<int64_t> idx_;
+  std::vector<int> idx_;
+  std::vector<int64_t> workspace_idx_;
   std::vector<AddressPtr> inputs_;
   std::vector<AddressPtr> workspace_;
   std::vector<AddressPtr> outputs_;
@@ -62,13 +65,13 @@ TEST_F(UniqueCpuKernelTest, compute_test) {
   x_ = {1, 1, 2, 4, 4, 4, 7, 8, 8};
   y_ = {1, 1, 1, 1, 1};
   idx_ = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-  CreateInputAddress();
-  CreateOutputAddress();
+  workspace_idx_ = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+  CreateAddress();
   unique_->Launch(inputs_, workspace_, outputs_);
 
   // check compute result
   std::vector<float> expect_y{1, 2, 4, 7, 8};
-  std::vector<int64_t> expect_idx{0, 0, 1, 2, 2, 2, 3, 4, 4};
+  std::vector<int> expect_idx{0, 0, 1, 2, 2, 2, 3, 4, 4};
   EXPECT_TRUE(y_ == expect_y);
   EXPECT_TRUE(idx_ == expect_idx);
 }
