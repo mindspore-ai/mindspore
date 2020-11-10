@@ -39,7 +39,7 @@ class WithBNNLossCell(Cell):
 
     Examples:
         >>> net = Net()
-        >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+        >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
         >>> net_with_criterion_object = WithBNNLossCell(net, loss_fn)
         >>> net_with_criterion = net_with_criterion_object()
         >>>

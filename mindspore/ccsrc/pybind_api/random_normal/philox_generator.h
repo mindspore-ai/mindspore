@@ -32,6 +32,15 @@ class PhiloxGenerator {
     counter_[3] = static_cast<uint32_t>(seed_ >> 32);
   }
 
+  explicit PhiloxGenerator(uint64_t seed_, uint64_t seed2_) {
+    key_var_[0] = static_cast<uint32_t>(seed_);
+    key_var_[1] = static_cast<uint32_t>(seed_ >> 32);
+    counter_[0] = 0;
+    counter_[1] = 0;
+    counter_[2] = static_cast<uint32_t>(seed2_);
+    counter_[3] = static_cast<uint32_t>(seed2_ >> 32);
+  }
+
   ~PhiloxGenerator() = default;
 
   void Jump();

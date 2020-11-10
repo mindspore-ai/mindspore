@@ -45,16 +45,13 @@ class Initializer:
     @property
     def seed(self):
         if self._seed is None:
-            seed_ = get_seed() if get_seed() is not None else 1
-            _, seed = _get_graph_seed(seed_, "init")
+            seed, seed2 = _get_graph_seed(get_seed(), "init")
         else:
-            seed = self._seed
-        return seed
+            seed, seed2 = self._seed + 1, 0
+        return seed, seed2
 
     @seed.setter
     def seed(self, value):
-        if not isinstance(value, int):
-            raise TypeError("'value' must be int type.")
         self._seed = value
 
     def _initialize(self, *kwargs):
@@ -367,9 +364,9 @@ class Normal(Initializer):
         self.sigma = sigma
 
     def _initialize(self, arr):
-        seed = self.seed
+        seed, seed2 = self.seed
         output_tensor = Tensor(np.zeros(arr.shape, dtype=np.float32))
-        random_normal(0, self.sigma, arr.shape, seed, output_tensor)
+        random_normal(0, self.sigma, arr.shape, seed, seed2, output_tensor)
         output_data = output_tensor.asnumpy()
         output_data *= self.sigma
         _assignment(arr, output_data)

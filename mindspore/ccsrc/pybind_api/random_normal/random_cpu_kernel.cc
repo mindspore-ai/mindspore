@@ -20,7 +20,7 @@
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
-bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, int64_t seed,
+bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, int64_t seed, int64_t seed2,
                       const py::object &output_tensor) {
   if (out_shape.size() == 0) {
     std::cout << "output data shape is error" << std::endl;
@@ -41,7 +41,8 @@ bool InitRandomNormal(float mean, float stddev, std::vector<int64_t> out_shape, 
   }
   int64_t batchSize = total_count / thread_num;
   std::vector<std::thread> threads(thread_num);
-  mindspore::PhiloxGenerator generator = mindspore::PhiloxGenerator(seed);
+  seed = (seed == 0 && seed2 == 0) ? clock() : seed;
+  mindspore::PhiloxGenerator generator = mindspore::PhiloxGenerator(seed, seed2);
   if (thread_num != 1) {
     for (uint32_t i = 0; i < thread_num - 1; i++) {
       float *offset_ptr = start_ptr + batchSize * i;
