@@ -385,9 +385,14 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> &input_ano
   if (paramValue != nullptr) {
     paramTensor->data.resize(paramValue->tensor_size());
     paramTensor->format = schema::Format(paramValue->format());
-    memcpy(paramTensor->data.data(), paramValue->tensor_addr(), paramValue->tensor_size());
+    if (EOK != memcpy_s(paramTensor->data.data(), paramTensor->data.size(), paramValue->tensor_addr(),
+                        paramValue->tensor_size())) {
+      MS_LOG(ERROR) << "memcpy_s failed.";
+      return RET_ERROR;
+    }
   }
 
+  paramTensor->name = input_name;
   node_id_map_[input_name] = meta_graphT->allTensors.size();
   output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(paramTensor));
@@ -572,9 +577,11 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
 #else
       if (tuple->size() == 1) {
         node_id_map_[cnode_name] = meta_graphT->allTensors.size();
+        msTensor->name = cnode_name;
       } else {
         std::string name = cnode_name + "_o:" + std::to_string(i);
         node_id_map_[name] = meta_graphT->allTensors.size();
+        msTensor->name = name;
       }
       meta_graphT->allTensors.emplace_back(msTensor);
       if (IsPrimitiveCNode(cnode, schema::PrimitiveType_Conv2D) ||
@@ -592,6 +599,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
     }
     ms_tensor->nodeType = schema::NodeType_CNode;
     ms_tensor->dataType = TypeId::kNumberTypeFloat32;
+    ms_tensor->name = cnode_name;
     fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
     node_id_map_[cnode_name] = meta_graphT->allTensors.size();
     meta_graphT->allTensors.emplace_back(ms_tensor);

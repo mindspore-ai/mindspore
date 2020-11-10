@@ -19,23 +19,12 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffePermuteParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffePermuteParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
+PrimitiveC *CaffePermuteParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                   const caffe::LayerParameter &weight) {
   std::unique_ptr<schema::TransposeT> attr = std::make_unique<schema::TransposeT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   const caffe::PermuteParameter &permuteParam = proto.permute_param();
@@ -45,11 +34,10 @@ STATUS CaffePermuteParser::Parse(const caffe::LayerParameter &proto, const caffe
     attr->perm[i] = (int32_t)permuteParam.order()[i];
   }
   attr->conjugate = false;
-
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_Transpose;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Transpose;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffePermuteParser("Permute", new CaffePermuteParser());

@@ -20,7 +20,6 @@
 #include <string>
 #include <memory>
 #include "tools/converter/converter.h"
-#include "tools/converter/parser/caffe/caffe_model_parser.h"
 #include "tools/converter/graphdef_transform.h"
 
 namespace mindspore::lite {

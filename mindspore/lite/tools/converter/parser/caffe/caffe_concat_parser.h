@@ -21,17 +21,14 @@
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
 #include "tools/converter/parser/caffe/caffe_node_parser_registry.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 class CaffeConcatParser : public CaffeNodeParser {
  public:
   CaffeConcatParser() : CaffeNodeParser("concat") {}
   ~CaffeConcatParser() override = default;
 
-  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
-               std::vector<schema::TensorT *> *weightVec) override;
+  PrimitiveC *ParseLitePrimitive(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_CONCAT_PARSER_H_

@@ -19,23 +19,12 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeReluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                              schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffeReluParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
+PrimitiveC *CaffeReluParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                const caffe::LayerParameter &weight) {
   std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   attr->type = schema::ActivationType_RELU;
@@ -46,11 +35,10 @@ STATUS CaffeReluParser::Parse(const caffe::LayerParameter &proto, const caffe::L
       attr->alpha = negative_slope;
     }
   }
-
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_Activation;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Activation;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffeReluParser("ReLU", new CaffeReluParser());

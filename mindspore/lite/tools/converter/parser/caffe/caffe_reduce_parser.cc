@@ -20,64 +20,25 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeReduceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffeReduceParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::ReduceT> attr = std::make_unique<schema::ReduceT>();
+PrimitiveC *CaffeReduceParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                  const caffe::LayerParameter &weight) {
+  std::unique_ptr<schema::PReLUT> attr = std::make_unique<schema::PReLUT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
-  const caffe::ReductionParameter &reduce_param = proto.reduction_param();
-  if (reduce_param.has_operation()) {
-    switch (reduce_param.operation()) {
-      case caffe::ReductionParameter_ReductionOp_MEAN:
-        attr->mode = schema::ReduceMode_ReduceMean;
-        break;
-      case caffe::ReductionParameter_ReductionOp_SUM:
-        attr->mode = schema::ReduceMode_ReduceSum;
-        break;
-      case caffe::ReductionParameter_ReductionOp_SUMSQ:
-        attr->mode = schema::ReduceMode_ReduceSumSquare;
-        break;
-      case caffe::ReductionParameter_ReductionOp_ASUM:
-        attr->mode = schema::ReduceMode_ReduceASum;
-        break;
-      default:
-        MS_LOG(ERROR) << "reduce parse params fail, unsupported opration: " << reduce_param.operation();
-        return RET_ERROR;
-    }
+  const caffe::PReLUParameter &pReluParam = proto.prelu_param();
+  if (pReluParam.has_channel_shared()) {
+    attr->channelShared = pReluParam.channel_shared();
   } else {
-    attr->mode = schema::ReduceMode_ReduceSum;
+    attr->channelShared = false;
   }
-  if (reduce_param.has_axis()) {
-    attr->axes = std::vector(1, reduce_param.axis());
-  } else {
-    attr->axes = std::vector(1, 0);
-  }
-  if (reduce_param.has_coeff()) {
-    attr->coeff = reduce_param.coeff();
-  } else {
-    attr->coeff = 1.0;
-  }
-  attr->reduceToEnd = true;
-  attr->keepDims = false;
 
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_Reduce;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Reduce;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffeReduceParser("Reduction", new CaffeReduceParser());

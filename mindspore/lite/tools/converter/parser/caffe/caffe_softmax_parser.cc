@@ -19,23 +19,12 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffeSoftmaxParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
+PrimitiveC *CaffeSoftmaxParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                   const caffe::LayerParameter &weight) {
   std::unique_ptr<schema::SoftMaxT> attr = std::make_unique<schema::SoftMaxT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   if (proto.has_softmax_param() && proto.softmax_param().has_axis()) {
@@ -46,11 +35,10 @@ STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe
   } else {
     attr->axis = 1;
   }
-
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_SoftMax;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_SoftMax;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffeSoftmaxParser("Softmax", new CaffeSoftmaxParser());

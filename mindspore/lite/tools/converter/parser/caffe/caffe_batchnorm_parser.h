@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_BATCHNORM_PARSER_H_
 
 #include <vector>
+#include "src/ops/primitive_c.h"
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
 #include "tools/converter/parser/caffe/caffe_node_parser_registry.h"
 
@@ -28,8 +29,7 @@ class CaffeBatchNormParser : public CaffeNodeParser {
   CaffeBatchNormParser() : CaffeNodeParser("batchnorm") {}
   ~CaffeBatchNormParser() override = default;
 
-  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
-               std::vector<schema::TensorT *> *weightVec) override;
+  PrimitiveC *ParseLitePrimitive(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

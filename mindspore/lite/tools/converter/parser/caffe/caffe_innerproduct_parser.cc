@@ -19,33 +19,18 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                      schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffeInnerProductParser";
-  if (weightVec == nullptr) {
-    MS_LOG(ERROR) << "weightVec is null";
-    return RET_NULL_PTR;
-  }
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
+PrimitiveC *CaffeInnerProductParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                        const caffe::LayerParameter &weight) {
   std::unique_ptr<schema::FullConnectionT> attr = std::make_unique<schema::FullConnectionT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   const caffe::InnerProductParameter &innerProductParam = proto.inner_product_param();
   if (!innerProductParam.has_num_output()) {
     MS_LOG(ERROR) << "InnerProduct Parse num_output for " << proto.name().c_str() << " failed.";
-    return RET_ERROR;
+    return nullptr;
   }
 
   if (innerProductParam.axis() == 1) {
@@ -53,40 +38,17 @@ STATUS CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto, const 
     attr->useAxis = true;
   } else {
     MS_LOG(ERROR) << "InnerProduct Parse axis only support default 1, but actually " << innerProductParam.axis();
-    return RET_ERROR;
+    return nullptr;
   }
 
   if (innerProductParam.bias_term()) {
     attr->hasBias = true;
   }
   attr->activationType = schema::ActivationType_NO_ACTIVATION;
-
-  // parse weight
-  if (weight.blobs_size() == 0) {
-    MS_LOG(ERROR) << "InnerProduct No filter data in layer " << weight.name().c_str();
-    return RET_ERROR;
-  }
-  auto filter = ConvertWeight(weight.blobs(0));
-  if (filter == nullptr) {
-    MS_LOG(ERROR) << "InnerProduct parse weight for layer " << weight.name().c_str() << " failed";
-    return RET_ERROR;
-  }
-  weightVec->push_back(filter);
-
-  // parse bias
-  if (innerProductParam.bias_term() && weight.blobs_size() > 1) {
-    auto bias = ConvertWeight(weight.blobs(1));
-    if (bias == nullptr) {
-      MS_LOG(ERROR) << "InnerProduct parse bias for layer " << weight.name().c_str() << " failed";
-      return RET_ERROR;
-    }
-    weightVec->push_back(bias);
-  }
-
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_FullConnection;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_FullConnection;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffeInnerProductParser("InnerProduct", new CaffeInnerProductParser());

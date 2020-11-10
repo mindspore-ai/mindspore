@@ -19,23 +19,12 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffeInterpParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
+PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                  const caffe::LayerParameter &weight) {
   std::unique_ptr<schema::ResizeT> attr = std::make_unique<schema::ResizeT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   const caffe::InterpParameter &interpParam = proto.interp_param();
@@ -43,7 +32,7 @@ STATUS CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe:
     int64_t height = interpParam.height();
     if (height < 0) {
       MS_LOG(ERROR) << "Interp height must be > 0";
-      return RET_ERROR;
+      return nullptr;
     }
     attr->newHeight = height;
   }
@@ -52,17 +41,16 @@ STATUS CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe:
     int64_t width = interpParam.width();
     if (width < 0) {
       MS_LOG(ERROR) << "Interp width must be > 0";
-      return RET_ERROR;
+      return nullptr;
     }
     attr->newWidth = width;
   }
   attr->alignCorners = true;
   attr->method = schema::ResizeMethod_LINEAR;
-
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_Resize;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Resize;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffeInterpParser("Interp", new CaffeInterpParser());

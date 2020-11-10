@@ -29,6 +29,7 @@ namespace mindspore::opt {
 namespace {
 constexpr size_t kCaffeBNMeanIndex = 2;
 constexpr size_t kCaffeBNVarIndex = 3;
+constexpr size_t kCaffeBNScaleFactorIndex = 4;
 constexpr size_t kTFBNScaleIndex = 2;
 constexpr size_t kTFBNBiasIndex = 3;
 constexpr size_t kTFBNMeanIndex = 4;
@@ -95,6 +96,34 @@ void CalTransBias(const AnfNodePtr &bn_mean_node, const AnfNodePtr &bn_bias_node
     }
   }
 }
+
+STATUS CalEstimatedData(const AnfNodePtr &origin_node, const AnfNodePtr &scale_factor_node) {
+  if (origin_node == nullptr) {
+    MS_LOG(ERROR) << "origin node is null";
+    return RET_ERROR;
+  }
+
+  if (scale_factor_node == nullptr) {
+    MS_LOG(ERROR) << "scale factor node is null";
+    return RET_ERROR;
+  }
+  auto origin_param = origin_node->cast<ParameterPtr>()->default_param();
+  auto origin_tensor = std::dynamic_pointer_cast<ParamValueLite>(origin_param);
+  auto origin_data = reinterpret_cast<float *>(origin_tensor->tensor_addr());
+
+  auto scale_factor_param = scale_factor_node->cast<ParameterPtr>()->default_param();
+  auto scale_factor_tensor = std::dynamic_pointer_cast<ParamValueLite>(scale_factor_param);
+  if (scale_factor_tensor->tensor_shape_size() < 1) {
+    MS_LOG(ERROR) << "scale factor data size is not equal to 1";
+    return RET_ERROR;
+  }
+  auto scale_factor_data = (reinterpret_cast<float *>(scale_factor_tensor->tensor_addr()))[0];
+  float scale_factor = scale_factor_data == 0 ? 0 : 1 / scale_factor_data;
+  for (int i = 0; i < origin_tensor->tensor_shape_size(); i++) {
+    origin_data[i] = origin_data[i] * scale_factor;
+  }
+  return RET_OK;
+}
 }  // namespace
 const BaseRef ConvBatchNormFusion::DefinePattern() const {
   auto conv_var = std::make_shared<CondVar>(IsConvNode);
@@ -106,8 +135,9 @@ const BaseRef ConvBatchNormFusion::DefinePattern() const {
 }
 // BatchNorm weight Tensor definition:
 // caffe
-//   estimated_mean  --0
-//   estimated_variance  --1
+//   mean  --0
+//   variance  --1
+//   scale_factor  --2
 // tensorflow
 //   scale    -- 0
 //   bias        --1
@@ -127,13 +157,17 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
   if (GetCNodeType(bn_node) == schema::PrimitiveType_BatchNorm) {
     bn_mean_node = bn_node->input(kCaffeBNMeanIndex);
     bn_variance_node = bn_node->input(kCaffeBNVarIndex);
-    if (CheckIfNodeIsParam(bn_mean_node) != lite::RET_OK || CheckIfNodeIsParam(bn_variance_node) != lite::RET_OK) {
+    AnfNodePtr bn_scale_factor_node = bn_node->input(kCaffeBNScaleFactorIndex);
+    if (CheckIfNodeIsParam(bn_mean_node) != lite::RET_OK || CheckIfNodeIsParam(bn_variance_node) != lite::RET_OK ||
+        CheckIfNodeIsParam(bn_scale_factor_node) != lite::RET_OK) {
       return;
     }
     MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::BatchNorm>>(primitive_c));
     auto primc = utils::cast<std::shared_ptr<mindspore::lite::BatchNorm>>(primitive_c);
     MS_ASSERT(primc != nullptr);
     eps = primc->GetEpsilon();
+    CalEstimatedData(bn_mean_node, bn_scale_factor_node);
+    CalEstimatedData(bn_variance_node, bn_scale_factor_node);
   } else if (GetCNodeType(bn_node) == schema::PrimitiveType_FusedBatchNorm) {
     bn_scale_node = bn_node->input(kTFBNScaleIndex);
     bn_bias_node = bn_node->input(kTFBNBiasIndex);

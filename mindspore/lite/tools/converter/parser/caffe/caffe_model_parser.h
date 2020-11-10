@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_
 
@@ -24,41 +23,45 @@
 #include <unordered_map>
 #include "tools/converter/model_parser.h"
 #include "proto/caffe.pb.h"
-#include "tools/common/tensor_util.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 class CaffeModelParser : public ModelParser {
  public:
   CaffeModelParser();
 
-  virtual ~CaffeModelParser();
+  ~CaffeModelParser() override;
+
+  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
+                     const QuantType &quant_type) override;
+
+  MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
+                        const QuantType &quant_type) override;
 
  private:
-  schema::MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
-                                const QuantType &quant_type = QuantType_QUANT_NONE) override;
+  STATUS InitOriginModel(const std::string &model_file, const std::string &weight_file);
 
-  STATUS SetOpInputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op, TensorCache *tensorCache);
+  STATUS ConvertGraphInputs();
 
-  STATUS SetOpOutputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op, TensorCache *tensorCache);
+  STATUS ConvertGraphOutputs();
 
-  STATUS SetWeightTensor(const std::vector<schema::TensorT *> &weightVec, schema::CNodeT *op, TensorCache *tensorCache);
+  STATUS ConvertLayers();
 
-  STATUS SetAllTensors(const TensorCache &tensorCache, schema::MetaGraphT *subGraphDef);
+  STATUS ConvertLayerQuantParams(const caffe::LayerParameter &layer, const caffe::LayerParameter &weight,
+                                 lite::PrimitiveC *primitive_c);
 
-  STATUS SetGraphTensorIndex(const caffe::NetParameter &proto, TensorCache *tensorCache,
-                             schema::MetaGraphT *subGraphDef);
+  STATUS ConvertBlobs(const caffe::LayerParameter &layer, std::vector<ParameterPtr> *const_parameters);
 
-  STATUS ParseLayer(const caffe::NetParameter &proto, const caffe::NetParameter &weight, TensorCache *tensorCache,
-                    schema::MetaGraphT *subGraphDef, const QuantType &quantType);
+  STATUS ConvertBottom(const caffe::LayerParameter &layer, std::vector<AnfNodePtr> *input_nodes);
 
-  STATUS GetModelInput(const caffe::NetParameter &proto, TensorCache *tensorCache);
+  STATUS ConvertTop(const caffe::LayerParameter &layer, const CNodePtr &cnode);
 
-  static const std::set<std::string> skipedLayerType;
+  bool IsSkipedLayer(const caffe::LayerParameter &layer);
 
-  std::unordered_map<std::string, std::string> splitLayer;
+  caffe::NetParameter caffe_model_;
+  caffe::NetParameter caffe_weight_;
+  std::unordered_map<std::string, AnfNodePtr> nodes_;
+  FuncGraphPtr func_graph_ptr_;
 };
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_MODEL_PARSER_H_

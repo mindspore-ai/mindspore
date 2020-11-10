@@ -19,29 +19,18 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffeConcatParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
+PrimitiveC *CaffeConcatParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                  const caffe::LayerParameter &weight) {
   std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   const caffe::ConcatParameter &concatParam = proto.concat_param();
   if (concatParam.has_axis() && concatParam.has_concat_dim()) {
     MS_LOG(ERROR) << "Concat param in caffe have concat_dim and axis simultaneously, return fail";
-    return RET_ERROR;
+    return nullptr;
   }
 
   if (concatParam.has_concat_dim()) {
@@ -49,7 +38,7 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe:
     auto concat_dim_value = (int32_t)concatParam.concat_dim();
     if (concat_dim_value < 0) {
       MS_LOG(ERROR) << "concat_dim value in model is smaller than 0:" << concat_dim_value;
-      return RET_ERROR;
+      return nullptr;
     }
     attr->axis = concat_dim_value;
   } else if (concatParam.has_axis()) {
@@ -60,11 +49,12 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe:
     MS_LOG(DEBUG) << "by default, set axis = 1";
     attr->axis = 1;
   }
+  attr->n = proto.bottom_size();
 
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_Concat;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Concat;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffeConcatParser("Concat", new CaffeConcatParser());

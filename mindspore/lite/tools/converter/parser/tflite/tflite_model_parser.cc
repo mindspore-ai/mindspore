@@ -103,7 +103,7 @@ STATUS TfliteModelParser::ConvertOps() {
 
     auto primitiveC = node_parser->ParseLitePrimitive(op, tflite_model_);
     if (primitiveC == nullptr) {
-      MS_LOG(ERROR) << "parse node " << op_type.c_str() << " parser failed";
+      MS_LOG(ERROR) << "parse node " << op_name << " parser failed";
       continue;
     }
 

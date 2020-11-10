@@ -29,9 +29,9 @@ STATUS CaffeInspector::InspectModel(const caffe::NetParameter &proto) {
 
   ParseInput();
 
-  SetTopsAndBottoms();
+  SetLayerTopsAndBottoms();
 
-  FindInputAndOutput();
+  FindGraphInputsAndOutputs();
 
   return RET_OK;
 }
@@ -46,7 +46,7 @@ STATUS CaffeInspector::ParseInput() {
   return RET_OK;
 }
 
-STATUS CaffeInspector::FindInputAndOutput() {
+STATUS CaffeInspector::FindGraphInputsAndOutputs() {
   for (const auto &iter : layerBottoms) {
     if (layerTops.find(iter) == layerTops.end()) {
       graphInput.insert(iter);
@@ -60,7 +60,7 @@ STATUS CaffeInspector::FindInputAndOutput() {
   return RET_OK;
 }
 
-STATUS CaffeInspector::SetTopsAndBottoms() {
+STATUS CaffeInspector::SetLayerTopsAndBottoms() {
   for (int32_t i = 0; i < net.layer_size(); i++) {
     auto &layer = const_cast<caffe::LayerParameter &>(net.layer(i));
     if (layer.top_size() == 1 && layer.bottom_size() == 1 && layer.top(0) == layer.bottom(0)) {

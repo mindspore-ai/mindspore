@@ -19,67 +19,6 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                                 schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffePoolingParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  attr->format = schema::Format::Format_NCHW;
-
-  const caffe::PoolingParameter &poolingParam = proto.pooling_param();
-  auto status = ParsePads(poolingParam, attr.get());
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
-    return RET_ERROR;
-  }
-
-  status = ParseStrides(poolingParam, attr.get());
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParseStrides for " << proto.name().c_str() << " failed";
-    return RET_ERROR;
-  }
-
-  status = ParseWindows(poolingParam, attr.get());
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParseWindows for " << proto.name().c_str() << " failed";
-    return RET_ERROR;
-  }
-
-  status = ParsePoolingMode(poolingParam, attr.get());
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParsePoolingMode for " << proto.name().c_str() << " failed";
-    return RET_ERROR;
-  }
-
-  attr->roundMode = schema::RoundMode_CEIL;
-  if (poolingParam.has_round_mode()) {
-    if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_FLOOR) {
-      attr->roundMode = schema::RoundMode_FLOOR;
-    } else if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_CEIL) {
-      attr->roundMode = schema::RoundMode_CEIL;
-    }
-  }
-  attr->padMode = schema::PadMode_CAFFE;
-
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_Pooling;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
-}
 
 STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
   if (poolingParam.has_pad_h() && poolingParam.has_pad_w()) {
@@ -155,6 +94,55 @@ STATUS CaffePoolingParser::ParsePoolingMode(const caffe::PoolingParameter &pooli
     return RET_ERROR;
   }
   return RET_OK;
+}
+PrimitiveC *CaffePoolingParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                   const caffe::LayerParameter &weight) {
+  std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  attr->format = schema::Format::Format_NCHW;
+
+  const caffe::PoolingParameter &poolingParam = proto.pooling_param();
+  auto status = ParsePads(poolingParam, attr.get());
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
+    return nullptr;
+  }
+
+  status = ParseStrides(poolingParam, attr.get());
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "ParseStrides for " << proto.name().c_str() << " failed";
+    return nullptr;
+  }
+
+  status = ParseWindows(poolingParam, attr.get());
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "ParseWindows for " << proto.name().c_str() << " failed";
+    return nullptr;
+  }
+
+  status = ParsePoolingMode(poolingParam, attr.get());
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "ParsePoolingMode for " << proto.name().c_str() << " failed";
+    return nullptr;
+  }
+
+  attr->roundMode = schema::RoundMode_CEIL;
+  if (poolingParam.has_round_mode()) {
+    if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_FLOOR) {
+      attr->roundMode = schema::RoundMode_FLOOR;
+    } else if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_CEIL) {
+      attr->roundMode = schema::RoundMode_CEIL;
+    }
+  }
+  attr->padMode = schema::PadMode_CAFFE;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Pooling;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffePoolingParser("Pooling", new CaffePoolingParser());

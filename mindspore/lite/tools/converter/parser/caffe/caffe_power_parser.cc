@@ -20,23 +20,12 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                               schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffePowerParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
+PrimitiveC *CaffePowerParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                 const caffe::LayerParameter &weight) {
   std::unique_ptr<schema::PowerT> attr = std::make_unique<schema::PowerT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   const caffe::PowerParameter &powerParam = proto.power_param();
@@ -50,10 +39,10 @@ STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto, const caffe::
     attr->shift = 0.0;
   }
 
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_Power;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Power;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffePowerParser("Power", new CaffePowerParser());

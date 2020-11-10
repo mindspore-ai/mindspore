@@ -28,8 +28,7 @@ class CaffePoolingParser : public CaffeNodeParser {
   CaffePoolingParser() : CaffeNodeParser("pooling") {}
   ~CaffePoolingParser() override = default;
 
-  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
-               std::vector<schema::TensorT *> *weightVec) override;
+  PrimitiveC *ParseLitePrimitive(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 
   static STATUS ParsePads(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr);
 
