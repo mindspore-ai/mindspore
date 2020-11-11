@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 #include "common/trans.h"
 #include "ir/dtype.h"
 #include "profiler/device/gpu/gpu_profiling.h"
+#include "profiler/device/gpu/gpu_profiling_utils.h"
 #include "utils/shape_utils.h"
 #include "debug/data_dump/dump_json_parser.h"
 #ifdef ENABLE_DEBUGGER
@@ -603,6 +604,16 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, De
 
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
+
+  static bool FlagGetStepTraceOpName = false;
+  if (!FlagGetStepTraceOpName) {
+    profiler::gpu::ProfilingTraceInfo profiling_trace =
+      profiler::gpu::ProfilingUtils::GetProfilingTraceFromEnv(NOT_NULL(graph));
+    if (profiling_trace.IsFirstStepEnd) {
+      FlagGetStepTraceOpName = true;
+      profiler_inst->SetStepTraceOpName(profiling_trace);
+    }
+  }
 
   for (const auto &kernel : kernels) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);

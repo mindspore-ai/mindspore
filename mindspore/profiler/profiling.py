@@ -33,7 +33,7 @@ from mindspore.profiler.parser.minddata_parser import MinddataParser
 from mindspore.profiler.parser.minddata_pipeline_parser import \
     MinddataPipelineParser
 from mindspore.profiler.parser.optime_parser import OPComputeTimeParser
-from mindspore.profiler.parser.step_trace_parser import StepTraceParser
+from mindspore.profiler.parser.step_trace_parser import GpuStepTraceParser, AscendStepTraceParser
 from mindspore.nn.cell import Cell
 
 PROFILING_LOG_BASE_PATH = "/var/log/npu/profiling"
@@ -154,6 +154,12 @@ class Profiler:
             except ProfilerException as err:
                 logger.warning(err.message)
 
+            # analyse step trace info
+            try:
+                self._analyse_step_trace()
+            except ProfilerException as err:
+                logger.warning(err.message)
+
             os.environ['PROFILING_MODE'] = str("false")
 
         elif self._device_target and self._device_target == "Ascend":
@@ -227,7 +233,7 @@ class Profiler:
             os.environ['PROFILING_MODE'] = str("false")
             context.set_context(enable_profiling=False)
 
-    def _analyse_step_trace(self, source_path, framework_parser):
+    def _analyse_step_trace(self, source_path=None, framework_parser=None):
         """
         Analyse step trace data and save the result.
 
@@ -247,18 +253,29 @@ class Profiler:
         )
         step_trace_intermediate_file_path = validate_and_normalize_path(step_trace_intermediate_file_path)
         point_info_file_path = validate_and_normalize_path(point_info_file_path)
-        # whether keep the first step
-        skip_first_step_flag = framework_parser.check_op_name(INIT_OP_NAME)
-        point_info = framework_parser.point_info
-        # parser the step trace files and save the result to disk
-        source_path = validate_and_normalize_path(source_path)
-        parser = StepTraceParser(input_dir=source_path,
-                                 output_file_path=step_trace_intermediate_file_path,
-                                 job_id=self._job_id_env,
-                                 skip_first_step=skip_first_step_flag)
-        parser.update_tag_op_type_map(point_info)
-        parser.parse_and_save()
-        point_info = parser.record_point_info(point_info, point_info_file_path)
+
+        if self._device_target and self._device_target == 'GPU':
+            input_file_path = os.path.join(
+                self._output_path,
+                f'step_trace_profiling_{self._dev_id}.txt'
+            )
+            parser = GpuStepTraceParser(input_dir=input_file_path,
+                                        output_file_path=step_trace_intermediate_file_path)
+            parser.parse_and_save()
+            point_info = parser.record_point_info(input_file_path, point_info_file_path)
+        else:
+            # whether keep the first step
+            skip_first_step_flag = framework_parser.check_op_name(INIT_OP_NAME)
+            point_info = framework_parser.point_info
+            # parser the step trace files and save the result to disk
+            source_path = validate_and_normalize_path(source_path)
+            parser = AscendStepTraceParser(input_dir=source_path,
+                                           output_file_path=step_trace_intermediate_file_path,
+                                           job_id=self._job_id_env,
+                                           skip_first_step=skip_first_step_flag)
+            parser.update_tag_op_type_map(point_info)
+            parser.parse_and_save()
+            point_info = parser.record_point_info(point_info, point_info_file_path)
         # print parser result
         parser.show()
         logger.info("Finish saving the intermediate result: %s", step_trace_intermediate_file_path)

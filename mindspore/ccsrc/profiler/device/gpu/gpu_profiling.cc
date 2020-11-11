@@ -470,6 +470,7 @@ void GPUProfiler::SaveProfileData() {
     MS_LOG(WARNING) << "Profile data path is empty, skip save profile data.";
   } else {
     DataSaver dataSaver;
+    dataSaver.SetStepTraceOpName(step_trace_op_name);
     dataSaver.ParseOpInfo(op_info_map_);
     dataSaver.ParseEvent(events_);
     dataSaver.WriteFile(profile_data_path_);
@@ -649,6 +650,9 @@ void GPUProfiler::HandleActivityRecord(CUpti_Activity *record) {
 
   AddEvent(std::move(profilingData));
 }
+
+void GPUProfiler::SetStepTraceOpName(ProfilingTraceInfo trace_op_name) { step_trace_op_name = trace_op_name; }
+
 void GPUProfiler::RegisterProfilingOp(std::shared_ptr<ProfilingOp> node) {
   if (profiling_op_.find(node->Name()) != profiling_op_.end()) {
     return;
