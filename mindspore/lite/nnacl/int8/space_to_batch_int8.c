@@ -24,9 +24,9 @@ void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int *bloc
   int copy_num = out_shape[3];
   int block_w = block_sizes[1];
   int block_h = block_sizes[0];
-  int in_strides[4];
+  int in_strides[4] = {0};
   ComputeStrides(in_shape, in_strides, 4);
-  int out_strides[4];
+  int out_strides[4] = {0};
   ComputeStrides(out_shape, out_strides, 4);
   size_t copy_size = copy_num * sizeof(int8_t);
   size_t out_offset = 0;

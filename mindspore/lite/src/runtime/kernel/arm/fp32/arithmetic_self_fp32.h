@@ -33,7 +33,7 @@ using mindspore::schema::PrimitiveType_Sqrt;
 using mindspore::schema::PrimitiveType_Square;
 
 namespace mindspore::kernel {
-typedef int (*ArithmeticSelfFunc)(float *input, float *output, int element_size);
+typedef int (*ArithmeticSelfFunc)(const float *input, float *output, const int element_size);
 class ArithmeticSelfCPUKernel : public LiteKernel {
  public:
   explicit ArithmeticSelfCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

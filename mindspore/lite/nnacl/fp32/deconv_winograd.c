@@ -340,7 +340,7 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
   return;
 }
 
-void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, float *weight_buf, float *tmp_buf, float *at_buf,
+void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, float *weight_buf, float *tmp_buf, const float *at_buf,
                        float *a_mid_buf, float *trans_a_buf, bool *transfered, const float *bt_buf, float *b_tmp_buf,
                        int unit_size, int w_start, int h_start, ConvParameter *conv_param, DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;

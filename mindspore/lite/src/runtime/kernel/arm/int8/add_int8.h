@@ -40,10 +40,10 @@ class QuantizedAddCPUKernel : public LiteKernel {
 
  private:
   AddQuantParameter para_;
-  ArithmeticParameter *arith_para_;
-  int thread_count_;
-  int thread_stride_;
-  int elements_num_;
+  ArithmeticParameter *arith_para_ = nullptr;
+  int thread_count_ = 1;
+  int thread_stride_ = 0;
+  int elements_num_ = 0;
   int8_t *input0_data_ = nullptr;
   int8_t *input1_data_ = nullptr;
   int8_t *output_data_ = nullptr;

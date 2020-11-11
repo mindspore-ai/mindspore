@@ -26,29 +26,29 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ElementAbs(float *input, float *output, int element_size);
+int ElementAbs(const float *input, float *output, const int element_size);
 
-int ElementCos(float *input, float *output, int element_size);
+int ElementCos(const float *input, float *output, const int element_size);
 
-int ElementLog(float *input, float *output, int element_size);
+int ElementLog(const float *input, float *output, const int element_size);
 
-int ElementSquare(float *input, float *output, int element_size);
+int ElementSquare(const float *input, float *output, const int element_size);
 
-int ElementSqrt(float *input, float *output, int element_size);
+int ElementSqrt(const float *input, float *output, const int element_size);
 
-int ElementRsqrt(float *input, float *output, int element_size);
+int ElementRsqrt(const float *input, float *output, const int element_size);
 
-int ElementSin(float *input, float *output, int element_size);
+int ElementSin(const float *input, float *output, const int element_size);
 
-int ElementLogicalNot(float *input, float *output, int element_size);
+int ElementLogicalNot(const float *input, float *output, const int element_size);
 
-int ElementRound(float *input, float *output, int element_size);
+int ElementRound(const float *input, float *output, const int element_size);
 
-int ElementFloor(float *input, float *output, int element_size);
+int ElementFloor(const float *input, float *output, const int element_size);
 
-int ElementCeil(float *input, float *output, int number);
+int ElementCeil(const float *input, float *output, const int number);
 
-int ElementNegative(float *input, float *output, int element_size);
+int ElementNegative(const float *input, float *output, const int element_size);
 #ifdef __cplusplus
 }
 #endif

@@ -42,9 +42,11 @@ ScaleInt8CPUKernel::~ScaleInt8CPUKernel() {
   }
   if (input1_data_ != nullptr && malloced_scale_) {
     free(input1_data_);
+    input1_data_ = nullptr;
   }
   if (input2_data_ != nullptr && malloced_offset_) {
     free(input2_data_);
+    input2_data_ = nullptr;
   }
 }
 
@@ -85,6 +87,7 @@ int ScaleInt8CPUKernel::InitScaleOffset() {
         if (input2_data_ == nullptr) {
           MS_LOG(ERROR) << "malloc input2_data_  failed.";
           free(input1_data_);
+          input1_data_ = nullptr;
           return RET_ERROR;
         }
         malloced_offset_ = true;
@@ -356,6 +359,7 @@ kernel::LiteKernel *CpuScaleInt8KernelCreator(const std::vector<lite::Tensor *> 
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "New kernel fails.";
     free(opParameter);
+    opParameter = nullptr;
     return nullptr;
   }
 

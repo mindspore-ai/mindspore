@@ -151,7 +151,7 @@ void TransposeCommInt8(const int8_t *in_data, int8_t *out_data, const int *strid
 int DoTransposeInt8(const int8_t *in_data, int8_t *out_data, int *input_shape, const int *output_shape,
                     TransposeParameter *transpose_param, int h_start, int h_end, int *dim_size, int *position) {
   if (in_data == NULL || out_data == NULL) {
-    return NNACL_ERR;
+    return NNACL_NULL_PTR;
   }
 
   int *perm = transpose_param->perm_;

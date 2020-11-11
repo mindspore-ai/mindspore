@@ -47,7 +47,7 @@ class Arithmetic : public PrimitiveC {
 
  protected:
   bool broadcasting_ = false;
-  int ndim_;
+  int ndim_ = 0;
   std::vector<int> in_shape0_;
   std::vector<int> in_shape1_;
   std::vector<int> out_shape_;

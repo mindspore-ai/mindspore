@@ -39,9 +39,9 @@ class DetectionPostProcessBaseCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
 
-  int thread_num_;
-  int num_boxes_;
-  int num_classes_with_bg_;
+  int thread_num_ = 1;
+  int num_boxes_ = 0;
+  int num_classes_with_bg_ = 0;
   float *input_boxes_ = nullptr;
   float *input_scores_ = nullptr;
   DetectionPostProcessParameter *params_ = nullptr;

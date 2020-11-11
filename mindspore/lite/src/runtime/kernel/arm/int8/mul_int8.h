@@ -39,12 +39,12 @@ class MulInt8CPUKernel : public LiteKernel {
   int DoExecute(int task_id);
 
  private:
-  const lite::InnerContext *ctx_;
-  ArithmeticParameter *tile_para;
+  const lite::InnerContext *ctx_ = nullptr;
+  ArithmeticParameter *tile_para = nullptr;
   MulParameter para_;
-  int thread_count_;
-  int64_t elements_num_;
-  int64_t count_unit_;
+  int thread_count_ = 1;
+  int64_t elements_num_ = 0;
+  int64_t count_unit_ = 0;
   int8_t *input0_data_ = nullptr;
   int8_t *input1_data_ = nullptr;
   int8_t *output_data_ = nullptr;

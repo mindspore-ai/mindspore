@@ -19,7 +19,7 @@
 #include "nnacl/fp32/arithmetic_self.h"
 
 // abs:
-int ElementAbs(float *input, float *output, int element_size) {
+int ElementAbs(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = fabsf(input[i]);
   }
@@ -27,7 +27,7 @@ int ElementAbs(float *input, float *output, int element_size) {
 }
 
 // cos:
-int ElementCos(float *input, float *output, int element_size) {
+int ElementCos(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = cosf(input[i]);
   }
@@ -35,7 +35,7 @@ int ElementCos(float *input, float *output, int element_size) {
 }
 
 // log:
-int ElementLog(float *input, float *output, int element_size) {
+int ElementLog(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     if (input[i] <= 0) {
       return NNACL_ERRCODE_LOG_NEGATIVE_OR_ZERO;
@@ -46,7 +46,7 @@ int ElementLog(float *input, float *output, int element_size) {
 }
 
 // Square
-int ElementSquare(float *input, float *output, int element_size) {
+int ElementSquare(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input[i] * input[i];
   }
@@ -54,7 +54,7 @@ int ElementSquare(float *input, float *output, int element_size) {
 }
 
 // Sqrt
-int ElementSqrt(float *input, float *output, int element_size) {
+int ElementSqrt(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     if (input[i] < 0) {
       return NNACL_ERRCODE_SQRT_NEGATIVE;
@@ -65,7 +65,7 @@ int ElementSqrt(float *input, float *output, int element_size) {
 }
 
 // rsqrt
-int ElementRsqrt(float *input, float *output, int element_size) {
+int ElementRsqrt(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     if (input[i] <= 0) {
       return NNACL_ERRCODE_RSQRT_NEGATIVE_OR_ZERO;
@@ -76,7 +76,7 @@ int ElementRsqrt(float *input, float *output, int element_size) {
 }
 
 // sin:
-int ElementSin(float *input, float *output, int element_size) {
+int ElementSin(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = sinf(input[i]);
   }
@@ -84,7 +84,7 @@ int ElementSin(float *input, float *output, int element_size) {
 }
 
 // logical_not:
-int ElementLogicalNot(float *input, float *output, int element_size) {
+int ElementLogicalNot(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = (float)(!((bool)(input[i])));
   }
@@ -92,7 +92,7 @@ int ElementLogicalNot(float *input, float *output, int element_size) {
 }
 
 // round:
-int ElementRound(float *input, float *output, int element_size) {
+int ElementRound(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = round(input[i]);
   }
@@ -100,21 +100,21 @@ int ElementRound(float *input, float *output, int element_size) {
 }
 
 // floor:
-int ElementFloor(float *input, float *output, int element_size) {
+int ElementFloor(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = floorf(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementCeil(float *input, float *output, int number) {
+int ElementCeil(const float *input, float *output, const int number) {
   for (int i = 0; i < number; ++i) {
     output[i] = ceil(input[i]);
   }
   return NNACL_OK;
 }
 
-int ElementNegative(float *input, float *output, int element_size) {
+int ElementNegative(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; ++i) {
     output[i] = -input[i];
   }

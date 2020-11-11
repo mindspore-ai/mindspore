@@ -47,13 +47,13 @@ class ScaleInt8CPUKernel : public LiteKernel {
   int8_t *input1_data_ = nullptr;
   int8_t *input2_data_ = nullptr;
   int8_t *output_data_ = nullptr;
-  const lite::InnerContext *ctx_;
-  ScaleParameter *scale_param_;
+  const lite::InnerContext *ctx_ = nullptr;
+  ScaleParameter *scale_param_ = nullptr;
   ArithmeticParameter *tile_para = nullptr;
   std::vector<int> second_in_shape_;
-  int thread_count_;
-  int64_t elements_num_;
-  int64_t count_unit_;
+  int thread_count_ = 1;
+  int64_t elements_num_ = 0;
+  int64_t count_unit_ = 0;
   bool has_bias_ = false;
   bool malloced_scale_ = false;
   bool malloced_offset_ = false;
