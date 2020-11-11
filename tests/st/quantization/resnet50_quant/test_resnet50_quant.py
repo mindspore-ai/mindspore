@@ -120,7 +120,7 @@ def test_resnet50_quant():
                 dataset_sink_mode=False)
     print("============== End Training ==============")
 
-    expect_avg_step_loss = 2.50
+    expect_avg_step_loss = 2.60
     avg_step_loss = np.mean(np.array(monitor.losses))
 
     print("average step loss:{}".format(avg_step_loss))
