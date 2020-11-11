@@ -40,6 +40,8 @@ int HSigmoid(const float *src, int length, float *dst);
 int Swish(const float *src, int length, float *dst);
 int HSwish(const float *src, int length, float *dst);
 int HardTanh(const float *src, int length, float *dst, float min_val, float max_val);
+
+float TanhOpt(float src);
 #ifdef __cplusplus
 }
 #endif
