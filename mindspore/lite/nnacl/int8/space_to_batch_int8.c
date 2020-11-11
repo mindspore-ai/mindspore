@@ -46,47 +46,40 @@ void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int *bloc
   }
 }
 
-void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, const int *in_shape, const int *padding,
-                                   const int *out_shape, int32_t zp) {
+void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, SpaceToBatchParameter *param, int32_t zp) {
+  int *in_shape = param->input_shape_;
+  int *out_shape = param->output_shape_;
+  int *paddings = param->paddings_;
+  int block_shape_h = param->block_sizes_[0];
+  int block_shape_w = param->m_ == 2 ? param->block_sizes_[1] : 1;
+  int in_b = in_shape[0];
   int in_h = in_shape[1];
   int in_w = in_shape[2];
-  int in_c = in_shape[3];
+  int channel = in_shape[3];
+  int out_h = out_shape[1];
   int out_w = out_shape[2];
-  int out_c = out_shape[3];
-  size_t ped_h_num = out_w * out_c;
-  size_t ped_h_size = ped_h_num * sizeof(int8_t);
-  size_t ped_w_size = out_c * sizeof(int8_t);
-  size_t out_offset = 0;
-  int in_strides[4];
-  ComputeStrides(in_shape, in_strides, 4);
-  int out_strides[4];
-  ComputeStrides(out_shape, out_strides, 4);
-  size_t copy_size = in_c * sizeof(int8_t);
-  for (int i = 0; i < in_shape[0]; ++i) {
-    size_t in_offset0 = i * in_strides[0];
-    for (int pad_h_top = 0; pad_h_top < padding[0]; ++pad_h_top) {
-      memset(output + out_offset, zp, ped_h_size);
-      out_offset += ped_h_num;
-    }
-    for (int j = 0; j < in_h; ++j) {
-      size_t in_offset1 = in_offset0 + j * in_strides[1];
-      for (int pad_w_left = 0; pad_w_left < padding[2]; ++pad_w_left) {
-        memset(output + out_offset, zp, ped_w_size);
-        out_offset += out_c;
+  int pad_t = paddings[0];
+  int pad_l = param->m_ == 2 ? paddings[2] : 0;
+  for (int i = 0; i < out_shape[0]; ++i) {
+    int in_batch = i % in_b;
+    int offset_w = (i / in_b) % block_shape_w;
+    int offset_h = (i / in_b) / block_shape_w;
+    int in_b_offset = in_batch * in_h * in_w * channel;
+    int out_b_offset = i * out_h * out_w * channel;
+    for (int j = 0; j < out_h; ++j) {
+      int out_h_offset = out_b_offset + j * out_w * channel;
+      for (int k = 0; k < out_w; ++k) {
+        int8_t *out_ptr = output + out_h_offset + k * channel;
+        int index_h = j * block_shape_h + offset_h;
+        int index_w = k * block_shape_w + offset_w;
+        if (index_h < pad_t || index_h >= (pad_t + in_h) || index_w < pad_l || index_w >= (pad_l + in_w)) {
+          memset(out_ptr, zp, channel * sizeof(int8_t));
+        } else {
+          int in_plane_offset = in_b_offset + ((index_h - pad_t) * in_w + (index_w - pad_l)) * channel;
+          const int8_t *in_ptr = input + in_plane_offset;
+          memcpy(out_ptr, in_ptr, channel * sizeof(int8_t));
+        }
       }
-      for (int k = 0; k < in_w; ++k) {
-        size_t in_offset2 = in_offset1 + k * in_strides[2];
-        memcpy(output + out_offset, input + in_offset2, copy_size);
-        out_offset += in_c;
-      }
-      for (int pad_w_right = 0; pad_w_right < padding[3]; ++pad_w_right) {
-        memset(output + out_offset, zp, ped_w_size);
-        out_offset += out_c;
-      }
-    }
-    for (int pad_h_bottom = 0; pad_h_bottom < padding[1]; ++pad_h_bottom) {
-      memset(output + out_offset, zp, ped_h_size);
-      out_offset += ped_h_num;
     }
   }
 }

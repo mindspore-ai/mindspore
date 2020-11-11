@@ -54,9 +54,15 @@ int SpaceToBatchCPUKernel::ReSize() {
     }
   }
   if (param->need_paddings_) {
+    int padding_left = 0;
+    int padding_right = 0;
+    if (param->m_ == 2) {
+      padding_left = param->paddings_[2];
+      padding_right = param->paddings_[3];
+    }
     param->padded_in_shape_[kNHWC_N] = input_tensor->shape().at(kNHWC_N);
     param->padded_in_shape_[kNHWC_H] = input_tensor->shape().at(kNHWC_H) + param->paddings_[0] + param->paddings_[1];
-    param->padded_in_shape_[kNHWC_W] = input_tensor->shape().at(kNHWC_W) + param->paddings_[2] + param->paddings_[3];
+    param->padded_in_shape_[kNHWC_W] = input_tensor->shape().at(kNHWC_W) + padding_left + padding_right;
     param->padded_in_shape_[kNHWC_C] = input_tensor->shape().at(kNHWC_C);
     param->padded_input_element_num = param->padded_in_shape_[kNHWC_N] * param->padded_in_shape_[kNHWC_H] *
                                       param->padded_in_shape_[kNHWC_W] * param->padded_in_shape_[kNHWC_C];

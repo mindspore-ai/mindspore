@@ -17,14 +17,14 @@
 #define MINDSPORE_LITE_NNACL_INT8_SPACE_TO_BATCH_INT8_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/fp32/space_to_batch.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int *block_sizes, const int *in_shape,
                             const int *out_shape);
-void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, const int *in_shape, const int *padding,
-                                   const int *out_shape, int32_t zp);
+void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, SpaceToBatchParameter *param, int32_t zp);
 #ifdef __cplusplus
 }
 #endif

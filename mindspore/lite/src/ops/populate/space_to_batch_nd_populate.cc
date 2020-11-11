@@ -31,6 +31,7 @@ OpParameter *PopulateSpaceToBatchNDParameter(const mindspore::lite::PrimitiveC *
 
   space_batch_param_nd->op_parameter_.type_ = primitive->Type();
   auto block_sizes = ((mindspore::lite::SpaceToBatchND *)primitive)->GetBlockShape();
+  space_batch_param_nd->m_ = block_sizes.size();
   memcpy(space_batch_param_nd->block_sizes_, (block_sizes.data()), block_sizes.size() * sizeof(int));
   auto paddings = ((mindspore::lite::SpaceToBatchND *)primitive)->GetPaddings();
   memcpy(space_batch_param_nd->paddings_, (paddings.data()), paddings.size() * sizeof(int));
