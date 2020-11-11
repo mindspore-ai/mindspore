@@ -309,6 +309,7 @@ class Cast(PrimitiveWithInfer):
             dst_type = dst_type.element_type()
         self.add_prim_attr('DstT', dst_type)
         self.add_prim_attr('SrcT', src_type)
+        self.add_prim_attr('dst_type', dst_type)
 
         value = None
         if x['value'] is not None:
