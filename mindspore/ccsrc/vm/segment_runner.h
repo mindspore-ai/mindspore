@@ -27,14 +27,10 @@
 
 #include "ir/anf.h"
 #include "vm/vmimpl.h"
+#include "vm/graph_partition.h"
 
 namespace mindspore {
-extern const char kMsVm[];
-extern const char kGeVm[];
-extern const char kMsConvert[];
-
 namespace compile {
-
 struct LinConvertResult {
   RunFuncPtr run;
   RunFuncPtr simu_run;
@@ -43,11 +39,9 @@ struct LinConvertResult {
   uint32_t graph_id;
 };
 
-using LinkFuncType = std::function<LinConvertResult(const AnfNodePtrList &, const std::string &)>;
-using ConvertCache = std::unordered_map<BaseRef, LinConvertResult, BaseRefHash>;
+using LinkFuncType = std::function<LinConvertResult(const GraphSegmentPtr &, const std::string &)>;
+using ConvertCache = std::unordered_map<GraphSegmentPtr, LinConvertResult>;
 extern LinkFuncType MsVmConvert;
-extern LinkFuncType GeVmConvert;
-extern std::unordered_map<std::string, LinkFuncType> backends;
 extern ConvertCache g_ConvertCache;
 extern std::set<std::string> backend_list;
 

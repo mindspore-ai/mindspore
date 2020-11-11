@@ -89,7 +89,8 @@ bool TensorInVector(const VectorRef *outputs) {
 
 void CompileNodesTask::Run() {
   MS_EXCEPTION_IF_NULL(session_);
-  graph_id_ = session_->CompileGraphImpl(nodes_, output_nodes_);
+  MS_EXCEPTION_IF_NULL(segment_);
+  graph_id_ = session_->CompileGraphImpl(segment_->nodes_, output_nodes_);
 }
 
 void CompileGraphTask::Run() {
@@ -226,10 +227,11 @@ void Executor::SyncRunTask(const std::shared_ptr<Task> &task) {
   MsException::GetInstance().CheckException();
 }
 
-GraphId Executor::CompileGraph(const SessionPtr &session, const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
+GraphId Executor::CompileGraph(const SessionPtr &session, const GraphSegmentPtr &segment,
+                               const AnfNodePtrList &outputs) {
   auto task = std::make_shared<CompileNodesTask>();
   task->session_ = session;
-  task->nodes_ = lst;
+  task->segment_ = segment;
   task->output_nodes_ = outputs;
   SyncRunTask(task);
   return task->graph_id_;

@@ -1388,9 +1388,9 @@ AnfNodePtr SessionBasic::FindPullNode(const AnfNodePtr &push_node, const std::ve
   return nullptr;
 }
 
-GraphId SessionBasic::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
+GraphId SessionBasic::CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
-  return executor_->CompileGraph(shared_from_this(), lst, outputs);
+  return executor_->CompileGraph(shared_from_this(), segment, outputs);
 }
 
 GraphId SessionBasic::CompileGraph(NotNull<FuncGraphPtr> func_graph) {

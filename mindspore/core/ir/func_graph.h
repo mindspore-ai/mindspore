@@ -354,6 +354,7 @@ class FuncGraph : public FuncGraphBase {
   static void set_drawer(Drawer drawer) { drawer_ = drawer; }
   std::shared_ptr<bool> switch_layer_input() const { return switch_layer_input_; }
   void set_switch_layer_input(std::shared_ptr<bool> switch_layer_input) { switch_layer_input_ = switch_layer_input; }
+  bool ContainMultiTarget() const;
 
  private:
   // graph is manipulated by manager and others

@@ -52,21 +52,11 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
 
   BackendPtr b = std::make_shared<Backend>("vm");
-  CompileGraph transform_(b);
-  auto splits = transform_.SplitNodes(g);
+  auto graph_partition = std::make_shared<GraphPartition>(nonlinear_ops, b->name());
+  auto segments = graph_partition->Partition(g);
   VectorRef args({1.0, 2.0});
 
-  std::vector<BaseRef> todos(splits.size());
-  auto it = std::copy_if(std::begin(splits), std::end(splits), std::begin(todos),
-                         [](const BaseRef &seg) -> bool { return utils::isa<VectorRef>(seg); });
-  todos.resize(std::distance(todos.begin(), it));
-  ASSERT_EQ(todos.size(), 1);
-
-  AnfNodePtrList anf_list;
-  for (auto &item : utils::cast<VectorRef>(todos[0])) {
-    anf_list.push_back(utils::cast<AnfNodePtr>(item));
-  }
-  auto convertResult = MsVmConvert(anf_list, "");
+  auto convertResult = MsVmConvert(segments[0], "");
   auto runResult = (*(convertResult.run))(args);
   ASSERT_TRUE(runResult.size() == 1 && py::cast<double>(BaseRefToPyData(runResult[0])) == 3.0);
 }
@@ -76,21 +66,11 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert2) {
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
 
   BackendPtr b = std::make_shared<Backend>("vm");
-  CompileGraph transform_(b);
-  auto splits = transform_.SplitNodes(g);
+  auto graph_partition = std::make_shared<GraphPartition>(nonlinear_ops, b->name());
+  auto segments = graph_partition->Partition(g);
   VectorRef args({1.0, 2.0});
 
-  std::vector<BaseRef> todos(splits.size());
-  auto it = std::copy_if(std::begin(splits), std::end(splits), std::begin(todos),
-                         [](const BaseRef &seg) -> bool { return utils::isa<VectorRef>(seg); });
-  todos.resize(std::distance(todos.begin(), it));
-  ASSERT_EQ(todos.size(), 1);
-
-  AnfNodePtrList anf_list;
-  for (auto &item : utils::cast<VectorRef>(todos[0])) {
-    anf_list.push_back(utils::cast<AnfNodePtr>(item));
-  }
-  auto convertResult = MsVmConvert(anf_list, "");
+  auto convertResult = MsVmConvert(segments[0], "");
   auto runResult = (*(convertResult.run))(args);
   ASSERT_TRUE(runResult.size() == 1 && py::cast<double>(BaseRefToPyData(runResult[0])) == 2.0);
 }
@@ -100,21 +80,11 @@ TEST_F(TestCompileSegmentRunner, test_if) {
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
 
   BackendPtr b = std::make_shared<Backend>("vm");
-  CompileGraph transform_(b);
-  auto splits = transform_.SplitNodes(g);
+  auto graph_partition = std::make_shared<GraphPartition>(nonlinear_ops, b->name());
+  auto segments = graph_partition->Partition(g);
   VectorRef args({1.0, 2.0});
 
-  std::vector<BaseRef> todos(splits.size());
-  auto it = std::copy_if(std::begin(splits), std::end(splits), std::begin(todos),
-                         [](const BaseRef &seg) -> bool { return utils::isa<VectorRef>(seg); });
-  todos.resize(std::distance(todos.begin(), it));
-  ASSERT_EQ(todos.size(), 1);
-
-  AnfNodePtrList anf_list;
-  for (auto &item : utils::cast<VectorRef>(todos[0])) {
-    anf_list.push_back(utils::cast<AnfNodePtr>(item));
-  }
-  auto convertResult = MsVmConvert(anf_list, "");
+  auto convertResult = MsVmConvert(segments[0], "");
   auto runResult = (*(convertResult.run))(args);
 
   auto result = py::cast<bool>(BaseRefToPyData(runResult[0]));

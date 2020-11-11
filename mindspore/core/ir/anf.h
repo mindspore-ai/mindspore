@@ -482,6 +482,13 @@ void reset_id();
 using TaggedNodeMap = std::unordered_map<AnfNodePtr, size_t>;
 using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
 std::string GetCNodeTarget(const AnfNodePtr &node);
+bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes);
+struct GraphSegment {
+  GraphSegment(const std::vector<AnfNodePtr> &nodes, bool is_cut) : nodes_(nodes), is_cut_(is_cut) {}
+  std::vector<AnfNodePtr> nodes_;
+  bool is_cut_{false};
+};
+using GraphSegmentPtr = std::shared_ptr<GraphSegment>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_IR_ANF_H_

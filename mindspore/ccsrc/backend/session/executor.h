@@ -63,7 +63,7 @@ class CompileNodesTask : public Task {
   CompileNodesTask() { type_ = kCompileNodes; }
   ~CompileNodesTask() override = default;
   void Run() override;
-  AnfNodePtrList nodes_;
+  GraphSegmentPtr segment_;
   AnfNodePtrList output_nodes_;
   GraphId graph_id_{0};
 };
@@ -151,7 +151,7 @@ class Executor {
   ~Executor();
   void WorkerLoop();
   void WorkerJoin();
-  GraphId CompileGraph(const SessionPtr &session, const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
+  GraphId CompileGraph(const SessionPtr &session, const GraphSegmentPtr &segment, const AnfNodePtrList &outputs);
   GraphId CompileGraph(const SessionPtr &session, NotNull<FuncGraphPtr> func_graph);
   void BuildGraph(const SessionPtr &session, GraphId graphId);
   void RunGraph(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,

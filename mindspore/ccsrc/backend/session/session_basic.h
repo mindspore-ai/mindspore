@@ -68,7 +68,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 
-  GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
+  GraphId CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs);
   GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph);
   void BuildGraph(GraphId graphId);
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
@@ -102,6 +102,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs) const {}
   std::vector<tensor::TensorPtr> GetInputNeedLockTensors(const GraphId &graph_id,
                                                          const std::vector<tensor::TensorPtr> &inputs);
+  // Get graph by graph id, if not exist return null ptr
+  KernelGraphPtr GetGraph(GraphId graph_id) const;
 #ifdef ENABLE_DEBUGGER
   // set debugger
   void SetDebugger() {
@@ -147,8 +149,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                          const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {}
   void RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs);
-  // Get graph by graph id ,if not exist return null ptr
-  KernelGraphPtr GetGraph(GraphId graph_id) const;
 
   virtual void SetSummaryNodes(KernelGraph *graph);
 

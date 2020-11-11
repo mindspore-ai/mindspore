@@ -301,4 +301,20 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
   }
   return default_target;
 }
+
+bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string last_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  for (auto &node : nodes) {
+    if (node->isa<CNode>()) {
+      std::string cur_target = GetCNodeTarget(node);
+      if (last_target != cur_target) {
+        return true;
+      }
+      last_target = cur_target;
+    }
+  }
+  return false;
+}
 }  // namespace mindspore

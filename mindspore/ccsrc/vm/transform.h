@@ -31,6 +31,7 @@
 #include "frontend/operator/ops.h"
 #include "vm/segment_runner.h"
 #include "vm/backend.h"
+#include "vm/graph_partition.h"
 
 // mindspore namespace is the top level namespace of MindSpore project.
 // Other namespace should be a sub namespace of mindspore namespace in the ME project.
@@ -59,7 +60,6 @@ class CompileGraph {
   void Tie(const AnfNodePtr &n1, const AnfNodePtr &n2) { slots_[n2] = slots_[n1]; }
   void Ret(int64_t nargs);
   int64_t Ref(const AnfNodePtr &node);
-  VectorRef SplitNodes(const FuncGraphPtr &func_graph);
 
   void set_height(int64_t h) {
     height_ = h;
@@ -76,10 +76,9 @@ class CompileGraph {
   }
 
  private:
-  VectorRef SplitNodesWithTarget(const std::vector<AnfNodePtr> &input_nodes, const FuncGraphPtr &graph);
   void PushParameters(const FuncGraphPtr &func_graph);
-  bool SplitGraph(const FuncGraphPtr &func_graph);
-  int64_t LinConvert(const FuncGraphPtr &func_graph, const AnfNodePtrList &node_list, const std::string &target = "");
+  bool Compile(const FuncGraphPtr &func_graph);
+  int64_t LinConvert(const FuncGraphPtr &func_graph, const GraphSegmentPtr &segment, const std::string &target = "");
   int64_t InterpretNode(const FuncGraphPtr &func_graph, const CNodePtr &node);
   int64_t AddCall(const FuncGraphPtr &graph, const CNodePtr &node);
   void AddPadStack(int64_t param_height);
@@ -97,11 +96,12 @@ class CompileGraph {
   void AddInst(const Instruction &inst, const VectorRef &args);
 
   BackendPtr backend_;
+  GraphPartitionPtr graph_partition_;
   LinkFuncType lin_convert_;
-  bool is_gevm_convert_;
+
   int64_t height_{0};
   int64_t max_height_{0};
-  std::vector<PrimitivePtr> cut_list_;
+
   std::unordered_map<AnfNodePtr, int64_t> slots_;
   InstSet inst_;
 };
@@ -123,7 +123,6 @@ class CompileGraphs {
   void Compile(const FuncGraphPtr &func_graph);
   FinalVMPtr Link(const FuncGraphPtr &func_graph);
   FinalVMPtr CompileAndLink(const FuncGraphPtr &func_graph);
-  static bool ContainMixedTarget(const FuncGraphPtr &graph);
 
  private:
   InstSet insts_;
