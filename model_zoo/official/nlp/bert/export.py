@@ -1,0 +1,74 @@
+# Copyright 2020 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+"""export checkpoint file into models"""
+import argparse
+import numpy as np
+
+from mindspore import Tensor, context
+import mindspore.common.dtype as mstype
+from mindspore.train.serialization import load_checkpoint, export
+
+from src.finetune_eval_model import BertCLSModel, BertSquadModel, BertNERModel
+from src.finetune_eval_config import optimizer_cfg, bert_net_cfg
+from src.utils import convert_labels_to_index
+
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+parser = argparse.ArgumentParser(description='Bert export')
+parser.add_argument('--use_crf', type=str, default="false", help='Use cfg, default is false.')
+parser.add_argument('--downstream_task', type=str, choices=["NER", "CLS", "SQUAD"], default="NER",
+                    help='at present，support NER only')
+parser.add_argument('--num_class', type=int, default=2, help='The number of class, default is 2.')
+parser.add_argument('--label_file_path', type=str, default="", help='label file path, used in clue benchmark.')
+parser.add_argument('--ckpt_file', type=str, required=True, help='Bert ckpt file.')
+parser.add_argument('--output_file', type=str, default='Bert.air', help='bert output air name.')
+parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+args = parser.parse_args()
+
+label_list = []
+with open(args.label_file_path) as f:
+    for label in f:
+        label_list.append(label.strip())
+
+tag_to_index = convert_labels_to_index(label_list)
+
+if args.use_crf.lower() == "true":
+    max_val = max(tag_to_index.values())
+    tag_to_index["<START>"] = max_val + 1
+    tag_to_index["<STOP>"] = max_val + 2
+    number_labels = len(tag_to_index)
+else:
+    number_labels = args.num_class
+
+
+if __name__ == '__main__':
+    if args.downstream_task == "NER":
+        net = BertNERModel(bert_net_cfg, False, number_labels, use_crf=(args.use_crf.lower() == "true"))
+    elif args.downstream_task == "CLS":
+        net = BertCLSModel(bert_net_cfg, False, num_labels=number_labels)
+    elif args.downstream_task == "SQUAD":
+        net = BertSquadModel(bert_net_cfg, False)
+    else:
+        raise ValueError("unsupported downstream task")
+
+    load_checkpoint(args.ckpt_file, net=net)
+    net.set_train(False)
+
+    input_ids = Tensor(np.zeros([optimizer_cfg.batch_size, bert_net_cfg.seq_length]), mstype.int32)
+    input_mask = Tensor(np.zeros([optimizer_cfg.batch_size, bert_net_cfg.seq_length]), mstype.int32)
+    token_type_id = Tensor(np.zeros([optimizer_cfg.batch_size, bert_net_cfg.seq_length]), mstype.int32)
+
+    input_data = [input_ids, input_mask, token_type_id]
+    export(net, *input_data, file_name=args.output_file, file_format=args.file_format)

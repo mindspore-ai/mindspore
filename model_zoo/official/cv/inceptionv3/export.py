@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-##############export checkpoint file into air and onnx models#################
+export checkpoint file into models
 """
 import argparse
 import numpy as np
@@ -25,16 +25,19 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net, 
 from src.config import config_gpu as cfg
 from src.inception_v3 import InceptionV3
 
+parser = argparse.ArgumentParser(description='inceptionv3 export')
+parser.add_argument('--ckpt_file', type=str, required=True, help='inceptionv3 ckpt file.')
+parser.add_argument('--output_file', type=str, default='inceptionv3.air', help='inceptionv3 output air name.')
+parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument('--width', type=int, default=299, help='input width')
+parser.add_argument('--height', type=int, default=299, help='input height')
+args = parser.parse_args()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='checkpoint export')
-    parser.add_argument('--checkpoint', type=str, default='', help='checkpoint of inception-v3 (Default: None)')
-    args_opt = parser.parse_args()
-
     net = InceptionV3(num_classes=cfg.num_classes, is_training=False)
-    param_dict = load_checkpoint(args_opt.checkpoint)
+    param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, 299, 299]), ms.float32)
-    export(net, input_arr, file_name=cfg.onnx_filename, file_format="ONNX")
-    export(net, input_arr, file_name=cfg.air_filename, file_format="AIR")
+    input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[cfg.batch_size, 3, args.width, args.height]), ms.float32)
+
+    export(net, input_arr, file_name=args.output_file, file_format=args.file_format)
