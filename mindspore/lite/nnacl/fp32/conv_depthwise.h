@@ -45,6 +45,14 @@ void AppendSlidingParamConvDw(SlidingWindowParam *sliding, const ConvParameter *
 void ConvDwSWFp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                   const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 
+bool CheckConvDwUse3X3(const ConvParameter *conv_param);
+
+void ConvDw3x3Pad(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
+                  const ConvParameter *conv_param, const SlidingWindowParam *sliding);
+
+void ConvDw3x3(float *output_data, float *buffer, const float *input_data, const float *weight_data,
+               const float *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
+
 void DeconvDwSWFp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                     const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 
