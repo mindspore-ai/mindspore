@@ -135,6 +135,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimAllReduce, {InferImplAllReduce, true}},
     {prim::kPrimBroadcast, {InferImplBroadcast, true}},
     {prim::kPrimAllGather, {InferImplAllGather, true}},
+    {prim::kPrimAllSwap, {InferImplAllSwap, true}},
     {prim::kPrimReduceScatter, {InferImplReduceScatter, true}},
     {prim::kPrimMemCpyAsync, {InferImplMemCpyAsync, true}},
     {prim::kPrimCast, {InferImplCast, true}},

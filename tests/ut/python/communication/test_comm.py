@@ -26,7 +26,9 @@ from mindspore.nn import Momentum
 from mindspore.nn import ReLU
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather, _AlltoAll, ReduceOp, ReduceScatter
-from mindspore.ops.operations.comm_ops import Broadcast
+from mindspore.ops.operations.comm_ops import Broadcast, AllSwap
+from mindspore.ops.operations.math_ops import ReduceSum
+import mindspore
 
 # pylint: disable=W0212
 # W0212: protected-access
@@ -117,6 +119,25 @@ class AlltoAllNet(nn.Cell):
         return self.relu(x)
 
 
+class AllSwapNet(nn.Cell):
+    """AlltoAllNet definition"""
+
+    def __init__(self, batch_size, input_channel, out_channel):
+        super(AllSwapNet, self).__init__()
+        self.dense = Dense(input_channel, out_channel)
+        self.allswap = AllSwap()
+        self.relu = ReLU()
+        self.reduce = ReduceSum()
+        part_slice = batch_size / 2
+        self.send_size = Tensor([0, part_slice*out_channel, part_slice*out_channel], mindspore.int64)
+        self.recv_size = Tensor([part_slice*out_channel, part_slice*out_channel, 0], mindspore.int64)
+    def construct(self, x):
+        x = self.dense(x)
+        x = self.allswap(x, self.send_size, self.recv_size)
+        x = self.relu(x)
+        return x
+
+
 def run_allreduce(op):
     """run_allreduce"""
     context.set_context(mode=context.GRAPH_MODE)
@@ -153,6 +174,13 @@ def test_allgather():
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
     _executor.compile(network, input_tensor, label_tensor)
+
+def test_allswap():
+    """run_allswap"""
+    context.set_context(mode=context.GRAPH_MODE)
+    input_tensor = Tensor(np.ones((100, 20)), dtype=mindspore.float32)
+    network = AllSwapNet(100, 20, 20)
+    _executor.compile(network, input_tensor)
 
 
 def run_reducescatter(op):

@@ -186,6 +186,7 @@ inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOper
 inline const PrimitivePtr kPrimVirtualDiv = std::make_shared<Primitive>("_VirtualDiv");
 inline const PrimitivePtr kPrimVirtualDataset = std::make_shared<Primitive>("_VirtualDataset");
 inline const PrimitivePtr kPrimAllReduce = std::make_shared<Primitive>("AllReduce");
+inline const PrimitivePtr kPrimAllSwap = std::make_shared<Primitive>("AllSwap");
 inline const PrimitivePtr kPrimBroadcast = std::make_shared<Primitive>("Broadcast");
 inline const PrimitivePtr kPrimAllGather = std::make_shared<Primitive>("AllGather");
 inline const PrimitivePtr kPrimReduceScatter = std::make_shared<Primitive>("ReduceScatter");
