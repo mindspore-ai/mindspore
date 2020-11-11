@@ -434,7 +434,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
   std::shared_ptr<SchemaObj> schema = Schema();
   schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
   schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
-  std::shared_ptr<Dataset> ds = RandomData(4, schema, {}, RandomSampler(), some_cache);
+  std::shared_ptr<Dataset> ds = RandomData(4, schema, {}, some_cache);
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds

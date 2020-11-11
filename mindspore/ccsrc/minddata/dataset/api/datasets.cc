@@ -691,10 +691,12 @@ std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &colum
   }
   return vocab;
 }
+
+#endif
 std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remainder) {
   return std::make_shared<BatchDataset>(shared_from_this(), batch_size, drop_remainder);
 }
-#endif
+
 SchemaObj::SchemaObj(const std::string &schema_file) : schema_file_(schema_file), num_rows_(0), dataset_type_("") {}
 
 // SchemaObj init function
@@ -969,16 +971,14 @@ VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, 
 #endif
 RandomDataDataset::RandomDataDataset(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema,
                                      const std::vector<std::string> &columns_list,
-                                     const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache) {
-  auto ds =
-    std::make_shared<RandomNode>(total_rows, std::move(schema), std::move(columns_list), std::move(sampler), cache);
+                                     std::shared_ptr<DatasetCache> cache) {
+  auto ds = std::make_shared<RandomNode>(total_rows, std::move(schema), std::move(columns_list), cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 RandomDataDataset::RandomDataDataset(const int32_t &total_rows, std::string schema_path,
                                      const std::vector<std::string> &columns_list,
-                                     const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache) {
-  auto ds = std::make_shared<RandomNode>(total_rows, std::move(schema_path), std::move(columns_list),
-                                         std::move(sampler), cache);
+                                     std::shared_ptr<DatasetCache> cache) {
+  auto ds = std::make_shared<RandomNode>(total_rows, std::move(schema_path), std::move(columns_list), cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 #ifndef ENABLE_ANDROID
