@@ -203,35 +203,52 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
                                             const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 3);
+  // input x
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
   auto x_shape = x->shape()->shape();
-
+  // segment_ids
   auto segment_ids = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   MS_EXCEPTION_IF_NULL(segment_ids);
   MS_EXCEPTION_IF_NULL(segment_ids->shape());
   auto segment_ids_shape = segment_ids->shape()->shape();
-  auto num_segments = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
-
+  // checks on Tensors 0 and 1 types
+  (void)CheckTensorDType(x, {kFloat32, kInt32}, "Input 0 (x) for SequenceMask should be %s");
+  (void)CheckTensorDType(segment_ids, {kInt32, kInt64}, "Input 1 (segment_ids) for SequenceMask should be %s");
   ShapeVector shape;
-  auto num_segments_value = num_segments->BuildValue();
-  MS_EXCEPTION_IF_NULL(num_segments_value);
-  if (!num_segments_value->isa<tensor::Tensor>()) {
-    MS_LOG(WARNING) << num_segments_value << "evaluator num_segments_value should be tensor, but got "
-                    << num_segments_value->type_name();
-    shape.emplace_back(-1);
+  ShapeVector max_shape;
+  ShapeVector min_shape;
+  int64_t num_segments_value;
+  if (args_spec_list[2]->isa<AbstractTensor>()) {  // Num segments is Tensor
+    auto num_segments = args_spec_list[2]->cast<AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(num_segments);
+    auto num_segments_value_ptr = num_segments->BuildValue();
+    MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
+    auto num_segments_tensor = num_segments_value_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(num_segments_tensor);
+    num_segments_value = *static_cast<int64_t *>(num_segments_tensor->data_c());
+    shape.emplace_back(num_segments_value);
+  } else if (args_spec_list[2]->isa<AbstractScalar>()) {  // Num segments is Scalar
+    auto num_segments = CheckArg<AbstractScalar>(op_name, args_spec_list, 2);
+    num_segments_value = GetValue<int64_t>(num_segments->BuildValue());
+    shape.emplace_back(num_segments_value);
   } else {
-    auto num_segments_tensor = num_segments_value->cast<tensor::TensorPtr>();
-    int64_t value = *(static_cast<int64_t *>(num_segments_tensor->data_c()));
-    MS_LOG(INFO) << "Infer UnsortedSegmentSum output shape:" << value;
-    shape.emplace_back(value);
+    MS_LOG(EXCEPTION) << "num_segments incorrect type in UnsortedSegmentSum";
   }
-
   shape.insert(shape.end(), x_shape.begin() + segment_ids_shape.size(), x_shape.end());
-
-  AbstractTensorPtr ret = std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape));
-  return ret;
+  // calc max shape
+  if (!x->shape()->max_shape().empty()) {  // copy max shape from x if present
+    std::copy(x->shape()->max_shape().begin(), x->shape()->max_shape().end(), std::back_inserter(max_shape));
+  } else {  // copy x shape directly if not present
+    std::copy(x->shape()->shape().begin(), x->shape()->shape().end(), std::back_inserter(max_shape));
+  }
+  // calc min shape
+  min_shape.push_back(segment_ids_shape.size());
+  std::copy(x->shape()->shape().begin() + segment_ids_shape.size(), x->shape()->shape().end(),
+            back_inserter(min_shape));
+  // return shape, min shape, max shape
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
 }
 
 AbstractBasePtr InferImplScatterAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

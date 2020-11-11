@@ -18,6 +18,7 @@
 
 namespace mindspore {
 namespace kernel {
+
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
@@ -37,5 +38,66 @@ MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
   UnsortedSegmentSumGpuKernel, int, int64_t)
+
+// Re-registration with 3 inputs - dynamic shape mode - sets of Int64/Int32 num segments types
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UnsortedSegmentSumGpuKernel, float, int)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UnsortedSegmentSumGpuKernel, float, int)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UnsortedSegmentSumGpuKernel, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UnsortedSegmentSumGpuKernel, float, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      UnsortedSegmentSumGpuKernel, int, int)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      UnsortedSegmentSumGpuKernel, int, int)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      UnsortedSegmentSumGpuKernel, int, int64_t)
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentSum,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      UnsortedSegmentSumGpuKernel, int, int64_t)
 }  // namespace kernel
 }  // namespace mindspore
