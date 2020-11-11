@@ -983,6 +983,7 @@ void FinalizeHccl() {
 #ifdef ENABLE_GE
   (void)FinalizeBackend();
 #else
+  session::ExecutorManager::Instance().Clear();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 #endif
 }
