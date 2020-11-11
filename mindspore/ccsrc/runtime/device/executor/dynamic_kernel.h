@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include <map>
 #include "ir/anf.h"
 #include "ir/tensor.h"
@@ -44,16 +45,19 @@ class DynamicKernel {
   bool is_dynamic_shape() const { return is_dynamic_shape_; }
   bool is_input_dynamic_shape() const { return is_input_dynamic_shape_; }
   bool is_output_dynamic_shape() const { return is_output_dynamic_shape_; }
-  bool have_depends() const { return !depend_tensor_map_.empty(); }
+  bool have_depends() const { return !depend_list_.empty(); }
   virtual void Initialize();
   std::string GetKernelName() { return cnode_ptr_->fullname_with_scope(); }
 
  protected:
+  void RebuildDependTensor();
+
   void *stream_;
   const CNodePtr cnode_ptr_;
   bool is_dynamic_shape_;
   bool is_input_dynamic_shape_;
   bool is_output_dynamic_shape_;
+  std::vector<uint32_t> depend_list_;
   std::map<uint32_t, tensor::TensorPtr> depend_tensor_map_;
 };
 using DynamicKernelPtr = std::shared_ptr<DynamicKernel>;
