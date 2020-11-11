@@ -38,17 +38,7 @@ int SpaceToBatchInt8CPUKernel::Run() {
   auto quant_arg = output_tensor->GetQuantParams().front();
 
   if (param->need_paddings_) {
-    padded_input_ = context_->allocator->Malloc(param->padded_input_element_num * sizeof(int8_t));
-    if (padded_input_ == nullptr) {
-      MS_LOG(ERROR) << "Memory allocation failed";
-      return RET_ERROR;
-    }
-    auto padded_input = reinterpret_cast<int8_t *>(padded_input_);
-    DoSpaceToBatchPaddingNHWCInt8(input_ptr, padded_input, param->input_shape_, param->paddings_,
-                                  param->padded_in_shape_, quant_arg.zeroPoint);
-    DoSpaceToBatchNHWCInt8(padded_input, output_ptr, param->block_sizes_, param->padded_in_shape_,
-                           param->output_shape_);
-    FreeTmpBuffer();
+    DoSpaceToBatchPaddingNHWCInt8(input_ptr, output_ptr, param, quant_arg.zeroPoint);
   } else {
     DoSpaceToBatchNHWCInt8(input_ptr, output_ptr, param->block_sizes_, param->input_shape_, param->output_shape_);
   }

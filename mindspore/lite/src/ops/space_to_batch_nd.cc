@@ -26,8 +26,6 @@ namespace lite {
 namespace {
 constexpr int kSpaceToBatchNDOutputNum = 1;
 constexpr int kSpaceToBatchNDInputNum = 1;
-constexpr int kBlockSizesSize = 2;
-constexpr int kPaddingsSize = 4;
 }  // namespace
 
 #ifdef PRIMITIVE_WRITEABLE
@@ -109,20 +107,19 @@ int SpaceToBatchND::InferShape(std::vector<lite::Tensor *> inputs, std::vector<l
     return RET_ERROR;
   }
   auto block_shape = GetBlockShape();
-  if (block_shape.size() != kBlockSizesSize) {
-    MS_LOG(ERROR) << "blockShape size != " << kBlockSizesSize;
-    return RET_ERROR;
+  auto padding = GetPaddings();
+  int padding_left = 0;
+  int padding_right = 0;
+  int block_w = 1;
+  if (block_shape.size() == 2) {
+    padding_left = padding[2];
+    padding_right = padding[3];
+    block_w = block_shape[1];
   }
-  auto pedding = GetPaddings();
-  if (pedding.size() != kPaddingsSize) {
-    MS_LOG(ERROR) << "pedding size should be " << kPaddingsSize;
-    return RET_ERROR;
-  }
-
   std::vector<int32_t> output_shape(input_shape.size());
-  output_shape[NHWC_N] = input_shape[NHWC_N] * block_shape[0] * block_shape[1];
-  output_shape[NHWC_H] = (input_shape[NHWC_H] + pedding[0] + pedding[1]) / block_shape[0];
-  output_shape[NHWC_W] = (input_shape[NHWC_W] + pedding[2] + pedding[3]) / block_shape[1];
+  output_shape[NHWC_N] = input_shape[NHWC_N] * block_shape[0] * block_w;
+  output_shape[NHWC_H] = (input_shape[NHWC_H] + padding[0] + padding[1]) / block_shape[0];
+  output_shape[NHWC_W] = (input_shape[NHWC_W] + padding_left + padding_right) / block_w;
   output_shape[NHWC_C] = input_shape[NHWC_C];
   outputs[0]->set_shape(output_shape);
   return RET_OK;

@@ -80,8 +80,6 @@ Registry SpaceToBatchRegistry(schema::PrimitiveType_SpaceToBatch, SpaceToBatchCr
 namespace {
 constexpr int kSpaceToBatchNDOutputNum = 1;
 constexpr int kSpaceToBatchNDInputNum = 1;
-constexpr int kBlockSizesSize = 2;
-constexpr int kPaddingsSize = 4;
 }  // namespace
 
 int SpaceToBatch::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
@@ -103,20 +101,13 @@ int SpaceToBatch::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   }
   auto input_shape = input->shape();
   if (input_shape.size() != kDimension_4d) {
-    MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
-    return 1;
+    MS_LOG(ERROR) << "Space_to_batch op only support 4D input currently. But got %d dimensionality input."
+                  << kDimension_4d;
+    return RET_ERROR;
   }
 
-  if (GetBlockShape().size() != kBlockSizesSize) {
-    MS_LOG(ERROR) << "Block shape size should be " << kBlockSizesSize;
-    return 1;
-  }
-  if (GetPaddings().size() != kPaddingsSize) {
-    MS_LOG(ERROR) << "Crops size should be " << kPaddingsSize;
-    return 1;
-  }
-
-  for (int &iter : GetBlockShape()) {
+  auto block_shape_vector = GetBlockShape();
+  for (int &iter : block_shape_vector) {
     block_sizes_.emplace_back(iter);
   }
 
@@ -125,7 +116,8 @@ int SpaceToBatch::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   paddings_.clear();
   in_shape_.emplace_back(input_shape.at(NHWC_N));
   padded_in_shape_.emplace_back(input_shape.at(NHWC_N));
-  for (int i = 0; i < kBlockSizesSize; i++) {
+  auto block_shape_size = block_shape_vector.size();
+  for (size_t i = 0; i < block_shape_size; i++) {
     in_shape_.emplace_back(input_shape.at(i + 1));
     padded_in_shape_.emplace_back(input_shape.at(i + 1) + (paddings_.at(2 * i) + paddings_.at(2 * i + 1)));
     paddings_.emplace_back(paddings_.at(2 * i));
@@ -137,11 +129,19 @@ int SpaceToBatch::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   }
   in_shape_.emplace_back(input_shape.at(NHWC_C));
   padded_in_shape_.emplace_back(input_shape.at(NHWC_C));
+  int padding_left = 0;
+  int padding_right = 0;
+  int block_w = 1;
+  if (block_shape_size == 2) {
+    padding_left = paddings_[2];
+    padding_right = paddings_[3];
+    block_w = block_sizes_[1];
+  }
 
   std::vector<int32_t> output_shape(input_shape.size());
-  output_shape[NHWC_N] = input_shape[NHWC_N] * (block_sizes_[NHWC_N] * block_sizes_[NHWC_H]);
-  output_shape[NHWC_H] = (input_shape[NHWC_H] + paddings_[0] + paddings_[1]) / block_sizes_[NHWC_N];
-  output_shape[NHWC_W] = (input_shape[NHWC_W] + paddings_[2] + paddings_[3]) / block_sizes_[NHWC_H];
+  output_shape[NHWC_N] = input_shape[NHWC_N] * (block_sizes_[0] * block_w);
+  output_shape[NHWC_H] = (input_shape[NHWC_H] + paddings_[0] + paddings_[1]) / block_sizes_[0];
+  output_shape[NHWC_W] = (input_shape[NHWC_W] + padding_left + padding_right) / block_w;
   output_shape[NHWC_C] = input_shape[NHWC_C];
   outputs[0]->set_shape(output_shape);
   return RET_OK;
