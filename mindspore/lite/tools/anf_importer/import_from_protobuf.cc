@@ -865,7 +865,7 @@ int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
 onnx::ModelProto *AnfImporterFromProtobuf::ReadOnnxFromBinary(const std::string &model_path) {
   auto onnx_model = new onnx::ModelProto;
   if (RET_OK != ValidateFileStr(model_path, ".mindir")) {
-    MS_LOG(ERROR) << "Input illegal: modelFile must be *.mindir";
+    MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.mindir";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_INPUT_PARAM_INVALID);
     return nullptr;
   }
