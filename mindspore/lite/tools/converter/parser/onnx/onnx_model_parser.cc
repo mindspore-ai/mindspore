@@ -624,7 +624,7 @@ schema::MetaGraphT *OnnxModelParser::ParseToFb(const std::string &modelFile, con
                                                const QuantType &quantType) {
   int status = ValidateFileStr(modelFile, ".onnx");
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Input illegal: modelFile must be *.onnx";
+    MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.onnx";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
