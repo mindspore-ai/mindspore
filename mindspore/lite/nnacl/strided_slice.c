@@ -104,8 +104,12 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
                                   dim3 * dim_offset[3] + dim4 * dim_offset[4] + dim5;
               if (param->data_type == kDataTypeFloat) {
                 *((float *)out_data + out_offset) = *((float *)in_data + in_offset);
-              } else {
+              } else if (param->data_type == kDataTypeInt8) {
                 *((int8_t *)out_data + out_offset) = *((int8_t *)in_data + in_offset);
+              } else if (param->data_type == kDataTypeInt) {
+                *((int32_t *)out_data + out_offset) = *((int32_t *)in_data + in_offset);
+              } else {
+                return NNACL_ERR;
               }
               out_offset++;
             }

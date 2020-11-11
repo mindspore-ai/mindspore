@@ -17,8 +17,11 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_SLICE_PARSER_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_SLICE_PARSER_H
 
+#include <vector>
+#include <string>
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
+#include "tools/converter/parser/onnx/onnx_tensor_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -27,6 +30,7 @@ class OnnxSliceParser : public OnnxNodeParser {
   OnnxSliceParser() : OnnxNodeParser("Slice") {}
   ~OnnxSliceParser() override = default;
 
+  STATUS InsertTensor(const std::vector<int> &onnx_val, const std::string &name, onnx::NodeProto *onnx_node);
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
 }  // namespace lite

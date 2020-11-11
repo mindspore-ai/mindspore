@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_BASE_STRIDED_SLICE_H_
 
 #include <vector>
-
+#include "nnacl/strided_slice.h"
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
@@ -27,7 +27,9 @@ class StridedSliceCPUKernel : public LiteKernel {
   StridedSliceCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    param_ = reinterpret_cast<StridedSliceParameter *>(parameter);
+  }
   ~StridedSliceCPUKernel() override = default;
 
   int Init() override;
@@ -36,6 +38,9 @@ class StridedSliceCPUKernel : public LiteKernel {
 
  private:
   int HandleMultiInputs();
+
+ private:
+  StridedSliceParameter *param_;
 };
 }  // namespace mindspore::kernel
 

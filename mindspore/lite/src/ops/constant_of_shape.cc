@@ -87,7 +87,7 @@ int ConstantOfShape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
   }
   auto in_data = reinterpret_cast<int *>(in_tensor->data_c());
   if (in_data == nullptr) {
-    MS_LOG(ERROR) << "Input data is nullptr";
+    MS_LOG(INFO) << "Input data is nullptr. Input tensor has not been calculated out yet.";
     return RET_INFER_INVALID;
   }
   int size = in_tensor->ElementsNum();

@@ -81,6 +81,7 @@ class StridedSlice : public PrimitiveC {
   std::vector<bool> new_axis_mask_;
   std::vector<bool> shrink_axis_mask_;
   void TransIndexToPositive();
+  int HandleAxesInputExist(const std::vector<lite::Tensor *> &inputs);
 };
 }  // namespace lite
 }  // namespace mindspore

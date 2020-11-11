@@ -64,6 +64,9 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
       param_value->set_tensor_addr(tensor_data);
       param_value->set_tensor_size(size);
       parameter->set_default_param(param_value);
+    } else if (std::find(meta_graph_->inputIndex.begin(), meta_graph_->inputIndex.end(), i) ==
+               meta_graph_->inputIndex.end()) {
+      parameter->set_default_param(param_value);
     }
     AddNode(i, parameter);
   }

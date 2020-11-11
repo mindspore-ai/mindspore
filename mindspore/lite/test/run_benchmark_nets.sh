@@ -62,7 +62,7 @@ function Run_Converter() {
         if [ $? = 0 ]; then
             converter_result='converter onnx '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
-            converter_result='converter onnx '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file}
+            converter_result='converter onnx '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
     done < ${models_onnx_config}
 

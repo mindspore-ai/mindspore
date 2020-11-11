@@ -50,6 +50,7 @@ class Registry {
   }
 };
 OpParameter *PopulateArithmetic(const mindspore::lite::PrimitiveC *primitive);
+OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *primitive);
 }  // namespace lite
 }  // namespace mindspore
 #endif
