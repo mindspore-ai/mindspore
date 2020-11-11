@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
   T i = (entry + 1) % length, off = 1;
@@ -107,6 +106,5 @@ void CacheSwapHashmapCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inpu
     }
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore

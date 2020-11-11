@@ -254,6 +254,99 @@ AbstractBasePtr InferImplScatterUpdate(const AnalysisEnginePtr &, const Primitiv
   return std::make_shared<AbstractTensor>(x->element(), x->shape());
 }
 
+AbstractBasePtr InferImplMapCacheIdx(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 5);
+  auto hash_map = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(hash_map);
+  MS_EXCEPTION_IF_NULL(hash_map->shape());
+
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto indices_shp = indices->shape();
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(indices_shp);
+
+  ShapeVector shape;
+  ShapeVector min_shape;
+  ShapeVector max_shape;
+  if (!indices_shp->max_shape().empty()) {
+    max_shape = indices_shp->max_shape();
+  } else {
+    max_shape = indices_shp->shape();
+  }
+  for (size_t i = 0; i < max_shape.size(); i++) {
+    shape.emplace_back(Shape::SHP_ANY);
+    min_shape.emplace_back(1);
+  }
+
+  auto cache_idx = std::make_shared<AbstractTensor>(hash_map->element(), indices->shape());
+  auto old_emb_idx =
+    std::make_shared<AbstractTensor>(hash_map->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  auto miss_emb_idx =
+    std::make_shared<AbstractTensor>(hash_map->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  auto swap_emb_idx =
+    std::make_shared<AbstractTensor>(hash_map->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+
+  AbstractBasePtrList elements = {cache_idx, old_emb_idx, miss_emb_idx, swap_emb_idx};
+  return std::make_shared<AbstractTuple>(elements);
+}
+
+AbstractBasePtr InferImplCacheSwapTable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 3);
+  auto cache_table = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto cache_table_shp = cache_table->shape();
+  MS_EXCEPTION_IF_NULL(cache_table);
+  MS_EXCEPTION_IF_NULL(cache_table_shp);
+
+  auto swap_cache_idx = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto swap_cache_idx_shp = swap_cache_idx->shape();
+  MS_EXCEPTION_IF_NULL(swap_cache_idx);
+  MS_EXCEPTION_IF_NULL(swap_cache_idx_shp);
+
+  auto cache_table_shape = cache_table_shp->shape();
+  auto swap_cache_idx_shape = swap_cache_idx_shp->shape();
+  ShapeVector shape;
+  shape.emplace_back(swap_cache_idx_shape[0]);
+  shape.emplace_back(cache_table_shape[1]);
+  auto swap_cache_idx_max_shape = swap_cache_idx_shp->max_shape();
+  ShapeVector max_shape;
+  ShapeVector min_shape;
+  if (!swap_cache_idx_max_shape.empty()) {
+    max_shape.emplace_back(swap_cache_idx_max_shape[0]);
+    max_shape.emplace_back(cache_table_shape[1]);
+  } else {
+    max_shape = shape;
+  }
+  for (size_t i = 0; i < max_shape.size(); ++i) {
+    min_shape.emplace_back(1);
+  }
+
+  AbstractTensorPtr ret =
+    std::make_shared<AbstractTensor>(cache_table->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  return ret;
+}
+
+AbstractBasePtr InferImplUpdateCache(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(input_x);
+  MS_EXCEPTION_IF_NULL(input_x->shape());
+
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(indices->shape());
+
+  ShapeVector shape;
+  shape.emplace_back(1);
+
+  AbstractTensorPtr ret = std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(shape));
+  return ret;
+}
+
 AbstractBasePtr InferImplDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();

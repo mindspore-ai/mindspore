@@ -46,6 +46,7 @@ class UpdateCacheCPUKernel : public CPUKernel {
   TypeId input_x_dtype_{kTypeUnknown};
   TypeId indices_dtype_{kTypeUnknown};
   size_t input_x_dtype_size_ = 4;
+  CNodePtr node_ = nullptr;
 };
 
 MS_REG_CPU_KERNEL(UpdateCache,
@@ -101,7 +102,6 @@ MS_REG_CPU_KERNEL(UpdateCache,
                     .AddInputAttr(kNumberTypeInt64)
                     .AddOutputAttr(kNumberTypeInt64),
                   UpdateCacheCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 

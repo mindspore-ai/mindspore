@@ -75,19 +75,6 @@ class CacheSwapHashmapNet(nn.Cell):
         return self.ops(self.net.hashmap, miss_emb_idx, self.step)
 
 
-class MapCacheIdxNet(nn.Cell):
-    def __init__(self, hashmap_np):
-        super().__init__()
-        self.ops = P.MapCacheIdx()
-        self.hashmap = Parameter(Tensor(hashmap_np), name="hashmap")
-        self.emb_max = 25
-        self.cache_max = 10
-        self.step = 0
-
-    def construct(self, indices):
-        return self.ops(self.hashmap, indices, self.step, self.emb_max, self.cache_max)
-
-
 class UpdateCacheNet(nn.Cell):
     def __init__(self, x):
         super().__init__()
@@ -162,45 +149,6 @@ def test_cache_swap_hashmap():
     assert np.allclose(old_emb_idx.asnumpy(),
                        np.array(expect_old_emb_idx, np.int32))
     assert np.allclose(net.net.hashmap.data.asnumpy(),
-                       np.array(hashmap_np_after_ops, np.int32))
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_map_cache_idx():
-    hashmap_np = init_hashmap(10)
-    indices_np = np.array([10, 2, 20, 5, 3], np.int32)
-    map_cache_idx = MapCacheIdxNet(hashmap_np)
-    indices = Tensor(indices_np)
-    cache_idx, old_emb_idx, miss_emb_idx, swap_cache_idx = map_cache_idx(
-        indices)
-
-    expect_cache_idx = [5, 1, 9, 7, 3]
-    expect_old_emb_idx = [-1, -1, 21, 15, -1]
-    expect_miss_emb_idx = [-1, -1, 20, 5, -1]
-    expect_swap_cache_idx = [-1, -1, 9, 7, -1]
-
-    hashmap_np_after_ops = [[5, 7, 0, 1],
-                            [10, 5, 0, 1],
-                            [2, 1, 0, 1],
-                            [20, 9, 0, 1],
-                            [20, 9, 0, 0],
-                            [0, 0, 0, 0],
-                            [0, 0, 0, 0],
-                            [0, 0, 0, 0],
-                            [3, 3, 0, 1],
-                            [21, 9, -5, 0]]
-
-    assert np.allclose(cache_idx.asnumpy(),
-                       np.array(expect_cache_idx, np.int32))
-    assert np.allclose(old_emb_idx.asnumpy(),
-                       np.array(expect_old_emb_idx, np.int32))
-    assert np.allclose(miss_emb_idx.asnumpy(),
-                       np.array(expect_miss_emb_idx, np.int32))
-    assert np.allclose(swap_cache_idx.asnumpy(),
-                       np.array(expect_swap_cache_idx, np.int32))
-    assert np.allclose(map_cache_idx.hashmap.data.asnumpy(),
                        np.array(hashmap_np_after_ops, np.int32))
 
 

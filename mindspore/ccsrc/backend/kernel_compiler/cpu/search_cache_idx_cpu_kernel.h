@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 struct HashmapEntry {
   T key;
@@ -133,7 +132,6 @@ MS_REG_CPU_KERNEL(SearchCacheIdx,
                     .AddOutputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
                   SearchCacheIdxCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 
