@@ -113,7 +113,7 @@ required_package = [
     'protobuf >= 3.8.0',
     'asttokens >= 1.1.13',
     'pillow >= 6.2.0',
-    'scipy == 1.3.3',
+    'scipy == 1.5.3',
     'easydict >= 1.9',
     'sympy >= 1.4',
     'cffi >= 1.13.2',
