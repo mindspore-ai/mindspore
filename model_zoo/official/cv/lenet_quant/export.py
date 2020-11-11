@@ -20,10 +20,8 @@ import argparse
 import numpy as np
 
 import mindspore
-from mindspore import Tensor
-from mindspore import context
+from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 from mindspore.compression.quant import QuantizationAwareTraining
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
 from src.config import mnist_cfg as cfg
 from src.lenet_fusion import LeNet5 as LeNet5Fusion

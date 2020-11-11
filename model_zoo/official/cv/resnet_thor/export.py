@@ -16,9 +16,7 @@
 import argparse
 import numpy as np
 
-from mindspore import context
-from mindspore import Tensor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
 from src.resnet_thor import resnet50 as resnet
 from src.config import config
 

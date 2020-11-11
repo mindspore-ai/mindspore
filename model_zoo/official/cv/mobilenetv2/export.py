@@ -16,8 +16,7 @@
 mobilenetv2 export mindir.
 """
 import numpy as np
-from mindspore import Tensor
-from mindspore.train.serialization import export
+from mindspore import Tensor, export
 from src.config import set_config
 from src.args import export_parse_args
 from src.models import define_net, load_ckpt

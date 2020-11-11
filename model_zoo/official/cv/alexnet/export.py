@@ -20,9 +20,7 @@ import argparse
 import numpy as np
 
 import mindspore as ms
-from mindspore import Tensor
-from mindspore import context
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
 
 from src.config import alexnet_cifar10_cfg, alexnet_imagenet_cfg
 from src.alexnet import AlexNet

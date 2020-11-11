@@ -16,8 +16,7 @@
 import argparse
 import numpy as np
 
-from mindspore import Tensor
-from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
+from mindspore import Tensor, export, load_checkpoint, load_param_into_net
 
 from src.unet.unet_model import UNet
 

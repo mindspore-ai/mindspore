@@ -20,5 +20,11 @@ Helper functions in train piplines.
 from .model import Model
 from .dataset_helper import DatasetHelper, connect_network_with_dataset
 from . import amp
+from .amp import build_train_network
+from .loss_scale_manager import LossScaleManager, FixedLossScaleManager, DynamicLossScaleManager
+from .serialization import save_checkpoint, load_checkpoint, load_param_into_net, export, parse_print,\
+    build_searched_strategy, merge_sliced_parameter
 
-__all__ = ["Model", "DatasetHelper", "amp", "connect_network_with_dataset"]
+__all__ = ["Model", "DatasetHelper", "amp", "connect_network_with_dataset", "build_train_network", "LossScaleManager",
+           "FixedLossScaleManager", "DynamicLossScaleManager", "save_checkpoint", "load_checkpoint",
+           "load_param_into_net", "export", "parse_print", "build_searched_strategy", "merge_sliced_parameter"]

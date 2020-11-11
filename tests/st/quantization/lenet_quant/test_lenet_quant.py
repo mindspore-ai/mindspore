@@ -24,7 +24,7 @@ from mindspore.common import dtype as mstype
 import mindspore.nn as nn
 from mindspore.nn.metrics import Accuracy
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import load_checkpoint, load_param_into_net, export
 from mindspore.train import Model
 from mindspore.compression.quant import QuantizationAwareTraining
 from mindspore.compression.quant.quant_utils import load_nonquant_param_into_quant_net

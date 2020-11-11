@@ -16,8 +16,7 @@
 import argparse
 import numpy as np
 
-from mindspore import Tensor, context
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
 from src.warpctc import StackedRNN
 from src.config import config
