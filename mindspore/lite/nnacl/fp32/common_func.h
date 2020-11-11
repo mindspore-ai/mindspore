@@ -39,27 +39,23 @@ float ShortToFloat32(uint16_t src_value);
 
 uint16_t Float32ToShort(float src_value);
 
-#ifdef ENABLE_X86_64_SSE
-void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
-                        size_t plane_size, size_t stride, size_t relu_type);
-void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
-                        size_t plane_size, size_t plane_stride, size_t relu_type);
-#endif
-
-#ifdef ENABLE_ARM
+#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
 void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
                       size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
                       size_t in_sw_step, size_t in_kh_step, size_t in_kw_step, size_t relu, size_t relu6);
+void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
+                      size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu, size_t relu6);
 void DeconvDwFp32Center(float *dst, const float *src, const float *weight, size_t height, size_t width, size_t kernel_h,
                         size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step, size_t in_sw_step,
                         size_t in_kh_step, size_t in_kw_step);
-void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, size_t num_pixels,
-                   size_t output_channel, size_t input_step);
-
-void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
-                      size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu, size_t relu6);
 void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
                         size_t plane_size, size_t stride, size_t relu_type);
+#endif
+
+#ifdef ENABLE_ARM
+
+void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, size_t num_pixels,
+                   size_t output_channel, size_t input_step);
 void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
                         size_t plane_size, size_t plane_stride, size_t relu_type);
 #endif

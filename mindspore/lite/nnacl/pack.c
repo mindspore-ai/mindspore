@@ -743,6 +743,7 @@ void PackNCHWToNHWCInt8(const void *src, void *dst, int batch, int plane, int ch
   return;
 }
 
+#ifndef ENABLE_X86_64_SSE
 void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel) {
   int hw8 = plane / C8NUM * C8NUM;
   int c8 = channel / C8NUM * C8NUM;
@@ -928,6 +929,7 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
   }
   return;
 }
+#endif
 
 void PackNHWCToNCHWInt8(const void *src, void *dst, int batches, int plane, int channel) {
   int hw8 = plane / C8NUM * C8NUM;
