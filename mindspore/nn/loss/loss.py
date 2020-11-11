@@ -291,6 +291,15 @@ class SampledSoftmaxLoss(_Loss):
     Outputs:
         Tensor, a tensor of shape (N) with the per-example sampled softmax losses.
 
+    Examples:
+        >>> loss = nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, num_true=1)
+        >>> weights = Tensor(np.random.randint(0, 9, [7, 10]), mindspore.float32)
+        >>> biases = Tensor(np.random.randint(0, 9, [7]), mindspore.float32)
+        >>> labels = Tensor([0, 1, 2])
+        >>> inputs = Tensor(np.random.randint(0, 9, [3, 10]), mindspore.float32)
+        >>> output = loss(weights, biases, labels, inputs)
+        >>> print(output)  # output is ranndom
+        [ 4.0181947 46.050743   7.0009117]
     """
 
     def __init__(self, num_sampled, num_classes, num_true=1,
