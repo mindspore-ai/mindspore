@@ -104,11 +104,11 @@ OcRes4_1:
   b OcRes4End
 
 OcRes4_2:
-  ld1 {v15.h}[0], [x16]
+  ld1 {v15.d}[0], [x16]
   b OcRes4End
 
 OcRes4_3:
-  ld1 {v15.h}[0], [x16]
+  ld1 {v15.d}[0], [x16]
   add x16, x16, #8
   ld1 {v15.s}[2], [x16]
   b OcRes4End

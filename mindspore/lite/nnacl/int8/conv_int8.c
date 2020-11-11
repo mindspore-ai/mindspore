@@ -406,12 +406,12 @@ void Conv1x1PreOptPeroc(const int8_t *src_input, int8_t *packed_input, int32_t *
 
       "14: \n"
       "ld1 {v16.4s}, [x10], #16\n"
-      "ld1 {v17.h}[0], [x10] \n"
+      "ld1 {v17.d}[0], [x10] \n"
       "b 16f \n"
 
       "15: \n"
       "ld1 {v16.4s}, [x10], #16\n"
-      "ld1 {v17.h}[0], [x10] \n"
+      "ld1 {v17.d}[0], [x10] \n"
       "add x10, x10, #8 \n"
       "ld1 {v17.s}[2], [x10] \n"
       "b 16f \n"
