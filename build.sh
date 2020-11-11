@@ -598,6 +598,9 @@ build_opencv() {
 }
 
 build_jpeg_turbo() {
+    if [ -d  "${BASEPATH}"/third_party/libjpeg-turbo/lib ];then
+        rm -rf "${BASEPATH}"/third_party/libjpeg-turbo/lib
+    fi
     cd ${BASEPATH}
     if [[ "${LITE_PLATFORM}" == "x86_64" ]]; then
         JPEG_TURBO="${BASEPATH}"/third_party/libjpeg-turbo/lib/libjpeg.so.62.3.0

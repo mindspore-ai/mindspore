@@ -59,6 +59,20 @@ LiteMat::LiteMat(int width, int height, LDataType data_type) {
   Init(width, height, data_type);
 }
 
+LiteMat::LiteMat(int width, int height, void *p_data, LDataType data_type) {
+  data_ptr_ = 0;
+  elem_size_ = 0;
+  width_ = 0;
+  height_ = 0;
+  channel_ = 0;
+  c_step_ = 0;
+  dims_ = 0;
+  data_type_ = LDataType::UINT8;
+  ref_count_ = 0;
+  size_ = 0;
+  Init(width, height, p_data, data_type);
+}
+
 LiteMat::LiteMat(int width, int height, int channel, LDataType data_type) {
   data_ptr_ = 0;
   elem_size_ = 0;
@@ -74,17 +88,17 @@ LiteMat::LiteMat(int width, int height, int channel, LDataType data_type) {
 }
 
 LiteMat::LiteMat(int width, int height, int channel, void *p_data, LDataType data_type) {
-  data_type_ = data_type;
-  InitElemSize(data_type);
-  width_ = width;
-  height_ = height;
-  dims_ = 3;
-  channel_ = channel;
-  c_step_ = height_ * width_;
-  size_ = c_step_ * channel_ * elem_size_;
-  data_ptr_ = p_data;
-  ref_count_ = new int[1];
-  *ref_count_ = 0;
+  data_ptr_ = 0;
+  elem_size_ = 0;
+  width_ = 0;
+  height_ = 0;
+  channel_ = 0;
+  c_step_ = 0;
+  dims_ = 0;
+  data_type_ = LDataType::UINT8;
+  ref_count_ = 0;
+  size_ = 0;
+  Init(width, height, channel, p_data, data_type);
 }
 
 LiteMat::~LiteMat() { Release(); }
@@ -153,7 +167,6 @@ void LiteMat::Init(int width, int height, LDataType data_type) {
   Release();
   data_type_ = data_type;
   InitElemSize(data_type);
-
   width_ = width;
   height_ = height;
   dims_ = 2;
@@ -163,6 +176,20 @@ void LiteMat::Init(int width, int height, LDataType data_type) {
   data_ptr_ = AlignMalloc(size_);
   ref_count_ = new int[1];
   *ref_count_ = 1;
+}
+
+void LiteMat::Init(int width, int height, void *p_data, LDataType data_type) {
+  data_type_ = data_type;
+  InitElemSize(data_type);
+  width_ = width;
+  height_ = height;
+  dims_ = 2;
+  channel_ = 1;
+  c_step_ = height_ * width_;
+  size_ = c_step_ * channel_ * elem_size_;
+  data_ptr_ = p_data;
+  ref_count_ = new int[1];
+  *ref_count_ = 0;
 }
 
 void LiteMat::Init(int width, int height, int channel, LDataType data_type) {
@@ -175,11 +202,23 @@ void LiteMat::Init(int width, int height, int channel, LDataType data_type) {
   channel_ = channel;
   c_step_ = ((height_ * width_ * elem_size_ + ALIGN - 1) & (-ALIGN)) / elem_size_;
   size_ = c_step_ * channel_ * elem_size_;
-
   data_ptr_ = AlignMalloc(size_);
-
   ref_count_ = new int[1];
   *ref_count_ = 1;
+}
+
+void LiteMat::Init(int width, int height, int channel, void *p_data, LDataType data_type) {
+  data_type_ = data_type;
+  InitElemSize(data_type);
+  width_ = width;
+  height_ = height;
+  dims_ = 3;
+  channel_ = channel;
+  c_step_ = height_ * width_;
+  size_ = c_step_ * channel_ * elem_size_;
+  data_ptr_ = p_data;
+  ref_count_ = new int[1];
+  *ref_count_ = 0;
 }
 
 bool LiteMat::IsEmpty() const { return data_ptr_ == 0 || data_ptr_ == nullptr || c_step_ * channel_ == 0; }

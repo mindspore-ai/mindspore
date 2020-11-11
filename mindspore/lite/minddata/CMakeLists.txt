@@ -105,6 +105,11 @@ if (BUILD_MINDDATA STREQUAL "full")
             "${MINDDATA_DIR}/engine/datasetops/cache_base_op.cc"
             "${MINDDATA_DIR}/engine/datasetops/cache_lookup_op.cc"
             "${MINDDATA_DIR}/engine/datasetops/cache_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/concat_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/rename_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/skip_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/take_op.cc"
+            "${MINDDATA_DIR}/engine/datasetops/zip_op.cc"
             )
 
     list(REMOVE_ITEM MINDDATA_ENGINE_DATASETOPS_SOURCE_SRC_FILES
@@ -113,6 +118,16 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/engine/datasetops/source/manifest_op.cc"
         "${MINDDATA_DIR}/engine/datasetops/source/mindrecord_op.cc"
         "${MINDDATA_DIR}/engine/datasetops/source/tf_reader_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/celeba_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/cifar_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/clue_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/coco_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/csv_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/image_folder_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/mnist_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/random_data_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/text_file_op.cc"
+        "${MINDDATA_DIR}/engine/datasetops/source/voc_op.cc"
         )
 
     list(REMOVE_ITEM MINDDATA_ENGINE_DATASETOPS_SOURCE_SAMPLER_SRC_FILES
@@ -138,6 +153,17 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/engine/ir/datasetops/source/minddata_node.cc"
         "${MINDDATA_DIR}/engine/ir/datasetops/source/tf_record_node.cc"
         "${MINDDATA_DIR}/engine/ir/datasetops/source/voc_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/celeba_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/cifar10_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/cifar100_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/coco_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/csv_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/image_folder_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/manifest_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/mnist_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/random_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/text_file_node.cc"
+        "${MINDDATA_DIR}/engine/ir/datasetops/source/clue_node.cc"
         )
     list(REMOVE_ITEM MINDDATA_KERNELS_IMAGE_SRC_FILES
         "${MINDDATA_DIR}/kernels/image/affine_op.cc"
@@ -148,7 +174,7 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/kernels/image/cut_out_op.cc"
         "${MINDDATA_DIR}/kernels/image/cutmix_batch_op.cc"
         "${MINDDATA_DIR}/kernels/image/equalize_op.cc"
-	"${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc"
+	    "${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc"
         "${MINDDATA_DIR}/kernels/image/image_utils.cc"
         "${MINDDATA_DIR}/kernels/image/invert_op.cc"
         "${MINDDATA_DIR}/kernels/image/math_utils.cc"
@@ -160,28 +186,28 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/kernels/image/random_crop_and_resize_with_bbox_op.cc"
         "${MINDDATA_DIR}/kernels/image/random_crop_decode_resize_op.cc"
         "${MINDDATA_DIR}/kernels/image/random_crop_and_resize_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_crop_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_crop_with_bbox_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_with_bbox_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_posterize_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_resize_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_rotation_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_select_subpolicy_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_solarize_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_vertical_flip_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_vertical_flip_with_bbox_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_sharpness_op.cc"
-            "${MINDDATA_DIR}/kernels/image/rescale_op.cc"
-            "${MINDDATA_DIR}/kernels/image/rgba_to_bgr_op.cc"
-            "${MINDDATA_DIR}/kernels/image/rgba_to_rgb_op.cc"
-            "${MINDDATA_DIR}/kernels/image/sharpness_op.cc"
-            "${MINDDATA_DIR}/kernels/image/solarize_op.cc"
-            "${MINDDATA_DIR}/kernels/image/swap_red_blue_op.cc"
-            "${MINDDATA_DIR}/kernels/image/uniform_aug_op.cc"
-            "${MINDDATA_DIR}/kernels/image/resize_with_bbox_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_resize_with_bbox_op.cc"
-            "${MINDDATA_DIR}/kernels/image/random_color_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_crop_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_horizontal_flip_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_posterize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_resize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_rotation_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_select_subpolicy_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_solarize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_vertical_flip_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_vertical_flip_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_sharpness_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rescale_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rgba_to_bgr_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rgba_to_rgb_op.cc"
+        "${MINDDATA_DIR}/kernels/image/sharpness_op.cc"
+        "${MINDDATA_DIR}/kernels/image/solarize_op.cc"
+        "${MINDDATA_DIR}/kernels/image/swap_red_blue_op.cc"
+        "${MINDDATA_DIR}/kernels/image/uniform_aug_op.cc"
+        "${MINDDATA_DIR}/kernels/image/resize_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_resize_with_bbox_op.cc"
+        "${MINDDATA_DIR}/kernels/image/random_color_op.cc"
             )
 
     list(REMOVE_ITEM MINDDATA_ENGINE_IR_DATASETOPS_SRC_FILES
@@ -190,6 +216,12 @@ if (BUILD_MINDDATA STREQUAL "full")
             "${MINDDATA_DIR}/engine/ir/datasetops/build_vocab_node.cc"
             "${MINDDATA_DIR}/engine/ir/datasetops/filter_node.cc"
             "${MINDDATA_DIR}/engine/ir/datasetops/sync_wait_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/skip_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/take_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/transfer_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/zip_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/rename_node.cc"
+            "${MINDDATA_DIR}/engine/ir/datasetops/concat_node.cc"
             )
     list(REMOVE_ITEM MINDDATA_ENGINE_CONSUMERS_SRC_FILES
             "${MINDDATA_DIR}/engine/consumers/python_tree_consumer.cc"
@@ -204,9 +236,9 @@ if (BUILD_MINDDATA STREQUAL "full")
             )
     include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
 
-    if (BUILD_MINDDATA_EXAMPLE AND (PLATFORM_ARM32 OR PLATFORM_ARM64))
-      set(MINDDATA_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/example/jni-example.cc)
-    endif ()
+#    if (BUILD_MINDDATA_EXAMPLE AND (PLATFORM_ARM32 OR PLATFORM_ARM64))
+#      set(MINDDATA_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/example/jni-example.cc)
+#    endif ()
 
     add_library(minddata-lite SHARED
             ${MINDDATA_API_SRC_FILES}
@@ -242,9 +274,6 @@ if (BUILD_MINDDATA STREQUAL "full")
         securec
         jpeg-turbo
         jpeg
-	#opencv_core
-	#opencv_imgcodecs
-	#opencv_imgproc
         mindspore::json
         )
 
@@ -260,11 +289,11 @@ if (BUILD_MINDDATA STREQUAL "full")
     if (PLATFORM_ARM32 OR PLATFORM_ARM64)
         target_link_libraries(minddata-lite log)
     elseif (BUILD_MINDDATA_EXAMPLE)
-        add_executable(mdlite-example ${CMAKE_CURRENT_SOURCE_DIR}/example/x86-example.cc)
-        target_link_libraries(mdlite-example minddata-lite)
-        add_custom_command(TARGET mdlite-example POST_BUILD
-            COMMAND cp -rf ${CMAKE_CURRENT_SOURCE_DIR}/example/testCifar10Data ${CMAKE_BINARY_DIR}/minddata
-            )
+        # add_executable(mdlite-example ${CMAKE_CURRENT_SOURCE_DIR}/example/x86-example.cc)
+        # target_link_libraries(mdlite-example minddata-lite)
+        # add_custom_command(TARGET mdlite-example POST_BUILD
+        #     COMMAND cp -rf ${CMAKE_CURRENT_SOURCE_DIR}/example/testCifar10Data ${CMAKE_BINARY_DIR}/minddata
+        #     )
     endif()
 elseif (BUILD_MINDDATA STREQUAL "lite")
     list(REMOVE_ITEM MINDDATA_CORE_SRC_FILES "${MINDDATA_DIR}/core/client.cc")
