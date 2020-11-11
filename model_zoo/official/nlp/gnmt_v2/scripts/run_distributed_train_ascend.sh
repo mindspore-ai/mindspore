@@ -28,7 +28,6 @@ do
     mkdir ${current_exec_path}/device$i
     cd ${current_exec_path}/device$i || exit
     cp ../../*.py .
-    cp ../../*.sh .
     cp -r ../../src .
     cp -r ../../config .
     export RANK_ID=$i
