@@ -48,12 +48,10 @@ Status CachePool::DoServiceStop() {
   }
   sm_.reset();
 
-  value_allocator alloc(mp_);
-  for (auto &bl : *tree_) {
-    if (bl.ptr != nullptr) {
-      alloc.deallocate(bl.ptr, bl.sz);
-    }
-  }
+  // We used to free the memory allocated from each DataLocator but
+  // since all of them are coming from NumaMemoryPool and we will
+  // skip this and release the whole NumaMemoryPool instead. Otherwise
+  // release each buffer in the DataLocator one by one.
 
   tree_.reset();
   if (!root_.toString().empty()) {

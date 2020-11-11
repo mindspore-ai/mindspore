@@ -339,7 +339,7 @@ def test_cache_nomap_basic8():
          |
       TFReader
     """
-    logger.info("Test cache basic 4")
+    logger.info("Test cache basic 8")
     if "SESSION_ID" in os.environ:
         session_id = int(os.environ['SESSION_ID'])
     else:
@@ -355,7 +355,33 @@ def test_cache_nomap_basic8():
 
     logger.info("Number of data in ds1: {} ".format(num_iter))
     assert num_iter == 3
-    logger.info('test_cache_basic3 Ended.\n')
+    logger.info('test_cache_basic8 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_basic9():
+    """
+    Testing the GetStat interface for getting some info from server, but this should fail if the cache is not created
+    in a pipeline.
+    """
+
+    logger.info("Test cache nomap basic 9")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # Contact the server to get the statistics, this should fail because we have not used this cache in any pipeline
+    # so there will not be any cache to get stats on.
+    with pytest.raises(RuntimeError) as e:
+        stat = some_cache.GetStat()
+        cache_sz = stat.avg_cache_sz
+        logger.info("Average row cache size: {}".format(cache_sz))
+    assert "Unexpected error" in str(e.value)
+
+    logger.info("test_cache_nomap_basic9 Ended.\n")
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")

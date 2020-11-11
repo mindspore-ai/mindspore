@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include <unistd.h>
 #include <algorithm>
 #include <cerrno>
@@ -351,7 +352,10 @@ Status CacheAdminArgHandler::RunCommand() {
       // have to wait for its complete shutdown because the server will shutdown
       // the comm layer as soon as the request is received, and we need to wait
       // on the message queue instead.
-      // The server will remove the queue and we will then wake up.
+      // The server will remove the queue and we will then wake up. But on the safe
+      // side, we will also set up an alarm and kill this proocess if we hang on
+      // the message queue.
+      alarm(15);
       Status dummy_rc;
       (void)msg.ReceiveStatus(&dummy_rc);
       break;

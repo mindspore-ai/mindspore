@@ -230,6 +230,9 @@ Status CacheClient::DestroyCache() {
 Status CacheClient::GetStat(CacheServiceStat *stat) {
   SharedLock lck(&mux_);
   RETURN_UNEXPECTED_IF_NULL(stat);
+  // GetStat has an external interface, so we have to make sure we have a valid connection id first
+  CHECK_FAIL_RETURN_UNEXPECTED(server_connection_id_ != 0, "GetStat called but the cache is not in use yet.");
+
   auto rq = std::make_shared<GetStatRequest>(server_connection_id_);
   RETURN_IF_NOT_OK(PushRequest(rq));
   RETURN_IF_NOT_OK(rq->Wait());
