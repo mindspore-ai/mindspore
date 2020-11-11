@@ -1,10 +1,10 @@
 package com.mindspore.himindspore.imageclassification.ui;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.mindspore.himindspore.R;
 
@@ -19,8 +19,8 @@ public class ImageMainActivity extends AppCompatActivity {
         findViewById(R.id.btn_demo).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(ImageMainActivity.this,ImageCameraActivity.class);
-                intent.putExtra(ImageCameraActivity.OPEN_TYPE,ImageCameraActivity.TYPE_DEMO);
+                Intent intent = new Intent(ImageMainActivity.this, ImageCameraActivity.class);
+                intent.putExtra(ImageCameraActivity.OPEN_TYPE, ImageCameraActivity.TYPE_DEMO);
                 startActivity(intent);
             }
         });
@@ -28,8 +28,8 @@ public class ImageMainActivity extends AppCompatActivity {
         findViewById(R.id.btn_custom).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(ImageMainActivity.this,ImageCameraActivity.class);
-                intent.putExtra(ImageCameraActivity.OPEN_TYPE,ImageCameraActivity.TYPE_CUSTOM);
+                Intent intent = new Intent(ImageMainActivity.this, ImageCameraActivity.class);
+                intent.putExtra(ImageCameraActivity.OPEN_TYPE, ImageCameraActivity.TYPE_CUSTOM);
                 startActivity(intent);
             }
         });

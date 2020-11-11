@@ -51,6 +51,11 @@ android {
     packagingOptions{
         pickFirst 'lib/arm64-v8a/libmlkit-label-MS.so'
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 // Before gradle build.
@@ -69,4 +74,15 @@ dependencies {
     implementation 'com.sun.mail:android-mail:1.6.5'
     implementation 'com.sun.mail:android-activation:1.6.5'
 
+
+    implementation 'com.trello.rxlifecycle2:rxlifecycle:2.2.2'
+    implementation 'com.trello.rxlifecycle2:rxlifecycle-components:2.2.2'
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.1'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.9.0'
+
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
+    implementation 'org.greenrobot:eventbus:3.0.0'
 }

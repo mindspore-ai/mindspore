@@ -23,9 +23,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.UiThread;
@@ -65,10 +63,10 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     private GarbageTrackingMobile garbageTrackingMobile;
 
     @Override
-    protected void onCreate( Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_camera);
-        enterType = getIntent().getIntExtra(OPEN_TYPE,TYPE_DEMO);
+        enterType = getIntent().getIntExtra(OPEN_TYPE, TYPE_DEMO);
 
         cameraPreview = findViewById(R.id.image_camera_preview);
         bottomLayout = findViewById(R.id.layout_bottom_content);
@@ -77,12 +75,12 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     }
 
     private void init() {
-        if(enterType == TYPE_DEMO) {
+        if (enterType == TYPE_DEMO) {
             mTrackingMobile = new ImageTrackingMobile(this);
             String modelPath = "model/mobilenetv2.ms";
             boolean ret = mTrackingMobile.loadModelFromBuf(modelPath);
             Log.d(TAG, "Loading model return value: " + ret);
-        }else {
+        } else {
             garbageTrackingMobile = new GarbageTrackingMobile(this);
             String garbageModelPath = "model/garbage_mobilenetv2.ms";
             boolean garbageRet = garbageTrackingMobile.loadModelFromBuf(garbageModelPath);
@@ -95,9 +93,9 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     @Override
     protected void onResume() {
         super.onResume();
-        if(enterType == TYPE_DEMO) {
+        if (enterType == TYPE_DEMO) {
             cameraPreview.onResume(this, CameraPreview.OPEN_TYPE_IMAGE, mTrackingMobile);
-        }else{
+        } else {
             cameraPreview.onResume(this, CameraPreview.OPEN_TYPE_IMAGE_CUSTOM, garbageTrackingMobile);
         }
     }
@@ -105,7 +103,7 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     @Override
     protected void onPause() {
         super.onPause();
-            cameraPreview.onPause();
+        cameraPreview.onPause();
     }
 
     @Override
@@ -124,7 +122,7 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
 
     @Override
     public void onRecognitionDataCallBack(final String result, final String time) {
-         if(enterType == TYPE_DEMO) {
+        if (enterType == TYPE_DEMO) {
             if (recognitionObjectBeanList != null) {
                 recognitionObjectBeanList.clear();
             } else {
@@ -175,10 +173,10 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
                 horTextView.setLeftTitle(bean.getName());
                 horTextView.setRightContent(String.format("%.2f", (100 * bean.getScore())) + "%");
                 horTextView.setBottomLineVisible(View.VISIBLE);
-                if (classNum == 1){
+                if (classNum == 1) {
                     horTextView.getTvLeftTitle().setTextColor(getResources().getColor(R.color.text_blue));
                     horTextView.getTvRightContent().setTextColor(getResources().getColor(R.color.text_blue));
-                }else{
+                } else {
                     horTextView.getTvLeftTitle().setTextColor(getResources().getColor(R.color.white));
                     horTextView.getTvRightContent().setTextColor(getResources().getColor(R.color.white));
                 }
@@ -212,7 +210,7 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
         }
     }
 
-    private void showLoadView(){
+    private void showLoadView() {
         TextView textView = new TextView(this);
         textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         textView.setText("Keep moving.");

@@ -1,12 +1,12 @@
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
 
-import com.mindspore.himindspore.track.TrackListener;
+import com.mindspore.himindspore.base.TrackListener;
 
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -60,7 +60,7 @@ public class ImageTrackingMobile implements TrackListener {
 
     /**
      * Running model.
-     * 
+     *
      * @param netEnv Inference environment address.
      * @param img A picture to be inferred.
      * @return Inference result
@@ -69,7 +69,7 @@ public class ImageTrackingMobile implements TrackListener {
 
     /**
      * Unbind model data.
-     * 
+     *
      * @param netEnv Inference environment address.
      * @return Unbound state.
      */
@@ -77,14 +77,14 @@ public class ImageTrackingMobile implements TrackListener {
 
     /**
      * The C++ side is encapsulated into a method of the MSNetWorks class
-     * 
+     *
      * @param modelPath Model file location
      * @return Load model file status
      */
     public boolean loadModelFromBuf(String modelPath) {
         ByteBuffer buffer = loadModelFile(modelPath);
         netEnv = loadModel(buffer, 2);  //numThread's default setting is 2.
-        if (netEnv == 0){ // Loading model failed.
+        if (netEnv == 0) { // Loading model failed.
             return false;
         }
 
@@ -111,7 +111,7 @@ public class ImageTrackingMobile implements TrackListener {
     /**
      * Load model file stream.
      * @param modelPath Model file path.
-     * @return  Model ByteBuffer.
+     * @return Model ByteBuffer.
      */
     public ByteBuffer loadModelFile(String modelPath) {
         InputStream is = null;
