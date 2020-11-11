@@ -47,18 +47,18 @@ constexpr size_t kNopNodeRealInputIndex = 1;
 
 bool IsShapeDynamic(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
-  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int s) { return s < 0; });
+  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
 }
 
 bool IsShapeDynamic(const std::vector<size_t> &shape) {
-  return std::any_of(shape.begin(), shape.end(), [](int s) { return s < 0; });
+  return std::any_of(shape.begin(), shape.end(), [](int64_t s) { return s < 0; });
 }
 
 std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
   MS_EXCEPTION_IF_NULL(shape);
   std::vector<size_t> shape_size_t;
   if (IsShapeDynamic(shape)) {
-    if (std::all_of(shape->max_shape().begin(), shape->max_shape().end(), [](int s) { return s >= 0; })) {
+    if (std::all_of(shape->max_shape().begin(), shape->max_shape().end(), [](int64_t s) { return s >= 0; })) {
       std::transform(shape->max_shape().begin(), shape->max_shape().end(), std::back_inserter(shape_size_t),
                      LongToSize);
     } else {
