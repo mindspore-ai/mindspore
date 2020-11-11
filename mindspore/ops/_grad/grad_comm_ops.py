@@ -225,7 +225,8 @@ def get_bprop_virtual_div_operator(self):
 
     def bprop(x, out, dout):
         if F.issubclass_(F.typeof(dout), mstype.tensor):
-            if F.issubclass_(F.dtype(dout), mstype.bool_):
+            if F.issubclass_(F.dtype(dout), mstype.bool_) or F.issubclass_(F.dtype(dout), mstype.int32) \
+                                     or F.issubclass_(F.dtype(dout), mstype.int16):
                 return (dout,)
             dx = op(dout, cast(F.scalar_to_array(divisor), dtype(dout)))
             return (dx,)
