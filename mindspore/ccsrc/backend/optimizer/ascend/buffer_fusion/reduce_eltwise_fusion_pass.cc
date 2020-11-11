@@ -64,6 +64,8 @@ void ReduceEltwiseFusionPass::MatchReduceEltwise(const CNodePtr &cnode, const se
       }
     }
     candidate_fusion->push_back(record);
+    std::vector<int64_t> output_used_num{SizeToLong(kernel_graph.manager()->node_users()[eltwise_input].size())};
+    AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), eltwise_input);
     SetRecordFusionId(record);
   }
 }
