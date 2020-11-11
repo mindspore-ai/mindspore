@@ -26,20 +26,7 @@ namespace kernel {
 template <typename T, typename S>
 class SparseFtrlGpuKernel : public GpuKernel {
  public:
-  SparseFtrlGpuKernel()
-      : variable_size_(0),
-        accumulation_size_(0),
-        linear_size_(0),
-        gradient_size_(0),
-        indices_size_(0),
-        lr_(0.0f),
-        l1_(0.0f),
-        l2_(0.0f),
-        lr_power_(0.0f),
-        use_locking_(false),
-        num_index_(0),
-        n_stride_(1) {}
-
+  SparseFtrlGpuKernel() { ResetResource(); }
   ~SparseFtrlGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -108,6 +95,24 @@ class SparseFtrlGpuKernel : public GpuKernel {
 
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    variable_size_ = 0;
+    accumulation_size_ = 0;
+    linear_size_ = 0;
+    gradient_size_ = 0;
+    indices_size_ = 0;
+    lr_ = 0.0f;
+    l1_ = 0.0f;
+    l2_ = 0.0f;
+    lr_power_ = 0.0f;
+    use_locking_ = false;
+    num_index_ = 0;
+    n_stride_ = 1;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

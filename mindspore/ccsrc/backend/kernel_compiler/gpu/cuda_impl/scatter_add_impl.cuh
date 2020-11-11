@@ -20,7 +20,7 @@
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T>
-void CalScatterAdd(const int &input_size, const int &inner_size, const int &indices_size, const bool &use_locking,
-                   const T *input, const int *indices, const T *updates, T *output, cudaStream_t cuda_stream);
+void CalScatterAdd(const int &inner_size, const int &indices_size, const bool &use_locking, const int *indices,
+                   const T *updates, T *output, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_SCATTER_ADD_IMPL_CUH_
