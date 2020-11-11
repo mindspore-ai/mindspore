@@ -121,9 +121,6 @@ GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNode
   MS_LOG(INFO) << "Start";
   // construct graph, if successfully, graph_sum_ + 1
   auto graph = ConstructKernelGraph(lst, outputs);
-  // Update Graph Dynamic Shape Attr
-  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
-  graph->UpdateGraphDynamicAttr();
   auto graph_id = graph->graph_id();
   MS_LOG(INFO) << "Compile graph " << graph_id << " success";
   return graph_id;

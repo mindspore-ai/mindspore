@@ -376,8 +376,7 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   InnerSetContext();
   if (graph->is_dynamic_shape()) {
     if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
-      MS_LOG(EXCEPTION)
-        << "Dynamic shape is not supported with dataset_sink_mode=True. Please set dataset_sink_mode=False";
+      MS_LOG(EXCEPTION) << "Dynamic shape is not supported with sink mode.";
     }
     if (DumpJsonParser::GetInstance().async_dump_enabled()) {
       MS_LOG(EXCEPTION) << "Dynamic shape is not supported with asyn dump. Please use other debugging methods.";

@@ -851,6 +851,10 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   if (ExistSummaryNode(graph.get())) {
     graph->set_summary_node_exist(true);
   }
+
+  // Update Graph Dynamic Shape Attr
+  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+
   opt::BackendCommonOptimization(graph);
   graph->SetInputNodes();
   graph->SetOptimizerFlag();
@@ -1493,6 +1497,7 @@ void SessionBasic::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &ro
       MS_LOG(INFO) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
     }
   }
+  root_graph->UpdateGraphDynamicAttr();
 }
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
