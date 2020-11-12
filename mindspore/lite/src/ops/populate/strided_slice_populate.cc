@@ -41,6 +41,7 @@ OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *pr
   memcpy(strided_slice_param->strides_, (stride.data()), stride.size() * sizeof(int));
   auto in_shape = ((lite::StridedSlice *)primitive)->GetInShape();
   memcpy(strided_slice_param->in_shape_, (in_shape.data()), in_shape.size() * sizeof(int));
+  strided_slice_param->in_shape_length_ = static_cast<int>(in_shape.size());
   return reinterpret_cast<OpParameter *>(strided_slice_param);
 }
 

@@ -17,9 +17,35 @@
 #include "tools/converter/parser/onnx/onnx_slice_parser.h"
 #include <memory>
 #include <vector>
+#include <string>
 
 namespace mindspore {
 namespace lite {
+STATUS OnnxSliceParser::InsertTensor(const std::vector<int> &onnx_val, const std::string &name,
+                                     onnx::NodeProto *onnx_node) {
+  std::unique_ptr<schema::TensorT> tensor = std::make_unique<schema::TensorT>();
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "new tensor failed";
+    return RET_ERROR;
+  }
+  tensor->dataType = mindspore::kNumberTypeInt32;
+  tensor->dims.push_back(onnx_val.size());
+  tensor->format = schema::Format::Format_NCHW;
+  tensor->nodeType = schema::NodeType::NodeType_ValueNode;
+  int data_size = sizeof(int32_t) * onnx_val.size();
+  tensor->data.resize(data_size);
+  if (data_size != 0 &&
+      memcpy_s(static_cast<void *>(tensor->data.data()), data_size, onnx_val.data(), data_size) != EOK) {
+    MS_LOG(ERROR) << "memcpy_s failed";
+    return RET_ERROR;
+  }
+  int tensor_num = OnnxTensorParser::GetInstance()->GetTensorCache()->GetCachedTensor().size();
+  std::string tensor_name = name + std::to_string(tensor_num);
+  OnnxTensorParser::GetInstance()->GetTensorCache()->AddTensor(tensor_name, tensor.release(), GRAPH_INPUT);
+  onnx_node->add_input(tensor_name);
+  return RET_OK;
+}
+
 STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                               schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx SliceParser";
@@ -33,15 +59,15 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
     return RET_NULL_PTR;
   }
 
-  std::unique_ptr<schema::SliceT> attr = std::make_unique<schema::SliceT>();
+  std::unique_ptr<schema::StridedSliceT> attr = std::make_unique<schema::StridedSliceT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
 
-  std::vector<int> axes;
   std::vector<int> starts;
   std::vector<int> ends;
+  std::vector<int> axes;
   std::vector<int> steps;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
@@ -71,64 +97,49 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
       }
     }
   }
-
-  if (onnx_node.input_size() > 1) {
-    const auto &starts_name = onnx_node.input(1);
-    for (const auto &it : onnx_graph.initializer()) {
-      if (it.name() == starts_name) {
-        starts.clear();
-        for (int i = 0; i < it.int32_data_size(); ++i) {
-          starts.push_back(it.int32_data(i));
-        }
-      }
+  if (axes.empty()) {
+    for (size_t i = 0; i < starts.size(); ++i) {
+      axes.push_back(i);
     }
   }
-
-  if (onnx_node.input_size() > 2) {
-    const auto &ends_name = onnx_node.input(2);
-    for (const auto &it : onnx_graph.initializer()) {
-      if (it.name() == ends_name) {
-        ends.clear();
-        for (int i = 0; i < it.int32_data_size(); ++i) {
-          ends.push_back(it.int32_data(i));
-        }
-      }
+  if (steps.empty()) {
+    steps.assign(starts.size(), 1);
+  }
+  onnx::NodeProto *slice_node = nullptr;
+  for (auto &node : onnx_graph.node()) {
+    if (&node == &onnx_node) {
+      slice_node = const_cast<onnx::NodeProto *>(&node);
     }
   }
-
-  if (onnx_node.input_size() > 3) {
-    const auto &axes_name = onnx_node.input(3);
-    for (const auto &it : onnx_graph.initializer()) {
-      if (it.name() == axes_name) {
-        axes.clear();
-        for (int i = 0; i < it.int32_data_size(); ++i) {
-          axes.push_back(it.int32_data(i));
-        }
-      }
+  int insert_num = 5 - onnx_node.input_size();
+  int status = RET_OK;
+  switch (insert_num) {
+    case 4: {
+      std::string name = "slice/starts/";
+      status = InsertTensor(starts, name, slice_node);
     }
-  }
-
-  if (onnx_node.input_size() > 4) {
-    const auto &steps_name = onnx_node.input(4);
-    for (const auto &it : onnx_graph.initializer()) {
-      if (it.name() == steps_name) {
-        steps.clear();
-        for (int i = 0; i < it.int32_data_size(); ++i) {
-          steps.push_back(it.int32_data(i));
-        }
+    case 3:
+      if (status == RET_OK) {
+        std::string name = "slice/ends/";
+        status = InsertTensor(ends, name, slice_node);
       }
-    }
+    case 2:
+      if (status == RET_OK) {
+        std::string name = "slice/axes/";
+        status = InsertTensor(axes, name, slice_node);
+      }
+    case 1:
+      if (status == RET_OK) {
+        std::string name = "slice/steps/";
+        status = InsertTensor(steps, name, slice_node);
+      }
+    default:
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "onnx slice insert tensor failed";
+        return RET_ERROR;
+      }
   }
-
-  std::vector<int> sizes(starts.size(), -1);
-  for (size_t i = 0; i < starts.size(); ++i) {
-    sizes[i] = (ends[i] < 0 ? ends[i] : ends[i] - starts[i]);
-  }
-  attr->axes = axes;
-  attr->begin = starts;
-  attr->size = sizes;
-  attr->step = steps;
-  op->primitive->value.type = schema::PrimitiveType_Slice;
+  op->primitive->value.type = schema::PrimitiveType_StridedSlice;
   op->primitive->value.value = attr.release();
   return RET_OK;
 }
