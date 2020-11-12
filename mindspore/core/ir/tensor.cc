@@ -581,7 +581,8 @@ void Tensor::data_sync(bool need_wait) const {
   if (device_sync_ == nullptr) {
     return;
   }
-  if (!device_sync_->SyncDeviceToHost(shape(), static_cast<size_t>(data().nbytes()), data_type(), data_c())) {
+  auto address = device_sync_;
+  if (!address->SyncDeviceToHost(shape(), static_cast<size_t>(data().nbytes()), data_type(), data_c())) {
     MS_LOG(EXCEPTION) << "SyncDeviceToHost failed.";
   }
   sync_status_ = kNeedSyncHostToDevice;
