@@ -48,7 +48,7 @@ int BiasAdd::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
       return RET_ERROR;
     }
     if (prim.GetAttr("axis") == nullptr) {
-      MS_LOG(WARNING) << "get axis failed";
+      MS_LOG(INFO) << "BiasAdd's attr axis is set to default";
       attr->axis = {1};
     } else {
       attr->axis = GetValue<std::vector<int>>(prim.GetAttr("axis"));

@@ -53,7 +53,7 @@ int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
       return RET_ERROR;
     }
     if (prim.GetAttr("dims") == nullptr) {
-      MS_LOG(WARNING) << "get dims failed";
+      MS_LOG(INFO) << "Tile's attr dims is set to default";
       attr->dims = {1};
     } else {
       attr->dims = GetValue<std::vector<int>>(prim.GetAttr("dims"));

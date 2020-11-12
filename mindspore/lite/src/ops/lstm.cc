@@ -84,6 +84,8 @@ int Lstm::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   out_shape[2] = hidden_size;
   if (GetBidirection()) {
     out_shape.insert(out_shape.begin() + 1, 2);
+  } else {
+    out_shape.insert(out_shape.begin() + 1, 1);
   }
   output->set_shape(out_shape);
   // set hidden state, cell state

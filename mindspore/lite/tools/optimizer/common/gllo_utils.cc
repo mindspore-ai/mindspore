@@ -374,8 +374,7 @@ schema::PrimitiveType GetCNodeType(const BaseRef &n) {
   } else if (utils::isa<ValueNodePtr>(n)) {
     value_node = utils::cast<ValueNodePtr>(n);
   } else {
-    MS_LOG(ERROR) << "only value node or cnode has type";
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
+    MS_LOG(INFO) << "only value node or cnode has type";
     return schema::PrimitiveType_NONE;
   }
   if (value_node == nullptr) {

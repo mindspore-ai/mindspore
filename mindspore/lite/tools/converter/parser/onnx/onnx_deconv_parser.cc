@@ -27,7 +27,7 @@ bool OnnxDeConvParser::ParseGroupDeConvolution(const std::unique_ptr<schema::DeC
   }
   std::unique_ptr<schema::DeDepthwiseConv2DT> deDepthwiseConv2DParam = std::make_unique<schema::DeDepthwiseConv2DT>();
   if (deDepthwiseConv2DParam == nullptr) {
-    MS_LOG(WARNING) << "new op failed";
+    MS_LOG(ERROR) << "new op failed";
     return false;
   }
   deDepthwiseConv2DParam->format = attr->format;
