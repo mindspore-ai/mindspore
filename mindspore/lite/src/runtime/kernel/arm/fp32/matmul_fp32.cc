@@ -31,9 +31,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
-MatmulCPUKernel::~MatmulCPUKernel() { FreeTmpBuffer(); }
-
-void MatmulCPUKernel::FreeTmpBuffer() {
+MatmulCPUKernel::~MatmulCPUKernel() {
   if (a_pack_ptr_ != nullptr) {
     free(a_pack_ptr_);
     a_pack_ptr_ = nullptr;
@@ -45,6 +43,17 @@ void MatmulCPUKernel::FreeTmpBuffer() {
   if (bias_ptr_ != nullptr) {
     free(bias_ptr_);
     bias_ptr_ = nullptr;
+  }
+}
+
+void MatmulCPUKernel::FreeTmpBuffer() {
+  if (a_pack_ptr_ != nullptr) {
+    params_->a_const_ ? free(a_pack_ptr_) : context_->allocator->Free(a_pack_ptr_);
+    a_pack_ptr_ = nullptr;
+  }
+  if (b_pack_ptr_ != nullptr) {
+    params_->b_const_ ? free(b_pack_ptr_) : context_->allocator->Free(b_pack_ptr_);
+    b_pack_ptr_ = nullptr;
   }
 }
 
@@ -66,20 +75,28 @@ int MatmulCPUKernel::MallocMatrixABuffer() {
   params_->row_12_ = UP_ROUND(params_->row_, C12NUM);
 
 #if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
-  a_pack_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * params_->row_4_ * params_->deep_ * sizeof(float)));
+  if (params_->a_const_) {
+    a_pack_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * params_->row_4_ * params_->deep_ * sizeof(float)));
+  } else {
+    a_pack_ptr_ = reinterpret_cast<float *>(
+      context_->allocator->Malloc(params_->batch * params_->row_4_ * params_->deep_ * sizeof(float)));
+  }
   if (a_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
-  memset(a_pack_ptr_, 0, params_->row_4_ * params_->deep_ * sizeof(float));
 #else
   int row_tmp = is_vector_a_ ? 1 : params_->row_12_;
-  a_pack_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * row_tmp * params_->deep_ * sizeof(float)));
+  if (params_->a_const_) {
+    a_pack_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * row_tmp * params_->deep_ * sizeof(float)));
+  } else {
+    a_pack_ptr_ =
+      reinterpret_cast<float *>(context_->allocator->Malloc(params_->batch * row_tmp * params_->deep_ * sizeof(float)));
+  }
   if (a_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
-  memset(a_pack_ptr_, 0, params_->batch * row_tmp * params_->deep_ * sizeof(float));
 #endif
   return RET_OK;
 }
@@ -99,12 +116,16 @@ int MatmulCPUKernel::MallocMatrixBBuffer() {
   params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
 
   int col_tmp = is_vector_a_ ? params_->col_ : params_->col_8_;
-  b_pack_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * col_tmp * params_->deep_ * sizeof(float)));
+  if (params_->b_const_) {
+    b_pack_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * col_tmp * params_->deep_ * sizeof(float)));
+  } else {
+    b_pack_ptr_ =
+      reinterpret_cast<float *>(context_->allocator->Malloc(params_->batch * col_tmp * params_->deep_ * sizeof(float)));
+  }
   if (b_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
-  memset(b_pack_ptr_, 0, params_->batch * col_tmp * params_->deep_ * sizeof(float));
 
   thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_8_, 8));
   thread_stride_ = UP_DIV(UP_DIV(params_->col_8_, 8), thread_count_);
@@ -112,58 +133,32 @@ int MatmulCPUKernel::MallocMatrixBBuffer() {
 }
 
 int MatmulCPUKernel::InitBias() {
+  auto b_shape = in_tensors_[1]->shape();
+  auto c_shape = out_tensors_[0]->shape();
+  params_->col_ = params_->b_const_
+                    ? (params_->b_transpose_ ? b_shape[b_shape.size() - 2] : b_shape[b_shape.size() - 1])
+                    : (c_shape[c_shape.size() - 1]);
+  params_->col_8_ = UP_ROUND(params_->col_, 8);
+  auto col_tmp = is_vector_a_ ? params_->col_ : params_->col_8_;
+  bias_ptr_ = reinterpret_cast<float *>(malloc(col_tmp * sizeof(float)));
+  if (bias_ptr_ == nullptr) {
+    FreeTmpBuffer();
+    return RET_MEMORY_FAILED;
+  }
+  memset(bias_ptr_, 0, col_tmp * sizeof(float));
   if (in_tensors_.size() == 3) {
-    auto c_shape = out_tensors_[0]->shape();
-    auto bias_shape = in_tensors_[1]->shape();
-    if (bias_shape[bias_shape.size() - 1] != c_shape[c_shape.size() - 1]) {
-      MS_LOG(ERROR) << "The bias'dimension is not equal with colum";
-      FreeTmpBuffer();
-      return RET_INPUT_TENSOR_ERROR;
-    }
-    auto col = c_shape[c_shape.size() - 1];
-    auto col_8 = UP_ROUND(col, 8);
-    auto col_tmp = is_vector_a_ ? col : col_8;
-    bias_ptr_ = reinterpret_cast<float *>(malloc(col_tmp * sizeof(float)));
-    if (bias_ptr_ == nullptr) {
-      FreeTmpBuffer();
-      return RET_MEMORY_FAILED;
-    }
     memcpy(bias_ptr_, in_tensors_[2]->data_c(), in_tensors_[2]->ElementsNum() * sizeof(float));
   }
   return RET_OK;
 }
 
 int MatmulCPUKernel::ReSize() {
-  if (params_->a_const_ == false || params_->a_init_shape_ == false) {
-    if (a_pack_ptr_ != nullptr) {
-      free(a_pack_ptr_);
-      a_pack_ptr_ = nullptr;
-    }
-    auto ret = MallocMatrixABuffer();
+  if (!params_->b_const_) {
+    auto ret = InitBias();
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Matmul fp32 malloc matrix a buffer failed";
+      MS_LOG(ERROR) << "Matmul fp32 init bias failed";
       return RET_ERROR;
     }
-  }
-  if (params_->b_const_ == false || params_->b_init_shape_ == false) {
-    if (b_pack_ptr_ != nullptr) {
-      free(b_pack_ptr_);
-      b_pack_ptr_ = nullptr;
-    }
-    auto ret = MallocMatrixBBuffer();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Matmul fp32 malloc matrix b buffer failed";
-      return RET_ERROR;
-    }
-  }
-  if (bias_ptr_ != nullptr) {
-    free(bias_ptr_);
-    bias_ptr_ = nullptr;
-  }
-  auto ret = InitBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Matmul fp32 init bias failed";
-    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -222,40 +217,31 @@ void MatmulCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {
 }
 
 int MatmulCPUKernel::Init() {
-  params_->a_init_shape_ = (in_tensors_[0]->shape().size() != 0);
-  params_->b_init_shape_ = (in_tensors_[1]->shape().size() != 0);
-  if (params_->a_init_shape_ == true) {
-    auto ret = MallocMatrixABuffer();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Matmul fp32 malloc matrix a buffer failed";
-      return RET_ERROR;
-    }
-  }
-  if (params_->b_init_shape_ == true) {
-    auto ret = MallocMatrixBBuffer();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Matmul fp32 malloc matrix b buffer failed";
-      return RET_ERROR;
-    }
-  }
-
   params_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
   params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
-  if (params_->a_const_ == true) {
+  if (params_->a_const_) {
+    auto ret = MallocMatrixABuffer();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp32 malloc matrix Ａ buffer failed";
+      return RET_ERROR;
+    }
     InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
     a_ptr_ = a_pack_ptr_;
   }
-  if (params_->b_const_ == true) {
+  if (params_->b_const_) {
+    auto ret = MallocMatrixBBuffer();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp32 malloc matrix B buffer failed";
+      return RET_ERROR;
+    }
     InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
     b_ptr_ = b_pack_ptr_;
-  }
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  auto ret = InitBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Matmul fp32 init bias failed";
-    return RET_ERROR;
+    // init bias
+    ret = InitBias();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp32 init bias failed";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -291,7 +277,16 @@ int MatmulCPUKernel::Run() {
   auto b_src = reinterpret_cast<float *>(in_tensors_[1]->data_c());
   auto c_src = reinterpret_cast<float *>(out_tensors_[0]->data_c());
 
-  if (params_->a_const_ == false || is_train()) {
+  if (!params_->a_const_ || is_train()) {
+    if (a_pack_ptr_ != nullptr) {
+      params_->a_const_ ? free(a_pack_ptr_) : context_->allocator->Free(a_pack_ptr_);
+      a_pack_ptr_ = nullptr;
+    }
+    auto ret = MallocMatrixABuffer();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp32 malloc matrix a buffer failed";
+      return RET_ERROR;
+    }
     if (is_vector_a_) {
       a_ptr_ = a_src;
     } else {
@@ -299,7 +294,16 @@ int MatmulCPUKernel::Run() {
       a_ptr_ = a_pack_ptr_;
     }
   }
-  if (params_->b_const_ == false || is_train()) {
+  if (!params_->b_const_ || is_train()) {
+    if (b_pack_ptr_ != nullptr) {
+      params_->b_const_ ? free(b_pack_ptr_) : context_->allocator->Free(b_pack_ptr_);
+      b_pack_ptr_ = nullptr;
+    }
+    auto ret = MallocMatrixBBuffer();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp32 malloc matrix b buffer failed";
+      return RET_ERROR;
+    }
     if (is_vector_a_ && params_->b_transpose_) {
       b_ptr_ = b_src;
     } else {
@@ -318,7 +322,20 @@ int MatmulCPUKernel::Run() {
       cur_b_ptr_ = b_ptr_ + i * params_->deep_ * params_->col_8_;
       cur_c_ptr_ = c_src + i * params_->row_ * params_->col_;
     }
-    ParallelLaunch(this->context_->thread_pool_, MatmulFloatRun, this, thread_count_);
+    auto ret = ParallelLaunch(this->context_->thread_pool_, MatmulFloatRun, this, thread_count_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp32 run function MatmulFloatRun failed";
+      FreeTmpBuffer();
+      return RET_ERROR;
+    }
+  }
+  if (!params_->a_const_ || is_train()) {
+    context_->allocator->Free(a_pack_ptr_);
+    a_pack_ptr_ = nullptr;
+  }
+  if (!params_->b_const_ || is_train()) {
+    context_->allocator->Free(b_pack_ptr_);
+    b_pack_ptr_ = nullptr;
   }
   return RET_OK;
 }
@@ -326,10 +343,10 @@ int MatmulCPUKernel::Run() {
 void MatmulCPUKernel::eval() {
   // Copy weights after training
   LiteKernel::eval();
-  if (params_->a_const_ == true) {
+  if (params_->a_const_) {
     InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
   }
-  if (params_->b_const_ == true) {
+  if (params_->b_const_) {
     InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), b_pack_ptr_);
   }
 }
