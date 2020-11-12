@@ -65,7 +65,9 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
   std::string temp_file = datasets_root_path_ + "/testCifar10Data/mind.mind";
   std::string temp_file_db = datasets_root_path_ + "/testCifar10Data/mind.mind.db";
   bool rc = ds->Save(temp_file);
-  EXPECT_EQ(rc, true);
+  // if save fails, no need to continue the execution
+  // save could fail if temp_file already exists
+  ASSERT_EQ(rc, true);
 
   // Stage 3: Load dataset from file output by stage 2
   // Create a MindData Dataset

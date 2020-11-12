@@ -38,9 +38,9 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::ERROR;
 
 std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false, int rows_per_buf = 2);
 
@@ -54,14 +54,17 @@ std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int6
   std::shared_ptr<ImageFolderOp> so;
   ImageFolderOp::Builder builder;
   Status rc = builder.SetNumWorkers(num_works)
-                     .SetImageFolderDir(path)
-                     .SetRowsPerBuffer(rows)
-                     .SetOpConnectorSize(conns)
-                     .SetExtensions({".jpg", ".JPEG"})
-                     .SetSampler(std::move(sampler))
-                     .SetClassIndex(map)
-                     .SetDecode(decode)
-                     .Build(&so);
+                .SetImageFolderDir(path)
+                .SetRowsPerBuffer(rows)
+                .SetOpConnectorSize(conns)
+                .SetExtensions({".jpg", ".JPEG"})
+                .SetSampler(std::move(sampler))
+                .SetClassIndex(map)
+                .SetDecode(decode)
+                .Build(&so);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Fail to build ImageFolderOp: " << rc.ToString() << "\n";
+  }
   return so;
 }
 
@@ -166,9 +169,9 @@ TEST_F(MindDataTestImageFolderSampler, TestSequentialImageFolderWithRepeatBatch)
   auto tree = Build({ImageFolder(16, 2, 32, folder_path, false), Repeat(2), Batch(11)});
   tree->Prepare();
   int32_t res[4][11] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-                         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-                         {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
-                         {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}};
+                        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                        {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
+                        {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3}};
   Status rc = tree->Launch();
   if (rc.IsError()) {
     MS_LOG(ERROR) << "Return code error detected during tree launch: " << common::SafeCStr(rc.ToString()) << ".";
@@ -184,7 +187,7 @@ TEST_F(MindDataTestImageFolderSampler, TestSequentialImageFolderWithRepeatBatch)
       Create1DTensor(&label, 11, reinterpret_cast<unsigned char *>(res[i % 4]), DataType::DE_INT32);
       EXPECT_TRUE((*label) == (*tensor_map["label"]));
       MS_LOG(DEBUG) << "row: " << i << " " << tensor_map["image"]->shape() << " (*label):" << (*label)
-                << " *tensor_map[label]: " << *tensor_map["label"] << std::endl;
+                    << " *tensor_map[label]: " << *tensor_map["label"] << std::endl;
       i++;
       di.GetNextAsMap(&tensor_map);
     }
@@ -373,8 +376,8 @@ TEST_F(MindDataTestImageFolderSampler, TestImageFolderDecode) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(label == res[i / 11]);
-      EXPECT_TRUE(
-        tensor_map["image"]->shape() == TensorShape({2268, 4032, 3}));  // verify shapes are correct after decode
+      EXPECT_TRUE(tensor_map["image"]->shape() ==
+                  TensorShape({2268, 4032, 3}));  // verify shapes are correct after decode
       MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
       i++;
       di.GetNextAsMap(&tensor_map);

@@ -305,3 +305,21 @@ TEST_F(MindDataTestPipeline, TestMnistFailWithNullSamplerFail) {
   // Expect failure: invalid Mnist input, sampler cannot be nullptr
   EXPECT_EQ(iter, nullptr);
 }
+
+TEST_F(MindDataTestPipeline, TestImageFolderClassIndexDatasetSize) {
+  std::string folder_path = datasets_root_path_ + "/testPK/data";
+  std::map<std::string, int32_t> class_index;
+  class_index["class1"] = 111;
+  class_index["class2"] = 333;
+  auto ds = ImageFolder(folder_path, false, RandomSampler(), {}, class_index);
+  EXPECT_EQ(ds->GetNumClasses(), 2);
+}
+
+TEST_F(MindDataTestPipeline, TestImageFolderClassIndexDatasetSizeFail) {
+  std::string folder_path = datasets_root_path_ + "/testPK/data";
+  std::map<std::string, int32_t> class_index;
+  class_index["class1"] = 111;
+  class_index["wrong class"] = 333;
+  auto ds = ImageFolder(folder_path, false, RandomSampler(), {}, class_index);
+  EXPECT_EQ(ds->GetNumClasses(), -1);
+}
