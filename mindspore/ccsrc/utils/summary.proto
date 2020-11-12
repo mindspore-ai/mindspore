@@ -109,12 +109,18 @@ message Explain {
         repeated float ground_truth_prob = 1;
         repeated int32 predicted_label = 2;
         repeated float predicted_prob = 3;
+        repeated float ground_truth_prob_sd = 4;
+        repeated float ground_truth_prob_itl95_low = 5;
+        repeated float ground_truth_prob_itl95_hi = 6;
+        repeated float predicted_prob_sd = 7;
+        repeated float predicted_prob_itl95_low = 8;
+        repeated float predicted_prob_itl95_hi = 9;
     }
 
     message Explanation{
         optional string explain_method = 1;
         optional int32 label = 2;
-        optional bytes heatmap = 3;
+        optional string heatmap_path = 3;
 	}
 
     message Benchmark{
@@ -130,10 +136,9 @@ message Explain {
 		repeated string benchmark_method = 3;
 	}
 
-    optional string image_id = 1;  // The Metadata and image id and benchmark must have one fill in
-    optional bytes image_data = 2;
+    optional int32 sample_id = 1;
+    optional string image_path = 2;  // The Metadata and image path must have one fill in
     repeated int32 ground_truth_label = 3;
-
 
     optional Inference inference = 4;
     repeated Explanation explanation = 5;
