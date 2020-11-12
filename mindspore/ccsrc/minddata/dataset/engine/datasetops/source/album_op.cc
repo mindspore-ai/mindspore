@@ -225,20 +225,21 @@ Status AlbumOp::WorkerEntry(int32_t worker_id) {
 
 // Only support JPEG/PNG/GIF/BMP
 // Optimization: Could take in a tensor
-Status AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
+// This function does not return status because we want to just skip bad input, not crash
+bool AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
   std::ifstream file_handle;
   constexpr int read_num = 3;
   *valid = false;
   file_handle.open(file_name, std::ios::binary | std::ios::in);
   if (!file_handle.is_open()) {
-    RETURN_STATUS_UNEXPECTED("Invalid file, can not open image file: " + file_name);
+    return false;
   }
   unsigned char file_type[read_num];
   (void)file_handle.read(reinterpret_cast<char *>(file_type), read_num);
 
   if (file_handle.fail()) {
     file_handle.close();
-    RETURN_STATUS_UNEXPECTED("Invalid data, failed to read image file: " + file_name);
+    return false;
   }
   file_handle.close();
   if (file_type[0] == 0xff && file_type[1] == 0xd8 && file_type[2] == 0xff) {
@@ -246,17 +247,8 @@ Status AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
     // JPEG with EXIF stats with \xff\xd8\xff\xe1
     // Use \xff\xd8\xff to cover both.
     *valid = true;
-  } else if (file_type[0] == 0x89 && file_type[1] == 0x50 && file_type[2] == 0x4e) {
-    // It's a PNG
-    *valid = true;
-  } else if (file_type[0] == 0x47 && file_type[1] == 0x49 && file_type[2] == 0x46) {
-    // It's a GIF
-    *valid = true;
-  } else if (file_type[0] == 0x42 && file_type[1] == 0x4d) {
-    // It's a BMP
-    *valid = true;
   }
-  return Status::OK();
+  return true;
 }
 
 Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col_num, TensorRow *row) {
@@ -264,22 +256,44 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
   std::ifstream fs;
   fs.open(image_file_path, std::ios::binary | std::ios::in);
   if (fs.fail()) {
-    MS_LOG(INFO) << "Image file not found:" << image_file_path << ".";
+    MS_LOG(WARNING) << "File not found:" << image_file_path << ".";
     // If file doesn't exist, we don't flag this as error in input check, simply push back empty tensor
-    RETURN_STATUS_UNEXPECTED("Invalid file_path, failed to read file: " + image_file_path);
+    RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, row));
+    return Status::OK();
   }
-
-  MS_LOG(INFO) << "Image file found: " << image_file_path << ".";
+  // Hack logic to replace png images with empty tensor
+  Path file(image_file_path);
+  std::set<std::string> png_ext = {".png", ".PNG"};
+  if (png_ext.find(file.Extension()) != png_ext.end()) {
+    // load empty tensor since image is not jpg
+    MS_LOG(INFO) << "PNG!" << image_file_path << ".";
+    RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, row));
+    return Status::OK();
+  }
+  // treat bin files separately
+  std::set<std::string> bin_ext = {".bin", ".BIN"};
+  if (bin_ext.find(file.Extension()) != bin_ext.end()) {
+    // load empty tensor since image is not jpg
+    MS_LOG(INFO) << "Bin file found" << image_file_path << ".";
+    RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_file_path, &image));
+    row->push_back(std::move(image));
+    return Status::OK();
+  }
 
   // check that the file is an image before decoding
   bool valid = false;
-  RETURN_IF_NOT_OK(CheckImageType(image_file_path, &valid));
+  bool check_success = CheckImageType(image_file_path, &valid);
+  if (!check_success || !valid) {
+    RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, row));
+    return Status::OK();
+  }
+  // if it is a jpeg image, load and try to decode
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_file_path, &image));
   if (decode_ && valid) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {
-      std::string err = "Invalid data, failed to decode image: " + image_file_path;
-      RETURN_STATUS_UNEXPECTED(err);
+      RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, row));
+      return Status::OK();
     }
   }
   row->push_back(std::move(image));

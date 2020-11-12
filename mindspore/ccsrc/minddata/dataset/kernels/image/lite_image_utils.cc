@@ -429,10 +429,11 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     bool ret = Pad(lite_mat_rgb, lite_mat_pad, pad_top, pad_bottom, pad_left, pad_right,
                    PaddBorderType::PADD_BORDER_CONSTANT, fill_r, fill_g, fill_b);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Pad failed in lite cv");
-
+    // new shape for output tensor
+    TensorShape new_shape = TensorShape({lite_mat_pad.height_, lite_mat_pad.width_, input->shape()[2]});
     std::shared_ptr<Tensor> output_tensor;
-    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(input->shape(), input->type(),
-                                              static_cast<uchar *>(lite_mat_pad.data_ptr_), &output_tensor));
+    RETURN_IF_NOT_OK(
+      Tensor::CreateFromMemory(new_shape, input->type(), static_cast<uchar *>(lite_mat_pad.data_ptr_), &output_tensor));
     *output = output_tensor;
   } catch (std::runtime_error &e) {
     RETURN_STATUS_UNEXPECTED("Error in image Pad.");

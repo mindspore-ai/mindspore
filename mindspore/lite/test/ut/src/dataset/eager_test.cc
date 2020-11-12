@@ -27,10 +27,10 @@
 
 using MSTensor = mindspore::tensor::MSTensor;
 using DETensor = mindspore::tensor::DETensor;
-using mindspore::dataset::api::vision::Decode;
-using mindspore::dataset::api::vision::Normalize;
-using mindspore::dataset::api::vision::Resize;
-using Execute = mindspore::dataset::api::Execute;
+using mindspore::dataset::vision::Decode;
+using mindspore::dataset::vision::Normalize;
+using mindspore::dataset::vision::Resize;
+using Execute = mindspore::dataset::Execute;
 using Path = mindspore::dataset::Path;
 
 class MindDataTestEager : public mindspore::CommonTest {

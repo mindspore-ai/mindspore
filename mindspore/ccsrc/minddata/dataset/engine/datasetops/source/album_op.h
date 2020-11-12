@@ -189,8 +189,8 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
 
   /// \brief Check if image ia valid.Only support JPEG/PNG/GIF/BMP
   ///     This function could be optimized to return the tensor to reduce open/closing files
-  /// \return Status - The error code returned
-  Status CheckImageType(const std::string &file_name, bool *valid);
+  /// \return bool - if file is bad then return false
+  bool CheckImageType(const std::string &file_name, bool *valid);
 
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.
