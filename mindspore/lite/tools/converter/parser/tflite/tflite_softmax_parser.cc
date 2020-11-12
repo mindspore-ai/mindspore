@@ -17,10 +17,9 @@
 #include "tools/converter/parser/tflite/tflite_softmax_parser.h"
 #include <vector>
 #include <memory>
-#include <map>
+#include "src/ops/softmax.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 STATUS TfliteSoftmaxParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                   const std::unique_ptr<tflite::ModelT> &tflite_model,
                                   const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
@@ -51,6 +50,13 @@ STATUS TfliteSoftmaxParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   return RET_OK;
 }
 
+STATUS TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                  const std::unique_ptr<tflite::ModelT> &tflite_model, PrimitiveC *primitiveC) {
+  auto softmaxPrimitive = new SoftMax();
+  softmaxPrimitive->SetAxis(-1);
+  primitiveC = softmaxPrimitive;
+  return RET_OK;
+}
+
 TfliteNodeRegister g_tfliteSoftmaxParser("Softmax", new TfliteSoftmaxParser());
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
