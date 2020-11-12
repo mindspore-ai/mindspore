@@ -47,20 +47,17 @@ void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int *bloc
 }
 
 void DoSpaceToBatchPaddingNHWCInt8(const int8_t *input, int8_t *output, SpaceToBatchParameter *param, int32_t zp) {
-  int *in_shape = param->input_shape_;
-  int *out_shape = param->output_shape_;
-  int *paddings = param->paddings_;
   int block_shape_h = param->block_sizes_[0];
   int block_shape_w = param->m_ == 2 ? param->block_sizes_[1] : 1;
-  int in_b = in_shape[0];
-  int in_h = in_shape[1];
-  int in_w = in_shape[2];
-  int channel = in_shape[3];
-  int out_h = out_shape[1];
-  int out_w = out_shape[2];
-  int pad_t = paddings[0];
-  int pad_l = param->m_ == 2 ? paddings[2] : 0;
-  for (int i = 0; i < out_shape[0]; ++i) {
+  int in_b = param->input_shape_[0];
+  int in_h = param->input_shape_[1];
+  int in_w = param->input_shape_[2];
+  int channel = param->input_shape_[3];
+  int out_h = param->output_shape_[1];
+  int out_w = param->output_shape_[2];
+  int pad_t = param->paddings_[0];
+  int pad_l = param->m_ == 2 ? param->paddings_[2] : 0;
+  for (int i = 0; i < param->output_shape_[0]; ++i) {
     int in_batch = i % in_b;
     int offset_w = (i / in_b) % block_shape_w;
     int offset_h = (i / in_b) / block_shape_w;

@@ -80,33 +80,24 @@ int AvgPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter
 }
 
 int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
-  int stride_w = pooling_param->stride_w_;
-  int stride_h = pooling_param->stride_h_;
-  int pad_w = pooling_param->pad_l_;
-  int pad_h = pooling_param->pad_u_;
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;
+  int c16 = channel / C16NUM;
   int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
   int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int output_batch = pooling_param->output_batch_;
-  int out_plane = output_w * output_h;
+  int out_plane = output_w * pooling_param->output_h_;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   int thread_num = out_tile_count < pooling_param->thread_num_ ? out_tile_count : pooling_param->thread_num_;
-  float input_scale = pooling_param->quant_args_[0][0].scale_;
   int input_zp = pooling_param->quant_args_[0][0].zp_;
-  float output_scale = pooling_param->quant_args_[1][0].scale_;
   int output_zp = pooling_param->quant_args_[1][0].zp_;
-  double real_multiplier = input_scale / output_scale;
-  int c16 = channel / C16NUM;
+  double real_multiplier = pooling_param->quant_args_[0][0].scale_ / pooling_param->quant_args_[1][0].scale_;
   const int8_t out_min = INT8_MIN;
   const int8_t out_max = INT8_MAX;
 
-  for (int batch = 0; batch < output_batch; batch++) {
-    int in_batch_offset = batch * in_h * in_w * channel;
-    int out_batch_offset = batch * output_h * output_w * channel;
+  for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
+    int in_batch_offset = batch * pooling_param->input_h_ * in_w * channel;
+    int out_batch_offset = batch * pooling_param->output_h_ * output_w * channel;
     for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
       int cal_start_index = thread_id * TILE_NUM;
       int real_cal_num = (out_plane - cal_start_index) > TILE_NUM ? TILE_NUM : (out_plane - cal_start_index);
@@ -114,14 +105,14 @@ int AvgPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParame
         int index = cal_start_index + i;
         int out_w_index = index % output_w;
         int out_h_index = index / output_w;
-        int in_w_index = out_w_index * stride_w - pad_w;
-        int in_h_index = out_h_index * stride_h - pad_h;
+        int in_w_index = out_w_index * pooling_param->stride_w_ - pooling_param->pad_l_;
+        int in_h_index = out_h_index * pooling_param->stride_h_ - pooling_param->pad_u_;
         int out_plane_offset = out_batch_offset + index * channel;
         int input_stride = (in_h_index * in_w + in_w_index) * channel;
         int kw_s = MSMAX(0, -in_w_index);
         int kw_e = MSMIN(win_w, in_w - in_w_index);
         int kh_s = MSMAX(0, -in_h_index);
-        int kh_e = MSMIN(win_h, in_h - in_h_index);
+        int kh_e = MSMIN(win_h, pooling_param->input_h_ - in_h_index);
         int real_count = (kw_e - kw_s) * (kh_e - kh_s);
         if (real_count == 0) {
           return NNACL_ERR;
@@ -335,19 +326,11 @@ void MaxPoolingInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParamete
 
 void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param,
                              int task_id) {
-  int stride_w = pooling_param->stride_w_;
-  int stride_h = pooling_param->stride_h_;
-  int pad_w = pooling_param->pad_l_;
-  int pad_h = pooling_param->pad_u_;
-  int win_w = pooling_param->window_w_;
-  int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;
   int in_w = pooling_param->input_w_;
   int in_h = pooling_param->input_h_;
   int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int output_batch = pooling_param->output_batch_;
-  int out_plane = output_w * output_h;
+  int out_plane = output_w * pooling_param->output_h_;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   int thread_num = out_tile_count < pooling_param->thread_num_ ? out_tile_count : pooling_param->thread_num_;
   int c16 = UP_DIV(channel, 16);
@@ -358,9 +341,9 @@ void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, Poolin
   int output_zp = pooling_param->quant_args_[1][0].zp_;
   double real_multiplier = input_scale / output_scale;
 
-  for (int batch = 0; batch < output_batch; batch++) {
+  for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
     int in_batch_offset = batch * in_h * in_w * channel;
-    int out_batch_offset = batch * output_h * output_w * channel;
+    int out_batch_offset = batch * pooling_param->output_h_ * output_w * channel;
     for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
       int cal_start_index = thread_id * TILE_NUM;
       int real_cal_num = (out_plane - cal_start_index) > TILE_NUM ? TILE_NUM : (out_plane - cal_start_index);
@@ -368,8 +351,8 @@ void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, Poolin
         int index = cal_start_index + i;
         int out_w_index = index % output_w;
         int out_h_index = index / output_w;
-        int in_w_index = out_w_index * stride_w - pad_w;
-        int in_h_index = out_h_index * stride_h - pad_h;
+        int in_w_index = out_w_index * pooling_param->stride_w_ - pooling_param->pad_l_;
+        int in_h_index = out_h_index * pooling_param->stride_h_ - pooling_param->pad_u_;
         int out_plane_offset = out_batch_offset + index * channel;
         for (int j = 0; j < c16 - 1; j++) {
           int in_channel_offset = in_batch_offset + j * 16;
@@ -382,8 +365,8 @@ void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, Poolin
             tmp_max[m] = INT8_MIN;
           }
 #endif
-          for (int h = 0; h < win_h; h++) {
-            for (int w = 0; w < win_w; w++) {
+          for (int h = 0; h < pooling_param->window_h_; h++) {
+            for (int w = 0; w < pooling_param->window_w_; w++) {
               if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||
                   (in_w_index + w) >= in_w) {
                 continue;
@@ -418,8 +401,8 @@ void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, Poolin
           int in_channel_offset = in_batch_offset + k;
           int out_channel_offset = out_plane_offset + k;
           int8_t tmp_max = INT8_MIN;
-          for (int h = 0; h < win_h; h++) {
-            for (int w = 0; w < win_w; w++) {
+          for (int h = 0; h < pooling_param->window_h_; h++) {
+            for (int w = 0; w < pooling_param->window_w_; w++) {
               if ((in_h_index + h) < 0 || (in_h_index + h) >= in_h || (in_w_index + w) < 0 ||
                   (in_w_index + w) >= in_w) {
                 continue;
@@ -437,26 +420,17 @@ void MaxPoolingWithQuantInt8(const int8_t *input_ptr, int8_t *output_ptr, Poolin
 }
 
 void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParameter *pooling_param, int task_id) {
-  int stride_w = pooling_param->stride_w_;
-  int stride_h = pooling_param->stride_h_;
-  int pad_w = pooling_param->pad_l_;
-  int pad_h = pooling_param->pad_u_;
-  int win_w = pooling_param->window_w_;
-  int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;
   int in_w = pooling_param->input_w_;
-  int in_h = pooling_param->input_h_;
   int output_w = pooling_param->output_w_;
-  int output_h = pooling_param->output_h_;
-  int output_batch = pooling_param->output_batch_;
-  int out_plane = output_w * output_h;
+  int out_plane = output_w * pooling_param->output_h_;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   int thread_num = MSMIN(out_tile_count, pooling_param->thread_num_);
   int8_t out_array[MAX_MAXPOOL_SIZE];
 
-  for (int batch = 0; batch < output_batch; batch++) {
-    int in_batch_offset = batch * in_h * in_w * channel;
-    int out_batch_offset = batch * output_h * output_w * channel;
+  for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
+    int in_batch_offset = batch * pooling_param->input_h_ * in_w * channel;
+    int out_batch_offset = batch * pooling_param->output_h_ * output_w * channel;
     for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
       int cal_start_index = thread_id * TILE_NUM;
       int real_cal_num = out_plane - cal_start_index;
@@ -465,12 +439,12 @@ void MaxPoolingOptInt8(const int8_t *input_ptr, int8_t *output_ptr, PoolingParam
         int index = cal_start_index + i;
         int out_w_index = index % output_w;
         int out_h_index = index / output_w;
-        int in_w_index = out_w_index * stride_w - pad_w;
-        int in_h_index = out_h_index * stride_h - pad_h;
+        int in_w_index = out_w_index * pooling_param->stride_w_ - pooling_param->pad_l_;
+        int in_h_index = out_h_index * pooling_param->stride_h_ - pooling_param->pad_u_;
         const int ky_s = 0 > (-in_h_index) ? 0 : (-in_h_index);
-        int ky_e = MSMIN(win_h, in_h - in_h_index);
+        int ky_e = MSMIN(pooling_param->window_h_, pooling_param->input_h_ - in_h_index);
         const int kx_s = 0 > (-in_w_index) ? 0 : (-in_w_index);
-        int kx_e = MSMIN(win_w, in_w - in_w_index);
+        int kx_e = MSMIN(pooling_param->window_w_, in_w - in_w_index);
         int input_stride = (in_h_index * in_w + in_w_index) * channel + in_batch_offset;
         int out_plane_offset = out_batch_offset + index * channel;
 

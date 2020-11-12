@@ -65,20 +65,12 @@ void Conv3x3Int8Gemm(int32_t *dst, const int16_t *src, const int16_t *weight, in
 void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, int8_t *packed_weight,
               const int32_t *bias_data, int8_t *output_data, int32_t *filter_zp, int32_t *input_sum, int task_id,
               ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func, bool is_optimize) {
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int in_batch = conv_param->input_batch_;
   int in_channel = conv_param->input_channel_;
-  int in_h = conv_param->input_h_;
-  int in_w = conv_param->input_w_;
-  int out_h = conv_param->output_h_;
-  int out_w = conv_param->output_w_;
   int out_channel = conv_param->output_channel_;
   int tile_n = conv_param->tile_num_;
-  int thread_count = conv_param->thread_num_;
-  int output_count = out_h * out_w;
+  int output_count = conv_param->output_h_ * conv_param->output_w_;
   int output_tile_count = UP_DIV(output_count, tile_n);
-  int kernel_plane = kernel_h * kernel_w;
+  int kernel_plane = conv_param->kernel_h_ * conv_param->kernel_w_;
   int unit_size;
   int input_sum_offset;
   int up_round_oc;
@@ -103,10 +95,10 @@ void ConvInt8(int8_t *input_data, int8_t *packed_input, int8_t *matmul_input, in
     per_channel = false;
   }
 
-  for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * in_channel * in_h * in_w;
-    int out_batch_offset = b * out_channel * out_h * out_w;
-    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
+  for (int b = 0; b < conv_param->input_batch_; b++) {
+    int in_batch_offset = b * in_channel * conv_param->input_h_ * conv_param->input_w_;
+    int out_batch_offset = b * out_channel * conv_param->output_h_ * conv_param->output_w_;
+    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += conv_param->thread_num_) {
       int start_index = thread_id * tile_n;
       int real_cal_num = (output_count - start_index) < tile_n ? (output_count - start_index) : tile_n;
       int32_t *tmp_input_sum = input_sum + task_id * input_sum_offset;
@@ -858,23 +850,20 @@ void Conv1x1Int8(const int8_t *packed_input, const int8_t *packed_weight, int8_t
 void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bias_data, int8_t *output_data,
                  int16_t *tile_buffer, int16_t *block_unit_buffer, int32_t *tmp_dst_buffer, int8_t *tmp_out,
                  int task_id, ConvParameter *conv_param) {
-  int thread_count = conv_param->thread_num_;
   int ic8 = UP_DIV(conv_param->input_channel_, C8NUM);
-  int output_channel = conv_param->output_channel_;
   int out_w_block = UP_DIV(conv_param->output_w_, OUPUT_UNIT);
   int out_h_block = UP_DIV(conv_param->output_h_, OUPUT_UNIT);
   int output_count = out_w_block * out_h_block;
   int output_tile_count = UP_DIV(output_count, TILE_NUM);
-  int oc4 = UP_DIV(output_channel, C4NUM);
+  int oc4 = UP_DIV(conv_param->output_channel_, C4NUM);
   int tile_buffer_offset = TILE_NUM * 16 * ic8 * C8NUM;
   const int block_unit_buffer_offset = 16 * C8NUM;
   int tmp_dst_buffer_offset = TILE_NUM * 16 * oc4 * C4NUM;
 
-  int input_batch = conv_param->input_batch_;
-  for (int batch = 0; batch < input_batch; batch++) {
+  for (int batch = 0; batch < conv_param->input_batch_; batch++) {
     int in_batch_offset = batch * ic8 * C8NUM * conv_param->input_h_ * conv_param->input_w_;
     int tmp_out_batch_offset = batch * oc4 * C4NUM * conv_param->output_w_ * conv_param->output_h_;
-    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
+    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += conv_param->thread_num_) {
       int start_index = thread_id * TILE_NUM;
       int real_cal_num = (output_count - start_index) < TILE_NUM ? (output_count - start_index) : TILE_NUM;
 
@@ -883,7 +872,7 @@ void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bi
                                 out_w_block, conv_param);
 
       Conv3x3Int8Gemm(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tile_buffer + task_id * tile_buffer_offset,
-                      transed_weight, output_channel, ic8, real_cal_num);
+                      transed_weight, conv_param->output_channel_, ic8, real_cal_num);
 
       Conv3x3Int8OutputTransform(tmp_dst_buffer + task_id * tmp_dst_buffer_offset, tmp_out + tmp_out_batch_offset,
                                  bias_data, start_index, real_cal_num, out_w_block, conv_param);
