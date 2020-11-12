@@ -103,10 +103,6 @@ class UncertaintyEvaluation:
                 raise ValueError("If save_model is True, the epi_uncer_model_path and "
                                  "ale_uncer_model_path should not be None.")
 
-    def _uncertainty_normalize(self, data):
-        area = np.max(data) - np.min(data)
-        return (data - np.min(data)) / area
-
     def _get_epistemic_uncertainty_model(self):
         """
         Get the model which can obtain the epistemic uncertainty.
@@ -150,7 +146,7 @@ class UncertaintyEvaluation:
         else:
             outputs = np.stack(outputs, axis=1)
             epi_uncertainty = outputs.var(axis=1)
-        epi_uncertainty = self._uncertainty_normalize(np.array(epi_uncertainty))
+        epi_uncertainty = np.array(epi_uncertainty)
         return epi_uncertainty
 
     def _get_aleatoric_uncertainty_model(self):
@@ -184,7 +180,7 @@ class UncertaintyEvaluation:
         self._get_aleatoric_uncertainty_model()
         _, var = self.ale_uncer_model(eval_data)
         ale_uncertainty = self.sum(self.pow(var, 2), 1)
-        ale_uncertainty = self._uncertainty_normalize(ale_uncertainty.asnumpy())
+        ale_uncertainty = ale_uncertainty.asnumpy()
         return ale_uncertainty
 
     def eval_epistemic_uncertainty(self, eval_data):
