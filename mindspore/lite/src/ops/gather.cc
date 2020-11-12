@@ -63,6 +63,10 @@ int Gather::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
       gather_attr->axis = axis;
     } else {
       MS_LOG(ERROR) << "input axis is not value node.";
+      delete this->primitive_;
+      delete gather_attr;
+      this->primitive_ = nullptr;
+      gather_attr = nullptr;
       return RET_ERROR;
     }
     gather_attr->batchDims = 0;

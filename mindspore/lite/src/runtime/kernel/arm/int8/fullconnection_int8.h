@@ -68,9 +68,9 @@ class FullconnectionInt8CPUKernel : public FullconnectionBaseCPUKernel {
   int *input_sums_ = nullptr;
   int *weight_bias_sums_ = nullptr;
   int *bias_ptr_ = nullptr;
-  int r4_;
-  int c4_;
-  int d16_;
+  int r4_ = 0;
+  int c4_ = 0;
+  int d16_ = 0;
 };
 }  // namespace mindspore::kernel
 

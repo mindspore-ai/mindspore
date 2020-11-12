@@ -70,7 +70,7 @@ class StridedSlice : public PrimitiveC {
   std::vector<int> GetStrides() { return this->strides_; }
 
  protected:
-  int ndim_;
+  int ndim_ = 0;
   std::vector<int> in_shape_;
   std::vector<int> begins_;
   std::vector<int> ends_;
