@@ -28,14 +28,13 @@ namespace mindspore {
 namespace lite {
 class Maximum : public Arithmetic {
  public:
+  Maximum() = default;
+  ~Maximum() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Arithmetic, Arithmetic);
-  Maximum() = default;
   explicit Maximum(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  Maximum() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

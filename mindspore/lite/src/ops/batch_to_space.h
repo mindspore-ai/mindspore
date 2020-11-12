@@ -27,15 +27,14 @@ namespace mindspore {
 namespace lite {
 class BatchToSpace : public PrimitiveC {
  public:
+  BatchToSpace() = default;
+  ~BatchToSpace() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(BatchToSpace, PrimitiveC);
-  BatchToSpace() = default;
   explicit BatchToSpace(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetBlockShape(const std::vector<int> &block_shape);
   void SetCrops(const std::vector<int> &crops);
 #else
-  BatchToSpace() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

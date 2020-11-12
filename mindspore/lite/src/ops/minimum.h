@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class Minimum : public Arithmetic {
  public:
+  Minimum() = default;
+  ~Minimum() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Arithmetic, Arithmetic);
-  Minimum() = default;
   explicit Minimum(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  Minimum() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

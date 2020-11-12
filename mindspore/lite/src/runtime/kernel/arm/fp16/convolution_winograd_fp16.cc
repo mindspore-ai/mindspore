@@ -224,6 +224,7 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
   ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
 

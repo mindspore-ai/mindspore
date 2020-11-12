@@ -26,15 +26,14 @@ namespace mindspore {
 namespace lite {
 class AddN : public PrimitiveC {
  public:
+  AddN() = default;
+  ~AddN() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(AddN, PrimitiveC);
-  AddN() = default;
   explicit AddN(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetN(int n);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  AddN() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

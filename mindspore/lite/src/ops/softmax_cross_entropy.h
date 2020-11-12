@@ -28,15 +28,14 @@ namespace mindspore {
 namespace lite {
 class SoftmaxCrossEntropy : public PrimitiveC {
  public:
+  SoftmaxCrossEntropy() = default;
+  ~SoftmaxCrossEntropy() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(SoftmaxCrossEntropy, PrimitiveC);
-  SoftmaxCrossEntropy() = default;
   explicit SoftmaxCrossEntropy(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(const std::vector<int> &axis);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  SoftmaxCrossEntropy() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

@@ -25,10 +25,10 @@ namespace mindspore {
 namespace lite {
 class BinaryCrossEntropy : public PrimitiveC {
  public:
+  BinaryCrossEntropy() = default;
+  ~BinaryCrossEntropy() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(BinaryCrossEntropy, PrimitiveC);
-
-  BinaryCrossEntropy() = default;
 
   explicit BinaryCrossEntropy(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 
@@ -36,8 +36,6 @@ class BinaryCrossEntropy : public PrimitiveC {
 
   int GetReduction() const;
 #else
-  BinaryCrossEntropy() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 
   int GetReduction() const;

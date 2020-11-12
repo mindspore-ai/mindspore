@@ -27,13 +27,13 @@ namespace mindspore {
 namespace lite {
 class Arithmetic : public PrimitiveC {
  public:
+  Arithmetic() = default;
+  ~Arithmetic() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Arithmetic, PrimitiveC);
-  Arithmetic() = default;
   explicit Arithmetic(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
   //  explicit Arithmetic(schema::Primitive *primitive) : PrimitiveC(primitive) {}
-  Arithmetic() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override {
     return RET_ERROR;
   }

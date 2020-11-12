@@ -26,15 +26,14 @@ namespace mindspore {
 namespace lite {
 class Div : public Arithmetic {
  public:
+  Div() = default;
+  ~Div() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Div, Arithmetic);
-  Div() = default;
   explicit Div(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   void SetActivationType(int activation_type);
 
 #else
-  Div() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetActivationType() const;

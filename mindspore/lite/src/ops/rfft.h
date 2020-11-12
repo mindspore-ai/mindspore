@@ -26,14 +26,13 @@ namespace mindspore {
 namespace lite {
 class Rfft : public PrimitiveC {
  public:
+  Rfft() = default;
+  ~Rfft() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Rfft, PrimitiveC);
-  Rfft() = default;
   explicit Rfft(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetFftLength(int fft_length);
 #else
-  Rfft() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetFftLength() const;

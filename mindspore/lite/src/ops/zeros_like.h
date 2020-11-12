@@ -27,12 +27,12 @@ namespace mindspore {
 namespace lite {
 class ZerosLike : public PrimitiveC {
  public:
+  ZerosLike() = default;
+  ~ZerosLike() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(ZerosLike, PrimitiveC);
-  ZerosLike() = default;
   explicit ZerosLike(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  ZerosLike() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

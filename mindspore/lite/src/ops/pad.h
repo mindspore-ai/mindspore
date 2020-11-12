@@ -28,16 +28,15 @@ namespace mindspore {
 namespace lite {
 class Pad : public PrimitiveC {
  public:
+  Pad() = default;
+  ~Pad() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Pad, PrimitiveC);
-  Pad() = default;
   explicit Pad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetPaddings(const std::vector<int> &paddings);
   void SetPaddingMode(int padding_mode);
   void SetConstantValue(float constant_value);
 #else
-  Pad() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

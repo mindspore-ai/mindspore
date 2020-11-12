@@ -28,17 +28,16 @@ namespace mindspore {
 namespace lite {
 class SparseToDense : public PrimitiveC {
  public:
+  SparseToDense() = default;
+  ~SparseToDense() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(SparseToDense, PrimitiveC);
-  SparseToDense() = default;
   explicit SparseToDense(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetOutputShape(const std::vector<int> &output_shape);
   void SetSparseValue(const std::vector<int> &sparse_value);
   void SetDefaultValue(const std::vector<int> &default_value);
   void SetValidateIndices(bool validate_indices);
 #else
-  SparseToDense() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   std::vector<int> GetOutputShape() const;

@@ -26,15 +26,14 @@ namespace mindspore {
 namespace lite {
 class DepthToSpace : public PrimitiveC {
  public:
+  DepthToSpace() = default;
+  ~DepthToSpace() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(DepthToSpace, PrimitiveC);
-  DepthToSpace() = default;
   explicit DepthToSpace(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetBlockSize(int block_size);
   void SetFormat(int format);
 #else
-  DepthToSpace() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

@@ -23,9 +23,10 @@ namespace mindspore {
 namespace lite {
 class CustomPredict : public PrimitiveC {
  public:
+  CustomPredict() = default;
+  ~CustomPredict() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(CustomPredict, PrimitiveC);
-  CustomPredict() = default;
   explicit CustomPredict(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int GetOutputNum() const;
   float GetWeightThreshold() const;
@@ -33,7 +34,6 @@ class CustomPredict : public PrimitiveC {
   void SetWeightThreshold(float weight_threshold);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  CustomPredict() = default;
   int GetOutputNum() const;
   float GetWeightThreshold() const;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;

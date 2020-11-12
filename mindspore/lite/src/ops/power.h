@@ -27,17 +27,16 @@ namespace mindspore {
 namespace lite {
 class Power : public PrimitiveC {
  public:
+  Power() = default;
+  ~Power() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Power, PrimitiveC);
-  Power() = default;
   explicit Power(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetPower(float power);
   void SetScale(float scale);
   void SetShift(float shift);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  Power() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

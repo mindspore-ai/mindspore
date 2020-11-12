@@ -28,15 +28,13 @@ namespace mindspore {
 namespace lite {
 class Where : public PrimitiveC {
  public:
+  Where() = default;
+  ~Where() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Where, PrimitiveC);
-  Where() = default;
   explicit Where(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetCondition(const std::vector<bool> &condition);
-
 #else
-  Where() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

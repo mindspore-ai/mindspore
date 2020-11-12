@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class Nchw2Nhwc : public PrimitiveC {
  public:
+  Nchw2Nhwc() = default;
+  ~Nchw2Nhwc() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Nchw2Nhwc, PrimitiveC);
-  Nchw2Nhwc() = default;
   explicit Nchw2Nhwc(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  Nchw2Nhwc() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

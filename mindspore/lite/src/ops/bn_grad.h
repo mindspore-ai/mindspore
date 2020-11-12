@@ -26,15 +26,15 @@ namespace mindspore {
 namespace lite {
 class BNGrad : public PrimitiveC {
  public:
+  BNGrad() = default;
+  ~BNGrad() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(BNGrad, PrimitiveC);
-  BNGrad() = default;
   explicit BNGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetEps(float eps);
   void SetMomentum(float momentum);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  BNGrad() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

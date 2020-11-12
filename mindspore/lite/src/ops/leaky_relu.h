@@ -27,15 +27,14 @@ namespace mindspore {
 namespace lite {
 class LeakyReLU : public PrimitiveC {
  public:
+  LeakyReLU() = default;
+  ~LeakyReLU() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(LeakyReLU, PrimitiveC);
-  LeakyReLU() = default;
   explicit LeakyReLU(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetNegativeSlope(float negative_slope);
 
 #else
-  LeakyReLU() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetNegativeSlope() const;

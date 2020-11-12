@@ -24,13 +24,13 @@ namespace mindspore {
 namespace lite {
 class Depend : public PrimitiveC {
  public:
+  Depend() = default;
+  ~Depend() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Depend, PrimitiveC);
-  Depend() = default;
   explicit Depend(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  Depend() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

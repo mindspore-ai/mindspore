@@ -27,16 +27,15 @@ namespace mindspore {
 namespace lite {
 class SoftMax : public PrimitiveC {
  public:
+  SoftMax() = default;
+  ~SoftMax() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(SoftMax, PrimitiveC);
-  SoftMax() = default;
   explicit SoftMax(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetAxis(int axis);
 
 #else
-  SoftMax() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

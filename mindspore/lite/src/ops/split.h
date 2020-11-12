@@ -28,17 +28,16 @@ namespace mindspore {
 namespace lite {
 class Split : public PrimitiveC {
  public:
+  Split() = default;
+  ~Split() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Split, PrimitiveC);
-  Split() = default;
   explicit Split(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetNumberSplit(int number_split);
   void SetSizeSplits(const std::vector<int> &size_splits);
   void SetSplitDim(int split_dim);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 #else
-  Split() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

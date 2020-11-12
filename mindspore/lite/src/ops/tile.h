@@ -28,17 +28,16 @@ namespace mindspore {
 namespace lite {
 class Tile : public PrimitiveC {
  public:
+  Tile() = default;
+  ~Tile() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Tile, PrimitiveC);
-  Tile() = default;
   explicit Tile(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetMultiples(const std::vector<int> &multiples);
   void SetDims(const std::vector<int> &dims);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 
 #else
-  Tile() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

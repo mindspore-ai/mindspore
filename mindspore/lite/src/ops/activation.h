@@ -26,9 +26,10 @@ namespace mindspore {
 namespace lite {
 class Activation : public PrimitiveC {
  public:
+  Activation() = default;
+  ~Activation() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Activation, PrimitiveC);
-  Activation() = default;
   explicit Activation(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetType(int type);
@@ -36,8 +37,6 @@ class Activation : public PrimitiveC {
   void SetMinVal(float minVal);
   void SetMaxVal(float maxVal);
 #else
-  Activation() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetType() const;

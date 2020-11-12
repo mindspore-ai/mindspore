@@ -26,15 +26,14 @@ namespace mindspore {
 namespace lite {
 class Dropout : public PrimitiveC {
  public:
+  Dropout() = default;
+  ~Dropout() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Dropout, PrimitiveC);
-  Dropout() = default;
   explicit Dropout(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetRatio(float ratio);
 
 #else
-  Dropout() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetRatio() const;

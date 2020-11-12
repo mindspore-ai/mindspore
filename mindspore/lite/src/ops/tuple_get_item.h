@@ -24,13 +24,13 @@ namespace mindspore {
 namespace lite {
 class TupleGetItem : public PrimitiveC {
  public:
+  TupleGetItem() = default;
+  ~TupleGetItem() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(TupleGetItem, PrimitiveC);
-  TupleGetItem() = default;
   explicit TupleGetItem(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  TupleGetItem() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

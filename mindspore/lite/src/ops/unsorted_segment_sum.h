@@ -24,15 +24,14 @@ namespace mindspore {
 namespace lite {
 class UnsortedSegmentSum : public PrimitiveC {
  public:
+  UnsortedSegmentSum() = default;
+  ~UnsortedSegmentSum() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(UnsortedSegmentSum, PrimitiveC);
-  UnsortedSegmentSum() = default;
   explicit UnsortedSegmentSum(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   int GetNumSegments() const;
 #else
-  UnsortedSegmentSum() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 
   int GetNumSegments() const;

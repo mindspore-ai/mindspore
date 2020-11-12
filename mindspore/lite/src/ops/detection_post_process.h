@@ -26,9 +26,10 @@ namespace mindspore {
 namespace lite {
 class DetectionPostProcess : public PrimitiveC {
  public:
+  DetectionPostProcess() = default;
+  ~DetectionPostProcess() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(DetectionPostProcess, PrimitiveC);
-  DetectionPostProcess() = default;
   explicit DetectionPostProcess(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetFormat(int format);
   void SetInputSize(int input_size);
@@ -45,8 +46,6 @@ class DetectionPostProcess : public PrimitiveC {
   void SetUseRegularNms(bool use_regular_nms);
   void SetOutQuantized(bool out_quantized);
 #else
-  DetectionPostProcess() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

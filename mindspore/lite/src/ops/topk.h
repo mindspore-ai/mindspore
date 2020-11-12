@@ -27,15 +27,14 @@ namespace mindspore {
 namespace lite {
 class TopK : public PrimitiveC {
  public:
+  TopK() = default;
+  ~TopK() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(TopK, PrimitiveC);
-  TopK() = default;
   explicit TopK(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetK(int k);
   void SetSorted(bool sorted);
 #else
-  TopK() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

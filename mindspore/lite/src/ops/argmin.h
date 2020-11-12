@@ -26,9 +26,10 @@ namespace mindspore {
 namespace lite {
 class ArgMin : public PrimitiveC {
  public:
+  ArgMin() = default;
+  ~ArgMin() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(ArgMin, PrimitiveC);
-  ArgMin() = default;
   explicit ArgMin(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(int axis);
   void SetOutMaxValue(bool out_max_value);
@@ -36,8 +37,6 @@ class ArgMin : public PrimitiveC {
   void SetKeepDims(bool keep_dims);
   void SetAxisType(int axis_type);
 #else
-  ArgMin() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class Rank : public PrimitiveC {
  public:
+  Rank() = default;
+  ~Rank() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Rank, PrimitiveC);
-  Rank() = default;
   explicit Rank(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  Rank() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

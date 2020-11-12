@@ -28,15 +28,14 @@ namespace mindspore {
 namespace lite {
 class Mean : public PrimitiveC {
  public:
+  Mean() = default;
+  ~Mean() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Mean, PrimitiveC);
-  Mean() = default;
   explicit Mean(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(const std::vector<int> &axis);
   void SetKeepDims(bool keep_dims);
 #else
-  Mean() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

@@ -28,17 +28,16 @@ namespace mindspore {
 namespace lite {
 class Slice : public PrimitiveC {
  public:
+  Slice() = default;
+  ~Slice() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Slice, PrimitiveC);
-  Slice() = default;
   explicit Slice(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetFormat(int format);
   void SetBegin(const std::vector<int> &begin);
   void SetSize(const std::vector<int> &size);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  Slice() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

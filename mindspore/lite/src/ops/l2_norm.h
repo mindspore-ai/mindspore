@@ -28,16 +28,15 @@ namespace mindspore {
 namespace lite {
 class L2Norm : public PrimitiveC {
  public:
+  L2Norm() = default;
+  ~L2Norm() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(L2Norm, PrimitiveC);
-  L2Norm() = default;
   explicit L2Norm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(const std::vector<int> &axis);
   void SetEpsilon(float epsilon);
   void SetActivationType(int activationType);
 #else
-  L2Norm() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   std::vector<int> GetAxis() const;

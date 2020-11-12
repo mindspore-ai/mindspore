@@ -23,13 +23,12 @@ namespace mindspore {
 namespace lite {
 class Quant : public PrimitiveC {
  public:
+  Quant() = default;
+  ~Quant() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Quant, PrimitiveC);
-  Quant() = default;
   explicit Quant(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-#else
-  Quant() = default;
 #endif
 };
 }  // namespace lite

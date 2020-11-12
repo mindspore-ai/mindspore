@@ -27,17 +27,16 @@ namespace mindspore {
 namespace lite {
 class LocalResponseNormalization : public PrimitiveC {
  public:
+  LocalResponseNormalization() = default;
+  ~LocalResponseNormalization() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(LocalResponseNormalization, PrimitiveC);
-  LocalResponseNormalization() = default;
   explicit LocalResponseNormalization(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetDepthRadius(int depth_radius);
   void SetBias(float bias);
   void SetAlpha(float alpha);
   void SetBeta(float beta);
 #else
-  LocalResponseNormalization() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetDepthRadius() const;

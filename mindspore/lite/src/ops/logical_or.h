@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class LogicalOr : public Arithmetic {
  public:
+  LogicalOr() = default;
+  ~LogicalOr() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(LogicalOr, Arithmetic);
-  LogicalOr() = default;
   explicit LogicalOr(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  LogicalOr() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

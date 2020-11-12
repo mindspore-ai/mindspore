@@ -28,16 +28,15 @@ namespace mindspore {
 namespace lite {
 class Stack : public PrimitiveC {
  public:
+  Stack() = default;
+  ~Stack() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Stack, PrimitiveC);
-  Stack() = default;
   explicit Stack(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(int axis);
   void SetN(int n);
   void SetIsScale(const std::vector<int> &is_scale);
 #else
-  Stack() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

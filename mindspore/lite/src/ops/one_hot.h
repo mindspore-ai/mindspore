@@ -27,15 +27,14 @@ namespace mindspore {
 namespace lite {
 class OneHot : public PrimitiveC {
  public:
+  OneHot() = default;
+  ~OneHot() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(OneHot, PrimitiveC);
-  OneHot() = default;
   explicit OneHot(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(int axis);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  OneHot() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

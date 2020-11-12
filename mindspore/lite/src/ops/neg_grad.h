@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class NegGrad : public ArithmeticSelf {
  public:
+  NegGrad() = default;
+  ~NegGrad() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(NegGrad, ArithmeticSelf);
-  NegGrad() = default;
   explicit NegGrad(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  NegGrad() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

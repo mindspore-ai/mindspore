@@ -26,17 +26,16 @@ namespace mindspore {
 namespace lite {
 class FusedBatchNorm : public PrimitiveC {
  public:
+  FusedBatchNorm() = default;
+  ~FusedBatchNorm() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(FusedBatchNorm, PrimitiveC);
-  FusedBatchNorm() = default;
   explicit FusedBatchNorm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetEpsilon(float epsilon);
   void SetMomentum(float momentum);
   void SetSpatial(int spatial);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  FusedBatchNorm() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

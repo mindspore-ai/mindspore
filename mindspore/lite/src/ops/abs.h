@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class Abs : public ArithmeticSelf {
  public:
+  Abs() = default;
+  ~Abs() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Abs, ArithmeticSelf);
-  Abs() = default;
   explicit Abs(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  Abs() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

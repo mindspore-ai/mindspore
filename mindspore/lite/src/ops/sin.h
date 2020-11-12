@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class Sin : public ArithmeticSelf {
  public:
+  Sin() = default;
+  ~Sin() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Sin, ArithmeticSelf);
-  Sin() = default;
   explicit Sin(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  Sin() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

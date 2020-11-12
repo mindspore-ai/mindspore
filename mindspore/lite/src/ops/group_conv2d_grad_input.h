@@ -28,9 +28,10 @@ namespace mindspore {
 namespace lite {
 class GroupConv2DGradInput : public PrimitiveC {
  public:
+  GroupConv2DGradInput() = default;
+  ~GroupConv2DGradInput() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(GroupConv2DGradInput, PrimitiveC);
-  GroupConv2DGradInput() = default;
   explicit GroupConv2DGradInput(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetFormat(int format);
   void SetGroup(int group);
@@ -50,8 +51,6 @@ class GroupConv2DGradInput : public PrimitiveC {
   void SetHasBias(bool has_bias);
   void SetActivationType(int activation_type);
 #else
-  GroupConv2DGradInput() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

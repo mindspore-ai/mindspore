@@ -26,16 +26,15 @@ namespace mindspore {
 namespace lite {
 class Cast : public PrimitiveC {
  public:
+  Cast() = default;
+  ~Cast() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Cast, PrimitiveC);
-  Cast() = default;
   explicit Cast(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetSrcT(int src_t);
   void SetDstT(int dst_t);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 #else
-  Cast() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

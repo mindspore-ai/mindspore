@@ -27,14 +27,13 @@ namespace mindspore {
 namespace lite {
 class Log : public ArithmeticSelf {
  public:
+  Log() = default;
+  ~Log() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Log, ArithmeticSelf);
-  Log() = default;
   explicit Log(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  Log() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

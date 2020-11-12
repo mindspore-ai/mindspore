@@ -27,17 +27,16 @@ namespace mindspore {
 namespace lite {
 class Lrn : public PrimitiveC {
  public:
+  Lrn() = default;
+  ~Lrn() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Lrn, PrimitiveC);
-  Lrn() = default;
   explicit Lrn(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAlpha(float alpha);
   void SetBeta(float beta);
   void SetBias(float bias);
   void SetSize(int size);
 #else
-  Lrn() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetAlpha() const;

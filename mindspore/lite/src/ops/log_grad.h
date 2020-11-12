@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class LogGrad : public PrimitiveC {
  public:
+  LogGrad() = default;
+  ~LogGrad() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(LogGrad, PrimitiveC);
-  LogGrad() = default;
   explicit LogGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  LogGrad() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

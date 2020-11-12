@@ -27,17 +27,16 @@ namespace mindspore {
 namespace lite {
 class MatrixDiag : public PrimitiveC {
  public:
+  MatrixDiag() = default;
+  ~MatrixDiag() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(MatrixDiag, PrimitiveC);
-  MatrixDiag() = default;
   explicit MatrixDiag(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetK(int k);
   void SetNumRows(int num_rows);
   void SetNumCols(int num_cols);
   void SetPaddingValue(float padding_value);
 #else
-  MatrixDiag() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetK() const;

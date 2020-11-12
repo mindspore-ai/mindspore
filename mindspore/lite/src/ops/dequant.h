@@ -24,13 +24,12 @@ namespace mindspore {
 namespace lite {
 class Dequant : public PrimitiveC {
  public:
+  Dequant() = default;
+  ~Dequant() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Dequant, PrimitiveC);
-  Dequant() = default;
   explicit Dequant(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-#else
-  Dequant() = default;
 #endif
 };
 }  // namespace lite

@@ -28,15 +28,14 @@ namespace mindspore {
 namespace lite {
 class ReverseSequence : public PrimitiveC {
  public:
+  ReverseSequence() = default;
+  ~ReverseSequence() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(ReverseSequence, PrimitiveC);
-  ReverseSequence() = default;
   explicit ReverseSequence(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetSeqAxis(int seq_axis);
   void SetBatchAxis(int batch_axis);
 #else
-  ReverseSequence() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

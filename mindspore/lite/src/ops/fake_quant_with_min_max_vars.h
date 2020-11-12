@@ -26,15 +26,14 @@ namespace mindspore {
 namespace lite {
 class FakeQuantWithMinMaxVars : public PrimitiveC {
  public:
+  FakeQuantWithMinMaxVars() = default;
+  ~FakeQuantWithMinMaxVars() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(FakeQuantWithMinMaxVars, PrimitiveC);
-  FakeQuantWithMinMaxVars() = default;
   explicit FakeQuantWithMinMaxVars(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetNarrowRange(bool narrow_range);
   void SetNumBits(int num_bits);
 #else
-  FakeQuantWithMinMaxVars() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   bool GetNarrowRange() const;

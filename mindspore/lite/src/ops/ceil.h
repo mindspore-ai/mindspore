@@ -26,13 +26,12 @@ namespace mindspore {
 namespace lite {
 class Ceil : public ArithmeticSelf {
  public:
+  Ceil() = default;
+  ~Ceil() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Ceil, ArithmeticSelf);
-  Ceil() = default;
   explicit Ceil(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  Ceil() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override {
     MS_ASSERT(nullptr != primitive);
     MS_ASSERT(nullptr != fbb);

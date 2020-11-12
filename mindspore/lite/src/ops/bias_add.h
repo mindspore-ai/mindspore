@@ -27,15 +27,14 @@ namespace mindspore {
 namespace lite {
 class BiasAdd : public PrimitiveC {
  public:
+  BiasAdd() = default;
+  ~BiasAdd() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(BiasAdd, PrimitiveC);
-  BiasAdd() = default;
   explicit BiasAdd(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetAxis(const std::vector<int> &axis);
 #else
-  BiasAdd() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   std::vector<int> GetAxis() const;

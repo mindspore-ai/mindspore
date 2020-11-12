@@ -28,9 +28,10 @@ namespace mindspore {
 namespace lite {
 class PriorBox : public PrimitiveC {
  public:
+  PriorBox() = default;
+  ~PriorBox() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(PriorBox, PrimitiveC);
-  PriorBox() = default;
   explicit PriorBox(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetMinSizes(const std::vector<int> &min_sizes);
   void SetMaxSizes(const std::vector<int> &max_sizes);
@@ -44,8 +45,6 @@ class PriorBox : public PrimitiveC {
   void SetFlip(bool flip);
   void SetOffset(float offset);
 #else
-  PriorBox() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

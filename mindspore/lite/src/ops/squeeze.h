@@ -28,16 +28,15 @@ namespace mindspore {
 namespace lite {
 class Squeeze : public PrimitiveC {
  public:
+  Squeeze() = default;
+  ~Squeeze() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Squeeze, PrimitiveC);
-  Squeeze() = default;
   explicit Squeeze(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(const std::vector<int> &axis);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 
 #else
-  Squeeze() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

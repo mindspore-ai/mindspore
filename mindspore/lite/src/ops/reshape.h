@@ -28,16 +28,15 @@ namespace mindspore {
 namespace lite {
 class Reshape : public PrimitiveC {
  public:
+  Reshape() = default;
+  ~Reshape() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Reshape, PrimitiveC);
-  Reshape() = default;
   explicit Reshape(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetFormat(int format);
   void SetShape(const std::vector<int64_t> &shape);
 #else
-  Reshape() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

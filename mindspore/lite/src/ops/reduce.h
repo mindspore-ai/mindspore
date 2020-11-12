@@ -29,9 +29,10 @@ namespace mindspore {
 namespace lite {
 class Reduce : public PrimitiveC {
  public:
+  Reduce() = default;
+  ~Reduce() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Reduce, PrimitiveC);
-  Reduce() = default;
   explicit Reduce(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetAxes(const std::vector<int> &axes);
@@ -40,8 +41,6 @@ class Reduce : public PrimitiveC {
   void SetReduceToEnd(bool reduce_to_end);
   void SetCoeff(float coeff);
 #else
-  Reduce() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
