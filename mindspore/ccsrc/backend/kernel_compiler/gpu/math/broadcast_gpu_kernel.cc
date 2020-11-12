@@ -62,6 +62,10 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   Div, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   BroadcastOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  DivNoNan,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  BroadcastOpGpuKernel, float)
 
 // fp16
 MS_REG_GPU_KERNEL_ONE(
@@ -107,6 +111,10 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   Div, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   BroadcastOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  DivNoNan,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  BroadcastOpGpuKernel, half)
 
 // int32
 MS_REG_GPU_KERNEL_ONE(
@@ -135,6 +143,9 @@ MS_REG_GPU_KERNEL_ONE(
   BroadcastOpGpuKernel, int)
 MS_REG_GPU_KERNEL_ONE(
   Div, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  BroadcastOpGpuKernel, int)
+MS_REG_GPU_KERNEL_ONE(
+  DivNoNan, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernel, int)
 }  // namespace kernel
 }  // namespace mindspore
