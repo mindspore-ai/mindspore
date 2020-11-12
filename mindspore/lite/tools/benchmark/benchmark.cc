@@ -120,6 +120,10 @@ int Benchmark::ReadInputFile() {
           return RET_ERROR;
         }
         auto input_data = cur_tensor->MutableData();
+        if (input_data == nullptr) {
+          MS_LOG(ERROR) << "input_data is nullptr.";
+          return RET_ERROR;
+        }
         memcpy(input_data, bin_buf, tensor_data_size);
       }
       delete[] bin_buf;
@@ -232,7 +236,7 @@ int Benchmark::CompareOutput() {
   }
   float mean_bias;
   if (total_size != 0) {
-    mean_bias = total_bias / total_size * 100;
+    mean_bias = total_bias / float_t(total_size) * 100;
   } else {
     mean_bias = 0;
   }
@@ -286,21 +290,26 @@ int Benchmark::CompareStringData(const std::string &name, tensor::MSTensor *tens
 int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
                                               int *total_size) {
   float bias = 0;
+  auto mutableData = tensor->MutableData();
+  if (mutableData == nullptr) {
+    MS_LOG(ERROR) << "mutableData is nullptr.";
+    return RET_ERROR;
+  }
   switch (msCalibDataType) {
     case TypeId::kNumberTypeFloat: {
-      bias = CompareData<float>(name, tensor->shape(), tensor->MutableData());
+      bias = CompareData<float>(name, tensor->shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt8: {
-      bias = CompareData<int8_t>(name, tensor->shape(), tensor->MutableData());
+      bias = CompareData<int8_t>(name, tensor->shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeUInt8: {
-      bias = CompareData<uint8_t>(name, tensor->shape(), tensor->MutableData());
+      bias = CompareData<uint8_t>(name, tensor->shape(), mutableData);
       break;
     }
     case TypeId::kNumberTypeInt32: {
-      bias = CompareData<int32_t>(name, tensor->shape(), tensor->MutableData());
+      bias = CompareData<int32_t>(name, tensor->shape(), mutableData);
       break;
     }
     default:
@@ -420,6 +429,10 @@ int Benchmark::PrintInputData() {
     }
     size_t print_num = std::min(input->ElementsNum(), 20);
     const void *in_data = input->MutableData();
+    if (in_data == nullptr) {
+      MS_LOG(ERROR) << "in_data is nullptr.";
+      return RET_ERROR;
+    }
 
     for (size_t j = 0; j < print_num; j++) {
       if (tensor_data_type == TypeId::kNumberTypeFloat32 || tensor_data_type == TypeId::kNumberTypeFloat) {
@@ -723,7 +736,7 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
     }
     columns.push_back(iter.first);
 
-    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / flags_->loop_count_);
+    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%f", iter.second.second / float_t(flags_->loop_count_));
     if (len > columnLenMax.at(1)) {
       columnLenMax.at(1) = len + 4;
     }
@@ -760,9 +773,9 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
     printf("%s\t", printBuf.c_str());
   }
   printf("\n");
-  for (size_t i = 0; i < rows.size(); i++) {
+  for (auto &row : rows) {
     for (int j = 0; j < 5; j++) {
-      auto printBuf = rows[i][j];
+      auto printBuf = row[j];
       printBuf.resize(columnLenMax.at(j), ' ');
       printf("%s\t", printBuf.c_str());
     }
@@ -772,7 +785,7 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
 }
 
 Benchmark::~Benchmark() {
-  for (auto iter : this->benchmark_data_) {
+  for (const auto &iter : this->benchmark_data_) {
     delete (iter.second);
   }
   this->benchmark_data_.clear();

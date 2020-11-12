@@ -860,8 +860,14 @@ ThreadPool *CreateThreadPool(int thread_num, int mode) {
     if (ret != RET_TP_OK) {
       LOG_ERROR("create thread %d failed", i);
       DestroyThreadPool(thread_pool);
+      thread_pool = NULL;
       return NULL;
     }
+  }
+  if (thread_pool == NULL) {
+    LOG_ERROR("create thread failed");
+    DestroyThreadPool(thread_pool);
+    return NULL;
   }
   return thread_pool;
 }

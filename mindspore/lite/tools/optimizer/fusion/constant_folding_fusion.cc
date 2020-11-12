@@ -240,6 +240,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
     lite_primitive->InferShape(input_tensors, output_tensors);
     auto primitive = lite_primitive.get();
     MS_ASSERT(primitive != nullptr);
+    MS_ASSERT(primitive->Type() != nullptr);
     auto parameter =
       lite::PopulateRegistry::GetInstance()->getParameterCreator(schema::PrimitiveType(primitive->Type()))(primitive);
 

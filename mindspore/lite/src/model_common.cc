@@ -24,21 +24,25 @@ int ConvertSubGraph(const schema::SubGraph &sub_graph, Model *model) {
     return RET_ERROR;
   }
   subgraph->name_ = sub_graph.name()->c_str();
+  MS_ASSERT(sub_graph.inputIndices() != nullptr);
   auto in_count = sub_graph.inputIndices()->size();
   for (uint32_t i = 0; i < in_count; ++i) {
-    subgraph->input_indices_.push_back(size_t(sub_graph.inputIndices()->GetAs<uint32_t>(i)));
+    subgraph->input_indices_.push_back(sub_graph.inputIndices()->Get(i));
   }
+  MS_ASSERT(sub_graph.outputIndices() != nullptr);
   auto out_count = sub_graph.outputIndices()->size();
   for (uint32_t i = 0; i < out_count; ++i) {
-    subgraph->output_indices_.push_back(size_t(sub_graph.outputIndices()->GetAs<uint32_t>(i)));
+    subgraph->output_indices_.push_back(sub_graph.outputIndices()->Get(i));
   }
+  MS_ASSERT(sub_graph.nodeIndices() != nullptr);
   auto node_count = sub_graph.nodeIndices()->size();
   for (uint32_t i = 0; i < node_count; ++i) {
-    subgraph->node_indices_.push_back(size_t(sub_graph.nodeIndices()->GetAs<uint32_t>(i)));
+    subgraph->node_indices_.push_back(sub_graph.nodeIndices()->Get(i));
   }
-  auto tensor_count = sub_graph.nodeIndices()->size();
+  MS_ASSERT(sub_graph.tensorIndices() != nullptr);
+  auto tensor_count = sub_graph.tensorIndices()->size();
   for (uint32_t i = 0; i < tensor_count; ++i) {
-    subgraph->tensor_indices_.push_back(size_t(sub_graph.tensorIndices()->GetAs<uint32_t>(i)));
+    subgraph->tensor_indices_.push_back(sub_graph.tensorIndices()->Get(i));
   }
   model->sub_graphs_.push_back(subgraph);
   return RET_OK;

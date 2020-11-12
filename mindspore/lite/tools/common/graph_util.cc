@@ -605,10 +605,6 @@ std::string GetModelName(const std::string &modelFile) {
   std::string modelName = modelFile;
   modelName = modelName.substr(modelName.find_last_of('/') + 1);
   modelName = modelName.substr(0, modelName.find_last_of('.'));
-
-  srand((unsigned)time(NULL));
-  modelName = modelName + std::to_string(rand());
-
   return modelName;
 }
 }  // namespace lite

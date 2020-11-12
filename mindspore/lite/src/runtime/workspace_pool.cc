@@ -109,7 +109,7 @@ void *WorkspacePool::AllocWorkSpaceMem(size_t size) {
     }
   }
   allocList.emplace_back(alloc);
-  return alloc.second;
+  return alloc.second != nullptr ? alloc.second : nullptr;
 }
 
 void WorkspacePool::FreeWorkSpaceMem(const void *ptr) {

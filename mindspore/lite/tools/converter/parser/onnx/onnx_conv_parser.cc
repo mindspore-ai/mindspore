@@ -157,6 +157,9 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     auto iter = std::find_if((*nodeIter).attribute().begin(), (*nodeIter).attribute().end(),
                              [](const onnx::AttributeProto &attr) { return attr.name() == "shape"; });
     if (iter != (*nodeIter).attribute().end()) {
+      MS_ASSERT(iter->ints() != nullptr);
+      MS_ASSERT(iter->ints().begin() != nullptr);
+      MS_ASSERT(iter->ints().end() != nullptr);
       dims.insert(dims.begin(), iter->ints().begin(), iter->ints().end());
     }
     attr->channelOut = dims[0];
