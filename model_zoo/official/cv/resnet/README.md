@@ -277,7 +277,7 @@ sh run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATA
 sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 
 # gpu benchmark example
-sh run_gpu_resnet_benchmark.sh [IMAGENET_DATASET_PATH] [BATCH_SIZE](optional)
+sh run_gpu_resnet_benchmark.sh [IMAGENET_DATASET_PATH] [BATCH_SIZE](optional) [DEVICE_NUM](optional)
 ```
 
 #### Running parameter server mode training
@@ -345,16 +345,11 @@ epoch: 5 step: 5004, loss is 3.3501816
 
 ```
 # ========START RESNET50 GPU BENCHMARK========
-step time: 22549.130 ms, fps: 11 img/sec. epoch: 1 step: 1, loss is 6.940182
-step time: 182.485 ms, fps: 1402 img/sec. epoch: 1 step: 2, loss is 7.078993
-step time: 175.263 ms, fps: 1460 img/sec. epoch: 1 step: 3, loss is 7.559594
-step time: 174.775 ms, fps: 1464 img/sec. epoch: 1 step: 4, loss is 8.020937
-step time: 175.564 ms, fps: 1458 img/sec. epoch: 1 step: 5, loss is 8.140132
-step time: 175.438 ms, fps: 1459 img/sec. epoch: 1 step: 6, loss is 8.021118
-step time: 175.760 ms, fps: 1456 img/sec. epoch: 1 step: 7, loss is 7.910158
-step time: 176.033 ms, fps: 1454 img/sec. epoch: 1 step: 8, loss is 7.940162
-step time: 175.995 ms, fps: 1454 img/sec. epoch: 1 step: 9, loss is 7.740654
-step time: 175.313 ms, fps: 1460 img/sec. epoch: 1 step: 10, loss is 7.956182
+step time: 12416.098 ms, fps: 412 img/sec. epoch: 1 step: 20, loss is 6.940182
+step time: 3472.037 ms, fps: 1474 img/sec. epoch: 2 step: 20, loss is 7.078993
+step time: 3469.523 ms, fps: 1475 img/sec. epoch: 3 step: 20, loss is 7.559594
+step time: 3460.311 ms, fps: 1479 img/sec. epoch: 4 step: 20, loss is 6.920937
+step time: 3460.543 ms, fps: 1479 img/sec. epoch: 5 step: 20, loss is 6.814013
 ...
 ```
 ## [Evaluation Process](#contents)

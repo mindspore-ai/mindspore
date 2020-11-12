@@ -14,9 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ] && [ $# != 2 ]
+if [ $# != 1 ] && [ $# != 2 ] && [ $# != 3 ]
 then 
-	echo "Usage: sh run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional)"
+	echo "Usage: sh run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DEVICE_NUM](optional)"
+  echo "Example: sh run_gpu_resnet_benchmark.sh /path/imagenet/train 256 8"
 exit 1
 fi
 
@@ -39,4 +40,10 @@ fi
 if [ $# == 2 ]
 then
     python ${self_path}/../gpu_resnet_benchmark.py --dataset_path=$DATAPATH --batch_size=$2
+fi
+
+if [ $# == 3 ]
+then
+    mpirun --allow-run-as-root -n $3 python ${self_path}/../gpu_resnet_benchmark.py --run_distribute=True \
+    --dataset_path=$DATAPATH --batch_size=$2
 fi

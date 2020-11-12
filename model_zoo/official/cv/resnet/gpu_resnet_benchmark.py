@@ -14,45 +14,54 @@
 # ============================================================================
 """train resnet."""
 import argparse
+import ast
 import time
 import numpy as np
 from mindspore import context
 from mindspore import Tensor
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.model import Model
+from mindspore.context import ParallelMode
 from mindspore.train.callback import Callback, LossMonitor
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.communication.management import init, get_group_size
 from mindspore.common import set_seed
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
-import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.vision.c_transforms as C
-import mindspore.dataset.transforms.c_transforms as C2
 from src.resnet_gpu_benchmark import resnet50 as resnet
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--batch_size', type=str, default="256", help='Batch_size: default 256.')
 parser.add_argument('--epoch_size', type=str, default="2", help='Epoch_size: default 2')
+parser.add_argument('--print_per_steps', type=str, default="20", help='Print loss and time per steps: default 20')
+parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute')
 parser.add_argument('--dataset_path', type=str, default=None, help='Imagenet dataset path')
 args_opt = parser.parse_args()
 
 set_seed(1)
 
 class MyTimeMonitor(Callback):
-    def __init__(self, batch_size):
+    def __init__(self, batch_size, sink_size):
         super(MyTimeMonitor, self).__init__()
         self.batch_size = batch_size
+        self.size = sink_size
     def step_begin(self, run_context):
         self.step_time = time.time()
     def step_end(self, run_context):
         step_mseconds = (time.time() - self.step_time) * 1000
-        fps = self.batch_size / step_mseconds *1000
+        fps = self.batch_size / step_mseconds *1000 * self.size
         print("step time: {:5.3f} ms, fps: {:d} img/sec.".format(step_mseconds, int(fps)), flush=True, end=" ")
 
+def pad(image):
+    zeros = np.zeros([224, 224, 1], dtype=np.uint8)
+    output = np.concatenate((image, zeros), axis=2)
+    return output
+
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="GPU"):
-    ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+    ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=4, shuffle=True)
 
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
@@ -73,16 +82,13 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
             C.Normalize(mean=mean, std=std),
         ]
 
-    type_cast_op = C2.TypeCast(mstype.int32)
-
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
-    ds = ds.map(operations=C2.PadEnd(pad_shape=[224, 224, 4], pad_value=0), input_columns="image",
-                num_parallel_workers=8)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=4)
+    ds = ds.map(operations=pad, input_columns="image", num_parallel_workers=4)
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    if repeat_num > 1:
+        ds = ds.repeat(repeat_num)
 
     return ds
 
@@ -101,16 +107,27 @@ def get_liner_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per
     return lr_each_step
 
 if __name__ == '__main__':
+    # set args
     dev = "GPU"
     epoch_size = int(args_opt.epoch_size)
     total_batch = int(args_opt.batch_size)
+    print_per_steps = int(args_opt.print_per_steps)
+
     # init context
     context.set_context(mode=context.GRAPH_MODE, device_target=dev, save_graphs=False)
+    if args_opt.run_distribute:
+        init()
+        context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
+                                          gradients_mean=True, all_reduce_fusion_config=[85, 160])
+
     # create dataset
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
                              batch_size=total_batch, target=dev)
     step_size = dataset.get_dataset_size()
-
+    if (print_per_steps > step_size or print_per_steps < 1):
+        print("Arg: print_per_steps should lessequal to dataset_size ", step_size)
+        print("Change to default: 20")
+        print_per_steps = 20
     # define net
     net = resnet(class_num=1001)
 
@@ -151,10 +168,10 @@ if __name__ == '__main__':
                   amp_level="O2", keep_batchnorm_fp32=False)
 
     # define callbacks
-    time_cb = MyTimeMonitor(total_batch)
+    time_cb = MyTimeMonitor(total_batch, print_per_steps)
     loss_cb = LossMonitor()
     cb = [time_cb, loss_cb]
 
     # train model
     print("========START RESNET50 GPU BENCHMARK========")
-    model.train(epoch_size, dataset, callbacks=cb, sink_size=dataset.get_dataset_size())
+    model.train(int(epoch_size * step_size / print_per_steps), dataset, callbacks=cb, sink_size=print_per_steps)
