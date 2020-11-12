@@ -147,6 +147,39 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   return true;
 }
 
+void GenNoneInputDescJson(const std::shared_ptr<OpIOInfo> &input_ptr, size_t input_i,
+                          std::vector<nlohmann::json> *input_list) {
+  nlohmann::json input_desc_json;
+  auto in_name = input_ptr->name();
+  input_desc_json[kJName] = in_name + std::to_string(input_i);
+  input_desc_json[kJValid] = false;
+  input_list->emplace_back(input_desc_json);
+}
+
+void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index,
+                                                 bool value, const std::shared_ptr<OpIOInfo> &input_ptr,
+                                                 const string &op_input_name, size_t input_i,
+                                                 std::vector<nlohmann::json> *input_list) {
+  auto dtype = GetDeviceInputType(anf_node, real_input_index);
+  auto format = GetDeviceInputFormat(anf_node, real_input_index);
+  auto shape = GetDeviceInputShape(anf_node, real_input_index);
+  auto ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_input_index);
+  if (ori_shape.empty()) {
+    ori_shape.emplace_back(1);
+  }
+  nlohmann::json input_desc_json;
+  input_desc_json[kJDtype] = dtype;
+  input_desc_json[kJName] = op_input_name + std::to_string(input_i);
+  input_desc_json[kJOriShape] = ori_shape;
+  input_desc_json[kJOriFormat] = kOpFormat_NCHW;
+  input_desc_json[kJShape] = shape;
+  input_desc_json[kJFormat] = format;
+  input_desc_json[kJValid] = value;
+  input_desc_json[kJParamType] = input_ptr->param_type();
+  input_desc_json[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index);
+  input_list->emplace_back(input_desc_json);
+}
+
 bool TbeKernelJsonCreator::GenInputDescJson(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index,
                                             bool value, const std::shared_ptr<OpIOInfo> &input_ptr,
                                             const string &op_input_name, size_t input_i,
@@ -156,32 +189,19 @@ bool TbeKernelJsonCreator::GenInputDescJson(const std::shared_ptr<AnfNode> &anf_
   MS_EXCEPTION_IF_NULL(input_list);
   std::string op_name = AnfAlgo::GetCNodeName(anf_node);
   if (op_name == kDynamicRNNOpName && input_ptr->name() == "seq_length") {
-    nlohmann::json input_desc_json;
-    auto in_name = input_ptr->name();
-    input_desc_json[kJName] = in_name + std::to_string(input_i);
-    input_desc_json[kJValid] = false;
-    input_list->emplace_back(input_desc_json);
+    GenNoneInputDescJson(input_ptr, input_i, input_list);
+  } else if (op_name == kDynamicGRUV2OpName) {
+    auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node, "placeholder_index");
+    auto item = find(none_index.begin(), none_index.end(), input_ptr->index());
+    if (item != none_index.end()) {
+      GenNoneInputDescJson(input_ptr, input_i, input_list);
+    } else {
+      GenValidInputDescJson(anf_node, real_input_index, value, input_ptr, op_input_name, input_i, input_list);
+    }
   } else if (input_ptr->name() == "input_indices" && op_name == kTopKOpName) {
     TbeAdapter::GenTopKV2IndicesTensorInfo(anf_node, real_input_index, input_list, creater_type_);
   } else {
-    auto dtype = GetDeviceInputType(anf_node, real_input_index);
-    auto format = GetDeviceInputFormat(anf_node, real_input_index);
-    auto shape = GetDeviceInputShape(anf_node, real_input_index);
-    auto ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_input_index);
-    if (ori_shape.empty()) {
-      ori_shape.emplace_back(1);
-    }
-    nlohmann::json input_desc_json;
-    input_desc_json[kJDtype] = dtype;
-    input_desc_json[kJName] = op_input_name + std::to_string(input_i);
-    input_desc_json[kJOriShape] = ori_shape;
-    input_desc_json[kJOriFormat] = kOpFormat_NCHW;
-    input_desc_json[kJShape] = shape;
-    input_desc_json[kJFormat] = format;
-    input_desc_json[kJValid] = value;
-    input_desc_json[kJParamType] = input_ptr->param_type();
-    input_desc_json[kJRange] = tbe::TbeDynamicShapeUtil::GetInputDynamicRange(anf_node, real_input_index);
-    input_list->emplace_back(input_desc_json);
+    GenValidInputDescJson(anf_node, real_input_index, value, input_ptr, op_input_name, input_i, input_list);
   }
   return true;
 }

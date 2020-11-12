@@ -111,6 +111,9 @@ class TbeKernelJsonCreator {
   void GenOutputList(const std::shared_ptr<AnfNode> &anf_node, const size_t &output_obj_num,
                      const std::shared_ptr<OpIOInfo> &output_ptr, size_t *output_idx,
                      std::vector<nlohmann::json> *output_list);
+  void GenValidInputDescJson(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index, bool value,
+                             const std::shared_ptr<OpIOInfo> &input_ptr, const string &op_input_name, size_t input_i,
+                             std::vector<nlohmann::json> *input_list);
   std::vector<size_t> GetDeviceInputShape(const AnfNodePtr &anf_node, size_t real_index) const;
   std::string GetDeviceInputType(const AnfNodePtr &anf_node, size_t real_index) const;
   std::string GetDeviceInputFormat(const AnfNodePtr &anf_node, size_t real_index) const;

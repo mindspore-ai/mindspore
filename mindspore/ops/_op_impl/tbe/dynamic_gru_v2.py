@@ -34,8 +34,8 @@ dynamic_gru_v2_op_info = TBERegOp("DynamicGRUV2") \
     .attr("is_training", "optional", "bool", "all", "true") \
     .partial_flag(True) \
     .input(0, "x", False, "required", "all") \
-    .input(1, "weight_input", False, "required", "all") \
-    .input(2, "weight_hidden", False, "required", "all") \
+    .input(1, "weight_input", False, "required", "all", reshape_type="CN") \
+    .input(2, "weight_hidden", False, "required", "all", reshape_type="CN") \
     .input(3, "bias_input", False, "optional", "all") \
     .input(4, "bias_hidden", False, "optional", "all") \
     .input(5, "seq_length", False, "optional", "all") \

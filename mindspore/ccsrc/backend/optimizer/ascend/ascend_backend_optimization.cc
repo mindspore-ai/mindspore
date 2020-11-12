@@ -63,6 +63,7 @@
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
 #include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_basiclstm_op.h"
+#include "backend/optimizer/ascend/format_type/insert_transpose_for_dyanmic_gru_v2.h"
 #include "backend/optimizer/ascend/format_type/rectify_do_mask_kernel_info.h"
 #include "backend/optimizer/ascend/format_type/chang_axis_of_reduce_kernel.h"
 #include "backend/optimizer/ascend/format_type/split_unsupported_transdata.h"
@@ -110,6 +111,7 @@
 #include "backend/optimizer/ascend/ir_fission/pack_fission.h"
 #include "backend/optimizer/ascend/enhancer/concat_outputs_for_all_gather.h"
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_rnn.h"
+#include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
@@ -222,6 +224,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   data_layout_pm->AddPass(std::make_shared<RemoveReshapePair>());
   data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());
+  data_layout_pm->AddPass(std::make_shared<InsertTransposeForDynamicGRUV2>());
   data_layout_pm->AddPass(std::make_shared<OptimizeDependence>());
   data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
   data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
@@ -278,6 +281,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());

@@ -22,7 +22,7 @@ gru_v2_hidden_grad_op_info = TBERegOp("GRUV2HiddenGrad") \
     .binfile_name("gru_v2_hidden_grad.so") \
     .compute_cost(10) \
     .kernel_name("gru_v2_hidden_grad") \
-    .attr("gate_order", "optional", "str", "all", "zrh") \
+    .attr("gate_order", "optional", "str", "all", "rzh") \
     .partial_flag(True) \
     .input(0, "weight_input", False, "required", "all") \
     .input(1, "init_h", False, "required", "all") \

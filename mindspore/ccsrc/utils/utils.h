@@ -227,8 +227,8 @@ constexpr auto kBasicLSTMCellInputGradOpName = "BasicLSTMCellInputGrad";
 constexpr auto kBasicLSTMCellOpName = "BasicLSTMCell";
 constexpr auto kDynamicRNNOpName = "DynamicRNN";
 constexpr auto kLSTMInputGradOpName = "LSTMInputGrad";
-constexpr auto kDynamicGRUOpName = "DynamicGRU";
-constexpr auto kGRUV2HiddenGrad = "GRUV2HiddenGrad";
+constexpr auto kDynamicGRUV2OpName = "DynamicGRUV2";
+constexpr auto kGRUV2HiddenGradOpName = "GRUV2HiddenGrad";
 constexpr auto kFusedSparseFtrlName = "FusedSparseFtrl";
 constexpr auto kFusedSparseProximalAdagradName = "FusedSparseProximalAdagrad";
 constexpr auto kFusedSparseLazyAdamName = "FusedSparseLazyAdam";
@@ -239,6 +239,7 @@ constexpr auto kLARSUpdateName = "LARSUpdate";
 constexpr auto kBasicLSTMCellCStateGradOpName = "BasicLSTMCellCStateGrad";
 constexpr auto kBasicLSTMCellCStateGradV2OpName = "BasicLSTMCellCStateGradV2";
 constexpr auto kMatMulV2OpName = "MatMulV2";
+constexpr auto kBroadcastToOpName = "BroadcastTo";
 
 // Hcom Op Type
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";

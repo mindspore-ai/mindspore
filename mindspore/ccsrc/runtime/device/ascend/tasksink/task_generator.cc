@@ -133,6 +133,13 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
       if (op_name == kDynamicRNNOpName && i == 3) {
         continue;
       }
+      if (op_name == kDynamicGRUV2OpName) {
+        auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(anf_node_ptr, "placeholder_index");
+        auto item = find(none_index.begin(), none_index.end(), i);
+        if (item != none_index.end()) {
+          continue;
+        }
+      }
       auto real_input_index = AnfAlgo::GetRealInputIndex(anf_node_ptr, i);
       auto device_address = AnfAlgo::GetPrevNodeOutputAddr(anf_node_ptr, real_input_index);
       AddressPtr input = std::make_shared<Address>();
