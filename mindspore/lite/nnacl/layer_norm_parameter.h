@@ -30,16 +30,10 @@ typedef struct LayerNormParameter {
 } LayerNormParameter;
 
 typedef struct LayerNormQuantArg {
-  QuantArg in_quant_arg_;
-  QuantArg out_quant_arg_;
-  QuantArg gamma_quant_arg_;
-
-  int32_t multiplier_;
-  int32_t shift_left_;
-  int32_t shift_right_;
-
-  int output_activation_min_;
-  int output_activation_max_;
+  int32_t in_zp_;
+  int32_t out_zp_;
+  double in_scale_;
+  double out_scale_;
 } LayerNormQuantArg;
 
 #endif  // MINDSPORE_LITE_NNACL_LAYER_NORM_PARAMETER_H_

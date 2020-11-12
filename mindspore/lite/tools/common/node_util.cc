@@ -138,6 +138,7 @@ static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_Crop,
                                                               schema::PrimitiveType_PriorBox,
                                                               schema::PrimitiveType_QuantDTypeCast,
+                                                              schema::PrimitiveType_LayerNorm,
                                                               schema::PrimitiveType_L2Norm};
 
 static const std::vector<schema::PrimitiveType> needInsertOpList = {
