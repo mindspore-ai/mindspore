@@ -83,7 +83,7 @@ TEST_F(TestDeviceManager, test_dm_init_AND_get_device_list) {
   ASSERT_EQ(dm_.Init(dev_list, local_dev, stage_map, "hccl"), Status::SUCCESS);
 
   ASSERT_EQ(dm_.DeviceNum(), 4);
-  ASSERT_EQ(dm_.GetStageNum(), (int32_t)(2));
+  ASSERT_EQ(dm_.stage_num(), (int32_t)(2));
 
   RankList dev_list_0 = dm_.GetDeviceListByStageId(0);
   RankList dev_list_1 = dm_.GetDeviceListByStageId(1);
@@ -98,11 +98,6 @@ TEST_F(TestDeviceManager, test_dm_init_AND_get_device_list) {
   ASSERT_EQ((*it), int32_t(1));
   it++;
   ASSERT_EQ((*it), int32_t(0));
-
-  std::shared_ptr<Stage> stage_0 = dm_.GetStageById(0);
-  ASSERT_EQ(stage_0->GetDevicesNum(), size_t(2));
-  std::shared_ptr<Stage> stage_1 = dm_.GetStageById(1);
-  ASSERT_EQ(stage_1->GetDevicesNum(), size_t(2));
 }
 
 TEST_F(TestDeviceManager, test_CreateNewDeviceByRank) {
@@ -123,5 +118,28 @@ TEST_F(TestDeviceManager, test_CreateDeviceListByRankList) {
   ASSERT_EQ(it->rank(), int32_t(1));
 }
 
+TEST_F(TestDeviceManager, test_StageID) {
+  RankList dev_list;
+  RankList stage_map;
+  int32_t local_dev = 2;
+
+  dev_list.push_back(0);
+  dev_list.push_back(1);
+  dev_list.push_back(2);
+  dev_list.push_back(3);
+
+  stage_map.push_back(2);
+  stage_map.push_back(2);
+  ASSERT_EQ(dm_.Init(dev_list, local_dev, stage_map, "hccl"), Status::SUCCESS);
+
+  ASSERT_EQ(dm_.DeviceNum(), 4);
+  ASSERT_EQ(dm_.stage_num(), 2);
+  ASSERT_EQ(dm_.stage_id(), 1);
+
+  RankList dev_list_0 = dm_.GetDeviceListByStageId(0);
+  RankList dev_list_1 = dm_.GetDeviceListByStageId(1);
+  ASSERT_EQ(dev_list_0.size(), 2);
+  ASSERT_EQ(dev_list_1.size(), 2);
+}
 }  // namespace parallel
 }  // namespace mindspore
