@@ -2799,14 +2799,8 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeResizeJpegFail) {
   EXPECT_EQ(soft_dvpp_decode_resize_jpeg_op4, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, DISABLED_TestUniformAugmentFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail1 with invalid zero num_ops parameter.";
-
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 20));
-  EXPECT_NE(ds, nullptr);
-
+TEST_F(MindDataTestPipeline, TestUniformAugmentFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail1 with invalid num_ops parameter.";
   // Create objects for the tensor ops
   std::shared_ptr<TensorOperation> random_crop_op = vision::RandomCrop({28, 28});
   EXPECT_NE(random_crop_op, nullptr);
@@ -2814,29 +2808,33 @@ TEST_F(MindDataTestPipeline, DISABLED_TestUniformAugmentFail1) {
   std::shared_ptr<TensorOperation> center_crop_op = vision::CenterCrop({16, 16});
   EXPECT_NE(center_crop_op, nullptr);
 
-  // Try UniformAugment with invalid zero num_ops value
-  std::shared_ptr<TensorOperation> uniform_aug_op = vision::UniformAugment({random_crop_op, center_crop_op}, 0);
-  EXPECT_EQ(uniform_aug_op, nullptr);
+  // UniformAug: num_ops must be greater than 0
+  std::shared_ptr<TensorOperation> uniform_aug_op1 = vision::UniformAugment({random_crop_op, center_crop_op}, 0);
+  EXPECT_EQ(uniform_aug_op1, nullptr);
+
+  // UniformAug: num_ops must be greater than 0
+  std::shared_ptr<TensorOperation> uniform_aug_op2 = vision::UniformAugment({random_crop_op, center_crop_op}, -1);
+  EXPECT_EQ(uniform_aug_op2, nullptr);
+
+  // UniformAug: num_ops is greater than transforms size
+  std::shared_ptr<TensorOperation> uniform_aug_op3 = vision::UniformAugment({random_crop_op, center_crop_op}, 3);
+  EXPECT_EQ(uniform_aug_op3, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, DISABLED_TestUniformAugmentFail2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail2 with invalid negative num_ops parameter.";
+TEST_F(MindDataTestPipeline, TestUniformAugmentFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail2 with invalid transform.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 20));
-  EXPECT_NE(ds, nullptr);
+  // UniformAug: transform ops must not be null
+  std::shared_ptr<TensorOperation> uniform_aug_op1 = vision::UniformAugment({vision::RandomCrop({-28})}, 1);
+  EXPECT_EQ(uniform_aug_op1, nullptr);
 
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_crop_op = vision::RandomCrop({28, 28});
-  EXPECT_NE(random_crop_op, nullptr);
+  // UniformAug: transform ops must not be null
+  std::shared_ptr<TensorOperation> uniform_aug_op2 = vision::UniformAugment({vision::RandomCrop({28}), nullptr}, 2);
+  EXPECT_EQ(uniform_aug_op2, nullptr);
 
-  std::shared_ptr<TensorOperation> center_crop_op = vision::CenterCrop({16, 16});
-  EXPECT_NE(center_crop_op, nullptr);
-
-  // Try UniformAugment with invalid negative num_ops value
-  std::shared_ptr<TensorOperation> uniform_aug_op = vision::UniformAugment({random_crop_op, center_crop_op}, -1);
-  EXPECT_EQ(uniform_aug_op, nullptr);
+  // UniformAug: transform list must not be empty
+  std::shared_ptr<TensorOperation> uniform_aug_op3 = vision::UniformAugment({}, 1);
+  EXPECT_EQ(uniform_aug_op3, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
