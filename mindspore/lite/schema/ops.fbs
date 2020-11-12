@@ -553,7 +553,6 @@ table Slice {
     axes: [int];
     begin: [int];
     size: [int];
-    step: [int];
 }
 
 table Floor {
