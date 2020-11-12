@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 GetNextProfiling::GetNextProfiling(const std::string &path) : profiling_path_(path) {}
 
 void GetNextProfiling::GetDeviceId() {
