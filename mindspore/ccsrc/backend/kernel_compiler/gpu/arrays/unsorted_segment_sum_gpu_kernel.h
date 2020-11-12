@@ -62,6 +62,13 @@ class UnsortedSegmentSumGpuKernel : public GpuKernel {
     auto ids_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
     auto output_shapes = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
 
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num == 3) {
+      MS_LOG(INFO) << "UnsortedSegmentSum Kernel Input count is 3 - dynamic mode";
+    } else {
+      MS_LOG(INFO) << "UnsortedSegmentSum Kernel Input count is 2";
+    }
+
     auto axis = ids_shapes.size();
     for (size_t i = 0; i < input_shapes.size(); i++) {
       if (i < axis) {
