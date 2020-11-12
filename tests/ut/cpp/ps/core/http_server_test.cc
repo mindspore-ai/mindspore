@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/comm/http_server.h"
+#include "ps/core/http_server.h"
 #include "common/common_test.h"
 #include <gtest/gtest.h>
 #include <algorithm>
@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 class TestHttpServer : public UT::Common {
  public:

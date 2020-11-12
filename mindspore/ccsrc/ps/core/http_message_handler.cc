@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/comm/http_message_handler.h"
+#include "ps/core/http_message_handler.h"
 
 #include <event2/event.h>
 #include <event2/buffer.h>
@@ -36,7 +36,7 @@
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 void HttpMessageHandler::InitHttpMessage() {
   MS_EXCEPTION_IF_NULL(event_request_);
@@ -202,6 +202,6 @@ void HttpMessageHandler::RespError(int nCode, const std::string &message) {
     evhttp_send_error(event_request_, nCode, message.c_str());
   }
 }
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore

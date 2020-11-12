@@ -14,29 +14,31 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
-import "google/protobuf/any.proto";
-package mindspore.ps;
-option optimize_for = LITE_RUNTIME;
+#include "common/common_test.h"
+#include "ps/core/comm_util.h"
 
-message MessageMeta {
-  // hostname or ip
-  string hostname = 1;
-  // the port of this node
-  int32 port = 2;
-  // the command of this message,for example: register、heartbeat、data
-  int32 cmd = 3;
-  // the timestamp of this message
-  int32 timestamp = 4;
-  // data type of message
-  repeated int32 data_type = 5 [packed = true];
-  // message.data_size
-  int32 data_size = 6;
+#include <memory>
+#include <thread>
+
+namespace mindspore {
+namespace ps {
+namespace core {
+class TestCommUtil : public UT::Common {
+ public:
+  TestCommUtil() = default;
+  virtual ~TestCommUtil() = default;
+
+  void SetUp() override {}
+  void TearDown() override {}
+};
+
+TEST_F(TestCommUtil, GetAvailableInterfaceAndIP) {
+  std::string interface;
+  std::string ip;
+  CommUtil::GetAvailableInterfaceAndIP(&interface, &ip);
+  EXPECT_TRUE(!interface.empty());
+  EXPECT_TRUE(!ip.empty());
 }
-
-
-message CommMessage {
-  MessageMeta pb_meta = 1;
-  bytes data = 2;
-}
-
+}  // namespace comm
+}  // namespace ps
+}  // namespace mindspore

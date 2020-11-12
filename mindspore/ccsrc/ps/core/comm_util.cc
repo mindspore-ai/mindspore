@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ps/comm/comm_util.h"
+#include "ps/core/comm_util.h"
 
 #include <arpa/inet.h>
 #include <cstdio>
@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ps {
-namespace comm {
+namespace core {
 
 bool CommUtil::CheckIpWithRegex(const std::string &ip) {
   std::regex pattern("((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
@@ -36,15 +36,47 @@ bool CommUtil::CheckIpWithRegex(const std::string &ip) {
   return false;
 }
 
-void CommUtil::CheckIp(const std::string &ip) {
+bool CommUtil::CheckIp(const std::string &ip) {
   if (!CheckIpWithRegex(ip)) {
-    MS_LOG(EXCEPTION) << "Server address" << ip << " illegal!";
+    return false;
   }
   int64_t uAddr = inet_addr(ip.c_str());
   if (INADDR_NONE == uAddr) {
-    MS_LOG(EXCEPTION) << "Server address illegal, inet_addr converting failed!";
+    return false;
   }
+  return true;
 }
-}  // namespace comm
+
+void CommUtil::GetAvailableInterfaceAndIP(std::string *interface, std::string *ip) {
+  MS_EXCEPTION_IF_NULL(interface);
+  MS_EXCEPTION_IF_NULL(ip);
+  struct ifaddrs *if_address = nullptr;
+  struct ifaddrs *ifa = nullptr;
+
+  interface->clear();
+  ip->clear();
+  getifaddrs(&if_address);
+  for (ifa = if_address; ifa != nullptr; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr == nullptr) {
+      continue;
+    }
+
+    if (ifa->ifa_addr->sa_family == AF_INET && (ifa->ifa_flags & IFF_LOOPBACK) == 0) {
+      char address_buffer[INET_ADDRSTRLEN] = {0};
+      void *sin_addr_ptr = &(reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr))->sin_addr;
+      MS_EXCEPTION_IF_NULL(sin_addr_ptr);
+      const char *net_ptr = inet_ntop(AF_INET, sin_addr_ptr, address_buffer, INET_ADDRSTRLEN);
+      MS_EXCEPTION_IF_NULL(net_ptr);
+
+      *ip = address_buffer;
+      *interface = ifa->ifa_name;
+      break;
+    }
+  }
+  MS_EXCEPTION_IF_NULL(if_address);
+  freeifaddrs(if_address);
+}
+
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore
