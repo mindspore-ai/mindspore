@@ -57,7 +57,7 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset'):
 
     # transform data format
     dataset_types, dataset_shapes = _get_types_and_shapes(exec_dataset)
-    init_exec_dataset(exec_dataset.__TRANSFER_DATASET__.queue_name,
+    init_exec_dataset(exec_dataset.__transfer_dataset__.queue_name,
                       dataset_size,
                       batch_size,
                       dataset_types,
