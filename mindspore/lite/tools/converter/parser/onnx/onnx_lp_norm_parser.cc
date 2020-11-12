@@ -40,6 +40,7 @@ STATUS OnnxLpNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
 
   auto onnx_node_attr = onnx_node.attribute();
   for (int i = 0; i < onnx_node_attr.size(); ++i) {
+    MS_ASSERT(onnx_node_attr.at(i) != nullptr);
     if (onnx_node_attr.at(i).name() == "axis") {
       attr->axis = onnx_node_attr.at(i).i();
     } else if (onnx_node_attr.at(i).name() == "p") {

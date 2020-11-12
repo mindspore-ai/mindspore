@@ -67,8 +67,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   }
   // transform node means scale,bn
   auto transform_node = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(transform_node) != lite::RET_OK ||
-      CheckLeastInputSize(transform_node, 2) != lite::RET_OK) {
+  if (CheckIfCNodeIsNull(transform_node) != lite::RET_OK || CheckLeastInputSize(transform_node, 2) != lite::RET_OK) {
     return nullptr;
   }
 
@@ -93,6 +92,7 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   auto trans_bias = new (std::nothrow) float[kernel_nums];
   if (trans_bias == nullptr) {
     MS_LOG(ERROR) << "tensor_data is nullptr";
+    delete[] trans_scale;
     delete[] trans_bias;
     return nullptr;
   }
@@ -234,8 +234,11 @@ const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kerne
     return;
   }
 
-  delete[] tmp_weight_data;
+  if (tmp_weight_data != nullptr) {
+    delete[] tmp_weight_data;
+  }
 }
+
 const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, bool bias_flag,
                                                  const float *trans_scale, const float *trans_bias) const {
   MS_ASSERT(bias_data != nullptr);

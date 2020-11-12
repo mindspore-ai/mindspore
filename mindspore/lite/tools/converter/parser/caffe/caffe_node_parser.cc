@@ -76,6 +76,10 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
     }
     weight->data.resize(count * sizeof(float));
     const float *data_ptr = proto.data().data();
+    if (data_ptr == nullptr) {
+      MS_LOG(ERROR) << "data_ptr is nullptr";
+      return nullptr;
+    }
     if (::memcpy_s(weight->data.data(), count * sizeof(float), (uint8_t *)data_ptr, count * sizeof(float)) != EOK) {
       MS_LOG(ERROR) << "memcpy failed";
       return nullptr;

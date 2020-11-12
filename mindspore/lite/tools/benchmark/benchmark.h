@@ -88,24 +88,24 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   std::string model_file_;
   std::string in_data_file_;
   std::vector<std::string> input_data_list_;
-  InDataType in_data_type_;
+  InDataType in_data_type_ = kBinary;
   std::string in_data_type_in_ = "bin";
   int cpu_bind_mode_ = 1;
   // MarkPerformance
-  int loop_count_;
-  int num_threads_;
-  bool enable_fp16_;
-  int warm_up_loop_count_;
-  bool time_profiling_;
+  int loop_count_ = 10;
+  int num_threads_ = 2;
+  bool enable_fp16_ = false;
+  int warm_up_loop_count_ = 3;
+  bool time_profiling_ = false;
   // MarkAccuracy
   std::string benchmark_data_file_;
-  std::string benchmark_data_type_;
-  float accuracy_threshold_;
+  std::string benchmark_data_type_ = "FLOAT";
+  float accuracy_threshold_ = 0.5;
   // Resize
-  std::string resize_dims_in_ = "";
+  std::string resize_dims_in_;
   std::vector<std::vector<int>> resize_dims_;
 
-  std::string device_;
+  std::string device_ = "CPU";
 };
 
 class MS_API Benchmark {
@@ -149,7 +149,7 @@ class MS_API Benchmark {
 
   // tensorData need to be converter first
   template <typename T>
-  float CompareData(const std::string &nodeName, std::vector<int> msShape, const void *tensor_data) {
+  float CompareData(const std::string &nodeName, const std::vector<int> &msShape, const void *tensor_data) {
     const T *msTensorData = static_cast<const T *>(tensor_data);
     auto iter = this->benchmark_data_.find(nodeName);
     if (iter != this->benchmark_data_.end()) {

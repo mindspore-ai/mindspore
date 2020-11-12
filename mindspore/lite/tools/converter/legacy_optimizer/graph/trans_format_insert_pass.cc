@@ -91,6 +91,8 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
   if (GetCNodeTType(*node) == schema::PrimitiveType_Activation) {
     MS_ASSERT(node != nullptr);
     MS_ASSERT(node->primitive != nullptr);
+    MS_ASSERT(node->primitive->value != nullptr);
+    MS_ASSERT(node->primitive->value.AsActivation() != nullptr);
     if (node->primitive->value.AsActivation() != nullptr &&
         node->primitive->value.AsActivation()->type == schema::ActivationType_LEAKY_RELU) {
       return has_trans_count >= half_count;
@@ -198,6 +200,7 @@ STATUS TransOpInsertPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uni
     MS_LOG(ERROR) << "node or primitive null";
     return RET_NULL_PTR;
   }
+  MS_ASSERT(node->primitive->value != nullptr);
   auto type = node->primitive->value.type;
   auto input1_ndim = graph->allTensors.at(node->inputIndex[0])->dims.size();
   if (input1_ndim != 4) {
@@ -213,6 +216,7 @@ STATUS TransOpInsertPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uni
     }
   }
   if (type == PrimitiveType_Concat) {
+    MS_ASSERT(node->primitive->value.AsConcat() != nullptr);
     auto origin_axis = node->primitive->value.AsConcat()->axis;
     auto axis_map = GetNc2NhAxisMap();
     if (node->primitive->value.AsConcat() == nullptr) {
@@ -222,6 +226,7 @@ STATUS TransOpInsertPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uni
     node->primitive->value.AsConcat()->axis = axis_map[origin_axis];
   }
   if (type == PrimitiveType_Split) {
+    MS_ASSERT(node->primitive->value.AsSplit() != nullptr);
     auto origin_axis = node->primitive->value.AsSplit()->splitDim;
     auto axis_map = GetNc2NhAxisMap();
     if (node->primitive->value.AsSplit() == nullptr) {
@@ -231,6 +236,7 @@ STATUS TransOpInsertPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uni
     node->primitive->value.AsSplit()->splitDim = axis_map[origin_axis];
   }
   if (type == PrimitiveType_Crop) {
+    MS_ASSERT(node->primitive->value.AsCrop() != nullptr);
     auto origin_axis = node->primitive->value.AsCrop()->axis;
     auto offsets = node->primitive->value.AsCrop()->offsets;
     auto axis_map = GetNc2NhAxisMap();

@@ -40,6 +40,7 @@ STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
   auto onnx_node_attr = onnx_node.attribute();
   int32_t size = 0;
   for (int i = 0; i < onnx_node_attr.size(); ++i) {
+    MS_ASSERT(onnx_node_attr.at(i) != nullptr);
     if (onnx_node_attr.at(i).name() == "alpha") {
       attr->alpha = onnx_node_attr.at(i).f();
     } else if (onnx_node_attr.at(i).name() == "beta") {
@@ -50,6 +51,11 @@ STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
       size = static_cast<int32_t>(onnx_node_attr.at(i).i());
       attr->depth_radius = size / 2;
     }
+  }
+
+  if (size == 0) {
+    MS_LOG(ERROR) << "Divide-by-zero error.";
+    return RET_ERROR;
   }
   attr->alpha /= size;
 

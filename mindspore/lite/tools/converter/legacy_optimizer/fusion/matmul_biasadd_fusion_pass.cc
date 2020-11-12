@@ -101,10 +101,11 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
   }
   fcAttr->hasBias = true;
   fcAttr->axis = 1;
+  MS_ASSERT(matMulNode->primitive != nullptr);
+  MS_ASSERT(matMulNode->primitive->value != nullptr);
   MS_ASSERT(matMulNode->primitive->value.AsMatMul() != nullptr);
   transA = matMulNode->primitive->value.AsMatMul()->transposeA;
   transB = matMulNode->primitive->value.AsMatMul()->transposeB;
-  MS_ASSERT(matMulNode->primitive->value.value != nullptr);
   matMulNode->primitive->value.type = schema::PrimitiveType_FullConnection;
   matMulNode->primitive->value.value = fcAttr.release();
 
