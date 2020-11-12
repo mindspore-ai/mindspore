@@ -59,6 +59,8 @@ int FullconnectionCPUKernel::ReSize() {
 #ifdef ENABLE_ARM64
   if (fc_param_->row_ == 1) {
     is_vector_input_ = true;
+  } else {
+    is_vector_input_ = false;
   }
 #endif
   if (in_tensors_.size() == 3) {
