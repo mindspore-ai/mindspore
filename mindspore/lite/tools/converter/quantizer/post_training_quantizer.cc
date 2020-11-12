@@ -685,25 +685,19 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const std::sha
     quant_params.emplace_back(quant_param);
   }
   // quant bias data
-  auto *quant_datas = new (std::nothrow) int32_t[shape_size];
-  if (quant_datas == nullptr) {
-    MS_LOG(ERROR) << "null pointer dereferencing.";
-    return RET_NULL_PTR;
-  }
+  std::vector<int32_t> quant_datas(shape_size);
+
   auto *raw_datas = static_cast<float *>(bias_param->tensor_addr());
   double bias_scale_tmp;
   const constexpr int32_t quanted_bias_abs_limit = 0.5 * INT32_MAX;
-  for (size_t i = 0; i < shape_size; i++) {
-    if (bias_scales.size() == 1) {
-      bias_scale_tmp = bias_scales[0];
-    } else {
+
+  if (bias_scales.size() == shape_size) {
+    for (size_t i = 0; i < shape_size; i++) {
       bias_scale_tmp = bias_scales[i];
-    }
-    if (std::abs(raw_datas[i] / bias_scale_tmp) >= quanted_bias_abs_limit) {
-      MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << active_weight_quant_params[1][i].scale
-                    << " is too small, need to update";
-      // update filter scale and zp
-      if (input_scales.size() == 1 && active_weight_quant_params[1].size() == shape_size) {
+      if (std::abs(raw_datas[i] / bias_scale_tmp) >= quanted_bias_abs_limit) {
+        MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << active_weight_quant_params[1][i].scale
+                      << " is too small, need to update";
+        // update filter scale and zp
         double activate_scale = input_scales[0];
         double filter_scale = std::abs(raw_datas[i]) / (activate_scale * quanted_bias_abs_limit);
         active_weight_quant_params[1][i].scale = filter_scale;
@@ -712,22 +706,48 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const std::sha
         bias_scale_tmp = std::abs(raw_datas[i]) / quanted_bias_abs_limit;
         quant_params[i].scale = bias_scale_tmp;
         MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
-      } else {
-        MS_LOG(WARNING) << "unexpected input_scales size: " << input_scales.size()
-                        << " weight_scales size: " << active_weight_quant_params[1].size();
+      }
+      auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
+      quant_datas[i] = quant_data;
+    }
+  } else if (bias_scales.size() == 1) {
+    // for fc, per tensor quant
+    bias_scale_tmp = quant_params[0].scale;
+    float max_raw_data = 0.0f;
+    for (size_t i = 0; i < shape_size; i++) {
+      if (std::abs(raw_datas[i]) > max_raw_data) {
+        max_raw_data = std::abs(raw_datas[i]);
       }
     }
-    auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
-    quant_datas[i] = quant_data;
-  }
-  primitive_c->AddInputQuantParam(quant_params);
-  auto ret = memcpy_s(bias_param->tensor_addr(), bias_param->tensor_size(), quant_datas, shape_size * sizeof(int32_t));
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s failed.";
-    delete[] quant_datas;
+    if (std::abs(max_raw_data / bias_scale_tmp) >= quanted_bias_abs_limit) {
+      MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << active_weight_quant_params[1][0].scale
+                    << " is too small, need to update";
+      double activate_scale = input_scales[0];
+      double filter_scale = std::abs(max_raw_data) / (activate_scale * quanted_bias_abs_limit);
+      active_weight_quant_params[1][0].scale = filter_scale;
+      active_weight_quant_params[1][0].zeroPoint = 0;
+      primitive_c->SetInputQuantParams(active_weight_quant_params);
+      bias_scale_tmp = max_raw_data / quanted_bias_abs_limit;
+      quant_params[0].scale = bias_scale_tmp;
+      MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
+    }
+    for (size_t i = 0; i < shape_size; i++) {
+      auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
+      quant_datas[i] = quant_data;
+    }
+  } else {
+    MS_LOG(ERROR) << "unexpected input_scales size: " << input_scales.size()
+                  << " weight_scales size: " << active_weight_quant_params[1].size();
     return RET_ERROR;
   }
-  delete[] quant_datas;
+
+  primitive_c->AddInputQuantParam(quant_params);
+  auto ret =
+    memcpy_s(bias_param->tensor_addr(), bias_param->tensor_size(), quant_datas.data(), shape_size * sizeof(int32_t));
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s failed.";
+    return RET_ERROR;
+  }
   // set dtype
   auto abstractBase = bias_parameter_ptr->abstract();
   if (abstractBase == nullptr) {
@@ -795,7 +815,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
       continue;
     } else if (op_type != PrimitiveType_Conv2D && op_type != PrimitiveType_DepthwiseConv2D &&
                op_type != PrimitiveType_DeConv2D && op_type != PrimitiveType_DeDepthwiseConv2D &&
-               op_type != PrimitiveType_FullConnection) {
+               op_type != PrimitiveType_FullConnection && op_type != PrimitiveType_LayerNorm) {
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
         auto input_node = cnode->input(i);
         bool is_graph_input = false;
@@ -865,10 +885,9 @@ STATUS PostTrainingQuantizer::QuantNode() {
       DoQuantInput(input_scale, input_zp, &input_min_max, primitive_c);
       // do weight quant
       auto weight = cnode->input(2);
-      bool perchannel = per_channel_;
-      if (op_type == PrimitiveType_FullConnection || op_type == PrimitiveType_DeConv2D ||
-          op_type == PrimitiveType_DeDepthwiseConv2D) {
-        perchannel = false;
+      bool perchannel = false;
+      if (op_type == PrimitiveType_Conv2D || op_type == PrimitiveType_DepthwiseConv2D) {
+        perchannel = true;
       }
       DoWeightQuant(weight, primitive_c, perchannel);
       // do bias quant

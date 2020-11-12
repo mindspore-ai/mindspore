@@ -16,6 +16,7 @@
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include <memory>
 #include <algorithm>
+#include <vector>
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType_CAFFE;
