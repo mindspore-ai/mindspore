@@ -91,11 +91,17 @@ PYBIND_REGISTER(CocoOp, 1, ([](const py::module *m) {
 
 PYBIND_REGISTER(ImageFolderOp, 1, ([](const py::module *m) {
                   (void)py::class_<ImageFolderOp, DatasetOp, std::shared_ptr<ImageFolderOp>>(*m, "ImageFolderOp")
-                    .def_static("get_num_rows_and_classes", [](const std::string &path) {
-                      int64_t count = 0, num_classes = 0;
-                      THROW_IF_ERROR(
-                        ImageFolderOp::CountRowsAndClasses(path, std::set<std::string>{}, &count, &num_classes));
-                      return py::make_tuple(count, num_classes);
+                    .def_static("get_num_rows",
+                                [](const std::string &path) {
+                                  int64_t count = 0;
+                                  THROW_IF_ERROR(ImageFolderOp::CountRowsAndClasses(path, {}, &count, nullptr, {}));
+                                  return count;
+                                })
+                    .def_static("get_num_classes", [](const std::string &path,
+                                                      const std::map<std::string, int32_t> class_index) {
+                      int64_t num_classes = 0;
+                      THROW_IF_ERROR(ImageFolderOp::CountRowsAndClasses(path, {}, nullptr, &num_classes, class_index));
+                      return num_classes;
                     });
                 }));
 

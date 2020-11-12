@@ -158,13 +158,23 @@ def test_imagefolder():
     assert data.get_dataset_size() == 10
     assert data.num_classes() == 4
 
+    data = ds.ImageFolderDataset("../data/dataset/testPK/data/", class_indexing={"class1": 1, "class2": 22})
+    assert data.num_classes() == 2
+
+    data = ds.ImageFolderDataset("../data/dataset/testPK/data/", class_indexing={"class1": 1, "wrong name": 22})
+    err_msg = ""
+    try:
+        data.num_classes()
+    except RuntimeError as e:
+        err_msg = str(e)
+    assert "wrong name doesn't exist" in err_msg
+
 
 if __name__ == '__main__':
-    # test_compare_v1_and_2()
-    # test_imagefolder()
-    # test_manifest()
+    test_manifest()
     test_case1()
-    # test_case2()
-    # test_case3()
-    # test_case4()
-    # test_case5()
+    test_case2()
+    test_case3()
+    test_case4()
+    test_case5()
+    test_imagefolder()

@@ -2891,7 +2891,7 @@ class ImageFolderDataset(MappableDataset):
             Number, number of batches.
         """
         if self.dataset_size is None:
-            num_rows = ImageFolderOp.get_num_rows_and_classes(self.dataset_dir)[0]
+            num_rows = ImageFolderOp.get_num_rows(self.dataset_dir)
             self.dataset_size = get_num_rows(num_rows, self.num_shards)
             rows_from_sampler = self._get_sampler_dataset_size()
             if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
@@ -2905,7 +2905,8 @@ class ImageFolderDataset(MappableDataset):
         Return:
             Number, number of classes.
         """
-        return ImageFolderOp.get_num_rows_and_classes(self.dataset_dir)[1]
+        class_index = self.class_indexing if self.class_indexing else {}
+        return ImageFolderOp.get_num_classes(self.dataset_dir, class_index)
 
     def is_shuffled(self):
         if self.shuffle_level is None:

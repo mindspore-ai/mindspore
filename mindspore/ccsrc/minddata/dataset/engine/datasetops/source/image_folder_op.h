@@ -205,7 +205,7 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   // returned by this function may not be consistent with what image_folder_op is going to return
   // user this at your own risk!
   static Status CountRowsAndClasses(const std::string &path, const std::set<std::string> &exts, int64_t *num_rows,
-                                    int64_t *num_classes, int64_t dev_id = 0, int64_t num_dev = 1);
+                                    int64_t *num_classes, std::map<std::string, int32_t> class_index);
 
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.
@@ -251,7 +251,7 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
 
   // start walking of all dirs
   // @return
-  Status startAsyncWalk();
+  Status StartAsyncWalk();
 
   // Called first when function is called
   // @return
