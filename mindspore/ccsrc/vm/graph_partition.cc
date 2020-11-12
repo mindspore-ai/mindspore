@@ -25,6 +25,9 @@
 #include "base/core_ops.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
+#ifdef ENABLE_GE
+#include "transform/graph_ir/convert.h"
+#endif
 namespace mindspore {
 const char kMsConvert[] = "ms";
 const char kMsVm[] = "vm";
