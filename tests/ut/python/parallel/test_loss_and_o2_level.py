@@ -119,3 +119,12 @@ def test_neg_repeat_calc2():
     strategy2 = ((4, 4),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)
+
+
+def test_parallel_optimizer_with_mix_precision():
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0,
+                                      enable_parallel_optimizer=True)
+    strategy1 = ((8, 1), (8, 1))
+    strategy2 = ((8, 1),)
+    net = Net(_w1, strategy1, strategy2)
+    compile_net(net)
