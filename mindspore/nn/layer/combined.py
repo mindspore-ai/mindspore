@@ -97,7 +97,7 @@ class Conv2dBnAct(Cell):
                  weight_init='normal',
                  bias_init='zeros',
                  has_bn=False,
-                 momentum=0.9,
+                 momentum=0.997,
                  eps=1e-5,
                  activation=None,
                  alpha=0.2,
