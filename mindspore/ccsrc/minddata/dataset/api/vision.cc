@@ -158,6 +158,7 @@ std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha) {
   // Input validation
   return op->ValidateParams() ? op : nullptr;
 }
+#endif
 
 // Function to create NormalizeOperation.
 std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std) {
@@ -166,6 +167,7 @@ std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vect
   return op->ValidateParams() ? op : nullptr;
 }
 
+#ifndef ENABLE_ANDROID
 // Function to create PadOperation.
 std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value,
                                   BorderType padding_mode) {
@@ -702,6 +704,7 @@ Status MixUpBatchOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> MixUpBatchOperation::Build() { return std::make_shared<MixUpBatchOp>(alpha_); }
 
+#endif
 // NormalizeOperation
 NormalizeOperation::NormalizeOperation(std::vector<float> mean, std::vector<float> std) : mean_(mean), std_(std) {}
 
@@ -736,6 +739,7 @@ std::shared_ptr<TensorOp> NormalizeOperation::Build() {
   return std::make_shared<NormalizeOp>(mean_[0], mean_[1], mean_[2], std_[0], std_[1], std_[2]);
 }
 
+#ifndef ENABLE_ANDROID
 // PadOperation
 PadOperation::PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode)
     : padding_(padding), fill_value_(fill_value), padding_mode_(padding_mode) {}

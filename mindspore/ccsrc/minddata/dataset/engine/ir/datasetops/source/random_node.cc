@@ -36,8 +36,6 @@ Status RandomNode::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  RETURN_IF_NOT_OK(ValidateDatasetSampler("RandomNode", sampler_));
-
   if (!columns_list_.empty()) {
     RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RandomNode", "columns_list", columns_list_));
   }
@@ -89,6 +87,14 @@ std::vector<std::shared_ptr<DatasetOp>> RandomNode::Build() {
       data_schema->LoadSchemaString(schema_json_string, columns_to_load);
     }
   }
+
+  // RandomOp by itself is a non-mappable dataset that does not support sampling.
+  // However, if a cache operator is injected at some other place higher in the tree, that cache can
+  // inherit this sampler from the leaf, providing sampling support from the caching layer.
+  // That is why we save the sampler here in a leaf node that does not use sampling.
+  // RandomOp doesn't support sampler, should not support sharding, select sampler should just be sequential.
+  std::shared_ptr<SamplerObj> sampler_ = SelectSampler(total_rows_, false, 1, 0);
+
   std::shared_ptr<RandomDataOp> op;
   op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, rows_per_buffer_, total_rows_,
                                       std::move(data_schema), std::move(sampler_->Build()));

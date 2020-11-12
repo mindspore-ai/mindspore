@@ -36,22 +36,20 @@ class RandomNode : public DatasetNode {
 
   /// \brief Constructor
   RandomNode(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema, const std::vector<std::string> &columns_list,
-             const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache)
+             std::shared_ptr<DatasetCache> cache)
       : DatasetNode(std::move(cache)),
         total_rows_(total_rows),
         schema_path_(""),
         schema_(std::move(schema)),
-        columns_list_(columns_list),
-        sampler_(std::move(sampler)) {}
+        columns_list_(columns_list) {}
 
   /// \brief Constructor
   RandomNode(const int32_t &total_rows, std::string schema_path, const std::vector<std::string> &columns_list,
-             const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache)
+             std::shared_ptr<DatasetCache> cache)
       : DatasetNode(std::move(cache)),
         total_rows_(total_rows),
         schema_path_(schema_path),
-        columns_list_(columns_list),
-        sampler_(std::move(sampler)) {}
+        columns_list_(columns_list) {}
 
   /// \brief Destructor
   ~RandomNode() = default;
