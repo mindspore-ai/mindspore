@@ -34,6 +34,8 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
 
 namespace mindspore::kernel {
 
+int GetUpPow2(int n);
+
 int GetMaxDivisor(int x, int divisor);
 
 int GetMaxDivisorStrategy0(int x, int divisor);
