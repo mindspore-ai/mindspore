@@ -274,6 +274,25 @@ int64_t Dataset::GetNumClasses() {
   return rc.IsError() ? -1 : num_classes;
 }
 
+std::vector<std::string> Dataset::GetColumnNames() {
+  std::vector<std::string> col_names;
+  auto ds = shared_from_this();
+  Status rc;
+  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
+  rc = runtime_context->Init();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetColumnNames: Initializing RuntimeContext failed.";
+    return std::vector<std::string>();
+  }
+  rc = tree_getters_->Init(ds->IRNode());
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "GetColumnNames: Initializing TreeGetters failed.";
+    return std::vector<std::string>();
+  }
+  rc = tree_getters_->GetColumnNames(&col_names);
+  return rc.IsError() ? std::vector<std::string>() : col_names;
+}
+
 std::vector<std::pair<std::string, std::vector<int32_t>>> Dataset::GetClassIndexing() {
   std::vector<std::pair<std::string, std::vector<int32_t>>> output_class_indexing;
   auto ds = shared_from_this();

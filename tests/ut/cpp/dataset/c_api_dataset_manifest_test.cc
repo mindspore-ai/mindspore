@@ -62,10 +62,12 @@ TEST_F(MindDataTestPipeline, TestManifestGetters) {
   // Create a Manifest Dataset
   std::shared_ptr<Dataset> ds1 = Manifest(file_path1);
   std::shared_ptr<Dataset> ds2 = Manifest(file_path2);
+  std::vector<std::string> column_names = {"image", "label"};
 
   EXPECT_NE(ds1, nullptr);
   EXPECT_EQ(ds1->GetDatasetSize(), 2);
   EXPECT_EQ(ds1->GetNumClasses(), 2);
+  EXPECT_EQ(ds1->GetColumnNames(), column_names);
 
   EXPECT_NE(ds2, nullptr);
   EXPECT_EQ(ds2->GetDatasetSize(), 4);

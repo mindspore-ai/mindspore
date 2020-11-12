@@ -57,8 +57,8 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess1) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestMindDataGetDatasetSize) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataGetDatasetSize with string file pattern.";
+TEST_F(MindDataTestPipeline, TestMindDataGetters) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataGetters with string file pattern.";
 
   // Create a MindData Dataset
   // Pass one mindrecord shard file to parse dataset info, and search for other mindrecord files with same dataset info,
@@ -67,7 +67,10 @@ TEST_F(MindDataTestPipeline, TestMindDataGetDatasetSize) {
   std::shared_ptr<Dataset> ds = MindData(file_path);
   EXPECT_NE(ds, nullptr);
 
+  std::vector<std::string> column_names = {"data", "file_name", "label"};
+
   EXPECT_EQ(ds->GetDatasetSize(), 20);
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
 TEST_F(MindDataTestPipeline, TestMindDataSuccess2) {

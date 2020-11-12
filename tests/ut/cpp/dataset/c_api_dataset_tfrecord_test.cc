@@ -84,8 +84,8 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasicGetDatasetSize) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetBasicGetDatasetSize.";
+TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasicGetters) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTFRecordDatasetBasicGetters.";
 
   // Create a TFRecord Dataset
   std::string file_path = datasets_root_path_ + "/test_tf_file_3_images2/train-0000-of-0001.data";
@@ -112,6 +112,8 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasicGetDatasetSize) {
   EXPECT_NE(ds, nullptr);
 
   EXPECT_EQ(ds->GetDatasetSize(), 6);
+  std::vector<std::string> column_names = {"image"};
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
 TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle) {

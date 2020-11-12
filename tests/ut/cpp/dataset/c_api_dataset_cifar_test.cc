@@ -81,6 +81,7 @@ TEST_F(MindDataTestPipeline, TestCifar10Getters) {
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
   std::vector<DataType> types = ds->GetOutputTypes();
   std::vector<TensorShape> shapes = ds->GetOutputShapes();
+  std::vector<std::string> column_names = {"image", "label"};
   int64_t num_classes = ds->GetNumClasses();
   EXPECT_EQ(types.size(), 2);
   EXPECT_EQ(types[0].ToString(), "uint8");
@@ -97,6 +98,7 @@ TEST_F(MindDataTestPipeline, TestCifar10Getters) {
   EXPECT_EQ(ds->GetOutputShapes(), shapes);
   EXPECT_EQ(ds->GetNumClasses(), -1);
 
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
   EXPECT_EQ(ds->GetOutputTypes(), types);
   EXPECT_EQ(ds->GetOutputShapes(), shapes);
@@ -141,15 +143,32 @@ TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestCifar100GetDatasetSize) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100GetDatasetSize.";
+TEST_F(MindDataTestPipeline, TestCifar100Getters) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100Getters.";
 
   // Create a Cifar100 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
   std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", RandomSampler(false, 10));
   EXPECT_NE(ds, nullptr);
 
+  std::vector<std::string> column_names = {"image", "coarse_label", "fine_label"};
+  std::vector<DataType> types = ds->GetOutputTypes();
+  std::vector<TensorShape> shapes = ds->GetOutputShapes();
+  int64_t num_classes = ds->GetNumClasses();
+
+  EXPECT_EQ(types.size(), 3);
+  EXPECT_EQ(types[0].ToString(), "uint8");
+  EXPECT_EQ(types[1].ToString(), "uint32");
+  EXPECT_EQ(types[2].ToString(), "uint32");
+  EXPECT_EQ(shapes.size(), 3);
+  EXPECT_EQ(shapes[0].ToString(), "<32,32,3>");
+  EXPECT_EQ(shapes[1].ToString(), "<>");
+  EXPECT_EQ(shapes[2].ToString(), "<>");
+  EXPECT_EQ(num_classes, -1);
+  EXPECT_EQ(ds->GetBatchSize(), 1);
+  EXPECT_EQ(ds->GetRepeatCount(), 1);
   EXPECT_EQ(ds->GetDatasetSize(), 10);
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
 TEST_F(MindDataTestPipeline, TestCifar100DatasetFail) {

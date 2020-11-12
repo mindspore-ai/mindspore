@@ -94,8 +94,8 @@ TEST_F(MindDataTestPipeline, TestVOCGetClassIndex) {
   EXPECT_EQ(class_index1[2].second[0], 9);
 }
 
-TEST_F(MindDataTestPipeline, TestVOCGetDatasetSize) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCGetDatasetSize.";
+TEST_F(MindDataTestPipeline, TestVOCGetters) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVOCGetters.";
 
   // Create a VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
@@ -111,6 +111,8 @@ TEST_F(MindDataTestPipeline, TestVOCGetDatasetSize) {
   ds = ds->Repeat(2);
 
   EXPECT_EQ(ds->GetDatasetSize(), 6);
+  std::vector<std::string> column_names = {"image", "bbox", "label", "difficult", "truncate"};
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
 TEST_F(MindDataTestPipeline, TestVOCDetection) {
