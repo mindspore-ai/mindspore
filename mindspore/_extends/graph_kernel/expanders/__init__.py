@@ -25,3 +25,6 @@ from .fused_adam import expand_fusedadam
 from .fused_adam_weight_decay import expand_fusedadamweightdecay
 from .reduce_mean import expand_reducemean
 from .tanh_grad import expand_tanhgrad
+from .maximum_grad import expand_maximumgrad
+from .minimum_grad import expand_minimumgrad
+from .dropout_grad import expand_dropoutgrad
