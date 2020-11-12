@@ -417,6 +417,9 @@ if platform.system().lower() != 'windows':
         """
         Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces, such as: ' ', '\\\\t', '\\\\r', '\\\\n'.
 
+        Note:
+            The WhitespaceTokenizer is not supported on windows platform yet.
+
         Args:
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
 
@@ -444,6 +447,9 @@ if platform.system().lower() != 'windows':
     class UnicodeScriptTokenizer(cde.UnicodeScriptTokenizerOp):
         """
         Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.
+
+        Note:
+            The UnicodeScriptTokenizer is not supported on windows platform yet.
 
         Args:
             keep_whitespace (bool, optional): If or not emit whitespace tokens (default=False).
@@ -475,6 +481,9 @@ if platform.system().lower() != 'windows':
         """
         Apply case fold operation on utf-8 string tensor.
 
+        Note:
+            The CaseFold is not supported on windows platform yet.
+
         Examples:
             >>> import mindspore.dataset.text as text
             >>>
@@ -494,6 +503,9 @@ if platform.system().lower() != 'windows':
     class NormalizeUTF8(cde.NormalizeUTF8Op):
         """
         Apply normalize operation on utf-8 string tensor.
+
+        Note:
+            The NormalizeUTF8 is not supported on windows platform yet.
 
         Args:
             normalize_form (NormalizeForm, optional): Valid values can be any of [NormalizeForm.NONE,
@@ -528,6 +540,9 @@ if platform.system().lower() != 'windows':
 
         See http://userguide.icu-project.org/strings/regexp for support regex pattern.
 
+        Note:
+            The RegexReplace is not supported on windows platform yet.
+
         Args:
             pattern (str): the regex expression patterns.
             replace (str): the string to replace matched element.
@@ -555,6 +570,9 @@ if platform.system().lower() != 'windows':
         Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
 
         See http://userguide.icu-project.org/strings/regexp for support regex pattern.
+
+        Note:
+            The RegexTokenizer is not supported on windows platform yet.
 
         Args:
             delim_pattern (str): The pattern of regex delimiters.
@@ -590,6 +608,9 @@ if platform.system().lower() != 'windows':
     class BasicTokenizer(cde.BasicTokenizerOp):
         """
         Tokenize a scalar tensor of UTF-8 string by specific rules.
+
+        Note:
+            The BasicTokenizer is not supported on windows platform yet.
 
         Args:
             lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
@@ -643,6 +664,9 @@ if platform.system().lower() != 'windows':
     class BertTokenizer(cde.BertTokenizerOp):
         """
         Tokenizer used for Bert text process.
+
+        Note:
+            The BertTokenizer is not supported on windows platform yet.
 
         Args:
             vocab (Vocab): A vocabulary object.
