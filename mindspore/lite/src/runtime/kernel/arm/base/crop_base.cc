@@ -38,10 +38,10 @@ int CropBaseCPUKernel::ReSize() {
   if (crop_para_->in_shape_ == nullptr) {
     MS_LOG(ERROR) << "in_shape_ is nullptr";
     return RET_ERROR;
-  } else {
-    memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->in_shape_)), input_shape.data(),
-           sizeof(int) * input_dim);
   }
+
+  memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->in_shape_)), input_shape.data(),
+         sizeof(int) * input_dim);
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto output_shape = out_tensor->shape();
@@ -51,10 +51,11 @@ int CropBaseCPUKernel::ReSize() {
   if (crop_para_->out_shape_ == nullptr) {
     MS_LOG(ERROR) << "out_shape_ is nullptr";
     return RET_ERROR;
-  } else {
-    memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->out_shape_)), output_shape.data(),
-           sizeof(int) * output_dim);
   }
+
+  memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->out_shape_)), output_shape.data(),
+         sizeof(int) * output_dim);
+
   MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
   crop_para_->input_dim_ = input_dim;
   PadOffset(input_dim, crop_para_);

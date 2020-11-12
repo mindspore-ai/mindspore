@@ -40,14 +40,13 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   model->buf = reinterpret_cast<char *>(malloc(size));
   if (model->buf == nullptr) {
     delete model;
-    MS_LOG(ERROR) << "new inner model buf fail!";
+    MS_LOG(ERROR) << "malloc inner model buf fail!";
     return nullptr;
   }
   memcpy(model->buf, model_buf, size);
   model->buf_size_ = size;
   auto meta_graph = schema::GetMetaGraph(model->buf);
   if (meta_graph == nullptr) {
-    free(model->buf);
     delete model;
     MS_LOG(ERROR) << "meta_graph is nullptr!";
     return nullptr;
@@ -73,6 +72,7 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
     int ret = MetaGraphMappingSubGraph(*meta_graph, model);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "converter old version model wrong.";
+      delete model;
       return nullptr;
     }
   } else {
@@ -83,6 +83,7 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
       int ret = ConvertSubGraph(*sub_graph, model);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "converter subgraph wrong.";
+        delete model;
         return nullptr;
       }
     }

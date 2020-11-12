@@ -132,11 +132,14 @@ int SubInt8CPUKernel::Run() {
       tile_para.out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
     }
     tile0_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
+    if (tile0_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc memroy fail!";
+      return RET_ERROR;
+    }
     tile1_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
-    if (tile0_data_ == nullptr || tile1_data_ == nullptr) {
+    if (tile1_data_ == nullptr) {
       MS_LOG(ERROR) << "malloc memroy fail!";
       context_->allocator->Free(tile0_data_);
-      context_->allocator->Free(tile1_data_);
       return RET_ERROR;
     }
     TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->MutableData()),

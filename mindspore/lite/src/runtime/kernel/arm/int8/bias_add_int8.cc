@@ -51,9 +51,14 @@ int BiasAddInt8CPUKernel::Run() {
   auto out = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   auto tile_in = static_cast<int8_t *>(ctx_->allocator->Malloc(data_size));
-  auto tile_bias = static_cast<int8_t *>(ctx_->allocator->Malloc(data_size));
-  if (tile_in == nullptr || tile_bias == nullptr) {
+  if (tile_in == nullptr) {
     MS_LOG(ERROR) << "Failed to malloc momery";
+    return NNACL_ERR;
+  }
+  auto tile_bias = static_cast<int8_t *>(ctx_->allocator->Malloc(data_size));
+  if (tile_bias == nullptr) {
+    MS_LOG(ERROR) << "Failed to malloc momery";
+    ctx_->allocator->Free(tile_in);
     return NNACL_ERR;
   }
   BroadcastAddInt8(in, bias, tile_in, tile_bias, out, data_size,

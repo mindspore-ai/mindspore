@@ -279,7 +279,11 @@ bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) {
 }  // namespace lite
 
 session::TrainSession *session::TrainSession::CreateSession(lite::Context *context) {
-  auto session = new lite::TrainSession();
+  auto session = new (std::nothrow) lite::TrainSession();
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "create session failed";
+    return nullptr;
+  }
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init sesssion failed";
