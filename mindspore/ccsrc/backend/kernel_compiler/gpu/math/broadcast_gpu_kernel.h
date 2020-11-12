@@ -173,9 +173,9 @@ class BroadcastOpGpuKernel : public GpuKernel {
   BroadcastOpType op_type_;
   bool need_broadcast_;
   bool is_comp_op_;
-  int input1_num_;
-  int input2_num_;
-  int output_num_;
+  size_t input1_num_;
+  size_t input2_num_;
+  size_t output_num_;
   std::vector<size_t> lhs_shape_;
   std::vector<size_t> rhs_shape_;
   std::vector<size_t> output_shape_;
