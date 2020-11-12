@@ -971,7 +971,7 @@ class Cutout:
             np_img (numpy.ndarray), NumPy image array with square patches cut out.
         """
         if not isinstance(np_img, np.ndarray):
-            raise TypeError('img should be NumPy array. Got {}'.format(type(np_img)))
+            raise TypeError("img should be NumPy array. Got {}.".format(type(np_img)))
         _, image_h, image_w = np_img.shape
         scale = (self.length * self.length) / (image_h * image_w)
         bounded = False

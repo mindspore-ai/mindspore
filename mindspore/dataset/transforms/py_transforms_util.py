@@ -49,7 +49,7 @@ def compose(transforms, *args):
 
         if all_numpy(args):
             return args
-        raise TypeError('args should be Numpy ndarray. Got {}. Append ToTensor() to transforms'.format(type(args)))
+        raise TypeError('args should be Numpy ndarray. Got {}. Append ToTensor() to transforms.'.format(type(args)))
     raise TypeError('args should be Numpy ndarray. Got {}.'.format(type(args)))
 
 

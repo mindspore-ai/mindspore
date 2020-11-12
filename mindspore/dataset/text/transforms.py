@@ -257,7 +257,7 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
             for k, v in user_dict.items():
                 self.add_word(k, v)
         else:
-            raise ValueError("the type of user_dict must str or dict")
+            raise TypeError("The type of user_dict must str or dict.")
 
     def __add_dict_py_file(self, file_path):
         """Add user defined word by file"""
@@ -273,7 +273,7 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         """parser user defined word by file"""
         if not os.path.exists(file_path):
             raise ValueError(
-                "user dict file {} is not exist".format(file_path))
+                "user dict file {} is not exist.".format(file_path))
         real_file_path = os.path.realpath(file_path)
         file_dict = open(real_file_path)
         data_re = re.compile('^(.+?)( [0-9]+)?$', re.U)
@@ -285,7 +285,7 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
             words = data_re.match(data).groups()
             if len(words) != 2:
                 raise ValueError(
-                    "user dict file {} format error".format(real_file_path))
+                    "user dict file {} format error.".format(real_file_path))
             words_list.append(words)
         file_dict.close()
         return words_list
@@ -295,14 +295,14 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         try:
             data = data.decode('utf-8')
         except UnicodeDecodeError:
-            raise ValueError("user dict file must utf8")
+            raise ValueError("user dict file must be utf8 format.")
         return data.lstrip('\ufeff')
 
     def __check_path__(self, model_path):
         """check model path"""
         if not os.path.exists(model_path):
             raise ValueError(
-                " jieba mode file {} is not exist".format(model_path))
+                " jieba mode file {} is not exist.".format(model_path))
 
 
 class UnicodeCharTokenizer(cde.UnicodeCharTokenizerOp):
@@ -528,7 +528,7 @@ if platform.system().lower() != 'windows':
 
         def __init__(self, normalize_form=NormalizeForm.NFKC):
             if not isinstance(normalize_form, NormalizeForm):
-                raise TypeError("Wrong input type for normalization_form, should be NormalizeForm.")
+                raise TypeError("Wrong input type for normalization_form, should be enum of 'NormalizeForm'.")
 
             self.normalize_form = DE_C_INTER_NORMALIZE_FORM[normalize_form]
             super().__init__(self.normalize_form)
@@ -650,7 +650,7 @@ if platform.system().lower() != 'windows':
         def __init__(self, lower_case=False, keep_whitespace=False, normalization_form=NormalizeForm.NONE,
                      preserve_unused_token=True, with_offsets=False):
             if not isinstance(normalization_form, NormalizeForm):
-                raise TypeError("Wrong input type for normalization_form, should be NormalizeForm.")
+                raise TypeError("Wrong input type for normalization_form, should be enum of 'NormalizeForm'.")
 
             self.lower_case = lower_case
             self.keep_whitespace = keep_whitespace
@@ -710,7 +710,7 @@ if platform.system().lower() != 'windows':
                      lower_case=False, keep_whitespace=False, normalization_form=NormalizeForm.NONE,
                      preserve_unused_token=True, with_offsets=False):
             if not isinstance(normalization_form, NormalizeForm):
-                raise TypeError("Wrong input type for normalization_form, should be NormalizeForm.")
+                raise TypeError("Wrong input type for normalization_form, should be enum of 'NormalizeForm'.")
 
             self.vocab = vocab
             self.suffix_indicator = suffix_indicator

@@ -29,19 +29,24 @@ from . import datasets as de
 
 _ITERATOR_CLEANUP = False
 
+
 def _set_iterator_cleanup():
     global _ITERATOR_CLEANUP
     _ITERATOR_CLEANUP = True
+
 
 def _unset_iterator_cleanup():
     global _ITERATOR_CLEANUP
     _ITERATOR_CLEANUP = False
 
+
 def check_iterator_cleanup():
     global _ITERATOR_CLEANUP
     return _ITERATOR_CLEANUP
 
+
 ITERATORS_LIST = list()
+
 
 def _cleanup():
     """Release all the Iterator."""
@@ -50,6 +55,7 @@ def _cleanup():
         itr = itr_ref()
         if itr is not None:
             itr.release()
+
 
 def alter_tree(node):
     """Traversing the Python dataset tree/graph to perform some alteration to some specific nodes."""
@@ -73,6 +79,7 @@ def _alter_node(node):
             node.iterator_bootstrap()
     return node
 
+
 class Iterator:
     """
     General Iterator over a dataset.
@@ -93,7 +100,7 @@ class Iterator:
 
         # The dataset passed into the iterator is not the root of the tree.
         # Trim the tree by saving the parent subtree into self.parent_subtree and
-        # restore it after launching our c++ pipeline.
+        # restore it after launching our C++ pipeline.
         if self.dataset.parent:
             logger.info("The dataset passed in is not the root of the pipeline. Ignoring parent subtree.")
             self.parent_subtree = self.dataset.parent
@@ -101,7 +108,7 @@ class Iterator:
 
         self.dataset = alter_tree(self.dataset)
         if not self.__is_tree():
-            raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
+            raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers).")
         self.depipeline = DEPipeline()
 
         # for manifest temporary use
@@ -116,7 +123,7 @@ class Iterator:
         """
         Manually terminate Python iterator instead of relying on out of scope destruction.
         """
-        logger.info("terminating Python iterator. This will also terminate c++ pipeline.")
+        logger.info("Terminating Python iterator. This will also terminate C++ pipeline.")
         if hasattr(self, 'depipeline') and self.depipeline:
             del self.depipeline
 
@@ -205,7 +212,7 @@ class Iterator:
         elif isinstance(dataset, de.CSVDataset):
             op_type = OpName.CSV
         else:
-            raise ValueError("Unsupported DatasetOp")
+            raise ValueError("Unsupported DatasetOp.")
 
         return op_type
 
@@ -256,9 +263,9 @@ class Iterator:
 
     def __next__(self):
         if not self.depipeline:
-            logger.warning("Iterator does not have a running c++ pipeline." +
-                           "It can be because Iterator stop() had been called, or c++ pipeline crashed silently.")
-            raise RuntimeError("Iterator does not have a running c++ pipeline.")
+            logger.warning("Iterator does not have a running C++ pipeline." +
+                           "It might because Iterator stop() had been called, or C++ pipeline crashed silently.")
+            raise RuntimeError("Iterator does not have a running C++ pipeline.")
 
         data = self.get_next()
         if not data:
@@ -297,6 +304,7 @@ class Iterator:
 
     def __deepcopy__(self, memo):
         return self
+
 
 class SaveOp(Iterator):
     """
@@ -375,7 +383,7 @@ class TupleIterator(Iterator):
         return [Tensor(t.as_array()) for t in self.depipeline.GetNextAsList()]
 
 
-class DummyIterator():
+class DummyIterator:
     """
     A DummyIterator only work when env MS_ROLE="MS_PSERVER" or MS_ROLE="MS_SCHED"
     """

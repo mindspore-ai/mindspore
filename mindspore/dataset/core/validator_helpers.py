@@ -122,7 +122,7 @@ def check_pos_float64(value, arg_name=""):
 
 def check_valid_detype(type_):
     if type_ not in valid_detype:
-        raise ValueError("Unknown column type")
+        raise TypeError("Unknown column type.")
     return True
 
 
@@ -146,10 +146,10 @@ def check_columns(columns, name):
     type_check(columns, (list, str), name)
     if isinstance(columns, str):
         if not columns:
-            raise ValueError("{0} should not be an empty str".format(name))
+            raise ValueError("{0} should not be an empty str.".format(name))
     elif isinstance(columns, list):
         if not columns:
-            raise ValueError("{0} should not be empty".format(name))
+            raise ValueError("{0} should not be empty.".format(name))
         for i, column_name in enumerate(columns):
             if not column_name:
                 raise ValueError("{0}[{1}] should not be empty.".format(name, i))
@@ -250,10 +250,10 @@ def check_filename(path):
     forbidden_symbols = set(r'\/:*?"<>|`&\';')
 
     if set(filename) & forbidden_symbols:
-        raise ValueError(r"filename should not contains \/:*?\"<>|`&;\'")
+        raise ValueError(r"filename should not contain \/:*?\"<>|`&;\'")
 
     if filename.startswith(' ') or filename.endswith(' '):
-        raise ValueError("filename should not start/end with space")
+        raise ValueError("filename should not start/end with space.")
 
     return True
 
@@ -374,4 +374,4 @@ def check_gnn_list_or_ndarray(param, param_name):
 def check_tensor_op(param, param_name):
     """check whether param is a tensor op or a callable Python function"""
     if not isinstance(param, cde.TensorOp) and not callable(param):
-        raise TypeError("{0} is not a c_transform op (TensorOp) nor a callable pyfunc.".format(param_name))
+        raise TypeError("{0} is neither a c_transform op (TensorOp) nor a callable pyfunc.".format(param_name))

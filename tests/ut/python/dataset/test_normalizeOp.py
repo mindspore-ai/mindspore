@@ -242,7 +242,7 @@ def test_normalize_exception_unequal_size_c():
         _ = c_vision.Normalize([100, 250, 125], [50, 50, 75, 75])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Length of mean and std must be equal"
+        assert str(e) == "Length of mean and std must be equal."
 
 
 def test_normalize_exception_unequal_size_py():
@@ -255,7 +255,7 @@ def test_normalize_exception_unequal_size_py():
         _ = py_vision.Normalize([0.50, 0.30, 0.75], [0.18, 0.32, 0.71, 0.72])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Length of mean and std must be equal"
+        assert str(e) == "Length of mean and std must be equal."
 
 
 def test_normalize_exception_invalid_size_py():

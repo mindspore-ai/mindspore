@@ -417,7 +417,7 @@ def check_python_tokenizer(method):
         [tokenizer], _ = parse_user_args(method, *args, **kwargs)
 
         if not callable(tokenizer):
-            raise TypeError("tokenizer is not a callable Python function")
+            raise TypeError("tokenizer is not a callable Python function.")
 
         return method(self, *args, **kwargs)
 
@@ -437,8 +437,7 @@ def check_from_dataset_sentencepiece(method):
         if vocab_size is not None:
             check_uint32(vocab_size, "vocab_size")
         else:
-            raise TypeError("vocab_size must be provided")
-
+            raise TypeError("vocab_size must be provided.")
 
         if character_coverage is not None:
             type_check(character_coverage, (float,), "character_coverage")
