@@ -172,7 +172,7 @@ class LazyAdam(Optimizer):
             If false, the result is unpredictable. Default: False.
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If true, update the gradients using NAG.
-            If true, update the gradients without using NAG. Default: False.
+            If false, update the gradients without using NAG. Default: False.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. Should be equal to or greater than 1. Default:
                             1.0.
