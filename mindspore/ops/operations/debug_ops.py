@@ -358,12 +358,12 @@ class Assert(PrimitiveWithInfer):
         >>> class AssertDemo(nn.Cell):
         >>>     def __init__(self):
         >>>         super(AssertDemo, self).__init__()
-        >>>         self.assert = P.Assert(summarize=10)
+        >>>         self.assert1 = P.Assert(summarize=10)
         >>>         self.add = P.TensorAdd()
         >>>
         >>>     def construct(self, x, y):
         >>>         data = self.add(x, y)
-        >>>         self.assert(True, [data])
+        >>>         self.assert1(True, [data])
         >>>         return data
     """
 

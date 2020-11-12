@@ -1326,7 +1326,8 @@ class Argmin(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
         >>> index = P.Argmin()(input_x)
-        >>> assert index == Tensor(2, mindspore.int64)
+        >>> print(index)
+        2
     """
 
     @prim_attr_register

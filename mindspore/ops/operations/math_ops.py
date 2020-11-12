@@ -182,7 +182,9 @@ class AssignAdd(PrimitiveWithInfer):
         >>>
         >>> net = Net()
         >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
-        >>> net(value)
+        >>> output = net(value)
+        >>> print(output)
+        Parameter (name=global_step)
     """
     __mindspore_signature__ = (
         sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -232,7 +234,9 @@ class AssignSub(PrimitiveWithInfer):
         >>>
         >>> net = Net()
         >>> value = Tensor(np.ones([1]).astype(np.int32)*100)
-        >>> net(value)
+        >>> output = net(value)
+        >>> print(output)
+        Parameter (name=global_step)
     """
 
     __mindspore_signature__ = (
@@ -3224,8 +3228,9 @@ class Atan(PrimitiveWithInfer):
         >>> tan = P.Tan()
         >>> output_y = tan(input_x)
         >>> atan = P.Atan()
-        >>> atan(output_y)
-        [[1.047, 07850001]]
+        >>> output = atan(output_y)
+        >>> print(output)
+        [[1.047, 0.7850001]]
     """
 
     @prim_attr_register
@@ -3350,7 +3355,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
 
     Outputs:
-        - **y** (Tensor) - The same type as the `input_x1`.
+        Tensor, has the same type as the `input_x1`.
 
     Examples:
          >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
@@ -3376,7 +3381,7 @@ class BitwiseOr(_BitwiseBinaryOp):
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
 
     Outputs:
-        - **y** (Tensor) - The same type as the `input_x1`.
+        Tensor, has the same type as the `input_x1`.
 
     Examples:
          >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
@@ -3402,7 +3407,7 @@ class BitwiseXor(_BitwiseBinaryOp):
         - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
 
     Outputs:
-        - **y** (Tensor) - The same type as the `input_x1`.
+        Tensor, has the same type as the `input_x1`.
 
     Examples:
          >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
@@ -3418,10 +3423,11 @@ class BesselI0e(PrimitiveWithInfer):
     Computes BesselI0e of input element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. Data type must be float16 or
+          float32.
 
     Outputs:
-        Tensor, has the same shape as `input_x`. Data type must be float16 or float32.
+        Tensor, has the same shape as `input_x`.
 
     Examples:
         >>> bessel_i0e = P.BesselI0e()
@@ -3447,10 +3453,11 @@ class BesselI1e(PrimitiveWithInfer):
     Computes BesselI1e of input element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. Data type must be float16 or
+          float32.
 
     Outputs:
-        Tensor, has the same shape as `input_x`. Data type must be float16 or float32.
+        Tensor, has the same shape as `input_x`.
 
     Examples:
         >>> bessel_i1e = P.BesselI1e()

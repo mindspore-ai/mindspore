@@ -48,7 +48,9 @@ class Assign(PrimitiveWithCheck):
         >>>         return self.y
         >>> x = Tensor([2.0], mindspore.float32)
         >>> net = Net()
-        >>> net(x)
+        >>> output = net(x)
+        >>> print(output)
+        Parameter (name=y)
     """
     __mindspore_signature__ = (
         sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),

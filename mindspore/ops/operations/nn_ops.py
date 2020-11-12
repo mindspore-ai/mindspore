@@ -789,9 +789,12 @@ class BNTrainingReduce(PrimitiveWithInfer):
         - **square_sum** (Tensor) - A 1-D Tensor with float32 data type. Tensor of shape :math:`(C,)`.
 
     Examples:
-        >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
+        >>> input_x = Tensor(np.ones([128, 3, 32, 3]), mindspore.float32)
         >>> bn_training_reduce = P.BNTrainingReduce()
         >>> output = bn_training_reduce(input_x)
+        >>> print(output)
+        ([1.22880000e+04, 1.22880000e+04, 1.22880000e+04],
+         [1.22880000e+04, 1.22880000e+04, 1.22880000e+04])
     """
 
     @prim_attr_register
@@ -843,15 +846,30 @@ class BNTrainingUpdate(PrimitiveWithInfer):
           Has the same shape as `variance`.
 
     Examples:
-        >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
-        >>> sum = Tensor(np.ones([64]), mindspore.float32)
-        >>> square_sum = Tensor(np.ones([64]), mindspore.float32)
-        >>> scale = Tensor(np.ones([64]), mindspore.float32)
-        >>> offset = Tensor(np.ones([64]), mindspore.float32)
-        >>> mean = Tensor(np.ones([64]), mindspore.float32)
-        >>> variance = Tensor(np.ones([64]), mindspore.float32)
+        >>> input_x = Tensor(np.ones([1, 2, 2, 2]), mindspore.float32)
+        >>> sum = Tensor(np.ones([2]), mindspore.float32)
+        >>> square_sum = Tensor(np.ones([2]), mindspore.float32)
+        >>> scale = Tensor(np.ones([2]), mindspore.float32)
+        >>> offset = Tensor(np.ones([2]), mindspore.float32)
+        >>> mean = Tensor(np.ones([2]), mindspore.float32)
+        >>> variance = Tensor(np.ones([2]), mindspore.float32)
         >>> bn_training_update = P.BNTrainingUpdate()
         >>> output = bn_training_update(input_x, sum, square_sum, scale, offset, mean, variance)
+        >>> print(output)
+        ([[[[2.73200464e+00, 2.73200464e+00],
+            [2.73200464e+00, 2.73200464e+00]],
+           [[2.73200464e+00, 2.73200464e+00],
+            [2.73200464e+00, 2.73200464e+00]]]],
+         [[[[2.73200464e+00, 2.73200464e+00],
+            [2.73200464e+00, 2.73200464e+00]],
+           [[2.73200464e+00, 2.73200464e+00],
+            [2.73200464e+00, 2.73200464e+00]]]],
+         [[[[2.73200464e+00, 2.73200464e+00],
+            [2.73200464e+00, 2.73200464e+00]],
+           [[2.73200464e+00, 2.73200464e+00],
+            [2.73200464e+00, 2.73200464e+00]]]],
+            [2.50000000e-01, 2.50000000e-01],
+            [1.87500000e-01, 1.87500000e-01])
     """
 
     @prim_attr_register
@@ -928,13 +946,20 @@ class BatchNorm(PrimitiveWithInfer):
         - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
 
     Examples:
-        >>> input_x = Tensor(np.ones([32, 64]), mindspore.float32)
-        >>> scale = Tensor(np.ones([64]), mindspore.float32)
-        >>> bias = Tensor(np.ones([64]), mindspore.float32)
-        >>> mean = Tensor(np.ones([64]), mindspore.float32)
-        >>> variance = Tensor(np.ones([64]), mindspore.float32)
+        >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
+        >>> scale = Tensor(np.ones([2]), mindspore.float32)
+        >>> bias = Tensor(np.ones([2]), mindspore.float32)
+        >>> mean = Tensor(np.ones([2]), mindspore.float32)
+        >>> variance = Tensor(np.ones([2]), mindspore.float32)
         >>> batch_norm = P.BatchNorm()
         >>> output = batch_norm(input_x, scale, bias, mean, variance)
+        >>> print(output)
+        ([[1.0, 1.0],
+          [1.0, 1.0]],
+          [1.0, 1.0],
+          [1.0, 1.0],
+          [1.0, 1.0],
+          [1.0, 1.0])
     """
 
     @prim_attr_register
@@ -1704,7 +1729,10 @@ class BiasAdd(PrimitiveWithInfer):
         >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
         >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
         >>> bias_add = P.BiasAdd()
-        >>> bias_add(input_x, bias)
+        >>> output = bias_add(input_x, bias)
+        >>> print(output)
+        [[0.4662124 1.2493685 2.3611782]
+         [3.4662123 4.2493687 5.3611784]]
     """
 
     @prim_attr_register
@@ -4817,7 +4845,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
         >>>         self.beta = 0.9
         >>>     def construct(self, grad):
         >>>         out = self.apply_power_sign(self.var, self.m, self.lr, self.logbase,
-                                                self.sign_decay, self.beta, grad)
+        >>>                                        self.sign_decay, self.beta, grad)
         >>>         return out
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
@@ -5594,7 +5622,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
             LSTM layer except the last layer. Default 1.0. The range of dropout is [0.0, 1.0].
         forget_bias (float): Add forget bias to forget gate biases in order to decrease former scale. Default: 1.0.
         state_is_tuple (bool): If true, the state is a tuple of 2 tensors, containing h and c; If false, the state is
-        a tensor and it needs to be split first. Default: True.
+            a tensor and it needs to be split first. Default: True.
         activation (str): Activation. Default: "tanh". Only "tanh" is currently supported.
 
     Inputs:
@@ -5626,12 +5654,20 @@ class BasicLSTMCell(PrimitiveWithInfer):
 
     Examples:
         >>> x = Tensor(np.random.rand(1, 32).astype(np.float16))
-        >>> h = Tensor(np.random.rand(1, 64).astype(np.float16))
-        >>> c = Tensor(np.random.rand(1, 64).astype(np.float16))
-        >>> w = Tensor(np.random.rand(96, 256).astype(np.float16))
-        >>> b = Tensor(np.random.rand(256, ).astype(np.float16))
+        >>> h = Tensor(np.random.rand(1, 2).astype(np.float16))
+        >>> c = Tensor(np.random.rand(1, 2).astype(np.float16))
+        >>> w = Tensor(np.random.rand(34, 8).astype(np.float16))
+        >>> b = Tensor(np.random.rand(8, ).astype(np.float16))
         >>> lstm = P.BasicLSTMCell(keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh')
-        >>> lstm(x, h, c, w, b)
+        >>> output = lstm(x, h, c, w, b)
+        >>> print(output)
+        ([[9.5459e-01, 9.2725e-01]],
+         [[1.0000e+00, 1.0000e+00]],
+         [[1.0000e+00, 1.0000e+00]],
+         [[1.0000e+00, 1.0000e+00]],
+         [[9.9951e-01, 1.0000e+00]],
+         [[9.5459e-01, 9.2773e-01]],
+         [[0.0000e+00, 0.0000e+00]])
     """
 
     @prim_attr_register

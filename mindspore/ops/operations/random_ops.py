@@ -134,11 +134,14 @@ class Gamma(PrimitiveWithInfer):
         The dtype is float32.
 
     Examples:
-        >>> shape = (4, 16)
+        >>> shape = (2, 2)
         >>> alpha = Tensor(1.0, mstype.float32)
         >>> beta = Tensor(1.0, mstype.float32)
         >>> gamma = P.Gamma(seed=3)
-        >>> output = Gamma(shape, alpha, beta)
+        >>> output = gamma(shape, alpha, beta)
+        >>> print(output)
+        [[0.21962446 0.33740655]
+         [1.0859369  0.25875127]]
     """
 
     @prim_attr_register
