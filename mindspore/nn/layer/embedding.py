@@ -148,7 +148,7 @@ class EmbeddingLookup(Cell):
         manual_shapes (tuple): The accompaniment array in field slice mode.
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
                                        or None. Default: None
-        sparse (bool): Using sparse mode. Currently, only support sparse mode when target is CPU. Default: True.
+        sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor. Values can be out of range of embedding_table,

@@ -46,28 +46,6 @@ using DeviceManagerPtr = std::shared_ptr<DeviceManager>;
 // 'g_device_manager' is the globally unique manager to manage the devices.
 extern DeviceManagerPtr g_device_manager;
 
-class Stage {
-  // This class is used in pipeline-parallelization. Available devices are partitioned into multiple stages.
-  // Currently, the function of pipeline-parallelization and this class are NOT implemented.
- public:
-  explicit Stage(std::vector<Device> devices) : devices_(std::move(devices)), number_(0), rank_(0) {
-    gm_ = GroupManager();
-  }
-  Stage(const std::vector<mindspore::parallel::Device> &devices, int64_t num, int64_t rank);
-  ~Stage() = default;
-
-  int64_t GetStageNum() const { return number_; }
-  size_t GetDevicesNum() const { return devices_.size(); }
-  std::vector<Device> GetDevicesList() { return devices_; }
-  int64_t global_rank(Group *g) const;
-
- private:
-  std::vector<Device> devices_;
-  int64_t number_;
-  int64_t rank_;
-  GroupManager gm_;
-};
-
 // This method is used for initializing the global DeviceManager 'g_device_manager',
 // arguments including 'device_num' and 'global_rank'
 bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &backend, const std::vector<int64_t> &stage);
@@ -79,7 +57,7 @@ std::string HashName(const std::string &rank_list_name);
 class DeviceManager {
   // This class is used to manage the abstract devices, including group-related and stage-related management.
  public:
-  DeviceManager() : local_rank_(0), global_rank_(0), stage_num_(0) { gm_ = GroupManager(); }
+  DeviceManager() : local_rank_(0), global_rank_(0), stage_num_(1), stage_id_(0) { gm_ = GroupManager(); }
   ~DeviceManager() = default;
 
   Status Init(const RankList &devices, int64_t local_device, const RankList &stage_map, const std::string &backend);
@@ -94,15 +72,20 @@ class DeviceManager {
   std::string GenerateGroupNameByRanks(RankList dev_ranks);
   Group CreateGroup(const std::string &group_name, const std::vector<Device> &devices);
   Group CreateGroup(const RankList &dev_ranks);
-  std::shared_ptr<Stage> GetStageById(int64_t stage_id);
 
   size_t DeviceNum() const { return devices_.size(); }
 
-  int64_t GetStageNum() const { return static_cast<const int64_t>(stage_devices_.size()); }
+  int64_t stage_num() const { return stage_num_; }
+  void set_stage_num(int64_t num) { stage_num_ = num; }
+
+  int64_t stage_id() const { return stage_id_; }
+  void set_stage_id(int64_t id) { stage_id_ = id; }
+
+  std::string backend() const { return backend_; }
 
   int64_t global_rank() const { return global_rank_; }
-  std::string backend() const { return backend_; }
   void set_global_rank(int64_t global_rank) { global_rank_ = global_rank; }
+
   void Clear();
   std::string world_group() const { return gm_.world_group(); }
   std::string FindRankListNameByHashName(const std::string &hash_name);
@@ -112,7 +95,6 @@ class DeviceManager {
   // each stage has a list of devices
   std::vector<std::vector<int64_t>> stage_devices_;
   std::shared_ptr<Device> device_;
-  std::vector<std::shared_ptr<Stage>> stages_;
   GroupManager gm_;
   std::string backend_;
 
@@ -123,6 +105,7 @@ class DeviceManager {
   int64_t local_rank_;
   int64_t global_rank_;
   int64_t stage_num_;
+  int64_t stage_id_;
 };
 }  // namespace parallel
 }  // namespace mindspore
