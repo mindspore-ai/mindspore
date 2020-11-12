@@ -175,7 +175,7 @@ num_cpu=$(grep -c processor /proc/cpuinfo)
 if [ $num_cpu -lt 100 ]; then
   cmd="${CACHE_ADMIN} --start -w 101"
 else
-  cmd="${CACHE_ADMIN} --start -w ${num_cpu}+1"
+  cmd="${CACHE_ADMIN} --start -w $(($num_cpu+1))"
 fi
 CacheAdminCmd "${cmd}" 1
 HandleRcExit $? 0 0
