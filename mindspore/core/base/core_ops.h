@@ -114,7 +114,6 @@ inline const PrimitivePtr kPrimDynamicGRUV2 = std::make_shared<Primitive>("Dynam
 inline const PrimitivePtr kPrimDynamicGRUV2Grad = std::make_shared<Primitive>("DynamicGRUV2Grad");
 inline const PrimitivePtr kPrimScatterAdd = std::make_shared<Primitive>("ScatterAdd");
 inline const PrimitivePtr kPrimScatterUpdate = std::make_shared<Primitive>("ScatterUpdate");
-inline const PrimitivePtr kPrimDiv = std::make_shared<Primitive>("Div");
 
 // NN
 inline const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
@@ -215,6 +214,8 @@ inline const PrimitivePtr kPrimReduceMin = std::make_shared<Primitive>("ReduceMi
 inline const PrimitivePtr kPrimNeg = std::make_shared<Primitive>("Neg");
 inline const PrimitivePtr kPrimSub = std::make_shared<Primitive>("Sub");
 inline const PrimitivePtr kPrimMul = std::make_shared<Primitive>("Mul");
+inline const PrimitivePtr kPrimDiv = std::make_shared<Primitive>("Div");
+inline const PrimitivePtr kPrimDivNoNan = std::make_shared<Primitive>("DivNoNan");
 inline const PrimitivePtr kPrimMinimum = std::make_shared<Primitive>("Minimum");
 inline const PrimitivePtr kPrimMaximum = std::make_shared<Primitive>("Maximum");
 inline const PrimitivePtr kPrimSquare = std::make_shared<Primitive>("Square");

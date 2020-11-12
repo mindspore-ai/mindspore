@@ -1944,7 +1944,7 @@ class Div(_MathBinaryOp):
         return None
 
 
-class DivNoNan(_MathBinaryOp):
+class DivNoNan(PrimitiveWithCheck):
     """
     Computes a safe divide which returns 0 if the y is zero.
 
@@ -1972,6 +1972,11 @@ class DivNoNan(_MathBinaryOp):
         >>> div_no_nan(input_x, input_y)
         [0., 0., 0., 2.5, 2.0]
     """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize _BinaryOp"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_value(self, x, y):
         if x is not None and y is not None:

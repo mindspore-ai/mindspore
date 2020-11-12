@@ -20,6 +20,8 @@
 #include <vector>
 #include "runtime/device/gpu/cuda_common.h"
 
+const float kFloatEplison = 1e-37;
+
 enum BroadcastOpType {
   BROADCAST_TYPE_GREATER = 0,
   BROADCAST_TYPE_LESS = 1,
@@ -33,6 +35,7 @@ enum BroadcastOpType {
   BROADCAST_TYPE_FLOORDIV = 9,
   BROADCAST_TYPE_ABSGRAD = 10,
   BROADCAST_TYPE_DIV = 11,
+  BROADCAST_TYPE_DIVNONAN = 12,
   BROADCAST_TYPE_INVALID = 0xffffffff,
 };
 
