@@ -691,7 +691,7 @@ void DeconvDwInt8Border(int32_t *dst, const int16_t *src, const int16_t *weight,
   }  // height loop
 }
 
-#ifndef ENABLE_ARM64
+#ifndef ENABLE_ARM
 void DeconvDwInt8Center(int32_t *dst, const int16_t *src, const int16_t *weight, int height, int width, int kernel_h,
                         int kernel_w, int out_h_step, int block_channel, int in_sh_step, int in_sw_step, int in_kh_step,
                         int in_kw_step) {
@@ -775,7 +775,7 @@ void DeconvDwInt8(int8_t *output_data, int32_t *output_buffer, const int16_t *in
         int32_t *out_t = output_buffer + oh_h_start * sliding->in_h_step_ + oh_w_start * sliding->block_channel_;
         const int16_t *in_t =
           src_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
         DeconvDwInt8Center(out_t, in_t, weight, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
                            conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_ * sizeof(int16_t),
                            sliding->block_channel_ * sizeof(int16_t), sliding->in_sh_step_ * sizeof(int32_t),
