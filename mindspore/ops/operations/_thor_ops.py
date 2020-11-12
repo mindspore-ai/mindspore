@@ -608,9 +608,42 @@ class UpdateThorGradient(PrimitiveWithInfer):
         return x2_dtype
 
 
+class Cholesky(PrimitiveWithInfer):
+    """
+    Inner API for positive-definite matrix Cholesky decomposition GPU backend.
+    """
+
+    @prim_attr_register
+    def __init__(self, split_dim=0):
+        self.init_prim_io_names(inputs=['x1'], outputs=['y'])
+        self.split_dim = split_dim
+        self.add_prim_attr('split_dim', self.split_dim)
+
+    def infer_shape(self, x1_shape):
+        if self.split_dim != 0:
+            assert len(x1_shape) == 2
+            height = x1_shape[0]
+            width = x1_shape[1]
+            assert height == width
+            if height <= self.split_dim:
+                out_shape = [1, height, width]
+            else:
+                batch = height // self.split_dim
+                if height != batch * self.split_dim:
+                    batch += 1
+                out_shape = [batch, self.split_dim, self.split_dim]
+        else:
+            out_shape = x1_shape
+        return out_shape
+
+    def infer_dtype(self, x1_dtype):
+        validator.check_tensor_dtype_valid('x1', x1_dtype, [mstype.float32], self.name)
+        return x1_dtype
+
+
 class CholeskyTrsm(PrimitiveWithInfer):
     """
-    Inner API for resnet50 THOR GPU backend
+    Inner API for resnet50 THOR GPU backend.
     """
 
     @prim_attr_register
@@ -643,7 +676,23 @@ class CholeskyTrsm(PrimitiveWithInfer):
 
 class DetTriangle(PrimitiveWithInfer):
     """
-    Calculate the determinant of triangle matrices
+    Calculate the determinant of triangle matrices.
+
+    Args:
+        fill_mode (tuple): The target shape to broadcast.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, with the given `shape` and the same data type as `input_x`.
+
+    Examples:
+        >>> shape = (2, 3)
+        >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> broadcast_to = P.BroadcastTo(shape)
+        >>> broadcast_to(input_x)
+        [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
     """
 
     @prim_attr_register
