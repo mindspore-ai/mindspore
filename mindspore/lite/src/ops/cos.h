@@ -26,12 +26,11 @@ namespace mindspore {
 namespace lite {
 class Cos : public ArithmeticSelf {
  public:
-#ifdef PRIMITIVE_WRITEABLE
   Cos() = default;
+  ~Cos() = default;
+#ifdef PRIMITIVE_WRITEABLE
   explicit Cos(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  Cos() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

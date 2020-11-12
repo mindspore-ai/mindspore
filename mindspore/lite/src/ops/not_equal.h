@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class NotEqual : public Arithmetic {
  public:
+  NotEqual() = default;
+  ~NotEqual() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(NotEqual, Arithmetic);
-  NotEqual() = default;
   explicit NotEqual(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  NotEqual() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

@@ -28,12 +28,12 @@ namespace mindspore {
 namespace lite {
 class Permute : public PrimitiveC {
  public:
+  Permute() = default;
+  ~Permute() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Permute, PrimitiveC);
   explicit Permute(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  Permute() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   std::vector<int64_t> GetOrder() const;

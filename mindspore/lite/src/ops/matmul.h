@@ -25,25 +25,18 @@
 namespace mindspore {
 namespace lite {
 class MatMul : public PrimitiveC {
-#ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(MatMul, PrimitiveC);
-
  public:
   MatMul() = default;
+  ~MatMul() = default;
+#ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(MatMul, PrimitiveC);
   explicit MatMul(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetTransposeA(bool transpose_a);
   void SetTransposeB(bool transpose_b);
-
 #else
-
- public:
-  MatMul() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-
- public:
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   bool GetTransposeA() const;
   bool GetTransposeB() const;

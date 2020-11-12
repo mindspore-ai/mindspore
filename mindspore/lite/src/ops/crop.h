@@ -27,15 +27,14 @@ namespace mindspore {
 namespace lite {
 class Crop : public PrimitiveC {
  public:
+  Crop() = default;
+  ~Crop() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Crop, PrimitiveC);
-  Crop() = default;
   explicit Crop(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(int64_t axis);
   void SetOffsets(const std::vector<int64_t> &offsets);
 #else
-  Crop() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

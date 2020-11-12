@@ -29,14 +29,14 @@ namespace mindspore {
 namespace lite {
 class Upsample : public PrimitiveC {
  public:
+  Upsample() = default;
+  ~Upsample() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Upsample, PrimitiveC);
-  Upsample() = default;
   explicit Upsample(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetMode(std::string mode);
   void SetScales(const std::vector<float> &scales);
 #else
-  Upsample() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 
 #endif

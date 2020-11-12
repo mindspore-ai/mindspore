@@ -23,14 +23,13 @@ namespace mindspore {
 namespace lite {
 class MakeTuple : public PrimitiveC {
  public:
+  MakeTuple() = default;
+  ~MakeTuple() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(MakeTuple, PrimitiveC);
-  MakeTuple() = default;
   explicit MakeTuple(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  MakeTuple() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

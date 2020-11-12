@@ -28,15 +28,13 @@ namespace mindspore {
 namespace lite {
 class PReLU : public Activation {
  public:
+  PReLU() = default;
+  ~PReLU() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(PReLU, Activation);
-  PReLU() = default;
   explicit PReLU(schema::PrimitiveT *primitive) : Activation(primitive) {}
   void SetChannelShared(bool channel_shared);
-
 #else
-  PReLU() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   bool GetChannelShared() const;

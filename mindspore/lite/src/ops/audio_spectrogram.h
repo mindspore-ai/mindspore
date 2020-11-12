@@ -26,16 +26,15 @@ namespace mindspore {
 namespace lite {
 class AudioSpectrogram : public PrimitiveC {
  public:
+  AudioSpectrogram() = default;
+  ~AudioSpectrogram() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(AudioSpectrogram, PrimitiveC);
-  AudioSpectrogram() = default;
   explicit AudioSpectrogram(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetWindowSize(int window_size) { this->primitive_->value.AsAudioSpectrogram()->windowSize = window_size; }
   void SetStride(int stride) { this->primitive_->value.AsAudioSpectrogram()->stride = stride; }
   void SetMagSquare(bool mag_square) { this->primitive_->value.AsAudioSpectrogram()->magSquare = mag_square; }
 #else
-  AudioSpectrogram() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetWindowSize() const;

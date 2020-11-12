@@ -27,16 +27,15 @@ namespace mindspore {
 namespace lite {
 class LayerNorm : public PrimitiveC {
  public:
+  LayerNorm() = default;
+  ~LayerNorm() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(LayerNorm, PrimitiveC);
-  LayerNorm() = default;
   explicit LayerNorm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetNormalizedShape(const std::vector<int> &normalizedShape);
   void SetEpsilon(float epsilon);
   void SetElementwiseAffine(bool elementwiseAffine);
 #else
-  LayerNorm() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

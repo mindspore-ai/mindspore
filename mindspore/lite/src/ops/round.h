@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class Round : public ArithmeticSelf {
  public:
+  Round() = default;
+  ~Round() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Round, ArithmeticSelf);
-  Round() = default;
   explicit Round(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  Round() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

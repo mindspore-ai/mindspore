@@ -23,13 +23,13 @@ namespace mindspore {
 namespace lite {
 class CustomNormalize : public PrimitiveC {
  public:
+  CustomNormalize() = default;
+  ~CustomNormalize() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(CustomNormalize, PrimitiveC);
-  CustomNormalize() = default;
   explicit CustomNormalize(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  CustomNormalize() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) override;

@@ -28,17 +28,16 @@ namespace mindspore {
 namespace lite {
 class While : public PrimitiveC {
  public:
+  While() = default;
+  ~While() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(While, PrimitiveC);
-  While() = default;
   explicit While(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetCondSubgraphIndex(const int cond_subgraph_index);
   void SetBodySubgraphIndex(const int body_subgraph_index);
 
 #else
-  While() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

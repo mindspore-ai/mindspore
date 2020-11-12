@@ -26,15 +26,14 @@ namespace mindspore {
 namespace lite {
 class Clip : public PrimitiveC {
  public:
+  Clip() = default;
+  ~Clip() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Clip, PrimitiveC);
-  Clip() = default;
   explicit Clip(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetMax(float max);
   void SetMin(float min);
 #else
-  Clip() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetMax() const;

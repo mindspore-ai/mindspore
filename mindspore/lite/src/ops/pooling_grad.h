@@ -28,9 +28,10 @@ namespace mindspore {
 namespace lite {
 class PoolingGrad : public PrimitiveC {
  public:
+  PoolingGrad() = default;
+  ~PoolingGrad() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(PoolingGrad, PrimitiveC);
-  PoolingGrad() = default;
   explicit PoolingGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetFormat(int format);
   void SetPoolingMode(int pooling_mode);
@@ -47,8 +48,6 @@ class PoolingGrad : public PrimitiveC {
   void SetRoundMode(int round_mode);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  PoolingGrad() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

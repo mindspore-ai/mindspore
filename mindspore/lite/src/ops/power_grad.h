@@ -27,17 +27,16 @@ namespace mindspore {
 namespace lite {
 class PowerGrad : public PrimitiveC {
  public:
+  PowerGrad() = default;
+  ~PowerGrad() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(PowerGrad, PrimitiveC);
-  PowerGrad() = default;
   explicit PowerGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetPower(float power);
   void SetScale(float scale);
   void SetShift(float shift);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  PowerGrad() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetPower() const;

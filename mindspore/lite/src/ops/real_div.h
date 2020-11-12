@@ -27,15 +27,14 @@ namespace mindspore {
 namespace lite {
 class RealDiv : public Arithmetic {
  public:
+  RealDiv() = default;
+  ~RealDiv() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(RealDiv, Arithmetic);
-  RealDiv() = default;
   explicit RealDiv(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 
 #else
-  RealDiv() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

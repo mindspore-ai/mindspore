@@ -27,14 +27,14 @@ namespace mindspore {
 namespace lite {
 class Eltwise : public Arithmetic {
  public:
+  Eltwise() = default;
+  ~Eltwise() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Eltwise, Arithmetic);
-  Eltwise() = default;
   explicit Eltwise(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   void SetMode(int mode);
 
 #else
-  Eltwise() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetMode() const;

@@ -26,15 +26,14 @@ namespace mindspore {
 namespace lite {
 class Add : public Arithmetic {
  public:
+  Add() = default;
+  ~Add() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Add, Arithmetic);
-  Add() = default;
   explicit Add(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetActivationType(int activation_type);
 #else
-  Add() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetActivationType() const;

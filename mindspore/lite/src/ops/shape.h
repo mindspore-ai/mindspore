@@ -26,13 +26,12 @@ namespace mindspore {
 namespace lite {
 class Shape : public PrimitiveC {
  public:
+  Shape() = default;
+  ~Shape() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Shape, PrimitiveC);
-  Shape() = default;
   explicit Shape(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
-  Shape() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

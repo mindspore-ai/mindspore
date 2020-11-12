@@ -26,15 +26,14 @@ namespace mindspore {
 namespace lite {
 class BatchNorm : public PrimitiveC {
  public:
+  BatchNorm() = default;
+  ~BatchNorm() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(BatchNorm, PrimitiveC);
-  BatchNorm() = default;
   explicit BatchNorm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetEpsilon(float epsilon);
 #else
-  BatchNorm() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetEpsilon() const;

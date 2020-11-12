@@ -28,14 +28,13 @@ namespace mindspore {
 namespace lite {
 class ApplyMomentum : public PrimitiveC {
  public:
+  ApplyMomentum() = default;
+  ~ApplyMomentum() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(ApplyMomentum, PrimitiveC);
-  ApplyMomentum() = default;
   explicit ApplyMomentum(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  ApplyMomentum() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

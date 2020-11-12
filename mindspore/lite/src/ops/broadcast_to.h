@@ -27,15 +27,14 @@ namespace mindspore {
 namespace lite {
 class BroadcastTo : public PrimitiveC {
  public:
+  BroadcastTo() = default;
+  ~BroadcastTo() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(BroadcastTo, PrimitiveC);
-  BroadcastTo() = default;
   explicit BroadcastTo(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetDstShape(const std::vector<int> &dst_shape);
 
 #else
-  BroadcastTo() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

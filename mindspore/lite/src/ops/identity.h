@@ -25,6 +25,7 @@ class Identity : public PrimitiveC {
  public:
   MS_DECLARE_PARENT(Identity, PrimitiveC);
   Identity() = default;
+  ~Identity() = default;
   explicit Identity(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 };
 }  // namespace lite

@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class Return : public PrimitiveC {
  public:
+  Return() = default;
+  ~Return() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Return, PrimitiveC);
-  Return() = default;
   explicit Return(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-#else
-  Return() = default;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };

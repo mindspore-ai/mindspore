@@ -26,17 +26,16 @@ namespace mindspore {
 namespace lite {
 class Exp : public PrimitiveC {
  public:
+  Exp() = default;
+  ~Exp() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Exp, PrimitiveC);
-  Exp() = default;
   explicit Exp(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetBase(float base);
   void SetShift(float shift);
   void SetScale(float scale);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  Exp() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetBase() const;

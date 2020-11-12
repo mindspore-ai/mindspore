@@ -26,13 +26,12 @@ namespace mindspore {
 namespace lite {
 class Square : public ArithmeticSelf {
  public:
+  Square() = default;
+  ~Square() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Square, ArithmeticSelf);
-  Square() = default;
   explicit Square(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
 #else
-  Square() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

@@ -26,15 +26,14 @@ namespace mindspore {
 namespace lite {
 class Elu : public PrimitiveC {
  public:
+  Elu() = default;
+  ~Elu() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Elu, PrimitiveC);
-  Elu() = default;
   explicit Elu(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAlpha(float alpha);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  Elu() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetAlpha() const;

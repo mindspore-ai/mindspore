@@ -27,16 +27,15 @@ namespace mindspore {
 namespace lite {
 class ROIPooling : public PrimitiveC {
  public:
+  ROIPooling() = default;
+  ~ROIPooling() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(ROIPooling, PrimitiveC);
-  ROIPooling() = default;
   explicit ROIPooling(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetPooledH(int pooled_h);
   void SetPooledW(int pooled_w);
   void SetScale(float scale);
 #else
-  ROIPooling() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

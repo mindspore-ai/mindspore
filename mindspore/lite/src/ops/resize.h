@@ -27,9 +27,10 @@ namespace mindspore {
 namespace lite {
 class Resize : public PrimitiveC {
  public:
+  Resize() = default;
+  ~Resize() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Resize, PrimitiveC);
-  Resize() = default;
   explicit Resize(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetFormat(int format);
   void SetMethod(int method);
@@ -39,8 +40,6 @@ class Resize : public PrimitiveC {
   void SetPreserveAspectRatio(bool preserve_aspect_ratio);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 #else
-  Resize() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

@@ -28,16 +28,15 @@ namespace mindspore {
 namespace lite {
 class ActivationGrad : public PrimitiveC {
  public:
+  ActivationGrad() = default;
+  ~ActivationGrad() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(ActivationGrad, PrimitiveC);
-  ActivationGrad() = default;
   explicit ActivationGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetType(int type);
   void SetAlpha(float alpha);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  ActivationGrad() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetType() const;

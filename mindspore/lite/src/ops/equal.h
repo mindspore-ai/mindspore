@@ -26,13 +26,12 @@ namespace mindspore {
 namespace lite {
 class Equal : public Arithmetic {
  public:
+  Equal() = default;
+  ~Equal() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Equal, PrimitiveC);
-  Equal() = default;
   explicit Equal(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  Equal() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

@@ -27,17 +27,16 @@ namespace mindspore {
 namespace lite {
 class Range : public PrimitiveC {
  public:
+  Range() = default;
+  ~Range() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Range, PrimitiveC);
-  Range() = default;
   explicit Range(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetDType(int d_type);
   void SetStart(int start);
   void SetLimit(int limit);
   void SetDelta(int delta);
 #else
-  Range() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

@@ -26,9 +26,10 @@ namespace mindspore {
 namespace lite {
 class Mfcc : public PrimitiveC {
  public:
+  Mfcc() = default;
+  ~Mfcc() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Mfcc, PrimitiveC);
-  Mfcc() = default;
   explicit Mfcc(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetFreqUpperLimit(float freq_upper_limit) {
     this->primitive_->value.AsMfcc()->freqUpperLimit = freq_upper_limit;
@@ -41,8 +42,6 @@ class Mfcc : public PrimitiveC {
   }
   void SetDctCoeffNum(int dct_coeff_num) { this->primitive_->value.AsMfcc()->dctCoeffNum = dct_coeff_num; }
 #else
-  Mfcc() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   float GetFreqUpperLimit() const;

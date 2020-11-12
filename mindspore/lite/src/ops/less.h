@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class Less : public Arithmetic {
  public:
+  Less() = default;
+  ~Less() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Less, Arithmetic);
-  Less() = default;
   explicit Less(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  Less() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

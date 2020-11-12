@@ -26,17 +26,16 @@ namespace mindspore {
 namespace lite {
 class FullConnection : public PrimitiveC {
  public:
+  FullConnection() = default;
+  ~FullConnection() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(FullConnection, PrimitiveC);
-  FullConnection() = default;
   explicit FullConnection(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetHasBias(bool has_bias);
   void SetAxis(int axis);
   void SetUseAxis(bool use_axis);
   void SetActivationType(int activationType);
 #else
-  FullConnection() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

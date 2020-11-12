@@ -27,13 +27,12 @@ namespace mindspore {
 namespace lite {
 class SquaredDifference : public Arithmetic {
  public:
+  SquaredDifference() = default;
+  ~SquaredDifference() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(SquaredDifference, Arithmetic);
-  SquaredDifference() = default;
   explicit SquaredDifference(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  SquaredDifference() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

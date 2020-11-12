@@ -26,11 +26,11 @@
 namespace mindspore {
 namespace lite {
 class Conv2D : public PrimitiveC {
-#ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(Conv2D, PrimitiveC);
-
  public:
   Conv2D() = default;
+  ~Conv2D() = default;
+#ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Conv2D, PrimitiveC);
   explicit Conv2D(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
@@ -57,10 +57,6 @@ class Conv2D : public PrimitiveC {
                                  const std::vector<AnfNodePtr> &inputs);
   void PopulaterConv2DSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group);
 #else
-
- public:
-  Conv2D() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 

@@ -28,15 +28,14 @@ namespace mindspore {
 namespace lite {
 class Reverse : public PrimitiveC {
  public:
+  Reverse() = default;
+  ~Reverse() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Reverse, PrimitiveC);
-  Reverse() = default;
   explicit Reverse(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(const std::vector<int> &axis);
 
 #else
-  Reverse() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   std::vector<int> GetAxis() const;

@@ -26,13 +26,12 @@ namespace mindspore {
 namespace lite {
 class FloorMod : public Arithmetic {
  public:
+  FloorMod() = default;
+  ~FloorMod() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(FloorMod, Arithmetic);
-  FloorMod() = default;
   explicit FloorMod(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
 #else
-  FloorMod() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

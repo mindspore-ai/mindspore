@@ -27,14 +27,13 @@ namespace mindspore {
 namespace lite {
 class Neg : public ArithmeticSelf {
  public:
+  Neg() = default;
+  ~Neg() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Neg, ArithmeticSelf);
-  Neg() = default;
   explicit Neg(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  Neg() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };

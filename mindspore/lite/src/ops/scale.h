@@ -27,16 +27,14 @@ namespace mindspore {
 namespace lite {
 class Scale : public PrimitiveC {
  public:
+  Scale() = default;
+  ~Scale() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Scale, PrimitiveC);
-  Scale() = default;
   explicit Scale(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetAxis(int axis);
   void SetActivationType(int activation_type);
-
 #else
-  Scale() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int GetAxis() const;
