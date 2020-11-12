@@ -157,6 +157,8 @@ class PrimLib:
         'ExpandDims': Prim(ELEMWISE),
         'InplaceAssign': Prim(ELEMWISE),
         '@ReduceInit': Prim(ELEMWISE),
+        'Reshape': Prim(ELEMWISE),
+        'Transpose': Prim(TRANSFORM),
     }
 
     default_primtive = Prim(UNKNOWN)
