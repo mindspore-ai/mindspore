@@ -261,6 +261,5 @@ std::string ParallelBuildManager::ProcessBuildRetStr(const std::string &build_re
   }
   return "";
 }
-
 }  // namespace kernel
 }  // namespace mindspore

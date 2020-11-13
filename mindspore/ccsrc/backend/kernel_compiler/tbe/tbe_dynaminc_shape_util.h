@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace kernel {
 namespace tbe {
-
 class TbeDynamicShapeUtil {
  public:
   TbeDynamicShapeUtil() = default;
@@ -41,7 +40,6 @@ class TbeDynamicShapeUtil {
   static std::vector<std::pair<int, int>> GetInputDynamicRange(const AnfNodePtr &anf_node, size_t index);
   static std::vector<std::pair<int, int>> GetOutputDynamicRange(const AnfNodePtr &anf_node, size_t index);
 };
-
 }  // namespace tbe
 }  // namespace kernel
 }  // namespace mindspore

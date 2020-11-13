@@ -113,13 +113,13 @@ void AiCoreDynamicKernel::UpdateArgs() {
   runtime_args_.clear();
 
   (void)std::transform(std::begin(kernel_inputs), std::end(kernel_inputs), std::back_inserter(runtime_args_),
-                       [](const AddressPtr &input) -> void * { return input->addr; });
+                       [](const AddressPtr &input) { return input->addr; });
   (void)std::transform(std::begin(kernel_outputs), std::end(kernel_outputs), std::back_inserter(runtime_args_),
-                       [](const AddressPtr &output) -> void * { return output->addr; });
+                       [](const AddressPtr &output) { return output->addr; });
   // Update workspace
   if (!workspace_addr_.empty()) {
     (void)std::transform(std::begin(workspace_addr_), std::end(workspace_addr_), std::back_inserter(runtime_args_),
-                         [](const DeviceAddressPtr &address_ptr) -> void * { return address_ptr->GetMutablePtr(); });
+                         [](const DeviceAddressPtr &address_ptr) { return address_ptr->GetMutablePtr(); });
   }
 
   if (is_dynamic_shape_ && !tiling_data_.empty() && tiling_data_ptr_ != nullptr) {

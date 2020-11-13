@@ -133,7 +133,7 @@ void ParseAttrValue(const std::string &type, const std::string &attr_name, const
     MS_EXCEPTION_IF_NULL(value_type);
     auto value_type_str = value_type->ToString();
     if (value_type_str == "Int64") {
-      int64_t data = GetValue<int64_t>(value);
+      auto data = GetValue<int64_t>(value);
       attr_value.push_back(data);
     } else {
       attr_value = GetValue<std::vector<int64_t>>(value);
@@ -291,11 +291,11 @@ bool CreateNodeDefBytes(const std::shared_ptr<AnfNode> &anf_node,
 
 uint64_t SetExtInfoShapeType(char *ext_info_buf, uint64_t ext_info_offset) {
   // deal1: unknown shape type
-  ExtInfo *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
+  auto *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
   info->infoType = FWK_ADPT_EXT_SHAPE_TYPE;
   info->infoLen = sizeof(int32_t);
   ext_info_offset += kExtInfoHeadSize;
-  int32_t *shape_type = reinterpret_cast<int32_t *>(ext_info_buf + ext_info_offset);
+  auto *shape_type = reinterpret_cast<int32_t *>(ext_info_buf + ext_info_offset);
   *shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
   ext_info_offset += info->infoLen;
   return ext_info_offset;
@@ -304,12 +304,12 @@ uint64_t SetExtInfoShapeType(char *ext_info_buf, uint64_t ext_info_offset) {
 uint64_t SetExtInfoInputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
                                   const std::shared_ptr<AnfNode> &anf_node, size_t input_num) {
   // deal2:input ShapeAndType
-  ExtInfo *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
+  auto *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
   info->infoType = FWK_ADPT_EXT_INPUT_SHAPE;
   info->infoLen = input_num * sizeof(ShapeAndType);
   ext_info_offset += kExtInfoHeadSize;
 
-  ShapeAndType *inputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
+  auto *inputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
   for (size_t input_index = 0; input_index < input_num; input_index++) {
     TypeId input_type = AnfAlgo::GetInputDeviceDataType(anf_node, input_index);
     std::vector<size_t> input_shape;
@@ -344,12 +344,12 @@ uint64_t SetExtInfoInputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
 uint64_t SetExtInfoOutputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
                                    const std::shared_ptr<AnfNode> &anf_node, size_t output_num) {
   // deal3:output ShapeAndType
-  ExtInfo *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
+  auto *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
   info->infoType = FWK_ADPT_EXT_OUTPUT_SHAPE;
   info->infoLen = output_num * sizeof(ShapeAndType);
   ext_info_offset += kExtInfoHeadSize;
 
-  ShapeAndType *outputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
+  auto *outputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
   for (size_t output_index = 0; output_index < output_num; output_index++) {
     std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
     TypeId output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, output_index);

@@ -314,9 +314,9 @@ bool E2eDumpUtil::DumpData(const session::KernelGraph *graph, uint32_t device_id
   dump_json_parser.UpdateDumpIter();
   auto dump_flag = dump_json_parser.e2e_dump_enabled();
   if (!dump_flag) {
-    MS_LOG(INFO) << "E2e dump is disabled, skip dump step";
     return true;
   }
+  MS_LOG(INFO) << "E2e dump data start";
 
   if (dump_json_parser.iteration() != 0) {
     if (dump_json_parser.cur_dump_iter() != dump_json_parser.iteration()) {
