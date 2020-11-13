@@ -492,6 +492,16 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
   } else if (value->isa<Number>()) {
     MS_LOG(INFO) << "Value is a number.";
     return RET_OK;
+  } else if (value->isa<mindspore::ParamValueLite>()) {
+    auto valueLite = std::dynamic_pointer_cast<ParamValueLite>(value);
+    paramTensor->data.resize(valueLite->tensor_size());
+    paramTensor->format = schema::Format(valueLite->format());
+    paramTensor->dataType = valueLite->tensor_type();
+    paramTensor->dims = valueLite->tensor_shape();
+    memcpy(paramTensor->data.data(), valueLite->tensor_addr(), valueLite->tensor_size());
+    node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
+    output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
+    meta_graphT->allTensors.emplace_back(std::move(paramTensor));
   } else {
     MS_LOG(ERROR) << "Not support value type , need add support.";
     return RET_ERROR;

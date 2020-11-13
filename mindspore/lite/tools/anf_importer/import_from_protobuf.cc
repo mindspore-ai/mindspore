@@ -452,24 +452,36 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInTensorForm(const std::string &val
   for (int i = 0; i < attr_tensor.dims_size(); ++i) {
     shape.push_back(attr_tensor.dims(i));
   }
-  std::vector<int64_t> shape_vector;
+  std::vector<int> shape_vector;
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
-  tensor::TensorPtr tensor_info =
-    std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[attr_tensor_type], shape_vector);
+                       [](const int32_t &value) { return static_cast<int>(value); });
+  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+  param_value->set_tensor_shape(shape_vector);
+  param_value->set_tensor_type(kDefaultValueSwitchMap[attr_tensor_type]);
   const std::string &tensor_buf = attr_tensor.raw_data();
-  auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor_info->data_c());
-  auto ret = memcpy_s(tensor_data_buf, tensor_info->Size(), tensor_buf.data(), tensor_buf.size());
-  if (EOK != ret) {
-    MS_LOG(ERROR) << "memcpy_s error";
+  auto tensor_data = new (std::nothrow) char[tensor_buf.size()];
+  if (tensor_data == nullptr) {
+    MS_LOG(ERROR) << "Tensor_data is nullptr";
     return false;
   }
-  auto new_value_node = NewValueNode(MakeValue(tensor_info));
+  auto ret = memcpy_s(tensor_data, tensor_buf.size(), tensor_buf.data(), tensor_buf.size());
+  if (ret != EOK) {
+    delete[] tensor_data;
+    MS_LOG(ERROR) << "Memcpy error: " << ret;
+    return false;
+  }
+  param_value->set_tensor_addr(tensor_data);
+  param_value->set_tensor_size(tensor_buf.size());
+  auto new_value_node = NewValueNode(MakeValue(param_value));
   if (new_value_node == nullptr) {
+    MS_LOG(ERROR) << "Make valuenode fail";
     return false;
   }
   auto type_ptr = TypeIdToType(kDefaultValueSwitchMap[attr_tensor_type]);
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  std::vector<int64_t> shape_vector_int64;
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector_int64),
+                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector_int64);
   new_value_node->set_abstract(abstract_tensor);
   anfnode_build_map_[value_node_name] = new_value_node;
   return true;

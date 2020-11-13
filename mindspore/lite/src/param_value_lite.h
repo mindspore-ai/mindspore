@@ -35,7 +35,7 @@ class ParamValueLite : public Value {
       tensor_size_ = 0;
     }
   }
-
+  MS_DECLARE_PARENT(ParamValueLite, Value)
   size_t tensor_size() const { return tensor_size_; }
   void set_tensor_size(size_t size) { tensor_size_ = size; }
   void *tensor_addr() const { return tensor_addr_; }
