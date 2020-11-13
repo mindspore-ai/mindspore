@@ -47,7 +47,7 @@ constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kIdentity = "Identity";
 constexpr auto kCustRunApi = "RunCpuKernel";
-const std::set<std::string> kCustAiCpuKernelOps{kEditDistance, kGatherD, kIdentity, kMeshgrid};
+const std::set<std::string> kCustAiCpuKernelOps{kEditDistance, kIdentity};
 
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
