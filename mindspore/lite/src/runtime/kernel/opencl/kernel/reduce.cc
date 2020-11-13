@@ -41,8 +41,9 @@ using mindspore::schema::ReduceMode_ReduceSumSquare;
 namespace mindspore::kernel {
 
 std::string ReduceOpenCLKernel::GetReduceTypeStr(int type) {
-  static const std::map<int, std::string> reduce_type2str{{ReduceMode_ReduceMean, "mean"},
-                                                          {ReduceMode_ReduceSum, "sum"}};
+  static const std::map<int, std::string> reduce_type2str{
+    {ReduceMode_ReduceMean, "Mean"}, {ReduceMode_ReduceSum, "Sum"},   {ReduceMode_ReduceMin, "Min"},
+    {ReduceMode_ReduceMax, "Max"},   {ReduceMode_ReduceProd, "Prod"}, {ReduceMode_ReduceSumSquare, "SumSquare"}};
   auto result_iter = reduce_type2str.find(type);
   if (result_iter != reduce_type2str.end()) {
     return result_iter->second;
@@ -50,7 +51,26 @@ std::string ReduceOpenCLKernel::GetReduceTypeStr(int type) {
   return "";
 }
 
+cl_float4 ReduceOpenCLKernel::GenC4Mask() {
+  auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
+  int last_c4 = in_tensors_[0]->shape()[3] % C4NUM;
+  last_c4 = (C4NUM - last_c4) % 4;
+  static const std::map<int, float> reduce_type2init{
+    {ReduceMode_ReduceMean, 0.f},     {ReduceMode_ReduceSum, 0.f},  {ReduceMode_ReduceMin, 10000.f},
+    {ReduceMode_ReduceMax, -10000.f}, {ReduceMode_ReduceProd, 1.f}, {ReduceMode_ReduceSumSquare, 0.f}};
+  float init_float = reduce_type2init.find(reduce_param->mode_)->second;
+  cl_float4 mask = {0.f, 0.f, 0.f, 0.f};
+  for (int i = 0; i < last_c4; i++) {
+    mask.s[C4NUM - i - 1] = init_float;
+  }
+  return mask;
+}
+
 int ReduceOpenCLKernel::CheckSpecs() {
+  if (in_tensors_[0]->shape()[0] > 1) {
+    MS_LOG(ERROR) << "reduce op only support n=2";
+    return RET_PARAM_INVALID;
+  }
   auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
   if (GetReduceTypeStr(reduce_param->mode_).empty()) {
     MS_LOG(ERROR) << "not supported reduce type:" << reduce_param->mode_;
@@ -82,17 +102,21 @@ int ReduceOpenCLKernel::Prepare() {
     return RET_NULL_PTR;
   }
 
-  std::string kernel_name = GetReduceTypeStr(reduce_param->mode_);
-  if (wc_reduce_) {
-    kernel_name += "_WC";
-  }
+  std::string kernel_name;
   if (in_tensors_[0]->shape()[reduce_param->axes_[0]] >= LOCAL_CACHE_THREAD ||
       in_tensors_[0]->shape()[reduce_param->axes_[1]] >= LOCAL_CACHE_THREAD) {
     use_local_ = true;
-    kernel_name += "_local";
+    kernel_name += "Local";
+  } else {
+    use_local_ = false;
+    kernel_name += "Global";
   }
-  kernel_name += "_NHWC4";
-
+  if (wc_reduce_) {
+    kernel_name += "WC";
+  } else {
+    kernel_name += "HW";
+  }
+  kernel_name += GetReduceTypeStr(reduce_param->mode_);
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
@@ -116,6 +140,9 @@ void ReduceOpenCLKernel::SetConstArgs() {
   cl_int4 size = {h, w, c4, c};
   int arg_idx = 2;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, size);
+  if (wc_reduce_) {
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, GenC4Mask());
+  }
 }
 void ReduceOpenCLKernel::SetGlobalLocal() {
   std::vector<int> shapex = in_tensors_[0]->shape();

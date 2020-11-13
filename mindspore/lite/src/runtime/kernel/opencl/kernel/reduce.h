@@ -38,6 +38,7 @@ class ReduceOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
+  cl_float4 GenC4Mask();
   static std::string GetReduceTypeStr(int type);
   cl::Kernel kernel_;
   Image2DInfo outShape = Image2DInfo(nullptr);
