@@ -119,7 +119,13 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   }
   // quant
   if (config->quantType == schema::QuantType_PostTraining) {
-    this->mQuantizer = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, 8);
+    if (!quant::WeightQuantizer::IsPosNum(config->bitNum)) {
+      MS_LOG(ERROR) << "bitNum must be valid pos num.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return nullptr;
+    }
+    this->mQuantizer =
+      std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, std::stoi(config->bitNum));
     if (mQuantizer == nullptr) {
       MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
