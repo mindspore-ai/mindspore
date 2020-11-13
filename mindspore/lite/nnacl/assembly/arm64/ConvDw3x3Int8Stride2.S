@@ -10,7 +10,8 @@
 
 // void ConvDw3x3Int8Stride2(int8_t *output, const int8_t *input, const int16_t *weight, const int32_t *bias, int input_col_size,
 //                           int input_row_size, int channel, int output_h, int output_w, int8_t in_zp, int32_t out_zp,
-//                           int out_multiplier, int left_shift, int right_shift, int32_t acc_min, int32_t acc_max)
+//                           int *out_multiplier, int *left_shift, int *right_shift, int32_t acc_min, int32_t acc_max
+//                           size_t per_channel)
 //
 // x0: output
 // x1: input
@@ -28,30 +29,34 @@
 // w13: right_shift
 // w14: acc_min
 // w15: acc_max
+// w16: per_channel
 
 ConvDw3x3Int8Stride2:
-    sub sp, sp, #160
+    sub sp, sp, #176
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     stp x19, x20, [sp], #16
     stp x21, x22, [sp], #16
+    stp x23, x24, [sp], #16
 
-    ldr w8, [sp]
-    ldr w9, [sp, #8]
-    ldr w10, [sp, #16]  // out_zp
-    ldr w11, [sp, #24]
-    ldr w12, [sp, #32]
-    ldr w13, [sp, #40]
-    ldr w14, [sp, #48]  // acc_min
-    ldr w15, [sp, #56]  // acc_max
+    ldr x8, [sp]
+    ldr x9, [sp, #8]
+    ldr x10, [sp, #16]
+    ldr x11, [sp, #24]
+    ldr x12, [sp, #32]
+    ldr x13, [sp, #40]
+    ldr x14, [sp, #48]
+    ldr x15, [sp, #56]
+    ldr x23, [sp, #64]  // per_channel
 
     add x19, x3, #16
     add w20, w6, w6   // channel * 2
     dup v28.8b, w9    // in_zp
-    dup v30.4s, w11   // out_multiplier
-    dup v29.4s, w12   // left_shift
-    dup v31.4s, w13   // right_shift
-
+    ldr w24, [x12]
+    
+    dup v29.4s, w10
+    dup v30.4s, w14
+    dup v31.4s, w15
     // Load weights
     ld1 {v0.8h}, [x2], x20
     ld1 {v1.8h}, [x2], x20
@@ -162,48 +167,70 @@ HEIGHT1_LOOP:
     ssubl v21.8h, v21.8b, v28.8b
     smlal2 v27.4s, v8.8h, v23.8h
 
-    dup v12.4s, w10  // out_zp
-    cbz w12, SKIP_LEFTSHIFT1
-    sqshl v24.4s, v24.4s, v29.4s
-    sqshl v25.4s, v25.4s, v29.4s
-    sqshl v26.4s, v26.4s, v29.4s
-    sqshl v27.4s, v27.4s, v29.4s
-    sqrdmulh v24.4s, v24.4s, v30.4s
-    sqrdmulh v25.4s, v25.4s, v30.4s
-    sqrdmulh v26.4s, v26.4s, v30.4s
-    sqrdmulh v27.4s, v27.4s, v30.4s
+    cbnz w23, PER_CHANNEL_POST1
+    ld1r {v17.4s}, [x11]
+    cbz w24, SKIP_LEFTSHIFT1
+    ld1r {v12.4s}, [x12]
+    sqshl v24.4s, v24.4s, v12.4s
+    sqshl v25.4s, v25.4s, v12.4s
+    sqshl v26.4s, v26.4s, v12.4s
+    sqshl v27.4s, v27.4s, v12.4s
+    sqrdmulh v24.4s, v24.4s, v17.4s
+    sqrdmulh v25.4s, v25.4s, v17.4s
+    sqrdmulh v26.4s, v26.4s, v17.4s
+    sqrdmulh v27.4s, v27.4s, v17.4s
     b OUTZP1
 
 SKIP_LEFTSHIFT1:
-    sqrdmulh v24.4s, v24.4s, v30.4s
-    sqrdmulh v25.4s, v25.4s, v30.4s
-    sqrdmulh v26.4s, v26.4s, v30.4s
-    sqrdmulh v27.4s, v27.4s, v30.4s
-    sqrshl v24.4s, v24.4s, v31.4s
-    sqrshl v25.4s, v25.4s, v31.4s
-    sqrshl v26.4s, v26.4s, v31.4s
-    sqrshl v27.4s, v27.4s, v31.4s
+    ld1r {v22.4s}, [x13]
+    sqrdmulh v24.4s, v24.4s, v17.4s
+    sqrdmulh v25.4s, v25.4s, v17.4s
+    sqrdmulh v26.4s, v26.4s, v17.4s
+    sqrdmulh v27.4s, v27.4s, v17.4s
+    sqrshl v24.4s, v24.4s, v22.4s
+    sqrshl v25.4s, v25.4s, v22.4s
+    sqrshl v26.4s, v26.4s, v22.4s
+    sqrshl v27.4s, v27.4s, v22.4s
+    b OUTZP1
+
+PER_CHANNEL_POST1:
+    ld1 {v12.4s}, [x12]
+    sqshl v24.4s, v24.4s, v12.4s
+    ldr q13, [x12, #16]
+    sqshl v25.4s, v25.4s, v13.4s
+    ld1 {v17.4s}, [x11]
+    sqshl v26.4s, v26.4s, v12.4s
+    sqshl v27.4s, v27.4s, v13.4s
+    ldr q18, [x11, #16]
+    sqrdmulh v24.4s, v24.4s, v17.4s
+    sqrdmulh v25.4s, v25.4s, v18.4s
+    ld1 {v22.4s}, [x13]
+    sqrdmulh v26.4s, v26.4s, v17.4s
+    sqrdmulh v27.4s, v27.4s, v18.4s
+    ldr q23, [x13, #16]
+    sqrshl v24.4s, v24.4s, v22.4s
+    sqrshl v25.4s, v25.4s, v23.4s
+    sqrshl v26.4s, v26.4s, v22.4s
+    sqrshl v27.4s, v27.4s, v23.4s
 
 OUTZP1:
     // Add output zero point
-    dup v17.4s, w14  // acc_min
-    sqadd v24.4s, v24.4s, v12.4s
-    sqadd v25.4s, v25.4s, v12.4s
-    sqadd v26.4s, v26.4s, v12.4s
-    sqadd v27.4s, v27.4s, v12.4s
+    sqadd v24.4s, v24.4s, v29.4s
+    sqadd v25.4s, v25.4s, v29.4s
+    sqadd v26.4s, v26.4s, v29.4s
+    sqadd v27.4s, v27.4s, v29.4s
 
     // Apply min bound
-    dup v22.4s, w15  // acc_max
-    smax v24.4s, v24.4s, v17.4s
-    smax v25.4s, v25.4s, v17.4s
-    smax v26.4s, v26.4s, v17.4s
-    smax v27.4s, v27.4s, v17.4s
+    smax v24.4s, v24.4s, v30.4s
+    smax v25.4s, v25.4s, v30.4s
+    smax v26.4s, v26.4s, v30.4s
+    smax v27.4s, v27.4s, v30.4s
 
     // Apply max bound
-    smin v24.4s, v24.4s, v22.4s
-    smin v25.4s, v25.4s, v22.4s
-    smin v26.4s, v26.4s, v22.4s
-    smin v27.4s, v27.4s, v22.4s
+    smin v24.4s, v24.4s, v31.4s
+    smin v25.4s, v25.4s, v31.4s
+    smin v26.4s, v26.4s, v31.4s
+    smin v27.4s, v27.4s, v31.4s
 
     sqxtn v24.4h, v24.4s
     sqxtn2 v24.8h, v25.4s
@@ -277,48 +304,70 @@ WIDTH2_LEFT:
     smlal v26.4s, v8.4h, v23.4h
     smlal2 v27.4s, v8.8h, v23.8h
 
-    dup v12.4s, w10
-    cbz w12, SKIP_LEFTSHIFT2
-    sqshl v24.4s, v24.4s, v29.4s
-    sqshl v25.4s, v25.4s, v29.4s
-    sqshl v26.4s, v26.4s, v29.4s
-    sqshl v27.4s, v27.4s, v29.4s
-    sqrdmulh v24.4s, v24.4s, v30.4s
-    sqrdmulh v25.4s, v25.4s, v30.4s
-    sqrdmulh v26.4s, v26.4s, v30.4s
-    sqrdmulh v27.4s, v27.4s, v30.4s
+    cbnz w23, PER_CHANNEL_POST2
+    ld1r {v17.4s}, [x11]
+    cbz w24, SKIP_LEFTSHIFT2
+    ld1r {v12.4s}, [x12]
+    sqshl v24.4s, v24.4s, v12.4s
+    sqshl v25.4s, v25.4s, v12.4s
+    sqshl v26.4s, v26.4s, v12.4s
+    sqshl v27.4s, v27.4s, v12.4s
+    sqrdmulh v24.4s, v24.4s, v17.4s
+    sqrdmulh v25.4s, v25.4s, v17.4s
+    sqrdmulh v26.4s, v26.4s, v17.4s
+    sqrdmulh v27.4s, v27.4s, v17.4s
     b OUTZP2
 
 SKIP_LEFTSHIFT2:
-    sqrdmulh v24.4s, v24.4s, v30.4s
-    sqrdmulh v25.4s, v25.4s, v30.4s
-    sqrdmulh v26.4s, v26.4s, v30.4s
-    sqrdmulh v27.4s, v27.4s, v30.4s
-    sqrshl v24.4s, v24.4s, v31.4s
-    sqrshl v25.4s, v25.4s, v31.4s
-    sqrshl v26.4s, v26.4s, v31.4s
-    sqrshl v27.4s, v27.4s, v31.4s
+    ld1r {v22.4s}, [x13]
+    sqrdmulh v24.4s, v24.4s, v17.4s
+    sqrdmulh v25.4s, v25.4s, v17.4s
+    sqrdmulh v26.4s, v26.4s, v17.4s
+    sqrdmulh v27.4s, v27.4s, v17.4s
+    sqrshl v24.4s, v24.4s, v22.4s
+    sqrshl v25.4s, v25.4s, v22.4s
+    sqrshl v26.4s, v26.4s, v22.4s
+    sqrshl v27.4s, v27.4s, v22.4s
+    b OUTZP2
+
+PER_CHANNEL_POST2:
+    ld1 {v12.4s}, [x12]
+    sqshl v24.4s, v24.4s, v12.4s
+    ldr q13, [x12, #16]
+    sqshl v25.4s, v25.4s, v13.4s
+    ld1 {v17.4s}, [x11]
+    sqshl v26.4s, v26.4s, v12.4s
+    sqshl v27.4s, v27.4s, v13.4s
+    ldr q18, [x11, #16]
+    sqrdmulh v24.4s, v24.4s, v17.4s
+    sqrdmulh v25.4s, v25.4s, v18.4s
+    ld1 {v22.4s}, [x13]
+    sqrdmulh v26.4s, v26.4s, v17.4s
+    sqrdmulh v27.4s, v27.4s, v18.4s
+    ldr q23, [x13, #16]
+    sqrshl v24.4s, v24.4s, v22.4s
+    sqrshl v25.4s, v25.4s, v23.4s
+    sqrshl v26.4s, v26.4s, v22.4s
+    sqrshl v27.4s, v27.4s, v23.4s
 
 OUTZP2:
     // Add output zero point
-    dup v17.4s, w14
-    sqadd v24.4s, v24.4s, v12.4s
-    sqadd v25.4s, v25.4s, v12.4s
-    sqadd v26.4s, v26.4s, v12.4s
-    sqadd v27.4s, v27.4s, v12.4s
+    sqadd v24.4s, v24.4s, v29.4s
+    sqadd v25.4s, v25.4s, v29.4s
+    sqadd v26.4s, v26.4s, v29.4s
+    sqadd v27.4s, v27.4s, v29.4s
 
     // Apply min bound
-    dup v22.4s, w15
-    smax v24.4s, v24.4s, v17.4s
-    smax v25.4s, v25.4s, v17.4s
-    smax v26.4s, v26.4s, v17.4s
-    smax v27.4s, v27.4s, v17.4s
+    smax v24.4s, v24.4s, v30.4s
+    smax v25.4s, v25.4s, v30.4s
+    smax v26.4s, v26.4s, v30.4s
+    smax v27.4s, v27.4s, v30.4s
 
     // Apply max bound
-    smin v24.4s, v24.4s, v22.4s
-    smin v25.4s, v25.4s, v22.4s
-    smin v26.4s, v26.4s, v22.4s
-    smin v27.4s, v27.4s, v22.4s
+    smin v24.4s, v24.4s, v31.4s
+    smin v25.4s, v25.4s, v31.4s
+    smin v26.4s, v26.4s, v31.4s
+    smin v27.4s, v27.4s, v31.4s
 
     sqxtn v24.4h, v24.4s
     sqxtn2 v24.8h, v25.4s
@@ -351,34 +400,50 @@ WIDTH1_LEFT:
     smlal v24.4s, v8.4h, v21.4h
     smlal2 v25.4s, v8.8h, v21.8h
 
-    dup v12.4s, w10
-    cbz w12, SKIP_LEFTSHIFT3
-    sqshl v24.4s, v24.4s, v29.4s
-    sqshl v25.4s, v25.4s, v29.4s
-    sqrdmulh v24.4s, v24.4s, v30.4s
-    sqrdmulh v25.4s, v25.4s, v30.4s
+    cbnz w23, PER_CHANNEL_POST3
+    ld1r {v17.4s}, [x11]
+    cbz w24, SKIP_LEFTSHIFT3
+    ld1r {v12.4s}, [x12]
+    sqshl v24.4s, v24.4s, v12.4s
+    sqshl v25.4s, v25.4s, v12.4s
+    sqrdmulh v24.4s, v24.4s, v17.4s
+    sqrdmulh v25.4s, v25.4s, v17.4s
     b OUTZP3
 
 SKIP_LEFTSHIFT3:
-    sqrdmulh v24.4s, v24.4s, v30.4s
-    sqrdmulh v25.4s, v25.4s, v30.4s
-    sqrshl v24.4s, v24.4s, v31.4s
-    sqrshl v25.4s, v25.4s, v31.4s
+    ld1r {v22.4s}, [x13]
+    sqrdmulh v24.4s, v24.4s, v17.4s
+    sqrdmulh v25.4s, v25.4s, v17.4s
+    sqrshl v24.4s, v24.4s, v22.4s
+    sqrshl v25.4s, v25.4s, v22.4s
+    b OUTZP3
+
+PER_CHANNEL_POST3:
+    ld1 {v12.4s}, [x12]
+    sqshl v24.4s, v24.4s, v12.4s
+    ldr q13, [x12, #16]
+    sqshl v25.4s, v25.4s, v13.4s
+    ld1 {v17.4s}, [x11]
+    ldr q18, [x11, #16]
+    sqrdmulh v24.4s, v24.4s, v17.4s
+    sqrdmulh v25.4s, v25.4s, v18.4s
+    ld1 {v22.4s}, [x13]
+    ldr q23, [x13, #16]
+    sqrshl v24.4s, v24.4s, v22.4s
+    sqrshl v25.4s, v25.4s, v23.4s
 
 OUTZP3:
     // Add output zero point
-    dup v17.4s, w14
-    sqadd v24.4s, v24.4s, v12.4s
-    sqadd v25.4s, v25.4s, v12.4s
+    sqadd v24.4s, v24.4s, v29.4s
+    sqadd v25.4s, v25.4s, v29.4s
 
     // Apply min bound
-    dup v22.4s, w15
-    smax v24.4s, v24.4s, v17.4s
-    smax v25.4s, v25.4s, v17.4s
+    smax v24.4s, v24.4s, v30.4s
+    smax v25.4s, v25.4s, v30.4s
 
     // Apply max bound
-    smin v24.4s, v24.4s, v22.4s
-    smin v25.4s, v25.4s, v22.4s
+    smin v24.4s, v24.4s, v31.4s
+    smin v25.4s, v25.4s, v31.4s
 
     sqxtn v24.4h, v24.4s
     sqxtn2 v24.8h, v25.4s
@@ -386,10 +451,11 @@ OUTZP3:
     st1 {v24.8b}, [x0], x6
 
 End:
-    sub sp, sp, #160
+    sub sp, sp, #176
     ld1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     ld1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
     ldp x19, x20, [sp], #16
     ldp x21, x22, [sp], #16
+    ldp x23, x24, [sp], #16
     ret
 #endif
