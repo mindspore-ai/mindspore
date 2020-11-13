@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/engine/datasetops/source/sampler/distributed_sampler.h"
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 
@@ -158,6 +159,15 @@ Status DistributedSamplerRT::ResetSampler() {
   }
 
   return Status::OK();
+}
+
+int64_t DistributedSamplerRT::CalculateNumSamples(int64_t num_rows) {
+  int64_t childs = num_rows;
+  if (!child_.empty()) {
+    childs = child_[0]->CalculateNumSamples(num_rows);
+  }
+  int64_t num_samples = (num_samples_ > 0) ? std::min(childs, num_samples_) : childs;
+  return std::ceil(num_samples * 1.0 / num_devices_);
 }
 
 void DistributedSamplerRT::Print(std::ostream &out, bool show_all) const {

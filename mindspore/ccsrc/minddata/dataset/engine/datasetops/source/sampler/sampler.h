@@ -99,9 +99,13 @@ class SamplerRT {
   Status SetNumSamples(int64_t num_samples);
 
   // getter for num samples
-  // @param num_samples - the number of samples to return.
-  // @return status error code
+  // @return number of samples
   int64_t GetNumSamples();
+
+  // Calculate num samples. Unlike GetNumSamples, it is not a getter and doesn't necessarily return the value of
+  // num_samples_
+  // @return number of samples
+  virtual int64_t CalculateNumSamples(int64_t num_rows);
 
   // setter for num or records in the dataset
   // @param num_rows - the number of records

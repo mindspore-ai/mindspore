@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 
+#include <algorithm>
 #include <string>
 
 namespace mindspore {
@@ -130,6 +131,15 @@ Status SamplerRT::SetNumSamples(int64_t num_samples) {
 }
 
 int64_t SamplerRT::GetNumSamples() { return num_samples_; }
+
+int64_t SamplerRT::CalculateNumSamples(int64_t num_rows) {
+  int64_t childs = num_rows;
+  if (!child_.empty()) {
+    childs = child_[0]->CalculateNumSamples(num_rows);
+  }
+
+  return (num_samples_ > 0) ? std::min(childs, num_samples_) : childs;
+}
 
 Status SamplerRT::SetNumRowsInDataset(int64_t num_rows) {
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows > 0, "Invalid parameter, num_rows must be greater than 0.");
