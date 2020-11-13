@@ -65,21 +65,25 @@ class CsvBase;
 
 // Dataset classes (in alphabetical order)
 class BatchDataset;
+class MapDataset;
+class ProjectDataset;
+class ShuffleDataset;
 #ifndef ENABLE_ANDROID
 class BucketBatchByLengthDataset;
 class FilterDataset;
-#endif
 class CSVDataset;
+class TransferDataset;
 class ConcatDataset;
-class MapDataset;
-class ProjectDataset;
 class RenameDataset;
+#endif
+
 class RepeatDataset;
-class ShuffleDataset;
+
+#ifndef ENABLE_ANDROID
 class SkipDataset;
 class TakeDataset;
-class TransferDataset;
 class ZipDataset;
+#endif
 
 /// \class Dataset datasets.h
 /// \brief A base class to represent a dataset in the data pipeline.
@@ -137,6 +141,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Shared pointer to the Iterator
   std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {});
 
+#ifndef ENABLE_ANDROID
   /// \brief Function to transfer data through a device.
   /// \notes If device is Ascend, features of data will be transferred one by one. The limitation
   ///     of data transmission per time is 256M.
@@ -144,7 +149,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Returns true if no error encountered else false.
   bool DeviceQueue(bool send_epoch_end = true);
 
-#ifndef ENABLE_ANDROID
   /// \brief Function to create a Saver to save the dynamic data processed by the dataset pipeline
   /// \note Usage restrictions:
   ///     1. Supported dataset formats: 'mindrecord' only
@@ -239,7 +243,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                     const std::pair<int64_t, int64_t> &freq_range = {0, kDeMaxFreq},
                                     int64_t top_k = kDeMaxTopk, const std::vector<std::string> &special_tokens = {},
                                     bool special_first = true);
-#endif
 
   /// \brief Function to create a ConcatDataset
   /// \notes Concat the datasets in the input
@@ -251,7 +254,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     return std::make_shared<ConcatDataset>(all_datasets);
   }
 
-#ifndef ENABLE_ANDROID
   /// \brief Function to filter dataset by predicate
   /// \notes If input_columns is not provided or empty, all columns will be used
   /// \param[in] predicate Function callable which returns a boolean value. If false then filter the element
@@ -298,6 +300,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     return std::make_shared<ProjectDataset>(shared_from_this(), columns);
   }
 
+#ifndef ENABLE_ANDROID
   /// \brief Function to create a Rename Dataset
   /// \notes Renames the columns in the input dataset
   /// \param[in] input_columns List of the input columns to rename
@@ -307,7 +310,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                         const std::vector<std::string> &output_columns) {
     return std::make_shared<RenameDataset>(shared_from_this(), input_columns, output_columns);
   }
-
+#endif
   /// \brief Function to create a RepeatDataset
   /// \notes Repeats this dataset count times. Repeat indefinitely if count is -1
   /// \param[in] count Number of times the dataset should be repeated
@@ -317,7 +320,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   std::shared_ptr<RepeatDataset> Repeat(int32_t count = -1) {
     return std::make_shared<RepeatDataset>(shared_from_this(), count);
   }
-
+#ifndef ENABLE_ANDROID
   /// \brief Function to create a Shuffle Dataset
   /// \notes Randomly shuffles the rows of this dataset
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
@@ -349,6 +352,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     all_datasets.push_back(shared_from_this());
     return std::make_shared<ZipDataset>(all_datasets);
   }
+#endif
 
   std::shared_ptr<DatasetNode> IRNode() { return ir_node_; }
 
@@ -433,14 +437,11 @@ class BucketBatchByLengthDataset : public Dataset {
     bool pad_to_bucket_boundary = false, bool drop_remainder = false);
 };
 
-#endif
-
 class ConcatDataset : public Dataset {
  public:
   explicit ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &input);
 };
 
-#ifndef ENABLE_ANDROID
 class FilterDataset : public Dataset {
  public:
   FilterDataset(std::shared_ptr<Dataset> input, std::function<TensorRow(TensorRow)> predicate,
@@ -461,11 +462,13 @@ class ProjectDataset : public Dataset {
   ProjectDataset(std::shared_ptr<Dataset> input, const std::vector<std::string> &columns);
 };
 
+#ifndef ENABLE_ANDROID
 class RenameDataset : public Dataset {
  public:
   RenameDataset(std::shared_ptr<Dataset> input, const std::vector<std::string> &input_columns,
                 const std::vector<std::string> &output_columns);
 };
+#endif
 
 class RepeatDataset : public Dataset {
  public:
@@ -477,6 +480,7 @@ class ShuffleDataset : public Dataset {
   ShuffleDataset(std::shared_ptr<Dataset> input, int32_t buffer_size);
 };
 
+#ifndef ENABLE_ANDROID
 class SkipDataset : public Dataset {
  public:
   SkipDataset(std::shared_ptr<Dataset> input, int32_t count);
@@ -491,7 +495,7 @@ class ZipDataset : public Dataset {
  public:
   explicit ZipDataset(const std::vector<std::shared_ptr<Dataset>> &inputs);
 };
-
+#endif
 /// \brief Function to create a SchemaObj
 /// \param[in] schema_file Path of schema file
 /// \return Shared pointer to the current schema
@@ -522,6 +526,7 @@ std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::s
                                     const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                     const std::shared_ptr<DatasetCache> &cache = nullptr);
 
+#ifndef ENABLE_ANDROID
 class CelebADataset : public Dataset {
  public:
   explicit CelebADataset(const std::string &dataset_dir, const std::string &usage = "all",
@@ -714,7 +719,6 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
                                                 const std::map<std::string, int32_t> &class_indexing = {},
                                                 const std::shared_ptr<DatasetCache> &cache = nullptr);
 
-#ifndef ENABLE_ANDROID
 class ManifestDataset : public Dataset {
  public:
   explicit ManifestDataset(const std::string &dataset_file, const std::string &usage = "train",
@@ -739,9 +743,7 @@ std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                           const std::map<std::string, int32_t> &class_indexing = {},
                                           bool decode = false, const std::shared_ptr<DatasetCache> &cache = nullptr);
-#endif
 
-#ifndef ENABLE_ANDROID
 class MindDataDataset : public Dataset {
  public:
   explicit MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list = {},
@@ -781,7 +783,6 @@ std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &datase
                                           const std::vector<std::string> &columns_list = {},
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                           nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
-#endif
 
 class MnistDataset : public Dataset {
  public:
@@ -871,7 +872,6 @@ std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &datase
                                           ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
                                           int32_t shard_id = 0, const std::shared_ptr<DatasetCache> &cache = nullptr);
 
-#ifndef ENABLE_ANDROID
 class TFRecordDataset : public Dataset {
  public:
   TFRecordDataset(const std::vector<std::string> &dataset_files, std::string schema,
@@ -978,13 +978,13 @@ std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t me
                                                  std::optional<int32_t> port = std::nullopt,
                                                  std::optional<int32_t> num_connections = std::nullopt,
                                                  std::optional<int32_t> prefetch_sz = std::nullopt);
-#endif
 
 /// \brief Function to create a ZipDataset
 /// \notes Applies zip to the dataset
 /// \param[in] datasets List of shared pointers to the datasets that we want to zip
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets);
+#endif
 }  // namespace dataset
 }  // namespace mindspore
 
