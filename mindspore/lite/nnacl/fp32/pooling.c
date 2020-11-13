@@ -20,10 +20,6 @@
 
 int AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id, float minf,
                float maxf) {
-  int stride_w = pooling_param->stride_w_;
-  int stride_h = pooling_param->stride_h_;
-  int pad_w = pooling_param->pad_l_;
-  int pad_h = pooling_param->pad_u_;
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;
@@ -32,10 +28,8 @@ int AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pool
   int in_h = pooling_param->input_h_;
   int output_w = pooling_param->output_w_;
   int output_h = pooling_param->output_h_;
-  int output_batch = pooling_param->output_batch_;
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
-  int thread_num = pooling_param->thread_num_;
   int window = win_w * win_h;
 
 #ifdef ENABLE_NEON
@@ -43,18 +37,18 @@ int AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pool
   float32x4_t max_value = vdupq_n_f32(maxf);
 #endif
 
-  for (int batch = 0; batch < output_batch; batch++) {
+  for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
     const float *src_b_ptr = input_ptr + batch * in_h * in_w * channel;
     float *dst_b_ptr = output_ptr + batch * output_h * output_w * channel;
-    for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
+    for (int thread_id = task_id; thread_id < out_tile_count; thread_id += pooling_param->thread_num_) {
       int cal_start_index = thread_id * TILE_NUM;
       int real_cal_num = (out_plane - cal_start_index) > TILE_NUM ? TILE_NUM : (out_plane - cal_start_index);
       for (int i = 0; i < real_cal_num; i++) {
         int index = cal_start_index + i;
         int out_w_index = index % output_w;
         int out_h_index = index / output_w;
-        int in_w_index = out_w_index * stride_w - pad_w;
-        int in_h_index = out_h_index * stride_h - pad_h;
+        int in_w_index = out_w_index * pooling_param->stride_w_ - pooling_param->pad_l_;
+        int in_h_index = out_h_index * pooling_param->stride_h_ - pooling_param->pad_u_;
 
         const float *src_plane_ptr = src_b_ptr;
         float *dst_plane_ptr = dst_b_ptr + index * channel;
@@ -152,10 +146,6 @@ int AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pool
 
 void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id, float minf,
                 float maxf) {
-  int stride_w = pooling_param->stride_w_;
-  int stride_h = pooling_param->stride_h_;
-  int pad_w = pooling_param->pad_l_;
-  int pad_h = pooling_param->pad_u_;
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;
@@ -166,7 +156,6 @@ void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
   int output_batch = pooling_param->output_batch_;
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
-  int thread_num = pooling_param->thread_num_;
   int c4 = channel / C4NUM; /* oc && ic */
 
 #ifdef ENABLE_NEON
@@ -177,15 +166,15 @@ void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *poo
   for (int batch = 0; batch < output_batch; batch++) {
     const float *src_b_ptr = input_ptr + batch * in_h * in_w * channel;
     float *dst_b_ptr = output_ptr + batch * output_h * output_w * channel;
-    for (int thread_id = task_id; thread_id < out_tile_count; thread_id += thread_num) {
+    for (int thread_id = task_id; thread_id < out_tile_count; thread_id += pooling_param->thread_num_) {
       int cal_start_index = thread_id * TILE_NUM;
       int real_cal_num = (out_plane - cal_start_index) > TILE_NUM ? TILE_NUM : (out_plane - cal_start_index);
       for (int i = 0; i < real_cal_num; i++) {
         int index = cal_start_index + i;
         int out_w_index = index % output_w;
         int out_h_index = index / output_w;
-        int in_w_index = out_w_index * stride_w - pad_w;
-        int in_h_index = out_h_index * stride_h - pad_h;
+        int in_w_index = out_w_index * pooling_param->stride_w_ - pooling_param->pad_l_;
+        int in_h_index = out_h_index * pooling_param->stride_h_ - pooling_param->pad_u_;
 
         const float *src_plane_ptr = src_b_ptr;
         float *dst_plane_ptr = dst_b_ptr + index * channel;

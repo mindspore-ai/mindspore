@@ -62,11 +62,46 @@ int MulInt8CPUKernel::Init() {
   return ReSize();
 }
 
+void MulInt8CPUKernel::CheckSameShapeSize(std::vector<int> in_tensor0_shape, std::vector<int> in_tensor1_shape) {
+  bool condition1 = in_tensor0_shape[0] == in_tensor1_shape[0];
+  bool condition2 = in_tensor0_shape[1] == 1;
+  bool condition3 = in_tensor0_shape[2] == 1;
+  bool condition4 = in_tensor0_shape[3] == in_tensor1_shape[3];
+  bool condition5 = in_tensor1_shape[1] == 1;
+  bool condition6 = in_tensor1_shape[2] == 1;
+  if (condition1 && condition2 && condition3 && condition4) {
+    fast_hw_broadcast_ = true;
+  } else if (condition1 && condition4 && condition5 && condition6) {
+    fast_hw_broadcast_ = true;
+    input1_hw_broadcast_ = true;
+  }
+}
+
+void MulInt8CPUKernel::CheckIfFastImpl() {
+  auto in_tensor0 = in_tensors_.at(0);
+  auto in_tensor1 = in_tensors_.at(1);
+  if (in_tensor0->ElementsNum() != in_tensor1->ElementsNum()) {
+    if (in_tensor0->shape().size() == 4 && in_tensor1->shape().size() == 4) {
+      CheckSameShapeSize(in_tensor0->shape(), in_tensor1->shape());
+    } else if (in_tensor0->shape().size() == 1 && in_tensor1->shape().size() == 4) {
+      if (in_tensor0->ElementsNum() == in_tensor1->shape()[3]) {
+        fast_hw_broadcast_ = true;
+      }
+    } else if (in_tensor0->shape().size() == 4 && in_tensor1->shape().size() == 1) {
+      if (in_tensor1->ElementsNum() == in_tensor0->shape()[3]) {
+        fast_hw_broadcast_ = true;
+        input1_hw_broadcast_ = true;
+      }
+    }
+  }
+}
+
 int MulInt8CPUKernel::ReSize() {
   size_t input0_size = in_tensors_.at(0)->shape().size();
   size_t input1_size = in_tensors_.at(1)->shape().size();
   size_t output_size = out_tensors_.at(0)->shape().size();
   tile_para->ndim_ = output_size;
+
   if (input0_size == input1_size) {
     for (size_t i = 0; i < output_size; i++) {
       tile_para->in_shape0_[i] = in_tensors_.at(0)->DimensionSize(i);
@@ -106,6 +141,14 @@ int MulInt8CPUKernel::Run() {
   input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->MutableData());
   output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
+  CheckIfFastImpl();
+  // can implement fast broadcast mul
+  if (fast_hw_broadcast_) {
+    elements_num_ = out_tensors_.front()->Batch() * out_tensors_.front()->Height() * out_tensors_.front()->Width();
+    count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
+    return ParallelLaunch(this->context_->thread_pool_, FastHWBroadcatMulInt8Run, this, thread_count_);
+  }
+
   elements_num_ = out_tensors_.at(0)->ElementsNum();
   count_unit_ = thread_count_ > 1 ? UP_DIV(elements_num_, thread_count_) : elements_num_;
   if (in_tensors_.at(0)->ElementsNum() != in_tensors_.at(1)->ElementsNum()) {
@@ -132,10 +175,34 @@ int MulInt8CPUKernel::Run() {
   return ret;
 }
 
+int FastHWBroadcatMulInt8Run(void *cdata, int task_id) {
+  auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
+  mul->FastDoExecute(task_id);
+  return lite::RET_OK;
+}
+
 int MulInt8Run(void *cdata, int task_id) {
   auto mul = reinterpret_cast<MulInt8CPUKernel *>(cdata);
   mul->DoExecute(task_id);
   return lite::RET_OK;
+}
+
+int MulInt8CPUKernel::FastDoExecute(int task_id) {
+  int depth = out_tensors_.front()->Channel();
+  int64_t real_dst_count = MSMIN(elements_num_ - task_id * count_unit_, count_unit_);
+  if (real_dst_count <= 0) {
+    return lite::RET_OK;
+  }
+  int8_t *cur_input0_data = input0_data_;
+  int8_t *cur_input1_data = input1_data_ + task_id * count_unit_ * depth;
+  int8_t *cur_output_data = output_data_ + task_id * count_unit_ * depth;
+  if (input1_hw_broadcast_) {
+    cur_input0_data = input1_data_;
+    cur_input1_data = input0_data_ + task_id * count_unit_ * depth;
+  }
+  FastMul(cur_input0_data, cur_input1_data, cur_output_data, depth, real_dst_count, input1_hw_broadcast_,
+          para_.mul_quant_arg_);
+  return RET_OK;
 }
 
 int MulInt8CPUKernel::DoExecute(int task_id) {

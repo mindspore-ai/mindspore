@@ -219,24 +219,19 @@ void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, floa
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int kernel_plane = kernel_h * kernel_w;
-  int stride_h = conv_param->stride_h_;
-  int stride_w = conv_param->stride_w_;
-  int pad_h = conv_param->pad_u_;
-  int pad_w = conv_param->pad_l_;
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
   int in_channel = conv_param->input_channel_;
-  int in_h = conv_param->input_h_;
   int in_w = conv_param->input_w_;
   int out_w = conv_param->output_w_;
 
   for (int i = 0; i < real_cal_num; i++) {
     int block_start = block_index + i;
-    int input_h = block_start / out_w * stride_h - pad_h;
-    int input_w = block_start % out_w * stride_w - pad_w;
+    int input_h = block_start / out_w * conv_param->stride_h_ - conv_param->pad_u_;
+    int input_w = block_start % out_w * conv_param->stride_w_ - conv_param->pad_l_;
     int input_stride = (input_h * in_w + input_w) * in_channel;
     int kh_s = MSMAX(0, UP_DIV(-input_h, dilation_h));
-    int kh_e = MSMIN(kernel_h, UP_DIV(in_h - input_h, dilation_h));
+    int kh_e = MSMIN(kernel_h, UP_DIV(conv_param->input_h_ - input_h, dilation_h));
     int kw_s = MSMAX(0, UP_DIV(-input_w, dilation_w));
     int kw_e = MSMIN(kernel_w, UP_DIV(in_w - input_w, dilation_w));
     if (dilation_w == 1 && dilation_h == 1) {

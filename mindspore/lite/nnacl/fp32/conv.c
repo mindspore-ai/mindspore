@@ -23,30 +23,20 @@
 // fp32 conv common
 void ConvFp32(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
               float *col_major_input, float *output_data, int task_id, ConvParameter *conv_param) {
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int in_batch = conv_param->input_batch_;
-  int in_channel = conv_param->input_channel_;
-  int in_h = conv_param->input_h_;
-  int in_w = conv_param->input_w_;
-  int out_h = conv_param->output_h_;
-  int out_w = conv_param->output_w_;
   int out_channel = conv_param->output_channel_;
-  int thread_count = conv_param->thread_num_;
-  int output_count = out_h * out_w;
+  int deep = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
+  int output_count = conv_param->output_h_ * conv_param->output_w_;
 #if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
   const int cal_num = C4NUM;
 #else
   const int cal_num = C12NUM;
 #endif
   int output_tile_count = UP_DIV(output_count, cal_num);
-  int kernel_plane = kernel_h * kernel_w;
-  int deep = kernel_plane * in_channel;
 
-  for (int b = 0; b < in_batch; b++) {
-    int in_batch_offset = b * in_channel * in_h * in_w;
-    int out_batch_offset = b * out_channel * out_h * out_w;
-    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_count) {
+  for (int b = 0; b < conv_param->input_batch_; b++) {
+    int in_batch_offset = b * conv_param->input_channel_ * conv_param->input_h_ * conv_param->input_w_;
+    int out_batch_offset = b * out_channel * output_count;
+    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += conv_param->thread_num_) {
       int start_index = thread_id * cal_num;
       int real_cal_num = (output_count - start_index) < cal_num ? (output_count - start_index) : cal_num;
       float *gemm_input = packed_input + task_id * deep * cal_num;
@@ -73,19 +63,14 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
 void ConvWinogardFp32(const float *input_data, const float *trans_weight, const float *bias_data, float *output_data,
                       TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param, InputTransFunc in_func,
                       OutputTransFunc out_func) {
-  int thread_num = conv_param->thread_num_;
-  int input_unit = conv_param->input_unit_;
-  int in_batch = conv_param->input_batch_;
   int in_channel = conv_param->input_channel_;
-  int out_unit = conv_param->output_unit_;
-  int out_w_block = UP_DIV(conv_param->output_w_, out_unit);
-  int out_h_block = UP_DIV(conv_param->output_h_, out_unit);
+  int out_w_block = UP_DIV(conv_param->output_w_, conv_param->output_unit_);
+  int out_h_block = UP_DIV(conv_param->output_h_, conv_param->output_unit_);
   int output_count = out_w_block * out_h_block;
   const int tile_num = C12NUM;
   int output_tile_count = UP_DIV(output_count, tile_num);
-  int out_channel = conv_param->output_channel_;
-  int oc8 = UP_DIV(out_channel, C8NUM);
-  int input_unit_square = input_unit * input_unit;
+  int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
+  int input_unit_square = conv_param->input_unit_ * conv_param->input_unit_;
 
   float *trans_input = buffer_list[0];
   float *gemm_out = buffer_list[1];
@@ -97,10 +82,10 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
   int col_buffer_offset = tile_num * in_channel;
   // step 1 : filter transform (pre-processed offline)
   // step 2 : input transform (online)
-  for (int b = 0; b < in_batch; b++) {
+  for (int b = 0; b < conv_param->input_batch_; b++) {
     int in_batch_offset = b * in_channel * conv_param->input_h_ * conv_param->input_w_;
-    int out_batch_offset = b * out_channel * conv_param->output_w_ * conv_param->output_h_;
-    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += thread_num) {
+    int out_batch_offset = b * conv_param->output_channel_ * conv_param->output_w_ * conv_param->output_h_;
+    for (int thread_id = task_id; thread_id < output_tile_count; thread_id += conv_param->thread_num_) {
       int out_tile_index = thread_id * tile_num;
       int cal_num = output_count - out_tile_index;
       cal_num = cal_num > tile_num ? tile_num : cal_num;
