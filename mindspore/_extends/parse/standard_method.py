@@ -28,6 +28,7 @@ __all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_lik
 
 trans = P.Transpose()
 shape_ = P.Shape()
+reshape_ = P.Reshape()
 dtype_ = P.DType()
 
 
@@ -159,6 +160,12 @@ def expand_tensor_as(x, y):
     return broadcast_to(x)
 
 
+def view(x, *shape):
+    """Reshape tensor, if shape is -1, reshape tensor into one dimension"""
+    shape = check_view_shape(shape)
+    return reshape_(x, shape)
+
+
 def isinstance_(x, base_type):
     """Determine whether x is an instance of base_type."""
     x_type = F.typeof(x)
@@ -219,6 +226,18 @@ def const_tensor_to_bool(x):
     if x.shape == (1,):
         return bool(x[0])
     raise ValueError("The truth value of an array with several elements is ambiguous.")
+
+
+@constexpr
+def check_view_shape(x):
+    """Check view function input shape"""
+    if not x:
+        raise ValueError("The shape variable should not be empty")
+    if isinstance(x[0], tuple):
+        if len(x) != 1:
+            raise ValueError(f"Only one tuple is needed, but got {x}")
+        x = x[0]
+    return x
 
 
 def tensor_bool(x):
