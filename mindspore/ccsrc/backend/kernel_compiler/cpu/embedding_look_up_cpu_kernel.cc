@@ -48,32 +48,54 @@ void LookUpTableTask(const float *input_addr, const T *indices_addr, float *outp
 
 void EmbeddingLookUpCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
+  node_ = kernel_node;
   std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.empty()) {
     MS_LOG(EXCEPTION) << "param must be at least 1D";
   }
   first_dim_size_ = input_shape[0];
+  outer_dim_size_ = 1;
   for (size_t i = 1; i < input_shape.size(); ++i) {
     outer_dim_size_ *= input_shape[i];
   }
+  indices_lens_ = 1;
   std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   for (const auto &shape : indices_shape) {
     indices_lens_ *= shape;
   }
+  indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   if (AnfAlgo::HasNodeAttr(kAttrOffset, kernel_node)) {
     offset_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrOffset);
   }
-  indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
 }
 
 template <typename T>
 void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) const {
+                                            const std::vector<kernel::AddressPtr> &outputs) {
+  if (node_ != nullptr) {
+    std::vector<size_t> input_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
+    if (input_shape.empty()) {
+      MS_LOG(EXCEPTION) << "param must be at least 1D";
+    }
+    first_dim_size_ = input_shape[0];
+    outer_dim_size_ = 1;
+    for (size_t i = 1; i < input_shape.size(); ++i) {
+      outer_dim_size_ *= input_shape[i];
+    }
+
+    indices_lens_ = 1;
+    std::vector<size_t> indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 1);
+    for (const auto &shape : indices_shape) {
+      indices_lens_ *= shape;
+    }
+  }
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto indices_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  const size_t thread_num = 16;
-  std::thread threads[16];
+  const size_t kMaxThreadNum = 16;
+  size_t thread_num = indices_lens_ / 10000 + 1;
+  thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
+  std::thread threads[kMaxThreadNum];
   size_t task_proc_lens = (indices_lens_ + thread_num - 1) / thread_num;
   size_t i;
   size_t task_offset = 0;

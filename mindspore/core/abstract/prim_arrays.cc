@@ -358,6 +358,41 @@ AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr 
   return std::make_shared<AbstractTensor>(params->element(), std::make_shared<Shape>(out_shape));
 }
 
+AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  auto params = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto params_shp = params->shape();
+  MS_EXCEPTION_IF_NULL(params);
+  MS_EXCEPTION_IF_NULL(params_shp);
+  auto params_shape = params_shp->shape();
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto indices_shp = indices->shape();
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(indices_shp);
+  auto indices_shape = indices_shp->shape();
+  auto indices_max_shape = indices_shp->max_shape();
+  ShapeVector shape;
+  ShapeVector max_shape;
+  shape.insert(shape.end(), indices_shape.begin(), indices_shape.end());
+  shape.insert(shape.end(), params_shape.begin() + 1, params_shape.end());
+  if (!indices_max_shape.empty()) {
+    max_shape.insert(max_shape.end(), indices_max_shape.begin(), indices_max_shape.end());
+    max_shape.insert(max_shape.end(), params_shape.begin() + 1, params_shape.end());
+  } else {
+    max_shape = shape;
+  }
+  ShapeVector min_shape;
+  for (size_t i = 0; i < max_shape.size(); ++i) {
+    min_shape.emplace_back(1);
+  }
+
+  AbstractTensorPtr ret =
+    std::make_shared<AbstractTensor>(params->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  return ret;
+}
+
 AbstractBasePtr InferImplShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();

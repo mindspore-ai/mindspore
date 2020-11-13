@@ -54,6 +54,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUniqueGrad, {InferImplUniqueGrad, true}},
     {prim::kPrimGatherV2, {InferImplGatherV2, true}},
     {prim::kPrimSparseGatherV2, {InferImplGatherV2, true}},
+    {prim::kPrimEmbeddingLookup, {InferImplEmbeddingLookup, true}},
     {prim::kPrimUnsortedSegmentSum, {InferImplUnsortedSegmentSum, true}},
     {prim::kPrimScatterAdd, {InferImplScatterAdd, true}},
     {prim::kPrimScatterUpdate, {InferImplScatterUpdate, true}},
