@@ -45,7 +45,7 @@ def connect_network_with_dataset(network, dataset_helper):
     data channel corresponding to the 'queue_name' and passed to the input network during forward computation.
 
     Note:
-        In the case of running the network on Ascend in graph mode, this function will wrap the input network with
+        In the case of running the network on Ascend/GPU in graph mode, this function will wrap the input network with
         'GetNext', in other cases, the input network will be returned with no change.
         The 'GetNext' is required to get data only in sink mode, so this function is not applicable to no-sink mode.
 
@@ -88,8 +88,8 @@ def connect_network_with_dataset(network, dataset_helper):
     if isinstance(dataset_iter, _DatasetIterNormal):
         raise RuntimeError("Dataset should be connected with network only in sink mode.")
 
-    if not hasattr(dataset, '__ME_INITED__') and context.get_context("device_target") == "Ascend" and \
-            not context.get_context("enable_ge"):
+    if not hasattr(dataset, '__ME_INITED__') and (context.get_context("device_target") == "Ascend" \
+         or context.get_context("device_target") == "GPU") and not context.get_context("enable_ge"):
         dataset.__ME_INITED__ = True
         dataset_types, dataset_shapes = dataset_helper.types_shapes()
         queue_name = dataset.__TRANSFER_DATASET__.queue_name
@@ -139,7 +139,7 @@ class DatasetHelper:
                     if ms_role in ("MS_PSERVER", "MS_SCHED"):
                         iterclass = _DatasetIterPSLite
                     else:
-                        iterclass = _DatasetIterMS
+                        iterclass = _DatasetIterMSLoopSink
                 elif context.get_context("device_target") == "CPU":
                     raise RuntimeError("Currently dataset sink mode is not supported when the device target is CPU.")
             self.iter = iterclass(dataset, sink_size, epoch_num)
@@ -218,7 +218,8 @@ class _DatasetIter:
         if hasattr(self.dataset, '__loop_size__'):
             sink_size = self.dataset.__loop_size__
         else:
-            if context.get_context("enable_ge") or context.get_context("device_target") == "Ascend":
+            if context.get_context("enable_ge") or context.get_context("device_target") == "Ascend" \
+                or context.get_context("device_target") == "GPU":
                 if self.sink_size > 0:
                     sink_size = self.sink_size
                 else:
