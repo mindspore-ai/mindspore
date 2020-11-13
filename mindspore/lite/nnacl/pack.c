@@ -197,17 +197,18 @@ void PackInputSum16x4PerChannelArm32(const int8_t *input_value, int32_t *input_s
 }
 
 void PackInputSum16x4Int8(const int8_t *input, int32_t *input_sum, int32_t *filter_zp, ConvParameter *conv_param) {
-  size_t hw4 = UP_ROUND(conv_param->input_h_ * conv_param->input_w_, C4NUM);
+  size_t hw = conv_param->output_h_ * conv_param->output_w_;
+  size_t hw4 = UP_ROUND(hw, C4NUM);
   size_t ic16 = UP_ROUND(conv_param->input_channel_, C16NUM);
   if (conv_param->conv_quant_arg_.filter_arg_num_ == 1) {
     PackInputSum16x4PerLayer(input, input_sum, conv_param->conv_quant_arg_.filter_quant_args_[0].zp_, hw4, ic16);
   } else {
 #ifdef ENABLE_ARM32
-    PackInputSum16x4PerChannelArm32(input, input_sum, filter_zp, conv_param->input_h_ * conv_param->input_w_,
-                                    conv_param->input_channel_, conv_param->output_channel_);
+    PackInputSum16x4PerChannelArm32(input, input_sum, filter_zp, hw, conv_param->input_channel_,
+                                    conv_param->output_channel_);
 #else
-    PackInputSum16x4PerChannel(input, input_sum, filter_zp, conv_param->input_h_ * conv_param->input_w_,
-                               conv_param->input_channel_, conv_param->output_channel_);
+    PackInputSum16x4PerChannel(input, input_sum, filter_zp, hw, conv_param->input_channel_,
+                               conv_param->output_channel_);
 #endif
   }
   return;
