@@ -211,4 +211,5 @@ kernel::LiteKernel *CpuSparseToDenseFp32KernelCreator(const std::vector<lite::Te
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseToDense, CpuSparseToDenseFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_SparseToDense, CpuSparseToDenseFp32KernelCreator)
 }  // namespace mindspore::kernel
