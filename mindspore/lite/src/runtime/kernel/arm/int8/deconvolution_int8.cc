@@ -16,7 +16,8 @@
 
 #include "src/runtime/kernel/arm/int8/deconvolution_int8.h"
 #include "src/runtime/runtime_api.h"
-#include "nnacl/optimized_kernel.h"
+#include "src/common/utils.h"
+#include "src/runtime/kernel/arm/int8/opt_op_handler.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -95,18 +96,9 @@ void DeConvInt8CPUKernel::CheckSupportOptimize() {
   support_optimize_ = true;
   matmul_func_ = MatMulInt8_16x4;
 #ifdef ENABLE_ARM64
-  void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
-  if (optimize_op_handler != nullptr) {
-    dlerror();
-    *(reinterpret_cast<void **>(&matmul_func_)) = dlsym(optimize_op_handler, "MatMulR4Int8_optimize_handler");
-    auto dlopen_error = dlerror();
-    if (dlopen_error != nullptr) {
-      MS_LOG(ERROR) << "load matmul func failed! " << dlopen_error << ".";
-      support_optimize_ = false;
-      matmul_func_ = MatMulR4Int8Neon64;
-    } else {
-      support_optimize_ = true;
-    }
+  if (mindspore::lite::IsSupportSDot()) {
+    support_optimize_ = true;
+    matmul_func_ = MatMulR4Int8_optimize_handler;
   } else {
     support_optimize_ = false;
     matmul_func_ = MatMulR4Int8Neon64;

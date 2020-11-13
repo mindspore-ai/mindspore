@@ -727,8 +727,6 @@ function Run_arm64() {
     fi
 
     cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/libmindspore-lite-fp16.so ${benchmark_test_path}/libmindspore-lite-fp16.so || exit 1
-    cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/lib/libmindspore-lite-optimize.so ${benchmark_test_path}/libmindspore-lite-optimize.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-runtime-arm64-${process_unit_arm64}/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1
 
     # adb push all needed files to the phone

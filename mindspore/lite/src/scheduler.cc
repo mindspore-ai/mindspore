@@ -275,7 +275,8 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
     }
   }
 #endif
-  if ((context_->IsCpuFloat16Enabled() && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16) {
+  if (mindspore::lite::IsSupportFloat16() &&
+      ((context_->IsCpuFloat16Enabled() && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16)) {
     kernel::KernelKey fp16_cpu_desc{desc.arch, kNumberTypeFloat16, desc.type};
     auto *kernel =
       KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, fp16_cpu_desc);

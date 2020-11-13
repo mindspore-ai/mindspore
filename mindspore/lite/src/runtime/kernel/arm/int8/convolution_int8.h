@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "nnacl/optimized_kernel.h"
+#include "src/common/utils.h"
 #include "nnacl/int8/conv_int8.h"
 
 namespace mindspore::kernel {

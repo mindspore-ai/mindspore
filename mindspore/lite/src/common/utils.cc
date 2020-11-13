@@ -16,6 +16,7 @@
 
 #ifdef __ANDROID__
 #include <sys/auxv.h>
+#include <asm/hwcap.h>
 #endif
 #include "src/common/utils.h"
 
@@ -257,5 +258,38 @@ uint32_t getHwCap(int hwcap_type) {
   return ret;
 }
 #endif
+
+bool IsSupportSDot() {
+  bool status = false;
+#ifdef ENABLE_ARM64
+  int hwcap_type = 16;
+  uint32_t hwcap = getHwCap(hwcap_type);
+  if (hwcap & HWCAP_ASIMDDP) {
+    MS_LOG(DEBUG) << "Hw cap support SMID Dot Product, hwcap: 0x" << hwcap;
+    status = true;
+  } else {
+    MS_LOG(DEBUG) << "Hw cap NOT support SIMD Dot Product, hwcap: 0x" << hwcap;
+    status = false;
+  }
+#endif
+  return status;
+}
+
+bool IsSupportFloat16() {
+  bool status = false;
+#ifdef ENABLE_ARM64
+  int hwcap_type = 16;
+  uint32_t hwcap = getHwCap(hwcap_type);
+  if (hwcap & HWCAP_FPHP) {
+    MS_LOG(DEBUG) << "Hw cap support FP16, hwcap: 0x" << hwcap;
+    status = true;
+  } else {
+    MS_LOG(DEBUG) << "Hw cap NOT support FP16, hwcap: 0x" << hwcap;
+    status = false;
+  }
+#endif
+  return status;
+}
+
 }  // namespace lite
 }  // namespace mindspore

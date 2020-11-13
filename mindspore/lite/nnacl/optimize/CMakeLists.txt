@@ -21,8 +21,6 @@ string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMA
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8.2-a+dotprod+fp16")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+dotprod+fp16")
 
-add_library(nnacl_optimize STATIC ${SDOT_FILES})
-target_link_libraries(nnacl_optimize mindspore-lite)
+add_library(nnacl_optimize_mid OBJECT ${SDOT_FILES})
 
-add_library(nnacl_fp16 STATIC ${FP16_FILES})
-target_link_libraries(nnacl_fp16 mindspore-lite)
+add_library(nnacl_fp16_mid OBJECT ${FP16_FILES})

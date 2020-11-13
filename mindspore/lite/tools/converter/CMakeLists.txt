@@ -28,6 +28,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/storage.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ir/primitive_t_value.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
 
         ../optimizer/common/node_pass_extends.cc
         ../optimizer/common/pass_manager_extends.cc

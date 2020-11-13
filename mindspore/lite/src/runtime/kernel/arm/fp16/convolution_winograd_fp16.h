@@ -23,7 +23,7 @@
 #include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
 #include "nnacl/fp16/conv_fp16.h"
 #include "nnacl/fp16/winograd_utils_fp16.h"
-#include "nnacl/optimized_kernel.h"
+#include "src/common/utils.h"
 #include "nnacl/minimal_filtering_generator.h"
 
 namespace mindspore::kernel {

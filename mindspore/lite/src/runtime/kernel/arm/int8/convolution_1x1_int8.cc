@@ -17,6 +17,9 @@
 #include "src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
 #include "src/runtime/runtime_api.h"
 #include "src/common/file_utils.h"
+#ifdef ENABLE_ARM64
+#include "src/runtime/kernel/arm/int8/opt_op_handler.h"
+#endif
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
@@ -74,18 +77,9 @@ void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
   support_optimize_ = false;
   matmul_func_ = MatMulInt8_8x8_r;
 #ifdef ENABLE_ARM64
-  void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
-  if (optimize_op_handler != nullptr) {
-    dlerror();
-    *(reinterpret_cast<void **>(&matmul_func_)) = dlsym(optimize_op_handler, "MatMulRInt8_optimize_handler");
-    auto dlopen_error = dlerror();
-    if (dlopen_error != nullptr) {
-      MS_LOG(ERROR) << "load matmul func failed! " << dlopen_error << ".";
-      support_optimize_ = false;
-      matmul_func_ = nullptr;
-    } else {
-      support_optimize_ = true;
-    }
+  if (mindspore::lite::IsSupportSDot()) {
+    support_optimize_ = true;
+    matmul_func_ = MatMulRInt8_optimize_handler;
   } else {
     support_optimize_ = false;
     matmul_func_ = nullptr;

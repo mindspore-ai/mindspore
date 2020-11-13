@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+#include "src/runtime/kernel/arm/int8/opt_op_handler.h"
 #include <stdlib.h>
-#include <stdbool.h>
 #include "nnacl/op_base.h"
 
 #ifdef __cplusplus

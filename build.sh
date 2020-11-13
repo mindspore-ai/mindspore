@@ -755,8 +755,6 @@ build_lite_java_arm64() {
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/arm64-v8a/
     mkdir -p ${JAVA_PATH}/java/app/libs/arm64-v8a/
     cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
-    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite-fp16.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
-    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite-optimize.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
     echo mindspore-lite-${VERSION_STR}-runtime-arm64-cpu
     [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-runtime-arm64-cpu
 }

@@ -17,7 +17,8 @@
 #include "src/sub_graph_kernel.h"
 #include "src/tensor.h"
 #ifdef ENABLE_ARM64
-#include "nnacl/optimized_kernel.h"
+#include "src/common/utils.h"
+#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
 
 namespace mindspore::kernel {
@@ -183,9 +184,9 @@ void CpuFp16SubGraph::FreeOriginInputData() {
 }
 
 int CpuFp16SubGraph::PreProcess() {
-  auto fp32_to_fp16_cast_func = Float16CastUtil::GetInstance()->float32_to_float16_func_;
-  if (fp32_to_fp16_cast_func == nullptr) {
-    MS_LOG(ERROR) << "Can not find cast fp32 to fp16 func";
+#ifdef ENABLE_ARM64
+  if (!mindspore::lite::IsSupportFloat16()) {
+    MS_LOG(ERROR) << "Unsupport fp16 in this devices";
     return RET_ERROR;
   }
   MS_ASSERT(origin_input_data_.empty());
@@ -203,7 +204,7 @@ int CpuFp16SubGraph::PreProcess() {
         return RET_ERROR;
       }
       MS_ASSERT(tensor->data_c() != nullptr);
-      fp32_to_fp16_cast_func(float32_data, tensor->data_c(), tensor->ElementsNum());
+      Float32ToFloat16_fp16_handler(float32_data, tensor->data_c(), tensor->ElementsNum());
       auto *data_store = DataStore::CreateDataStore(float32_data, tensor->allocator(), this->context_->allocator.get());
       if (data_store == nullptr) {
         MS_LOG(ERROR) << "Create DataStore failed";
@@ -223,12 +224,15 @@ int CpuFp16SubGraph::PreProcess() {
     }
   }
   return RET_OK;
+#else
+  return RET_OK;
+#endif
 }
 
 int CpuFp16SubGraph::PostProcess() {
-  auto fp16_to_fp32_cast_func = Float16CastUtil::GetInstance()->float16_to_float32_func_;
-  if (fp16_to_fp32_cast_func == nullptr) {
-    MS_LOG(ERROR) << "Can not find cast fp16 to fp32 func";
+#ifdef ENABLE_ARM64
+  if (!mindspore::lite::IsSupportFloat16()) {
+    MS_LOG(ERROR) << "Unsupport fp16 in this devices";
     return RET_ERROR;
   }
   for (auto tensor : this->out_tensors_) {
@@ -249,7 +253,7 @@ int CpuFp16SubGraph::PostProcess() {
         return RET_ERROR;
       }
       MS_ASSERT(tensor->data_c() != nullptr);
-      fp16_to_fp32_cast_func(float16_data, tensor->data_c(), tensor->ElementsNum());
+      Float16ToFloat32_fp16_handler(float16_data, tensor->data_c(), tensor->ElementsNum());
       if (tensor->allocator() != nullptr) {
         tensor->allocator()->Free(float16_data);
       } else {
@@ -273,5 +277,8 @@ int CpuFp16SubGraph::PostProcess() {
   }
   this->FreeOriginInputData();
   return RET_OK;
+#else
+  return RET_OK;
+#endif
 }
 }  // namespace mindspore::kernel

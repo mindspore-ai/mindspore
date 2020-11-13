@@ -23,6 +23,9 @@
 #include "src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
 #include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
 #include "src/runtime/runtime_api.h"
+#ifdef ENABLE_ARM64
+#include "src/runtime/kernel/arm/int8/opt_op_handler.h"
+#endif
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -39,18 +42,9 @@ void ConvolutionInt8CPUKernel::CheckSupportOptimize() {
 #endif
 
 #ifdef ENABLE_ARM64
-  void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
-  if (optimize_op_handler != nullptr) {
-    dlerror();
-    *(reinterpret_cast<void **>(&matmul_func_)) = dlsym(optimize_op_handler, "MatMulRInt8_optimize_handler");
-    auto dlopen_error = dlerror();
-    if (dlopen_error != nullptr) {
-      MS_LOG(ERROR) << "load matmul func failed! " << dlopen_error << ".";
-      support_optimize_ = false;
-      tile_num_ = 4;
-    } else {
-      support_optimize_ = true;
-    }
+  if (mindspore::lite::IsSupportSDot()) {
+    matmul_func_ = MatMulRInt8_optimize_handler;
+    support_optimize_ = true;
   } else {
     tile_num_ = 4;
     support_optimize_ = false;
@@ -260,8 +254,7 @@ kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &
   kernel::LiteKernel *kernel;
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
 #ifdef ENABLE_ARM64
-    void *optimize_op_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
-    if (optimize_op_handler != nullptr) {
+    if (mindspore::lite::IsSupportSDot()) {
       kernel = new (std::nothrow) kernel::ConvolutionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
     } else {
       kernel = new (std::nothrow) kernel::Convolution3x3Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
