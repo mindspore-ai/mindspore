@@ -117,7 +117,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // replace for grad graph
   ValuePtr CleanTupleAddr(const ValueTuplePtr &tuple);
   ValuePtr GetForwardValue(const OpExecInfoPtr &op_exec_info);
-  void SaveForwardResult(const CNodePtr &cnode, const py::object &out);
   void GenTupleMap(const ValueTuplePtr &tuple, std::map<std::string, tensor::TensorPtr> *t_map);
   void SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out);
 
