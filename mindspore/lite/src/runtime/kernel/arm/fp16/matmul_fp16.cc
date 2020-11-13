@@ -30,9 +30,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
-MatmulFP16CPUKernel::~MatmulFP16CPUKernel() { FreeTmpBuffer(); }
-
-void MatmulFP16CPUKernel::FreeTmpBuffer() {
+MatmulFP16CPUKernel::~MatmulFP16CPUKernel() {
   if (a_pack_ptr_ != nullptr) {
     free(a_pack_ptr_);
     a_pack_ptr_ = nullptr;
@@ -47,6 +45,17 @@ void MatmulFP16CPUKernel::FreeTmpBuffer() {
   }
 }
 
+void MatmulFP16CPUKernel::FreeTmpBuffer() {
+  if (a_pack_ptr_ != nullptr) {
+    params_->a_const_ ? free(a_pack_ptr_) : context_->allocator->Free(a_pack_ptr_);
+    a_pack_ptr_ = nullptr;
+  }
+  if (b_pack_ptr_ != nullptr) {
+    params_->b_const_ ? free(b_pack_ptr_) : context_->allocator->Free(b_pack_ptr_);
+    b_pack_ptr_ = nullptr;
+  }
+}
+
 int MatmulFP16CPUKernel::MallocMatrixABuffer() {
   auto a_shape = in_tensors_[0]->shape();
   int batch = 1;
@@ -57,9 +66,13 @@ int MatmulFP16CPUKernel::MallocMatrixABuffer() {
   params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - 2];
   params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
   params_->row_16_ = UP_ROUND(params_->row_, C16NUM);
-
-  a_pack_ptr_ =
-    reinterpret_cast<float16_t *>(malloc(params_->batch * params_->row_16_ * params_->deep_ * sizeof(float16_t)));
+  if (params_->a_const_) {
+    a_pack_ptr_ =
+      reinterpret_cast<float16_t *>(malloc(params_->batch * params_->row_16_ * params_->deep_ * sizeof(float16_t)));
+  } else {
+    a_pack_ptr_ = reinterpret_cast<float16_t *>(
+      context_->allocator->Malloc(params_->batch * params_->row_16_ * params_->deep_ * sizeof(float16_t)));
+  }
   if (a_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
@@ -82,8 +95,13 @@ int MatmulFP16CPUKernel::MallocMatrixBBuffer() {
   params_->col_8_ = UP_ROUND(params_->col_, 8);
   params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
 
-  b_pack_ptr_ =
-    reinterpret_cast<float16_t *>(malloc(params_->batch * params_->col_8_ * params_->deep_ * sizeof(float16_t)));
+  if (params_->b_const_) {
+    b_pack_ptr_ =
+      reinterpret_cast<float16_t *>(malloc(params_->batch * params_->col_8_ * params_->deep_ * sizeof(float16_t)));
+  } else {
+    b_pack_ptr_ = reinterpret_cast<float16_t *>(
+      context_->allocator->Malloc(params_->batch * params_->col_8_ * params_->deep_ * sizeof(float16_t)));
+  }
   if (b_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
@@ -95,58 +113,31 @@ int MatmulFP16CPUKernel::MallocMatrixBBuffer() {
 }
 
 int MatmulFP16CPUKernel::InitBias() {
+  auto b_shape = in_tensors_[1]->shape();
+  auto c_shape = out_tensors_[0]->shape();
+  params_->col_ = params_->b_const_
+                    ? (params_->b_transpose_ ? b_shape[b_shape.size() - 2] : b_shape[b_shape.size() - 1])
+                    : (c_shape[c_shape.size() - 1]);
+  params_->col_8_ = UP_ROUND(params_->col_, 8);
+  bias_ptr_ = reinterpret_cast<float16_t *>(malloc(params_->col_8_ * sizeof(float16_t)));
+  if (bias_ptr_ == nullptr) {
+    FreeTmpBuffer();
+    return RET_MEMORY_FAILED;
+  }
+  memset(bias_ptr_, 0, params_->col_8_ * sizeof(float16_t));
   if (in_tensors_.size() == 3) {
-    auto c_shape = out_tensors_[0]->shape();
-    auto bias_shape = in_tensors_[1]->shape();
-    if (bias_shape[bias_shape.size() - 1] != c_shape[c_shape.size() - 1]) {
-      MS_LOG(ERROR) << "The bias'dimension is not equal with colum";
-      FreeTmpBuffer();
-      return RET_INPUT_TENSOR_ERROR;
-    }
-    auto col = c_shape[c_shape.size() - 1];
-    auto col_8 = UP_ROUND(col, 8);
-    bias_ptr_ = reinterpret_cast<float16_t *>(malloc(col_8 * sizeof(float16_t)));
-    if (bias_ptr_ == nullptr) {
-      FreeTmpBuffer();
-      return RET_MEMORY_FAILED;
-    }
-    memset(bias_ptr_, 0, col_8 * sizeof(float16_t));
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->data_c()), bias_ptr_, col);
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->data_c()), bias_ptr_, params_->col_);
   }
   return RET_OK;
 }
 
 int MatmulFP16CPUKernel::ReSize() {
-  if (params_->a_const_ == false || params_->a_init_shape_ == false) {
-    if (a_pack_ptr_ != nullptr) {
-      free(a_pack_ptr_);
-      a_pack_ptr_ = nullptr;
-    }
-    auto ret = MallocMatrixABuffer();
+  if (!params_->b_const_) {
+    auto ret = InitBias();
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Matmul fp16 malloc matrix a buffer failed";
+      MS_LOG(ERROR) << "Matmul fp16 init bias failed";
       return RET_ERROR;
     }
-  }
-  if (params_->b_const_ == false || params_->b_init_shape_ == false) {
-    if (b_pack_ptr_ != nullptr) {
-      free(b_pack_ptr_);
-      b_pack_ptr_ = nullptr;
-    }
-    auto ret = MallocMatrixBBuffer();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Matmul fp16 malloc matrix b buffer failed";
-      return RET_ERROR;
-    }
-  }
-  if (bias_ptr_ != nullptr) {
-    free(bias_ptr_);
-    bias_ptr_ = nullptr;
-  }
-  auto ret = InitBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Matmul fp16 init bias failed";
-    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -200,47 +191,36 @@ void MatmulFP16CPUKernel::InitMatrixB(float16_t *b_ptr, float16_t *b_pack_ptr) {
 }
 
 int MatmulFP16CPUKernel::Init() {
-  params_->a_init_shape_ = (in_tensors_[0]->shape().size() != 0);
-  params_->b_init_shape_ = (in_tensors_[1]->shape().size() != 0);
-  if (params_->a_init_shape_ == true) {
-    auto ret = MallocMatrixABuffer();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Matmul fp16 malloc matrix a buffer failed";
-      return RET_ERROR;
-    }
-  }
-  if (params_->b_init_shape_ == true) {
-    auto ret = MallocMatrixBBuffer();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Matmul fp16 malloc matrix b buffer failed";
-      return RET_ERROR;
-    }
-  }
-
   params_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
   params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
-  if (params_->a_const_ == true) {
+  if (params_->a_const_) {
+    auto ret = MallocMatrixABuffer();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp16 malloc matrix A buffer failed";
+      return RET_ERROR;
+    }
     if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
       InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
     } else {
       InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->data_c()), a_pack_ptr_);
     }
   }
-  if (params_->b_const_ == true) {
+  if (params_->b_const_) {
+    auto ret = MallocMatrixBBuffer();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp16 malloc matrix B buffer failed";
+      return RET_ERROR;
+    }
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
       InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
     } else {
       InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
     }
-  }
-
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  auto ret = InitBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Matmul fp16 init bias failed";
-    return RET_ERROR;
+    ret = InitBias();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp16 init bias failed";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -275,7 +255,7 @@ int MatmulFP16Run(void *cdata, int task_id) {
   auto op = reinterpret_cast<MatmulFP16CPUKernel *>(cdata);
   auto error_code = op->RunImpl(task_id);
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "MatmulFp32Run error task_id[" << task_id << "] error_code[" << error_code << "]";
+    MS_LOG(ERROR) << "MatmulFp16Run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
   }
   return RET_OK;
@@ -294,14 +274,24 @@ int MatmulFP16CPUKernel::Run() {
   } else {
     c_ptr = reinterpret_cast<float16_t *>(out_tensor->data_c());
   }
-  if (params_->a_const_ == false) {
+  if (!params_->a_const_) {
+    ret = MallocMatrixABuffer();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp16 malloc matrix A buffer failed";
+      return RET_ERROR;
+    }
     if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
       InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
     } else {
       InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->data_c()), a_pack_ptr_);
     }
   }
-  if (params_->b_const_ == false) {
+  if (!params_->b_const_) {
+    ret = MallocMatrixBBuffer();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp16 malloc matrix B buffer failed";
+      return RET_ERROR;
+    }
     if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
       InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
     } else {
@@ -312,13 +302,26 @@ int MatmulFP16CPUKernel::Run() {
     current_a_ = a_pack_ptr_ + i * params_->row_16_ * params_->deep_;
     current_b_ = b_pack_ptr_ + i * params_->deep_ * params_->col_8_;
     current_c_ = c_ptr + i * params_->row_ * params_->col_;
-    ParallelLaunch(this->context_->thread_pool_, MatmulFP16Run, this, thread_count_);
+    ret = ParallelLaunch(this->context_->thread_pool_, MatmulFP16Run, this, thread_count_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Matmul fp16 run function MatmulFP16Run failed";
+      FreeTmpBuffer();
+      return RET_ERROR;
+    }
   }
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     auto size = out_tensor->ElementsNum();
     auto out_tensor_data = reinterpret_cast<float *>(out_tensor->data_c());
     Float16ToFloat32(output_ptr_, out_tensor_data, size);
     ctx_->allocator->Free(output_ptr_);
+  }
+  if (!params_->a_const_) {
+    context_->allocator->Free(a_pack_ptr_);
+    a_pack_ptr_ = nullptr;
+  }
+  if (!params_->b_const_) {
+    context_->allocator->Free(b_pack_ptr_);
+    b_pack_ptr_ = nullptr;
   }
   return RET_OK;
 }
