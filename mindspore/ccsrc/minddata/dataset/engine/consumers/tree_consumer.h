@@ -166,6 +166,7 @@ class TreeGetters : public TreeConsumer {
   Status GetBatchSize(int64_t *batch_size);
   Status GetRepeatCount(int64_t *repeat_count);
   Status GetNumClasses(int64_t *num_classes);
+  Status GetColumnNames(std::vector<std::string> *output);
   Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
   bool isInitialized();
   std::string Name() override { return "TreeGetters"; }

@@ -56,8 +56,8 @@ TEST_F(MindDataTestPipeline, TestAlbumBasic) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestAlbumgetters) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumgetters.";
+TEST_F(MindDataTestPipeline, TestAlbumGetters) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumGetters.";
 
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
@@ -72,6 +72,7 @@ TEST_F(MindDataTestPipeline, TestAlbumgetters) {
   EXPECT_EQ(batch_size, 1);
   int64_t repeat_count = ds->GetRepeatCount();
   EXPECT_EQ(repeat_count, 1);
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
 TEST_F(MindDataTestPipeline, TestAlbumDecode) {

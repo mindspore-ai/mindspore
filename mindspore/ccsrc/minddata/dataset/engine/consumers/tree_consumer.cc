@@ -466,6 +466,22 @@ Status TreeGetters::GetNumClasses(int64_t *num_classes) {
   return Status::OK();
 }
 
+Status TreeGetters::GetColumnNames(std::vector<std::string> *output) {
+  std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
+  std::unordered_map<std::string, int32_t> column_name_id_map = root->column_name_id_map();
+  if (column_name_id_map.empty()) RETURN_STATUS_UNEXPECTED("GetColumnNames: column_name_id map was empty.");
+  std::vector<std::pair<std::string, int32_t>> column_name_id_vector(column_name_id_map.begin(),
+                                                                     column_name_id_map.end());
+  std::sort(column_name_id_vector.begin(), column_name_id_vector.end(),
+            [](const std::pair<std::string, int32_t> &a, const std::pair<std::string, int32_t> &b) {
+              return a.second < b.second;
+            });
+  for (auto item : column_name_id_vector) {
+    (*output).push_back(item.first);
+  }
+  return Status::OK();
+}
+
 Status TreeGetters::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");

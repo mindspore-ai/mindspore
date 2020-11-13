@@ -70,8 +70,8 @@ TEST_F(MindDataTestPipeline, TestCSVDatasetBasic) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestCSVGetDatasetSize) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVGetDatasetSize.";
+TEST_F(MindDataTestPipeline, TestCSVGetters) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCSVGetters.";
 
   // Create a CSVDataset, with single CSV file
   std::string train_file = datasets_root_path_ + "/testCSV/1.csv";
@@ -80,6 +80,7 @@ TEST_F(MindDataTestPipeline, TestCSVGetDatasetSize) {
   EXPECT_NE(ds, nullptr);
 
   EXPECT_EQ(ds->GetDatasetSize(), 3);
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
 }
 
 TEST_F(MindDataTestPipeline, TestCSVDatasetMultiFiles) {

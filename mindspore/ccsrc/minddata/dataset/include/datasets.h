@@ -119,6 +119,10 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return number of classes. If failed, return -1
   int64_t GetNumClasses();
 
+  /// \brief Gets the column names
+  /// \return Names of the columns. If failed, return an empty vector
+  std::vector<std::string> GetColumnNames();
+
   /// \brief Gets the class indexing
   /// \return a map of ClassIndexing. If failed, return an empty map
   std::vector<std::pair<std::string, std::vector<int32_t>>> GetClassIndexing();
