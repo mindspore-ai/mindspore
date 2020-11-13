@@ -51,14 +51,11 @@ if args_opt.platform == 'Ascend':
 if __name__ == '__main__':
     lr_scale = 1
     if args_opt.run_distribute:
+        init()
         if args_opt.platform == 'Ascend':
-            init()
-            lr_scale = 1
             device_num = int(os.environ.get("RANK_SIZE"))
             rank = int(os.environ.get("RANK_ID"))
         else:
-            init()
-            lr_scale = 1
             device_num = get_group_size()
             rank = get_rank()
         context.reset_auto_parallel_context()
