@@ -74,14 +74,15 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->outputFile.rfind('/') == this->outputFile.length() - 1) {
-    std::cerr << "INPUT ILLEGAL: outputFile must be a valid file path";
-    return RET_INPUT_PARAM_INVALID;
-  }
-
 #ifdef _WIN32
   replace(this->outputFile.begin(), this->outputFile.end(), '/', '\\');
 #endif
+
+  if (this->outputFile.rfind('/') == this->outputFile.length() - 1 ||
+      this->outputFile.rfind('\\') == this->outputFile.length() - 1) {
+    std::cerr << "INPUT ILLEGAL: outputFile must be a valid file path";
+    return RET_INPUT_PARAM_INVALID;
+  }
 
   if (this->fmkIn.empty()) {
     std::cerr << "INPUT MISSING: fmk is necessary";
