@@ -127,13 +127,15 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
     auto attr_size = (&(iter->second))->at(attr_index).first.GetInputSize();
     // data type matching check of all input parameters of kernel
     for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
-      if (marjor_sm < RECOMMEND_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
+      const bool check_sm = mindspore::device::gpu::CudaCommon::GetInstance().check_sm();
+      if (check_sm && marjor_sm < RECOMMEND_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
         if (marjor_sm < MINIUM_SM) {
           MS_LOG(EXCEPTION) << "Half precision ops can be used on Devices which computing capacity is >= " << MINIUM_SM
                             << ", but the current device's computing capacity is " << marjor_sm;
         }
         MS_LOG(WARNING) << "It is recommended to use devices with a computing capacity >= " << RECOMMEND_SM
                         << ", but the current device's computing capacity is " << marjor_sm;
+        mindspore::device::gpu::CudaCommon::GetInstance().set_check_sm(false);
       }
       if (kernel_info->GetInputDeviceType(input_index) !=
           (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).first) {
