@@ -22,35 +22,56 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LayerNorm;
 
 namespace mindspore::kernel {
-void LayerNormInt8CPUKernel::SetQuantArgs() {
+LayerNormInt8CPUKernel::~LayerNormInt8CPUKernel() {
+  if (param_->elementwise_affine_ && gamma_ptr_ != nullptr) {
+    free(gamma_ptr_);
+    gamma_ptr_ = nullptr;
+  }
+  if (param_->elementwise_affine_ && beta_ptr_ != nullptr) {
+    free(beta_ptr_);
+    beta_ptr_ = nullptr;
+  }
+  return;
+}
+
+int LayerNormInt8CPUKernel::SetQuantArgs() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
 
-  quant_param_.in_quant_arg_.zp_ = input->GetQuantParams().front().zeroPoint;
-  quant_param_.in_quant_arg_.scale_ = input->GetQuantParams().front().scale;
-  quant_param_.out_quant_arg_.zp_ = output->GetQuantParams().front().zeroPoint;
-  quant_param_.out_quant_arg_.scale_ = output->GetQuantParams().front().scale;
-
-  quant_param_.output_activation_min_ = std::numeric_limits<int8_t>::min();
-  quant_param_.output_activation_max_ = std::numeric_limits<int8_t>::max();
+  quant_param_.in_zp_ = input->GetQuantParams().front().zeroPoint;
+  quant_param_.in_scale_ = input->GetQuantParams().front().scale;
+  quant_param_.out_zp_ = output->GetQuantParams().front().zeroPoint;
+  quant_param_.out_scale_ = output->GetQuantParams().front().scale;
 
   if (param_->elementwise_affine_) {
-    lite::Tensor *gamma_tensor = out_tensors_.at(1);
-    quant_param_.gamma_quant_arg_.zp_ = gamma_tensor->GetQuantParams().front().zeroPoint;
-    quant_param_.gamma_quant_arg_.scale_ = gamma_tensor->GetQuantParams().front().scale;
-  }
+    lite::Tensor *gamma_tensor = in_tensors_.at(1);
+    lite::Tensor *beta_tensor = in_tensors_.at(2);
 
-  double in_scale;
-  if (param_->elementwise_affine_) {
-    in_scale = static_cast<double>(quant_param_.in_quant_arg_.scale_ * quant_param_.gamma_quant_arg_.scale_);
-  } else {
-    in_scale = static_cast<double>(quant_param_.in_quant_arg_.scale_);
-  }
-  double real_multiplier = in_scale / static_cast<double>(quant_param_.out_quant_arg_.scale_);
+    double gamma_scale = gamma_tensor->GetQuantParams().front().scale;
+    int gamma_zp = gamma_tensor->GetQuantParams().front().zeroPoint;
+    gamma_ptr_ = reinterpret_cast<float *>(malloc(gamma_tensor->ElementsNum() * sizeof(float)));
+    if (gamma_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "malloc gamma_ptr_ failed";
+      return RET_ERROR;
+    }
+    int8_t *src_gamma = reinterpret_cast<int8_t *>(gamma_tensor->data_c());
+    for (int i = 0; i < gamma_tensor->ElementsNum(); i++) {
+      gamma_ptr_[i] = (src_gamma[i] - gamma_zp) * gamma_scale;
+    }
 
-  QuantizeRoundParameter(real_multiplier, &quant_param_.multiplier_, &quant_param_.shift_left_,
-                         &quant_param_.shift_right_);
-  return;
+    beta_ptr_ = reinterpret_cast<float *>(malloc(beta_tensor->ElementsNum() * sizeof(float)));
+    if (beta_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "malloc beta_ptr_ failed";
+      free(gamma_ptr_);
+      gamma_ptr_ = nullptr;
+      return RET_ERROR;
+    }
+    int32_t *src_beta = reinterpret_cast<int32_t *>(beta_tensor->data_c());
+    for (int i = 0; i < beta_tensor->ElementsNum(); i++) {
+      beta_ptr_[i] = src_beta[i] * quant_param_.in_scale_ * gamma_scale;
+    }
+  }
+  return RET_OK;
 }
 
 int LayerNormInt8CPUKernel::Init() {
@@ -96,17 +117,13 @@ int LayerNormInt8CPUKernel::DoExecute(int task_id) {
   int8_t *thread_dst = dst_ptr_ + task_id * param_->thread_outsize_ * inner_size_;
 
   LayerNormInt8(thread_src, gamma_ptr_, beta_ptr_, thread_dst, param_->elementwise_affine_, current_out_size,
-                inner_size_, &quant_param_);
+                inner_size_, &quant_param_, param_->epsilon_);
   return RET_OK;
 }
 
 int LayerNormInt8CPUKernel::Run() {
   src_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
   dst_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
-  if (param_->elementwise_affine_) {
-    gamma_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(1)->MutableData());
-    beta_ptr_ = reinterpret_cast<int32_t *>(in_tensors_.at(2)->MutableData());
-  }
 
   auto ret = ParallelLaunch(this->context_->thread_pool_, LayerNormInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
