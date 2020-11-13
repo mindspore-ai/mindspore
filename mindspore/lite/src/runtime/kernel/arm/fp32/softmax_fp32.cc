@@ -70,12 +70,41 @@ int SoftmaxCPUKernel::ReSize() {
   return RET_OK;
 }
 
-int SoftmaxCPUKernel::Run() {
-  memset(sum_data_, 0, in_plane_size_ * out_plane_size_ * sizeof(float));
+int SoftmaxCPUKernel::DoSoftmaxLastAxis(int task_id) {
+  int unit = UP_DIV(out_plane_size_, context_->thread_num_);
+  int begin = task_id * unit;
+  int end = MSMIN(begin + unit, out_plane_size_);
+  int channel = softmax_param_->input_shape_[softmax_param_->axis_];
+  int offset = begin * channel;
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
-  Softmax(input_ptr, output_ptr, sum_data_, softmax_param_);
+  SoftmaxLastAxis(input_ptr + offset, output_ptr + offset, end - begin, channel);
   return RET_OK;
+}
+
+int SoftmaxLastAxisRun(void *cdata, int task_id) {
+  auto kernel = reinterpret_cast<SoftmaxCPUKernel *>(cdata);
+  auto ret = kernel->DoSoftmaxLastAxis(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "DoSoftmaxLastAxis error task_id: " << task_id << ", ret: " << ret;
+  }
+  return ret;
+}
+
+int SoftmaxCPUKernel::Run() {
+  auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  int ret = RET_OK;
+  if (in_plane_size_ == 1) {
+    ret = ParallelLaunch(this->context_->thread_pool_, SoftmaxLastAxisRun, this, context_->thread_num_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "SoftmaxCPUKernel ParallelLaunch failed, ret: " << ret;
+    }
+  } else {
+    memset(sum_data_, 0, in_plane_size_ * out_plane_size_ * sizeof(float));
+    Softmax(input_ptr, output_ptr, sum_data_, softmax_param_);
+  }
+  return ret;
 }
 
 }  // namespace mindspore::kernel

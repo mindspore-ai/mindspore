@@ -37,6 +37,7 @@ class SoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int DoSoftmaxLastAxis(int task_id);
 
  private:
   float *sum_data_ = nullptr;
