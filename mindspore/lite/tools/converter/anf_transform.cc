@@ -23,6 +23,7 @@
 #include "tools/optimizer/fusion/conv_tuple_activation_fusion.h"
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
+#include "tools/optimizer/fusion/conv_tuplegetitem_fusion.h"
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "tools/optimizer/fusion/layer_norm_fusion.h"
@@ -35,6 +36,8 @@
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
+#include "tools/optimizer/graph/infershape_pass.h"
+#include "tools/optimizer/graph/slice_prepose_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -76,6 +79,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
                                                             schema::ActivationType_RELU));
     pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu6", schema::PrimitiveType_Activation,
                                                             schema::ActivationType_RELU6));
+    pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
     pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(
       true, "conv_tuple_relu", schema::PrimitiveType_Activation, schema::ActivationType_RELU));
     pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(
@@ -89,6 +93,12 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   weight_format_transform_pass->SetFmkType(config->fmk);
   weight_format_transform_pass->SetQuantType(config->quantType);
   graph_pm->AddPass(weight_format_transform_pass);
+  auto infershape_pass = std::make_shared<opt::InferShapePass>();
+  infershape_pass->SetFmkType(config->fmk);
+  graph_pm->AddPass(infershape_pass);
+  auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
+  slice_prepose_pass->SetFmkType(config->fmk);
+  graph_pm->AddPass(slice_prepose_pass);
 
   if (config->fmk == lite::converter::FmkType_MS) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();

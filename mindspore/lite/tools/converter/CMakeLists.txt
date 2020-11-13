@@ -39,6 +39,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/conv_transform_fusion.cc
         ../optimizer/fusion/conv_scale_fusion.cc
         ../optimizer/fusion/conv_bn_fusion.cc
+        ../optimizer/fusion/conv_tuplegetitem_fusion.cc
         ../optimizer/fusion/constant_folding_fusion.cc
         ../optimizer/fusion/quant_dtype_cast_fusion.cc
         ../optimizer/fusion/layer_norm_fusion.cc
@@ -51,6 +52,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/unused_cast_node_remove_pass.cc
         ../optimizer/graph/unused_transpose_node_remove_pass.cc
         ../optimizer/graph/identity_remove_pass.cc
+        ../optimizer/graph/infershape_pass.cc
+        ../optimizer/graph/slice_prepose_pass.cc
         )
 
 add_subdirectory(../anf_importer anf_importer)
