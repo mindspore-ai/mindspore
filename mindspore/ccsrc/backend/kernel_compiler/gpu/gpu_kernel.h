@@ -251,7 +251,6 @@ class GpuKernel : public KernelMod {
 
   device::DynamicKernelPtr dynamic_kernel_;
 };
-
 }  // namespace kernel
 }  // namespace mindspore
 

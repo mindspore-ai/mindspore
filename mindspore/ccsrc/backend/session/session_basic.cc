@@ -1432,7 +1432,7 @@ void SessionBasic::RunGraphAsync(const GraphId &graph_id, const std::vector<tens
 }
 
 bool IsDynamicShape(const NotNull<abstract::ShapePtr> &shape) {
-  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int s) { return s < 0; });
+  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
 }
 
 bool IsNodeOutputDynamicShape(const CNodePtr &anf_node_ptr) {
