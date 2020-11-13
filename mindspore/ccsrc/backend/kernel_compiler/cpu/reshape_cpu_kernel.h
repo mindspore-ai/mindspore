@@ -31,6 +31,11 @@ class ReshapeCPUKernel : public CPUKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  CNodePtr node_ = nullptr;
+  TypeId x_data_type_{kNumberTypeInt32};
+  size_t type_size_ = 4;
 };
 
 MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
