@@ -69,12 +69,12 @@ bool Somas::Allocate(const session::KernelGraph *graph) {
 bool Somas::InitSomasTensors(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   InitBasicInfo(graph);
-  GetNextOutputProcess(graph);
   IndependentNodeOutputProcess(graph);
   SummaryInputProcess(graph);
   RefNodeProcess(graph);
   UnReuseNodeProcess(graph);
   GenContiguousList(graph);
+  GetNextOutputProcess(graph);
 
   if (tensors_list_.empty()) {
     MS_LOG(INFO) << "No Tensor from graph " << graph->graph_id();
@@ -273,6 +273,7 @@ void Somas::GetNextOutputProcess(const session::KernelGraph *graph) {
     if (iter != nodes_map_.end()) {
       auto getnext_output_tensors = iter->second->output_tensors_;
       for (auto &tensor : getnext_output_tensors) {
+        if (tensor->contiguous_) continue;
         tensor->offset_ = total_size;
         total_size += tensor->GetAlignedSize();
         tensor->lifelong_value_ = kLifeLongGraphAll;
