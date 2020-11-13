@@ -21,7 +21,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/fp16/convolution_base_fp16.h"
-#include "nnacl/optimized_kernel.h"
+#include "src/common/utils.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/fp16/matmul_fp16.h"
 

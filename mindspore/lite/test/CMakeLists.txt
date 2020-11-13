@@ -66,17 +66,6 @@ if (PLATFORM_ARM32)
             )
 endif()
 
-if (ENABLE_FP16)
-    file(GLOB KERNEL_OP_FP16_SRC
-            ${LITE_DIR}/src/runtime/kernel/arm/fp16/*.cc
-            ${LITE_DIR}/nnacl/fp16/*.c
-            )
-    set(KERNEL_OP_SRC
-            ${KERNEL_OP_SRC}
-            ${KERNEL_OP_FP16_SRC}
-            )
-endif ()
-
 if ("${X86_64_SIMD}" STREQUAL "sse")
     file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/x86_64_sse/*.c)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
@@ -295,7 +284,7 @@ add_executable(lite-test ${TEST_SRC})
 
 target_link_libraries(lite-test dl ${GTEST_LIBRARY})
 if (PLATFORM_ARM64)
-    target_link_libraries(lite-test mslite_internal)
+    target_link_libraries(lite-test mslite_internal nnacl_fp16_mid nnacl_optimize_mid)
 endif()
 
 if (PLATFORM_ARM)

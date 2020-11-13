@@ -102,11 +102,11 @@ int QuantDTypeCastFp16CPUKernel::QuantDTypeCast(int task_id) {
   return RET_OK;
 }
 
-int QuantDTypeCastRun(void *cdata, int task_id) {
+int QuantDTypeCastFP16Run(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<QuantDTypeCastFp16CPUKernel *>(cdata);
   auto ret = g_kernel->QuantDTypeCast(task_id);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "QuantDTypeCastRun error task_id[" << task_id << "] error_code[" << ret << "]";
+    MS_LOG(ERROR) << "QuantDTypeCastFP16Run error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
   }
   return RET_OK;
@@ -126,7 +126,7 @@ int QuantDTypeCastFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto ret = ParallelLaunch(this->context_->thread_pool_, QuantDTypeCastRun, this, thread_n_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, QuantDTypeCastFP16Run, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;

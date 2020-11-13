@@ -25,7 +25,7 @@
 #include "nnacl/int8/conv_int8.h"
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/matmul_parameter.h"
-#include "nnacl/optimized_kernel.h"
+#include "src/common/utils.h"
 
 namespace mindspore::kernel {
 class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {

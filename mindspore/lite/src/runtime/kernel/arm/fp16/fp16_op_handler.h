@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+#ifdef ENABLE_ARM64
 #include <arm_neon.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

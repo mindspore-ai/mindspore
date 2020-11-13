@@ -44,6 +44,9 @@ void ShortToFloat32(const int16_t *srcdata, float *dstdata, size_t elementSize);
 
 void Float32ToShort(const float *srcdata, int16_t *dstdata, size_t elementSize);
 
+bool IsSupportSDot();
+
+bool IsSupportFloat16();
 #if defined(__arm__) || defined(__aarch64__)
 uint32_t getHwCap(int hwcap_type);
 #endif

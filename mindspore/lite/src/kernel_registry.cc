@@ -20,7 +20,7 @@
 #include <asm/hwcap.h>
 #include "common/utils.h"
 #include "src/common/log_adapter.h"
-#include "nnacl/optimized_kernel.h"
+#include "src/common/utils.h"
 #endif
 
 using mindspore::kernel::kCPU;
@@ -36,17 +36,15 @@ KernelRegistry *KernelRegistry::GetInstance() {
 
 int KernelRegistry::Init() {
 #ifdef ENABLE_ARM64
-  void *optimized_lib_handler = OptimizeModule::GetInstance()->optimized_op_handler_;
-  if (optimized_lib_handler != nullptr) {
-    MS_LOG(INFO) << "load optimize lib success.";
+  if (mindspore::lite::IsSupportSDot()) {
+    MS_LOG(INFO) << "The current device supports Sdot.";
   } else {
-    MS_LOG(INFO) << "load optimize lib failed.";
+    MS_LOG(INFO) << "The current device NOT supports Sdot.";
   }
-  void *float16_op_handler = Float16Module::GetInstance()->float16_op_handler_;
-  if (float16_op_handler != nullptr) {
-    MS_LOG(INFO) << "load float16 lib success.";
+  if (mindspore::lite::IsSupportFloat16()) {
+    MS_LOG(INFO) << "The current device supports float16.";
   } else {
-    MS_LOG(INFO) << "load float16 lib failed.";
+    MS_LOG(INFO) << "The current device NOT supports float16.";
   }
 #endif
   return RET_OK;
