@@ -83,13 +83,13 @@ void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
 }
 
 uint8_t *MemoryManager::MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,
-                                        const DeviceAddressPtr &address) {
+                                        const DeviceAddressPtr &address, bool comm_mem) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(address);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   uint8_t *ptr = nullptr;
-  if (AnfAlgo::IsCommunicationOp(node)) {
+  if (comm_mem) {
     bool communication_mem = false;
     if (context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
       communication_mem = true;

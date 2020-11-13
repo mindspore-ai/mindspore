@@ -46,7 +46,7 @@ class MemoryManager {
   void MallocReusedDynamicMem(const session::KernelGraph *graph);
   void MallocSomasDynamicMem(const session::KernelGraph *graph);
   uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, MemType type, size_t size,
-                           const DeviceAddressPtr &address);
+                           const DeviceAddressPtr &address, bool comm_mem);
   uint8_t *MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, MemType type, size_t size);
   virtual uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address);
 
