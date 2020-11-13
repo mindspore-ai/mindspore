@@ -73,23 +73,23 @@ struct Image2DInfo {
       return;
     }
     auto shape = tensor->shape();
-    auto ndim = shape.size();
-    if (ndim == 1) {
+    OriDim = shape.size();
+    if (OriDim == 1) {
       N = shape[0];
-    } else if (ndim == 2) {
+    } else if (OriDim == 2) {
       N = shape[0];
       C = shape[1];
-    } else if (ndim == 3) {
+    } else if (OriDim == 3) {
       N = shape[0];
       W = shape[1];
       C = shape[2];
-    } else if (ndim == 4) {
+    } else if (OriDim == 4) {
       N = shape[0];
       H = shape[1];
       W = shape[2];
       C = shape[3];
-    } else if (ndim >= 5) {
-      MS_LOG(ERROR) << "GPU doesn't support Tensor with ndim>=" << ndim;
+    } else if (OriDim >= 5) {
+      MS_LOG(ERROR) << "GPU doesn't support Tensor with ndim>=" << OriDim;
     }
     Slice = UP_DIV(C, C4NUM);
 
@@ -116,6 +116,17 @@ struct Image2DInfo {
     return row_pitch;
   }
 
+  int AlignAxis(int oriAxis) const {
+    if (OriDim == 0) {
+      return 0;
+    }
+    int no_neg_axis = (oriAxis + OriDim) % OriDim;
+    if (no_neg_axis == 0) {
+      return 0;
+    }
+    return no_neg_axis + 4 - OriDim;
+  }
+
   size_t N{1};
   size_t H{1};
   size_t W{1};
@@ -129,6 +140,7 @@ struct Image2DInfo {
   size_t ElementsC4Num{};
   size_t OriginSize{};
   size_t Image2DSize{};
+  size_t OriDim{};
 };
 
 class OpenCLKernel : public LiteKernel {
