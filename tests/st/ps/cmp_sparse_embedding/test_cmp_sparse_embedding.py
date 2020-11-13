@@ -69,7 +69,7 @@ def do_sparse_embedding(ps=False):
     train_network.set_train()
     losses = []
     for _ in range(epoch):
-        data = Tensor(np.random.randint(0, 15, (32, 3), np.int32))
+        data = Tensor(np.random.randint(-5, 15, (32, 3), np.int32))
         label = Tensor(np.random.randint(0, 9, (32), np.int32))
         if _is_role_pserver():
             train_network(data, label)

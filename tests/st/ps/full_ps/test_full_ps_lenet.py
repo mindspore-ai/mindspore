@@ -135,4 +135,4 @@ if __name__ == "__main__":
     acc = model.eval(ds_eval, dataset_sink_mode=False)
 
     print("Accuracy:", acc['Accuracy'])
-    assert acc['Accuracy'] > 0.93
+    assert acc['Accuracy'] > 0.90
