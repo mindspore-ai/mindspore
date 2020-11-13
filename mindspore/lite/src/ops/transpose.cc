@@ -124,6 +124,7 @@ int Transpose::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
   if (!GetInferFlag()) {
     return RET_OK;
   }
+  MS_ASSERT(inputs_.size() == kSingleNum || inputs_.size() == kDoubleNum);
   MS_ASSERT(outputs_.size() == kSingleNum);
 
   int conjugate = GetConjugate();
