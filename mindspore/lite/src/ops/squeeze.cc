@@ -47,7 +47,7 @@ int Squeeze::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
       return RET_ERROR;
     }
     if (prim.GetAttr("axis") == nullptr) {
-      MS_LOG(WARNING) << "get axis failed";
+      MS_LOG(INFO) << "Squeeze's attr xis is set to default";
       attr->axis = {0};
     } else {
       int axis = GetValue<int>(prim.GetAttr("axis"));
