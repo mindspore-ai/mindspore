@@ -156,6 +156,12 @@ def enumerate_(x, start=0):
     return ret
 
 
+def expand_tensor_as(x, y):
+    """Expand tensor"""
+    broadcast_to = P.BroadcastTo(shape_(y))
+    return broadcast_to(x)
+
+
 def isinstance_(x, base_type):
     """Determine whether x is an instance of base_type."""
     x_type = F.typeof(x)
