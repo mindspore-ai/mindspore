@@ -171,7 +171,7 @@ TEST_F(TestLogSoftmaxInfo, GetDeviceList1) {
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   log_softmax->Init(strategy);
-  RankList dev_list = log_softmax->global_device_list();
+  RankList dev_list = log_softmax->stage_device_list();
   ASSERT_EQ(dev_list.size(), 128);
 }
 

@@ -325,7 +325,7 @@ void Redistribution(const std::pair<AnfNodePtr, int64_t> &node_pair, const Opera
   if (next_distribute_operator == nullptr) {
     MS_LOG(EXCEPTION) << "Failure: " << next_node->ToString() << " GetDistributeOperator failed";
   }
-  RankList dev_list = distribute_operator->global_device_list();
+  RankList dev_list = distribute_operator->stage_device_list();
   std::string next_prim_name = GetValueNode<PrimitivePtr>(next_node->input(0))->name();
   MS_LOG(DEBUG) << "Redistribution: middle_prim " << middle_prim->name() << " next_prim " << next_prim_name;
   MS_LOG(DEBUG) << "Redistribution: middle_node " << middle_node->ToString() << " next_node " << next_node->ToString();

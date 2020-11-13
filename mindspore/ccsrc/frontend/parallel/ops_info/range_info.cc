@@ -136,7 +136,7 @@ Status RangeInfo::InitForCostModel(const StrategyPtr &strategy) {
 
 Status RangeInfo::InferNewAttr() {
   CheckGlobalDeviceManager();
-  int64_t rank = g_device_manager->global_rank();
+  int64_t rank = g_device_manager->rank_index_in_stage();
 
   // If repeated calculation and repeated num as the last dimension of dev-matrix,
   // the dev-matrix is [split_num_, repeated_calc_num_], so from rank 0 to rank repeated_calc_num_

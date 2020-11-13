@@ -531,7 +531,7 @@ Status ArgMaxWithValueInfo::InferAsLossDivisor() {
 
   MS_LOG(INFO) << name_ << " has two outputs, use output[0] to infer";
   if (outputs_tensor_map_[0].empty()) {
-    as_loss_divisor_ = SizeToLong(global_device_list_.size());
+    as_loss_divisor_ = stage_device_size_;
     MS_LOG(INFO) << name_ << ": The output is a scalar, use the dev size" << as_loss_divisor_ << " as loss divisor.";
     return SUCCESS;
   }
