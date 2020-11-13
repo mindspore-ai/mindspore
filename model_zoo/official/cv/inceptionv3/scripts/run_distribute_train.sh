@@ -17,7 +17,7 @@
 DATA_DIR=$2
 export RANK_TABLE_FILE=$1
 export RANK_SIZE=8
-
+export HCCL_CONNECT_TIMEOUT=600
 
 cores=`cat /proc/cpuinfo|grep "processor" |wc -l`
 echo "the number of logical core" $cores
