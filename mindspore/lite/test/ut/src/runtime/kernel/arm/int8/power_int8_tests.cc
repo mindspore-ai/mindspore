@@ -79,7 +79,7 @@ TEST_F(TestPowerInt8, PowerInt8) {
   kernel->Run();
 
   std::vector<int8_t> except_result = {-112, -65, 15, 127};
-  CompareOutputData(output.data(), except_result.data(), input.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), except_result.data(), input.size(), 0.000001));
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
@@ -148,7 +148,7 @@ TEST_F(TestPowerInt8, normal) {
   kernel->Run();
 
   std::vector<int8_t> except_result = {-99, 95, 124, -14};
-  CompareOutputData(output.data(), except_result.data(), input.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), except_result.data(), input.size(), 0.000001));
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);

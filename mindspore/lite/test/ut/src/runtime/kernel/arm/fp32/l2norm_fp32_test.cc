@@ -92,7 +92,7 @@ TEST_F(TestL2NormFp32, Test1) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol_);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol_));
 }
 
 // 2thread  all axis relu
@@ -113,7 +113,7 @@ TEST_F(TestL2NormFp32, Test2) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol_);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol_));
 }
 
 // 4 thread  trailing axis  no activation
@@ -134,7 +134,7 @@ TEST_F(TestL2NormFp32, Test3) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol_);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol_));
 }
 
 // 1 thread  trailing axis  no activation
@@ -155,7 +155,7 @@ TEST_F(TestL2NormFp32, Test4) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol_);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol_));
 }
 
 }  // namespace mindspore

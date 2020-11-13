@@ -91,7 +91,7 @@ TEST_F(TestMulInt8, Mul_quant0) {
 
   std::vector<int8_t> except_result = {1, 4, 3, 8, 5, 12, 21, 32, 27, 40, 33, 48};
   PrintData("output data", output, input1.size());
-  CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size(), 0.000001));
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -162,7 +162,7 @@ TEST_F(TestMulInt8, Mul_quant0_thread0) {
 
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
   PrintData("output data", output, input1.size());
-  CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size(), 0.000001));
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -233,7 +233,7 @@ TEST_F(TestMulInt8, Mul_quant1) {
 
   std::vector<int8_t> except_result = {1, 2, 2, 4, 3, 6, 11, 16, 14, 20, 17, 24};
   PrintData("output data", output, input1.size());
-  CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size(), 0.000001));
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -304,7 +304,7 @@ TEST_F(TestMulInt8, Mul_quant1_thread1) {
 
   std::vector<int8_t> except_result = {1, 2, 2, 4, 3, 6, 11, 16, 14, 20, 17, 24};
   PrintData("output data", output, input1.size());
-  CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size(), 0.000001));
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -375,7 +375,7 @@ TEST_F(TestMulInt8, test) {
 
   std::vector<int8_t> except_result = {1, 4, 9, 16, 25, 36, 7, 16, 27, 40, 55, 72};
   PrintData("output data", output, input1.size());
-  CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size(), 0.000001));
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
   output0_tensor->set_data(nullptr);

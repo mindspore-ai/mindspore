@@ -85,7 +85,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice1) {
   std::cout << correct[0] << " , " << correct[1];
   std::cout << std::endl;
 
-  CompareOutputData(output_data, correct, 2, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, 2, 0.00001));
 
   delete strided_slice_param;
   MS_LOG(INFO) << "Teststrided_sliceFp32 passed";
@@ -111,7 +111,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice2) {
   // runtime part
   DoStridedSlice(input_data, output_data, strided_slice_param);
 
-  CompareOutputData(output_data, correct, 9, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, 9, 0.00001));
 
   delete strided_slice_param;
 }
@@ -162,7 +162,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice3) {
   kernel->Run();
   delete ctx;
 
-  CompareOutputData(output_data, correct, 2, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, 2, 0.000001));
   input_tensor.set_data(nullptr);
   output_tensor.set_data(nullptr);
 }
@@ -199,7 +199,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice4) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::InnerContext *ctx = new lite::InnerContext;
+  auto *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
@@ -212,7 +212,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice4) {
   kernel->Run();
   delete ctx;
 
-  CompareOutputData(output_data, correct, 4, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, 4, 0.000001));
   input_tensor.set_data(nullptr);
   output_tensor.set_data(nullptr);
 }
@@ -256,7 +256,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice5) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::InnerContext *ctx = new lite::InnerContext;
+  auto *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
@@ -269,7 +269,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice5) {
   kernel->Run();
   delete ctx;
 
-  CompareOutputData(output_data, correct, 12, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, 12, 0.000001));
   input_tensor.set_data(nullptr);
   output_tensor.set_data(nullptr);
 }
@@ -313,7 +313,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice6) {
   output_tensor.set_data_type(input_tensor.data_type());
   output_tensor.set_shape(output_shape);
 
-  lite::InnerContext *ctx = new lite::InnerContext;
+  auto *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   strided_slice_param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
@@ -326,7 +326,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice6) {
   kernel->Run();
   delete ctx;
 
-  CompareOutputData(output_data, correct, 8, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, 8, 0.000001));
   input_tensor.set_data(nullptr);
   output_tensor.set_data(nullptr);
 }
@@ -375,7 +375,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice7) {
   kernel->Run();
   delete ctx;
 
-  CompareOutputData(output_data, correct, 1, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, 1, 0.000001));
   input_tensor.set_data(nullptr);
   output_tensor.set_data(nullptr);
 }
@@ -432,7 +432,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice8) {
   kernel->Run();
   delete ctx;
 
-  CompareOutputData(output_data, correct, 5, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, 5, 0.000001));
   input_tensor.set_data(nullptr);
   output_tensor.set_data(nullptr);
 }
@@ -582,7 +582,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice9) {
   kernel->Run();
   delete ctx;
 
-  CompareOutputData(output_data, correct, 490, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, correct, 490, 0.000001));
   input_tensor.set_data(nullptr);
   output_tensor.set_data(nullptr);
 }

@@ -90,8 +90,8 @@ TEST_F(TestInternalArithmeticFp32, MulTest) {
   out_tensors[0]->data_ = new float[correct_out.size()];
   DoArithmetic(in_tensors, out_tensors, node, &allocator);
 
-  CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct_out.data(), correct_out.size(),
-                    0.00001);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct_out.data(),
+                                 correct_out.size(), 0.00001));
 
   delete[] out_tensors[0]->data_;
   delete node;

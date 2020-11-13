@@ -69,7 +69,7 @@ TEST_F(TestInstanceNormFp32, INTest1) {
     std::cout << output[i] << " ,";
   }
   std::cout << std::endl;
-  CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
@@ -124,7 +124,7 @@ TEST_F(TestInstanceNormFp32, INTest2) {
     std::cout << output[i] << " ,";
   }
   std::cout << std::endl;
-  CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);

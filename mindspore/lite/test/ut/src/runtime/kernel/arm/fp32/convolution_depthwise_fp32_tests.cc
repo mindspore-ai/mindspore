@@ -135,14 +135,14 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Accuracy) {
   auto correct_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(output_path.c_str(), &output_size));
 
   // compare
-  CompareOutputData(output_ptr, correct_data, outputs[0]->ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_ptr, correct_data, outputs[0]->ElementsNum(), 0.0001));
 
   delete conv_param;
-  for (unsigned int i = 0; i < inputs.size(); i++) {
-    delete inputs[i];
+  for (auto &input : inputs) {
+    delete input;
   }
-  for (unsigned int i = 0; i < outputs.size(); i++) {
-    delete outputs[i];
+  for (auto &output : outputs) {
+    delete output;
   }
   delete kernel;
   delete correct_data;

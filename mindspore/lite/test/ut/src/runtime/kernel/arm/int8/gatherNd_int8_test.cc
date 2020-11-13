@@ -92,7 +92,7 @@ TEST_F(TestGatherNdInt8, GatherNdTest) {
     printf("%d, ", output[i]);
   }
   std::cout << std::endl;
-  CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);

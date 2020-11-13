@@ -123,7 +123,7 @@ TEST_F(TestArithmeticTestFp32, AddTest) {
   auto tile_data0 = new float[size];
   auto tile_data1 = new float[size];
   BroadcastAdd(in_ptr, add_ptr, tile_data0, tile_data1, out, size, add_param);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -166,7 +166,7 @@ TEST_F(TestArithmeticTestFp32, MulTest) {
   auto tile_data0 = new float[size];
   auto tile_data1 = new float[size];
   BroadcastMul(in_ptr, add_ptr, tile_data0, tile_data1, out, size, mul_param);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -209,7 +209,7 @@ TEST_F(TestArithmeticTestFp32, DivTest) {
   auto tile_data0 = new float[size];
   auto tile_data1 = new float[size];
   BroadcastDiv(in_ptr, add_ptr, tile_data0, tile_data1, out, size, div_param);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -229,7 +229,7 @@ TEST_F(TestArithmeticTestFp32, DivTest2) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(out, correct_out.data(), kOutSize, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out.data(), kOutSize, 0.00001));
 }
 
 TEST_F(TestArithmeticTestFp32, FloorDivTest) {
@@ -263,7 +263,7 @@ TEST_F(TestArithmeticTestFp32, FloorDivTest) {
   auto tile_data1 = new float[size];
   int ret = BroadcastFloorDiv(in_ptr, add_ptr, tile_data0, tile_data1, out, size, fdiv_param);
   EXPECT_EQ(ret, 0);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -303,7 +303,7 @@ TEST_F(TestArithmeticTestFp32, FloorModTest) {
   auto tile_data1 = new float[size];
   int ret = BroadcastFloorMod(in_ptr, add_ptr, tile_data0, tile_data1, out, size, fmod_param);
   EXPECT_EQ(ret, 0);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -342,7 +342,7 @@ TEST_F(TestArithmeticTestFp32, LogicalAndTest) {
   auto tile_data0 = new float[size];
   auto tile_data1 = new float[size];
   BroadcastLogicalAnd(in_ptr, add_ptr, tile_data0, tile_data1, out, size, logical_and_param);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -383,7 +383,7 @@ TEST_F(TestArithmeticTestFp32, LogicalOrTest) {
   auto tile_data0 = new float[size];
   auto tile_data1 = new float[size];
   BroadcastLogicalOr(in_ptr, add_ptr, tile_data0, tile_data1, out, size, logical_or_param);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -427,7 +427,7 @@ TEST_F(TestArithmeticTestFp32, MaximumTest) {
   auto tile_data0 = new float[size];
   auto tile_data1 = new float[size];
   BroadcastMaximum(in_ptr, add_ptr, tile_data0, tile_data1, out, size, maximum_param);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -471,7 +471,7 @@ TEST_F(TestArithmeticTestFp32, MinimumTest) {
   auto tile_data0 = new float[size];
   auto tile_data1 = new float[size];
   BroadcastMinimum(in_ptr, add_ptr, tile_data0, tile_data1, out, size, minimum_param);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -507,7 +507,7 @@ TEST_F(TestArithmeticTestFp32, SquaredDifferenceTest) {
   auto tile_data1 = new float[size];
   BroadcastSub(in_ptr, add_ptr, tile_data0, tile_data1, out, size, add_param);
   ElementMul(out, out, out, size);
-  CompareOutputData(out, correct_out_ptr, size, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, correct_out_ptr, size, 0.00001));
 
   delete[] out;
   delete[] tile_data0;
@@ -581,7 +581,7 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
                                     2.547916,    -3.8308315, -0.56281954, 9.992072,  -1.8067529, 1.42546};
   auto correct_out_ptr = correct_out.data();
 
-  CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
@@ -655,7 +655,7 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
                                     2.547916,  0,         0,         9.992072,  0,          1.42546};
   auto correct_out_ptr = correct_out.data();
 
-  CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
@@ -728,7 +728,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
                                     1.1281147, 0,         2.547916,  0,         0,          6, 0, 1.42546};
   auto correct_out_ptr = correct_out.data();
 
-  CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
@@ -753,7 +753,7 @@ TEST_F(TestArithmeticTestFp32, MulInt0) {
 
   int correct_data[12] = {0, 2, 2, 9, 8, 5, 18, 14, 8, 27, 20, 11};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulInt1) {
@@ -774,7 +774,7 @@ TEST_F(TestArithmeticTestFp32, MulInt1) {
 
   int correct_data[12] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulInt2) {
@@ -795,7 +795,7 @@ TEST_F(TestArithmeticTestFp32, MulInt2) {
 
   int correct_data[12] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulInt3) {
@@ -816,7 +816,7 @@ TEST_F(TestArithmeticTestFp32, MulInt3) {
 
   int correct_data[12] = {0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulReluInt0) {
@@ -837,7 +837,7 @@ TEST_F(TestArithmeticTestFp32, MulReluInt0) {
 
   int correct_data[12] = {0, 1, 2, 0, 4, 5, 0, 7, 8, 0, 10, 11};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulReluInt1) {
@@ -858,7 +858,7 @@ TEST_F(TestArithmeticTestFp32, MulReluInt1) {
 
   int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 7, 8, 9, 10, 11};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulReluInt2) {
@@ -879,7 +879,7 @@ TEST_F(TestArithmeticTestFp32, MulReluInt2) {
 
   int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 7, 8, 9, 10, 11};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulReluInt3) {
@@ -900,7 +900,7 @@ TEST_F(TestArithmeticTestFp32, MulReluInt3) {
 
   int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 7, 8, 9, 10, 11};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulRelu6Int0) {
@@ -921,7 +921,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Int0) {
 
   int correct_data[12] = {0, 1, 2, 0, 4, 5, 0, 6, 6, 0, 6, 6};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulRelu6Int1) {
@@ -942,7 +942,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Int1) {
 
   int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulRelu6Int2) {
@@ -963,7 +963,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Int2) {
 
   int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, MulRelu6Int3) {
@@ -984,7 +984,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Int3) {
 
   int correct_data[12] = {0, 0, 0, 0, 0, 0, 6, 6, 6, 6, 6, 6};
 
-  CompareOutputData(out_data, correct_data, 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, correct_data, 12, err_tol));
 }
 
 TEST_F(TestArithmeticTestFp32, AddReluFp32) {
@@ -1053,7 +1053,7 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
     11.572254, 9.565813, 1.6258626, 7.629906,  0,         4.0682936, 0,         0, 13.641247, 0,        3.548678};
   auto correct_out_ptr = correct_out.data();
 
-  CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
@@ -1125,7 +1125,7 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
                                     0, 6,        6, 1.6258626, 6,         0, 4.0682936, 0, 0, 6, 0, 3.548678};
   auto correct_out_ptr = correct_out.data();
 
-  CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
@@ -1199,7 +1199,7 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
                                     5.56195764,  0, 0,           0,          0,          0.71874648};
   auto correct_out_ptr = correct_out.data();
 
-  CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
@@ -1271,7 +1271,7 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
                                     0, 0, 6, 0.28698101, 4.01059523, 0.53567243, 5.56195764, 0, 0, 0, 0, 0.71874648};
   auto correct_out_ptr = correct_out.data();
 
-  CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
@@ -1341,7 +1341,7 @@ TEST_F(TestArithmeticTestFp32, EqualFp32) {
   std::vector<float> correct_out = {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
   auto correct_out_ptr = correct_out.data();
 
-  CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), correct_out_ptr, 24, 0.00001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);

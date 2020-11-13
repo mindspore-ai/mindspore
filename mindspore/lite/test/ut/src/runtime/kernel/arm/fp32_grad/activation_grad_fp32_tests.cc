@@ -21,7 +21,6 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "src/common/file_utils_ext.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/tensor.h"
 #include "mindspore/lite/src/lite_kernel.h"
@@ -71,7 +70,7 @@ TEST_F(TestActGradFp32, ReluGradFp32) {
 
   std::string output_path = "./test_data/activationGrad/relu_out_50.bin";
 
-  int res = lite::CompareRelativeOutput(output_data, output_path);
+  int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -117,7 +116,7 @@ TEST_F(TestActGradFp32, Relu6GradFp32) {
   std::cout << std::endl;
 
   std::string output_path = "./test_data/activationGrad/relu6_out_50.bin";
-  int res = lite::CompareRelativeOutput(output_data, output_path);
+  int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -163,7 +162,7 @@ TEST_F(TestActGradFp32, LReluGradFp32) {
   std::cout << std::endl;
 
   std::string output_path = "./test_data/activationGrad/lrelu_out_50.bin";
-  int res = lite::CompareRelativeOutput(output_data, output_path);
+  int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -209,10 +208,10 @@ TEST_F(TestActGradFp32, SigmoidGradFp32) {
   std::cout << std::endl;
 
   std::string output_path = "./test_data/activationGrad/sigmoid_out_50.bin";
-  int res = lite::CompareRelativeOutput(output_data, output_path);
+  int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
-  // lite::CompareOutput(output_data, output_data_size, output_path);
+  // CompareOutput(output_data, output_data_size, output_path);
 
   delete[] input_data;
   delete[] output_data;
@@ -256,7 +255,7 @@ TEST_F(TestActGradFp32, tanhGradFp32) {
   std::cout << std::endl;
 
   std::string output_path = "./test_data/activationGrad/tanh_out_50.bin";
-  int res = lite::CompareRelativeOutput(output_data, output_path);
+  int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -303,7 +302,7 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
   std::cout << std::endl;
 
   std::string output_path = "./test_data/activationGrad/hswish_out_50.bin";
-  int res = lite::CompareRelativeOutput(output_data, output_path);
+  int res = CompareRelativeOutput(output_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -312,5 +311,4 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
   delete[] yt_data;
   MS_LOG(INFO) << "hswishGradFp32 passed";
 }
-
 }  // namespace mindspore

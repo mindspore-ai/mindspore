@@ -20,7 +20,6 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "src/common/file_utils_ext.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/convolution.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/convolution_grad_filter.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/convolution_grad_input.h"
@@ -131,7 +130,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/conv/convfp32_dw_32_3_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -205,7 +204,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/conv/convfp32_dx_1_28_28_3.bin";
-  auto res = lite::CompareRelativeOutput(dx_data, output_path);
+  auto res = CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] dx_data;
   delete[] w_data;
@@ -276,7 +275,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/conv/convfp32_dw_g3_18_3_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] input_data;
@@ -348,7 +347,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/conv/convfp32_dx_g3_1_28_28_3.bin";
-  auto res = lite::CompareRelativeOutput(dx_data, output_path);
+  auto res = CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] dx_data;
   delete[] w_data;
@@ -421,7 +420,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/conv/convfp32_dw_g3_d2_18_3_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] input_data;
   delete[] dy_data;
@@ -488,7 +487,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/conv/convfp32_dx_g3_d2_1_28_28_3.bin";
-  auto res = lite::CompareRelativeOutput(dx_data, output_path);
+  auto res = CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] dx_data;
   delete[] w_data;
@@ -563,7 +562,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/conv/convfp32_y_g3_d2_1_26_26_18.bin";
-  auto res = lite::CompareRelativeOutput(y_data, output_path);
+  auto res = CompareRelativeOutput(y_data, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] y_data;
@@ -661,7 +660,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/conv/convfp32_dw_d2_g2_s2_12_2_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -761,7 +760,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/conv/convfp32_inputdx_d2_g2_s2_2_4_32_32.bin";
-  auto res = lite::CompareRelativeOutput(dx_data, output_path);
+  auto res = CompareRelativeOutput(dx_data, output_path);
   EXPECT_EQ(res, 0);
   delete[] dx_data;
   delete[] w_data;

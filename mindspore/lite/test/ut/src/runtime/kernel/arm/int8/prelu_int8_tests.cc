@@ -85,7 +85,7 @@ TEST_F(TestPreluInt8, prelu_1) {
   std::vector<int8_t> except_result = {1, -1, 3, 4, 5, 6, 7, -2};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);

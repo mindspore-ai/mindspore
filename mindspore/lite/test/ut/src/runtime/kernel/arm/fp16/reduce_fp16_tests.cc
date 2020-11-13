@@ -95,7 +95,7 @@ TEST_F(TestReduceFp16, Mean) {
   int num_axis = 1;
   int thread_num = 1;
   Prepare(input_shape, output_shape, in, out, num_axis, axes, thread_num);
-  CompareOutputData(out, correct, 24, 1e-3);
+  ASSERT_EQ(0, CompareOutputData(out, correct, 24, 1e-3));
 }
 
 }  // namespace mindspore

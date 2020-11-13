@@ -131,7 +131,7 @@ TEST_F(TestPadFp32, TestPad1) {
     20.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0, 18.0, 19.0, 20.0, 15.0, 16.0, 17.0, 12.0, 13.0, 14.0, 9.0,  10.0, 11.0,
     6.0,  7.0,  8.0,  3.0,  4.0,  5.0,  0.0,  1.0,  2.0,  0.0,  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,
     10.0, 11.0, 9.0,  10.0, 11.0, 6.0,  7.0,  8.0,  3.0,  4.0,  5.0,  0.0,  1.0,  2.0};
-  CompareOutputData(out_data, expect.data(), 432, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, expect.data(), 432, err_tol));
 }
 
 TEST_F(TestPadFp32, TestPad2) {
@@ -166,7 +166,7 @@ TEST_F(TestPadFp32, TestPad2) {
     16.0, 17.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 18.0, 19.0, 20.0, 15.0, 16.0,
     17.0, 12.0, 13.0, 14.0, 9.0,  10.0, 11.0, 6.0,  7.0,  8.0,  3.0,  4.0,  5.0,  0.0,  1.0,  2.0,  3.0,  4.0,  5.0,
     6.0,  7.0,  8.0,  9.0,  10.0, 11.0, 6.0,  7.0,  8.0,  3.0,  4.0,  5.0,  0.0,  1.0,  2.0};
-  CompareOutputData(out_data, expect.data(), 300, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, expect.data(), 300, err_tol));
 }
 
 TEST_F(TestPadFp32, TestPad3) {
@@ -202,7 +202,7 @@ TEST_F(TestPadFp32, TestPad3) {
     0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
     0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
     0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0};
-  CompareOutputData(out_data, expect.data(), 300, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, expect.data(), 300, err_tol));
 }
 
 TEST_F(TestPadFp32, TestPad4) {
@@ -238,7 +238,7 @@ TEST_F(TestPadFp32, TestPad4) {
     1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
     1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
     1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0};
-  CompareOutputData(out_data, expect.data(), 300, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, expect.data(), 300, err_tol));
 }
 
 TEST_F(TestPadFp32, TestPad5) {
@@ -274,6 +274,6 @@ TEST_F(TestPadFp32, TestPad5) {
     1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
     1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
     1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0};
-  CompareOutputData(out_data, expect.data(), 300, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, expect.data(), 300, err_tol));
 }
 }  // namespace mindspore

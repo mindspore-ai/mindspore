@@ -30,7 +30,6 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
-#include "src/common/file_utils_ext.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32_grad/convolution.h"
 
@@ -418,7 +417,7 @@ TEST_F(NetworkTest, tuning_layer) {
   }
   std::cout << std::endl;
   std::string output_path = "./test_data/train/train_output_32_10.bin";
-  auto error = lite::RelativeOutputError(outData, output_path);
+  auto error = RelativeOutputError(outData, output_path);
   EXPECT_LT(error, 2e-3);
 
   ret = session->RunGraph();
@@ -433,7 +432,7 @@ TEST_F(NetworkTest, tuning_layer) {
     std::cout << outData[i] << ", ";
   }
   std::cout << std::endl;
-  error = lite::RelativeOutputError(outData, output_path);
+  error = RelativeOutputError(outData, output_path);
   EXPECT_LT(error, 2e-3);
 
   session->Train();
@@ -449,7 +448,7 @@ TEST_F(NetworkTest, tuning_layer) {
     std::cout << outData[i] << ", ";
   }
   std::cout << std::endl;
-  error = lite::RelativeOutputError(outData, output_path);
+  error = RelativeOutputError(outData, output_path);
   EXPECT_LT(error, 2e-3);
 
   delete session;
@@ -502,7 +501,7 @@ int32_t runNet(mindspore::session::LiteSession *session, const std::string &in, 
       }
       std::cout << std::endl;
     }
-    return mindspore::lite::CompareRelativeOutput(output_data, out);
+    return CommonTest::CompareRelativeOutput(output_data, out);
   }
 
   return lite::RET_ERROR;

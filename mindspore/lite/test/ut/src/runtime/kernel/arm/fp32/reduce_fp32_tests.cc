@@ -116,7 +116,7 @@ TEST_F(TestReduceFp32, Mean1) {
   kernel_->Run();
 
   int output_size = 24;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 // thread num 2 reduce_to_end
@@ -143,7 +143,7 @@ TEST_F(TestReduceFp32, Mean2) {
   kernel_->Run();
 
   int output_size = 2;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 // thread num 1
@@ -171,7 +171,7 @@ TEST_F(TestReduceFp32, Mean3) {
   kernel_->Run();
 
   int output_size = 2;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, MeanAllAxis) {
@@ -197,7 +197,7 @@ TEST_F(TestReduceFp32, MeanAllAxis) {
   kernel_->Run();
 
   int output_size = 1;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, Sum) {
@@ -224,7 +224,7 @@ TEST_F(TestReduceFp32, Sum) {
   kernel_->Run();
 
   int output_size = 24;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 // sum reduce_to_end
@@ -253,7 +253,7 @@ TEST_F(TestReduceFp32, Sum2) {
   kernel_->Run();
 
   int output_size = 32;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, Sum3) {
@@ -281,7 +281,7 @@ TEST_F(TestReduceFp32, Sum3) {
   kernel_->Run();
 
   int output_size = 32;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, SumAllAxis) {
@@ -306,7 +306,7 @@ TEST_F(TestReduceFp32, SumAllAxis) {
   kernel_->Run();
 
   int output_size = 1;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, Max) {
@@ -333,7 +333,7 @@ TEST_F(TestReduceFp32, Max) {
   kernel_->Run();
 
   int output_size = 24;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, Min) {
@@ -360,7 +360,7 @@ TEST_F(TestReduceFp32, Min) {
   kernel_->Run();
 
   int output_size = 24;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, Prod) {
@@ -388,7 +388,7 @@ TEST_F(TestReduceFp32, Prod) {
   kernel_->Run();
 
   int output_size = 24;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, SumSquare) {
@@ -414,7 +414,7 @@ TEST_F(TestReduceFp32, SumSquare) {
   kernel_->Run();
 
   int output_size = 8;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, SumSquare2) {
@@ -443,7 +443,7 @@ TEST_F(TestReduceFp32, SumSquare2) {
   kernel_->Run();
 
   int output_size = 32;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 
 TEST_F(TestReduceFp32, ASum) {
@@ -471,6 +471,6 @@ TEST_F(TestReduceFp32, ASum) {
   kernel_->Run();
 
   int output_size = 32;
-  CompareOutputData(out, correct, output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out, correct, output_size, err_tol));
 }
 }  // namespace mindspore

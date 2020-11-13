@@ -48,7 +48,7 @@ TEST_F(TestDeconvInt8, PackWeight1) {
   int8_t dst[80] = {0};
   /*5*1*2*6 nhwc*/
   PackNHWCToC8HWN8Int8(in, dst, 5, 2, 6);
-  CompareOutputData(dst, co, 80, 1);
+  ASSERT_EQ(0, CompareOutputData(dst, co, 80, 1));
 }
 
 TEST_F(TestDeconvInt8, PackWeight2) {
@@ -105,7 +105,7 @@ TEST_F(TestDeconvInt8, PackWeight2) {
     46,   121,  66,   92,   0,    0,    0,    0};
   int8_t dst[528] = {0};
   PackNHWCToC8HWN8Int8(in, dst, 22, 1, 20);
-  CompareOutputData(dst, co, 528, 1);
+  ASSERT_EQ(0, CompareOutputData(dst, co, 528, 1));
 }
 
 TEST_F(TestDeconvInt8, PackInputTest1) {
@@ -131,7 +131,7 @@ TEST_F(TestDeconvInt8, PackInputTest1) {
                  0,   0,    0,   0,   0,    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0};
   int8_t dst[8 * 32] = {0};
   RowMajor2Row16x4MajorInt8(in, dst, 6, 20);
-  CompareOutputData(dst, co, 8 * 32, 1);
+  ASSERT_EQ(0, CompareOutputData(dst, co, 8 * 32, 1));
 }
 
 TEST_F(TestDeconvInt8, InputSumTest1) {
@@ -150,12 +150,12 @@ TEST_F(TestDeconvInt8, InputSumTest1) {
   int32_t input_sum[12] = {0};
   int32_t correct_input_sum[] = {-7100, -4780, 580, -4880, -9460, -1420, -3120, -3260, -1840, -6960, -4800, -4800};
   DeConvPackInputSum(packed_a, input_sum, filter_zp, 12, 16, true);
-  CompareOutputData(input_sum, correct_input_sum, 12, 0);
+  ASSERT_EQ(0, CompareOutputData(input_sum, correct_input_sum, 12, 0));
 
   int32_t input_sum_4[4] = {0};
   int32_t correct_input_sum_4[] = {-18400, -13160, -7340, -12940};
   DeConvPackInputSum(packed_a, input_sum_4, filter_zp, 4, 16 * 3, true);
-  CompareOutputData(input_sum_4, correct_input_sum_4, 4, 0);
+  ASSERT_EQ(0, CompareOutputData(input_sum_4, correct_input_sum_4, 4, 0));
 }
 
 TEST_F(TestDeconvInt8, MatMulOptTest1) {
@@ -196,7 +196,7 @@ TEST_F(TestDeconvInt8, MatMulOptTest1) {
     55,  10,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,   15,  15,  15,  15,
     15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15,  15};
   RowMajor2Row16x4MajorInt8(a_src_ptr, packed_a, 10, 12);
-  CompareOutputData(packed_a, correct_packed_a, 16 * 12, 0);
+  ASSERT_EQ(0, CompareOutputData(packed_a, correct_packed_a, 16 * 12, 0));
 
   /*
    * ----------------------   pack weight  ------------------------- */
@@ -224,14 +224,14 @@ TEST_F(TestDeconvInt8, MatMulOptTest1) {
     -20,  -20,  -20,  -20,  -20,  -20};
   DeConvWeightTransInt8(b_src_ptr, packed_b, 12, 6, 3, true);
   /* kernel : 12x1x3x6   nhwc   */
-  CompareOutputData(packed_b, correct_packed_b, 16 * 3 * 8, 0);
+  ASSERT_EQ(0, CompareOutputData(packed_b, correct_packed_b, 16 * 3 * 8, 0));
 
   /*
    * ----------------------   calculate input_sum   ------------------------- */
   int32_t input_sum[12] = {0};
   int32_t correct_input_sum[] = {-7100, -4780, 580, -4880, -9460, -1420, -3120, -3260, -1840, -6960, -4800, -4800};
   DeConvPackInputSum(packed_a, input_sum, filter_zp, 12, 16, true);
-  CompareOutputData(input_sum, correct_input_sum, 12, 0);
+  ASSERT_EQ(0, CompareOutputData(input_sum, correct_input_sum, 12, 0));
 
   /*
    * ----------------------   calculate weight_sum   ------------------------- */
@@ -239,7 +239,7 @@ TEST_F(TestDeconvInt8, MatMulOptTest1) {
   int32_t correct_weight_sum[] = {-7395, -8265, -3090, -435, -5655, -1035, 0,     0,     1695,  -4770, -6630, 300,
                                   -765,  -2835, 0,     0,    -7395, 4665,  -2475, -4170, -2880, -1110, 0,     0};
   DeConvPackWeightSum(packed_b, weight_sum, input_zp, filter_zp, 16, 24, true);
-  CompareOutputData(weight_sum, correct_weight_sum, 3 * 8, 0);
+  ASSERT_EQ(0, CompareOutputData(weight_sum, correct_weight_sum, 3 * 8, 0));
 
   /*
    * ----------------------   do matmul   ------------------------- */
@@ -268,36 +268,36 @@ TEST_F(TestDeconvInt8, MatMulOptTest1) {
     0,      0,      0,      0,      0,      0,      0,      0};
 
   MatMulInt8_16x4(packed_a, packed_b, tmp_output, 12, 24, 16, input_sum, weight_sum);
-  CompareOutputData(tmp_output, correct_tmp_output, 12 * 3 * 8, 0);
+  ASSERT_EQ(0, CompareOutputData(tmp_output, correct_tmp_output, 12 * 3 * 8, 0));
 }
 
 int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                         ConvParameter *conv_param, int8_t **correct) {
   /* float data from deconv fp32 testcase : DeConvTestInit2 */
   /*   vq = (vi - zp) * s     vi = vq / s + zp */
-  Tensor *in_t = new Tensor(kNumberTypeInt8, {1, 4, 2, 3}, Format_NHWC, lite::Tensor::Category::VAR);
+  auto *in_t = new Tensor(kNumberTypeInt8, {1, 4, 2, 3}, Format_NHWC, lite::Tensor::Category::VAR);
   in_t->MallocData();
   int8_t in[] = {6, 43, 38, 24, -8, 12, 41, -24, -20, 41, -19, -6, -26, -6, 23, -31, 34, 45, 8, 45, -39, -27, -48, 12};
   memcpy(in_t->MutableData(), in, sizeof(int8_t) * in_t->ElementsNum());
-  QuantArg *in_quant_arg = new QuantArg();
+  auto *in_quant_arg = new QuantArg();
   in_quant_arg->zeroPoint = -19, in_quant_arg->scale = 0.31228156;
   in_t->AddQuantParam(*in_quant_arg);
   inputs_->push_back(in_t);
 
-  Tensor *weight_t = new Tensor(kNumberTypeInt8, {3, 3, 3, 2}, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
+  auto *weight_t = new Tensor(kNumberTypeInt8, {3, 3, 3, 2}, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
   weight_t->MallocData();
   int8_t weight[] = {66, 89, 98, 74,  95, 86, 125, 95, 105, 83, 116, 94, 90, 80, 86, 59, 72, 92,
                      64, 76, 92, 80,  90, 87, 106, 55, 105, 60, 75,  53, 81, 81, 98, 81, 86, 59,
                      74, 82, 97, 105, 71, 67, 79,  87, 72,  79, 80,  76, 96, 80, 83, 71, 61, 79};
   memcpy(weight_t->MutableData(), weight, sizeof(int8_t) * weight_t->ElementsNum());
-  QuantArg *w_quant_arg = new QuantArg();
+  auto *w_quant_arg = new QuantArg();
   w_quant_arg->zeroPoint = 83, w_quant_arg->scale = 0.023649725490196;
   weight_t->AddQuantParam(*w_quant_arg);
   inputs_->push_back(weight_t);
 
-  Tensor *out_t = new Tensor(kNumberTypeInt8, {1, 7, 3, 2}, Format_NHWC, lite::Tensor::Category::VAR);
+  auto *out_t = new Tensor(kNumberTypeInt8, {1, 7, 3, 2}, Format_NHWC, lite::Tensor::Category::VAR);
   out_t->MallocData();
-  QuantArg *out_quant_arg = new QuantArg();
+  auto *out_quant_arg = new QuantArg();
   out_quant_arg->zeroPoint = 31, out_quant_arg->scale = 0.3439215686275;
   out_t->AddQuantParam(*out_quant_arg);
   outputs_->push_back(out_t);
@@ -318,17 +318,17 @@ TEST_F(TestDeconvInt8, DeConvInt8Test1) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   auto deconv_param = new ConvParameter();
-  lite::InnerContext *ctx = new lite::InnerContext;
+  auto *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   int8_t *correct;
   int total_size = DeConvInt8TestInit1(&inputs_, &outputs_, deconv_param, &correct);
-  mindspore::kernel::DeConvInt8CPUKernel *deconv = new mindspore::kernel::DeConvInt8CPUKernel(
-    reinterpret_cast<OpParameter *>(deconv_param), inputs_, outputs_, ctx, nullptr);
+  auto *deconv = new mindspore::kernel::DeConvInt8CPUKernel(reinterpret_cast<OpParameter *>(deconv_param), inputs_,
+                                                            outputs_, ctx, nullptr);
 
   deconv->Init();
   deconv->Run();
-  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 3);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 3));
 
   delete deconv_param;
   delete deconv;

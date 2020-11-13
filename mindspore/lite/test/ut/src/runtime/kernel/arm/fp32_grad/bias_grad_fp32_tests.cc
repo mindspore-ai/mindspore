@@ -61,7 +61,7 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   }
   std::cout << std::endl;
   std::string output_path = "./test_data/operators/biasgradfp32_1_db_7.bin";
-  lite::CompareOutput(output_data, 7, output_path);
+  CompareOutput(output_data, 7, output_path);
 
   delete[] input_data;
   delete[] output_data;

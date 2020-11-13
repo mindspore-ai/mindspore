@@ -69,8 +69,8 @@ void TEST_MAIN(PadParameter *param, Format input_format, Format output_format, F
   sub_graph->Init();
   memcpy(input.data_c(), input_data, input.Size());
   sub_graph->Run();
-  if (lite::CompareOutputData(reinterpret_cast<float *>(output.data_c()), output.ElementsNum(),
-                              const_cast<float *>(expect_data), output.ElementsNum())) {
+  if (CommonTest::CompareOutputData(reinterpret_cast<float *>(output.data_c()), const_cast<float *>(expect_data),
+                                    static_cast<size_t>(output.ElementsNum()))) {
     FAIL();
   } else {
     std::cout << "COMPARE SUCCESS!\n";

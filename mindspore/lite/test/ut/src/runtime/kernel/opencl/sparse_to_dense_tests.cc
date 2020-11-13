@@ -96,7 +96,7 @@ TEST_F(TestSparseToDenseOpenCLCI, Fp32Dim2Scalar) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
 
@@ -168,7 +168,7 @@ TEST_F(TestSparseToDenseOpenCLCI, Fp32Dim2Vector) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
 
@@ -239,7 +239,7 @@ TEST_F(TestSparseToDenseOpenCLCI, Fp32Dim2Shape1Vector) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
 
@@ -310,7 +310,7 @@ TEST_F(TestSparseToDenseOpenCLCI, Fp32Dim2Shape1Scalar) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
 
@@ -381,7 +381,7 @@ TEST_F(TestSparseToDenseOpenCLCI, Fp32Dim1Scalar) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
 
@@ -452,7 +452,7 @@ TEST_F(TestSparseToDenseOpenCLCI, Fp32Dim1Vector) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
 

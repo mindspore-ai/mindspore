@@ -124,7 +124,7 @@ TEST_F(TestConcatOpenCLCI, ConcatFp32_2inputforCI) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001));
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
     delete tensor;
@@ -252,7 +252,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_4input_dim4_axis1) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001));
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
     delete tensor;
@@ -371,7 +371,7 @@ TEST_F(TestConcatOpenCLfp32, ConcatFp32_3input_dim4_axis1) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001));
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
     delete tensor;
@@ -510,7 +510,7 @@ TEST_F(TestConcatOpenCLfp16, ConcatFp16_6input_dim4_axis1) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001));
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
     delete tensor;

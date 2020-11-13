@@ -58,9 +58,6 @@ inline int WriteToBin(const std::string &file_path, void *data, size_t size) {
   return 0;
 }
 
-int CompareOutputData(const float *output_data, size_t output_num, const float *correct_data, size_t data_size);
-int CompareOutput(const float *output_data, size_t output_num, const std::string &file_path);
-
 std::string GetAndroidPackageName();
 std::string GetAndroidPackagePath();
 }  // namespace lite

@@ -77,7 +77,7 @@ TEST_F(TestInternalReduceFp32, ReduceSumOneAxisTest) {
 
   DoReduce(in_tensors, out_tensors, node, &allocator);
 
-  CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct, 24, 0.00001));
   delete out_tensors[0]->data_;
   delete node;
   delete params;
@@ -126,7 +126,7 @@ TEST_F(TestInternalReduceFp32, ReduceSumAllAxisTest) {
 
   DoReduce(in_tensors, out_tensors, node, &allocator);
 
-  CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct, 1, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct, 1, 0.00001));
   delete out_tensors[0]->data_;
   delete node;
   delete params;
@@ -180,7 +180,7 @@ TEST_F(TestInternalReduceFp32, ReduceMeanOneAxisTest) {
 
   DoReduce(in_tensors, out_tensors, node, &allocator);
 
-  CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct, 24, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct, 24, 0.00001));
   delete out_tensors[0]->data_;
   delete node;
   delete params;
@@ -234,7 +234,7 @@ TEST_F(TestInternalReduceFp32, ReduceMeanAllAxisTest) {
 
   DoReduce(in_tensors, out_tensors, node, &allocator);
 
-  CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct, 1, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(out_tensors.front()->data_), correct, 1, 0.00001));
   delete out_tensors[0]->data_;
   delete node;
   delete params;

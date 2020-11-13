@@ -83,7 +83,7 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
 
@@ -139,7 +139,7 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor.data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
 }  // namespace mindspore

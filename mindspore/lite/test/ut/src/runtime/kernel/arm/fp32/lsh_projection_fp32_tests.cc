@@ -71,7 +71,7 @@ TEST_F(TestLshProjectionFp32, Dense1DInputs) {
 
   std::vector<int32_t> except_result = {0, 0, 0, 1, 0, 0};
   PrintData("output data", output_data, 6);
-  CompareOutputData(output_data, except_result.data(), 6, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, except_result.data(), 6, 0.000001));
 
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
@@ -111,7 +111,7 @@ TEST_F(TestLshProjectionFp32, Sparse1DInputs) {
 
   std::vector<int32_t> except_result = {0, 5, 8};
   PrintData("output data", output_data, 3);
-  CompareOutputData(output_data, except_result.data(), 3, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, except_result.data(), 3, 0.000001));
 
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);
@@ -155,7 +155,7 @@ TEST_F(TestLshProjectionFp32, Sparse3DInputs) {
 
   std::vector<int32_t> except_result = {2, 5, 9};
   PrintData("output data", output_data, 3);
-  CompareOutputData(output_data, except_result.data(), 3, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, except_result.data(), 3, 0.000001));
 
   in_tensor0.set_data(nullptr);
   in_tensor1.set_data(nullptr);

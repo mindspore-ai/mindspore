@@ -23,7 +23,7 @@
 namespace mindspore {
 class LstmFp32 : public mindspore::CommonTest {
  public:
-  LstmFp32() {}
+  LstmFp32() = default;
 };
 
 void InitLstmParam(LstmParameter *lstm_param) {
@@ -124,7 +124,7 @@ void InitLstmForwardCreator(std::vector<lite::Tensor *> *inputs, std::vector<lit
   outputs->push_back(hidden_state);
 }
 
-void CompareOutput(lite::Tensor *output, std::vector<float> data) {
+void CompareResult(lite::Tensor *output, std::vector<float> data) {
   for (int i = 0; i < output->ElementsNum(); i++) {
     std::cout << reinterpret_cast<float *>(output->MutableData())[i] << ", ";
   }
@@ -162,20 +162,20 @@ TEST_F(LstmFp32, LstmForwardFp32Accuracy) {
   std::cout << "==================output data=================" << std::endl;
   std::vector<float> output0_data = {-0.0702, 0.1225,  0.0876,  -0.0357, -0.0227, -0.2294,
                                      -0.0345, -0.0108, -0.2002, 0.0451,  0.0853,  -0.1205};
-  CompareOutput(outputs[0], output0_data);
+  CompareResult(outputs[0], output0_data);
 
   std::vector<float> output1_data = {0.0451, 0.0853, -0.1205};
-  CompareOutput(outputs[1], output1_data);
+  CompareResult(outputs[1], output1_data);
 
   std::vector<float> output2_data = {0.0989, 0.2094, -0.4132};
-  CompareOutput(outputs[2], output2_data);
+  CompareResult(outputs[2], output2_data);
 
   delete lstm_param;
   for (unsigned int i = 0; i < inputs.size() - 1; i++) {
     delete inputs[i];
   }
-  for (unsigned int i = 0; i < outputs.size(); i++) {
-    delete outputs[i];
+  for (auto &output : outputs) {
+    delete output;
   }
   delete kernel;
   MS_LOG(INFO) << "LstmFp32 forward accuracy passed";
@@ -312,20 +312,20 @@ TEST_F(LstmFp32, LstmBackwardFp32Accuracy) {
   std::vector<float> output0_data = {-0.2922, -0.1416, 0.0077,  -0.0422, -0.0585, 0.2061,  -0.2385, -0.0146,
                                      -0.1796, -0.0554, -0.0973, 0.1013,  -0.3062, -0.1516, -0.0310, 0.0459,
                                      -0.0784, 0.0949,  0.0249,  -0.0653, -0.0869, -0.1113, -0.2155, -0.0500};
-  CompareOutput(outputs[0], output0_data);
+  CompareResult(outputs[0], output0_data);
 
   std::vector<float> output1_data = {0.0249, -0.0653, -0.0869, -0.0422, -0.0585, 0.2061};
-  CompareOutput(outputs[1], output1_data);
+  CompareResult(outputs[1], output1_data);
 
   std::vector<float> output2_data = {0.0373, -0.2322, -0.1477, -0.1621, -0.1808, 0.5146};
-  CompareOutput(outputs[2], output2_data);
+  CompareResult(outputs[2], output2_data);
 
   delete lstm_param;
   for (unsigned int i = 0; i < inputs.size() - 1; i++) {
     delete inputs[i];
   }
-  for (unsigned int i = 0; i < outputs.size(); i++) {
-    delete outputs[i];
+  for (auto &output : outputs) {
+    delete output;
   }
   delete kernel;
   MS_LOG(INFO) << "LstmFp32 backward accuracy passed";

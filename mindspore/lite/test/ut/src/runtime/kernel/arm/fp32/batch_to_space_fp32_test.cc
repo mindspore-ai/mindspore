@@ -39,7 +39,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest1) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_1) {
@@ -57,7 +57,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_1) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest2) {
@@ -76,7 +76,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest2) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_2) {
@@ -95,7 +95,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_2) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest3) {
@@ -118,7 +118,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest3) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_3) {
@@ -139,7 +139,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_3) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest4) {
@@ -164,7 +164,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest4) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_4) {
@@ -187,7 +187,7 @@ TEST_F(BatchToSpaceTestFp32, BatchToSpaceTest_crop_4) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 }  // namespace mindspore

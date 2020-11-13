@@ -81,7 +81,7 @@ TEST_F(TestReshapeInt8, reshape_quant0) {
   std::vector<int8_t> except_result = {10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25};
   PrintData("output data", output, input1.size());
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size(), 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -141,7 +141,7 @@ TEST_F(TestReshapeInt8, reshape_quant1_thread2) {
   std::vector<int8_t> except_result = {6, 7, 7, 8, 8, 9, 11, 12, 12, 13, 13, 14};
   PrintData("output data", output, input1.size());
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), input1.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size(), 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);

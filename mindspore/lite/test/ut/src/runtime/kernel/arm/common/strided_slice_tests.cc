@@ -71,7 +71,7 @@ TEST_F(TestStridedSlice, StridedSlice) {
   EXPECT_EQ(0, ret);
 
   float expect[2] = {0.2390374, 0.05051243};
-  CompareOutputData(output_data, expect, 2, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect, 2, 0.000001));
 
   in_tensor.set_data(nullptr);
   out_tensor.set_data(nullptr);
