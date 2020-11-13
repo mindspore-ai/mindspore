@@ -371,7 +371,7 @@ class AvgPool1d(_PoolNd):
         self.squeeze = P.Squeeze(2)
 
     def construct(self, x):
-        _shape_check(self.shape(x))
+        x = F.depend(x, _shape_check(self.shape(x)))
         batch, channel, width = self.shape(x)
         if width == self.kernel_size[1]:
             x = self.reduce_mean(x, 2)

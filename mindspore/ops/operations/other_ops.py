@@ -492,7 +492,12 @@ class ConfusionMatrix(PrimitiveWithInfer):
         >>> confusion_matrix = P.ConfusionMatrix(4)
         >>> labels = Tensor([0, 1, 1, 3], mindspore.int32)
         >>> predictions = Tensor([1, 2, 1, 3], mindspore.int32)
-        >>> confusion_matrix(labels, predictions)
+        >>> output = confusion_matrix(labels, predictions)
+        >>> print(output)
+        [[0 1 0 0
+         [0 1 1 0]
+         [0 0 0 0]
+         [0 0 0 1]]
     """
 
     @prim_attr_register

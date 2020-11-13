@@ -5412,7 +5412,7 @@ class Dropout(PrimitiveWithInfer):
 
     Args:
         keep_prob (float): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
-          means dropping out 10% of input units.
+            means dropping out 10% of input units.
 
     Inputs:
         - **input** (Tensor) - The input tensor.
@@ -5426,9 +5426,9 @@ class Dropout(PrimitiveWithInfer):
         >>> x = Tensor((20, 16, 50, 50), mindspore.float32)
         >>> output, mask = dropout(x)
         >>> print(output)
-        [ 0.	32.	0.	0.]
+        [0. 32. 0. 0.]
         >>> print(mask)
-        [0.	1.	0.	0.]
+        [0. 1. 0. 0.]
     """
 
     @prim_attr_register
