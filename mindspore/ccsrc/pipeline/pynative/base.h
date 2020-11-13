@@ -64,6 +64,7 @@ using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
 OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
 const std::set<std::string> ignore_infer_prim = {"make_ref", "mixed_precision_cast"};
+const std::set<std::string> force_infer_prim = {"TopK", "DropoutGenMask"};
 }  // namespace pynative
 }  // namespace mindspore
 
