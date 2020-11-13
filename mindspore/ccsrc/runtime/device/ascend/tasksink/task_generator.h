@@ -36,6 +36,19 @@ using mindspore::kernel::AddressPtr;
 using AddressPtrList = std::vector<mindspore::kernel::AddressPtr>;
 using ge::model_runner::TaskInfo;
 using TaskInfoPtr = std::shared_ptr<TaskInfo>;
+class TaskDebugInfo {
+ public:
+  std::string op_name_;
+  std::size_t task_num_{0};
+  uint32_t stream_id_{0};
+  uint32_t type_{0};
+  bool dump_flag_{false};
+  std::vector<AddressPtr> input_addrs_;
+  std::vector<AddressPtr> output_addrs_;
+  std::vector<AddressPtr> workspace_addrs_;
+};
+using TaskDebugInfoPtr = std::shared_ptr<TaskDebugInfo>;
+
 class TaskGenerator {
  public:
   TaskGenerator() = default;
@@ -43,15 +56,17 @@ class TaskGenerator {
   TaskGenerator(const TaskGenerator &in) = delete;
   TaskGenerator &operator=(const TaskGenerator &in) = delete;
 
-  static bool GenTasks(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *task_info_list,
-                       uint32_t graph_id);
+  bool GenTasks(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *task_info_list,
+                uint32_t graph_id);
 
  private:
+  std::vector<TaskDebugInfoPtr> task_debug_info_list_;
   static void LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressPtrList *kernel_inputs);
   static void LaunchAddrCleanAkgKernel(const CNodePtr &anf_node_ptr, AddressPtrList *kernel_inputs);
-  static bool LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_id, std::vector<TaskInfoPtr> *task_info_list);
-  static bool LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *task_info_list,
-                              uint32_t graph_id);
+  bool LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_id, std::vector<TaskInfoPtr> *task_info_list);
+  bool LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *task_info_list,
+                       uint32_t graph_id);
+  void DumpTaskInfo(const string &real_filename);
 };
 }  // namespace tasksink
 }  // namespace ascend
