@@ -18,7 +18,6 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "src/common/file_utils_ext.h"
 #include "src/runtime/kernel/arm/fp32_grad/bn_grad.h"
 #include "nnacl/fp32_grad/batch_norm.h"
 #include "nnacl/fp32/batchnorm.h"
@@ -93,18 +92,18 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   auto dx = reinterpret_cast<float *>(outputs[0]->MutableData());
   for (int i = 0; i < 7; i++) std::cout << dx[i] << " ";
   std::cout << "\n";
-  auto res = mindspore::lite::CompareRelativeOutput(dx, "./test_data/bngrad/output_dx_2_4_5_3.bin");
+  auto res = CompareRelativeOutput(dx, "./test_data/bngrad/output_dx_2_4_5_3.bin");
   std::cout << "\n=======dscale=======\n";
   auto dscale = reinterpret_cast<float *>(outputs[1]->MutableData());
   for (int i = 0; i < channels; i++) std::cout << dscale[i] << " ";
   std::cout << "\n";
-  res = mindspore::lite::CompareRelativeOutput(dscale, "./test_data/bngrad/output_dscale_3.bin");
+  res = CompareRelativeOutput(dscale, "./test_data/bngrad/output_dscale_3.bin");
   EXPECT_EQ(res, 0);
   std::cout << "==========dbias==========\n";
   auto dbias = reinterpret_cast<float *>(outputs[2]->MutableData());
   for (int i = 0; i < 3; i++) std::cout << dbias[i] << " ";
   std::cout << "\n";
-  res = mindspore::lite::CompareRelativeOutput(dbias, "./test_data/bngrad/output_dbias_3.bin");
+  res = CompareRelativeOutput(dbias, "./test_data/bngrad/output_dbias_3.bin");
   EXPECT_EQ(res, 0);
   for (auto v : inputs) {
     delete[] reinterpret_cast<float *>(v->MutableData());
@@ -192,9 +191,9 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   for (int i = 0; i < channels; i++) std::cout << save_var[i] << " ";
   std::cout << "\n";
   delete[] reinterpret_cast<float *>(x_tensor->MutableData());
-  auto res = mindspore::lite::CompareRelativeOutput(save_mean, "./test_data/bngrad/running_mean_3.bin");
+  auto res = CompareRelativeOutput(save_mean, "./test_data/bngrad/running_mean_3.bin");
   EXPECT_EQ(res, 0);
-  res = mindspore::lite::CompareRelativeOutput(save_var, "./test_data/bngrad/running_var_3.bin");
+  res = CompareRelativeOutput(save_var, "./test_data/bngrad/running_var_3.bin");
   EXPECT_EQ(res, 0);
 
   x_tensor->set_data(nullptr);

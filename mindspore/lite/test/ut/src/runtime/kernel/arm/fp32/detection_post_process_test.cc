@@ -129,33 +129,33 @@ TEST_F(TestDetectionPostProcessFp32, Fast) {
   op->Init();
   op->Run();
 
-  float *output_boxes = reinterpret_cast<float *>(outputs_[0]->MutableData());
+  auto *output_boxes = reinterpret_cast<float *>(outputs_[0]->MutableData());
   size_t output_boxes_size;
   std::string output_boxes_path = "./test_data/detectionPostProcess/output_0.bin";
   auto correct_boxes =
     reinterpret_cast<float *>(mindspore::lite::ReadFile(output_boxes_path.c_str(), &output_boxes_size));
-  CompareOutputData(output_boxes, correct_boxes, outputs_[0]->ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_boxes, correct_boxes, outputs_[0]->ElementsNum(), 0.0001));
 
-  float *output_classes = reinterpret_cast<float *>(outputs_[1]->MutableData());
+  auto *output_classes = reinterpret_cast<float *>(outputs_[1]->MutableData());
   size_t output_classes_size;
   std::string output_classes_path = "./test_data/detectionPostProcess/output_1.bin";
   auto correct_classes =
     reinterpret_cast<float *>(mindspore::lite::ReadFile(output_classes_path.c_str(), &output_classes_size));
-  CompareOutputData(output_classes, correct_classes, outputs_[1]->ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_classes, correct_classes, outputs_[1]->ElementsNum(), 0.0001));
 
-  float *output_scores = reinterpret_cast<float *>(outputs_[2]->MutableData());
+  auto *output_scores = reinterpret_cast<float *>(outputs_[2]->MutableData());
   size_t output_scores_size;
   std::string output_scores_path = "./test_data/detectionPostProcess/output_2.bin";
   auto correct_scores =
     reinterpret_cast<float *>(mindspore::lite::ReadFile(output_scores_path.c_str(), &output_scores_size));
-  CompareOutputData(output_scores, correct_scores, outputs_[2]->ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_scores, correct_scores, outputs_[2]->ElementsNum(), 0.0001));
 
-  float *output_num_det = reinterpret_cast<float *>(outputs_[3]->MutableData());
+  auto *output_num_det = reinterpret_cast<float *>(outputs_[3]->MutableData());
   size_t output_num_det_size;
   std::string output_num_det_path = "./test_data/detectionPostProcess/output_3.bin";
   auto correct_num_det =
     reinterpret_cast<float *>(mindspore::lite::ReadFile(output_num_det_path.c_str(), &output_num_det_size));
-  CompareOutputData(output_num_det, correct_num_det, outputs_[3]->ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_num_det, correct_num_det, outputs_[3]->ElementsNum(), 0.0001));
 
   delete op;
   for (auto t : inputs_) delete t;

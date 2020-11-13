@@ -27,7 +27,7 @@ using mindspore::lite::Tensor;
 
 class TestConv1x1Fp32 : public mindspore::CommonTest {
  public:
-  TestConv1x1Fp32() {}
+  TestConv1x1Fp32() = default;
 };
 
 TEST_F(TestConv1x1Fp32, Input1x1PrePack1) {
@@ -54,7 +54,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack1) {
 
   float out[20] = {0};
   Conv1x1InputPack(in, out, conv_param, sizeof(float));
-  EXPECT_EQ(0, lite::CompareOutputData(out, 20, correct, 20));
+  EXPECT_EQ(0, CompareOutputData(out, correct, 20));
   delete conv_param;
 }
 
@@ -95,7 +95,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack2) {
 
   float out[28] = {0};
   Conv1x1InputPack(in, out, conv_param, sizeof(float));
-  CompareOutputData(out, correct, 28, 0.0001);
+  ASSERT_EQ(0, CompareOutputData(out, correct, 28, 0.0001));
   delete conv_param;
 }
 
@@ -114,7 +114,7 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack3) {
                      -5.052577, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
   Conv1x1InputPack(in, out, conv_param, sizeof(float));
-  EXPECT_EQ(0, lite::CompareOutputData(out, 18, correct, 18));
+  EXPECT_EQ(0, CompareOutputData(out, correct, 18));
   delete conv_param;
 }
 
@@ -136,12 +136,12 @@ TEST_F(TestConv1x1Fp32, Input1x1PrePack4) {
                      0.0,    0.0,    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    0.0};
   float out[54] = {0};
   Conv1x1InputPack(in, out, conv_param, sizeof(float));
-  EXPECT_EQ(0, lite::CompareOutputData(out, 54, correct, 54));
+  EXPECT_EQ(0, CompareOutputData(out, correct, 54));
   delete conv_param;
 }
 
 TEST_F(TestConv1x1Fp32, Conv1x1WeightTest1) {
-  ConvParameter *conv_param = new ConvParameter();
+  auto *conv_param = new ConvParameter();
   float in[] = {0.214637,  0.3815,   0.811557, 0.982146,  0.09123,   0.687198,  0.02742,   0.3360,    0.853275,
                 0.674123,  0.81337,  0.57188,  0.706416,  0.2740942, 0.9045,    0.07155,   0.130864,  0.037712,
                 0.5369175, 0.97283,  0.92133,  0.3588165, 0.7432479, 0.7886823, 0.870324,  0.230946,  0.343969,
@@ -166,13 +166,13 @@ TEST_F(TestConv1x1Fp32, Conv1x1WeightTest1) {
   conv_param->output_channel_ = 7;
   float out[96] = {0};
   Pack1x1WeightFp32(in, out, conv_param);
-  EXPECT_EQ(0, lite::CompareOutputData(out, 96, co, 96));
+  EXPECT_EQ(0, CompareOutputData(out, co, 96));
   delete conv_param;
 }
 
 int Conv1x1TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                      ConvParameter *conv_param, float **correct) {
-  lite::Tensor *in_t = new lite::Tensor(kNumberTypeFloat, {1, 2, 3, 4}, schema::Format_NHWC, lite::Tensor::VAR);
+  auto *in_t = new lite::Tensor(kNumberTypeFloat, {1, 2, 3, 4}, schema::Format_NHWC, lite::Tensor::VAR);
   in_t->MallocData();
   float in[] = {12.216284, 3.3466918,  15.327419, 5.234958,  0.804376,   9.952188,  14.727955,  -8.080715,
                 13.71383,  8.055829,   6.5845337, -9.25232,  -4.24519,   11.550042, 9.262012,   1.2780352,
@@ -180,21 +180,20 @@ int Conv1x1TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Ten
   memcpy(in_t->MutableData(), in, sizeof(float) * 24);
   inputs_->push_back(in_t);
 
-  lite::Tensor *weight_t =
-    new lite::Tensor(kNumberTypeFloat, {3, 1, 1, 4}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
+  auto *weight_t = new lite::Tensor(kNumberTypeFloat, {3, 1, 1, 4}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
   weight_t->MallocData();
   float weight[] = {-0.7308652, 0.5257509,  -0.87825793, -1.123181,   -1.2206168, 0.562695,
                     1.5382664,  -0.5020635, 0.8591602,   -0.26410004, 1.1262615,  0.073132955}; /* nhwc */
   memcpy(weight_t->MutableData(), weight, sizeof(float) * 12);
   inputs_->push_back(weight_t);
 
-  lite::Tensor *bias_t = new lite::Tensor(kNumberTypeFloat, {3}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
+  auto *bias_t = new lite::Tensor(kNumberTypeFloat, {3}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
   bias_t->MallocData();
   float bias[] = {2, 2, 2};
   memcpy(bias_t->MutableData(), bias, sizeof(float) * 3);
   inputs_->push_back(bias_t);
 
-  lite::Tensor *out_t = new lite::Tensor(kNumberTypeFloat, {1, 2, 3, 3}, schema::Format_NHWC, lite::Tensor::VAR);
+  auto *out_t = new lite::Tensor(kNumberTypeFloat, {1, 2, 3, 3}, schema::Format_NHWC, lite::Tensor::VAR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -214,18 +213,18 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test1) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
-  lite::InnerContext *ctx = new lite::InnerContext();
+  auto *ctx = new lite::InnerContext();
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   float *correct;
   int total_size = Conv1x1TestInit1(&inputs_, &outputs_, conv_param, &correct);
-  kernel::Convolution1x1CPUKernel *conv1x1 =
+  auto *conv1x1 =
     new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);
 
   conv1x1->Init();
   conv1x1->Run();
 
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete conv_param;
   delete conv1x1;
   for (auto t : inputs_) delete t;
@@ -236,29 +235,28 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test1) {
 int Conv1x1TestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *> *outputs_,
                      ConvParameter *conv_param, float **correct) {
   size_t buffer_size;
-  lite::Tensor *in_t = new lite::Tensor(kNumberTypeFloat, {1, 300, 300, 24}, schema::Format_NHWC, lite::Tensor::VAR);
+  auto *in_t = new lite::Tensor(kNumberTypeFloat, {1, 300, 300, 24}, schema::Format_NHWC, lite::Tensor::VAR);
   in_t->MallocData();
   std::string input_path = "./conv/conv1x1fp32_input1_nhwc.bin";
   auto in = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &buffer_size));
   memcpy(in_t->MutableData(), in, buffer_size);
   inputs_->push_back(in_t);
 
-  lite::Tensor *weight_t =
-    new lite::Tensor(kNumberTypeFloat, {40, 1, 1, 24}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
+  auto *weight_t = new lite::Tensor(kNumberTypeFloat, {40, 1, 1, 24}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
   weight_t->MallocData();
   std::string weight_path = "./conv/conv1x1fp32_weight1_nhwc.bin";
   auto weight = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &buffer_size));
   memcpy(weight_t->MutableData(), weight, buffer_size);
   inputs_->push_back(weight_t);
 
-  lite::Tensor *bias_t = new lite::Tensor(kNumberTypeFloat, {40}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
+  auto *bias_t = new lite::Tensor(kNumberTypeFloat, {40}, schema::Format_NHWC, lite::Tensor::CONST_TENSOR);
   bias_t->MallocData();
   std::string bias_path = "./conv/conv1x1fp32_bias1_nhwc.bin";
   auto bias = mindspore::lite::ReadFile(bias_path.c_str(), &buffer_size);
   memcpy(bias_t->MutableData(), bias, buffer_size);
   inputs_->push_back(bias_t);
 
-  lite::Tensor *out_t = new lite::Tensor(kNumberTypeFloat, {1, 300, 300, 40}, schema::Format_NHWC, lite::Tensor::VAR);
+  auto *out_t = new lite::Tensor(kNumberTypeFloat, {1, 300, 300, 40}, schema::Format_NHWC, lite::Tensor::VAR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 
@@ -279,17 +277,17 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test2) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   auto conv_param = new ConvParameter();
-  lite::InnerContext *ctx = new lite::InnerContext();
+  auto *ctx = new lite::InnerContext();
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   float *correct;
   int total_size = Conv1x1TestInit2(&inputs_, &outputs_, conv_param, &correct);
-  kernel::Convolution1x1CPUKernel *conv1x1 =
+  auto *conv1x1 =
     new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);
 
   conv1x1->Init();
   conv1x1->Run();
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
 
   /* running warm up */
   for (int i = 0; i < 0; i++) {

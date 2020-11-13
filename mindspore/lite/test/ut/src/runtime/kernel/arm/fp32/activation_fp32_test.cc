@@ -132,7 +132,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   kernel->Run();
 
   std::vector<float> expect_output = {-0, -0.33333334, -0.33333334, 0, 0.6666667, 5, 6, 7};
-  CompareOutputData(output.data(), expect_output.data(), 8, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
@@ -176,7 +176,7 @@ TEST_F(TestActivationFp32, HardTanh1) {
   kernel->Run();
 
   std::vector<float> expect_output = {-1.0, -1.0, -0.5, 0.0, 0.5, 1.0, 1.0, 1.0};
-  CompareOutputData(output.data(), expect_output.data(), 8, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);
@@ -220,7 +220,7 @@ TEST_F(TestActivationFp32, HardTanh2) {
   kernel->Run();
 
   std::vector<float> expect_output = {-2.0, -2.0, -1.0, 0.0, 1.0, 2.0, 2.0, 2.0};
-  CompareOutputData(output.data(), expect_output.data(), 8, 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), expect_output.data(), 8, 0.00001));
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);

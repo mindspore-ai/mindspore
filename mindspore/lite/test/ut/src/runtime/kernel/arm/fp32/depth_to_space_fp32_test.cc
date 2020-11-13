@@ -51,7 +51,7 @@ TEST_F(DepthToSpaceTestFp32, DepthToSpaceTest2) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 TEST_F(DepthToSpaceTestFp32, DepthToSpaceTest3) {
@@ -80,6 +80,6 @@ TEST_F(DepthToSpaceTestFp32, DepthToSpaceTest3) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 }  // namespace mindspore

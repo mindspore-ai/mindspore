@@ -72,7 +72,7 @@ TEST_F(InferTest, TestSession) {
     std::cout << *(reinterpret_cast<float *>(outvec.at(0)->data_) + i) << " ";
   }
   std::cout << "\n";
-  CompareOutputData(reinterpret_cast<float *>(outvec.at(0)->data_), expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outvec.at(0)->data_), expect_out, kOutSize, 0.000001));
   DestroyTensor(in);
   DestroyTensor(out);
 }

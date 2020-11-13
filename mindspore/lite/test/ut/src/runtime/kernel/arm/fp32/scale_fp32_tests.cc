@@ -112,7 +112,7 @@ TEST_F(TestScaleFp32, ScaleNoAct) {
 
   std::vector<float> expect{1.0, 3.0, 7.0, 4.0, 9.0, 16.0, 7.0, 15.0, 25.0, 10.0, 21.0, 34.0};
 
-  CompareOutputData(out_data, expect.data(), 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, expect.data(), 12, err_tol));
 }
 
 TEST_F(TestScaleFp32, ScaleRelu) {
@@ -134,7 +134,7 @@ TEST_F(TestScaleFp32, ScaleRelu) {
 
   std::vector<float> expect{0.0, 0.0, 1.0, 0.0, 3.0, 10.0, 1.0, 9.0, 19.0, 4.0, 15.0, 28.0};
 
-  CompareOutputData(out_data, expect.data(), 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, expect.data(), 12, err_tol));
 }
 TEST_F(TestScaleFp32, ScaleRelu6) {
   std::vector<int> input_shape{1, 2, 2, 3};
@@ -155,6 +155,6 @@ TEST_F(TestScaleFp32, ScaleRelu6) {
 
   std::vector<float> expect{0.0, 0.0, 1.0, 0.0, 3.0, 6.0, 1.0, 6.0, 6.0, 4.0, 6.0, 6.0};
 
-  CompareOutputData(out_data, expect.data(), 12, err_tol);
+  ASSERT_EQ(0, CompareOutputData(out_data, expect.data(), 12, err_tol));
 }
 }  // namespace mindspore

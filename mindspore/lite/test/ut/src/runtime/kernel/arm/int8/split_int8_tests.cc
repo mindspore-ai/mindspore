@@ -100,8 +100,8 @@ TEST_F(TestSplitInt8, Split_quant0_thread2) {
   PrintData("output data shape", output1_tensor_shape.data(), output1_tensor_shape.size());
   PrintData("output data", output2, output2_size);
   PrintData("output data shape", output2_tensor_shape.data(), output2_tensor_shape.size());
-  CompareOutputData(output1, except_result1.data(), output1_size, 0.000001);
-  CompareOutputData(output2, except_result2.data(), output2_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output1, except_result1.data(), output1_size, 0.000001));
+  ASSERT_EQ(0, CompareOutputData(output2, except_result2.data(), output2_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output1_tensor->set_data(nullptr);
@@ -194,9 +194,9 @@ TEST_F(TestSplitInt8, Split_quant0_thread2_num) {
   PrintData("output data shape", output2_tensor_shape.data(), output2_tensor_shape.size());
   PrintData("output data", output3, output3_size);
   PrintData("output data shape", output3_tensor_shape.data(), output3_tensor_shape.size());
-  CompareOutputData(output1, except_result1.data(), output1_size, 0.000001);
-  CompareOutputData(output2, except_result2.data(), output2_size, 0.000001);
-  CompareOutputData(output3, except_result3.data(), output3_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output1, except_result1.data(), output1_size, 0.000001));
+  ASSERT_EQ(0, CompareOutputData(output2, except_result2.data(), output2_size, 0.000001));
+  ASSERT_EQ(0, CompareOutputData(output3, except_result3.data(), output3_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output1_tensor->set_data(nullptr);
@@ -291,9 +291,9 @@ TEST_F(TestSplitInt8, Split_quant1_thread2_num) {
   PrintData("output data shape", output2_tensor_shape.data(), output2_tensor_shape.size());
   PrintData("output data", output3, output3_size);
   PrintData("output data shape", output3_tensor_shape.data(), output3_tensor_shape.size());
-  CompareOutputData(output1, except_result1.data(), output1_size, 0.000001);
-  CompareOutputData(output2, except_result2.data(), output2_size, 0.000001);
-  CompareOutputData(output3, except_result3.data(), output3_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output1, except_result1.data(), output1_size, 0.000001));
+  ASSERT_EQ(0, CompareOutputData(output2, except_result2.data(), output2_size, 0.000001));
+  ASSERT_EQ(0, CompareOutputData(output3, except_result3.data(), output3_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output1_tensor->set_data(nullptr);

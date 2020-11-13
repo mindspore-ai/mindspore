@@ -99,7 +99,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test1) {
                                       0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
@@ -183,7 +183,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test2) {
                                       0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
@@ -265,7 +265,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test3) {
   std::vector<float> except_result = {0, 1, 0, 1, 1, 0, 0, 0, 0, 0};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
@@ -347,7 +347,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test4) {
   std::vector<float> except_result = {0, 0, 0, 0, 0, 1, 0, 0, 0, 0};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
@@ -431,7 +431,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test5) {
                                       0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);

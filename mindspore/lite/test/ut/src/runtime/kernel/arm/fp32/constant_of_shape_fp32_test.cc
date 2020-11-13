@@ -63,7 +63,7 @@ TEST_F(TestConstantOfShapeFp32, Simple) {
   float *output = reinterpret_cast<float *>(outputs_[0]->MutableData());
   for (int i = 0; i < 8; ++i) printf("%f ", output[i]);
   printf("\n");
-  CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<float *>(outputs_[0]->MutableData()), correct, total_size, 0.0001));
   delete op;
   for (auto t : inputs_) delete t;
   for (auto t : outputs_) delete t;

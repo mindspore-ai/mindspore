@@ -84,37 +84,5 @@ std::string RealPath(const char *path) {
   std::string res = resolvedPath.get();
   return res;
 }
-
-int CompareOutputData(const float *output_data, size_t output_size, const float *correct_data, size_t data_size) {
-  if (output_size != data_size) {
-    printf("compare failed, output_size %zu isn't equal to data_size %zu.\n", output_size, data_size);
-    return 0;
-  }
-  float error = 0;
-  for (size_t i = 0; i < data_size; i++) {
-    float abs = fabs(output_data[i] - correct_data[i]);
-    if (abs > 0.00001) {
-      error += abs;
-    }
-  }
-  error /= data_size;
-
-  if (error > 0.0001) {
-    printf("has accuracy error!\n");
-    printf("%f\n", error);
-    return 1;
-  }
-  return 0;
-}
-
-int CompareOutput(const float *output_data, size_t output_num, const std::string &file_path) {
-  size_t ground_truth_size = 0;
-  auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &ground_truth_size));
-  size_t ground_truth_num = ground_truth_size / sizeof(float);
-  printf("ground truth num : %zu\n", ground_truth_num);
-  int res = CompareOutputData(output_data, output_num, ground_truth, ground_truth_num);
-  delete[] ground_truth;
-  return res;
-}
 }  // namespace lite
 }  // namespace mindspore

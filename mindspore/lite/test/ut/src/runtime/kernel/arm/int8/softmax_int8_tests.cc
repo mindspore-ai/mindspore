@@ -84,7 +84,7 @@ TEST_F(TestSoftmaxInt8, SoftmaxInt8) {
 
   std::vector<int8_t> except_result = {-126, -126, -124, -124, -123, -124, -116, -116, 122, 122, 112, 112,
                                        -127, -127, -127, -127, -59,  -59,  -61,  -59,  58,  58,  59,  58};
-  CompareOutputData(output.data(), except_result.data(), input.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), except_result.data(), input.size(), 0.000001));
 
   input0_tensor.set_data(nullptr);
   output0_tensor.set_data(nullptr);

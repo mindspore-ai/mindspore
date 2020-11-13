@@ -84,7 +84,7 @@ TEST_F(TestUnsqueezeInt8, Unsqueeze_1) {
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);

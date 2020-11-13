@@ -42,7 +42,7 @@ TEST_F(TestConv1x1Int8, Input1x1PrePack1) {
                       1, -1, 41, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0};
   int8_t out[54] = {0};
   Conv1x1InputPack(in, out, conv_param, sizeof(int8_t));
-  CompareOutputData(out, correct, 54, 0);
+  ASSERT_EQ(0, CompareOutputData(out, correct, 54, 0));
   delete conv_param;
 }
 
@@ -65,7 +65,7 @@ TEST_F(TestConv1x1Int8, Input1x1PrePack2) {
 
   int8_t out[20] = {0};
   Conv1x1InputPack(in, out, conv_param, sizeof(int8_t));
-  CompareOutputData(out, correct, 20, 0);
+  ASSERT_EQ(0, CompareOutputData(out, correct, 20, 0));
   delete conv_param;
 }
 
@@ -130,7 +130,7 @@ TEST_F(TestConv1x1Int8, Conv1x1TestPerChannel) {
 
   conv1x1->Init();
   conv1x1->Run();
-  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 70);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 70));
 
   delete conv1x1;
   for (auto t : inputs_) delete t;
@@ -199,7 +199,7 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test1) {
 
   conv1x1->Init();
   conv1x1->Run();
-  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2));
 
   delete conv1x1;
   for (auto t : inputs_) delete t;
@@ -271,12 +271,12 @@ TEST_F(TestConv1x1Int8, Conv1x1Int8Test2) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   int total_size = Conv1x1Int8TestInit2(&inputs_, &outputs_, conv_param, &correct);
-  kernel::Convolution1x1Int8CPUKernel *conv1x1 = new kernel::Convolution1x1Int8CPUKernel(
-    reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);
+  auto *conv1x1 = new kernel::Convolution1x1Int8CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_,
+                                                          outputs_, ctx, nullptr);
 
   conv1x1->Init();
   conv1x1->Run();
-  CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2);
+  ASSERT_EQ(0, CompareOutputData(reinterpret_cast<int8_t *>(outputs_[0]->MutableData()), correct, total_size, 2));
 
   delete conv1x1;
   for (auto t : inputs_) delete t;

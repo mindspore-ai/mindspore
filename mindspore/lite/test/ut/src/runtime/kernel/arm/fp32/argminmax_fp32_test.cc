@@ -44,7 +44,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest1) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.000001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest1_keep_dim) {
@@ -69,7 +69,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest1_keep_dim) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.000001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest_axis2_keep_dim) {
@@ -95,7 +95,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest_axis2_keep_dim) {
     std::cout << out[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.000001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest2) {
@@ -112,7 +112,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest2) {
   param.get_max_ = true;
   param.keep_dims_ = false;
   ArgMinMax(in.data(), out, shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.000001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMinTest2) {
@@ -129,7 +129,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMinTest2) {
   param.get_max_ = false;
   param.keep_dims_ = false;
   ArgMinMax(in.data(), out, shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.000001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest3_axis2_out_data) {
@@ -146,7 +146,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest3_axis2_out_data) {
   ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
   float out[10];
   ArgMaxDim2(in.data(), out, in_shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.00001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest3_axis2_out_index) {
@@ -163,7 +163,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest3_axis2_out_index) {
   ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
   float out[10];
   ArgMaxDim2(in.data(), out, in_shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.00001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest4_axis3_out_data) {
@@ -180,7 +180,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest4_axis3_out_data) {
   ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
   float out[6];
   ArgMaxDim3(in.data(), out, in_shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.00001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest4_axis3_out_index) {
@@ -197,7 +197,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest4_axis3_out_index) {
   ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
   float out[6];
   ArgMaxDim3(in.data(), out, in_shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.00001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest5_axis1_out_index) {
@@ -215,7 +215,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest5_axis1_out_index) {
   ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
   float out[24];
   ArgMaxDim1(in.data(), out, in_shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.00001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest5_axis1_out_data) {
@@ -234,7 +234,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest5_axis1_out_data) {
   ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
   float out[24];
   ArgMaxDim1(in.data(), out, in_shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.00001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest6_axis0_out_index) {
@@ -251,7 +251,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest6_axis0_out_index) {
   ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
   float out[16];
   ArgMaxDim0(in.data(), out, in_shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.00001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMaxTest6_axis0_out_data) {
@@ -268,7 +268,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMaxTest6_axis0_out_data) {
   ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
   float out[16];
   ArgMaxDim0(in.data(), out, in_shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.00001));
 }
 
 TEST_F(TestArgMinMaxTestFp32, ArgMinTest1_axis3_out_data) {
@@ -285,7 +285,7 @@ TEST_F(TestArgMinMaxTestFp32, ArgMinTest1_axis3_out_data) {
   ComputeStrides(out_shape.data(), param.out_strides_, out_shape.size());
   float out[6];
   ArgMinDim3(in.data(), out, in_shape.data(), &param);
-  CompareOutputData(out, except_out.data(), except_out.size(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(out, except_out.data(), except_out.size(), 0.00001));
 }
 
 }  // namespace mindspore

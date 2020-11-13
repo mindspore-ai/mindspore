@@ -36,11 +36,11 @@ TEST_F(StackTestFp32, StackTest1) {
   float expect_out[kOutSize] = {1, 4, 7, 2, 5, 8, 3, 6, 9, 10, 40, 70, 20, 50, 80, 30, 60, 90};
   float output[kOutSize];
   DoStack(input, 3, shape.data(), shape.size(), axis, output);
-  for (int i = 0; i < kOutSize; ++i) {
-    std::cout << output[i] << " ";
+  for (float i : output) {
+    std::cout << i << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output, expect_out, kOutSize, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, expect_out, kOutSize, 0.000001));
 }
 
 }  // namespace mindspore

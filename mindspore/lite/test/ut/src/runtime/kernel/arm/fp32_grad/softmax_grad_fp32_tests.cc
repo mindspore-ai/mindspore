@@ -23,7 +23,6 @@
 #include "common/common_test.h"
 #include "src/common/utils.h"
 #include "src/common/file_utils.h"
-#include "src/common/file_utils_ext.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/softmax_grad.h"
 #include "mindspore/lite/nnacl/fp32_grad/softmax_grad.h"
 #include "mindspore/lite/src/kernel_registry.h"
@@ -97,7 +96,7 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis0) {
 
   std::string output_path = "./test_data/softmax/softmaxgrad_out.bin";
 
-  auto res = lite::CompareRelativeOutput(out_data, output_path);
+  auto res = CompareRelativeOutput(out_data, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] input_data;
@@ -156,7 +155,7 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis1) {
   std::string output_path = "./test_data/softmax/softmaxgrad_1_out.bin";
   // auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
 
-  auto res = lite::CompareRelativeOutput(out_data, output_path);
+  auto res = CompareRelativeOutput(out_data, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] input_data;
@@ -215,7 +214,7 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis2) {
   std::string output_path = "./test_data/softmax/softmaxgrad_2_out.bin";
   // auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
 
-  auto res = lite::CompareRelativeOutput(out_data, output_path);
+  auto res = CompareRelativeOutput(out_data, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] input_data;
@@ -274,7 +273,7 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxis3) {
   std::string output_path = "./test_data/softmax/softmaxgrad_3_out.bin";
   // auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
 
-  auto res = lite::CompareRelativeOutput(out_data, output_path);
+  auto res = CompareRelativeOutput(out_data, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] input_data;
@@ -333,7 +332,7 @@ TEST_F(TestSoftmaxGradFp32, SoftmaxGradAxisMinus1) {
   std::string output_path = "./test_data/softmax/softmaxgrad_-1_out.bin";
   // auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
 
-  auto res = lite::CompareRelativeOutput(out_data, output_path);
+  auto res = CompareRelativeOutput(out_data, output_path);
   EXPECT_EQ(res, 0);
 
   delete[] input_data;

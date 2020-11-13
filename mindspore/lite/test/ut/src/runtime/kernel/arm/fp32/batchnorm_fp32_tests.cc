@@ -69,7 +69,7 @@ TEST_F(TestBatchnormFp32, BNTest) {
     std::cout << output[i] << " ,";
   }
   std::cout << std::endl;
-  CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), corr_out.data(), output0_tensor.ElementsNum(), 0.001));
 
   input0_tensor.set_data(nullptr);
   input1_tensor.set_data(nullptr);
@@ -125,7 +125,7 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
     std::cout << output[i] << " ,";
   }
   std::cout << std::endl;
-  CompareOutputData(output.data(), corr_out.data(), output0.ElementsNum(), 0.001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), corr_out.data(), output0.ElementsNum(), 0.001));
 
   input0.set_data(nullptr);
   input1.set_data(nullptr);
@@ -176,7 +176,7 @@ TEST_F(TestBatchnormFp32, easyTest) {
     std::cout << output[i] << " ,";
   }
   std::cout << std::endl;
-  CompareOutputData(output.data(), corr_out.data(), output0.ElementsNum(), 0.001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), corr_out.data(), output0.ElementsNum(), 0.001));
 
   input0.set_data(nullptr);
   input1.set_data(nullptr);

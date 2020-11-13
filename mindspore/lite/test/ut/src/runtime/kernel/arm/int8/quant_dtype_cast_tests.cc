@@ -77,7 +77,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output.data(), expect_out, out_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), expect_out, out_size, 0.000001));
 }
 
 TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
@@ -124,6 +124,6 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
     std::cout << output[i] << " ";
   }
   std::cout << "\n";
-  CompareOutputData(output.data(), expect_out, out_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output.data(), expect_out, out_size, 0.000001));
 }
 }  // namespace mindspore

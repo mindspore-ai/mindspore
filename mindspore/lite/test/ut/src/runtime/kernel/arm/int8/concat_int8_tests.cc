@@ -92,7 +92,7 @@ TEST_F(TestConcatInt8, Concat1_axis0) {
 
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   PrintData("output data", output, input1.size() + input2.size());
-  CompareOutputData(output, except_result.data(), input1.size() + input2.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size() + input2.size(), 0.000001));
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -164,7 +164,7 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2) {
 
   std::vector<int8_t> except_result = {10, 11, 12, 13, 14, 15, 30, 31, 20, 21, 22, 23, 24, 25, 32, 33};
   PrintData("output data", output, input1.size() + input2.size());
-  CompareOutputData(output, except_result.data(), input1.size() + input2.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size() + input2.size(), 0.000001));
 
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);
@@ -237,7 +237,7 @@ TEST_F(TestConcatInt8, Concat1_axis1_thread2_quant1) {
 
   std::vector<int8_t> except_result = {5, 6, 6, 7, 7, 8, 15, 16, 10, 11, 11, 12, 12, 13, 16, 17};
   PrintData("output data", output, input1.size() + input2.size());
-  CompareOutputData(output, except_result.data(), input1.size() + input2.size(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), input1.size() + input2.size(), 0.000001));
 
   input_tensor1->set_data(nullptr);
   input_tensor2->set_data(nullptr);

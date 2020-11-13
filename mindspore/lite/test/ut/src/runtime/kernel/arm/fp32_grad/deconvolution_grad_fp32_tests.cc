@@ -17,10 +17,8 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-// #include "utils/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "src/common/file_utils_ext.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32_grad/deconvolution_grad_filter.h"
 #include "mindspore/lite/nnacl/conv_parameter.h"
 #include "mindspore/lite/src/kernel_registry.h"
@@ -114,7 +112,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/deconv/deconvfp32_dw_9_3_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -213,7 +211,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_9_3_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -312,7 +310,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_g3_3_3_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -411,7 +409,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_g3_s1_3_3_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -510,7 +508,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_g2_s2_6_4_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
 
@@ -609,7 +607,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   printf("single thread running time : %f ms\n", time_avg / 1000.0f);
 
   std::string output_path = "./test_data/deconv/deconvfp32_dw_d2_g12_s2_12_1_3_3.bin";
-  auto res = lite::CompareRelativeOutput(dw_data, output_path);
+  auto res = CompareRelativeOutput(dw_data, output_path);
 
   EXPECT_EQ(res, 0);
 

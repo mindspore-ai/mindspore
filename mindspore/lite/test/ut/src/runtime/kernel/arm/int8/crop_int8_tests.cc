@@ -85,7 +85,7 @@ TEST_F(TestCropInt8, crop_1d_axis0_offset0_quant0_thread2) {
   std::vector<int8_t> except_result = {2, 3, 4, 5, 6, 7, 8};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -149,7 +149,7 @@ TEST_F(TestCropInt8, crop_2d_axis1_offset0_quant0_thread2) {
   std::vector<int8_t> except_result = {2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -213,7 +213,7 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread0) {
   std::vector<int8_t> except_result = {4, 8};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -278,7 +278,7 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread2) {
   std::vector<int8_t> except_result = {4, 6, 8, 10, 12, 14, 16, 20, 22, 24, 26, 28, 30, 32};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -342,7 +342,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread0) {
   std::vector<int8_t> except_result = {16};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -406,7 +406,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset0_quant0_thread0) {
   std::vector<int8_t> except_result = {8, 16};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -473,7 +473,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant0_thread0) {
   std::vector<int8_t> except_result = {13, 14, 15, 16};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -540,7 +540,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant1_thread0) {
   std::vector<int8_t> except_result = {7, 7, 8, 8};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -606,7 +606,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread2) {
   std::vector<int8_t> except_result = {40, 44, 48, 52, 56, 60, 64};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -672,7 +672,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread3) {
   std::vector<int8_t> except_result = {40, 44, 48, 52, 56, 60, 64};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);

@@ -80,7 +80,7 @@ TEST_F(TestArithmeticSelfInt8, floor_quant0_thread2) {
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -140,7 +140,7 @@ TEST_F(TestArithmeticSelfInt8, floor_quant1_thread2) {
   std::vector<int8_t> except_result = {0, 1, 1, 2, 3, 3, 3, 4, 5, 5, 5, 6};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -200,7 +200,7 @@ TEST_F(TestArithmeticSelfInt8, round_quant0_thread2) {
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -260,7 +260,7 @@ TEST_F(TestArithmeticSelfInt8, round_quant1_thread2) {
   std::vector<int8_t> except_result = {1, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6, 7};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -320,7 +320,7 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant0_thread2) {
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -380,7 +380,7 @@ TEST_F(TestArithmeticSelfInt8, ceil_quant1_thread2) {
   std::vector<int8_t> except_result = {1, 1, 2, 3, 3, 3, 4, 5, 5, 5, 6, 7};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -440,7 +440,7 @@ TEST_F(TestArithmeticSelfInt8, abs_quant0_thread0) {
   std::vector<int8_t> except_result = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -500,7 +500,7 @@ TEST_F(TestArithmeticSelfInt8, abs_quant1_thread2) {
   std::vector<int8_t> except_result = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -560,7 +560,7 @@ TEST_F(TestArithmeticSelfInt8, sin_quant0_thread2) {
   std::vector<int8_t> except_result = {1, 1, 0, -1};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -620,7 +620,7 @@ TEST_F(TestArithmeticSelfInt8, cos_quant0_thread2) {
   std::vector<int8_t> except_result = {1, 0, -1, -1};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -680,7 +680,7 @@ TEST_F(TestArithmeticSelfInt8, log_quant0_thread2) {
   std::vector<int8_t> except_result = {0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -740,7 +740,7 @@ TEST_F(TestArithmeticSelfInt8, sqrt_quant0_thread2) {
   std::vector<int8_t> except_result = {1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -800,7 +800,7 @@ TEST_F(TestArithmeticSelfInt8, rsqrt_quant0_thread2) {
   std::vector<int8_t> except_result = {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -860,7 +860,7 @@ TEST_F(TestArithmeticSelfInt8, square_quant0_thread2) {
   std::vector<int8_t> except_result = {1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 127};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -920,7 +920,7 @@ TEST_F(TestArithmeticSelfInt8, square_quant1_thread2) {
   std::vector<int8_t> except_result = {1, 2, 4, 7, 11, 16, 21, 28, 35, 43, 52, 62};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);
@@ -980,7 +980,7 @@ TEST_F(TestArithmeticSelfInt8, logical_not_quant0_thread2) {
   std::vector<int8_t> except_result = {0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1};
   PrintData("output data", output, output_size);
   PrintData("output data shape", output_tensor_shape.data(), output_tensor_shape.size());
-  CompareOutputData(output, except_result.data(), output_size, 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output, except_result.data(), output_size, 0.000001));
 
   input_tensor1->set_data(nullptr);
   output0_tensor->set_data(nullptr);

@@ -141,7 +141,7 @@ TEST_F(TestBatchnormOpenCLCI, Batchnormfp32CI) {
   sub_graph->Run();
 
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
-  CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001));
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
     delete tensor;
@@ -260,7 +260,7 @@ TEST_F(TestBatchnormOpenCLfp16, Batchnormfp16input_dim4) {
   sub_graph->Run();
 
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->data_c());
-  CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.01);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.01));
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
     delete tensor;
@@ -378,7 +378,7 @@ TEST_F(TestBatchnormOpenCLfp32, Batchnormfp32input_dim4) {
   sub_graph->Run();
 
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
-  CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correct_data, output_tensor->ElementsNum(), 0.0001));
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
     delete tensor;

@@ -22,6 +22,8 @@
 #include <string>
 #include <algorithm>
 #include "gtest/gtest.h"
+#include "src/common/file_utils.h"
+
 namespace mindspore {
 class CommonTest : public testing::Test {
  public:
@@ -34,7 +36,7 @@ class CommonTest : public testing::Test {
   virtual void TearDown();
 
   template <typename T>
-  void PrintData(std::string name, T *output_data, int size) {
+  void PrintData(const std::string &name, T *output_data, int size) {
     std::cout << "The " << name << " is as follows:" << std::endl;
     if (typeid(output_data[0]) == typeid(uint8_t) || typeid(output_data[0]) == typeid(int8_t)) {
       for (int i = 0; i < std::min(size, 100); i++) {
@@ -49,14 +51,22 @@ class CommonTest : public testing::Test {
   }
 
   template <typename T>
-  static void CompareOutputData(T *output_data, T *correct_data, int size, float err_bound) {
+  static int CompareOutputData(const T *output_data, const T *correct_data, int size, float err_bound = 1e-4) {
+    float error = 0;
     for (int i = 0; i < size; i++) {
-      T abs = fabs(output_data[i] - correct_data[i]);
-      ASSERT_LE(abs, err_bound);
+      T diff = std::fabs(output_data[i] - correct_data[i]);
+      if (diff > 0.00001) {
+        error += diff;
+      }
     }
+    error /= static_cast<float>(size);
+    if (error > err_bound) {
+      return 1;
+    }
+    return 0;
   }
 
-  void CompareOutputInt8(int8_t *output_data, int8_t *correct_data, int size, float err_percent) {
+  static void CompareOutputInt8(int8_t *output_data, int8_t *correct_data, int size, float err_percent) {
     int bias_count = 0;
     for (int i = 0; i < size; i++) {
       int8_t diff = abs(output_data[i] - correct_data[i]);
@@ -65,11 +75,62 @@ class CommonTest : public testing::Test {
         bias_count++;
       }
     }
-    float bias_percent = static_cast<float>(bias_count) / size;
+    float bias_percent = static_cast<float>(bias_count) / static_cast<float>(size);
     ASSERT_LE(bias_percent, err_percent);
   }
 
-  void ReadFile(const char *file, size_t *size, char **buf) {
+  static int CompareOutput(const float *output_data, size_t output_num, const std::string &file_path) {
+    size_t ground_truth_size = 0;
+    auto ground_truth = reinterpret_cast<float *>(lite::ReadFile(file_path.c_str(), &ground_truth_size));
+    size_t ground_truth_num = ground_truth_size / sizeof(float);
+    printf("ground truth num : %zu\n", ground_truth_num);
+    int res = CompareOutputData(output_data, ground_truth, ground_truth_num);
+    delete[] ground_truth;
+    return res;
+  }
+
+  static float CompareOutputRelativeData(const float *output_data, const float *correct_data, int data_size) {
+    float error = 0;
+
+    // relative error
+    float diffSum = 0.0f;
+    float sum = 0.0f;
+    for (int i = 0; i < data_size; i++) {
+      sum += std::abs(correct_data[i]);
+    }
+    for (int i = 0; i < data_size; i++) {
+      float diff = std::abs(output_data[i] - correct_data[i]);
+      diffSum += diff;
+    }
+    error = diffSum / sum;
+    return error;
+  }
+
+  static int CompareRelativeOutput(const float *output_data, const std::string &file_path) {
+    size_t output_size;
+    auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
+    if (ground_truth == nullptr) {
+      return 1;
+    }
+    size_t output_num = output_size / sizeof(float);
+    float error = CompareOutputRelativeData(output_data, ground_truth, output_num);
+    delete[] ground_truth;
+    if (error > 1e-4) {
+      return 1;
+    }
+    return 0;
+  }
+
+  static float RelativeOutputError(const float *output_data, const std::string &file_path) {
+    size_t output_size = 0;
+    auto ground_truth = reinterpret_cast<float *>(mindspore::lite::ReadFile(file_path.c_str(), &output_size));
+    size_t output_num = output_size / sizeof(float);
+    float error = CompareOutputRelativeData(output_data, ground_truth, output_num);
+    delete[] ground_truth;
+    return error;
+  }
+
+  static void ReadFile(const char *file, size_t *size, char **buf) {
     ASSERT_NE(nullptr, file);
     ASSERT_NE(nullptr, size);
     ASSERT_NE(nullptr, buf);

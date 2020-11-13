@@ -147,7 +147,7 @@ TEST_F(TestFcInt8, fctest1) {
   QuantProcess(correct, out_params.len, out_params.min, out_params.max, &out_scale, &out_zp, nullptr);
   float *out = new float[out_params.len];
   Dequantize(reinterpret_cast<int8_t *>(outputs[0]->MutableData()), outputs[0]->ElementsNum(), out_scale, out_zp, out);
-  CompareOutputData(out, correct, 6, 0.3);
+  ASSERT_EQ(0, CompareOutputData(out, correct, 6, 0.3));
   delete fc;
   for (auto t : inputs) delete t;
   for (auto t : outputs) delete t;

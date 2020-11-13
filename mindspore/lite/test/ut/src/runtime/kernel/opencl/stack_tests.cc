@@ -135,7 +135,7 @@ TEST_F(TestStackOpenCLCI, StackFp32_8inputforCI) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float *>(output_tensor->data_c());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.00001));
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
     delete tensor;
@@ -268,7 +268,7 @@ TEST_F(TestStackOpenCLfp16, StackFp32_8inputaxis1) {
   std::cout << "==================output data================" << std::endl;
   sub_graph->Run();
   auto *output_data_gpu = reinterpret_cast<float16_t *>(output_tensor->MutableData());
-  CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001);
+  ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor->ElementsNum(), 0.000001));
   for (auto tensor : inputs) {
     tensor->set_data(nullptr);
     delete tensor;

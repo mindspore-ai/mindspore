@@ -87,7 +87,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest1) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 1*1
@@ -104,7 +104,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest2) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 1*2
@@ -121,7 +121,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest3) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 2*1
@@ -138,7 +138,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest4) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 2*2
@@ -155,7 +155,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest5) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 1*4
@@ -172,7 +172,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest6) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 4*1
@@ -189,7 +189,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest7) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 2*4
@@ -206,7 +206,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest8) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 4*2
@@ -223,7 +223,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest9) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 3*3
@@ -240,7 +240,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest10) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2 -> 4*4
@@ -257,7 +257,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest11) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2*2*5 -> 2*4*4*5
@@ -285,7 +285,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest12) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2*2*5 -> 2*4*4*5 align corners
@@ -320,7 +320,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest13) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2*2*5 -> 2*4*4*5 thread_num 2
@@ -349,7 +349,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest14) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 2*2*2*5 -> 2*4*4*5 thread_num 4
@@ -379,7 +379,7 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest15) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 
 // 5*5 -> 2*2
@@ -405,6 +405,6 @@ TEST_F(TestResizeBilinearFp32, ResizeBilinearTest16) {
   auto ret = kernel_->Run();
   EXPECT_EQ(0, ret);
 
-  CompareOutputData(output_data, expect.data(), output_size, err_tol);
+  ASSERT_EQ(0, CompareOutputData(output_data, expect.data(), output_size, err_tol));
 }
 }  // namespace mindspore
