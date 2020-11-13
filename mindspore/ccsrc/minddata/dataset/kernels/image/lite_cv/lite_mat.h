@@ -247,6 +247,13 @@ class LiteMat {
   LDataType data_type_;
   int *ref_count_;
 };
+
+/// \brief Calculates the difference between the two images for each element
+bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
+
+/// \brief Calculates the division between the two images for each element
+bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINI_MAT_H_
