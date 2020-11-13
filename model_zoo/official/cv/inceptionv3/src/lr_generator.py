@@ -45,7 +45,7 @@ def _generate_steps_lr(lr_init, lr_max, total_steps, warmup_steps, global_step=0
             else:
                 lr = lr_max * 0.001
         lr_each_step.append(lr)
-        lr_each_step = np.array(lr_each_step).astype(np.float32)[global_step:]
+    lr_each_step = np.array(lr_each_step).astype(np.float32)[global_step:]
     return lr_each_step
 
 
@@ -81,7 +81,7 @@ def _generate_exponential_lr(lr_init, lr_max, total_steps, warmup_steps, steps_p
     return lr_each_step
 
 
-def _generate_cosine_lr(lr_init, lr_end, lr_max, total_steps, warmup_steps):
+def _generate_cosine_lr(lr_init, lr_end, lr_max, total_steps, warmup_steps, global_step=0):
     """
     Applies cosine decay to generate learning rate array.
 
@@ -105,6 +105,7 @@ def _generate_cosine_lr(lr_init, lr_end, lr_max, total_steps, warmup_steps):
             cosine_decay = 0.5 * (1 + math.cos(math.pi * (i-warmup_steps) / decay_steps))
             lr = (lr_max-lr_end)*cosine_decay + lr_end
         lr_each_step.append(lr)
+    lr_each_step = np.array(lr_each_step).astype(np.float32)[global_step:]
     return lr_each_step
 
 
@@ -155,7 +156,7 @@ def get_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch
     elif lr_decay_mode == 'steps_decay':
         lr_each_step = _generate_exponential_lr(lr_init, lr_max, total_steps, warmup_steps, steps_per_epoch)
     elif lr_decay_mode == 'cosine':
-        lr_each_step = _generate_cosine_lr(lr_init, lr_end, lr_max, total_steps, warmup_steps)
+        lr_each_step = _generate_cosine_lr(lr_init, lr_end, lr_max, total_steps, warmup_steps, global_step)
     else:
         lr_each_step = _generate_liner_lr(lr_init, lr_end, lr_max, total_steps, warmup_steps)
     learning_rate = np.array(lr_each_step).astype(np.float32)
