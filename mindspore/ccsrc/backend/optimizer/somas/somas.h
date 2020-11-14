@@ -81,9 +81,6 @@ class Somas {
   // total Offset
   size_t mem_offset_;
 
-  // getnext op output size
-  size_t get_next_size_;
-
   // Memory base addr
   uint8_t *mem_base_addr_{nullptr};
 

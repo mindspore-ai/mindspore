@@ -273,16 +273,12 @@ void Somas::GetNextOutputProcess(const session::KernelGraph *graph) {
     if (iter != nodes_map_.end()) {
       auto getnext_output_tensors = iter->second->output_tensors_;
       for (auto &tensor : getnext_output_tensors) {
-        if (tensor->contiguous_) continue;
-        tensor->offset_ = total_size;
         total_size += tensor->GetAlignedSize();
         tensor->lifelong_value_ = kLifeLongGraphAll;
         tensor->type_ = kGetNextOutput;
       }
     }
   }
-
-  this->get_next_size_ = total_size;
 
   MS_LOG(INFO) << "Special Tensor total size: GetNext Output " << total_size;
 }
@@ -947,7 +943,7 @@ bool Somas::Assign(const session::KernelGraph *graph) {
   // Solver info -- moved here because we set sizes to zero in ref node preprocessing (was before in GetSomasTensors())
   MS_LOG(INFO) << "Start Loop to create solver info";
   for (auto tensor : tensors_list_) {
-    if (tensor->GetSolverTensorDesc() != nullptr && tensor->type_ != kGetNextOutput) {
+    if (tensor->GetSolverTensorDesc() != nullptr) {
       SomasSolverTensorDescPtr pSolverTensor = tensor->GetSolverTensorDesc();
       solver_tensor_desc_list_.insert(
         std::pair<size_t, SomasSolverTensorDescPtr>(pSolverTensor->index_, pSolverTensor));
@@ -972,7 +968,7 @@ bool Somas::Assign(const session::KernelGraph *graph) {
 
   // Update solver_tensor_desc offset to tensors list
   for (const auto &tensor : tensors_list_) {
-    tensor->SetOffset(get_next_size_);
+    tensor->SetOffset();
   }
 
   // Ref Node Postprocessing
@@ -995,7 +991,7 @@ bool Somas::Assign(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "\nEnd Solving Postprocessing for Ref Node";
 
   // Set mem_offset_ value by solver result
-  mem_offset_ = static_cast<size_t>(somas_solver_->GetMaxOffset()) + get_next_size_;
+  mem_offset_ = static_cast<size_t>(somas_solver_->GetMaxOffset());
 
   if (save_graphs_) {
     std::string mem_pool_file_path =
