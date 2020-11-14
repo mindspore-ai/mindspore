@@ -149,7 +149,15 @@ class GraphBuilder:
         """Create a new Value"""
         if name in (None, ''):
             name = self._alloc_tensor_name()
-        return Value(name, dtype, value, data_format)
+
+        if dtype == "float16":
+            # For float16 value, it will be changed to float32 wrongly. And there is no good solution for now.
+            # So instead just declare float32 value and then cast it to float16.
+            v_fp32 = Value(name, "float32", value, data_format)
+            v = self.emit("Cast", [v_fp32], attrs={"dst_type": "float16"})
+        else:
+            v = Value(name, dtype, value, data_format)
+        return v
 
     def op(self, prim, output, inputs, attrs=None):
         """Insert an operator into graph"""
@@ -166,9 +174,9 @@ class GraphBuilder:
         """Emit a new operation"""
         if attrs is None:
             attrs = {}
-        if isinstance(inputs, Tensor):
+        if isinstance(inputs, (Tensor, Value)):
             inputs = [inputs]
-        tensor_inputs = [t for t in inputs if isinstance(t, Tensor)]
+        tensor_inputs = [t for t in inputs if isinstance(t, (Tensor, Value))]
         out_shape, out_dtype, out_format = OpInfer.infer(prim, tensor_inputs, attrs)
         output = self.tensor(out_shape, out_dtype, out_format, name)
         self.op(prim, output, inputs, attrs)

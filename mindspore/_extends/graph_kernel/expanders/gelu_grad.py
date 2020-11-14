@@ -43,9 +43,6 @@ def expand_gelugrad(expand_info):
         input_x = graph_builder.tensor(input_desc_1['shape'], input_desc_1['data_type'], input_desc_1['format'])
         input_y = graph_builder.tensor(input_desc_2['shape'], input_desc_2['data_type'], input_desc_2['format'])
         graph_scope.set_input(input_dy, input_x, input_y)
-        dtype = input_dy.dtype
-        if dtype == 'float16':
-            input_dy = graph_builder.emit('Cast', [input_dy], attrs={'dst_type': 'float32'})
 
         # create some const var
         const_csvalue = graph_builder.value(input_dy.dtype, CSVALUE, input_desc_0['format'])
@@ -83,8 +80,6 @@ def expand_gelugrad(expand_info):
         result_tmp = graph_builder.emit('TensorAdd', [half_mul_tanh_res_add_one, mul_final])
         result = graph_builder.emit('Mul', [input_dy, result_tmp])
 
-        if dtype == 'float16':
-            result = graph_builder.emit('Cast', [result], attrs={'dst_type': 'float16'})
         # set graph output.
         graph_scope.set_output(result)
 
