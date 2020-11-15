@@ -39,9 +39,9 @@ STATUS OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx:
   }
   if (onnx_node.op_type() == "Int8Quantize") {
     attr->srcT = kNumberTypeFloat32;
-    attr->dstT = kNumberTypeInt8;
+    attr->dstT = kNumberTypeUInt8;
   } else if (onnx_node.op_type() == "Int8Dequantize") {
-    attr->srcT = kNumberTypeInt8;
+    attr->srcT = kNumberTypeUInt8;
     attr->dstT = kNumberTypeFloat32;
   } else {
     MS_LOG(ERROR) << "Unsupported nodeType: " << onnx_node.op_type().c_str();
