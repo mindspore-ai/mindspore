@@ -287,10 +287,13 @@ bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
   MS_LOG(INFO) << "Start load step";
   uint32_t cur_iter = 0;
   MS_LOG(INFO) << "Cur iter is " << cur_iter;
-  // load output
-  debugger_->LoadGraphOutputs();
-  // load parameters
-  debugger_->LoadParametersAndConst();
+  for (auto graph_ptr : debugger_->GetGraphPtrList()) {
+    debugger_->SetGraphPtr(graph_ptr);
+    // load output
+    debugger_->LoadGraphOutputs();
+    // load parameters
+    debugger_->LoadParametersAndConst();
+  }
 #endif
   return true;
 }

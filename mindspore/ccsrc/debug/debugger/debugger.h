@@ -118,6 +118,10 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   uint32_t GetFirstRunGraphId();
 
+  void SetGraphPtr(const KernelGraphPtr &graph_ptr) { graph_ptr_ = graph_ptr; }
+
+  std::list<KernelGraphPtr> GetGraphPtrList() { return graph_ptr_list_; }
+
  private:
   // private constructor for singleton
   Debugger();
@@ -204,6 +208,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // flag to keep track of the very first suspension of debugger
   bool initial_suspend_;
   std::list<GraphProto> graph_proto_list_;
+  std::list<KernelGraphPtr> graph_ptr_list_;
 
   // singleton
   static std::mutex instance_lock_;
