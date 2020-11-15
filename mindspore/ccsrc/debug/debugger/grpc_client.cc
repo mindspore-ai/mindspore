@@ -69,7 +69,7 @@ EventReply GrpcClient::SendMetadata(const Metadata &metadata) {
   return reply;
 }
 
-std::vector<std::string> ChunkString(std::string str, int graph_size) {
+std::vector<std::string> GrpcClient::ChunkString(std::string str, int graph_size) {
   std::vector<std::string> buf;
   int size_iter = 0;
   while (size_iter < graph_size) {
@@ -112,6 +112,28 @@ EventReply GrpcClient::SendGraph(const GraphProto &graph) {
 
   if (!status.ok()) {
     MS_LOG(ERROR) << "RPC failed: SendGraph";
+    MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
+    reply.set_status(EventReply_Status_FAILED);
+  }
+  return reply;
+}
+
+EventReply GrpcClient::SendMultiGraphs(const std::list<Chunk> &chunks) {
+  EventReply reply;
+  grpc::ClientContext context;
+
+  std::unique_ptr<grpc::ClientWriter<Chunk> > writer(stub_->SendMultiGraphs(&context, &reply));
+  for (const auto &chunk : chunks) {
+    if (!writer->Write(chunk)) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+  writer->WritesDone();
+  grpc::Status status = writer->Finish();
+
+  if (!status.ok()) {
+    MS_LOG(ERROR) << "RPC failed: SendMultigraphs";
     MS_LOG(ERROR) << status.error_code() << ": " << status.error_message();
     reply.set_status(EventReply_Status_FAILED);
   }

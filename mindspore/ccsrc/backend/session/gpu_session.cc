@@ -333,12 +333,21 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   }
   // Alloc memory, including static memory and dynamic memory
   AllocateMemory(graph.get());
+
+#ifdef ENABLE_DEBUGGER
+  if (debugger_) {
+    debugger_->LoadGraphs(graph);
+  }
+#endif
+  MS_LOG(INFO) << "CompileGraph graph_id: " << graph_id;
+
   return graph_id;
 }
 
 void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                               VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
+  MS_LOG(INFO) << "RunGraph graph_id: " << graph_id;
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
   PreIterationDbg(kernel_graph);
@@ -414,7 +423,7 @@ bool GPUSession::DumpDataEnabledIteration() const {
 
 void GPUSession::PreIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   if (debugger_) {
-    debugger_->PreExecute(kernel_graph);
+    debugger_->PreExecute(kernel_graph, graph_sum_);
   }
   PreLoadTensor(kernel_graph);
 }

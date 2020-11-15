@@ -19,9 +19,11 @@
 #include <grpcpp/grpcpp.h>
 #include <string>
 #include <list>
+#include <vector>
 #include <memory>
 #include "proto/debug_grpc.grpc.pb.h"
 
+using debugger::Chunk;
 using debugger::EventListener;
 using debugger::EventReply;
 using debugger::GraphProto;
@@ -52,7 +54,11 @@ class GrpcClient {
 
   EventReply SendTensors(const std::list<TensorProto> &tensors);
 
+  EventReply SendMultiGraphs(const std::list<Chunk> &chunks);
+
   EventReply SendWatchpointHits(const std::list<WatchpointHit> &watchpoints);
+
+  std::vector<std::string> ChunkString(std::string str, int graph_size);
 
  private:
   std::unique_ptr<EventListener::Stub> stub_;

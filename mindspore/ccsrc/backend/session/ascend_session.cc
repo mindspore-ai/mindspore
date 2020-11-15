@@ -160,6 +160,11 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 
   HardwareOptimize(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
+  // load graphs to debugger.
+  if (debugger_) {
+    LoadGraphsToDbg(NOT_NULL(root_graph), NOT_NULL(&memo));
+  }
+  memo.clear();
 
   UpdateRefOutputMap(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
@@ -191,7 +196,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   // build kernel
   BuildKernel(root_graph);
   if (debugger_ && debugger_->partial_memory()) {
-    debugger_->PreExecute(root_graph);
+    debugger_->PreExecute(root_graph, graph_sum_);
   }
   SetSummaryNodes(root_graph.get());
   // Alloc memory for child graph's inputs
@@ -271,7 +276,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (debugger_ && debugger_->partial_memory()) {
-    debugger_->PreExecute(graph);
+    debugger_->PreExecute(graph, graph_sum_);
   }
   if (ms_context->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
     MS_LOG(INFO) << "Precompile only, stop in build kernel step";
@@ -329,7 +334,7 @@ void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tens
   // load input data from user input
   LoadInputData(kernel_graph, inputs);
   if (debugger_) {
-    debugger_->PreExecute(kernel_graph);
+    debugger_->PreExecute(kernel_graph, graph_sum_);
   }
 #if ENABLE_CPU && ENABLE_D
   // Initialize parameter server
@@ -960,6 +965,23 @@ void AscendSession::HardwareOptimize(NotNull<KernelGraphPtr> graph,
     HardwareOptimize(NOT_NULL(child_graph.lock()), memo);
   }
   MS_LOG(INFO) << "Finish doing HardwareOptimize in graph: " << graph->graph_id();
+}
+
+void AscendSession::LoadGraphsToDbg(NotNull<KernelGraphPtr> graph,
+                                    NotNull<std::set<KernelGraphPtr> *> const memo) const {
+  if (memo->find(graph) != memo->end()) {
+    return;
+  }
+  memo->insert(graph.get());
+
+  MS_LOG(INFO) << "Start to do LoadGraphsToDbg in graph: " << graph->graph_id();
+
+  debugger_->LoadGraphs(graph);
+  MS_LOG(INFO) << "graph_sum_: " << graph_sum_;
+  for (auto &child_graph : graph->child_graph_order()) {
+    LoadGraphsToDbg(NOT_NULL(child_graph.lock()), memo);
+  }
+  MS_LOG(INFO) << "Finish doing LoadGraphsToDbg in graph: " << graph->graph_id();
 }
 
 void AscendSession::AssignStaticMemory(NotNull<KernelGraphPtr> graph,

@@ -34,6 +34,7 @@
 #include "debug/data_dump/e2e_dump_util.h"
 #include "utils/config_manager.h"
 
+using debugger::Chunk;
 using debugger::EventReply;
 using debugger::GraphProto;
 using debugger::ModelProto;
@@ -69,7 +70,8 @@ Debugger::Debugger()
       partial_memory_(false),
       last_overflow_bin_(0),
       overflow_bin_path_(""),
-      initial_suspend_(true) {
+      initial_suspend_(true),
+      not_dataset_graph_sum_(0) {
   if (CheckDebuggerEnabled()) {
     // configure partial memory reuse
     partial_memory_ = CheckDebuggerPartialMemoryEnabled();
@@ -259,12 +261,47 @@ void Debugger::Reset() {
   stream_task_to_opname_.clear();
 }
 
-void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
+void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
   // access lock for public method
   std::lock_guard<std::mutex> a_lock(access_lock_);
   CheckDatasetSinkMode();
-  if (debugger_->DebuggerBackendEnabled()) {
-    // check and save graph_ptr, suspend if graph is new
+  auto graph_id = graph_ptr->graph_id();
+  // collect rungrap_ids to update step number in multigraph case
+  if (!rungraph_id_list_.size()) {
+    rungraph_id_list_.push_back(graph_id);
+
+  } else {
+    if (std::find(rungraph_id_list_.begin(), rungraph_id_list_.end(), graph_id) == rungraph_id_list_.end()) {
+      rungraph_id_list_.push_back(graph_id);
+    }
+  }
+  // check and save graph_ptr, suspend if graph is new
+  MS_LOG(INFO) << "total number graph: " << graph_sum;
+  // multiple graphs
+  if (graph_sum > 1) {
+    // there are more than one graphs are not dataset_graph
+    if (not_dataset_graph_sum_ > 0) {
+      // only try to enable debugger if they are not all dataset graphs
+      if (!debugger_enabled_) {
+        EnableDebugger();
+      }
+
+      if (debugger_enabled_) {
+        if (graph_proto_list_.size()) {
+          // only send compiled graphs once.
+          SendMultiGraphsAndSuspend(graph_proto_list_, graph_sum);
+          graph_proto_list_.clear();
+        } else if (graph_id == rungraph_id_list_.front()) {
+          // stop only when receive the first sub run graph for each step
+          CommandLoop();
+        }
+      }
+    }
+  } else if (graph_proto_list_.size() == 1) {
+    // In single graph case, reset graph_ptr_ to be nullptr for the initial step
+    if (num_step_ == 0) {
+      graph_ptr_ = nullptr;
+    }
     CheckGraphPtr(graph_ptr);
   }
 }
@@ -346,20 +383,38 @@ void Debugger::SetStreamTaskToOpnameMap(const std::map<std::pair<uint32_t, uint3
   stream_task_to_opname_ = mapping;
 }
 
-void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
+void Debugger::LoadGraphs(const KernelGraphPtr &graph_ptr) {
   if (graph_ptr_ != graph_ptr) {
-    MS_LOG(INFO) << "Debugger got new graph: " << graph_ptr->graph_id();
+    MS_LOG(INFO) << "LoadGraphs Debugger got new graph: " << graph_ptr->graph_id();
     // save new graph_ptr
     graph_ptr_ = graph_ptr;
-    // check if it is dataset graph
     CheckDatasetGraph();
+    if (!is_dataset_graph_) {
+      // get proto for new graph_ptr
+      auto graph_proto = GetGraphProto(graph_ptr);
+      // add new graph proto to graph_proto_list_
+      graph_proto_list_.push_back(graph_proto);
+      not_dataset_graph_sum_++;
+    }
+    // reset is_dataset_graph to be false
+    is_dataset_graph_ = false;
+  }
+}
+
+// In single graph cases, check single graph ptr
+void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
+  if (graph_ptr_ != graph_ptr) {
+    MS_LOG(INFO) << "CheckGraphPtr Debugger got new graph: " << graph_ptr->graph_id();
+    // save new graph_ptr
+    graph_ptr_ = graph_ptr;
     if (!is_dataset_graph_) {
       // only try to enable debugger if it is not a dataset graph
       EnableDebugger();
       if (debugger_enabled_) {
         LoadParametersAndConst();
         // get graph proto and send to mindinsight
-        SendGraphAndSuspend(GetGraphProto());
+        auto graph_proto = graph_proto_list_.front();
+        SendGraphAndSuspend(graph_proto);
       }
     }
   }
@@ -386,7 +441,7 @@ void Debugger::CheckDatasetGraph() {
   is_dataset_graph_ = false;
 }
 
-GraphProto Debugger::GetGraphProto() const {
+GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
   // convert kernel graph to debugger modelproto
   ModelProto model = GetDebuggerFuncGraphProto(graph_ptr_);
   return model.graph();
@@ -413,10 +468,47 @@ void Debugger::SendMetadata() {
   metadata.set_cur_node(cur_name_);
   metadata.set_training_done(training_done_);
   MS_LOG(INFO) << "Is training done?" << training_done_;
+  // set graph munber to not_dataset_graph_sum_
+  metadata.set_graph_num(not_dataset_graph_sum_);
   EventReply reply_metadata = grpc_client_->SendMetadata(metadata);
   if (reply_metadata.status() != reply_metadata.OK) {
     MS_LOG(ERROR) << "Error: SendMetadata failed";
   }
+}
+
+void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_proto_list, uint32_t graph_sum) {
+  SendMetadata();
+  // send multiple graphs to mindinght server
+  // split graph into chunks if one graph is larger than chunk size
+  std::list<Chunk> chunked_graph_proto_list;
+  Chunk chunk;
+  for (auto graph : graph_proto_list) {
+    std::string str = graph.SerializeAsString();
+    auto graph_size = graph.ByteSize();
+    if (graph_size > CHUNK_SIZE) {
+      auto sub_graph_str = grpc_client_->ChunkString(str, graph_size);
+      for (unsigned int i = 0; i < sub_graph_str.size(); i++) {
+        chunk.set_buffer(sub_graph_str[i]);
+        chunked_graph_proto_list.push_back(chunk);
+        if (i < sub_graph_str.size() - 1) {
+          chunk.set_finished(false);
+        } else {
+          chunk.set_finished(true);
+          chunked_graph_proto_list.push_back(chunk);
+        }
+      }
+    } else {
+      chunk.set_buffer(str);
+      chunk.set_finished(true);
+      chunked_graph_proto_list.push_back(chunk);
+    }
+  }
+  EventReply reply = grpc_client_->SendMultiGraphs(chunked_graph_proto_list);
+  if (reply.status() != reply.OK) {
+    MS_LOG(ERROR) << "Error: SendGraph failed";
+  }
+  // enter command loop, wait and process commands
+  CommandLoop();
 }
 
 void Debugger::CommandLoop() {
@@ -923,6 +1015,8 @@ bool Debugger::CheckPort(const char *port) {
   return true;
 }
 
+uint32_t Debugger::GetFirstRunGraphId() { return rungraph_id_list_.front(); }
+
 void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
@@ -996,6 +1090,13 @@ void Debugger::LoadGraphOutputs() {
       }
     }
     for (size_t j = 0; j < output_size; ++j) {
+      auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
+      MS_EXCEPTION_IF_NULL(kernel_info);
+      auto addr_test = kernel_info->GetOutputAddr(j);
+      if (addr_test == nullptr) {
+        MS_LOG(INFO) << "Cannot find output addr for slot " << j << " for " << kernel_name;
+        continue;
+      }
       auto addr = AnfAlgo::GetOutputAddr(node, j);
       MS_EXCEPTION_IF_NULL(addr);
       auto type = AnfAlgo::GetOutputInferDataType(node, j);
@@ -1015,9 +1116,14 @@ void Debugger::LoadGraphOutputs() {
   }
 }
 
-void Debugger::UpdateStepNum() {
-  if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()))
+void Debugger::UpdateStepNum(const session::KernelGraph *graph) {
+  // update step number if we are processing the first graph (to support multigraph)
+  if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()) &&
+      (graph->graph_id() == debugger_->GetFirstRunGraphId())) {
+    // access lock for public method
+    std::lock_guard<std::mutex> a_lock(access_lock_);
     ++num_step_;
+  }
 }
 
 void Debugger::ClearCurrentData() {
