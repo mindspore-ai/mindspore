@@ -42,11 +42,17 @@ TEST_F(TestActGradFp32, ReluGradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/activationGrad/relu_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
+
   std::string yt_path = "./test_data/activationGrad/relu_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
+  ASSERT_NE(yt_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
+
   auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
+
   // warm up loop
   for (int i = 0; i < 3; i++) {
     ReluGrad(yt_data, input_data, output_data_size, output_data);
@@ -90,10 +96,15 @@ TEST_F(TestActGradFp32, Relu6GradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/activationGrad/relu6_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
+
   std::string yt_path = "./test_data/activationGrad/relu6_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
+  ASSERT_NE(yt_data, nullptr);
 
   auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
+
   // warm up loop
   for (int i = 0; i < 3; i++) {
     Relu6Grad(yt_data, input_data, 50, output_data);
@@ -136,10 +147,15 @@ TEST_F(TestActGradFp32, LReluGradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/activationGrad/lrelu_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
+
   std::string yt_path = "./test_data/activationGrad/lrelu_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
+  ASSERT_NE(yt_data, nullptr);
 
   auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
+
   // warm up loop
   for (int i = 0; i < 3; i++) {
     LReluGrad(yt_data, input_data, 50, output_data, 0.1);
@@ -182,10 +198,15 @@ TEST_F(TestActGradFp32, SigmoidGradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/activationGrad/sigmoid_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
+
   std::string yt_path = "./test_data/activationGrad/sigmoid_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
+  ASSERT_NE(yt_data, nullptr);
 
   auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
+
   // warm up loop
   for (int i = 0; i < 3; i++) {
     SigmoidGrad(yt_data, input_data, 50, output_data);
@@ -229,10 +250,15 @@ TEST_F(TestActGradFp32, tanhGradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/activationGrad/tanh_y_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
+
   std::string yt_path = "./test_data/activationGrad/tanh_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
+  ASSERT_NE(yt_data, nullptr);
 
   auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
+
   // warm up loop
   for (int i = 0; i < 3; i++) {
     TanhGrad(yt_data, input_data, 50, output_data);
@@ -274,11 +300,17 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/activationGrad/hswish_x_50.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
+
   std::string yt_path = "./test_data/activationGrad/hswish_yt_50.bin";
   auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
+  ASSERT_NE(yt_data, nullptr);
   EXPECT_EQ(input_size, output_data_size * sizeof(float));
+
   auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
+
   // warm up loop
   for (int i = 0; i < 3; i++) {
     HSwishGrad(yt_data, input_data, static_cast<int>(output_data_size), output_data);
@@ -311,4 +343,58 @@ TEST_F(TestActGradFp32, hswishGradFp32) {
   delete[] yt_data;
   MS_LOG(INFO) << "hswishGradFp32 passed";
 }
+
+TEST_F(TestActGradFp32, hsigmoidGradFp32) {
+  // runtime part
+  printf("Calculating runtime cost...\n");
+  uint64_t time_avg = 0;
+  const size_t output_data_size = 10;
+
+  size_t input_size;
+  std::string input_path = "./test_data/activationGrad/hsig_x_50.bin";
+  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
+  EXPECT_EQ(input_size, output_data_size * sizeof(float));
+
+  std::string yt_path = "./test_data/activationGrad/hsig_yt_50.bin";
+  auto yt_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(yt_path.c_str(), &input_size));
+  ASSERT_NE(yt_data, nullptr);
+  EXPECT_EQ(input_size, output_data_size * sizeof(float));
+
+  auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
+
+  // warm up loop
+  for (int i = 0; i < 3; i++) {
+    HSigmoidGrad(yt_data, input_data, static_cast<int>(output_data_size), output_data);
+  }
+
+  int loop_count = 100;
+  auto time_start = mindspore::lite::GetTimeUs();
+  for (int i = 0; i < loop_count; i++) {
+    HSigmoidGrad(yt_data, input_data, output_data_size, output_data);
+  }
+  auto time_end = mindspore::lite::GetTimeUs();
+  auto cost = time_end - time_start;
+  time_avg = cost / loop_count;
+  printf("single thread running time : %f ms\n", time_avg / 1000.0f);
+
+  printf("==================output data=================\n");
+  size_t min = (output_data_size < 20UL) ? output_data_size : 20UL;
+  for (size_t i = 0; i < min; i++) {
+    std::cout << output_data[i] << " ,";
+  }
+  std::cout << std::endl;
+
+  std::string output_path = "./test_data/activationGrad/hsig_out_50.bin";
+  int res = CompareRelativeOutput(output_data, output_path);
+
+  EXPECT_EQ(res, 0);
+
+  delete[] input_data;
+  delete[] output_data;
+  delete[] yt_data;
+  MS_LOG(INFO) << "hsigmoidGradFp32 passed";
+}
+
 }  // namespace mindspore

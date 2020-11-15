@@ -17,66 +17,55 @@
 #include <string.h>
 #include "nnacl/fp32_grad/batch_norm.h"
 
-void sumSpatialBatch(const float *in, int size, int ch, float *out) {
+void sumSpatialBatch(const float *in, size_t size, int ch, float *out) {
   memset(out, 0, ch * sizeof(float));
-  for (int i = 0; i < size; i++) {
-    const float *ptr = in + i * ch;
-    for (int c = 0; c < ch; c++) {
+  for (size_t i = 0; i < size; i++) {
+    const float *ptr = in + (i * ch);
+    for (size_t c = 0; c < ch; c++) {
       out[c] += ptr[c];
     }
   }
 }
 
-static void meanVar(const float *in, int size, int ch, float eps, float *mean, float *invar) {
-  float N = (float)(size);
-  sumSpatialBatch(in, N, ch, mean);
-  for (int f = 0; f < ch; ++f) {
-    mean[f] /= N;
-  }
-  for (int f = 0; f < ch; f++) {
-    float tvar = 0;
-    for (int i = 0; i < N; i++) {
-      float x = in[i * ch + f];
-      tvar += (x - mean[f]) * (x - mean[f]);
-    }
-    invar[f] = 1.0f / (sqrt(tvar / N + eps));
-  }
-}
-
-void backwardX(const float *in, const float *dout, const float *scale, const int size, int channels, float eps,
-               float *mean, float *invar, float *dxhathat_sum, float *dxhat_sum, float *out) {
-  meanVar(in, size, channels, eps, mean, invar);
-  for (int i = 0; i < size; i++) {
-    for (int f = 0; f < channels; f++) {
-      int ix = i * channels + f;
+void backwardX(const float *in, const float *dout, const float *scale, const size_t size, int channels, float *mean,
+               float *invar, float *dxhathat_sum, float *dxhat_sum, float *out) {
+  const float N = (size);
+  for (size_t i = 0; i < size; i++) {
+    for (size_t f = 0; f < channels; f++) {
+      size_t ix = i * channels + f;
       float x_hat = (in[ix] - mean[f]) * invar[f];
-      float dxhat = dout[ix] * scale[f];
-      dxhat_sum[f] += dxhat;
-      dxhathat_sum[f] += dxhat * x_hat;
+      float dx_hat = dout[ix] * scale[f];
+      dxhat_sum[f] += dx_hat;
+      dxhathat_sum[f] += dx_hat * x_hat;
     }
   }
-  for (int i = 0; i < size; i++) {
-    for (int f = 0; f < channels; f++) {
-      int ix = i * channels + f;
+  for (size_t i = 0; i < size; i++) {
+    for (size_t f = 0; f < channels; f++) {
+      size_t ix = i * channels + f;
       float x_hat = (in[ix] - mean[f]) * invar[f];
-      float dxhat = dout[ix] * scale[f];
-      out[ix] = 1.f / size * invar[f] * (size * dxhat - dxhat_sum[f] - x_hat * dxhathat_sum[f]);
+      float dx_hat = dout[ix] * scale[f];
+      out[ix] = 1.0f / N * (invar[f]) * (N * dx_hat - dxhat_sum[f] - x_hat * dxhathat_sum[f]);
     }
   }
 }
 
-void backwardScale(const float *x, const float *mean, const float *invar, const float *delta, int batch,
-                   int n, int size, float *scale_updates) {
-  int i, b, f;
+void backwardScale(const float *x, const float *mean, const float *invar, const float *delta, int batch, int n,
+                   int size, float *scale_updates) {
+  size_t i, b, f;
   memset(scale_updates, 0, n * sizeof(float));
   for (b = 0; b < batch; ++b) {
     for (i = 0; i < size; ++i) {
       for (f = 0; f < n; ++f) {
         int index = (b * size + i) * n + f;
         float x_norm = (x[index] - mean[f]) * invar[f];
-        scale_updates[f] += delta[index] * x_norm;
+        scale_updates[f] += (delta[index] * x_norm);
       }
     }
   }
 }
 
+void var2Invar(float *save_var, size_t size, float eps) {
+  for (size_t i = 0; i < size; i++) {
+    save_var[i] = 1.0f / sqrt(save_var[i] + eps);
+  }
+}

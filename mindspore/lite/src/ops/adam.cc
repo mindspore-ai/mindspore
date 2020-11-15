@@ -73,7 +73,7 @@ Registry AdamRegistry(schema::PrimitiveType_Adam, AdamCreator);
 
 int Adam::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   if (10 != inputs.size()) {
-    MS_LOG(ERROR) << "Adam should have at 10 input tensors";
+    MS_LOG(ERROR) << "Adam should have 10 input tensors";
     return RET_ERROR;
   }
 

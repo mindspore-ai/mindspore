@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32_grad/bn_grad.h"
+#include <math.h>
 #include <algorithm>
 #include <vector>
 #include "schema/model_generated.h"
@@ -34,7 +35,7 @@ namespace mindspore::kernel {
 int BNGradCPUKernel::Init() {
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
-  SetWorkspaceSize(4 * channels * sizeof(float));
+  SetWorkspaceSize(2 * channels * sizeof(float));
   return RET_OK;
 }
 
@@ -45,19 +46,23 @@ int BNGradCPUKernel::Execute(int task_id) {
   auto *input_yt = in_tensors_.at(0);
   auto *input_x = in_tensors_.at(1);
   auto *input_scale = in_tensors_.at(2);
+  auto *input_mean = in_tensors_.at(3);
+  auto *input_var = in_tensors_.at(4);
+
+  float *save_mean = reinterpret_cast<float *>(input_mean->MutableData());
+  float *save_var = reinterpret_cast<float *>(input_var->MutableData());
+
   auto *output_dx = out_tensors_.at(0);
   auto *output_scale = out_tensors_.at(1);
   auto *output_bias = out_tensors_.at(2);
-  int batch = input_x->Batch();
-  int channels = input_x->Channel();
-  int spatial = input_x->Height() * input_x->Width();
+  size_t batch = input_x->Batch();
+  size_t channels = input_x->Channel();
+  size_t spatial = input_x->Height() * input_x->Width();
   float eps = bn_param->epsilon_;
 
   float *workspace = static_cast<float *>(GetWorkspace());
   std::fill(workspace, workspace + GetWorkspaceSize() / sizeof(*workspace), 0.f);
-  float *mean = workspace;
-  float *invar = mean + channels;
-  float *dxhat_sum = invar + channels;
+  float *dxhat_sum = workspace;
   float *dxhathat_sum = dxhat_sum + channels;
 
   float *x = reinterpret_cast<float *>(input_x->MutableData());
@@ -67,11 +72,14 @@ int BNGradCPUKernel::Execute(int task_id) {
   float *dscale = reinterpret_cast<float *>(output_scale->MutableData());
   float *dbias = reinterpret_cast<float *>(output_bias->MutableData());
 
-  backwardX(x, yt, scale, batch * spatial, channels, eps, mean, invar, dxhat_sum, dxhathat_sum, dx);
+  var2Invar(save_var, input_var->ElementsNum(), eps);
+  // dx
+  backwardX(x, yt, scale, batch * spatial, channels, save_mean, save_var, dxhat_sum, dxhathat_sum, dx);
   // dbias
   sumSpatialBatch(yt, batch * spatial, channels, dbias);
   // dscale
-  backwardScale(x, mean, invar, yt, batch, channels, spatial, dscale);
+  backwardScale(x, save_mean, save_var, yt, batch, channels, spatial, dscale);
+
   return RET_OK;
 }
 

@@ -36,6 +36,10 @@
 #include "src/ops/bn_grad.h"
 #include "nnacl/fp32_grad/batch_norm.h"
 #include "src/ops/adam.h"
+#include "nnacl/fp32_grad/dropout_parameter.h"
+#include "src/ops/dropout.h"
+#include "src/ops/dropout_grad.h"
+#include "src/ops/arithmetic.h"
 #include "src/ops/oneslike.h"
 #include "src/ops/binary_cross_entropy.h"
 #include "src/ops/binary_cross_entropy_grad.h"
@@ -399,8 +403,64 @@ OpParameter *PopulateBNGradParameter(const mindspore::lite::PrimitiveC *primitiv
   bnGrad_param->op_parameter_.type_ = primitive->Type();
   auto bngrad = reinterpret_cast<mindspore::lite::BNGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   bnGrad_param->epsilon_ = bngrad->GetEps();
-  bnGrad_param->momentum_ = 0.1;
+  bnGrad_param->momentum_ = bngrad->GetMomentum();
   return reinterpret_cast<OpParameter *>(bnGrad_param);
+}
+
+OpParameter *PopulateDropoutParameter(const mindspore::lite::PrimitiveC *primitive) {
+  DropoutParameter *dropout_parameter = reinterpret_cast<DropoutParameter *>(malloc(sizeof(DropoutParameter)));
+  if (dropout_parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc Dropout Parameter failed.";
+    return nullptr;
+  }
+  memset(dropout_parameter, 0, sizeof(DropoutParameter));
+  dropout_parameter->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::Dropout *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  dropout_parameter->ratio_ = param->GetRatio();
+  if (dropout_parameter->ratio_ < 0.f || dropout_parameter->ratio_ > 1.f) {
+    MS_LOG(ERROR) << "Dropout ratio must be between 0 to 1, got " << dropout_parameter->ratio_;
+    free(dropout_parameter);
+    return nullptr;
+  }
+  return reinterpret_cast<OpParameter *>(dropout_parameter);
+}
+
+OpParameter *PopulateDropoutGradParameter(const mindspore::lite::PrimitiveC *primitive) {
+  DropoutParameter *dropoutGrad_parameter = reinterpret_cast<DropoutParameter *>(malloc(sizeof(DropoutParameter)));
+  if (dropoutGrad_parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc Dropout Grad Parameter failed.";
+    return nullptr;
+  }
+  memset(dropoutGrad_parameter, 0, sizeof(DropoutParameter));
+  dropoutGrad_parameter->op_parameter_.type_ = primitive->Type();
+  auto param = reinterpret_cast<mindspore::lite::DropoutGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  dropoutGrad_parameter->ratio_ = param->GetRatio();
+  if (dropoutGrad_parameter->ratio_ < 0.f || dropoutGrad_parameter->ratio_ > 1.f) {
+    MS_LOG(ERROR) << "Dropout Grad ratio must be between 0 to 1, got " << dropoutGrad_parameter->ratio_;
+    free(dropoutGrad_parameter);
+    return nullptr;
+  }
+  return reinterpret_cast<OpParameter *>(dropoutGrad_parameter);
+}
+
+OpParameter *PopulateArithmeticGradParameter(const mindspore::lite::PrimitiveC *primitive) {
+  ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
+  if (arithmetic_param == nullptr) {
+    MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
+    return nullptr;
+  }
+  memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
+  arithmetic_param->op_parameter_.type_ = primitive->Type();
+  arithmetic_param->broadcasting_ = ((lite::Arithmetic *)primitive)->Broadcasting();
+  arithmetic_param->ndim_ = ((lite::Arithmetic *)primitive)->NDims();
+
+  auto tmp_shape = ((lite::Arithmetic *)primitive)->InShape0();
+  memcpy(arithmetic_param->in_shape0_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
+  tmp_shape = ((lite::Arithmetic *)primitive)->InShape1();
+  memcpy(arithmetic_param->in_shape1_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
+  tmp_shape = ((lite::Arithmetic *)primitive)->OutputShape();
+  memcpy(arithmetic_param->out_shape_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
+  return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
 void PopulateTrainParameters() {
@@ -430,6 +490,10 @@ void PopulateTrainParameters() {
   lite::Registry OnesLikeParameterRegistry(schema::PrimitiveType_OnesLike, DefaultPopulateParameter);
   lite::Registry UnsortedSegmentSumParameterRegistry(schema::PrimitiveType_UnsortedSegmentSum,
                                                      DefaultPopulateParameter);
+  lite::Registry DropoutParameterRegistry(schema::PrimitiveType_Dropout, PopulateDropoutParameter);
+  lite::Registry DropGradParameterRegistry(schema::PrimitiveType_DropoutGrad, PopulateDropoutGradParameter);
+  lite::Registry MaximumGradParameterRegistry(schema::PrimitiveType_MaximumGrad, PopulateArithmeticGradParameter);
+  lite::Registry MinimumGradParameterRegistry(schema::PrimitiveType_MinimumGrad, PopulateArithmeticGradParameter);
 }
 
 }  // namespace mindspore::kernel

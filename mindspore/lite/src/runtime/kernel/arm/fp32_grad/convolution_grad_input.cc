@@ -51,11 +51,14 @@ int ConvolutionGradInputCPUKernel::Init() {
 
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
+  ws_size = chunk * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
 
-  size_t ws_size = conv_param->output_h_ * conv_param->output_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
-                   conv_param->input_channel_ / conv_param->group_;
+  int n = conv_param->kernel_w_ * conv_param->kernel_h_ * conv_param->input_channel_ / conv_param->group_;
+  int k = conv_param->output_channel_ / conv_param->group_;
 
-  SetWorkspaceSize(ws_size * sizeof(float));
+  size_t mat_alloc = MatSizeTotal(chunk, n, k, 0);
+
+  SetWorkspaceSize((ws_size + mat_alloc) * sizeof(float));
   return RET_OK;
 }
 
@@ -88,16 +91,30 @@ int ConvolutionGradInputCPUKernel::Execute(int task_id) {
   int n = k_w * k_h * in_ch / groups;
   int k = out_ch / groups;
   float *workspace = reinterpret_cast<float *>(GetWorkspace());
-
+  float *mat_workspace = workspace + ws_size;
   memset(dx_addr, 0, sizeof(float) * batch * in_ch * in_h * in_w);
-
   for (i = 0; i < batch; ++i) {
     for (j = 0; j < groups; ++j) {
-      float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups);
-      float *mat_b = w_addr + j * nweights / groups;
-      float *mat_c = workspace;
-      gemm(0, 0, m, n, k, 1, mat_a, out_ch, mat_b, n, 0, mat_c, n);
-      col2im_hwc(mat_c, dx_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups), conv_param);
+      GemmCb gcb;
+      for (int ci = 0; ci < m; ci += chunk) {
+        float *mat_b;
+        if (ci == 0) {
+          mat_b = w_addr + j * nweights / groups;
+          gcb.ca = 0;
+          gcb.cb = 0;
+          gcb.bias = nullptr;
+          gcb.atype = ActType_No;
+        } else {
+          mat_b = gcb.mat_b;
+          gcb.cb = 1;
+        }
+        int real_chunk = MSMIN(m - ci, chunk);
+        float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
+        float *mat_c = workspace;
+        GemmMatmulPlus(0, 0, real_chunk, n, k, 1, mat_a, out_ch, mat_b, n, 0, mat_c, n, mat_workspace, &gcb);
+        rolling_col2im_hwc(mat_c, dx_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups),
+                           conv_param, real_chunk, ci);
+      }
     }
   }
 

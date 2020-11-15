@@ -41,8 +41,7 @@ void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *lab
         float logit =
           -logf(logits[i * param_->number_of_classes_ + j] <= 0.0 ? eps : logits[i * param_->number_of_classes_ + j]);
         grads[i * param_->number_of_classes_ + j] =
-          (logits[i * param_->number_of_classes_ + j] - labels[i * param_->number_of_classes_ + j]) /
-          param_->batch_size_;
+          (logits[i * param_->number_of_classes_ + j] - labels[i * param_->number_of_classes_ + j]);
         total_loss += labels[i * param_->number_of_classes_ + j] * logit;
       }
     }
@@ -63,7 +62,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   float *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   float *grads = NULL;
-  if (is_train() && out_tensors_.size() > 1) {
+  if (IsTrain() && out_tensors_.size() > 1) {
     grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
   }
   size_t data_size = in_tensors_.at(0)->ElementsNum();

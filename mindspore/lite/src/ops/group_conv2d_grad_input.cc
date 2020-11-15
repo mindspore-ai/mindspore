@@ -39,6 +39,9 @@ int GroupConv2DGradInput::GetPadRight() const { return this->primitive_->value.A
 int GroupConv2DGradInput::GetDilateW() const { return this->primitive_->value.AsGroupConv2DGradInput()->dilateW; }
 int GroupConv2DGradInput::GetDilateH() const { return this->primitive_->value.AsGroupConv2DGradInput()->dilateH; }
 bool GroupConv2DGradInput::GetHasBias() const { return this->primitive_->value.AsGroupConv2DGradInput()->hasBias; }
+std::vector<int> GroupConv2DGradInput::GetInputShape() const {
+  return this->primitive_->value.AsGroupConv2DGradInput()->input_shape;
+}
 int GroupConv2DGradInput::GetActivationType() const {
   return this->primitive_->value.AsGroupConv2DGradInput()->activationType;
 }
@@ -99,10 +102,16 @@ int GroupConv2DGradInput::UnPackToFlatBuilder(const schema::Primitive *primitive
     MS_LOG(ERROR) << "value_as_GroupConv2DGradInput return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateGroupConv2DGradInput(
+  std::vector<int32_t> input_shape;
+  if (attr->input_shape() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->input_shape()->size()); i++) {
+      input_shape.push_back(attr->input_shape()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateGroupConv2DGradInputDirect(
     *fbb, attr->format(), attr->group(), attr->channelIn(), attr->channelOut(), attr->kernelW(), attr->kernelH(),
     attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(), attr->padLeft(),
-    attr->padRight(), attr->dilateW(), attr->dilateH(), attr->hasBias(), attr->activationType());
+    attr->padRight(), attr->dilateW(), attr->dilateH(), attr->hasBias(), &input_shape, attr->activationType());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_GroupConv2DGradInput, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
@@ -127,51 +136,38 @@ int GroupConv2DGradInput::GetPadRight() const { return this->primitive_->value_a
 int GroupConv2DGradInput::GetDilateW() const { return this->primitive_->value_as_GroupConv2DGradInput()->dilateW(); }
 int GroupConv2DGradInput::GetDilateH() const { return this->primitive_->value_as_GroupConv2DGradInput()->dilateH(); }
 bool GroupConv2DGradInput::GetHasBias() const { return this->primitive_->value_as_GroupConv2DGradInput()->hasBias(); }
+std::vector<int> GroupConv2DGradInput::GetInputShape() const {
+  auto fb_vector = this->primitive_->value_as_GroupConv2DGradInput()->input_shape();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
 int GroupConv2DGradInput::GetActivationType() const {
   return this->primitive_->value_as_GroupConv2DGradInput()->activationType();
 }
-
 PrimitiveC *GroupConv2DGradInputCreator(const schema::Primitive *primitive) {
   return PrimitiveC::NewPrimitiveC<GroupConv2DGradInput>(primitive);
 }
 Registry GroupConv2DGradInputRegistry(schema::PrimitiveType_GroupConv2DGradInput, GroupConv2DGradInputCreator);
+
 #endif
 
 int GroupConv2DGradInput::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
-  if (3 != inputs.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad Input should have 3 inputs";
+  if (2 != inputs.size()) {
+    MS_LOG(ERROR) << "Conv2d Grad input should have 2 inputs";
     return RET_ERROR;
   }
   if (1 != outputs.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad input should have one output";
+    MS_LOG(ERROR) << "Conv2d Grad output should have one output";
     return RET_ERROR;
   }
 
   auto *in0 = inputs.at(0);
-  auto *in = inputs.at(2);
-  MS_ASSERT(in0 != nullptr);
-  MS_ASSERT(in != nullptr);
 
-  std::vector<int> output_shape;
-  int *out_shape = reinterpret_cast<int *>(in->MutableData());
-  int new_size = in->ElementsNum();
-  if (in0->GetFormat() == in->GetFormat()) {
-    for (int i = 0; i < new_size; i++) output_shape.push_back(out_shape[i]);
-  } else {
-    if ((in0->GetFormat() == schema::Format_NHWC) && (in->GetFormat() == schema::Format_NCHW)) {
-      output_shape.push_back(out_shape[0]);
-      output_shape.push_back(out_shape[2]);
-      output_shape.push_back(out_shape[3]);
-      output_shape.push_back(out_shape[1]);
-    } else {
-      MS_LOG(ERROR) << "Shape covnert is not supported";
-      return RET_ERROR;
-    }
-  }
+  MS_ASSERT(in0 != nullptr);
 
   auto *out = outputs.at(0);
   MS_ASSERT(out != nullptr);
-  out->set_shape(output_shape);
+  out->set_shape(GetInputShape());
+
   out->set_data_type(in0->data_type());
   out->SetFormat(in0->GetFormat());
 

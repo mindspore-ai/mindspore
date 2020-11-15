@@ -70,6 +70,7 @@ class GroupConv2DGradInput : public PrimitiveC {
   int GetDilateW() const;
   int GetDilateH() const;
   bool GetHasBias() const;
+  std::vector<int> GetInputShape() const;
   int GetActivationType() const;
 };
 }  // namespace lite

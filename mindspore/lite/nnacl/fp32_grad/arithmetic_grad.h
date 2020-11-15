@@ -16,11 +16,17 @@
 #ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
 #define MINDSPORE_LITE_NNACL_FP32_GRAD_ARITHMETIC_GRAD_H_
 
+#include "nnacl/op_base.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 void ElementDivNegSquare(const float *nom, const float *denom, float *output, int element_size);
 void ElementMulAndDivNegSquare(const float *a, const float *b, const float *denom, float *output, int element_size);
+void MaximumByAxes(const float *input0, const float *input1, const float *dy, const int *input0_dims,
+                   const int *input1_dims, const int *dy_dims, float *output0, float *output1, int num_dims);
+void MinimumByAxes(const float *input0, const float *input1, const float *dy, const int *input0_dims,
+                   const int *input1_dims, const int *dy_dims, float *output0, float *output1, int num_dims);
 #ifdef __cplusplus
 }
 #endif

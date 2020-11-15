@@ -54,8 +54,8 @@ STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
     }
     auto postNodeIdxes = GetOutputNodeIdx(*graphT, nodeIdx, 1);
     if (postNodeIdxes.size() != 0) {
-      MS_LOG(ERROR) << "Unsupported Dropout: " << node->name.c_str() << " with mask output.";
-      return RET_ERROR;
+      MS_LOG(WARNING) << "Unsupported Dropout: " << node->name.c_str() << " with mask output.";
+      return RET_OK;
     }
   }
   auto inDataTensorIdx = inputTensorIdxes.front();

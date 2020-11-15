@@ -52,15 +52,10 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_SpaceToDepth,
   schema::PrimitiveType_DepthToSpace};
 
-static const std::vector<schema::PrimitiveType> nhwcOpDualInputList = {
-#ifdef SUPPORT_TRAIN
-  schema::PrimitiveType_Conv2DGradFilter, schema::PrimitiveType_BNGrad
-#endif
-};
-
 static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
 #ifdef SUPPORT_TRAIN
-  schema::PrimitiveType_PoolingGrad, schema::PrimitiveType_ActivationGrad
+  schema::PrimitiveType_PoolingGrad, schema::PrimitiveType_ActivationGrad, schema::PrimitiveType_Conv2DGradFilter,
+  schema::PrimitiveType_BNGrad
 #endif
 };
 
@@ -155,8 +150,6 @@ std::vector<schema::PrimitiveType> GetInsertOpList() { return needInsertOpList; 
 std::vector<schema::PrimitiveType> Getfp32FullOpList() { return fp32FullOpList; }
 
 std::vector<schema::PrimitiveType> GetNhwcOpList() { return nhwcOpList; }
-
-std::vector<schema::PrimitiveType> GetNhwcDualInputOpList() { return nhwcOpDualInputList; }
 
 std::vector<schema::PrimitiveType> GetNhwcAllInputOpList() { return nhwcOpAllInputList; }
 

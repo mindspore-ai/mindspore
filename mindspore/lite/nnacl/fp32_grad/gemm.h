@@ -17,11 +17,26 @@
 #ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_GEMM_H_
 #define MINDSPORE_LITE_NNACL_FP32_GRAD_GEMM_H_
 
+#include <stdlib.h>
+#include "nnacl/op_base.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-void gemm(int transpose_a, int transpose_b, int M, int N, int K, float alpha, float *mat_a, int lda, float *mat_b,
-          int ldb, float beta, float *mat_c, int ldc);
+typedef struct {
+  int ca;
+  int cb;
+  ActType atype;
+  float *bias;
+  float *mat_a;
+  float *mat_b;
+} GemmCb;
+
+void GemmMatmulPlus(int ta, int tb, int M, int N, int K, float alpha, const float *mat_a, int lda, const float *mat_b,
+                    int ldb, float beta, float *mat_c, int ldc, float *workspace, GemmCb *cb);
+void GemmMatmul(int ta, int tb, int M, int N, int K, float alpha, const float *mat_a, int lda, const float *mat_b,
+                int ldb, float beta, float *mat_c, int ldc, float *workspace);
+int MatSize(int row, int col, int round);
+int MatSizeTotal(int row, int col, int deep, int inc);
 #ifdef __cplusplus
 }
 #endif

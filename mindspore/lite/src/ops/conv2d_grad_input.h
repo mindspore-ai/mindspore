@@ -72,6 +72,7 @@ class Conv2DGradInput : public PrimitiveC {
   int GetDilateH() const;
   bool GetHasBias() const;
   int GetActivationType() const;
+  std::vector<int> GetInputShape() const;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -140,10 +140,12 @@ int MatmulCPUKernel::InitBias() {
                     : (c_shape[c_shape.size() - 1]);
   params_->col_8_ = UP_ROUND(params_->col_, 8);
   auto col_tmp = is_vector_a_ ? params_->col_ : params_->col_8_;
-  bias_ptr_ = reinterpret_cast<float *>(malloc(col_tmp * sizeof(float)));
   if (bias_ptr_ == nullptr) {
-    FreeTmpBuffer();
-    return RET_MEMORY_FAILED;
+    bias_ptr_ = reinterpret_cast<float *>(malloc(col_tmp * sizeof(float)));
+    if (bias_ptr_ == nullptr) {
+      FreeTmpBuffer();
+      return RET_MEMORY_FAILED;
+    }
   }
   memset(bias_ptr_, 0, col_tmp * sizeof(float));
   if (in_tensors_.size() == 3) {
@@ -154,6 +156,8 @@ int MatmulCPUKernel::InitBias() {
 
 int MatmulCPUKernel::ReSize() {
   if (!params_->b_const_) {
+    free(bias_ptr_);
+    bias_ptr_ = nullptr;
     auto ret = InitBias();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Matmul fp32 init bias failed";
@@ -277,7 +281,7 @@ int MatmulCPUKernel::Run() {
   auto b_src = reinterpret_cast<float *>(in_tensors_[1]->data_c());
   auto c_src = reinterpret_cast<float *>(out_tensors_[0]->data_c());
 
-  if (!params_->a_const_ || is_train()) {
+  if (!params_->a_const_ || IsTrain()) {
     if (a_pack_ptr_ != nullptr) {
       params_->a_const_ ? free(a_pack_ptr_) : context_->allocator->Free(a_pack_ptr_);
       a_pack_ptr_ = nullptr;
@@ -294,7 +298,7 @@ int MatmulCPUKernel::Run() {
       a_ptr_ = a_pack_ptr_;
     }
   }
-  if (!params_->b_const_ || is_train()) {
+  if (!params_->b_const_ || IsTrain()) {
     if (b_pack_ptr_ != nullptr) {
       params_->b_const_ ? free(b_pack_ptr_) : context_->allocator->Free(b_pack_ptr_);
       b_pack_ptr_ = nullptr;
@@ -311,7 +315,9 @@ int MatmulCPUKernel::Run() {
       b_ptr_ = b_pack_ptr_;
     }
   }
-
+  if (IsTrain()) {
+    InitBias();
+  }
   for (int i = 0; i < params_->batch; ++i) {
     if (is_vector_a_) {
       cur_a_ptr_ = a_ptr_ + i * params_->deep_;
@@ -329,26 +335,54 @@ int MatmulCPUKernel::Run() {
       return RET_ERROR;
     }
   }
-  if (!params_->a_const_ || is_train()) {
-    context_->allocator->Free(a_pack_ptr_);
+  if (!params_->a_const_ || IsTrain()) {
+    params_->a_const_ ? free(a_pack_ptr_) : context_->allocator->Free(a_pack_ptr_);
     a_pack_ptr_ = nullptr;
   }
-  if (!params_->b_const_ || is_train()) {
-    context_->allocator->Free(b_pack_ptr_);
+  if (!params_->b_const_ || IsTrain()) {
+    params_->b_const_ ? free(b_pack_ptr_) : context_->allocator->Free(b_pack_ptr_);
     b_pack_ptr_ = nullptr;
   }
   return RET_OK;
 }
 
-void MatmulCPUKernel::eval() {
+int MatmulCPUKernel::Eval() {
   // Copy weights after training
-  LiteKernel::eval();
+  auto a_src = reinterpret_cast<float *>(in_tensors_[0]->data_c());
+  auto b_src = reinterpret_cast<float *>(in_tensors_[1]->data_c());
+  LiteKernel::Eval();
   if (params_->a_const_) {
-    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
+    if (a_pack_ptr_ == nullptr) {
+      auto ret = MallocMatrixABuffer();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Matmul fp32 malloc matrix a buffer failed";
+        return RET_ERROR;
+      }
+    }
+    if (is_vector_a_) {
+      a_ptr_ = a_src;
+    } else {
+      InitMatrixA(a_src, a_pack_ptr_);
+      a_ptr_ = a_pack_ptr_;
+    }
   }
   if (params_->b_const_) {
-    InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), b_pack_ptr_);
+    if (b_pack_ptr_ == nullptr) {
+      auto ret = MallocMatrixBBuffer();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Matmul fp32 malloc matrix b buffer failed";
+        return RET_ERROR;
+      }
+    }
+    if (is_vector_a_ && params_->b_transpose_) {
+      b_ptr_ = b_src;
+    } else {
+      InitMatrixB(b_src, b_pack_ptr_);
+      b_ptr_ = b_pack_ptr_;
+    }
   }
+  InitBias();
+  return RET_OK;
 }
 
 kernel::LiteKernel *CpuMatmulFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,

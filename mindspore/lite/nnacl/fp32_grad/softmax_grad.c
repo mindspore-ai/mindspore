@@ -41,7 +41,6 @@ void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr,
 
   const int M = input_shape[axis];
   const int N = inner_size;
-  const int K = 1;
   for (int i = 0; i < outter_size; i++) {
     int outter_offset = i * dim;
     memset(sum_data, 0.0f, inner_size * sizeof(float));
@@ -52,7 +51,14 @@ void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr,
         sum_data[k] += output_ptr[offset] * input_ptr[offset];
       }
     }
-    gemm(0, 0, M, N, K, -1, sum_mul, K, sum_data, N, 1, &output_ptr[outter_offset], N);
+    for (int k = 0; k < M; ++k) {
+      float a = -sum_mul[k];
+      for (int j = 0; j < N; ++j) {
+        *(output_ptr + outter_offset + k * N + j) += a * sum_data[j];
+      }
+    }
+
+    // gemm(0, 0, M, N, K, -1, sum_mul, K, sum_data, N, 1, &output_ptr[outter_offset], N);
   }
 
   for (int i = 0; i < ele_size; i++) {

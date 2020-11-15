@@ -32,6 +32,8 @@ class TestDeConvolutionGradFp32 : public mindspore::CommonTest {
 TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   // prepare stage
   auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv_param, nullptr);
+
   conv_param->input_batch_ = 2;
   conv_param->input_h_ = 32;
   conv_param->input_w_ = 32;
@@ -63,24 +65,24 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   size_t dy_size;
   std::string dy_path = "./test_data/deconv/deconvfp32_dy_2_9_63_63.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
+  ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 63, 63, 9});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(dy_data);
 
-  // runtime part
-  printf("Calculating runtime cost...\n");
-  uint64_t time_avg = 0;
   size_t output_data_size =
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
   std::string input_path = "./test_data/deconv/deconvfp32_input0_2_3_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
+  ASSERT_NE(dw_data, nullptr);
   std::vector<int> dim_dw({3, 3, 3, 9});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   dw_tensor.set_data(dw_data);
@@ -93,7 +95,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
 
   // warm up loop
@@ -101,6 +105,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
     kernel->Run();
   }
 
+  // runtime part
+  printf("Calculating runtime cost...\n");
+  uint64_t time_avg = 0;
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
@@ -131,6 +138,8 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
 TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   // prepare stage
   auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv_param, nullptr);
+
   conv_param->input_batch_ = 2;
   conv_param->input_h_ = 32;
   conv_param->input_w_ = 32;
@@ -162,24 +171,24 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   size_t dy_size;
   std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_2_9_65_65.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
+  ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 65, 65, 9});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(dy_data);
 
-  // runtime part
-  printf("Calculating runtime cost...\n");
-  uint64_t time_avg = 0;
   size_t output_data_size =
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
   std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_2_3_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
+  ASSERT_NE(dw_data, nullptr);
   std::vector<int> dim_dw({9, 3, 3, 3});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   dw_tensor.set_data(dw_data);
@@ -192,7 +201,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
 
   // warm up loop
@@ -200,6 +211,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
     kernel->Run();
   }
 
+  // runtime part
+  printf("Calculating runtime cost...\n");
+  uint64_t time_avg = 0;
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
@@ -230,6 +244,8 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
 TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   // prepare stage
   auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv_param, nullptr);
+
   conv_param->input_batch_ = 2;
   conv_param->input_h_ = 32;
   conv_param->input_w_ = 32;
@@ -261,6 +277,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   size_t dy_size;
   std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_g3_2_9_65_65.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
+  ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 65, 65, 9});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(dy_data);
@@ -274,11 +291,13 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   size_t input_size;
   std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_g3_2_3_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
+  ASSERT_NE(dw_data, nullptr);
   std::vector<int> dim_dw({3, 3, 3, 3});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   dw_tensor.set_data(dw_data);
@@ -291,7 +310,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
 
   // warm up loop
@@ -329,6 +350,8 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
 TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   // prepare stage
   auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv_param, nullptr);
+
   conv_param->input_batch_ = 2;
   conv_param->input_h_ = 32;
   conv_param->input_w_ = 32;
@@ -360,24 +383,24 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   size_t dy_size;
   std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_g3_s1_2_9_34_34.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
+  ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 34, 34, 9});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(dy_data);
 
-  // runtime part
-  printf("Calculating runtime cost...\n");
-  uint64_t time_avg = 0;
   size_t output_data_size =
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
   std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_g3_s1_2_3_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
+  ASSERT_NE(dw_data, nullptr);
   std::vector<int> dim_dw({3, 3, 3, 3});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   dw_tensor.set_data(dw_data);
@@ -390,7 +413,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
 
   // warm up loop
@@ -398,6 +423,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
     kernel->Run();
   }
 
+  // runtime part
+  printf("Calculating runtime cost...\n");
+  uint64_t time_avg = 0;
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
@@ -428,6 +456,8 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
 TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   // prepare stage
   auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv_param, nullptr);
+
   conv_param->input_batch_ = 2;
   conv_param->input_h_ = 32;
   conv_param->input_w_ = 32;
@@ -459,24 +489,24 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   size_t dy_size;
   std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_g2_s2_2_12_65_65.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
+  ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 65, 65, 12});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(dy_data);
 
-  // runtime part
-  printf("Calculating runtime cost...\n");
-  uint64_t time_avg = 0;
   size_t output_data_size =
     conv_param->output_channel_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
 
   size_t input_size;
   std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_g2_s2_2_4_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 4});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
+  ASSERT_NE(dw_data, nullptr);
   std::vector<int> dim_dw({6, 3, 3, 4});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   dw_tensor.set_data(dw_data);
@@ -489,7 +519,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
 
   // warm up loop
@@ -497,6 +529,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
     kernel->Run();
   }
 
+  // runtime part
+  printf("Calculating runtime cost...\n");
+  uint64_t time_avg = 0;
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
@@ -527,6 +562,8 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
 TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   // prepare stage
   auto conv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv_param, nullptr);
+
   conv_param->input_batch_ = 2;
   conv_param->input_h_ = 32;
   conv_param->input_w_ = 32;
@@ -558,6 +595,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   size_t dy_size;
   std::string dy_path = "./test_data/deconv/deconvfp32_dy_d2_g12_s2_2_12_65_65.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &dy_size));
+  ASSERT_NE(dy_data, nullptr);
   std::vector<int> dim_dy({2, 65, 65, 12});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(dy_data);
@@ -571,11 +609,13 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   size_t input_size;
   std::string input_path = "./test_data/deconv/deconvfp32_input0_d2_g12_s2_2_12_32_32.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_x({2, 32, 32, 12});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input_data);
 
   auto dw_data = new float[output_data_size];
+  ASSERT_NE(dw_data, nullptr);
   std::vector<int> dim_dw({1, 3, 3, 12});
   lite::Tensor dw_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   dw_tensor.set_data(dw_data);
@@ -588,7 +628,9 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->GetWorkspaceSize());
 
   // warm up loop

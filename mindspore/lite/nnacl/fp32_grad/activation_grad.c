@@ -72,7 +72,7 @@ int HSwishGrad(float *src0, float *src1, int length, float *dst) {
 
 int HSigmoidGrad(float *src0, float *src1, int length, float *dst) {
   for (int i = 0; i < length; ++i) {
-    float tmp = (src1[i] > 3.0f ? 1.0f : (src1[i] < -3.0f ? 0.0f : 1.0f / 6.0f));
+    float tmp = (src1[i] > 3.0f ? 0.0f : (src1[i] < -3.0f ? 0.0f : 1.0f / 6.0f));
     dst[i] = tmp * src0[i];
   }
   return NNACL_OK;

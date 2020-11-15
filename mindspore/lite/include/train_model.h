@@ -18,32 +18,36 @@
 #include <vector>
 #include "include/model.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+
+/// \brief TrainModel Defines a class that allows to import and export a mindsport trainable model
 struct TrainModel : public lite::Model {
-  /// \brief Static method to create a TrainModel pointer.
+  /// \brief Static method to create a TrainModel object
   ///
-  /// \param[in] model_buf Define the buffer read from a model file.
-  /// \param[in] size Define bytes number of model buffer.
-  ///
-  /// \return Pointer of MindSpore Lite TrainModel.
+  /// \param[in] model_buf A buffer that was read from a MS model file
+  /// \param[in] size Length of the buffer
+  //
+  /// \return Pointer to MindSpore Lite TrainModel
   static TrainModel *Import(const char *model_buf, size_t size);
 
-  /// \brief Free meta graph temporary buffer
+  /// \brief Free meta graph related data
   void Free() override;
 
-  /// \brief TrainModel destruct, free all memory
+  /// \brief Class destructor, free all memory
   virtual ~TrainModel();
 
-  /// \brief Export Model into buf.
+  /// \brief Export Model into a buffer
   ///
-  /// \param[in] buf Define the buffer to Export into. If nullptr, buf will be allocated
-  /// \param[in] len size of the buffer.
+  /// \param[in] buf The buffer to Export into. If equal to nullptr, buf will be allocated
+  /// \param[in,out] len Size of the pre-allocated buffer, and returned size of the exported buffer
   ///
   /// \return Pointer to buffer with exported model
-  char* ExportBuf(char* buf, size_t* len) const;
+  char *ExportBuf(char *buf, size_t *len) const;
 
   size_t buf_size_;
 };
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_INCLUDE_TRAIN_MODEL_H_

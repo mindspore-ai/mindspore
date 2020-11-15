@@ -148,15 +148,8 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
 #ifdef SUPPORT_TRAIN
     if (IsContain(GetNhwcAllInputOpList(), GetCNodeTType(**iter))) {
       int idx_num = node->inputIndex.size();
+      if (GetCNodeTType(**iter) == schema::PrimitiveType_BNGrad) idx_num = 2;
       for (int i = 0; i < idx_num; i++) {
-        iter = InsertFormatTransNode(graph, iter, kBefore, i, beforeNodeType, &status);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "InsertNchw2NhwcNode before " << nodeName << "failed";
-          return RET_ERROR;
-        }
-      }
-    } else if (IsContain(GetNhwcDualInputOpList(), GetCNodeTType(**iter))) {
-      for (int i = 0; i < 2; i++) {
         iter = InsertFormatTransNode(graph, iter, kBefore, i, beforeNodeType, &status);
         if (status != RET_OK) {
           MS_LOG(ERROR) << "InsertNchw2NhwcNode before " << nodeName << "failed";

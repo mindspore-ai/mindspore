@@ -42,11 +42,18 @@ int ArithmeticGrad::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
   MS_ASSERT(dx1 != nullptr);
   MS_ASSERT(dx2 != nullptr);
 
+  if ((Type() == schema::PrimitiveType_MaximumGrad) || (Type() == schema::PrimitiveType_MinimumGrad)) {
+    x1 = inputs_[0];
+    x2 = inputs_[1];
+    dy = inputs_[2];
+  }
+
   auto inShape0 = x1->shape();
   auto inShape1 = x2->shape();
   auto outShape = dy->shape();
 
-  if ((Type() == schema::PrimitiveType_AddGrad) || (Type() == schema::PrimitiveType_SubGrad)) {
+  if ((Type() == schema::PrimitiveType_AddGrad) || (Type() == schema::PrimitiveType_SubGrad) ||
+      (Type() == schema::PrimitiveType_MaximumGrad) || (Type() == schema::PrimitiveType_MinimumGrad)) {
     ndim_ = outShape.size();
     x1_shape_.resize(ndim_);
     x2_shape_.resize(ndim_);
@@ -61,7 +68,6 @@ int ArithmeticGrad::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
       dy_shape_[i] = outShape[i];
     }
   } else {
-    // if (inShape0.size() < inShape1.size())
     if (dx1->ElementsNum() < dx2->ElementsNum()) {
       ndim_ = inShape1.size();
       x1_shape_.resize(ndim_);

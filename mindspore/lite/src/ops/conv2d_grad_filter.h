@@ -72,6 +72,7 @@ class Conv2DGradFilter : public PrimitiveC {
   int GetDilateH() const;
   bool GetHasBias() const;
   int GetActivationType() const;
+  std::vector<int> GetFilterShape() const;
 };
 }  // namespace lite
 }  // namespace mindspore

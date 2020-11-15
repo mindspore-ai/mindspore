@@ -33,6 +33,14 @@ class ConvolutionTrainCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int Execute(int task_id);
+
+ private:
+  int ws_size = 0;
+#ifdef ENABLE_ARM32
+  const int chunk = C4NUM;
+#else
+  const int chunk = C12NUM;
+#endif
 };
 
 kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,

@@ -234,6 +234,9 @@ union PrimitiveType {
     BinaryCrossEntropyGrad,
     BinaryCrossEntropy,
     LpNormalization,
+    DropoutGrad,
+    MaximumGrad,
+    MinimumGrad
 }
 
 enum QuantType: int {
