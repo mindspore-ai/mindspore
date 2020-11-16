@@ -46,17 +46,17 @@ class PowerTransform(Bijector):
         >>>
         >>> # To use a PowerTransform bijector in a network.
         >>> class net(Cell):
-        >>>     def __init__(self):
-        >>>         super(net, self).__init__():
-        >>>         self.p1 = msb.PowerTransform(0.5)
-        >>>
-        >>>     def construct(self, value):
-        >>>         # Similar calls can be made to other functions
-        >>>         # by replacing 'forward' by the name of the function.
-        >>>         ans1 = self.s1.forward(value)
-        >>>         ans2 = self.s1.inverse(value)
-        >>>         ans3 = self.s1.forward_log_jacobian(value)
-        >>>         ans4 = self.s1.inverse_log_jacobian(value)
+        ...     def __init__(self):
+        ...         super(net, self).__init__():
+        ...         self.p1 = msb.PowerTransform(0.5)
+        ...
+        ...     def construct(self, value):
+        ...         # Similar calls can be made to other functions
+        ...         # by replacing 'forward' by the name of the function.
+        ...         ans1 = self.s1.forward(value)
+        ...         ans2 = self.s1.inverse(value)
+        ...         ans3 = self.s1.forward_log_jacobian(value)
+        ...         ans4 = self.s1.inverse_log_jacobian(value)
     """
 
     def __init__(self,

@@ -28,21 +28,21 @@ class Invert(Bijector):
     Examples:
         >>> # To initialize an Invert bijector.
         >>> import mindspore.nn.probability.bijector as msb
-        >>> n = msb.Invert()
+        >>> n = msb.Invert(msb.Exp())
         >>>
         >>> # To use an Invert bijector in a network.
         >>> class net(Cell):
-        >>>     def __init__(self):
-        >>>         super(net, self).__init__():
-        >>>         self.inv = msb.Invert(msb.Exp())
-        >>>
-        >>>     def construct(self, value):
-        >>>         # Similar calls can be made to other functions
-        >>>         # by replacing `forward` by the name of the function.
-        >>>         ans1 = self.inv.forward(value)
-        >>>         ans2 = self.inv.inverse(value)
-        >>>         ans3 = self.inv.forward_log_jacobian(value)
-        >>>         ans4 = self.inv.inverse_log_jacobian(value)
+        ...     def __init__(self):
+        ...         super(net, self).__init__():
+        ...         self.inv = msb.Invert(msb.Exp())
+        ...
+        ...     def construct(self, value):
+        ...         # Similar calls can be made to other functions
+        ...         # by replacing `forward` by the name of the function.
+        ...         ans1 = self.inv.forward(value)
+        ...         ans2 = self.inv.inverse(value)
+        ...         ans3 = self.inv.forward_log_jacobian(value)
+        ...         ans4 = self.inv.inverse_log_jacobian(value)
     """
 
     def __init__(self,
