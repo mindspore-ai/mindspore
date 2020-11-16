@@ -5489,7 +5489,7 @@ class CSVDataset(SourceDataset):
             num_rows = CsvOp.get_num_rows(self.dataset_files, self.column_names is None)
             self.dataset_size = get_num_rows(num_rows, self.num_shards)
             if self.num_samples is not None and self.num_samples < self.dataset_size:
-                self.dataset_size = num_rows
+                self.dataset_size = self.num_samples
         return self.dataset_size
 
     def is_shuffled(self):
