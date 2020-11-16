@@ -22,6 +22,7 @@
 #include "include/model.h"
 #include "include/version.h"
 #include "schema/model_generated.h"
+#include "schema/model_v0_generated.h"
 #include "src/common/common.h"
 #ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"

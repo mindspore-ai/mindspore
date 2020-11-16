@@ -28,7 +28,8 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
     return nullptr;
   }
   flatbuffers::Verifier verify((const uint8_t *)model_buf, size);
-  if (!schema::VerifyMetaGraphBuffer(verify)) {
+  int schema_version = VersionVerify(&verify);
+  if (schema_version == -1) {
     MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";
     return nullptr;
   }
@@ -45,48 +46,18 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   }
   memcpy(model->buf, model_buf, size);
   model->buf_size_ = size;
-  auto meta_graph = schema::GetMetaGraph(model->buf);
+  const void *meta_graph = GetMetaGraphByVerison(model->buf, schema_version);
   if (meta_graph == nullptr) {
-    delete model;
     MS_LOG(ERROR) << "meta_graph is nullptr!";
+    delete (model);
     return nullptr;
   }
 
-  if (meta_graph->name() != nullptr) {
-    model->name_ = meta_graph->name()->c_str();
-  }
-  if (meta_graph->version() != nullptr) {
-    model->version_ = meta_graph->version()->c_str();
-  }
-  if (!ConvertNodes(*meta_graph, model)) {
-    delete model;
+  int status = GenerateModelByVersion(meta_graph, model, schema_version);
+  if (status != RET_OK) {
+    delete (model);
+    MS_LOG(ERROR) << "fail to generate model";
     return nullptr;
-  }
-
-  if (!ConvertTensors(*meta_graph, model)) {
-    delete model;
-    return nullptr;
-  }
-
-  if (meta_graph->subGraph() == nullptr) {
-    int ret = MetaGraphMappingSubGraph(*meta_graph, model);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "converter old version model wrong.";
-      delete model;
-      return nullptr;
-    }
-  } else {
-    auto sub_graphs = meta_graph->subGraph();
-    auto sub_graph_size = sub_graphs->size();
-    for (size_t i = 0; i < sub_graph_size; i++) {
-      auto sub_graph = sub_graphs->GetAs<schema::SubGraph>(i);
-      int ret = ConvertSubGraph(*sub_graph, model);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "converter subgraph wrong.";
-        delete model;
-        return nullptr;
-      }
-    }
   }
   return model;
 }

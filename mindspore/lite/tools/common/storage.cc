@@ -27,6 +27,7 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
   flatbuffers::FlatBufferBuilder builder(1024);
   auto offset = schema::MetaGraph::Pack(builder, &graph);
   builder.Finish(offset);
+  schema::FinishMetaGraphBuffer(builder, offset);
   int size = builder.GetSize();
   auto content = builder.GetBufferPointer();
   if (content == nullptr) {
