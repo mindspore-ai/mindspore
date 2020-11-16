@@ -21,20 +21,9 @@
 namespace mindspore {
 namespace kernel {
 void UpdateCacheCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  if (indices_shape.size() < 2) {
-    MS_LOG(EXCEPTION) << "indices shape less than 2";
-  }
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  node_ = kernel_node;
 
-  for (size_t i = 0; i < indices_shape.size(); ++i) {
-    batch_size_ *= indices_shape[i];
-  }
-
-  for (size_t i = 0; i < update_shape.size(); ++i) {
-    update_size_ *= update_shape[i];
-  }
-  update_length_ = update_size_ / batch_size_;
   input_x_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   indices_dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 1);
 
@@ -64,6 +53,19 @@ bool UpdateCacheCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 template <typename T>
 void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &outputs) {
+  auto indices_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 1);
+  auto update_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 2);
+
+  batch_size_ = 1;
+  for (size_t i = 0; i < indices_shape.size(); ++i) {
+    batch_size_ *= indices_shape[i];
+  }
+  MS_LOG(INFO) << "UpdateCache batch_size:" << batch_size_;
+  update_size_ = 1;
+  for (size_t i = 0; i < update_shape.size(); ++i) {
+    update_size_ *= update_shape[i];
+  }
+  update_length_ = update_shape[1];
   char *input_x = reinterpret_cast<char *>(inputs[0]->addr);
   T *indices = reinterpret_cast<T *>(inputs[1]->addr);
   char *update = reinterpret_cast<char *>(inputs[2]->addr);
@@ -80,6 +82,5 @@ void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     }
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore

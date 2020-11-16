@@ -99,6 +99,5 @@ void SearchCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
   MS_LOG(INFO) << "avg search count: " << total_count / count_size;
   MS_LOG(INFO) << "cache hit rate: " << hit_count / count_size;
 }
-
 }  // namespace kernel
 }  // namespace mindspore

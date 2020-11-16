@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 struct HashmapEntry {
   T key;
@@ -60,8 +59,9 @@ T HashFunc(const T &key, const size_t &m) {
 }
 
 template <typename T>
-void Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
+int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
   T i = (entry + 1) % length, off = 1;
+  int compress_count = 0;
   for (; !entry_p[i].IsEmpty(); i = (i + 1) % length, off++) {
     if (entry_p[i].tag > off) {
       entry_p[entry].key = entry_p[i].key;
@@ -72,19 +72,18 @@ void Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
       off = 0;
       entry = i;
     }
+    compress_count++;
   }
+  return compress_count;
 }
 
 void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  node_ = kernel_node;
   auto hashmap_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto emb_idx_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
   if (hashmap_shape.size() != 2) {
     MS_LOG(EXCEPTION) << "Dimension of HashMap must be 2, (n, 4)";
-  }
-
-  for (size_t i = 0; i < emb_idx_shape.size(); ++i) {
-    batch_size_ *= emb_idx_shape[i];
   }
 
   hashmap_length_ = hashmap_shape[0];
@@ -108,100 +107,124 @@ bool MapCacheIdxCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 template <typename T>
 void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &outputs) {
+  auto emb_idx_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 1);
+  batch_size_ = 1;
+  for (size_t i = 0; i < emb_idx_shape.size(); ++i) {
+    batch_size_ *= emb_idx_shape[i];
+  }
   HashmapEntry<T> *hashmap = reinterpret_cast<HashmapEntry<T> *>(inputs[0]->addr);
   auto input_indices = reinterpret_cast<T *>(inputs[1]->addr);
   T *step_ = reinterpret_cast<T *>(inputs[2]->addr);
   T emb_max_num = *reinterpret_cast<T *>(inputs[3]->addr);
-  T cache_max_num = *reinterpret_cast<T *>(inputs[4]->addr);
+  T offset = *reinterpret_cast<T *>(inputs[4]->addr);
   auto output_cache_idx = reinterpret_cast<T *>(outputs[0]->addr);
   auto output_old_emb_idx = reinterpret_cast<T *>(outputs[1]->addr);
   auto output_miss_emb_idx = reinterpret_cast<T *>(outputs[2]->addr);
   auto output_swap_cache_idx = reinterpret_cast<T *>(outputs[3]->addr);
 
-  std::vector<T> output_miss_idx(batch_size_, -1);
-
+  std::vector<T> miss_idx;
+  size_t miss_count = 0;
   float total_count = 0;
   int count_size = 0;
   float hit_count = 0;
-
   // search_cache_idx
   for (size_t i = 0; i < batch_size_; ++i) {
-    if (input_indices[i] == emb_max_num) {
-      output_miss_idx[i] = -1;
-      output_cache_idx[i] = cache_max_num;
-      output_miss_emb_idx[i] = -1;
+    T key = input_indices[i] - offset;
+    if (key >= emb_max_num || key < 0) {
+      output_cache_idx[i] = -1;
       continue;
     }
 
-    T key = input_indices[i];
     T tmp_entry = HashFunc(key, hashmap_length_);
 
-    int count = 1;
+    size_t count = 1;
     count_size += 1;
     while ((!hashmap[tmp_entry].IsEmpty() && !hashmap[tmp_entry].IsKey(key))) {
       tmp_entry = (tmp_entry + 1) % hashmap_length_;
+      if (count > hashmap_length_) {
+        MS_LOG(ERROR) << "Hashmap is full, search cache idx failed!";
+        break;
+      }
       count += 1;
     }
 
     total_count += count;
     if (hashmap[tmp_entry].IsEmpty()) {
-      output_miss_idx[i] = i;
-      output_miss_emb_idx[i] = key;
+      miss_idx.emplace_back(i);
+      output_miss_emb_idx[miss_count] = key;
       output_cache_idx[i] = -1;
+      miss_count++;
     } else {
       hit_count += 1;
-      output_miss_idx[i] = -1;
       output_cache_idx[i] = hashmap[tmp_entry].value;
       hashmap[tmp_entry].step = step_[0];
-      output_miss_emb_idx[i] = -1;
     }
   }
-  MS_LOG(INFO) << "avg search count: " << total_count / count_size;
-  MS_LOG(INFO) << "cache hit rate: " << hit_count / count_size;
+  MS_LOG(INFO) << "Miss count: " << miss_count;
+  MS_LOG(INFO) << "Avg search count: " << total_count / count_size;
+  MS_LOG(INFO) << "Cache hit rate: " << hit_count / count_size;
+
+  float total_insert_count = 0;
+  float total_delete_count = 0;
 
   // swap hash map
-  for (size_t i = 0; i < batch_size_; ++i) {
-    if (output_miss_emb_idx[i] < 0) {
-      output_swap_cache_idx[i] = -1;
-      output_old_emb_idx[i] = -1;
-    } else {
-      T emb_idx = output_miss_emb_idx[i];
-      T entry = HashFunc(emb_idx, hashmap_length_);
-      T tag_count = 1;
-      while (!hashmap[entry].IsEmpty()) {
-        entry = (entry + 1) % hashmap_length_;
-        tag_count++;
+  for (size_t i = 0; i < miss_count; ++i) {
+    T emb_idx = output_miss_emb_idx[i];
+    T entry = HashFunc(emb_idx, hashmap_length_);
+    size_t tag_count = 1;
+    while (!hashmap[entry].IsEmpty()) {
+      entry = (entry + 1) % hashmap_length_;
+      if (tag_count > hashmap_length_) {
+        MS_LOG(ERROR) << "Hashmap is full, insert new key failed!";
+        break;
       }
-
-      hashmap[entry].key = emb_idx;
-      hashmap[entry].step = step_[0];
-      hashmap[entry].tag = tag_count;
-
-      T tmp_entry = (entry + 1) % hashmap_length_;
-
-      while (hashmap[tmp_entry].IsEmpty() || hashmap[tmp_entry].IsUsing(step_[0])) {
-        tmp_entry = (tmp_entry + 1) % hashmap_length_;
-      }
-
-      output_swap_cache_idx[i] = hashmap[tmp_entry].value;
-      output_old_emb_idx[i] = hashmap[tmp_entry].key;
-      hashmap[entry].value = output_swap_cache_idx[i];
-      hashmap[tmp_entry].SetEmpty();
-      Compress(hashmap, hashmap_length_, tmp_entry);
+      tag_count++;
     }
+
+    hashmap[entry].key = emb_idx;
+    hashmap[entry].step = step_[0];
+    hashmap[entry].tag = tag_count;
+
+    T tmp_entry = (entry + 1) % hashmap_length_;
+    size_t delete_count = 1;
+    while (hashmap[tmp_entry].IsEmpty() || hashmap[tmp_entry].IsUsing(step_[0])) {
+      tmp_entry = (tmp_entry + 1) % hashmap_length_;
+      if (delete_count > hashmap_length_) {
+        MS_LOG(ERROR) << "Hashmap is full, delete old key failed!";
+        break;
+      }
+      delete_count++;
+    }
+
+    output_swap_cache_idx[i] = hashmap[tmp_entry].value;
+    output_old_emb_idx[i] = hashmap[tmp_entry].key;
+    hashmap[entry].value = output_swap_cache_idx[i];
+    hashmap[tmp_entry].SetEmpty();
+    int compress_count = Compress(hashmap, hashmap_length_, tmp_entry);
+    total_delete_count += (compress_count + delete_count);
+    total_insert_count += tag_count;
   }
+
+  MS_LOG(INFO) << "Insert count: " << total_insert_count / miss_count;
+  MS_LOG(INFO) << "Delete count: " << total_delete_count / miss_count;
 
   // update step
   step_[0] += 1;
 
   // update cache idx
-  for (size_t i = 0; i < batch_size_; ++i) {
-    if (output_miss_idx[i] < 0 || output_miss_idx[i] >= cache_max_num) {
-      continue;
-    }
-    output_cache_idx[i] = output_swap_cache_idx[i];
+  for (size_t i = 0; i < miss_count; ++i) {
+    int idx = miss_idx[i];
+    output_cache_idx[idx] = output_swap_cache_idx[i];
   }
-}
 
+  std::vector<size_t> out_shape;
+  out_shape.emplace_back(miss_count);
+  std::vector<TypeId> dtypes;
+  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(node_); i++) {
+    dtypes.push_back(AnfAlgo::GetOutputInferDataType(node_, i));
+  }
+  AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetOutputInferShape(node_, 0), out_shape, out_shape, out_shape},
+                                      node_.get());
+}
 }  // namespace kernel
 }  // namespace mindspore

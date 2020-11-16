@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 class CacheSwapHashmapCPUKernel : public CPUKernel {
  public:
   CacheSwapHashmapCPUKernel() = default;
@@ -82,7 +81,6 @@ MS_REG_CPU_KERNEL(CacheSwapHashmap,
                     .AddOutputAttr(kNumberTypeInt32)
                     .AddOutputAttr(kNumberTypeInt32),
                   CacheSwapHashmapCPUKernel);
-
 }  // namespace kernel
 }  // namespace mindspore
 
