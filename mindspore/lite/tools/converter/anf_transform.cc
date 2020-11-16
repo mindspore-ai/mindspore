@@ -28,6 +28,7 @@
 #include "tools/optimizer/fusion/layer_norm_fusion.h"
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
+#include "tools/optimizer/fusion/conv_conv_fusion.h"
 #include "tools/optimizer/graph/identity_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
@@ -108,6 +109,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     pm->AddPass(remove_unused_transpose_pass);
   }
   pm->AddPass(std::make_shared<opt::ConstFoldPass>());
+  pm->AddPass(std::make_shared<opt::ConvConvFusion>());
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   optimizer->AddPassManager(convert_pm);
   optimizer->AddPassManager(pm);

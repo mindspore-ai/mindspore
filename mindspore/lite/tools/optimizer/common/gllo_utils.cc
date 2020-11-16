@@ -318,7 +318,7 @@ int CheckIfVarIsNull(const VarPtr &var) {
 
 int CheckIfNodeIsParam(const AnfNodePtr &node) {
   if (node != nullptr && !utils::isa<ParameterPtr>(node)) {
-    MS_LOG(ERROR) << "The Node is not param.";
+    MS_LOG(DEBUG) << "The Node is not param.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
     return lite::RET_INVALID_OP_ATTR;
   }

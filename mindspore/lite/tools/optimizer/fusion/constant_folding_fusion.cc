@@ -156,7 +156,7 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
       return lite::RET_ERROR;
     }
     new_parameter->set_name(input_node->fullname_with_scope());
-    any_node->set_input(replace_index, new_parameter);
+    manager->Replace(input_node, new_parameter);
   }
   return lite::RET_OK;
 }
