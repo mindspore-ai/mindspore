@@ -145,8 +145,9 @@ class ELU(Cell):
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
         >>> elu = nn.ELU()
-        >>> elu(input_x)
-
+        >>> result = elu(input_x)
+        >>> print(result)
+        [-0.63212055  -0.86466473  0  2  1]
     """
 
     def __init__(self, alpha=1.0):
@@ -437,8 +438,9 @@ class HSwish(Cell):
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hswish = nn.HSwish()
-        >>> hswish(input_x)
-
+        >>> result = hswish(input_x)
+        >>> print(result)
+        [-0.3333  -0.3333  0  1.666  0.6665]
     """
 
     def __init__(self):
@@ -471,8 +473,9 @@ class HSigmoid(Cell):
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hsigmoid = nn.HSigmoid()
-        >>> hsigmoid(input_x)
-
+        >>> result = hsigmoid(input_x)
+        >>> print(result)
+        [0.3333  0.1666  0.5  0.833  0.6665]
     """
 
     def __init__(self):

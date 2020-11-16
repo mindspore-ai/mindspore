@@ -129,7 +129,9 @@ class F1(Fbeta):
         >>> y = Tensor(np.array([1, 0, 1]))
         >>> metric = nn.F1()
         >>> metric.update(x, y)
-        >>> f1 = metric.eval()
+        >>> result = metric.eval()
+        >>> print(result)
+        [0.66666667  0.66666667]
     """
     def __init__(self):
         super(F1, self).__init__(1.0)

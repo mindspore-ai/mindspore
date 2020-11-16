@@ -457,6 +457,8 @@ class HSwish(PrimitiveWithInfer):
         >>> hswish = P.HSwish()
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> result = hswish(input_x)
+        >>> print(result)
+        [-0.3333  -0.3333  0  1.666  0.6665]
     """
 
     @prim_attr_register
@@ -530,6 +532,8 @@ class HSigmoid(PrimitiveWithInfer):
         >>> hsigmoid = P.HSigmoid()
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> result = hsigmoid(input_x)
+        >>> print(result)
+        [0.3333  0.1666  0.5  0.833  0.6665]
     """
 
     @prim_attr_register
@@ -2755,6 +2759,8 @@ class Gelu(PrimitiveWithInfer):
         >>> tensor = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> gelu = P.Gelu()
         >>> result = gelu(tensor)
+        >>> print(result)
+        [0.841192  1.9545976  2.9963627]
     """
 
     @prim_attr_register
