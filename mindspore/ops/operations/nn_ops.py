@@ -288,6 +288,7 @@ class ReLU(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu = P.ReLU()
         >>> result = relu(input_x)
+        >>> print(result)
         [[0, 4.0, 0.0], [2.0, 0.0, 9.0]]
     """
 
@@ -320,6 +321,7 @@ class ReLU6(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu6 = P.ReLU6()
         >>> result = relu6(input_x)
+        >>> print(result)
         [[0. 4. 0.]
          [2. 0. 6.]]
     """
@@ -413,8 +415,9 @@ class Elu(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> elu = P.Elu()
         >>> result = elu(input_x)
-        Tensor([[-0.632  4.0   -0.999]
-                [2.0    -0.993  9.0  ]], shape=(2, 3), dtype=mindspore.float32)
+        >>> print(result)
+        [[-0.632  4.0   -0.999]
+         [2.0    -0.993  9.0  ]]
     """
 
     @prim_attr_register
@@ -1558,6 +1561,7 @@ class AvgPool(_Pool):
         >>> input_x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
         >>> net = Net()
         >>> result = net(input_x)
+        >>> print(result)
         [[[[ 2.5   3.5   4.5]
            [ 6.5   7.5   8.5]]
           [[ 14.5  15.5  16.5]
@@ -1828,6 +1832,7 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         >>> labels = Tensor([[0, 0, 0, 0, 1], [0, 0, 0, 1, 0]], mindspore.float32)
         >>> softmax_cross = P.SoftmaxCrossEntropyWithLogits()
         >>> loss, backprop = softmax_cross(logits, labels)
+        >>> print((loss, backprop))
         ([0.5899297, 0.52374405], [[0.02760027, 0.20393994, 0.01015357, 0.20393994, -0.44563377],
         [0.08015892, 0.02948882, 0.08015892, -0.4077012, 0.21789455]])
     """
@@ -2850,6 +2855,7 @@ class PReLU(PrimitiveWithInfer):
         >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
         >>> net = Net()
         >>> result = net(input_x, weight)
+        >>> print(result)
         [[[-0.1, 1.0],
           [0.0, 2.0],
           [0.0, 0.0]],
@@ -3106,6 +3112,7 @@ class MirrorPad(PrimitiveWithInfer):
         >>> paddings = Tensor([[1,1],[2,2]])
         >>> pad = Net()
         >>> ms_output = pad(Tensor(x), paddings)
+        >>> print(ms_output)
         [[0.5525309 0.49183875 0.99110144 0.49183875 0.5525309 0.49183875 0.99110144]
          [0.31417271 0.96308136 0.934709 0.96308136 0.31417271 0.96308136 0.934709  ]
          [0.5525309 0.49183875 0.99110144 0.49183875 0.5525309 0.49183875 0.99110144]
@@ -3176,6 +3183,7 @@ class ROIAlign(PrimitiveWithInfer):
         >>> rois = Tensor(np.array([[0, 0.2, 0.3, 0.2, 0.3]]), mindspore.float32)
         >>> roi_align = P.ROIAlign(2, 2, 0.5, 2)
         >>> output_tensor = roi_align(input_tensor, rois)
+        >>> print(output_tensor)
         [[[[1.77499998e+00, 2.02500010e+00],
            [2.27500010e+00, 2.52500010e+00]]]]
     """
@@ -3879,6 +3887,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         >>> input_y = Tensor(np.array([0., 1., 0.]), mindspore.float32)
         >>> weight = Tensor(np.array([1, 2, 2]), mindspore.float32)
         >>> result = net(input_x, input_y, weight)
+        >>> print(result)
         0.38240486
     """
 
@@ -4363,6 +4372,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         >>> grad = Tensor(np.random.rand(1, 1, 1).astype(np.float32))
         >>> indices = Tensor([0], mstype.int32)
         >>> result = net(grad, indices)
+        >>> print(result)
         ([[[1.0]]], [[[1.0]]])
     """
 
@@ -4452,6 +4462,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         >>> grad = Tensor(np.random.rand(1, 1, 1).astype(np.float32))
         >>> indices = Tensor([0], mstype.int32)
         >>> result = net(grad, indices)
+        >>> print(result)
         ([[[1.0]]], [[[1.67194188]]])
     """
 
@@ -4649,6 +4660,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         >>> grad = Tensor(np.random.rand(1, 3).astype(np.float32))
         >>> indices = Tensor(np.ones((1,), np.int32))
         >>> output = net(grad, indices)
+        >>> print(output)
         ([[6.94971561e-01, 5.24479389e-01, 5.52502394e-01]],
          [[1.69961065e-01, 9.21632349e-01, 7.83344746e-01]])
     """
@@ -5178,6 +5190,7 @@ class ApplyFtrl(PrimitiveWithInfer):
         >>> net = ApplyFtrlNet()
         >>> input_x = Tensor(np.random.randint(-4, 4, (3, 3)), mindspore.float32)
         >>> result = net(input_x)
+        >>> print(result)
         [[0.67455846   0.14630564   0.160499  ]
          [0.16329421   0.00415689   0.05202988]
          [0.18672481   0.17418946   0.36420345]]
@@ -5265,6 +5278,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         >>> grad = Tensor(np.random.rand(1, 1).astype(np.float32))
         >>> indices = Tensor(np.ones([1]), mindspore.int32)
         >>> output = net(grad, indices)
+        >>> print(output)
         ([[1.02914639e-01]], [[7.60280550e-01]], [[7.64630079e-01]])
     """
 
@@ -5363,6 +5377,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         >>> grad = Tensor(np.random.rand(1, 3).astype(np.float32))
         >>> indices = Tensor(np.ones([1]), mindspore.int32)
         >>> output = net(grad, indices)
+        >>> print(output)
         ([[3.98493223e-02, 4.38684933e-02, 8.25387388e-02]],
          [[6.40987396e-01, 7.19417334e-01, 1.52606890e-01]],
          [[7.43463933e-01, 2.92334408e-01, 6.81572020e-01]])
@@ -5876,6 +5891,7 @@ class InTopK(PrimitiveWithInfer):
         >>> x2 = Tensor(np.array([1, 3]), mindspore.int32)
         >>> in_top_k = P.InTopK(3)
         >>> result = in_top_k(x1, x2)
+        >>> print(result)
         [True  False]
     """
 

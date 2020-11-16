@@ -294,6 +294,7 @@ class LinSpace(PrimitiveWithInfer):
         >>> stop = Tensor(10, mindspore.float32)
         >>> num = Tensor(5, mindspore.int32)
         >>> output = linspace(assist, start, stop, num)
+        >>> print(output)
         [12.25, 13.375]
     """
 
@@ -329,6 +330,7 @@ class MatrixDiag(PrimitiveWithInfer):
         >>> assist = Tensor(np.arange(-12, 0).reshape(3, 2, 2), mindspore.float32)
         >>> matrix_diag = P.MatrixDiag()
         >>> result = matrix_diag(x, assist)
+        >>> print(result)
         [[[-12.   11.]
           [-10.    9.]]
          [[ -8.    7.]
@@ -382,6 +384,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
         >>> assist = Tensor(np.arange(-12, 0).reshape(3, 2, 2), mindspore.float32)
         >>> matrix_diag_part = P.MatrixDiagPart()
         >>> result = matrix_diag_part(x, assist)
+        >>> print(result)
         [[12., -9.], [8., -5.], [4., -1.]]
     """
 
@@ -424,6 +427,7 @@ class MatrixSetDiag(PrimitiveWithInfer):
         >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
         >>> matrix_set_diag = P.MatrixSetDiag()
         >>> result = matrix_set_diag(x, diagonal)
+        >>> print(result)
         [[[-1, 0], [0, 2]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
 
     """
