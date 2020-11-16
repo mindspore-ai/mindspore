@@ -24,13 +24,13 @@
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/util/status.h"
 #include "mindspore/ccsrc/minddata/dataset/engine/perf/profiling.h"
-
 namespace mindspore {
 namespace dataset {
 // Forward declares
 class TaskGroup;
 class DatasetOp;
-
+class Pass;
+using OptPass = std::vector<std::unique_ptr<Pass>>;
 class ExecutionTree {
  public:
   // Prepare flags used during tree prepare phase
@@ -253,6 +253,10 @@ class ExecutionTree {
   // @return total number of epochs
   int32_t num_epochs() { return num_epochs_; }
 
+  // set the function ptr that overrides the pre-pass which allows caller to adjust the existing pre_pass and
+  // introduce new passes. E.g. caller can override the num_epoch in EpochInjectionPass
+  void SetPrePassOverride(std::function<OptPass(OptPass)> pre_pass_override) { pre_pass_override_ = pre_pass_override; }
+
  private:
   // A helper functions for doing the recursive printing
   // @param dataset_op - The dataset op to print
@@ -270,6 +274,7 @@ class ExecutionTree {
   int32_t num_epochs_;                                   // Total number of epochs to run for this tree
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
   bool optimize_;                                        // Flag to enable optional optimizations
+  std::function<OptPass(OptPass)> pre_pass_override_;    // function ptr that overrides pre pass, called in PrePrepare()
 };
 }  // namespace dataset
 }  // namespace mindspore

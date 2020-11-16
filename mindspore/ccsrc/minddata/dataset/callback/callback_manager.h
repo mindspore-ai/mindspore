@@ -41,6 +41,9 @@ class CallbackManager {
   /// \param [in] callbacks list of callbacks to perform
   void AddCallbacks(std::vector<std::shared_ptr<DSCallback>> callbacks);
 
+  /// \brief set callbacks to empty
+  void ClearCallbacks() { callbacks_.clear(); }
+
   /// \brief DatasetOp needs to call Init if it wishes to use callback, Init will set enabled_ to true
   /// \param[in] op, this pointer is used for Callback Manager to Pause Worker threads
   /// \return Status
