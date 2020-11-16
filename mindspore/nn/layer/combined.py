@@ -77,7 +77,7 @@ class Conv2dBnAct(Cell):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> net = nn.Conv2dBnAct(120, 240, 4, has_bn=True, activation='ReLU')
+        >>> net = nn.Conv2dBnAct(120, 240, 4, has_bn=True, activation='relu')
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
         >>> result = net(input)
         >>> result.shape
