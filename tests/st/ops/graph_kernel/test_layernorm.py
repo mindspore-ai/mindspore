@@ -23,8 +23,6 @@ import mindspore.nn as nn
 from mindspore.ops.operations import _grad_ops as G
 import mindspore.ops.operations as P
 
-context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-
 
 class Net(Cell):
     def __init__(self):
@@ -72,9 +70,6 @@ def LayerNormGradReference(x, dy, gamma, epsilon, begin_norm_axis, begin_params_
     return dx, dg, db, mean, var
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_basic():
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     gamma = np.random.normal(0, 1, [3, 4, 3]).astype(np.float32)
@@ -117,9 +112,6 @@ def test_basic():
         assert False
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_layernormgrad():
     np.random.seed(0)
     begin_norm_axis = 1
@@ -142,3 +134,37 @@ def test_layernormgrad():
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-6, atol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_basic_gpu():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    test_basic()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_basic_ascend():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    test_basic()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgrad_gpu():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    test_layernormgrad()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_layernormgrad_ascend():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    test_layernormgrad()

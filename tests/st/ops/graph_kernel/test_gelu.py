@@ -21,8 +21,6 @@ from mindspore.nn import Cell
 import mindspore.ops.operations as P
 import mindspore.ops.operations._grad_ops as G
 
-context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-
 
 class GeluNet(Cell):
     def __init__(self):
@@ -48,9 +46,6 @@ def CalGelu(x):
     return expect
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_gelu():
     np.random.seed(0)
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
@@ -64,9 +59,6 @@ def test_gelu():
     assert res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_gelu_grad():
     np.random.seed(0)
     input_dy = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
@@ -83,3 +75,37 @@ def test_gelu_grad():
 
     res = np.allclose(expect, result.asnumpy(), rtol=1.e-4, atol=1.e-7, equal_nan=True)
     assert res
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gelu_gpu():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    test_gelu()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_gelu_ascend():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    test_gelu()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gelu_grad_gpu():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    test_gelu_grad()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_gelu_grad_ascend():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    test_gelu_grad()

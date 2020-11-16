@@ -20,8 +20,6 @@ from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops.operations._grad_ops as G
 
-context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-
 
 class MaxmumGradNet(Cell):
     def __init__(self):
@@ -32,9 +30,6 @@ class MaxmumGradNet(Cell):
         return self.maximum_grad(x, y, dy)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_maximum_grad():
     np.random.seed(0)
     input_x = np.random.normal(0, 1, [2, 3]).astype(np.float32)
@@ -46,3 +41,20 @@ def test_maximum_grad():
     dy = input_dout - dx
     assert np.allclose(result[0].asnumpy(), dx, rtol=1.e-4, atol=1.e-8, equal_nan=True)
     assert np.allclose(result[1].asnumpy(), dy, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_maximum_grad_gpu():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    test_maximum_grad()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_maximum_grad_ascend():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    test_maximum_grad()

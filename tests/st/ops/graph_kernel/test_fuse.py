@@ -21,8 +21,6 @@ from mindspore.nn import Cell
 import mindspore.ops.operations as P
 from mindspore.nn.graph_kernels import ReLU
 
-context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-
 
 class Net(Cell):
     def __init__(self):
@@ -42,9 +40,6 @@ class Net(Cell):
         return self.add(add1_res, add1_res)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_basic():
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     input_y = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
@@ -61,3 +56,20 @@ def test_basic():
 
     res = np.allclose(expect, result.asnumpy(), rtol=1.e-4, atol=1.e-7, equal_nan=True)
     assert res
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_basic_gpu():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    test_basic()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_basic_ascend():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    test_basic()

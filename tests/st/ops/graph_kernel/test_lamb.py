@@ -20,7 +20,6 @@ from mindspore import Tensor, Parameter
 from mindspore.nn import Cell
 from mindspore.nn.graph_kernels import LambUpdateWithLR, LambNextMV
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 class LambNet(Cell):
     def __init__(self, i2, i5, x6):
@@ -38,6 +37,7 @@ class LambNet(Cell):
                               ix1, ix2, ix3), \
                self.lamb_update(x1, x2, x3, x4, x5, self.x6, gy, se, my)
 
+
 def LambUpdateNumpy(x1, x2, x3, x4, x5, x6, gy, se, my):
     trust_ratio = np.where(np.greater(x2, gy),
                            np.where(np.greater(x1, gy), np.divide(x2, x3), se),
@@ -46,6 +46,7 @@ def LambUpdateNumpy(x1, x2, x3, x4, x5, x6, gy, se, my):
     update_with_lr = trust_ratio * x4 * x5
     next_param = x6 - np.reshape(update_with_lr, x6.shape)
     return next_param
+
 
 def LambNextMVNumpy(i1, i2, i3, i4, i5, i6, i7, i8, i9, x0, x1, x2, x3):
     m_fp32 = i5.astype(np.float32)
@@ -63,10 +64,7 @@ def tensor_all(*args):
     res = [Tensor(a) for a in args]
     return res
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
 def test_graph_kernel_lamb():
     shape = [1, 16]
     oshape = [1]
@@ -130,3 +128,17 @@ def test_graph_kernel_lamb():
                        wres, bres))
 
     assert all(cmp_res) and np.allclose(ares, np_res, rtol, atol)
+
+
+def test_graph_kernel_lamb_gpu():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    test_graph_kernel_lamb()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_graph_kernel_lamb_ascend():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    test_graph_kernel_lamb()
