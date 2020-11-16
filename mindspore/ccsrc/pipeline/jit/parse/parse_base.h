@@ -90,6 +90,24 @@ const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
 
 // define the common name
 const char NAMED_PRIMITIVE_LEN[] = "len";
+const char NAMED_PRIMITIVE_BODY[] = "body";
+const char NAMED_PRIMITIVE_ASSIGN[] = "Assign";
+const char NAMED_PRIMITIVE_FOR[] = "For";
+const char NAMED_PRIMITIVE_IF[] = "If";
+const char NAMED_PRIMITIVE_WHILE[] = "While";
+const char NAMED_PRIMITIVE_VALUE[] = "value";
+const char NAMED_PRIMITIVE_FUNC[] = "func";
+const char NAMED_PRIMITIVE_TEST[] = "test";
+const char NAMED_PRIMITIVE_LEFT[] = "left";
+const char NAMED_PRIMITIVE_CALL[] = "Call";
+const char NAMED_PRIMITIVE_SUBSCRIPT[] = "Subscript";
+const char NAMED_PRIMITIVE_ATTRIBUTE[] = "Attribute";
+const char NAMED_PRIMITIVE_COMPARE[] = "Compare";
+const char NAMED_PRIMITIVE_NAMECONSTANT[] = "NameConstant";
+const char NAMED_PRIMITIVE_COMPARATORS[] = "comparators";
+const char NAMED_PRIMITIVE_SLICE[] = "slice";
+const char NAMED_PRIMITIVE_NUM[] = "Num";
+const char NAMED_PRIMITIVE_STR[] = "Str";
 const char NAMED_PRIMITIVE_ITER[] = "iter";
 const char NAMED_PRIMITIVE_NEXT[] = "next";
 const char NAMED_PRIMITIVE_GETITEM[] = "getitem";
@@ -104,6 +122,7 @@ const char NAMED_METAGRAPH_UNPACKCALL[] = "unpack_call";
 
 // define NAMED_PRIMITIVE_GETATTR "getattr"
 // define python inline attr
+const char PYTHON_GET_METHOD_LEN[] = "__len__";
 const char PYTHON_GET_METHOD_SELF_CLASS[] = "__self__";
 const char PYTHON_GET_OBJ_DESC[] = "__str__";
 
