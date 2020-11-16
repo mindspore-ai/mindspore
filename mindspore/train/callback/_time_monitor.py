@@ -36,7 +36,7 @@ class TimeMonitor(Callback):
         self.epoch_time = time.time()
 
     def epoch_end(self, run_context):
-        epoch_seconds = (time.time() - self.epoch_time) * 1000
+        epoch_seconds = time.time() - self.epoch_time
         step_size = self.data_size
         cb_params = run_context.original_args()
         if hasattr(cb_params, "batch_num"):
@@ -49,4 +49,4 @@ class TimeMonitor(Callback):
             return
 
         step_seconds = epoch_seconds / step_size
-        print("Epoch time: {:5.3f}, per step time: {:5.3f}".format(epoch_seconds, step_seconds), flush=True)
+        print("Epoch time: {:5.3f}s, per step time: {:5.3f}s".format(epoch_seconds, step_seconds), flush=True)
