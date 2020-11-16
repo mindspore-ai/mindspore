@@ -234,6 +234,11 @@ def raise_type_error(name, cur_type, required_type):
     raise TypeError(
         f"For {name} , the type should be or be subclass of {required_type}, but got {cur_type}")
 
+@constexpr
+def raise_not_defined(func_name, obj, *args, **kwargs):
+    raise ValueError(
+        f"{func_name} is undefined for {obj} distribution.")
+
 
 @constexpr
 def check_distribution_name(name, expected_name):
