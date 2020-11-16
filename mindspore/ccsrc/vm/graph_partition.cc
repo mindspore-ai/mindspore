@@ -246,6 +246,55 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
   return result;
 }
 
+void AddSegmentDependency(const FuncGraphPtr &graph, const std::string &default_target,
+                          const std::map<AnfNodePtr, GraphSegmentPtr> &node_to_segment) {
+  std::stack<AnfNodePtr> to_visit;
+  std::map<AnfNodePtr, size_t> nodes_ref;
+  std::map<AnfNodePtr, std::vector<AnfNodePtr>> control_edges;
+  CalcNodeRefCount(graph, &nodes_ref, &control_edges);
+  to_visit.push(graph->get_return());
+  while (!to_visit.empty()) {
+    auto &node = to_visit.top();
+    MS_EXCEPTION_IF_NULL(node);
+    to_visit.pop();
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto node_inputs = cnode->inputs();
+    auto ctrl_inputs = control_edges.find(node);
+    if (ctrl_inputs != control_edges.end()) {
+      node_inputs.insert(node_inputs.end(), ctrl_inputs->second.begin(), ctrl_inputs->second.end());
+    }
+    GraphSegmentPtr node_segment{nullptr};
+    auto node_iter = node_to_segment.find(node);
+    if (node_iter != node_to_segment.end()) {
+      node_segment = node_iter->second;
+    }
+    for (auto &input : node_inputs) {
+      if (node_segment != nullptr && !node_segment->is_cut_ && input->isa<CNode>()) {
+        GraphSegmentPtr input_segment{nullptr};
+        auto input_iter = node_to_segment.find(input);
+        if (input_iter != node_to_segment.end()) {
+          input_segment = input_iter->second;
+        }
+        if (input_segment != nullptr && input_segment != node_segment && !input_segment->is_cut_) {
+          node_segment->AddPreSegment(input_segment);
+        }
+      }
+      auto ref_iter = nodes_ref.find(input);
+      if (ref_iter != nodes_ref.end()) {
+        ref_iter->second--;
+        if (ref_iter->second != 0) {
+          continue;
+        }
+      }
+      to_visit.push(input);
+    }
+  }
+}
+
 std::vector<AnfNodePtr> ParallelSplitSort(const FuncGraphPtr &graph, const std::string &default_target) {
   std::vector<AnfNodePtr> result;
   std::stack<AnfNodePtr> handle_nodes;
@@ -404,10 +453,10 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
   auto nodes = TopoSort(graph->get_return());
   MS_LOG(DEBUG) << "Split all nodes size:" << nodes.size();
   bool contain_multi_target = ContainMultiTarget(nodes);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (contain_multi_target) {
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     if (graph != nullptr) {
       nodes = SplitSort(graph, default_target);
     } else {
@@ -417,15 +466,22 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
   }
   std::vector<GraphSegmentPtr> segments;
   std::vector<AnfNodePtr> segment_nodes;
+  std::map<AnfNodePtr, GraphSegmentPtr> node_to_segment;
+  auto new_segment = [&segments, &segment_nodes, &node_to_segment]() {
+    if (segment_nodes.size() != 0) {
+      auto segment = std::make_shared<GraphSegment>(segment_nodes, false);
+      segments.emplace_back(segment);
+      for (auto node : segment_nodes) {
+        node_to_segment[node] = segment;
+      }
+      segment_nodes.clear();
+    }
+  };
   std::string last_target;
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (IsCut(node)) {
-      if (segment_nodes.size() != 0) {
-        auto segment = std::make_shared<GraphSegment>(segment_nodes, false);
-        segments.emplace_back(segment);
-        segment_nodes.clear();
-      }
+      new_segment();
       segment_nodes.emplace_back(node);
       auto segment = std::make_shared<GraphSegment>(segment_nodes, true);
       segments.push_back(segment);
@@ -433,10 +489,8 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
     } else if (node->isa<CNode>()) {
       if (contain_multi_target) {
         std::string cur_target = GetCNodeTarget(node);
-        if (cur_target != last_target && !last_target.empty() && segment_nodes.size() != 0) {
-          auto segment = std::make_shared<GraphSegment>(segment_nodes, false);
-          segments.emplace_back(segment);
-          segment_nodes.clear();
+        if (cur_target != last_target && !last_target.empty()) {
+          new_segment();
         }
         last_target = cur_target;
       }
@@ -444,6 +498,9 @@ std::vector<GraphSegmentPtr> GraphPartition::Partition(const FuncGraphPtr &graph
     }
   }
   MS_LOG(DEBUG) << "Segment size:" << segments.size();
+  if (contain_multi_target) {
+    AddSegmentDependency(graph, default_target, node_to_segment);
+  }
   return segments;
 }
 }  // namespace compile

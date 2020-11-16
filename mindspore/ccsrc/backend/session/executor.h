@@ -179,8 +179,10 @@ class Executor {
   std::string device_name_;
   std::mutex task_mutex_;
   std::mutex pending_task_mutex_;
+  std::mutex reenter_mutex_;
   std::condition_variable task_cond_var_;
   std::condition_variable sync_cond_var_;
+  std::condition_variable reenter_cond_var_;
   std::queue<std::shared_ptr<Task>> ready_tasks_;
   std::list<std::shared_ptr<RunGraphTask>> pending_tasks_;
   std::vector<std::shared_ptr<Task>> done_tasks_;

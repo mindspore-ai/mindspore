@@ -344,7 +344,7 @@ void SessionBasic::InitDevice(const std::string &device_name, uint32_t device_id
 KernelGraphPtr SessionBasic::GetGraph(mindspore::GraphId graph_id) const {
   auto it = graphs_.find(graph_id);
   if (it == graphs_.end()) {
-    MS_LOG(WARNING) << "Can't find graph " << graph_id;
+    MS_LOG(INFO) << "Can't find graph " << graph_id;
     return nullptr;
   }
   return it->second;

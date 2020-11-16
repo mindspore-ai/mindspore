@@ -106,7 +106,11 @@ void BuildGraphTask::Run() {
 void RunGraphTask::Run() {
   MS_EXCEPTION_IF_NULL(session_);
   try {
+    auto graph = session_->GetGraph(graph_id_);
+    MS_EXCEPTION_IF_NULL(graph);
+    graph->ResetGraphRunningStatus();
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
+    graph->OnRunGraphFinished();
     UpdateOutputTensors(&outputs_, tensor_to_node_);
   } catch (const std::exception &e) {
     MsException::GetInstance().SetException();
@@ -205,6 +209,7 @@ void Executor::OnRunGraphFinished() {
   if (new_ready_tasks.size() > 0) {
     task_cond_var_.notify_all();
   }
+  reenter_cond_var_.notify_all();
 }
 
 bool Executor::IsTaskReady(const std::shared_ptr<RunGraphTask> &task) {
@@ -214,6 +219,12 @@ bool Executor::IsTaskReady(const std::shared_ptr<RunGraphTask> &task) {
     if (input->NeedWait()) {
       return false;
     }
+  }
+  auto session = task->session_;
+  MS_EXCEPTION_IF_NULL(session);
+  auto graph = session->GetGraph(task->graph_id_);
+  if (graph != nullptr) {
+    return graph->IsPreGraphFinished();
   }
   return true;
 }
@@ -299,6 +310,14 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
     mindspore::ScopedLongRunning long_running;
     SyncRunTask(task);
     return;
+  }
+  auto graph = session->GetGraph(task->graph_id_);
+  if (graph != nullptr) {
+    if (!graph->IsPostGraphFinished()) {
+      mindspore::ScopedLongRunning long_running;
+      std::unique_lock<std::mutex> lock(reenter_mutex_);
+      reenter_cond_var_.wait(lock, [graph] { return graph->IsPostGraphFinished(); });
+    }
   }
 
   bool ready = IsTaskReady(task);
