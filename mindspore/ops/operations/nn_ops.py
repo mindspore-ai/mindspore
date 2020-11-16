@@ -3037,11 +3037,12 @@ class Pad(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> pad_op = P.Pad(((1, 2), (2, 1)))
         >>> output_tensor = pad_op(input_tensor)
-        >>> assert output_tensor == Tensor(np.array([[ 0. ,  0. ,  0. ,  0. ,  0. ,  0. ],
-        >>>                                          [ 0. ,  0. , -0.1,  0.3,  3.6,  0. ],
-        >>>                                          [ 0. ,  0. ,  0.4,  0.5, -3.2,  0. ],
-        >>>                                          [ 0. ,  0. ,  0. ,  0. ,  0. ,  0. ],
-        >>>                                          [ 0. ,  0. ,  0. ,  0. ,  0. ,  0. ]]), mindspore.float32)
+        >>> print(output_tensor)
+        [[ 0.   0.   0.   0.   0.   0. ]
+         [ 0.   0.  -0.1  0.3  3.6  0. ]
+         [ 0.   0.   0.4  0.5 -3.2  0. ]
+         [ 0.   0.   0.   0.   0.   0. ]
+         [ 0.   0.   0.   0.   0.   0. ]]
     """
 
     @prim_attr_register
@@ -4857,7 +4858,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
         >>>         self.beta = 0.9
         >>>     def construct(self, grad):
         >>>         out = self.apply_power_sign(self.var, self.m, self.lr, self.logbase,
-        >>>                                        self.sign_decay, self.beta, grad)
+        ...                                        self.sign_decay, self.beta, grad)
         >>>         return out
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))

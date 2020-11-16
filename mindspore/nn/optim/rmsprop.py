@@ -133,7 +133,7 @@ class RMSProp(Optimizer):
     Examples:
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
-        >>> optim = nn.RMSProp(params=net.trainable_params(), learning_rate=lr)
+        >>> optim = nn.RMSProp(params=net.trainable_params(), learning_rate=0.1)
         >>>
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))

@@ -379,7 +379,7 @@ class IsInstance(PrimitiveWithInfer):
 
     Examples:
         >>> a = 1
-        >>> result = P.IsInstance()(a, mindspore.int32)
+        >>> result = P.IsInstance()(a, mindspore.int64)
         >>> print(result)
         True
     """
@@ -1640,7 +1640,7 @@ class Tile(PrimitiveWithInfer):
         x_shp = x['shape']
         validator.check_value_type("multiples", multiples_v, [tuple], self.name)
         for i, multiple in enumerate(multiples_v):
-            validator.check_value_type("multiples[%d]" % i, multiple, [int], self.name)
+            validator.check_positive_int(multiple, "multiples[%d]" % i, self.name)
         validator.check_value_type("x[\'dtype\']", x["dtype"], mstype.tensor_type, self.name)
         len_sub = len(multiples_v) - len(x_shp)
         multiples_w = None
