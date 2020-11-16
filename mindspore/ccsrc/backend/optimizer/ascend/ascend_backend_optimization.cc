@@ -20,6 +20,7 @@
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/ascend/ir_fission/dynamic_rnn_grad_fission_v2.h"
+#include "backend/optimizer/ascend/ir_fission/dynamic_gru_v2_grad_fission.h"
 #include "backend/optimizer/ascend/ir_fission/bn_split.h"
 #include "backend/optimizer/ascend/ir_fission/bn_grad_split.h"
 #include "backend/optimizer/ascend/ir_fission/batch_norm_grad_split.h"
@@ -280,6 +281,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());

@@ -1157,7 +1157,7 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
         reset_after (bool): An bool identifying whether to apply reset gate after matrix multiplication. Default: True.
 
     Inputs:
-        - **x** (Tensor) - Current words. Tensor of shape :math:`({num_step, batch_size, input_size)`.
+        - **x** (Tensor) - Current words. Tensor of shape :math:`(num_step, batch_size, input_size)`.
           The data type must be float16 or float32.
         - **weight_input** (Tensor) - Weight. Tensor of shape :math:`(input_size, 3 x hidden_size)`.
           The data type must be float16 or float32.
@@ -1168,17 +1168,17 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
           if num_proj == 0 `(num_step, batch_size, hidden_size)`.
           The data type must be float16 or float32.
         - **init_h** (Tensor) - Hidden state of initial time.
-          Tensor of shape :math:`(batch_size, hidden_size)`, or None.
+          Tensor of shape :math:`(batch_size, hidden_size)`.
           The data type must be float16 or float32.
-        - **h** (Tensor) - A Tensor of shape :math:`({num_step, batch_size, hidden_size)`.
+        - **h** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
           The data type must be float16 or float32.
         - **dy** (Tensor) - Gradient of `y`, has the same shape and data type as `y`.
-        - **dh** (Tensor) - Gradient of `h`, has the same shape and data type as `h`.
-        - **update** (Tensor) - A Tensor of shape :math:`({num_step, batch_size, hidden_size)`.
+        - **dh** (Tensor) - Gradient of `h`, has the same shape and data type as `init_h`.
+        - **update** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
           The data type must be float16 or float32.
-        - **reset** (Tensor) - A Tensor of shape :math:`({num_step, batch_size, hidden_size)`.
+        - **reset** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
           The data type must be float16 or float32.
-        - **new** (Tensor) - A Tensor of shape :math:`({num_step, batch_size, hidden_size)`.
+        - **new** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
           The data type must be float16 or float32.
         - **hidden_new** (Tensor) - A Tensor of shape :math:`(num_step, batch_size, hidden_size)`.
           The data type must be float16 or float32.
