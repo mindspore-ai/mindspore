@@ -113,7 +113,7 @@ Status Edge::GetRedistributionCost(const TensorLayout &prev_op_output_layout, co
                                    size_t type_length, TypePtr type, CostPtr *cost) {
   MS_EXCEPTION_IF_NULL(prev_op_);
   MS_EXCEPTION_IF_NULL(cost);
-  RankList dev_list = prev_op_->global_device_list();
+  RankList dev_list = prev_op_->stage_device_list();
   TensorRedistribution tensor_redistribution(false);
 
   // Init TensorRedistribution

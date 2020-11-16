@@ -134,7 +134,7 @@ Status OneHotInfo::InferTensorInfo() {
 
 Status OneHotInfo::ExtractInputInfo() {
   CheckGlobalDeviceManager();
-  rank_ = g_device_manager->global_rank();
+  rank_ = g_device_manager->rank_index_in_stage();
   mod_rank_ = rank_ % old_dev_matrix_back_;
   if (!cnode_) {
     MS_LOG(ERROR) << "Failure:OneHot cnode_ is nullptr";

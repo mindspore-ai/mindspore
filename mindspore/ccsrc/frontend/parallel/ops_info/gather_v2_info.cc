@@ -232,7 +232,7 @@ Status GatherV2Info::InferTensorSubOps() {
     MS_LOG(ERROR) << "Axis is " << axis_ << ", not in [0, " << dev_matrix_shape_.size() << ").";
   }
   int64_t mod_p = mod_n * dev_matrix_shape_.at(axis_);
-  int64_t rank = g_device_manager->global_rank();
+  int64_t rank = g_device_manager->rank_index_in_stage();
   int64_t mod_rank = rank % mod_p;
   mod_rank = static_cast<int64_t>(mod_rank / mod_n);
   if (inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) {

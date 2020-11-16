@@ -57,14 +57,14 @@ std::string HashName(const std::string &rank_list_name);
 class DeviceManager {
   // This class is used to manage the abstract devices, including group-related and stage-related management.
  public:
-  DeviceManager() : local_rank_(0), global_rank_(0), stage_num_(1), stage_id_(0) { gm_ = GroupManager(); }
+  DeviceManager() { gm_ = GroupManager(); }
   ~DeviceManager() = default;
 
   Status Init(const RankList &devices, int64_t local_device, const RankList &stage_map, const std::string &backend);
 
   static DeviceManager &GetInstance();
   RankList GetDeviceListByStageId(int64_t stage_id) const;
-  RankList global_device_list(int64_t stage_id, int64_t rank, int64_t split_num) const;
+  RankList GetDeviceListInThisStage() const;
 
   Device CreateNewDeviceByRank(int64_t rank) const;
   std::vector<Device> CreateDeviceListByRankList(RankList ranks);
@@ -74,17 +74,11 @@ class DeviceManager {
   Group CreateGroup(const RankList &dev_ranks);
 
   size_t DeviceNum() const { return devices_.size(); }
-
   int64_t stage_num() const { return stage_num_; }
-  void set_stage_num(int64_t num) { stage_num_ = num; }
-
   int64_t stage_id() const { return stage_id_; }
-  void set_stage_id(int64_t id) { stage_id_ = id; }
-
-  std::string backend() const { return backend_; }
-
+  int64_t rank_index_in_stage() const { return rank_index_in_stage_; }
   int64_t global_rank() const { return global_rank_; }
-  void set_global_rank(int64_t global_rank) { global_rank_ = global_rank; }
+  std::string backend() const { return backend_; }
 
   void Clear();
   std::string world_group() const { return gm_.world_group(); }
@@ -102,10 +96,11 @@ class DeviceManager {
   std::map<std::string, std::string> rank_to_group_;  // the key is rank list, value is hash name
   std::map<std::string, std::string> group_to_rank_;  // the key is hash name, value is rank list
 
-  int64_t local_rank_;
-  int64_t global_rank_;
-  int64_t stage_num_;
-  int64_t stage_id_;
+  int64_t global_rank_ = 0;          // the real rank in all devices
+  int64_t stage_num_ = 0;            // the stage num
+  int64_t stage_id_ = 0;             // the stage id of the global_rank_
+  int64_t rank_index_in_stage_ = 0;  // the index of this rank in it's stage
+  int64_t stage_device_num_ = 0;     // the device num of one stage
 };
 }  // namespace parallel
 }  // namespace mindspore

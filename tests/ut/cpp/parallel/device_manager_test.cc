@@ -135,6 +135,8 @@ TEST_F(TestDeviceManager, test_StageID) {
   ASSERT_EQ(dm_.DeviceNum(), 4);
   ASSERT_EQ(dm_.stage_num(), 2);
   ASSERT_EQ(dm_.stage_id(), 1);
+  ASSERT_EQ(dm_.rank_index_in_stage(), 0);
+  ASSERT_EQ(dm_.GetDeviceListInThisStage().back(), 3);
 
   RankList dev_list_0 = dm_.GetDeviceListByStageId(0);
   RankList dev_list_1 = dm_.GetDeviceListByStageId(1);

@@ -161,6 +161,8 @@ class EmbeddingLookup(Cell):
     Examples:
         >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
         >>> out = nn.EmbeddingLookup(4,2)(input_indices)
+        >>> output.shape
+        (2, 2, 2)
     """
     BATCH_SLICE = "batch_slice"
     FIELD_SLICE = "field_slice"

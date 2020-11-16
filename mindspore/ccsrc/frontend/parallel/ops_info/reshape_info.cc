@@ -113,7 +113,7 @@ Status ReshapeInfo::GetParameterInput() {
 }
 
 Status ReshapeInfo::ComputeReplaceOp() {
-  RankList dev_list = global_device_list();
+  RankList dev_list = stage_device_list();
   TensorRedistribution tensor_redistribution(!is_generating_costs_, true);
   if (tensor_redistribution.Init(input_layout_, output_layout_, dev_list) == FAILED) {
     if (is_generating_costs_) {
@@ -289,13 +289,7 @@ void ReshapeInfo::InferTensorInfoByLayout() {
 Status ReshapeInfo::GetAttrs() { return GetParameterInput(); }
 
 void ReshapeInfo::device_number(const StrategyPtr &strategy) {
-  int64_t stage = 0;
-  if (strategy != nullptr) {
-    stage = strategy->GetInputStage();
-  }
-  CheckGlobalDeviceManager();
-  global_device_list_ = g_device_manager->GetDeviceListByStageId(stage);
-  dev_num_ = SizeToLong(global_device_list_.size());
+  dev_num_ = stage_device_size_;
   MS_ASSERT(dev_num_ > 0);
 }
 

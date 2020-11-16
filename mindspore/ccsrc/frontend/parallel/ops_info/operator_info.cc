@@ -116,7 +116,6 @@ void OperatorInfo::ResetQueueMember() {
   replace_op_.clear();
   replace_op_info_.clear();
   virtual_div_op_.clear();
-  global_device_list_.clear();
 }
 
 Status OperatorInfo::InferAttrs() {
@@ -131,14 +130,8 @@ Status OperatorInfo::InferAttrs() {
   return SUCCESS;
 }
 
-void OperatorInfo::SetDeviceListByStrategy() {
-  int64_t stage = strategy_->GetInputStage();
-  CheckGlobalDeviceManager();
-  global_device_list_ = g_device_manager->GetDeviceListByStageId(stage);
-}
-
 Status OperatorInfo::InferRepeatedCalcInfo() {
-  int64_t g_dev_list_size = SizeToLong(global_device_list_.size());
+  int64_t g_dev_list_size = stage_device_size_;
   int64_t dev_matrix_size =
     std::accumulate(dev_matrix_shape_.begin(), dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
   if (dev_matrix_size == 0) {
@@ -155,12 +148,6 @@ Status OperatorInfo::InferRepeatedCalcInfo() {
                   << dev_matrix_size;
     return FAILED;
   }
-
-  CheckGlobalDeviceManager();
-  int64_t rank = g_device_manager->global_rank();
-  int64_t stage = strategy_->GetInputStage();
-  local_device_list_ = g_device_manager->global_device_list(stage, rank, repeated_calc_num_);
-
   return SUCCESS;
 }
 
@@ -331,7 +318,7 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
   }
   CheckGlobalDeviceManager();
   int64_t rank = g_device_manager->global_rank();
-  DeviceMatrix dev_matrix(rank, global_device_list_, dev_matrix_shape_);
+  DeviceMatrix dev_matrix(rank, stage_device_list_, dev_matrix_shape_);
   RankList group_devices;
   if (dev_matrix.GetDevicesByTensorMap(tensor_map, &group_devices) != SUCCESS) {
     return FAILED;
@@ -354,7 +341,7 @@ Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   }
   CheckGlobalDeviceManager();
   int64_t rank = g_device_manager->global_rank();
-  DeviceMatrix dev_matrix(rank, global_device_list_, dev_matrix_shape_);
+  DeviceMatrix dev_matrix(rank, stage_device_list_, dev_matrix_shape_);
   RankList group_devices;
   if (dev_matrix.GetDevicesAlongDim(SizeToUlong(axis), &group_devices) != SUCCESS) {
     return FAILED;
@@ -469,7 +456,6 @@ Status OperatorInfo::InitForCostModelWithAutoRepeatCalc(const StrategyPtr &strat
   ResetQueueMember();
 
   strategy_ = strategy;
-  SetDeviceListByStrategy();
 
   if (InferDevMatrixShape() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": InferDevMatrixShape failed.";
@@ -526,7 +512,6 @@ Status OperatorInfo::InitForCostModelWithManualRepeatCalc(const StrategyPtr &str
   ResetQueueMember();
 
   strategy_ = strategy;
-  SetDeviceListByStrategy();
 
   if (InferDevMatrixShape() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": InferDevMatrixShape failed.";
@@ -1325,7 +1310,7 @@ Status OperatorInfo::InferAsLossDivisor() {
   }
 
   if (outputs_tensor_map_[0].empty()) {
-    as_loss_divisor_ = SizeToLong(global_device_list_.size());
+    as_loss_divisor_ = stage_device_size_;
     MS_LOG(INFO) << name_ << ": The output is a scalar, use the dev size " << as_loss_divisor_ << ", loss divisor.";
     return SUCCESS;
   }

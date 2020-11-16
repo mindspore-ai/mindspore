@@ -64,6 +64,8 @@ class OperatorInfo {
     std::vector<bool> not_parameteter(inputs_shape_.size(), false);
     is_parameter_ = not_parameteter;
     refkey_parameter_name_ = "";
+    stage_device_list_ = g_device_manager->GetDeviceListInThisStage();
+    stage_device_size_ = SizeToLong(stage_device_list_.size());
   }
 
   virtual ~OperatorInfo() = default;
@@ -119,7 +121,7 @@ class OperatorInfo {
   std::vector<std::shared_ptr<StrategyWithCost>> strategy_cost() const { return strategy_cost_; }
   const std::string &name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
-  RankList global_device_list() const { return global_device_list_; }
+  RankList stage_device_list() const { return stage_device_list_; }
 
   void AddSuccEdge(const std::shared_ptr<Edge> &e) { succ_edges_.push_back(e); }
   void AddPrevEdge(const std::shared_ptr<Edge> &e) { prev_edges_.push_back(e); }
@@ -187,7 +189,6 @@ class OperatorInfo {
   virtual Status InferTensorInfo() = 0;
   virtual Status InferDevMatrixShape() = 0;
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
-  void SetDeviceListByStrategy();
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
   Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
@@ -231,8 +232,8 @@ class OperatorInfo {
   ReplaceGraphPtr replace_graph_;
   MirrorOps mirror_ops_;
   VirtualDivOp virtual_div_op_;
-  RankList global_device_list_;  // the size of global_device_list equal to the size of stageID
-  RankList local_device_list_;   // the size equal to global_device_list_.size() / repeated_calc_num_
+  RankList stage_device_list_;  // the device list in this stage
+  int64_t stage_device_size_ = 0;
   bool infer_attrs_completed_ = false;
 
   bool is_auto_parallel_ = false;  // false: semi_auto_parallel; true: auto_parallel

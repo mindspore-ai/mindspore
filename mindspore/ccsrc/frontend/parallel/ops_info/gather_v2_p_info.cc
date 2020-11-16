@@ -451,7 +451,7 @@ Status GatherV2PInfo::InferTensorInfo() {
   Shape input_shape = inputs_shape_.at(0);
   Shape input_index_shape = inputs_shape_.at(1);
   Shape output_shape = outputs_shape_.at(0);
-  int64_t rank = g_device_manager->global_rank();
+  int64_t rank = g_device_manager->rank_index_in_stage();
   // infer tensor layout
   TensorLayout input_tensor_layout, input_index_layout, output_tensor_layout;
   if (manual_split_) {
@@ -481,7 +481,7 @@ Status GatherV2PInfo::InferTensorInfo() {
 
 Status GatherV2PInfo::InferBias() {
   CheckGlobalDeviceManager();
-  int64_t rank = g_device_manager->global_rank();
+  int64_t rank = g_device_manager->rank_index_in_stage();
   auto input_shape = inputs_shape_.at(0);
   auto params_strategy = strategy_->GetInputDim().at(0);
   // axis don't split
@@ -513,7 +513,7 @@ Status GatherV2PInfo::InferBias() {
 
 Status GatherV2PInfo::InferOffset() {
   CheckGlobalDeviceManager();
-  size_t rank = g_device_manager->global_rank();
+  size_t rank = g_device_manager->rank_index_in_stage();
 
   MS_EXCEPTION_IF_NULL(strategy_);
   auto param_strategy = strategy_->GetInputDim()[0];
