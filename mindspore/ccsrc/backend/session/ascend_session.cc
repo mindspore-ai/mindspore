@@ -41,6 +41,14 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/tensor_load.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
+#include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
+#include "backend/optimizer/graph_kernel/tensor_promotion.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
+#include "backend/optimizer/graph_kernel/value_graph_binder.h"
+#include "backend/optimizer/graph_kernel/add_atomic_clean.h"
+#include "backend/optimizer/pass/getitem_tuple.h"
 #include "debug/data_dump/e2e_dump_util.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
@@ -296,8 +304,6 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   MS_EXCEPTION_IF_NULL(child_graph);
   MS_LOG(INFO) << "CompileChildGraph " << child_graph->ToString();
   opt::AscendBackendIRFusionOptimization(child_graph);
-  opt::AscendBackendFuseBasicOpt(child_graph, true);
-  opt::AscendBackendGraphKernelOpt(child_graph, true);
   child_graph->SetExecOrderByDefault();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -471,11 +477,33 @@ void AscendSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_
   MS_LOG(INFO) << "HardwareOptimize start!";
   opt::AscendBackendOptimization(kernel_graph);
   opt::AscendGraphKernelCommonProcess(kernel_graph);
-  opt::AscendBackendFuseBasicOpt(kernel_graph, false);
-  opt::AscendBackendAddAtomicClean(kernel_graph);
+  GraphKernelOptimize(kernel_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   MS_LOG(INFO) << "HardwareOptimize Finish!";
+}
+
+void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
+    return;
+  }
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>("graph_kernel_pm");
+  pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
+  pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
+  pm->AddPass(std::make_shared<opt::CompositeOpsFusion>());
+  pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
+  pm->AddPass(std::make_shared<opt::TensorPromotion>());
+  pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());
+  // After Simplify and Splitter, a lot of redundant getitem/maketuple
+  // will be exposed, use GetitemTuple Pass to delete them.
+  pm->AddPass(std::make_shared<opt::GetitemTuple>());
+  pm->AddPass(std::make_shared<opt::BindValueToGraph>());
+  pm->AddPass(std::make_shared<opt::CleanAddAtomic>());
+  optimizer->AddPassManager(pm);
+  (void)optimizer->Optimize(kernel_graph);
 }
 
 void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -870,8 +898,6 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
   memo->insert(graph.get());
 
   opt::AscendBackendIRFusionOptimization(graph);
-  opt::AscendBackendFuseBasicOpt(graph, true);
-  opt::AscendBackendGraphKernelOpt(graph, true);
   graph->SetExecOrderByDefault();
 
   auto context_ptr = MsContext::GetInstance();

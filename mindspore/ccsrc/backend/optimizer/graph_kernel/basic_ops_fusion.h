@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace opt {
-bool FuseBasicOps(const FuncGraphPtr &kernel_graph, bool is_before_kernel_select);
+bool FuseBasicOps(const FuncGraphPtr &kernel_graph);
 
 class BasicOpsFusion : public Pass {
  public:

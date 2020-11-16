@@ -176,7 +176,7 @@ AnfNodePtr GraphKernelExpander::CreateExpandGraphKernel(const FuncGraphPtr &func
   EliminateRedundantParameters(new_func_graph, &inputs);
   kernel::GetValidKernelNodes(new_func_graph, &kernel_nodes);
   kernel::GetFuncGraphOutputNodes(new_func_graph, &outputs);
-  auto graph_kernel_node = CreateNewFuseCNode(func_graph, new_func_graph, inputs, outputs, false);
+  auto graph_kernel_node = CreateNewFuseCNode(func_graph, new_func_graph, inputs, outputs);
   SetNewKernelInfo(graph_kernel_node, new_func_graph, inputs, outputs, AnfAlgo::GetProcessor(node));
   std::string graph_kernel_flag;
   std::for_each(kernel_nodes.begin(), kernel_nodes.end(), [&graph_kernel_flag](const AnfNodePtr &node) {

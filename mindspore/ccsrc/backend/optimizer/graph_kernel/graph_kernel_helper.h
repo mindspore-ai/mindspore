@@ -45,12 +45,11 @@ void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const 
                       const AnfNodePtrList &outputs, kernel::Processor processor);
 AnfNodePtrList GetExpandOuts(const AnfNodePtrList &outs);
 AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &kernel_graph, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
-                              const AnfNodePtrList &outputs, bool is_before_kernel_select);
+                              const AnfNodePtrList &outputs);
 void ReplaceNewFuseCNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &new_fuse_cnode,
                          const AnfNodePtrList &outputs);
 void FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
-                         const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::string &postfix,
-                         bool is_before_kernel_select);
+                         const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::string &postfix);
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc);
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc,
                    std::map<std::string, AnfNodePtr> *address_node_map);
@@ -59,6 +58,7 @@ FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNo
 std::unordered_set<PrimitivePtr> GetExpandOps();
 std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &prefix = "", const string &postfix = "");
 std::vector<PrimitivePtr> GetFusibleOpList();
+bool IsBasicFuseOp(const AnfNodePtr &node);
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 }  // namespace opt
 }  // namespace mindspore

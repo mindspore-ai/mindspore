@@ -74,7 +74,6 @@
 #include "backend/optimizer/ascend/format_type/convert_unsupported_transnode_to_aicpu.h"
 #include "backend/optimizer/pass/eliminate_redundant_op.h"
 #include "backend/optimizer/pass/common_subexpression_elimination.h"
-#include "backend/optimizer/pass/add_atomic_clean.h"
 #include "backend/optimizer/ascend/format_type/merge_cast_to_op.h"
 #include "backend/optimizer/ascend/format_type/check_consistency.h"
 #include "backend/optimizer/ascend/buffer_fusion/ub_pattern_fusion.h"
@@ -379,74 +378,6 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     DumpIR(file_name, kernel_graph, true);
     DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
     kernel_graph->DumpFuncGraph("hwopt_d_end");
-  }
-}
-
-void AscendBackendGraphKernelOpt(const std::shared_ptr<session::KernelGraph> &kernel_graph,
-                                 bool is_before_kernel_select) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
-    return;
-  }
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_graph_kernel_opt_before_graph_" + std::to_string(!is_before_kernel_select) + "_" +
-                            std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph);
-  }
-
-  // Fuse graph kernels with basic ops
-  static_cast<void>(FuseCompositeOps(kernel_graph, is_before_kernel_select));
-
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_graph_kernel_opt_end_graph_" + std::to_string(!is_before_kernel_select) + "_" +
-                            std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true);
-  }
-}
-
-void AscendBackendFuseBasicOpt(const std::shared_ptr<session::KernelGraph> &kernel_graph,
-                               bool is_before_kernel_select) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
-    return;
-  }
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    std::string file_name = "hwopt_fuse_basic_opt_before_graph_" + std::to_string(!is_before_kernel_select) + "_" +
-                            std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true);
-  }
-
-  // Fuse basic ops with basic ops
-  static_cast<void>(FuseBasicOps(kernel_graph, is_before_kernel_select));
-
-  if (save_graphs) {
-    std::string file_name = "hwopt_fuse_basic_opt_end_graph_" + std::to_string(!is_before_kernel_select) + "_" +
-                            std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true);
-  }
-}
-
-void AscendBackendAddAtomicClean(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
-    return;
-  }
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_add_atomic_clean_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph);
-  }
-
-  AddAtomicClean(kernel_graph);
-
-  if (save_graphs) {
-    std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true);
   }
 }
 
