@@ -157,7 +157,19 @@ int OpenCLRuntime::Init() {
   }
 #else
   MS_LOG(INFO) << "Create common opencl context";
+#ifdef Debug
+  std::vector<cl_context_properties> ctx_properties = {CL_CONTEXT_PLATFORM,
+                                                       (cl_context_properties)platforms[0](),
+                                                       CL_PRINTF_CALLBACK_ARM,
+                                                       (cl_context_properties)printf_callback,
+                                                       CL_PRINTF_BUFFERSIZE_ARM,
+                                                       0x1000000,
+                                                       0};
+  context_ =
+    new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, ctx_properties.data(), nullptr, nullptr, &ret);
+#else
   context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
+#endif
 #endif
   if (ret != CL_SUCCESS) {
     delete device_;
@@ -201,9 +213,10 @@ int OpenCLRuntime::Init() {
   MS_LOG(INFO) << "Compute Unit: " << compute_units_;
   MS_LOG(INFO) << "Clock Frequency: " << max_freq_ << " MHz";
 
+#ifdef Debug
+  const cl_command_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
+#else
   const cl_command_queue_properties properties = 0;
-#if MS_OPENCL_PROFILE
-  properties |= CL_QUEUE_PROFILING_ENABLE;
 #endif
 
   default_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, properties, &ret);
@@ -412,7 +425,7 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
   }
   cnt++;
   MS_LOG(DEBUG) << "RunKernel success!";
-#if MS_OPENCL_PROFILE
+#ifdef Debug
   event.wait();
   cl_ulong time_start;
   cl_ulong time_end;
@@ -445,7 +458,7 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const cl::NDRange &global
   }
   cnt++;
   MS_LOG(DEBUG) << "RunKernel success!";
-#if MS_OPENCL_PROFILE
+#ifdef Debug
   event.wait();
   cl_ulong time_start;
   cl_ulong time_end;
