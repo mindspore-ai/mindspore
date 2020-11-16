@@ -59,9 +59,9 @@ std::string GetIfstreamString(const std::ifstream &ifstream) {
 bool DumpJsonParser::IsDumpEnabled() {
   auto config_path = std::getenv(kMindsporeDumpConfig);
   if (config_path == nullptr) {
-    MS_LOG(INFO) << "Dump config path is null";
     return false;
   }
+  MS_LOG(INFO) << "Dump config path is " << config_path;
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -389,9 +389,9 @@ bool DumpJsonParser::OutputNeedDump() const {
 
 void DumpJsonParser::UpdateNeedDumpKernels(NotNull<const session::KernelGraph *> kernel_graph) {
   if (!async_dump_enabled_) {
-    MS_LOG(INFO) << "E2e dump no need to update dump kernel list";
     return;
   }
+  MS_LOG(INFO) << "Update async dump kernel list for hccl";
   std::map<std::string, uint32_t> update_kernels;
   for (const auto &kernel : kernel_graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);

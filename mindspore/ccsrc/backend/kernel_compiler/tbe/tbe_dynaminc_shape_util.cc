@@ -24,7 +24,6 @@
 namespace mindspore {
 namespace kernel {
 namespace tbe {
-
 bool TbeDynamicShapeUtil::IsDynamicShapeNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_num = AnfAlgo ::GetInputTensorNum(cnode);
@@ -133,7 +132,6 @@ std::vector<std::pair<int, int>> TbeDynamicShapeUtil::GetOutputDynamicRange(cons
   }
   return ret;
 }
-
 }  // namespace tbe
 }  // namespace kernel
 }  // namespace mindspore
