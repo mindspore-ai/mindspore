@@ -105,6 +105,9 @@ def test_adam():
     assert np.allclose(opt.v.data.asnumpy(), v_expect, rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_adam_weight_decay():
     np.random.seed(0)
     beta1 = np.array([0.9]).astype(np.float32)

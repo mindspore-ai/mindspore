@@ -28,3 +28,4 @@ from .tanh_grad import expand_tanhgrad
 from .maximum_grad import expand_maximumgrad
 from .minimum_grad import expand_minimumgrad
 from .dropout_grad import expand_dropoutgrad
+from .layernorm_grad import expand_layernormgrad
