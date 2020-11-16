@@ -324,7 +324,7 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
   }
 
   auto layer_norm_cnode = CreateLayerNormNode(func_graph, equiv, gamma_shape, epsilon);
-  layer_norm_cnode->set_abstract(add2_cnode->abstract());
+  layer_norm_cnode->set_abstract(add2_cnode->abstract()->Clone());
   layer_norm_cnode->set_fullname_with_scope("layer_norm_" + add2_cnode->fullname_with_scope());
   MS_LOG(INFO) << "layernorm node:" << layer_norm_cnode->fullname_with_scope() << " fusion success";
   return layer_norm_cnode;
