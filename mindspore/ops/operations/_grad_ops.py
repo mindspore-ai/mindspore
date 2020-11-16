@@ -1210,7 +1210,7 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
                  num_proj=0,
                  time_major=True,
                  bias_type="double_bias",
-                 gate_order="zrh",
+                 gate_order="rzh",
                  reset_after=True):
         self.cell_depth = validator.check_value_type("cell_depth", cell_depth, [int], self.name)
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
@@ -1266,12 +1266,13 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype, winput_dtype, whidden_dtype, y_dtype, init_h_dtype, h_dtype,
                     dy_dtype, dh_dtype, update_dtype, reset_dtype, new_dtype, hnew_dtype, seq_dtype, mask_dtype):
         valid_types = (mstype.float16, mstype.float32)
-        args = {"y_dtype": y_dtype, "init_h_dtype": init_h_dtype, "h_dtype": h_dtype,
-                "dy_dtype": dy_dtype, "dh_dtype": dh_dtype, "update_dtype": update_dtype,
-                "reset_dtype": reset_dtype, "new_dtype": new_dtype, "hnew_dtype": hnew_dtype}
+        args = {"y_dtype": y_dtype, "h_dtype": h_dtype, "dy_dtype": dy_dtype,
+                "dh_dtype": dh_dtype, "update_dtype": update_dtype, "reset_dtype": reset_dtype,
+                "new_dtype": new_dtype, "hnew_dtype": hnew_dtype}
         validator.check_tensor_dtype_valid("x_dtype", x_dtype, valid_types, self.name)
         validator.check_tensor_dtype_valid("winput_dtype", winput_dtype, valid_types, self.name)
         validator.check_tensor_dtype_valid("whidden_dtype", whidden_dtype, valid_types, self.name)
+        validator.check_tensor_dtype_valid("init_h_dtype", init_h_dtype, valid_types, self.name)
         validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
         if seq_dtype is not None:
             validator.check_tensor_dtype_valid("seq_dtype", seq_dtype, valid_types, self.name)

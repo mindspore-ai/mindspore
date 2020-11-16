@@ -59,7 +59,7 @@ bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildIn
   auto name = AnfAlgo::GetCNodeName(cnode);
   for (size_t input_index = 0; input_index < kernel_build_info.GetInputNum(); ++input_index) {
     TypeId input_origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_index);
-    if (name == kDynamicRNNOpName && input_origin_type == kMetaTypeNone) {
+    if ((name == kDynamicRNNOpName || name == kDynamicGRUV2OpName) && input_origin_type == kMetaTypeNone) {
       continue;
     }
     if (kernel_build_info.GetInputDeviceType(input_index) != input_origin_type) {

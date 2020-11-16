@@ -553,41 +553,49 @@ class DynamicGRUV2(PrimitiveWithInfer):
         self.reset_after = validator.check_value_type("reset_after", reset_after, [bool], self.name)
         self.add_prim_attr("io_format", "ND")
 
-    def infer_shape(self, x_shape, winput_shape, whidden_shape, binput_shape, bhidden_shape, seq_shape, h_shape):
+    def infer_shape(self, x_shape, winput_shape, whidden_shape,
+                    binput_shape=None, bhidden_shape=None, seq_shape=None, h_shape=None):
         validator.check_int(len(x_shape), 3, Rel.EQ, "x shape", self.name)
         validator.check_int(len(winput_shape), 2, Rel.EQ, "weight input shape rank", self.name)
         validator.check_int(len(whidden_shape), 2, Rel.EQ, "weight hidden shape rank", self.name)
-        if binput_shape is not None:
-            validator.check_int(len(binput_shape), 1, Rel.EQ, "bias input shape rank", self.name)
-        if bhidden_shape is not None:
-            validator.check_int(len(bhidden_shape), 1, Rel.EQ, "bias hidden shape rank", self.name)
-        if h_shape is not None:
-            validator.check_int(len(h_shape), 2, Rel.EQ, "init_h shape rank", self.name)
-        if seq_shape is not None:
-            raise ValueError(f"For {self.name}, seq_shape should be None.")
 
         num_step, batch_size, input_size = x_shape
         hidden_size = winput_shape[-1] // 3
-
         if winput_shape[-1] % 3 != 0:
             raise ValueError(f"For {self.name}, weight_input_shape[-1] should multiple of 3.")
 
-        validator.check("weight_input_shape[-1]", winput_shape[-1], "weight_hidden_shape[-1]",
-                        whidden_shape[-1], Rel.EQ, self.name)
-        validator.check("bias_input_shape", binput_shape, "bias_hidden_shape", bhidden_shape, Rel.EQ, self.name)
-        validator.check("weight_input_shape[0]", winput_shape[0], "input_size", input_size, Rel.EQ, self.name)
-        validator.check("weight_hidden_shape[0]", whidden_shape[0], "hidden_size", hidden_size, Rel.EQ, self.name)
+        self.placeholder_index = [3, 4, 5, 6]
+        if binput_shape is not None:
+            validator.check_int(len(binput_shape), 1, Rel.EQ, "bias input shape rank", self.name)
+            validator.check("bias_input_shape", binput_shape, "3 * hidden_shape", [3 * hidden_size], Rel.EQ, self.name)
+            self.placeholder_index.remove(3)
+        if bhidden_shape is not None:
+            validator.check_int(len(bhidden_shape), 1, Rel.EQ, "bias hidden shape rank", self.name)
+            validator.check("bias_hidden_shape", bhidden_shape,
+                            "3 * hidden_shape", [3 * hidden_size], Rel.EQ, self.name)
+            self.placeholder_index.remove(4)
         if h_shape is not None:
+            validator.check_int(len(h_shape), 2, Rel.EQ, "init_h shape rank", self.name)
             validator.check("init_h_shape[0]", h_shape[0], "batch_size", batch_size, Rel.EQ, self.name)
             validator.check("init_h_shape[1]", h_shape[1], "hidden_size", hidden_size, Rel.EQ, self.name)
+            self.placeholder_index.remove(6)
+        if seq_shape is not None:
+            raise ValueError(f"For {self.name}, seq_shape should be None.")
+
+        validator.check("weight_input_shape[-1]", winput_shape[-1], "weight_hidden_shape[-1]",
+                        whidden_shape[-1], Rel.EQ, self.name)
+        validator.check("weight_input_shape[0]", winput_shape[0], "input_size", input_size, Rel.EQ, self.name)
+        validator.check("weight_hidden_shape[0]", whidden_shape[0], "hidden_size", hidden_size, Rel.EQ, self.name)
         if self.num_proj > 0:
             y_shape = (num_step, batch_size, min(hidden_size, self.num_proj))
         else:
             y_shape = (num_step, batch_size, hidden_size)
         outh_shape = (num_step, batch_size, hidden_size)
+        self.add_prim_attr("placeholder_index", self.placeholder_index)
         return y_shape, outh_shape, outh_shape, outh_shape, outh_shape, outh_shape
 
-    def infer_dtype(self, x_dtype, winput_dtype, whidden_dtype, binput_dtype, bhidden_dtype, seq_dtype, h_dtype):
+    def infer_dtype(self, x_dtype, winput_dtype, whidden_dtype,
+                    binput_dtype=None, bhidden_dtype=None, seq_dtype=None, h_dtype=None):
         validator.check_tensor_dtype_valid("x dtype", x_dtype, [mstype.float16], self.name)
         validator.check_tensor_dtype_valid("weight input dtype", winput_dtype, [mstype.float16], self.name)
         validator.check_tensor_dtype_valid("weight hidden dtype", whidden_dtype, [mstype.float16], self.name)
