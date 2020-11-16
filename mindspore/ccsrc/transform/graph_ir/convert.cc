@@ -1426,7 +1426,7 @@ bool DfGraphConvertor::GetControlDependList(const CNodePtr &node,
   ValuePtr mode_ptr = prim_ptr->GetAttr("depend_mode");
   int depend_mode = DEPEND_MODE_NORMAL_USE;
   if (mode_ptr != nullptr) {
-    auto mode_int = mode_ptr->cast<Int32ImmPtr>();
+    auto mode_int = mode_ptr->cast<Int64ImmPtr>();
     MS_EXCEPTION_IF_NULL(mode_int);
     depend_mode = mode_int->value();
     MS_LOG(DEBUG) << "depend_mode = " << depend_mode;
