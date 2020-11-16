@@ -378,11 +378,11 @@ void Conv1x1PreOptPeroc(const int8_t *src_input, int8_t *packed_input, int32_t *
       "b 16f \n"
 
       "10: \n"
-      "ld1 {v16.h}[0], [x10] \n"
+      "ld1 {v16.d}[0], [x10] \n"
       "b 16f \n"
 
       "11: \n"
-      "ld1 {v16.h}[0], [x10] \n"
+      "ld1 {v16.d}[0], [x10] \n"
       "add x10, x10, #8 \n"
       "ld1 {v16.s}[2], [x10] \n"
       "b 16f \n"
@@ -802,11 +802,12 @@ void Conv1x1PreOptPert(const int8_t *src_input, int8_t *packed_input, int32_t *i
 
 void Conv1x1Int8Opt(const int8_t *packed_input, const int8_t *packed_weight, int8_t *dst, const int32_t *input_sum,
                     const int32_t *bias, int row, int col, int deep4, int32_t *left_shift, int32_t *right_shift,
-                    int32_t *multiplier, ConvParameter *conv_param, MATMUL_OPT_R_FUNC matmul_func) {
+                    int32_t *multiplier, ConvParameter *conv_param, MATMUL_OPT_DP_FUNC matmul_func, int *filter_zp) {
   int is_per_oc = (int)conv_param->conv_quant_arg_.filter_arg_num_ != 1;
-  matmul_func(packed_input, packed_weight, dst, row, col, deep4, conv_param->output_channel_, input_sum, bias,
-              left_shift, right_shift, multiplier, conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
-              conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0], is_per_oc);
+  matmul_func(packed_input, packed_weight, dst, row, col, deep4, col, input_sum, bias, left_shift, right_shift,
+              multiplier, conv_param->conv_quant_arg_.output_quant_args_[0].zp_,
+              conv_param->conv_quant_arg_.out_act_min_[0], conv_param->conv_quant_arg_.out_act_max_[0], is_per_oc,
+              filter_zp);
   return;
 }
 

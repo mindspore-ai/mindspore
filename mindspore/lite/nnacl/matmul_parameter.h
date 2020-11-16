@@ -27,6 +27,11 @@ typedef void (*MATMUL_OPT_R_FUNC)(const int8_t *a, const int8_t *b, int8_t *dst,
                                   int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini,
                                   int32_t maxi, size_t per_channel);
 
+typedef void (*MATMUL_OPT_DP_FUNC)(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
+                                   size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
+                                   int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini,
+                                   int32_t maxi, size_t per_channel, int *filter_zp);
+
 typedef enum OutType { OutType_C8 = 0, OutType_Nhwc = 1, OutType_TileC8 = 2 } OutType;
 
 typedef struct MatMulParameter {
@@ -40,6 +45,7 @@ typedef struct MatMulParameter {
   int col_2_;
   int col_4_;
   int col_8_;
+  int col_16_;
   int deep_;
   int deep_4_;
   int deep_16_;
