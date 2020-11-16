@@ -25,8 +25,6 @@ from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU", enable_graph_kernel=True)
-
 
 class Net(nn.Cell):
     def __init__(self, decay_flag=True):
@@ -76,9 +74,6 @@ def CalFusedAdam(beta1, beta2, one_sub_beta_1, one_sub_beta_2, gradient, eps, we
     return param_expect, m_expect, v_expect
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_adam():
     np.random.seed(0)
     beta1 = np.array([0.9]).astype(np.float32)
@@ -105,9 +100,6 @@ def test_adam():
     assert np.allclose(opt.v.data.asnumpy(), v_expect, rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_adam_weight_decay():
     np.random.seed(0)
     beta1 = np.array([0.9]).astype(np.float32)
@@ -133,3 +125,37 @@ def test_adam_weight_decay():
     assert np.allclose(opt.param.data.asnumpy(), param_expect, rtol=1.e-4, atol=1.e-8, equal_nan=True)
     assert np.allclose(opt.m.data.asnumpy(), m_expect, rtol=1.e-4, atol=1.e-8, equal_nan=True)
     assert np.allclose(opt.v.data.asnumpy(), v_expect, rtol=1.e-4, atol=1.e-8, equal_nan=True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_adam_gpu():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    test_adam()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_adam_ascend():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    test_adam()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_adam_weight_decay_gpu():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    test_adam_weight_decay()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_adam_weight_decay_ascend():
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    test_adam_weight_decay()
