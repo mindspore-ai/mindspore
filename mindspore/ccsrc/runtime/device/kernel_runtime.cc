@@ -831,8 +831,9 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
                       << " should be equal to the size of kernels " << kernels.size();
   }
   for (size_t i = 0; i < kernels.size(); ++i) {
+    auto &kernel = kernels[i];
     if (!dynamic_kernel_list.empty() && dynamic_kernel_list[i] != nullptr &&
-        dynamic_kernel_list[i]->is_dynamic_shape()) {
+        dynamic_kernel_list[i]->is_dynamic_shape() && AnfAlgo::GetKernelType(kernel) == AICPU_KERNEL) {
       dynamic_kernel_list[i]->InferShape();
       dynamic_kernel_list[i]->UpdateArgs();
       dynamic_kernel_list[i]->Execute();
@@ -842,12 +843,12 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
       }
       dynamic_kernel_list[i]->PostExecute();
     } else {
-      auto kernel_mod = AnfAlgo::GetKernelMod(kernels[i]);
+      auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
       MS_EXCEPTION_IF_NULL(kernel_mod);
       AddressPtrList kernel_inputs;
       AddressPtrList kernel_workspaces;
       AddressPtrList kernel_outputs;
-      GenLaunchArgs(*kernel_mod, kernels[i], &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+      GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
       auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
       if (!ret) {
         MS_LOG(ERROR) << "Launch kernel failed.";
