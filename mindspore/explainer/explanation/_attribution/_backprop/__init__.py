@@ -13,12 +13,3 @@
 # limitations under the License.
 # ============================================================================
 """Backprop-base _attribution explainer."""
-
-from .gradient import Gradient
-from .gradcam import GradCAM
-from .modified_relu import Deconvolution, GuidedBackprop
-
-__all__ = ['Gradient',
-           'GradCAM',
-           'Deconvolution',
-           'GuidedBackprop']

@@ -14,9 +14,10 @@
 # ============================================================================
 """Predefined Attribution explainers."""
 
-from ._attribution._backprop.gradcam import GradCAM
 from ._attribution._backprop.gradient import Gradient
+from ._attribution._backprop.gradcam import GradCAM
 from ._attribution._backprop.modified_relu import Deconvolution, GuidedBackprop
+from ._attribution._perturbation.occlusion import Occlusion
 from ._attribution._perturbation.rise import RISE
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     'Deconvolution',
     'GuidedBackprop',
     'GradCAM',
-    'RISE'
+    'Occlusion',
+    'RISE',
 ]

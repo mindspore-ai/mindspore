@@ -16,12 +16,11 @@
 from copy import deepcopy
 
 from mindspore import nn
-from mindspore.ops import operations as op
 from mindspore.train._utils import check_value_type
 from ...._operators import reshape, sqrt, Tensor
-from .._attribution import Attribution
+from ..attribution import Attribution
 from .backprop_utils import compute_gradients
-from ...._utils import unify_inputs, unify_targets
+from ...._utils import abs_max, unify_inputs, unify_targets
 
 
 def _get_hook(bntype, cache):
@@ -39,16 +38,6 @@ def _get_hook(bntype, cache):
         return grad_output
 
     return reset_gradient
-
-
-def _abs_max(gradients):
-    """
-    Transform gradients to saliency through abs then take max along
-    channels.
-    """
-    gradients = op.Abs()(gradients)
-    saliency = op.ReduceMax(keep_dims=True)(gradients, axis=1)
-    return saliency
 
 
 class Gradient(Attribution):
@@ -85,8 +74,7 @@ class Gradient(Attribution):
         self._backward_model.set_grad(False)
         self._hook_bn()
         self._grad_op = compute_gradients
-        self._aggregation_fn = _abs_max
-
+        self._aggregation_fn = abs_max
 
     def __call__(self, inputs, targets):
         """

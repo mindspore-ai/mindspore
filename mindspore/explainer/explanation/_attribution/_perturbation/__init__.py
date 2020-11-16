@@ -13,7 +13,3 @@
 # limitations under the License.
 # ============================================================================
 """ Perturbation-based _attribution explainer. """
-
-from .rise import RISE
-
-__all__ = ['RISE']

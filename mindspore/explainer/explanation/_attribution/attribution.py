@@ -16,8 +16,10 @@
 
 from typing import Callable
 
+import mindspore as ms
+import mindspore.nn as nn
 from mindspore.train._utils import check_value_type
-from mindspore.nn import Cell
+
 
 class Attribution:
     """
@@ -26,15 +28,20 @@ class Attribution:
     The explainers which explanation through attributing the relevance scores should inherit this class.
 
     Args:
-        network (Cell): The black-box model to explain.
+        network (nn.Cell): The black-box model to explanation.
     """
 
     def __init__(self, network):
-        check_value_type("network", network, Cell)
+        check_value_type("network", network, nn.Cell)
         self._model = network
         self._model.set_train(False)
         self._model.set_grad(False)
 
+    @staticmethod
+    def _verify_model(model):
+        """Verify the input `network` for __init__ function."""
+        if not isinstance(model, nn.Cell):
+            raise TypeError("The parsed `network` must be a `mindspore.nn.Cell` object.")
 
     __call__: Callable
     """
@@ -51,4 +58,17 @@ class Attribution:
 
     @property
     def model(self):
+        """Return the model."""
         return self._model
+
+    @staticmethod
+    def _verify_data(inputs, targets):
+        """Verify the validity of the parsed inputs."""
+        check_value_type('inputs', inputs, ms.Tensor)
+        if len(inputs.shape) != 4:
+            raise ValueError('Argument inputs must be 4D Tensor')
+        check_value_type('targets', targets, (ms.Tensor, int))
+        if isinstance(targets, ms.Tensor):
+            if len(targets.shape) > 1 or (len(targets.shape) == 1 and len(targets) != len(inputs)):
+                raise ValueError('Argument targets must be a 1D or 0D Tensor. If it is a 1D Tensor, '
+                                 'it should have the same length as inputs.')

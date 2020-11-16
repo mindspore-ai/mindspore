@@ -64,6 +64,9 @@ class RISE(PerturbationAttribution):
                  activation_fn=nn.Softmax(),
                  perturbation_per_eval=32):
         super(RISE, self).__init__(network, activation_fn)
+        check_value_type('perturbation_per-eval', perturbation_per_eval, int)
+        if perturbation_per_eval <= 0:
+            raise ValueError('perturbation_per_eval should be postive integer.')
         self._perturbation_per_eval = perturbation_per_eval
 
         self._num_masks = 6000  # number of masks to be sampled
@@ -156,12 +159,11 @@ class RISE(PerturbationAttribution):
         targets = self._unify_targets(inputs, targets)
         attr_classes = []
         for idx, target in enumerate(targets):
-            dtype = inputs.dtype
             attr_np_idx = attr_np[idx]
             attr_idx = attr_np_idx[target]
             attr_classes.append(attr_idx)
 
-        return op.Tensor(attr_classes, dtype=dtype)
+        return op.Tensor(attr_classes, dtype=inputs.dtype)
 
     @staticmethod
     def _verify_data(inputs, targets):
@@ -183,7 +185,7 @@ class RISE(PerturbationAttribution):
     def _unify_targets(inputs, targets):
         """To unify targets to be 2D numpy.ndarray."""
         if isinstance(targets, int):
-            return np.array([[targets] for i in inputs]).astype(np.int)
+            return np.array([[targets] for _ in inputs]).astype(np.int)
         if isinstance(targets, Tensor):
             if not targets.shape:
                 return np.array([[targets.asnumpy()] for _ in inputs]).astype(np.int)
