@@ -400,6 +400,7 @@ class ServerStopRequest : public BaseRequest {
   explicit ServerStopRequest(int32_t qID) : BaseRequest(RequestType::kStopService) {
     rq_.add_buf_data(std::to_string(qID));
   }
+  ~ServerStopRequest() = default;
   Status PostReply() override;
 };
 
