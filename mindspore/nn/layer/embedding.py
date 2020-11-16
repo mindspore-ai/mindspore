@@ -66,7 +66,8 @@ class Embedding(Cell):
         >>>
         >>> # Maps the input word IDs to word embedding.
         >>> output = net(input_data)
-        >>> output.shape
+        >>> result = output.shape
+        >>> print(result)
         (8, 128, 768)
     """
 

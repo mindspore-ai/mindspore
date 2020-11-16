@@ -76,7 +76,8 @@ class Dropout(Cell):
         >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
         >>> net = nn.Dropout(keep_prob=0.8)
         >>> net.set_train()
-        >>> net(x)
+        >>> output = net(x)
+        >>> print(output)
         [[[0., 1.25, 0.],
           [1.25, 1.25, 1.25]],
          [[1.25, 1.25, 1.25],
@@ -141,7 +142,8 @@ class Flatten(Cell):
     Examples:
         >>> input = Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
         >>> net = nn.Flatten()
-        >>> net(input)
+        >>> output = net(input)
+        >>> print(output)
         [[1.2 1.2 2.1 2.1]
          [2.2 2.2 3.2 3.2]]
     """
@@ -196,7 +198,8 @@ class Dense(Cell):
     Examples:
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> net = nn.Dense(3, 4)
-        >>> net(input)
+        >>> output = net(input)
+        >>> print(output)
         [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
          [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
     """
@@ -317,7 +320,8 @@ class ClipByNorm(Cell):
         >>> net = nn.ClipByNorm()
         >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
         >>> clip_norm = Tensor(np.array([100]).astype(np.float32))
-        >>> net(input, clip_norm).shape
+        >>> result = net(input, clip_norm).shape
+        >>> print(result)
         (4, 16)
 
     """
@@ -386,7 +390,8 @@ class Norm(Cell):
     Examples:
         >>> net = nn.Norm(axis=0)
         >>> input = Tensor(np.random.randint(0, 10, [2, 4]), mindspore.float32)
-        >>> net(input)
+        >>> output = net(input)
+        >>> print(output)
         [2.236068 9.848858 4. 5.656854]
     """
 
@@ -442,7 +447,8 @@ class OneHot(Cell):
     Examples:
         >>> net = nn.OneHot(depth=4, axis=1)
         >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
-        >>> net(indices)
+        >>> output = net(indices)
+        >>> print(output)
         [[[0. 0.]
           [1. 0.]
           [0. 0.]
@@ -501,11 +507,11 @@ class Pad(Cell):
         >>> import mindspore.nn as nn
         >>> import numpy as np
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.pad = nn.Pad(paddings=((1,1),(2,2)), mode="CONSTANT")
-        >>>     def construct(self, x):
-        >>>         return self.pad(x)
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.pad = nn.Pad(paddings=((1,1),(2,2)), mode="CONSTANT")
+        ...     def construct(self, x):
+        ...         return self.pad(x)
         >>> x = np.random.random(size=(2, 3)).astype(np.float32)
         >>> pad = Net()
         >>> ms_output = pad(Tensor(x))
@@ -567,9 +573,10 @@ class Unfold(Cell):
     Examples:
         >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 2, 2, 1], rates=[1, 2, 2, 1])
         >>> image = Tensor(np.ones([2, 3, 6, 6]), dtype=mstype.float16)
-        >>> net(image)
-        Tensor ([[[[1, 1] [1, 1]] [[1, 1], [1, 1]] [[1, 1] [1, 1]], [[1, 1] [1, 1]], [[1, 1] [1, 1]],
-                [[1, 1], [1, 1]]]], shape=(2, 12, 2, 2), dtype=mstype.float16)
+        >>> output = net(image)
+        >>> print(output)
+        [[[[1, 1] [1, 1]] [[1, 1], [1, 1]] [[1, 1] [1, 1]], [[1, 1] [1, 1]], [[1, 1] [1, 1]],
+                [[1, 1], [1, 1]]]]
     """
 
     def __init__(self, ksizes, strides, rates, padding="valid"):
@@ -621,6 +628,7 @@ class MatrixDiag(Cell):
         >>> x = Tensor(np.array([1, -1]), mstype.float32)
         >>> matrix_diag = nn.MatrixDiag()
         >>> result = matrix_diag(x)
+        >>> print(result)
         [[1.   0.]
          [0.  -1.]]
     """
@@ -652,6 +660,7 @@ class MatrixDiagPart(Cell):
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> matrix_diag_part = nn.MatrixDiagPart()
         >>> result = matrix_diag_part(x)
+        >>> print(result)
         [[-1., 1.], [-1., 1.], [-1., 1.]]
     """
     def __init__(self):
@@ -684,6 +693,7 @@ class MatrixSetDiag(Cell):
         >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
         >>> matrix_set_diag = nn.MatrixSetDiag()
         >>> result = matrix_set_diag(x, diagonal)
+        >>> print(result)
         [[[-1, 0], [0, 2]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
     """
     def __init__(self):

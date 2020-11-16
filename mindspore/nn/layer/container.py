@@ -87,7 +87,8 @@ class SequentialCell(Cell):
         >>> seq = nn.SequentialCell([conv, bn, relu])
         >>>
         >>> x = Tensor(np.random.random((1, 3, 4, 4)), dtype=mindspore.float32)
-        >>> seq(x)
+        >>> output = seq(x)
+        >>> print(output)
         [[[[0.02531557 0.        ]
            [0.04933941 0.04880078]]
           [[0.         0.        ]
@@ -155,7 +156,8 @@ class SequentialCell(Cell):
             >>> seq = nn.SequentialCell([conv, bn])
             >>> seq.append(relu)
             >>> x = Tensor(np.ones([1, 3, 4, 4]), dtype=mindspore.float32)
-            >>> seq(x)
+            >>> output = seq(x)
+            >>> print(output)
             [[[[0.12445523 0.12445523]
                [0.12445523 0.12445523]]
               [[0.         0.        ]

@@ -40,7 +40,8 @@ def piecewise_constant_lr(milestone, learning_rates):
     Examples:
         >>> milestone = [2, 5, 10]
         >>> learning_rates = [0.1, 0.05, 0.01]
-        >>> piecewise_constant_lr(milestone, learning_rates)
+        >>> output = piecewise_constant_lr(milestone, learning_rates)
+        >>> print(output)
         [0.1, 0.1, 0.05, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01]
     """
     validator.check_value_type('milestone', milestone, (tuple, list))
@@ -100,7 +101,8 @@ def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 1
-        >>> exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
+        >>> output = exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch)
+        >>> print(output)
         [0.1, 0.1, 0.09000000000000001, 0.09000000000000001, 0.08100000000000002, 0.08100000000000002]
     """
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
@@ -142,7 +144,8 @@ def natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, 
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 2
-        >>> natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+        >>> output = natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+        >>> print(output)
         [0.1, 0.1, 0.1, 0.1, 0.016529888822158657, 0.016529888822158657]
     """
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
@@ -185,7 +188,8 @@ def inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, deca
         >>> total_step = 6
         >>> step_per_epoch = 1
         >>> decay_epoch = 1
-        >>> inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+        >>> output = inverse_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, True)
+        >>> print(output)
         [0.1, 0.06666666666666667, 0.05, 0.04, 0.03333333333333333, 0.028571428571428574]
     """
     _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
@@ -227,7 +231,8 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> decay_epoch = 2
-        >>> cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
+        >>> output = cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
+        >>> print(output)
         [0.1, 0.1, 0.05500000000000001, 0.05500000000000001, 0.01, 0.01]
     """
     if not isinstance(min_lr, float):
@@ -295,7 +300,8 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         >>> step_per_epoch = 2
         >>> decay_epoch = 2
         >>> power = 0.5
-        >>> polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
+        >>> r = polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
+        >>> print(r)
         [0.1, 0.1, 0.07363961030678928, 0.07363961030678928, 0.01, 0.01]
     """
     validator.check_positive_float(learning_rate, 'learning_rate')
@@ -350,7 +356,8 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
         >>> total_step = 6
         >>> step_per_epoch = 2
         >>> warmup_epoch = 2
-        >>> warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
+        >>> output = warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch)
+        >>> print(output)
         [0.0, 0.0, 0.05, 0.05, 0.1, 0.1]
     """
     if not isinstance(learning_rate, float):
