@@ -2146,12 +2146,12 @@ class Slice(PrimitiveWithInfer):
     Slices a tensor in the specified shape.
 
     Inputs:
-        x (Tensor): The target tensor.
-        begin (tuple): The beginning of the slice. Only constant value is allowed.
-        size (tuple): The size of the slice. Only constant value is allowed.
+        - **x** (Tensor): The target tensor.
+        - **begin** (tuple): The beginning of the slice. Only constant value is allowed.
+        - **size** (tuple): The size of the slice. Only constant value is allowed.
 
-    Returns:
-        Tensor.
+    Outputs:
+        Tensor, the shape is : input `size`, the data type is the same as input `x`.
 
     Examples:
         >>> data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
