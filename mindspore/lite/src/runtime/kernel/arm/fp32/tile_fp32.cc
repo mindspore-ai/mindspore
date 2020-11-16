@@ -41,6 +41,7 @@ void TileCPUKernel::ComputeStrides(const int *shape, int *strides, int ndim) {
 
 int TileCPUKernel::ReSize() {
   auto tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
+  tile_parameter_->in_dim_ = in_tensors_[0]->shape().size();
   for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
     tile_parameter_->in_shape_[i] = in_tensors_[0]->shape()[i];
     tile_parameter_->out_shape_[i] = out_tensors_[0]->shape()[i];

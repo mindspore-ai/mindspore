@@ -31,10 +31,13 @@ OpParameter *PopulateTileParameter(const mindspore::lite::PrimitiveC *primitive)
   memset(tile_param, 0, sizeof(TileParameter));
   tile_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Tile *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  auto dims = param->GetDims();
   auto multiples = param->GetMultiples();
-  tile_param->in_dim_ = multiples.size();
-  for (int i = 0; i < tile_param->in_dim_; ++i) {
-    tile_param->multiples_[i] = multiples[i];
+  for (size_t i = 0; i < kDimension_4d; ++i) {
+    tile_param->multiples_[i] = 1;
+  }
+  for (size_t i = 0; i < dims.size(); ++i) {
+    tile_param->multiples_[dims[i]] = multiples[i];
   }
   return reinterpret_cast<OpParameter *>(tile_param);
 }
