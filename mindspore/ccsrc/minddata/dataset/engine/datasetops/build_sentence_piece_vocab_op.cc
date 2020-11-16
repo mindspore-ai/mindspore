@@ -45,8 +45,8 @@ Status BuildSentencePieceVocabOp::operator()() {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(sentence_queue_->Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->AllTasks()->CreateAsyncTask("sentenceTask", std::bind(&BuildSentencePieceVocabOp::SentenceThread, this)));
+  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
+    "sentenceTask", std::bind(&BuildSentencePieceVocabOp::SentenceThread, this), nullptr, id()));
   TaskManager::FindMe()->Post();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   TensorRow new_row;

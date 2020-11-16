@@ -23,6 +23,7 @@
 
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
+#include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/util/status.h"
 
 #ifdef ENABLE_TDTQUE
@@ -172,6 +173,11 @@ class DeviceQueueOp : public PipelineOp {
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *const modified) override;
+
+  // Record the pipeline profiling info
+  void ProfilingRecorder(bool isProfilingEnable, std::shared_ptr<DeviceQueueTracing> profiling_node, int64_t send_batch,
+                         int32_t tdt_cost, uint64_t *batch_start_time, uint64_t *end_time, int32_t connector_capacity,
+                         int32_t connector_size);
 
   // Op name getter
   // @return Name of the current Op

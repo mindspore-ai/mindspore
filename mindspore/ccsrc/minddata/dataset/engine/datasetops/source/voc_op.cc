@@ -366,6 +366,7 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
     } else {
       RETURN_STATUS_UNEXPECTED("Invalid data, bndbox dismatch in " + path);
     }
+
     if (label_name != "" && (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) && xmin > 0 &&
         ymin > 0 && xmax > xmin && ymax > ymin) {
       std::vector<float> bbox_list = {xmin, ymin, xmax - xmin, ymax - ymin, difficult, truncated};
@@ -389,7 +390,8 @@ Status VOCOp::LaunchThreadsAndInitOp() {
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&VOCOp::WorkerEntry, this, std::placeholders::_1)));
+  RETURN_IF_NOT_OK(
+    tree_->LaunchWorkers(num_workers_, std::bind(&VOCOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(this->ParseImageIds());
   if (task_type_ == TaskType::Detection) {

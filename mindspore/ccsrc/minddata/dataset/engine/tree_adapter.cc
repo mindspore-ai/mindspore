@@ -246,8 +246,10 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   RETURN_IF_NOT_OK(cur_db_->PopRow(row));
   // Record profiling info
   if (tracing_ != nullptr) {
+    uint64_t end_time = ProfilingTime::GetCurMilliSecond();
     cur_batch_num_++;
-    RETURN_IF_NOT_OK(tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_));
+    RETURN_IF_NOT_OK(
+      tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_, end_time));
   }
   return Status::OK();
 }

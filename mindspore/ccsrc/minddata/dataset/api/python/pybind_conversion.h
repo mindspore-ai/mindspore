@@ -17,11 +17,13 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_API_PYTHON_PYBIND_CONVERSION_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_API_PYTHON_PYBIND_CONVERSION_H_
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
@@ -52,6 +54,10 @@ std::set<std::string> toStringSet(const py::list list);
 std::map<std::string, int32_t> toStringMap(const py::dict dict);
 
 std::vector<std::string> toStringVector(const py::list list);
+
+std::vector<pid_t> toIntVector(const py::list input_list);
+
+std::unordered_map<int32_t, std::vector<pid_t>> toIntMap(const py::dict input_dict);
 
 std::pair<int64_t, int64_t> toIntPair(const py::tuple tuple);
 

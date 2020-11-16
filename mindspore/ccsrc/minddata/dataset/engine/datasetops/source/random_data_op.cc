@@ -197,7 +197,7 @@ Status RandomDataOp::operator()() {
 
   // RandomDataOp doesn't need the master thread to stay around.  Kick off the workers and then master exits.
   RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&RandomDataOp::WorkerEntry, this, std::placeholders::_1)));
+    tree_->LaunchWorkers(num_workers_, std::bind(&RandomDataOp::WorkerEntry, this, std::placeholders::_1), "", id()));
 
   // required task group setup after launching workers
   TaskManager::FindMe()->Post();

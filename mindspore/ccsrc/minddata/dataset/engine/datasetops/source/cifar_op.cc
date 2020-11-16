@@ -165,9 +165,10 @@ Status CifarOp::LaunchThreadsAndInitOp() {
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
+  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
+    "Get cifar data block", std::bind(&CifarOp::ReadCifarBlockDataAsync, this), nullptr, id()));
   RETURN_IF_NOT_OK(
-    tree_->AllTasks()->CreateAsyncTask("Get cifar data block", std::bind(&CifarOp::ReadCifarBlockDataAsync, this)));
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&CifarOp::WorkerEntry, this, std::placeholders::_1)));
+    tree_->LaunchWorkers(num_workers_, std::bind(&CifarOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   TaskManager::FindMe()->Post();
   // The order of the following 2 functions must not be changed!
   RETURN_IF_NOT_OK(ParseCifarData());  // Parse cifar data and get num rows, blocking

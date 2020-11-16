@@ -24,7 +24,7 @@ namespace mindspore {
 namespace dataset {
 
 Status DeviceQueueTracing::Record(const int32_t type, const int32_t extra_info, const int32_t batch_num,
-                                  const int32_t value) {
+                                  const int32_t value, const uint64_t time_stamp) {
   // Format: "type extra-info batch-num value"
   // type: 0: time,  1: connector size
   // extra-info: if type is 0 - 0: pipeline time, 1: push tdt time, 2: batch time
@@ -32,11 +32,12 @@ Status DeviceQueueTracing::Record(const int32_t type, const int32_t extra_info, 
   // batch-num: batch number
   // value: if type is 0 - value is time(ms)
   //        if type is 1 - value is connector size
+  // time-stamp: time stamp
   // Examples:
-  // 0 0 20 10 - The 20th batch took 10ms to get data from pipeline.
-  // 1 64 20 5 - Connector size is 5 when get the 20th batch.Connector capacity is 64.
+  // 0 0 20 10 xxx- The 20th batch took 10ms to get data from pipeline.
+  // 1 64 20 5 xxx- Connector size is 5 when get the 20th batch.Connector capacity is 64.
   std::string data = std::to_string(type) + " " + std::to_string(extra_info) + " " + std::to_string(batch_num) + " " +
-                     std::to_string(value);
+                     std::to_string(value) + " " + std::to_string(time_stamp);
   value_.emplace_back(data);
   return Status::OK();
 }

@@ -75,7 +75,8 @@ class TaskManager : public Service {
   // API
   // This takes the same parameter as Task constructor. Take a look
   // of the test-thread.cc for usage.
-  Status CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, TaskGroup *vg, Task **);
+  Status CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, TaskGroup *vg, Task **,
+                         int32_t operator_id = -1);
 
   // Same usage as boot thread group
   Status join_all();
@@ -100,7 +101,7 @@ class TaskManager : public Service {
 
   void ReturnFreeTask(Task *p) noexcept;
 
-  Status GetFreeTask(const std::string &my_name, const std::function<Status()> &f, Task **p);
+  Status GetFreeTask(const std::string &my_name, const std::function<Status()> &f, Task **p, int32_t operator_id = -1);
 
   Status WatchDog();
 
@@ -129,13 +130,16 @@ class TaskGroup : public Service {
   friend class Task;
   friend class TaskManager;
 
-  Status CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, Task **pTask = nullptr);
+  Status CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, Task **pTask = nullptr,
+                         int32_t operator_id = -1);
 
   void interrupt_all() noexcept;
 
   Status join_all(Task::WaitFlag wf = Task::WaitFlag::kBlocking);
 
   int size() const noexcept { return grp_list_.count; }
+
+  List<Task> GetTask() const noexcept { return grp_list_; }
 
   Status DoServiceStart() override { return Status::OK(); }
 

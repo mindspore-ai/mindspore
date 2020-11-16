@@ -65,7 +65,7 @@ Status CacheLookupOp::operator()() {
   RETURN_IF_NOT_OK(RegisterResources());
   // Kick off the workers
   RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&CacheLookupOp::WorkerEntry, this, std::placeholders::_1)));
+    tree_->LaunchWorkers(num_workers_, std::bind(&CacheLookupOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   // required task group sync after launching workers
   TaskManager::FindMe()->Post();
   // We have to wait until the leaf op has handshake with us.

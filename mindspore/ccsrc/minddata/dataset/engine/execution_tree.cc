@@ -208,7 +208,7 @@ Status ExecutionTree::Launch() {
     // the launching tree/user thread.  Do not exec any thread for an inlined op.
     itr->state_ = DatasetOp::OpState::kDeOpRunning;
     if (!itr->inlined()) {
-      RETURN_IF_NOT_OK(tg_->CreateAsyncTask(itr->NameWithID(), std::ref(*itr)));
+      RETURN_IF_NOT_OK(tg_->CreateAsyncTask(itr->NameWithID(), std::ref(*itr), nullptr, itr->id()));
       // Set the state of the Operator as running. This only matters in Leaf ops, CacheOp and TakeOp
     }
   }
@@ -237,7 +237,8 @@ ExecutionTree::Iterator::Iterator(const std::shared_ptr<DatasetOp> &root) : ind_
 
 // Given the number of workers, launches the worker entry function for each. Essentially a
 // wrapper for the TaskGroup handling that is stored inside the execution tree.
-Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name) {
+Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name,
+                                    int32_t operator_id) {
   int32_t num_cpu_threads = GlobalContext::Instance()->config_manager()->num_cpu_threads();
   // this performs check that num_workers is positive and not unreasonably large which could happen
   // for example, un-initialized variable. uint16 max is 65536 which is large enough to cover everything
@@ -249,7 +250,7 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
                     << std::to_string(num_cpu_threads) << ", the maximum number of threads on this CPU.";
   }
   for (int32_t i = 0; i < num_workers; ++i) {
-    RETURN_IF_NOT_OK(tg_->CreateAsyncTask(name, std::bind(func, i)));
+    RETURN_IF_NOT_OK(tg_->CreateAsyncTask(name, std::bind(func, i), nullptr, operator_id));
   }
   return Status::OK();
 }
