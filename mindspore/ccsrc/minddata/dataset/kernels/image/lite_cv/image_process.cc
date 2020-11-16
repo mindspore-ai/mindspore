@@ -547,10 +547,10 @@ template <typename T>
 static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, const int bottom, const int left,
                             const int right, const PaddBorderType pad_type, uint8_t fill_b_or_gray, uint8_t fill_g,
                             uint8_t fill_r) {
-  std::vector<uint8_t> row_buffer(dst.width_ * dst.channel_);
-  uint8_t *const_ptr = row_buffer.data();
-  int src_step = src.width_ * dst.channel_;
-  int dst_step = dst.width_ * dst.channel_;
+  std::vector<uint8_t> row_buffer(dst.width_ * dst.channel_ * dst.elem_size_);
+  T *const_ptr = reinterpret_cast<T *>(row_buffer.data());
+  int src_step = src.width_ * src.channel_ * src.elem_size_;
+  int dst_step = dst.width_ * dst.channel_ * dst.elem_size_;
   if (dst.channel_ == 1) {
     for (int i = 0; i < dst_step; i++) {
       const_ptr[i] = fill_b_or_gray;
@@ -569,10 +569,10 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
     memcpy(dst_ptr + i * dst_step, const_ptr, dst_step);
   }
 
-  int left_size = left * dst.channel_;
-  int right_size = right * dst.channel_;
+  int left_size = left * dst.channel_ * dst.elem_size_;
+  int right_size = right * dst.channel_ * dst.elem_size_;
   uint8_t *dst_raw_data = dst_ptr + top * dst_step + left_size;
-  for (int i = 0; i < src.width_; i++, dst_raw_data += dst_step, src_ptr += src_step) {
+  for (int i = 0; i < src.height_; i++, dst_raw_data += dst_step, src_ptr += src_step) {
     memcpy(dst_raw_data, src_ptr, src_step);
     memcpy(dst_raw_data - left_size, const_ptr, left_size);
     memcpy(dst_raw_data + src_step, const_ptr, right_size);
