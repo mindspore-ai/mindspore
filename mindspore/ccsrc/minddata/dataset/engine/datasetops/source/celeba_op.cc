@@ -505,8 +505,8 @@ Status CelebAOp::GetDatasetSize(int64_t *dataset_size) {
     num_rows = std::min(num_rows, partition_num);
   }
 
-  sample_size = sampler_->GetNumSamples();
-  *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
+  sample_size = sampler_->CalculateNumSamples(num_rows);
+  *dataset_size = sample_size;
   return Status::OK();
 }
 }  // namespace dataset

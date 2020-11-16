@@ -427,10 +427,15 @@ Status RandomDataOp::GetDatasetSize(int64_t *dataset_size) {
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t num_rows, sample_size = 0;
+  int64_t num_rows;
   num_rows = total_rows_ != 0 ? total_rows_ : data_schema_->num_rows();
-  if (sampler_ != nullptr) sample_size = sampler_->GetNumSamples();
-  *dataset_size = sample_size != 0 ? std::min(num_rows, sample_size) : num_rows;
+  if (sampler_ != nullptr) {
+    int64_t sample_size;
+    sample_size = sampler_->CalculateNumSamples(num_rows);
+    *dataset_size = sample_size;
+  } else {
+    *dataset_size = num_rows;
+  }
   dataset_size_ = *dataset_size;
   return Status::OK();
 }

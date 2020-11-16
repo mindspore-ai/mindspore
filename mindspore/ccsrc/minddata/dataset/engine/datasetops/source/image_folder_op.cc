@@ -475,8 +475,8 @@ Status ImageFolderOp::GetDatasetSize(int64_t *dataset_size) {
     // GetDatasetSize will not be impacted by class_index_
     RETURN_IF_NOT_OK(CountRowsAndClasses(folder_path_, extensions_, &num_rows, nullptr, {}));
   }
-  sample_size = sampler_->GetNumSamples();
-  *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
+  sample_size = sampler_->CalculateNumSamples(num_rows);
+  *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();
 }
