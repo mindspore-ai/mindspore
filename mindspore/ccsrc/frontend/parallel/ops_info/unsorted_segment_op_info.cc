@@ -277,20 +277,17 @@ std::shared_ptr<Strategys> UnsortedSegmentOpInfo::GenerateBatchStrategies() {
     MS_LOG(EXCEPTION) << name_ << ": inputs shape size must be " << UNSORTEDSEGMENTOP_INPUTS_SIZE << ", but is "
                       << inputs_shape_.size();
   }
-  CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   if (GetAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << "GetAttrs failed!";
   }
 
-  Dimensions strategy_a;
-  Dimensions strategy_b;
-  strategy_a.push_back(SizeToInt(dev_num));
+  Dimensions strategy_a, strategy_b;
+  strategy_a.push_back(stage_device_size_);
   for (size_t i = 1; i < inputs_shape_[0].size(); i++) {
     strategy_a.push_back(1);
   }
 
-  strategy_b.push_back(SizeToInt(dev_num));
+  strategy_b.push_back(stage_device_size_);
   for (size_t i = 1; i < inputs_shape_[1].size(); i++) {
     strategy_b.push_back(1);
   }

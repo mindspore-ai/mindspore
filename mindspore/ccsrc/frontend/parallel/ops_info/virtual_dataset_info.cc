@@ -66,13 +66,10 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
 Status VirtualDatasetInfo::InferDevMatrixShape() {
   Strategys stra = strategy_->GetInputDim();
   Dimensions strategy_first = stra.at(0);
-  int64_t stage = strategy_->GetInputStage();
-  CheckGlobalDeviceManager();
-  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(stage).size());
   int64_t batch_split_num = ((int64_t)(strategy_first.at(0)));
   dev_matrix_shape_.push_back(batch_split_num);
-  if (dev_num > batch_split_num) {
-    dev_matrix_shape_.push_back(dev_num / batch_split_num);
+  if (stage_device_size_ > batch_split_num) {
+    dev_matrix_shape_.push_back(stage_device_size_ / batch_split_num);
   }
 
   return SUCCESS;
@@ -156,11 +153,10 @@ Status VirtualDatasetInfo::GenerateStrategies(int64_t stage_id) {
     return FAILED;
   }
 
-  CheckGlobalDeviceManager();
   if (full_batch) {
     total_dev_num = 1;
   } else {
-    total_dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+    total_dev_num = stage_device_size_;
   }
   StrategyPtr sp;
   Strategys strategy;

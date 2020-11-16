@@ -268,9 +268,7 @@ Status OneHotInfo::GenerateStrategies(int64_t stage_id) {
 Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::shared_ptr<Strategys> OneHotInfo::GenerateBatchStrategies() {
-  CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
-  Dimensions strategy = {SizeToLong(dev_num), 1};
+  Dimensions strategy = {stage_device_size_, 1};
   Dimensions empty_strategy;
   Strategys strategy_v = {strategy, empty_strategy, empty_strategy};
   return std::make_shared<Strategys>(strategy_v);

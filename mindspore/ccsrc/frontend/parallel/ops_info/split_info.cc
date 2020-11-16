@@ -233,15 +233,13 @@ std::shared_ptr<Strategys> SplitInfo::GenerateBatchStrategies() {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
   }
-  CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   Dimensions input_strategy(inputs_shape_[0].size(), 1);
   // axis can't split
   if (inputs_shape_[0].size() > 1) {
     if (axis_ == 0) {
-      input_strategy[1] = dev_num;
+      input_strategy[1] = stage_device_size_;
     } else {
-      input_strategy[0] = dev_num;
+      input_strategy[0] = stage_device_size_;
     }
   }
   Strategys strategy_v = {input_strategy};

@@ -85,7 +85,7 @@ Status UniqueInfo::InferTensorInfo() {
 }
 
 Status UniqueInfo::InferDevMatrixShape() {
-  dev_matrix_shape_.push_back(dev_num_);
+  dev_matrix_shape_.push_back(stage_device_size_);
   return SUCCESS;
 }
 
@@ -110,9 +110,7 @@ Status UniqueInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
   }
-  int64_t stage = strategy->GetInputStage();
-  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(stage).size());
-  dev_num_ = dev_num;
+
   if (stras[0][0] != 1) {
     MS_LOG(ERROR) << "Currently, unique only support repeat calculate in all devices";
     return FAILED;

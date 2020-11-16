@@ -408,17 +408,14 @@ std::shared_ptr<Strategys> TensorDotInfo::GenerateBatchStrategies() {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
   }
-
-  CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   Dimensions input_a_strategy(inputs_shape_[0].size(), 1);
   Dimensions input_b_strategy(inputs_shape_[1].size(), 1);
 
-  input_a_strategy[0] = SizeToInt(dev_num);
+  input_a_strategy[0] = stage_device_size_;
 
   if (axes_type_ == INT_TYPE) {
     if (IntToSize(axes_int_) == inputs_shape_[0].size()) {
-      input_b_strategy[0] = SizeToInt(dev_num);  // find the relavent dimension for input_b
+      input_b_strategy[0] = stage_device_size_;  // find the relavent dimension for input_b
     }
   } else if (axes_type_ == TUPLE_TUPLE_TYPE) {
     // if the input_a's axes contain 0, the input_b has the relavent dimension with batch dimension
@@ -434,7 +431,7 @@ std::shared_ptr<Strategys> TensorDotInfo::GenerateBatchStrategies() {
 
     if (found) {
       // find the relavant
-      input_b_strategy[axes_tuple_tuple_[1][relavant_index]] = dev_num;
+      input_b_strategy[axes_tuple_tuple_[1][relavant_index]] = stage_device_size_;
     }
   } else {
     MS_LOG(EXCEPTION) << name_ << ": Now do not support TUPLE_TYPE";
