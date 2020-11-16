@@ -18,6 +18,7 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 import mindspore.nn as nn
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import operations as P
 
 
@@ -28,6 +29,18 @@ class Net(nn.Cell):
 
     def construct(self, x):
         return self.split(x)
+
+
+class NetDynamic(nn.Cell):
+    def __init__(self, axis=0, out_nums=1):
+        super(NetDynamic, self).__init__()
+        self.conv = inner.GpuConvertToDynamicShape()
+        self.split = P.Split(axis, out_nums)
+
+    def construct(self, x):
+        x_conv = self.conv(x)
+        x_split = self.split(x_conv)
+        return x_split
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -47,6 +60,9 @@ def test_split():
         assert (out.asnumpy() == x[i]).all()
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_split_4d():
     x_np = np.random.randn(2, 6, 4, 4).astype(np.float32)
     y = np.split(x_np, 3, axis=1)
@@ -56,3 +72,69 @@ def test_split_4d():
 
     for i, out in enumerate(outputs):
         assert (out.asnumpy() == y[i]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_dynamic():
+    x = np.array([[[1, -1, 1], [2, -2, 2]],
+                  [[3, -3, 3], [4, -4, 4]],
+                  [[5, -5, 5], [6, -6, 6]]]).astype(np.float32)
+
+    net = NetDynamic(0, 3)
+    x_split = net(Tensor(x))
+    for i, out in enumerate(x_split):
+        assert (out.asnumpy() == x[i]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_dynamic_axis1():
+    x = np.array([[[1, -1, 1], [2, -2, 2]],
+                  [[3, -3, 3], [4, -4, 4]],
+                  [[5, -5, 5], [6, -6, 6]]]).astype(np.int32)
+    y = np.split(x, 2, axis=1)
+
+    net = NetDynamic(1, 2)
+    x_split = net(Tensor(x))
+    for i, out in enumerate(x_split):
+        assert (out.asnumpy() == y[i]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_dynamic_axis2():
+    x = np.array([[[1, -1, 1], [2, -2, 2]],
+                  [[3, -3, 3], [4, -4, 4]],
+                  [[5, -5, 5], [6, -6, 6]]]).astype(np.int32)
+    y = np.split(x, 3, axis=2)
+
+    net = NetDynamic(2, 3)
+    x_split = net(Tensor(x))
+    for i, out in enumerate(x_split):
+        assert (out.asnumpy() == y[i]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_invalid_input():
+    with pytest.raises(TypeError):
+        _ = Net(0.1, 3)
+
+    with pytest.raises(TypeError):
+        _ = Net(0, 3.0)
+
+    with pytest.raises(ValueError):
+        _ = Net(0, -3)
+
+    x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.int32)
+    split_net = Net(2, 2)
+    with pytest.raises(ValueError):
+        _ = split_net(Tensor(x))
+
+    with pytest.raises(TypeError):
+        _ = split_net(x)

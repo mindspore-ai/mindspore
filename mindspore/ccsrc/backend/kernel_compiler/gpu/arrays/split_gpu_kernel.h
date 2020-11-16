@@ -132,10 +132,6 @@ class SplitGpuFwdKernel : public GpuKernel {
       MS_LOG(ERROR) << "Attr output_num " << output_num_ << "must less than" << input_shape[axis_];
       return false;
     }
-    if (input_shape[axis_] % output_num_ != 0) {
-      MS_LOG(ERROR) << "Attr output_num " << output_num_ << "must be divided by" << input_shape[axis_];
-      return false;
-    }
     if (output_num_ != output_num) {
       MS_LOG(ERROR) << "Output num is " << output_num << ", but need " << output_num_;
       return false;
