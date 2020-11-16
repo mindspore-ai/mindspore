@@ -55,9 +55,10 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   int CompileTrainGraph(lite::TrainModel *model) override;
 
   void *ExportToBuf(char *buf, size_t *len) const override;
+  int SaveToFile(const std::string &filename) const override;
 
-  void Train() override;
-  void Eval() override;
+  int Train() override;
+  int Eval() override;
 
   void BindThread(bool if_bind) override { return lite::LiteSession::BindThread(if_bind); }
   std::vector<tensor::MSTensor *> GetInputs() const override { return lite::LiteSession::GetInputs(); }
@@ -84,16 +85,19 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
 
  protected:
   void AllocWorkSpace();
-  bool IsLossKernel(const kernel::LiteKernel *kernel);
+  bool IsLossKernel(const kernel::LiteKernel *kernel) const;
+  bool IsOptimizer(kernel::LiteKernel *kernel) const;
+  virtual void MarkOptimizedKernels();
   virtual std::vector<CreatorOp> ReplaceOps();
   virtual void RestoreOps(const std::vector<CreatorOp> &restore);
   virtual void BuildInferenceKernelsMap();
   virtual void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
-
+  virtual void CompileTrainKernels();
   TrainModel *model_ = nullptr;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;
   std::vector<kernel::LiteKernel *> inference_kernels_;
+  std::vector<kernel::LiteKernel *> train_kernels_;
 };
 }  // namespace lite
 }  // namespace mindspore

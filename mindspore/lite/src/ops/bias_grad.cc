@@ -45,7 +45,12 @@ int BiasGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &i
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    attr->axis = {0};  // GetValue<std::vector<int>>(prim.GetAttr("axis"));
+    if (prim.GetAttr("axis") == nullptr) {
+      MS_LOG(WARNING) << "get axis failed";
+      attr->axis = {0};
+    } else {
+      attr->axis = GetValue<std::vector<int>>(prim.GetAttr("axis"));
+    }
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {
       MS_LOG(ERROR) << "primitive value is nullptr";

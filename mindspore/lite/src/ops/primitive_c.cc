@@ -18,6 +18,7 @@
 #ifdef PRIMITIVE_WRITEABLE
 #include <memory>
 #include <map>
+
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/ops/space_to_batch.h"
 #include "src/ops/space_to_batch_nd.h"
@@ -167,12 +168,14 @@
 #include "src/ops/sgd.h"
 #include "src/ops/adam.h"
 #include "src/ops/assign.h"
+#include "src/ops/dropout_grad.h"
+#include "src/ops/maximum_grad.h"
+#include "src/ops/minimum_grad.h"
 #include "src/ops/control_depend.h"
 #include "src/ops/assign_add.h"
 #include "src/ops/binary_cross_entropy.h"
 #include "src/ops/binary_cross_entropy_grad.h"
 #endif
-
 #endif
 namespace mindspore {
 namespace lite {
@@ -506,10 +509,12 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Maximum>(prim, inputs, quantType);
   } else if (op_type == "Split") {
     return NewPrimitiveC<Split>(prim, inputs, quantType);
-  } else if (op_type == "While") {
-    return NewPrimitiveC<While>(prim, inputs, quantType);
   } else if (op_type == "OneHot") {
     return NewPrimitiveC<OneHot>(prim, inputs, quantType);
+  } else if (op_type == "Dropout") {
+    return NewPrimitiveC<Dropout>(prim, inputs, quantType);
+  } else if (op_type == "While") {
+    return NewPrimitiveC<While>(prim, inputs, quantType);
   } else if (op_type == "GatherV2") {
     return NewPrimitiveC<Gather>(prim, inputs, quantType);
   } else if (op_type == "OnesLike") {
@@ -537,7 +542,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
   } else if ((op_type == "ReluGrad" || op_type == "ReLU6Grad" || op_type == "SigmoidGrad" ||
               op_type == "HSigmoidGrad" || op_type == "HSwishGrad")) {
     return NewPrimitiveC<ActivationGrad>(prim, inputs, quantType);
-  } else if ((op_type == "MaxPoolGrad") || (op_type == "MeanPoolGrad")) {
+  } else if ((op_type == "MaxPoolGrad") || (op_type == "MeanPoolGrad") || (op_type == "AvgPoolGradGpu")) {
     return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
   } else if (op_type == "Conv2DBackpropFilter") {
     return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);
@@ -559,6 +564,12 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Adam>(prim, inputs, quantType);
   } else if (op_type == "Assign") {
     return NewPrimitiveC<Assign>(prim, inputs, quantType);
+  } else if (op_type == "DropoutGrad") {
+    return NewPrimitiveC<DropoutGrad>(prim, inputs, quantType);
+  } else if (op_type == "MaximumGrad") {
+    return NewPrimitiveC<MaximumGrad>(prim, inputs, quantType);
+  } else if (op_type == "MinimumGrad") {
+    return NewPrimitiveC<MinimumGrad>(prim, inputs, quantType);
   } else if (op_type == "AssignAdd") {
     return NewPrimitiveC<AssignAdd>(prim, inputs, quantType);
   } else if (op_type == "BinaryCrossEntropy") {
@@ -884,7 +895,12 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new BinaryCrossEntropyGrad(primitive);
     case schema::PrimitiveType_BinaryCrossEntropy:
       return new BinaryCrossEntropy(primitive);
-
+    case schema::PrimitiveType_DropoutGrad:
+      return new DropoutGrad(primitive);
+    case schema::PrimitiveType_MaximumGrad:
+      return new MaximumGrad(primitive);
+    case schema::PrimitiveType_MinimumGrad:
+      return new MinimumGrad(primitive);
 #endif
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);
@@ -892,6 +908,7 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
   }
   return nullptr;
 }
+
 #else
 void PrimitiveC::SetQuantType(schema::QuantType quant_type) { this->quant_type_ = quant_type; }
 schema::QuantType PrimitiveC::GetQuantType() const { return quant_type_; }

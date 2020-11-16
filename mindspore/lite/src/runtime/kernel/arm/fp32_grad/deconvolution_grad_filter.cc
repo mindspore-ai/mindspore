@@ -50,10 +50,14 @@ int DeConvolutionGradFilterCPUKernel::Init() {
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
-  int ws_size = conv_param->input_h_ * conv_param->input_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ *
-                conv_param->output_channel_ / conv_param->group_;
+  ws_size = chunk * conv_param->input_w_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->output_channel_ /
+            conv_param->group_;
 
-  SetWorkspaceSize(ws_size * sizeof(float));
+  int m = conv_param->input_channel_ / conv_param->group_;
+  int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->output_channel_ / conv_param->group_;
+  size_t mat_alloc = MatSizeTotal(n, m, chunk * conv_param->input_w_, conv_param->input_channel_);
+
+  SetWorkspaceSize((ws_size + mat_alloc) * sizeof(float));
 
   return RET_OK;
 }
@@ -82,21 +86,25 @@ int DeConvolutionGradFilterCPUKernel::Execute(int task_id) {
   int out_h = conv_param->output_h_;
   int out_w = conv_param->output_w_;
 
-  int m = in_ch / groups;
-  int n = k_h * k_w * out_ch / groups;
-  int k = in_h * in_w;
+  const int m = in_ch / groups;
+  const int n = k_h * k_w * out_ch / groups;
 
   float *workspace = reinterpret_cast<float *>(GetWorkspace());
+  float *mat_workspace = workspace + ws_size;
   // zero out pointer
   memset(dw_addr, 0, out_dw->Size());
   for (i = 0; i < batch; ++i) {
     for (j = 0; j < groups; ++j) {
-      float *mat_a = x_addr + (i * (in_ch * in_h * in_w) + j * (in_ch / groups));
-      float *mat_b = workspace;
-      float *mat_c = dw_addr + j * m;
-      float *im = dy_addr + (i * (out_h * out_w * out_ch) + j * (out_ch / groups));
-      im2row_hwc(im, mat_b, conv_param, true);
-      gemm(0, 0, n, m, k, 1, mat_b, k, mat_a, in_ch, 1, mat_c, in_ch);
+      for (int ci = 0; ci < in_h; ci += chunk) {
+        int real_chunk = MSMIN(in_h - ci, chunk);
+        float *mat_a = x_addr + (i * (in_ch * in_h * in_w) + j * (in_ch / groups)) + ci * in_w * in_ch;
+        float *mat_b = workspace;
+        float *mat_c = dw_addr + j * m;
+        float *im = dy_addr + (i * (out_h * out_w * out_ch) + j * (out_ch / groups));
+        rolling_im2row_hwc(im, mat_b, conv_param, real_chunk, ci);
+        GemmMatmul(0, 0, n, m, real_chunk * in_w, 1, mat_b, real_chunk * in_w, mat_a, in_ch, 1, mat_c, in_ch,
+                   mat_workspace);
+      }
     }
   }
   return RET_OK;

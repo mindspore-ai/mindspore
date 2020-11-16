@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_SUB_H_
-#define LITE_MINDSPORE_LITE_C_OPS_SUB_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_SUB_H_
+#define MINDSPORE_LITE_SRC_OPS_SUB_H_
 
 #include <vector>
 #include <set>
@@ -34,7 +34,6 @@ class Sub : public Arithmetic {
   explicit Sub(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   void SetActivationType(int activation_type);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
@@ -43,4 +42,4 @@ class Sub : public Arithmetic {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_SUB_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_SUB_H_

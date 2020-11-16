@@ -31,17 +31,21 @@ class TestSoftmaxCrossEntropyFp32 : public mindspore::CommonTest {
 TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   // prepare stage
   auto sce_param = reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
+  ASSERT_NE(sce_param, nullptr);
   size_t input_size;
 
   std::string input_path = "./test_data/operators/sce_fp32_1_y_6_4.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_y({6, 4});
   lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.set_data(input_data);
 
   std::string label_path = "./test_data/operators/sce_fp32_1_l_6.bin";
   auto ll_labels = reinterpret_cast<int64_t *>(mindspore::lite::ReadFile(label_path.c_str(), &input_size));
+  ASSERT_NE(ll_labels, nullptr);
   auto labels = new float[6 * 4];
+  ASSERT_NE(labels, nullptr);
   std::fill(labels, labels + 6 * 4, 0.f);
   for (int i = 0; i < 6; i++) labels[i * 4 + ll_labels[i]] = 1.0;
 
@@ -52,10 +56,12 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   std::vector<lite::Tensor *> inputs = {&y_tensor, &l_tensor};
 
   auto loss = new float[1];
+  ASSERT_NE(loss, nullptr);
   std::vector<int> dim_dw({1});
   lite::Tensor loss_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   loss_tensor.set_data(loss);
   auto grad = new float[24];
+  ASSERT_NE(grad, nullptr);
   lite::Tensor grad_tensor(TypeId::kNumberTypeFloat32, dim_y);
   grad_tensor.set_data(grad);
   std::vector<lite::Tensor *> outputs = {&loss_tensor, &grad_tensor};
@@ -66,7 +72,9 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_SoftmaxCrossEntropy};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(sce_param), &context, desc, nullptr);
+  ASSERT_NE(kernel_obj, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel_obj->GetWorkspaceSize());
   kernel_obj->Run();
 
@@ -78,16 +86,20 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   std::string output_path = "./test_data/operators/sce_fp32_1_loss_1.bin";
   CompareOutput(loss, 1, output_path);
 
-  ((mindspore::kernel::SparseSoftmaxCrossEntropyWithLogitsCPUKernel *)kernel_obj)->train();
+  ((mindspore::kernel::SparseSoftmaxCrossEntropyWithLogitsCPUKernel *)kernel_obj)->Train();
   kernel_obj->Run();
-
+  // normalize by batch size the result
+  for (int i = 0; i < 24; i++) {
+    grad[i] /= 6;
+  }
   printf("==================output data=================\n");
   for (int i = 0; i < 12; i++) {
     std::cout << grad[i] << " ,";
   }
   std::cout << std::endl;
   std::string grad_path = "./test_data/operators/sce_fp32_1_dy_6_4.bin";
-  CompareOutput(grad, 24, grad_path);
+  auto res = CompareRelativeOutput(grad, grad_path);
+  EXPECT_EQ(res, 0);
 
   delete[] ll_labels;
   delete[] labels;

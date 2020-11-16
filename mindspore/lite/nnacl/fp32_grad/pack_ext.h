@@ -17,14 +17,18 @@
 #ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_PACK_EXT_H_
 #define MINDSPORE_LITE_NNACL_FP32_GRAD_PACK_EXT_H_
 
+#include <stddef.h>
 #include "nnacl/conv_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void im2col_hwc(const float *in_data, float *data_col, ConvParameter *conv_param);
-void im2row_hwc(const float *in_data, float *data_row, ConvParameter *conv_param, bool transpose);
-void col2im_hwc(const float *data_col, float *data_im, ConvParameter *conv_param);
+
+void RollingIm2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param, float *packed_input,
+                               int real_cal_num, int block_index);
+void rolling_im2col_hwc(const float *in_data, float *data_col, const ConvParameter *conv_param, int rows, int start);
+void rolling_im2row_hwc(const float *in_data, float *data_row, const ConvParameter *conv_param, int rows, int start);
+void rolling_col2im_hwc(const float *data_col, float *data_im, const ConvParameter *conv_param, int rows, int start);
 #ifdef __cplusplus
 }
 #endif

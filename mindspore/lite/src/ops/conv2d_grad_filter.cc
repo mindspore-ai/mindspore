@@ -38,6 +38,7 @@ int Conv2DGradFilter::GetPadRight() const { return this->primitive_->value.AsCon
 int Conv2DGradFilter::GetDilateW() const { return this->primitive_->value.AsConv2DGradFilter()->dilateW; }
 int Conv2DGradFilter::GetDilateH() const { return this->primitive_->value.AsConv2DGradFilter()->dilateH; }
 bool Conv2DGradFilter::GetHasBias() const { return this->primitive_->value.AsConv2DGradFilter()->hasBias; }
+
 int Conv2DGradFilter::GetActivationType() const { return this->primitive_->value.AsConv2DGradFilter()->activationType; }
 
 void Conv2DGradFilter::SetFormat(int format) {
@@ -66,6 +67,9 @@ void Conv2DGradFilter::SetPadRight(int pad_right) {
 void Conv2DGradFilter::SetDilateW(int dilate_w) { this->primitive_->value.AsConv2DGradFilter()->dilateW = dilate_w; }
 void Conv2DGradFilter::SetDilateH(int dilate_h) { this->primitive_->value.AsConv2DGradFilter()->dilateH = dilate_h; }
 void Conv2DGradFilter::SetHasBias(bool has_bias) { this->primitive_->value.AsConv2DGradFilter()->hasBias = has_bias; }
+std::vector<int> Conv2DGradFilter::GetFilterShape() const {
+  return this->primitive_->value.AsConv2DGradFilter()->filter_shape;
+}
 void Conv2DGradFilter::SetActivationType(int activation_type) {
   this->primitive_->value.AsConv2DGradFilter()->activationType = (schema::ActivationType)activation_type;
 }
@@ -134,6 +138,28 @@ int Conv2DGradFilter::UnPackAttr(const Primitive &prim, const std::vector<AnfNod
       attr->activationType = schema::ActivationType_NO_ACTIVATION;
     }
 
+    if (inputs.size() >= kAnfPopulaterThree) {
+      auto filter_shape = inputs[kAnfPopulaterTwo];
+      MS_ASSERT(filter_shape != nullptr);
+      if (filter_shape->isa<ValueNode>()) {
+        auto valueNode = filter_shape->cast<ValueNodePtr>();
+        MS_ASSERT(valueNode != nullptr);
+        auto value = valueNode->value();
+        MS_ASSERT(value != nullptr);
+        if (value->isa<ValueTuple>()) {
+          auto valTuplPtr = dyn_cast<ValueTuple>(value);
+          MS_ASSERT(valTuplPtr != nullptr);
+          const int nchw2nhwc[] = {0, 3, 1, 2};
+          attr->filter_shape.resize(valTuplPtr->size());
+          for (size_t i = 0; i < valTuplPtr->size(); i++) {
+            auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+            MS_ASSERT(elem != nullptr);
+            attr->filter_shape[nchw2nhwc[i]] = elem->value();
+          }
+        }
+      }
+    }
+
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {
       MS_LOG(ERROR) << "primitive value is nullptr";
@@ -151,10 +177,16 @@ int Conv2DGradFilter::UnPackToFlatBuilder(const schema::Primitive *primitive, fl
     MS_LOG(ERROR) << "value_as_Conv2DGradFilter return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateConv2DGradFilter(
+  std::vector<int32_t> filter_shape;
+  if (attr->filter_shape() != nullptr) {
+    for (int i = 0; i < static_cast<int>(attr->filter_shape()->size()); i++) {
+      filter_shape.push_back(attr->filter_shape()->data()[i]);
+    }
+  }
+  auto val_offset = schema::CreateConv2DGradFilterDirect(
     *fbb, attr->format(), attr->group(), attr->channelIn(), attr->channelOut(), attr->kernelW(), attr->kernelH(),
     attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(), attr->padLeft(),
-    attr->padRight(), attr->dilateW(), attr->dilateH(), attr->hasBias(), attr->activationType());
+    attr->padRight(), attr->dilateW(), attr->dilateH(), attr->hasBias(), &filter_shape, attr->activationType());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Conv2DGradFilter, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
@@ -175,6 +207,10 @@ int Conv2DGradFilter::GetPadRight() const { return this->primitive_->value_as_Co
 int Conv2DGradFilter::GetDilateW() const { return this->primitive_->value_as_Conv2DGradFilter()->dilateW(); }
 int Conv2DGradFilter::GetDilateH() const { return this->primitive_->value_as_Conv2DGradFilter()->dilateH(); }
 bool Conv2DGradFilter::GetHasBias() const { return this->primitive_->value_as_Conv2DGradFilter()->hasBias(); }
+std::vector<int> Conv2DGradFilter::GetFilterShape() const {
+  auto fb_vector = this->primitive_->value_as_Conv2DGradFilter()->filter_shape();
+  return std::vector<int>(fb_vector->begin(), fb_vector->end());
+}
 int Conv2DGradFilter::GetActivationType() const {
   return this->primitive_->value_as_Conv2DGradFilter()->activationType();
 }
@@ -186,41 +222,22 @@ Registry conv2DGradFilterRegistry(schema::PrimitiveType_Conv2DGradFilter, Conv2D
 #endif
 
 int Conv2DGradFilter::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
-  if (3 != inputs.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad Filter should have 3 inputs";
+  if (2 != inputs.size()) {
+    MS_LOG(ERROR) << "Conv2d Grad Filter should have 2 inputs, but it got " << inputs.size();
     return RET_ERROR;
   }
   if (1 != outputs.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad Filter should have one output";
+    MS_LOG(ERROR) << "Conv2d Grad Filter should have one output but it got " << outputs.size();
     return RET_ERROR;
   }
 
   auto *in0 = inputs.at(0);
-  auto *in = inputs.at(2);
   MS_ASSERT(in0 != nullptr);
-  MS_ASSERT(in != nullptr);
-
-  std::vector<int> output_shape;
-  int *out_shape = reinterpret_cast<int *>(in->MutableData());
-  int new_size = in->ElementsNum();
-  if (in0->GetFormat() == in->GetFormat()) {
-    for (int i = 0; i < new_size; i++) output_shape.push_back(out_shape[i]);
-  } else {
-    if ((in0->GetFormat() == schema::Format_NHWC) && (in->GetFormat() == schema::Format_NCHW)) {
-      output_shape.push_back(out_shape[0]);
-      output_shape.push_back(out_shape[2]);
-      output_shape.push_back(out_shape[3]);
-      output_shape.push_back(out_shape[1]);
-    } else {
-      MS_LOG(ERROR) << "Shape covnert is not supported";
-      return RET_ERROR;
-    }
-  }
 
   auto *out = outputs.at(0);
   MS_ASSERT(out != nullptr);
 
-  out->set_shape(output_shape);
+  out->set_shape(GetFilterShape());
   out->set_data_type(in0->data_type());
   out->SetFormat(in0->GetFormat());
 

@@ -224,6 +224,7 @@ table Conv2DGradFilter {
     dilateW: int;
     dilateH: int;
     hasBias: bool = false;
+    filter_shape: [int];
     activationType: ActivationType = 0;
 }
 
@@ -244,6 +245,7 @@ table Conv2DGradInput {
     dilateW: int;
     dilateH: int;
     hasBias: bool = false;
+    input_shape: [int];
     activationType: ActivationType = 0;
 }
 
@@ -264,6 +266,7 @@ table GroupConv2DGradInput {
     dilateW: int;
     dilateH: int;
     hasBias: bool = false;
+    input_shape: [int];
     activationType: ActivationType = 0;
 }
 
@@ -478,13 +481,10 @@ table DeConv2DGradFilter {
 }
 
 table BNGrad {
-    eps : float;
+    eps: float;
     momentum: float;
 }
-table BNGradInput {
-    eps : float;
-    momentum: float;
-}
+
 table Scale {
     axis: int;
     activationType: ActivationType = 0;
@@ -1085,6 +1085,16 @@ table FftReal {
 }
 
 table FftImag {
+}
+
+table DropoutGrad {
+    ratio : float = 0.5;
+}
+
+table MaximumGrad {
+}
+
+table MinimumGrad {
 }
 
 table NonMaxSuppression {

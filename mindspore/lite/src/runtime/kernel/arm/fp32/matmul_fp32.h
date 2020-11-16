@@ -34,7 +34,7 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   int ReSize() override;
   int Run() override;
   int RunImpl(int task_id);
-  void eval() override;
+  int Eval() override;
 
  private:
   int MallocMatrixABuffer();

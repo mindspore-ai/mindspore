@@ -24,6 +24,8 @@
 
 using mindspore::schema::PrimitiveType_AddGrad;
 using mindspore::schema::PrimitiveType_DivGrad;
+using mindspore::schema::PrimitiveType_MaximumGrad;
+using mindspore::schema::PrimitiveType_MinimumGrad;
 using mindspore::schema::PrimitiveType_MulGrad;
 using mindspore::schema::PrimitiveType_SubGrad;
 
@@ -52,6 +54,12 @@ class ArithmeticGradCPUKernel : public LiteKernel {
       case PrimitiveType_DivGrad:
         arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradDiv;  // this will be adjusted in InferShape
         break;
+      case PrimitiveType_MaximumGrad:
+        arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMaximum;
+        break;
+      case PrimitiveType_MinimumGrad:
+        arithmetic_grad_ = &ArithmeticGradCPUKernel::ArithmeticGradMinimum;
+        break;
       default:
         MS_LOG(ERROR) << "Error Operator type " << parameter->type_;
         break;
@@ -79,6 +87,8 @@ class ArithmeticGradCPUKernel : public LiteKernel {
   void ArithmeticGradDiv(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
   void ArithmeticGradDiv1L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
   void ArithmeticGradDiv2L(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  void ArithmeticGradMaximum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
+  void ArithmeticGradMinimum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2, int dx2_size);
   ArithmeticParameter *arithmeticParameter_;
   ArithmeticGradOperation arithmetic_grad_;
   float *tile_data0;

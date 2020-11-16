@@ -29,11 +29,12 @@ typedef struct BNGradParameter {
 extern "C" {
 #endif
 
-void sumSpatialBatch(const float *in, int size, int ch, float *out);
-void backwardX(const float *in, const float *dout, const float *scale, const int size, int channels, float eps,
-               float *mean, float *invar, float *xhat_sum, float *dxhat_sum, float *out);
-void backwardScale(const float *x, const float *mean, const float *invar, const float *delta, int batch,
-                   int n, int size, float *scale_updates);
+void sumSpatialBatch(const float *in, size_t size, int ch, float *out);
+void backwardX(const float *in, const float *dout, const float *scale, const size_t size, int channels, float *mean,
+               float *invar, float *xhat_sum, float *dxhat_sum, float *out);
+void backwardScale(const float *x, const float *mean, const float *invar, const float *delta, int batch, int n,
+                   int size, float *scale_updates);
+void var2Invar(float *save_var, size_t size, float eps);
 
 #ifdef __cplusplus
 }

@@ -19,6 +19,7 @@
 #include "nnacl/fp32_grad/gemm.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
+#include "nnacl/pack.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::RET_ERROR;
@@ -26,8 +27,8 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ConvolutionTrainCPUKernel::Init() {
-  if (2 != in_tensors_.size()) {
-    MS_LOG(ERROR) << "Convolution should have two inputs";
+  if (2 > in_tensors_.size()) {
+    MS_LOG(ERROR) << "Convolution should have at least two inputs";
     return RET_ERROR;
   }
   if (1 != out_tensors_.size()) {
@@ -51,11 +52,11 @@ int ConvolutionTrainCPUKernel::Init() {
   conv_param_->kernel_w_ = input_weight->shape().at(kNHWC_W);
 
   conv_param_->group_ = (conv_param_->group_ == 0) ? conv_param_->input_channel_ : conv_param_->group_;
-
-  int ws_size = conv_param_->output_h_ * conv_param_->output_w_ * conv_param_->kernel_h_ * conv_param_->kernel_w_ *
-                conv_param_->input_channel_ / conv_param_->group_;
-
-  SetWorkspaceSize(ws_size * sizeof(float));
+  const int n = conv_param_->output_channel_ * conv_param_->group_;
+  const int k = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ / conv_param_->group_;
+  ws_size = chunk * k;
+  int mat_alloc = MatSizeTotal(chunk, n, k, 0);
+  SetWorkspaceSize((ws_size + mat_alloc) * sizeof(float));
   return RET_OK;
 }
 
@@ -71,36 +72,35 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
   auto y_addr = reinterpret_cast<float *>(out_y->MutableData());
   auto w_addr = reinterpret_cast<float *>(input_w->MutableData());
 
-  int i, j;
-  int nweights = input_w->ElementsNum();
-  int in_ch = conv_param_->input_channel_;
-  int in_h = conv_param_->input_h_;
-  int in_w = conv_param_->input_w_;
-  int k_h = conv_param_->kernel_h_;
-  int k_w = conv_param_->kernel_w_;
-  int batch = conv_param_->output_batch_;
-  int out_ch = conv_param_->output_channel_;  // out_y->shape()[3];
-  int groups = conv_param_->group_;
-  int out_h = conv_param_->output_h_;
-  int out_w = conv_param_->output_w_;
-  int m = out_h * out_w;
-  int n = out_ch / groups;
-  int k = k_h * k_w * in_ch / groups;
+  const int nweights = input_w->ElementsNum();
+  const int in_ch = conv_param_->input_channel_;
+  const int in_h = conv_param_->input_h_;
+  const int in_w = conv_param_->input_w_;
+  const int k_h = conv_param_->kernel_h_;
+  const int k_w = conv_param_->kernel_w_;
+  const int batch = conv_param_->output_batch_;
+  const int out_ch = conv_param_->output_channel_;  // out_y->shape()[3];
+  const int groups = conv_param_->group_;
+  const int out_h = conv_param_->output_h_;
+  const int out_w = conv_param_->output_w_;
+  const int m = out_h * out_w;
+  const int n = out_ch / groups;
+  const int k = k_h * k_w * in_ch / groups;
   float *workspace = static_cast<float *>(GetWorkspace());
-
-  memset(y_addr, 0, out_y->Size());
-
-  for (i = 0; i < batch; ++i) {
-    for (j = 0; j < groups; ++j) {
-      float *mat_a = workspace;
-      float *mat_b = w_addr + j * nweights / groups;
-      float *mat_c = y_addr + (i * groups) * n * m + j * (out_ch / groups);
-      float *im = x_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups);
-      im2col_hwc(im, mat_a, conv_param_);
-      gemm(0, 1, m, n, k, 1, mat_a, k, mat_b, k, 1, mat_c, out_ch);
+  float *mat_workspace = workspace + ws_size;
+  for (int i = 0; i < batch; ++i) {
+    for (int j = 0; j < groups; ++j) {
+      for (int ci = 0; ci < m; ci += chunk) {
+        int real_chunk = MSMIN(m - ci, chunk);
+        float *mat_a = workspace;
+        const float *mat_b = w_addr + j * nweights / groups;
+        float *mat_c = y_addr + (i * groups) * n * m + j * (out_ch / groups) + ci * out_ch;
+        float *im = x_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups);
+        RollingIm2ColPackUnitFp32(im, conv_param_, mat_a, real_chunk, ci);
+        GemmMatmul(0, 1, real_chunk, n, k, 1, mat_a, k, mat_b, k, 0, mat_c, out_ch, mat_workspace);
+      }
     }
   }
-
   return RET_OK;
 }
 

@@ -42,13 +42,16 @@ int BNGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     return RET_ERROR;
   }
   if (this->primitive_->value.value == nullptr) {
-    auto attr = new (std::nothrow) schema::BNGradInputT();
+    auto attr = new (std::nothrow) schema::BNGradT();
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    attr->momentum = GetValue<float>(prim.GetAttr("momentum"));
-    // FusedBatchNormGrad dows not get this attribute
+    attr->momentum = 0.1f;
+    if (prim.GetAttr("momentum") != nullptr) {
+      attr->momentum = GetValue<float>(prim.GetAttr("momentum"));
+    }
+    attr->eps = 1e-5;
     if (prim.GetAttr("epsilon") != nullptr) {
       attr->eps = GetValue<float>(prim.GetAttr("epsilon"));
     }
@@ -75,6 +78,9 @@ int BNGrad::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
   return RET_OK;
 }
 
+PrimitiveC *BNGradCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<BNGrad>(primitive); }
+Registry BNGradRegistry(schema::PrimitiveType_BNGrad, BNGradCreator);
+
 float BNGrad::GetEps() const { return this->primitive_->value_as_BNGrad()->eps(); }
 float BNGrad::GetMomentum() const { return this->primitive_->value_as_BNGrad()->momentum(); }
 #endif
@@ -89,6 +95,10 @@ int BNGrad::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Ten
   }
   auto in = inputs[1];
   auto scale = inputs[2];
+
+  if (in->shape().size() != 4) {
+    MS_LOG(ERROR) << "Grad Fused batchnorm only support nhwc input!";
+  }
 
   outputs[0]->set_shape(in->shape());
   outputs[1]->set_shape(scale->shape());

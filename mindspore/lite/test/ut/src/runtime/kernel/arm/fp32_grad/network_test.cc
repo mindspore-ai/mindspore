@@ -90,6 +90,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive = std::make_unique<schema::PrimitiveT>();
     node->primitive->value.type = schema::PrimitiveType_Activation;
     auto primitive = new schema::ActivationT;
+    ASSERT_NE(primitive, nullptr);
     primitive->type = schema::ActivationType_RELU;
     node->primitive->value.value = primitive;
     node->name = "ReLU";
@@ -102,6 +103,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive = std::make_unique<schema::PrimitiveT>();
     node->primitive->value.type = schema::PrimitiveType_MatMul;
     auto primitive = new schema::MatMulT;
+    ASSERT_NE(primitive, nullptr);
     primitive->transposeA = false;
     primitive->transposeB = true;
     node->primitive->value.value = primitive;
@@ -115,6 +117,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive = std::make_unique<schema::PrimitiveT>();
     node->primitive->value.type = schema::PrimitiveType_BiasAdd;
     auto primitive = new schema::BiasAddT;
+    ASSERT_NE(primitive, nullptr);
     primitive->axis.push_back(0);
     node->primitive->value.value = primitive;
     node->name = "BiasAdd";
@@ -127,6 +130,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive = std::make_unique<schema::PrimitiveT>();
     node->primitive->value.type = schema::PrimitiveType_SoftmaxCrossEntropy;
     auto primitive = new schema::SoftmaxCrossEntropyT;
+    ASSERT_NE(primitive, nullptr);
     primitive->axis.push_back(0);
     node->primitive->value.value = primitive;
     node->name = "SoftmaxCrossEntropy";
@@ -139,6 +143,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive = std::make_unique<schema::PrimitiveT>();
     node->primitive->value.type = schema::PrimitiveType_BiasGrad;
     auto primitive = new schema::BiasGradT;
+    ASSERT_NE(primitive, nullptr);
     primitive->axis.push_back(0);
     node->primitive->value.value = primitive;
     node->name = "BiasGrad";
@@ -151,6 +156,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive = std::make_unique<schema::PrimitiveT>();
     node->primitive->value.type = schema::PrimitiveType_MatMul;
     auto primitive = new schema::MatMulT;
+    ASSERT_NE(primitive, nullptr);
     primitive->transposeA = true;
     primitive->transposeB = false;
     node->primitive->value.value = primitive;
@@ -164,6 +170,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive = std::make_unique<schema::PrimitiveT>();
     node->primitive->value.type = schema::PrimitiveType_ApplyMomentum;
     auto primitive = new schema::ApplyMomentumT;
+    ASSERT_NE(primitive, nullptr);
     node->primitive->value.value = primitive;
     node->name = "Momentum";
     meta_graph->nodes.emplace_back(std::move(node));
@@ -175,6 +182,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive = std::make_unique<schema::PrimitiveT>();
     node->primitive->value.type = schema::PrimitiveType_ApplyMomentum;
     auto primitive = new schema::ApplyMomentumT;
+    ASSERT_NE(primitive, nullptr);
     node->primitive->value.value = primitive;
     node->name = "Momentum";
     meta_graph->nodes.emplace_back(std::move(node));
@@ -450,9 +458,6 @@ TEST_F(NetworkTest, tuning_layer) {
   std::cout << std::endl;
   error = RelativeOutputError(outData, output_path);
   EXPECT_LT(error, 2e-3);
-
-  delete session;
-  MS_LOG(INFO) << "TuningLayer passed";
 }
 
 int32_t fileIterator(mindspore::session::TrainSession *session, const std::string &path,
@@ -516,6 +521,7 @@ TEST_F(NetworkTest, efficient_net) {
   auto model = lite::TrainModel::Import(buf, net_size);
   delete[] buf;
   auto context = new lite::Context;
+  ASSERT_NE(context, nullptr);
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
@@ -533,48 +539,6 @@ TEST_F(NetworkTest, efficient_net) {
   ASSERT_EQ(res, 0);
 }
 
-TEST_F(NetworkTest, lenetnet) {
-  char *buf = nullptr;
-  size_t net_size = 0;
-  std::string net = "./test_data/nets/lenet_train.ms";
-  ReadFile(net.c_str(), &net_size, &buf);
-  auto model = lite::TrainModel::Import(buf, net_size);
-  delete[] buf;
-  auto context = new lite::Context;
-  context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
-  context->thread_num_ = 1;
-
-  // check registration
-  mindspore::lite::KernelRegistry *reg = mindspore::lite::KernelRegistry::GetInstance();
-  mindspore::kernel::KernelKey desc1 = {mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32,
-                                        mindspore::schema::PrimitiveType_Conv2D};
-  mindspore::kernel::KernelKey desc2 = {mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32,
-                                        mindspore::schema::PrimitiveType_DepthwiseConv2D};
-  auto regb1 = reg->GetCreator(desc1);
-  auto regb2 = reg->GetCreator(desc2);
-  ASSERT_EQ(regb1 == mindspore::kernel::CpuConvTrainFp32KernelCreator, false);
-
-  auto session = session::TrainSession::CreateSession(context);
-  ASSERT_NE(session, nullptr);
-  auto ret = session->CompileTrainGraph(model);
-  ASSERT_EQ(lite::RET_OK, ret);
-
-  auto rega1 = reg->GetCreator(desc1);
-  auto rega2 = reg->GetCreator(desc2);
-  ASSERT_EQ(regb1, rega1);
-  ASSERT_EQ(regb2, rega2);
-  ASSERT_EQ(rega1 == mindspore::kernel::CpuConvTrainFp32KernelCreator, false);
-  // end of check registration
-
-  session->Eval();
-  std::string in = "./test_data/nets/x_lenet.bin";
-  std::string out = "./test_data/nets/y_lenet.bin";
-  auto res = runNet(session, in, out, "24");
-  delete session;
-  delete context;
-  ASSERT_EQ(res, 0);
-}
-
 TEST_F(NetworkTest, retina_net) {
   char *buf = nullptr;
   size_t net_size = 0;
@@ -585,6 +549,7 @@ TEST_F(NetworkTest, retina_net) {
   auto model = lite::Model::Import(buf, net_size);
   delete[] buf;
   auto context = new lite::Context;
+  ASSERT_NE(context, nullptr);
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
@@ -592,7 +557,7 @@ TEST_F(NetworkTest, retina_net) {
   auto session = session::LiteSession::CreateSession(context);
   ASSERT_NE(session, nullptr);
   auto ret = session->CompileGraph(model);
-  ASSERT_EQ(lite::RET_OK, ret);
+  EXPECT_EQ(lite::RET_OK, ret);
   // session->Eval();
 
   std::string in = "./test_data/nets/test1.hwc_normalized_f32";
@@ -619,8 +584,9 @@ TEST_F(NetworkTest, retina_net) {
     final_res |= res;
   }
 
-  ASSERT_EQ(final_res, 0);
+  EXPECT_EQ(final_res, 0);
 
+  delete model;
   delete session;
   delete context;
 }
@@ -635,6 +601,7 @@ TEST_F(NetworkTest, mobileface_net) {
   auto model = lite::Model::Import(buf, net_size);
   delete[] buf;
   auto context = new lite::Context;
+  ASSERT_NE(context, nullptr);
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 

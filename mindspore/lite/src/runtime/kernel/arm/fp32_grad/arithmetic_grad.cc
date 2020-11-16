@@ -177,6 +177,28 @@ void ArithmeticGradCPUKernel::ArithmeticGradDiv2L(float *dy, int dy_size, float 
   ElementDivNegSquare(tile_data2, x2_data, dx2, dy_size);
 }
 
+void ArithmeticGradCPUKernel::ArithmeticGradMaximum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
+                                                    int dx2_size) {
+  // For some reason, input order is x0, x1, dy
+  auto x1 = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  auto x2 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  dy = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
+
+  MaximumByAxes(x1, x2, dy, arithmeticParameter_->in_shape0_, arithmeticParameter_->in_shape1_,
+                arithmeticParameter_->out_shape_, dx1, dx2, arithmeticParameter_->ndim_);
+}
+
+void ArithmeticGradCPUKernel::ArithmeticGradMinimum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
+                                                    int dx2_size) {
+  // For some reason, input order is x0, x1, dy
+  auto x1 = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
+  auto x2 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
+  dy = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
+
+  MinimumByAxes(x1, x2, dy, arithmeticParameter_->out_shape_, arithmeticParameter_->in_shape0_,
+                arithmeticParameter_->in_shape1_, dx1, dx2, arithmeticParameter_->ndim_);
+}
+
 int ArithmeticGradCPUKernel::ReSize() { return RET_OK; }
 
 int ArithmeticGradCPUKernel::Execute(int task_id) {
@@ -240,4 +262,6 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MulGrad, CpuArithmeticGradFp3
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_AddGrad, CpuArithmeticGradFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SubGrad, CpuArithmeticGradFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DivGrad, CpuArithmeticGradFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MaximumGrad, CpuArithmeticGradFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MinimumGrad, CpuArithmeticGradFp32KernelCreator)
 }  // namespace mindspore::kernel

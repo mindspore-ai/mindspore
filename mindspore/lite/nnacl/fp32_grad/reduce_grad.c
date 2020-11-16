@@ -15,50 +15,7 @@
  */
 #include <string.h>
 #include "nnacl/fp32_grad/reduce_grad.h"
-
-static inline int NextIndex(const int num_dims, const int *dims, int *current) {
-  int carry = 1;
-  for (int idx = num_dims - 1; idx >= 0; --idx) {
-    int current_val = current[idx] + carry;
-    if (dims[idx] == current_val) {
-      current[idx] = 0;
-    } else {
-      current[idx] = current_val;
-      carry = 0;
-      break;
-    }
-  }
-  return (carry == 0);
-}
-
-static inline size_t GetInputOffset(const int num_dims, const int *dims, const int *iter) {
-  size_t offset = 0;
-  for (int idx = 0; idx < num_dims; ++idx) {
-    offset = offset * (size_t)(dims[idx]) + (size_t)(iter[idx]);
-  }
-
-  return offset;
-}
-
-static inline size_t GetOutputOffset(const int num_dims, const int *dims, const int *iter, const int num_axis,
-                                     const int *axes) {
-  size_t offset = 0;
-  for (int idx = 0; idx < num_dims; ++idx) {
-    // if we need to skip this axis
-    int is_axis = 0;
-    for (int axis_idx = 0; axis_idx < num_axis; ++axis_idx) {
-      if (idx == axes[axis_idx]) {
-        is_axis = 1;
-        break;
-      }
-    }
-
-    if (!is_axis) {
-      offset = offset * (size_t)(dims[idx]) + (size_t)(iter[idx]);
-    }
-  }
-  return offset;
-}
+#include "nnacl/fp32_grad/utils.h"
 
 void ReduceMeanByAxes(const float *input_data, int *input_iter, const int *input_dims, int input_num_dims,
                       const int *axes, int num_axes, float *output_data, const int *output_dims, int output_num_dims) {
@@ -111,7 +68,7 @@ void ReduceSumByAxes(const float *input, const int *input_dims, float *output, c
     return;
   }
 
-  for (int idx = 0; idx < num_outputs; ++idx) output[idx] = 0;  // zero output
+  memset(output, 0, num_outputs * sizeof(float));  // zero output
 
   int input_iter[8] = {0};
   int axes[5] = {0};

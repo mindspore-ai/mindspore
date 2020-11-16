@@ -270,11 +270,13 @@ if (BUILD_MINDDATA STREQUAL "full")
         ${CORE_DIR}/utils/ms_utils.cc
         )
 
+    find_package(Threads REQUIRED)
     target_link_libraries(minddata-lite
         securec
         jpeg-turbo
         jpeg
         mindspore::json
+        Threads::Threads
         )
 
     # ref: https://github.com/android/ndk/issues/1202

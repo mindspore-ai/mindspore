@@ -154,6 +154,25 @@ int Flags::Init(int argc, const char **argv) {
     std::cerr << "INPUT ILLEGAL: trainModel must be true|false ";
     return RET_INPUT_PARAM_INVALID;
   }
+
+  if (this->trainModel == true) {
+    if (this->fmk != FmkType_MS) {
+      std::cerr << "INPUT ILLEGAL: train model convertor supporting only MINDIR format";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if ((this->inputDataType != TypeId::kNumberTypeFloat32) && (this->inputDataType != TypeId::kTypeUnknown)) {
+      std::cerr << "INPUT ILLEGAL: train model convertor supporting only FP32 input tensors";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if ((this->outputDataType != TypeId::kNumberTypeFloat32) && (this->outputDataType != TypeId::kTypeUnknown)) {
+      std::cerr << "INPUT ILLEGAL: train model convertor supporting only FP32 output tensors";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if (this->quantType != QuantType_QUANT_NONE) {
+      std::cerr << "INPUT ILLEGAL: train model convertor is not supporting quantization";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
   return RET_OK;
 }
 }  // namespace converter

@@ -95,13 +95,23 @@ class LiteKernel {
 
   std::string name() const { return this->name_; }
 
-  virtual void train() { train_mode_ = true; }
+  virtual int Train() {
+    this->train_mode_ = true;
+    return mindspore::lite::RET_OK;
+  }
 
-  virtual bool is_train() { return train_mode_; }
+  virtual bool IsTrain() const { return this->train_mode_; }
 
-  virtual void eval() { train_mode_ = false; }
+  virtual int Eval() {
+    this->train_mode_ = false;
+    return mindspore::lite::RET_OK;
+  }
 
-  virtual bool is_eval() { return !train_mode_; }
+  virtual bool IsEval() const { return !this->train_mode_; }
+
+  virtual void SetTrainable(bool trainable = true) { this->trainable_ = trainable; }
+
+  virtual bool IsTrainable() const { return this->trainable_; }
 
   void set_name(const std::string &name) { this->name_ = name; }
 
@@ -179,6 +189,7 @@ class LiteKernel {
   std::vector<LiteKernel *> in_kernels_;
   std::vector<LiteKernel *> out_kernels_;
   bool train_mode_ = false;
+  bool trainable_ = false;  // paramaters of this Kernel are trained in Train Session
   bool is_model_output_ = false;
   size_t workspace_size_ = 0;
   static void *workspace_;

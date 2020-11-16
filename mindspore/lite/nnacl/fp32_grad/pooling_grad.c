@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <stdint.h>
+#include <string.h>
 #include <float.h>
 #include "nnacl/fp32_grad/pooling_grad.h"
 
@@ -31,8 +32,7 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter 
   int output_h = pooling_param->output_h_;
   int output_batch = pooling_param->output_batch_;
 
-  for (int i = 0; i < in_h * in_w * channel * output_batch; i++) output_ptr[i] = 0.0;
-
+  memset(output_ptr, 0, in_h * in_w * channel * output_batch * sizeof(float));
   float kk = (float)(win_h * win_w);
   for (uint16_t ib = 0; ib < output_batch; ib++) {
     float *out = &output_ptr[(ib * in_h * in_w * channel)];
@@ -77,8 +77,7 @@ void MaxPoolingGrad(const float *input_ptr, const float *dx_ptr, const float *dy
   int output_h = pooling_param->output_h_;
   int output_batch = pooling_param->output_batch_;
 
-  for (int i = 0; i < in_h * in_w * channel * output_batch; i++) output_ptr[i] = 0.0;
-
+  memset(output_ptr, 0, in_h * in_w * channel * output_batch * sizeof(float));
   for (uint16_t ib = 0; ib < output_batch; ib++) {
     float *out = &output_ptr[(ib * in_h * in_w * channel)];
     const float *inPtr = (const float *)(&input_ptr[(ib * in_h * in_w * channel)]);

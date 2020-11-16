@@ -49,7 +49,9 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   {
     Optimizer unusedOpRemoveOptimizer;
     unusedOpRemoveOptimizer.AddPass(new UnusedNodeRemovePass());
-    unusedOpRemoveOptimizer.AddPass(new DropoutNodeRemovePass());
+    if (ctx.trainModel == false) {
+      unusedOpRemoveOptimizer.AddPass(new DropoutNodeRemovePass());
+    }
     unusedOpRemoveOptimizer.AddPass(new IsolatedNodeRemovePass());
     status = unusedOpRemoveOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {

@@ -297,6 +297,7 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, s
 #endif
   } else {
     auto inputs = input_cnode->inputs();
+
     if (inputs.size() != 3) {
       MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << inputs.size();
       return RET_ERROR;
@@ -440,43 +441,8 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
     output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
     meta_graphT->allTensors.emplace_back(std::move(paramTensor));
   } else if (value->isa<mindspore::ValueSequeue>()) {
-#ifndef SUPPORT_TRAIN
     MS_LOG(DEBUG) << "Value type is ValueSequence.";
     return RET_OK;
-#else
-    auto valueAbstract = valueNode->abstract();
-    auto abstractSequnce = utils::cast<abstract::AbstractSequeuePtr>(valueAbstract);
-    if (abstractSequnce->isa<abstract::AbstractTuple>()) {
-      auto abstractTuple = utils::cast<abstract::AbstractTuplePtr>(valueAbstract);
-      auto x_shape_data = abstractTuple->elements();
-      std::vector<int32_t> shape;
-      for (std::size_t i = 0; i < abstractTuple->size(); ++i) {
-        auto value_track = x_shape_data[i]->GetValueTrack();
-        if (value_track == nullptr) {
-          ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
-          return RET_NULL_PTR;
-        }
-        if (value_track->isa<Int32Imm>()) {
-          shape.push_back((GetValue<int>(value_track)));
-        } else {
-          MS_LOG(ERROR) << "Value type is ValueSequence is not integer, it is " << value_track->ToString() << ".";
-        }
-      }
-      if (shape.size()) {
-        auto typePtr = abstractTuple->elements()[0]->GetTypeTrack();  // abstractTuple->GetTypeTrack();
-        paramTensor->dataType = typePtr->type_id();
-        paramTensor->dims = {static_cast<int32_t>(shape.size())};
-        paramTensor->nodeType = schema::NodeType_ValueNode;
-        paramTensor->data.resize(shape.size() * sizeof(int));
-        memcpy(paramTensor->data.data(), shape.data(), shape.size() * sizeof(int));
-        node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
-        output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
-        meta_graphT->allTensors.emplace_back(std::move(paramTensor));
-      }
-    } else {
-      MS_LOG(ERROR) << "Value type is ValueSequence not supported - " << valueAbstract->type_name() << ".";
-    }
-#endif
   } else if (value->isa<mindspore::BoolImm>()) {
     auto valueAbstract = valueNode->abstract();
     auto abstractScalar = utils::cast<abstract::AbstractScalarPtr>(valueAbstract);

@@ -60,6 +60,8 @@ void InitPoolingParamFP32(PoolingParameter *pooling_param) {
 TEST_F(TestPoolingGradFp32, AvgPoolingGradFp32) {
   // prepare stage
   auto pooling_param = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  ASSERT_NE(pooling_param, nullptr);
+
   InitPoolingParamFP32(pooling_param);
   pooling_param->output_channel_ = 3;
   pooling_param->pool_mode_ = PoolMode_AvgPool;
@@ -73,8 +75,10 @@ TEST_F(TestPoolingGradFp32, AvgPoolingGradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/pooling/avgpoolgradfp32_1_dy_1_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
 
   auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
   // warm up loop
   for (int i = 0; i < 3; i++) {
     AvgPoolingGrad(input_data, output_data, pooling_param, 1);
@@ -108,6 +112,8 @@ TEST_F(TestPoolingGradFp32, AvgPoolingGradFp32) {
 TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   // prepare stage
   auto pooling_param = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  ASSERT_NE(pooling_param, nullptr);
+
   InitPoolingParamFP32(pooling_param);
   pooling_param->output_channel_ = 3;
   pooling_param->pool_mode_ = PoolMode_AvgPool;
@@ -121,12 +127,14 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/pooling/avgpoolgradfp32_1_dy_1_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_dy({1, 28, 28, 3});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(input_data);
 
   std::string input1_path = "./test_data/pooling/avgpoolgradfp32_1_x_1_28_28_3.bin";
   auto input1_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1_path.c_str(), &input_size));
+  ASSERT_NE(input1_data, nullptr);
   std::vector<int> dim_x({1, 28, 28, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input1_data);
@@ -134,6 +142,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
 
   auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
   std::vector<int> dim_dx({1, 28, 28, 3});
   lite::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
   dx_tensor.set_data(output_data);
@@ -145,7 +154,9 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), &context, desc, nullptr);
+  ASSERT_NE(kernel_obj, nullptr);
 
   kernel_obj->Run();
 
@@ -172,8 +183,9 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
 TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   // prepare stage
   auto pooling_param = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
-  InitPoolingParamFP32(pooling_param);
+  ASSERT_NE(pooling_param, nullptr);
 
+  InitPoolingParamFP32(pooling_param);
   pooling_param->output_channel_ = 3;
   pooling_param->input_batch_ = 3;
   pooling_param->output_batch_ = 3;
@@ -185,12 +197,14 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   size_t input_size;
   std::string input_path = "./test_data/pooling/avgpoolgradfp32_1_dy_3_28_28_3.bin";
   auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input_path.c_str(), &input_size));
+  ASSERT_NE(input_data, nullptr);
   std::vector<int> dim_dy({3, 28, 28, 3});
   lite::Tensor dy_tensor(TypeId::kNumberTypeFloat32, dim_dy);
   dy_tensor.set_data(input_data);
 
   std::string input1_path = "./test_data/pooling/avgpoolgradfp32_1_x_3_28_28_3.bin";
   auto input1_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1_path.c_str(), &input_size));
+  ASSERT_NE(input1_data, nullptr);
   std::vector<int> dim_x({3, 28, 28, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input1_data);
@@ -209,7 +223,9 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
 
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(pooling_param), &context, desc, nullptr);
+  ASSERT_NE(kernel_obj, nullptr);
 
   kernel_obj->Run();
 
@@ -236,6 +252,8 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   // prepare stage
   // input size will be equal to the original size of x, output size will be the output size as in forward
   auto pool = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  ASSERT_NE(pool, nullptr);
+
   InitPoolingParamFP32(pool);
   pool->output_channel_ = 3;
   pool->pool_mode_ = PoolMode_AvgPool;
@@ -250,12 +268,14 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
 
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s2_x_3_28_28_3.bin", &input_size));
+  ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({pool->output_batch_, pool->input_h_, pool->input_w_, pool->input_channel_});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s2_dy_3_28_28_3.bin", &input_size));
+  ASSERT_NE(yt_data, nullptr);
   std::vector<int> dim_y({pool->output_batch_, pool->output_h_, pool->output_w_, pool->output_channel_});
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.set_data(yt_data);
@@ -271,7 +291,9 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
 
   kernel::KernelKey pool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto pool_creator = lite::KernelRegistry::GetInstance()->GetCreator(pool_desc);
+  ASSERT_NE(pool_creator, nullptr);
   auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), &context, pool_desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
 
   kernel->Init();
 
@@ -295,6 +317,8 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
   // prepare stage
   // input size will be equal to the original size of x, output size will be the output size as in forward
   auto pool = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  ASSERT_NE(pool, nullptr);
+
   InitPoolingParamFP32(pool);
   pool->output_channel_ = 3;
   pool->pool_mode_ = PoolMode_AvgPool;
@@ -309,12 +333,14 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
 
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s3_x_3_28_28_3.bin", &input_size));
+  ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({pool->output_batch_, pool->input_h_, pool->input_w_, pool->input_channel_});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/avgpoolgradfp32_s3_dy_3_28_28_3.bin", &input_size));
+  ASSERT_NE(yt_data, nullptr);
   std::vector<int> dim_y({pool->output_batch_, pool->output_h_, pool->output_w_, pool->output_channel_});
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.set_data(yt_data);
@@ -332,7 +358,9 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
 
   kernel::KernelKey pool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto pool_creator = lite::KernelRegistry::GetInstance()->GetCreator(pool_desc);
+  ASSERT_NE(pool_creator, nullptr);
   auto kernel = pool_creator(inputs, outputs, reinterpret_cast<OpParameter *>(pool), &context, pool_desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
 
   kernel->Init();
 
@@ -356,6 +384,8 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
 TEST_F(TestPoolingGradFp32, MaxPoolingGradFp32) {
   // prepare stage
   auto pooling_param = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  ASSERT_NE(pooling_param, nullptr);
+
   InitPoolingParamFP32(pooling_param);
   pooling_param->output_channel_ = 3;
   pooling_param->pool_mode_ = PoolMode_MaxPool;
@@ -368,14 +398,18 @@ TEST_F(TestPoolingGradFp32, MaxPoolingGradFp32) {
   size_t input_size;
   std::string i_path = "./test_data/pooling/maxpoolgradfp32_1_x_1_28_28_3.bin";
   auto in_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(i_path.c_str(), &input_size));
+  ASSERT_NE(in_data, nullptr);
 
   std::string dy_path = "./test_data/pooling/maxpoolgradfp32_1_dy_1_28_28_3.bin";
   auto dy_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dy_path.c_str(), &input_size));
+  ASSERT_NE(dy_data, nullptr);
 
   std::string dx_path = "./test_data/pooling/maxpoolgradfp32_1_dx_1_28_28_3.bin";
   auto dx_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dx_path.c_str(), &input_size));
+  ASSERT_NE(dx_data, nullptr);
 
   auto output_data = new float[output_data_size];
+  ASSERT_NE(output_data, nullptr);
   // warm up loop
   for (int i = 0; i < 3; i++) {
     MaxPoolingGrad(in_data, dx_data, dy_data, output_data, pooling_param, 1);
@@ -412,6 +446,8 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
   // prepare stage
   // input size will be equal to the original size of x, output size will be the output size as in forward
   auto maxpool = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  ASSERT_NE(maxpool, nullptr);
+
   InitPoolingParamFP32(maxpool);
   maxpool->output_channel_ = 3;
   maxpool->pool_mode_ = PoolMode_MaxPool;
@@ -422,18 +458,21 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
 
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_1_x_3_28_28_3.bin", &input_size));
+  ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({3, 28, 28, 3});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
   auto y_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_1_dx_3_28_28_3.bin", &input_size));
+  ASSERT_NE(y_data, nullptr);
   std::vector<int> dim_y({3, 28, 28, 3});
   lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.set_data(y_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_1_dy_3_28_28_3.bin", &input_size));
+  ASSERT_NE(yt_data, nullptr);
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.set_data(yt_data);
 
@@ -449,8 +488,10 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradBatchFp32) {
 
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
+  ASSERT_NE(maxpool_creator, nullptr);
   auto kernel = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context,
                                 maxpool_desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
 
   kernel->Init();
 
@@ -477,6 +518,8 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
   // prepare stage
   // input size will be equal to the original size of x, output size will be the output size as in forward
   auto maxpool = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  ASSERT_NE(maxpool, nullptr);
+
   InitPoolingParamFP32(maxpool);
   maxpool->output_channel_ = 3;
   maxpool->input_channel_ = 3;
@@ -492,18 +535,21 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
 
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s2_x_3_28_28_3.bin", &input_size));
+  ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({maxpool->output_batch_, maxpool->input_h_, maxpool->input_w_, maxpool->input_channel_});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
   auto y_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s2_dx_3_28_28_3.bin", &input_size));
+  ASSERT_NE(y_data, nullptr);
   std::vector<int> dim_y({maxpool->output_batch_, maxpool->output_h_, maxpool->output_w_, maxpool->output_channel_});
   lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.set_data(y_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s2_dy_3_28_28_3.bin", &input_size));
+  ASSERT_NE(yt_data, nullptr);
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.set_data(yt_data);
 
@@ -520,8 +566,10 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride2Fp32) {
 
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
+  ASSERT_NE(maxpool_creator, nullptr);
   auto kernel = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context,
                                 maxpool_desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
 
   kernel->Init();
 
@@ -548,6 +596,8 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
   // prepare stage
   // input size will be equal to the original size of x, output size will be the output size as in forward
   auto maxpool = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  ASSERT_NE(maxpool, nullptr);
+
   InitPoolingParamFP32(maxpool);
   maxpool->output_channel_ = 3;
   maxpool->input_channel_ = 3;
@@ -563,18 +613,21 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
 
   auto x_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s3_x_3_28_28_3.bin", &input_size));
+  ASSERT_NE(x_data, nullptr);
   std::vector<int> dim_x({maxpool->output_batch_, maxpool->input_h_, maxpool->input_w_, maxpool->input_channel_});
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(x_data);
 
   auto y_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s3_dx_3_28_28_3.bin", &input_size));
+  ASSERT_NE(y_data, nullptr);
   std::vector<int> dim_y({maxpool->output_batch_, maxpool->output_h_, maxpool->output_w_, maxpool->output_channel_});
   lite::Tensor y_tensor(TypeId::kNumberTypeFloat32, dim_y);
   y_tensor.set_data(y_data);
 
   auto yt_data = reinterpret_cast<float *>(
     mindspore::lite::ReadFile("./test_data/pooling/maxpoolgradfp32_s3_dy_3_28_28_3.bin", &input_size));
+  ASSERT_NE(yt_data, nullptr);
   lite::Tensor yt_tensor(TypeId::kNumberTypeFloat32, dim_y);
   yt_tensor.set_data(yt_data);
 
@@ -591,11 +644,12 @@ TEST_F(TestPoolingGradFp32, MaxPoolGradStride3Fp32) {
 
   kernel::KernelKey maxpool_desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_PoolingGrad};
   auto maxpool_creator = lite::KernelRegistry::GetInstance()->GetCreator(maxpool_desc);
+  ASSERT_NE(maxpool_creator, nullptr);
   auto kernel = maxpool_creator(maxpool_inputs, maxpool_outputs, reinterpret_cast<OpParameter *>(maxpool), &context,
                                 maxpool_desc, nullptr);
+  ASSERT_NE(kernel, nullptr);
 
   kernel->Init();
-
   kernel->Run();
 
   std::string output_path = "./test_data/pooling/maxpoolgradfp32_s3_xgrad_3_28_28_3.bin";

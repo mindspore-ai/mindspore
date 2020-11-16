@@ -15,9 +15,12 @@
  */
 
 #include "src/train/train_session.h"
+#include <sys/stat.h>
 #include <algorithm>
 #include <utility>
 #include <vector>
+#include <iostream>
+#include <fstream>
 #include "include/errorcode.h"
 #include "include/train_model.h"
 #include "src/common/utils.h"
@@ -98,6 +101,21 @@ int TrainSession::CompileTrainGraph(mindspore::lite::TrainModel *model) {
   for (auto inTensor : inputs_) inTensor->MutableData();
   RestoreOps(restore);
   AllocWorkSpace();
+  MarkOptimizedKernels();
+  CompileTrainKernels();
+  if (train_mode_) {
+    auto ret1 = Train();
+    if (ret1 != RET_OK) {
+      MS_LOG(ERROR) << "faild to initialize network in train mode";
+      return RET_ERROR;
+    }
+  } else {
+    auto ret1 = Eval();
+    if (ret1 != RET_OK) {
+      MS_LOG(ERROR) << "faild to initialize network in eval mode";
+      return RET_ERROR;
+    }
+  }
   return ret;
 }
 
@@ -110,34 +128,67 @@ void *TrainSession::ExportToBuf(char *buf, size_t *len) const { return model_->E
 
 int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &after) {
   this->outputs_.clear();
-  for (auto ms_tensors : output_node_map_)
-    for (auto ms_tensor : ms_tensors.second) this->outputs_.push_back((static_cast<lite::Tensor *>(ms_tensor)));
-  if (train_mode_) return lite::LiteSession::RunGraph(before, after);
+
+  // build out tensor
+  for (auto ms_tensors : output_node_map_) {
+    for (auto ms_tensor : ms_tensors.second) {
+      this->outputs_.push_back((static_cast<lite::Tensor *>(ms_tensor)));
+    }
+  }
 
   if (this->context_ == nullptr) {
     MS_LOG(ERROR) << "context is null";
     return lite::RET_NULL_PTR;
   }
+  auto run_kernel = (train_mode_) ? train_kernels_ : inference_kernels_;
   lite::Executor executor;
   if (before == nullptr && after == nullptr) {
-    return executor.Run(this->inputs_, this->outputs_, inference_kernels_, this->context_->allocator.get());
+    return executor.Run(this->inputs_, this->outputs_, run_kernel, this->context_->allocator.get());
   } else {
-    return executor.Run(this->inputs_, this->outputs_, inference_kernels_, this->context_->allocator.get(), before,
-                        after);
+    return executor.Run(this->inputs_, this->outputs_, run_kernel, this->context_->allocator.get(), before, after);
   }
 }
 
-void TrainSession::Train() {
+int TrainSession::SaveToFile(const std::string &filename) const {
+  size_t fb_size = 0;
+  auto *buf = reinterpret_cast<char *>(ExportToBuf(nullptr, &fb_size));
+  if (buf == NULL) {
+    MS_LOG(ERROR) << "Could not Export Trained model";
+    return lite::RET_NULL_PTR;
+  }
+  std::ofstream ofs(filename);
+  if ((true != ofs.good()) || (true != ofs.is_open())) {
+    MS_LOG(ERROR) << "Could not open file \"" << filename << "\" for writing";
+    free(buf);
+    return RET_ERROR;
+  }
+
+  ofs.seekp(0, std::ios::beg);
+  ofs.write(buf, fb_size);
+  ofs.close();
+  free(buf);
+  return chmod(filename.c_str(), S_IRUSR);
+}
+
+int TrainSession::Train() {
   for (auto ori_kernel : kernels_) {
     MS_ASSERT(nullptr != ori_kernel);
     if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
-      ori_kernel->train();
+      auto ret = ori_kernel->Train();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << ori_kernel->name() << " failed to set train mode";
+        return RET_ERROR;
+      }
     } else {
       auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
       MS_ASSERT(nullptr != sub_graph);
       for (auto kernel : sub_graph->nodes()) {
         MS_ASSERT(nullptr != kernel);
-        kernel->train();
+        auto ret = kernel->Train();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << kernel->name() << " failed to set train mode";
+          return RET_ERROR;
+        }
       }
     }
   }
@@ -157,6 +208,7 @@ void TrainSession::Train() {
       }
     }
   }
+  return RET_OK;
 }
 
 void TrainSession::UpdateOutputMapByLossKernel(const kernel::LiteKernel *kernel) {
@@ -190,17 +242,25 @@ void TrainSession::UpdateOutputMapByInKernel(const kernel::LiteKernel *kernel) {
   }
 }
 
-void TrainSession::Eval() {
+int TrainSession::Eval() {
   for (auto ori_kernel : kernels_) {
     MS_ASSERT(nullptr != ori_kernel);
     if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
-      ori_kernel->eval();
+      auto ret = ori_kernel->Eval();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << ori_kernel->name() << " failed to set eval mode";
+        return RET_ERROR;
+      }
     } else {
       auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
       MS_ASSERT(nullptr != sub_graph);
       for (auto kernel : sub_graph->nodes()) {
         MS_ASSERT(nullptr != kernel);
-        kernel->eval();
+        auto ret = kernel->Eval();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << kernel->name() << " failed to set eval mode";
+          return RET_ERROR;
+        }
       }
     }
   }
@@ -221,6 +281,7 @@ void TrainSession::Eval() {
   if (inference_kernels_.size() == 0) {
     BuildInferenceKernelsMap();
   }
+  return RET_OK;
 }
 
 void TrainSession::BuildInferenceKernelsRecursive(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *v) {
@@ -234,24 +295,25 @@ void TrainSession::BuildInferenceKernelsRecursive(kernel::LiteKernel *kernel, st
 
 void TrainSession::BuildInferenceKernelsMap() {
   std::vector<kernel::LiteKernel *> req_kernels;
-  for (auto ori_kernel : kernels_) {
-    if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
-      if (IsLossKernel(ori_kernel)) {  // For each loss in the system add backward tree
-        for (auto in_node : ori_kernel->in_kernels()) {
+  for (auto kernel : this->kernels_) {
+    if (kernel->subgraph_type() == kernel::kNotSubGraph) {
+      if (IsLossKernel(kernel)) {  // For each loss in the system add backward tree
+        for (auto in_node : kernel->in_kernels()) {
           BuildInferenceKernelsRecursive(in_node, &req_kernels);
         }
       }
     } else {
-      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
-      for (auto kernel : sub_graph->nodes()) {
-        if (IsLossKernel(kernel)) {  // For each loss in the system add backward tree
-          for (auto in_node : kernel->in_kernels()) {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      for (auto sb_kernel : sub_graph->nodes()) {
+        if (IsLossKernel(sb_kernel)) {  // For each loss in the system add backward tree
+          for (auto in_node : sb_kernel->in_kernels()) {
             BuildInferenceKernelsRecursive(in_node, &req_kernels);
           }
         }
       }
     }
   }
+
   inference_kernels_.clear();
   for (auto ori_kernel : kernels_) {
     if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
@@ -272,8 +334,69 @@ void TrainSession::BuildInferenceKernelsMap() {
   }
 }
 
-bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) {
+void TrainSession::CompileTrainKernels() {
+  train_kernels_.clear();
+  for (auto ori_kernel : kernels_) {
+    if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
+      train_kernels_.push_back(ori_kernel);
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
+      for (auto kernel : sub_graph->nodes()) {
+        train_kernels_.push_back(kernel);
+      }
+    }
+  }
+}
+
+void TrainSession::MarkOptimizedKernels() {
+  std::vector<lite::Tensor *> ot;
+  for (auto kernel : this->kernels_) {
+    if (kernel->subgraph_type() == kernel::kNotSubGraph) {
+      if (IsOptimizer(kernel)) {
+        std::copy(kernel->in_tensors().begin(), kernel->in_tensors().end(), std::back_inserter(ot));
+      }
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      for (auto sb_kernel : sub_graph->nodes()) {
+        if (IsOptimizer(sb_kernel)) {
+          std::copy(sb_kernel->in_tensors().begin(), sb_kernel->in_tensors().end(), std::back_inserter(ot));
+        }
+      }
+    }
+  }
+  for (auto kernel : this->kernels_) {
+    if (kernel->subgraph_type() == kernel::kNotSubGraph) {
+      if (!IsOptimizer(kernel)) {
+        for (auto it : kernel->in_tensors()) {
+          if (std::find(ot.begin(), ot.end(), it) != ot.end()) {
+            kernel->SetTrainable(true);
+            break;
+          }
+        }
+      }
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      for (auto sb_kernel : sub_graph->nodes()) {
+        if (!IsOptimizer(sb_kernel)) {
+          for (auto it : sb_kernel->in_tensors()) {
+            if (std::find(ot.begin(), ot.end(), it) != ot.end()) {
+              sb_kernel->SetTrainable(true);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
   return (kernel->Type() == schema::PrimitiveType_SoftmaxCrossEntropy);
+}
+
+bool TrainSession::IsOptimizer(kernel::LiteKernel *kernel) const {
+  return ((kernel->Type() == schema::PrimitiveType_Adam) || (kernel->Type() == schema::PrimitiveType_Sgd) ||
+          (kernel->Type() == schema::PrimitiveType_ApplyMomentum));
 }
 
 }  // namespace lite
