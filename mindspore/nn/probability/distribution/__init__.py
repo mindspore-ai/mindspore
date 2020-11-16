@@ -22,6 +22,7 @@ from .bernoulli import Bernoulli
 from .categorical import Categorical
 from .cauchy import Cauchy
 from .exponential import Exponential
+from .gamma import Gamma
 from .geometric import Geometric
 from .gumbel import Gumbel
 from .logistic import Logistic
@@ -36,6 +37,7 @@ __all__ = ['Distribution',
            'Categorical',
            'Cauchy',
            'Exponential',
+           'Gamma',
            'Geometric',
            'Gumbel',
            'Logistic',
