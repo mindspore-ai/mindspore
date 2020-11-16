@@ -4192,12 +4192,20 @@ class EmbeddingLookup(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
         validator.check_subclass("offset", offset['dtype'], mstype.int_, self.name)
         params_shp = params['shape']
-        if len(params_shp) != 2:
-            raise ValueError("The dimension of 'params' in EmbeddingLookup must be 2, but got %d." % len(params_shp))
         out_shape = indices['shape'] + params_shp[1:]
+        if 'max_shape' in indices:
+            out_max_shape = indices['max_shape'] + params_shp[1:]
+        else:
+            out_max_shape = out_shape
+        if 'min_shape' in indices:
+            out_min_shape = indices['min_shape'] + params_shp[1:]
+        else:
+            out_min_shape = out_shape
         out = {'shape': out_shape,
                'dtype': params['dtype'],
-               'value': None}
+               'value': None,
+               'max_shape': out_max_shape,
+               'min_shape': out_min_shape}
         return out
 
 
