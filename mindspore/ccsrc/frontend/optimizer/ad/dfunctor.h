@@ -194,10 +194,8 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg) {
   std::vector<AnfNodePtr> transf_args;
   TransformArgs(mng, cloned_bprop_fg, outer, &transf_args);
 
-  TraceManager::DebugTrace(std::make_shared<TraceEquiv>(dout->debug_info()));
   (void)transf_args.insert(transf_args.begin(), NewValueNode(primal));
   auto out_value = outer->NewCNode(transf_args);
-  TraceManager::EndTrace();
 
   (void)mng->Replace(out_param, out_value);
 
