@@ -14,6 +14,7 @@
 # ============================================================================
 """ test control ops """
 import numpy as np
+import pytest
 
 from mindspore import dtype as ms
 from mindspore import Tensor
@@ -1150,3 +1151,147 @@ def test_if_by_if_forward_all_const_branch():
     end = Tensor(np.array(3), dtype=ms.float32)
     x = Tensor(np.array(0), dtype=ms.float32)
     net(idx, end, x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_if_const_grad():
+    class MyNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.add = P.TensorAdd()
+
+        def construct(self, *inputs):
+            out = self.add(*inputs)
+            return out
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = ParameterTuple(net.trainable_params())
+
+        def construct(self, *inputs):
+            a = 1
+            b = 2
+            if a > 0:
+                b = 1
+            a += b
+            return grad_by_list(self.net, self.weights)(*inputs)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    my_net = MyNet()
+    net = GradNet(my_net)
+    a = Tensor(np.array(0), dtype=ms.int32)
+    b = Tensor(np.array(1), dtype=ms.int32)
+    net(a, b)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_if_by_if_const_grad():
+    class MyNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.add = P.TensorAdd()
+
+        def construct(self, *inputs):
+            out = self.add(*inputs)
+            return out
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = ParameterTuple(net.trainable_params())
+
+        def construct(self, *inputs):
+            a = 1
+            b = 2
+            if a > 0:
+                b = 1
+            if a < 0:
+                b = 0
+            if a == 0:
+                b = 3
+            a += b
+            return grad_by_list(self.net, self.weights)(*inputs)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    my_net = MyNet()
+    net = GradNet(my_net)
+    a = Tensor(np.array(0), dtype=ms.int32)
+    b = Tensor(np.array(1), dtype=ms.int32)
+    net(a, b)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_while_const_grad():
+    class MyNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.add = P.TensorAdd()
+
+        def construct(self, *inputs):
+            out = self.add(*inputs)
+            return out
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = ParameterTuple(net.trainable_params())
+
+        def construct(self, *inputs):
+            a = 1
+            while a > 1:
+                a = a - 1
+            return grad_by_list(self.net, self.weights)(*inputs)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    my_net = MyNet()
+    net = GradNet(my_net)
+    a = Tensor(np.array(0), dtype=ms.int32)
+    b = Tensor(np.array(1), dtype=ms.int32)
+    net(a, b)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_if_by_while_const_grad():
+    class MyNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.add = P.TensorAdd()
+
+        def construct(self, *inputs):
+            out = self.add(*inputs)
+            return out
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.weights = ParameterTuple(net.trainable_params())
+
+        def construct(self, *inputs):
+            a = 1
+            b = 2
+            if a > 0:
+                b = 0
+            while a > 1:
+                a = a - 1
+            a += b
+            return grad_by_list(self.net, self.weights)(*inputs)
+
+    context.set_context(mode=context.GRAPH_MODE)
+    my_net = MyNet()
+    net = GradNet(my_net)
+    a = Tensor(np.array(0), dtype=ms.int32)
+    b = Tensor(np.array(1), dtype=ms.int32)
+    net(a, b)

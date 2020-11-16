@@ -187,7 +187,7 @@ TEST_F(TestOptOpt, CSE) {
   FuncGraphManagerPtr manager1 = Manage(test_graph1);
   draw::Draw("opt_cse_before_1.dot", test_graph1);
 
-  ASSERT_EQ(manager1->all_nodes().size(), 10);
+  ASSERT_EQ(manager1->all_nodes().size(), 9);
 
   auto cse = std::make_shared<CSE>();
   ASSERT_TRUE(cse != nullptr);
@@ -205,7 +205,7 @@ TEST_F(TestOptOpt, CSE) {
 
   FuncGraphManagerPtr manager2 = Manage(test_graph2);
   draw::Draw("opt_cse_before_2.dot", test_graph2);
-  ASSERT_EQ(manager2->all_nodes().size(), 22);
+  ASSERT_EQ(manager2->all_nodes().size(), 16);
   is_changed = cse->Cse(test_graph2, manager2);
   ASSERT_TRUE(is_changed);
   ASSERT_EQ(manager2->all_nodes().size(), 12);
