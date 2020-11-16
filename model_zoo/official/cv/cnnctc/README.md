@@ -171,7 +171,6 @@ Arguments:
   * `--TRAIN_DATASET_SIZE`： Training dataset size.
   * `--TEST_DATASET_PATH`： The path to test dataset.
   * `--TEST_BATCH_SIZE`： Test batch size.
-  * `--TEST_DATASET_SIZE`：Test dataset size.
   * `--TRAIN_EPOCHS`：Total training epochs.
   * `--CKPT_PATH`：The path to model checkpoint file, can be used to resume training and evaluation.
   * `--SAVE_PATH`：The path to save model checkpoint file.

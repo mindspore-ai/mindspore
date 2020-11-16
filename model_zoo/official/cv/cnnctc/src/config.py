@@ -29,7 +29,6 @@ class Config_CNNCTC():
     TRAIN_BATCH_SIZE = 192
     TEST_DATASET_PATH = 'CNNCTC_Data/IIIT5k_3000'
     TEST_BATCH_SIZE = 256
-    TEST_DATASET_SIZE = 2976
     TRAIN_EPOCHS = 3
 
     # training config
