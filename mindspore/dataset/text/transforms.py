@@ -76,7 +76,7 @@ class Lookup(cde.LookupOp):
         >>> # Load vocabulary from list
         >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
         >>> # Use Lookup operator to map tokens to ids
-        >>> lookup = text.Lookup(vocab, "<unk>")
+        >>> lookup = text.Lookup(vocab)
         >>> data1 = data1.map(operations=[lookup])
     """
 

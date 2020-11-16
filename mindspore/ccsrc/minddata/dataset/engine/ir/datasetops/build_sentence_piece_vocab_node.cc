@@ -74,6 +74,10 @@ Status BuildSentenceVocabNode::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
+  if (!col_names_.empty()) {
+    RETURN_IF_NOT_OK(ValidateDatasetColumnParam("BuildVocabNode", "columns", col_names_));
+  }
+
   return Status::OK();
 }
 
