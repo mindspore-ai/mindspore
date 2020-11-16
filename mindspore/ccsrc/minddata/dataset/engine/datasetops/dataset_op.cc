@@ -312,7 +312,8 @@ Status DatasetOp::GetNumClasses(int64_t *num_classes) {
   if (!child_.empty()) {
     return child_[0]->GetNumClasses(num_classes);
   } else {
-    RETURN_STATUS_UNEXPECTED("Can't get the dataset size for the current tree.");
+    *num_classes = -1;
+    RETURN_STATUS_UNEXPECTED("Can't get the number of classes for the current tree.");
   }
 }
 
