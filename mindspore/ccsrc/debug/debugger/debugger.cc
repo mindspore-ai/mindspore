@@ -291,7 +291,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
           // only send compiled graphs once.
           SendMultiGraphsAndSuspend(graph_proto_list_, graph_sum);
           graph_proto_list_.clear();
-        } else if (graph_id == rungraph_id_list_.front()) {
+        } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
           // stop only when receive the first sub run graph for each step
           CommandLoop();
         }
@@ -394,6 +394,7 @@ void Debugger::LoadGraphs(const KernelGraphPtr &graph_ptr) {
       auto graph_proto = GetGraphProto(graph_ptr);
       // add new graph proto to graph_proto_list_
       graph_proto_list_.push_back(graph_proto);
+      graph_ptr_list_.push_back(graph_ptr);
       not_dataset_graph_sum_++;
     }
     // reset is_dataset_graph to be false
