@@ -29,6 +29,13 @@ int Executor::CheckInputs(std::vector<Tensor *> &in_tensors) {
       MS_LOG(ERROR) << "Graph input tensor data is nullptr";
       return RET_ERROR;
     }
+    auto shape = inTensor->shape();
+    bool valid = all_of(shape.begin(), shape.end(), [](int i) { return i > 0; });
+    if (!valid) {
+      MS_LOG(ERROR) << "The shape of input tensor contains zero or negative dimension,"
+                    << "check the model and assign the input shape with method Resize().";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

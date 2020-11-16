@@ -294,7 +294,10 @@ STATUS TransOpInsertPass::Run(schema::MetaGraphT *graph) {
         return ret;
       }
       ret = ChangeOpAxis(graph, node);
-      if (ret != RET_OK) {
+      if (ret == RET_NOT_SUPPORT) {
+        MS_LOG(INFO) << "not support to ChangeOpAxis";
+        return RET_OK;
+      } else if (ret != RET_OK) {
         MS_LOG(INFO) << "no need to ChangeOpAxis";
         return ret;
       }
