@@ -236,7 +236,16 @@ union PrimitiveType {
     LpNormalization,
     DropoutGrad,
     MaximumGrad,
-    MinimumGrad
+    MinimumGrad,
+    Switch,
+    Partial,
+    TensorListFromTensor,
+    TensorListStack,
+    TensorListGetItem,
+    TensorListSetItem,
+    TensorListReserve,
+    All,
+    Assert,
 }
 
 enum QuantType: int {

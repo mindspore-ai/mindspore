@@ -1143,3 +1143,37 @@ table LpNormalization {
     axis : int;
     p : int;
 }
+
+table Switch {
+}
+
+table Partial {
+    subGraphIndex : int;
+}
+
+table TensorListFromTensor {
+}
+
+table TensorListStack {
+    numElements : int;
+    elementDType : int;
+}
+
+table TensorListGetItem {
+    elementDType : int;
+}
+
+table TensorListSetItem {
+}
+
+table TensorListReserve {
+    elementDType : int;
+}
+
+table All {
+    keepDims : int;
+}
+
+table Assert {
+    summarize : int;
+}
