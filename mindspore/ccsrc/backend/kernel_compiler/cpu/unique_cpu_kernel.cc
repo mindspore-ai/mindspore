@@ -22,6 +22,7 @@ namespace kernel {
 const size_t kUseBucketUniqueSize = 100000;
 const size_t kUniqueThreadNum = 23;
 void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+  node_ = kernel_node;
   CheckParam(kernel_node);
   auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   input_size_ = input_shape[0];
@@ -44,6 +45,16 @@ bool UniqueCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     LaunchKernel<int64_t, int>(inputs, workspace, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float, int>(inputs, workspace, outputs);
+  }
+  if (node_ != nullptr) {
+    std::vector<size_t> out_shape;
+    out_shape.emplace_back(output_size_);
+    std::vector<TypeId> dtypes;
+    size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
+    for (size_t i = 0; i < output_num; i++) {
+      dtypes.push_back(AnfAlgo::GetOutputInferDataType(node_, i));
+    }
+    AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape, AnfAlgo::GetOutputInferShape(node_, 1)}, node_.get());
   }
   return true;
 }

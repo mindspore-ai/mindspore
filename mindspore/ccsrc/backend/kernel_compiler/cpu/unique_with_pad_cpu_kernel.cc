@@ -22,12 +22,14 @@ namespace kernel {
 bool UniqueWithPadCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &workspace,
                                     const std::vector<kernel::AddressPtr> &outputs) {
-  UniqueCPUKernel::Launch(inputs, workspace, outputs);
   if (dtype_ == kNumberTypeInt32) {
+    UniqueCPUKernel::LaunchKernel<int, int>(inputs, workspace, outputs);
     PadOutput<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
+    UniqueCPUKernel::LaunchKernel<int64_t, int>(inputs, workspace, outputs);
     PadOutput<int64_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
+    UniqueCPUKernel::LaunchKernel<float, int>(inputs, workspace, outputs);
     PadOutput<float>(inputs, outputs);
   }
   return true;
