@@ -385,7 +385,14 @@ class Parser:
                 self.col_offset = \
                     len(original_src.split('\n')[0]) - len(src.split('\n')[0])
                 logger.debug("get source = %s", src)
-                tree = asttokens.ASTTokens(src, parse=True).tree
+                try:
+                    tree = asttokens.ASTTokens(src, parse=True).tree
+                except IndentationError as idt_err:
+                    idt_err.filename = self.filename
+                    idt_err.lineno = self.line_offset
+                    idt_err.msg = f"There are incorrect indentations in definition or comment of function: " \
+                                 f"'{self.fn.__qualname__}'."
+                    raise idt_err
                 Parser.ast_cache[hexstr] = tree
         else:
             logger.error("Fn type is invalid")
