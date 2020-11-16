@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef API_PYBIND_API_H_
-#define API_PYBIND_API_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_API_PYTHON_PYBIND_REGISTER_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_API_PYTHON_PYBIND_REGISTER_H_
 
 #include <map>
 #include <string>
@@ -78,4 +78,4 @@ class PybindDefineRegisterer {
 #endif
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // API_PYBIND_API_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_API_PYTHON_PYBIND_REGISTER_H_
