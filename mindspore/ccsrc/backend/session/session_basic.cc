@@ -1153,6 +1153,11 @@ void SessionBasic::Summary(KernelGraph *graph) {
   if (!exist_summary) {
     return;
   }
+
+  if (!IsSupportSummary()) {
+    MS_LOG(ERROR) << "The Summary operator can not collect data correctly. Detail: the data sink mode is used and the"
+                     " sink size(in model.train() python api) is not equal to 1.";
+  }
   SetSummaryNodes(graph);
   auto summary_outputs = graph->summary_nodes();
   std::map<std::string, tensor::TensorPtr> params_list;

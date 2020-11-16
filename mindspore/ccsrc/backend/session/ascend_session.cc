@@ -327,6 +327,8 @@ void AscendSession::CompileChildGraph(const KernelGraphPtr &child_graph) {
   runtime_instance->AssignStaticMemoryValueNode(child_graph.get());
 }
 
+bool AscendSession::IsSupportSummary() { return !device::KernelAdjust::NeedInsertSwitch(); }
+
 void AscendSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                  VectorRef *const outputs) {
   MS_LOG(INFO) << "Start";
