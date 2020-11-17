@@ -29,7 +29,7 @@ enum KernelSelectStatus {
 };
 KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node,
                                     KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
-void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node);
+void SetTensorDeviceInfo(const CNodePtr &kernel_node);
 void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph);
 }  // namespace ascend
 }  // namespace device

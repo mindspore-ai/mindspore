@@ -124,7 +124,7 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
     SetKernelType(kernel_build_info->kernel_type());
     SetFusionType(kernel_build_info->fusion_type());
     SetProcessor(kernel_build_info->processor());
-    OpPattern(kernel_build_info->op_pattern());
+    SetOpPattern(kernel_build_info->op_pattern());
     for (size_t index = 0; index < kernel_build_info->GetInputNum(); ++index) {
       kernel_build_info_->inputs_device_type_.emplace_back(kernel_build_info->GetInputDeviceType(index));
       kernel_build_info_->inputs_format_.emplace_back(kernel_build_info->GetInputFormat(index));

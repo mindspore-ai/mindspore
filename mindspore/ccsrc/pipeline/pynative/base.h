@@ -60,6 +60,9 @@ struct OpExecInfo {
   py::list op_inputs;
   py::dict op_attrs;
   std::vector<bool> inputs_mask;
+  std::string next_op_name = "";
+  bool is_mixed_precision_cast = false;
+  size_t next_input_index = 0;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
 OpExecInfoPtr GenerateOpExecInfo(const py::args &args);

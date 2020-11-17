@@ -51,6 +51,9 @@ struct OpRunInfo {
   AbstractBasePtr abstract;
   ValuePtr value = nullptr;
   bool is_dynamic_shape = false;
+  bool is_auto_mixed_precision = false;
+  std::string next_op_name = "";
+  size_t next_input_index = 0;
 };
 using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 class Executor;
