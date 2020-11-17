@@ -159,6 +159,15 @@ def check_prob(p):
         raise ValueError('Probabilities should be less than one')
 
 def check_sum_equal_one(probs):
+    """
+    Used in categorical distribution. check if probabilities of each category sum to 1.
+    """
+    if probs is None:
+        raise ValueError(f'input value cannot be None in check_sum_equal_one')
+    if isinstance(probs, Parameter):
+        if not isinstance(probs.data, Tensor):
+            return
+        probs = probs.data
     prob_sum = np.sum(probs.asnumpy(), axis=-1)
     comp = np.equal(np.ones(prob_sum.shape), prob_sum)
     if not comp.all():
@@ -168,6 +177,12 @@ def check_rank(probs):
     """
     Used in categorical distribution. check Rank >=1.
     """
+    if probs is None:
+        raise ValueError(f'input value cannot be None in check_rank')
+    if isinstance(probs, Parameter):
+        if not isinstance(probs.data, Tensor):
+            return
+        probs = probs.data
     if probs.asnumpy().ndim == 0:
         raise ValueError('probs for Categorical distribution must have rank >= 1.')
 

@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from mindspore import dtype
 def test_init():
     b = msb.PowerTransform()
     assert isinstance(b, msb.Bijector)
-    b = msb.PowerTransform(1)
+    b = msb.PowerTransform(1.)
     assert isinstance(b, msb.Bijector)
 
 def test_type():
@@ -37,7 +37,7 @@ class Net(nn.Cell):
     """
     def __init__(self):
         super(Net, self).__init__()
-        self.b1 = msb.PowerTransform(power=0)
+        self.b1 = msb.PowerTransform(power=0.)
         self.b2 = msb.PowerTransform()
 
     def construct(self, x_):
@@ -60,7 +60,7 @@ class Jacobian(nn.Cell):
     """
     def __init__(self):
         super(Jacobian, self).__init__()
-        self.b1 = msb.PowerTransform(power=0)
+        self.b1 = msb.PowerTransform(power=0.)
         self.b2 = msb.PowerTransform()
 
     def construct(self, x_):

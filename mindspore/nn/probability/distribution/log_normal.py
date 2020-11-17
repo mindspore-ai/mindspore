@@ -47,7 +47,7 @@ class LogNormal(msd.TransformedDistribution):
         >>> # The following creates two independent LogNormal distributions.
         >>> n = msd.LogNormal([3.0, 3.0], [4.0, 4.0], dtype=mstype.float32)
         >>>
-        >>> # A LogNormal distribution can be initilize without arguments.
+        >>> # A LogNormal distribution can be initialized without arguments.
         >>> # In this case, `loc` and `scale` must be passed in during function calls.
         >>> n = msd.LogNormal(dtype=mstype.float32)
         >>>
@@ -122,7 +122,6 @@ class LogNormal(msd.TransformedDistribution):
         ...         ans = self.n1.sample((2,3))
         ...         ans = self.n1.sample((2,3), loc_b, scale_b)
         ...         ans = self.n2.sample((2,3), loc_a, scale_a)
-        ...
     """
 
     def __init__(self,

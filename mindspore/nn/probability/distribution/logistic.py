@@ -47,7 +47,7 @@ class Logistic(Distribution):
         >>> # The following creates two independent Logistic distributions.
         >>> n = msd.Logistic([3.0, 3.0], [4.0, 4.0], dtype=mstype.float32)
         >>>
-        >>> # A Logistic distribution can be initilize without arguments.
+        >>> # A Logistic distribution can be initialized without arguments.
         >>> # In this case, `loc` and `scale` must be passed in through arguments.
         >>> n = msd.Logistic(dtype=mstype.float32)
         >>>
@@ -97,7 +97,6 @@ class Logistic(Distribution):
         ...         ans = self.l1.sample((2,3))
         ...         ans = self.l1.sample((2,3), loc_b, scale_b)
         ...         ans = self.l2.sample((2,3), loc_a, scale_a)
-        ...
     """
 
     def __init__(self,

@@ -46,7 +46,7 @@ class Uniform(Distribution):
         >>> # The following creates two independent Uniform distributions.
         >>> u = msd.Uniform([0.0, 0.0], [1.0, 2.0], dtype=mstype.float32)
         >>>
-        >>> # A Uniform distribution can be initilized without arguments.
+        >>> # A Uniform distribution can be initialized without arguments.
         >>> # In this case, `high` and `low` must be passed in through arguments during function calls.
         >>> u = msd.Uniform(dtype=mstype.float32)
         >>>
@@ -64,8 +64,8 @@ class Uniform(Distribution):
         ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments.
         ...         # Args:
         ...         #     value (Tensor): the value to be evaluated.
-        ...         #     low (Tensor): the lower bound of distribution. Default: self.low.
-        ...         #     high (Tensor): the higher bound of distribution. Default: self.high.
+        ...         #     low (Tensor): the lower bound of the distribution. Default: self.low.
+        ...         #     high (Tensor): the higher bound of the distribution. Default: self.high.
         ...
         ...         # Examples of `prob`.
         ...         # Similar calls can be made to other probability functions
@@ -79,8 +79,8 @@ class Uniform(Distribution):
         ...
         ...         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
         ...         # Args:
-        ...         #     low (Tensor): the lower bound of distribution. Default: self.low.
-        ...         #     high (Tensor): the higher bound of distribution. Default: self.high.
+        ...         #     low (Tensor): the lower bound of the distribution. Default: self.low.
+        ...         #     high (Tensor): the higher bound of the distribution. Default: self.high.
         ...
         ...         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
         ...         ans = self.u1.mean() # return 0.5
@@ -112,7 +112,6 @@ class Uniform(Distribution):
         ...         ans = self.u1.sample((2,3))
         ...         ans = self.u1.sample((2,3), low_b, high_b)
         ...         ans = self.u2.sample((2,3), low_a, high_a)
-        ...
     """
 
     def __init__(self,

@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return forward
 
 def test_forward():
-    power = 2
+    power = 2.
     x = np.array([2.0, 3.0, 4.0, 5.0], dtype=np.float32)
     tx = Tensor(x, dtype=dtype.float32)
     forward = Net(power=power)
@@ -57,7 +57,7 @@ class Net1(nn.Cell):
         return inverse
 
 def test_inverse():
-    power = 2
+    power = 2.
     y = np.array([2.0, 3.0, 4.0, 5.0], dtype=np.float32)
     ty = Tensor(y, dtype=dtype.float32)
     inverse = Net1(power=power)
@@ -78,7 +78,7 @@ class Net2(nn.Cell):
         return self.bijector.forward_log_jacobian(x_)
 
 def test_forward_jacobian():
-    power = 2
+    power = 2.
     x = np.array([2.0, 3.0, 4.0, 5.0], dtype=np.float32)
     tx = Tensor(x, dtype=dtype.float32)
     forward_jacobian = Net2(power=power)
@@ -99,7 +99,7 @@ class Net3(nn.Cell):
         return self.bijector.inverse_log_jacobian(y_)
 
 def test_inverse_jacobian():
-    power = 2
+    power = 2.
     y = np.array([2.0, 3.0, 4.0, 5.0], dtype=np.float32)
     ty = Tensor(y, dtype=dtype.float32)
     inverse_jacobian = Net3(power=power)

@@ -48,70 +48,70 @@ class Cauchy(Distribution):
         >>> # The following creates two independent Cauchy distributions.
         >>> cauchy = msd.Cauchy([3.0, 3.0], [4.0, 4.0], dtype=mstype.float32)
         >>>
-        >>> # A Cauchy distribution can be initilize without arguments.
+        >>> # A Cauchy distribution can be initialized without arguments.
         >>> # In this case, 'loc' and `scale` must be passed in through arguments.
         >>> cauchy = msd.Cauchy(dtype=mstype.float32)
         >>>
         >>> # To use a Cauchy distribution in a network.
         >>> class net(Cell):
-        >>>     def __init__(self):
-        >>>         super(net, self).__init__():
-        >>>         self.cau1 = msd.Cauchy(0.0, 1.0, dtype=mstype.float32)
-        >>>         self.cau2 = msd.Cauchy(dtype=mstype.float32)
-        >>>
-        >>>     # The following calls are valid in construct.
-        >>>     def construct(self, value, loc_b, scale_b, loc_a, scale_a):
-        >>>
-        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
-        >>>         # Args:
-        >>>         #     value (Tensor): the value to be evaluated.
-        >>>         #     loc (Tensor): the location of the distribution. Default: self.loc.
-        >>>         #     scale (Tensor): the scale of the distribution. Default: self.scale.
-        >>>
-        >>>         # Examples of `prob`.
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'prob' by the name of the function
-        >>>         ans = self.cau1.prob(value)
-        >>>         # Evaluate with respect to distribution b.
-        >>>         ans = self.cau1.prob(value, loc_b, scale_b)
-        >>>         # `loc` and `scale` must be passed in during function calls
-        >>>         ans = self.cau2.prob(value, loc_a, scale_a)
-        >>>
-        >>>         # Functions `mode` and `entropy` have the same arguments.
-        >>>         # Args:
-        >>>         #     loc (Tensor): the location of the distribution. Default: self.loc.
-        >>>         #     scale (Tensor): the scale of the distribution. Default: self.scale.
-        >>>
-        >>>         # Example of `mode`.
-        >>>         ans = self.cau1.mode() # return 0.0
-        >>>         ans = self.cau1.mode(loc_b, scale_b) # return loc_b
-        >>>         # `loc` and `scale` must be passed in during function calls.
-        >>>         ans = self.cau2.mode(loc_a, scale_a)
-        >>>
-        >>>         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
-        >>>         # Args:
-        >>>         #     dist (str): the type of the distributions. Only "Cauchy" is supported.
-        >>>         #     loc_b (Tensor): the loc of distribution b.
-        >>>         #     scale_b (Tensor): the scale distribution b.
-        >>>         #     loc (Tensor): the loc of distribution a. Default: self.loc.
-        >>>         #     scale (Tensor): the scale distribution a. Default: self.scale.
-        >>>
-        >>>         # Examples of `kl_loss`. `cross_entropy` is similar.
-        >>>         ans = self.cau1.kl_loss('Cauchy', loc_b, scale_b)
-        >>>         ans = self.cau1.kl_loss('Cauchy', loc_b, scale_b, loc_a, scale_a)
-        >>>         # Additional `loc` and `scale` must be passed in.
-        >>>         ans = self.cau2.kl_loss('Cauchy', loc_b, scale_b, loc_a, scale_a)
-        >>>
-        >>>         # Examples of `sample`.
-        >>>         # Args:
-        >>>         #     shape (tuple): the shape of the sample. Default: ()
-        >>>         #     loc (Tensor): the location of the distribution. Default: self.loc.
-        >>>         #     scale (Tensor): the scale of the distribution. Default: self.scale.
-        >>>         ans = self.cau1.sample()
-        >>>         ans = self.cau1.sample((2,3))
-        >>>         ans = self.cau1.sample((2,3), loc_b, s_b)
-        >>>         ans = self.cau2.sample((2,3), loc_a, s_a)
+        ...     def __init__(self):
+        ...         super(net, self).__init__():
+        ...         self.cau1 = msd.Cauchy(0.0, 1.0, dtype=mstype.float32)
+        ...         self.cau2 = msd.Cauchy(dtype=mstype.float32)
+        ...
+        ...     # The following calls are valid in construct.
+        ...     def construct(self, value, loc_b, scale_b, loc_a, scale_a):
+        ...
+        ...         # Private interfaces of probability functions corresponding to public interfaces, including
+        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
+        ...         # Args:
+        ...         #     value (Tensor): the value to be evaluated.
+        ...         #     loc (Tensor): the location of the distribution. Default: self.loc.
+        ...         #     scale (Tensor): the scale of the distribution. Default: self.scale.
+        ...
+        ...         # Examples of `prob`.
+        ...         # Similar calls can be made to other probability functions
+        ...         # by replacing 'prob' by the name of the function
+        ...         ans = self.cau1.prob(value)
+        ...         # Evaluate with respect to distribution b.
+        ...         ans = self.cau1.prob(value, loc_b, scale_b)
+        ...         # `loc` and `scale` must be passed in during function calls
+        ...         ans = self.cau2.prob(value, loc_a, scale_a)
+        ...
+        ...         # Functions `mode` and `entropy` have the same arguments.
+        ...         # Args:
+        ...         #     loc (Tensor): the location of the distribution. Default: self.loc.
+        ...         #     scale (Tensor): the scale of the distribution. Default: self.scale.
+        ...
+        ...         # Example of `mode`.
+        ...         ans = self.cau1.mode() # return 0.0
+        ...         ans = self.cau1.mode(loc_b, scale_b) # return loc_b
+        ...         # `loc` and `scale` must be passed in during function calls.
+        ...         ans = self.cau2.mode(loc_a, scale_a)
+        ...
+        ...         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
+        ...         # Args:
+        ...         #     dist (str): the type of the distributions. Only "Cauchy" is supported.
+        ...         #     loc_b (Tensor): the loc of distribution b.
+        ...         #     scale_b (Tensor): the scale distribution b.
+        ...         #     loc (Tensor): the loc of distribution a. Default: self.loc.
+        ...         #     scale (Tensor): the scale distribution a. Default: self.scale.
+        ...
+        ...         # Examples of `kl_loss`. `cross_entropy` is similar.
+        ...         ans = self.cau1.kl_loss('Cauchy', loc_b, scale_b)
+        ...         ans = self.cau1.kl_loss('Cauchy', loc_b, scale_b, loc_a, scale_a)
+        ...         # Additional `loc` and `scale` must be passed in.
+        ...         ans = self.cau2.kl_loss('Cauchy', loc_b, scale_b, loc_a, scale_a)
+        ...
+        ...         # Examples of `sample`.
+        ...         # Args:
+        ...         #     shape (tuple): the shape of the sample. Default: ()
+        ...         #     loc (Tensor): the location of the distribution. Default: self.loc.
+        ...         #     scale (Tensor): the scale of the distribution. Default: self.scale.
+        ...         ans = self.cau1.sample()
+        ...         ans = self.cau1.sample((2,3))
+        ...         ans = self.cau1.sample((2,3), loc_b, s_b)
+        ...         ans = self.cau2.sample((2,3), loc_a, s_a)
     """
 
     def __init__(self,

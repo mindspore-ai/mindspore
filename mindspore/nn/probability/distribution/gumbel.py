@@ -91,7 +91,6 @@ class Gumbel(TransformedDistribution):
         ...
         ...         ans = self.g1.sample()
         ...         ans = self.g1.sample((2,3))
-        ...
     """
 
     def __init__(self,
