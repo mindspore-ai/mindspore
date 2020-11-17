@@ -21,6 +21,7 @@ from scipy.ndimage.filters import gaussian_filter
 
 from mindspore import log
 import mindspore as ms
+from mindspore.train._utils import check_value_type
 import mindspore.nn as nn
 import mindspore.ops.operations as op
 from .metric import AttributionMetric
@@ -140,9 +141,7 @@ class Perturb:
     @staticmethod
     def _assign(x: _Array, y: _Array, masks: _Array):
         """Assign values to perturb pixels on perturbations."""
-        if masks.dtype != bool:
-            raise TypeError('The param "masks" should be an array of bool, but receive {}'
-                            .format(masks.dtype))
+        check_value_type("masks dtype", masks.dtype, type(np.dtype(bool)))
         for i in range(x.shape[0]):
             x[i][:, masks[i]] = y[:, masks[i]]
 
@@ -336,8 +335,7 @@ class NaiveFaithfulness(_FaithfulnessHelper):
         if not np.count_nonzero(saliency):
             log.warning("The saliency map is zero everywhere. The correlation will be set to zero.")
             correlation = 0
-            normalized_faithfulness = (correlation + 1) / 2
-            return np.array([normalized_faithfulness], np.float)
+            return np.array([correlation], np.float)
         reference = self._get_reference(inputs)
         perturbations, masks = self._perturb(
             inputs, saliency, reference, return_mask=True)
@@ -347,8 +345,7 @@ class NaiveFaithfulness(_FaithfulnessHelper):
         predictions = model(perturbations).asnumpy()[:, targets]
 
         faithfulness = calc_correlation(feature_importance, predictions)
-        normalized_faithfulness = (faithfulness + 1) / 2
-        return np.array([normalized_faithfulness], np.float)
+        return np.array([faithfulness], np.float)
 
 
 class DeletionAUC(_FaithfulnessHelper):
@@ -533,6 +530,8 @@ class Faithfulness(AttributionMetric):
         metric (str, optional): The specifi metric to quantify faithfulness.
             Options: "DeletionAUC", "InsertionAUC", "NaiveFaithfulness".
             Default: 'NaiveFaithfulness'.
+        activation_fn (Cell, optional): The activation function that transforms the network output to a probability.
+            Default: nn.Softmax().
 
     Examples:
         >>> from mindspore.explainer.benchmark import Faithfulness
@@ -543,7 +542,7 @@ class Faithfulness(AttributionMetric):
     """
     _methods = [NaiveFaithfulness, DeletionAUC, InsertionAUC]
 
-    def __init__(self, num_labels: int, metric: str = "NaiveFaithfulness"):
+    def __init__(self, num_labels: int, metric: str = "NaiveFaithfulness", activation_fn=nn.Softmax()):
         super(Faithfulness, self).__init__(num_labels)
 
         perturb_percent = 0.5  # ratio of pixels to be perturbed, future argument
@@ -552,6 +551,7 @@ class Faithfulness(AttributionMetric):
         num_perturb_steps = 100  # separate the perturbation progress in to 100 steps.
         base_value = 0.0  # the pixel value set for the perturbed pixels
 
+        self._activation_fn = activation_fn
         self._verify_metrics(metric)
         for method in self._methods:
             if metric == method.__name__:
@@ -568,9 +568,7 @@ class Faithfulness(AttributionMetric):
         Evaluate faithfulness on a single data sample.
 
         Note:
-            To apply `Faithfulness` to evaluate an explainer, this explainer must be initialized with a network that
-            contains the output activation function. Otherwise, the results will not be correct. Currently only single
-            sample (:math:`N=1`) at each call is supported.
+            Currently only single sample (:math:`N=1`) at each call is supported.
 
         Args:
             explainer (Explanation): The explainer to be evaluated, see `mindspore.explainer.explanation`.
@@ -586,7 +584,7 @@ class Faithfulness(AttributionMetric):
 
         Examples:
             >>> # init an explainer, the network should contain the output activation function.
-            >>> network = nn.SequentialCell([resnet50, nn.Sigmoid()])
+            >>> network = resnet50(20)
             >>> gradient = Gradient(network)
             >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
             >>> targets = 5
@@ -610,10 +608,10 @@ class Faithfulness(AttributionMetric):
         saliency = saliency.squeeze()
         if len(saliency.shape) != 2:
             raise ValueError('Squeezed saliency map is expected to 2D, but receive {}.'.format(len(saliency.shape)))
-
-        faithfulness = self._faithfulness_helper.calc_faithfulness(inputs=inputs, model=explainer.model,
+        model = nn.SequentialCell([explainer.model, self._activation_fn])
+        faithfulness = self._faithfulness_helper.calc_faithfulness(inputs=inputs, model=model,
                                                                    targets=targets, saliency=saliency)
-        return faithfulness
+        return (1 + faithfulness) / 2
 
     def _verify_metrics(self, metric: str):
         supports = [x.__name__ for x in self._methods]

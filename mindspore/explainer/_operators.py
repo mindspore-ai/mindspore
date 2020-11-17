@@ -18,9 +18,8 @@ from typing import List, Tuple, Union, Callable
 import numpy as np
 
 import mindspore
-from mindspore import nn
 import mindspore.ops.operations as op
-
+from mindspore import nn
 
 _Axis = Union[int, Tuple[int, ...], List[int]]
 _Idx = Union[int, mindspore.Tensor, Tuple[int, ...], Tuple[mindspore.Tensor, ...]]
@@ -235,7 +234,7 @@ def randint(low: int, high: int, shape: _Shape, dtype: mindspore.dtype = mindspo
     return outputs
 
 
-def softmax(axis: int) -> Callable:
+def softmax(axis: int = -1) -> Callable:
     """Softmax activation function."""
     func = nn.Softmax(axis=axis)
     return func
