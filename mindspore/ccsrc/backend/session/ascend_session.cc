@@ -712,20 +712,6 @@ void AscendSession::SetSummaryNodes(KernelGraph *graph) {
   MS_LOG(DEBUG) << "Update summary end size: " << summary.size();
 }
 
-GraphId AscendSession::GetGraphIdByNode(const AnfNodePtr &front_anf) const {
-  for (const auto &graph_item : graphs_) {
-    auto graph = graph_item.second;
-    MS_EXCEPTION_IF_NULL(graph);
-    // if front_anf is a parameter,the backend parameter may have two
-    if (graph->GetBackendAnfByFrontAnf(front_anf) != nullptr) {
-      return graph_item.first;
-    }
-  }
-  MS_EXCEPTION_IF_NULL(front_anf);
-  MS_LOG(DEBUG) << "Front_anf " << front_anf->DebugString() << " is not exist in any graph";
-  return kInvalidGraphId;
-}
-
 void AscendSession::MergeGraphExecOrder() {
   MS_LOG(INFO) << "Start!";
   // merge graph order
