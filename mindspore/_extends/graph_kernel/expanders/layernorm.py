@@ -18,7 +18,6 @@ from mindspore._extends.graph_kernel.model import model_builder as builder
 
 def expand_layernorm(expand_info):
     """LayerNorm expander"""
-
     # get op info.
     input_desc_0 = expand_info['input_desc'][0]
     input_desc_1 = expand_info['input_desc'][1]
@@ -70,11 +69,8 @@ def expand_layernorm(expand_info):
         normalize_sub = graph_builder.emit('Sub', [input_x, mean])
         epsilon_v = graph_builder.value(input_x.dtype, epsilon, input_x.data_format)
         normalize_add = graph_builder.emit('TensorAdd', [variance, epsilon_v])
-        normalize_log = graph_builder.emit('Log', [normalize_add])
-        input_y = graph_builder.value(input_x.dtype, -0.5, input_x.data_format)
-        normalize_log_mul = graph_builder.emit('Mul', [normalize_log, input_y])
-        normalize_exp = graph_builder.emit('Exp', [normalize_log_mul])
-        normalize_mul = graph_builder.emit('Mul', [normalize_sub, normalize_exp])
+        normlize_rsqrt = graph_builder.emit('Rsqrt', [normalize_add])
+        normalize_mul = graph_builder.emit('Mul', [normalize_sub, normlize_rsqrt])
 
         # Calculate scale and translate
         scale_mul = graph_builder.emit('Mul', [input_gamma, normalize_mul])

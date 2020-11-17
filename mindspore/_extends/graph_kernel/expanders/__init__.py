@@ -29,3 +29,5 @@ from .maximum_grad import expand_maximumgrad
 from .minimum_grad import expand_minimumgrad
 from .dropout_grad import expand_dropoutgrad
 from .layernorm_grad import expand_layernormgrad
+from .logsoftmax import expand_logsoftmax
+from .logsoftmax_grad import expand_logsoftmaxgrad
