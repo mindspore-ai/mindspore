@@ -1829,7 +1829,7 @@ class Div(_MathBinaryOp):
         return None
 
 
-class DivNoNan(PrimitiveWithCheck):
+class DivNoNan(_MathBinaryOp):
     """
     Computes a safe divide which returns 0 if the y is zero.
 
