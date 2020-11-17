@@ -193,6 +193,8 @@ class LiteMat {
 
   LiteMat(int width, int height, LDataType data_type = LDataType::UINT8);
 
+  LiteMat(int width, int height, void *p_data, LDataType data_type = LDataType::UINT8);
+
   LiteMat(int width, int height, int channel, LDataType data_type = LDataType::UINT8);
 
   LiteMat(int width, int height, int channel, void *p_data, LDataType data_type = LDataType::UINT8);
@@ -205,7 +207,11 @@ class LiteMat {
 
   void Init(int width, int height, LDataType data_type = LDataType::UINT8);
 
+  void Init(int width, int height, void *p_data, LDataType data_type = LDataType::UINT8);
+
   void Init(int width, int height, int channel, LDataType data_type = LDataType::UINT8);
+
+  void Init(int width, int height, int channel, void *p_data, LDataType data_type = LDataType::UINT8);
 
   bool IsEmpty() const;
 

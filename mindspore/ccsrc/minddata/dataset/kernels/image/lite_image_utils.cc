@@ -217,6 +217,16 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   return Status::OK();
 }
 
+static LDataType GetLiteCVDataType(DataType data_type) {
+  if (data_type == DataType::DE_UINT8) {
+    return LDataType::UINT8;
+  } else if (data_type == DataType::DE_FLOAT32) {
+    return LDataType::FLOAT32;
+  } else {
+    return LDataType::UNKNOWN;
+  }
+}
+
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   if (IsNonEmptyJPEG(input)) {
     return JpegCropAndDecode(input, output);
@@ -230,7 +240,7 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
     RETURN_STATUS_UNEXPECTED("Shape not <H,W,C> or <H,W>");
   }
 
-  if (input->type() != DataType::DE_FLOAT32 || input->type() != DataType::DE_UINT8) {
+  if (input->type() != DataType::DE_FLOAT32 && input->type() != DataType::DE_UINT8) {
     RETURN_STATUS_UNEXPECTED("Only float32, uint8 support in Crop");
   }
 
@@ -243,16 +253,22 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
     RETURN_STATUS_UNEXPECTED("Invalid x coordinate value for crop");
   }
 
-  LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], 3,
-                       const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())), LDataType::UINT8);
-
   try {
+    LiteMat lite_mat_rgb;
     TensorShape shape{h, w};
-    int num_channels = input->shape()[2];
-    if (input->Rank() == 3) shape = shape.AppendDim(num_channels);
+    if (input->Rank() == 2) {
+      lite_mat_rgb.Init(input->shape()[1], input->shape()[0],
+                        const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                        GetLiteCVDataType(input->type()));
+    } else {  // rank == 3
+      lite_mat_rgb.Init(input->shape()[1], input->shape()[0], input->shape()[2],
+                        const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                        GetLiteCVDataType(input->type()));
+      int num_channels = input->shape()[2];
+      shape = shape.AppendDim(num_channels);
+    }
     LiteMat lite_mat_cut;
-
-    bool ret = Crop(lite_mat_rgb, lite_mat_cut, x, y, x + w, y + h);
+    bool ret = Crop(lite_mat_rgb, lite_mat_cut, x, y, w, h);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Crop failed in lite cv");
     // create output Tensor based off of lite_mat_cut
     std::shared_ptr<Tensor> output_tensor;
@@ -292,17 +308,9 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     RETURN_STATUS_UNEXPECTED("Input tensor rank isn't 3");
   }
 
-  if (input->type() != DataType::DE_UINT8) {
-    RETURN_STATUS_UNEXPECTED("Only uint8 support in Normalize");
+  if (input->type() != DataType::DE_UINT8 && input->type() != DataType::DE_FLOAT32) {
+    RETURN_STATUS_UNEXPECTED("Only uint8, float32 support in Normalize");
   }
-
-  LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], 3,
-                       const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())), LDataType::UINT8);
-
-  LiteMat lite_mat_float;
-  // change input to float
-  bool ret = ConvertTo(lite_mat_rgb, lite_mat_float, 1.0);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret, "Conversion of lite cv to float failed");
 
   mean->Squeeze();
   if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
@@ -325,9 +333,24 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
       vec_mean.push_back(mean_c);
       vec_std.push_back(std_c);
     }
+
     LiteMat lite_mat_norm;
-    ret = SubStractMeanNormalize(lite_mat_float, lite_mat_norm, vec_mean, vec_std);
+    bool ret = false;
+    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                         GetLiteCVDataType(input->type()));
+
+    if (input->type() == DataType::DE_UINT8) {
+      LiteMat lite_mat_float;
+      // change input to float
+      ret = ConvertTo(lite_mat_rgb, lite_mat_float, 1.0);
+      CHECK_FAIL_RETURN_UNEXPECTED(ret, "Conversion of lite cv to float failed");
+      ret = SubStractMeanNormalize(lite_mat_float, lite_mat_norm, vec_mean, vec_std);
+    } else {  // float32
+      ret = SubStractMeanNormalize(lite_mat_rgb, lite_mat_norm, vec_mean, vec_std);
+    }
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Normalize in lite cv failed");
+
     // create output Tensor based off of lite_mat_cut
     std::shared_ptr<Tensor> output_tensor;
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(input->shape(), DataType(DataType::DE_FLOAT32),
@@ -341,8 +364,8 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
 Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t output_height,
               int32_t output_width, double fx, double fy, InterpolationMode mode) {
-  if (input->Rank() != 3) {
-    RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C>");
+  if (input->Rank() != 3 && input->Rank() != 2) {
+    RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C> or <H,W>");
   }
   if (input->type() != DataType::DE_UINT8) {
     RETURN_STATUS_UNEXPECTED("Only uint8 support in Resize");
@@ -355,13 +378,20 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       "1000 times the original image; 2) can not be 0.";
     return Status(StatusCode::kShapeMisMatch, err_msg);
   }
-  LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], 3,
-                       const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())), LDataType::UINT8);
-
   try {
+    LiteMat lite_mat_rgb;
     TensorShape shape{output_height, output_width};
-    int num_channels = input->shape()[2];
-    if (input->Rank() == 3) shape = shape.AppendDim(num_channels);
+    if (input->Rank() == 2) {
+      lite_mat_rgb.Init(input->shape()[1], input->shape()[0],
+                        const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                        GetLiteCVDataType(input->type()));
+    } else {  // rank == 3
+      lite_mat_rgb.Init(input->shape()[1], input->shape()[0], input->shape()[2],
+                        const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                        GetLiteCVDataType(input->type()));
+      int num_channels = input->shape()[2];
+      shape = shape.AppendDim(num_channels);
+    }
 
     LiteMat lite_mat_resize;
     bool ret = ResizeBilinear(lite_mat_rgb, lite_mat_resize, output_width, output_height);
@@ -383,25 +413,25 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C>");
   }
 
-  if (input->type() != DataType::DE_FLOAT32 || input->type() != DataType::DE_UINT8) {
+  if (input->type() != DataType::DE_FLOAT32 && input->type() != DataType::DE_UINT8) {
     RETURN_STATUS_UNEXPECTED("Only float32, uint8 support in Pad");
   }
 
-  if (pad_top <= 0 || pad_bottom <= 0 || pad_left <= 0 || pad_right <= 0) {
+  if (pad_top < 0 || pad_bottom < 0 || pad_left < 0 || pad_right < 0) {
     RETURN_STATUS_UNEXPECTED("The pad, top, bottom, left, right must be greater than 0");
   }
 
   try {
-    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], 3,
-                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())), LDataType::UINT8);
-
+    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                         GetLiteCVDataType(input->type()));
     LiteMat lite_mat_pad;
     bool ret = Pad(lite_mat_rgb, lite_mat_pad, pad_top, pad_bottom, pad_left, pad_right,
                    PaddBorderType::PADD_BORDER_CONSTANT, fill_r, fill_g, fill_b);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Pad failed in lite cv");
 
     std::shared_ptr<Tensor> output_tensor;
-    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(input->shape(), DataType(DataType::DE_FLOAT32),
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(input->shape(), input->type(),
                                               static_cast<uchar *>(lite_mat_pad.data_ptr_), &output_tensor));
     *output = output_tensor;
   } catch (std::runtime_error &e) {
