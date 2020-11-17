@@ -49,6 +49,8 @@ void DynamicKernel::Initialize() {
   MS_LOG(INFO) << "Init End";
 }
 
+int DynamicKernel::GetKernelType() { return AnfAlgo::GetKernelType(cnode_ptr_); }
+
 bool IsTupleGetItem(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (!anf_node->isa<CNode>()) {

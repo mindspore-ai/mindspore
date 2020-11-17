@@ -606,7 +606,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
 
   auto dynamic_kernels = iter->second;
   for (const auto &dynamic_kernel : dynamic_kernels) {
-    if (dynamic_kernel->have_depends()) {
+    if (dynamic_kernel->have_depends() || dynamic_kernel->GetKernelType() == KernelType::HCCL_KERNEL) {
       MS_LOG(INFO) << "Match Dynamic Kernel, Start SyncStream";
       if (!SyncStream()) {
         MS_LOG(ERROR) << "SyncStream failed";
