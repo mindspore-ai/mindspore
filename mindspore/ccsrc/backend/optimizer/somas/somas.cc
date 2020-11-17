@@ -494,7 +494,6 @@ void Somas::GenContiguousList(const session::KernelGraph *graph) {
     outputs.push_back(output_before_gap->GetId());
 
     for (const auto &output_tensor : node->output_tensors_) {
-      output_tensor->lifelong_value_ = kLifeLongGraphStart;
       comm_output_total_size_ += output_tensor->aligned_size_;
       output_tensor->contiguous_ = true;
       outputs.push_back(output_tensor->GetId());
