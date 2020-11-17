@@ -86,27 +86,27 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
   } else {
     attr->format = schema::Format::Format_NUM_OF_FORMAT;
   }
-  auto pad_list = GetValue<std::vector<int>>(prim.GetAttr("pads"));
+  auto pad_list = CastToInt(prim.GetAttr("pads"), true);
   attr->padUp = pad_list[0];
   attr->padDown = pad_list[1];
   attr->padLeft = pad_list[2];
   attr->padRight = pad_list[3];
 
-  auto dilation = GetValue<std::vector<int>>(prim.GetAttr("dilation"));
+  auto dilation = CastToInt(prim.GetAttr("dilation"), true);
   attr->dilateH = dilation[0];
   attr->dilateW = dilation[1];
 
   if (utils::isa<ValueSequeue>(prim.GetAttr("kernel_size"))) {
-    auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("kernel_size"));
+    auto kernel_size = CastToInt(prim.GetAttr("kernel_size"), true);
     attr->kernelH = kernel_size[0];
     attr->kernelW = kernel_size[1];
   } else {
-    auto kernel_size = GetValue<int>(prim.GetAttr("kernel_size"));
+    auto kernel_size = CastToInt(prim.GetAttr("kernel_size"), false).front();
     attr->kernelH = kernel_size;
     attr->kernelW = kernel_size;
   }
 
-  auto stride = GetValue<std::vector<int>>(prim.GetAttr("stride"));
+  auto stride = CastToInt(prim.GetAttr("stride"), true);
   attr->strideH = stride[2];
   attr->strideW = stride[3];
 
@@ -124,7 +124,7 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
   } else {
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
-  auto channel_multiplier = GetValue<int>(prim.GetAttr("channel_multiplier"));
+  auto channel_multiplier = CastToInt(prim.GetAttr("channel_multiplier"), false).front();
   attr->channelMultiplier = channel_multiplier;
 
   MS_ASSERT(inputs.size() == kAnfPopulaterTwo);

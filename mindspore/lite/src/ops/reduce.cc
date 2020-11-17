@@ -87,7 +87,7 @@ int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
             attr->axes.emplace_back(elem->value());
           }
         } else {
-          int axes_item = GetValue<int>(value);
+          int axes_item = CastToInt(value, false).front();
           attr->axes.push_back(axes_item);
         }
       }

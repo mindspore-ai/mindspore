@@ -180,6 +180,35 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
+std::vector<int> CastToInt(const ValuePtr value, bool is_vector) {
+  if (value == nullptr) {
+    MS_LOG(WARNING) << "valueptr is nullptr.";
+    return {};
+  }
+  std::vector<int> cur_value;
+  if (is_vector) {
+    if (!utils::isa<ValueSequeuePtr>(value)) {
+      MS_LOG(WARNING) << "valueptr is not a sequence, value may be a scalar.";
+      return {};
+    }
+    if (value->cast<ValueSequeuePtr>()->value().front()->type()->type_name() == "Int64Imm") {
+      auto origin_value = GetValue<std::vector<int64_t>>(value);
+      for (size_t index = 0; index < origin_value.size(); ++index) {
+        cur_value.push_back(static_cast<int>(origin_value[index]));
+      }
+    } else {
+      cur_value = GetValue<std::vector<int>>(value);
+    }
+  } else {
+    if (value->type_name() == "Int64Imm") {
+      cur_value.push_back(static_cast<int>(GetValue<int64_t>(value)));
+    } else {
+      cur_value.push_back(GetValue<int>(value));
+    }
+  }
+  return cur_value;
+}
+
 void PrimitiveC::CalFloatScopeByMeanAndStddev(const double &mean, const double &stdDev, float *mMin, float *mMax) {
   const float qmin = 0;
   const float qmax = 255;

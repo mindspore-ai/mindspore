@@ -99,11 +99,11 @@ int PoolingGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr>
       attr->padMode = schema::PadMode_NOTSET;
     }
 
-    auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("ksize"));
+    auto kernel_size = CastToInt(prim.GetAttr("ksize"), true);
     attr->windowH = kernel_size[2];
     attr->windowW = kernel_size[3];
 
-    auto stride = GetValue<std::vector<int>>(prim.GetAttr("strides"));
+    auto stride = CastToInt(prim.GetAttr("strides"), true);
     attr->strideH = stride[2];
     attr->strideW = stride[3];
     this->primitive_->value.value = attr;
