@@ -105,6 +105,10 @@ TEST_F(MindDataTestPipeline, TestTextFileGetters) {
   EXPECT_EQ(ds->GetDatasetSize(), 2);
   EXPECT_EQ(ds->GetColumnNames(), column_names);
 
+  ds = TextFile({tf_file1}, 0);
+  EXPECT_NE(ds, nullptr);
+
+  EXPECT_EQ(ds->GetDatasetSize(), 3);
   // Restore configuration
   GlobalContext::config_manager()->set_seed(original_seed);
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);

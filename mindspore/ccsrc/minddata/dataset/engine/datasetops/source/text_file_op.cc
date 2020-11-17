@@ -529,7 +529,7 @@ Status TextFileOp::GetDatasetSize(int64_t *dataset_size) {
   int64_t num_rows, sample_size;
   sample_size = total_rows_;
   if (num_rows_per_shard_ <= 0) RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
-  num_rows = total_rows_;
+  num_rows = num_rows_per_shard_;
   *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
   dataset_size_ = *dataset_size;
   return Status::OK();
