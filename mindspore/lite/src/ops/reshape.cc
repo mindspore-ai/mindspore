@@ -63,7 +63,7 @@ int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
           attr->shape.emplace_back(static_cast<int>(elem->value()));
         }
       } else {
-        int dim = GetValue<int>(val);
+        int dim = CastToInt(val, false).front();
         attr->shape = {dim};
       }
     }

@@ -314,7 +314,9 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, s
       return RET_ERROR;
     }
     auto input_index_key =
-      get_item_input_cnode->fullname_with_scope() + "_o:" + std::to_string(GetValue<int>(value_node->value()));
+      get_item_input_cnode->fullname_with_scope() + "_o:" +
+      std::to_string(value_node->value()->type_name() == "Int64Imm" ? GetValue<int64_t>(value_node->value())
+                                                                    : GetValue<int>(value_node->value()));
     auto iter = node_id_map_.find(input_index_key);
     if (iter == node_id_map_.end()) {
 #ifdef SUPPORT_TRAIN

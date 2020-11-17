@@ -48,7 +48,7 @@ int OneHot::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     }
     attr->axis = -1;
     if (prim.GetAttr("axis") != nullptr) {
-      attr->axis = GetValue<int>(prim.GetAttr("axis"));
+      attr->axis = CastToInt(prim.GetAttr("axis"), false).front();
     }
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {

@@ -50,7 +50,7 @@ int Squeeze::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
       MS_LOG(INFO) << "Squeeze's attr xis is set to default";
       attr->axis = {0};
     } else {
-      attr->axis = GetValue<std::vector<int>>(prim.GetAttr("axis"));
+      attr->axis = CastToInt(prim.GetAttr("axis"), true);
     }
     this->primitive_->value.value = attr;
   }

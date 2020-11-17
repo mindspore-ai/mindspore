@@ -52,6 +52,8 @@ static std::map<std::string, schema::ActivationType> kActivationTypeMap{{"ReLU",
                                                                         {"Sigmoid", schema::ActivationType_SIGMOID},
                                                                         {"HSwish", schema::ActivationType_HSWISH},
                                                                         {"HSigmoid", schema::ActivationType_HSIGMOID}};
+std::vector<int> CastToInt(const ValuePtr value, bool is_vector);
+
 class PrimitiveC : public mindspore::Primitive {
  public:
   // Argument primitive is deliverd into PrimitiveC and will be deleted in ~PrimitiveC().

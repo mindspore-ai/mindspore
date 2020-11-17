@@ -132,21 +132,21 @@ void DeConv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::Primitiv
   } else {
     attr->format = schema::Format::Format_NUM_OF_FORMAT;
   }
-  auto pad_list = GetValue<std::vector<int>>(prim.GetAttr("pad_list"));
+  auto pad_list = CastToInt(prim.GetAttr("pad_list"), true);
   attr->padUp = pad_list[0];
   attr->padDown = pad_list[1];
   attr->padLeft = pad_list[2];
   attr->padRight = pad_list[3];
 
-  auto dilation = GetValue<std::vector<int>>(prim.GetAttr("dilation"));
+  auto dilation = CastToInt(prim.GetAttr("dilation"), true);
   attr->dilateH = dilation[0];
   attr->dilateW = dilation[1];
 
-  auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("kernel_size"));
+  auto kernel_size = CastToInt(prim.GetAttr("kernel_size"), true);
   attr->kernelH = kernel_size[0];
   attr->kernelW = kernel_size[1];
 
-  auto stride = GetValue<std::vector<int>>(prim.GetAttr("stride"));
+  auto stride = CastToInt(prim.GetAttr("stride"), true);
   attr->strideH = stride[0];
   attr->strideW = stride[1];
 
@@ -168,7 +168,7 @@ void DeConv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::Primitiv
 
   int channel_mutiplier = 1;
   if (prim.GetAttr("channel_mutiplier") != nullptr) {
-    channel_mutiplier = GetValue<int>(prim.GetAttr("channel_multiplier"));
+    channel_mutiplier = CastToInt(prim.GetAttr("channel_multiplier"), false).front();
   }
   attr->channelMultiplier = channel_mutiplier;
 
@@ -195,25 +195,25 @@ void DeConv2D::PopulaterDeConv2DSingleGroup(const Primitive &prim, schema::Primi
   } else {
     attr->format = schema::Format_NUM_OF_FORMAT;
   }
-  auto pad_list = GetValue<std::vector<int>>(prim.GetAttr("pad_list"));
+  auto pad_list = CastToInt(prim.GetAttr("pad_list"), true);
   attr->padUp = pad_list[0];
   attr->padDown = pad_list[1];
   attr->padLeft = pad_list[2];
   attr->padRight = pad_list[3];
 
-  auto dilation = GetValue<std::vector<int>>(prim.GetAttr("dilation"));
+  auto dilation = CastToInt(prim.GetAttr("dilation"), true);
   attr->dilateH = dilation[0];
   attr->dilateW = dilation[1];
 
-  auto kernel_size = GetValue<std::vector<int>>(prim.GetAttr("kernel_size"));
+  auto kernel_size = CastToInt(prim.GetAttr("kernel_size"), true);
   attr->kernelH = kernel_size[0];
   attr->kernelW = kernel_size[1];
 
-  auto stride = GetValue<std::vector<int>>(prim.GetAttr("stride"));
+  auto stride = CastToInt(prim.GetAttr("stride"), true);
   attr->strideH = stride[0];
   attr->strideW = stride[1];
 
-  attr->channelOut = GetValue<int>(prim.GetAttr("out_channel"));
+  attr->channelOut = CastToInt(prim.GetAttr("out_channel"), false).front();
 
   auto pad_mode = GetValue<std::string>(prim.GetAttr("pad_mode"));
   if (pad_mode == "valid" || pad_mode == "VALID") {
@@ -248,7 +248,7 @@ int DeConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &i
     MS_LOG(ERROR) << "primitive_ type is error:" << this->primitive_->value.type;
     return RET_ERROR;
   }
-  int group = GetValue<int>(prim.GetAttr("group"));
+  int group = CastToInt(prim.GetAttr("group"), false).front();
   if (group == 1) {
     PopulaterDeConv2DSingleGroup(prim, this->primitive_, group);
   } else if (group > 1) {
