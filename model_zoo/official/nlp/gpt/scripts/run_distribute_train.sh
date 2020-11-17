@@ -21,13 +21,13 @@ echo "for example: bash run_distributed_pretrain_ascend.sh /path/dataset /path/h
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
-ROOT_PATH='pwd'
+ROOT_PATH=`pwd`
 DATA_DIR=$1
 export RANK_TABLE_FILE=$2
 RANK_SIZE=$3
 
 
-for((i=0;i<=${RANK_SIZE};i++));
+for((i=0;i<${RANK_SIZE};i++));
 do
     rm ${ROOT_PATH}/device$i/ -rf
     mkdir ${ROOT_PATH}/device$i
