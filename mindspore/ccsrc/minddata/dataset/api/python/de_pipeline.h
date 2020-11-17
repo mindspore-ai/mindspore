@@ -111,6 +111,8 @@ class DEPipeline {
 
   Status GetOutputTypes(py::list *output);
 
+  Status GetDataInfo(py::list *types, py::list *shapes);
+
   Status SaveDataset(const std::vector<std::string> &file_names, const std::string &file_type);
 
   int GetDatasetSize() const;
