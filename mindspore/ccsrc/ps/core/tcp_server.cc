@@ -198,7 +198,10 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
   if (!bev) {
     MS_LOG(ERROR) << "Error constructing buffer event!";
-    event_base_loopbreak(base);
+    int ret = event_base_loopbreak(base);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "event base loop break failed!";
+    }
     return;
   }
 
