@@ -46,6 +46,7 @@ extern "C" {
 #endif
 
 void AddInt8(const int8_t *input0, const int8_t *input1, int8_t *output, int size, AddQuantParameter *params);
+void AddOptInt8(const int8_t *ptr_in, const int8_t element_in, int8_t *output, int size, AddQuantParameter *params);
 
 #ifdef __cplusplus
 }

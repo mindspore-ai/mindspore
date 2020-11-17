@@ -39,11 +39,16 @@ class QuantizedAddCPUKernel : public LiteKernel {
   int DoExecute(int tId);
 
  private:
+  void BroadcastRun(int task_id);
+
+ private:
   AddQuantParameter para_;
   ArithmeticParameter *arith_para_ = nullptr;
+  int in_size_ = 0;
+  int out_size_ = 0;
   int thread_count_ = 1;
-  int thread_stride_ = 0;
   int elements_num_ = 0;
+  bool support_opt_add_ = false;
   int8_t *input0_data_ = nullptr;
   int8_t *input1_data_ = nullptr;
   int8_t *output_data_ = nullptr;
