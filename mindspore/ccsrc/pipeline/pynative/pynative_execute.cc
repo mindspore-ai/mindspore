@@ -1985,6 +1985,7 @@ void PynativeExecutor::Clear(const std::string &flag) {
   graph_info_map_.clear();
   op_id_map_.clear();
   obj_to_forward_id_.clear();
+  node_abs_map_.clear();
   std::stack<FuncGraphPtr>().swap(graph_context_);
   ConfigManager::GetInstance().ResetIterNum();
 }
