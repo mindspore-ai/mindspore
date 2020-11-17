@@ -393,6 +393,9 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \brief Add callback to DatasetOp, only MapOp supports Callback at the moment
   void AddCallbacks(std::vector<std::shared_ptr<DSCallback>> callbacks) { callback_manager_.AddCallbacks(callbacks); }
 
+  /// \brief Remove all callbacks from DatasetOp
+  void ClearCallbacks() { callback_manager_.ClearCallbacks(); }
+
  protected:
   /// \brief Removes a parent operator from this operator
   /// \notes External callers do not have access to this function

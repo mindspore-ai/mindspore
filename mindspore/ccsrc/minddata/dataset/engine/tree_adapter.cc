@@ -95,7 +95,7 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
 }
 
 Status TreeAdapter::BuildExecutionTree(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op) {
-  // Build the DatasetOp ExecutionTree from the optmized IR tree
+  // Build the DatasetOp ExecutionTree from the optimized IR tree
   std::vector<std::shared_ptr<DatasetOp>> ops = ir->Build();
   CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty(), "Unable to build node.");
 

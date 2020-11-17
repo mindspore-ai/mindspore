@@ -16,6 +16,7 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include <iostream>
 #include <string>
+#include <utility>
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
@@ -35,7 +36,7 @@
 namespace mindspore {
 namespace dataset {
 // Constructor
-ExecutionTree::ExecutionTree() : id_count_(0) {
+ExecutionTree::ExecutionTree() : id_count_(0), pre_pass_override_(nullptr) {
   tg_ = std::make_unique<TaskGroup>();
   tree_state_ = kDeTStateInit;
   prepare_flags_ = kDePrepNone;
@@ -234,7 +235,6 @@ Status ExecutionTree::PrepareTreePreAction() {
   bool modified = false;
   std::vector<std::unique_ptr<Pass>> pre_actions;
   // Construct pre actions
-  MS_LOG(INFO) << "Running pre pass loops.";
 #ifndef ENABLE_ANDROID
   pre_actions.push_back(std::make_unique<CacheErrorPass>());
 #endif
@@ -243,6 +243,17 @@ Status ExecutionTree::PrepareTreePreAction() {
 #ifndef ENABLE_ANDROID
   pre_actions.push_back(std::make_unique<CacheTransformPass>());
 #endif
+
+  // this offers a way to override the preset optimization pass with customized ones
+  // this is used when certain nodes are removed for tree getters
+  if (pre_pass_override_) {
+    MS_LOG(INFO) << "Default pre optimization passes is being overridden,"
+                 << " number of passes before the override:" << pre_actions.size() << ".";
+    pre_actions = pre_pass_override_(std::move(pre_actions));
+  }
+
+  MS_LOG(INFO) << "Running " << pre_actions.size() << " pre pass loops.";
+
   // Apply pre action passes
   for (auto &pass : pre_actions) {
     RETURN_IF_NOT_OK(pass->Run(this, &modified));
@@ -256,7 +267,7 @@ Status ExecutionTree::PrepareTreePostAction() {
   tree_state_ = kDeTStatePrepare;
 
   bool modified = false;
-  std::vector<std::unique_ptr<Pass>> post_actions;
+  OptPass post_actions;
   // Construct pre actions
   MS_LOG(INFO) << "Running post pass loops.";
 #ifndef ENABLE_ANDROID
@@ -274,7 +285,7 @@ Status ExecutionTree::PrepareTreePostAction() {
 
 Status ExecutionTree::Optimize() {
   // Vector of optimizations, currently only 1, add more as necessary
-  std::vector<std::unique_ptr<NodePass>> optimizations;
+  OptPass optimizations;
 #ifndef ENABLE_ANDROID
   optimizations.push_back(std::make_unique<TensorOpFusionPass>());
 #endif
