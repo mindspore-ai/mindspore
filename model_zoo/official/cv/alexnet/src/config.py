@@ -51,12 +51,4 @@ alexnet_imagenet_cfg = edict({
 
     # lr
     'is_dynamic_loss_scale': 0,
-    'label_smooth': 1,
-    'label_smooth_factor': 0.1,
-    'lr_scheduler': 'cosine_annealing',
-    'warmup_epochs': 5,
-    'lr_epochs': [30, 60, 90, 120],
-    'lr_gamma': 0.1,
-    'T_max': 150,
-    'eta_min': 0.0,
 })
