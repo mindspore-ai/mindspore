@@ -21,9 +21,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 #if defined(__arm__) || defined(__aarch64__)
 uint32_t getHwCap(int hwcap_type);
 #endif
+
+#ifdef DEBUG
+#include <assert.h>
+#define NNACL_ASSERT(f) assert(f)
+#else
+#define NNACL_ASSERT(f) ((void)0)
+#endif
+
 #ifdef __cplusplus
 }
 #endif
