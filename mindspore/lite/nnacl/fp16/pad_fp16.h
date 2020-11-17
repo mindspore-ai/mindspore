@@ -19,7 +19,7 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "nnacl/fp32/pad.h"
+#include "nnacl/fp32/pad_fp32.h"
 
 #ifdef __cplusplus
 extern "C" {

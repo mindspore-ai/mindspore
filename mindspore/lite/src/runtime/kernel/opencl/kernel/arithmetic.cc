@@ -18,7 +18,7 @@
 #include <set>
 #include <vector>
 #include <string>
-#include "nnacl/fp32/common_func.h"
+#include "nnacl/fp32/common_func_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"

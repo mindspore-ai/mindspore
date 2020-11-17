@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BIAS_H_
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 
 namespace mindspore::kernel {
 class BiasCPUKernel : public LiteKernel {

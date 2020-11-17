@@ -16,7 +16,7 @@
 #include "test/common/common_test.h"
 #include "src/common/file_utils.h"
 #include "schema/ops_generated.h"
-#include "mindspore/lite/nnacl/fp32/arithmetic.h"
+#include "mindspore/lite/nnacl/fp32/arithmetic_fp32.h"
 #include "internal/src/allocator.h"
 #include "internal/include/model.h"
 #include "internal/include/ms_tensor.h"

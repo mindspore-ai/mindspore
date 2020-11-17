@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_NNACL_INT8_TOPK_INT8_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/fp32/topk.h"
+#include "nnacl/fp32/topk_fp32.h"
 
 typedef struct TopkNodeInt8 {
   int8_t element;

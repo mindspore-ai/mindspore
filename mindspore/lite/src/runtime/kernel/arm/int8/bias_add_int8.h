@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/unique.h"
+#include "nnacl/fp32/unique_fp32.h"
 #include "nnacl/arithmetic_common.h"
 
 namespace mindspore::kernel {

@@ -20,7 +20,7 @@
 #include "src/lite_kernel.h"
 
 #include "include/context.h"
-#include "mindspore/lite/nnacl/fp32/sparse_to_dense.h"
+#include "mindspore/lite/nnacl/fp32/sparse_to_dense_fp32.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 using mindspore::lite::InnerContext;

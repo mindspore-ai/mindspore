@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_HSWISH_H_
 
 #include <vector>
-#include "mindspore/lite/nnacl/fp32/activation.h"
+#include "mindspore/lite/nnacl/fp32/activation_fp32.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {

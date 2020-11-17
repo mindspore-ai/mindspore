@@ -15,7 +15,7 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/fp32/arg_min_max.h"
+#include "mindspore/lite/nnacl/fp32/arg_min_max_fp32.h"
 #include "mindspore/lite/nnacl/arg_min_max.h"
 #include "mindspore/lite/nnacl/arithmetic_common.h"
 

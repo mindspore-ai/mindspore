@@ -16,7 +16,7 @@
 
 #ifdef ENABLE_X86_64_SSE
 #include <nmmintrin.h>
-#include "nnacl/fp32/conv_depthwise.h"
+#include "nnacl/fp32/conv_depthwise_fp32.h"
 
 void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
                       size_t in_kh_step, size_t in_kw_step, size_t kernel_w_step, size_t relu, size_t relu6) {

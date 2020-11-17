@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/arm/fp32/slice_fp32.h"
 #include "src/kernel_registry.h"
-#include "nnacl/fp32/slice.h"
+#include "nnacl/fp32/slice_fp32.h"
 #include "src/ops/slice.h"
 
 using mindspore::lite::KernelRegistrar;

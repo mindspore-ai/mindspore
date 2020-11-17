@@ -21,7 +21,7 @@
 #include "src/ops/softmax_cross_entropy.h"
 #include "nnacl/fp32_grad/softmax_grad.h"
 #include "src/ops/activation_grad.h"
-#include "nnacl/fp32/activation.h"
+#include "nnacl/fp32/activation_fp32.h"
 #include "src/ops/conv2d_grad_filter.h"
 #include "src/ops/conv2d_grad_input.h"
 #include "src/ops/group_conv2d_grad_input.h"

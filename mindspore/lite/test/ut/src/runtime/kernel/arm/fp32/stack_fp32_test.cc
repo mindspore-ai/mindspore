@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/fp32/stack.h"
+#include "mindspore/lite/nnacl/fp32/stack_fp32.h"
 
 namespace mindspore {
 class StackTestFp32 : public mindspore::CommonTest {

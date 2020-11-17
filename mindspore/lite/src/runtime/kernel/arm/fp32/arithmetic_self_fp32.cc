@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/arm/fp32/arithmetic_self_fp32.h"
 #include "src/kernel_registry.h"
-#include "nnacl/fp32/arithmetic_self.h"
+#include "nnacl/fp32/arithmetic_self_fp32.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

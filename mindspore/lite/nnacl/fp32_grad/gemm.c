@@ -19,7 +19,7 @@
 #ifdef __ARM_NEON
 #include <arm_neon.h>
 #endif
-#include "nnacl/fp32/matmul.h"
+#include "nnacl/fp32/matmul_fp32.h"
 
 static void addv(const float *restrict v1, float *restrict v2, float beta, int row, int col, int stride) {
   const float *src_ptr = v1;

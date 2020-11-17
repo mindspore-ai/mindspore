@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/arg_min_max.h"
-#include "nnacl/fp32/arg_min_max.h"
+#include "nnacl/fp32/arg_min_max_fp32.h"
 
 #define FLOAT_DATA_TYPE 43
 

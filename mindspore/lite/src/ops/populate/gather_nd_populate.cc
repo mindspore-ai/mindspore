@@ -17,7 +17,7 @@
 #include "src/ops/gather_nd.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/gatherNd.h"
+#include "nnacl/fp32/gatherNd_fp32.h"
 
 namespace mindspore {
 namespace lite {

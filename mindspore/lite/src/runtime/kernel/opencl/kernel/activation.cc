@@ -24,7 +24,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
-#include "nnacl/fp32/common_func.h"
+#include "nnacl/fp32/common_func_fp32.h"
 #include "src/runtime/kernel/opencl/cl/activation.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;

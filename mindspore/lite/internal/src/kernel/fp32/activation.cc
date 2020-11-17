@@ -18,7 +18,7 @@
 #include "internal/src/kernel/common/common_infershape.h"
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
-#include "nnacl/fp32/activation.h"
+#include "nnacl/fp32/activation_fp32.h"
 #include "internal/src/lite_log.h"
 #include "nnacl/errorcode.h"
 

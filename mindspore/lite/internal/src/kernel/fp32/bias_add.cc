@@ -21,7 +21,7 @@
 #include "internal/src/lite_log.h"
 #include "internal/include/errorcode.h"
 #include "nnacl/arithmetic_common.h"
-#include "nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 
 int DoBiasAddInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors, OpParameter *param) {
   return DoCommonInferShape(in_tensors, out_tensors);

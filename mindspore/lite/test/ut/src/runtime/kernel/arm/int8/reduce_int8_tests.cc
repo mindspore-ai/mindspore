@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 #include "src/tensor.h"
 #include "mindspore/lite/src/kernel_registry.h"
-#include "nnacl/fp32/reduce.h"
+#include "nnacl/fp32/reduce_fp32.h"
 
 namespace mindspore {
 using mindspore::lite::QuantArg;

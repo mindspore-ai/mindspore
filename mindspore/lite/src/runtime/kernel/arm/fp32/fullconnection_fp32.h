@@ -21,7 +21,7 @@
 #include "src/runtime/kernel/arm/base/fullconnection_base.h"
 #include "include/context.h"
 #include "include/errorcode.h"
-#include "nnacl/fp32/matmul.h"
+#include "nnacl/fp32/matmul_fp32.h"
 
 using mindspore::lite::InnerContext;
 

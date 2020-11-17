@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/embedding_lookup.h"
+#include "nnacl/fp32/embedding_lookup_fp32.h"
 
 namespace mindspore::kernel {
 class EmbeddingLookupCPUKernel : public LiteKernel {

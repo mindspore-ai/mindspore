@@ -21,7 +21,7 @@
 #include "nnacl/quantization/quantize.h"
 #include "nnacl/quantization/fixed_point.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
-#include "nnacl/fp32/activation.h"
+#include "nnacl/fp32/activation_fp32.h"
 
 typedef struct TanhQuantParameter {
   int32_t in_zp_;

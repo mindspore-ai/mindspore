@@ -18,7 +18,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/tensor.h"
-#include "nnacl/fp32/cast.h"
+#include "nnacl/fp32/cast_fp32.h"
 #include "nnacl/op_base.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"

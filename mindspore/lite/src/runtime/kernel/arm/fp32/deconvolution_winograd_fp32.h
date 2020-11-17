@@ -23,8 +23,8 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
-#include "nnacl/fp32/matmul.h"
-#include "nnacl/fp32/deconv_winograd.h"
+#include "nnacl/fp32/matmul_fp32.h"
+#include "nnacl/fp32/deconv_winograd_fp32.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 
 namespace mindspore::kernel {

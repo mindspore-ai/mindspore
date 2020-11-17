@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/fp32/space_to_batch_fp32.h"
 #include <vector>
 #include "src/kernel_registry.h"
-#include "nnacl/fp32/space_to_batch.h"
+#include "nnacl/fp32/space_to_batch_fp32.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;

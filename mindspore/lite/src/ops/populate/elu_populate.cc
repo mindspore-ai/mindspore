@@ -15,7 +15,7 @@
  */
 
 #include "src/ops/elu.h"
-#include "nnacl/fp32/elu.h"
+#include "nnacl/fp32/elu_fp32.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 

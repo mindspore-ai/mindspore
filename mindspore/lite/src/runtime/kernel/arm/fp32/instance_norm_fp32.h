@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "nnacl/fp32/instance_norm.h"
+#include "nnacl/fp32/instance_norm_fp32.h"
 
 using mindspore::lite::InnerContext;
 

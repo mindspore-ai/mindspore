@@ -17,7 +17,7 @@
 #include "src/ops/activation.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/activation.h"
+#include "nnacl/fp32/activation_fp32.h"
 
 namespace mindspore {
 namespace lite {

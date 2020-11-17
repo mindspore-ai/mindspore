@@ -20,7 +20,7 @@
 #include "internal/include/ms_tensor.h"
 #include "internal/include/lite_utils.h"
 #include "nnacl/arithmetic_common.h"
-#include "nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 
 typedef int (*ArithmeticRun)(const float *input0, const float *input1, float *output, const int element_size);
 typedef int (*ArithmeticOptRun)(const float *input0, const float *input1, float *output, const int element_size,

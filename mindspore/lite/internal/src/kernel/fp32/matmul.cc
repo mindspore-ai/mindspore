@@ -15,7 +15,7 @@
  */
 
 #include "internal/src/kernel/fp32/matmul.h"
-#include "nnacl/fp32/matmul.h"
+#include "nnacl/fp32/matmul_fp32.h"
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
 #include "internal/src/lite_log.h"

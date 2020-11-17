@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/topk.h"
+#include "nnacl/fp32/topk_fp32.h"
 
 namespace mindspore::kernel {
 class TopKCPUKernel : public LiteKernel {
