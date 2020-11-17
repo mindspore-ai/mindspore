@@ -183,6 +183,24 @@ def test_adamweightdecay_group():
     _executor.compile(train_network, inputs, label)
 
 
+def test_adamoffload_group():
+    """ test_adam_group_lr_and_weight_decay """
+    inputs = Tensor(np.ones([1, 64]).astype(np.float32))
+    label = Tensor(np.zeros([1, 10]).astype(np.float32))
+    net = Net()
+    net.set_train()
+    loss = nn.SoftmaxCrossEntropyWithLogits()
+    net_with_loss = WithLossCell(net, loss)
+    all_params = net.trainable_params()
+
+    schedule_lr = lr_schedules.PolynomialDecayLR(0.01, 0.0001, 3, power=1.0)
+    group_params = [{'params': [all_params[0]], 'lr': 0.02, 'weight_decay': 0.9},
+                    {'params': [all_params[1]]}]
+    optimizer = nn.AdamOffload(group_params, learning_rate=schedule_lr)
+    train_network = TrainOneStepCell(net_with_loss, optimizer)
+    _executor.compile(train_network, inputs, label)
+
+
 def test_AdamWeightDecay_beta1():
     net = Net()
     print("**********", net.get_parameters())

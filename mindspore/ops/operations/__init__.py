@@ -58,7 +58,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
 
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial)
-from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, ApplyMomentum, BatchNorm,
+from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
                      DropoutDoMask, Dropout,
@@ -133,6 +133,7 @@ __all__ = [
     'Adam',
     'FusedSparseAdam',
     'FusedSparseLazyAdam',
+    'AdamNoUpdateParam',
     'Softplus',
     'Softmax',
     'Softsign',

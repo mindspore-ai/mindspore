@@ -36,9 +36,8 @@ class AdamDeltaCPUKernel : public CPUKernel {
   size_t elem_num_{0};
 };
 
-MS_REG_CPU_KERNEL(AdamDelta,
+MS_REG_CPU_KERNEL(AdamNoUpdateParam,
                   KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)
