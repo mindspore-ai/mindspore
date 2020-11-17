@@ -58,6 +58,8 @@ class IteratorConsumer : public TreeConsumer {
   /// \param num_epochs number of epochs. Default to -1 (infinite epochs).
   explicit IteratorConsumer(int32_t num_epochs = -1) : TreeConsumer(), num_epochs_(num_epochs) {}
 
+  ~IteratorConsumer() = default;
+
   Status Init(std::shared_ptr<DatasetNode> d) override;
 
   /// Returns the next row in a vector format
@@ -89,6 +91,8 @@ class SaveToDisk : public TreeConsumer {
   /// \param dataset_type The format of the dataset. Default to "mindrecod".
   explicit SaveToDisk(std::string dataset_path, int32_t num_files = 1, std::string dataset_type = "mindrecord")
       : TreeConsumer(), dataset_path_(dataset_path), num_files_(num_files), dataset_type_(dataset_type) {}
+
+  ~SaveToDisk() = default;
 
   /// \brief Parameters validation
   /// \return Status Status::OK() if all the parameters are valid
@@ -130,6 +134,8 @@ class ToDevice : public TreeConsumer {
   explicit ToDevice(bool send_epoch_end, int32_t num_epochs = -1)
       : TreeConsumer(), send_epoch_end_(send_epoch_end), num_epochs_(num_epochs) {}
 
+  ~ToDevice() = default;
+
   Status Init(std::shared_ptr<DatasetNode> d) override;
 
   /// Send the data to device
@@ -159,6 +165,7 @@ class ToDevice : public TreeConsumer {
 class TreeGetters : public TreeConsumer {
  public:
   TreeGetters();
+  ~TreeGetters() = default;
   Status Init(std::shared_ptr<DatasetNode> d) override;
   Status GetDatasetSize(int64_t *size);
   Status GetOutputTypes(std::vector<DataType> *types);
@@ -183,6 +190,8 @@ class BuildVocabConsumer : public TreeConsumer {
  public:
   /// BuildVocabConsumer Constructor which will call the base class default constructor.
   BuildVocabConsumer() = default;
+
+  ~BuildVocabConsumer() = default;
 
   Status Init(std::shared_ptr<DatasetNode> d) override;
 

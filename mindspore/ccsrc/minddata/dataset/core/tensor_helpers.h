@@ -46,6 +46,8 @@ class SliceOption {
   explicit SliceOption(Slice slice) : slice_(slice) {}
   SliceOption(SliceOption const &slice) = default;
 
+  ~SliceOption() = default;
+
   // only one of the following will be valid
   // given indices to slice the Tensor.
   std::vector<dsize_t> indices_ = {};

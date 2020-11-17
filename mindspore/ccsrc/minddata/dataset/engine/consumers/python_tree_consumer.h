@@ -32,6 +32,8 @@ class PythonIteratorConsumer : public IteratorConsumer {
   /// Constructor which will call the base class default constructor.
   /// \param num_epochs number of epochs. Default to -1 (infinite epochs).
   explicit PythonIteratorConsumer(int32_t num_epochs = -1) : IteratorConsumer(num_epochs) {}
+
+  ~PythonIteratorConsumer() = default;
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
   /// \return Status error code
