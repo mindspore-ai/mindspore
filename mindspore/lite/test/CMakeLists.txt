@@ -287,7 +287,7 @@ add_executable(lite-test ${TEST_SRC})
 
 target_link_libraries(lite-test dl ${GTEST_LIBRARY})
 if (PLATFORM_ARM64)
-    target_link_libraries(lite-test mslite_internal nnacl_fp16_mid nnacl_optimize_mid)
+    target_link_libraries(lite-test nnacl_fp16_mid nnacl_optimize_mid)
 endif()
 
 if (PLATFORM_ARM)

@@ -19,7 +19,7 @@
 #include "minddata/dataset/include/de_tensor.h"
 #include "minddata/dataset/include/type_id.h"
 #include "mindspore/core/ir/dtype/type_id.h"
-#include "mindspore/lite/internal/include/ms_tensor.h"
+#include "mindspore/lite/include/ms_tensor.h"
 #include "utils/hashing.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
