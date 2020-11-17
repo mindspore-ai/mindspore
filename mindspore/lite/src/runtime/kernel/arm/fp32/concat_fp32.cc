@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp32/concat_fp32.h"
 #include <vector>
-#include "nnacl/fp32/concat.h"
+#include "nnacl/fp32/concat_fp32.h"
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"

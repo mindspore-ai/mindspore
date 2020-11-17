@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_NNACL_INT8_SPACE_TO_BATCH_INT8_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/fp32/space_to_batch.h"
+#include "nnacl/fp32/space_to_batch_fp32.h"
 
 #ifdef __cplusplus
 extern "C" {

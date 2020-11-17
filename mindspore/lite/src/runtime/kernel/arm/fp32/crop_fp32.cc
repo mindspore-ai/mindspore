@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/fp32/crop_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "nnacl/fp32/crop.h"
+#include "nnacl/fp32/crop_fp32.h"
 #include "nnacl/crop_parameter.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"

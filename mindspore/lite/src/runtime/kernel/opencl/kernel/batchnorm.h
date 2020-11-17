@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "nnacl/fp32/batchnorm.h"
+#include "nnacl/fp32/batchnorm_fp32.h"
 
 namespace mindspore::kernel {
 

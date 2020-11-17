@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/rank.h"
+#include "nnacl/fp32/rank_fp32.h"
 
 namespace mindspore::kernel {
 class RankCPUKernel : public LiteKernel {

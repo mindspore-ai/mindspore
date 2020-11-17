@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_POOLING_GRAD_H_
 #define MINDSPORE_LITE_NNACL_FP32_GRAD_POOLING_GRAD_H_
 
-#include "nnacl/fp32/pooling.h"
+#include "nnacl/fp32/pooling_fp32.h"
 
 #ifdef __cplusplus
 extern "C" {

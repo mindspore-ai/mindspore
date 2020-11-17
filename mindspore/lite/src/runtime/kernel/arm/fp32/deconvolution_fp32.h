@@ -24,8 +24,8 @@
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "nnacl/fp32/deconv.h"
-#include "nnacl/fp32/matmul.h"
+#include "nnacl/fp32/deconv_fp32.h"
+#include "nnacl/fp32/matmul_fp32.h"
 
 namespace mindspore::kernel {
 class DeConvolutionCPUKernel : public ConvolutionBaseCPUKernel {

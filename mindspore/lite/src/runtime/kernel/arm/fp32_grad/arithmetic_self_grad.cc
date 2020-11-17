@@ -19,7 +19,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
-#include "nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

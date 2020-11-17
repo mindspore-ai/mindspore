@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_NNACL_FP16_CONV_DEPTHWISE_FP16_H_
 
 #include "nnacl/conv_parameter.h"
-#include "nnacl/fp32/conv_depthwise.h"
+#include "nnacl/fp32/conv_depthwise_fp32.h"
 
 #ifdef __cplusplus
 extern "C" {

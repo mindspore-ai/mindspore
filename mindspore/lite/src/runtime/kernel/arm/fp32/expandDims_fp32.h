@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/expandDims.h"
+#include "nnacl/fp32/expandDims_fp32.h"
 #include "schema/model_generated.h"
 
 #include "include/context.h"

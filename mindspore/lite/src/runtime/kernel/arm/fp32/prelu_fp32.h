@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "nnacl/fp32/prelu.h"
+#include "nnacl/fp32/prelu_fp32.h"
 
 namespace mindspore::kernel {
 class PReluCPUKernel : public LiteKernel {

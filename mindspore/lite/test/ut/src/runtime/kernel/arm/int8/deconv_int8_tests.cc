@@ -21,7 +21,7 @@
 #include "src/common/file_utils.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/nnacl/pack.h"
-#include "mindspore/lite/nnacl/fp32/matmul.h"
+#include "mindspore/lite/nnacl/fp32/matmul_fp32.h"
 #include "mindspore/lite/nnacl/int8/deconv_int8.h"
 #include "mindspore/lite/src/runtime/kernel/arm/int8/deconvolution_int8.h"
 

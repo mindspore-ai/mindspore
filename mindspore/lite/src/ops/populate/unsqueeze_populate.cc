@@ -19,7 +19,7 @@
 #include "src/tensor.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/unsqueeze.h"
+#include "nnacl/fp32/unsqueeze_fp32.h"
 
 namespace mindspore {
 namespace lite {

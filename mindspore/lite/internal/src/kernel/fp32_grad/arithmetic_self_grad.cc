@@ -19,8 +19,8 @@
 #include "internal/include/errorcode.h"
 #include "internal/include/ms_tensor.h"
 #include "internal/src/lite_log.h"
-#include "nnacl/fp32/arithmetic_self.h"
-#include "nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic_self_fp32.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 
 int DoArithmeticSelfGradInferShape(const TensorPtrVector &in_tensors, const TensorPtrVector &out_tensors,
                                    OpParameter *param) {

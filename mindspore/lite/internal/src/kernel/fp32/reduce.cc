@@ -20,7 +20,7 @@
 #include "internal/src/lite_log.h"
 #include "internal/include/errorcode.h"
 #include "nnacl/reduce_parameter.h"
-#include "nnacl/fp32/reduce.h"
+#include "nnacl/fp32/reduce_fp32.h"
 #include "nnacl/errorcode.h"
 
 typedef int (*Reducer)(const int outer_size, const int inner_size, const int axis_size, const float *src_data,

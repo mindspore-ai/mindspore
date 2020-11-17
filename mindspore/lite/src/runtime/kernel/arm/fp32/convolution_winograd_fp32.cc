@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_winograd_fp32.h"
-#include "nnacl/fp32/conv.h"
+#include "nnacl/fp32/conv_fp32.h"
 #include "nnacl/pack.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"

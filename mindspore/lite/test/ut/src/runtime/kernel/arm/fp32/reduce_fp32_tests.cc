@@ -16,7 +16,7 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/fp32/reduce.h"
+#include "mindspore/lite/nnacl/fp32/reduce_fp32.h"
 #include "schema/inner/model_generated.h"
 #include "src/tensor.h"
 #include "mindspore/lite/src/kernel_registry.h"

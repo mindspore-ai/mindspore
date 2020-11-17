@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/fp32/crop.h"
+#include "mindspore/lite/nnacl/fp32/crop_fp32.h"
 #include "mindspore/lite/src/runtime/kernel/arm/fp32/crop_fp32.h"
 
 namespace mindspore {

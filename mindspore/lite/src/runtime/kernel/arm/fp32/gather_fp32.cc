@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/fp32/gather_fp32.h"
 #include <vector>
 #include "nnacl/gather_parameter.h"
-#include "nnacl/fp32/gather.h"
+#include "nnacl/fp32/gather_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"

@@ -20,7 +20,7 @@
 #include <string>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "nnacl/fp32/common_func.h"
+#include "nnacl/fp32/common_func_fp32.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/scale.cl.inc"

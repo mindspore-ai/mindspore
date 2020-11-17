@@ -20,7 +20,7 @@
 #include "nnacl/pad_parameter.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "schema/ops_generated.h"
-#include "nnacl/fp32/scale.h"
+#include "nnacl/fp32/scale_fp32.h"
 
 using mindspore::schema::ActivationType;
 using mindspore::schema::ActivationType_NO_ACTIVATION;

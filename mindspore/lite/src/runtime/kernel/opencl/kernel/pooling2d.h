@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "nnacl/fp32/pooling.h"
+#include "nnacl/fp32/pooling_fp32.h"
 
 namespace mindspore::kernel {
 

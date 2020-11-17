@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "nnacl/fp32/batchnorm.h"
+#include "nnacl/fp32/batchnorm_fp32.h"
 #include "nnacl/batchnorm_parameter.h"
 #include "src/runtime/runtime_api.h"
 

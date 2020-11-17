@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/train/loss_kernel.h"
 #include "nnacl/fp32_grad/softmax_grad.h"
-#include "nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/softmax_parameter.h"
 
 namespace mindspore::kernel {

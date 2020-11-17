@@ -17,7 +17,7 @@
 #include "src/ops/one_hot.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/one_hot.h"
+#include "nnacl/fp32/one_hot_fp32.h"
 
 namespace mindspore {
 namespace lite {

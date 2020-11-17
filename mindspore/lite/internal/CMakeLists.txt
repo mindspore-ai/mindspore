@@ -8,12 +8,12 @@ add_compile_definitions(ENABLE_NNACL_INFER_SHAPE)
 
 file(GLOB KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/arithmetic_common.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/activation.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/arithmetic_self.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/arithmetic.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/matmul.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/reduce.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/arithmetic.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/activation_fp32.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/arithmetic_self_fp32.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/arithmetic_fp32.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/matmul_fp32.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/reduce_fp32.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../nnacl/fp32/arithmetic_fp32.c
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/fp32/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/common/*.cc
         )

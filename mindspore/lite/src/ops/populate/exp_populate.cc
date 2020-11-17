@@ -17,7 +17,7 @@
 #include "src/ops/exp.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/exp.h"
+#include "nnacl/fp32/exp_fp32.h"
 
 namespace mindspore {
 namespace lite {

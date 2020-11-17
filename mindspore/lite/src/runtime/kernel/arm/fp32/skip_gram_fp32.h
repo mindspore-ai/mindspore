@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/skip_gram.h"
+#include "nnacl/fp32/skip_gram_fp32.h"
 #include "src/common/string_util.h"
 
 namespace mindspore::kernel {

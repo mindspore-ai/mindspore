@@ -21,7 +21,7 @@
 #include <string>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "nnacl/fp32/one_hot.h"
+#include "nnacl/fp32/one_hot_fp32.h"
 
 namespace mindspore::kernel {
 class OneHotOpenCLKernel : public OpenCLKernel {

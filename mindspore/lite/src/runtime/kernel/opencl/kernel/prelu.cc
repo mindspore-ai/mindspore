@@ -21,7 +21,7 @@
 
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "nnacl/fp32/common_func.h"
+#include "nnacl/fp32/common_func_fp32.h"
 #include "src/runtime/kernel/opencl/kernel/prelu.h"
 #include "src/runtime/kernel/opencl/cl/prelu.cl.inc"
 

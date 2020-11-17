@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "nnacl/fp32/constant_of_shape.h"
+#include "nnacl/fp32/constant_of_shape_fp32.h"
 
 using mindspore::lite::InnerContext;
 

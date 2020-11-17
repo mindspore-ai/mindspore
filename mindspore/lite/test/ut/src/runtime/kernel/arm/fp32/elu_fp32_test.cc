@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include "src/runtime/kernel/arm/fp32/elu_fp32.h"
-#include "nnacl/fp32/elu.h"
+#include "nnacl/fp32/elu_fp32.h"
 #include "src/common/file_utils.h"
 #include "common/common_test.h"
 #include "src/common/log_adapter.h"

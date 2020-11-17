@@ -15,7 +15,7 @@
  */
 #ifdef ENABLE_X86_64_SSE
 #include <nmmintrin.h>
-#include "nnacl/fp32/common_func.h"
+#include "nnacl/fp32/common_func_fp32.h"
 
 void WinogradTransLeft(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length) {
   size_t len_c4 = length * 4;

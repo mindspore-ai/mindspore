@@ -16,7 +16,7 @@
 
 #include <math.h>
 #include "nnacl/op_base.h"
-#include "nnacl/fp32/arithmetic.h"
+#include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/fp32_grad/activation_grad.h"
 #include "nnacl/errorcode.h"
 
