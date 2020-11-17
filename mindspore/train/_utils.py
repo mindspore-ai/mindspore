@@ -50,7 +50,7 @@ def _get_types_and_shapes(dataset):
     return dataset_types, dataset_shapes
 
 
-def _exec_datagraph(exec_dataset, dataset_size, phase='dataset'):
+def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_info_queue=False):
     """Initialize and execute the dataset graph."""
     batch_size = exec_dataset.get_batch_size()
     input_indexs = exec_dataset.input_indexs
@@ -58,7 +58,7 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset'):
     # transform data format
     dataset_types, dataset_shapes = _get_types_and_shapes(exec_dataset)
     send_epoch_end = bool(dataset_size == -1)
-    exec_dataset = exec_dataset.device_que(send_epoch_end=send_epoch_end)
+    exec_dataset = exec_dataset.device_que(send_epoch_end=send_epoch_end, create_data_info_queue=create_data_info_queue)
 
     _executor.init_dataset(exec_dataset.queue_name,
                            dataset_size,

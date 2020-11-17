@@ -62,9 +62,8 @@ std::vector<std::shared_ptr<DatasetOp>> TransferNode::Build() {
   } else if (device_type_ == "Ascend") {
     type = DeviceQueueOp::DeviceType::Ascend;
   }
-
-  node_ops.push_back(
-    std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, prefetch_size_, send_epoch_end_, total_batch_));
+  node_ops.push_back(std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, prefetch_size_, send_epoch_end_,
+                                                     total_batch_, false));
   return node_ops;
 }
 

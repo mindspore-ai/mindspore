@@ -17,6 +17,7 @@ import math
 import os
 
 from mindspore._checkparam import Validator
+from mindspore.common.dtype import pytype_to_dtype
 from .. import context, nn
 from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from ..nn.wrap import GetNextSingleOp
@@ -30,6 +31,7 @@ def _send_data(dataset, epoch_num):
         exec_dataset = dataset.__transfer_dataset__
         exec_dataset.send(epoch_num)
         dataset.__has_sent__ = True
+
 
 def _send_data_no_flag(dataset, epoch_num):
     """Engine dataset to write data to tdt queue directly."""
@@ -70,6 +72,7 @@ def connect_network_with_dataset(network, dataset_helper):
         Wraps the input network with a dataset which automatically fetches data with 'GetNext' function from the
         dataset channel 'queue_name' and performs the forward computation.
         """
+
         def __init__(self, network, dataset_types, dataset_shapes, queue_name):
             super(_DataWrapper, self).__init__(auto_prefix=False, flags=network.get_flags())
             # Also copy the flag in `network` construct
@@ -88,9 +91,30 @@ def connect_network_with_dataset(network, dataset_helper):
     if isinstance(dataset_iter, _DatasetIterNormal):
         raise RuntimeError("Dataset should be connected with network only in sink mode.")
 
-    if not hasattr(dataset, '__me_inited__') and (context.get_context("device_target") == "Ascend"
-                                                  or context.get_context("device_target") == "GPU") and not \
-            context.get_context("enable_ge"):
+    if (hasattr(dataset_iter, "sink_size") and dataset_iter.sink_size == 1) \
+        and (hasattr(dataset_iter, "sink_count") and dataset_iter.sink_count == 1) \
+        and context.get_context("device_target") == "Ascend":
+
+        if not hasattr(dataset, '__network__'):
+            dataset.__network__ = network
+        network = dataset.__network__
+
+        dataset_types, dataset_shapes = dataset_helper.get_data_info()
+        dataset_types = [pytype_to_dtype(x) for x in dataset_types]
+
+        key = str(dataset_types) + str(dataset_shapes)
+        if hasattr(dataset, '__network_manage__') and key in dataset.__network_manage__:
+            network = dataset.__network_manage__[key]
+        else:
+            network = _DataWrapper(network, dataset_types, dataset_shapes, dataset.__transfer_dataset__.queue_name)
+            dataset.__network_manage__ = dataset.__network_manage__ if hasattr(
+                dataset, '__network_manage__') else dict()
+            dataset.__network_manage__[key] = network
+
+        return network
+
+    if not hasattr(dataset, '__me_inited__') and (context.get_context("device_target") == "Ascend" or \
+            context.get_context("device_target") == "GPU") and not context.get_context("enable_ge"):
         dataset.__me_inited__ = True
 
         dataset_types, dataset_shapes = dataset_helper.types_shapes()
@@ -98,7 +122,6 @@ def connect_network_with_dataset(network, dataset_helper):
 
         network = _DataWrapper(network, dataset_types, dataset_shapes, queue_name)
     return network
-
 
 class DatasetHelper:
     """
@@ -171,18 +194,25 @@ class DatasetHelper:
         """continue send data to device at the beginning of epoch."""
         self.iter.continue_send()
 
+    def get_data_info(self):
+        return self.iter.get_data_info()
+
 
 class _DatasetIter:
     """Base iter for dataset helper"""
+
     def __init__(self, dataset, sink_size, epoch_num):
         self.dataset = dataset
         self.sink_size = sink_size
-        self.sink_count = 1
+        self.sink_count = self.get_sink_count(dataset)
 
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
                 self.sink_size = dataset.__loop_size__
-            dataset.__transfer_dataset__ = _exec_datagraph(dataset, self.sink_size)
+            create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and context.get_context(
+                "device_target") == "Ascend")
+            dataset.__transfer_dataset__ = _exec_datagraph(dataset, self.sink_size,
+                                                           create_data_info_queue=create_data_info_queue)
 
             if not hasattr(dataset, '__no_send__'):
                 _send_data(dataset, epoch_num)
@@ -191,6 +221,7 @@ class _DatasetIter:
 
         self.stop_send = dataset.__transfer_dataset__.stop_send
         self.continue_send = dataset.__transfer_dataset__.continue_send
+        self.get_data_info = dataset.__transfer_dataset__.get_data_info
         self.dataset_types, self.dataset_shapes = _get_types_and_shapes(dataset)
 
     def __iter__(self):
@@ -223,7 +254,7 @@ class _DatasetIter:
             sink_size = self.dataset.__loop_size__
         else:
             if context.get_context("enable_ge") or context.get_context("device_target") == "Ascend" \
-                or context.get_context("device_target") == "GPU":
+                    or context.get_context("device_target") == "GPU":
                 if self.sink_size > 0:
                     sink_size = self.sink_size
                 else:
@@ -233,6 +264,7 @@ class _DatasetIter:
 
 class _DatasetIterGE(_DatasetIter):
     """Iter for GE."""
+
     def __init__(self, dataset, sink_size, epoch_num):
         super().__init__(dataset, sink_size, epoch_num)
         self.sink_count = self.get_sink_count(dataset)
@@ -249,6 +281,7 @@ class _DatasetIterGE(_DatasetIter):
 
 class _DatasetIterMSLoopSink(_DatasetIter):
     """Iter for context (device_target=Ascend)"""
+
     def __init__(self, dataset, sink_size, epoch_num):
         super().__init__(dataset, sink_size, epoch_num)
         self.sink_count = self.get_sink_count(dataset)
@@ -270,6 +303,7 @@ class _DatasetIterMSLoopSink(_DatasetIter):
 
 class _DatasetIterMS(_DatasetIter):
     """Iter for MS(enable_loop_sink=False)."""
+
     def __init__(self, dataset, sink_size, epoch_num):
         super().__init__(dataset, sink_size, epoch_num)
         if sink_size > 0:
@@ -283,11 +317,13 @@ class _DatasetIterMS(_DatasetIter):
 
 class _DatasetIterPSLite(_DatasetIter):
     """Iter for context (device_target=GPU) on MS_PSERVER or MS_SCHED"""
+
     def __init__(self, dataset, sink_size, epoch_num):
         super().__init__(dataset, sink_size, epoch_num)
         self.sink_count = 1
         self.sink_size = 1
         self.op = None
+
         def op():
             return _construct_tensor_list(self.dataset_types, self.dataset_shapes, batch_expand_num=1)
         self.op = op

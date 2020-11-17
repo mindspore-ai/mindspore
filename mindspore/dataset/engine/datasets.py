@@ -1005,7 +1005,7 @@ class Dataset:
         return dataset
 
     @check_device_send
-    def device_que(self, prefetch_size=None, send_epoch_end=True):
+    def device_que(self, prefetch_size=None, send_epoch_end=True, create_data_info_queue=False):
         """
         Return a transferred Dataset that transfers data through a device.
 
@@ -1013,6 +1013,8 @@ class Dataset:
             prefetch_size (int, optional): Prefetch number of records ahead of the
                 user's request (default=None).
             send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
+            create_data_info_queue (bool, optional): Whether to create queue which stores
+                types and shapes of data or not(default=False).
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
@@ -1021,15 +1023,17 @@ class Dataset:
         Return:
             TransferDataset, dataset for transferring.
         """
-        return self.to_device(send_epoch_end=send_epoch_end)
+        return self.to_device(send_epoch_end=send_epoch_end, create_data_info_queue=create_data_info_queue)
 
     @check_device_send
-    def to_device(self, send_epoch_end=True):
+    def to_device(self, send_epoch_end=True, create_data_info_queue=False):
         """
         Transfer data through CPU, GPU or Ascend devices.
 
         Args:
             send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
+            create_data_info_queue (bool, optional): Whether to create queue which stores
+                types and shapes of data or not(default=False).
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
@@ -1078,7 +1082,7 @@ class Dataset:
 
         distribution_path, device_id = get_distribution(self)
         if distribution_path == "":
-            return TransferDataset(self, queue_name, device_id, device_type, send_epoch_end)
+            return TransferDataset(self, queue_name, device_id, device_type, send_epoch_end, create_data_info_queue)
         try:
             with open(distribution_path, 'r') as distribution_f:
                 dist = json.load(distribution_f)
@@ -1088,7 +1092,7 @@ class Dataset:
         except Exception:
             raise RuntimeError("Failed to read Distribution file.")
 
-        return TransferDataset(self, queue_name, device_id, device_type, send_epoch_end)
+        return TransferDataset(self, queue_name, device_id, device_type, send_epoch_end, create_data_info_queue)
 
     @check_save
     def save(self, file_name, num_files=1, file_type='mindrecord'):
@@ -2640,9 +2644,12 @@ class TransferDataset(DatasetOp):
         device_id (int): ID of device.
         device_type (str): Type of device, including "CPU", "GPU", and "Ascend".
         send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
+        create_data_info_queue (bool, optional): Whether to create queue which stores
+            types and shapes of data or not(default=False).
     """
 
-    def __init__(self, input_dataset, queue_name, device_id, device_type, send_epoch_end=True):
+    def __init__(self, input_dataset, queue_name, device_id, device_type, send_epoch_end=True,
+                 create_data_info_queue=False):
         super().__init__()
         self.children.append(input_dataset)
         input_dataset.parent.append(self)
@@ -2652,6 +2659,7 @@ class TransferDataset(DatasetOp):
         self._device_id = device_id
         self._send_epoch_end = send_epoch_end
         self.iterator = None
+        self._create_data_info_queue = create_data_info_queue
 
     def get_args(self):
         args = super().get_args()
@@ -2661,6 +2669,7 @@ class TransferDataset(DatasetOp):
         args["send_epoch_end"] = self._send_epoch_end
         if hasattr(self.children[0], "__total_batch__"):
             args["total_batch"] = self.children[0].__total_batch__
+        args["create_data_info_queue"] = self._create_data_info_queue
         return args
 
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
@@ -2691,6 +2700,9 @@ class TransferDataset(DatasetOp):
 
     def continue_send(self):
         self.iterator.depipeline.ContinueSend()
+
+    def get_data_info(self):
+        return self.iterator.depipeline.GetDataInfo()
 
 
 class RangeDataset(MappableDataset):
