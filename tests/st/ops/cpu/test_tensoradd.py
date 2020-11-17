@@ -43,6 +43,8 @@ def test_tensor_add():
     y1 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32))
     x2 = Tensor(np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32))
     y2 = Tensor(2, mstype.float32)
+    x3 = Tensor(2, mstype.float32)
+    y3 = Tensor(2, mstype.float32)
     add = TensorAdd()
     out = add(x0, y0).asnumpy()
     exp = x0.asnumpy() + y0.asnumpy()
@@ -60,6 +62,13 @@ def test_tensor_add():
 
     out = add(x2, y2).asnumpy()
     exp = x2.asnumpy() + y2.asnumpy()
+    diff = np.abs(out - exp)
+    err = np.ones(shape=exp.shape) * 1.0e-5
+    assert np.all(diff < err)
+    assert out.shape == exp.shape
+
+    out = add(x3, y3).asnumpy()
+    exp = x3.asnumpy() + y3.asnumpy()
     diff = np.abs(out - exp)
     err = np.ones(shape=exp.shape) * 1.0e-5
     assert np.all(diff < err)

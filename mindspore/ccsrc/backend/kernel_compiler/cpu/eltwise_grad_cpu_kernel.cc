@@ -73,8 +73,8 @@ void EltWiseGradCPUKernel::SqrtGrad(const T *input1, const T *input2, T *out, si
 template <typename T>
 void EltWiseGradCPUKernel::TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
-    T tmp = (1 - input1[i]);
-    out[i] = input2[i] * tmp * tmp;
+    T tmp = input1[i] * input1[i];
+    out[i] = input2[i] * (1 - tmp);
   }
 }
 
