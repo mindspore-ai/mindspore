@@ -279,11 +279,11 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
-  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
 
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) &&
       ConfigManager::GetInstance().iter_num() > 1) {
