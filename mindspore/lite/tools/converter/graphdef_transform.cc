@@ -28,6 +28,7 @@
 #include "tools/converter/legacy_optimizer/graph/batchnorm_convert_scale_pass.h"
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
 #include "tools/converter/legacy_optimizer/graph/trans_format_insert_pass.h"
+#include "tools/converter/legacy_optimizer/graph/global_format_transform_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/unused_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
@@ -114,6 +115,10 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     formatTransOptimizer.AddPass(new (std::nothrow) TransOpInsertPass());
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    if (ctx.trainModel == false && ctx.fmk != converter::FmkType_ONNX) {
+      formatTransOptimizer.AddPass(new (std::nothrow) GlobalFormatTransformPass());
+      formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    }
     status = formatTransOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
       MS_LOG(ERROR) << "Run formatTransOptimizer graphPasses Failed";

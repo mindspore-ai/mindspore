@@ -86,6 +86,13 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
                          std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, OpDefCopyer opDefCopyer);
 
 STATUS ValidateFileStr(const std::string &modelFile, std::string fileType);
+
+void TransformAttrByAxes(int *origin_attr, int *axes, int element_size);
+
+STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
+
+STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
+
 std::string GetModelName(const std::string &modelFile);
 }  // namespace lite
 }  // namespace mindspore
