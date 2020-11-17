@@ -662,8 +662,9 @@ void Pipeline::Run() {
           auto manager = func_graph->manager();
           size_t graph_nums = manager->func_graphs().size();
           if (graph_nums == 1) {
-            resource_->set_gpu_loopsink_flag(true);
-            MS_LOG(INFO) << "Change gpu_loopsink_flag_ to true.";
+            int64_t sinksize = ConfigManager::GetInstance().iter_num();
+            resource_->set_gpu_loopsink(true, sinksize);
+            MS_LOG(INFO) << "Change gpu_loopsink_flag_ to true,set loopsink size to " << sinksize;
           }
         }
       }
@@ -834,7 +835,7 @@ py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
   }
   // Set loopsink size for each phase.
   bool is_loopsink = info_[phase_s]->resource->gpu_loopsink_flag();
-  int64_t sinksize = ConfigManager::GetInstance().iter_num();
+  int64_t sinksize = info_[phase_s]->resource->gpu_loopsink_size();
   ConfigManager::GetInstance().set_gpu_loopsink_size(is_loopsink ? sinksize : 1);
   // If target is not gpu or is loopsink, keep vmloop 1.
   bool g = (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);

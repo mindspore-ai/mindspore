@@ -14,15 +14,14 @@
 # limitations under the License.
 # ============================================================================
 # an simple tutorial as follows, more parameters can be setting
-if [ $# != 3 ]
+if [ $# != 2 ]
 then
-    echo "Usage: sh run_standalone_train_gpu.sh [cifar10|imagenet] [DATA_PATH] [DEVICE_ID]"
+    echo "Usage: sh run_standalone_train_gpu.sh [cifar10|imagenet] [DATA_PATH]"
 exit 1
 fi
 
 export DATASET_NAME=$1
 export DATA_PATH=$2
-export DEVICE_ID=$3
 
 python train.py --dataset_name=$DATASET_NAME --data_path=$DATA_PATH \
-               --device_id=$DEVICE_ID --device_target="GPU" > log 2>&1 &
+               --device_target="GPU" > log 2>&1 &
