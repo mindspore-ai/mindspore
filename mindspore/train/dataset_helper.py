@@ -67,6 +67,7 @@ def connect_network_with_dataset(network, dataset_helper):
         >>> net = Net()
         >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
     """
+
     class _DataWrapper(nn.Cell):
         """
         Wraps the input network with a dataset which automatically fetches data with 'GetNext' function from the
@@ -163,16 +164,20 @@ class DatasetHelper:
             if context.get_context("enable_ge"):
                 iterclass = _DatasetIterGE
             else:
-                if context.get_context("device_target") == "Ascend":
-                    iterclass = _DatasetIterMSLoopSink
-                elif context.get_context("device_target") == "GPU":
-                    ms_role = os.getenv("MS_ROLE")
-                    if ms_role in ("MS_PSERVER", "MS_SCHED"):
-                        iterclass = _DatasetIterPSLite
-                    else:
+                if context.get_context("mode") == context.GRAPH_MODE:
+                    if context.get_context("device_target") == "Ascend":
                         iterclass = _DatasetIterMSLoopSink
-                elif context.get_context("device_target") == "CPU":
-                    raise RuntimeError("Currently dataset sink mode is not supported when the device target is CPU.")
+                    elif context.get_context("device_target") == "GPU":
+                        ms_role = os.getenv("MS_ROLE")
+                        if ms_role in ("MS_PSERVER", "MS_SCHED"):
+                            iterclass = _DatasetIterPSLite
+                        else:
+                            iterclass = _DatasetIterMSLoopSink
+                    elif context.get_context("device_target") == "CPU":
+                        raise RuntimeError(
+                            "Currently dataset sink mode is not supported when the device target is CPU.")
+                else:
+                    iterclass = _DatasetIterPyNative
             self.iter = iterclass(dataset, sink_size, epoch_num)
         else:
             iterclass = _DatasetIterNormal
@@ -281,6 +286,20 @@ class _DatasetIterGE(_DatasetIter):
 
         self.op = op
 
+class _DatasetIterPyNative(_DatasetIter):
+    """Iter for MS(enable_loop_sink=False)."""
+
+    def __init__(self, dataset, sink_size, epoch_num):
+        super().__init__(dataset, sink_size, epoch_num)
+        if sink_size > 0:
+            self.sink_count = sink_size
+        else:
+            self.sink_count = dataset.get_dataset_size()
+
+        def op():
+            return tuple()
+
+        self.op = op
 
 class _DatasetIterMSLoopSink(_DatasetIter):
     """Iter for context (device_target=Ascend)"""
@@ -329,6 +348,7 @@ class _DatasetIterPSLite(_DatasetIter):
 
         def op():
             return _construct_tensor_list(self.dataset_types, self.dataset_shapes, batch_expand_num=1)
+
         self.op = op
 
 

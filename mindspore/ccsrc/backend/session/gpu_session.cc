@@ -507,6 +507,15 @@ void GPUSession::CleanValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &ke
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->CleanValueNodeDeviceAddr(kernel_graph.get());
 }
+
+void GPUSession::SyncStream() {
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  auto ret = runtime_instance->SyncStream();
+  if (!ret) {
+    MS_LOG(ERROR) << "Sync stream error!";
+  }
+}
 }  // namespace gpu
 }  // namespace session
 }  // namespace mindspore

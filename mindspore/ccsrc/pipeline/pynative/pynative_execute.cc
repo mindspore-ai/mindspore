@@ -2087,6 +2087,13 @@ void PynativeExecutor::GradNet(const GradOperationPtr &grad, const py::object &c
   PynativeExecutorTry(this, &PynativeExecutor::GradNetInner, grad, cell, weights, args);
 }
 
+void PynativeExecutor::Sync() {
+  if (session == nullptr) {
+    MS_EXCEPTION(NotExistsError) << "No session has been created!";
+  }
+  session->SyncStream();
+}
+
 REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                          (void)py::class_<PynativeExecutor, std::shared_ptr<PynativeExecutor>>(*m, "PynativeExecutor_")
                            .def_static("get_instance", &PynativeExecutor::GetInstance, "PynativeExecutor get_instance.")
@@ -2095,6 +2102,7 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("check_graph", &PynativeExecutor::CheckGraph, "pynative check a grad graph.")
                            .def("grad_net", &PynativeExecutor::GradNet, "pynative grad graph.")
                            .def("clear", &PynativeExecutor::Clear, "pynative clear status.")
+                           .def("sync", &PynativeExecutor::Sync, "pynative sync stream.")
                            .def("__call__", &PynativeExecutor::Run, py::arg("args"), py::arg("phase") = py::str(""),
                                 "Executor run function.")
                            .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),

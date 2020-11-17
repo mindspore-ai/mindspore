@@ -1375,5 +1375,14 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph, const 
   RunInfer(func_graph, inputs);
   return CompileGraphImpl(func_graph);
 }
+
+void AscendSession::SyncStream() {
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  auto ret = runtime_instance->SyncStream();
+  if (!ret) {
+    MS_LOG(ERROR) << "Sync stream error!";
+  }
+}
 }  // namespace session
 }  // namespace mindspore
