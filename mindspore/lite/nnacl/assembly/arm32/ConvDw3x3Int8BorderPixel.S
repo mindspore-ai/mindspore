@@ -10,8 +10,10 @@
 
 // void ConvDw3x3Int8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, size_t height,
 //                               size_t width, size_t in_kh_step, size_t in_kw_step, size_t channel, size_t in_zp, size_t out_zp,
-//                               size_t out_multiplier, size_t left_shift, size_t right_shift, size_t acc_min, size_t acc_max) {
+//                               size_t out_multiplier, size_t left_shift, size_t right_shift, size_t acc_min, size_t acc_max
+//                               size_t per_channel) {
 
+// todo: support per channel
 // r0: dst, r1: src, r2: weight, r3: bias, r4: height, r5: width, r6: in_kh_step, r7: in_kw_step,
 // r8: channel, r9: in_zp,  r10: out_zp, r11: out_multiplier, r12: left_shift, r13: right_shift
 // r14: acc_min, r15: acc_max
