@@ -354,11 +354,11 @@ void KernelGraph::CheckLoop() {
     if (node_input_it == node_input_edges_.end()) {
       MS_LOG(EXCEPTION) << "Can't find node [" << it.first->DebugString() << "]";
     }
-    for (const auto &input_edge : node_input_edges_[it.first]) {
-      MS_EXCEPTION_IF_NULL(input_edge.first);
-      str = str.append(input_edge.first->DebugString()).append("|");
-    }
     if (it.second != 0) {
+      for (const auto &input_edge : node_input_edges_[it.first]) {
+        MS_EXCEPTION_IF_NULL(input_edge.first);
+        str = str.append(input_edge.first->DebugString()).append("|");
+      }
       MS_LOG(WARNING) << "Node:" << it.first->DebugString() << ",inputs:" << str << ",input num:" << it.second;
       none_zero_nodes[it.first] = it.second;
     }
