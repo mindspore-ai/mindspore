@@ -688,7 +688,7 @@ std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shap
     return nullptr;
   }
   CheckGlobalDeviceManager();
-  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(0).size());
+  int64_t dev_num = g_device_manager->stage_device_num();
   Strategys strategy_v;
   for (size_t i = 0; i != shapes.size(); i++) {
     if (shapes[i].empty()) {
@@ -1393,9 +1393,7 @@ Status OperatorInfo::set_outputs_type(const std::vector<TypePtr> &outputs_type) 
 
 void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr &stra, const CostPtr &cost) {
   if (!stra->GetInputDim().empty() && !stra->GetInputDim()[0].empty()) {
-    CheckGlobalDeviceManager();
-    auto total_device_num = g_device_manager->GetDeviceListByStageId(stra->GetInputStage()).size();
-    if (LongToSize(stra->GetInputDim()[0][0]) == total_device_num) {
+    if (stra->GetInputDim()[0][0] == stage_device_size_) {
       if (cost->computation_cost_ > 1.0) {
         cost->computation_cost_ -= 1.0;
       }

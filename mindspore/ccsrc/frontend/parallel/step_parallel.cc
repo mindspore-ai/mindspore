@@ -1640,7 +1640,7 @@ void SetVirtualDatasetStrategy(const CNodePtr &node) {
     if (full_batch) {
       dev_num = 1;
     } else {
-      dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(0).size());
+      dev_num = SizeToLong(g_device_manager->stage_device_num());
     }
     auto attrs_temp = prim->attrs();
     std::vector<Shapes> shape_list = ExtractShape(node);
@@ -1984,7 +1984,7 @@ std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
     return next_layout;
   }
   CheckGlobalDeviceManager();
-  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(0).size());
+  int64_t dev_num = g_device_manager->stage_device_num();
   TensorLayout input_tensor_layout;
   // create input_shape
   Shapes inputs_shape = GetNodeShape(node);
@@ -2009,7 +2009,7 @@ RedistributionOpListPtr InferSensRedistribution(const AnfNodePtr &node, const Te
   TensorRedistribution tensor_redistribution;
   // create stand alone layout:TensorMap:[all -1],dev_matrix:[dev_num].
   CheckGlobalDeviceManager();
-  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(0).size());
+  int64_t dev_num = g_device_manager->stage_device_num();
   TensorLayout stand_alone_layout;
   Shapes inputs_shape = GetNodeShape(node);
   if (inputs_shape.empty()) {
@@ -2029,7 +2029,7 @@ RedistributionOpListPtr InferSensRedistribution(const AnfNodePtr &node, const Te
   }
 
   // Infer Redistribution op list for stand alone and loss layout.
-  RankList dev_list = g_device_manager->GetDeviceListByStageId(0);
+  RankList dev_list = g_device_manager->GetDeviceListInThisStage();
   if (tensor_redistribution.Init(stand_alone_layout, loss_layout, dev_list) == FAILED) {
     MS_LOG(EXCEPTION) << "Redistribution for Sens init failed.";
   }
@@ -3093,7 +3093,7 @@ static void HandleNoUsedParameter(const FuncGraphPtr &root) {
   if (full_batch) {
     return;
   }
-  auto dev_num = g_device_manager->GetDeviceListByStageId(0).size();
+  auto dev_num = g_device_manager->stage_device_num();
   auto parameters = root->parameters();
   for (auto &parameter : parameters) {
     if (IsUsedParameter(root, parameter)) {

@@ -151,10 +151,8 @@ Status DropoutDoMaskInfo::GenerateStrategies(int64_t stage_id) {
 }
 
 std::shared_ptr<Strategys> DropoutDoMaskInfo::GenerateBatchStrategies() {
-  CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   Dimensions strategy(inputs_shape_[0].size() - 1, 1);
-  (void)strategy.insert(strategy.begin(), SizeToLong(dev_num));
+  (void)strategy.insert(strategy.begin(), stage_device_size_);
   Strategys strategy_v = {strategy};
   return std::make_shared<Strategys>(strategy_v);
 }

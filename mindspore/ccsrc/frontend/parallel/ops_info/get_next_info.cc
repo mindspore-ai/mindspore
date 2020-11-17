@@ -66,7 +66,7 @@ Strategys GetNextInfo::GetOutputStrategy() {
   Strategys outputs_strategy;
   for (auto shp : shapes_) {
     Dimensions out_strategy;
-    out_strategy.push_back(dev_num_);
+    out_strategy.push_back(stage_device_size_);
     for (size_t i = 1; i < shp.size(); ++i) {
       out_strategy.push_back(1);
     }
@@ -97,7 +97,7 @@ Status GetNextInfo::InferDevMatrixShape() {
   if (max_shape_length == 0) {
     MS_LOG(ERROR) << name_ << " : shape is 0";
   }
-  dev_matrix_shape_.push_back(dev_num_);
+  dev_matrix_shape_.push_back(stage_device_size_);
   for (size_t i = 1; i < max_shape_length; ++i) {
     dev_matrix_shape_.push_back(1);
   }
@@ -125,9 +125,6 @@ Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
       return FAILED;
     }
   }
-  int64_t stage = strategy->GetInputStage();
-  int64_t dev_num = SizeToLong(g_device_manager->GetDeviceListByStageId(stage).size());
-  dev_num_ = dev_num;
   return SUCCESS;
 }
 
@@ -199,16 +196,16 @@ Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
 
   Shapes out_shapes = outputs_shape_;
   for (size_t i = 0; i < out_shapes.size(); ++i) {
-    if (dev_num_ <= 0) {
+    if (stage_device_size_ <= 0) {
       MS_LOG(ERROR) << name_ << " : The dev num is 0.";
       return FAILED;
     }
     if (!full_batch) {
-      if (out_shapes[i][0] % dev_num_ != 0) {
+      if (out_shapes[i][0] % stage_device_size_ != 0) {
         MS_LOG(ERROR) << name_ << " : batch num cannot floor div dev num.";
         return FAILED;
       }
-      out_shapes[i][0] = out_shapes[i][0] / dev_num_;
+      out_shapes[i][0] = out_shapes[i][0] / stage_device_size_;
     }
   }
   ValuePtr new_shapes = MakeValue(out_shapes);

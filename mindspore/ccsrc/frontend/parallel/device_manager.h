@@ -75,6 +75,7 @@ class DeviceManager {
 
   size_t DeviceNum() const { return devices_.size(); }
   int64_t stage_num() const { return stage_num_; }
+  int64_t stage_device_num() const { return stage_device_num_; }
   int64_t stage_id() const { return stage_id_; }
   int64_t rank_index_in_stage() const { return rank_index_in_stage_; }
   int64_t global_rank() const { return global_rank_; }

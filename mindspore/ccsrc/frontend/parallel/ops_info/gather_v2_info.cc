@@ -308,8 +308,6 @@ std::shared_ptr<Strategys> GatherV2Info::GenerateBatchStrategies() {
     MS_LOG(EXCEPTION) << name_ << ": inputs shape size must be " << GATHER_V2_INPUTS_SIZE << ", but is "
                       << inputs_shape_.size();
   }
-  CheckGlobalDeviceManager();
-  size_t dev_num = g_device_manager->GetDeviceListByStageId(0).size();
   if (GetAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << "GetAttrs failed!";
   }
@@ -318,7 +316,7 @@ std::shared_ptr<Strategys> GatherV2Info::GenerateBatchStrategies() {
   if (index_size_ != 1) {
     strategy.push_back(1);
   } else {
-    strategy.push_back(SizeToLong(dev_num));
+    strategy.push_back(stage_device_size_);
   }
   for (size_t i = 1; i < inputs_shape_[0].size(); i++) {
     strategy.push_back(1);
