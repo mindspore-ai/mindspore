@@ -51,14 +51,18 @@ int ConvertSubGraph(const schema::SubGraph &sub_graph, Model *model) {
 int VersionVerify(flatbuffers::Verifier *verify) {
   if (schema::VerifyMetaGraphBuffer(*verify)) {
     return SCHEMA_VERSION::SCHEMA_CUR;
+  } else if (schema::v0::VerifyMetaGraphBuffer(*verify)) {
+    return SCHEMA_VERSION::SCHEMA_V0;
   }
-  return -1;
+  return SCHEMA_VERSION::SCHEMA_INVALID;
 }
 
 const void *GetMetaGraphByVerison(const char *buf, const int &schema_version) {
   MS_ASSERT(buf != nullptr);
   if (schema_version == SCHEMA_VERSION::SCHEMA_CUR) {
     return reinterpret_cast<const void *>(schema::GetMetaGraph(buf));
+  } else if (schema_version == SCHEMA_VERSION::SCHEMA_V0) {
+    return reinterpret_cast<const void *>(schema::v0::GetMetaGraph(buf));
   }
   return nullptr;
 }
@@ -69,6 +73,9 @@ int GenerateModelByVersion(const void *meta_graph, Model *model, const int &sche
   if (schema_version == SCHEMA_VERSION::SCHEMA_CUR) {
     status = GenerateModel<schema::MetaGraph, schema::CNode>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph),
                                                              model, schema_version);
+  } else if (schema_version == SCHEMA_VERSION::SCHEMA_V0) {
+    status = GenerateModel<schema::v0::MetaGraph, schema::v0::CNode>(
+      *reinterpret_cast<const schema::v0::MetaGraph *>(meta_graph), model, schema_version);
   }
   return status;
 }

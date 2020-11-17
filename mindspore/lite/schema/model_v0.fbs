@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 
-include "ops.fbs";
+include "ops_v0.fbs";
 
-namespace mindspore.schema;
-
-// This corresponds to the version.
-file_identifier "MSL1";
-// File extension of any written files.
-file_extension "ms";
+namespace mindspore.schema.v0;
 
 enum NodeType: int {
     ValueNode,  // const
@@ -241,16 +236,7 @@ union PrimitiveType {
     LpNormalization,
     DropoutGrad,
     MaximumGrad,
-    MinimumGrad,
-    Switch,
-    Partial,
-    TensorListFromTensor,
-    TensorListStack,
-    TensorListGetItem,
-    TensorListSetItem,
-    TensorListReserve,
-    All,
-    Assert,
+    MinimumGrad
 }
 
 enum QuantType: int {

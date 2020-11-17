@@ -165,6 +165,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsTwoBranch) {
   flatbuffers::FlatBufferBuilder builder(1024);
   auto offset = mindspore::schema::MetaGraph::Pack(builder, meta_graph.get());
   builder.Finish(offset);
+  mindspore::schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
   auto model = mindspore::lite::Model::Import(content, size);
@@ -349,6 +350,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsThreeBranch) {
   flatbuffers::FlatBufferBuilder builder(1024);
   auto offset = mindspore::schema::MetaGraph::Pack(builder, meta_graph.get());
   builder.Finish(offset);
+  mindspore::schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
   auto model = mindspore::lite::Model::Import(content, size);

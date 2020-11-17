@@ -355,6 +355,7 @@ TEST_F(NetworkTest, tuning_layer) {
   flatbuffers::FlatBufferBuilder builder(1024);
   auto offset = schema::MetaGraph::Pack(builder, meta_graph.get());
   builder.Finish(offset);
+  schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
   std::cout << "build fb size= " << size << std::endl;
