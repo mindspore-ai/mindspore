@@ -50,7 +50,7 @@ class WarpCTCAccuracy(nn.Metric):
 
     def eval(self):
         if self._total_num == 0:
-            raise RuntimeError('Accuary can not be calculated, because the number of samples is 0.')
+            raise RuntimeError('Accuracy can not be calculated, because the number of samples is 0.')
         return self._correct_num / self._total_num
 
     def _is_eq(self, pred_lbl, target):

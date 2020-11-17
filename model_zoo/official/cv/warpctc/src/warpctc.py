@@ -33,13 +33,13 @@ class StackedRNN(nn.Cell):
         hidden_size(int): the hidden size in LSTM layers, default is 512
      """
 
-    def __init__(self, input_size, batch_size=64, hidden_size=512):
+    def __init__(self, input_size, batch_size=64, hidden_size=512, num_class=11):
         super(StackedRNN, self).__init__()
-        self.batch_size = batch_size
         self.input_size = input_size
-        self.num_classes = 11
-        self.reshape = P.Reshape()
-        self.cast = P.Cast()
+        self.batch_size = batch_size
+        self.hidden_size = hidden_size
+        self.num_class = num_class
+
         k = (1 / hidden_size) ** 0.5
 
         self.rnn1 = P.DynamicRNN(forget_bias=0.0)
@@ -58,32 +58,23 @@ class StackedRNN(nn.Cell):
         self.c1 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
         self.c2 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
 
-        self.fc_weight = np.random.random((self.num_classes, hidden_size)).astype(np.float32)
-        self.fc_bias = np.random.random(self.num_classes).astype(np.float32)
+        self.fc_weight = Tensor(np.random.random((hidden_size, num_class)).astype(np.float16))
+        self.fc_bias = Tensor(np.random.random(self.num_class).astype(np.float16))
 
-        self.fc = nn.Dense(in_channels=hidden_size, out_channels=self.num_classes, weight_init=Tensor(self.fc_weight),
-                           bias_init=Tensor(self.fc_bias))
-
-        self.fc.to_float(mstype.float32)
-        self.expand_dims = P.ExpandDims()
-        self.concat = P.Concat()
+        self.cast = P.Cast()
+        self.reshape = P.Reshape()
         self.transpose = P.Transpose()
-        self.squeeze = P.Squeeze(axis=0)
+        self.matmul = nn.MatMul()
 
     def construct(self, x):
-        x = self.cast(x, mstype.float16)
-        x = self.transpose(x, (3, 0, 2, 1))
+        x = self.transpose(x, (1, 0, 2, 3))
         x = self.reshape(x, (-1, self.batch_size, self.input_size))
 
         y1, _, _, _, _, _, _, _ = self.rnn1(x, self.w1, self.b1, None, self.h1, self.c1)
         y2, _, _, _, _, _, _, _ = self.rnn2(y1, self.w2, self.b2, None, self.h2, self.c2)
 
-        output = ()
-        for i in range(F.shape(x)[0]):
-            y2_after_fc = self.fc(self.squeeze(y2[i:i + 1:1]))
-            y2_after_fc = self.expand_dims(y2_after_fc, 0)
-            output += (y2_after_fc,)
-        output = self.concat(output)
+        # [time_step, bs, hidden_size] * [hidden_size, num_class] + [num_class]
+        output = self.matmul(y2, self.fc_weight) + self.fc_bias
         return output
 
 

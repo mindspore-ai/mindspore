@@ -61,12 +61,18 @@ class _CaptchaDataset:
         return image, label
 
 
+def transpose_hwc2whc(image):
+    """transpose image from HWC to WHC"""
+    image = np.transpose(image, (1, 0, 2))
+    return image
+
+
 def create_dataset(dataset_path, batch_size=1, num_shards=1, shard_id=0, device_target='Ascend'):
     """
      create train or evaluation dataset for warpctc
 
      Args:
-        dataset_path(int): dataset path
+        dataset_path(str): dataset path
         batch_size(int): batch size of generated dataset, default is 1
         num_shards(int): number of devices
         shard_id(int): rank id
@@ -79,12 +85,13 @@ def create_dataset(dataset_path, batch_size=1, num_shards=1, shard_id=0, device_
         vc.Rescale(1.0 / 255.0, 0.0),
         vc.Normalize([0.9010, 0.9049, 0.9025], std=[0.1521, 0.1347, 0.1458]),
         vc.Resize((m.ceil(cf.captcha_height / 16) * 16, cf.captcha_width)),
-        vc.HWC2CHW()
+        c.TypeCast(mstype.float16)
     ]
     label_trans = [
         c.TypeCast(mstype.int32)
     ]
     ds = ds.map(operations=image_trans, input_columns=["image"], num_parallel_workers=8)
+    ds = ds.map(operations=transpose_hwc2whc, input_columns=["image"], num_parallel_workers=8)
     ds = ds.map(operations=label_trans, input_columns=["label"], num_parallel_workers=8)
 
     ds = ds.batch(batch_size, drop_remainder=True)
