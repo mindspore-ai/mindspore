@@ -270,7 +270,7 @@ class Cell(Cell_):
                 res.append(self._cast_mixed_precision_inputs(item, dst_type))
             elif isinstance(item, float):
                 res.append(cast(item, dst_type))
-            elif hasattr(item, "dtype") in {mstype.float16, mstype.float32, mstype.float64}:
+            elif hasattr(item, "dtype") and item.dtype in {mstype.float16, mstype.float32, mstype.float64}:
                 res.append(cast(item, dst_type))
             else:
                 res.append(item)
