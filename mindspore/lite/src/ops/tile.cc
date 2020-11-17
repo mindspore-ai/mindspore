@@ -140,18 +140,17 @@ int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
 
   std::vector<int> out_shape;
   std::vector<int> multiples = GetMultiples();
+  std::vector<int> dims = GetDims();
   const size_t in_dims = input->shape().size();
-  const size_t delta_dims = in_dims - multiples.size();
 
-  size_t i = 0;
-  for (; i < delta_dims; ++i) {
-    int tmp = input->shape()[i];
-    out_shape.push_back(tmp);
+  MS_ASSERT(multiples.size() == dims.size());
+  for (size_t i = 0; i < in_dims; ++i) {
+    out_shape.push_back(input->shape()[i]);
   }
-  for (; i < in_dims; ++i) {
-    int tmp = input->shape()[i] * (multiples[i - delta_dims]);
-    out_shape.push_back(tmp);
+  for (size_t i = 0; i < dims.size(); ++i) {
+    out_shape[dims[i]] = input->shape()[dims[i]] * (multiples[i]);
   }
+
   output->set_shape(out_shape);
   return RET_OK;
 }
