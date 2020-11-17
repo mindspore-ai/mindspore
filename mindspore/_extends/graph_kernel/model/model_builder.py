@@ -51,6 +51,7 @@ class OpInfer:
 
     default_infer_shape_func = [
         None,
+        None,
         default_elementwise_infer.__func__,
         lambda inputs, attrs: max([t.shape for t in inputs]),
         default_reduce_infer.__func__,
@@ -70,7 +71,8 @@ class OpInfer:
 
     infer_shape_func = {
         # add special infer func here
-        'InplaceAssign': lambda inputs, attrs: inputs[2].shape
+        'InplaceAssign': lambda inputs, attrs: inputs[2].shape,
+        'Reshape': lambda inputs, attrs: attrs["shape"],
     }
     infer_dtype_func = {
         # add special infer func here

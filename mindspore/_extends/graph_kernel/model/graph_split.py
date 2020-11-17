@@ -87,7 +87,8 @@ class GraphSplitByPattern:
                 _redirect_relation(a.out_relations)
             for a, _ in area.out_relations.items():
                 _redirect_relation(a.in_relations)
-            self.mode = self.MODE_COMPOSITE
+            if self.pattern > PrimLib.RESHAPE:
+                self.mode = self.MODE_COMPOSITE
 
         def check_circle(self, to):
             """Check circle. It returns false if circle exists"""
@@ -148,7 +149,7 @@ class GraphSplitByPattern:
     def split(self):
         """Split graph by pattern"""
         def _elemwise_depth(dom):
-            if dom.pattern > PrimLib.BROADCAST or len(dom.in_relations) != 1:
+            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.in_relations) != 1:
                 return None
             a, r = list(dom.in_relations.items())[0]
             if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 and r != PrimLib.ELEMWISE:
@@ -156,7 +157,7 @@ class GraphSplitByPattern:
             return [a]
 
         def _elemwise_width(dom):
-            if dom.pattern > PrimLib.BROADCAST:
+            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST):
                 return None
             fused = []
             for a, r in dom.in_relations.items():
@@ -165,7 +166,7 @@ class GraphSplitByPattern:
             return fused
 
         def _broadcast_depth(dom):
-            if dom.pattern > PrimLib.BROADCAST or len(dom.in_relations) != 1:
+            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.in_relations) != 1:
                 return None
             a, r = list(dom.in_relations.items())[0]
             if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or \
@@ -174,7 +175,7 @@ class GraphSplitByPattern:
             return [a]
 
         def _broadcast_width(dom):
-            if dom.pattern > PrimLib.BROADCAST:
+            if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST):
                 return None
             fused = []
             for a, r in dom.in_relations.items():
