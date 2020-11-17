@@ -301,7 +301,7 @@ void Somas::IndependentNodeOutputProcess(const session::KernelGraph *graph) {
       auto semi_reuse_output_tensors = iter->second->output_tensors_;
       for (auto &tensor : semi_reuse_output_tensors) {
         total_size += tensor->GetAlignedSize();
-        tensor->aligned_size_ = 0;
+        tensor->lifelong_value_ = kLifeLongGraphAll;
       }
     }
   }

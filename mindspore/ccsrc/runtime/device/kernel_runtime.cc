@@ -543,7 +543,7 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
 
   if (node->isa<CNode>()) {
     bool independent = AnfAlgo::IsIndependentNode(node->cast<CNodePtr>());
-    if (independent && (type == kReuseDynamicMem || type == kSomasReuseDynamicMem)) {
+    if (independent && (type == kReuseDynamicMem)) {
       MS_LOG(INFO) << "Independent node " << node->fullname_with_scope() << " disable memory reuse";
       type = kDynamicMem;
     }
