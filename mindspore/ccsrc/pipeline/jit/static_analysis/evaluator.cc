@@ -97,7 +97,12 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                       << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)
                       << ", please call 'context.set_context(max_call_depth=value)' to adjust this value.";
   }
-  const std::vector<AnfNodePtr> &all_nodes = TopoSort(func_node);
+  const auto &all_nodes = TopoSort(func_node, SuccIncoming, [&fg](const AnfNodePtr &node) -> IncludeType {
+    if (node->func_graph() != fg || node->isa<ValueNode>()) {
+      return EXCLUDE;
+    }
+    return FOLLOW;
+  });
   for (const auto &node : all_nodes) {
     AnfNodeConfigPtr node_conf = engine->MakeConfig(node, graph_context_);
     MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg.get() << fg->ToString()
