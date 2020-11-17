@@ -63,8 +63,7 @@ void ParallelContext::Reset() {
   all_reduce_fusion_split_indices_.clear();
   all_reduce_fusion_split_sizes_.clear();
   strategy_search_mode_ = DYNAMIC_PROGRAMMING;
-  stages_.clear();
-  pipeline_stage_split_num_ = 0;
+  pipeline_stage_split_num_ = 1;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -86,8 +85,6 @@ void ParallelContext::set_gradient_fp32_sync(bool gradient_fp32_sync) { gradient
 void ParallelContext::set_loss_repeated_mean(bool loss_repeated_mean) { loss_repeated_mean_ = loss_repeated_mean; }
 
 void ParallelContext::set_pipeline_stage_split_num(const int64_t stage_num) { pipeline_stage_split_num_ = stage_num; }
-
-void ParallelContext::set_stage(const std::vector<int64_t> &stages) { stages_ = stages; }
 
 bool ParallelContext::set_parallel_mode(const std::string &parallel_mode) {
   auto iter = std::find(PARALLEL_MODE_LIST.begin(), PARALLEL_MODE_LIST.end(), parallel_mode);

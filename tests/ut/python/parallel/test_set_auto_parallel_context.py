@@ -107,4 +107,4 @@ def test_reset_auto_parallel_context():
     assert not parameter_broadcast
     assert not device_num_is_set
     assert not parameter_broadcast_is_set
-    assert not stage
+    assert stage == 1
