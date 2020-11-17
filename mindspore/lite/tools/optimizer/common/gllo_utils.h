@@ -75,6 +75,8 @@ size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
 
 ParamValueLitePtr GetLiteParamValue(const AnfNodePtr &node);
 
+AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index);
+
 enum kTransFilterType {
   kKCHW2HWCK,  // 0
   kKCHW2KHWC,

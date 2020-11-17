@@ -191,12 +191,15 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/fusion/batchmatmul_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/sigmoid_mul_fusion.cc
             ${LITE_DIR}/tools/optimizer/fusion/conv_conv_fusion.cc
+            ${LITE_DIR}/tools/optimizer/fusion/conv_tuplegetitem_fusion.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_transform_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/weight_format_hardcode_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_cast_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_transpose_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/identity_remove_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/infershape_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
             )
 endif()
 ### train

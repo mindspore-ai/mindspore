@@ -406,6 +406,55 @@ ParamValueLitePtr GetLiteParamValue(const AnfNodePtr &node) {
   auto param_value = std::dynamic_pointer_cast<ParamValueLite>(param->default_param());
   return param_value;
 }
+
+AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "CNodePtr is nullptr";
+    return nullptr;
+  }
+  auto inputs = cnode->inputs();
+  if (!(0 < index && index < inputs.size())) {
+    return nullptr;
+  }
+  auto input = inputs[index];
+  if (input == nullptr) {
+    MS_LOG(ERROR) << "CNode input is nullptr";
+    return nullptr;
+  }
+
+  AbstractBasePtr abstract = nullptr;
+  if (utils::isa<ParameterPtr>(input)) {
+    auto parameter = input->cast<ParameterPtr>();
+    abstract = parameter->abstract();
+  } else if (utils::isa<CNodePtr>(input)) {
+    auto input_cnode = input->cast<CNodePtr>();
+    if (GetCNodeType(input_cnode) == schema::PrimitiveType_TupleGetItem) {
+      auto tuple_inputs = input_cnode->inputs();
+      MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
+      auto get_item_input_cnode = tuple_inputs.at(1);
+      MS_ASSERT(get_item_input_cnode != nullptr);
+      auto idx = GetTupleGetItemOutIndex(input_cnode);
+      if (!utils::isa<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
+        MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple";
+        return nullptr;
+      }
+      auto abstract_tuple = utils::cast<abstract::AbstractTuplePtr>(get_item_input_cnode->abstract());
+      auto abstract_list = abstract_tuple->elements();
+      if (abstract_list.size() <= idx) {
+        MS_LOG(ERROR) << "AbstractTuple's size is smaller than expect";
+        return nullptr;
+      }
+      abstract = abstract_list[idx];
+    } else {
+      abstract = input_cnode->abstract();
+    }
+  } else {
+    MS_LOG(ERROR) << "unsupported input node type";
+    return nullptr;
+  }
+  return abstract;
+}
+
 bool IsParamNode(const BaseRef &n) {
   if (!utils::isa<ParameterPtr>(n)) {
     return false;
