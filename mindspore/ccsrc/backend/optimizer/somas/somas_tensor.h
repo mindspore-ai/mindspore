@@ -108,9 +108,9 @@ class SomasTensor {
   bool IsGap() { return type_ == kGap; }
 
   // Computing functions
-  void SetOffset(size_t start_offset = 0) {
-    if (aligned_size_ != 0 && type_ != kGetNextOutput) {
-      offset_ = start_offset + solver_tensor_desc_->offset_;
+  void SetOffset() {
+    if (aligned_size_ != 0) {
+      offset_ = solver_tensor_desc_->offset_;
     }
   }
   SomasSolverTensorDescPtr GetSolverTensorDesc();
