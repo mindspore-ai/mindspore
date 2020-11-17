@@ -666,9 +666,7 @@ AnfNodePtr SimplifyReduce(const AnfNodePtr &node) {
 }
 
 AnfNodePtr TrySimplify(const AnfNodePtr &node) {
-  std::list<std::function<AnfNodePtr(AnfNodePtr)>> SimplifyFuncList = {
-    SimplifyAdd,    SimplifyDiv,  SimplifyLog, SimplifyMul,       SimplifyNeg,    SimplifyPow,   SimplifyRsqrt,
-    SimplifySelect, SimplifySqrt, SimplifySub, SimplifyTranspose, SimplifyMatMul, SimplifyReduce};
+  std::list<std::function<AnfNodePtr(AnfNodePtr)>> SimplifyFuncList = {SimplifyReduce};
   for (auto f : SimplifyFuncList) {
     auto ret = f(node);
     if (ret != nullptr) {
