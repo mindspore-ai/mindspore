@@ -26,10 +26,10 @@
 namespace mindspore {
 // namespace to support debug trace infomation
 namespace trace {
-std::vector<DebugInfoPtr> GetSourceCodeDebugInfoVec(DebugInfoPtr debug_info) {
+std::vector<DebugInfoPtr> GetSourceCodeDebugInfoVec(DebugInfoPtr debug_info, bool is_debug = false) {
   std::vector<DebugInfoPtr> debug_with_loc_vec;
   while (debug_info != nullptr) {
-    if (debug_info->location() != nullptr) {
+    if (is_debug || debug_info->location() != nullptr) {
       debug_with_loc_vec.push_back(debug_info);
     }
     if (debug_info->trace_info() != nullptr) {
@@ -108,6 +108,90 @@ std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix, So
     std::replace(debug_info.begin(), debug_info.end(), '\n', '/');
   }
   oss << prefix << debug_info;
+  return oss.str();
+}
+
+std::string DumpSourceLines(const AnfNodePtr node) {
+  if (node == nullptr) {
+    MS_LOG(WARNING) << "Node is null";
+    return "";
+  }
+  auto info_vec = GetSourceCodeDebugInfoVec(node->debug_info());
+  std::ostringstream oss;
+  for (auto info : info_vec) {
+    MS_EXCEPTION_IF_NULL(info);
+    auto loc = info->location();
+    if (loc == nullptr) {
+      continue;
+    }
+    auto loc_str = loc->ToString(kSourceLineTipDiscard);
+    std::replace(loc_str.begin(), loc_str.end(), '\r', '/');
+    std::replace(loc_str.begin(), loc_str.end(), '\n', '/');
+    oss << loc_str << "\n";
+  }
+  return oss.str();
+}
+
+std::vector<std::string> GetSourceLineList(const AnfNodePtr node) {
+  std::vector<std::string> result;
+  if (node == nullptr) {
+    MS_LOG(WARNING) << "Node is null";
+    return result;
+  }
+  auto info_vec = GetSourceCodeDebugInfoVec(node->debug_info());
+  for (auto info : info_vec) {
+    MS_EXCEPTION_IF_NULL(info);
+    auto loc = info->location();
+    if (loc == nullptr) {
+      continue;
+    }
+    auto loc_str = loc->ToString(kSourceLineTipDiscard);
+    std::replace(loc_str.begin(), loc_str.end(), '\r', '/');
+    std::replace(loc_str.begin(), loc_str.end(), '\n', '/');
+    result.push_back(loc_str + "\n");
+  }
+  return result;
+}
+
+std::vector<LocationPtr> GetSourceLocationList(const AnfNodePtr node) {
+  std::vector<LocationPtr> result;
+  if (node == nullptr) {
+    MS_LOG(WARNING) << "Node is null";
+    return result;
+  }
+  auto info_vec = GetSourceCodeDebugInfoVec(node->debug_info());
+  for (auto info : info_vec) {
+    MS_EXCEPTION_IF_NULL(info);
+    if (info->location() != nullptr) {
+      result.emplace_back(info->location());
+    }
+  }
+  return result;
+}
+
+std::string GetDebugTraceInfo(const AnfNodePtr node, bool is_debug) {
+  if (node == nullptr) {
+    MS_LOG(WARNING) << "Node is null";
+    return "";
+  }
+  auto info_vec = GetSourceCodeDebugInfoVec(node->debug_info(), is_debug);
+  std::ostringstream oss;
+  for (auto info : info_vec) {
+    MS_EXCEPTION_IF_NULL(info);
+    auto trace_info = info->trace_info();
+    if (trace_info != nullptr) {
+      oss << trace_info->symbol() << "(" << trace_info->full_name() << ") ";
+    }
+    auto loc = info->location();
+    if (loc == nullptr) {
+      oss << "Location miss\n";
+      continue;
+    }
+    auto loc_str = loc->ToString(kSourceLineTipDiscard);
+    std::replace(loc_str.begin(), loc_str.end(), '\r', '/');
+    std::replace(loc_str.begin(), loc_str.end(), '\n', '/');
+    oss << loc_str << "\n";
+  }
   return oss.str();
 }
 }  // namespace trace
