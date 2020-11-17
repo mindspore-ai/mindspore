@@ -38,6 +38,7 @@
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "utils/log_adapter.h"
+#include "pipeline/jit/pipeline_split.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -417,6 +418,8 @@ bool TransformTopGraphPass(const ResourcePtr &res) {
   }
   return true;
 }
+
+bool PipelineSplitPass(const ResourcePtr &res) { return PipelineSplit(res); }
 
 bool ValidatePass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());

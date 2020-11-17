@@ -355,6 +355,8 @@ class FuncGraph : public FuncGraphBase {
   std::shared_ptr<bool> switch_layer_input() const { return switch_layer_input_; }
   void set_switch_layer_input(std::shared_ptr<bool> switch_layer_input) { switch_layer_input_ = switch_layer_input; }
   bool ContainMultiTarget() const;
+  int64_t stage() { return stage_; }
+  void set_stage(int64_t stage) { stage_ = stage; }
 
  private:
   // graph is manipulated by manager and others
@@ -419,6 +421,7 @@ class FuncGraph : public FuncGraphBase {
   // Design switch_layer_input as a ptr to
   // share between derived backpropagator and cloned graphs
   std::shared_ptr<bool> switch_layer_input_;
+  int64_t stage_;
   std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
                      abstract::AbstractBasePtrListEqual>
     func_graph_cache_;
