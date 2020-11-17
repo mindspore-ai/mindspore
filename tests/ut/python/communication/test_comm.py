@@ -138,6 +138,7 @@ def test_allreduce():
     run_allreduce(ReduceOp.SUM)
     run_allreduce(ReduceOp.MAX)
     run_allreduce(ReduceOp.MIN)
+    run_allreduce(ReduceOp.PROD)
 
 
 def test_allgather():

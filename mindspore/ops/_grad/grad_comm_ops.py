@@ -37,11 +37,18 @@ def get_bprop_all_reduce(self):
     equal = P.Equal()
     cast = P.Cast()
     mul = P.Mul()
+    div = P.RealDiv()
     dtype = P.DType()
 
     if self.op == ReduceOp.PROD:
-        raise RuntimeError("The bprop of ReduceOp.PROD is not supported yet.")
-    if self.op == ReduceOp.SUM:
+
+        def bprop(x, out, dout):
+            dy1 = mul(dout, out)
+            dy2 = all_reduce_grad(dy1)
+            dx = div(dy2, x)
+            return (dx,)
+
+    elif self.op == ReduceOp.SUM:
 
         def bprop(x, out, dout):
             if F.issubclass_(F.typeof(dout), mstype.tensor):
