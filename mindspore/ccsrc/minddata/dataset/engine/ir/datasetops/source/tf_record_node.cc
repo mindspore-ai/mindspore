@@ -70,15 +70,6 @@ Status TFRecordNode::ValidateParams() {
     return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, err_msg);
   }
 
-  if (cache_ == nullptr && !shard_equal_rows_ && dataset_files_.size() < num_shards_) {
-    // This check only makes sense in a non-cache path. We should make sure there is at least one file per
-    // shard in file-based sharding
-    std::string err_msg =
-      "TFRecordNode: Invalid number of dataset files, should at least be " + std::to_string(num_shards_);
-    MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, err_msg);
-  }
-
   std::vector<std::string> invalid_files(dataset_files_.size());
   auto it = std::copy_if(dataset_files_.begin(), dataset_files_.end(), invalid_files.begin(),
                          [](const std::string &filename) { return !TFReaderOp::ValidateFirstRowCrc(filename); });

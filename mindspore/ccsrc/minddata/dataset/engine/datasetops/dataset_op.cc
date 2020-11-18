@@ -298,30 +298,45 @@ Status DatasetOp::GetDatasetSize(int64_t *dataset_size) {
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 1, "Can't get the dataset size for the current tree.");
-
-  return child_[0]->GetDatasetSize(dataset_size);
+  if (child_.size() == 1) {
+    return child_[0]->GetDatasetSize(dataset_size);
+  } else if (child_.size() > 1) {
+    // It is okay for dataset to have more than 1 child, GetDatasetSize shouldn't fail in this case.
+    // This is done mostly for cache, which injects cache lookup/merge operators. Cache path will
+    // always be in front of the child_ structure, so we get the dataset size from the last child.
+    return child_[child_.size() - 1]->GetDatasetSize(dataset_size);
+  } else {
+    RETURN_STATUS_UNEXPECTED("Trying to get dataset size from leaf node, missing override");
+  }
 }
 
 // Gets the number of classes
 Status DatasetOp::GetNumClasses(int64_t *num_classes) {
-  if (num_classes_ > 0) {
-    *num_classes = num_classes_;
-    return Status::OK();
-  }
-  if (!child_.empty()) {
+  if (child_.size() == 1) {
     return child_[0]->GetNumClasses(num_classes);
+  } else if (child_.size() > 1) {
+    // It is okay for dataset to have more than 1 child, GetNumClasses shouldn't fail in this case.
+    // This is done mostly for cache, which injects cache lookup/merge operators. Cache path will
+    // always be in front of the child_ structure, so we get num classes from the last child.
+    return child_[child_.size() - 1]->GetNumClasses(num_classes);
   } else {
+    // when num classes isn't found, the default behavior is to return -1
     *num_classes = -1;
-    RETURN_STATUS_UNEXPECTED("Can't get the number of classes for the current tree.");
+    return Status::OK();
   }
 }
 
 Status DatasetOp::GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) {
-  if (!child_.empty()) {
+  if (child_.size() == 1) {
     return child_[0]->GetClassIndexing(output_class_indexing);
+  } else if (child_.size() > 1) {
+    // It is okay for dataset to have more than 1 child, GetClassIndexing shouldn't fail in this case.
+    // This is done mostly for cache, which injects cache lookup/merge operators. Cache path will
+    // always be in the front of the child_ structure, so we get data from the last child.
+    return child_[child_.size() - 1]->GetClassIndexing(output_class_indexing);
   } else {
-    RETURN_STATUS_UNEXPECTED("Can't get the class index for the current tree.");
+    *output_class_indexing = {};
+    RETURN_STATUS_UNEXPECTED("Trying to get class index from leaf node, missing override");
   }
 }
 
@@ -478,17 +493,31 @@ void DatasetOp::UpdateRepeatAndEpochCounter() {
   if (op_current_repeats_ % op_num_repeats_per_epoch_ == 0) op_current_epochs_++;
   MS_LOG(DEBUG) << Name() << " current repeats: " << op_current_repeats_ << ", current epochs: " << op_current_epochs_;
 }
+
 int64_t DatasetOp::GetTreeBatchSize() {
-  if (!child_.empty()) {
+  if (child_.size() == 1) {
     return child_[0]->GetTreeBatchSize();
+  } else if (child_.size() > 1) {
+    // It is okay for dataset to have more than 1 child, GetBatchSize shouldn't fail in this case.
+    // This is done mostly for cache, which injects cache lookup/merge operators. Cache path will
+    // always be in front of the child_ structure, so we get data from the last child.
+    return child_[child_.size() - 1]->GetTreeBatchSize();
+  } else {
+    return 1;
   }
-  return 1;
 }
+
 int64_t DatasetOp::GetTreeRepeatCount() {
-  if (!child_.empty()) {
+  if (child_.size() == 1) {
     return child_[0]->GetTreeRepeatCount();
+  } else if (child_.size() > 1) {
+    // It is okay for dataset to have more than 1 child, GetRepeatCount shouldn't fail in this case.
+    // This is done mostly for cache, which injects cache lookup/merge operators. Cache path will
+    // always be in front of the child_ structure, so we get data from the last child.
+    return child_[child_.size() - 1]->GetTreeRepeatCount();
+  } else {
+    return 1;
   }
-  return 1;
 }
 }  // namespace dataset
 }  // namespace mindspore
