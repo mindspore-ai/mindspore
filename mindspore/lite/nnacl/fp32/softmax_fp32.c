@@ -13,9 +13,79 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "nnacl/fp32/softmax_fp32.h"
 #include <math.h>
+#include "nnacl/fp32/exp_fp32.h"
+
+void SoftmaxNorm(const float *src, float *dst, int batch, int channel) {
+  int cur_batch_offset = 0;
+  for (int i = 0; i < batch; i++, cur_batch_offset += channel) {
+    int j = 0;
+#ifdef ENABLE_ARM64
+    float32x4_t max4 = vld1q_f32(src + cur_batch_offset);
+    j += C4NUM;
+    for (; j < channel - C4NUM; j += C4NUM) {
+      float32x4_t input4 = vld1q_f32(src + cur_batch_offset + j);
+      max4 = vmaxq_f32(max4, input4);
+    }
+    float max = channel >= C4NUM ? vmaxvq_f32(max4) : src[cur_batch_offset];
+#else
+    float max = src[cur_batch_offset];
+#endif
+    for (; j < channel; j++) {
+      float input = src[cur_batch_offset + j];
+      if (input > max) {
+        max = input;
+      }
+    }
+    int k = 0;
+#ifdef ENABLE_NEON
+    for (; k < channel - C4NUM; k += C4NUM) {
+      float32x4_t input4 = vld1q_f32(src + cur_batch_offset + k);
+      float32x4_t output4 = vsubq_f32(input4, vdupq_n_f32(max));
+      vst1q_f32(dst + cur_batch_offset + k, output4);
+    }
+#endif
+    for (; k < channel; k++) {
+      int offset = cur_batch_offset + k;
+      dst[offset] = src[offset] - max;
+    }
+  }
+}
+
+void SumAndDiv(const float *src, float *dst, int batch, int channel) {
+  int cur_batch_offset = 0;
+  for (int i = 0; i < batch; i++, cur_batch_offset += channel) {
+    float sum = 0;
+    int j = 0;
+#ifdef ENABLE_NEON
+    float32x4_t sum4 = vdupq_n_f32(0);
+    for (; j < channel - C4NUM; j += C4NUM) {
+      sum4 = vaddq_f32(sum4, vld1q_f32(src + cur_batch_offset + j));
+    }
+    sum = sum4[0] + sum4[1] + sum4[2] + sum4[3];
+#endif
+    for (; j < channel; j++) {
+      sum += src[cur_batch_offset + j];
+    }
+    int k = 0;
+#ifdef ENABLE_NEON
+    float div = 1.0f / sum;
+    for (; k < channel - C4NUM; k += C4NUM) {
+      vst1q_f32(dst + cur_batch_offset + k, vmulq_n_f32(vld1q_f32(src + cur_batch_offset + k), div));
+    }
+#endif
+    for (; k < channel; k++) {
+      dst[cur_batch_offset + k] = src[cur_batch_offset + k] / sum;
+    }
+  }
+}
+
+void SoftmaxLastAxis(const float *src, float *dst, int batch, int channel) {
+  SoftmaxNorm(src, dst, batch, channel);
+  ExpFp32(dst, dst, batch * channel);
+  SumAndDiv(dst, dst, batch, channel);
+}
 
 // output = exp(input) / reduce_sum(exp(input), axis)
 void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, SoftmaxParameter *parameter) {
