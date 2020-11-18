@@ -38,7 +38,6 @@ const BaseRef ConvTupleActivationFusion::DefinePattern() const {
   auto act_prim = new schema::PrimitiveT();
   act_prim->value.type = primitive_type;
   auto act_value = std::make_shared<lite::PrimitiveC>(act_prim);
-
   return VectorRef({act_value, tuple_get_item});
 }
 

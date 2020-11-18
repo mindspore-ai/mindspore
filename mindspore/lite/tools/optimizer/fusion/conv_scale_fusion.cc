@@ -42,7 +42,6 @@ const BaseRef ConvScaleFusion::DefinePattern() const {
   auto bn_var = std::make_shared<CondVar>(IsScaleNode);
   auto weight_var = std::make_shared<CondVar>(IsParamNode);
   auto bias_var = std::make_shared<SeqVar>();
-
   return VectorRef({bn_var, conv_var, weight_var, bias_var});
 }
 const void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num, float *trans_scale,

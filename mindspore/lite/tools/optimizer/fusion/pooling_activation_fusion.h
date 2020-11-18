@@ -25,9 +25,9 @@ namespace mindspore {
 namespace opt {
 class PoolingActivationFusion : public PatternProcessPass {
  public:
-  explicit PoolingAActivationFusion(bool multigraph = true, const std::string &name = "pooling_activation_fusion",
-                                    schema::PrimitiveType primitive = schema::PrimitiveType_LeakyReLU,
-                                    schema::ActivationType activation = schema::ActivationType_LEAKY_RELU)
+  PoolingAActivationFusion(bool multigraph = true, const std::string &name = "pooling_activation_fusion",
+                           schema::PrimitiveType primitive = schema::PrimitiveType_LeakyReLU,
+                           schema::ActivationType activation = schema::ActivationType_LEAKY_RELU)
       : PatternProcessPass(name, multigraph), primitive_type(primitive), activation_type(activation) {}
   ~PoolingAActivationFusion() override = default;
   const BaseRef DefinePattern() const override;

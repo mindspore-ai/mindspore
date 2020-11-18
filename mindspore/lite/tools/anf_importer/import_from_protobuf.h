@@ -31,7 +31,7 @@
 namespace mindspore::lite {
 class AnfImporterFromProtobuf : public AnfImporter {
  public:
-  explicit AnfImporterFromProtobuf(onnx::ModelProto *onnx_model, FuncGraphPtr func_graph)
+  AnfImporterFromProtobuf(onnx::ModelProto *onnx_model, FuncGraphPtr func_graph)
       : onnx_model_(onnx_model), func_graph_(std::move(func_graph)) {}
 
   ~AnfImporterFromProtobuf() override = default;
