@@ -2922,8 +2922,8 @@ class ScatterUpdate(_ScatterOp_Dynamic):
     Examples:
         >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
         >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
-        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> np_updates = np.array([[[1.0, 2.2, 1.0], [2.0, 1.2, 1.0]], [[2.0, 2.2, 1.0], [3.0, 1.2, 1.0]]])
+        >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
+        >>> np_updates = np.array([[2.0, 1.2, 1.0], [3.0, 1.2, 1.0]])
         >>> updates = Tensor(np_updates, mindspore.float32)
         >>> op = P.ScatterUpdate()
         >>> output = op(input_x, indices, updates)
