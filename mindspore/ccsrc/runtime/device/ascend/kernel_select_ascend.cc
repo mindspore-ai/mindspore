@@ -172,9 +172,9 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
   }
 }
 
-void PrintRaiseOrReducePrecisionSelectedInfo(const CNodePtr &cnode,
-                                             const std::shared_ptr<kernel::KernelBuildInfo> &selected_kernel_build_info,
-                                             bool precision_reduce) {
+std::string PrintRaiseOrReducePrecisionSelectedInfo(
+  const CNodePtr &cnode, const std::shared_ptr<kernel::KernelBuildInfo> &selected_kernel_build_info,
+  bool precision_reduce) {
   MS_EXCEPTION_IF_NULL(selected_kernel_build_info);
   MS_EXCEPTION_IF_NULL(cnode);
   std::ostringstream buffer;
@@ -186,7 +186,7 @@ void PrintRaiseOrReducePrecisionSelectedInfo(const CNodePtr &cnode,
   }
   PrintInputAndOutputInferType(buffer, cnode);
   buffer << ", select kernel:" << selected_kernel_build_info->ToString();
-  MS_LOG(INFO) << buffer.str();
+  return buffer.str();
 }
 
 std::shared_ptr<kernel::KernelBuildInfo> ChooseMatchedKernelInfo(
@@ -381,7 +381,7 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
     if (selected_kernel_info == nullptr) {
       return select_status;
     } else {
-      PrintRaiseOrReducePrecisionSelectedInfo(kernel_node, selected_kernel_info, precision_reduce);
+      MS_LOG(INFO) << PrintRaiseOrReducePrecisionSelectedInfo(kernel_node, selected_kernel_info, precision_reduce);
       select_status = precision_reduce ? kStatusReducePrecision : kStatusRaisePrecision;
     }
   }
