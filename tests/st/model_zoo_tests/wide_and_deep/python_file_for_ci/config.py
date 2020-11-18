@@ -37,6 +37,8 @@ def argparse_init():
     parser.add_argument("--ckpt_path", type=str, default="./checkpoints/")
     parser.add_argument("--eval_file_name", type=str, default="eval.log")
     parser.add_argument("--loss_file_name", type=str, default="loss.log")
+    parser.add_argument("--sparse", type=int, default=0, help="Enable sparse or not")
+    parser.add_argument("--deep_table_slice_mode", type=str, default="column_slice", help="column_slice/row_slice")
     return parser
 
 
@@ -66,6 +68,8 @@ class WideDeepConfig():
         self.loss_file_name = "loss.log"
         self.ckpt_path = "./checkpoints/"
         self.stra_ckpt = "./strategy_train.ckpt"
+        self.sparse = False
+        self.deep_table_slice_mode = "column_slice"
 
     def argparse_init(self):
         """
@@ -94,3 +98,7 @@ class WideDeepConfig():
         self.loss_file_name = args.loss_file_name
         self.ckpt_path = args.ckpt_path
         self.stra_ckpt = args.stra_ckpt
+        self.sparse = bool(args.sparse)
+        self.deep_table_slice_mode = args.deep_table_slice_mode
+        if self.host_device_mix == 1:
+            self.sparse = True

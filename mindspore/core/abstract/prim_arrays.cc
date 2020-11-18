@@ -561,6 +561,17 @@ AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr
     result_shp.push_back(input_shp[idx]);
     indices.insert(idx);
   }
+  ShapeVector max_shp;
+  ShapeVector min_shp;
+  if (input->shape()->max_shape().size() == input_shp.size() &&
+      input->shape()->min_shape().size() == input_shp.size()) {
+    for (size_t i = 0; i < perm_vec.size(); i++) {
+      size_t idx = static_cast<size_t>(perm_vec[i]);
+      max_shp.push_back(input->shape()->max_shape()[idx]);
+      min_shp.push_back(input->shape()->min_shape()[idx]);
+    }
+    return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp, min_shp, max_shp));
+  }
   return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp));
 }
 

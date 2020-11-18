@@ -144,6 +144,11 @@ class Optimizer(Cell):
             decay_filter = lambda x: 'beta' not in x.name and 'gamma' not in x.name
             self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
             self.exec_weight_decay = self.weight_decay > 0
+        # when a parameter has been unique, there is no need do another unique in optimizer.
+        for param in self.parameters:
+            if param.unique:
+                self._unique = False
+                break
         ps_filter = lambda x: x.is_param_ps
         self.ps_parameters = tuple(ps_filter(x) for x in self.parameters)
         self.reciprocal_scale = 1.0 / loss_scale

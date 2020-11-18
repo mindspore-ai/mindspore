@@ -27,7 +27,7 @@ void DynamicShapeKernel::Execute() {
   }
 
   auto prev_output_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, 0);
-  auto output_shape = std::vector<int64_t>(SizeToLong(prev_output_shape.size()));
+  std::vector<int64_t> output_shape = {SizeToLong(prev_output_shape.size())};
 
   auto output_type = TypeId::kNumberTypeInt64;
 

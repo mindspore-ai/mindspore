@@ -40,8 +40,8 @@ def get_WideDeep_net(config):
     WideDeep_net = WideDeepModel(config)
     loss_net = NetWithLossClass(WideDeep_net, config)
     loss_net = VirtualDatasetCellTriple(loss_net)
-    train_net = TrainStepWrap(
-        loss_net, host_device_mix=bool(config.host_device_mix), sparse=config.sparse)
+    train_net = TrainStepWrap(loss_net, host_device_mix=bool(config.host_device_mix),
+                              sparse=config.sparse)
     eval_net = PredictWithSigmoid(WideDeep_net)
     eval_net = VirtualDatasetCellTriple(eval_net)
     return train_net, eval_net
@@ -122,7 +122,7 @@ def train_and_eval(config):
                   metrics={"auc": auc_metric})
 
     eval_callback = EvalCallBack(
-        model, ds_eval, auc_metric, config, host_device_mix=host_device_mix)
+        model, ds_eval, auc_metric, config)
 
     callback = LossCallBack(config=config, per_print_times=20)
     ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size()*epochs,
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     context.set_context(variable_memory_max_size="24GB")
     context.set_context(enable_sparse=True)
     init()
-    if wide_deep_config.host_device_mix == 1:
+    if wide_deep_config.sparse:
         context.set_auto_parallel_context(
             parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, gradients_mean=True)
     else:

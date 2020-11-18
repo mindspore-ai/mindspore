@@ -274,7 +274,8 @@ class AllGather(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
-        x_shape[0] = x_shape[0] * self.rank_size
+        if x_shape[0] > 0:
+            x_shape[0] = x_shape[0] * self.rank_size
         return x_shape
 
     def infer_dtype(self, x_dtype):
@@ -324,7 +325,8 @@ class _HostAllGather(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         validator.check_positive_int(len(x_shape), "x shape", self.name)
-        x_shape[0] = x_shape[0] * self.group_size
+        if x_shape[0] > 0:
+            x_shape[0] = x_shape[0] * self.group_size
         return x_shape
 
     def infer_dtype(self, x_dtype):

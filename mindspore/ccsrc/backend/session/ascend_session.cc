@@ -569,7 +569,6 @@ void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kerne
 void AscendSession::MemoryAlloc(KernelGraph *kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  opt::RemoveNopNode(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   runtime_instance->AssignMemory(kernel_graph);

@@ -471,7 +471,21 @@ bool KernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) { return false; }
 
 DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  if (!anf_node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "anf_node should be a cnode";
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (opt::IsNopNode(cnode)) {
+    size_t kNopNodeInputSize = 2;
+    size_t kNopNodeRealInputIndex = 1;
+    if (cnode->size() != kNopNodeInputSize) {
+      MS_LOG(EXCEPTION) << cnode->fullname_with_scope() << " has invalid input size: " << cnode->size();
+    }
+    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
+    return PreAssignCNodeMemory(cnode->input(kNopNodeRealInputIndex), input_node_with_index.second);
+  }
   auto kernel_mod = AnfAlgo::GetKernelMod(anf_node);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();
   if (output_sizes.size() <= index) {
     MS_LOG(EXCEPTION) << "Previous node output size < node index";

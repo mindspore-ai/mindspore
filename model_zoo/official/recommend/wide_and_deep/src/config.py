@@ -48,6 +48,7 @@ def argparse_init():
     parser.add_argument("--parameter_server", type=int, default=0, help="Open parameter server of not")
     parser.add_argument("--field_slice", type=int, default=0, help="Enable split field mode or not")
     parser.add_argument("--sparse", type=int, default=0, help="Enable sparse or not")
+    parser.add_argument("--deep_table_slice_mode", type=str, default="column_slice", help="column_slice/row_slice")
     return parser
 
 
@@ -86,6 +87,7 @@ class WideDeepConfig():
         self.field_slice = False
         self.manual_shape = None
         self.sparse = False
+        self.deep_table_slice_mode = "column_slice"
 
     def argparse_init(self):
         """
@@ -121,5 +123,6 @@ class WideDeepConfig():
         self.parameter_server = args.parameter_server
         self.field_slice = bool(args.field_slice)
         self.sparse = bool(args.sparse)
+        self.deep_table_slice_mode = args.deep_table_slice_mode
         if self.host_device_mix == 1:
             self.sparse = True
