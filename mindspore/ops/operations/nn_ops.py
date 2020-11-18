@@ -661,7 +661,8 @@ class FusedBatchNorm(Primitive):
         >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
         >>> net = FusedBatchNormNet()
         >>> output = net(input_x)
-        >>> output[0].shape
+        >>> result = output[0].shape
+        >>> print(result)
         (128, 64, 32, 64)
     """
     __mindspore_signature__ = (
@@ -754,7 +755,8 @@ class FusedBatchNormEx(PrimitiveWithInfer):
         >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
         >>> net = FusedBatchNormExNet()
         >>> output = net(input_x)
-        >>> output[0].shape
+        >>> result = output[0].shape
+        >>> print(result)
         (128, 64, 32, 64)
     """
     __mindspore_signature__ = (
@@ -1803,6 +1805,7 @@ class TopK(PrimitiveWithInfer):
         >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16)
         >>> k = 3
         >>> values, indices = topk(input_x, k)
+        >>> print((values, indices))
         ([5.0, 4.0, 3.0], [4, 3, 2])
     """
 
