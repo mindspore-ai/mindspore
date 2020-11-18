@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp32/space_to_batch_fp32.h"
-#include <vector>
 #include "src/kernel_registry.h"
-#include "nnacl/fp32/space_to_batch_fp32.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
@@ -34,70 +32,39 @@ int SpaceToBatchCPUKernel::Init() {
   return ReSize();
 }
 
+int SpaceToBatchFp32Run(void *cdata, int task_id) {
+  auto op = reinterpret_cast<SpaceToBatchCPUKernel *>(cdata);
+  op->DoRun(task_id);
+  return RET_OK;
+}
+
 int SpaceToBatchCPUKernel::ReSize() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-  if (input_tensor->format() != schema::Format_NHWC) {
-    MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
-    return RET_FORMAT_ERR;
-  }
-  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
 
   for (size_t i = 0; i < DIMENSION_4D; i++) {
-    param->input_shape_[i] = input_tensor->shape().at(i);
-    param->output_shape_[i] = output_tensor->shape().at(i);
+    param_->input_shape_[i] = input_tensor->shape().at(i);
+    param_->output_shape_[i] = output_tensor->shape().at(i);
   }
-  for (int i = 0; i < DIMENSION_4D; ++i) {
-    if (param->paddings_[i] != 0) {
-      param->need_paddings_ = true;
-      break;
-    }
-  }
-  if (param->need_paddings_) {
-    int padding_left = 0;
-    int padding_right = 0;
-    if (param->m_ == 2) {
-      padding_left = param->paddings_[2];
-      padding_right = param->paddings_[3];
-    }
-    param->padded_in_shape_[kNHWC_N] = input_tensor->shape().at(kNHWC_N);
-    param->padded_in_shape_[kNHWC_H] = input_tensor->shape().at(kNHWC_H) + param->paddings_[0] + param->paddings_[1];
-    param->padded_in_shape_[kNHWC_W] = input_tensor->shape().at(kNHWC_W) + padding_left + padding_right;
-    param->padded_in_shape_[kNHWC_C] = input_tensor->shape().at(kNHWC_C);
-    param->padded_input_element_num = param->padded_in_shape_[kNHWC_N] * param->padded_in_shape_[kNHWC_H] *
-                                      param->padded_in_shape_[kNHWC_W] * param->padded_in_shape_[kNHWC_C];
-  }
+
+  ComputeStrides(param_->input_shape_, param_->in_stride_, DIMENSION_4D);
+  ComputeStrides(param_->output_shape_, param_->out_stride_, DIMENSION_4D);
   return RET_OK;
+}
+
+void SpaceToBatchCPUKernel::DoRun(int task_id) {
+  DoSpaceToBatch(input_ptr_, output_ptr_, param_->input_shape_, param_->output_shape_, param_->in_stride_,
+                 param_->out_stride_, param_->block_sizes_, param_->paddings_, op_parameter_->thread_num_, task_id);
+  return;
 }
 
 int SpaceToBatchCPUKernel::Run() {
-  auto input_tensor = in_tensors_.at(0);
-  auto output_tensor = out_tensors_.at(0);
-  auto input_ptr = reinterpret_cast<const float *>(input_tensor->MutableData());
-  auto output_ptr = reinterpret_cast<float *>(output_tensor->MutableData());
-  SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
+  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
 
-  if (param->need_paddings_) {
-    padded_input_ = context_->allocator->Malloc(param->padded_input_element_num * sizeof(float));
-    if (padded_input_ == nullptr) {
-      MS_LOG(ERROR) << "Memory allocation failed";
-      return RET_ERROR;
-    }
-    auto padded_input = reinterpret_cast<float *>(padded_input_);
-    DoSpaceToBatchPaddingNHWC(input_ptr, padded_input, param->input_shape_, param->paddings_, param->padded_in_shape_);
-    DoSpaceToBatchNHWC(padded_input, output_ptr, param->block_sizes_, param->padded_in_shape_, param->output_shape_);
-    FreeTmpBuffer();
-  } else {
-    DoSpaceToBatchNHWC(input_ptr, output_ptr, param->block_sizes_, param->input_shape_, param->output_shape_);
-  }
+  ParallelLaunch(this->context_->thread_pool_, SpaceToBatchFp32Run, this, op_parameter_->thread_num_);
+
   return RET_OK;
-}
-
-void SpaceToBatchCPUKernel::FreeTmpBuffer() {
-  if (padded_input_ != nullptr) {
-    context_->allocator->Free(padded_input_);
-    padded_input_ = nullptr;
-  }
 }
 
 kernel::LiteKernel *CpuSpaceToBatchFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,

@@ -18,6 +18,8 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "nnacl/fp32/space_to_batch_fp32.h"
+#include "nnacl/arithmetic_common.h"
 
 namespace mindspore::kernel {
 class SpaceToBatchCPUKernel : public LiteKernel {
@@ -25,18 +27,22 @@ class SpaceToBatchCPUKernel : public LiteKernel {
   SpaceToBatchCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    param_ = reinterpret_cast<SpaceToBatchParameter *>(op_parameter_);
+  }
   ~SpaceToBatchCPUKernel() {}
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
+ public:
+  void DoRun(int task_id);
+
  protected:
-  size_t EnumElement(int *shape, int n_dims);
-  void FreeTmpBuffer();
-  void *padded_input_ = nullptr;
+  SpaceToBatchParameter *param_;
+  float *input_ptr_ = nullptr;
+  float *output_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
