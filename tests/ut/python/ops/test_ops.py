@@ -2532,7 +2532,11 @@ test_case_other_ops = [
                         Tensor(np.random.rand(48).astype(np.float16)),
                         Tensor(np.random.rand(48).astype(np.float16)),
                         Tensor(np.random.rand(8, 16).astype(np.float16))],
-        'skip': ['backward']}),
+        'desc_bprop': [Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
+                       Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
+                       Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
+                       Tensor(np.random.rand(2, 8, 16).astype(np.float16)),
+                       Tensor(np.random.rand(2, 8, 16).astype(np.float16))]}),
 ]
 
 test_case_quant_ops = [
