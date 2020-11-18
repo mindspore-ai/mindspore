@@ -40,6 +40,8 @@ from src.utils.optimizer import Adam
 
 parser = argparse.ArgumentParser(description='GNMT train entry point.')
 parser.add_argument("--config", type=str, required=True, help="model config json file path.")
+parser.add_argument("--dataset_schema_train", type=str, required=True, help="dataset schema for train.")
+parser.add_argument("--pre_train_dataset", type=str, required=True, help="pre-train dataset address.")
 
 device_id = os.getenv('DEVICE_ID', None)
 if device_id is None:
@@ -351,9 +353,9 @@ if __name__ == '__main__':
     args, _ = parser.parse_known_args()
     _check_args(args.config)
     _config = get_config(args.config)
-
+    _config.dataset_schema = args.dataset_schema_train
+    _config.pre_train_dataset = args.pre_train_dataset
     set_seed(_config.random_seed)
-
     if _rank_size is not None and int(_rank_size) > 1:
         train_parallel(_config)
     else:

@@ -81,21 +81,19 @@ class GNMTTraining(nn.Cell):
         self.gnmt = GNMT(config, is_training, use_one_hot_embeddings)
         self.projection = PredLogProbs(config)
 
-    def construct(self, source_ids, source_mask, source_len, target_ids):
+    def construct(self, source_ids, source_mask, target_ids):
         """
         Construct network.
 
         Args:
             source_ids (Tensor): Source sentence.
             source_mask (Tensor): Source padding mask.
-            source_len (Tensor): Effective length of source sentence.
             target_ids (Tensor): Target sentence.
-
 
         Returns:
             Tensor, prediction_scores.
         """
-        decoder_outputs = self.gnmt(source_ids, source_mask, source_len, target_ids)
+        decoder_outputs = self.gnmt(source_ids, source_mask, target_ids)
         prediction_scores = self.projection(decoder_outputs)
         return prediction_scores
 
@@ -175,11 +173,10 @@ class GNMTNetworkWithLoss(nn.Cell):
     def construct(self,
                   source_ids,
                   source_mask,
-                  source_len,
                   target_ids,
                   label_ids,
                   label_weights):
-        prediction_scores = self.gnmt(source_ids, source_mask, source_len, target_ids)
+        prediction_scores = self.gnmt(source_ids, source_mask, target_ids)
         total_loss = self.loss(prediction_scores, label_ids, label_weights)
         return self.cast(total_loss, mstype.float32)
 
@@ -265,7 +262,6 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
     def construct(self,
                   source_eos_ids,
                   source_eos_mask,
-                  source_eos_length,
                   target_sos_ids,
                   target_eos_ids,
                   target_eos_mask,
@@ -276,7 +272,6 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
         Args:
             source_eos_ids (Tensor): Source sentence.
             source_eos_mask (Tensor): Source padding mask.
-            source_eos_length (Tensor): Effective length of source sentence.
             target_sos_ids (Tensor): Target sentence.
             target_eos_ids (Tensor): Prediction sentence.
             target_eos_mask (Tensor): Prediction padding mask.
@@ -287,7 +282,6 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
         """
         source_ids = source_eos_ids
         source_mask = source_eos_mask
-        source_len = source_eos_length
         target_ids = target_sos_ids
         label_ids = target_eos_ids
         label_weights = target_eos_mask
@@ -295,7 +289,6 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
         weights = self.weights
         loss = self.network(source_ids,
                             source_mask,
-                            source_len,
                             target_ids,
                             label_ids,
                             label_weights)
@@ -309,7 +302,6 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
             scaling_sens = sens
         grads = self.grad(self.network, weights)(source_ids,
                                                  source_mask,
-                                                 source_len,
                                                  target_ids,
                                                  label_ids,
                                                  label_weights,

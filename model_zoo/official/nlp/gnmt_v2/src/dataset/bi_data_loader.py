@@ -103,7 +103,6 @@ class BiLingualDataLoader(DataLoader):
                     src_padding = np.zeros(shape=self.source_max_sen_len, dtype=np.int64)
                     for i in range(src_len):
                         src_padding[i] = 1
-                    src_length = np.array([src_len], dtype=np.int64)
                     # decoder inputs
                     decoder_input = self.padding(tgt_tokens[:-1], self.tokenizer.padding_index, self.target_max_sen_len)
                     # decoder outputs
@@ -119,7 +118,6 @@ class BiLingualDataLoader(DataLoader):
                     example = {
                         "src": encoder_input,
                         "src_padding": src_padding,
-                        "src_length": src_length,
                         "prev_opt": decoder_input,
                         "target": decoder_output,
                         "tgt_padding": tgt_padding
@@ -133,9 +131,9 @@ class BiLingualDataLoader(DataLoader):
                 print(f" | Total  sen = {count}.")
 
                 if self.schema_address is not None:
-                    provlist = [count, self.source_max_sen_len, self.source_max_sen_len, 1,
+                    provlist = [count, self.source_max_sen_len, self.source_max_sen_len,
                                 self.target_max_sen_len, self.target_max_sen_len, self.target_max_sen_len]
-                    columns = ["src", "src_padding", "src_length", "prev_opt", "target", "tgt_padding"]
+                    columns = ["src", "src_padding", "prev_opt", "target", "tgt_padding"]
                     with open(self.schema_address, "w", encoding="utf-8") as  f:
                         f.write("{\n")
                         f.write('  "datasetType":"TF",\n')
@@ -196,12 +194,10 @@ class TextDataLoader(DataLoader):
                 src_padding = np.zeros(shape=self.source_max_sen_len, dtype=np.int64)
                 for i in range(src_len):
                     src_padding[i] = 1
-                src_length = np.array([src_len], dtype=np.int64)
 
                 example = {
                     "src": encoder_input,
-                    "src_padding": src_padding,
-                    "src_length": src_length
+                    "src_padding": src_padding
                 }
                 self._add_example(example)
                 count += 1
@@ -211,8 +207,8 @@ class TextDataLoader(DataLoader):
             print(f" | Total  sen = {count}.")
 
             if self.schema_address is not None:
-                provlist = [count, self.source_max_sen_len, self.source_max_sen_len, 1]
-                columns = ["src", "src_padding", "src_length"]
+                provlist = [count, self.source_max_sen_len, self.source_max_sen_len]
+                columns = ["src", "src_padding"]
                 with open(self.schema_address, "w", encoding="utf-8") as  f:
                     f.write("{\n")
                     f.write('  "datasetType":"TF",\n')

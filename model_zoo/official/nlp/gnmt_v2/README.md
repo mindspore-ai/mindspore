@@ -12,16 +12,12 @@
     - [Dataset Preparation](#dataset-preparation)
     - [Configuration File](#configuration-file)
     - [Training Process](#training-process)
-    - [Evaluation Process](#evaluation-process)
+    - [Inference Process](#inference-process)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Result](#result)
             - [Training Performance](#training-performance)
             - [Inference Performance](#inference-performance)
-    - [Practice](#practice)
-        - [Dataset Preprocessing](#dataset-preprocessing)
-        - [Training](#training-1)
-        - [Inference](#inference-1)
 - [Random Situation Description](#random-situation-description)
 - [Others](#others)
 - [ModelZoo](#modelzoo)
@@ -50,8 +46,8 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 - Framework
   - Install [MindSpore](https://www.mindspore.cn/install/en).
 - For more information, please check the resources below:
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/en/master/index.html) 
-  - [MindSpore API](https://www.mindspore.cn/api/en/master/index.html)
+  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html) 
+  - [MindSpore API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 ## Software
 ```txt
@@ -62,18 +58,26 @@ subword_nmt==0.3.7
 ```
 
 # [Quick Start](#contents)
+The process of GNMTv2 performing the text translation task is as follows:
+1. Download the wmt16 data corpus and extract the dataset. For details, see the chapter "_Dataset_" above.
+2. Dataset preparation and configuration.
+3. Training.
+4. Inference.
+
 After dataset preparation, you can start training and evaluation as follows: 
 ```bash
 # run training example
-python train.py --config /home/workspace/gnmt_v2/config/config.json
+cd ./scripts
+sh run_standalone_train_ascend.sh DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
 
 # run distributed training example
 cd ./scripts
-sh run_distributed_train_ascend.sh
+sh run_distributed_train_ascend.sh RANK_TABLE_ADDR DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
 
 # run evaluation example
 cd ./scripts
-sh run_standalone_eval_ascend.sh
+sh run_standalone_eval_ascend.sh DATASET_SCHEMA_TEST TEST_DATASET EXISTED_CKPT_PATH \
+  VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
 ```
 
 # Script Description
@@ -130,7 +134,7 @@ The GNMT network script and code result are as follows:
 ```
 
 ## Dataset Preparation
-You may use this [shell script](https://github.com/NVIDIA/DeepLearningExamples/blob/master/PyTorch/Translation/GNMT/scripts/wmt16_en_de.sh) to download and preprocess WMT English-German dataset. Assuming you get the following files:
+You may use this [shell script](https://github.com/NVIDIA/DeepLearningExamples/blob/master/TensorFlow/Translation/GNMT/scripts/wmt16_en_de.sh) to download and preprocess WMT English-German dataset. Assuming you get the following files:
   - train.tok.clean.bpe.32000.en
   - train.tok.clean.bpe.32000.de
   - vocab.bpe.32000
@@ -146,35 +150,60 @@ You may use this [shell script](https://github.com/NVIDIA/DeepLearningExamples/b
 
 ## Configuration File
 The JSON file in the `config/` directory is the template configuration file.
-Almost all required options and parameters can be easily assigned, including the training platform, dataset and model configuration, and optimizer parameters. By setting the corresponding options, you can also obtain optional functions such as loss scale and checkpoint.
-For more information about attributes, see the `config/config.py` file.
+Almost all required options and parameters can be easily assigned, including the training platform, model configuration, and optimizer parameters.
+- config for GNMTv2
+  ```python
+  'random_seed': 50         # global random seed
+  'epochs':6                # total training epochs
+  'batch_size': 128         # training batch size
+  'dataset_sink_mode': true # whether use dataset sink mode
+  'seq_length': 51          # max length of source sentences
+  'vocab_size': 32320       # vocabulary size
+  'hidden_size': 125        # the output's last dimension of dynamicRNN
+  'initializer_range': 0.1  # initializer range
+  'max_decode_length': 125  # max length of decoder
+  'lr': 0.1                 # initial learning rate
+  'lr_scheduler': 'WarmupMultiStepLR'  # learning rate scheduler
+  'existed_ckpt': ''        # the absolute full path to save the checkpoint file
+  ```
+For more configuration details, please refer the script `config/config.py` file.
 
 ## Training Process
-The model training requires the shell script `scripts/run_standalone_train_ascend.sh`. In this script, set environment variables and the training script `train.py` to be executed in `gnmt_v2/`.
-Start task training on a single device and run the following command in bash:
+For a pre-trained model, configure the following options in the `scripts/run_standalone_train_ascend.json` file:
+- Select an optimizer ('momentum/adam/lamb' is available).
+- Specify `ckpt_prefix` and `ckpt_path` in `checkpoint_path` to save the model file.
+- Set other parameters, including dataset configuration and network configuration.
+- If a pre-trained model exists, assign `existed_ckpt` to the path of the existing model during fine-tuning.
+
+Start task training on a single device and run the shell script `scripts/run_standalone_train_ascend.sh`:
 ```bash
 cd ./scripts
-sh run_standalone_train_ascend.sh
+sh run_standalone_train_ascend.sh DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
 ```
- or multiple devices 
+In this script, the `DATASET_SCHEMA_TRAIN` and `PRE_TRAIN_DATASET` are the dataset schema and dataset address.
+
+Run `scripts/run_distributed_train_ascend.sh` for distributed training of GNMTv2 model.
 Task training on multiple devices and run the following command in bash to be executed in `scripts/`.:
 ```bash
 cd ./scripts
-sh run_distributed_train_ascend.sh
+sh run_distributed_train_ascend.sh RANK_TABLE_ADDR DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
 ```
-Note: Ensure that the hccl_json file is assigned when distributed training is running.
-Currently, inconsecutive device IDs are not supported in `scripts/run_distributed_train_ascend.sh`. The device ID must start from 0 in the `distribute_script/rank_table_8p.json` file.
+Note: the `RANK_TABLE_ADDR` is the hccl_json file assigned when distributed training is running. 
+Currently, inconsecutive device IDs are not supported in `scripts/run_distributed_train_ascend.sh`. The device ID must start from 0 in the `RANK_TABLE_ADDR` file.
 
-## Evaluation Process
-
-Set options in `config/config_test.json`. Make sure the 'existed_ckpt', 'dataset_schema' and 'test_dataset' are set to your own path.
-
-Run `scripts/run_standalone_eval_ascend.sh` to process the output token ids to get the BLEU scores.
-
+## Inference Process
+For inference using a trained model on multiple hardware platforms, such as Ascend 910.
+Set options in `config/config_test.json`.
+ 
+Run the shell script `scripts/run_standalone_eval_ascend.sh` to process the output token ids to get the BLEU scores.
 ```bash
 cd ./scripts
 sh run_standalone_eval_ascend.sh
+sh run_standalone_eval_ascend.sh DATASET_SCHEMA_TEST TEST_DATASET EXISTED_CKPT_PATH \
+  VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
 ```
+The `DATASET_SCHEMA_TEST` and the `TEST_DATASET` are the schema and address of inference dataset respectively, and `EXISTED_CKPT_PATH` is the path of the model file generated during training process.
+The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code address and the `TEST_TARGET` are the path of answers.
 
 # Model Description
 ## Performance
@@ -190,10 +219,11 @@ sh run_standalone_eval_ascend.sh
 | Training Parameters        | epoch=6, batch_size=128                                        |
 | Optimizer                  | Adam                                                           |
 | Loss Function              | Softmax Cross Entropy                                          |
-| BLEU Score                 | 24.05                                                          |
+| outputs                    | probability                                                    |
 | Speed                      | 344ms/step (8pcs)                                              |
+| Total Time                 | 7800s (8pcs)                                                   |
 | Loss                       | 63.35                                                          |
-| Params (M)                 | 613                                                          |
+| Params (M)                 | 613                                                            |
 | Checkpoint for inference   | 1.8G (.ckpt file)                                              |
 | Scripts                    | [gnmt_v2](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/gnmt_v2) |
 
@@ -206,48 +236,10 @@ sh run_standalone_eval_ascend.sh
 | MindSpore Version   | 1.0.0                       |
 | Dataset             | WMT newstest2014            |
 | batch_size          | 128                         |
-| outputs             | BLEU score                  |
-| Accuracy            | BLEU= 24.05                 |
-
-## Practice
-The process of GNMTv2 performing the text translation task is as follows:
-1. Download the wmt16 data corpus and extract the dataset. For details, see the chapter "_Dataset_" above.
-2. Dataset preprocessing.
-3. Perform training.
-4. Perform inference.
-
-### Dataset Preprocessing
-For a pre-trained model, configure the following options in the `config.json` file:
-```
-python create_dataset.py --src_folder /home/work_space/wmt16_de_en  --output_folder /home/work_space/dataset_menu
-```
-
-### Training
-For a pre-trained model, configure the following options in the `config/config.json` file:
-- Assign `pre_train_dataset` and `dataset_schema` to the training dataset path.
-- Select an optimizer ('momentum/adam/lamb' is available).
-- Specify `ckpt_prefix` and `ckpt_path` in `checkpoint_path` to save the model file.
-- Set other parameters, including dataset configuration and network configuration.
-- If a pre-trained model exists, assign `existed_ckpt` to the path of the existing model during fine-tuning.
-
-Run the shell script `run.sh`:
-```bash
-cd ./scripts
-sh run_standalone_train_ascend.sh
-```
-
-### Inference
-For inference using a trained model on multiple hardware platforms, such as GPU, Ascend 910, and Ascend 310, see [Network Migration](https://www.mindspore.cn/tutorial/en/master/advanced_use/network_migration.html).
-For inference interruption, configure the following options in the `config/config.json` file:
-- Assign `test_dataset` and the `dataset_schema` to the inference dataset path.
-- Assign `existed_ckpt` and the `checkpoint_path` to the path of the model file generated during training.
-- Set other parameters, including dataset configuration and network configuration.
-
-Run the shell script `run.sh`:
-```bash
-cd ./scripts
-sh run_standalone_eval_ascend.sh
-```
+| Total Time          | 1560s                       |
+| outputs             | probability                 |
+| Accuracy            | BLEU Score= 24.05           |
+| Model for inference | 1.8G (.ckpt file)           |
 
 # Random Situation Description
 There are three random situations:
@@ -260,4 +252,4 @@ Some seeds have already been set in train.py to avoid the randomness of dataset 
 This model has been validated in the Ascend environment and is not validated on the CPU and GPU.
 
 # ModelZoo 主页
- [链接](https://gitee.com/mindspore/mindspore/tree/master/mindspore/model_zoo)
+ [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)

@@ -71,7 +71,7 @@ class GNMTEncoder(nn.Cell):
         self.reverse_v2 = P.ReverseV2(axis=[0])
         self.dropout = nn.Dropout(keep_prob=1.0 - config.hidden_dropout_prob)
 
-    def construct(self, inputs, source_len, attention_mask=None):
+    def construct(self, inputs):
         """Encoder."""
         inputs = self.dropout(inputs)
         # bidirectional layer, fwd_encoder_outputs: [T,N,D]
