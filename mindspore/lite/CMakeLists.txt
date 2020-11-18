@@ -212,7 +212,6 @@ if (BUILD_MINDDATA STREQUAL "lite_cv")
 endif ()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/internal)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/nnacl)
 if (ENABLE_TOOLS)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/benchmark)
