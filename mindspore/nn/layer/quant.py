@@ -116,7 +116,8 @@ def _partial_init(cls_or_self, **kwargs):
         >>> foo_builder = Foo.partial_init(a=3, b=4).partial_init(answer=42)
         >>> foo_instance1 = foo_builder()
         >>> foo_instance2 = foo_builder()
-        >>> id(foo_instance1) == id(foo_instance2)
+        >>> result = (id(foo_instance1) == id(foo_instance2))
+        >>> print(result)
         False
     """
 
@@ -234,7 +235,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         >>> fake_quant = nn.FakeQuantWithMinMaxObserver()
         >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> result = fake_quant(input)
-        >>> result
+        >>> print(result)
         [[0.9882355, 1.9764705, 0.9882355], [-1.9764705, 0. , -0.9882355]]
     """
 
@@ -591,7 +592,8 @@ class Conv2dBnFoldQuant(Cell):
         >>>                                      quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
         >>> result = conv2d_bnfold(input)
-        >>> result.shape
+        >>> output = result.shape
+        >>> print(output)
         (2, 6, 2, 2)
     """
 
@@ -776,7 +778,8 @@ class Conv2dBnWithoutFoldQuant(Cell):
         >>>                                                quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mstype.float32)
         >>> result = conv2d_no_bnfold(input)
-        >>> result.shape
+        >>> output = result.shape
+        >>> print(output)
         (2, 6, 2, 2)
     """
 
@@ -897,7 +900,8 @@ class Conv2dQuant(Cell):
         >>>                               quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
         >>> result = conv2d_quant(input)
-        >>> result.shape
+        >>> output = result.shape
+        >>> print(output)
         (2, 6, 2, 2)
     """
 
@@ -997,7 +1001,8 @@ class DenseQuant(Cell):
         >>> dense_quant = nn.DenseQuant(3, 6, quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
         >>> result = dense_quant(input)
-        >>> result.shape
+        >>> output = result.shape
+        >>> print(output)
         (2, 6)
     """
 
@@ -1102,7 +1107,7 @@ class ActQuant(_QuantActivation):
         >>> act_quant = nn.ActQuant(nn.ReLU(), quant_config=qconfig)
         >>> input = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
         >>> result = act_quant(input)
-        >>> result
+        >>> print(result)
         [[0.9882355, 1.9764705, 0.], [0., 0., 0.]]
     """
 
@@ -1164,7 +1169,7 @@ class TensorAddQuant(Cell):
         >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones((2, 3)), mindspore.float32)
         >>> result = add_quant(input_x1, input_x2)
-        >>> result
+        >>> print(result)
         [[1.9764705, 3.011765, 1.9764705], [-0.9882355, 0.9882355, 0.]]
     """
 
@@ -1211,7 +1216,7 @@ class MulQuant(Cell):
         >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones((2, 3)) * 2, mindspore.float32)
         >>> result = mul_quant(input_x1, input_x2)
-        >>> result
+        >>> print(result)
         [[1.9764705, 4.0000005, 1.9764705], [-4., 0., -1.9764705]]
     """
 

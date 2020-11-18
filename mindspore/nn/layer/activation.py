@@ -70,7 +70,8 @@ class Softmax(Cell):
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> softmax = nn.Softmax()
-        >>> softmax(input_x)
+        >>> output = softmax(input_x)
+        >>> print(output)
         [0.03168  0.01166  0.0861  0.636  0.2341]
     """
 
@@ -106,7 +107,8 @@ class LogSoftmax(Cell):
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> log_softmax = nn.LogSoftmax()
-        >>> log_softmax(input_x)
+        >>> output = log_softmax(input_x)
+        >>> print(output)
         [[-5.00672150e+00 -6.72150636e-03 -1.20067215e+01]
          [-7.00091219e+00 -1.40009127e+01 -9.12250078e-04]]
     """
@@ -174,7 +176,8 @@ class ReLU(Cell):
     Examples:
         >>> input_x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
         >>> relu = nn.ReLU()
-        >>> relu(input_x)
+        >>> output = relu(input_x)
+        >>> print(output)
         [0.  2.  0.  2.  0.]
     """
 
@@ -203,7 +206,8 @@ class ReLU6(Cell):
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> relu6 = nn.ReLU6()
-        >>> relu6(input_x)
+        >>> output = relu6(input_x)
+        >>> print(output)
         [0.  0.  0.  2.  1.]
     """
 
@@ -240,7 +244,8 @@ class LeakyReLU(Cell):
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> leaky_relu = nn.LeakyReLU()
-        >>> leaky_relu(input_x)
+        >>> output = leaky_relu(input_x)
+        >>> print(output)
         [[-0.2  4.  -1.6]
          [ 2   -1.   9.]]
     """
@@ -284,7 +289,8 @@ class Tanh(Cell):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 2, 1]), mindspore.float16)
         >>> tanh = nn.Tanh()
-        >>> tanh(input_x)
+        >>> output = tanh(input_x)
+        >>> print(output)
         [0.7617  0.964  0.995  0.964 0.7617]
     """
 
@@ -315,7 +321,8 @@ class GELU(Cell):
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> gelu = nn.GELU()
-        >>> gelu(input_x)
+        >>> output = gelu(input_x)
+        >>> print(output)
         [[-1.5880802e-01  3.9999299e+00 -3.1077917e-21]
          [ 1.9545976e+00 -2.2918017e-07  9.0000000e+00]]
     """
@@ -346,7 +353,8 @@ class Sigmoid(Cell):
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> sigmoid = nn.Sigmoid()
-        >>> sigmoid(input_x)
+        >>> output = sigmoid(input_x)
+        >>> print(output)
         [0.2688  0.11914  0.5  0.881  0.7305]
     """
 
@@ -384,7 +392,8 @@ class PReLU(Cell):
     Examples:
         >>> input_x = Tensor(np.array([[[[0.1, 0.6], [0.9, 0.9]]]]), mindspore.float32)
         >>> prelu = nn.PReLU()
-        >>> prelu(input_x)
+        >>> output = prelu(input_x)
+        >>> print(output)
         [[[[0.1 0.6]
            [0.9 0.9]]]]
 
@@ -506,6 +515,7 @@ class LogSigmoid(Cell):
         >>> net = nn.LogSigmoid()
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> logsigmoid = net(input_x)
+        >>> print(logsigmoid)
         [-3.1326166e-01, -1.2692806e-01, -4.8587345e-02]
 
     """

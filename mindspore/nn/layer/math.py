@@ -64,7 +64,8 @@ class ReduceLogSumExp(Cell):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = nn.ReduceLogSumExp(1, keep_dims=True)
         >>> output = op(input_x)
-        >>> output.shape
+        >>> result = output.shape
+        >>> print(reuslt)
         (3, 1, 5, 6)
     """
 
@@ -101,6 +102,7 @@ class Range(Cell):
     Examples:
         >>> net = nn.Range(1, 8, 2)
         >>> out = net()
+        >>> print(out)
         [1, 3, 5, 7]
     """
 
@@ -154,6 +156,7 @@ class LinSpace(Cell):
     Examples:
         >>> linspace = nn.LinSpace(1, 10, 5)
         >>> output = linspace()
+        >>> print(output)
         [1, 3.25, 5.5, 7.75, 10]
     """
 

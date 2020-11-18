@@ -80,7 +80,8 @@ class Conv2dBnAct(Cell):
         >>> net = nn.Conv2dBnAct(120, 240, 4, has_bn=True, activation='relu')
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
         >>> result = net(input)
-        >>> result.shape
+        >>> output = result.shape
+        >>> print(output)
         (1, 240, 1024, 640)
     """
 
@@ -171,7 +172,8 @@ class DenseBnAct(Cell):
         >>> net = nn.DenseBnAct(3, 4)
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> result = net(input)
-        >>> result.shape
+        >>> output = result.shape
+        >>> print(output)
         (2, 4)
     """
 

@@ -199,7 +199,8 @@ class Conv2d(_Conv):
     Examples:
         >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
-        >>> net(input).shape
+        >>> output = net(input).shape
+        >>> print(output)
         (1, 240, 1024, 640)
     """
 
@@ -374,7 +375,8 @@ class Conv1d(_Conv):
     Examples:
         >>> net = nn.Conv1d(120, 240, 4, has_bias=False, weight_init='normal')
         >>> input = Tensor(np.ones([1, 120, 640]), mindspore.float32)
-        >>> net(input).shape
+        >>> output = net(input).shape
+        >>> print(output)
         (1, 240, 640)
     """
 
@@ -544,7 +546,8 @@ class Conv2dTranspose(_Conv):
     Examples:
         >>> net = nn.Conv2dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
         >>> input = Tensor(np.ones([1, 3, 16, 50]), mindspore.float32)
-        >>> net(input).shape
+        >>> output = net(input).shape
+        >>> print(output)
         (1, 64, 19, 53)
         """
 
@@ -719,7 +722,8 @@ class Conv1dTranspose(_Conv):
     Examples:
         >>> net = nn.Conv1dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
         >>> input = Tensor(np.ones([1, 3, 50]), mindspore.float32)
-        >>> net(input).shape
+        >>> output = net(input).shape
+        >>> print(output)
         (1, 64, 53)
     """
 

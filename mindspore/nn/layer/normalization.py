@@ -522,7 +522,8 @@ class LayerNorm(Cell):
         >>> x = Tensor(np.ones([20, 5, 10, 10]), mindspore.float32)
         >>> shape1 = x.shape[1:]
         >>> m = nn.LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
-        >>> m(x).shape
+        >>> output = m(x).shape
+        >>> print(output)
         (20, 5, 10, 10)
     """
 
@@ -593,7 +594,8 @@ class GroupNorm(Cell):
     Examples:
         >>> goup_norm_op = nn.GroupNorm(2, 2)
         >>> x = Tensor(np.ones([1, 2, 4, 4], np.float32))
-        >>> goup_norm_op(x)
+        >>> output = goup_norm_op(x)
+        >>> print(output)
         [[[[0. 0. 0. 0.]
            [0. 0. 0. 0.]
            [0. 0. 0. 0.]

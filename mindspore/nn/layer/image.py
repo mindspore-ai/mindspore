@@ -53,7 +53,8 @@ class ImageGradients(Cell):
     Examples:
         >>> net = nn.ImageGradients()
         >>> image = Tensor(np.array([[[[1,2],[3,4]]]]), dtype=mstype.int32)
-        >>> net(image)
+        >>> output = net(image)
+        >>> print(output)
         [[[[2,2]
            [0,0]]]]
         [[[[1,0]
@@ -214,6 +215,7 @@ class SSIM(Cell):
         >>> img1 = Tensor(np.random.random((1,3,16,16)), mindspore.float32)
         >>> img2 = Tensor(np.random.random((1,3,16,16)), mindspore.float32)
         >>> ssim = net(img1, img2)
+        >>> print(ssim)
         [0.12174469]
     """
     def __init__(self, max_val=1.0, filter_size=11, filter_sigma=1.5, k1=0.01, k2=0.03):
@@ -379,6 +381,7 @@ class PSNR(Cell):
         >>> img1 = Tensor(np.random.random((1,3,16,16)))
         >>> img2 = Tensor(np.random.random((1,3,16,16)))
         >>> psnr = net(img1, img2)
+        >>> print(psnr)
         [7.8297315]
     """
     def __init__(self, max_val=1.0):
@@ -447,7 +450,8 @@ class CentralCrop(Cell):
         >>> net = nn.CentralCrop(central_fraction=0.5)
         >>> image = Tensor(np.random.random((4, 3, 4, 4)), mindspore.float32)
         >>> output = net(image)
-        >>> output.shape
+        >>> result = output.shape
+        >>> print(result)
         (4, 3, 2, 2)
     """
 
