@@ -89,7 +89,7 @@ class GraphData:
                 while self._graph_data.is_stoped() is not True:
                     time.sleep(1)
             except KeyboardInterrupt:
-                raise Exception("Graph data server receives KeyboardInterrupt")
+                raise Exception("Graph data server receives KeyboardInterrupt.")
 
     @check_gnn_get_all_nodes
     def get_all_nodes(self, node_type):
@@ -112,7 +112,7 @@ class GraphData:
             TypeError: If `node_type` is not integer.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         return self._graph_data.get_all_nodes(node_type).as_array()
 
     @check_gnn_get_all_edges
@@ -136,7 +136,7 @@ class GraphData:
             TypeError: If `edge_type` is not integer.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         return self._graph_data.get_all_edges(edge_type).as_array()
 
     @check_gnn_get_nodes_from_edges
@@ -154,7 +154,7 @@ class GraphData:
             TypeError: If `edge_list` is not list or ndarray.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         return self._graph_data.get_nodes_from_edges(edge_list).as_array()
 
     @check_gnn_get_all_neighbors
@@ -181,7 +181,7 @@ class GraphData:
             TypeError: If `neighbor_type` is not integer.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         return self._graph_data.get_all_neighbors(node_list, neighbor_type).as_array()
 
     @check_gnn_get_sampled_neighbors
@@ -216,7 +216,7 @@ class GraphData:
             TypeError: If `neighbor_types` is not list or ndarray.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         return self._graph_data.get_sampled_neighbors(
             node_list, neighbor_nums, neighbor_types).as_array()
 
@@ -246,7 +246,7 @@ class GraphData:
             TypeError: If `neg_neighbor_type` is not integer.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         return self._graph_data.get_neg_sampled_neighbors(
             node_list, neg_neighbor_num, neg_neighbor_type).as_array()
 
@@ -274,7 +274,7 @@ class GraphData:
             TypeError: If `feature_types` is not list or ndarray.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         if isinstance(node_list, list):
             node_list = np.array(node_list, dtype=np.int32)
         return [
@@ -306,7 +306,7 @@ class GraphData:
             TypeError: If `feature_types` is not list or ndarray.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         if isinstance(edge_list, list):
             edge_list = np.array(edge_list, dtype=np.int32)
         return [
@@ -324,7 +324,7 @@ class GraphData:
             node_feature_type and edge_feature_type.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         return self._graph_data.graph_info()
 
     @check_gnn_random_walk
@@ -360,6 +360,6 @@ class GraphData:
             TypeError: If `meta_path` is not list or ndarray.
         """
         if self._working_mode == 'server':
-            raise Exception("This method is not supported when working mode is server")
+            raise Exception("This method is not supported when working mode is server.")
         return self._graph_data.random_walk(target_nodes, meta_path, step_home_param, step_away_param,
                                             default_node).as_array()

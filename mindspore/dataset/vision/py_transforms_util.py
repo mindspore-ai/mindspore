@@ -26,7 +26,7 @@ from PIL import Image, ImageOps, ImageEnhance, __version__
 from .utils import Inter
 from ..core.py_util_helpers import is_numpy
 
-augment_error_message = 'img should be PIL image. Got {}. Use Decode() for encoded data or ToPIL() for decoded data.'
+augment_error_message = "img should be PIL image. Got {}. Use Decode() for encoded data or ToPIL() for decoded data."
 
 
 def is_pil(img):
@@ -55,19 +55,19 @@ def normalize(img, mean, std):
         img (numpy.ndarray), Normalized image.
     """
     if not is_numpy(img):
-        raise TypeError('img should be NumPy image. Got {}'.format(type(img)))
+        raise TypeError("img should be NumPy image. Got {}.".format(type(img)))
 
     num_channels = img.shape[0]  # shape is (C, H, W)
 
     if len(mean) != len(std):
-        raise ValueError("Length of mean and std must be equal")
+        raise ValueError("Length of mean and std must be equal.")
     # if length equal to 1, adjust the mean and std arrays to have the correct
     # number of channels (replicate the values)
     if len(mean) == 1:
         mean = [mean[0]] * num_channels
         std = [std[0]] * num_channels
     elif len(mean) != num_channels:
-        raise ValueError("Length of mean and std must both be 1 or equal to the number of channels({0})"
+        raise ValueError("Length of mean and std must both be 1 or equal to the number of channels({0})."
                          .format(num_channels))
 
     mean = np.array(mean, dtype=img.dtype)
@@ -108,7 +108,7 @@ def hwc_to_chw(img):
     """
     if is_numpy(img):
         return img.transpose(2, 0, 1).copy()
-    raise TypeError('img should be NumPy array. Got {}'.format(type(img)))
+    raise TypeError('img should be NumPy array. Got {}.'.format(type(img)))
 
 
 def to_tensor(img, output_type):
@@ -123,11 +123,11 @@ def to_tensor(img, output_type):
         img (numpy.ndarray), Converted image.
     """
     if not (is_pil(img) or is_numpy(img)):
-        raise TypeError('img should be PIL image or NumPy array. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL image or NumPy array. Got {}.".format(type(img)))
 
     img = np.asarray(img)
     if img.ndim not in (2, 3):
-        raise ValueError('img dimension should be 2 or 3. Got {}'.format(img.ndim))
+        raise ValueError("img dimension should be 2 or 3. Got {}.".format(img.ndim))
 
     if img.ndim == 2:
         img = img[:, :, None]
@@ -265,7 +265,7 @@ def resize(img, size, interpolation=Inter.BILINEAR):
         raise TypeError(augment_error_message.format(type(img)))
     if not (isinstance(size, int) or (isinstance(size, (list, tuple)) and len(size) == 2)):
         raise TypeError('Size should be a single number or a list/tuple (h, w) of length 2.'
-                        'Got {}'.format(size))
+                        'Got {}.'.format(size))
 
     if isinstance(size, int):
         img_width, img_height = img.size
@@ -424,7 +424,7 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
         img_width, img_height = img.size
         height, width = size
         if height > img_height or width > img_width:
-            raise ValueError("Crop size {} is larger than input image size {}".format(size, (img_height, img_width)))
+            raise ValueError("Crop size {} is larger than input image size {}.".format(size, (img_height, img_width)))
 
         if width == img_width and height == img_height:
             return 0, 0, img_height, img_width
@@ -558,7 +558,7 @@ def to_type(img, output_type):
         img (numpy.ndarray), Converted image.
     """
     if not is_numpy(img):
-        raise TypeError('img should be NumPy image. Got {}'.format(type(img)))
+        raise TypeError("img should be NumPy image. Got {}.".format(type(img)))
 
     return img.astype(output_type)
 
@@ -632,7 +632,7 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
         elif isinstance(value, (list, tuple)) and len(value) == 2:
             if not bound[0] <= value[0] <= value[1] <= bound[1]:
                 raise ValueError("Please check your value range of {} is valid and "
-                                 "within the bound {}".format(input_name, bound))
+                                 "within the bound {}.".format(input_name, bound))
         else:
             raise TypeError("Input of {} should be either a single value, or a list/tuple of "
                             "length 2.".format(input_name))
@@ -695,7 +695,7 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
         if len(degrees) != 2:
             raise ValueError("If degrees is a sequence, the length must be 2.")
     else:
-        raise TypeError("Degrees must be a single non-negative number or a sequence")
+        raise TypeError("Degrees must be a single non-negative number or a sequence.")
 
     angle = random.uniform(degrees[0], degrees[1])
     return rotate(img, angle, resample, expand, center, fill_value)
@@ -729,7 +729,7 @@ def five_crop(img, size):
     img_width, img_height = img.size
     crop_height, crop_width = size
     if crop_height > img_height or crop_width > img_width:
-        raise ValueError("Crop size {} is larger than input image size {}".format(size, (img_height, img_width)))
+        raise ValueError("Crop size {} is larger than input image size {}.".format(size, (img_height, img_width)))
     center = center_crop(img, (crop_height, crop_width))
     top_left = img.crop((0, 0, crop_width, crop_height))
     top_right = img.crop((img_width - crop_width, 0, img_width, crop_height))
@@ -802,7 +802,7 @@ def grayscale(img, num_output_channels):
         np_img = np.dstack([np_gray, np_gray, np_gray])
         img = Image.fromarray(np_img, 'RGB')
     else:
-        raise ValueError('num_output_channels should be either 1 or 3. Got {}'.format(num_output_channels))
+        raise ValueError('num_output_channels should be either 1 or 3. Got {}.'.format(num_output_channels))
 
     return img
 
@@ -859,7 +859,7 @@ def pad(img, padding, fill_value, padding_mode):
         raise TypeError("fill_value can be any of: an integer, a string or a tuple.")
 
     if padding_mode not in ['constant', 'edge', 'reflect', 'symmetric']:
-        raise ValueError("Padding mode can be any of ['constant', 'edge', 'reflect', 'symmetric'].")
+        raise ValueError("Padding mode should be 'constant', 'edge', 'reflect', or 'symmetric'.")
 
     if padding_mode == 'constant':
         if img.mode == 'P':
@@ -946,7 +946,7 @@ def get_erase_params(np_img, scale, ratio, value, bounded, max_attempts):
     """Helper function to get parameters for RandomErasing/ Cutout.
     """
     if not is_numpy(np_img):
-        raise TypeError('img should be NumPy array. Got {}'.format(type(np_img)))
+        raise TypeError('img should be NumPy array. Got {}.'.format(type(np_img)))
 
     image_c, image_h, image_w = np_img.shape
     area = image_h * image_w
@@ -1009,7 +1009,7 @@ def erase(np_img, i, j, height, width, erase_value, inplace=False):
         np_img (numpy.ndarray), Erased NumPy image array.
     """
     if not is_numpy(np_img):
-        raise TypeError('img should be NumPy array. Got {}'.format(type(np_img)))
+        raise TypeError('img should be NumPy array. Got {}.'.format(type(np_img)))
 
     if not inplace:
         np_img = np_img.copy()
@@ -1111,7 +1111,7 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
     else:
         raise ValueError(
             "Shear should be a single value or a tuple/list containing " +
-            "two values. Got {}".format(shear))
+            "two values. Got {}.".format(shear))
 
     scale = 1.0 / scale
 
@@ -1239,13 +1239,13 @@ def rgb_to_hsvs(np_rgb_imgs, is_hwc):
         np_hsv_imgs (numpy.ndarray), NumPy HSV images with same type of np_rgb_imgs.
     """
     if not is_numpy(np_rgb_imgs):
-        raise TypeError('img should be NumPy image. Got {}'.format(type(np_rgb_imgs)))
+        raise TypeError("img should be NumPy image. Got {}".format(type(np_rgb_imgs)))
 
     shape_size = len(np_rgb_imgs.shape)
 
     if not shape_size in (3, 4):
-        raise TypeError('img shape should be (H, W, C)/(N, H, W, C)/(C ,H, W)/(N, C, H, W). \
-                         Got {}'.format(np_rgb_imgs.shape))
+        raise TypeError("img shape should be (H, W, C)/(N, H, W, C)/(C ,H, W)/(N, C, H, W). \
+                         Got {}.".format(np_rgb_imgs.shape))
 
     if shape_size == 3:
         batch_size = 0
@@ -1261,7 +1261,7 @@ def rgb_to_hsvs(np_rgb_imgs, is_hwc):
             num_channels = np_rgb_imgs.shape[1]
 
     if num_channels != 3:
-        raise TypeError('img should be 3 channels RGB img. Got {} channels'.format(num_channels))
+        raise TypeError("img should be 3 channels RGB img. Got {} channels.".format(num_channels))
     if batch_size == 0:
         return rgb_to_hsv(np_rgb_imgs, is_hwc)
     return np.array([rgb_to_hsv(img, is_hwc) for img in np_rgb_imgs])
@@ -1307,13 +1307,13 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
         np_rgb_imgs (numpy.ndarray), NumPy RGB images with same type of np_hsv_imgs.
     """
     if not is_numpy(np_hsv_imgs):
-        raise TypeError('img should be NumPy image. Got {}'.format(type(np_hsv_imgs)))
+        raise TypeError("img should be NumPy image. Got {}.".format(type(np_hsv_imgs)))
 
     shape_size = len(np_hsv_imgs.shape)
 
     if not shape_size in (3, 4):
-        raise TypeError('img shape should be (H, W, C)/(N, H, W, C)/(C, H, W)/(N, C, H, W). \
-                         Got {}'.format(np_hsv_imgs.shape))
+        raise TypeError("img shape should be (H, W, C)/(N, H, W, C)/(C, H, W)/(N, C, H, W). \
+                         Got {}.".format(np_hsv_imgs.shape))
 
     if shape_size == 3:
         batch_size = 0
@@ -1329,7 +1329,7 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
             num_channels = np_hsv_imgs.shape[1]
 
     if num_channels != 3:
-        raise TypeError('img should be 3 channels RGB img. Got {} channels'.format(num_channels))
+        raise TypeError("img should be 3 channels RGB img. Got {} channels.".format(num_channels))
     if batch_size == 0:
         return hsv_to_rgb(np_hsv_imgs, is_hwc)
     return np.array([hsv_to_rgb(img, is_hwc) for img in np_hsv_imgs])
@@ -1349,7 +1349,7 @@ def random_color(img, degrees):
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
 
     v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
     return ImageEnhance.Color(img).enhance(v)
@@ -1369,7 +1369,7 @@ def random_sharpness(img, degrees):
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
 
     v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
     return ImageEnhance.Sharpness(img).enhance(v)
@@ -1390,7 +1390,7 @@ def auto_contrast(img, cutoff, ignore):
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
 
     return ImageOps.autocontrast(img, cutoff, ignore)
 
@@ -1408,7 +1408,7 @@ def invert_color(img):
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
 
     return ImageOps.invert(img)
 
@@ -1426,7 +1426,7 @@ def equalize(img):
     """
 
     if not is_pil(img):
-        raise TypeError('img should be PIL image. Got {}'.format(type(img)))
+        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
 
     return ImageOps.equalize(img)
 

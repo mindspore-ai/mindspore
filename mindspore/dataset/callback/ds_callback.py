@@ -186,7 +186,7 @@ class WaitedDSCallback(Callback, DSCallback):
                 success = self.epoch_event.wait(timeout=ds.config.get_callback_timeout())
                 self.epoch_event.clear()
                 if not success:
-                    raise RuntimeError(f"ds_epoch_begin timed out after {ds.config.get_callback_timeout()} second(s)")
+                    raise RuntimeError(f"ds_epoch_begin timed out after {ds.config.get_callback_timeout()} second(s).")
             # by the time this thread wakes up, self.epoch_run_context is already available
             self.sync_epoch_begin(self.epoch_run_context, ds_run_context)
 
@@ -212,7 +212,7 @@ class WaitedDSCallback(Callback, DSCallback):
                 success = self.step_event.wait(timeout=ds.config.get_callback_timeout())
                 self.step_event.clear()
                 if not success:
-                    raise RuntimeError(f"ds_step_begin timed out after {ds.config.get_callback_timeout()} second(s)")
+                    raise RuntimeError(f"ds_step_begin timed out after {ds.config.get_callback_timeout()} second(s).")
                 # by the time this thread wakes up, self.epoch_run_context is already available
             self.sync_step_begin(self.step_run_context, ds_run_context)
 

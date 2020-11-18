@@ -483,7 +483,7 @@ def test_clue_padded_and_skip_with_0_samples():
         count += 1
     assert count == 0
 
-    with pytest.raises(ValueError, match="There is no samples in the "):
+    with pytest.raises(ValueError, match="There are no samples in the "):
         dataset = dataset.concat(data_copy1)
         count = 0
         for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):

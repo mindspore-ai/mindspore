@@ -510,7 +510,8 @@ def test_generator_error_3():
 
         for _ in data1:
             pass
-    assert "When (len(input_columns) != len(output_columns)), column_order must be specified." in str(info.value)
+    assert "When length of input_columns and output_columns are not equal, column_order must be specified." in \
+           str(info.value)
 
 
 def test_generator_error_4():

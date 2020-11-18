@@ -279,7 +279,7 @@ def test_cv_minddataset_partition_num_samples_equals_0():
     with pytest.raises(Exception) as error_info:
         partitions(5)
     try:
-        assert 'num_samples should be a positive integer value, but got num_samples=0' in str(error_info.value)
+        assert 'num_samples should be a positive integer value, but got num_samples: 0.' in str(error_info.value)
     except Exception as error:
         os.remove(CV_FILE_NAME)
         os.remove("{}.db".format(CV_FILE_NAME))

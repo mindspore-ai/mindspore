@@ -117,11 +117,11 @@ def get_num_rows(num_rows, num_shards):
         ValueError: If num_shards is invalid (<= 0).
     """
     if num_rows < 0:
-        raise ValueError("num_rows is invalid (< 0)")
+        raise ValueError("num_rows is invalid, less than 0.")
 
     if num_shards is not None:
         if num_shards <= 0:
-            raise ValueError("num_shards is invalid (<= 0)")
+            raise ValueError("num_shards is invalid, less than or equal to 0.")
         if num_rows % num_shards == 0:
             num_rows = num_rows // num_shards
         else:
@@ -869,7 +869,7 @@ class Dataset:
         elif isinstance(datasets, Dataset):
             datasets = (self, datasets)
         else:
-            raise TypeError("The zip function %s type error!" % (datasets))
+            raise TypeError("Invalid datasets, expected Dataset object or tuple of Dataset, but got %s!" % (datasets))
         return ZipDataset(datasets)
 
     @check_concat
@@ -902,7 +902,7 @@ class Dataset:
         elif isinstance(datasets, list):
             datasets = [self] + datasets
         else:
-            raise TypeError("The concat_dataset function %s type error!" % (datasets))
+            raise TypeError("Invalid datasets, expected Dataset object or list of Dataset, but got %s!" % (datasets))
         return ConcatDataset(datasets)
 
     @check_rename
@@ -1055,7 +1055,7 @@ class Dataset:
             raise TypeError("Please set device_type in context")
 
         if device_type not in ('Ascend', 'GPU', 'CPU'):
-            raise ValueError("Only support CPU, Ascend, GPU")
+            raise ValueError("Only CPU, Ascend or GPU device type is supported.")
 
         def get_distribution(output_dataset):
             dev_id = 0
@@ -1072,7 +1072,7 @@ class Dataset:
                 return "", dev_id
 
             if not output_dataset.children:
-                raise RuntimeError("Unknown output_dataset: {}".format(type(output_dataset)))
+                raise RuntimeError("Unknown output_dataset: {}.".format(type(output_dataset)))
             input_dataset = output_dataset.children[0]
             return get_distribution(input_dataset)
 
@@ -1084,9 +1084,9 @@ class Dataset:
                 dist = json.load(distribution_f)
                 device_id = dist["deviceId"]
         except json.decoder.JSONDecodeError:
-            raise RuntimeError("Json decode error when load distribution file")
+            raise RuntimeError("Json decode error when load distribution file.")
         except Exception:
-            raise RuntimeError("Distribution file failed to read")
+            raise RuntimeError("Failed to read Distribution file.")
 
         return TransferDataset(self, queue_name, device_id, device_type, send_epoch_end)
 
@@ -1346,12 +1346,12 @@ class Dataset:
         if isinstance(num_batch, int) and num_batch <= 0:
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
-            raise RuntimeError("Sync_update batch size can only be positive, got : {}".format(num_batch))
+            raise RuntimeError("Sync_update batch size can only be positive, got : {}.".format(num_batch))
         notifiers_dict = self.get_sync_notifiers()
         if condition_name not in notifiers_dict:
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
-            raise RuntimeError("Condition name not found")
+            raise RuntimeError("Condition name not found.")
         if num_batch is not None:
             num_batch *= self.get_batch_size()
         notifiers_dict[condition_name](num_batch, data)
@@ -1429,7 +1429,7 @@ class SourceDataset(Dataset):
                 unmatched_patterns.append(pattern)
 
         if unmatched_patterns:
-            raise ValueError("The following patterns did not match any files: ", unmatched_patterns)
+            raise ValueError("The following patterns did not match any files: {}.".format(unmatched_patterns))
 
         if file_list:  # not empty
             return file_list
@@ -1873,7 +1873,7 @@ class BlockReleasePair:
                                             timeout=get_callback_timeout())
             # time_out will be False if time out occurs
             if not not_time_out:
-                logger.warning("Timeout happened in sync_wait, disabling lock")
+                logger.warning("Timeout happened in sync_wait, disabling lock.")
                 self.disable = True
             self.row_count += 1
         return True
@@ -1918,8 +1918,8 @@ class SyncWaitDataset(DatasetOp):
 
         self._pair = BlockReleasePair(num_batch, callback)
         if self._condition_name in self.children[0].get_sync_notifiers():
-            raise RuntimeError("Condition name is already in use")
-        logger.warning("Please remember to add dataset.sync_update(condition=%s), otherwise will result in hanging",
+            raise RuntimeError("Condition name is already in use.")
+        logger.warning("Please remember to add dataset.sync_update(condition=%s), otherwise hanging will result.",
                        condition_name)
 
     def get_sync_notifiers(self):
@@ -1981,7 +1981,7 @@ class ShuffleDataset(DatasetOp):
         input_dataset.parent.append(self)
         self._input_indexs = input_dataset.input_indexs
         if self.is_sync():
-            raise RuntimeError("No shuffle after sync operators")
+            raise RuntimeError("No shuffle after sync operators.")
 
     def get_args(self):
         args = super().get_args()
@@ -2045,7 +2045,7 @@ class _PythonCallable:
                     _set_iterator_cleanup()
                     self.pool.close()
                     self.pool.join()
-                    raise Exception("Multiprocess MapOp worker receives KeyboardInterrupt")
+                    raise Exception("Multiprocess MapOp worker receives KeyboardInterrupt.")
             return (None,)
         # Invoke original Python callable in master process in case the pool is gone.
         return self.py_callable(*args)
@@ -2128,7 +2128,8 @@ class MapDataset(DatasetOp):
         if self.input_columns and self.output_columns \
                 and len(self.input_columns) != len(self.output_columns) \
                 and self.column_order is None:
-            raise ValueError("When (len(input_columns) != len(output_columns)), column_order must be specified.")
+            raise ValueError("When length of input_columns and output_columns are not equal,"
+                             " column_order must be specified.")
 
         input_dataset.parent.append(self)
         self._input_indexs = input_dataset.input_indexs
@@ -2405,7 +2406,7 @@ class ZipDataset(DatasetOp):
         super().__init__()
         for dataset in datasets:
             if not isinstance(dataset, Dataset):
-                raise TypeError("The parameter %s of zip has type error!" % (dataset))
+                raise TypeError("Invalid dataset, expected Dataset object, but got %s!" % type(dataset))
         self.datasets = datasets
         for data in datasets:
             self.children.append(data)
@@ -2457,7 +2458,7 @@ class ConcatDataset(DatasetOp):
         super().__init__()
         for dataset in datasets:
             if not isinstance(dataset, Dataset):
-                raise TypeError("The parameter %s of concat has type error!" % (dataset))
+                raise TypeError("Invalid dataset, expected Dataset object, but got %s!" % type(dataset))
         self.datasets = datasets
         self._sampler = None
         for data in datasets:
@@ -2468,8 +2469,8 @@ class ConcatDataset(DatasetOp):
         child_index = 0
         for item in self.children_sizes_:
             if item == 0:
-                raise ValueError("There is no samples in the %dth dataset. Please make sure there are "
-                                 "valid samples in the dataset" % child_index)
+                raise ValueError("There are no samples in the dataset number %d. Please make sure there are "
+                                 "valid samples in the dataset." % child_index)
             child_index += 1
 
         # _children_flag_and_nums: A list of pair<int ,int>.The first element of pair is flag that characterizes
@@ -2524,7 +2525,7 @@ class ConcatDataset(DatasetOp):
             raise TypeError("The parameter %s of concat must be DistributedSampler!" % (sampler))
 
         if sampler.is_shuffled():
-            raise ValueError("The parameter shuffle of DistributedSampler must to be False!")
+            raise ValueError("The parameter shuffle of DistributedSampler must be False!")
 
         if sampler.num_shards <= 0:
             raise ValueError("The parameter num_shards of DistributedSampler must be positive int!")
@@ -2672,10 +2673,10 @@ class TransferDataset(DatasetOp):
         raise RuntimeError("TransferDataset is not iterable.")
 
     def output_shapes(self):
-        raise RuntimeError("TransferDataset does not support output_shapes.")
+        raise RuntimeError("TransferDataset does not support obtaining output_shapes.")
 
     def output_types(self):
-        raise RuntimeError("TransferDataset does not support output_types.")
+        raise RuntimeError("TransferDataset does not support obtaining output_types.")
 
     def send(self, num_epochs=-1):
         # need to keep iterator alive so the executionTree is not destroyed
@@ -2757,7 +2758,7 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id, n
                 (any(arg is not None for arg in [num_shards, shard_id, shuffle, num_samples]))):
             raise ValueError(
                 'Conflicting arguments during sampler assignments. num_samples: {}, num_shards: {},'
-                ' shard_id: {}, shuffle: {})'.format(num_samples, num_shards, shard_id, shuffle))
+                ' shard_id: {}, shuffle: {}.'.format(num_samples, num_shards, shard_id, shuffle))
         return input_sampler
     if shuffle is None:
         if num_shards is not None:
@@ -3360,13 +3361,13 @@ class SamplerFn:
             try:
                 result = self.workers[i % self.num_worker].get()
             except queue.Empty:
-                raise Exception("Generator worker process timeout")
+                raise Exception("Generator worker process timeout.")
             except KeyboardInterrupt:
                 self.eof.set()
                 for w in self.workers:
                     w.terminate()
                     w.join()
-                raise Exception("Generator worker receives KeyboardInterrupt")
+                raise Exception("Generator worker receives KeyboardInterrupt.")
             if idx_cursor < len(indices):
                 idx_cursor = _fill_worker_indices(self.workers, indices, idx_cursor)
             yield tuple([np.array(x, copy=False) for x in result])
@@ -3384,7 +3385,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof):
         try:
             idx = idx_queue.get(timeout=1)
         except KeyboardInterrupt:
-            raise Exception("Generator worker receives KeyboardInterrupt")
+            raise Exception("Generator worker receives KeyboardInterrupt.")
         except queue.Empty:
             if eof.is_set():
                 return
@@ -3404,7 +3405,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof):
             try:
                 result_queue.put(result, timeout=5)
             except KeyboardInterrupt:
-                raise Exception("Generator worker receives KeyboardInterrupt")
+                raise Exception("Generator worker receives KeyboardInterrupt.")
             except queue.Full:
                 if eof.is_set():
                     return
@@ -3416,7 +3417,7 @@ def _generator_worker_loop(dataset, idx_queue, result_queue, eof):
 
 class _GeneratorWorkerMt(threading.Thread):
     """
-    Worker process for multithread Generator.
+    Worker process for multi-thread Generator.
     """
 
     def __init__(self, dataset, eof):
@@ -3472,10 +3473,10 @@ class _GeneratorWorkerMp(multiprocessing.Process):
 
     def queue_empty(self):
         if not self.idx_queue.empty():
-            logger.error("idx_queue is not empty")
+            logger.error("idx_queue is not empty.")
             return False
         if not self.res_queue.empty():
-            logger.error("res_queue is not empty")
+            logger.error("res_queue is not empty.")
             return False
         return True
 
@@ -3773,7 +3774,8 @@ class TFRecordDataset(SourceDataset):
             self.num_samples = schema_obj.num_rows
 
         if not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError("shuffle must be of type boolean or enum 'Shuffle'.")
+            raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like"
+                            " 'Shuffle.GLOBAL' or 'Shuffle.FILES'.")
         if not isinstance(shuffle, Shuffle):
             if shuffle:
                 self.shuffle_level = Shuffle.GLOBAL
@@ -4535,11 +4537,11 @@ class Schema:
                 try:
                     name = column.pop("name")
                 except KeyError:
-                    raise RuntimeError("Column's name is missing")
+                    raise RuntimeError("Column's name is missing.")
                 try:
                     de_type = column.pop("type")
                 except KeyError:
-                    raise RuntimeError("Column' type is missing")
+                    raise RuntimeError("Column's type is missing.")
                 shape = column.pop("shape", None)
                 column.pop("t_impl", None)
                 column.pop("rank", None)
@@ -4552,7 +4554,7 @@ class Schema:
                 try:
                     de_type = value.pop("type")
                 except KeyError:
-                    raise RuntimeError("Column' type is missing")
+                    raise RuntimeError("Column's type is missing.")
                 shape = value.pop("shape", None)
                 value.pop("t_impl", None)
                 value.pop("rank", None)
@@ -4584,13 +4586,13 @@ class Schema:
             elif k == "columns":
                 self.parse_columns(v)
             else:
-                raise RuntimeError("Unknown field %s" % k)
+                raise RuntimeError("Unknown field %s." % k)
 
         if self.columns is None:
             raise RuntimeError("Columns are missing.")
         if self.num_rows is not None:
             if not isinstance(self.num_rows, int) or self.num_rows <= 0:
-                raise ValueError("numRows must be greater than 0")
+                raise ValueError("numRows must be greater than 0.")
 
     def __str__(self):
         return self.to_json()
@@ -5130,7 +5132,7 @@ class CelebADataset(MappableDataset):
                             if int(split_line[1]) == usage_type:
                                 partition_num += 1
                 except FileNotFoundError:
-                    raise RuntimeError("Partition file can not be found")
+                    raise RuntimeError("Partition file can not be found.")
                 if partition_num < num_rows:
                     num_rows = partition_num
 
@@ -5340,7 +5342,8 @@ class CLUEDataset(SourceDataset):
         self.cols_to_keyword = self.task_dict[task][usage]
 
         if not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError("shuffle must be of type boolean or enum 'Shuffle'.")
+            raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like"
+                            " 'Shuffle.GLOBAL' or 'Shuffle.FILES'.")
         if not isinstance(shuffle, Shuffle):
             if shuffle:
                 self.shuffle_level = Shuffle.GLOBAL
@@ -5455,7 +5458,8 @@ class CSVDataset(SourceDataset):
         self.num_samples = num_samples
 
         if not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError("shuffle must be of type boolean or enum 'Shuffle'.")
+            raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like"
+                            " 'Shuffle.GLOBAL' or 'Shuffle.FILES'.")
         if not isinstance(shuffle, Shuffle):
             if shuffle:
                 self.shuffle_level = Shuffle.GLOBAL
@@ -5563,7 +5567,8 @@ class TextFileDataset(SourceDataset):
         self.num_samples = num_samples
 
         if not isinstance(shuffle, (bool, Shuffle)):
-            raise TypeError("shuffle must be of type boolean or enum 'Shuffle'.")
+            raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like"
+                            " 'Shuffle.GLOBAL' or 'Shuffle.FILES'.")
         if not isinstance(shuffle, Shuffle):
             if shuffle:
                 self.shuffle_level = Shuffle.GLOBAL

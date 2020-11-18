@@ -348,15 +348,15 @@ def create_node(node):
 
     elif dataset_op == 'CacheDataset':
         # Member function cache() is not defined in class Dataset yet.
-        raise RuntimeError(dataset_op + " is not yet supported")
+        raise RuntimeError(dataset_op + " is not yet supported.")
 
     elif dataset_op == 'FilterDataset':
         # Member function filter() is not defined in class Dataset yet.
-        raise RuntimeError(dataset_op + " is not yet supported")
+        raise RuntimeError(dataset_op + " is not yet supported.")
 
     elif dataset_op == 'TakeDataset':
         # Member function take() is not defined in class Dataset yet.
-        raise RuntimeError(dataset_op + " is not yet supported")
+        raise RuntimeError(dataset_op + " is not yet supported.")
 
     elif dataset_op == 'ZipDataset':
         # Create ZipDataset instance, giving dummy input dataset that will be overrided in the caller.
@@ -376,7 +376,7 @@ def create_node(node):
         pyobj = de.Dataset().to_device()
 
     else:
-        raise RuntimeError(dataset_op + " is not yet supported by ds.engine.deserialize()")
+        raise RuntimeError(dataset_op + " is not yet supported by ds.engine.deserialize().")
 
     return pyobj
 
@@ -401,7 +401,7 @@ def construct_sampler(in_sampler):
         elif sampler_name == 'WeightedRandomSampler':
             sampler = sampler_class(in_sampler['weights'], in_sampler['num_samples'], in_sampler.get('replacement'))
         else:
-            raise ValueError("Sampler type is unknown: " + sampler_name)
+            raise ValueError("Sampler type is unknown: {}.".format(sampler_name))
 
     return sampler
 
@@ -461,7 +461,7 @@ def construct_tensor_ops(operations):
             result.append(op_class())
 
         elif op_name == 'CHW2HWC':
-            raise ValueError("Tensor op is not supported: " + op_name)
+            raise ValueError("Tensor op is not supported: {}.".format(op_name))
 
         elif op_name == 'OneHot':
             result.append(op_class(op['num_classes']))
@@ -474,6 +474,6 @@ def construct_tensor_ops(operations):
             result.append(op_class(op['padding'], op['fill_value'], Border(op['padding_mode'])))
 
         else:
-            raise ValueError("Tensor op name is unknown: " + op_name)
+            raise ValueError("Tensor op name is unknown: {}.".format(op_name))
 
     return result

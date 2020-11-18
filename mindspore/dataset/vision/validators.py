@@ -79,7 +79,7 @@ def check_mix_up_batch_c(method):
 
 def check_normalize_c_param(mean, std):
     if len(mean) != len(std):
-        raise ValueError("Length of mean and std must be equal")
+        raise ValueError("Length of mean and std must be equal.")
     for mean_value in mean:
         check_pos_float32(mean_value)
     for std_value in std:
@@ -88,7 +88,7 @@ def check_normalize_c_param(mean, std):
 
 def check_normalize_py_param(mean, std):
     if len(mean) != len(std):
-        raise ValueError("Length of mean and std must be equal")
+        raise ValueError("Length of mean and std must be equal.")
     for mean_value in mean:
         check_value(mean_value, [0., 1.], "mean_value")
     for std_value in std:
@@ -372,7 +372,7 @@ def check_num_channels(method):
         if num_output_channels is not None:
             if num_output_channels not in (1, 3):
                 raise ValueError("Number of channels of the output grayscale image"
-                                 "should be either 1 or 3. Got {0}".format(num_output_channels))
+                                 "should be either 1 or 3. Got {0}.".format(num_output_channels))
 
         return method(self, *args, **kwargs)
 
@@ -471,7 +471,7 @@ def check_linear_transform(method):
 
         if transformation_matrix.shape[0] != transformation_matrix.shape[1]:
             raise ValueError("transformation_matrix should be a square matrix. "
-                             "Got shape {} instead".format(transformation_matrix.shape))
+                             "Got shape {} instead.".format(transformation_matrix.shape))
         if mean_vector.shape[0] != transformation_matrix.shape[0]:
             raise ValueError("mean_vector length {0} should match either one dimension of the square"
                              "transformation_matrix {1}.".format(mean_vector.shape[0], transformation_matrix.shape))
@@ -556,7 +556,7 @@ def check_uniform_augment_cpp(method):
         check_positive(num_ops, "num_ops")
 
         if num_ops > len(transforms):
-            raise ValueError("num_ops is greater than transforms list size")
+            raise ValueError("num_ops is greater than transforms list size.")
         type_check_list(transforms, (TensorOp,), "tensor_ops")
 
         return method(self, *args, **kwargs)
@@ -693,11 +693,11 @@ def check_random_solarize(method):
         type_check(threshold, (tuple,), "threshold")
         type_check_list(threshold, (int,), "threshold")
         if len(threshold) != 2:
-            raise ValueError("threshold must be a sequence of two numbers")
+            raise ValueError("threshold must be a sequence of two numbers.")
         for element in threshold:
             check_value(element, (0, UINT8_MAX))
         if threshold[1] < threshold[0]:
-            raise ValueError("threshold must be in min max format numbers")
+            raise ValueError("threshold must be in min max format numbers.")
 
         return method(self, *args, **kwargs)
 
