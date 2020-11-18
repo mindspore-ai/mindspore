@@ -42,6 +42,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
+#include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
@@ -164,6 +165,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("graph_kernel_pm");
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
+  pm->AddPass(std::make_shared<opt::ShapeOpsSplitter>());
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
   pm->AddPass(std::make_shared<opt::CompositeOpsFusion>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>());

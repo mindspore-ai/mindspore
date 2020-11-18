@@ -65,11 +65,12 @@ class PrimLib:
     """Prim lib"""
 
     UNKNOWN = 0
-    ELEMWISE = 1
-    BROADCAST = 2
-    REDUCE = 3
-    TRANSFORM = 4
-    CONTROL = 5
+    RESHAPE = 1
+    ELEMWISE = 2
+    BROADCAST = 3
+    REDUCE = 4
+    TRANSFORM = 5
+    CONTROL = 6
 
     class Prim:
         """Prim"""
@@ -80,6 +81,11 @@ class PrimLib:
             self.relation_func = relation_func
             if relation_func is None:
                 self.relation_func = lambda *x: self.default_relation_func[iter_type](self, *x)
+
+        def default_reshape_relation(self, op, input_idx):
+            axis_relation, elem_relation = self.unknown_relation(op, input_idx)
+            elem_relation = [PrimLib.RESHAPE] * len(elem_relation)
+            return axis_relation, elem_relation
 
         def default_elemwise_broadcast_relation(self, op, input_idx):
             """Process elemwise and broadcast relation"""
@@ -116,6 +122,7 @@ class PrimLib:
 
         default_relation_func = [
             unknown_relation,
+            default_reshape_relation,
             default_elemwise_broadcast_relation,
             default_elemwise_broadcast_relation,
             default_reduce_relation,
@@ -154,11 +161,15 @@ class PrimLib:
         'ControlDepend': Prim(CONTROL),
         'Assign': Prim(ELEMWISE),
         'Tanh': Prim(ELEMWISE),
-        'ExpandDims': Prim(ELEMWISE),
+        'ExpandDims': Prim(RESHAPE),
         'InplaceAssign': Prim(ELEMWISE),
         '@ReduceInit': Prim(ELEMWISE),
-        'Reshape': Prim(ELEMWISE),
+        'Reshape': Prim(RESHAPE),
+        'Squeeze': Prim(RESHAPE),
+        'Flatten': Prim(RESHAPE),
+        'FlattenGrad': Prim(RESHAPE),
         'Transpose': Prim(TRANSFORM),
+        'Tile': Prim(BROADCAST),
     }
 
     default_primtive = Prim(UNKNOWN)
