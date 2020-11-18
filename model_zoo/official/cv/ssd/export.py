@@ -12,29 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-ssd export mindir.
-"""
+
 import argparse
 import numpy as np
-from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
-from src.ssd import SSD300, ssd_mobilenet_v2
+
+import mindspore
+from mindspore import context, Tensor
+from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from src.ssd import SSD300, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn
 from src.config import config
 
-def get_export_args():
-    parser = argparse.ArgumentParser(description='SSD export')
-    parser.add_argument("--checkpoint_path", type=str, required=True, help="Checkpoint file path.")
-    parser.add_argument("--run_platform", type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"),
-                        help="run platform, support Ascend, GPU and CPU.")
-    return parser.parse_args()
+parser = argparse.ArgumentParser(description='SSD export')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--file_name", type=str, default="ssd.air", help="output file name.")
+parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+args = parser.parse_args()
+
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
 
 if __name__ == '__main__':
-    args_opt = get_export_args()
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.run_platform)
-    net = SSD300(ssd_mobilenet_v2(), config, is_training=False)
+    if config.model == "ssd300":
+        net = SSD300(ssd_mobilenet_v2(), config, is_training=False)
+    else:
+        net = ssd_mobilenet_v1_fpn(config=config)
 
-    param_dict = load_checkpoint(args_opt.checkpoint_path)
+    param_dict = load_checkpoint(args.ckpt_file)
+    net.init_parameters_data()
     load_param_into_net(net, param_dict)
-    input_shp = [1, 3] + config.img_shape
-    input_array = Tensor(np.random.uniform(-1.0, 1.0, size=input_shp).astype(np.float32))
-    export(net, input_array, file_name=config.export_file, file_format=config.export_format)
+    net.set_train(False)
+
+    input_shp = [args.batch_size, 3] + config.img_shape
+    input_array = Tensor(np.random.uniform(-1.0, 1.0, size=input_shp), mindspore.float32)
+    export(net, input_array, file_name=args.file_name, file_format=args.file_format)

@@ -333,11 +333,10 @@ mAP: 0.2244936111705981
 
 ## [Export MindIR](#contents)
 
-Change the export mode and export file in `src/config.py`, and run `export.py`.
-
 ```
-python export.py --run_platform [PLATFORM] --checkpoint_path [CKPT_PATH]
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
+The ckpt_file parameter is required.
 
 # [Model Description](#contents)
 ## [Performance](#contents)

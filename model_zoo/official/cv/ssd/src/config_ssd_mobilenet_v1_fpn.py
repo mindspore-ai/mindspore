@@ -82,7 +82,5 @@ config = ed({
     "voc_root": "/data/voc_dataset",
     # if coco or voc used, `image_dir` and `anno_path` are useless.
     "image_dir": "",
-    "anno_path": "",
-    "export_format": "MINDIR",
-    "export_file": "ssd.mindir"
+    "anno_path": ""
 })
