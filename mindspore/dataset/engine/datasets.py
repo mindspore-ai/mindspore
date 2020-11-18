@@ -27,6 +27,7 @@ import multiprocessing
 import queue
 from enum import Enum
 from importlib import import_module
+import sys
 import threading
 
 import copy
@@ -38,7 +39,8 @@ from mindspore._c_expression import typing
 
 from mindspore import log as logger
 from . import samplers
-from .iterators import DictIterator, TupleIterator, DummyIterator, SaveOp, Iterator, check_iterator_cleanup
+from .iterators import DictIterator, TupleIterator, DummyIterator, SaveOp, Iterator, check_iterator_cleanup, \
+    _set_iterator_cleanup
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, check_device_send, \
     check_take, check_project, check_imagefolderdataset, check_mnist_cifar_dataset, check_manifestdataset, \
@@ -2020,12 +2022,25 @@ class _PythonCallable:
                 except multiprocessing.TimeoutError:
                     continue
                 except KeyboardInterrupt:
-                    self.pool.terminate()
+                    _set_iterator_cleanup()
+                    self.pool.close()
                     self.pool.join()
                     raise Exception("Multiprocess MapOp worker receives KeyboardInterrupt")
             return (None,)
         # Invoke original Python callable in master process in case the pool is gone.
         return self.py_callable(*args)
+
+
+class _ExceptHookHandler:
+    def __init__(self, pool):
+        self.__pool = pool
+        sys.excepthook = self.__handler_exception
+
+    def __handler_exception(self, type, value, tb):
+        logger.error("Uncaught exception: ", exc_info=(type, value, tb))
+        if self.__pool is not None:
+            _set_iterator_cleanup()
+            self.__pool.terminate()
 
 
 class MapDataset(DatasetOp):
@@ -2087,6 +2102,7 @@ class MapDataset(DatasetOp):
             callbacks = [callbacks]
 
         self.callbacks = callbacks
+        self.hook = None
 
     def get_args(self):
         args = super().get_args()
@@ -2127,6 +2143,7 @@ class MapDataset(DatasetOp):
         new_op.input_indexs = copy.deepcopy(self._input_indexs, memodict)
         new_op.python_multiprocessing = copy.deepcopy(self.python_multiprocessing, memodict)
         new_op.cache = copy.deepcopy(self.cache, memodict)
+        new_op.hook = copy.deepcopy(self.hook, memodict)
         new_op.operations = self.operations
         new_op.dataset_size = self.dataset_size
         new_op.callbacks = self.callbacks
@@ -2165,10 +2182,11 @@ class MapDataset(DatasetOp):
                         # CPP ops remain the same
                         iter_specific_operations.append(op)
                 self.operations = iter_specific_operations
+                self.hook = _ExceptHookHandler(self.process_pool)
 
     def __del__(self):
         if hasattr(self, 'process_pool') and self.process_pool is not None:
-            self.process_pool.terminate()
+            self.process_pool.close()
 
 
 class FilterDataset(DatasetOp):
