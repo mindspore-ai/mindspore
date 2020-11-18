@@ -25,6 +25,40 @@ from ...ops.operations.comm_ops import _VirtualDataset
 from ..cell import Cell
 from .grad_reducer import DistributedGradReducer
 
+_get_datatype = C.MultitypeFuncGraph("_get_datatype")
+
+
+@_get_datatype.register("Tensor")
+def _tensors_get_datatype(param):
+    """
+    Acquire parameter datatype.
+
+    Args:
+        param (Tensor): The parameter before operation.
+
+    Returns:
+        mstype, the datatype of parameter.
+    """
+    return F.dtype(param)
+
+
+_cast_datatype = C.MultitypeFuncGraph("_cast_datatype")
+
+
+@_cast_datatype.register("TypeType", "Tensor")
+def _tensors_cast_datatype(datatype, param):
+    """
+    Cast gradient to datatype.
+
+    Args:
+        datatype (mstype): the destination datatype of parameter.
+        param (Tensor): The parameter before operation.
+
+    Returns:
+        Tensor, the parameter after operation.
+    """
+    return F.cast(param, datatype)
+
 
 class WithLossCell(Cell):
     r"""
@@ -175,6 +209,7 @@ class TrainOneStepCell(Cell):
         >>> loss_net = MyWithLossCell(net, loss_fn)
         >>> train_net = nn.TrainOneStepCell(loss_net, optim)
     """
+
     def __init__(self, network, optimizer, sens=1.0):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
@@ -314,7 +349,6 @@ class WithEvalCell(Cell):
         self._loss_fn = loss_fn
         self.add_cast_fp32 = add_cast_fp32
 
-
     def construct(self, data, label):
         outputs = self._network(data)
         if self.add_cast_fp32:
@@ -354,3 +388,25 @@ class ParameterUpdate(Cell):
     def construct(self, x):
         F.assign(self._param, x)
         return x
+
+
+class _BroadCastCell(Cell):
+    """
+    Broadcast the parameters from device 0 to other devices.
+
+    Args:
+       params (list): The parameters of Net.
+    """
+
+    def __init__(self, params):
+        super(_BroadCastCell, self).__init__()
+        self.map_ = C.Map()
+        self.params = tuple(params)
+        self.broadcast = P.Broadcast(0)
+
+    def construct(self):
+        datatypes = self.map_(F.partial(_get_datatype), self.params)
+        params = self.map_(F.partial(_cast_datatype, mstype.float32), self.params)
+        params = self.broadcast(params)
+        new_params = self.map_(F.partial(_cast_datatype), datatypes, params)
+        return new_params

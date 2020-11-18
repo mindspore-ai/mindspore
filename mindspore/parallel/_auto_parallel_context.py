@@ -207,9 +207,6 @@ class _AutoParallelContext:
             parameter_broadcast (bool): Parameter broadcast or not.
         """
         self.check_context_handle()
-        if parameter_broadcast is True and context.get_context("enable_ge") is False:
-            raise RuntimeError("Parameter broadcast is a developing feature. For now we suggest to"
-                               " use mindspore.common.set_seed() to share parameters among devices.")
         self._context_handle.set_parameter_broadcast(parameter_broadcast)
 
     def get_parameter_broadcast(self):
