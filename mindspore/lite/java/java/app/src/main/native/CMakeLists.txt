@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.14)
-project (Lite-java)
+cmake_minimum_required(VERSION 3.10)
+project(Lite-java)
 
 set(BUILD_LITE "on")
 set(PLATFORM_ARM "on")
@@ -31,7 +31,7 @@ include(${TOP_DIR}/cmake/external_libs/flatbuffers.cmake)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${LITE_DIR})  ## lite include
 include_directories(${TOP_DIR}/mindspore/core/) ## core include
-include_directories(${LITE_DIR}/build)
+include_directories(${LITE_DIR}/build) ## flatbuffers
 
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../libs/${ANDROID_ABI}/)
 
@@ -46,4 +46,4 @@ add_library(mindspore-lite-jni SHARED
 
 find_library(log-lib log)
 
-target_link_libraries(mindspore-lite-jni mindspore-lite ${log-lib} )
+target_link_libraries(mindspore-lite-jni mindspore-lite ${log-lib})

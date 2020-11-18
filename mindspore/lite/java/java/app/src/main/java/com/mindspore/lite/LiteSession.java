@@ -132,7 +132,7 @@ public class LiteSession {
 
     private native List<Long> getInputs(long sessionPtr);
 
-    private native Long getInputsByTensorName(long sessionPtr, String tensorName);
+    private native long getInputsByTensorName(long sessionPtr, String tensorName);
 
     private native List<Long> getOutputsByNodeName(long sessionPtr, String nodeName);
 
@@ -140,7 +140,7 @@ public class LiteSession {
 
     private native List<String> getOutputTensorNames(long sessionPtr);
 
-    private native Long getOutputByTensorName(long sessionPtr, String tensorName);
+    private native long getOutputByTensorName(long sessionPtr, String tensorName);
 
     private native void free(long sessionPtr);
 

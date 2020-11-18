@@ -18,6 +18,6 @@
 #include "common/ms_log.h"
 #include "include/version.h"
 
-extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_lite_Version_version(JNIEnv *env, jobject thiz) {
+extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_lite_Version_version(JNIEnv *env, jclass thiz) {
   return env->NewStringUTF(mindspore::lite::Version().c_str());
 }
