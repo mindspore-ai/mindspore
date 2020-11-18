@@ -36,9 +36,6 @@ def expand_gelu(expand_info):
         # create tensor input.
         input_x = graph_builder.tensor(input_desc['shape'], input_desc['data_type'], input_desc['format'])
         graph_scope.set_input(input_x)
-        dtype = input_x.dtype
-        if dtype == 'float16':
-            input_x = graph_builder.emit('Cast', [input_x], attrs={'dst_type': 'float32'})
 
         # cal y
         mul_0 = graph_builder.emit('Mul', [input_x, input_x])
@@ -58,8 +55,6 @@ def expand_gelu(expand_info):
         mul_x = graph_builder.emit('Mul', [input_x, tanh_y_add_one])
         result = graph_builder.emit('Mul', [const_half, mul_x])
 
-        if dtype == 'float16':
-            result = graph_builder.emit('Cast', [result], attrs={'dst_type': 'float16'})
         # set graph output.
         graph_scope.set_output(result)
 
