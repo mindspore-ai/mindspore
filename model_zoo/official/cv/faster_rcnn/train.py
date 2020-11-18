@@ -101,8 +101,8 @@ if __name__ == '__main__':
     loss_scale = float(config.loss_scale)
 
     # When create MindDataset, using the fitst mindrecord file, such as FasterRcnn.mindrecord0.
-    dataset = create_fasterrcnn_dataset(mindrecord_file, repeat_num=1,
-                                        batch_size=config.batch_size, device_num=device_num, rank_id=rank)
+    dataset = create_fasterrcnn_dataset(mindrecord_file, batch_size=config.batch_size,
+                                        device_num=device_num, rank_id=rank)
 
     dataset_size = dataset.get_dataset_size()
     print("Create dataset done!")
