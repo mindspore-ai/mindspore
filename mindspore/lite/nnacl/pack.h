@@ -38,6 +38,12 @@ void Im2ColPackUnitInt8Opt(const int8_t *input_data, int8_t *packed_input, int8_
 
 void PackInputSum16x4PerLayer(const int8_t *src, int32_t *dst, int32_t filter_zp, size_t row4, size_t col16);
 
+void PackInputSum16x4PerChannelArm32(const int8_t *input_value, int32_t *input_sum, int32_t *filter_zp_ptr,
+                                     size_t plane_size, size_t input_channel, size_t output_channel);
+
+void PackInputSum16x4PerChannel(const int8_t *input_value, int32_t *input_sum, int32_t *filter_zp_ptr,
+                                size_t plane_size, size_t input_channel, size_t output_channel);
+
 void Conv1x1InputPack(const void *src_ptr, void *dst_ptr, ConvParameter *conv_param, int data_size);
 
 void Pack1x1WeightFp32(const float *weight_data, float *packed_weight, ConvParameter *conv_param);
