@@ -337,7 +337,7 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   AllocateMemory(graph.get());
 
 #ifdef ENABLE_DEBUGGER
-  if (debugger_) {
+  if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     debugger_->LoadGraphs(graph);
   }
 #endif
