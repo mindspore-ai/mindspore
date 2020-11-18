@@ -1561,7 +1561,7 @@ class SmoothL1LossGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, beta=1.0):
-        pass
+        self.add_prim_attr('sigma', beta)
 
     def infer_shape(self, prediction, target, dloss):
         validator.check('prediction shape', prediction, 'target shape', target, Rel.EQ, self.name)
