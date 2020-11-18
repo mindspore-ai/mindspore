@@ -24,9 +24,7 @@
 using std::string;
 using std::vector;
 
-namespace mindspore {
-namespace lite {
-namespace quant {
+namespace mindspore::lite::quant {
 bool WeightQuantizer::IsPosNum(const std::string &str) {
   for (size_t i = 0; i < str.size(); i++) {
     if (str.at(i) < '0' || str.at(i) > '9') {
@@ -65,7 +63,7 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const string &weightSize,
   auto quantSize = static_cast<size_t>(std::stoull(weightSize));
   this->bitNum = static_cast<size_t>(std::stoull(bitNum));
   auto convQuantWeightChannelThreshold = static_cast<size_t>(std::stoull(convWeightChannelThreshold));
-  mStrategy.reset(new QuantStrategy(quantSize, convQuantWeightChannelThreshold));
+  mStrategy = std::make_unique<QuantStrategy>(quantSize, convQuantWeightChannelThreshold);
   quant_max = (1 << (unsigned int)(this->bitNum - 1)) - 1;
   quant_min = -(1 << (unsigned int)(this->bitNum - 1));
   // parse type_id
@@ -217,7 +215,8 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
 }
 
 STATUS WeightQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
-  auto ret = RET_OK;
+  MS_ASSERT(funcGraph != nullptr);
+  STATUS ret;
   auto cnodes = funcGraph->GetOrderedCnodes();
   ret = DoConvQuantize(cnodes);
   if (ret != RET_OK) {
@@ -231,6 +230,4 @@ STATUS WeightQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
   }
   return ret;
 }
-}  // namespace quant
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite::quant

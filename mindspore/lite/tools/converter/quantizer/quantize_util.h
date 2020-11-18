@@ -36,9 +36,7 @@
 #include "abstract/dshape.h"
 #include "tools/converter/quantizer/bitpacking.h"
 
-namespace mindspore {
-namespace lite {
-namespace quant {
+namespace mindspore::lite::quant {
 static constexpr size_t UINT8_QUANTIZATION = 8;
 static constexpr size_t WEIGHT_INDEX = 1;
 
@@ -96,7 +94,7 @@ T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   }
 
   return [maxLimit, minLimit, zeroPoint, scale, narrowRange, originData] {
-    double tmp = 0.0f;
+    double tmp;
     if (originData > maxLimit) {
       tmp = maxLimit;
     } else if (originData < minLimit) {
@@ -130,8 +128,10 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
   }();
 }
 template <typename T>
-STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primitive_c, QuantType quantType,
+STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<PrimitiveC> &primitive_c, QuantType quantType,
                    int quant_max, int quant_min, size_t bitNum, bool per_channel, bool k_means = false) {
+  MS_ASSERT(weight != nullptr);
+  MS_ASSERT(primitive_c != nullptr);
   auto dims = weight->tensor_shape();
   auto op_type = (schema::PrimitiveType)primitive_c->Type();
   if (per_channel) {
@@ -320,8 +320,6 @@ STATUS QuantFilter(ParamValueLitePtr weight, std::shared_ptr<PrimitiveC> primiti
   return RET_OK;
 }
 
-schema::PrimitiveType NodePrimitiveType(CNodePtr cnode);
-}  // namespace quant
-}  // namespace lite
-}  // namespace mindspore
+schema::PrimitiveType NodePrimitiveType(const CNodePtr &cnode);
+}  // namespace mindspore::lite::quant
 #endif

@@ -28,9 +28,7 @@
 #include "base/base.h"
 #include "abstract/dshape.h"
 
-namespace mindspore {
-namespace lite {
-namespace quant {
+namespace mindspore::lite::quant {
 class WeightQuantizer : public Quantizer {
  public:
   WeightQuantizer(FuncGraphPtr graph, const std::string &weightSize, const std::string &covWeightChannelThreshold,
@@ -51,7 +49,5 @@ class WeightQuantizer : public Quantizer {
   std::unique_ptr<QuantStrategy> mStrategy;
   size_t bitNum;
 };
-}  // namespace quant
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite::quant
 #endif

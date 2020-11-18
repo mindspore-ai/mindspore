@@ -23,18 +23,15 @@
 #include "mindspore/core/ir/func_graph.h"
 
 namespace mindspore::lite::quant {
-
 class QuantCast {
  public:
   QuantCast() = default;
   ~QuantCast() = default;
-  STATUS Run(FuncGraphPtr graph);
+  STATUS Run(const FuncGraphPtr &graph);
   void SetInputDataDType(TypeId dataType) { this->inputDataDType = dataType; }
 
  private:
   TypeId inputDataDType = kNumberTypeFloat32;
 };
-
 }  // namespace mindspore::lite::quant
-
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__QUANT_CAST_H

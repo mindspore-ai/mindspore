@@ -22,8 +22,7 @@
 #include <vector>
 #include <cassert>
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 class BitPack {
  public:
   ~BitPack() = default;
@@ -68,7 +67,5 @@ class BitPack {
     }
   }
 };
-}  // namespace lite
-}  // namespace mindspore
-
+}  // namespace mindspore::lite
 #endif
