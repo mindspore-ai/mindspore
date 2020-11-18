@@ -49,6 +49,9 @@ class ControlDepend(Primitive):
     Outputs:
         This operation has no actual data output, it will be used to setup the order of relative operations.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> class Net(nn.Cell):
         >>>     def __init__(self):

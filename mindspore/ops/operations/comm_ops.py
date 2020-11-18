@@ -33,6 +33,9 @@ class ReduceOp:
         - MAX: Take the maximum.
         - MIN: Take the minimum.
         - PROD: Take the product.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
     SUM = "sum"
     MAX = "max"
@@ -66,6 +69,9 @@ class AllReduce(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape of the input, i.e., :math:`(x_1, x_2, ..., x_R)`.
         The contents depend on the specified operation.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> from mindspore.communication import init
@@ -130,6 +136,9 @@ class AllGather(PrimitiveWithInfer):
     Outputs:
         Tensor. If the number of devices in the group is N,
         then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore.ops.operations as P
@@ -240,6 +249,9 @@ class ReduceScatter(PrimitiveWithInfer):
     Raises:
         TypeError: If any of operation and group is not a string.
         ValueError: If the first dimension of the input cannot be divided by the rank size.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> from mindspore import Tensor
@@ -357,6 +369,9 @@ class Broadcast(PrimitiveWithInfer):
 
     Raises:
         TypeError: If root_rank is not a integer or group is not a string.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> from mindspore import Tensor

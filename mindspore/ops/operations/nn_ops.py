@@ -86,6 +86,9 @@ class Flatten(PrimitiveWithInfer):
         Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
         the product of the remaining dimension.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
         >>> flatten = P.Flatten()
@@ -129,6 +132,9 @@ class Softmax(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the logits.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
@@ -180,6 +186,9 @@ class LogSoftmax(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the logits.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> log_softmax = P.LogSoftmax()
@@ -217,6 +226,9 @@ class Softplus(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
+    Supported Platforms:
+        ``Ascend``  ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> softplus = P.Softplus()
@@ -252,6 +264,9 @@ class Softsign(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
         >>> softsign = P.Softsign()
@@ -283,6 +298,9 @@ class ReLU(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
@@ -316,6 +334,9 @@ class ReLU6(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
@@ -351,6 +372,9 @@ class ReLUV2(PrimitiveWithInfer):
     Outputs:
         - **output** (Tensor) - Has the same type and shape as the `input_x`.
         - **mask** (Tensor) - A tensor whose data type must be uint8.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mindspore.float32)
@@ -411,6 +435,9 @@ class Elu(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and data type as `input_x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> elu = P.Elu()
@@ -453,6 +480,9 @@ class HSwish(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> hswish = P.HSwish()
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
@@ -487,6 +517,9 @@ class Sigmoid(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
@@ -526,6 +559,9 @@ class HSigmoid(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> hsigmoid = P.HSigmoid()
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
@@ -560,6 +596,9 @@ class Tanh(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
@@ -618,6 +657,9 @@ class FusedBatchNorm(Primitive):
         - **updated_bias** (Tensor) - Tensor of shape :math:`(C,)`.
         - **updated_moving_mean** (Tensor) - Tensor of shape :math:`(C,)`.
         - **updated_moving_variance** (Tensor) - Tensor of shape :math:`(C,)`.
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import mindspore
@@ -712,6 +754,9 @@ class FusedBatchNormEx(PrimitiveWithInfer):
           data type: float32.
         - **reserve** (Tensor) - reserve space, Tensor of shape :math:`(C,)`, data type: float32.
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
@@ -792,6 +837,9 @@ class BNTrainingReduce(PrimitiveWithInfer):
         - **sum** (Tensor) - A 1-D Tensor with float32 data type. Tensor of shape :math:`(C,)`.
         - **square_sum** (Tensor) - A 1-D Tensor with float32 data type. Tensor of shape :math:`(C,)`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.ones([128, 3, 32, 3]), mindspore.float32)
         >>> bn_training_reduce = P.BNTrainingReduce()
@@ -848,6 +896,9 @@ class BNTrainingUpdate(PrimitiveWithInfer):
           Has the same shape as `variance`.
         - **batch_variance** (Tensor) - Tensor for the mean of `variance`, with float32 data type.
           Has the same shape as `variance`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.ones([1, 2, 2, 2]), mindspore.float32)
@@ -948,6 +999,9 @@ class BatchNorm(PrimitiveWithInfer):
         - **updated_bias** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_1** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
@@ -1054,6 +1108,9 @@ class Conv2D(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
@@ -1199,6 +1256,9 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
 
     Outputs:
         Tensor of shape :math:`(N, C_{in} * \text{channel_multiplier}, H_{out}, W_{out})`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
@@ -1411,6 +1471,9 @@ class MaxPool(_Pool):
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_tensor = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
         >>> maxpool_op = P.MaxPool(padding="VALID", ksize=2, strides=1)
@@ -1462,6 +1525,9 @@ class MaxPoolWithArgmax(_Pool):
 
         - **output** (Tensor) -  Maxpooling result, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
         - **mask** (Tensor) -  Max values' index represented by the mask.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_tensor = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
@@ -1543,6 +1609,9 @@ class AvgPool(_Pool):
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
@@ -1611,6 +1680,9 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the gradients w.r.t the input of convolution. It has the same shape as the input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> dout = Tensor(np.ones([10, 32, 30, 30]), mindspore.float32)
@@ -1730,6 +1802,9 @@ class BiasAdd(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same shape and type as `input_x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
         >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
@@ -1779,6 +1854,9 @@ class TopK(PrimitiveWithInfer):
         - **values** (Tensor) - The `k` largest elements in each slice of the last dimensional.
         - **indices** (Tensor) - The indices of values within the last dimension of input.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> topk = P.TopK(sorted=True)
         >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16)
@@ -1826,6 +1904,9 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
 
     Outputs:
         Tuple of 2 tensors, the `loss` shape is `(N,)`, and the `dlogits` with the same shape as `logits`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> logits = Tensor([[2, 4, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
@@ -1880,6 +1961,9 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
     Outputs:
         Tensor, if `is_grad` is False, the output tensor is the value of loss which is a scalar tensor;
         if `is_grad` is True, the output tensor is the gradient of input with the same shape as `logits`.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
 
     Examples:
         Please refer to the usage in nn.SoftmaxCrossEntropyWithLogits source code.
@@ -1937,6 +2021,9 @@ class ApplyMomentum(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be updated.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         Please refer to the usage in nn.ApplyMomentum.
@@ -1999,6 +2086,9 @@ class SmoothL1Loss(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as `prediction`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> loss = P.SmoothL1Loss()
         >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -2042,6 +2132,9 @@ class L2Loss(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same dtype as `input_x`. The output tensor is the value of loss which is a scalar tensor.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
         >>> l2_loss = P.L2Loss()
@@ -2078,6 +2171,9 @@ class DataFormatDimMap(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor([0, 1, 2, 3], mindspore.int32)
@@ -2119,6 +2215,9 @@ class RNNTLoss(PrimitiveWithInfer):
     Outputs:
         - **costs** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
         - **grads** (Tensor[int32]) - Has the same shape as `acts`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> B, T, U, V = 1, 2, 3, 5
@@ -2185,6 +2284,9 @@ class SGD(PrimitiveWithCheck):
 
     Outputs:
         Tensor, parameters to be updated.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> sgd = P.SGD()
@@ -2264,6 +2366,9 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be update.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> apply_rms = P.ApplyRMSProp()
@@ -2363,6 +2468,9 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     Outputs:
         Tensor, parameters to be update.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> centered_rms_prop = P.ApplyCenteredRMSProp()
         >>> input_x = Tensor(np.arange(-6, 6).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
@@ -2451,6 +2559,9 @@ class LayerNorm(Primitive):
         - **mean** (Tensor) - Tensor of shape :math:`(C,)`.
         - **variance** (Tensor) - Tensor of shape :math:`(C,)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)
         >>> gamma = Tensor(np.ones([3]), mindspore.float32)
@@ -2489,6 +2600,9 @@ class L2Normalize(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the input.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> l2_normalize = P.L2Normalize()
@@ -2534,6 +2648,9 @@ class DropoutGenMask(Primitive):
     Outputs:
         Tensor, the value of generated mask for input shape.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> dropout_gen_mask = P.DropoutGenMask()
         >>> shape = (2, 4, 5)
@@ -2568,6 +2685,9 @@ class DropoutDoMask(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the value that applied dropout on.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
@@ -2640,6 +2760,9 @@ class ResizeBilinear(PrimitiveWithInfer):
     Outputs:
         Tensor, resized image. 4-D with shape [batch, channels, new_height, new_width] in `float32`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> tensor = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
         >>> resize_bilinear = P.ResizeBilinear((5, 5))
@@ -2696,6 +2819,9 @@ class OneHot(PrimitiveWithInfer):
     Outputs:
         Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
         >>> depth, on_value, off_value = 3, Tensor(1.0, mindspore.float32), Tensor(0.0, mindspore.float32)
@@ -2751,6 +2877,9 @@ class Gelu(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as input.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> tensor = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> gelu = P.Gelu()
@@ -2791,6 +2920,9 @@ class GetNext(PrimitiveWithInfer):
     Outputs:
         tuple[Tensor], the output of Dataset. The shape is described in `shapes`
         and the type is described is `types`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> get_next = P.GetNext([mindspore.float32, mindspore.int32], [[32, 1, 28, 28], [10]], 2, 'shared_name')
@@ -2836,6 +2968,9 @@ class PReLU(PrimitiveWithInfer):
         Tensor, with the same type as `input_x`.
 
     For detailed information, please refer to `nn.PReLU`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import mindspore
@@ -2897,6 +3032,9 @@ class LSTM(PrimitiveWithInfer):
     Performs the long short term memory(LSTM) on the input.
 
     For detailed information, please refer to `nn.LSTM`.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -2992,6 +3130,9 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same shape and type as input `logits`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
         >>> labels = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
@@ -3032,6 +3173,9 @@ class Pad(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the tensor after padding.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
@@ -3097,6 +3241,9 @@ class MirrorPad(PrimitiveWithInfer):
           according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
           is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the Outputs is
           [[2,1,1,2,3,3,2],[2,1,1,2,3,3,2],[5,4,4,5,6,6,5],[8,7,7,8,9,9,8],[8,7,7,8,9,9,8]].
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> from mindspore import Tensor
@@ -3178,6 +3325,9 @@ class ROIAlign(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape is `(rois_n, C, pooled_height, pooled_width)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_tensor = Tensor(np.array([[[[1., 2.], [3., 4.]]]]), mindspore.float32)
@@ -3264,6 +3414,9 @@ class Adam(PrimitiveWithInfer):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
         - **v** (Tensor) - The same shape and data type as `v`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np
@@ -3366,6 +3519,9 @@ class FusedSparseAdam(PrimitiveWithInfer):
         - **var** (Tensor) - A Tensor with shape (1,).
         - **m** (Tensor) - A Tensor with shape (1,).
         - **v** (Tensor) - A Tensor with shape (1,).
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -3500,6 +3656,9 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         - **m** (Tensor) - A Tensor with shape (1,).
         - **v** (Tensor) - A Tensor with shape (1,).
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
@@ -3606,6 +3765,9 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         - **var** (Tensor) - A Tensor with shape (1,).
         - **accum** (Tensor) - A Tensor with shape (1,).
         - **linear** (Tensor) - A Tensor with shape (1,).
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import mindspore
@@ -3795,6 +3957,9 @@ class KLDivLoss(PrimitiveWithInfer):
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input_x`.
         Otherwise it is a scalar.
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
@@ -3868,6 +4033,9 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input_x`.
         Otherwise, the output is a scalar.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore
@@ -3966,6 +4134,9 @@ class ApplyAdaMax(PrimitiveWithInfer):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
         - **v** (Tensor) - The same shape and data type as `v`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -4087,6 +4258,9 @@ class ApplyAdadelta(PrimitiveWithInfer):
         - **accum** (Tensor) - The same shape and data type as `accum`.
         - **accum_update** (Tensor) - The same shape and data type as `accum_update`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
@@ -4187,6 +4361,9 @@ class ApplyAdagrad(PrimitiveWithInfer):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
@@ -4269,6 +4446,9 @@ class ApplyAdagradV2(PrimitiveWithInfer):
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `m`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -4353,6 +4533,9 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -4442,6 +4625,9 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -4639,6 +4825,9 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
@@ -4732,6 +4921,9 @@ class ApplyAddSign(PrimitiveWithInfer):
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -4841,6 +5033,9 @@ class ApplyPowerSign(PrimitiveWithInfer):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
@@ -4931,6 +5126,9 @@ class ApplyGradientDescent(PrimitiveWithInfer):
     Outputs:
         Tensor, represents the updated `var`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
@@ -5001,6 +5199,9 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
     Outputs:
         Tensor, represents the updated `var`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
@@ -5080,6 +5281,9 @@ class LARSUpdate(PrimitiveWithInfer):
 
     Outputs:
         Tensor, represents the new gradient.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> from mindspore import Tensor
@@ -5163,6 +5367,9 @@ class ApplyFtrl(PrimitiveWithInfer):
 
     Outputs:
         Tensor, represents the updated `var`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore
@@ -5255,6 +5462,9 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
         - **accum** (Tensor) - Tensor, has the same shape and data type as `accum`.
         - **linear** (Tensor) - Tensor, has the same shape and data type as `linear`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import mindspore
@@ -5353,6 +5563,9 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
         - **accum** (Tensor) - Tensor, has the same shape and data type as `accum`.
         - **linear** (Tensor) - Tensor, has the same shape and data type as `linear`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import mindspore
@@ -5491,6 +5704,9 @@ class CTCLoss(PrimitiveWithInfer):
         - **loss** (Tensor) - A tensor containing log-probabilities, the shape is (`batch_size`). The tensor has
           the same type with `inputs`.
         - **gradient** (Tensor) - The gradient of `loss`, has the same type and shape with `inputs`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
@@ -5667,6 +5883,9 @@ class BasicLSTMCell(PrimitiveWithInfer):
           Has the same type with input `c`.
         - **tanhct** (Tensor) - Forward :math:`tanh c_t` cache at moment `t`.
           Tensor of shape (`batch_size`, `hidden_size`), has the same type with input `c`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.random.rand(1, 32).astype(np.float16))
@@ -5887,6 +6106,9 @@ class InTopK(PrimitiveWithInfer):
         Tensor has 1 dimension of type bool and the same shape with `x2`. For labeling sample `i` in `x2`,
         if the label in the first `k` predictions for sample `i` is in `x1`, then the value is True, otherwise False.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)
         >>> x2 = Tensor(np.array([1, 3]), mindspore.int32)
@@ -5931,6 +6153,9 @@ class LRN(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same shape and data type as the input tensor.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.random.rand(1, 2, 2, 2), mindspore.float32)

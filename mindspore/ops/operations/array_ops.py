@@ -143,6 +143,9 @@ class ExpandDims(PrimitiveWithInfer):
         Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
         value of `axis` is 0.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> expand_dims = P.ExpandDims()
@@ -192,6 +195,9 @@ class DType(PrimitiveWithInfer):
     Outputs:
         mindspore.dtype, the data type of a tensor.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> output = P.DType()(input_tensor)
@@ -226,6 +232,9 @@ class SameTypeShape(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`,
         if data type and shape of `input_x` and `input_y` are the same.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
@@ -267,6 +276,9 @@ class Cast(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -341,6 +353,9 @@ class IsSubClass(PrimitiveWithInfer):
     Outputs:
         bool, the check result.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> result = P.IsSubClass()(mindspore.int32,  mindspore.intc)
         >>> print(result)
@@ -376,6 +391,9 @@ class IsInstance(PrimitiveWithInfer):
 
     Outputs:
         bool, the check result.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> a = 1
@@ -423,6 +441,9 @@ class Reshape(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
@@ -506,6 +527,9 @@ class Shape(PrimitiveWithInfer):
         tuple[int], the output tuple is constructed by multiple integers,
         :math:`(x_1, x_2, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
         >>> shape = P.Shape()
@@ -535,6 +559,9 @@ class DynamicShape(Primitive):
 
     Outputs:
         Tensor[int], 1-dim Tensor of type int32
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
@@ -570,6 +597,9 @@ class Squeeze(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
@@ -626,6 +656,9 @@ class Transpose(PrimitiveWithCheck):
         Tensor, the type of output tensor is the same as `input_x` and the shape of output tensor is decided by the
         shape of `input_x` and the value of `input_perm`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_tensor = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
         >>> perm = (0, 2, 1)
@@ -665,6 +698,9 @@ class Unique(Primitive):
         Tuple, containing Tensor objects `(y, idx)`, `y` is a tensor has the same type as `x`, `idx` is a tensor
         containing indices of elements in the input coressponding to the output tensor.
 
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
         >>> out = P.Unique()(x)
@@ -690,6 +726,9 @@ class GatherV2(PrimitiveWithCheck):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
@@ -766,6 +805,9 @@ class Padding(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
         >>> pad_dim_size = 4
@@ -806,6 +848,9 @@ class UniqueWithPad(PrimitiveWithInfer):
         tuple(Tensor), tuple of 2 tensors, y and idx.
         - y (Tensor) - The unique elements filled with pad_num, the shape and type same as x.
         - idx (Tensor) - The index of each value of x in the unique output y, the shape and type same as x.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 1, 5, 5, 4, 4, 3, 3, 2, 2,]), mindspore.int32)
@@ -850,6 +895,9 @@ class Split(PrimitiveWithInfer):
     Outputs:
         tuple[Tensor], the shape of each output tensor is the same, which is
         :math:`(y_1, y_2, ..., y_S)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> split = P.Split(1, 2)
@@ -907,6 +955,9 @@ class Rank(PrimitiveWithInfer):
 
     Outputs:
         Tensor. 0-D int32 Tensor representing the rank of input, i.e., :math:`R`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
@@ -980,6 +1031,9 @@ class Size(PrimitiveWithInfer):
         int, a scalar representing the elements size of `input_x`, tensor is the number of elements
         in a tensor, :math:`size=x_1*x_2*...x_R`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> size = P.Size()
@@ -1019,6 +1073,9 @@ class Fill(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type and shape as input value.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> fill = P.Fill()
@@ -1150,6 +1207,9 @@ class OnesLike(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and type as `input_x` but filled with ones.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> oneslike = P.OnesLike()
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
@@ -1183,6 +1243,9 @@ class ZerosLike(PrimitiveWithCheck):
     Outputs:
         Tensor, has the same shape and data type as `input_x` but filled with zeros.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> zeroslike = P.ZerosLike()
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
@@ -1213,6 +1276,9 @@ class TupleToArray(PrimitiveWithInfer):
 
     Outputs:
         Tensor, if the input tuple contains `N` numbers, then the shape of the output tensor is (N,).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> type = P.TupleToArray()((1,2,3))
@@ -1257,6 +1323,9 @@ class ScalarToArray(PrimitiveWithInfer):
     Outputs:
         Tensor. 0-D Tensor and the content is the input.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> op = P.ScalarToArray()
         >>> data = 1.0
@@ -1289,6 +1358,9 @@ class ScalarToTensor(PrimitiveWithInfer):
 
     Outputs:
         Tensor. 0-D Tensor and the content is the input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> op = P.ScalarToTensor()
@@ -1332,6 +1404,9 @@ class InvertPermutation(PrimitiveWithInfer):
 
     Outputs:
         tuple[int]. It has the same length as the input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> invert = P.InvertPermutation()
@@ -1397,6 +1472,9 @@ class Argmax(PrimitiveWithInfer):
     Outputs:
         Tensor, indices of the max value of input tensor across the axis.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
         >>> index = P.Argmax(output_type=mindspore.int32)(input_x)
@@ -1445,6 +1523,9 @@ class Argmin(PrimitiveWithInfer):
 
     Outputs:
         Tensor, indices of the min value of input tensor across the axis.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
@@ -1504,6 +1585,9 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
         - output_x (Tensor) - The maximum value of input tensor, with the same shape as index.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
         >>> index, output = P.ArgMaxWithValue()(input_x)
@@ -1555,6 +1639,9 @@ class ArgMinWithValue(PrimitiveWithInfer):
         output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
         - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
@@ -1610,6 +1697,9 @@ class Tile(PrimitiveWithInfer):
           Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(1*y_1, ..., x_S*y_R)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> tile = P.Tile()
@@ -1683,6 +1773,9 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
         >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
@@ -1754,6 +1847,9 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
     Outputs:
         Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
         >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
@@ -1803,6 +1899,9 @@ class UnsortedSegmentMax(PrimitiveWithInfer):
 
     Outputs:
         Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
@@ -1854,6 +1953,9 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
 
     Outputs:
         Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
@@ -1917,6 +2019,9 @@ class Concat(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> data1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
         >>> data2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
@@ -1964,6 +2069,9 @@ class ParallelConcat(PrimitiveWithInfer):
 
     Outputs:
         Tensor, data type is the same as `values`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> data1 = Tensor(np.array([[0, 1]]).astype(np.int32))
@@ -2048,6 +2156,9 @@ class Pack(PrimitiveWithInfer):
                     or if axis is out of the range [-(R+1), R+1);
                     or if the shapes of elements in input_x are not the same.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
         >>> data2 = Tensor(np.array([2, 3]).astype(np.float32))
@@ -2098,6 +2209,9 @@ class Unpack(PrimitiveWithInfer):
 
     Raises:
         ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> unpack = P.Unpack()
@@ -2153,6 +2267,9 @@ class Slice(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape is : input `size`, the data type is the same as input `x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
         ...                         [[3, 3, 3], [4, 4, 4]],
@@ -2203,6 +2320,9 @@ class ReverseV2(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and type as `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
         >>> op = P.ReverseV2(axis=[1])
@@ -2240,6 +2360,9 @@ class Rint(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([-1.6, -0.1, 1.5, 2.0]), mindspore.float32)
@@ -2300,6 +2423,9 @@ class Select(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> select = P.Select()
@@ -2433,6 +2559,9 @@ class StridedSlice(PrimitiveWithInfer):
               Based on the return value of the 1st dimension, return the element with :math:`index = 0,1,2`,
               i.e., [3, 3, 3].
             - Finally, the output is [3, 3, 3].
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples
         >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
@@ -2685,6 +2814,9 @@ class Eye(PrimitiveWithInfer):
     Outputs:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> eye = P.Eye()
         >>> out_tensor = eye(2, 2, mindspore.int32)
@@ -2720,6 +2852,9 @@ class ScatterNd(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> op = P.ScatterNd()
@@ -2774,6 +2909,9 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, C, NEW\_H, NEW\_W)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_tensor = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mindspore.float32)
         >>> resize = P.ResizeNearestNeighbor((2, 2))
@@ -2815,6 +2953,9 @@ class GatherNd(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
@@ -2851,6 +2992,9 @@ class TensorScatterUpdate(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
@@ -2904,6 +3048,9 @@ class ScatterUpdate(_ScatterOp_Dynamic):
     Outputs:
         Tensor, has the same shape and type as `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
         >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
@@ -2943,6 +3090,9 @@ class ScatterNdUpdate(_ScatterNdOp):
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
@@ -2993,6 +3143,9 @@ class ScatterMax(_ScatterOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
@@ -3034,6 +3187,9 @@ class ScatterMin(_ScatterOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
@@ -3068,6 +3224,9 @@ class ScatterAdd(_ScatterOp_Dynamic):
 
     Outputs:
         Parameter, the updated `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
@@ -3110,6 +3269,9 @@ class ScatterSub(_ScatterOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 1]]), mindspore.int32)
@@ -3144,6 +3306,9 @@ class ScatterMul(_ScatterOp):
 
     Outputs:
         Parameter, the updated `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
@@ -3180,6 +3345,9 @@ class ScatterDiv(_ScatterOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
@@ -3214,6 +3382,9 @@ class ScatterNdAdd(_ScatterNdOp):
 
     Outputs:
         Parameter, the updated `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
@@ -3250,6 +3421,9 @@ class ScatterNdSub(_ScatterNdOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
@@ -3281,6 +3455,9 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
 
     Outputs:
         Parameter, the updated `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
@@ -3325,6 +3502,9 @@ class SpaceToDepth(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the same data type as `x`. It must be a 4-D tensor.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.random.rand(1,3,2,2), mindspore.float32)
@@ -3382,6 +3562,9 @@ class DepthToSpace(PrimitiveWithInfer):
 
     Outputs:
         Tensor of shape :math:`(N, C_{in} / \text{block_size}, H_{in} * \text{block_size}, W_{in} * \text{block_size})`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.random.rand(1,12,1,1), mindspore.float32)
@@ -3448,6 +3631,9 @@ class SpaceToBatch(PrimitiveWithInfer):
             :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_size`
 
             :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_size`
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> block_size = 2
@@ -3519,6 +3705,9 @@ class BatchToSpace(PrimitiveWithInfer):
                 :math:`h' = h*block\_size-crops[0][0]-crops[0][1]`
 
                 :math:`w' = w*block\_size-crops[1][0]-crops[1][1]`
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> block_size = 2
@@ -3596,6 +3785,9 @@ class SpaceToBatchND(PrimitiveWithInfer):
             :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_shape[0]`
 
             :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_shape[1]`
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> block_shape = [2, 2]
@@ -3690,6 +3882,9 @@ class BatchToSpaceND(PrimitiveWithInfer):
 
                 :math:`w' = w*block\_shape[1]-crops[1][0]-crops[1][1]`
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> block_shape = [2, 2]
         >>> crops = [[0, 0], [0, 0]]
@@ -3768,6 +3963,9 @@ class BroadcastTo(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the given `shape` and the same data type as `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> shape = (2, 3)
@@ -3916,6 +4114,9 @@ class InplaceUpdate(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the input `x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> indices = (0, 1)
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
@@ -3972,6 +4173,9 @@ class ReverseSequence(PrimitiveWithInfer):
 
     Outputs:
         Reversed tensor with the same shape and data type as input.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
@@ -4145,6 +4349,9 @@ class Sort(PrimitiveWithInfer):
         - **y1** (Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
         - **y2** (Tensor) - The indices of the elements in the original input tensor. Data type is int32.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
         >>> sort = P.Sort()
@@ -4185,6 +4392,9 @@ class EmbeddingLookup(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
@@ -4283,6 +4493,9 @@ class Identity(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
