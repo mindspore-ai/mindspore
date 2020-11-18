@@ -49,13 +49,6 @@ bool HttpServer::InitServer() {
     MS_LOG(EXCEPTION) << "The http server ip:" << server_address_ << " is illegal!";
   }
 
-  int result = evthread_use_pthreads();
-  if (result != 0) {
-    MS_LOG(EXCEPTION) << "Use event pthread failed!";
-  }
-
-  is_stop_ = false;
-
   event_base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(event_base_);
   event_http_ = evhttp_new(event_base_);
@@ -153,20 +146,13 @@ bool HttpServer::Start() {
 
 void HttpServer::Stop() {
   MS_LOG(INFO) << "Stop http server!";
-  if (!is_stop_.load()) {
-    int ret = event_base_loopbreak(event_base_);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "event base loop break failed!";
-    }
-    if (event_http_) {
-      evhttp_free(event_http_);
-      event_http_ = nullptr;
-    }
-    if (event_base_) {
-      event_base_free(event_base_);
-      event_base_ = nullptr;
-    }
-    is_stop_ = true;
+  if (event_http_) {
+    evhttp_free(event_http_);
+    event_http_ = nullptr;
+  }
+  if (event_base_) {
+    event_base_free(event_base_);
+    event_base_ = nullptr;
   }
 }
 
