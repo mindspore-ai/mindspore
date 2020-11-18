@@ -57,11 +57,25 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   result.outputs = outputs;
   result.graph_id = kInvalidGraphId;
   GraphId graph_id = kInvalidGraphId;
+  auto current_session = target_sess_;
   if (target != target_device_ && !target.empty()) {
     CreateOtherSession(target);
-    graph_id = other_sess_->CompileGraph(segment, outputs);
-  } else {
-    graph_id = target_sess_->CompileGraph(segment, outputs);
+    current_session = other_sess_;
+  }
+  MS_EXCEPTION_IF_NULL(current_session);
+  graph_id = current_session->CompileGraph(segment, outputs);
+  segment->graph_id_ = graph_id;
+  auto graph = current_session->GetGraph(graph_id);
+  MS_EXCEPTION_IF_NULL(graph);
+  for (auto &pre_segment : segment->pre_segments_) {
+    MS_EXCEPTION_IF_NULL(pre_segment);
+    auto pre_graph = target_sess_->GetGraph(pre_segment->graph_id_);
+    if (pre_graph == nullptr) {
+      pre_graph = other_sess_->GetGraph(pre_segment->graph_id_);
+    }
+    MS_EXCEPTION_IF_NULL(pre_graph);
+    pre_graph->AddPostGraph(graph);
+    graph->AddPreGraph(pre_graph);
   }
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {

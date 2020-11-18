@@ -25,6 +25,7 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+#include <set>
 
 #include "base/base.h"
 #include "base/user_data.h"
@@ -490,8 +491,11 @@ std::string GetCNodeTarget(const AnfNodePtr &node);
 bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes);
 struct GraphSegment {
   GraphSegment(const std::vector<AnfNodePtr> &nodes, bool is_cut) : nodes_(nodes), is_cut_(is_cut) {}
+  void AddPreSegment(const std::shared_ptr<GraphSegment> &segment) { (void)pre_segments_.insert(segment); }
   std::vector<AnfNodePtr> nodes_;
+  std::set<std::shared_ptr<GraphSegment>> pre_segments_;
   bool is_cut_{false};
+  uint32_t graph_id_{0};
 };
 using GraphSegmentPtr = std::shared_ptr<GraphSegment>;
 }  // namespace mindspore
