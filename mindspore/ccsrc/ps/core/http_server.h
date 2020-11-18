@@ -25,7 +25,6 @@
 #include <event2/keyvalq_struct.h>
 #include <event2/listener.h>
 #include <event2/util.h>
-#include <event2/thread.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -33,7 +32,6 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <atomic>
 
 namespace mindspore {
 namespace ps {
@@ -57,12 +55,7 @@ class HttpServer {
  public:
   // Server address only support IPV4 now, and should be in format of "x.x.x.x"
   explicit HttpServer(const std::string &address, std::uint16_t port)
-      : server_address_(address),
-        server_port_(port),
-        event_base_(nullptr),
-        event_http_(nullptr),
-        is_init_(false),
-        is_stop_(true) {}
+      : server_address_(address), server_port_(port), event_base_(nullptr), event_http_(nullptr), is_init_(false) {}
 
   ~HttpServer();
 
@@ -91,7 +84,6 @@ class HttpServer {
   struct event_base *event_base_;
   struct evhttp *event_http_;
   bool is_init_;
-  std::atomic<bool> is_stop_;
 };
 
 }  // namespace core
