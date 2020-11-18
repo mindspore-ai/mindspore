@@ -284,9 +284,13 @@ class BatchNorm1d(_BatchNorm):
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out})`.
 
     Examples:
-        >>> net = nn.BatchNorm1d(num_features=16)
-        >>> input = Tensor(np.random.randint(0, 255, [3, 16]), mindspore.float32)
-        >>> net(input)
+        >>> net = nn.BatchNorm1d(num_features=4)
+        >>> input = Tensor(np.random.randint(0, 255, [3, 4]), mindspore.float32)
+        >>> result = net(input)
+        >>> print(result)
+        [[ 57.99971  50.99974 220.99889 222.99889 ]
+         [106.99947 193.99902  77.99961 101.99949 ]
+         [ 85.99957 188.99905  46.99976 226.99887 ]]
     """
 
     def __init__(self,
@@ -367,8 +371,23 @@ class BatchNorm2d(_BatchNorm):
 
     Examples:
         >>> net = nn.BatchNorm2d(num_features=3)
-        >>> input = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
-        >>> net(input)
+        >>> input = Tensor(np.random.randint(0, 255, [1, 3, 4, 4]), mindspore.float32)
+        >>> result = net(input)
+        >>> print(result)
+        [[[[148.99925 148.99925 178.9991   77.99961 ]
+           [ 41.99979  97.99951 157.9992   94.99953 ]
+           [ 87.99956 158.9992   50.99974 179.9991  ]
+           [146.99927  27.99986 119.9994  253.99873 ]]
+
+          [[178.9991  187.99905 190.99904  88.99956 ]
+           [213.99893 158.9992   13.99993 200.999   ]
+           [224.99887  56.99971 246.99876 239.9988  ]
+           [ 97.99951  34.99983  28.99986  57.99971 ]]
+
+          [[ 14.99993  31.99984 136.99931 207.99896 ]
+           [180.9991   28.99986  23.99988  71.99964 ]
+           [112.99944  36.99981 213.99893  71.99964 ]
+           [  8.99996 162.99919 157.9992   41.99979 ]]]]
     """
 
     def __init__(self,
