@@ -398,7 +398,14 @@ schema::PrimitiveType GetCNodeType(const BaseRef &n) {
 ParamValueLitePtr GetLiteParamValue(const AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);
   if (!utils::isa<ParameterPtr>(node)) {
-    MS_LOG(ERROR) << "get lite param value node must paramter";
+    if (utils::isa<ValueNodePtr>(node)) {
+      auto valueNode = node->cast<ValueNodePtr>();
+      auto value = std::dynamic_pointer_cast<ParamValueLite>(valueNode->value());
+      if (value != nullptr) {
+        return value;
+      }
+    }
+    MS_LOG(DEBUG) << "get lite param value node neither parameternode or valuenode";
     return nullptr;
   }
   auto param = node->cast<ParameterPtr>();
