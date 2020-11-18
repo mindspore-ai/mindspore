@@ -689,7 +689,7 @@ STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNo
       MS_LOG(ERROR) << "node->primitive->value.AsConcat() is nullptr";
       return RET_NULL_PTR;
     }
-    node->primitive->value.AsConcat()->axis = axis_map[origin_axis];
+    node->primitive->value.AsConcat()->axis = axis_map[origin_axis < 0 ? origin_axis + 4 : origin_axis];
   }
   if (type == schema::PrimitiveType_Split) {
     MS_ASSERT(node->primitive->value.AsSplit() != nullptr);
