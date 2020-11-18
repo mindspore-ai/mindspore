@@ -28,6 +28,107 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 // Tests for data transforms ops (in alphabetical order)
 
+TEST_F(MindDataTestPipeline, TestComposeSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeSuccess.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, RandomSampler(false, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> compose = transforms::Compose({vision::Decode(), vision::Resize({777, 777})});
+  EXPECT_NE(compose, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({compose}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    MS_LOG(INFO) << "Label shape: " << label->shape();
+    EXPECT_EQ(image->shape()[0], 777);
+    EXPECT_EQ(image->shape()[1], 777);
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestComposeFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail with invalid transform.";
+
+  // Resize: Non-positive size value: -1 at element: 0
+  // Compose: transform ops must not be null
+  std::shared_ptr<TensorOperation> compose1 = transforms::Compose({vision::Decode(), vision::Resize({-1})});
+  EXPECT_EQ(compose1, nullptr);
+
+  // Compose: transform ops must not be null
+  std::shared_ptr<TensorOperation> compose2 = transforms::Compose({vision::Decode(), nullptr});
+  EXPECT_EQ(compose2, nullptr);
+
+  // Compose: transform list must not be empty
+  std::shared_ptr<TensorOperation> compose3 = transforms::Compose({});
+  EXPECT_EQ(compose3, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDuplicateSuccess.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> duplicate = transforms::Duplicate();
+  EXPECT_NE(duplicate, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    auto image_copy = row["image_copy"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    EXPECT_EQ(*image, *image_copy);
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
   // Testing CutMixBatch on a batch of CHW images
   // Create a Cifar10 Dataset
@@ -155,6 +256,127 @@ TEST_F(MindDataTestPipeline, TestOneHotFail) {
   // incorrect num_class
   std::shared_ptr<TensorOperation> one_hot_op2 = transforms::OneHot(-5);
   EXPECT_EQ(one_hot_op2, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplySuccess.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 5));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_apply = transforms::RandomApply({vision::Resize({777, 777})}, 0.8);
+  EXPECT_NE(random_apply, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_apply}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    MS_LOG(INFO) << "Label shape: " << label->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 5);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomApplyFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail with invalid transform.";
+
+  // Resize: Non-positive size value: -1 at element: 0
+  // RandomApply: transform ops must not be null
+  std::shared_ptr<TensorOperation> random_apply1 = transforms::RandomApply({vision::Decode(), vision::Resize({-1})});
+  EXPECT_EQ(random_apply1, nullptr);
+
+  // RandomApply: transform ops must not be null
+  std::shared_ptr<TensorOperation> random_apply2 = transforms::RandomApply({vision::Decode(), nullptr});
+  EXPECT_EQ(random_apply2, nullptr);
+
+  // RandomApply: transform list must not be empty
+  std::shared_ptr<TensorOperation> random_apply3 = transforms::RandomApply({});
+  EXPECT_EQ(random_apply3, nullptr);
+
+  // RandomApply: Probability has to be between 0 and 1
+  std::shared_ptr<TensorOperation> random_apply4 = transforms::RandomApply({vision::Resize({100})}, -1);
+  EXPECT_EQ(random_apply4, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceSuccess.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 3));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_choice =
+    transforms::RandomChoice({vision::Resize({777, 777}), vision::Resize({888, 888})});
+  EXPECT_NE(random_choice, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_choice}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    MS_LOG(INFO) << "Label shape: " << label->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomChoiceFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceFail with invalid transform.";
+
+  // Resize: Non-positive size value: -1 at element: 0
+  // RandomChoice: transform ops must not be null
+  std::shared_ptr<TensorOperation> random_choice1 = transforms::RandomChoice({vision::Decode(), vision::Resize({-1})});
+  EXPECT_EQ(random_choice1, nullptr);
+
+  // RandomChoice: transform ops must not be null
+  std::shared_ptr<TensorOperation> random_choice2 = transforms::RandomChoice({vision::Decode(), nullptr});
+  EXPECT_EQ(random_choice2, nullptr);
+
+  // RandomChoice: transform list must not be empty
+  std::shared_ptr<TensorOperation> random_choice3 = transforms::RandomChoice({});
+  EXPECT_EQ(random_choice3, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {

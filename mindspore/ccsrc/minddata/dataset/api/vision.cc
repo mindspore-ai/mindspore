@@ -394,77 +394,7 @@ std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<
   // Input validation
   return op->ValidateParams() ? op : nullptr;
 }
-
 #endif
-/* ####################################### Validator Functions ############################################ */
-Status ValidateVectorFillvalue(const std::string &dataset_name, const std::vector<uint8_t> &fill_value) {
-  if (fill_value.empty() || (fill_value.size() != 1 && fill_value.size() != 3)) {
-    std::string err_msg = dataset_name + ": fill_value vector has incorrect size: " + std::to_string(fill_value.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  for (uint8_t single_fill_value : fill_value) {
-    if (single_fill_value > 255) {
-      std::string err_msg =
-        dataset_name + ": fill_value has to be between 0 and 255, got:" + std::to_string(single_fill_value);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
-
-  return Status::OK();
-}
-
-Status ValidateVectorProbability(const std::string &dataset_name, const float &probability) {
-  if (probability < 0.0 || probability > 1.0) {
-    std::string err_msg =
-      dataset_name + ": probability must be between 0.0 and 1.0, got: " + std::to_string(probability);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  return Status::OK();
-}
-
-Status ValidateVectorPadding(const std::string &dataset_name, const std::vector<int32_t> &padding) {
-  if (padding.empty() || padding.size() == 3 || padding.size() > 4) {
-    std::string err_msg = dataset_name + ": padding vector has incorrect size: " + std::to_string(padding.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  for (int32_t i = 0; i < padding.size(); ++i) {
-    if (padding[i] < 0) {
-      std::string err_msg =
-        dataset_name +
-        ": invalid padding, padding value must be greater than or equal to 0, got: " + std::to_string(padding[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-    if (padding[i] == INT_MAX) {
-      std::string err_msg =
-        dataset_name + ": invalid padding, padding value too large, got: " + std::to_string(padding[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
-
-  return Status::OK();
-}
-
-Status ValidateVectorPositive(const std::string &dataset_name, const std::vector<int32_t> &size) {
-  for (int32_t i = 0; i < size.size(); ++i) {
-    if (size[i] <= 0) {
-      std::string err_msg =
-        dataset_name + ": Non-positive size value: " + std::to_string(size[i]) + " at element: " + std::to_string(i);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
-
-  return Status::OK();
-}
-
-bool CmpFloat(const float &a, const float &b, float epsilon = 0.0000000001f) { return (std::fabs(a - b) < epsilon); }
 
 /* ####################################### Derived TensorOperation classes ################################# */
 
@@ -503,17 +433,8 @@ BoundingBoxAugmentOperation::BoundingBoxAugmentOperation(std::shared_ptr<TensorO
     : transform_(transform), ratio_(ratio) {}
 
 Status BoundingBoxAugmentOperation::ValidateParams() {
-  if (transform_ == nullptr) {
-    std::string err_msg = "BoundingBoxAugment: transform must not be null.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  if (ratio_ < 0.0 || ratio_ > 1.0) {
-    std::string err_msg = "BoundingBoxAugment: ratio has to be between 0.0 and 1.0, got: " + std::to_string(ratio_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
+  RETURN_IF_NOT_OK(ValidateVectorTransforms("BoundingBoxAugment", {transform_}));
+  RETURN_IF_NOT_OK(ValidateProbability("BoundingBoxAugment", ratio_));
   return Status::OK();
 }
 
@@ -1315,7 +1236,7 @@ std::shared_ptr<TensorOp> RandomCropWithBBoxOperation::Build() {
 RandomHorizontalFlipOperation::RandomHorizontalFlipOperation(float probability) : probability_(probability) {}
 
 Status RandomHorizontalFlipOperation::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateVectorProbability("RandomHorizontalFlip", probability_));
+  RETURN_IF_NOT_OK(ValidateProbability("RandomHorizontalFlip", probability_));
 
   return Status::OK();
 }
@@ -1330,7 +1251,7 @@ RandomHorizontalFlipWithBBoxOperation::RandomHorizontalFlipWithBBoxOperation(flo
     : probability_(probability) {}
 
 Status RandomHorizontalFlipWithBBoxOperation::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateVectorProbability("RandomHorizontalFlipWithBBox", probability_));
+  RETURN_IF_NOT_OK(ValidateProbability("RandomHorizontalFlipWithBBox", probability_));
 
   return Status::OK();
 }
@@ -1696,7 +1617,7 @@ std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
 RandomVerticalFlipOperation::RandomVerticalFlipOperation(float probability) : probability_(probability) {}
 
 Status RandomVerticalFlipOperation::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateVectorProbability("RandomVerticalFlip", probability_));
+  RETURN_IF_NOT_OK(ValidateProbability("RandomVerticalFlip", probability_));
 
   return Status::OK();
 }
@@ -1711,7 +1632,7 @@ RandomVerticalFlipWithBBoxOperation::RandomVerticalFlipWithBBoxOperation(float p
     : probability_(probability) {}
 
 Status RandomVerticalFlipWithBBoxOperation::ValidateParams() {
-  RETURN_IF_NOT_OK(ValidateVectorProbability("RandomVerticalFlipWithBBox", probability_));
+  RETURN_IF_NOT_OK(ValidateProbability("RandomVerticalFlipWithBBox", probability_));
 
   return Status::OK();
 }
@@ -1945,21 +1866,15 @@ UniformAugOperation::UniformAugOperation(std::vector<std::shared_ptr<TensorOpera
 
 Status UniformAugOperation::ValidateParams() {
   // transforms
+  RETURN_IF_NOT_OK(ValidateVectorTransforms("UniformAug", transforms_));
   if (num_ops_ > transforms_.size()) {
-    std::string err_msg = "UniformAug: num_ops is greater than transforms size, num_ops: " + std::to_string(num_ops_);
+    std::string err_msg = "UniformAug: num_ops is greater than transforms size, but got: " + std::to_string(num_ops_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  for (int32_t i = 0; i < transforms_.size(); ++i) {
-    if (transforms_[i] == nullptr) {
-      std::string err_msg = "UniformAug: transform ops must not be null.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
   // num_ops
   if (num_ops_ <= 0) {
-    std::string err_msg = "UniformAug: num_ops must be greater than 0, num_ops: " + std::to_string(num_ops_);
+    std::string err_msg = "UniformAug: num_ops must be greater than 0, but got: " + std::to_string(num_ops_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
