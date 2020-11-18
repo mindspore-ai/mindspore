@@ -674,7 +674,7 @@ table Range {
     dType: int;
     start: int;
     limit: int;
-    delta: int;
+    delta: int = 1;
 }
 
 table ExpandDims {
@@ -1176,4 +1176,7 @@ table All {
 
 table Assert {
     summarize : int;
+}
+
+table Adder {
 }

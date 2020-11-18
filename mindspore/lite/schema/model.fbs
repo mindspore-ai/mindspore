@@ -251,6 +251,7 @@ union PrimitiveType {
     TensorListReserve,
     All,
     Assert,
+    Adder,
 }
 
 enum QuantType: int {

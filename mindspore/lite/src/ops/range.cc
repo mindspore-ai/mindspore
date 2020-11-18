@@ -64,14 +64,19 @@ int Range::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
 
-  output->set_data_type(input->data_type());
+  output->set_data_type(mindspore::kNumberTypeFloat32);
   output->set_format(input->format());
   if (!infer_flag()) {
     return RET_OK;
   }
 
-  int shape_size = std::ceil(static_cast<float>(GetLimit() - GetStart()) / GetDelta());
-  std::vector<int> in_shape(1);
+  int shape_size = 0;
+  if (inputs_.size() == 3) {
+    shape_size = -1;
+  } else {
+    shape_size = std::ceil(static_cast<float>(GetLimit() - GetStart()) / GetDelta());
+  }
+  std::vector<int> in_shape;
   in_shape.push_back(shape_size);
   output->set_shape(in_shape);
 
