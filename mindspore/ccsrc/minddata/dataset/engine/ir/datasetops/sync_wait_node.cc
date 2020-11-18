@@ -50,12 +50,6 @@ Status SyncWaitNode::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  if (condition_name_.empty()) {
-    std::string err_msg = "SyncWaitNode: condition_name must not be empty.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
   return Status::OK();
 }
 
