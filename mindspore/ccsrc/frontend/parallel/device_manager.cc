@@ -54,44 +54,44 @@ bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &back
     MS_LOG(ERROR) << "Invalid backend: " << backend;
     return false;
   }
+  if (stage.empty()) {
+    MS_LOG(ERROR) << "The size of stage must be positive";
+    return false;
+  }
 
   RankList devices, stage_map;
   for (int64_t i = 0; i < device_num; ++i) {
     devices.push_back(i);
   }
 
-  if (stage.size()) {
-    int64_t summed_value = 0;
-    for (auto begin = stage.begin(); begin != stage.end(); ++begin) {
-      if (*begin <= 0) {
-        MS_LOG(ERROR) << "The value in the pipeline stages should be positive value";
-        return false;
-      }
-      summed_value += *begin;
-      stage_map.push_back(*begin);
-    }
-
-    if (summed_value != device_num) {
-      MS_LOG(ERROR) << "The sum of the pipeline stage :" << summed_value << " is not equal to the device_num "
-                    << device_num;
+  int64_t summed_value = 0;
+  for (auto begin = stage.begin(); begin != stage.end(); ++begin) {
+    if (*begin <= 0) {
+      MS_LOG(ERROR) << "The value in the pipeline stages should be positive value";
       return false;
     }
-  } else {
-    stage_map.push_back(device_num);
+    summed_value += *begin;
+    stage_map.push_back(*begin);
   }
 
-  for (auto &y : stage_map) {
-    MS_LOG(DEBUG) << "Obtained stage id :" << y;
+  if (summed_value != device_num) {
+    MS_LOG(ERROR) << "The sum of the pipeline stage :" << summed_value << " is not equal to the device_num "
+                  << device_num;
+    return false;
+  }
+
+  for (auto &ele : stage_map) {
+    MS_LOG(DEBUG) << "Obtained stage id: " << ele;
   }
 
   g_device_manager = std::make_shared<DeviceManager>();
   if (g_device_manager->Init(devices, global_rank, stage_map, backend) == SUCCESS) {
     MS_LOG(INFO) << "Device initialization succeeds.";
     return true;
-  } else {
-    MS_LOG(ERROR) << "Device initialization fails.";
-    return false;
   }
+
+  MS_LOG(ERROR) << "Device initialization fails.";
+  return false;
 }
 
 void CheckGlobalDeviceManager() {

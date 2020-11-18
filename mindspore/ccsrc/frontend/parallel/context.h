@@ -70,9 +70,6 @@ class ParallelContext {
   void set_pipeline_stage_split_num(const int64_t stages);
   int64_t pipeline_stage_split_num() const { return pipeline_stage_split_num_; }
 
-  void set_stage(const std::vector<int64_t> &stages);
-  std::vector<int64_t> stage() const { return stages_; }
-
   void set_global_rank(int64_t global_rank);
   int64_t global_rank() const { return global_rank_; }
 
@@ -121,8 +118,7 @@ class ParallelContext {
   int64_t global_rank_;
   std::string parallel_mode_;
   std::string strategy_search_mode_;
-  std::vector<int64_t> stages_;
-  int64_t pipeline_stage_split_num_ = 0;
+  int64_t pipeline_stage_split_num_;
   bool parameter_broadcast_;
   bool device_num_is_set_;
   bool global_rank_is_set_;

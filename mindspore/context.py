@@ -391,7 +391,7 @@ def set_auto_parallel_context(**kwargs):
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
                         the devices are distributed alone the pipeline. The total devices will be divided into
                         'pipeline_stags' stages. This currently could only be used when
-                        parall mode semi_auto_parallel is enabled.
+                        parallel mode semi_auto_parallel is enabled. Default: 1.
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -444,6 +444,7 @@ def reset_auto_parallel_context():
     - strategy_ckpt_save_file: ''.
     - full_batch: False.
     - enable_parallel_optimizer: False.
+    - pipeline_stages: 1.
     """
     _reset_auto_parallel_context()
 
