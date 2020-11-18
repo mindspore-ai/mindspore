@@ -245,8 +245,8 @@ class Lamb(Optimizer):
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
-        >>>                 {'params': no_conv_params, 'lr': poly_decay_lr},
-        >>>                 {'order_params': net.trainable_params(0.01, 0.0001, 10, 0.5)}]
+        ...                 {'params': no_conv_params, 'lr': poly_decay_lr},
+        ...                 {'order_params': net.trainable_params(0.01, 0.0001, 10, 0.5)}]
         >>> optim = nn.Lamb(group_params, learning_rate=0.1, weight_decay=0.0)
         >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01.
         >>> # The no_conv_params's parameters will use dynamic learning rate of poly decay learning rate and default

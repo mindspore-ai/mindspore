@@ -135,8 +135,8 @@ class FTRL(Optimizer):
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
-        >>>                 {'params': no_conv_params},
-        >>>                 {'order_params': net.trainable_params()}]
+        ...                 {'params': no_conv_params},
+        ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.FTRL(group_params, learning_rate=0.1, weight_decay=0.0)
         >>> # The conv_params's parameters will use weight decay of 0.01.
         >>> # The no_conv_params's parameters will use default weight decay of 0.0.

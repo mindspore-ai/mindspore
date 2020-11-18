@@ -59,18 +59,20 @@ class UncertaintyEvaluation:
         >>> load_param_into_net(network, param_dict)
         >>> ds_train = create_dataset('workspace/mnist/train')
         >>> evaluation = UncertaintyEvaluation(model=network,
-        >>>                                    train_dataset=ds_train,
-        >>>                                    task_type='classification',
-        >>>                                    num_classes=10,
-        >>>                                    epochs=1,
-        >>>                                    epi_uncer_model_path=None,
-        >>>                                    ale_uncer_model_path=None,
-        >>>                                    save_model=False)
+        ...                                    train_dataset=ds_train,
+        ...                                    task_type='classification',
+        ...                                    num_classes=10,
+        ...                                    epochs=1,
+        ...                                    epi_uncer_model_path=None,
+        ...                                    ale_uncer_model_path=None,
+        ...                                    save_model=False)
         >>> epistemic_uncertainty = evaluation.eval_epistemic_uncertainty(eval_data)
         >>> aleatoric_uncertainty = evaluation.eval_aleatoric_uncertainty(eval_data)
-        >>> epistemic_uncertainty.shape
+        >>> output = epistemic_uncertainty.shape
+        >>> print(output)
         (32, 10)
-        >>> aleatoric_uncertainty.shape
+        >>> output = aleatoric_uncertainty.shape
+        >>> print(output)
         (32,)
     """
 

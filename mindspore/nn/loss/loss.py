@@ -136,7 +136,8 @@ class MSELoss(_Loss):
         >>> loss = nn.MSELoss()
         >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> target_data = Tensor(np.array([1, 2, 2]), mindspore.float32)
-        >>> loss(input_data, target_data)
+        >>> output = loss(input_data, target_data)
+        >>> print(output)
         0.33333334
     """
     def construct(self, base, target):
@@ -495,7 +496,8 @@ class BCELoss(_Loss):
         >>> loss = nn.BCELoss(weight=weight, reduction='mean')
         >>> inputs = Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]), mindspore.float32)
         >>> labels = Tensor(np.array([[0, 1, 0], [0, 0, 1]]), mindspore.float32)
-        >>> loss(inputs, labels)
+        >>> output = loss(inputs, labels)
+        >>> print(output)
         1.8952923
     """
 
@@ -553,7 +555,8 @@ class CosineEmbeddingLoss(_Loss):
         >>> x2 = Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]), mindspore.float32)
         >>> y = Tensor(np.array([1,-1]), mindspore.int32)
         >>> cosine_embedding_loss = nn.CosineEmbeddingLoss()
-        >>> cosine_embedding_loss(x1, x2, y)
+        >>> output = cosine_embedding_loss(x1, x2, y)
+        >>> print(output)
         [0.0003426671]
     """
     def __init__(self, margin=0.0, reduction="mean"):

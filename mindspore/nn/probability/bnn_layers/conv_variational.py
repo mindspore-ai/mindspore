@@ -252,7 +252,8 @@ class ConvReparam(_ConvVariational):
     Examples:
         >>> net = ConvReparam(120, 240, 4, has_bias=False)
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
-        >>> net(input).shape
+        >>> output = net(input).shape
+        >>> print(output)
         (1, 240, 1024, 640)
     """
 
