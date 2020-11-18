@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "profiler/device/gpu/gpu_profiling_utils.h"
 
 namespace mindspore {
 namespace profiler {
@@ -144,6 +145,7 @@ class GPUProfiler {
   void OpDataProducerEnd();
   void ProcessEvents();
   void RegisterProfilingOp(std::shared_ptr<ProfilingOp> node);
+  void SetStepTraceOpName(ProfilingTraceInfo trace_op_name);
   std::string ProfileDataPath() const { return profile_data_path_; }
 
  private:
@@ -189,6 +191,7 @@ class GPUProfiler {
   uint64_t op_cupti_time_start_;
   std::string profile_data_path_;
   std::map<std::string, std::shared_ptr<ProfilingOp>> profiling_op_;
+  ProfilingTraceInfo step_trace_op_name;
 };
 }  // namespace gpu
 }  // namespace profiler

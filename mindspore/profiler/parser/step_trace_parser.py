@@ -33,7 +33,7 @@ StepTraceStruct = namedtuple(
 )
 
 
-class StepTraceParser:
+class BaseStepTraceParser:
     """
     The parser for step trace data.
 
@@ -43,11 +43,6 @@ class StepTraceParser:
         job_id (int): The job id used to define the start of new step. Default: 0.
         skip_first_step (bool): Whether skip the first step or not.
     """
-    _event_size = 20
-    _fp_tag = 1
-    _bp_tag = 2
-    _end_tag = 255
-
     def __init__(self, input_dir, output_file_path, job_id=0, skip_first_step=False):
         self._input_dir = input_dir
         self._output_path = output_file_path
@@ -98,18 +93,6 @@ class StepTraceParser:
         Returns:
             dict, parsed point info.
         """
-        points = {
-            'fp_start': point_info.get(self._fp_tag, ''),
-            'bp_end': point_info.get(self._bp_tag, '')
-        }
-        try:
-            with open(output_path, 'w') as json_file:
-                json.dump(points, json_file)
-            os.chmod(output_path, stat.S_IREAD)
-        except (IOError, OSError) as err:
-            log.warning('Failed to save point info. %s', err)
-            raise ProfilerIOException
-        return points
 
     def update_tag_op_type_map(self, point_info):
         """
@@ -153,17 +136,7 @@ class StepTraceParser:
 
     def _get_step_trace_files(self):
         """Get step trace files."""
-        # step trace files may under $profiler_dir or $profiler_dir/data
-        profiler_dir = self._input_dir
-        step_trace_files = self._search_file(profiler_dir)
-        if not step_trace_files:
-            # try to find step trace files under $profiler_dir/data
-            profiler_dir = os.path.join(profiler_dir, 'data')
-            step_trace_files = self._search_file(profiler_dir)
-        if not step_trace_files:
-            raise ProfilerPathErrorException('Training trace file does not exist.')
-
-        return step_trace_files
+        return self._input_dir
 
     @staticmethod
     def _search_file(input_dir):
@@ -198,19 +171,6 @@ class StepTraceParser:
 
     def _parse(self, source_files):
         """Parse source step trace files."""
-        log.info("Start to parse step trace file.")
-        event_info = {}
-        for source_file in source_files:
-            source_file = validate_and_normalize_path(source_file)
-            with open(source_file, 'rb') as handler:
-                content = handler.read()
-                for step_trace in self._get_next_step_trace(content, event_info):
-                    if self._skip_first_step:
-                        self._skip_first_step = False
-                        continue
-                    self._record_trace_event(step_trace)
-        self._record_average_info()
-        log.info("Finish to parse step trace file.")
 
     def _get_next_step_trace(self, content, event_info):
         """
@@ -337,22 +297,8 @@ class StepTraceParser:
         Returns:
             dict, reduce info.
         """
-        reduce_info = {}
-        if end_point[0] - start_point[0] != 1 or end_point[0] % 2:
-            log.warning("Unmatched reduce event <%s, %s>.", start_point, end_point)
-            return reduce_info
-        op_type = self._tag_map.get(start_point[0])
-        # append field name with op type.
-        if not op_type:
-            log.warning("Can't recognize the inner type for point tag: %d.", start_point[0])
-            field_name += '_parallel'
-        else:
-            field_name += '_' + op_type
-        reduce_info[field_name] = end_point[1] - start_point[1]
-        reduce_info[field_name + '_start_point'] = start_point[1]
-        reduce_info[field_name + '_end_point'] = end_point[1]
-
-        return reduce_info
+        ret_dict = {}
+        return ret_dict
 
     def _record_average_info(self):
         """Calculate average info."""
@@ -383,3 +329,204 @@ class StepTraceParser:
             for row_data in self._result:
                 csv_writer.writerow(row_data)
         os.chmod(self._output_path, stat.S_IREAD)
+
+
+class GpuStepTraceParser(BaseStepTraceParser):
+    """The parser for gpu step trace data."""
+    def record_point_info(self, source_file, output_path):
+        """
+        Record point info into json.
+
+        Args:
+            source_file (str): The file path of step trace original data.
+            output_path (str): The output path for saving point info.
+
+        Returns:
+            dict, parsed point info.
+        """
+        fp_start, bp_end = 1, 2
+        try:
+            with open(source_file, 'r') as f:
+                lines = f.readlines()
+                fp_start_name = lines[fp_start].split()[0]
+                bp_end_name = lines[bp_end].split()[0]
+        except (IOError, OSError) as err:
+            log.warning(f'Failed to read {source_file}', err)
+            raise ProfilerIOException
+
+        points = {
+            'fp_start': fp_start_name,
+            'bp_end': bp_end_name
+        }
+        try:
+            with open(output_path, 'w') as json_file:
+                json.dump(points, json_file)
+            os.chmod(output_path, stat.S_IREAD)
+        except (IOError, OSError) as err:
+            log.warning('Failed to save point info. %s', err)
+            raise ProfilerIOException
+        return points
+
+    def _get_step_trace_files(self):
+        """Get step trace files."""
+        return self._input_dir
+
+    def _parse(self, source_file):
+        """Parse source step trace files."""
+        log.info("Start to parse step trace file.")
+        iter_start, fp_start, bp_end, iter_end = 0, 1, 2, 3
+        reduce_start = 4
+        start_time, end_time = 0, 1
+
+        source_file = validate_and_normalize_path(source_file)
+        try:
+            with open(source_file, 'r') as f:
+                lines = f.readlines()
+                step_trace_info_all = [line.strip().split() for line in lines]
+                num_of_step = len(step_trace_info_all[0])
+                # in callback mode that set the profiling step range, each op count is not equal
+                step_trace_info_all = [line[-num_of_step:] for line in step_trace_info_all]
+        except (IOError, OSError) as err:
+            log.warning(f'Failed to read {source_file}', err)
+            raise ProfilerIOException
+
+        for step_num in range(1, num_of_step):
+            step_trace = {
+                'start': int(step_trace_info_all[iter_start][step_num].split(',')[start_time]),
+                'fp': int(step_trace_info_all[fp_start][step_num].split(',')[start_time]),
+                'bp': int(step_trace_info_all[bp_end][step_num].split(',')[end_time]),
+                'end': int(step_trace_info_all[iter_end][step_num].split(',')[end_time]),
+                'reduce': {}
+            }
+            num_of_step_point = len(step_trace_info_all)
+            if num_of_step_point > reduce_start:
+                reduce_info = {}
+                reduce_time_info = []
+                for reduce_idx in range(reduce_start, num_of_step_point):
+                    cur_reduce_time = step_trace_info_all[reduce_idx][step_num]
+                    reduce_time_info += cur_reduce_time.split(',')
+                reduce_info['ops'] = reduce_time_info
+                step_trace['reduce'] = reduce_info
+            self._record_trace_event(step_trace)
+        self._record_average_info()
+        log.info("Finish to parse step trace file.")
+
+    def _get_single_reduce_event_info(self, field_name, start_point, end_point):
+        """
+        Get single reduce info.
+
+        Args:
+            field_name (str): The field name.
+            start_point (str): Start point time.
+            end_point (str): End point time.
+
+        Returns:
+            dict, reduce info.
+        """
+        reduce_info = {}
+
+        op_type = 'AllReduce'
+        # append field name with op type.
+        field_name += '_' + op_type
+        reduce_info[field_name] = int(end_point) - int(start_point)
+        reduce_info[field_name + '_start_point'] = start_point
+        reduce_info[field_name + '_end_point'] = end_point
+
+        return reduce_info
+
+
+class AscendStepTraceParser(BaseStepTraceParser):
+    """The parser for ascend step trace data."""
+    _event_size = 20
+    _fp_tag = 1
+    _bp_tag = 2
+    _end_tag = 255
+
+    def record_point_info(self, point_info, output_path):
+        """
+        Record point info into json.
+
+        Args:
+            point_info (dict): The point info about tag id and relative op name.
+            output_path (str): The output path for saving point info.
+
+        Returns:
+            dict, parsed point info.
+        """
+        points = {
+            'fp_start': point_info.get(self._fp_tag, ''),
+            'bp_end': point_info.get(self._bp_tag, '')
+        }
+        try:
+            with open(output_path, 'w') as json_file:
+                json.dump(points, json_file)
+            os.chmod(output_path, stat.S_IREAD)
+        except (IOError, OSError) as err:
+            log.warning('Failed to save point info. %s', err)
+            raise ProfilerIOException
+        return points
+
+    def _get_step_trace_files(self):
+        """Get step trace files."""
+        # step trace files may under $profiler_dir or $profiler_dir/data
+        profiler_dir = self._input_dir
+        step_trace_files = self._search_file(profiler_dir)
+        if not step_trace_files:
+            # try to find step trace files under $profiler_dir/data
+            profiler_dir = os.path.join(profiler_dir, 'data')
+            step_trace_files = self._search_file(profiler_dir)
+        if not step_trace_files:
+            raise ProfilerPathErrorException('Training trace file does not exist.')
+
+        return step_trace_files
+
+    def _parse(self, source_files):
+        """Parse source step trace files."""
+        log.info("Start to parse step trace file.")
+        event_info = {}
+
+        for source_file in source_files:
+            source_file = validate_and_normalize_path(source_file)
+            try:
+                with open(source_file, 'rb') as handler:
+                    content = handler.read()
+                    for step_trace in self._get_next_step_trace(content, event_info):
+                        if self._skip_first_step:
+                            self._skip_first_step = False
+                            continue
+                        self._record_trace_event(step_trace)
+            except (IOError, OSError) as err:
+                log.warning(f'Failed to read {source_file}', err)
+                raise ProfilerIOException
+
+        self._record_average_info()
+        log.info("Finish to parse step trace file.")
+
+    def _get_single_reduce_event_info(self, field_name, start_point, end_point):
+        """
+        Get single reduce info.
+
+        Args:
+            field_name (str): The field name.
+            start_point (Tuple[int, int]): Start point time info, including (tag_id, sys_count).
+            end_point (Tuple[int, int]): End point time info, including (tag_id, sys_count).
+
+        Returns:
+            dict, reduce info.
+        """
+        reduce_info = {}
+        if end_point[0] - start_point[0] != 1 or end_point[0] % 2:
+            log.warning("Unmatched reduce event <%s, %s>.", start_point, end_point)
+            return reduce_info
+        op_type = self._tag_map.get(start_point[0])
+        # append field name with op type.
+        if not op_type:
+            log.warning("Can't recognize the inner type for point tag: %d.", start_point[0])
+            field_name += '_parallel'
+        else:
+            field_name += '_' + op_type
+        reduce_info[field_name] = end_point[1] - start_point[1]
+        reduce_info[field_name + '_start_point'] = start_point[1]
+        reduce_info[field_name + '_end_point'] = end_point[1]
+
+        return reduce_info
