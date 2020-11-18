@@ -166,7 +166,7 @@ Java_com_mindspore_hiobject_help_TrackingMobile_loadModel(JNIEnv *env, jobject t
   mindspore::lite::Context *context = new mindspore::lite::Context;
   context->thread_num_ = numThread;
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = mindspore::lite::NO_BIND;
-  context->device_list_[0].device_info_.cpu_device_info_.enable_float16_ = true;
+  context->device_list_[0].device_info_.cpu_device_info_.enable_float16_ = false;
   context->device_list_[0].device_type_ = mindspore::lite::DT_CPU;
 
   labelNet->CreateSessionMS(modelBuffer, bufferLen, context);

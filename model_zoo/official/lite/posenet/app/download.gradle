@@ -1,0 +1,73 @@
+/**
+ * To download necessary library from HuaWei server.
+ * Including mindspore-lite .so file, minddata-lite .so file and model file.
+ * The libraries can be downloaded manually.
+ */
+def mindsporeLite_Version = "mindspore-lite-maven-1.0.1"
+def targetModelFile = "src/main/assets/posenet_model.ms"
+def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/posenet_lite/posenet_model.ms"
+def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/java/${mindsporeLite_Version}.zip"
+def mindSporeLibrary = "libs/${mindsporeLite_Version}.zip"
+def cleantargetMindSporeInclude = "libs"
+def targetMindSporeInclude = "libs/"
+
+
+task downloadModelFile(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${modelDownloadUrl}"
+    }
+    sourceUrl = "${modelDownloadUrl}"
+    target = file("${targetModelFile}")
+}
+
+
+task downloadMindSporeLibrary(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${mindsporeLiteDownloadUrl}"
+    }
+    sourceUrl = "${mindsporeLiteDownloadUrl}"
+    target = file("${mindSporeLibrary}")
+}
+
+task unzipMindSporeInclude(type: Copy, dependsOn: ['downloadMindSporeLibrary']) {
+    doFirst {
+        println "Unzipping ${mindSporeLibrary}"
+    }
+    from zipTree("${mindSporeLibrary}")
+    into "${targetMindSporeInclude}"
+}
+
+task cleanUnusedmindsporeFiles(type: Delete, dependsOn: ['unzipMindSporeInclude']) {
+    delete fileTree("${cleantargetMindSporeInclude}").matching {
+        include "*.zip"
+    }
+}
+
+if (file("libs/mindspore-lite-1.0.1.aar").exists()){
+    downloadMindSporeLibrary.enabled = false
+    unzipMindSporeInclude.enabled = false
+    cleanUnusedmindsporeFiles.enabled = false
+}
+
+
+if (file("src/main/assets/posenet_model.ms").exists()){
+    downloadModelFile.enabled = false
+}
+
+preBuild.dependsOn downloadModelFile
+preBuild.dependsOn downloadMindSporeLibrary
+preBuild.dependsOn unzipMindSporeInclude
+preBuild.dependsOn cleanUnusedmindsporeFiles
+
+class DownloadUrlTask extends DefaultTask {
+    @Input
+    String sourceUrl
+
+    @OutputFile
+    File target
+
+    @TaskAction
+    void download() {
+        ant.get(src: sourceUrl, dest: target)
+    }
+}
