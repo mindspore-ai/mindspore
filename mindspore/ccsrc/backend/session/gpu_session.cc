@@ -398,17 +398,22 @@ void GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &grap
 }
 
 void GPUSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                           const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
+                           std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                           const std::vector<int64_t> &tensors_mask) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
+  EraseValueNodeTensor(tensors_mask, input_tensors);
+
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Remove NopOp from execution graph
   opt::RemoveNopNode(kernel_graph.get());
-  RunOpAllocateMemory(input_tensors, kernel_graph.get());
+  RunOpAllocateMemory(*input_tensors, kernel_graph.get());
   // Execute the computation
-  LoadInputData(kernel_graph, input_tensors);
+  LoadInputData(kernel_graph, *input_tensors);
   Execute(kernel_graph);
   // Fetch outputs
-  UpdateOutputs(kernel_graph, outputs, input_tensors);
+  UpdateOutputs(kernel_graph, outputs, *input_tensors);
   RunOpClearMemory(kernel_graph.get());
 }
 

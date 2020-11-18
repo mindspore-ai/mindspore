@@ -471,21 +471,6 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   op_prim->EndRecordAddAttr();
 }
 
-void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask, std::vector<tensor::TensorPtr> *input_tensors) {
-  MS_EXCEPTION_IF_NULL(input_tensors);
-  if (input_tensors->size() != tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size() << " should be equal to tensors mask size "
-                      << tensors_mask.size();
-  }
-  std::vector<tensor::TensorPtr> new_input_tensors;
-  for (size_t index = 0; index < tensors_mask.size(); ++index) {
-    if (tensors_mask[index] != kValueNodeTensorMask) {
-      new_input_tensors.emplace_back(input_tensors->at(index));
-    }
-  }
-  *input_tensors = new_input_tensors;
-}
-
 BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref) {
   if (utils::isa<VectorRef>(base_ref)) {
     auto ref_list = utils::cast<VectorRef>(base_ref);
@@ -1301,10 +1286,8 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
                                     op_exec_info->is_mixed_precision_cast,
                                     op_exec_info->next_op_name,
                                     op_exec_info->next_input_index};
-  session->BuildOp(&op_run_info, graph_info, input_tensors, tensors_mask);
-  EraseValueNodeTensor(tensors_mask, &input_tensors);
   VectorRef outputs;
-  session->RunOp(&op_run_info, graph_info, input_tensors, &outputs);
+  session->RunOp(&op_run_info, graph_info, &input_tensors, &outputs, tensors_mask);
   auto result = BaseRefToPyData(outputs);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, false);
   *status = PYNATIVE_SUCCESS;

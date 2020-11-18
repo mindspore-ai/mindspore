@@ -125,14 +125,9 @@ void RunGraphTask::Run() {
   ExecutorManager::Instance().OnRunGraphFinished();
 }
 
-void BuildOpTask::Run() {
-  MS_EXCEPTION_IF_NULL(session_);
-  session_->BuildOpImpl(*op_run_info_, graph_info_, input_tensors_, tensors_mask_);
-}
-
 void RunOpTask::Run() {
   MS_EXCEPTION_IF_NULL(session_);
-  session_->RunOpImpl(*op_run_info_, graph_info_, input_tensors_, &outputs_);
+  session_->RunOpImpl(*op_run_info_, graph_info_, input_tensors_, &outputs_, tensors_mask_);
 }
 
 void RunOpsInGraphTask::Run() {
@@ -340,25 +335,16 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
   task_cond_var_.notify_all();
 }
 
-void Executor::BuildOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                       const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int64_t> &tensors_mask) {
-  auto task = std::make_shared<BuildOpTask>();
-  task->session_ = session;
-  task->op_run_info_ = op_run_info;
-  task->graph_info_ = graph_info;
-  task->input_tensors_ = input_tensors;
-  task->tensors_mask_ = tensors_mask;
-  SyncRunTask(task);
-}
-
 void Executor::RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                     const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
+                     std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                     const std::vector<int64_t> &tensors_mask) {
   auto task = std::make_shared<RunOpTask>();
   task->session_ = session;
   task->op_run_info_ = op_run_info;
   task->graph_info_ = graph_info;
   task->input_tensors_ = input_tensors;
-  for (auto &tensor : input_tensors) {
+  task->tensors_mask_ = tensors_mask;
+  for (auto &tensor : *input_tensors) {
     if (tensor->NeedWait()) {
       tensor->Wait();
     }

@@ -76,9 +76,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void BuildGraph(GraphId graphId);
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   void RunGraphAsync(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
-  void BuildOp(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
-               const std::vector<int64_t> &tensors_mask);
-  void RunOp(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs);
+  void RunOp(OpRunInfo *, const GraphInfo &, std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+             const std::vector<int64_t> &tensors_mask);
   void RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
@@ -137,7 +136,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   friend class CompileGraphTask;
   friend class BuildGraphTask;
   friend class RunGraphTask;
-  friend class BuildOpTask;
   friend class RunOpTask;
   friend class RunOpsInGraphTask;
   virtual bool IsSupportSummary() { return true; }
@@ -156,7 +154,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                            const std::vector<tensor::TensorPtr> &input_tensors,
                            const std::vector<int64_t> &tensors_mask) {}
   virtual void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                         const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {}
+                         std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                         const std::vector<int64_t> &tensors_mask) {}
   virtual void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                  VectorRef *outputs) {}
   void RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs);
@@ -165,6 +164,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   virtual void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                              const std::vector<tensor::TensorPtr> &inputs_const) const;
+  void EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask, std::vector<tensor::TensorPtr> *input_tensors);
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
                      const std::vector<tensor::TensorPtr> &input_tensors) const;
   void Reorder(std::vector<CNodePtr> *node_list);
