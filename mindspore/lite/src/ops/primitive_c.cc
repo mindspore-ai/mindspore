@@ -191,7 +191,7 @@ std::vector<int> CastToInt(const ValuePtr value, bool is_vector) {
       MS_LOG(WARNING) << "valueptr is not a sequence, value may be a scalar.";
       return {};
     }
-    if (value->cast<ValueSequeuePtr>()->value().front()->type()->type_name() == "Int64Imm") {
+    if (value->cast<ValueSequeuePtr>()->value().front()->type()->number_type() == kNumberTypeInt64) {
       auto origin_value = GetValue<std::vector<int64_t>>(value);
       for (size_t index = 0; index < origin_value.size(); ++index) {
         cur_value.push_back(static_cast<int>(origin_value[index]));
@@ -200,7 +200,7 @@ std::vector<int> CastToInt(const ValuePtr value, bool is_vector) {
       cur_value = GetValue<std::vector<int>>(value);
     }
   } else {
-    if (value->type_name() == "Int64Imm") {
+    if (value->type()->number_type() == kNumberTypeInt64) {
       cur_value.push_back(static_cast<int>(GetValue<int64_t>(value)));
     } else {
       cur_value.push_back(GetValue<int>(value));
@@ -321,9 +321,9 @@ void PrimitiveC::GetAttrDataFromInput(const AnfNodePtr inputNode, std::vector<in
       auto tuple = val->cast<ValueTuplePtr>();
       MS_ASSERT(tuple != nullptr);
       for (size_t i = 0; i < tuple->size(); i++) {
-        auto elem = tuple->value()[i]->cast<Int32ImmPtr>();
+        auto elem = tuple->value()[i];
         MS_ASSERT(elem != nullptr);
-        data->emplace_back(static_cast<int>(elem->value()));
+        data->emplace_back(CastToInt(elem, false).front());
       }
     }
   }
@@ -556,6 +556,10 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<ExpandDims>(prim, inputs, quantType);
   } else if (op_type == "UnsortedSegmentSum") {
     return NewPrimitiveC<UnsortedSegmentSum>(prim, inputs, quantType);
+  } else if (op_type == "ResizeNearestNeighbor") {
+    return NewPrimitiveC<Resize>(prim, inputs, quantType);
+  } else if (op_type == "ResizeBilinear") {
+    return NewPrimitiveC<Resize>(prim, inputs, quantType);
 
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {

@@ -219,8 +219,8 @@ void Conv2D::PopulaterConv2DSingleGroup(const Primitive &prim, schema::Primitive
   attr->padRight = pad_list[3];
 
   auto dilation = CastToInt(prim.GetAttr("dilation"), true);
-  attr->dilateH = dilation[0];
-  attr->dilateW = dilation[1];
+  attr->dilateH = dilation[2];
+  attr->dilateW = dilation[3];
 
   auto kernel_size = CastToInt(prim.GetAttr("kernel_size"), true);
   attr->kernelH = kernel_size[0];
