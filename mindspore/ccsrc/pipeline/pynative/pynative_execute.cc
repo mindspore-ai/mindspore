@@ -1972,8 +1972,8 @@ void PynativeExecutor::Clear(const std::string &flag) {
     ConfigManager::GetInstance().ResetIterNum();
     if (top_graph_cells_.find(flag) != top_graph_cells_.end()) {
       op_forward_map_.clear();
-      Clean();
     }
+    Clean();
     return;
   }
 
