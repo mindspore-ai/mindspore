@@ -30,6 +30,7 @@ from ..core.validator_helpers import parse_user_args, type_check, type_check_lis
 
 from . import datasets
 from . import samplers
+from . import cache_client
 
 
 def check_imagefolderdataset(method):
@@ -1259,8 +1260,4 @@ def check_paddeddataset(method):
 def check_cache_option(cache):
     """Sanity check for cache parameter"""
     if cache is not None:
-        if os.getenv('MS_ENABLE_CACHE') != 'TRUE':
-            # temporary disable cache feature in the current release
-            raise ValueError("Caching is disabled in the current release.")
-        from . import cache_client
         type_check(cache, (cache_client.DatasetCache,), "cache")

@@ -88,7 +88,7 @@ ds::Status StartServer(int argc, char **argv) {
       if (child_rc.IsError()) {
         return child_rc;
       }
-      std::cerr << "cache server daemon process has been created as process id: " << pid
+      std::cerr << "cache server daemon has been created as process id " << pid << " and listening on port " << port
                 << "\nCheck log file for any start up error" << std::endl;
       signal(SIGCHLD, SIG_IGN);  // ignore sig child signal.
       return ds::Status::OK();

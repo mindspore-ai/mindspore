@@ -343,7 +343,7 @@ Status CacheAdminArgHandler::RunCommand() {
       if (rc.IsError()) {
         msg.RemoveResourcesOnExit();
         if (rc.IsNetWorkError()) {
-          std::string errMsg = "Server is not up or has been shutdown already.";
+          std::string errMsg = "Server on port " + std::to_string(port_) + " is not up or has been shutdown already.";
           return Status(StatusCode::kNetWorkError, errMsg);
         }
         return rc;
@@ -355,9 +355,10 @@ Status CacheAdminArgHandler::RunCommand() {
       // The server will remove the queue and we will then wake up. But on the safe
       // side, we will also set up an alarm and kill this proocess if we hang on
       // the message queue.
-      alarm(15);
+      alarm(30);
       Status dummy_rc;
       (void)msg.ReceiveStatus(&dummy_rc);
+      std::cout << "Cache server has been stopped." << std::endl;
       break;
     }
     case CommandId::kCmdGenerateSession: {
@@ -384,6 +385,7 @@ Status CacheAdminArgHandler::RunCommand() {
       CacheClientGreeter comm(hostname_, port_, 1);
       RETURN_IF_NOT_OK(comm.ServiceStart());
       auto rq = std::make_shared<ListSessionsRequest>();
+      std::cout << "Listing sessions for server on port " << port_ << "\n" << std::endl;
       RETURN_IF_NOT_OK(comm.HandleRequest(rq));
       RETURN_IF_NOT_OK(rq->Wait());
       std::vector<SessionCacheInfo> session_info = rq->GetSessionCacheInfo();
@@ -481,12 +483,14 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     msg.resize(n);
-    std::cout << msg << std::endl;
     if (WIFEXITED(status)) {
       auto exit_status = WEXITSTATUS(status);
       if (exit_status) {
-        std::string errMsg = "Child exit status " + std::to_string(exit_status);
+        std::string errMsg = msg + "\nChild exit status " + std::to_string(exit_status);
         return Status(StatusCode::kUnexpectedError, errMsg);
+      } else {
+        // Not an error, some info message goes to stdout
+        std::cout << msg << std::endl;
       }
     }
     return Status::OK();
@@ -545,14 +549,14 @@ void CacheAdminArgHandler::Help() {
   std::cerr << "               [ [-l | --minloglevel] <log level> ]\n";
   std::cerr << "                     Possible values are 0, 1, 2 and 3.\n";
   std::cerr << "                     Default is 1 (info level).\n";
-  std::cerr << "               [ --list_sessions ]\n";
+  std::cerr << "               [--list_sessions]\n";
+  std::cerr << "               [--help]" << std::endl;
   // Do not expose these option to the user via help or documentation, but the options do exist to aid with
   // development and tuning.
-  // std::cerr << "               [ [-m | --shared_memory_size] <shared memory size> ]\n";
-  // std::cerr << "                     Default is " << kDefaultSharedMemorySizeInGB << " (Gb in unit).\n";
-  // std::cerr << "               [ [-r | --memory_cap_ratio] <float percent value>]\n";
-  // std::cerr << "                     Default is " << kMemoryCapRatio << ".\n";
-  std::cerr << "               [--help]" << std::endl;
+  // [ [-m | --shared_memory_size] <shared memory size> ]
+  //    Default is: kDefaultSharedMemorySizeInGB (Gb in unit)
+  // [ [-r | --memory_cap_ratio] <float percent value>]
+  //    Default is kMemoryCapRatio
 }
 }  // namespace dataset
 }  // namespace mindspore
