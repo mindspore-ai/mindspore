@@ -53,7 +53,7 @@ class MyTimeMonitor(Callback):
     def step_end(self, run_context):
         step_mseconds = (time.time() - self.step_time) * 1000
         fps = self.batch_size / step_mseconds *1000 * self.size
-        print("step time: {:5.3f} ms, fps: {:d} img/sec.".format(step_mseconds, int(fps)), flush=True, end=" ")
+        print("Epoch time: {:5.3f} ms, fps: {:d} img/sec.".format(step_mseconds, int(fps)), flush=True, end=" ")
 
 def pad(image):
     zeros = np.zeros([224, 224, 1], dtype=np.uint8)

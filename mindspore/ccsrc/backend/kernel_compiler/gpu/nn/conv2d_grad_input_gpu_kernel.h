@@ -77,7 +77,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     }
 
     const float alpha = 1;
-    if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_) {
+    if (use_pad_) {
       T *padded = GetDeviceAddress<T>(workspace, 1);
 
       CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -139,14 +139,14 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
                          [](const int64_t &value) { return static_cast<int>(value); });
     pad_height_ = pad_list[0];
     pad_width_ = pad_list[2];
-    auto symmetry_pad = (pad_height_ == pad_list[1]) && (pad_width_ == pad_list[3]);
+    use_pad_ = !((pad_height_ == pad_list[1]) && (pad_width_ == pad_list[3]));
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
     cudnnTensorDescriptor_t dx_desc_real = nullptr;
     int padA[2];
     int strideA[2] = {stride_[0], stride_[1]};
     int dilaA[2] = {dilation_[2], dilation_[3]};
-    if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase || !symmetry_pad) {
+    if (use_pad_) {
       pad_height_ = pad_list[0] + pad_list[1];
       pad_width_ = pad_list[2] + pad_list[3];
       pad_top_ = pad_list[0];
@@ -170,17 +170,12 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnSetTensorNdDescriptor(padded_descriptor_, cudnn_data_type_, 4, dimA, strideApadded),
         "cudnnSetTensor4dDescriptor failed");
-      if (use_pad_) {
-        padA[0] = 0;
-        padA[1] = 0;
-      } else {
-        padA[0] = pad_top_;
-        padA[1] = pad_left_;
-      }
+      padA[0] = 0;
+      padA[1] = 0;
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnSetConvolutionNdDescriptor(conv_desc_, 2, padA, strideA, dilaA, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
         "cudnnSetConvolutionNdDescriptor failed");
-      dx_desc_real = use_pad_ ? padded_descriptor_ : dx_desc_;
+      dx_desc_real = padded_descriptor_;
     } else {
       if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
         pad_height_ = 0;
@@ -233,7 +228,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     input_size_list_.push_back(w_size_);
     output_size_list_.push_back(output_size_);
 
-    if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_ && !is_null_input_) {
+    if (use_pad_ && !is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(padded_descriptor_, &padded_size_),
                                   "cudnnGetTensorSizeInBytes failed");
 

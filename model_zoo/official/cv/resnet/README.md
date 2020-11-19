@@ -345,11 +345,11 @@ epoch: 5 step: 5004, loss is 3.3501816
 
 ```
 # ========START RESNET50 GPU BENCHMARK========
-step time: 12416.098 ms, fps: 412 img/sec. epoch: 1 step: 20, loss is 6.940182
-step time: 3472.037 ms, fps: 1474 img/sec. epoch: 2 step: 20, loss is 7.078993
-step time: 3469.523 ms, fps: 1475 img/sec. epoch: 3 step: 20, loss is 7.559594
-step time: 3460.311 ms, fps: 1479 img/sec. epoch: 4 step: 20, loss is 6.920937
-step time: 3460.543 ms, fps: 1479 img/sec. epoch: 5 step: 20, loss is 6.814013
+Epoch time: 12416.098 ms, fps: 412 img/sec. epoch: 1 step: 20, loss is 6.940182
+Epoch time: 3472.037 ms, fps: 1474 img/sec. epoch: 2 step: 20, loss is 7.078993
+Epoch time: 3469.523 ms, fps: 1475 img/sec. epoch: 3 step: 20, loss is 7.559594
+Epoch time: 3460.311 ms, fps: 1479 img/sec. epoch: 4 step: 20, loss is 6.920937
+Epoch time: 3460.543 ms, fps: 1479 img/sec. epoch: 5 step: 20, loss is 6.814013
 ...
 ```
 ## [Evaluation Process](#contents)

@@ -129,6 +129,8 @@ class DatasetHelper:
         Validator.check_is_int(sink_size)
         if sink_size < -1 or sink_size == 0:
             raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
+        if sink_size == -1:
+            sink_size = dataset.get_dataset_size()
 
         if dataset_sink_mode:
             if context.get_context("enable_ge"):
