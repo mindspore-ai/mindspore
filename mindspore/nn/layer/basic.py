@@ -35,7 +35,7 @@ from .activation import get_activation
 
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
-           'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']
+           'Tril', 'Triu', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']
 
 
 class Dropout(Cell):
@@ -599,6 +599,80 @@ class Unfold(Cell):
         else:
             result = self.extract_image_patches(input_x)
         return result
+
+
+@constexpr
+def tril(x_shape, x_dtype, k):
+    Validator.check_int(len(x_shape), 1, Rel.GE, "x rank", "tril")
+    Validator.check_is_int(k, "k value", "tril")
+    mask = np.tril(np.ones(x_shape), k)
+    return Tensor(mask, x_dtype)
+
+
+class Tril(Cell):
+    """
+    Returns a tensor with elements above the kth diagonal zeroed.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+        - **k** (Int) - The index of diagonal. Default: 0
+
+    Outputs:
+        Tensor, has the same type as input `x`.
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+        >>> tril = nn.Tril()
+        >>> result = tril(x)
+        >>> print(result)
+        [[1   0]
+         [3   4]]
+    """
+    def __init__(self):
+        super(Tril, self).__init__()
+        self.dtype = P.DType()
+        self.mul = P.Mul()
+
+    def construct(self, x, k=0):
+        assist = tril(x.shape, self.dtype(x), k)
+        return self.mul(x, assist)
+
+
+@constexpr
+def triu(x_shape, x_dtype, k):
+    Validator.check_int(len(x_shape), 1, Rel.GE, "x rank", "triu")
+    Validator.check_is_int(k, "k value", "triu")
+    mask = np.triu(np.ones(x_shape), k)
+    return Tensor(mask, x_dtype)
+
+
+class Triu(Cell):
+    """
+    Returns a tensor with elements below the kth diagonal zeroed.
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+        - **k** (Int) - The index of diagonal. Default: 0
+
+    Outputs:
+        Tensor, has the same type as input `x`.
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]))
+        >>> tril = nn.Tril()
+        >>> result = tril(x)
+        >>> print(result)
+        [[1   2]
+         [0   4]]
+    """
+    def __init__(self):
+        super(Triu, self).__init__()
+        self.dtype = P.DType()
+        self.mul = P.Mul()
+
+    def construct(self, x, k=0):
+        assist = triu(x.shape, self.dtype(x), k)
+        return self.mul(x, assist)
 
 
 @constexpr
