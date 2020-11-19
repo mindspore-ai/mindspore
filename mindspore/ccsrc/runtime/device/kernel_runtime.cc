@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2019 Huawei Technologies Co., Ltd
  *

@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 class CastCPUKernel : public CPUKernel {
  public:
   CastCPUKernel() = default;

@@ -268,9 +268,11 @@ void AddSegmentDependency(const FuncGraphPtr &graph, const std::string &default_
       node_inputs.insert(node_inputs.end(), ctrl_inputs->second.begin(), ctrl_inputs->second.end());
     }
     GraphSegmentPtr node_segment{nullptr};
-    auto node_iter = node_to_segment.find(node);
-    if (node_iter != node_to_segment.end()) {
-      node_segment = node_iter->second;
+    if (!IsPrimitiveCNode(cnode, prim::kPrimControlDepend)) {
+      auto node_iter = node_to_segment.find(node);
+      if (node_iter != node_to_segment.end()) {
+        node_segment = node_iter->second;
+      }
     }
     for (auto &input : node_inputs) {
       if (node_segment != nullptr && !node_segment->is_cut_ && input->isa<CNode>()) {

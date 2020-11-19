@@ -54,7 +54,6 @@ MS_REG_CPU_KERNEL(FusedBatchNormGradCPU,
                     .AddOutputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   FusedBatchNormGradCPUKernel)
-
 }  // namespace kernel
 }  // namespace mindspore
 

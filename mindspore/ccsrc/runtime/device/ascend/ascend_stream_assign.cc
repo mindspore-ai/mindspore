@@ -1832,7 +1832,6 @@ void AscendStreamAssign::AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr
 
   graph_ptr->set_execution_order(update_orders);
 }
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

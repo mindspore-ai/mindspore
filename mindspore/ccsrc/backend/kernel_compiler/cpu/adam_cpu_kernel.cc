@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void AdamCPUKernel::LaunchAdam(T *var, T *m, T *v, float lr, float beta1, float beta2, float epsilon, const T *gradient,
                                size_t start, size_t end) {
