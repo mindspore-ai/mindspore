@@ -148,8 +148,8 @@ class ExpandDims(PrimitiveWithInfer):
         >>> expand_dims = P.ExpandDims()
         >>> output = expand_dims(input_tensor, 0)
         >>> print(output)
-        [[[2.0, 2.0],
-          [2.0, 2.0]]]
+        [[[2. 2.]
+          [2. 2.]]]
     """
 
     @prim_attr_register
@@ -230,8 +230,8 @@ class SameTypeShape(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> input_y = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> out = P.SameTypeShape()(input_x, input_y)
-        >>> print(out)
+        >>> output = P.SameTypeShape()(input_x, input_y)
+        >>> print(output)
         [[2. 2.]
          [2. 2.]]
     """
@@ -342,8 +342,8 @@ class IsSubClass(PrimitiveWithInfer):
         bool, the check result.
 
     Examples:
-        >>> result = P.IsSubClass()(mindspore.int32,  mindspore.intc)
-        >>> print(result)
+        >>> output = P.IsSubClass()(mindspore.int32,  mindspore.intc)
+        >>> print(output)
         True
     """
 
@@ -379,9 +379,9 @@ class IsInstance(PrimitiveWithInfer):
 
     Examples:
         >>> a = 1
-        >>> result = P.IsInstance()(a, mindspore.int64)
-        >>> print(result)
-        True
+        >>> output = P.IsInstance()(a, mindspore.int32)
+        >>> print(output)
+        False
     """
 
     @prim_attr_register
@@ -429,9 +429,9 @@ class Reshape(PrimitiveWithInfer):
         >>> reshape = P.Reshape()
         >>> output = reshape(input_tensor, (3, 2))
         >>> print(output)
-        [[-0.1 0.3]
-         [3.6 0.4 ]
-         [0.5 -3.2]]
+        [[-0.1  0.3]
+         [ 3.6  0.4]
+         [ 0.5 -3.2]]
     """
 
     @prim_attr_register
@@ -632,12 +632,12 @@ class Transpose(PrimitiveWithCheck):
         >>> transpose = P.Transpose()
         >>> output = transpose(input_tensor, perm)
         >>> print(output)
-        [[[1. 4.]
-          [2. 5.]
-          [3. 6.]]
-         [[7. 10.]
-          [8. 11.]
-          [9. 12.]]]
+        [[[ 1.  4.]
+          [ 2.  5.]
+          [ 3.  6.]]
+         [[ 7. 10.]
+          [ 8. 11.]
+          [ 9. 12.]]]
     """
 
     @prim_attr_register
@@ -668,8 +668,9 @@ class Unique(Primitive):
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
-        >>> out = P.Unique()(x)
-        (Tensor([1, 2, 5], mindspore.int32), Tensor([0, 1, 2, 1], mindspore.int32))
+        >>> output = P.Unique()(x)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 1]))
     """
 
     @prim_attr_register
@@ -696,11 +697,11 @@ class GatherV2(PrimitiveWithCheck):
         >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
-        >>> out = P.GatherV2()(input_params, input_indices, axis)
-        >>> print(out)
-        [[2.0, 7.0],
-         [4.0, 54.0],
-         [2.0, 55.0]]
+        >>> output = P.GatherV2()(input_params, input_indices, axis)
+        >>> print(output)
+        [[ 2.  7.]
+         [ 4. 54.]
+         [ 2. 55.]]
     """
 
     @prim_attr_register
@@ -770,9 +771,10 @@ class Padding(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
         >>> pad_dim_size = 4
-        >>> out = P.Padding(pad_dim_size)(x)
-        >>> print(out)
-        [[8, 0, 0, 0], [10, 0, 0, 0]]
+        >>> output = P.Padding(pad_dim_size)(x)
+        >>> print(output)
+        [[ 8.  0.  0.  0.]
+         [10.  0.  0.  0.]]
     """
 
     @prim_attr_register
@@ -811,9 +813,10 @@ class UniqueWithPad(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.array([1, 1, 5, 5, 4, 4, 3, 3, 2, 2,]), mindspore.int32)
         >>> pad_num = 8
-        >>> out = P.UniqueWithPad()(x, pad_num)
-        >>> print(out)
-        ([1, 5, 4, 3, 2, 8, 8, 8, 8, 8], [0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
+        >>> output = P.UniqueWithPad()(x, pad_num)
+        >>> print(output)
+        (Tensor(shape=[10], dtype=Int32, value= [1, 5, 4, 3, 2, 8, 8, 8, 8, 8]),
+         Tensor(shape=[10], dtype=Int32, value= [0, 0, 1, 1, 2, 2, 3, 3, 4, 4]))
     """
 
     @prim_attr_register
@@ -854,13 +857,14 @@ class Split(PrimitiveWithInfer):
 
     Examples:
         >>> split = P.Split(1, 2)
-        >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
+        >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mindspore.int32)
         >>> output = split(x)
         >>> print(output)
-        ([[1, 1],
-          [2, 2]],
-         [[1, 1],
-          [2, 2]])
+        (Tensor(shape=[2, 2], dtype=Int32, value=
+        [[1, 1],
+         [2, 2]]), Tensor(shape=[2, 2], dtype=Int32, value=
+        [[1, 1],
+         [2, 2]]))
     """
 
     @prim_attr_register
@@ -1025,8 +1029,8 @@ class Fill(PrimitiveWithInfer):
         >>> fill = P.Fill()
         >>> output = fill(mindspore.float32, (2, 2), 1)
         >>> print(output)
-        [[1.0, 1.0],
-         [1.0, 1.0]]
+        [[1. 1.]
+         [1. 1.]]
     """
 
     @prim_attr_register
@@ -1156,8 +1160,8 @@ class OnesLike(PrimitiveWithInfer):
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
         >>> output = oneslike(x)
         >>> print(output)
-        [[1, 1],
-         [1, 1]]
+        [[1 1]
+         [1 1]]
     """
 
     @prim_attr_register
@@ -1189,8 +1193,8 @@ class ZerosLike(PrimitiveWithCheck):
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> output = zeroslike(x)
         >>> print(output)
-        [[0.0, 0.0],
-         [0.0, 0.0]]
+        [[0. 0.]
+         [0. 0.]]
     """
 
     @prim_attr_register
@@ -1338,7 +1342,8 @@ class InvertPermutation(PrimitiveWithInfer):
         >>> invert = P.InvertPermutation()
         >>> input_data = (3, 4, 0, 2, 1)
         >>> output = invert(input_data)
-        >>> output == (2, 4, 3, 0, 1)
+        >>> print(output)
+        (2, 4, 3, 0, 1)
     """
 
     @prim_attr_register
@@ -1400,8 +1405,8 @@ class Argmax(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
-        >>> index = P.Argmax(output_type=mindspore.int32)(input_x)
-        >>> print(index)
+        >>> output = P.Argmax(output_type=mindspore.int32)(input_x)
+        >>> print(output)
         1
     """
 
@@ -1559,9 +1564,9 @@ class ArgMinWithValue(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
-        >>> index, output = P.ArgMinWithValue()(input_x)
-        >>> print((index, output))
-        0 0.0496291
+        >>> output = P.ArgMinWithValue()(input_x)
+        >>> print(output)
+        (Tensor(shape=[], dtype=Int32, value= 2), Tensor(shape=[], dtype=Float32, value= 0.0595638))
     """
 
     @prim_attr_register
@@ -1616,8 +1621,8 @@ class Tile(PrimitiveWithInfer):
         >>> tile = P.Tile()
         >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
         >>> multiples = (2, 3)
-        >>> result = tile(input_x, multiples)
-        >>> print(result)
+        >>> output = tile(input_x, multiples)
+        >>> print(output)
         [[1.  2.  1.  2.  1.  2.]
          [3.  4.  3.  4.  3.  4.]
          [1.  2.  1.  2.  1.  2.]
@@ -1693,7 +1698,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         >>> num_segments = 4
         >>> output = P.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
         >>> print(output)
-        [3, 3, 4, 0]
+        [3. 3. 4. 0.]
     """
 
     @prim_attr_register
@@ -1767,8 +1772,10 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
         >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
         >>> num_segments = 2
         >>> unsorted_segment_min = P.UnsortedSegmentMin()
-        >>> unsorted_segment_min(input_x, segment_ids, num_segments)
-        [[1., 2., 3.], [4., 2., 1.]]
+        >>> output = unsorted_segment_min(input_x, segment_ids, num_segments)
+        >>> print(output)
+        [[1. 2. 3.]
+         [4. 2. 1.]]
     """
 
     @prim_attr_register
@@ -1821,8 +1828,10 @@ class UnsortedSegmentMax(PrimitiveWithInfer):
         >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
         >>> num_segments = 2
         >>> unsorted_segment_max = P.UnsortedSegmentMax()
-        >>> unsorted_segment_max(input_x, segment_ids, num_segments)
-        [[1., 2., 3.], [4., 5., 6.]]
+        >>> output = unsorted_segment_max(input_x, segment_ids, num_segments)
+        >>> print(output)
+        [[1. 2. 3.]
+         [4. 5. 6.]]
     """
 
     @prim_attr_register
@@ -1872,8 +1881,10 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
         >>> segment_ids = Tensor(np.array([0, 1, 0]).astype(np.int32))
         >>> num_segments = 2
         >>> unsorted_segment_prod = P.UnsortedSegmentProd()
-        >>> unsorted_segment_prod(input_x, segment_ids, num_segments)
-        [[4., 4., 3.], [4., 5., 6.]]
+        >>> output = unsorted_segment_prod(input_x, segment_ids, num_segments)
+        >>> print(output)
+        [[4. 4. 3.]
+         [4. 5. 6.]]
     """
 
     @prim_attr_register
@@ -1935,10 +1946,10 @@ class Concat(PrimitiveWithInfer):
         >>> op = P.Concat()
         >>> output = op((data1, data2))
         >>> print(output)
-        [[0, 1],
-         [2, 1],
-         [0, 1],
-         [2, 1]]
+        [[0 1]
+         [2 1]
+         [0 1]
+         [2 1]]
     """
 
     @prim_attr_register
@@ -1983,7 +1994,8 @@ class ParallelConcat(PrimitiveWithInfer):
         >>> op = P.ParallelConcat()
         >>> output = op((data1, data2))
         >>> print(output)
-        [[0, 1], [2, 1]]
+        [[0 1]
+         [2 1]]
     """
 
     @prim_attr_register
@@ -2066,7 +2078,8 @@ class Pack(PrimitiveWithInfer):
         >>> pack = P.Pack()
         >>> output = pack([data1, data2])
         >>> print(output)
-        [[0, 1], [2, 3]]
+        [[0. 1.]
+         [2. 3.]]
     """
 
     @prim_attr_register
@@ -2116,7 +2129,8 @@ class Unpack(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
         >>> output = unpack(input_x)
         >>> print(output)
-        ([1, 1, 1, 1], [2, 2, 2, 2])
+        (Tensor(shape=[4], dtype=Int32, value= [1, 1, 1, 1]),
+         Tensor(shape=[4], dtype=Int32, value= [2, 2, 2, 2]))
     """
 
     @prim_attr_register
@@ -2169,8 +2183,9 @@ class Slice(PrimitiveWithInfer):
         >>> data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
         ...                         [[3, 3, 3], [4, 4, 4]],
         ...                         [[5, 5, 5], [6, 6, 6]]]).astype(np.int32))
-        >>> type = P.Slice()(data, (1, 0, 0), (1, 1, 3))
-        >>> print(type)
+        >>> slice = P.Slice()
+        >>> output = slice(data, (1, 0, 0), (1, 1, 3))
+        >>> print(output)
         [[[3 3 3]]]
     """
 
@@ -2223,7 +2238,8 @@ class ReverseV2(PrimitiveWithInfer):
         >>> op = P.ReverseV2(axis=[1])
         >>> output = op(input_x)
         >>> print(output)
-        [[4, 3, 2, 1], [8, 7, 6, 5]]
+        [[4 3 2 1]
+         [8 7 6 5]]
     """
 
     @prim_attr_register
@@ -2261,7 +2277,7 @@ class Rint(PrimitiveWithInfer):
         >>> op = P.Rint()
         >>> output = op(input_x)
         >>> print(output)
-        [-2., 0., 2., 2.]
+        [-2.  0.  2.  2.]
     """
 
     @prim_attr_register
@@ -2321,7 +2337,8 @@ class Select(PrimitiveWithInfer):
         >>> input_cond = Tensor([True, False])
         >>> input_x = Tensor([2,3], mindspore.float32)
         >>> input_y = Tensor([1,2], mindspore.float32)
-        >>> select(input_cond, input_x, input_y)
+        >>> output = select(input_cond, input_x, input_y)
+        >>> print(output)
         [2. 2.]
     """
 
@@ -2454,10 +2471,8 @@ class StridedSlice(PrimitiveWithInfer):
         ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
         >>> slice = P.StridedSlice()
         >>> output = slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
-        >>> output.shape
-        (1, 1, 3)
-        >>> output
-        [[[3, 3, 3]]]
+        >>> print(output)
+        [[[3. 3. 3.]]]
     """
 
     @prim_attr_register
@@ -2648,13 +2663,13 @@ class DiagPart(PrimitiveWithInfer):
 
     Examples
         >>> input_x = Tensor([[1, 0, 0, 0],
-        >>>                   [0, 2, 0, 0],
-        >>>                   [0, 0, 3, 0],
-        >>>                   [0, 0, 0, 4]])
+        ...                   [0, 2, 0, 0],
+        ...                   [0, 0, 3, 0],
+        ...                   [0, 0, 0, 4]])
         >>> diag_part = P.DiagPart()
         >>> output = diag_part(input_x)
         >>> print(output)
-        [1, 2, 3, 4]
+        [1 2 3 4]
     """
 
     @prim_attr_register
@@ -2702,10 +2717,10 @@ class Eye(PrimitiveWithInfer):
 
     Examples:
         >>> eye = P.Eye()
-        >>> out_tensor = eye(2, 2, mindspore.int32)
-        >>> print(out_tensor)
-        [[1, 0],
-         [0, 1]]
+        >>> output = eye(2, 2, mindspore.int32)
+        >>> print(output)
+        [[1 0]
+         [0 1]]
     """
 
     @prim_attr_register
@@ -2743,9 +2758,9 @@ class ScatterNd(PrimitiveWithInfer):
         >>> shape = (3, 3)
         >>> output = op(indices, update, shape)
         >>> print(output)
-        [[0. 3.2 0.]
-         [0. 1.1 0.]
-         [0. 0. 0. ]]
+        [[0.  3.2 0. ]
+         [0.  1.1 0. ]
+         [0.  0.  0. ]]
     """
 
     @prim_attr_register
@@ -2794,8 +2809,8 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         >>> resize = P.ResizeNearestNeighbor((2, 2))
         >>> output = resize(input_tensor)
         >>> print(output)
-        [[[[-0.1 0.3]
-           [0.4 0.5 ]]]]
+        [[[[-0.1  0.3]
+           [ 0.4  0.5]]]]
     """
 
     @prim_attr_register
@@ -2836,7 +2851,7 @@ class GatherNd(PrimitiveWithInfer):
         >>> op = P.GatherNd()
         >>> output = op(input_x, indices)
         >>> print(output)
-        [-0.1, 0.5]
+        [-0.1  0.5]
     """
 
     @prim_attr_register
@@ -2873,8 +2888,9 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> op = P.TensorScatterUpdate()
         >>> output = op(input_x, indices, update)
-        [[1.0, 0.3, 3.6],
-         [0.4, 2.2, -3.2]]
+        >>> print(output)
+        [[ 1.   0.3  3.6]
+         [ 0.4  2.2 -3.2]]
     """
 
     @prim_attr_register
@@ -2928,8 +2944,8 @@ class ScatterUpdate(_ScatterOp_Dynamic):
         >>> op = P.ScatterUpdate()
         >>> output = op(input_x, indices, updates)
         >>> print(output)
-        [[2.0, 1.2, 1.0],
-         [3.0, 1.2, 1.0]]
+        [[2.  1.2 1. ]
+         [3.  1.2 1. ]]
     """
 
     @prim_attr_register
@@ -2969,8 +2985,8 @@ class ScatterNdUpdate(_ScatterNdOp):
         >>> op = P.ScatterNdUpdate()
         >>> output = op(input_x, indices, update)
         >>> print(output)
-        [[1. 0.3 3.6]
-         [0.4 2.2 -3.2]]
+        [[ 1.   0.3  3.6]
+         [ 0.4  2.2 -3.2]]
     """
 
     @prim_attr_register
@@ -3017,7 +3033,8 @@ class ScatterMax(_ScatterOp):
         >>> scatter_max = P.ScatterMax()
         >>> output = scatter_max(input_x, indices, update)
         >>> print(output)
-        [[88.0, 88.0, 88.0], [88.0, 88.0, 88.0]]
+        [[88. 88. 88.]
+         [88. 88. 88.]]
     """
 
     @prim_attr_register
@@ -3058,7 +3075,8 @@ class ScatterMin(_ScatterOp):
         >>> scatter_min = P.ScatterMin()
         >>> output = scatter_min(input_x, indices, update)
         >>> print(output)
-        [[0.0, 1.0, 1.0], [0.0, 0.0, 0.0]]
+        [[0. 1. 1.]
+         [0. 0. 0.]]
     """
 
 
@@ -3093,7 +3111,8 @@ class ScatterAdd(_ScatterOp_Dynamic):
         >>> scatter_add = P.ScatterAdd()
         >>> output = scatter_add(input_x, indices, updates)
         >>> print(output)
-        [[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]]
+        [[1. 1. 1.]
+         [3. 3. 3.]]
     """
 
     @prim_attr_register
@@ -3170,7 +3189,8 @@ class ScatterMul(_ScatterOp):
         >>> scatter_mul = P.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
-        [[2.0, 2.0, 2.0], [4.0, 4.0, 4.0]]
+        [[2. 2. 2.]
+         [4. 4. 4.]]
     """
 
 
@@ -3205,7 +3225,8 @@ class ScatterDiv(_ScatterOp):
         >>> scatter_div = P.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
-        [[3.0, 3.0, 3.0], [1.0, 1.0, 1.0]]
+        [[3. 3. 3.]
+         [1. 1. 1.]]
     """
 
 
@@ -3240,7 +3261,7 @@ class ScatterNdAdd(_ScatterNdOp):
         >>> scatter_nd_add = P.ScatterNdAdd()
         >>> output = scatter_nd_add(input_x, indices, updates)
         >>> print(output)
-        [1, 10, 9, 4, 12, 6, 7, 17]
+        [ 1. 10.  9.  4. 12.  6.  7. 17.]
     """
 
 
@@ -3275,7 +3296,7 @@ class ScatterNdSub(_ScatterNdOp):
         >>> scatter_nd_sub = P.ScatterNdSub()
         >>> output = scatter_nd_sub(input_x, indices, updates)
         >>> print(output)
-        [1, -6, -3, 4, -2, 6, 7, -1]
+        [ 1. -6. -3.  4. -2.  6.  7. -1.]
     """
 
 
@@ -3307,7 +3328,7 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
         >>> scatter_non_aliasing_add = P.ScatterNonAliasingAdd()
         >>> output = scatter_non_aliasing_add(input_x, indices, updates)
         >>> print(output)
-        [1, 10, 9, 4, 12, 6, 7, 17]
+        [ 1. 10.  9.  4. 12.  6.  7. 17.]
     """
 
     @prim_attr_register
@@ -3347,9 +3368,10 @@ class SpaceToDepth(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.random.rand(1,3,2,2), mindspore.float32)
         >>> block_size = 2
-        >>> op = P.SpaceToDepth(block_size)
-        >>> output = op(x)
-        >>> output.asnumpy().shape == (1,12,1,1)
+        >>> space_to_depth = P.SpaceToDepth(block_size)
+        >>> output = space_to_depth(x)
+        >>> print(output)
+        (1, 12, 1, 1)
     """
 
     @prim_attr_register
@@ -3404,8 +3426,8 @@ class DepthToSpace(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.random.rand(1,12,1,1), mindspore.float32)
         >>> block_size = 2
-        >>> op = P.DepthToSpace(block_size)
-        >>> output = op(x)
+        >>> depth_to_space = P.DepthToSpace(block_size)
+        >>> output = depth_to_space(x)
         >>> print(output.shape)
         (1, 3, 2, 2)
     """
@@ -3472,9 +3494,12 @@ class SpaceToBatch(PrimitiveWithInfer):
         >>> paddings = [[0, 0], [0, 0]]
         >>> space_to_batch = P.SpaceToBatch(block_size, paddings)
         >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
-        >>> space_to_batch(input_x)
-        [[[[1.]]], [[[2.]]], [[[3.]]], [[[4.]]]]
-
+        >>> output = space_to_batch(input_x)
+        >>> print(output)
+        [[[[1.]]]
+         [[[2.]]]
+         [[[3.]]]
+         [[[4.]]]]
     """
 
     @prim_attr_register
@@ -3541,11 +3566,12 @@ class BatchToSpace(PrimitiveWithInfer):
     Examples:
         >>> block_size = 2
         >>> crops = [[0, 0], [0, 0]]
-        >>> op = P.BatchToSpace(block_size, crops)
+        >>> batch_to_space = P.BatchToSpace(block_size, crops)
         >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
-        >>> output = op(input_x)
+        >>> output = batch_to_space(input_x)
         >>> print(output)
-        [[[[1., 2.], [3., 4.]]]]
+        [[[[1.  2.]
+           [3.  4.]]]]
 
     """
 
@@ -3620,9 +3646,12 @@ class SpaceToBatchND(PrimitiveWithInfer):
         >>> paddings = [[0, 0], [0, 0]]
         >>> space_to_batch_nd = P.SpaceToBatchND(block_shape, paddings)
         >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
-        >>> space_to_batch_nd(input_x)
-        [[[[1.]]], [[[2.]]], [[[3.]]], [[[4.]]]]
-
+        >>> output = space_to_batch_nd(input_x)
+        >>> print(output)
+        [[[[1.]]]
+         [[[2.]]]
+         [[[3.]]]
+         [[[4.]]]]
     """
 
     @prim_attr_register
@@ -3715,7 +3744,8 @@ class BatchToSpaceND(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
         >>> output = batch_to_space_nd(input_x)
         >>> print(output)
-        [[[[1., 2.], [3., 4.]]]]
+        [[[[1.  2.]
+           [3.  4.]]]]
 
     """
 
@@ -3791,8 +3821,10 @@ class BroadcastTo(PrimitiveWithInfer):
         >>> shape = (2, 3)
         >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> broadcast_to = P.BroadcastTo(shape)
-        >>> broadcast_to(input_x)
-        [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]
+        >>> output = broadcast_to(input_x)
+        >>> print(output)
+        [[1. 2. 3.]
+         [1. 2. 3.]]
     """
 
     @prim_attr_register
@@ -3939,11 +3971,11 @@ class InplaceUpdate(PrimitiveWithInfer):
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
         >>> inplace_update = P.InplaceUpdate(indices)
-        >>> result = inplace_update(x, v)
-        >>> print(result)
-        [[0.5, 1.0],
-         [1.0, 1.5],
-         [5.0, 6.0]]
+        >>> output = inplace_update(x, v)
+        >>> print(output)
+        [[0.5 1. ]
+         [1.  1.5]
+         [5.  6. ]]
     """
 
     @prim_attr_register
@@ -3997,9 +4029,9 @@ class ReverseSequence(PrimitiveWithInfer):
         >>> reverse_sequence = P.ReverseSequence(seq_dim=1)
         >>> output = reverse_sequence(x, seq_lengths)
         >>> print(output)
-        [[1 2 3]
-         [5 4 6]
-         [9 8 7]]
+        [[1. 2. 3.]
+         [5. 4. 6.]
+         [9. 8. 7.]]
     """
 
     @prim_attr_register
@@ -4057,16 +4089,16 @@ class EditDistance(PrimitiveWithInfer):
         >>> import mindspore.ops.operations as P
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>> class EditDistance(nn.Cell):
-        >>>     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
-        >>>         super(EditDistance, self).__init__()
-        >>>         self.edit_distance = P.EditDistance(normalize)
-        >>>         self.hypothesis_shape = hypothesis_shape
-        >>>         self.truth_shape = truth_shape
-        >>>
-        >>>     def construct(self, hypothesis_indices, hypothesis_values, truth_indices, truth_values):
-        >>>         return self.edit_distance(hypothesis_indices, hypothesis_values, self.hypothesis_shape,
-        >>>                                   truth_indices, truth_values, self.truth_shape)
-        >>>
+        ...     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
+        ...         super(EditDistance, self).__init__()
+        ...         self.edit_distance = P.EditDistance(normalize)
+        ...         self.hypothesis_shape = hypothesis_shape
+        ...         self.truth_shape = truth_shape
+        ...
+        ...     def construct(self, hypothesis_indices, hypothesis_values, truth_indices, truth_values):
+        ...         return self.edit_distance(hypothesis_indices, hypothesis_values, self.hypothesis_shape,
+        ...                                   truth_indices, truth_values, self.truth_shape)
+        ...
         >>> hypothesis_indices = Tensor(np.array([[0, 0, 0], [1, 0, 1], [1, 1, 1]]).astype(np.int64))
         >>> hypothesis_values = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> hypothesis_shape = Tensor(np.array([1, 1, 2]).astype(np.int64))
@@ -4074,9 +4106,10 @@ class EditDistance(PrimitiveWithInfer):
         >>> truth_values = Tensor(np.array([1, 3, 2, 1]).astype(np.float32))
         >>> truth_shape = Tensor(np.array([2, 2, 2]).astype(np.int64))
         >>> edit_distance = EditDistance(hypothesis_shape, truth_shape)
-        >>> out = edit_distance(hypothesis_indices, hypothesis_values, truth_indices, truth_values)
-        >>> print(out)
-        >>> [[1.0, 1.0], [1.0, 1.0]]
+        >>> output = edit_distance(hypothesis_indices, hypothesis_values, truth_indices, truth_values)
+        >>> print(output)
+		[[1. 1.]
+		 [1. 1.]]
     """
 
     @prim_attr_register
@@ -4166,9 +4199,15 @@ class Sort(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
         >>> sort = P.Sort()
-        >>> sort(x)
-        ([[1.0, 2.0, 8.0], [3.0, 5.0, 9.0], [4.0, 6.0 ,7.0]],
-         [[2, 1, 0], [2, 0, 1], [0, 1, 2]])
+        >>> output = sort(x)
+        >>> print(output)
+        (Tensor(shape=[3, 3], dtype=Float16, value=
+        [[ 1.0000e+00,  2.0000e+00,  8.0000e+00],
+         [ 3.0000e+00,  5.0000e+00,  9.0000e+00],
+         [ 4.0000e+00,  6.0000e+00,  7.0000e+00]]), Tensor(shape=[3, 3], dtype=Int32, value=
+        [[2, 1, 0],
+         [2, 0, 1],
+         [0, 1, 2]]))
     """
 
     @prim_attr_register
@@ -4208,9 +4247,12 @@ class EmbeddingLookup(PrimitiveWithInfer):
         >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
         >>> offset = 4
-        >>> out = P.EmbeddingLookup()(input_params, input_indices, offset)
-        >>> print(out)
-        [[[10, 11], [0 ,0]], [[0, 0], [10, 11]]]
+        >>> output = P.EmbeddingLookup()(input_params, input_indices, offset)
+        >>> print(output)
+        [[[10. 11.]
+          [ 0.  0.]]
+         [[ 0.  0.]
+          [10. 11.]]]
     """
 
     @prim_attr_register
@@ -4259,9 +4301,10 @@ class GatherD(PrimitiveWithInfer):
         >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
         >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
         >>> dim = 1
-        >>> out = P.GatherD()(x, dim, index)
-        >>> print(out)
-        [[1, 1], [4, 3]]
+        >>> output = P.GatherD()(x, dim, index)
+        >>> print(output)
+        [[1 1]
+         [4 3]]
     """
 
     @prim_attr_register
@@ -4304,9 +4347,9 @@ class Identity(PrimitiveWithInfer):
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
-        >>> y = P.Identity()(x)
-        >>> print(y)
-        [1, 2, 3, 4]
+        >>> output = P.Identity()(x)
+        >>> print(output)
+        [1 2 3 4]
     """
 
     @prim_attr_register
@@ -4341,10 +4384,10 @@ class RepeatElements(PrimitiveWithInfer):
         >>> repeat_elements = P.RepeatElements(rep = 2, axis = 0)
         >>> output = repeat_elements(x)
         >>> print(output)
-        [[0, 1, 2],
-         [0, 1, 2],
-         [3, 4, 5],
-         [3, 4, 5]],
+        [[0 1 2]
+         [0 1 2]
+         [3 4 5]
+         [3 4 5]]
     """
 
     @prim_attr_register

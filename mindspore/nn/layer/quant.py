@@ -234,9 +234,10 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
     Examples:
         >>> fake_quant = nn.FakeQuantWithMinMaxObserver()
         >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = fake_quant(input)
-        >>> print(result)
-        [[0.9882355, 1.9764705, 0.9882355], [-1.9764705, 0. , -0.9882355]]
+        >>> output = fake_quant(input)
+        >>> print(output)
+        [[ 0.9882355  1.9764705  0.9882355]
+         [-1.9764705  0.        -0.9882355]]
     """
 
     def __init__(self,
@@ -589,11 +590,10 @@ class Conv2dBnFoldQuant(Cell):
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
         >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                                      quant_config=qconfig)
+        ...                                      quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
-        >>> result = conv2d_bnfold(input)
-        >>> output = result.shape
-        >>> print(output)
+        >>> output = conv2d_bnfold(input)
+        >>> print(output.shape)
         (2, 6, 2, 2)
     """
 
@@ -775,11 +775,10 @@ class Conv2dBnWithoutFoldQuant(Cell):
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
         >>> conv2d_no_bnfold = nn.Conv2dBnWithoutFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                                                quant_config=qconfig)
+        ...                                                quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mstype.float32)
-        >>> result = conv2d_no_bnfold(input)
-        >>> output = result.shape
-        >>> print(output)
+        >>> output = conv2d_no_bnfold(input)
+        >>> print(output.shape)
         (2, 6, 2, 2)
     """
 
@@ -897,11 +896,10 @@ class Conv2dQuant(Cell):
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
         >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                               quant_config=qconfig)
+        ...                               quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
-        >>> result = conv2d_quant(input)
-        >>> output = result.shape
-        >>> print(output)
+        >>> output = conv2d_quant(input)
+        >>> print(output.shape)
         (2, 6, 2, 2)
     """
 
@@ -1106,9 +1104,10 @@ class ActQuant(_QuantActivation):
         >>> qconfig = compression.quant.create_quant_config()
         >>> act_quant = nn.ActQuant(nn.ReLU(), quant_config=qconfig)
         >>> input = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
-        >>> result = act_quant(input)
-        >>> print(result)
-        [[0.9882355, 1.9764705, 0.], [0., 0., 0.]]
+        >>> output = act_quant(input)
+        >>> print(output)
+        [[0.9882355 1.9764705 0.       ]
+         [0.        0.        0.       ]]
     """
 
     def __init__(self,
@@ -1168,9 +1167,10 @@ class TensorAddQuant(Cell):
         >>> add_quant = nn.TensorAddQuant(quant_config=qconfig)
         >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones((2, 3)), mindspore.float32)
-        >>> result = add_quant(input_x1, input_x2)
-        >>> print(result)
-        [[1.9764705, 3.011765, 1.9764705], [-0.9882355, 0.9882355, 0.]]
+        >>> output = add_quant(input_x1, input_x2)
+        >>> print(output)
+        [[ 1.9764705  3.011765   1.9764705]
+         [-0.9882355  0.9882355  0.       ]]
     """
 
     def __init__(self,
@@ -1215,9 +1215,10 @@ class MulQuant(Cell):
         >>> mul_quant = nn.MulQuant(quant_config=qconfig)
         >>> input_x1 = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
         >>> input_x2 = Tensor(np.ones((2, 3)) * 2, mindspore.float32)
-        >>> result = mul_quant(input_x1, input_x2)
-        >>> print(result)
-        [[1.9764705, 4.0000005, 1.9764705], [-4., 0., -1.9764705]]
+        >>> output = mul_quant(input_x1, input_x2)
+        >>> print(output)
+        [[ 1.9764705  4.0000005  1.9764705]
+         [-4.         0.        -1.9764705]]
     """
 
     def __init__(self,

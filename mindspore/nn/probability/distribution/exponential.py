@@ -52,62 +52,63 @@ class Exponential(Distribution):
         >>>
         >>> # To use an Exponential distribution in a network.
         >>> class net(Cell):
-        >>>     def __init__(self):
-        >>>         super(net, self).__init__():
-        >>>         self.e1 = msd.Exponential(0.5, dtype=mstype.float32)
-        >>>         self.e2 = msd.Exponential(dtype=mstype.float32)
-        >>>
-        >>>     # All the following calls in construct are valid.
-        >>>     def construct(self, value, rate_b, rate_a):
-        >>>
-        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
-        >>>         # Args:
-        >>>         #     value (Tensor): the value to be evaluated.
-        >>>         #     rate (Tensor): the rate of the distribution. Default: self.rate.
-        >>>
-        >>>         # Examples of `prob`.
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing `prob` by the name of the function.
-        >>>         ans = self.e1.prob(value)
-        >>>         # Evaluate with respect to distribution b.
-        >>>         ans = self.e1.prob(value, rate_b)
-        >>>         # `rate` must be passed in during function calls.
-        >>>         ans = self.e2.prob(value, rate_a)
-        >>>
-        >>>
-        >>>         # Functions `mean`, `sd`, 'var', and 'entropy' have the same arguments as follows.
-        >>>         # Args:
-        >>>         #     rate (Tensor): the rate of the distribution. Default: self.rate.
-        >>>
-        >>>         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
-        >>>         ans = self.e1.mean() # return 2
-        >>>         ans = self.e1.mean(rate_b) # return 1 / rate_b
-        >>>         # `rate` must be passed in during function calls.
-        >>>         ans = self.e2.mean(rate_a)
-        >>>
-        >>>
-        >>>         # Interfaces of `kl_loss` and `cross_entropy` are the same.
-        >>>         # Args:
-        >>>         #     dist (str): The name of the distribution. Only 'Exponential' is supported.
-        >>>         #     rate_b (Tensor): the rate of distribution b.
-        >>>         #     rate_a (Tensor): the rate of distribution a. Default: self.rate.
-        >>>
-        >>>         # Examples of `kl_loss`. `cross_entropy` is similar.
-        >>>         ans = self.e1.kl_loss('Exponential', rate_b)
-        >>>         ans = self.e1.kl_loss('Exponential', rate_b, rate_a)
-        >>>         # An additional `rate` must be passed in.
-        >>>         ans = self.e2.kl_loss('Exponential', rate_b, rate_a)
-        >>>
-        >>>
-        >>>         # Examples of `sample`.
-        >>>         # Args:
-        >>>         #     shape (tuple): the shape of the sample. Default: ()
-        >>>         #     probs1 (Tensor): the rate of the distribution. Default: self.rate.
-        >>>         ans = self.e1.sample()
-        >>>         ans = self.e1.sample((2,3))
-        >>>         ans = self.e1.sample((2,3), rate_b)
-        >>>         ans = self.e2.sample((2,3), rate_a)
+        ...     def __init__(self):
+        ...         super(net, self).__init__():
+        ...         self.e1 = msd.Exponential(0.5, dtype=mstype.float32)
+        ...         self.e2 = msd.Exponential(dtype=mstype.float32)
+        ...
+        ...     # All the following calls in construct are valid.
+        ...     def construct(self, value, rate_b, rate_a):
+        ...
+        ...         # Private interfaces of probability functions corresponding to public interfaces, including
+        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
+        ...         # Args:
+        ...         #     value (Tensor): the value to be evaluated.
+        ...         #     rate (Tensor): the rate of the distribution. Default: self.rate.
+        ...
+        ...         # Examples of `prob`.
+        ...         # Similar calls can be made to other probability functions
+        ...         # by replacing `prob` by the name of the function.
+        ...         ans = self.e1.prob(value)
+        ...         # Evaluate with respect to distribution b.
+        ...         ans = self.e1.prob(value, rate_b)
+        ...         # `rate` must be passed in during function calls.
+        ...         ans = self.e2.prob(value, rate_a)
+        ...
+        ...
+        ...         # Functions `mean`, `sd`, 'var', and 'entropy' have the same arguments as follows.
+        ...         # Args:
+        ...         #     rate (Tensor): the rate of the distribution. Default: self.rate.
+        ...
+        ...         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
+        ...         ans = self.e1.mean() # return 2
+        ...         ans = self.e1.mean(rate_b) # return 1 / rate_b
+        ...         # `rate` must be passed in during function calls.
+        ...         ans = self.e2.mean(rate_a)
+        ...
+        ...
+        ...         # Interfaces of `kl_loss` and `cross_entropy` are the same.
+        ...         # Args:
+        ...         #     dist (str): The name of the distribution. Only 'Exponential' is supported.
+        ...         #     rate_b (Tensor): the rate of distribution b.
+        ...         #     rate_a (Tensor): the rate of distribution a. Default: self.rate.
+        ...
+        ...         # Examples of `kl_loss`. `cross_entropy` is similar.
+        ...         ans = self.e1.kl_loss('Exponential', rate_b)
+        ...         ans = self.e1.kl_loss('Exponential', rate_b, rate_a)
+        ...         # An additional `rate` must be passed in.
+        ...         ans = self.e2.kl_loss('Exponential', rate_b, rate_a)
+        ...
+        ...
+        ...         # Examples of `sample`.
+        ...         # Args:
+        ...         #     shape (tuple): the shape of the sample. Default: ()
+        ...         #     probs1 (Tensor): the rate of the distribution. Default: self.rate.
+        ...         ans = self.e1.sample()
+        ...         ans = self.e1.sample((2,3))
+        ...         ans = self.e1.sample((2,3), rate_b)
+        ...         ans = self.e2.sample((2,3), rate_a)
+        ...
     """
 
     def __init__(self,

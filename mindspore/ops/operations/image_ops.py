@@ -55,14 +55,14 @@ class CropAndResize(PrimitiveWithInfer):
 
     Examples:
         >>> class CropAndResizeNet(nn.Cell):
-        >>>     def __init__(self, crop_size):
-        >>>         super(CropAndResizeNet, self).__init__()
-        >>>         self.crop_and_resize = P.CropAndResize()
-        >>>         self.crop_size = crop_size
-        >>>
-        >>>     def construct(self, x, boxes, box_index):
-        >>>         return self.crop_and_resize(x, boxes, box_index, self.crop_size)
-        >>>
+        ...     def __init__(self, crop_size):
+        ...         super(CropAndResizeNet, self).__init__()
+        ...         self.crop_and_resize = P.CropAndResize()
+        ...         self.crop_size = crop_size
+        ...
+        ...     def construct(self, x, boxes, box_index):
+        ...         return self.crop_and_resize(x, boxes, box_index, self.crop_size)
+        ...
         >>> BATCH_SIZE = 1
         >>> NUM_BOXES = 5
         >>> IMAGE_HEIGHT = 256
@@ -74,7 +74,7 @@ class CropAndResize(PrimitiveWithInfer):
         >>> crop_size = (24, 24)
         >>> crop_and_resize = CropAndResizeNet(crop_size=crop_size)
         >>> output = crop_and_resize(Tensor(image), Tensor(boxes), Tensor(box_index))
-        >>> output.shape
+        >>> print(output.shape)
         (5, 24, 24, 3)
     """
 

@@ -53,50 +53,51 @@ class Logistic(Distribution):
         >>>
         >>> # To use a Normal distribution in a network.
         >>> class net(Cell):
-        >>>     def __init__(self):
-        >>>         super(net, self).__init__():
-        >>>         self.l1 = msd.Logistic(0.0, 1.0, dtype=mstype.float32)
-        >>>         self.l2 = msd.Logistic(dtype=mstype.float32)
-        >>>
-        >>>     # The following calls are valid in construct.
-        >>>     def construct(self, value, loc_b, scale_b, loc_a, scale_a):
-        >>>
-        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
-        >>>         # Args:
-        >>>         #     value (Tensor): the value to be evaluated.
-        >>>         #     loc (Tensor): the location of the distribution. Default: self.loc.
-        >>>         #     scale (Tensor): the scale of the distribution. Default: self.scale.
-        >>>
-        >>>         # Examples of `prob`.
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'prob' by the name of the function
-        >>>         ans = self.l1.prob(value)
-        >>>         # Evaluate with respect to distribution b.
-        >>>         ans = self.l1.prob(value, loc_b, scale_b)
-        >>>         # `loc` and `scale` must be passed in during function calls
-        >>>         ans = self.l2.prob(value, loc_a, scale_a)
-        >>>
-        >>>         # Functions `mean`, `mode`, `sd`, `var`, and `entropy` have the same arguments.
-        >>>         # Args:
-        >>>         #     loc (Tensor): the location of the distribution. Default: self.loc.
-        >>>         #     scale (Tensor): the scale of the distribution. Default: self.scale.
-        >>>
-        >>>         # Example of `mean`. `mode`, `sd`, `var`, and `entropy` are similar.
-        >>>         ans = self.l1.mean() # return 0.0
-        >>>         ans = self.l1.mean(loc_b, scale_b) # return loc_b
-        >>>         # `loc` and `scale` must be passed in during function calls.
-        >>>         ans = self.l2.mean(loc_a, scale_a)
-        >>>
-        >>>         # Examples of `sample`.
-        >>>         # Args:
-        >>>         #     shape (tuple): the shape of the sample. Default: ()
-        >>>         #     loc (Tensor): the location of the distribution. Default: self.loc.
-        >>>         #     scale (Tensor): the scale of the distribution. Default: self.scale.
-        >>>         ans = self.l1.sample()
-        >>>         ans = self.l1.sample((2,3))
-        >>>         ans = self.l1.sample((2,3), loc_b, scale_b)
-        >>>         ans = self.l2.sample((2,3), loc_a, scale_a)
+        ...     def __init__(self):
+        ...         super(net, self).__init__():
+        ...         self.l1 = msd.Logistic(0.0, 1.0, dtype=mstype.float32)
+        ...         self.l2 = msd.Logistic(dtype=mstype.float32)
+        ...
+        ...     # The following calls are valid in construct.
+        ...     def construct(self, value, loc_b, scale_b, loc_a, scale_a):
+        ...
+        ...         # Private interfaces of probability functions corresponding to public interfaces, including
+        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
+        ...         # Args:
+        ...         #     value (Tensor): the value to be evaluated.
+        ...         #     loc (Tensor): the location of the distribution. Default: self.loc.
+        ...         #     scale (Tensor): the scale of the distribution. Default: self.scale.
+        ...
+        ...         # Examples of `prob`.
+        ...         # Similar calls can be made to other probability functions
+        ...         # by replacing 'prob' by the name of the function
+        ...         ans = self.l1.prob(value)
+        ...         # Evaluate with respect to distribution b.
+        ...         ans = self.l1.prob(value, loc_b, scale_b)
+        ...         # `loc` and `scale` must be passed in during function calls
+        ...         ans = self.l2.prob(value, loc_a, scale_a)
+        ...
+        ...         # Functions `mean`, `mode`, `sd`, `var`, and `entropy` have the same arguments.
+        ...         # Args:
+        ...         #     loc (Tensor): the location of the distribution. Default: self.loc.
+        ...         #     scale (Tensor): the scale of the distribution. Default: self.scale.
+        ...
+        ...         # Example of `mean`. `mode`, `sd`, `var`, and `entropy` are similar.
+        ...         ans = self.l1.mean() # return 0.0
+        ...         ans = self.l1.mean(loc_b, scale_b) # return loc_b
+        ...         # `loc` and `scale` must be passed in during function calls.
+        ...         ans = self.l2.mean(loc_a, scale_a)
+        ...
+        ...         # Examples of `sample`.
+        ...         # Args:
+        ...         #     shape (tuple): the shape of the sample. Default: ()
+        ...         #     loc (Tensor): the location of the distribution. Default: self.loc.
+        ...         #     scale (Tensor): the scale of the distribution. Default: self.scale.
+        ...         ans = self.l1.sample()
+        ...         ans = self.l1.sample((2,3))
+        ...         ans = self.l1.sample((2,3), loc_b, scale_b)
+        ...         ans = self.l2.sample((2,3), loc_a, scale_a)
+        ...
     """
 
     def __init__(self,

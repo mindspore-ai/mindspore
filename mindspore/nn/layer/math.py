@@ -64,8 +64,7 @@ class ReduceLogSumExp(Cell):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = nn.ReduceLogSumExp(1, keep_dims=True)
         >>> output = op(input_x)
-        >>> result = output.shape
-        >>> print(reuslt)
+        >>> print(output.shape)
         (3, 1, 5, 6)
     """
 
@@ -101,9 +100,9 @@ class Range(Cell):
 
     Examples:
         >>> net = nn.Range(1, 8, 2)
-        >>> out = net()
-        >>> print(out)
-        [1, 3, 5, 7]
+        >>> output = net()
+        >>> print(output)
+        [1 3 5 7]
     """
 
     def __init__(self, start, limit=None, delta=1):
@@ -157,7 +156,7 @@ class LinSpace(Cell):
         >>> linspace = nn.LinSpace(1, 10, 5)
         >>> output = linspace()
         >>> print(output)
-        [1, 3.25, 5.5, 7.75, 10]
+        [ 1.    3.25  5.5   7.75 10.  ]
     """
 
     def __init__(self, start, stop, num):
@@ -230,6 +229,7 @@ class LGamma(Cell):
         >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
         >>> op = nn.LGamma()
         >>> output = op(input_x)
+        >>> print(output)
         [3.5762787e-07 6.9314754e-01 1.7917603e+00]
     """
 
@@ -830,9 +830,13 @@ class Moments(Cell):
     Examples:
         >>> net = nn.Moments(axis=3, keep_dims=True)
         >>> input_x = Tensor(np.array([[[[1, 2, 3, 4], [3, 4, 5, 6]]]]), mindspore.float32)
-        >>> mean, var = net(input_x)
-        mean: [[[[2.5], [4.5]]]]
-        var:  [[[[1.25], [1.25]]]]
+        >>> output = net(input_x)
+        >>> print(output)
+        (Tensor(shape=[1, 1, 2, 1], dtype=Float32, value=
+        [[[[ 2.50000000e+00],
+           [ 4.50000000e+00]]]]), Tensor(shape=[1, 1, 2, 1], dtype=Float32, value=
+        [[[[ 1.25000000e+00],
+           [ 1.25000000e+00]]]]))
     """
 
     def __init__(self, axis=None, keep_dims=None):

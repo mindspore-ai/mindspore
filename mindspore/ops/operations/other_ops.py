@@ -39,13 +39,14 @@ class Assign(PrimitiveWithCheck):
 
     Examples:
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.y = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="y")
-        >>>
-        >>>     def construct(self, x):
-        >>>         P.Assign()(self.y, x)
-        >>>         return self.y
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.y = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="y")
+        ...
+        ...     def construct(self, x):
+        ...         P.Assign()(self.y, x)
+        ...         return self.y
+        ...
         >>> x = Tensor([2.0], mindspore.float32)
         >>> net = Net()
         >>> output = net(x)
@@ -78,13 +79,20 @@ class InplaceAssign(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same type as original `variable`.
     Examples:
-    >>> def construct(self, x):
-    >>> val = x - 1.0
-    >>> ret = x + 2.0
-    >>> return InplaceAssign()(x, val, ret)
-    >>> x = Tensor([2.0], mindspore.float32)
-    >>> net = Net()
-    >>> net(x)
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.inplace_assign = P.InplaceAssign()
+        ...
+        ...     def construct(self, x):
+        ...         val = x - 1.0
+        ...         ret = x + 2.0
+        ...         return self.inplace_assign(x, val, ret)
+        ...
+        >>> x = Tensor([2.0], mindspore.float32)
+        >>> net = Net()
+        >>> output = net(x)
+        >>> print(output)
    """
     @ prim_attr_register
     def __init__(self):
@@ -116,10 +124,10 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
         >>> groundtruth_box = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
         >>> boundingbox_encode = P.BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
-        >>> boundingbox_encode(anchor_box, groundtruth_box)
-        [[5.0000000e-01  5.0000000e-01  -6.5504000e+04  6.9335938e-01]
+        >>> output = boundingbox_encode(anchor_box, groundtruth_box)
+        >>> print(output)
+        [[ 5.0000000e-01  5.0000000e-01 -6.5504000e+04  6.9335938e-01]
          [-1.0000000e+00  2.5000000e-01  0.0000000e+00  4.0551758e-01]]
-
     """
 
     @prim_attr_register
@@ -170,9 +178,10 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         >>> deltas = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
         >>> boundingbox_decode = P.BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
         ...                                          max_shape=(768, 1280), wh_ratio_clip=0.016)
-        >>> boundingbox_decode(anchor_box, deltas)
-        [[4.1953125  0.  0.  5.1953125]
-         [2.140625  0.  3.859375  60.59375]]
+        >>> output = boundingbox_decode(anchor_box, deltas)
+        >>> print(output)
+        [[ 4.1953125  0.         0.         5.1953125]
+         [ 2.140625   0.         3.859375  60.59375  ]]
 
     """
 
@@ -226,19 +235,19 @@ class CheckValid(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.check_valid = P.CheckValid()
-        >>>     def construct(self, x, y):
-        >>>         valid_result = self.check_valid(x, y)
-        >>>         return valid_result
-        >>>
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.check_valid = P.CheckValid()
+        ...     def construct(self, x, y):
+        ...         valid_result = self.check_valid(x, y)
+        ...         return valid_result
+        ...
         >>> bboxes = Tensor(np.linspace(0, 6, 12).reshape(3, 4), mindspore.float32)
         >>> img_metas = Tensor(np.array([2, 1, 3]), mindspore.float32)
         >>> net = Net()
         >>> output = net(bboxes, img_metas)
         >>> print(output)
-        [True   False   False]
+        [ True False False]
     """
 
     @prim_attr_register
@@ -292,10 +301,12 @@ class IOU(PrimitiveWithInfer):
         >>> iou = P.IOU()
         >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
-        >>> iou(anchor_boxes, gt_boxes)
-        [[0.0, 65504, 65504],
-         [0.0, 0.0, 0.0],
-         [0.22253, 0.0, 0.0]]
+        >>> output = iou(anchor_boxes, gt_boxes)
+        >>> print(output)
+        [[65000. 65500.    -0.]
+         [65000. 65500.    -0.]
+         [    0.     0.     0.]]
+
     """
 
     @prim_attr_register
@@ -336,19 +347,20 @@ class MakeRefKey(Primitive):
     Examples:
         >>> from mindspore.ops import functional as F
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.y = mindspore.Parameter(Tensor(np.ones([6, 8, 10]), mindspore.int32), name="y")
-        >>>         self.make_ref_key = P.MakeRefKey("y")
-        >>>
-        >>>     def construct(self, x):
-        >>>         key = self.make_ref_key()
-        >>>         ref = F.make_ref(key, x, self.y)
-        >>>         return ref * x
-        >>>
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.y = mindspore.Parameter(Tensor(np.ones([6, 8, 10]), mindspore.int32), name="y")
+        ...         self.make_ref_key = P.MakeRefKey("y")
+        ...
+        ...     def construct(self, x):
+        ...         key = self.make_ref_key()
+        ...         ref = F.make_ref(key, x, self.y)
+        ...         return ref * x
+        ...
         >>> x = Tensor(np.ones([3, 4, 5]), mindspore.int32)
         >>> net = Net()
-        >>> net(x)
+        >>> output = net(x)
+        >>> print(output)
     """
 
     @prim_attr_register
@@ -536,7 +548,9 @@ class PopulationCount(PrimitiveWithInfer):
     Examples:
         >>> population_count = P.PopulationCount()
         >>> x_input = Tensor([0, 1, 3], mindspore.int16)
-        >>> population_count(x_input)
+        >>> output = population_count(x_input)
+        >>> print(output)
+        [0 1 2]
     """
 
     @prim_attr_register

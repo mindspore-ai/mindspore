@@ -139,8 +139,9 @@ class TensorAdd(_MathBinaryOp):
         >>> add = P.TensorAdd()
         >>> input_x = Tensor(np.array([1,2,3]).astype(np.float32))
         >>> input_y = Tensor(np.array([4,5,6]).astype(np.float32))
-        >>> add(input_x, input_y)
-        [5,7,9]
+        >>> output = add(input_x, input_y)
+        >>> print(output)
+        [5. 7. 9.]
     """
 
     def infer_value(self, x, y):
@@ -170,16 +171,16 @@ class AssignAdd(PrimitiveWithInfer):
           It must have the same shape as `variable` if it is a Tensor.
 
     Examples:
-        >>> class Net(Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.AssignAdd = P.AssignAdd()
-        >>>         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int64), name="global_step")
-        >>>
-        >>>     def construct(self, x):
-        >>>         self.AssignAdd(self.variable, x)
-        >>>         return self.variable
-        >>>
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.AssignAdd = P.AssignAdd()
+        ...         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int64), name="global_step")
+        ...
+        ...     def construct(self, x):
+        ...         self.AssignAdd(self.variable, x)
+        ...         return self.variable
+        ...
         >>> net = Net()
         >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
         >>> output = net(value)
@@ -222,16 +223,16 @@ class AssignSub(PrimitiveWithInfer):
           It must have the same shape as `variable` if it is a Tensor.
 
     Examples:
-        >>> class Net(Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.AssignSub = P.AssignSub()
-        >>>         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
-        >>>
-        >>>     def construct(self, x):
-        >>>         self.AssignSub(self.variable, x)
-        >>>         return self.variable
-        >>>
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.AssignSub = P.AssignSub()
+        ...         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int32), name="global_step")
+        ...
+        ...     def construct(self, x):
+        ...         self.AssignSub(self.variable, x)
+        ...         return self.variable
+        ...
         >>> net = Net()
         >>> value = Tensor(np.ones([1]).astype(np.int32)*100)
         >>> output = net(value)
@@ -422,8 +423,9 @@ class ReduceAll(_Reduce):
         >>> input_x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = P.ReduceAll(keep_dims=True)
         >>> output = op(input_x, 1)
+        >>> print(output)
         [[False]
-         [True ]]
+         [ True]]
     """
 
     def __infer__(self, input_x, axis):
@@ -461,8 +463,8 @@ class ReduceAny(_Reduce):
         >>> op = P.ReduceAny(keep_dims=True)
         >>> output = op(input_x, 1)
         >>> print(output)
-        [[True],
-         [True]]
+        [[ True]
+         [ True]]
     """
 
     def __infer__(self, input_x, axis):
@@ -744,6 +746,7 @@ class BatchMatMul(MatMul):
         >>> input_y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
         >>> batmatmul = P.BatchMatMul()
         >>> output = batmatmul(input_x, input_y)
+        >>> print(output)
         [[[[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
@@ -757,6 +760,7 @@ class BatchMatMul(MatMul):
         >>> input_y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
         >>> batmatmul = P.BatchMatMul(transpose_a=True)
         >>> output = batmatmul(input_x, input_y)
+        >>> print(output)
         [[[[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
           [[3. 3. 3. 3.]]
@@ -800,6 +804,7 @@ class CumSum(PrimitiveWithInfer):
         >>> input = Tensor(np.array([[3, 4, 6, 10],[1, 6, 7, 9],[4, 3, 8, 7],[1, 3, 7, 9]]).astype(np.float32))
         >>> cumsum = P.CumSum()
         >>> output = cumsum(input, 1)
+        >>> print(output)
         [[ 3.  7. 13. 23.]
          [ 1.  7. 14. 23.]
          [ 4.  7. 15. 22.]
@@ -842,18 +847,19 @@ class AddN(PrimitiveWithInfer):
 
     Examples:
         >>> class NetAddN(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(NetAddN, self).__init__()
-        >>>         self.addN = P.AddN()
-        >>>
-        >>>     def construct(self, *z):
-        >>>         return self.addN(z)
-        >>>
+        ...     def __init__(self):
+        ...         super(NetAddN, self).__init__()
+        ...         self.addN = P.AddN()
+        ...
+        ...     def construct(self, *z):
+        ...         return self.addN(z)
+        ...
         >>> net = NetAddN()
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.float32)
-        >>> net(input_x, input_y, input_x, input_y)
-        [10.0, 14.0, 18.0]
+        >>> output = net(input_x, input_y, input_x, input_y)
+        >>> print(output)
+        [10. 14. 18.]
     """
 
     @prim_attr_register
@@ -924,18 +930,19 @@ class AccumulateNV2(PrimitiveWithInfer):
 
     Examples:
         >>> class NetAccumulateNV2(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(NetAccumulateNV2, self).__init__()
-        >>>         self.accumulateNV2 = P.AccumulateNV2()
-        >>>
-        >>>     def construct(self, *z):
-        >>>         return self.accumulateNV2(z)
-        >>>
+        ...     def __init__(self):
+        ...         super(NetAccumulateNV2, self).__init__()
+        ...         self.accumulateNV2 = P.AccumulateNV2()
+        ...
+        ...     def construct(self, *z):
+        ...         return self.accumulateNV2(z)
+        ...
         >>> net = NetAccumulateNV2()
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.float32)
-        >>> net(input_x, input_y, input_x, input_y)
-        Tensor([10., 14., 18.], shape=(3,), dtype=mindspore.float32)
+        >>> output = net(input_x, input_y, input_x, input_y)
+        >>> print(output)
+        [10. 14. 18.]
     """
 
     @prim_attr_register
@@ -983,8 +990,8 @@ class Neg(PrimitiveWithInfer):
     Examples:
         >>> neg = P.Neg()
         >>> input_x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
-        >>> result = neg(input_x)
-        >>> print(result)
+        >>> output = neg(input_x)
+        >>> print(output)
         [-1.  -2.   1.  -2.   0.   3.5]
     """
 
@@ -1030,10 +1037,11 @@ class InplaceAdd(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
         >>> inplaceAdd = P.InplaceAdd(indices)
-        >>> inplaceAdd(input_x, input_v)
-        [[1.5 3.]
-         [4. 5.5]
-         [5. 6.]]
+        >>> output = inplaceAdd(input_x, input_v)
+        >>> print(output)
+        [[1.5 3. ]
+         [4.  5.5]
+         [5.  6. ]]
     """
 
     @prim_attr_register
@@ -1088,10 +1096,11 @@ class InplaceSub(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
         >>> inplaceSub = P.InplaceSub(indices)
-        >>> inplaceSub(input_x, input_v)
-        [[0.5 1.]
-         [2. 2.5]
-         [5. 6.]]
+        >>> output = inplaceSub(input_x, input_v)
+        >>> print(output)
+        [[0.5 1. ]
+         [2.  2.5]
+         [5.  6. ]]
     """
 
     @prim_attr_register
@@ -1150,8 +1159,9 @@ class Sub(_MathBinaryOp):
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.int32)
         >>> sub = P.Sub()
-        >>> sub(input_x, input_y)
-        [-3, -3, -3]
+        >>> output = sub(input_x, input_y)
+        >>> print(output)
+        [-3 -3 -3]
     """
 
     def infer_value(self, x, y):
@@ -1189,8 +1199,9 @@ class Mul(_MathBinaryOp):
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
         >>> mul = P.Mul()
-        >>> mul(input_x, input_y)
-        [4, 10, 18]
+        >>> output = mul(input_x, input_y)
+        >>> print(output)
+        [ 4. 10. 18.]
     """
 
     def infer_value(self, x, y):
@@ -1228,8 +1239,9 @@ class SquaredDifference(_MathBinaryOp):
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([2.0, 4.0, 6.0]), mindspore.float32)
         >>> squared_difference = P.SquaredDifference()
-        >>> squared_difference(input_x, input_y)
-        [1.0, 4.0, 9.0]
+        >>> output = squared_difference(input_x, input_y)
+        >>> print(output)
+        [1. 4. 9.]
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
@@ -1250,8 +1262,9 @@ class Square(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> square = P.Square()
-        >>> square(input_x)
-        [1.0, 4.0, 9.0]
+        >>> output = square(input_x)
+        >>> print(output)
+        [1. 4. 9.]
     """
 
     @prim_attr_register
@@ -1288,8 +1301,10 @@ class Rsqrt(PrimitiveWithInfer):
     Examples:
         >>> input_tensor = Tensor([[4, 4], [9, 9]], mindspore.float32)
         >>> rsqrt = P.Rsqrt()
-        >>> rsqrt(input_tensor)
-        [[0.5, 0.5], [0.333333, 0.333333]]
+        >>> output = rsqrt(input_tensor)
+        >>> print(output)
+        [[0.5      0.5     ]
+         [0.333334 0.333334]]
     """
 
     @prim_attr_register
@@ -1326,8 +1341,9 @@ class Sqrt(PrimitiveWithCheck):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
         >>> sqrt = P.Sqrt()
-        >>> sqrt(input_x)
-        [1.0, 2.0, 3.0]
+        >>> output = sqrt(input_x)
+        >>> print(output)
+        [1. 2. 3.]
     """
 
     @prim_attr_register
@@ -1360,8 +1376,9 @@ class Reciprocal(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> reciprocal = P.Reciprocal()
-        >>> reciprocal(input_x)
-        [1.0, 0.5, 0.25]
+        >>> output = reciprocal(input_x)
+        >>> print(output)
+        [1.   0.5  0.25]
     """
 
     @prim_attr_register
@@ -1414,14 +1431,16 @@ class Pow(_MathBinaryOp):
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> input_y = 3.0
         >>> pow = P.Pow()
-        >>> pow(input_x, input_y)
-        [1.0, 8.0, 64.0]
+        >>> output = pow(input_x, input_y)
+        >>> print(output)
+        [ 1.  8. 64.]
         >>>
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
         >>> pow = P.Pow()
-        >>> pow(input_x, input_y)
-        [1.0, 16.0, 64.0]
+        >>> output = pow(input_x, input_y)
+        >>> print(output)
+        [ 1. 16. 64.]
     """
 
     def infer_value(self, x, power):
@@ -1447,8 +1466,9 @@ class Exp(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> exp = P.Exp()
-        >>> exp(input_x)
-        [ 2.71828183,  7.3890561 , 54.59815003]
+        >>> output = exp(input_x)
+        >>> print(output)
+        [ 2.718282  7.389056 54.598152]
     """
 
     @prim_attr_register
@@ -1485,8 +1505,9 @@ class Expm1(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
         >>> expm1 = P.Expm1()
-        >>> expm1(input_x)
-        [ 0.,  1.71828183,  6.3890561 , 53.59815003]
+        >>> output = expm1(input_x)
+        >>> print(output)
+        [ 0.        1.718282  6.389056 53.598152]
     """
 
     @prim_attr_register
@@ -1523,7 +1544,8 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         >>> x = Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mindspore.float16)
         >>> range = Tensor([0.0, 5.0], mindspore.float16)
         >>> hist = P.HistogramFixedWidth(5)
-        >>> hist(x, range)
+        >>> output = hist(x, range)
+        >>> print(output)
         [2 1 1 0 2]
     """
 
@@ -1559,8 +1581,9 @@ class Log(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> log = P.Log()
-        >>> log(input_x)
-        [0.0, 0.69314718, 1.38629436]
+        >>> output = log(input_x)
+        >>> print(output)
+        [0.        0.6931472 1.38629444]
     """
 
     @prim_attr_register
@@ -1596,8 +1619,9 @@ class Log1p(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> log1p = P.Log1p()
-        >>> log1p(input_x)
-        [0.6931472, 1.0986123, 1.609438]
+        >>> output = log1p(input_x)
+        >>> print(output)
+        [0.6931472 1.0986123 1.609438 ]
     """
 
     @prim_attr_register
@@ -1626,8 +1650,9 @@ class Erf(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
         >>> erf = P.Erf()
-        >>> erf(input_x)
-        [-0.8427168, 0., 0.8427168, 0.99530876, 0.99997765]
+        >>> output = erf(input_x)
+        >>> print(output)
+        [-0.8427168   0.          0.8427168   0.99530876  0.99997765]
     """
 
     @prim_attr_register
@@ -1656,8 +1681,9 @@ class Erfc(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
         >>> erfc = P.Erfc()
-        >>> erfc(input_x)
-        [1.8427168, 1.0, 0.1572832, 0.00469124, 0.00002235]
+        >>> output = erfc(input_x)
+        >>> print(output)
+        [1.8427168e+00 1.0000000e+00 1.5728319e-01 4.6912432e-03 2.2351742e-05]
     """
 
     @prim_attr_register
@@ -1698,8 +1724,9 @@ class Minimum(_MathBinaryOp):
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
         >>> minimum = P.Minimum()
-        >>> minimum(input_x, input_y)
-        [1.0, 2.0, 3.0]
+        >>> output = minimum(input_x, input_y)
+        >>> print(output)
+        [1. 2. 3.]
     """
 
     def infer_value(self, x, y):
@@ -1737,8 +1764,9 @@ class Maximum(_MathBinaryOp):
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
         >>> maximum = P.Maximum()
-        >>> maximum(input_x, input_y)
-        [4.0, 5.0, 6.0]
+        >>> output = maximum(input_x, input_y)
+        >>> print(output)
+        [4. 5. 6.]
     """
 
     def infer_value(self, x, y):
@@ -1776,8 +1804,9 @@ class RealDiv(_MathBinaryOp):
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
         >>> realdiv = P.RealDiv()
-        >>> realdiv(input_x, input_y)
-        [0.25, 0.4, 0.5]
+        >>> output = realdiv(input_x, input_y)
+        >>> print(output)
+        [0.25 0.4  0.5 ]
     """
 
     def infer_value(self, x, y):
@@ -1816,8 +1845,9 @@ class Div(_MathBinaryOp):
         >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
         >>> div = P.Div()
-        >>> div(input_x, input_y)
-        [-1.3, 2.5, 2.0]
+        >>> output = div(input_x, input_y)
+        >>> print(output)
+        [-1.3333334  2.5        2.        ]
     """
 
     def infer_value(self, x, y):
@@ -1854,8 +1884,9 @@ class DivNoNan(_MathBinaryOp):
         >>> input_x = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([0., 0., 0., 2.0, 3.0]), mindspore.float32)
         >>> div_no_nan = P.DivNoNan()
-        >>> div_no_nan(input_x, input_y)
-        [0., 0., 0., 2.5, 2.0]
+        >>> output = div_no_nan(input_x, input_y)
+        >>> print(output)
+        [0.  0.  0.  2.5 2. ]
     """
 
     @prim_attr_register
@@ -1899,8 +1930,9 @@ class FloorDiv(_MathBinaryOp):
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
         >>> floor_div = P.FloorDiv()
-        >>> floor_div(input_x, input_y)
-        [0, 1, -1]
+        >>> output = floor_div(input_x, input_y)
+        >>> print(output)
+        [ 0  1 -1]
     """
 
 
@@ -1930,8 +1962,9 @@ class TruncateDiv(_MathBinaryOp):
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
         >>> truncate_div = P.TruncateDiv()
-        >>> truncate_div(input_x, input_y)
-        [0, 1, 0]
+        >>> output = truncate_div(input_x, input_y)
+        >>> print(output)
+        [0 1 0]
     """
 
 
@@ -1960,8 +1993,9 @@ class TruncateMod(_MathBinaryOp):
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
         >>> truncate_mod = P.TruncateMod()
-        >>> truncate_mod(input_x, input_y)
-        [2, 1, -1]
+        >>> output = truncate_mod(input_x, input_y)
+        >>> print(output)
+        [ 2  1 -1]
     """
 
 
@@ -1991,8 +2025,9 @@ class Mod(_MathBinaryOp):
         >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
         >>> mod = P.Mod()
-        >>> mod(input_x, input_y)
-        [-1. 1. 0.]
+        >>> output = mod(input_x, input_y)
+        >>> print(output)
+        [-1.  1.  0.]
     """
 
     def infer_value(self, x, y):
@@ -2016,8 +2051,9 @@ class Floor(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
         >>> floor = P.Floor()
-        >>> floor(input_x)
-        [1.0, 2.0, -2.0]
+        >>> output = floor(input_x)
+        >>> print(output)
+        [ 1.  2. -2.]
     """
 
     @prim_attr_register
@@ -2057,8 +2093,9 @@ class FloorMod(_MathBinaryOp):
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
         >>> floor_mod = P.FloorMod()
-        >>> floor_mod(input_x, input_y)
-        [2, 1, 2]
+        >>> output = floor_mod(input_x, input_y)
+        >>> print(output)
+        [2 1 2]
     """
 
 
@@ -2075,8 +2112,9 @@ class Ceil(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
         >>> ceil_op = P.Ceil()
-        >>> ceil_op(input_x)
-        [2.0, 3.0, -1.0]
+        >>> output = ceil_op(input_x)
+        >>> print(output)
+        [ 2.  3. -1.]
     """
 
     @prim_attr_register
@@ -2116,8 +2154,9 @@ class Xdivy(_MathBinaryOp):
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.float32)
         >>> input_y = Tensor(np.array([2, 2, 2]), mindspore.float32)
         >>> xdivy = P.Xdivy()
-        >>> xdivy(input_x, input_y)
-        [1.0, 2.0, -0.5]
+        >>> output = xdivy(input_x, input_y)
+        >>> print(output)
+        [ 1.   2.  -0.5]
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
@@ -2151,8 +2190,9 @@ class Xlogy(_MathBinaryOp):
         >>> input_x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
         >>> input_y = Tensor(np.array([2, 2, 2]), mindspore.float32)
         >>> xlogy = P.Xlogy()
-        >>> xlogy(input_x, input_y)
-        [-3.465736, 0.0, 2.7725887]
+        >>> output = xlogy(input_x, input_y)
+        >>> print(output)
+        [-3.465736   0.        2.7725887]
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
@@ -2201,7 +2241,8 @@ class Cosh(PrimitiveWithInfer):
         >>> cosh = P.Cosh()
         >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = cosh(input_x)
-        [1.0289385 1.364684 1.048436 1.4228927]
+        >>> print(output)
+        [1.0289385 1.364684 1.048436 1.0040528]
     """
 
     @prim_attr_register
@@ -2230,7 +2271,8 @@ class Asinh(PrimitiveWithInfer):
         >>> asinh = P.Asinh()
         >>> input_x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mindspore.float32)
         >>> output = asinh(input_x)
-        [-2.3212, 1.1976, 1.8184, 5.2983]
+        >>> print(output)
+        [-2.3124385  1.1947632  1.8184465  5.298342 ]
     """
 
     @prim_attr_register
@@ -2259,7 +2301,8 @@ class Sinh(PrimitiveWithInfer):
         >>> sinh = P.Sinh()
         >>> input_x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
         >>> output = sinh(input_x)
-        [0.6604918 0.28367308 0.44337422 0.6604918]
+        >>> print(output)
+        [0.6604918  0.28367308 0.44337422 0.6604918 ]
     """
 
     @prim_attr_register
@@ -2316,8 +2359,9 @@ class Equal(_LogicBinaryOp):
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 2, 4]), mindspore.int32)
         >>> equal = P.Equal()
-        >>> equal(input_x, input_y)
-        [True, True, False]
+        >>> output = equal(input_x, input_y)
+        >>> print(output)
+        [ True  True False]
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
@@ -2356,8 +2400,9 @@ class ApproximateEqual(_LogicBinaryOp):
         >>> x1 = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> x2 = Tensor(np.array([2, 4, 6]), mindspore.float32)
         >>> approximate_equal = P.ApproximateEqual(2.)
-        >>> result = approximate_equal(x1, x2)
-        [True  True  False]
+        >>> output = approximate_equal(x1, x2)
+        >>> print(output)
+        [ True  True  False]
     """
 
     @prim_attr_register
@@ -2393,7 +2438,8 @@ class EqualCount(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 2, 4]), mindspore.int32)
         >>> equal_count = P.EqualCount()
-        >>> equal_count(input_x, input_y)
+        >>> output = equal_count(input_x, input_y)
+        >>> print(output)
         [2]
     """
 
@@ -2434,14 +2480,16 @@ class NotEqual(_LogicBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> not_equal = P.NotEqual()
-        >>> not_equal(input_x, 2.0)
-        [True, False, True]
+        >>> output = not_equal(input_x, 2.0)
+        >>> print(output)
+        [ True False  True]
         >>>
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 2, 4]), mindspore.int32)
         >>> not_equal = P.NotEqual()
-        >>> not_equal(input_x, input_y)
-        [False, False, True]
+        >>> output = not_equal(input_x, input_y)
+        >>> print(output)
+        [False False  True]
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
@@ -2472,8 +2520,9 @@ class Greater(_LogicBinaryOp):
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
         >>> greater = P.Greater()
-        >>> greater(input_x, input_y)
-        [False, True, False]
+        >>> output = greater(input_x, input_y)
+        >>> print(output)
+        [False  True False]
     """
 
     def infer_value(self, x, y):
@@ -2509,8 +2558,9 @@ class GreaterEqual(_LogicBinaryOp):
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
         >>> greater_equal = P.GreaterEqual()
-        >>> greater_equal(input_x, input_y)
-        [True, True, False]
+        >>> output = greater_equal(input_x, input_y)
+        >>> print(output)
+        [ True  True False]
     """
 
     def infer_value(self, x, y):
@@ -2546,8 +2596,9 @@ class Less(_LogicBinaryOp):
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
         >>> less = P.Less()
-        >>> less(input_x, input_y)
-        [False, False, True]
+        >>> output = less(input_x, input_y)
+        >>> print(output)
+        [False False  True]
     """
 
     def infer_value(self, x, y):
@@ -2583,8 +2634,9 @@ class LessEqual(_LogicBinaryOp):
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
         >>> less_equal = P.LessEqual()
-        >>> less_equal(input_x, input_y)
-        [True, False, True]
+        >>> output = less_equal(input_x, input_y)
+        >>> print(output)
+        [ True False  True]
     """
 
     def infer_value(self, x, y):
@@ -2609,8 +2661,9 @@ class LogicalNot(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
         >>> logical_not = P.LogicalNot()
-        >>> logical_not(input_x)
-        [False, True, False]
+        >>> output = logical_not(input_x)
+        >>> print(output)
+        [False  True False]
     """
 
     @prim_attr_register
@@ -2649,8 +2702,9 @@ class LogicalAnd(_LogicBinaryOp):
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
         >>> input_y = Tensor(np.array([True, True, False]), mindspore.bool_)
         >>> logical_and = P.LogicalAnd()
-        >>> logical_and(input_x, input_y)
-        [True, False, False]
+        >>> output = logical_and(input_x, input_y)
+        >>> print(output)
+        [ True False False]
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
@@ -2680,8 +2734,9 @@ class LogicalOr(_LogicBinaryOp):
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
         >>> input_y = Tensor(np.array([True, True, False]), mindspore.bool_)
         >>> logical_or = P.LogicalOr()
-        >>> logical_or(input_x, input_y)
-        [True, True, True]
+        >>> output = logical_or(input_x, input_y)
+        >>> print(output)
+        [ True  True  True]
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
@@ -2757,8 +2812,9 @@ class IsFinite(PrimitiveWithInfer):
     Examples:
         >>> is_finite = P.IsFinite()
         >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
-        >>> result = is_finite(input_x)
-        [False   True   False]
+        >>> output = is_finite(input_x)
+        >>> print(output)
+        [False  True False]
     """
 
     @prim_attr_register
@@ -2820,8 +2876,9 @@ class NPUAllocFloatStatus(PrimitiveWithInfer):
 
     Examples:
         >>> alloc_status = P.NPUAllocFloatStatus()
-        >>> init = alloc_status()
-        Tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], shape=(8,), dtype=mindspore.float32)
+        >>> output = alloc_status()
+        >>> print(output)
+        [0. 0. 0. 0. 0. 0. 0. 0.]
     """
 
     @prim_attr_register
@@ -2855,8 +2912,9 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
         >>> alloc_status = P.NPUAllocFloatStatus()
         >>> get_status = P.NPUGetFloatStatus()
         >>> init = alloc_status()
-        >>> flag = get_status(init)
-        Tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], shape=(8,), dtype=mindspore.float32)
+        >>> output = get_status(init)
+        >>> print(output)
+        [0. 0. 0. 0. 0. 0. 0. 0.]
     """
 
     @prim_attr_register
@@ -2898,9 +2956,9 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         >>> clear_status = P.NPUClearFloatStatus()
         >>> init = alloc_status()
         >>> flag = get_status(init)
-        >>> clear = clear_status(init)
-        >>> print(clear)
-        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        >>> output = clear_status(init)
+        >>> print(output)
+        [0. 0. 0. 0. 0. 0. 0. 0.]
     """
 
     @prim_attr_register
@@ -2991,7 +3049,8 @@ class Sin(PrimitiveWithInfer):
         >>> sin = P.Sin()
         >>> input_x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
         >>> output = sin(input_x)
-        [0.5810352 0.27635565 0.41687083 0.5810352]
+        >>> print(output)
+        [0.5810352  0.27635565 0.41687083 0.5810352 ]
     """
 
     @prim_attr_register
@@ -3020,7 +3079,8 @@ class Asin(PrimitiveWithInfer):
         >>> asin = P.Asin()
         >>> input_x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
         >>> output = asin(input_x)
-        [0.8331, 0.0400, 0.3047, 0.5944]
+        >>> print(output)
+        [0.8330927  0.04001068  0.30469266  0.59438497]
     """
 
     @prim_attr_register
@@ -3105,10 +3165,11 @@ class Abs(PrimitiveWithInfer):
         Tensor, has the same shape as the `input_x`.
 
     Examples:
-         >>> input_x = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
-         >>> abs = P.Abs()
-         >>> abs(input_x)
-         [1.0, 1.0, 0.0]
+        >>> input_x = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
+        >>> abs = P.Abs()
+        >>> output = abs(input_x)
+        >>> print(output)
+        [1. 1. 0.]
     """
 
     @prim_attr_register
@@ -3152,7 +3213,7 @@ class Sign(PrimitiveWithInfer):
          >>> sign = P.Sign()
          >>> output = sign(input_x)
          >>> print(output)
-         [[1.0, 0.0, -1.0]]
+         [[ 1.  0. -1.]]
     """
 
     @prim_attr_register
@@ -3180,8 +3241,9 @@ class Round(PrimitiveWithInfer):
     Examples:
          >>> input_x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
          >>> round = P.Round()
-         >>> round(input_x)
-         [1.0, 2.0, 2.0, 2.0, -4.0]
+         >>> output = round(input_x)
+         >>> print(output)
+         [ 1.  2.  2.  2. -4.]
     """
 
     @prim_attr_register
@@ -3245,7 +3307,7 @@ class Atan(PrimitiveWithInfer):
         >>> atan = P.Atan()
         >>> output = atan(output_y)
         >>> print(output)
-        [[1.047, 0.7850001]]
+        [1.047     0.7850001]
     """
 
     @prim_attr_register
@@ -3273,8 +3335,9 @@ class Atanh(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
         >>> atanh = P.Atanh()
-        >>> atanh(input_x)
-        [[1.8869909 1.058268]]
+        >>> output = atanh(input_x)
+        >>> print(output)
+        [1.8869909 1.058268 ]
     """
 
     @prim_attr_register
@@ -3309,11 +3372,12 @@ class Atan2(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,and the data type is same as `input_x`.
 
     Examples:
-         >>> input_x = Tensor(np.array([[0, 1]]), mindspore.float32)
-         >>> input_y = Tensor(np.array([[1, 1]]), mindspore.float32)
-         >>> atan2 = P.Atan2()
-         >>> atan2(input_x, input_y)
-         [[0. 0.7853982]]
+        >>> input_x = Tensor(np.array([0, 1]), mindspore.float32)
+        >>> input_y = Tensor(np.array([1, 1]), mindspore.float32)
+        >>> atan2 = P.Atan2()
+        >>> output = atan2(input_x, input_y)
+        >>> print(output)
+        [0.        0.7853982]
     """
 
 
@@ -3333,11 +3397,13 @@ class SquareSumAll(PrimitiveWithInfer):
         - **output_y2** (Tensor) - The same type as the `input_x1`.
 
     Examples:
-         >>> input_x1 = Tensor(np.array([0, 0, 2, 0]), mindspore.float32)
-         >>> input_x2 = Tensor(np.array([0, 0, 2, 4]), mindspore.float32)
-         >>> square_sum_all = P.SquareSumAll()
-         >>> square_sum_all(input_x1, input_x2)
-         (4, 20)
+        >>> input_x1 = Tensor(np.array([0, 0, 2, 0]), mindspore.float32)
+        >>> input_x2 = Tensor(np.array([0, 0, 2, 4]), mindspore.float32)
+        >>> square_sum_all = P.SquareSumAll()
+        >>> output = square_sum_all(input_x1, input_x2)
+        >>> print(output)
+        (Tensor(shape=[], dtype=Float32, value= 4),
+         Tensor(shape=[], dtype=Float32, value= 20))
     """
 
     @prim_attr_register
@@ -3373,11 +3439,12 @@ class BitwiseAnd(_BitwiseBinaryOp):
         Tensor, has the same type as the `input_x1`.
 
     Examples:
-         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
-         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)
-         >>> bitwise_and = P.BitwiseAnd()
-         >>> bitwise_and(input_x1, input_x2)
-         [0, 0, 1, -1, 1, 0, 1]
+        >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+        >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+        >>> bitwise_and = P.BitwiseAnd()
+        >>> output = bitwise_and(input_x1, input_x2)
+        >>> print(output)
+        [ 0  0  1 -1  1  0  1]
     """
 
 
@@ -3399,11 +3466,12 @@ class BitwiseOr(_BitwiseBinaryOp):
         Tensor, has the same type as the `input_x1`.
 
     Examples:
-         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
-         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)
-         >>> bitwise_or = P.BitwiseOr()
-         >>> bitwise_or(input_x1, input_x2)
-         [0, 1, 1, -1, -1, 3, 3]
+        >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+        >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+        >>> bitwise_or = P.BitwiseOr()
+        >>> boutput = itwise_or(input_x1, input_x2)
+        >>> print(output)
+        [ 0  1  1 -1 -1  3  3]
     """
 
 
@@ -3425,11 +3493,12 @@ class BitwiseXor(_BitwiseBinaryOp):
         Tensor, has the same type as the `input_x1`.
 
     Examples:
-         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
-         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)
-         >>> bitwise_xor = P.BitwiseXor()
-         >>> bitwise_xor(input_x1, input_x2)
-         [0, 1, 0, 0, -2, 3, 2]
+        >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+        >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+        >>> bitwise_xor = P.BitwiseXor()
+        >>> output = bitwise_xor(input_x1, input_x2)
+        >>> print(output)
+        [ 0  1  0  0 -2  3  2]
     """
 
 
@@ -3449,7 +3518,7 @@ class BesselI0e(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = bessel_i0e(input_x)
         >>> print(output)
-        [0.7979961, 0.5144438, 0.75117415, 0.9157829]
+        [0.7979961  0.5144438  0.75117415  0.9157829 ]
     """
 
     @prim_attr_register
@@ -3480,7 +3549,7 @@ class BesselI1e(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = bessel_i1e(input_x)
         >>> print(output)
-        [0.09507662, 0.19699717, 0.11505538, 0.04116856]
+        [0.09507662 0.19699717 0.11505538 0.04116856]
     """
 
     @prim_attr_register
@@ -3511,7 +3580,7 @@ class Inv(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([0.25, 0.4, 0.31, 0.52]), mindspore.float32)
         >>> output = inv(input_x)
         >>> print(output)
-        [4., 2.5, 3.2258065, 1.923077]
+        [4.        2.5       3.2258065 1.923077 ]
     """
 
     @prim_attr_register
@@ -3542,7 +3611,7 @@ class Invert(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
         >>> output = invert(input_x)
         >>> print(output)
-        [-26, -5, -14, -10]
+        [-26 -5 -14 -10]
     """
 
     @prim_attr_register
@@ -3569,9 +3638,9 @@ class Eps(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor([4, 1, 2, 3], mindspore.float32)
-        >>> out = P.Eps()(input_x)
-        >>> print(out)
-        [1.52587891e-05, 1.52587891e-05, 1.52587891e-05, 1.52587891e-05]
+        >>> output = P.Eps()(input_x)
+        >>> print(output)
+        [1.5258789e-05 1.5258789e-05 1.5258789e-05 1.5258789e-05]
     """
 
     @prim_attr_register

@@ -85,7 +85,6 @@ class SequentialCell(Cell):
         >>> bn = nn.BatchNorm2d(2)
         >>> relu = nn.ReLU()
         >>> seq = nn.SequentialCell([conv, bn, relu])
-        >>>
         >>> x = Tensor(np.random.random((1, 3, 4, 4)), dtype=mindspore.float32)
         >>> output = seq(x)
         >>> print(output)
@@ -158,10 +157,10 @@ class SequentialCell(Cell):
             >>> x = Tensor(np.ones([1, 3, 4, 4]), dtype=mindspore.float32)
             >>> output = seq(x)
             >>> print(output)
-            [[[[0.12445523 0.12445523]
-               [0.12445523 0.12445523]]
-              [[0.         0.        ]
-               [0.         0.        ]]]]
+            [[[[0.08789019 0.08789019]
+               [0.08789019 0.08789019]]
+              [[0.07690391 0.07690391]
+               [0.07690391 0.07690391]]]]
         """
         if _valid_cell(cell):
             self._cells[str(len(self))] = cell
@@ -195,9 +194,11 @@ class CellList(_CellListBase, Cell):
         >>> x = Tensor(np.random.random((1, 3, 4, 4)), dtype=mindspore.float32)
         >>> # not same as nn.SequentialCell, `cell_ls(x)` is not correct
         >>> cell_ls
-        CellList< (0): Conv2d<input_channels=100, ..., bias_init=None>
-                  (1): BatchNorm2d<num_features=20, ..., moving_variance=Parameter (name=variance)>
-                  (2): ReLU<> >
+        CellList<
+          (0): Conv2d<input_channels=100, ..., bias_init=None>
+          (1): BatchNorm2d<num_features=20, ..., moving_variance=Parameter (name=variance)>
+          (2): ReLU<>
+          >
     """
     def __init__(self, *args):
         _CellListBase.__init__(self)

@@ -133,8 +133,9 @@ class Softmax(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> softmax = P.Softmax()
-        >>> softmax(input_x)
-        [0.01165623, 0.03168492, 0.08612854, 0.23412167, 0.6364086]
+        >>> output = softmax(input_x)
+        >>> print(output)
+        [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
     """
 
     @prim_attr_register
@@ -183,8 +184,9 @@ class LogSoftmax(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> log_softmax = P.LogSoftmax()
-        >>> log_softmax(input_x)
-        [-4.4519143, -3.4519143, -2.4519143, -1.4519144, -0.4519144]
+        >>> output = log_softmax(input_x)
+        >>> print(output)
+        [-4.4519143 -3.4519143 -2.4519143 -1.4519144 -0.4519144]
     """
 
     @prim_attr_register
@@ -220,8 +222,9 @@ class Softplus(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> softplus = P.Softplus()
-        >>> softplus(input_x)
-        [1.3132615, 2.126928, 3.0485873, 4.01815, 5.0067153]
+        >>> output = softplus(input_x)
+        >>> print(output)
+        [1.3132615 2.126928  3.0485873 4.01815   5.0067153]
     """
 
     @prim_attr_register
@@ -255,8 +258,9 @@ class Softsign(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)
         >>> softsign = P.Softsign()
-        >>> softsign(input_x)
-        [0. -0.5 0.6666667 0.9677419 -0.9677419]
+        >>> output = softsign(input_x)
+        >>> print(output)
+        [ 0.        -0.5         0.6666667  0.9677419 -0.9677419]
     """
 
     @prim_attr_register
@@ -287,9 +291,10 @@ class ReLU(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu = P.ReLU()
-        >>> result = relu(input_x)
-        >>> print(result)
-        [[0, 4.0, 0.0], [2.0, 0.0, 9.0]]
+        >>> output = relu(input_x)
+        >>> print(output)
+        [[0. 4. 0.]
+         [2. 0. 9.]]
     """
 
     @prim_attr_register
@@ -355,9 +360,17 @@ class ReLUV2(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mindspore.float32)
         >>> relu_v2 = P.ReLUV2()
-        >>> output = relu_v2(input_x)
-        ([[[[1., 0.], [0., 4.]], [[0., 6.], [7., 0.]]]],
-         [[[[[1, 0], [2, 0]], [[2, 0], [1, 0]]]]])
+        >>> output, mask= relu_v2(input_x)
+        >>> print(output)
+        [[[[1. 0.]
+           [0. 4.]]
+          [[0. 6.]
+           [7. 0.]]]]
+        >>> print(mask)
+        [[[[[1 0]
+            [2 0]]
+           [[2 0]
+            [1 0]]]]]
     """
 
     @prim_attr_register
@@ -414,10 +427,10 @@ class Elu(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> elu = P.Elu()
-        >>> result = elu(input_x)
-        >>> print(result)
-        [[-0.632  4.0   -0.999]
-         [2.0    -0.993  9.0  ]]
+        >>> output = elu(input_x)
+        >>> print(output)
+        [[-0.63212055  4.         -0.99966455]
+         [ 2.         -0.99326205  9.        ]]
     """
 
     @prim_attr_register
@@ -493,8 +506,9 @@ class Sigmoid(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> sigmoid = P.Sigmoid()
-        >>> sigmoid(input_x)
-        [0.73105866, 0.880797, 0.9525742, 0.98201376, 0.9933071]
+        >>> output = sigmoid(input_x)
+        >>> print(output)
+        [0.7310586  0.880797   0.95257413 0.98201376 0.9933072 ]
     """
 
     @prim_attr_register
@@ -568,8 +582,9 @@ class Tanh(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> tanh = P.Tanh()
-        >>> tanh(input_x)
-        [0.7615941, 0.9640276, 0.9950548, 0.9993293, 0.99990916]
+        >>> output = tanh(input_x)
+        >>> print(output)
+        [0.7615941 0.9640276 0.9950547 0.9993293 0.9999092]
     """
 
     @prim_attr_register
@@ -1554,24 +1569,24 @@ class AvgPool(_Pool):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.avgpool_op = P.AvgPool(padding="VALID", ksize=2, strides=1)
-        >>>
-        >>>     def construct(self, x):
-        >>>         result = self.avgpool_op(x)
-        >>>         return result
-        >>>
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.avgpool_op = P.AvgPool(padding="VALID", ksize=2, strides=1)
+        ...
+        ...     def construct(self, x):
+        ...         result = self.avgpool_op(x)
+        ...         return result
+        ...
         >>> input_x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
         >>> net = Net()
-        >>> result = net(input_x)
-        >>> print(result)
+        >>> output = net(input_x)
+        >>> print(output)
         [[[[ 2.5   3.5   4.5]
            [ 6.5   7.5   8.5]]
-          [[ 14.5  15.5  16.5]
-           [ 18.5  19.5  20.5]]
-          [[ 26.5  27.5  28.5]
-           [ 30.5  31.5  32.5]]]]
+          [[14.5  15.5  16.5]
+           [18.5  19.5  20.5]]
+          [[26.5  27.5  28.5]
+           [30.5  31.5  32.5]]]]
     """
 
     @prim_attr_register
@@ -1835,10 +1850,12 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         >>> logits = Tensor([[2, 4, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
         >>> labels = Tensor([[0, 0, 0, 0, 1], [0, 0, 0, 1, 0]], mindspore.float32)
         >>> softmax_cross = P.SoftmaxCrossEntropyWithLogits()
-        >>> loss, backprop = softmax_cross(logits, labels)
-        >>> print((loss, backprop))
-        ([0.5899297, 0.52374405], [[0.02760027, 0.20393994, 0.01015357, 0.20393994, -0.44563377],
-        [0.08015892, 0.02948882, 0.08015892, -0.4077012, 0.21789455]])
+        >>> loss, dlogits = softmax_cross(logits, labels)
+        >>> print(loss)
+        [0.5899297  0.52374405]
+        >>> print(dlogits)
+        [[ 0.02760027  0.20393994  0.01015357  0.20393994 -0.44563377]
+         [ 0.08015892  0.02948882  0.08015892 -0.4077012   0.21789455]]
     """
 
     @prim_attr_register
@@ -2009,7 +2026,7 @@ class SmoothL1Loss(PrimitiveWithInfer):
         >>> target_data = Tensor(np.array([1, 2, 2]), mindspore.float32)
         >>> output = loss(input_data, target_data)
         >>> print(output)
-        [0, 0, 0.5]
+        [0.  0.  0.5]
     """
 
     @prim_attr_register
@@ -2281,7 +2298,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
         >>> epsilon = 0.001
         >>> output = apply_rms(input_x, mean_square, moment, learning_rate, grad, decay, momentum, epsilon)
         >>> print(output)
-        (-2.9977674, 0.80999994, 1.9987665)
+        (Tensor(shape=[], dtype=Float32, value= 0.100112), Tensor(shape=[], dtype=Float32, value= 4),
+        Tensor(shape=[], dtype=Float32, value= 0.899888))
     """
 
     @prim_attr_register
@@ -2369,24 +2387,27 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
 
     Examples:
         >>> centered_rms_prop = P.ApplyCenteredRMSProp()
-        >>> input_x = Tensor(np.arange(-6, 6).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
-        >>> mean_grad = Tensor(np.arange(12).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
-        >>> mean_square = Tensor(np.arange(-8, 4).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
-        >>> moment = Tensor(np.arange(12).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
-        >>> grad = Tensor(np.arange(12).astype(np.float32).reshape(2, 3, 2), mindspore.float32)
+        >>> input_x = Tensor(np.arange(-2, 2).astype(np.float32).reshape(2, 2), mindspore.float32)
+        >>> mean_grad = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mindspore.float32)
+        >>> mean_square = Tensor(np.arange(-3, 1).astype(np.float32).reshape(2, 2), mindspore.float32)
+        >>> moment = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mindspore.float32)
+        >>> grad = Tensor(np.arange(4).astype(np.float32).reshape(2, 2), mindspore.float32)
         >>> learning_rate = Tensor(0.9, mindspore.float32)
         >>> decay = 0.0
         >>> momentum = 1e-10
         >>> epsilon = 0.05
         >>> output = centered_rms_prop(input_x, mean_grad, mean_square, moment, grad,
-        >>>                            learning_rate, decay, momentum, epsilon)
+        ...                            learning_rate, decay, momentum, epsilon)
         >>> print(output)
-        [[[ -6.        -9.024922]
-          [-12.049845 -15.074766]
-          [-18.09969  -21.124613]]
-         [[-24.149532 -27.174456]
-          [-30.199379 -33.2243  ]
-          [-36.249226 -39.274143]]]
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[-2.00000000e+00, -5.02492237e+00],
+         [-8.04984474e+00, -1.10747662e+01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 0.00000000e+00,  1.00000000e+00],
+         [ 2.00000000e+00,  3.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 0.00000000e+00,  1.00000000e+00],
+         [ 4.00000000e+00,  9.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 0.00000000e+00,  4.02492237e+00],
+         [ 8.04984474e+00,  1.20747662e+01]]))
     """
 
     @prim_attr_register
@@ -2460,10 +2481,16 @@ class LayerNorm(Primitive):
         >>> gamma = Tensor(np.ones([3]), mindspore.float32)
         >>> beta = Tensor(np.ones([3]), mindspore.float32)
         >>> layer_norm = P.LayerNorm()
-        >>> output = layer_norm(input_x, gamma, beta)
+        >>> output, mean, variance = layer_norm(input_x, gamma, beta)
         >>> print(output)
-        ([[-0.22474492, 1., 2.2247488], [-0.22474492, 1., 2.2247488]],
-         [[2.], [2.]], [[0.6666667], [0.6666667]])
+        [[-0.2247448  1.         2.2247448]
+         [-0.2247448  1.         2.2247448]]
+        >>> print(mean)
+        [[2.]
+         [2.]]
+        >>> print(variance)
+        [[0.6666667]
+         [0.6666667]])
     """
 
     @prim_attr_register
@@ -2544,7 +2571,7 @@ class DropoutGenMask(Primitive):
         >>> keep_prob = Tensor(0.5, mindspore.float32)
         >>> output = dropout_gen_mask(shape, keep_prob)
         >>> print(output)
-        [249, 11, 134, 133, 143, 246, 89, 52, 169, 15, 94, 63, 146, 103, 7, 101]
+        [249  11 134 133 143 246  89  52 169  15  94  63 146 103   7 101]
     """
 
     @prim_attr_register
@@ -2581,11 +2608,11 @@ class DropoutDoMask(PrimitiveWithInfer):
         >>> dropout_do_mask = P.DropoutDoMask()
         >>> mask = dropout_gen_mask(shape, keep_prob)
         >>> output = dropout_do_mask(x, mask, keep_prob)
-        >>> assert output.shape == (2, 2, 3)
-        [[[2.0, 0.0, 0.0],
-          [0.0, 0.0, 0.0]],
-         [[0.0, 0.0, 0.0],
-          [2.0, 2.0, 2.0]]]
+        >>> print(output)
+        [[[2. 0. 0.]
+          [2. 0. 0.]]
+         [[0. 2. 2.]
+          [2. 0. 2.]]]
     """
 
     @prim_attr_register
@@ -2706,7 +2733,9 @@ class OneHot(PrimitiveWithInfer):
         >>> onehot = P.OneHot()
         >>> output = onehot(indices, depth, on_value, off_value)
         >>> print(output)
-        [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        [[1. 0. 0.]
+         [0. 1. 0.]
+         [0. 0. 1.]]
     """
 
     @prim_attr_register
@@ -2860,14 +2889,14 @@ class PReLU(PrimitiveWithInfer):
         >>> input_x = Tensor(np.random.randint(-3, 3, (2, 3, 2)), mindspore.float32)
         >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
         >>> net = Net()
-        >>> result = net(input_x, weight)
-        >>> print(result)
-        [[[-0.1, 1.0],
-          [0.0, 2.0],
-          [0.0, 0.0]],
-         [[-0.2, -0.1],
-          [2.0, -1.8000001],
-          [0.6, 0.6]]]
+        >>> output = net(input_x, weight)
+        >>> print(output)
+        [[[-0.2        -0.1       ]
+          [-1.8000001  -0.6       ]
+          [ 0.90000004  1.        ]]
+         [[-0.3        -0.1       ]
+          [-1.8000001   2.        ]
+          [ 0.90000004  0.90000004]]]
     """
 
     @prim_attr_register
@@ -3004,8 +3033,8 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
         >>> sigmoid = P.SigmoidCrossEntropyWithLogits()
         >>> output = sigmoid(logits, labels)
         >>> print(output)
-        [[0.6113 0.5034 0.263 ]
-         [0.5845 0.553 -0.4365]]
+        [[0.6111007   0.5032824   0.26318604]
+         [0.58439666  0.5530153  -0.4368139 ]]
     """
 
     @prim_attr_register
@@ -3042,12 +3071,12 @@ class Pad(PrimitiveWithInfer):
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> pad_op = P.Pad(((1, 2), (2, 1)))
-        >>> output_tensor = pad_op(input_tensor)
-        >>> print(output_tensor)
-        [[ 0.   0.   0.   0.   0.   0. ]
-         [ 0.   0.  -0.1  0.3  3.6  0. ]
-         [ 0.   0.   0.4  0.5 -3.2  0. ]
-         [ 0.   0.   0.   0.   0.   0. ]
+        >>> output = pad_op(input_tensor)
+        >>> print(output)
+        [[ 0.   0.   0.   0.   0.   0. ],
+         [ 0.   0.  -0.1  0.3  3.6  0. ],
+         [ 0.   0.   0.4  0.5 -3.2  0. ],
+         [ 0.   0.   0.   0.   0.   0. ],
          [ 0.   0.   0.   0.   0.   0. ]]
     """
 
@@ -3110,20 +3139,21 @@ class MirrorPad(PrimitiveWithInfer):
         >>> import mindspore.nn as nn
         >>> import numpy as np
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.pad = P.MirrorPad(mode="REFLECT")
-        >>>     def construct(self, x, paddings):
-        >>>         return self.pad(x, paddings)
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.pad = P.MirrorPad(mode="REFLECT")
+        ...     def construct(self, x, paddings):
+        ...         return self.pad(x, paddings)
+        ...
         >>> x = np.random.random(size=(2, 3)).astype(np.float32)
         >>> paddings = Tensor([[1,1],[2,2]])
         >>> pad = Net()
-        >>> ms_output = pad(Tensor(x), paddings)
-        >>> print(ms_output)
-        [[0.5525309 0.49183875 0.99110144 0.49183875 0.5525309 0.49183875 0.99110144]
-         [0.31417271 0.96308136 0.934709 0.96308136 0.31417271 0.96308136 0.934709  ]
-         [0.5525309 0.49183875 0.99110144 0.49183875 0.5525309 0.49183875 0.99110144]
-         [0.31417271 0.96308136 0.934709 0.96308136 0.31417271 0.96308136 0.934709  ]]
+        >>> output = pad(Tensor(x), paddings)
+        >>> print(output)
+        [[0.5525309  0.49183875 0.99110144 0.49183875 0.5525309  0.49183875 0.99110144]
+         [0.31417271 0.96308136 0.934709   0.96308136 0.31417271 0.96308136 0.934709  ]
+         [0.5525309  0.49183875 0.99110144 0.49183875 0.5525309  0.49183875 0.99110144]
+         [0.31417271 0.96308136 0.934709   0.96308136 0.31417271 0.96308136 0.934709  ]]
     """
 
     @prim_attr_register
@@ -3189,10 +3219,10 @@ class ROIAlign(PrimitiveWithInfer):
         >>> input_tensor = Tensor(np.array([[[[1., 2.], [3., 4.]]]]), mindspore.float32)
         >>> rois = Tensor(np.array([[0, 0.2, 0.3, 0.2, 0.3]]), mindspore.float32)
         >>> roi_align = P.ROIAlign(2, 2, 0.5, 2)
-        >>> output_tensor = roi_align(input_tensor, rois)
-        >>> print(output_tensor)
-        [[[[1.77499998e+00, 2.02500010e+00],
-           [2.27500010e+00, 2.52500010e+00]]]]
+        >>> output = roi_align(input_tensor, rois)
+        >>> print(output)
+        [[[[1.775 2.025]
+           [2.275 2.525]]]]
     """
 
     @prim_attr_register
@@ -3277,19 +3307,29 @@ class Adam(PrimitiveWithInfer):
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_adam = P.Adam()
-        >>>         self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="var")
-        >>>         self.m = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="m")
-        >>>         self.v = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="v")
-        >>>     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
-        >>>         out = self.apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2,
-        >>>                               epsilon, grad)
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_adam = P.Adam()
+        ...         self.var = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="var")
+        ...         self.m = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="m")
+        ...         self.v = Parameter(Tensor(np.ones([2, 2]).astype(np.float32)), name="v")
+        ...     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
+        ...         out = self.apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2,
+        ...                               epsilon, grad)
+        ...
         >>>         return out
         >>> net = Net()
-        >>> gradient = Tensor(np.random.rand(3, 3, 3).astype(np.float32))
+        >>> gradient = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> result = net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient)
+        >>> output = net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[[ 9.99458194e-01,  9.99398530e-01],
+          [ 9.99404728e-01,  9.99371529e-01]]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[[ 8.17151368e-01,  9.41661000e-01],
+          [ 9.28607702e-01,  9.98143375e-01]]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[[ 9.98003900e-01,  9.98960912e-01],
+          [ 9.98780012e-01,  9.99961138e-01]]]))
     """
 
     @prim_attr_register
@@ -3481,16 +3521,17 @@ class FusedSparseAdam(PrimitiveWithInfer):
         >>> from mindspore.ops import operations as P
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.sparse_apply_adam = P.FusedSparseAdam()
-        >>>         self.var = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="var")
-        >>>         self.m = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="m")
-        >>>         self.v = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="v")
-        >>>     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, indices):
-        >>>         out = self.sparse_apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2,
-        >>>                                      epsilon, grad, indices)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.sparse_apply_adam = P.FusedSparseAdam()
+        ...         self.var = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="var")
+        ...         self.m = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="m")
+        ...         self.v = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="v")
+        ...     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, indices):
+        ...         out = self.sparse_apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2,
+        ...                                      epsilon, grad, indices)
+        ...         return out
+        ...
         >>> net = Net()
         >>> beta1_power = Tensor(0.9, mstype.float32)
         >>> beta2_power = Tensor(0.999, mstype.float32)
@@ -3500,7 +3541,8 @@ class FusedSparseAdam(PrimitiveWithInfer):
         >>> epsilon = Tensor(1e-8, mstype.float32)
         >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
         >>> indices = Tensor([0, 1], mstype.int32)
-        >>> result = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
+        >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
+        >>> print(output)
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -3614,16 +3656,17 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         >>> from mindspore.ops import operations as P
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.sparse_apply_lazyadam = P.FusedSparseLazyAdam()
-        >>>         self.var = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="var")
-        >>>         self.m = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="m")
-        >>>         self.v = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="v")
-        >>>     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, indices):
-        >>>         out = self.sparse_apply_lazyadam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1,
-        >>>                                          beta2, epsilon, grad, indices)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.sparse_apply_lazyadam = P.FusedSparseLazyAdam()
+        ...         self.var = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="var")
+        ...         self.m = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="m")
+        ...         self.v = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="v")
+        ...     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad, indices):
+        ...         out = self.sparse_apply_lazyadam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1,
+        ...                                          beta2, epsilon, grad, indices)
+        ...         return out
+        ...
         >>> net = Net()
         >>> beta1_power = Tensor(0.9, mstype.float32)
         >>> beta2_power = Tensor(0.999, mstype.float32)
@@ -3633,7 +3676,8 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         >>> epsilon = Tensor(1e-8, mstype.float32)
         >>> gradient = Tensor(np.random.rand(2, 1, 2), mstype.float32)
         >>> indices = Tensor([0, 1], mstype.int32)
-        >>> result = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
+        >>> output = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient, indices)
+        >>> print(output)
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -3722,21 +3766,22 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as P
         >>> class SparseApplyFtrlNet(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(SparseApplyFtrlNet, self).__init__()
-        >>>         self.sparse_apply_ftrl = P.FusedSparseFtrl(lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="accum")
-        >>>         self.linear = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="linear")
-        >>>
-        >>>     def construct(self, grad, indices):
-        >>>         out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
-        >>>         return out
-        >>>
+        ...     def __init__(self):
+        ...         super(SparseApplyFtrlNet, self).__init__()
+        ...         self.sparse_apply_ftrl = P.FusedSparseFtrl(lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
+        ...         self.var = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="accum")
+        ...         self.linear = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="linear")
+        ...
+        ...     def construct(self, grad, indices):
+        ...         out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
+        ...         return out
+        ...
         >>> net = SparseApplyFtrlNet()
         >>> grad = Tensor(np.random.rand(2, 1, 2).astype(np.float32))
         >>> indices = Tensor(np.array([0, 1]).astype(np.int32))
         >>> output = net(grad, indices)
+        >>> print(output)
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -3820,22 +3865,24 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.sparse_apply_proximal_adagrad = P.FusedSparseProximalAdagrad()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="accum")
-        >>>         self.lr = Tensor(0.01, mstype.float32)
-        >>>         self.l1 = Tensor(0.0, mstype.float32)
-        >>>         self.l2 = Tensor(0.0, mstype.float32)
-        >>>     def construct(self, grad, indices):
-        >>>         out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1,
-        >>>                                                  self.l2, grad, indices)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.sparse_apply_proximal_adagrad = P.FusedSparseProximalAdagrad()
+        ...         self.var = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(3, 1, 2).astype(np.float32)), name="accum")
+        ...         self.lr = Tensor(0.01, mstype.float32)
+        ...         self.l1 = Tensor(0.0, mstype.float32)
+        ...         self.l2 = Tensor(0.0, mstype.float32)
+        ...     def construct(self, grad, indices):
+        ...         out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1,
+        ...                                                  self.l2, grad, indices)
+        ...         return out
+        ...
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(2, 1, 2).astype(np.float32))
         >>> indices = Tensor(np.array([0, 1]).astype(np.int32))
         >>> output = net(grad, indices)
+        >>> print(output)
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -3909,17 +3956,19 @@ class KLDivLoss(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.kldiv_loss = P.KLDivLoss()
-        >>>     def construct(self, x, y):
-        >>>         result = self.kldiv_loss(x, y)
-        >>>         return result
-        >>>
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.kldiv_loss = P.KLDivLoss()
+        ...     def construct(self, x, y):
+        ...         result = self.kldiv_loss(x, y)
+        ...         return result
+        ...
         >>> net = Net()
         >>> input_x = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
         >>> input_y = Tensor(np.array([0., 1., 0.]), mindspore.float32)
-        >>> result = net(input_x, input_y)
+        >>> output = net(input_x, input_y)
+        >>> print(output)
+        -0.23333333
     """
 
     @prim_attr_register
@@ -3983,19 +4032,19 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.binary_cross_entropy = P.BinaryCrossEntropy()
-        >>>     def construct(self, x, y, weight):
-        >>>         result = self.binary_cross_entropy(x, y, weight)
-        >>>         return result
-        >>>
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.binary_cross_entropy = P.BinaryCrossEntropy()
+        ...     def construct(self, x, y, weight):
+        ...         result = self.binary_cross_entropy(x, y, weight)
+        ...         return result
+        ...
         >>> net = Net()
         >>> input_x = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
         >>> input_y = Tensor(np.array([0., 1., 0.]), mindspore.float32)
         >>> weight = Tensor(np.array([1, 2, 2]), mindspore.float32)
-        >>> result = net(input_x, input_y, weight)
-        >>> print(result)
+        >>> output = net(input_x, input_y, weight)
+        >>> print(output)
         0.38240486
     """
 
@@ -4081,23 +4130,32 @@ class ApplyAdaMax(PrimitiveWithInfer):
         >>> from mindspore.ops import operations as P
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_ada_max = P.ApplyAdaMax()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
-        >>>         self.v = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="v")
-        >>>     def construct(self, beta1_power, lr, beta1, beta2, epsilon, grad):
-        >>>         out = self.apply_ada_max(self.var, self.m, self.v, beta1_power, lr, beta1, beta2, epsilon, grad)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_ada_max = P.ApplyAdaMax()
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.m = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="m")
+        ...         self.v = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="v")
+        ...     def construct(self, beta1_power, lr, beta1, beta2, epsilon, grad):
+        ...         out = self.apply_ada_max(self.var, self.m, self.v, beta1_power, lr, beta1, beta2, epsilon, grad)
+        ...         return out
+        ...
         >>> net = Net()
         >>> beta1_power =Tensor(0.9, mstype.float32)
         >>> lr = Tensor(0.001, mstype.float32)
         >>> beta1 = Tensor(0.9, mstype.float32)
         >>> beta2 = Tensor(0.99, mstype.float32)
         >>> epsilon = Tensor(1e-10, mstype.float32)
-        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-        >>> result = net(beta1_power, lr, beta1, beta2, epsilon, grad)
+        >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
+        >>> output = net(beta1_power, lr, beta1, beta2, epsilon, grad)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 6.46618605e-01,  6.48276925e-01],
+         [ 7.72792041e-01,  8.58803272e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 6.23247683e-01,  6.30929232e-01],
+         [ 9.17923033e-01,  8.98910999e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 3.03175300e-01,  5.75195193e-01],
+         [ 9.43458021e-01,  8.41971099e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -4201,21 +4259,30 @@ class ApplyAdadelta(PrimitiveWithInfer):
         >>> from mindspore.ops import operations as P
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_adadelta = P.ApplyAdadelta()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
-        >>>         self.accum_update = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum_update")
-        >>>     def construct(self, lr, rho, epsilon, grad):
-        >>>         out = self.apply_adadelta(self.var, self.accum, self.accum_update, lr, rho, epsilon, grad)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_adadelta = P.ApplyAdadelta()
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="accum")
+        ...         self.accum_update = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="accum_update")
+        ...     def construct(self, lr, rho, epsilon, grad):
+        ...         out = self.apply_adadelta(self.var, self.accum, self.accum_update, lr, rho, epsilon, grad)
+        ...         return out
+        ...
         >>> net = Net()
         >>> lr = Tensor(0.001, mstype.float32)
         >>> rho = Tensor(0.0, mstype.float32)
         >>> epsilon = Tensor(1e-6, mstype.float32)
-        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-        >>> result = net(lr, rho, epsilon, grad)
+        >>> grad = Tensor(np.random.rand(1, 2).astype(np.float32))
+        >>> output = net(lr, rho, epsilon, grad)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 7.60124624e-01,  9.54110503e-01],
+         [ 7.25456238e-01,  4.98913884e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.00194868e-02,  5.50848258e-01],
+         [ 9.95293319e-01,  1.97404027e-02]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 4.17240560e-01,  8.39873433e-01],
+         [ 4.95992631e-01,  9.19294059e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -4301,18 +4368,25 @@ class ApplyAdagrad(PrimitiveWithInfer):
         >>> from mindspore.ops import operations as P
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_adagrad = P.ApplyAdagrad()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
-        >>>     def construct(self, lr, grad):
-        >>>         out = self.apply_adagrad(self.var, self.accum, lr, grad)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_adagrad = P.ApplyAdagrad()
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="accum")
+        ...     def construct(self, lr, grad):
+        ...         out = self.apply_adagrad(self.var, self.accum, lr, grad)
+        ...         return out
+        ...
         >>> net = Net()
         >>> lr = Tensor(0.001, mstype.float32)
-        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-        >>> result = net(lr, grad)
+        >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
+        >>> output = net(lr, grad)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 7.12832332e-01,  3.10275197e-01],
+         [ 9.02635300e-01,  3.90718848e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 8.68964046e-02,  3.21274072e-01],
+         [ 1.19302607e+00,  9.59712446e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -4384,18 +4458,25 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         >>> from mindspore.ops import operations as P
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_adagrad_v2 = P.ApplyAdagradV2(epsilon=1e-6)
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
-        >>>     def construct(self, lr, grad):
-        >>>         out = self.apply_adagrad_v2(self.var, self.accum, lr, grad)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_adagrad_v2 = P.ApplyAdagradV2(epsilon=1e-6)
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="accum")
+        ...     def construct(self, lr, grad):
+        ...         out = self.apply_adagrad_v2(self.var, self.accum, lr, grad)
+        ...         return out
+        ...
         >>> net = Net()
         >>> lr = Tensor(0.001, mstype.float32)
-        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-        >>> result = net(lr, grad)
+        >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
+        >>> output = net(lr, grad)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 6.75180078e-01,  5.12131870e-01],
+         [ 9.32922423e-01,  6.53732181e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 8.45080376e-01,  4.80091214e-01],
+         [ 1.68451762e+00,  1.03823669e+00]]))
     """
 
     __mindspore_signature__ = (
@@ -4468,20 +4549,23 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         >>> from mindspore.ops import operations as P
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.sparse_apply_adagrad = P.SparseApplyAdagrad(lr=1e-8)
-        >>>         self.var = Parameter(Tensor(np.ones([1, 1, 1]).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.ones([1, 1, 1]).astype(np.float32)), name="accum")
-        >>>     def construct(self, grad, indices):
-        >>>         out = self.sparse_apply_adagrad(self.var, self.accum, grad, indices)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.sparse_apply_adagrad = P.SparseApplyAdagrad(lr=1e-8)
+        ...         self.var = Parameter(Tensor(np.ones([1, 1, 1]).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.ones([1, 1, 1]).astype(np.float32)), name="accum")
+        ...     def construct(self, grad, indices):
+        ...         out = self.sparse_apply_adagrad(self.var, self.accum, grad, indices)
+        ...         return out
+        ...
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(1, 1, 1).astype(np.float32))
         >>> indices = Tensor([0], mstype.int32)
-        >>> result = net(grad, indices)
-        >>> print(result)
-        ([[[1.0]]], [[[1.0]]])
+        >>> output = net(grad, indices)
+        >>> print(output)
+        (Tensor(shape=[1, 1, 1], dtype=Float32, value=
+        [[[1.00000000e+00]]]), Tensor(shape=[1, 1, 1], dtype=Float32, value=
+        [[[1.00000000e+00]]]))
     """
 
     __mindspore_signature__ = (
@@ -4557,21 +4641,24 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         >>> from mindspore.ops import operations as P
         >>> import mindspore.common.dtype as mstype
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.sparse_apply_adagrad_v2 = P.SparseApplyAdagradV2(lr=1e-8, epsilon=1e-6)
-        >>>         self.var = Parameter(Tensor(np.ones([1, 1, 1]).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.ones([1, 1, 1]).astype(np.float32)), name="accum")
-        >>>
-        >>>     def construct(self, grad, indices):
-        >>>         out = self.sparse_apply_adagrad_v2(self.var, self.accum, grad, indices)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.sparse_apply_adagrad_v2 = P.SparseApplyAdagradV2(lr=1e-8, epsilon=1e-6)
+        ...         self.var = Parameter(Tensor(np.ones([1, 1, 1]).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.ones([1, 1, 1]).astype(np.float32)), name="accum")
+        ...
+        ...     def construct(self, grad, indices):
+        ...         out = self.sparse_apply_adagrad_v2(self.var, self.accum, grad, indices)
+        ...         return out
+        ...
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(1, 1, 1).astype(np.float32))
         >>> indices = Tensor([0], mstype.int32)
-        >>> result = net(grad, indices)
-        >>> print(result)
-        ([[[1.0]]], [[[1.67194188]]])
+        >>> output = net(grad, indices)
+        >>> print(output)
+        (Tensor(shape=[1, 1, 1], dtype=Float32, value=
+        [[[1.00000000e+00]]]), Tensor(shape=[1, 1, 1], dtype=Float32, value=
+        [[[1.13986731e+00]]]))
     """
 
     __mindspore_signature__ = (
@@ -4648,20 +4735,27 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_proximal_adagrad = P.ApplyProximalAdagrad()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
-        >>>         self.lr = 0.01
-        >>>         self.l1 = 0.0
-        >>>         self.l2 = 0.0
-        >>>     def construct(self, grad):
-        >>>         out = self.apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1, self.l2, grad)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_proximal_adagrad = P.ApplyProximalAdagrad()
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="accum")
+        ...         self.lr = 0.01
+        ...         self.l1 = 0.0
+        ...         self.l2 = 0.0
+        ...     def construct(self, grad):
+        ...         out = self.apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1, self.l2, grad)
+        ...         return out
+        ...
         >>> net = Net()
-        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(grad)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 3.79054576e-01,  5.28407156e-01],
+         [ 2.39551291e-01,  7.34573752e-02]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 8.96461844e-01,  1.47237992e+00],
+         [ 8.52952123e-01,  1.22406030e+00]]))
     """
 
     __mindspore_signature__ = (
@@ -4752,25 +4846,27 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
-        >>>         self.var = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="accum")
-        >>>         self.lr = 0.01
-        >>>         self.l1 = 0.0
-        >>>         self.l2 = 0.0
-        >>>     def construct(self, grad, indices):
-        >>>         out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1,
-                                                             self.l2, grad, indices)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
+        ...         self.var = Parameter(Tensor(np.random.rand(1, 2).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(1, 2).astype(np.float32)), name="accum")
+        ...         self.lr = 0.01
+        ...         self.l1 = 0.0
+        ...         self.l2 = 0.0
+        ...     def construct(self, grad, indices):
+        ...         out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1,
+        ...                                                  self.l2, grad, indices)
+        ...         return out
+        ...
         >>> net = Net()
-        >>> grad = Tensor(np.random.rand(1, 3).astype(np.float32))
+        >>> grad = Tensor(np.random.rand(1, 2).astype(np.float32))
         >>> indices = Tensor(np.ones((1,), np.int32))
         >>> output = net(grad, indices)
         >>> print(output)
-        ([[6.94971561e-01, 5.24479389e-01, 5.52502394e-01]],
-         [[1.69961065e-01, 9.21632349e-01, 7.83344746e-01]])
+        Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 7.74297953e-01,  7.12414503e-01]]), Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 6.14362955e-01,  6.38007671e-02]]))
     """
 
     __mindspore_signature__ = (
@@ -4846,21 +4942,28 @@ class ApplyAddSign(PrimitiveWithInfer):
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_add_sign = P.ApplyAddSign()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
-        >>>         self.lr = 0.001
-        >>>         self.alpha = 1.0
-        >>>         self.sign_decay = 0.99
-        >>>         self.beta = 0.9
-        >>>     def construct(self, grad):
-        >>>         out = self.apply_add_sign(self.var, self.m, self.lr, self.alpha, self.sign_decay, self.beta, grad)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_add_sign = P.ApplyAddSign()
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.m = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="m")
+        ...         self.lr = 0.001
+        ...         self.alpha = 1.0
+        ...         self.sign_decay = 0.99
+        ...         self.beta = 0.9
+        ...     def construct(self, grad):
+        ...         out = self.apply_add_sign(self.var, self.m, self.lr, self.alpha, self.sign_decay, self.beta, grad)
+        ...         return out
+        ...
         >>> net = Net()
-        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(grad)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 5.37551343e-01,  3.78310502e-01],
+         [ 7.81984031e-01,  5.19252002e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 8.28343272e-01,  8.14828694e-01],
+         [ 3.79919171e-01,  2.55756438e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -4954,22 +5057,29 @@ class ApplyPowerSign(PrimitiveWithInfer):
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_power_sign = P.ApplyPowerSign()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.m = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="m")
-        >>>         self.lr = 0.001
-        >>>         self.logbase = np.e
-        >>>         self.sign_decay = 0.99
-        >>>         self.beta = 0.9
-        >>>     def construct(self, grad):
-        >>>         out = self.apply_power_sign(self.var, self.m, self.lr, self.logbase,
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_power_sign = P.ApplyPowerSign()
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.m = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="m")
+        ...         self.lr = 0.001
+        ...         self.logbase = np.e
+        ...         self.sign_decay = 0.99
+        ...         self.beta = 0.9
+        ...     def construct(self, grad):
+        ...         out = self.apply_power_sign(self.var, self.m, self.lr, self.logbase,
         ...                                        self.sign_decay, self.beta, grad)
-        >>>         return out
+        ...         return out
+        ...
         >>> net = Net()
-        >>> grad = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(grad)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 5.01964271e-01,  8.59248936e-01],
+         [ 5.14324069e-01,  2.50274092e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 5.16151905e-01,  7.50251293e-01],
+         [ 4.36047137e-01,  1.26427144e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -5044,17 +5154,21 @@ class ApplyGradientDescent(PrimitiveWithInfer):
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_gradient_descent = P.ApplyGradientDescent()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.alpha = 0.001
-        >>>     def construct(self, delta):
-        >>>         out = self.apply_gradient_descent(self.var, self.alpha, delta)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_gradient_descent = P.ApplyGradientDescent()
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.alpha = 0.001
+        ...     def construct(self, delta):
+        ...         out = self.apply_gradient_descent(self.var, self.alpha, delta)
+        ...         return out
+        ...
         >>> net = Net()
-        >>> delta = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> delta = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(delta)
+        >>> print(output)
+        [[0.54876804 0.38894778]
+         [0.5847089  0.09858753]]
     """
 
     __mindspore_signature__ = (
@@ -5115,19 +5229,23 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as P
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.apply_proximal_gradient_descent = P.ApplyProximalGradientDescent()
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.alpha = 0.001
-        >>>         self.l1 = 0.0
-        >>>         self.l2 = 0.0
-        >>>     def construct(self, delta):
-        >>>         out = self.apply_proximal_gradient_descent(self.var, self.alpha, self.l1, self.l2, delta)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.apply_proximal_gradient_descent = P.ApplyProximalGradientDescent()
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.alpha = 0.001
+        ...         self.l1 = 0.0
+        ...         self.l2 = 0.0
+        ...     def construct(self, delta):
+        ...         out = self.apply_proximal_gradient_descent(self.var, self.alpha, self.l1, self.l2, delta)
+        ...         return out
+        ...
         >>> net = Net()
-        >>> delta = Tensor(np.random.rand(3, 3).astype(np.float32))
+        >>> delta = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(delta)
+        >>> print(output)
+        [[0.38671502 0.087947  ]
+         [0.07595529 0.44336063]]
     """
 
     __mindspore_signature__ = (
@@ -5195,19 +5313,23 @@ class LARSUpdate(PrimitiveWithInfer):
         >>> import mindspore.nn as nn
         >>> import numpy as np
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.lars = P.LARSUpdate()
-        >>>         self.reduce = P.ReduceSum()
-        >>>     def construct(self, weight, gradient):
-        >>>         w_square_sum = self.reduce(F.square(weight))
-        >>>         grad_square_sum = self.reduce(F.square(gradient))
-        >>>         grad_t = self.lars(weight, gradient, w_square_sum, grad_square_sum, 0.0, 1.0)
-        >>>         return grad_t
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.lars = P.LARSUpdate()
+        ...         self.reduce = P.ReduceSum()
+        ...     def construct(self, weight, gradient):
+        ...         w_square_sum = self.reduce(F.square(weight))
+        ...         grad_square_sum = self.reduce(F.square(gradient))
+        ...         grad_t = self.lars(weight, gradient, w_square_sum, grad_square_sum, 0.0, 1.0)
+        ...         return grad_t
+        ...
         >>> weight = np.random.random(size=(2, 3)).astype(np.float32)
         >>> gradient = np.random.random(size=(2, 3)).astype(np.float32)
         >>> net = Net()
-        >>> ms_output = net(Tensor(weight), Tensor(gradient))
+        >>> output = net(Tensor(weight), Tensor(gradient))
+        >>> print(output)
+        [[1.0630977e-03 1.0647357e-03 1.0038106e-03]
+         [2.9038603e-04 5.9235965e-05 6.8709702e-04]]
     """
 
     @prim_attr_register
@@ -5279,29 +5401,33 @@ class ApplyFtrl(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as P
         >>> class ApplyFtrlNet(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(ApplyFtrlNet, self).__init__()
-        >>>         self.apply_ftrl = P.ApplyFtrl()
-        >>>         self.lr = 0.001
-        >>>         self.l1 = 0.0
-        >>>         self.l2 = 0.0
-        >>>         self.lr_power = -0.5
-        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
-        >>>         self.linear = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="linear")
-        >>>
-        >>>     def construct(self, grad):
-        >>>         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, self.lr, self.l1, self.l2,
-        >>>                               self.lr_power)
-        >>>         return out
-        >>>
+        ...     def __init__(self):
+        ...         super(ApplyFtrlNet, self).__init__()
+        ...         self.apply_ftrl = P.ApplyFtrl()
+        ...         self.lr = 0.001
+        ...         self.l1 = 0.0
+        ...         self.l2 = 0.0
+        ...         self.lr_power = -0.5
+        ...         self.var = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="accum")
+        ...         self.linear = Parameter(Tensor(np.random.rand(2, 2).astype(np.float32)), name="linear")
+        ...
+        ...     def construct(self, grad):
+        ...         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, self.lr, self.l1, self.l2,
+        ...                               self.lr_power)
+        ...         return out
+        ...
         >>> net = ApplyFtrlNet()
-        >>> input_x = Tensor(np.random.randint(-4, 4, (3, 3)), mindspore.float32)
-        >>> result = net(input_x)
-        >>> print(result)
-        [[0.67455846   0.14630564   0.160499  ]
-         [0.16329421   0.00415689   0.05202988]
-         [0.18672481   0.17418946   0.36420345]]
+        >>> input_x = Tensor(np.random.randint(-4, 4, (2, 2)), mindspore.float32)
+        >>> output = net(input_x)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.51306406e-01,  4.06460911e-02],
+         [ 5.40895802e-01,  1.35308430e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.62730598e+01,  4.53126240e+00],
+         [ 4.10181570e+01,  4.67408800e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[-6.10368164e+02, -8.65223694e+01],
+         [-1.09547302e+03, -2.92531921e+02]]))
     """
 
     @prim_attr_register
@@ -5371,23 +5497,26 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as P
         >>> class SparseApplyFtrlNet(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(SparseApplyFtrlNet, self).__init__()
-        >>>         self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
-        >>>         self.var = Parameter(Tensor(np.random.rand(1, 1).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(1, 1).astype(np.float32)), name="accum")
-        >>>         self.linear = Parameter(Tensor(np.random.rand(1, 1).astype(np.float32)), name="linear")
-        >>>
-        >>>     def construct(self, grad, indices):
-        >>>         out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
-        >>>         return out
-        >>>
+        ...     def __init__(self):
+        ...         super(SparseApplyFtrlNet, self).__init__()
+        ...         self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
+        ...         self.var = Parameter(Tensor(np.random.rand(1, 1).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(1, 1).astype(np.float32)), name="accum")
+        ...         self.linear = Parameter(Tensor(np.random.rand(1, 1).astype(np.float32)), name="linear")
+        ...
+        ...     def construct(self, grad, indices):
+        ...         out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
+        ...         return out
+        ...
         >>> net = SparseApplyFtrlNet()
         >>> grad = Tensor(np.random.rand(1, 1).astype(np.float32))
         >>> indices = Tensor(np.ones([1]), mindspore.int32)
         >>> output = net(grad, indices)
         >>> print(output)
-        ([[1.02914639e-01]], [[7.60280550e-01]], [[7.64630079e-01]])
+        (Tensor(shape=[1, 1], dtype=Float32, value=
+        [[1.21931173e-01]]), Tensor(shape=[1, 1], dtype=Float32, value=
+        [[3.54384869e-01]]), Tensor(shape=[1, 1], dtype=Float32, value=
+        [[2.99625486e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -5469,26 +5598,27 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as P
         >>> class SparseApplyFtrlV2Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(SparseApplyFtrlV2Net, self).__init__()
-        >>>         self.sparse_apply_ftrl_v2 = P.SparseApplyFtrlV2(lr=0.01, l1=0.0, l2=0.0,
-                                                                    l2_shrinkage=0.0, lr_power=-0.5)
-        >>>         self.var = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="var")
-        >>>         self.accum = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="accum")
-        >>>         self.linear = Parameter(Tensor(np.random.rand(1, 3).astype(np.float32)), name="linear")
-        >>>
-        >>>     def construct(self, grad, indices):
-        >>>         out = self.sparse_apply_ftrl_v2(self.var, self.accum, self.linear, grad, indices)
-        >>>         return out
-        >>>
+        ...     def __init__(self):
+        ...         super(SparseApplyFtrlV2Net, self).__init__()
+        ...         self.sparse_apply_ftrl_v2 = P.SparseApplyFtrlV2(lr=0.01, l1=0.0, l2=0.0,
+        ...                                                         l2_shrinkage=0.0, lr_power=-0.5)
+        ...         self.var = Parameter(Tensor(np.random.rand(1, 2).astype(np.float32)), name="var")
+        ...         self.accum = Parameter(Tensor(np.random.rand(1, 2).astype(np.float32)), name="accum")
+        ...         self.linear = Parameter(Tensor(np.random.rand(1, 2).astype(np.float32)), name="linear")
+        ...
+        ...     def construct(self, grad, indices):
+        ...         out = self.sparse_apply_ftrl_v2(self.var, self.accum, self.linear, grad, indices)
+        ...         return out
+        ...
         >>> net = SparseApplyFtrlV2Net()
-        >>> grad = Tensor(np.random.rand(1, 3).astype(np.float32))
+        >>> grad = Tensor(np.random.rand(1, 2).astype(np.float32))
         >>> indices = Tensor(np.ones([1]), mindspore.int32)
         >>> output = net(grad, indices)
         >>> print(output)
-        ([[3.98493223e-02, 4.38684933e-02, 8.25387388e-02]],
-         [[6.40987396e-01, 7.19417334e-01, 1.52606890e-01]],
-         [[7.43463933e-01, 2.92334408e-01, 6.81572020e-01]])
+        Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 8.69189978e-01,  7.50899851e-01]]), Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 2.51525849e-01,  2.19218452e-02]]), Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 1.70145389e-02,  7.74444342e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -5678,21 +5808,22 @@ class CTCGreedyDecoder(PrimitiveWithInfer):
           containing sequence log-probability, has the same type as `inputs`.
 
     Examples:
-        >>>    class CTCGreedyDecoderNet(nn.Cell):
-        >>>        def __init__(self):
-        >>>            super(CTCGreedyDecoderNet, self).__init__()
-        >>>            self.ctc_greedy_decoder = P.CTCGreedyDecoder()
-        >>>            self.assert_op = P.Assert(300)
-        >>>
-        >>>        def construct(self, inputs, sequence_length):
-        >>>            out = self.ctc_greedy_decoder(inputs,sequence_length)
-        >>>            self.assert_op(True, (out[0], out[1], out[2], out[3]))
-        >>>            return out[2]
-        >>>
+        >>>class CTCGreedyDecoderNet(nn.Cell):
+        ...    def __init__(self):
+        ...        super(CTCGreedyDecoderNet, self).__init__()
+        ...        self.ctc_greedy_decoder = P.CTCGreedyDecoder()
+        ...        self.assert_op = P.Assert(300)
+        ...
+        ...    def construct(self, inputs, sequence_length):
+        ...        out = self.ctc_greedy_decoder(inputs,sequence_length)
+        ...        self.assert_op(True, (out[0], out[1], out[2], out[3]))
+        ...        return out[2]
+        ...
         >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> net = CTCGreedyDecoderNet()
         >>> output = net(inputs, sequence_length)
+        >>> print(output)
     """
 
     @prim_attr_register
@@ -5784,13 +5915,14 @@ class BasicLSTMCell(PrimitiveWithInfer):
         >>> lstm = P.BasicLSTMCell(keep_prob=1.0, forget_bias=1.0, state_is_tuple=True, activation='tanh')
         >>> output = lstm(x, h, c, w, b)
         >>> print(output)
-        ([[9.5459e-01, 9.2725e-01]],
-         [[1.0000e+00, 1.0000e+00]],
-         [[1.0000e+00, 1.0000e+00]],
-         [[1.0000e+00, 1.0000e+00]],
-         [[9.9951e-01, 1.0000e+00]],
-         [[9.5459e-01, 9.2773e-01]],
-         [[0.0000e+00, 0.0000e+00]])
+        (Tensor(shape=[1, 2], dtype=Float16, value=
+        ([[9.5312e-01, 9.5215e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
+         [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
+         [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
+         [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
+         [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
+         [[9.5312e-01, 9.5215e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
+         [[0.0000e+00, 0.0000e+00]]))
     """
 
     @prim_attr_register
@@ -5998,9 +6130,9 @@ class InTopK(PrimitiveWithInfer):
         >>> x1 = Tensor(np.array([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]]), mindspore.float32)
         >>> x2 = Tensor(np.array([1, 3]), mindspore.int32)
         >>> in_top_k = P.InTopK(3)
-        >>> result = in_top_k(x1, x2)
-        >>> print(result)
-        [True  False]
+        >>> output = in_top_k(x1, x2)
+        >>> print(output)
+        [ True  False]
     """
 
     @prim_attr_register
@@ -6042,7 +6174,8 @@ class LRN(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.random.rand(1, 2, 2, 2), mindspore.float32)
         >>> lrn = P.LRN()
-        >>> lrn(x)
+        >>> output = lrn(x)
+        >>> print(output)
         [[[[0.18990143 0.59475636]
            [0.6291904  0.1371534 ]]
           [[0.6258911  0.4964315 ]

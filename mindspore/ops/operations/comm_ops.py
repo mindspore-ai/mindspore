@@ -76,16 +76,19 @@ class AllReduce(PrimitiveWithInfer):
         >>>
         >>> init()
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.allreduce_sum = P.AllReduce(ReduceOp.SUM, group="nccl_world_group")
-        >>>
-        >>>     def construct(self, x):
-        >>>         return self.allreduce_sum(x)
-        >>>
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.allreduce_sum = P.AllReduce(ReduceOp.SUM, group="nccl_world_group")
+        ...
+        ...     def construct(self, x):
+        ...         return self.allreduce_sum(x)
+        ...
         >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
         >>> net = Net()
         >>> output = net(input_)
+        >>> print(output)
+        [[4. 5. 6. 0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0. 0. 0. 0.]]
     """
 
     @prim_attr_register
@@ -249,17 +252,18 @@ class AllGather(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>>
         >>> init()
-        >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.allgather = P.AllGather(group="nccl_world_group")
-        >>>
-        >>>     def construct(self, x):
-        >>>         return self.allgather(x)
-        >>>
+        ... class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.allgather = P.AllGather(group="nccl_world_group")
+        ...
+        ...     def construct(self, x):
+        ...         return self.allgather(x)
+        ...
         >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
         >>> net = Net()
         >>> output = net(input_)
+        >>> print(output)
     """
 
     @prim_attr_register
@@ -364,16 +368,17 @@ class ReduceScatter(PrimitiveWithInfer):
         >>>
         >>> init()
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.reducescatter = P.ReduceScatter(ReduceOp.SUM)
-        >>>
-        >>>     def construct(self, x):
-        >>>         return self.reducescatter(x)
-        >>>
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.reducescatter = P.ReduceScatter(ReduceOp.SUM)
+        ...
+        ...     def construct(self, x):
+        ...         return self.reducescatter(x)
+        ...
         >>> input_ = Tensor(np.ones([8, 8]).astype(np.float32))
         >>> net = Net()
         >>> output = net(input_)
+        >>> print(output)
     """
 
     @prim_attr_register
@@ -480,16 +485,20 @@ class Broadcast(PrimitiveWithInfer):
         >>>
         >>> init()
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.broadcast = P.Broadcast(1)
-        >>>
-        >>>     def construct(self, x):
-        >>>         return self.broadcast((x,))
-        >>>
-        >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.broadcast = P.Broadcast(1)
+        ...
+        ...     def construct(self, x):
+        ...         return self.broadcast((x,))
+        ...
+        >>> input_ = Tensor(np.ones([2, 4]).astype(np.int32))
         >>> net = Net()
         >>> output = net(input_)
+        >>> print(output)
+        (Tensor(shape[2,4], dtype=Int32, value=
+        [[1, 1, 1, 1],
+         [1, 1, 1, 1]]),)
     """
 
     @prim_attr_register

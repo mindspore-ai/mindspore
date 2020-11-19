@@ -46,59 +46,60 @@ class Categorical(Distribution):
         >>>
         >>> # To use a Categorical distribution in a network
         >>> class net(Cell):
-        >>>     def __init__(self, probs):
-        >>>         super(net, self).__init__():
-        >>>         self.ca = msd.Categorical(probs=[0.2, 0.8], dtype=mstype.int32)
-        >>>         self.ca1 = msd.Categorical(dtype=mstype.int32)
-        >>>
-        >>>     # All the following calls in construct are valid
-        >>>     def construct(self, value):
-        >>>
-        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
-        >>>         # Args:
-        >>>         #     value (Tensor): the value to be evaluated.
-        >>>         #     probs (Tensor): event probabilities. Default: self.probs.
-        >>>
-        >>>         # Examples of `prob`.
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing `prob` by the name of the function.
-        >>>         ans = self.ca.prob(value)
-        >>>         # Evaluate `prob` with respect to distribution b.
-        >>>         ans = self.ca.prob(value, probs_b)
-        >>>         # `probs` must be passed in during function calls.
-        >>>         ans = self.ca1.prob(value, probs_a)
-        >>>
-        >>>         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
-        >>>         # Args:
-        >>>         #     probs (Tensor): event probabilities. Default: self.probs.
-        >>>
-        >>>         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
-        >>>         ans = self.ca.mean() # return 0.8
-        >>>         ans = self.ca.mean(probs_b)
-        >>>         # `probs` must be passed in during function calls.
-        >>>         ans = self.ca1.mean(probs_a)
-        >>>
-        >>>         # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:
-        >>>         # Args:
-        >>>         #     dist (str): the name of the distribution. Only 'Categorical' is supported.
-        >>>         #     probs_b (Tensor): event probabilities of distribution b.
-        >>>         #     probs (Tensor): event probabilities of distribution a. Default: self.probs.
-        >>>
-        >>>         # Examples of kl_loss. `cross_entropy` is similar.
-        >>>         ans = self.ca.kl_loss('Categorical', probs_b)
-        >>>         ans = self.ca.kl_loss('Categorical', probs_b, probs_a)
-        >>>         # An additional `probs` must be passed in.
-        >>>         ans = self.ca1.kl_loss('Categorical', probs_b, probs_a)
-        >>>
-        >>>         # Examples of `sample`.
-        >>>         # Args:
-        >>>         #     shape (tuple): the shape of the sample. Default: ().
-        >>>         #     probs (Tensor): event probabilities. Default: self.probs.
-        >>>         ans = self.ca.sample()
-        >>>         ans = self.ca.sample((2,3))
-        >>>         ans = self.ca.sample((2,3), probs_b)
-        >>>         ans = self.ca1.sample((2,3), probs_a)
+        ...     def __init__(self, probs):
+        ...         super(net, self).__init__():
+        ...         self.ca = msd.Categorical(probs=[0.2, 0.8], dtype=mstype.int32)
+        ...         self.ca1 = msd.Categorical(dtype=mstype.int32)
+        ...
+        ...     # All the following calls in construct are valid
+        ...     def construct(self, value):
+        ...
+        ...         # Private interfaces of probability functions corresponding to public interfaces, including
+        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
+        ...         # Args:
+        ...         #     value (Tensor): the value to be evaluated.
+        ...         #     probs (Tensor): event probabilities. Default: self.probs.
+        ...
+        ...         # Examples of `prob`.
+        ...         # Similar calls can be made to other probability functions
+        ...         # by replacing `prob` by the name of the function.
+        ...         ans = self.ca.prob(value)
+        ...         # Evaluate `prob` with respect to distribution b.
+        ...         ans = self.ca.prob(value, probs_b)
+        ...         # `probs` must be passed in during function calls.
+        ...         ans = self.ca1.prob(value, probs_a)
+        ...
+        ...         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
+        ...         # Args:
+        ...         #     probs (Tensor): event probabilities. Default: self.probs.
+        ...
+        ...         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
+        ...         ans = self.ca.mean() # return 0.8
+        ...         ans = self.ca.mean(probs_b)
+        ...         # `probs` must be passed in during function calls.
+        ...         ans = self.ca1.mean(probs_a)
+        ...
+        ...         # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:
+        ...         # Args:
+        ...         #     dist (str): the name of the distribution. Only 'Categorical' is supported.
+        ...         #     probs_b (Tensor): event probabilities of distribution b.
+        ...         #     probs (Tensor): event probabilities of distribution a. Default: self.probs.
+        ...
+        ...         # Examples of kl_loss. `cross_entropy` is similar.
+        ...         ans = self.ca.kl_loss('Categorical', probs_b)
+        ...         ans = self.ca.kl_loss('Categorical', probs_b, probs_a)
+        ...         # An additional `probs` must be passed in.
+        ...         ans = self.ca1.kl_loss('Categorical', probs_b, probs_a)
+        ...
+        ...         # Examples of `sample`.
+        ...         # Args:
+        ...         #     shape (tuple): the shape of the sample. Default: ().
+        ...         #     probs (Tensor): event probabilities. Default: self.probs.
+        ...         ans = self.ca.sample()
+        ...         ans = self.ca.sample((2,3))
+        ...         ans = self.ca.sample((2,3), probs_b)
+        ...         ans = self.ca1.sample((2,3), probs_a)
+        ...
     """
 
     def __init__(self,

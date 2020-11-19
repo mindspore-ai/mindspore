@@ -396,16 +396,27 @@ class RandomCategorical(PrimitiveWithInfer):
 
     Examples:
         >>> class Net(nn.Cell):
-        >>>   def __init__(self, num_sample):
-        >>>     super(Net, self).__init__()
-        >>>     self.random_categorical = P.RandomCategorical(mindspore.int64)
-        >>>     self.num_sample = num_sample
-        >>>   def construct(self, logits, seed=0):
-        >>>     return self.random_categorical(logits, self.num_sample, seed)
-        >>>
+        ...   def __init__(self, num_sample):
+        ...     super(Net, self).__init__()
+        ...     self.random_categorical = P.RandomCategorical(mindspore.int64)
+        ...     self.num_sample = num_sample
+        ...   def construct(self, logits, seed=0):
+        ...     return self.random_categorical(logits, self.num_sample, seed)
+        ...
         >>> x = np.random.random((10, 5)).astype(np.float32)
         >>> net = Net(8)
         >>> output = net(Tensor(x))
+        >>> print(output)
+        [[0 2 1 3 4 2 0 2]
+         [0 2 1 3 4 2 0 2]
+         [0 2 1 3 4 2 0 2]
+         [0 2 1 3 4 2 0 2]
+         [0 2 0 3 4 2 0 2]
+         [0 2 1 3 4 3 0 3]
+         [0 2 1 3 4 2 0 2]
+         [0 2 1 3 4 2 0 2]
+         [0 2 1 3 4 2 0 2]
+         [0 2 0 3 4 2 0 2]]
     """
 
     @prim_attr_register

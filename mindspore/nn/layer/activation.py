@@ -72,7 +72,7 @@ class Softmax(Cell):
         >>> softmax = nn.Softmax()
         >>> output = softmax(input_x)
         >>> print(output)
-        [0.03168  0.01166  0.0861  0.636  0.2341]
+        [0.03168 0.01166 0.0861  0.636   0.2341 ]
     """
 
     def __init__(self, axis=-1):
@@ -179,7 +179,7 @@ class ReLU(Cell):
         >>> relu = nn.ReLU()
         >>> output = relu(input_x)
         >>> print(output)
-        [0.  2.  0.  2.  0.]
+        [0. 2. 0. 2. 0.]
     """
 
     def __init__(self):
@@ -209,7 +209,7 @@ class ReLU6(Cell):
         >>> relu6 = nn.ReLU6()
         >>> output = relu6(input_x)
         >>> print(output)
-        [0.  0.  0.  2.  1.]
+        [0. 0. 0. 2. 1.]
     """
 
     def __init__(self):
@@ -248,7 +248,7 @@ class LeakyReLU(Cell):
         >>> output = leaky_relu(input_x)
         >>> print(output)
         [[-0.2  4.  -1.6]
-         [ 2   -1.   9.]]
+         [ 2   -1.   9. ]]
     """
 
     def __init__(self, alpha=0.2):
@@ -292,7 +292,7 @@ class Tanh(Cell):
         >>> tanh = nn.Tanh()
         >>> output = tanh(input_x)
         >>> print(output)
-        [0.7617  0.964  0.995  0.964 0.7617]
+        [0.7617 0.964  0.995  0.964  0.7617]
     """
 
     def __init__(self):
@@ -356,7 +356,7 @@ class Sigmoid(Cell):
         >>> sigmoid = nn.Sigmoid()
         >>> output = sigmoid(input_x)
         >>> print(output)
-        [0.2688  0.11914  0.5  0.881  0.7305]
+        [0.2688  0.11914 0.5     0.881   0.7305 ]
     """
 
     def __init__(self):
@@ -517,10 +517,9 @@ class LogSigmoid(Cell):
     Examples:
         >>> net = nn.LogSigmoid()
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> logsigmoid = net(input_x)
-        >>> print(logsigmoid)
-        [-3.1326166e-01, -1.2692806e-01, -4.8587345e-02]
-
+        >>> output = net(input_x)
+        >>> print(output)
+        [-0.31326166 -0.12692806 -0.04858734]
     """
 
     def __init__(self):

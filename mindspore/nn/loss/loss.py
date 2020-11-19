@@ -95,7 +95,8 @@ class L1Loss(_Loss):
         >>> loss = nn.L1Loss()
         >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> target_data = Tensor(np.array([1, 2, 2]), mindspore.float32)
-        >>> loss(input_data, target_data)
+        >>> output = loss(input_data, target_data)
+        >>> print(output)
         0.33333334
     """
     def __init__(self, reduction='mean'):
@@ -183,7 +184,9 @@ class SmoothL1Loss(_Loss):
         >>> loss = nn.SmoothL1Loss()
         >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> target_data = Tensor(np.array([1, 2, 2]), mindspore.float32)
-        >>> loss(input_data, target_data)
+        >>> output = loss(input_data, target_data)
+        >>> print(output)
+        [0.  0.  0.5]
     """
     def __init__(self, beta=1.0):
         super(SmoothL1Loss, self).__init__()
@@ -236,7 +239,9 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         >>> logits = Tensor(np.random.randint(0, 9, [1, 10]), mindspore.float32)
         >>> labels_np = np.ones([1,]).astype(np.int32)
         >>> labels = Tensor(labels_np)
-        >>> loss(logits, labels)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        [5.6924148]
     """
     def __init__(self,
                  sparse=False,
@@ -299,7 +304,7 @@ class SampledSoftmaxLoss(_Loss):
         >>> labels = Tensor([0, 1, 2])
         >>> inputs = Tensor(np.random.randint(0, 9, [3, 10]), mindspore.float32)
         >>> output = loss(weights, biases, labels, inputs)
-        >>> print(output)  # output is ranndom
+        >>> print(output)
         [ 4.0181947 46.050743   7.0009117]
     """
 
@@ -557,7 +562,7 @@ class CosineEmbeddingLoss(_Loss):
         >>> cosine_embedding_loss = nn.CosineEmbeddingLoss()
         >>> output = cosine_embedding_loss(x1, x2, y)
         >>> print(output)
-        [0.0003426671]
+        [0.0003426075]
     """
     def __init__(self, margin=0.0, reduction="mean"):
         super(CosineEmbeddingLoss, self).__init__(reduction)

@@ -50,16 +50,17 @@ class ScalarSummary(PrimitiveWithInfer):
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
-        >>>     def __init__(self,):
-        >>>         super(SummaryDemo, self).__init__()
-        >>>         self.summary = P.ScalarSummary()
-        >>>         self.add = P.TensorAdd()
-        >>>
-        >>>     def construct(self, x, y):
-        >>>         name = "x"
-        >>>         self.summary(name, x)
-        >>>         x = self.add(x, y)
-        >>>         return x
+        ...     def __init__(self,):
+        ...         super(SummaryDemo, self).__init__()
+        ...         self.summary = P.ScalarSummary()
+        ...         self.add = P.TensorAdd()
+        ...
+        ...     def construct(self, x, y):
+        ...         name = "x"
+        ...         self.summary(name, x)
+        ...         x = self.add(x, y)
+        ...         return x
+		...
     """
 
     @prim_attr_register
@@ -88,14 +89,15 @@ class ImageSummary(PrimitiveWithInfer):
 
     Examples:
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.summary = P.ImageSummary()
-        >>>
-        >>>     def construct(self, x):
-        >>>         name = "image"
-        >>>         out = self.summary(name, x)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.summary = P.ImageSummary()
+        ...
+        ...     def construct(self, x):
+        ...         name = "image"
+        ...         out = self.summary(name, x)
+        ...         return out
+        ...
     """
 
     @prim_attr_register
@@ -125,16 +127,17 @@ class TensorSummary(PrimitiveWithInfer):
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
-        >>>     def __init__(self,):
-        >>>         super(SummaryDemo, self).__init__()
-        >>>         self.summary = P.TensorSummary()
-        >>>         self.add = P.TensorAdd()
-        >>>
-        >>>     def construct(self, x, y):
-        >>>         x = self.add(x, y)
-        >>>         name = "x"
-        >>>         self.summary(name, x)
-        >>>         return x
+        ...     def __init__(self,):
+        ...         super(SummaryDemo, self).__init__()
+        ...         self.summary = P.TensorSummary()
+        ...         self.add = P.TensorAdd()
+        ...
+        ...     def construct(self, x, y):
+        ...         x = self.add(x, y)
+        ...         name = "x"
+        ...         self.summary(name, x)
+        ...         return x
+        ...
     """
 
     @prim_attr_register
@@ -163,16 +166,17 @@ class HistogramSummary(PrimitiveWithInfer):
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
-        >>>     def __init__(self,):
-        >>>         super(SummaryDemo, self).__init__()
-        >>>         self.summary = P.HistogramSummary()
-        >>>         self.add = P.TensorAdd()
-        >>>
-        >>>     def construct(self, x, y):
-        >>>         x = self.add(x, y)
-        >>>         name = "x"
-        >>>         self.summary(name, x)
-        >>>         return x
+        ...     def __init__(self,):
+        ...         super(SummaryDemo, self).__init__()
+        ...         self.summary = P.HistogramSummary()
+        ...         self.add = P.TensorAdd()
+        ...
+        ...     def construct(self, x, y):
+        ...         x = self.add(x, y)
+        ...         name = "x"
+        ...         self.summary(name, x)
+        ...         return x
+        ...
     """
 
     @prim_attr_register
@@ -206,33 +210,34 @@ class InsertGradientOf(PrimitiveWithInfer):
 
     Examples:
         >>> def clip_gradient(dx):
-        >>>     ret = dx
-        >>>     if ret > 1.0:
-        >>>         ret = 1.0
-        >>>
-        >>>     if ret < 0.2:
-        >>>         ret = 0.2
-        >>>
-        >>>     return ret
-        >>>
+        ...     ret = dx
+        ...     if ret > 1.0:
+        ...         ret = 1.0
+        ...
+        ...     if ret < 0.2:
+        ...         ret = 0.2
+        ...
+        ...     return ret
+        ...
         >>> clip = P.InsertGradientOf(clip_gradient)
         >>> grad_all = C.GradOperation(get_all=True)
         >>> def InsertGradientOfClipDemo():
-        >>>     def clip_test(x, y):
-        >>>         x = clip(x)
-        >>>         y = clip(y)
-        >>>         c = x * y
-        >>>         return c
-        >>>
-        >>>     @ms_function
-        >>>     def f(x, y):
-        >>>         return clip_test(x, y)
-        >>>
-        >>>     def fd(x, y):
-        >>>         return grad_all(clip_test)(x, y)
-        >>>
-        >>>     print("forward: ", f(1.1, 0.1))
-        >>>     print("clip_gradient:", fd(1.1, 0.1))
+        ...     def clip_test(x, y):
+        ...         x = clip(x)
+        ...         y = clip(y)
+        ...         c = x * y
+        ...         return c
+        ...
+        ...     @ms_function
+        ...     def f(x, y):
+        ...         return clip_test(x, y)
+        ...
+        ...     def fd(x, y):
+        ...         return grad_all(clip_test)(x, y)
+        ...
+        ...     print("forward: ", f(1.1, 0.1))
+        ...     print("clip_gradient:", fd(1.1, 0.1))
+        ...
     """
 
     @prim_attr_register
@@ -266,21 +271,21 @@ class HookBackward(PrimitiveWithInfer):
 
     Examples:
         >>> def hook_fn(grad_out):
-        >>>     print(grad_out)
-        >>>
+        ...     print(grad_out)
+        ...
         >>> grad_all = GradOperation(get_all=True)
         >>> hook = P.HookBackward(hook_fn)
-        >>>
         >>> def hook_test(x, y):
-        >>>     z = x * y
-        >>>     z = hook(z)
-        >>>     z = z * y
-        >>>     return z
-        >>>
+        ...     z = x * y
+        ...     z = hook(z)
+        ...     z = z * y
+        ...     return z
+        ...
         >>> def backward(x, y):
-        >>>     return grad_all(hook_test)(x, y)
-        >>>
-        >>> backward(1, 2)
+        ...     return grad_all(hook_test)(x, y)
+        ...
+        >>> output = backward(1, 2)
+        >>> print(output)
     """
 
     def __init__(self, hook_fn, cell_id=""):
@@ -316,13 +321,14 @@ class Print(PrimitiveWithInfer):
 
     Examples:
         >>> class PrintDemo(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(PrintDemo, self).__init__()
-        >>>         self.print = P.Print()
-        >>>
-        >>>     def construct(self, x, y):
-        >>>         self.print('Print Tensor x and Tensor y:', x, y)
-        >>>         return x
+        ...     def __init__(self):
+        ...         super(PrintDemo, self).__init__()
+        ...         self.print = P.Print()
+        ...
+        ...     def construct(self, x, y):
+        ...         self.print('Print Tensor x and Tensor y:', x, y)
+        ...         return x
+        ...
     """
 
     @prim_attr_register
@@ -356,15 +362,16 @@ class Assert(PrimitiveWithInfer):
 
     Examples:
         >>> class AssertDemo(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(AssertDemo, self).__init__()
-        >>>         self.assert1 = P.Assert(summarize=10)
-        >>>         self.add = P.TensorAdd()
-        >>>
-        >>>     def construct(self, x, y):
-        >>>         data = self.add(x, y)
-        >>>         self.assert1(True, [data])
-        >>>         return data
+        ...     def __init__(self):
+        ...         super(AssertDemo, self).__init__()
+        ...         self.assert1 = P.Assert(summarize=10)
+        ...         self.add = P.TensorAdd()
+        ...
+        ...     def construct(self, x, y):
+        ...         data = self.add(x, y)
+        ...         self.assert1(True, [data])
+        ...         return data
+        ...
     """
 
     @prim_attr_register

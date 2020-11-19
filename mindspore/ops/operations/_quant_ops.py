@@ -1417,13 +1417,15 @@ class IFMR(PrimitiveWithInfer):
 
     Examples:
         >>> data = Tensor(np.random.rand(1, 3, 6, 4).astype(np.float32))
-        >>> data_min = Tensor([0.1], mstype.float32)
-        >>> data_max = Tensor([0.5], mstype.float32)
+        >>> data_min = Tensor([0.1], mindspore.float32)
+        >>> data_max = Tensor([0.5], mindspore.float32)
         >>> cumsum = Tensor(np.random.rand(4).astype(np.int32))
         >>> ifmr = Q.IFMR(min_percentile=0.2, max_percentile=0.9, search_range=(1.0, 2.0),
-        >>>               search_step=1.0, with_offset=False)
+        ...               search_step=1.0, with_offset=False)
         >>> output = ifmr(data, data_min, data_max, cumsum)
-        ([7.87401572e-03], [0.00000000e+00])
+        >>> print(output)
+        (Tensor(shape=[1], dtype=Float32, value= [7.87401572e-03]),
+         Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]))
     """
 
     @prim_attr_register
