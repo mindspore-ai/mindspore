@@ -669,7 +669,7 @@ STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNo
   MS_ASSERT(node->primitive->value != nullptr);
   auto type = node->primitive->value.type;
   auto input1_ndim = graph->allTensors.at(node->inputIndex[0])->dims.size();
-  if (input1_ndim != 4 && input1_ndim != 0) {
+  if (input1_ndim != 4) {
     if (node->inputIndex.size() > 1) {
       auto input2_ndim = graph->allTensors.at(node->inputIndex[1])->dims.size();
       if (input2_ndim != 4 && input2_ndim != 0) {

@@ -313,10 +313,10 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, s
       MS_LOG(ERROR) << "cast to ValueNode failed";
       return RET_ERROR;
     }
-    auto input_index_key =
-      get_item_input_cnode->fullname_with_scope() + "_o:" +
-      std::to_string(value_node->value()->type_name() == "Int64Imm" ? GetValue<int64_t>(value_node->value())
-                                                                    : GetValue<int>(value_node->value()));
+    auto input_index_key = get_item_input_cnode->fullname_with_scope() + "_o:" +
+                           std::to_string(value_node->value()->type()->number_type() == kNumberTypeInt64
+                                            ? GetValue<int64_t>(value_node->value())
+                                            : GetValue<int>(value_node->value()));
     auto iter = node_id_map_.find(input_index_key);
     if (iter == node_id_map_.end()) {
 #ifdef SUPPORT_TRAIN
@@ -415,8 +415,7 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
     paramTensor->dataType = typePtr->type_id();
     paramTensor->dims = {1};
     paramTensor->nodeType = schema::NodeType::NodeType_ValueNode;
-    auto data = value->cast<mindspore::Int32ImmPtr>();
-    int real_data = GetValue<int32_t>(data);
+    int real_data = CastToInt(value, false).front();
     paramTensor->data.resize(sizeof(int32_t));
     memcpy(paramTensor->data.data(), &real_data, sizeof(int32_t));
     node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();

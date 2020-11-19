@@ -58,9 +58,9 @@ int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
         auto tuple = val->cast<ValueTuplePtr>();
         MS_ASSERT(tuple != nullptr);
         for (size_t i = 0; i < tuple->size(); ++i) {
-          auto elem = tuple->value()[i]->cast<Int32ImmPtr>();
+          auto elem = tuple->value()[i];
           MS_ASSERT(elem != nullptr);
-          attr->shape.emplace_back(static_cast<int>(elem->value()));
+          attr->shape.emplace_back(CastToInt(elem, false).front());
         }
       } else {
         int dim = CastToInt(val, false).front();

@@ -32,7 +32,12 @@ class SplitBaseCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
     param = reinterpret_cast<SplitParameter *>(op_parameter_);
   }
-  ~SplitBaseCPUKernel() = default;
+  ~SplitBaseCPUKernel() override {
+    if (param != nullptr && param->split_sizes_ != nullptr) {
+      free(param->split_sizes_);
+      param->split_sizes_ = nullptr;
+    }
+  }
 
   int Init() override;
   int ReSize() override;

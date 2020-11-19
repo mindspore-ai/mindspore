@@ -62,9 +62,9 @@ int Transpose::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &
         auto tuple = val->cast<ValueTuplePtr>();
         MS_ASSERT(tuple != nullptr);
         for (size_t i = 0; i < tuple->size(); i++) {
-          auto elem = tuple->value()[i]->cast<Int32ImmPtr>();
+          auto elem = tuple->value()[i];
           MS_ASSERT(elem != nullptr);
-          attr->perm.emplace_back(static_cast<int>(elem->value()));
+          attr->perm.emplace_back(CastToInt(elem, false).front());
         }
       }
     }
