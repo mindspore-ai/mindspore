@@ -798,7 +798,6 @@ bool AscendKernelRuntime::DestroyHccl() {
     MS_LOG(ERROR) << "Dynamic Shape Hccl Finalize Failed";
   }
   HcclResult res = hcom_destroy();
-
   if (res != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "Hccl destroy failed";
     return false;

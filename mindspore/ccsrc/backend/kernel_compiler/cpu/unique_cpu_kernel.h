@@ -63,6 +63,9 @@ class UniqueCPUKernel : public CPUKernel {
 
   template <typename DataType>
   static size_t BucketId(DataType data, size_t bucket_num) {
+    if (bucket_num < 1) {
+      return static_cast<size_t>(data);
+    }
     return static_cast<size_t>(data) % bucket_num;
   }
 
@@ -73,6 +76,9 @@ class UniqueCPUKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(params->input_);
     MS_EXCEPTION_IF_NULL(each_bucket_size);
     size_t bucket_num = each_bucket_size->size();
+    if (params->input_size_ < 1) {
+      return;
+    }
     for (IndexType i = 0; i < params->input_size_; ++i) {
       auto bucket_id = BucketId(params->input_[i], bucket_num);
       each_bucket_size->at(bucket_id)++;
@@ -131,6 +137,9 @@ class UniqueCPUKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(segment->input_);
     std::vector<IndexType> bucket_data_num(segment->thread_num_, 0);
     auto bucket_size = buckets.size();
+    if (segment->input_size_ < 1) {
+      return;
+    }
     for (IndexType i = 0; i < segment->input_size_; ++i) {
       DataType data = segment->input_[i];
       auto bucket_id = BucketId(data, segment->thread_num_);
@@ -233,6 +242,9 @@ class UniqueCPUKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(output);
     MS_EXCEPTION_IF_NULL(inverse_idx);
     IndexType j = 0;
+    if (params->input_size_ < 1) {
+      return;
+    }
     if (params->need_sort_) {
       for (IndexType i = 0; i < params->input_size_; ++i) {
         input_idx[i] = i;
@@ -296,6 +308,9 @@ class UniqueCPUKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(bucket->workspace_idx_);
     MS_EXCEPTION_IF_NULL(result);
     MS_EXCEPTION_IF_NULL(result->inverse_idx_);
+    if (bucket->input_size_ < 1) {
+      return;
+    }
     for (IndexType i = 0; i < bucket->input_size_; ++i) {
       auto origin_idx = bucket->workspace_idx_[i];
       if (origin_idx >= 0 && origin_idx < result->input_size_) {

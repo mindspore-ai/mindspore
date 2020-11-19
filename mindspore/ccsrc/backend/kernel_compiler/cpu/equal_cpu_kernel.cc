@@ -95,6 +95,5 @@ void EqualCPUKernel::CheckParam(const CNodePtr &kernel_node) {
     }
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore
