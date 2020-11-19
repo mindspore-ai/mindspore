@@ -25,7 +25,7 @@ from ..primitive import PrimitiveWithInfer, prim_attr_register
 
 class ReduceOp:
     """
-    Operation options for reduce tensors.
+    Operation options for reducing tensors.
 
     There are four kinds of operation options, "SUM", "MAX", "MIN", and "PROD".
 

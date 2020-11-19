@@ -320,7 +320,7 @@ class _Reduce(PrimitiveWithInfer):
 
 class ReduceMean(_Reduce):
     """
-     Reduce a dimension of a tensor by averaging all elements in the dimension.
+     Reduces a dimension of a tensor by averaging all elements in the dimension.
 
      The dtype of the tensor to be reduced is number.
 
@@ -354,7 +354,7 @@ class ReduceMean(_Reduce):
 
 class ReduceSum(_Reduce):
     """
-    Reduce a dimension of a tensor by summing all elements in the dimension.
+    Reduces a dimension of a tensor by summing all elements in the dimension.
 
     The dtype of the tensor to be reduced is number.
 
@@ -394,7 +394,7 @@ class ReduceSum(_Reduce):
 
 class ReduceAll(_Reduce):
     """
-    Reduce a dimension of a tensor by the "logical and" of all elements in the dimension.
+    Reduces a dimension of a tensor by the "logicalAND" of all elements in the dimension.
 
     The dtype of the tensor to be reduced is bool.
 
@@ -432,7 +432,7 @@ class ReduceAll(_Reduce):
 
 class ReduceAny(_Reduce):
     """
-    Reduce a dimension of a tensor by the "logical OR" of all elements in the dimension.
+    Reduces a dimension of a tensor by the "logical OR" of all elements in the dimension.
 
     The dtype of the tensor to be reduced is bool.
 
@@ -471,7 +471,7 @@ class ReduceAny(_Reduce):
 
 class ReduceMax(_Reduce):
     """
-    Reduce a dimension of a tensor by the maximum value in this dimension.
+    Reduces a dimension of a tensor by the maximum value in this dimension.
 
     The dtype of the tensor to be reduced is number.
 
@@ -515,7 +515,7 @@ class ReduceMax(_Reduce):
 
 class ReduceMin(_Reduce):
     """
-    Reduce a dimension of a tensor by the minimum value in the dimension.
+    Reduces a dimension of a tensor by the minimum value in the dimension.
 
     The dtype of the tensor to be reduced is number.
 
@@ -550,7 +550,7 @@ class ReduceMin(_Reduce):
 
 class ReduceProd(_Reduce):
     """
-    Reduce a dimension of a tensor by multiplying all elements in the dimension.
+    Reduces a dimension of a tensor by multiplying all elements in the dimension.
 
     The dtype of the tensor to be reduced is number.
 
@@ -585,7 +585,7 @@ class ReduceProd(_Reduce):
 
 class CumProd(PrimitiveWithInfer):
     """
-    Compute the cumulative product of the tensor x along axis.
+    Computes the cumulative product of the tensor x along axis.
 
     Args:
         exclusive (bool): If true, perform exclusive cumulative product. Default: False.
@@ -1753,7 +1753,7 @@ class Maximum(_MathBinaryOp):
 
 class RealDiv(_MathBinaryOp):
     """
-    Divide the first input tensor by the second input tensor in floating-point type element-wise.
+    Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -1831,7 +1831,7 @@ class Div(_MathBinaryOp):
 
 class DivNoNan(_MathBinaryOp):
     """
-    Computes a safe divide which returns 0 if the y is zero.
+    Computes a safe divide and returns 0 if the y is zero.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -1876,7 +1876,7 @@ class DivNoNan(_MathBinaryOp):
 
 class FloorDiv(_MathBinaryOp):
     """
-    Divide the first input tensor by the second input tensor element-wise and round down to the closest integer.
+    Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -1906,7 +1906,7 @@ class FloorDiv(_MathBinaryOp):
 
 class TruncateDiv(_MathBinaryOp):
     """
-    Divide the first input tensor by the second input tensor element-wise for integer types, negative numbers will
+    Divides the first input tensor by the second input tensor element-wise for integer types, negative numbers will
     round fractional quantities towards zero.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
@@ -1937,7 +1937,7 @@ class TruncateDiv(_MathBinaryOp):
 
 class TruncateMod(_MathBinaryOp):
     """
-    Returns element-wise remainder of division.
+    Returns the remainder of division element-wise.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -2005,7 +2005,7 @@ class Mod(_MathBinaryOp):
 
 class Floor(PrimitiveWithInfer):
     """
-    Round a tensor down to the closest integer element-wise.
+    Rounds a tensor down to the closest integer element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. Its element data type must be float.
@@ -2034,7 +2034,7 @@ class Floor(PrimitiveWithInfer):
 
 class FloorMod(_MathBinaryOp):
     """
-    Compute the remainder of division element-wise.
+    Computes the remainder of division element-wise.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -2064,7 +2064,7 @@ class FloorMod(_MathBinaryOp):
 
 class Ceil(PrimitiveWithInfer):
     """
-    Round a tensor up to the closest integer element-wise.
+    Rounds a tensor up to the closest integer element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It's element data type must be float16 or float32.
@@ -2093,7 +2093,7 @@ class Ceil(PrimitiveWithInfer):
 
 class Xdivy(_MathBinaryOp):
     """
-    Divide the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
+    Divides the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -2126,7 +2126,7 @@ class Xdivy(_MathBinaryOp):
 
 class Xlogy(_MathBinaryOp):
     """
-    Computes first input tensor multiplied by the logarithm of second input tensor element-wise.
+    Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
     Returns zero when `x` is zero.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
@@ -2161,7 +2161,7 @@ class Xlogy(_MathBinaryOp):
 
 class Acosh(PrimitiveWithInfer):
     """
-    Compute inverse hyperbolic cosine of the input element-wise.
+    Computes inverse hyperbolic cosine of the input element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -2218,7 +2218,7 @@ class Cosh(PrimitiveWithInfer):
 
 class Asinh(PrimitiveWithInfer):
     """
-    Compute inverse hyperbolic sine of the input element-wise.
+    Computes inverse hyperbolic sine of the input element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -2247,7 +2247,7 @@ class Asinh(PrimitiveWithInfer):
 
 class Sinh(PrimitiveWithInfer):
     """
-    Computes hyperbolic sine of input element-wise.
+    Computes hyperbolic sine of the input element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -2335,7 +2335,7 @@ class Equal(_LogicBinaryOp):
 
 class ApproximateEqual(_LogicBinaryOp):
     """
-    Returns true if abs(x1-x2) is smaller than tolerance element-wise, otherwise false.
+    Returns True if abs(x1-x2) is smaller than tolerance element-wise, otherwise False.
 
     Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -2690,7 +2690,7 @@ class LogicalOr(_LogicBinaryOp):
 
 class IsNan(PrimitiveWithInfer):
     """
-    Judge which elements are nan for each position.
+    Determines which elements are NaN for each position.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
@@ -2718,7 +2718,7 @@ class IsNan(PrimitiveWithInfer):
 
 class IsInf(PrimitiveWithInfer):
     """
-    Judging which elements are inf or -inf for each position
+    Determines which elements are inf or -inf for each position
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
@@ -2746,7 +2746,7 @@ class IsInf(PrimitiveWithInfer):
 
 class IsFinite(PrimitiveWithInfer):
     """
-    Judge which elements are finite for each position.
+    Deternubes which elements are finite for each position.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.
@@ -2776,7 +2776,7 @@ class IsFinite(PrimitiveWithInfer):
 
 class FloatStatus(PrimitiveWithInfer):
     """
-    Determine if the elements contain Not a Number(NaN), infinite or negative infinite. 0 for normal, 1 for overflow.
+    Determines if the elements contain Not a Number(NaN), infinite or negative infinite. 0 for normal, 1 for overflow.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type must be float16 or float32.
@@ -2838,7 +2838,7 @@ class NPUAllocFloatStatus(PrimitiveWithInfer):
 
 class NPUGetFloatStatus(PrimitiveWithInfer):
     """
-    Updates the flag which is the output tensor of `NPUAllocFloatStatus` with latest overflow status.
+    Updates the flag which is the output tensor of `NPUAllocFloatStatus` with the latest overflow status.
 
     The flag is a tensor whose shape is `(8,)` and data type is `mindspore.dtype.float32`.
     If the sum of the flag equals to 0, there is no overflow happened. If the sum of the flag is bigger than 0, there
@@ -2877,7 +2877,7 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
 
 class NPUClearFloatStatus(PrimitiveWithInfer):
     """
-    Clear the flag which stores the overflow status.
+    Clears the flag which stores the overflow status.
 
     Note:
         The flag is in the register on the `Ascend` device. It will be reset and can not be reused again after the
@@ -2951,7 +2951,7 @@ class Cos(PrimitiveWithInfer):
 
 class ACos(PrimitiveWithInfer):
     """
-    Computes arccosine of input element-wise.
+    Computes arccosine of input tensors element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -2979,7 +2979,7 @@ class ACos(PrimitiveWithInfer):
 
 class Sin(PrimitiveWithInfer):
     """
-    Computes sine of input element-wise.
+    Computes sine of the input element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -3008,7 +3008,7 @@ class Sin(PrimitiveWithInfer):
 
 class Asin(PrimitiveWithInfer):
     """
-    Computes arcsine of input element-wise.
+    Computes arcsine of input tensors element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -3037,7 +3037,7 @@ class Asin(PrimitiveWithInfer):
 
 class NMSWithMask(PrimitiveWithInfer):
     """
-    Select some bounding boxes in descending order of score.
+    Selects some bounding boxes in descending order of score.
 
     Args:
         iou_threshold (float): Specifies the threshold of overlap boxes with respect to
@@ -3133,7 +3133,7 @@ class Abs(PrimitiveWithInfer):
 
 class Sign(PrimitiveWithInfer):
     r"""
-    Perform :math:`sign` on tensor element-wise.
+    Performs sign on the tensor element-wise.
 
     Note:
         .. math::
@@ -3319,7 +3319,7 @@ class Atan2(_MathBinaryOp):
 
 class SquareSumAll(PrimitiveWithInfer):
     """
-    Returns square sum all of a tensor element-wise
+    Returns the square sum of a tensor element-wise
 
     Inputs:
         - **input_x1** (Tensor) - The input tensor. The data type must be float16 or float32.
@@ -3559,7 +3559,7 @@ class Invert(PrimitiveWithInfer):
 
 class Eps(PrimitiveWithInfer):
     """
-    Creates a tensor filled with `input_x` dtype minimum val.
+    Creates a tensor filled with `input_x` dtype minimum value.
 
     Inputs:
         - **input_x** (Tensor) - Input tensor. The data type must be float16 or float32.

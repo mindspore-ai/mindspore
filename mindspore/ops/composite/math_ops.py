@@ -171,11 +171,11 @@ def TensorDot(x1, x2, axes):
     axes = 2 is the same as axes = ((0,1),(1,2)) where length of input shape is 3 for both `a` and `b`
 
     Inputs:
-        - **x1** (Tensor): First tensor in TensorDot op with datatype float16 or float32
-        - **x2** (Tensor): Second tensor in TensorDot op with datatype float16 or float32
-        - **axes** (Union[int, tuple(int), tuple(tuple(int)), list(list(int))]): Single value or
-        tuple/list of length 2 with dimensions specified for `a` and `b` each. If single value `N` passed,
-        automatically picks up first N dims from `a` input shape and last N dims from `b` input shape.
+        - **x1** (Tensor) - First tensor in TensorDot op with datatype float16 or float32
+        - **x2** (Tensor) - Second tensor in TensorDot op with datatype float16 or float32
+        - **axes** (Union[int, tuple(int), tuple(tuple(int)), list(list(int))]) - Single value or
+          tuple/list of length 2 with dimensions specified for `a` and `b` each. If single value `N` passed,
+          automatically picks up first N dims from `a` input shape and last N dims from `b` input shape.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N + M)`. Where :math:`N` and :math:`M` are the free axes not

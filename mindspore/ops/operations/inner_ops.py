@@ -23,7 +23,7 @@ from ..primitive import prim_attr_register, PrimitiveWithInfer
 
 class ScalarCast(PrimitiveWithInfer):
     """
-    Cast the input scalar to another type.
+    Casts the input scalar to another type.
 
     Inputs:
         - **input_x** (scalar) - The input scalar. Only constant value is allowed.

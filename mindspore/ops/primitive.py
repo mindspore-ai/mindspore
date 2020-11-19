@@ -287,7 +287,7 @@ class PrimitiveWithCheck(Primitive):
 
 class PrimitiveWithInfer(Primitive):
     """
-    PrimitiveWithInfer is the base class of primitives in python defines functions for tracking inference in python.
+    PrimitiveWithInfer is the base class of primitives in python and defines functions for tracking inference in python.
 
     There are four method can be overide to define the infer logic of the primitive: __infer__(), infer_shape(),
     infer_dtype(), and infer_value(). If __infer__() is defined in primitive, the __infer__() has highest priority
@@ -464,8 +464,8 @@ def prim_attr_register(fn):
 
 def constexpr(fn=None, get_instance=True, name=None):
     """
-    Make a PrimitiveWithInfer operator that can infer the value at compile time. We can use it to define a function to
-    compute constant value using the constants in the constructor.
+    Creates a PrimitiveWithInfer operator that can infer the value at compile time. We can use it to define a function
+    to compute constant value using the constants in the constructor.
 
     Args:
         fn (function): A `fn` use as the infer_value of the output operator.

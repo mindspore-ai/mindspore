@@ -342,7 +342,7 @@ class AiCPURegOp(RegOp):
 
 
 class TBERegOp(RegOp):
-    """Class for TBE op info register."""
+    """Class for TBE operator information register."""
 
     def __init__(self, op_name):
         super(TBERegOp, self).__init__(op_name)

@@ -167,7 +167,7 @@ class LogSoftmax(PrimitiveWithInfer):
     the Log Softmax function is shown as follows:
 
     .. math::
-        \text{output}(x_i) = \log \left(\frac{exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
+        \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
 
     where :math:`N` is the length of the Tensor.
 
@@ -274,7 +274,7 @@ class Softsign(PrimitiveWithInfer):
 
 class ReLU(PrimitiveWithInfer):
     r"""
-    Computes ReLU(Rectified Linear Unit) of input tensor element-wise.
+    Computes ReLU (Rectified Linear Unit) of input tensors element-wise.
 
     It returns :math:`\max(x,\  0)` element-wise.
 
@@ -307,7 +307,7 @@ class ReLU(PrimitiveWithInfer):
 
 class ReLU6(PrimitiveWithInfer):
     r"""
-    Computes ReLU(Rectified Linear Unit) upper bounded by 6 of input tensor element-wise.
+    Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
 
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
@@ -341,7 +341,7 @@ class ReLU6(PrimitiveWithInfer):
 
 class ReLUV2(PrimitiveWithInfer):
     r"""
-    Computes ReLU(Rectified Linear Unit) of input tensor element-wise.
+    Computes ReLU (Rectified Linear Unit) of input tensors element-wise.
 
     It returns :math:`\max(x,\  0)` element-wise.
 
@@ -398,7 +398,18 @@ class ReLUV2(PrimitiveWithInfer):
 
 class Elu(PrimitiveWithInfer):
     r"""
-    Computes exponential linear: `alpha * (exp(x) - 1)` if x < 0, `x` otherwise.
+    Computes exponential linear:
+
+    if x < 0:
+
+    .. math::
+        \text{x} = \alpha * (\exp(\text{x}) - 1)
+
+    if x >= 0:
+
+    .. math::
+        \text{x} = \text{x}
+
     The data type of input tensor must be float.
 
     Args:
@@ -480,7 +491,7 @@ class Sigmoid(PrimitiveWithInfer):
     Computes Sigmoid of input element-wise. The Sigmoid function is defined as:
 
     .. math::
-        \text{sigmoid}(x_i) = \frac{1}{1 + exp(-x_i)},
+        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
 
     where :math:`x_i` is the element of the input.
 
@@ -586,7 +597,7 @@ class Tanh(PrimitiveWithInfer):
 
 class FusedBatchNorm(Primitive):
     r"""
-    FusedBatchNorm is a BatchNorm that moving mean and moving variance will be computed instead of being loaded.
+    FusedBatchNorm is a BatchNorm. Moving mean and moving variance will be computed instead of being loaded.
 
     Batch Normalization is widely used in convolutional networks. This operation applies
     Batch Normalization over input to avoid internal covariate shift as described in the
@@ -786,7 +797,7 @@ class FusedBatchNormEx(PrimitiveWithInfer):
 
 class BNTrainingReduce(PrimitiveWithInfer):
     """
-    For BatchNorm operator, this operator update the moving averages for training and is used in conjunction with
+    For the BatchNorm operation this operator update the moving averages for training and is used in conjunction with
     BNTrainingUpdate.
 
     Inputs:
@@ -820,7 +831,7 @@ class BNTrainingReduce(PrimitiveWithInfer):
 
 class BNTrainingUpdate(PrimitiveWithInfer):
     """
-    For BatchNorm operator, this operator update the moving averages for training and is used in conjunction with
+    For the BatchNorm operation, this operator update the moving averages for training and is used in conjunction with
     BNTrainingReduce.
 
     Args:
@@ -1428,7 +1439,7 @@ class MaxPool(_Pool):
 
 class MaxPoolWithArgmax(_Pool):
     r"""
-    Perform max pooling on the input Tensor and return both max values and indices.
+    Performs max pooling on the input Tensor and returns both max values and indices.
 
     Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
     regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
@@ -1819,7 +1830,7 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
 
         .. math::
-            p_{ij} = softmax(X_{ij}) = \frac{exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)}
+            p_{ij} = softmax(X_{ij}) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)}
 
         .. math::
             loss_{ij} = -\sum_j{Y_{ij} * ln(p_{ij})}
@@ -1865,7 +1876,7 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
 
         .. math::
-            p_{ij} = softmax(X_{ij}) = \frac{exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)}
+            p_{ij} = softmax(X_{ij}) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)}
 
         .. math::
             loss_{ij} = \begin{cases} -ln(p_{ij}), &j = y_i \cr -ln(1 - p_{ij}), & j \neq y_i \end{cases}
@@ -2164,7 +2175,7 @@ class RNNTLoss(PrimitiveWithInfer):
 
 class SGD(PrimitiveWithCheck):
     """
-    Computes stochastic gradient descent (optionally with momentum).
+    Computes the stochastic gradient descent. Momentum is optional.
 
     Nesterov momentum is based on the formula from On the importance of
     initialization and momentum in deep learning.
@@ -2625,7 +2636,7 @@ class DropoutDoMask(PrimitiveWithInfer):
 
 class ResizeBilinear(PrimitiveWithInfer):
     r"""
-    Resizes the image to certain size using bilinear interpolation.
+    Resizes an image to a certain size using the bilinear interpolation.
 
     The resizing only affects the lower two dimensions which represent the height and width. The input images
     can be represented by different data types, but the data types of output images are always float32.
@@ -2900,7 +2911,7 @@ class PReLU(PrimitiveWithInfer):
 
 class LSTM(PrimitiveWithInfer):
     """
-    Performs the long short term memory(LSTM) on the input.
+    Performs the Long Short-Term Memory (LSTM) on the input.
 
     For detailed information, please refer to `nn.LSTM`.
     """
@@ -3025,7 +3036,7 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
 
 class Pad(PrimitiveWithInfer):
     """
-    Pads input tensor according to the paddings.
+    Pads the input tensor according to the paddings.
 
     Args:
         paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
@@ -3158,7 +3169,7 @@ class MirrorPad(PrimitiveWithInfer):
 
 class ROIAlign(PrimitiveWithInfer):
     """
-    Computes Region of Interest (RoI) Align operator.
+    Computes the Region of Interest (RoI) Align operator.
 
     The operator computes the value of each sampling point by bilinear interpolation from the nearby grid points on the
     feature map. No quantization is performed on any coordinates involved in the RoI, its bins, or the sampling
@@ -3223,7 +3234,7 @@ class ROIAlign(PrimitiveWithInfer):
 
 class Adam(PrimitiveWithInfer):
     r"""
-    Updates gradients by Adaptive Moment Estimation (Adam) algorithm.
+    Updates gradients by the Adaptive Moment Estimation (Adam) algorithm.
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
@@ -3418,7 +3429,7 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
 
 class FusedSparseAdam(PrimitiveWithInfer):
     r"""
-    Merges the duplicate value of the gradient and then updates parameters by Adaptive Moment Estimation (Adam)
+    Merges the duplicate value of the gradient and then updates parameters by the Adaptive Moment Estimation (Adam)
     algorithm. This operator is used when the gradient is sparse.
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
@@ -3550,7 +3561,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
 
 class FusedSparseLazyAdam(PrimitiveWithInfer):
     r"""
-    Merges the duplicate value of the gradient and then updates parameters by Adaptive Moment Estimation (Adam)
+    Merges the duplicate value of the gradient and then updates parameters by the Adaptive Moment Estimation (LazyAdam)
     algorithm. This operator is used when the gradient is sparse. The behavior is not equivalent to the
     original Adam algorithm, as only the current indices parameters will be updated.
 
@@ -4516,7 +4527,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
 
 class SparseApplyAdagradV2(PrimitiveWithInfer):
     r"""
-    Updates relevant entries according to the adagrad scheme.
+    Updates relevant entries according to the adagrad scheme, one more epsilon attribute than SparseApplyAdagrad.
 
     .. math::
             accum += grad * grad
@@ -5020,7 +5031,7 @@ class ApplyPowerSign(PrimitiveWithInfer):
 
 class ApplyGradientDescent(PrimitiveWithInfer):
     r"""
-    Updates relevant entries according to the following formula.
+    Updates relevant entries according to the following.
 
     .. math::
         var = var - \alpha * \delta
@@ -5170,7 +5181,7 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
 class LARSUpdate(PrimitiveWithInfer):
     """
-    Conducts lars (layer-wise adaptive rate scaling) update on the sum of squares of gradient.
+    Conducts LARS (layer-wise adaptive rate scaling) update on the sum of squares of gradient.
 
     Args:
         epsilon (float): Term added to the denominator to improve numerical stability. Default: 1e-05.
@@ -5429,7 +5440,8 @@ class SparseApplyFtrl(PrimitiveWithCheck):
 
 class SparseApplyFtrlV2(PrimitiveWithInfer):
     """
-    Updates relevant entries according to the FTRL-proximal scheme.
+    Updates relevant entries according to the FTRL-proximal scheme. This class has one more attribute, named
+    l2_shrinkage, than class SparseApplyFtrl.
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -5979,7 +5991,7 @@ class DynamicRNN(PrimitiveWithInfer):
 
 class InTopK(PrimitiveWithInfer):
     r"""
-    Whether the targets are in the top `k` predictions.
+    Determines whether the targets are in the top `k` predictions.
 
     Args:
         k (int): Specifies the number of top elements to be used for computing precision.

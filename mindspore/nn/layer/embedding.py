@@ -127,7 +127,7 @@ def _make_axis_range(start, end):
 
 class EmbeddingLookup(Cell):
     r"""
-    Returns a slice of input tensor based on the specified indices.
+    Returns a slice of the input tensor based on the specified indices.
 
     Note:
         When 'target' is set to 'CPU', this module will use

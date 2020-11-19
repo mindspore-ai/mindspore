@@ -23,7 +23,7 @@ from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 
 class ControlDepend(Primitive):
     """
-    Adds control dependency relation between source and destination operation.
+    Adds control dependency relation between source and destination operations.
 
     In many cases, we need to control the execution order of operations. ControlDepend is designed for this.
     ControlDepend will instruct the execution engine to run the operations in a specific order. ControlDepend

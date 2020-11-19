@@ -383,7 +383,7 @@ class SoftmaxCrossEntropyWithLogits(GraphKernel):
         Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
 
         .. math::
-            p_{ij} = softmax(X_{ij}) = \frac{exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)}
+            p_{ij} = softmax(X_{ij}) = \frac{\exp(x_i)}{\sum_{j = 0}^{N-1}\exp(x_j)}
 
         .. math::
             loss_{ij} = -\sum_j{Y_{ij} * ln(p_{ij})}
@@ -666,7 +666,7 @@ class LogSoftmax(GraphKernel):
     the Log Softmax function is shown as follows:
 
     .. math::
-        \text{output}(x_i) = \log \left(\frac{exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
+        \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
 
     where :math:`N` is the length of the Tensor.
 
@@ -674,7 +674,7 @@ class LogSoftmax(GraphKernel):
         axis (int): The axis to do the Log softmax operation. Default: -1.
 
     Inputs:
-        logits (Tensor): The input of Log Softmax.
+        - **logits** (Tensor) - The input of Log Softmax.
 
     Outputs:
         Tensor, with the same type and shape as the logits.

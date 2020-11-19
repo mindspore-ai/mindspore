@@ -352,7 +352,7 @@ class GradOperation(GradOperation_):
 
 class MultitypeFuncGraph(MultitypeFuncGraph_):
     """
-    Generate overloaded functions.
+    Generates overloaded functions.
 
     MultitypeFuncGraph is a class used to generate overloaded functions, considering different types as inputs.
     Initialize an `MultitypeFuncGraph` object with name, and use `register` with input types as the decorator

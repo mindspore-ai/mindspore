@@ -24,7 +24,7 @@ Examples:
     >>> import mindspore.ops as ops
 
 Note:
-    - The Primitive operators in operations need to be used after instantiation.
+    - The Primitive operators in operations need to be instantiated before being used.
     - The composite operators are the pre-defined combination of operators.
     - The functional operators are the pre-instantiated Primitive operators, which can be used directly as a function.
     - For functional operators usage, please refer to
