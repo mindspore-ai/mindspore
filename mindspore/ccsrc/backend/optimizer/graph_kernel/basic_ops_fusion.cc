@@ -47,12 +47,13 @@ IncludeType IncludeFusedBasicOpForward(const AnfNodePtr &cur_node, const AnfNode
   return is_fusable ? FOLLOW : EXCLUDE;
 }
 
-std::vector<AnfNodePtr> FindFuseCNodes(const CNodePtr &cnode) {
+std::vector<AnfNodePtr> FindFuseCNodes(const CNodePtr &cnode,
+                                       const std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> &dep_pri) {
   // Search fusable nodes according input direction.
   auto include_func_forward = std::bind(IncludeFusedBasicOpForward, cnode, std::placeholders::_1);
   auto used_nodes = DeepLinkedGraphSearch(cnode, include_func_forward);
   if (used_nodes.size() > 1) {
-    used_nodes = RemoveCircle(used_nodes, false);
+    used_nodes = RemoveCircle(used_nodes, dep_pri, false);
   }
   TopoSortForNodeList(&used_nodes);
   return used_nodes;
@@ -78,7 +79,8 @@ void SearchForDependNode(const AnfNodeSet &outputs_set, const AnfNodeIndexSet &u
 }
 
 bool FindControlDependOut(AnfNodePtrList *outputs, const AnfNodePtrList &vir_outputs, const FuncGraphManagerPtr &mng,
-                          std::unordered_map<AnfNodePtr, AnfNodePtr> *eqv) {
+                          std::unordered_map<AnfNodePtr, AnfNodePtr> *eqv,
+                          std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior) {
   AnfNodeSet outputs_set;
   for (auto out : *outputs) {
     outputs_set.insert(out);
@@ -112,6 +114,7 @@ bool FindControlDependOut(AnfNodePtrList *outputs, const AnfNodePtrList &vir_out
         auto new_control_depend = control_depend_node->func_graph()->NewCNode(new_control_depend_inputs);
         mng->Replace(control_depend_node, new_control_depend);
         has_erase_outs = true;
+        UpdateControlDependNode(depend_prior, control_depend_node, new_control_depend);
       }
     } else {
       it++;
@@ -120,7 +123,8 @@ bool FindControlDependOut(AnfNodePtrList *outputs, const AnfNodePtrList &vir_out
   return has_erase_outs;
 }
 
-void RemoveControlDependOut(const FuncGraphPtr &fg, AnfNodePtrList *outputs, const FuncGraphManagerPtr &mng) {
+void RemoveControlDependOut(const FuncGraphPtr &fg, AnfNodePtrList *outputs, const FuncGraphManagerPtr &mng,
+                            std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior) {
   AnfNodePtrList vir_outputs;
   std::unordered_map<AnfNodePtr, AnfNodePtr> eqv;
   auto fg_outputs = fg->output();
@@ -137,7 +141,7 @@ void RemoveControlDependOut(const FuncGraphPtr &fg, AnfNodePtrList *outputs, con
     MS_LOG(EXCEPTION) << "The size of virtual output of the fg is not the same with the real output";
   }
 
-  if (!FindControlDependOut(outputs, vir_outputs, mng, &eqv)) {
+  if (!FindControlDependOut(outputs, vir_outputs, mng, &eqv, depend_prior)) {
     return;
   }
 
@@ -159,6 +163,11 @@ bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr
                   std::unordered_set<AnfNodePtr> *fused_ops) {
   bool changed = false;
   auto mng = kernel_graph->manager();
+
+  // depend_prior[depend] = pair(prior, controlDependNode)
+  std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> depend_prior;
+  InitDependPrior(todos, &depend_prior);
+
   for (auto iter = todos.cbegin(); iter != todos.cend(); ++iter) {
     auto node = (*iter)->cast<CNodePtr>();
     if (node == nullptr) {
@@ -172,7 +181,7 @@ bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr
       continue;
     }
 
-    auto fuse_nodes = FindFuseCNodes(node);
+    auto fuse_nodes = FindFuseCNodes(node, depend_prior);
     if (fuse_nodes.size() <= 1) {
       continue;
     }
@@ -182,11 +191,11 @@ bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr
     AnfNodePtrList inputs;
     AnfNodePtrList outputs;
     std::tie(fg, inputs, outputs) = compile::TransformSegmentToAnfGraph(fuse_nodes);
-    RemoveControlDependOut(fg, &outputs, mng);
+    RemoveControlDependOut(fg, &outputs, mng, &depend_prior);
     ConvertNonscalarTensorToParameter(fg, &inputs);
     auto fuse_new_node = CreateNewFuseCNode(kernel_graph, fg, inputs, outputs);
     SetNewKernelInfo(fuse_new_node, fg, inputs, outputs, AnfAlgo::GetProcessor(fuse_nodes[0]));
-
+    ReplaceNewFuseCNodeForDependPrior(&depend_prior, fuse_new_node, outputs);
     ReplaceNewFuseCNode(kernel_graph, fuse_new_node, outputs);
 
     // Set graph kernel attr

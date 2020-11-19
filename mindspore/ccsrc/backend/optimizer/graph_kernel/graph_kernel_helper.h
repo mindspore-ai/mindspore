@@ -15,17 +15,20 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_
-#include <string>
-#include <vector>
-#include <memory>
+
 #include <map>
+#include <memory>
+#include <set>
+#include <string>
 #include <tuple>
 #include <unordered_set>
-#include <nlohmann/json.hpp>
+#include <utility>
+#include <vector>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
+#include <nlohmann/json.hpp>
 
 namespace mindspore {
 namespace opt {
@@ -48,8 +51,9 @@ AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &kernel_graph, const FuncGraphP
                               const AnfNodePtrList &outputs);
 void ReplaceNewFuseCNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &new_fuse_cnode,
                          const AnfNodePtrList &outputs);
-void FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
-                         const std::shared_ptr<session::KernelGraph> &kernel_graph, const std::string &postfix);
+std::tuple<AnfNodePtr, AnfNodePtrList> FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
+                                                           const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                                                           const std::string &postfix);
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc);
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc,
                    std::map<std::string, AnfNodePtr> *address_node_map);
@@ -60,6 +64,12 @@ std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &p
 std::vector<PrimitivePtr> GetFusibleOpList();
 bool IsBasicFuseOp(const AnfNodePtr &node);
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
+void InitDependPrior(const std::vector<AnfNodePtr> &todos,
+                     std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior);
+void UpdateControlDependNode(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior,
+                             const AnfNodePtr &control_depend_node, const AnfNodePtr &new_control_depend);
+void ReplaceNewFuseCNodeForDependPrior(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior,
+                                       const AnfNodePtr &new_fuse_cnode, const AnfNodePtrList &outputs);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_

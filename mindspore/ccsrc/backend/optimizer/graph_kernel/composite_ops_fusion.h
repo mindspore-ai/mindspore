@@ -16,11 +16,13 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_COMPOSITE_OPS_FUSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_COMPOSITE_OPS_FUSION_H_
 
+#include <limits>
+#include <map>
+#include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
-#include <memory>
-#include <limits>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/session/kernel_graph.h"
 
@@ -29,7 +31,9 @@ namespace opt {
 const std::set<std::string> graph_kernel_black_list = {"BNTrainingUpdateSum", "ApplyMomentum", "LayerNormForward",
                                                        "LambNextMV", "LambUpdateWithLR"};
 
-std::vector<AnfNodePtr> RemoveCircle(const std::vector<AnfNodePtr> &fused_op, bool is_backward = true);
+std::vector<AnfNodePtr> RemoveCircle(const std::vector<AnfNodePtr> &fused_op,
+                                     const std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> &depend_prior,
+                                     bool is_backward = true);
 
 void TopoSortForNodeList(std::vector<AnfNodePtr> *lst);
 
