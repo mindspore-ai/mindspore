@@ -3315,6 +3315,107 @@ class Adam(PrimitiveWithInfer):
         return var_dtype, m_dtype, v_dtype
 
 
+class AdamNoUpdateParam(PrimitiveWithInfer):
+    r"""
+    Updates gradients by Adaptive Moment Estimation (Adam) algorithm. This operator do not update the parameter, but
+    calculate the value that should be added to the parameter instead.
+
+    The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
+
+    The updating formulas are as follows,
+
+    .. math::
+        \begin{array}{ll} \\
+            m = \beta_1 * m + (1 - \beta_1) * g \\
+            v = \beta_2 * v + (1 - \beta_2) * g * g \\
+            l = \alpha * \frac{\sqrt{1-\beta_2^t}}{1-\beta_1^t} \\
+            \Delta{w} = - l * \frac{m}{\sqrt{v} + \epsilon}
+        \end{array}
+
+    :math:`m` represents the 1st moment vector, :math:`v` represents the 2nd moment vector, :math:`g` represents
+    `gradient`, :math:`l` represents scaling factor `lr`, :math:`\beta_1, \beta_2` represent `beta1` and `beta2`,
+    :math:`t` represents updating step while :math:`beta_1^t` and :math:`beta_2^t` represent `beta1_power` and
+    `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents the parameter to be updated,
+    :math:`\epsilon`represents `epsilon`.
+
+    Args:
+        use_locking (bool): Whether to enable a lock to protect variable tensors from being updated.
+            If true, updates of the var, m, and v tensors will be protected by a lock.
+            If false, the result is unpredictable. Default: False.
+        use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
+            If true, update the gradients using NAG.
+            If false, update the gradients without using NAG. Default: False.
+
+    Inputs:
+        - **m** (Tensor) - The 1st moment vector in the updating formula. The data type must be float32.
+        - **v** (Tensor) - the 2nd moment vector in the updating formula. The shape must be the same as `m`.
+          The data type must be float32.
+        - **beta1_power** (Tensor) - :math:`beta_1^t` in the updating formula. The data type must be float32.
+        - **beta2_power** (Tensor) - :math:`beta_2^t` in the updating formula. The data type must be float32.
+        - **lr** (Tensor) - :math:`l` in the updating formula. The data type must be float32.
+        - **beta1** (Tensor) - The exponential decay rate for the 1st moment estimations. The data type must be float32.
+        - **beta2** (Tensor) - The exponential decay rate for the 2nd moment estimations. The data type must be float32.
+        - **epsilon** (Tensor) - Term added to the denominator to improve numerical stability. The data type must be
+          float32.
+        - **gradient** (Tensor) - Gradient, the shape must be the same as `m`, the data type must be float32.
+
+    Outputs:
+        Tensor, whose shape and data type are the same with `gradient`, is a value that should be added to the
+        parameter to be updated.
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore.ops import operations as P
+        >>>
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.adam = P.AdamNoUpdateParam()
+        >>>         self.m = Parameter(Tensor(np.array([[0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]).astype(np.float32)),
+        >>>                            name="m")
+        >>>         self.v = Parameter(Tensor(np.array([[0.1, 0.1, 0.1], [0.2, 0.2, 0.2]]).astype(np.float32)),
+        >>>                            name="v")
+        >>>     def construct(self, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad):
+        >>>         out = self.adam(self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
+        >>>         return out
+        >>> net = Net()
+        >>> beta1_power = Tensor(0.9, ms.float32)
+        >>> beta2_power = Tensor(0.999, ms.float32)
+        >>> lr = Tensor(0.001, ms.float32)
+        >>> beta1 = Tensor(0.9, ms.float32)
+        >>> beta2 = Tensor(0.999, ms.float32)
+        >>> epsilon = Tensor(1e-8, ms.float32)
+        >>> gradient = Tensor(np.array([[0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]).astype(np.float32))
+        >>>
+        >>> result = net(beta1_power, beta2_power, lr, beta1, beta2, epsilon, gradient)
+        >>> print(result)
+        [[-0.00010004 -0.00010004 -0.00010004]
+        [-0.00013441 -0.00013441 -0.00013441]]
+
+    """
+    @prim_attr_register
+    def __init__(self, use_locking=False, use_nesterov=False):
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
+
+    def infer_shape(self, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
+                    beta1_shape, beta2_shape, epsilon_shape, grad_shape):
+        validator.check("grad_shape", grad_shape, "m_shape", m_shape, Rel.EQ, self.name)
+        validator.check("grad_shape", grad_shape, "v_shape", v_shape, Rel.EQ, self.name)
+        return grad_shape
+
+    def infer_dtype(self, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
+                    beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype):
+        args = {"m": m_dtype, "v": v_dtype, "grad": grad_dtype,
+                "beta1_power": beta1_power_dtype, "beta2_power": beta2_power_dtype, 'lr': lr_dtype,
+                "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype}
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float32], self.name)
+        return grad_dtype
+
+
 class FusedSparseAdam(PrimitiveWithInfer):
     r"""
     Merges the duplicate value of the gradient and then updates parameters by Adaptive Moment Estimation (Adam)
