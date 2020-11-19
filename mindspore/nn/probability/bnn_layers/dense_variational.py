@@ -190,7 +190,8 @@ class DenseReparam(_DenseVariational):
     Examples:
         >>> net = DenseReparam(3, 4)
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
-        >>> net(input).shape
+        >>> output = net(input).shape
+        >>> print(output)
         (2, 4)
     """
 
