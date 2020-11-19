@@ -32,13 +32,21 @@ namespace dataset {
 VOCNode::VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
                  const std::map<std::string, int32_t> &class_indexing, bool decode, std::shared_ptr<SamplerObj> sampler,
                  std::shared_ptr<DatasetCache> cache)
-    : DatasetNode(std::move(cache)),
+    : MappableSourceNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       task_(task),
       usage_(usage),
       class_index_(class_indexing),
       decode_(decode),
       sampler_(sampler) {}
+
+std::shared_ptr<DatasetNode> VOCNode::Copy() {
+  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  auto node = std::make_shared<VOCNode>(dataset_dir_, task_, usage_, class_index_, decode_, sampler, cache_);
+  return node;
+}
+
+void VOCNode::Print(std::ostream &out) const { out << Name(); }
 
 Status VOCNode::ValidateParams() {
   Path dir(dataset_dir_);

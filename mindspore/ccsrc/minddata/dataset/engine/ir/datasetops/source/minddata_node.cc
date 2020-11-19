@@ -30,7 +30,8 @@ namespace dataset {
 
 MindDataNode::MindDataNode(const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list,
                            const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded)
-    : dataset_file_(std::string()),
+    : MappableSourceNode(),
+      dataset_file_(std::string()),
       dataset_files_(dataset_files),
       search_for_pattern_(false),
       columns_list_(columns_list),
@@ -41,7 +42,8 @@ MindDataNode::MindDataNode(const std::vector<std::string> &dataset_files, const 
 
 MindDataNode::MindDataNode(const std::string &dataset_file, const std::vector<std::string> &columns_list,
                            const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample, int64_t num_padded)
-    : dataset_file_(dataset_file),
+    : MappableSourceNode(),
+      dataset_file_(dataset_file),
       dataset_files_({}),
       search_for_pattern_(true),
       columns_list_(columns_list),
@@ -49,6 +51,19 @@ MindDataNode::MindDataNode(const std::string &dataset_file, const std::vector<st
       padded_sample_(padded_sample),
       sample_bytes_({}),
       num_padded_(num_padded) {}
+
+std::shared_ptr<DatasetNode> MindDataNode::Copy() {
+  std::shared_ptr<MindDataNode> node;
+  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  if (dataset_files_.empty()) {
+    node = std::make_shared<MindDataNode>(dataset_file_, columns_list_, sampler, padded_sample_, num_padded_);
+  } else {
+    node = std::make_shared<MindDataNode>(dataset_files_, columns_list_, sampler, padded_sample_, num_padded_);
+  }
+  return node;
+}
+
+void MindDataNode::Print(std::ostream &out) const { out << Name() + "(file:" + dataset_file_ + ",...)"; }
 
 Status MindDataNode::ValidateParams() {
   if (!search_for_pattern_ && dataset_files_.size() > 4096) {

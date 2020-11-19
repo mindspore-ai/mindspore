@@ -27,6 +27,18 @@
 namespace mindspore {
 namespace dataset {
 
+std::shared_ptr<DatasetNode> RandomNode::Copy() {
+  std::shared_ptr<RandomNode> node;
+  if (schema_ != nullptr) {
+    node = std::make_shared<RandomNode>(total_rows_, schema_, columns_list_, cache_);
+  } else {
+    node = std::make_shared<RandomNode>(total_rows_, schema_path_, columns_list_, cache_);
+  }
+  return node;
+}
+
+void RandomNode::Print(std::ostream &out) const { out << Name() + "(num_row:" + std::to_string(total_rows_) + ",...)"; }
+
 // ValidateParams for RandomNode
 Status RandomNode::ValidateParams() {
   if (total_rows_ < 0) {

@@ -29,8 +29,15 @@ namespace dataset {
 // Function to build ProjectOp
 ProjectNode::ProjectNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &columns)
     : columns_(columns) {
-  this->children.push_back(child);
+  this->AddChild(child);
 }
+
+std::shared_ptr<DatasetNode> ProjectNode::Copy() {
+  auto node = std::make_shared<ProjectNode>(nullptr, this->columns_);
+  return node;
+}
+
+void ProjectNode::Print(std::ostream &out) const { out << Name() + "(column: " + PrintColumns(columns_) + ")"; }
 
 Status ProjectNode::ValidateParams() {
   if (columns_.empty()) {

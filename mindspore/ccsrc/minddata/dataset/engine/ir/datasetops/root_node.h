@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_PROJECT_NODE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_PROJECT_NODE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_ROOT_NODE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_ROOT_NODE_H_
 
 #include <memory>
 #include <string>
@@ -26,17 +26,17 @@
 namespace mindspore {
 namespace dataset {
 
-class ProjectNode : public DatasetNode {
+class RootNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit ProjectNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &columns);
+  RootNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs);
 
   /// \brief Destructor
-  ~ProjectNode() = default;
+  ~RootNode() = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
-  std::string Name() const override { return kProjectNode; }
+  std::string Name() const override { return kRootNode; }
 
   /// \brief Print the description
   /// \param out - The output stream to write output to
@@ -47,17 +47,32 @@ class ProjectNode : public DatasetNode {
   std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
+  /// \return shared pointer to the list of newly created DatasetOps
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
+
+  /// \brief Getter of number of epochs
+  int32_t num_epochs() { return num_epochs_; }
 
   /// \brief Parameters validation
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  /// \brief Base-class override for accepting NodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status Accept(NodePass *p, bool *modified) override;
+
+  /// \brief Base-class override for accepting NodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status AcceptAfter(NodePass *p, bool *modified) override;
+
  private:
-  std::vector<std::string> columns_;
+  int32_t num_epochs_;
 };
 
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_PROJECT_NODE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_ROOT_NODE_H_

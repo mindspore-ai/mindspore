@@ -32,7 +32,10 @@ class TensorOp;
 class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
  public:
   /// \brief Constructor
-  TensorOperation();
+  TensorOperation() : random_op_(false) {}
+
+  /// \brief Constructor
+  explicit TensorOperation(bool random) : random_op_(random) {}
 
   /// \brief Destructor
   ~TensorOperation() = default;
@@ -42,6 +45,13 @@ class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
   virtual std::shared_ptr<TensorOp> Build() = 0;
 
   virtual Status ValidateParams() = 0;
+
+  /// \brief Check whether the operation is deterministic.
+  /// \return true if this op is a random op (returns non-deterministic result e.g. RandomCrop)
+  bool IsRandomOp() const { return random_op_; }
+
+ protected:
+  bool random_op_;
 };
 
 // Helper function to validate fill value

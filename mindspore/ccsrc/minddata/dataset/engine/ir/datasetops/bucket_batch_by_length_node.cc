@@ -41,7 +41,17 @@ BucketBatchByLengthNode::BucketBatchByLengthNode(
       pad_info_(pad_info),
       pad_to_bucket_boundary_(pad_to_bucket_boundary),
       drop_remainder_(drop_remainder) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> BucketBatchByLengthNode::Copy() {
+  auto node = std::make_shared<BucketBatchByLengthNode>(nullptr, column_names_, bucket_boundaries_, bucket_batch_sizes_,
+                                                        element_length_function_, pad_info_, pad_to_bucket_boundary_);
+  return node;
+}
+
+void BucketBatchByLengthNode::Print(std::ostream &out) const {
+  out << Name() + "(columns:" + PrintColumns(column_names_) + ",...)";
 }
 
 std::vector<std::shared_ptr<DatasetOp>> BucketBatchByLengthNode::Build() {

@@ -18,6 +18,7 @@
 
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/root_node.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/opt/pre/input_validation_pass.h"
 
@@ -119,11 +120,16 @@ Status TreeAdapter::BuildExecutionTree(std::shared_ptr<DatasetNode> ir, std::sha
   return Status::OK();
 }
 
-Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs) {
-  num_epochs_ = num_epochs;
+Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_epochs) {
   optimize_ = true;  // Always ON (temporary)
 
-  RETURN_UNEXPECTED_IF_NULL(root_ir);
+  RETURN_UNEXPECTED_IF_NULL(input_ir);
+  MS_LOG(INFO) << "Input plan:" << '\n' << *input_ir << '\n';
+
+  // Copy the input IR tree and insert under the root node
+  // Create a root node to host the input IR tree
+  auto root_ir = std::make_shared<RootNode>(input_ir->DeepCopy(), num_epochs);
+  MS_LOG(INFO) << "Plan before PrePass:" << '\n' << *root_ir << '\n';
 
   // Pre-pass of the IR tree
   RETURN_IF_NOT_OK(PrePass(root_ir));
@@ -136,11 +142,15 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> root_ir, int32_t num_ep
   // Post-pass of the IR tree
   RETURN_IF_NOT_OK(PostPass(root_ir));
 
+  MS_LOG(INFO) << "Plan after PostPass:" << '\n' << *root_ir << '\n';
+
   // This will evolve in the long run
   tree_ = std::make_unique<ExecutionTree>();
 
+  // Build the Execution tree from the child of the root node
   std::shared_ptr<DatasetOp> root_op;
-  RETURN_IF_NOT_OK(BuildExecutionTree(root_ir, &root_op));
+  // We will replace input_ir with root_ir->Children()[0] once IR optimizer is in
+  RETURN_IF_NOT_OK(BuildExecutionTree(input_ir, &root_op));
   RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));
 
   if (pre_pass_override_) tree_->SetPrePassOverride(pre_pass_override_);

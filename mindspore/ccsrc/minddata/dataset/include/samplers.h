@@ -47,6 +47,10 @@ class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
   /// \return Shared pointers to the newly created Sampler
   virtual std::shared_ptr<SamplerRT> Build() = 0;
 
+  /// \brief Pure virtual function to copy a SamplerObj class
+  /// \return Shared pointers to the newly copied SamplerObj
+  virtual std::shared_ptr<SamplerObj> Copy() = 0;
+
   /// \brief Function for derived class to get the shard id of sampler
   /// \return The shard id of the derived sampler
   virtual int64_t ShardId() { return 0; }
@@ -132,6 +136,11 @@ class DistributedSamplerObj : public SamplerObj {
 
   std::shared_ptr<SamplerRT> Build() override;
 
+  std::shared_ptr<SamplerObj> Copy() override {
+    return std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_,
+                                                   even_dist_);
+  }
+
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
@@ -160,6 +169,10 @@ class PKSamplerObj : public SamplerObj {
 
   std::shared_ptr<SamplerRT> Build() override;
 
+  std::shared_ptr<SamplerObj> Copy() override {
+    return std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
+  }
+
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
@@ -174,9 +187,8 @@ class PKSamplerObj : public SamplerObj {
 
 class PreBuiltSamplerObj : public SamplerObj {
  public:
-#ifndef ENABLE_ANDROID
   explicit PreBuiltSamplerObj(std::shared_ptr<SamplerRT> sampler);
-
+#ifndef ENABLE_ANDROID
   explicit PreBuiltSamplerObj(std::shared_ptr<mindrecord::ShardOperator> sampler);
 #endif
 
@@ -187,6 +199,8 @@ class PreBuiltSamplerObj : public SamplerObj {
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
+
+  std::shared_ptr<SamplerObj> Copy() override;
 
   bool ValidateParams() override;
 
@@ -204,6 +218,8 @@ class RandomSamplerObj : public SamplerObj {
   ~RandomSamplerObj() = default;
 
   std::shared_ptr<SamplerRT> Build() override;
+
+  std::shared_ptr<SamplerObj> Copy() override { return std::make_shared<RandomSamplerObj>(replacement_, num_samples_); }
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -224,6 +240,10 @@ class SequentialSamplerObj : public SamplerObj {
 
   std::shared_ptr<SamplerRT> Build() override;
 
+  std::shared_ptr<SamplerObj> Copy() override {
+    return std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
+  }
+
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
@@ -243,6 +263,10 @@ class SubsetRandomSamplerObj : public SamplerObj {
 
   std::shared_ptr<SamplerRT> Build() override;
 
+  std::shared_ptr<SamplerObj> Copy() override {
+    return std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
+  }
+
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
@@ -261,6 +285,10 @@ class WeightedRandomSamplerObj : public SamplerObj {
   ~WeightedRandomSamplerObj() = default;
 
   std::shared_ptr<SamplerRT> Build() override;
+
+  std::shared_ptr<SamplerObj> Copy() override {
+    return std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
+  }
 
   bool ValidateParams() override;
 

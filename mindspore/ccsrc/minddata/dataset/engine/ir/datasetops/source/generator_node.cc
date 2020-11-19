@@ -28,7 +28,19 @@ namespace dataset {
 
 GeneratorNode::GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
                              const std::vector<DataType> &column_types)
-    : generator_function_(generator_function), column_names_(column_names), column_types_(column_types) {}
+    : MappableSourceNode(),
+      generator_function_(generator_function),
+      column_names_(column_names),
+      column_types_(column_types) {}
+
+std::shared_ptr<DatasetNode> GeneratorNode::Copy() {
+  auto node = std::make_shared<GeneratorNode>(generator_function_, column_names_, column_types_);
+  return node;
+}
+
+void GeneratorNode::Print(std::ostream &out) const {
+  out << Name() + "(<func>:" + ",columns:" + PrintColumns(column_names_) + ",<col_types>)";
+}
 
 GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema)
     : generator_function_(generator_function), schema_(schema) {}

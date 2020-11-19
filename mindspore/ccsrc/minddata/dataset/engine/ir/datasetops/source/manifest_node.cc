@@ -32,12 +32,29 @@ ManifestNode::ManifestNode(const std::string &dataset_file, const std::string &u
                            const std::shared_ptr<SamplerObj> &sampler,
                            const std::map<std::string, int32_t> &class_indexing, bool decode,
                            std::shared_ptr<DatasetCache> cache)
-    : DatasetNode(std::move(cache)),
+    : MappableSourceNode(std::move(cache)),
       dataset_file_(dataset_file),
       usage_(usage),
       decode_(decode),
       class_index_(class_indexing),
       sampler_(sampler) {}
+
+std::shared_ptr<DatasetNode> ManifestNode::Copy() {
+  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  auto node = std::make_shared<ManifestNode>(dataset_file_, usage_, sampler, class_index_, decode_, cache_);
+  return node;
+}
+
+void ManifestNode::Print(std::ostream &out) const {
+  out << Name() + "(file:" + dataset_file_;
+  if (sampler_ != nullptr) {
+    out << ",sampler";
+  }
+  if (cache_ != nullptr) {
+    out << ",cache";
+  }
+  out << ")";
+}
 
 Status ManifestNode::ValidateParams() {
   std::vector<char> forbidden_symbols = {':', '*', '?', '"', '<', '>', '|', '`', '&', '\'', ';'};

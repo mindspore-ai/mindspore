@@ -30,7 +30,16 @@ namespace dataset {
 RenameNode::RenameNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &input_columns,
                        const std::vector<std::string> &output_columns)
     : input_columns_(input_columns), output_columns_(output_columns) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> RenameNode::Copy() {
+  auto node = std::make_shared<RenameNode>(nullptr, input_columns_, output_columns_);
+  return node;
+}
+
+void RenameNode::Print(std::ostream &out) const {
+  out << Name() + "(input:" + PrintColumns(input_columns_) + ",output:" + PrintColumns(output_columns_) + ")";
 }
 
 Status RenameNode::ValidateParams() {

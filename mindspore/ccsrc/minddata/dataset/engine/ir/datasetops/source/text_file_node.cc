@@ -31,12 +31,22 @@ namespace dataset {
 // Constructor for TextFileNode
 TextFileNode::TextFileNode(std::vector<std::string> dataset_files, int32_t num_samples, ShuffleMode shuffle,
                            int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache)
-    : DatasetNode(std::move(cache)),
+    : NonMappableSourceNode(std::move(cache)),
       dataset_files_(dataset_files),
       num_samples_(num_samples),
       shuffle_(shuffle),
       num_shards_(num_shards),
       shard_id_(shard_id) {}
+
+std::shared_ptr<DatasetNode> TextFileNode::Copy() {
+  auto node = std::make_shared<TextFileNode>(dataset_files_, num_samples_, shuffle_, num_shards_, shard_id_, cache_);
+  return node;
+}
+
+void TextFileNode::Print(std::ostream &out) const {
+  out << Name() + "(file:..." + ",num_shards:" + std::to_string(num_shards_) +
+           ",shard_id:" + std::to_string(shard_id_) + ",cache:" + ((cache_ != nullptr) ? "true" : "false") + ",...)";
+}
 
 Status TextFileNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("TextFileNode", dataset_files_));

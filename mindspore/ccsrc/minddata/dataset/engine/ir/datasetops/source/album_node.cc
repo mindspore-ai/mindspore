@@ -32,12 +32,22 @@ namespace dataset {
 AlbumNode::AlbumNode(const std::string &dataset_dir, const std::string &data_schema,
                      const std::vector<std::string> &column_names, bool decode,
                      const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache)
-    : DatasetNode(std::move(cache)),
+    : MappableSourceNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       schema_path_(data_schema),
       column_names_(column_names),
       decode_(decode),
       sampler_(sampler) {}
+
+std::shared_ptr<DatasetNode> AlbumNode::Copy() {
+  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  auto node = std::make_shared<AlbumNode>(dataset_dir_, schema_path_, column_names_, decode_, sampler, cache_);
+  return node;
+}
+
+void AlbumNode::Print(std::ostream &out) const {
+  out << Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ")";
+}
 
 Status AlbumNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("AlbumNode", dataset_dir_));

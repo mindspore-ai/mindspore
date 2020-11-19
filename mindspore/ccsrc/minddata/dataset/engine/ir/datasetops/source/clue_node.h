@@ -28,7 +28,7 @@ namespace dataset {
 
 /// \class CLUENode
 /// \brief A Dataset derived class to represent CLUE dataset
-class CLUENode : public DatasetNode {
+class CLUENode : public NonMappableSourceNode {
  public:
   /// \brief Constructor
   CLUENode(const std::vector<std::string> dataset_files, std::string task, std::string usage, int64_t num_samples,
@@ -36,6 +36,18 @@ class CLUENode : public DatasetNode {
 
   /// \brief Destructor
   ~CLUENode() = default;
+
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kCLUENode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return The list of shared pointers to the newly created DatasetOps

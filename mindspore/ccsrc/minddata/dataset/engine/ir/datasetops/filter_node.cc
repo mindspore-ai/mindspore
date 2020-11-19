@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/filter_op.h"
-
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -31,7 +31,16 @@ namespace dataset {
 FilterNode::FilterNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<TensorOp> predicate,
                        std::vector<std::string> input_columns)
     : predicate_(predicate), input_columns_(input_columns) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> FilterNode::Copy() {
+  auto node = std::make_shared<FilterNode>(nullptr, predicate_, input_columns_);
+  return node;
+}
+
+void FilterNode::Print(std::ostream &out) const {
+  out << Name() + "(<predicate>," + "input_cols:" + PrintColumns(input_columns_) + ")";
 }
 
 std::vector<std::shared_ptr<DatasetOp>> FilterNode::Build() {
@@ -52,6 +61,18 @@ Status FilterNode::ValidateParams() {
     RETURN_IF_NOT_OK(ValidateDatasetColumnParam("FilterNode", "input_columns", input_columns_));
   }
   return Status::OK();
+}
+
+// Visitor accepting method for NodePass
+Status FilterNode::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<FilterNode>(), modified);
+}
+
+// Visitor accepting method for NodePass
+Status FilterNode::AcceptAfter(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<FilterNode>(), modified);
 }
 
 }  // namespace dataset

@@ -26,10 +26,9 @@
 
 namespace mindspore {
 namespace dataset {
-
 /// \class GeneratorNode
 /// \brief A Dataset derived class to represent GeneratorNode dataset
-class GeneratorNode : public DatasetNode {
+class GeneratorNode : public MappableSourceNode {
  public:
   /// \brief Constructor
   GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
@@ -40,6 +39,18 @@ class GeneratorNode : public DatasetNode {
 
   /// \brief Destructor
   ~GeneratorNode() = default;
+
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kGeneratorNode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return The list of shared pointers to the newly created DatasetOps

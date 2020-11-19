@@ -33,7 +33,7 @@ CSVNode::CSVNode(const std::vector<std::string> &csv_files, char field_delim,
                  const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
                  const std::vector<std::string> &column_names, int64_t num_samples, ShuffleMode shuffle,
                  int32_t num_shards, int32_t shard_id, std::shared_ptr<DatasetCache> cache)
-    : DatasetNode(std::move(cache)),
+    : NonMappableSourceNode(std::move(cache)),
       dataset_files_(csv_files),
       field_delim_(field_delim),
       column_defaults_(column_defaults),
@@ -42,6 +42,17 @@ CSVNode::CSVNode(const std::vector<std::string> &csv_files, char field_delim,
       shuffle_(shuffle),
       num_shards_(num_shards),
       shard_id_(shard_id) {}
+
+std::shared_ptr<DatasetNode> CSVNode::Copy() {
+  auto node = std::make_shared<CSVNode>(dataset_files_, field_delim_, column_defaults_, column_names_, num_samples_,
+                                        shuffle_, num_shards_, shard_id_, cache_);
+  return node;
+}
+
+void CSVNode::Print(std::ostream &out) const {
+  out << Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ",..." +
+           ",num_shards:" + std::to_string(num_shards_) + ",shard_id:" + std::to_string(shard_id_) + ")";
+}
 
 Status CSVNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CSVNode", dataset_files_));

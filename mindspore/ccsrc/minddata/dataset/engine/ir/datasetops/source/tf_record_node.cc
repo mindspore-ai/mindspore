@@ -30,6 +30,23 @@
 namespace mindspore {
 namespace dataset {
 
+std::shared_ptr<DatasetNode> TFRecordNode::Copy() {
+  std::shared_ptr<TFRecordNode> node;
+  if (schema_obj_ != nullptr) {
+    node = std::make_shared<TFRecordNode>(dataset_files_, schema_obj_, columns_list_, num_samples_, shuffle_,
+                                          num_shards_, shard_id_, shard_equal_rows_, cache_);
+  } else {
+    node = std::make_shared<TFRecordNode>(dataset_files_, schema_path_, columns_list_, num_samples_, shuffle_,
+                                          num_shards_, shard_id_, shard_equal_rows_, cache_);
+  }
+  return node;
+}
+
+void TFRecordNode::Print(std::ostream &out) const {
+  out << Name() + "(num_samples:" + std::to_string(num_samples_) + ",num_shards:" + std::to_string(num_shards_) +
+           ",shard_id:" + std::to_string(shard_id_) + ",...)";
+}
+
 // Validator for TFRecordNode
 Status TFRecordNode::ValidateParams() {
   if (dataset_files_.empty()) {

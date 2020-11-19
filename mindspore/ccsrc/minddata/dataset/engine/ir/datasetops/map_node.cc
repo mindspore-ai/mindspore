@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
@@ -37,7 +38,18 @@ MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr
       project_columns_(project_columns),
       DatasetNode(std::move(cache)),
       callbacks_(callbacks) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> MapNode::Copy() {
+  auto node = std::make_shared<MapNode>(nullptr, operations_, input_columns_, output_columns_, project_columns_, cache_,
+                                        callbacks_);
+  return node;
+}
+
+void MapNode::Print(std::ostream &out) const {
+  out << Name() + "(<ops>" + ",input:" + PrintColumns(input_columns_) + ",output:" + PrintColumns(output_columns_) +
+           ",<project_cols>" + ",...)";
 }
 
 std::vector<std::shared_ptr<DatasetOp>> MapNode::Build() {
@@ -93,5 +105,16 @@ Status MapNode::ValidateParams() {
   return Status::OK();
 }
 
+// Visitor accepting method for NodePass
+Status MapNode::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<MapNode>(), modified);
+}
+
+// Visitor accepting method for NodePass
+Status MapNode::AcceptAfter(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<MapNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

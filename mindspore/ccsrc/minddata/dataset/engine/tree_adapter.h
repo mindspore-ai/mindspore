@@ -67,10 +67,6 @@ class TreeAdapter {
   // Optional optimizations status
   bool OptimizationEnabled() const { return optimize_; }
 
-  // Getter function to get the total number of epochs to be run on this tree.
-  // @return total number of epochs
-  int32_t num_epochs() { return num_epochs_; }
-
  private:
   // This function runs a mandatory pass checking the syntax and semantics of the IR tree.
   Status PrePass(std::shared_ptr<DatasetNode> ir);

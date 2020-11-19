@@ -233,14 +233,92 @@ std::shared_ptr<DatasetNode> DatasetNode::SetNumWorkers(int32_t num_workers) {
   return shared_from_this();
 }
 
-DatasetNode::DatasetNode() {
+DatasetNode::DatasetNode() : cache_(nullptr), parent_(nullptr), children_({}) {
   // Fetch some default value from config manager
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   num_workers_ = cfg->num_parallel_workers();
   rows_per_buffer_ = cfg->rows_per_buffer();
   connector_que_size_ = cfg->op_connector_size();
   worker_connector_size_ = cfg->worker_connector_size();
-  build_status = Status::OK();  // remove me after changing return val of Build()
+}
+
+// this function will preform a deep copy of current node (and its descendants), the parent* pointer will not be copied
+std::shared_ptr<DatasetNode> DatasetNode::DeepCopy() {
+  std::shared_ptr<DatasetNode> new_node = this->Copy();
+  for (const auto &child : children_) {
+    new_node->AddChild(child->DeepCopy());
+  }
+  return new_node;
+}
+
+std::string DatasetNode::PrintColumns(const std::vector<std::string> &columns) const {
+  std::string me;
+  if (columns.empty()) {
+    me = "<nil>";
+  } else {
+    me = "[";
+    auto i = 0;
+    for (auto it = columns.begin(); it < columns.end(); ++it, ++i) {
+      me += *it;
+      if (i < columns.size() - 1) {
+        me += ", ";
+      } else {
+        me += "]";
+      }
+    }
+  }
+  return me;
+}
+
+void DatasetNode::PrintTree(std::ostream &out) const {
+  int level = 0;
+  PrintNode(out, &level);
+}
+
+void DatasetNode::PrintNode(std::ostream &out, int *level) const {
+  const std::string prefix = "+-";
+  const std::string indent = "  ";
+  out << prefix;
+  Print(out);
+  for (const auto &c : this->Children()) {
+    out << '\n';
+    ++(*level);
+    for (auto i = 0; i < *level; i++) {
+      out << indent;
+    }
+    c->PrintNode(out, level);
+    --(*level);
+  }
+}
+
+// Add a node as a child, node's parent needs to be nullptr
+// this function will allow child to be a nullptr, in which case it will simply skip
+void DatasetNode::AddChild(std::shared_ptr<DatasetNode> child) {
+  if (child != nullptr && child->parent_ == nullptr) {
+    children_.push_back(child);
+    child->parent_ = this;
+  } else if (child != nullptr) {
+    MS_LOG(WARNING) << "DatasetNode::AddChild() Fail" + child->Name() + "'s parent isn't a nullptr.";
+  }
+}
+
+// Remove this node from its parent. Add the child of this node to its parent.
+// for now, this remove is limited to node with a single child or no child
+Status DatasetNode::Remove() {
+  CHECK_FAIL_RETURN_UNEXPECTED(parent_ != nullptr, "Cannot remove root or a node without parent.");
+  CHECK_FAIL_RETURN_UNEXPECTED(children_.size() < 2, "Cannot remove node with more than 1 child.");
+  if (children_.empty()) {  // I am a leaf node, remove me from my parent's children list
+    parent_->children_.erase(std::remove(parent_->children_.begin(), parent_->children_.end(), shared_from_this()),
+                             parent_->children_.end());  // removal using "erase remove idiom"
+  } else {  // replace my position in my parent's children list with my single child
+    auto itr = std::find(parent_->children_.begin(), parent_->children_.end(), shared_from_this());
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != parent_->children_.end(), "I am not in my parent's children list.");
+    children_[0]->parent_ = parent_;  // set my single child's parent ptr to my parent
+    *itr = std::move(children_[0]);   // replace me in my parent's children list with my single child
+    children_.clear();                //  release my single child from my children list
+  }
+  parent_ = nullptr;
+  return Status::OK();
 }
 
 // In DFS tree traversal, each node is visited twice. Accept is called on the first visit.
@@ -255,13 +333,25 @@ Status DatasetNode::AcceptAfter(NodePass *p, bool *modified) {
   // This method will only be called if its derived class does not implement one.
   return p->VisitAfter(shared_from_this(), modified);
 }
+
 Status DatasetNode::GetShardId(int32_t *shard_id) {
   if (!Children().empty()) {
     // Get shard id from the child node
     return Children()[0]->GetShardId(shard_id);
   } else {
-    RETURN_STATUS_SYNTAX_ERROR("Get Shard Id failed at source node");
+    RETURN_STATUS_SYNTAX_ERROR("Get Shard Id failed at source node: " + Name() + "\n");
   }
+}
+// Visitor accepting method for NodePass
+Status SourceNode::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<SourceNode>(), modified);
+}
+
+// Visitor accepting method for NodePass
+Status SourceNode::AcceptAfter(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<SourceNode>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

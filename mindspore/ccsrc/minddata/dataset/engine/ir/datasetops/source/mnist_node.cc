@@ -29,7 +29,15 @@ namespace dataset {
 
 MnistNode::MnistNode(std::string dataset_dir, std::string usage, std::shared_ptr<SamplerObj> sampler,
                      std::shared_ptr<DatasetCache> cache)
-    : DatasetNode(std::move(cache)), dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
+    : MappableSourceNode(std::move(cache)), dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
+
+std::shared_ptr<DatasetNode> MnistNode::Copy() {
+  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  auto node = std::make_shared<MnistNode>(dataset_dir_, usage_, sampler, cache_);
+  return node;
+}
+
+void MnistNode::Print(std::ostream &out) const { out << Name(); }
 
 Status MnistNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("MnistNode", dataset_dir_));

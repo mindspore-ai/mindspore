@@ -570,7 +570,7 @@ class WeightedRandomSampler(BuiltinSampler):
     Samples the elements from [0, len(weights) - 1] randomly with the given weights (probabilities).
 
     Args:
-        weights (list[float]): A sequence of weights, not necessarily summing up to 1.
+        weights (list[float, int]): A sequence of weights, not necessarily summing up to 1.
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
         replacement (bool): If True, put the sample ID back for the next draw (default=True).
 

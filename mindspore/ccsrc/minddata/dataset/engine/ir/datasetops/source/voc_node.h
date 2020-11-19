@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 
-class VOCNode : public DatasetNode {
+class VOCNode : public MappableSourceNode {
  public:
   /// \brief Constructor
   VOCNode(const std::string &dataset_dir, const std::string &task, const std::string &usage,
@@ -36,6 +36,18 @@ class VOCNode : public DatasetNode {
 
   /// \brief Destructor
   ~VOCNode() = default;
+
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kVOCNode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return shared pointer to the list of newly created DatasetOps

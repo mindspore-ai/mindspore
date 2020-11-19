@@ -30,7 +30,17 @@ namespace dataset {
 // Constructor for Cifar100Node
 Cifar100Node::Cifar100Node(const std::string &dataset_dir, const std::string &usage,
                            std::shared_ptr<SamplerObj> sampler, std::shared_ptr<DatasetCache> cache)
-    : DatasetNode(std::move(cache)), dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
+    : MappableSourceNode(std::move(cache)), dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
+
+std::shared_ptr<DatasetNode> Cifar100Node::Copy() {
+  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  auto node = std::make_shared<Cifar100Node>(dataset_dir_, usage_, sampler, cache_);
+  return node;
+}
+
+void Cifar100Node::Print(std::ostream &out) const {
+  out << Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ")";
+}
 
 Status Cifar100Node::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("Cifar100Node", dataset_dir_));

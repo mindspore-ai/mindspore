@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 
-class RandomNode : public DatasetNode {
+class RandomNode : public NonMappableSourceNode {
  public:
   // Some constants to provide limits to random generation.
   static constexpr int32_t kMaxNumColumns = 4;
@@ -37,7 +37,7 @@ class RandomNode : public DatasetNode {
   /// \brief Constructor
   RandomNode(const int32_t &total_rows, std::shared_ptr<SchemaObj> schema, const std::vector<std::string> &columns_list,
              std::shared_ptr<DatasetCache> cache)
-      : DatasetNode(std::move(cache)),
+      : NonMappableSourceNode(std::move(cache)),
         total_rows_(total_rows),
         schema_path_(""),
         schema_(std::move(schema)),
@@ -46,13 +46,26 @@ class RandomNode : public DatasetNode {
   /// \brief Constructor
   RandomNode(const int32_t &total_rows, std::string schema_path, const std::vector<std::string> &columns_list,
              std::shared_ptr<DatasetCache> cache)
-      : DatasetNode(std::move(cache)),
+      : NonMappableSourceNode(std::move(cache)),
         total_rows_(total_rows),
         schema_path_(schema_path),
+        schema_(nullptr),
         columns_list_(columns_list) {}
 
   /// \brief Destructor
   ~RandomNode() = default;
+
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kRandomNode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return The list of shared pointers to the newly created DatasetOps
