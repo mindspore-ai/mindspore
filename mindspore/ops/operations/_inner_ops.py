@@ -19,7 +19,7 @@ from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
 from ... import context
 from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, prim_attr_register
+from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from ..operations.math_ops import _infer_shape_reduce
 
 
@@ -666,3 +666,99 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         validator.check_subclass("input1_dtype", input1_dtype, mstype.tensor, self.name)
         validator.check_subclass("input2_dtype", input2_dtype, mstype.tensor, self.name)
         return input0_dtype, input1_dtype
+
+
+class GpuConvertToDynamicShape(PrimitiveWithCheck):
+    """
+    This op is used for dynamic shape testing. Its inferred shape will be unknown
+    during compile time, so that its output will appear to be dynamically shaped.
+    The input will not be altered in any way. Put this operator before the operator
+    being tested for dynamic shape support.
+
+    Inputs:
+        - **input** (Tensor) - The tensor used for testing.
+
+    Outputs:
+        - **output** (Tensor) - Same shape, type and value as `input`.
+
+    Examples:
+          >>> # make a model, since dynamic shape operators must be in GRAPH_MODE
+          >>> class TestDynamicShapeReshapeNet(nn.Cell):
+          >>>     def __init__(self):
+          >>>         super(TestDynamicShapeReshapeNet, self).__init__()
+          >>>         self.convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
+          >>>         # suppose we are testing Reshape op
+          >>>         self.reshape = P.Reshape()
+          >>>
+          >>>     def construct(self, input, new_shape):
+          >>>         dynamic_shape_input = self.convert_to_dynamic_shape(input)
+          >>>         reshaped_input = self.reshape(input, new_shape)
+          >>>
+          >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+          >>> input = Tensor(np.array([0, 1, 2, 3])
+          >>> new_shape = (2, 2)
+          >>> net = TestDynamicShapeReshapeNet()
+          >>> output = net(input, new_shape)
+          >>> print(output)
+          [[0, 1], [2, 3]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=["input"], outputs=["output"])
+
+    def check_shape(self, input_shape):
+        validator.check("input_shape rank", len(input_shape), "", 0, Rel.GT, self.name)
+
+    def check_dtype(self, input_dtype):
+        validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
+
+class ErrorOnDynamicShapeInput(PrimitiveWithInfer):
+    """
+    This op is used for dynamic shape testing. The only purpose of this operator is
+    that it will throw a value error if the input is dynamically shaped.
+
+    Inputs:
+        - **input** (Tensor) - The tensor used for testing.
+
+    Outputs:
+        - **output** (Tensor) - Same shape, type and value as `input`.
+
+    Examples:
+          >>> # make a model, since dynamic shape operators must be in GRAPH_MODE
+          >>> class AssertDynamicShapeNet(nn.Cell):
+          >>>     def __init__(self):
+          >>>         super(AssertDynamicShapeNet, self).__init__()
+          >>>         self.convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
+          >>>         self.error_on_dynamic_shape_input = inner.ErrorOnDynamicShapeInput()
+          >>>
+          >>>     def construct(self, input, new_shape):
+          >>>         dynamic_shape_input = self.convert_to_dynamic_shape(input)
+          >>>         self.error_on_dynamic_shape_input(dynamic_shape_input)
+          >>>
+          >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+          >>> input = Tensor(np.array([0])
+          >>> net = TestDynamicShapeReshapeNet()
+          >>> output = net(input, new_shape)
+          ValueError: Input is dynamically shaped.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=["input"], outputs=["output"])
+
+    def infer_shape(self, input_shape):
+        shape = list(input_shape)
+
+        for dim in shape:
+            if dim == -1:
+                raise ValueError("Input is dynamically shaped.")
+
+        return input_shape
+
+    def infer_type(self, input_dtype):
+        validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
+        return input_dtype
+
+    def infer_value(self, input_tensor):
+        return input_tensor

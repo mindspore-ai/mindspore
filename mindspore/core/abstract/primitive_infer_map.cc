@@ -121,6 +121,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimControlDepend, {InferImplControlDepend, true}},
     // Debug
     {prim::kPrimDebug, {InferImplDebug, true}},
+    // Dynamic shape testing
+    {prim::kPrimGpuConvertToDynamicShape, {InferImplGpuConvertToDynamicShape, true}},
     // SparseTensor
     {prim::kPrimMakeSparseTensor, {InferImplMakeSparseTensor, true}},
     {prim::kPrimSparseTensorGetValues, {InferImplSparseTensorGetValues, true}},

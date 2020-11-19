@@ -271,6 +271,10 @@ inline const PrimitivePtr kPrimTensorSummary = std::make_shared<Primitive>("Tens
 inline const PrimitivePtr kPrimHistogramSummary = std::make_shared<Primitive>("HistogramSummary");
 inline const PrimitivePtr kPrimDebug = std::make_shared<Primitive>("Debug");
 
+// Dynamic shape testing
+inline const PrimitivePtr kPrimGpuConvertToDynamicShape = std::make_shared<Primitive>("GpuConvertToDynamicShape");
+inline const PrimitivePtr kPrimErrorOnDynamicShapeInput = std::make_shared<Primitive>("ErrorOnDynamicShapeInput");
+
 // Other miscellaneous
 inline const PrimitivePtr kPrimDepend = std::make_shared<Primitive>("Depend");
 inline const PrimitivePtr kPrimPartial = std::make_shared<Primitive>("Partial");
