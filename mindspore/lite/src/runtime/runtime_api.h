@@ -36,9 +36,6 @@ struct ThreadPool;
 #endif
 INTERNAL_API_DLL ThreadPool *CreateLiteThreadPool(int thread_num, int mode);
 INTERNAL_API_DLL void LiteAPISetLastError(const char *msg);
-INTERNAL_API_DLL void *LiteBackendAllocWorkspace(int deviceType, int deviceId, uint64_t size, int dtypeCode,
-                                                 int dtypeBits);
-INTERNAL_API_DLL int LiteBackendFreeWorkspace(int deviceType, int deviceId, const void *ptr);
 INTERNAL_API_DLL int LiteBackendRegisterSystemLibSymbol(const char *name, void *ptr);
 #ifdef __cplusplus
 }

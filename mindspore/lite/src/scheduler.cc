@@ -171,6 +171,33 @@ int Scheduler::BuildKernels(const lite::Model *model, std::vector<Tensor *> *ten
   return RET_OK;
 }
 
+std::vector<kernel::LiteKernel *> Scheduler::FindAllSubGraphKernels(
+  kernel::LiteKernel *head_kernel, std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map) {
+  MS_ASSERT(head_kernel != nullptr);
+  MS_ASSERT(sinked_kernel_map != nullptr);
+  std::vector<kernel::LiteKernel *> sub_kernels;
+  std::queue<kernel::LiteKernel *> kernel_queue;
+  kernel_queue.emplace(head_kernel);
+  auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernel);
+  while (!kernel_queue.empty()) {
+    auto cur_kernel = kernel_queue.front();
+    kernel_queue.pop();
+    (*sinked_kernel_map)[cur_kernel] = true;
+    sub_kernels.emplace_back(cur_kernel);
+    auto post_kernels = cur_kernel->out_kernels();
+    for (auto post_kernel : post_kernels) {
+      if (cur_sub_graph_type == mindspore::lite::Scheduler::GetKernelSubGraphType(post_kernel)) {
+        auto post_kernel_inputs = post_kernel->in_kernels();
+        if (std::all_of(post_kernel_inputs.begin(), post_kernel_inputs.end(),
+                        [&](kernel::LiteKernel *kernel) { return (*sinked_kernel_map)[kernel]; })) {
+          kernel_queue.emplace(post_kernel);
+        }
+      }
+    }
+  }
+  return sub_kernels;
+}
+
 int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
   auto old_kernels = *kernels;
   kernels->clear();
@@ -194,27 +221,8 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
       MS_LOG(ERROR) << "Not support NPU and APU now";
       return RET_NOT_SUPPORT;
     }
-
-    std::vector<kernel::LiteKernel *> sub_kernels;
-    std::queue<kernel::LiteKernel *> kernel_queue;
-    kernel_queue.emplace(head_kernel);
     auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernel);
-    while (!kernel_queue.empty()) {
-      auto cur_kernel = kernel_queue.front();
-      kernel_queue.pop();
-      is_kernel_sinked[cur_kernel] = true;
-      sub_kernels.emplace_back(cur_kernel);
-      auto post_kernels = cur_kernel->out_kernels();
-      for (auto post_kernel : post_kernels) {
-        if (cur_sub_graph_type == mindspore::lite::Scheduler::GetKernelSubGraphType(post_kernel)) {
-          auto post_kernel_inputs = post_kernel->in_kernels();
-          if (std::all_of(post_kernel_inputs.begin(), post_kernel_inputs.end(),
-                          [&](kernel::LiteKernel *kernel) { return is_kernel_sinked[kernel]; })) {
-            kernel_queue.emplace(post_kernel);
-          }
-        }
-      }
-    }
+    auto sub_kernels = FindAllSubGraphKernels(head_kernel, &is_kernel_sinked);
     auto subgraph = CreateSubGraphKernel(sub_kernels, cur_sub_graph_type);
     if (subgraph == nullptr) {
       MS_LOG(ERROR) << "Create SubGraphKernel failed";

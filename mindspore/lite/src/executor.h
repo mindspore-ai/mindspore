@@ -36,12 +36,6 @@ class Executor {
 
  protected:
   int CheckInputs(std::vector<Tensor *> &in_tensors);
-
-  int TransformTensorLayoutFp32(Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
-
-  int TransformTensorLayoutUint8(Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
-
-  int TransformTensorLayout(Tensor *tensor, schema::Format dst_format, Allocator *allocator = nullptr);
 };
 }  // namespace mindspore::lite
 #endif

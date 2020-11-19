@@ -17,7 +17,6 @@
 #include "src/runtime/runtime_api.h"
 #include <mutex>
 #include <string>
-#include "src/runtime/workspace_pool.h"
 #include "src/common/log_adapter.h"
 
 static std::mutex gWorkspaceMutex;
@@ -28,26 +27,6 @@ extern "C" {
 ThreadPool *CreateLiteThreadPool(int thread_num, int mode) { return CreateThreadPool(thread_num, mode); }
 
 void LiteAPISetLastError(const char *msg) { MS_LOG(ERROR) << "The lite api set last error is " << msg; }
-
-void *LiteBackendAllocWorkspace(int deviceType, int deviceId, uint64_t size, int dtypeCode, int dtypeBits) {
-  std::lock_guard<std::mutex> lock(gWorkspaceMutex);
-  auto p = mindspore::predict::WorkspacePool::GetInstance();
-  if (p == nullptr) {
-    MS_LOG(ERROR) << "Get thread pool instance failed";
-    return nullptr;
-  }
-  return p->AllocWorkSpaceMem(size);
-}
-
-int LiteBackendFreeWorkspace(int deviceType, int deviceId, const void *ptr) {
-  std::lock_guard<std::mutex> lock(gWorkspaceMutex);
-  auto p = mindspore::predict::WorkspacePool::GetInstance();
-  if (p == nullptr) {
-    return -1;
-  }
-  p->FreeWorkSpaceMem(ptr);
-  return 0;
-}
 #ifdef __cplusplus
 }
 #endif

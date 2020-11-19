@@ -72,7 +72,6 @@ set(LITE_SRC
         ${SRC_DIR}/runtime/allocator.cc
         ${SRC_DIR}/runtime/runtime_api.cc
         ${SRC_DIR}/runtime/thread_pool.c
-        ${SRC_DIR}/runtime/workspace_pool.cc
         ${SRC_DIR}/inner_context.cc
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/kernel_registry.cc

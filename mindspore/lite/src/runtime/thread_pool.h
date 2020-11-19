@@ -28,24 +28,9 @@ typedef enum {
   MID_MODE = 2      /**< bind middle cpu first */
 } BindMode;
 
-/// \brief ThreadPoolId defined for specifying which thread pool to use.
-typedef enum {
-  THREAD_POOL_DEFAULT = 0, /**< default thread pool id */
-  THREAD_POOL_SECOND = 1,  /**< the second thread pool id */
-  THREAD_POOL_THIRD = 2,   /**< the third thread pool id */
-  THREAD_POOL_FOURTH = 3   /**< the fourth thread pool id */
-} ThreadPoolId;
-
 struct ThreadPool;
 
 struct ThreadPool *CreateThreadPool(int thread_num, int mode);
-
-/**
- * create thread pool and init
- * @param thread_num
- * @param mode
- */
-int ConfigThreadPool(struct ThreadPool *thread_pool, int thread_num, int mode);
 
 /**
  *

@@ -52,89 +52,106 @@ static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor
 
 LiteSession::LiteSession() { this->is_running_.store(false); }
 
+void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor != nullptr);
+  MS_ASSERT(dst_tensor != nullptr);
+  auto quant_params = src_tensor->quantParams();
+  if (quant_params != nullptr) {
+    for (size_t j = 0; j < quant_params->size(); j++) {
+      QuantArg quant_arg{};
+      quant_arg.bitNum = quant_params->Get(j)->numBits();
+      quant_arg.scale = quant_params->Get(j)->scale();
+      quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
+      quant_arg.var_corr = quant_params->Get(j)->varCorr();
+      quant_arg.mean_corr = quant_params->Get(j)->meanCorr();
+      quant_arg.inited = quant_params->Get(j)->inited();
+      dst_tensor->AddQuantParam(quant_arg);
+    }
+  }
+  auto quant_clusters = src_tensor->quantClusters();
+  if (quant_clusters != nullptr) {
+    std::vector<float> clusters;
+    for (size_t j = 0; j < quant_clusters->size(); j++) {
+      clusters.push_back(quant_clusters->Get(j));
+    }
+    dst_tensor->SetQuantClusters(clusters);
+  }
+}
+
+int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_index, const schema::Tensor *src_tensor,
+                                    lite::Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor != nullptr);
+  MS_ASSERT(dst_tensor != nullptr);
+  auto src_category = TensorCategory(src_tensor);
+  auto data_type = src_tensor->dataType();
+  if ((src_category == Tensor::Category::CONST_TENSOR || src_category == Tensor::Category::CONST_SCALAR) &&
+      src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
+    MS_ASSERT(dst_tensor->Size() == src_tensor->data()->size());
+    if (WeightTensorNeedCopy(model, tensor_index)) {
+      auto dst_data = dst_tensor->MutableData();
+      if (dst_data == nullptr) {
+        MS_LOG(ERROR) << "Data from tensor is nullptr";
+        return RET_NULL_PTR;
+      }
+      memcpy(dst_data, src_tensor->data()->data(), dst_tensor->Size());
+      copyed_tensor_idxes_.emplace_back(tensor_index);
+    } else {
+      int pack_size = src_tensor->data()->size();
+      int org_size = dst_tensor->Size();
+      if (pack_size != org_size && (data_type == kNumberTypeInt8 || data_type == kNumberTypeInt16)) {
+        auto ret = dst_tensor->MallocData();
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Malloc data for tensor failed ";
+          return RET_ERROR;
+        }
+        kernel::DequantUtil::UnPackToInt(src_tensor, dst_tensor->MutableData());
+      } else {
+        dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
+      }
+    }
+  }
+  return RET_OK;
+}
+
 int LiteSession::ConvertTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   copyed_tensor_idxes_.clear();
   uint32_t tensor_count = model->all_tensors_.size();
   for (uint32_t i = 0; i < tensor_count; ++i) {
-    auto *srcTensor = model->all_tensors_[i];
-    if (srcTensor == nullptr) {
+    auto *src_tensor = model->all_tensors_[i];
+    if (src_tensor == nullptr) {
       MS_LOG(ERROR) << i << "th tensor in model is nullptr";
       return RET_NULL_PTR;
     }
-    auto src_category = TensorCategory(srcTensor);
+    auto src_category = TensorCategory(src_tensor);
     std::vector<int> shape;
-    if (srcTensor->dims() == nullptr) {
+    if (src_tensor->dims() == nullptr) {
       MS_LOG(DEBUG) << "Dims of " << i << "th tensor is nullptr";
-    } else {
-      if (src_category == Tensor::Category::CONST_TENSOR) {
-        if (srcTensor->dataType() == kObjectTypeString && srcTensor->data() != nullptr) {
-          shape.push_back(srcTensor->data()->size());
-        } else {
-          for (size_t j = 0; j < srcTensor->dims()->size(); j++) {
-            shape.push_back(srcTensor->dims()->data()[j]);
-          }
+    }
+    if (src_tensor->dims() != nullptr && src_category == Tensor::Category::CONST_TENSOR) {
+      if (src_tensor->dataType() == kObjectTypeString && src_tensor->data() != nullptr) {
+        shape.push_back(src_tensor->data()->size());
+      } else {
+        for (size_t j = 0; j < src_tensor->dims()->size(); j++) {
+          shape.push_back(src_tensor->dims()->data()[j]);
         }
       }
     }
-    int dataType = srcTensor->dataType();
-    auto *dstTensor = new (std::nothrow) Tensor(TypeId(dataType), shape, srcTensor->format(), src_category);
-    if (dstTensor == nullptr) {
+    auto *dst_tensor =
+      new (std::nothrow) Tensor(TypeId(src_tensor->dataType()), shape, src_tensor->format(), src_category);
+    if (dst_tensor == nullptr) {
       MS_LOG(ERROR) << "new " << i << "th tensor failed";
       return RET_NULL_PTR;
     }
-    if ((src_category == Tensor::Category::CONST_TENSOR || src_category == Tensor::Category::CONST_SCALAR) &&
-        srcTensor->data() != nullptr && srcTensor->data()->size() > 0) {
-      MS_ASSERT(dstTensor->Size() == srcTensor->data()->size());
-      if (WeightTensorNeedCopy(model, i)) {
-        auto dst_data = dstTensor->MutableData();
-        if (dst_data == nullptr) {
-          MS_LOG(ERROR) << "MutableData from " << i << "th tensor is nullptr";
-          delete dstTensor;
-          return RET_ERROR;
-        }
-        memcpy(dst_data, srcTensor->data()->data(), dstTensor->Size());
-        copyed_tensor_idxes_.emplace_back(i);
-      } else {
-        int pack_size = srcTensor->data()->size();
-        int org_size = dstTensor->Size();
-        if (pack_size != org_size && (dataType == kNumberTypeInt8 || dataType == kNumberTypeInt16)) {
-          auto ret = dstTensor->MallocData();
-          if (ret != RET_OK) {
-            MS_LOG(ERROR) << "Malloc data for " << i << "tensor failed ";
-            delete dstTensor;
-            return RET_ERROR;
-          }
-          kernel::DequantUtil::UnPackToInt(srcTensor, dstTensor->MutableData());
-        } else {
-          dstTensor->set_data(const_cast<unsigned char *>(srcTensor->data()->data()));
-        }
-      }
+    auto ret = ConvertTensorsData(model, i, src_tensor, dst_tensor);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Convert data of " << i << "th tensor failed";
+      delete (dst_tensor);
+      return ret;
     }
-    auto quant_params = srcTensor->quantParams();
-    if (quant_params != nullptr) {
-      for (size_t j = 0; j < quant_params->size(); j++) {
-        QuantArg quant_arg{};
-        quant_arg.bitNum = quant_params->Get(j)->numBits();
-        quant_arg.scale = quant_params->Get(j)->scale();
-        quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
-        quant_arg.var_corr = quant_params->Get(j)->varCorr();
-        quant_arg.mean_corr = quant_params->Get(j)->meanCorr();
-        quant_arg.inited = quant_params->Get(j)->inited();
-        dstTensor->AddQuantParam(quant_arg);
-      }
-    }
-    auto quant_clusters = srcTensor->quantClusters();
-    if (quant_clusters != nullptr) {
-      std::vector<float> clusters;
-      for (size_t j = 0; j < quant_clusters->size(); j++) {
-        clusters.push_back(quant_clusters->Get(j));
-      }
-      dstTensor->SetQuantClusters(clusters);
-    }
-    this->tensors_.emplace_back(dstTensor);
+    ConvertTensorsQuantParam(src_tensor, dst_tensor);
+    this->tensors_.emplace_back(dst_tensor);
   }
-
   return RET_OK;
 }
 

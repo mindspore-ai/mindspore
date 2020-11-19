@@ -131,6 +131,10 @@ class PrimitiveC : public mindspore::Primitive {
   static std::shared_ptr<PrimitiveC> Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
                                             const schema::QuantType &quantType);
   void PopulaterQuantParam(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
+  void FillDefaultInputQuantParamIfNeed(const size_t &inputSize);
+  void PopulaterInputQuantParam(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
+                                bool narrowRangeQuantParam, int32_t numbitsRangeQuantParam);
+  void PopulaterOutputQuantParam(const Primitive &prim, bool narrowRangeQuantParam, int32_t numbitsRangeQuantParam);
   void CalFloatScopeByMeanAndStddev(const double &mean, const double &stdDev, float *mMin, float *mMax);
 
  protected:

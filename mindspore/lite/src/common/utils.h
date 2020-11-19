@@ -34,15 +34,7 @@ const int USEC = 1000000;
 const int MSEC = 1000;
 std::vector<std::string> StringSplit(std::string str, const std::string &pattern);
 
-uint64_t GetTimeUs(void);
-
-int16_t Float32ToShort(float srcValue);
-
-float ShortToFloat32(int16_t srcValue);
-
-void ShortToFloat32(const int16_t *srcdata, float *dstdata, size_t elementSize);
-
-void Float32ToShort(const float *srcdata, int16_t *dstdata, size_t elementSize);
+uint64_t GetTimeUs();
 
 bool IsSupportSDot();
 
