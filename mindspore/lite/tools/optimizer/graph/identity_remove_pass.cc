@@ -14,34 +14,96 @@
  * limitations under the License.
  */
 #include "tools/optimizer/graph/identity_remove_pass.h"
-#include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/lite/include/errorcode.h"
 #include "src/ops/primitive_c.h"
 
 namespace mindspore::opt {
-bool RemoveIdentityOpPass::Run(const FuncGraphPtr &func_graph) {
-  if (this->fmk_type != lite::converter::FmkType_ONNX) {
-    MS_LOG(INFO) << "The framework type of model should be onnx.";
-    return RET_OK;
+int RemoveIdentityOpPass::ReplaceIdentity(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
+  if (!utils::isa<CNodePtr>(anf_node)) {
+    MS_LOG(DEBUG) << "anf node is node a cnode.";
+    return lite::RET_NO_CHANGE;
   }
+  auto type = opt::GetCNodeType(anf_node);
+  if (type != schema::PrimitiveType_Identity) {
+    MS_LOG(DEBUG) << "anf node is not a identity node.";
+    return lite::RET_NO_CHANGE;
+  }
+  auto identity_cnode = anf_node->cast<CNodePtr>();
+  if (identity_cnode->inputs().size() != lite::kDoubleNum) {
+    MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
+    remove_cnode_.insert(anf_node);
+    return lite::RET_NO_CHANGE;
+  } else {
+    bool replace_succ = manager->Replace(anf_node, identity_cnode->input(1));
+    if (!replace_succ) {
+      MS_LOG(ERROR) << "replace identity failed.";
+      return lite::RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+int RemoveIdentityOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
+  if (!utils::isa<CNodePtr>(anf_node)) {
+    MS_LOG(DEBUG) << "anf node is node a cnode.";
+    return lite::RET_NO_CHANGE;
+  }
+  auto type = opt::GetCNodeType(anf_node);
+  if (type != schema::PrimitiveType_TupleGetItem) {
+    return lite::RET_NO_CHANGE;
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (cnode->inputs().size() != 3) {
+    MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << cnode->inputs().size();
+    return RET_ERROR;
+  }
+  type = opt::GetCNodeType(cnode->input(1));
+  if (type != schema::PrimitiveType_Identity) {
+    return lite::RET_NO_CHANGE;
+  }
+  auto get_item_input_cnode = cnode->input(1)->cast<CNodePtr>();
+  auto index_vnode = cnode->input(2);
+  if (!utils::isa<ValueNode>(index_vnode)) {
+    MS_LOG(ERROR) << "TupleGetItem's input 2 is not valuenode";
+    return lite::RET_ERROR;
+  }
+  int index = lite::CastToInt(index_vnode->cast<ValueNodePtr>()->value(), false).front();
+  int input_cnode_inputs_size = get_item_input_cnode->inputs().size();
+  if ((index + 1) >= input_cnode_inputs_size) {
+    MS_LOG(ERROR) << "value node index is out of range.";
+    return lite::RET_ERROR;
+  }
+  bool replace_succ = manager->Replace(anf_node, get_item_input_cnode->input(index + 1));
+  if (!replace_succ) {
+    MS_LOG(ERROR) << "replace identity failed.";
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
+bool RemoveIdentityOpPass::Run(const FuncGraphPtr &func_graph) {
   MS_ASSERT(func_graph != nullptr);
   auto manager = func_graph->manager();
   MS_ASSERT(manager != nullptr);
   auto node_list = TopoSort(func_graph->get_return());
+  int status = RET_OK;
   for (auto &node : node_list) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
     auto type = opt::GetCNodeType(node);
-    if (type != schema::PrimitiveType_Identity) {
-      continue;
+    if (type == schema::PrimitiveType_Identity) {
+      status = ReplaceIdentity(node, manager);
+    } else if (type == schema::PrimitiveType_TupleGetItem) {
+      status = ReplaceTupleGetItem(node, manager);
     }
-    auto identity_cnode = node->cast<CNodePtr>();
-    if (identity_cnode->inputs().size() != lite::kDoubleNum) {
-      MS_LOG(ERROR) << "The `node input is a single tensor";
-      return RET_ERROR;
+    if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "remove identity pass is failed.";
+      return false;
     }
-    manager->Replace(node, identity_cnode->input(1));
+  }
+  for (auto &node : remove_cnode_) {
+    func_graph->DropNode(node);
   }
   return true;
 }

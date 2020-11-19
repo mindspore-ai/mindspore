@@ -17,8 +17,10 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_REMOVE_IDENTITY_PASS_H_
 #define MINDSPORE_LITE_SRC_PASS_REMOVE_IDENTITY_PASS_H_
 #include <string>
+#include <set>
 #include "backend/optimizer/common/pass.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
@@ -26,11 +28,12 @@ class RemoveIdentityOpPass : public Pass {
  public:
   RemoveIdentityOpPass() : Pass("remove_identity_pass") {}
   ~RemoveIdentityOpPass() override = default;
-  void SetFmkType(FmkType fmkType) { this->fmk_type = fmkType; }
+  int ReplaceIdentity(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
+  int ReplaceTupleGetItem(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  FmkType fmk_type = lite::converter::FmkType_ONNX;
+  std::set<AnfNodePtr> remove_cnode_;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_REMOVE_IDENTITY_PASS_H_

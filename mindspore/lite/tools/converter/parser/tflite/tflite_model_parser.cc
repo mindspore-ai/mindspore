@@ -109,16 +109,20 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
       status = (status == RET_OK ? RET_NOT_FIND_OP : status);
       continue;
     }
-    if (status == RET_OK) {
-      status = node_parser->Parse(&tensorsInfo, tflite_op, tflite_model, tflite_subgraph, op.get());
-      if (status != RET_OK) {
-        if (status == RET_NOT_FIND_OP) {
+    if (status == RET_OK || op_type == "Custom") {
+      int status_node = node_parser->Parse(&tensorsInfo, tflite_op, tflite_model, tflite_subgraph, op.get());
+      status = (status == RET_OK ? status_node : status);
+      if (status_node != RET_OK) {
+        if (status_node == RET_NOT_FIND_OP) {
           op_type =
             (op_type != "Custom" ? op_type : (tflite_model->operator_codes[tflite_op->opcode_index])->custom_code);
           NoSupportOp::GetInstance()->InsertOp(op_type);
         } else {
           MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";
         }
+        continue;
+      }
+      if (status != RET_OK) {
         continue;
       }
       sub_graph->nodes.emplace_back(op.release());
