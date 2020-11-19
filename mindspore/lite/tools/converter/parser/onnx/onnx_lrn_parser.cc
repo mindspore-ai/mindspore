@@ -17,8 +17,7 @@
 #include "tools/converter/parser/onnx/onnx_lrn_parser.h"
 #include <memory>
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx LrnParser";
   if (op == nullptr) {
@@ -37,18 +36,17 @@ STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
     return RET_NULL_PTR;
   }
 
-  auto onnx_node_attr = onnx_node.attribute();
   int32_t size = 0;
-  for (int i = 0; i < onnx_node_attr.size(); ++i) {
-    MS_ASSERT(onnx_node_attr.at(i) != nullptr);
-    if (onnx_node_attr.at(i).name() == "alpha") {
-      attr->alpha = onnx_node_attr.at(i).f();
-    } else if (onnx_node_attr.at(i).name() == "beta") {
-      attr->beta = onnx_node_attr.at(i).f();
-    } else if (onnx_node_attr.at(i).name() == "bias") {
-      attr->bias = onnx_node_attr.at(i).f();
-    } else if (onnx_node_attr.at(i).name() == "size") {
-      size = static_cast<int32_t>(onnx_node_attr.at(i).i());
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "alpha") {
+      attr->alpha = onnx_node_attr.f();
+    } else if (attribute_name == "beta") {
+      attr->beta = onnx_node_attr.f();
+    } else if (attribute_name == "bias") {
+      attr->bias = onnx_node_attr.f();
+    } else if (attribute_name == "size") {
+      size = static_cast<int32_t>(onnx_node_attr.i());
       attr->depth_radius = size / 2;
     }
   }
@@ -66,5 +64,4 @@ STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 
 OnnxNodeRegistrar g_onnxLrnxParser("Lrn", new OnnxLrnParser());
 OnnxNodeRegistrar g_onnxLRNxParser("LRN", new OnnxLrnParser());
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

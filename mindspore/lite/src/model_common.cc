@@ -23,6 +23,7 @@ int ConvertSubGraph(const schema::SubGraph &sub_graph, Model *model) {
     MS_LOG(ERROR) << "new subGraph fail!";
     return RET_ERROR;
   }
+  MS_ASSERT(sub_graph.name() != nullptr);
   subgraph->name_ = sub_graph.name()->c_str();
   MS_ASSERT(sub_graph.inputIndices() != nullptr);
   auto in_count = sub_graph.inputIndices()->size();
@@ -68,6 +69,7 @@ const void *GetMetaGraphByVerison(const char *buf, const int &schema_version) {
 }
 
 int GenerateModelByVersion(const void *meta_graph, Model *model, const int &schema_version) {
+  MS_ASSERT(meta_graph != nullptr);
   MS_ASSERT(model != nullptr);
   int status = RET_ERROR;
   if (schema_version == SCHEMA_VERSION::SCHEMA_CUR) {

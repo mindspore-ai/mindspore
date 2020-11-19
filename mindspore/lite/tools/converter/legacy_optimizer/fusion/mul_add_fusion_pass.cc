@@ -147,7 +147,6 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
   scaleParam->axis = 0 - shape_size;
   mulNode->inputIndex.push_back(addBiasIndex);
   MS_ASSERT(addNode->primitive != nullptr);
-  MS_ASSERT(addNode->primitive->value != nullptr);
   MS_ASSERT(addNode->primitive->value.AsAdd() != nullptr);
   auto activationType = addNode->primitive->value.AsAdd()->activationType;
   if (activationType == ActivationType_RELU || activationType == ActivationType_RELU6 ||
@@ -163,7 +162,6 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
     // repace addnode as activation
     std::unique_ptr<ActivationT> activationParam(new ActivationT());
     MS_ASSERT(addNode->primitive != nullptr);
-    MS_ASSERT(addNode->primitive->value != nullptr);
     MS_ASSERT(addNode->primitive->value.AsAdd() != nullptr);
     activationParam->type = addNode->primitive->value.AsAdd()->activationType;
     addNode->primitive->value.type = schema::PrimitiveType_Activation;

@@ -192,22 +192,24 @@ class Calibrator {
 
   STATUS AddQuantizedOp(const CNodePtr &node);
 
-  STATUS RecordMaxValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
+  static STATUS RecordMaxValue(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
 
-  STATUS UpdateDivergInverval(std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
+  static STATUS UpdateDivergInverval(
+    std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *diverg_info);
 
-  STATUS UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
+  static STATUS UpdateDataFrequency(const std::vector<float> &data, const std::unique_ptr<DivergInfo> &diverg_info);
   void Dump();
 
   STATUS ComputeThreshold();
 
-  std::unordered_map<CNodePtr, float> GetScale(
+  static std::unordered_map<CNodePtr, float> GetScale(
     std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
-  std::unordered_map<CNodePtr, int32_t> GetZeropoint(
+  static std::unordered_map<CNodePtr, int32_t> GetZeropoint(
     std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
-  std::map<CNodePtr, MaxMin> GetMinMax(std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
+  static std::map<CNodePtr, MaxMin> GetMinMax(
+    std::unordered_map<std::string, std::unique_ptr<DivergInfo>> *diverg_info);
 
   std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *GetInputDivergInfo();
 

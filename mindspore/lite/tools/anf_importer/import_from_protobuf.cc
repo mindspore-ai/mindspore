@@ -15,11 +15,7 @@
  */
 
 #include "tools/anf_importer/import_from_protobuf.h"
-
-#include <fcntl.h>
 #include <unistd.h>
-
-#include <fstream>
 #include <map>
 #include <memory>
 #include <stack>
@@ -243,7 +239,7 @@ int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node
   node->set_abstract(abstract_tensor);
 
   if (default_para_map_.find(value_proto.name()) != default_para_map_.end()) {
-    Tensor *tensor_info = new Tensor(kDefaultValueSwitchMap[tensor_typeproto.elem_type()], shape);
+    auto *tensor_info = new Tensor(kDefaultValueSwitchMap[tensor_typeproto.elem_type()], shape);
     if (tensor_info == nullptr) {
       return RET_MEMORY_FAILED;
     }
@@ -435,7 +431,7 @@ bool AnfImporterFromProtobuf::GetAttrValueForCNode(const PrimitivePtr &prim, con
   }
   if (kParseTypeSwitchMap[type] == FORM_PARSE_SCALAR) {
     if (kv.size() == 1) {
-      std::unordered_map<std::string, ValuePtr>::iterator iter = kv.begin();
+      auto iter = kv.begin();
       prim->AddAttr(attr_name, iter->second);
     } else {
       auto res = ParserScalarAttrValue(ref_attr_name, kv);
@@ -459,7 +455,7 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInTensorForm(const std::string &val
   param_value->set_tensor_shape(shape_vector);
   param_value->set_tensor_type(kDefaultValueSwitchMap[attr_tensor_type]);
   const std::string &tensor_buf = attr_tensor.raw_data();
-  auto tensor_data = new (std::nothrow) char[tensor_buf.size()];
+  auto tensor_data = new (std::nothrow) char[tensor_buf.size() + 1];
   if (tensor_data == nullptr) {
     MS_LOG(ERROR) << "Tensor_data is nullptr";
     return false;
@@ -648,14 +644,14 @@ CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &out
     MS_LOG(ERROR) << "funcgraph new cnode failed";
     return nullptr;
   }
-  if (0 == kv.size()) {
+  if (kv.empty()) {
     AbstractBasePtrList elem;
     for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
       elem.push_back(cnode_ptr->input(index)->abstract());
     }
     cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
   } else if (1 == kv.size()) {
-    std::unordered_map<std::string, abstract::AbstractTensorPtr>::iterator iter = kv.begin();
+    auto iter = kv.begin();
     cnode_ptr->set_abstract(iter->second);
   } else {
     auto abstract = ParserAttrShape(shape_ref_attr_name, kv);

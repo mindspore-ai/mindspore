@@ -79,7 +79,6 @@ bool RemoveUnusedTransposeOpPass::Run(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "Transpose node of onnx need to removed which has not primitiveT";
         return RET_ERROR;
       }
-      MS_ASSERT(primT->value != nullptr);
       MS_ASSERT(primT->value.AsTranspose() != nullptr);
       std::vector<int32_t> perm = primT->value.AsTranspose()->perm;
       if (perm == kPermNHWC) {
