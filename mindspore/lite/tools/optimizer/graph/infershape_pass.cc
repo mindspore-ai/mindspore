@@ -27,9 +27,7 @@ abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(li
   std::vector<int> shape(tensor->shape());
   auto type_id = static_cast<TypeId>(tensor->data_type());
   auto type_ptr = TypeIdToType(type_id);
-  std::vector<int64_t> shape_vector;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                       [](const int32_t &value) { return static_cast<int64_t>(value); });
+  std::vector<int64_t> shape_vector(shape.begin(), shape.end());
   auto new_abstract = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
   if (new_abstract == nullptr) {
     MS_LOG(ERROR) << "new AbstractTensor failed";
@@ -283,12 +281,16 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     auto primt = std::make_unique<schema::PrimitiveT>();
     if (primt == nullptr) {
       MS_LOG(ERROR) << "primt is nullptr";
+      FreeTensors(&input_tensors);
+      FreeTensors(&output_tensors);
       return false;
     }
     *primt = *origin_primt;
     auto primc = std::shared_ptr<lite::PrimitiveC>(lite::PrimitiveC::Create(primt.release()));
     if (primc == nullptr) {
       MS_LOG(ERROR) << "primc is nullptr";
+      FreeTensors(&input_tensors);
+      FreeTensors(&output_tensors);
       return false;
     }
     status = primc->InferShape(input_tensors, output_tensors);
