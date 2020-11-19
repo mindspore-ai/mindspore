@@ -71,6 +71,8 @@ if __name__ == "__main__":
         context.set_context(device_id=args.device_id)
 
         if device_num > 1:
+            cfg.learning_rate = cfg.learning_rate * device_num
+            cfg.epoch_size = cfg.epoch_size * 2
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
@@ -107,7 +109,7 @@ if __name__ == "__main__":
 
     elif args.dataset_name == 'imagenet':
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        lr = Tensor(get_lr_imagenet(cfg, step_per_epoch))
+        lr = Tensor(get_lr_imagenet(cfg.learning_rate, cfg.epoch_size, step_per_epoch))
         opt = nn.Momentum(params=get_param_groups(network),
                           learning_rate=lr,
                           momentum=cfg.momentum,
