@@ -51,7 +51,7 @@ dataset_path=$dataset_root/centerface/images/val/images/
 ground_truth_mat=$dataset_root/centerface/ground_truth/val.mat
 save_path=$root/output/centerface/
 device_id=0
-ckpt="0.ckpt" # the model saved for epoch=125
+ckpt="0-125_24750.ckpt" # the model saved for epoch=125
 
 if [ $# == 1 ]
 then
