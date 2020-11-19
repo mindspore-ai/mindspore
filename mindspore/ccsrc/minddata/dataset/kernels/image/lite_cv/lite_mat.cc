@@ -198,8 +198,7 @@ void LiteMat::Init(int width, int height, void *p_data, LDataType data_type) {
   c_step_ = height_ * width_;
   size_ = c_step_ * channel_ * elem_size_;
   data_ptr_ = p_data;
-  ref_count_ = new int[1];
-  *ref_count_ = 0;
+  ref_count_ = nullptr;
 }
 
 void LiteMat::Init(int width, int height, int channel, LDataType data_type) {
@@ -227,8 +226,7 @@ void LiteMat::Init(int width, int height, int channel, void *p_data, LDataType d
   c_step_ = height_ * width_;
   size_ = c_step_ * channel_ * elem_size_;
   data_ptr_ = p_data;
-  ref_count_ = new int[1];
-  *ref_count_ = 0;
+  ref_count_ = nullptr;
 }
 
 bool LiteMat::IsEmpty() const { return data_ptr_ == 0 || data_ptr_ == nullptr || c_step_ * channel_ == 0; }
