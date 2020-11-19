@@ -30,23 +30,17 @@ namespace profiler {
 namespace gpu {
 struct ProfilingTraceInfo {
   // support get all the op name from environment variable
-  // iteration start op is GetNext
-  std::string trace_iter_start;
-  // fp start op is the first op of Graph that ID is 2
+  // fp start op is the first op in all subgraph except data related op
   std::string trace_fp_start;
   // bp end op is the input node op of the last communication op (if exist)
   std::string trace_bp_end;
   // iteration end op is the last executed op
   std::string trace_iter_end;
 
-  bool IsFirstStepEnd;
-
   // profiling specific op, such as AllReduce;
   std::vector<std::string> trace_custom_node;
 
-  bool IsValid() const {
-    return !(trace_iter_start.empty() || trace_fp_start.empty() || trace_bp_end.empty() || trace_iter_end.empty());
-  }
+  bool IsValid() const { return !(trace_fp_start.empty() || trace_bp_end.empty() || trace_iter_end.empty()); }
 };
 
 class ProfilingUtils {
@@ -61,13 +55,11 @@ class ProfilingUtils {
   static ProfilingTraceInfo GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr);
   static void OutputStepTraceOpNameStatus();
 
-  static uint32_t last_graph_id;
   static bool have_communication_op;
   static ProfilingTraceInfo profiling_trace;
 
  private:
-  static void SetTraceIterStart(const std::vector<CNodePtr> &cnode_exec_order);
-  static void SetTraceFpStart(const std::vector<CNodePtr> &cnode_exec_order, uint32_t graph_id);
+  static void SetTraceFpStart(const std::vector<CNodePtr> &cnode_exec_order);
   static void SetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order);
   static void SetTraceIterEnd(const std::vector<CNodePtr> &cnode_exec_order);
   static std::string GetGraphSecondLastKernelName(const std::vector<CNodePtr> &cnode_exec_order);

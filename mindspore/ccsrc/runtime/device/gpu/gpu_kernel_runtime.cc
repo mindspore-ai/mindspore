@@ -587,14 +587,10 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
 
-  static bool FlagGetStepTraceOpName = false;
-  if (!FlagGetStepTraceOpName) {
+  if (is_first_step_map_[graph->graph_id()]) {
     profiler::gpu::ProfilingTraceInfo profiling_trace =
       profiler::gpu::ProfilingUtils::GetProfilingTraceFromEnv(NOT_NULL(graph));
-    if (profiling_trace.IsFirstStepEnd) {
-      FlagGetStepTraceOpName = true;
-      profiler_inst->SetStepTraceOpName(profiling_trace);
-    }
+    profiler_inst->SetStepTraceOpName(profiling_trace);
   }
 
   for (const auto &kernel : kernels) {

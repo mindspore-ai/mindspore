@@ -27,11 +27,10 @@ namespace gpu {
 constexpr char kFpStartNode[] = "PROFILING_FP_START";
 constexpr char kBpEndNode[] = "PROFILING_BP_END";
 constexpr char kIterEndNode[] = "PROFILING_ITER_END";
-constexpr int fpExistGraphId = 2;
+constexpr auto kInitDatasetQueueOpName = "InitDataSetQueue";
 
-uint32_t ProfilingUtils::last_graph_id = 0;
 bool ProfilingUtils::have_communication_op = false;
-ProfilingTraceInfo ProfilingUtils::profiling_trace = {"", "", "", "", false};
+ProfilingTraceInfo ProfilingUtils::profiling_trace = {"", "", ""};
 
 ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr) {
   MS_LOG(INFO) << "get current subgraph op name start.";
@@ -39,30 +38,21 @@ ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const sessio
   if (cnode_exec_order.empty()) {
     return profiling_trace;
   }
-  uint32_t current_graph_id = graph_ptr->graph_id();
-  // current graph id less than last graph id indicates all subgraph have called.
-  if (current_graph_id < last_graph_id) {
-    profiling_trace.IsFirstStepEnd = true;
-    OutputStepTraceOpNameStatus();
-    return profiling_trace;
-  }
 
-  SetTraceIterStart(cnode_exec_order);
   SetTraceIterEnd(cnode_exec_order);
-  SetTraceFpStart(cnode_exec_order, current_graph_id);
+  SetTraceFpStart(cnode_exec_order);
   SetTraceBpEnd(cnode_exec_order);
   GetTraceHccl(cnode_exec_order);
 
-  last_graph_id = current_graph_id;
+  OutputStepTraceOpNameStatus();
   return profiling_trace;
 }
 
 void ProfilingUtils::OutputStepTraceOpNameStatus() {
-  if (!profiling_trace.IsValid()) {
-    MS_LOG(ERROR) << "Did not get all the step_trace op name.";
+  if (profiling_trace.IsValid()) {
+    MS_LOG(INFO) << "Get all the step_trace op name.";
   }
-  MS_LOG(INFO) << "[profiling]trace_iter_start: " << profiling_trace.trace_iter_start
-               << "trace_fp_start: " << profiling_trace.trace_fp_start
+  MS_LOG(INFO) << "[profiling]trace_fp_start: " << profiling_trace.trace_fp_start
                << "trace_bp_end: " << profiling_trace.trace_bp_end
                << "trace_iter_end: " << profiling_trace.trace_iter_end;
   MS_LOG(INFO) << "get step_trace op name end.";
@@ -81,19 +71,7 @@ void ProfilingUtils::GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order)
   }
 }
 
-void ProfilingUtils::SetTraceIterStart(const std::vector<CNodePtr> &cnode_exec_order) {
-  if (!profiling_trace.trace_iter_start.empty()) {
-    return;
-  }
-
-  auto first_node = cnode_exec_order.front();
-  MS_EXCEPTION_IF_NULL(first_node);
-  if (AnfAlgo::GetCNodeName(first_node) == kGetNextOpName) {
-    profiling_trace.trace_iter_start = first_node->fullname_with_scope();
-  }
-}
-
-void ProfilingUtils::SetTraceFpStart(const std::vector<CNodePtr> &cnode_exec_order, uint32_t graph_id) {
+void ProfilingUtils::SetTraceFpStart(const std::vector<CNodePtr> &cnode_exec_order) {
   if (!profiling_trace.trace_fp_start.empty()) {
     return;
   }
@@ -105,9 +83,20 @@ void ProfilingUtils::SetTraceFpStart(const std::vector<CNodePtr> &cnode_exec_ord
     return;
   }
 
-  if (graph_id == fpExistGraphId) {
-    auto first_node = cnode_exec_order.front();
-    MS_EXCEPTION_IF_NULL(first_node);
+  auto first_node = cnode_exec_order.front();
+  MS_EXCEPTION_IF_NULL(first_node);
+  auto node_name = AnfAlgo::GetCNodeName(first_node);
+  if (node_name == kInitDatasetQueueOpName) {
+    return;
+  }
+
+  if (node_name == kGetNextOpName) {
+    if (cnode_exec_order.size() > 1) {
+      profiling_trace.trace_fp_start = cnode_exec_order.at(1)->fullname_with_scope();
+    } else {
+      MS_LOG(ERROR) << "No Op Behind the GetNext Op" << std::endl;
+    }
+  } else {
     profiling_trace.trace_fp_start = first_node->fullname_with_scope();
   }
 }
