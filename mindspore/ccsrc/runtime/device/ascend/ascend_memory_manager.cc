@@ -40,7 +40,6 @@ void AscendMemoryManager::MallocDeviceMemory() {
       MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
     }
   }
-
   AscendMemoryPool::GetInstance().Init(device_mem_base_, device_mem_size_, dynamic_mem_offset_);
 }
 

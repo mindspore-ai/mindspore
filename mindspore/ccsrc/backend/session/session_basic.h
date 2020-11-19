@@ -64,7 +64,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   virtual void Init(uint32_t device_id) { device_id_ = device_id; }
 
-  void InitDevice(const std::string &device_name, uint32_t device_id);
+  void InitExecutor(const std::string &device_name, uint32_t device_id);
 
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 

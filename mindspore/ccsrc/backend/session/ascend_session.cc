@@ -125,6 +125,13 @@ void InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_graph) {
 }
 }  // namespace
 
+void AscendSession::Init(uint32_t device_id) {
+  InitExecutor(kAscendDevice, device_id);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->CreateContext();
+}
+
 GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   MS_LOG(INFO) << "Start";
   // construct graph, if successfully, graph_sum_ + 1

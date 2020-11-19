@@ -89,7 +89,7 @@ void GPUSession::Init(uint32_t device_id) {
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
 
   MS_LOG(INFO) << "Set device id " << device_id << " for gpu session.";
-  InitDevice(kGPUDevice, device_id);
+  InitExecutor(kGPUDevice, device_id);
 }
 
 void GPUSession::SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {

@@ -75,6 +75,7 @@ class KernelRuntime {
                                   const std::vector<CNodePtr> &execution_order);
   virtual bool SyncStream() = 0;
   virtual void ClearGlobalIdleMem() {}
+  virtual void CreateContext() {}
   virtual void SetContext() {}
   uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
     return mem_manager_->MallocMem(type, size, address);
