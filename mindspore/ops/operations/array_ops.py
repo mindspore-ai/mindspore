@@ -1965,10 +1965,13 @@ class Concat(PrimitiveWithInfer):
         self.add_prim_attr('T', x_type[0].element_type())
         self.add_prim_attr('inputNums', len(x_shp))
         ret_shp = x_shp[0].copy()
+        value = None
+        if input_x['value'] is not None:
+            value = Tensor(np.concatenate([x.asnumpy() for x in input_x['value']], axis=axis))
         ret_shp[axis] = all_shp
         out = {'shape': ret_shp,
                'dtype': x_type[0],
-               'value': None}
+               'value': value}
         return out
 
 

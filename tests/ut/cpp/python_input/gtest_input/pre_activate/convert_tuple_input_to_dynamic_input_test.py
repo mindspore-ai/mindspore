@@ -42,13 +42,13 @@ def test_convert_tuple_input_to_dynamic_input(tag):
 
     @fns
     def before(x):
-        res = concat((t1, t2))
+        res = concat((x, x))
         res = add(x, res)
         return res
 
     @fns
     def after(x):
-        res = concat(t1, t2)
+        res = concat(x, x)
         res = add(x, res)
         res = make_tuple(res)
         return res
