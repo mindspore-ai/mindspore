@@ -848,6 +848,7 @@ ThreadPool *CreateThreadPool(int thread_num, int mode) {
     if (thread_pool->thread_list == NULL) {
       LOG_ERROR("create thread list failed");
       DestroyThreadPool(thread_pool);
+      thread_pool = NULL;
       return NULL;
     }
     thread_pool->thread_list->head = NULL;

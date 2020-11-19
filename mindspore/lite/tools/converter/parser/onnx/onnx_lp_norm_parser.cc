@@ -17,8 +17,7 @@
 #include "tools/converter/parser/onnx/onnx_lp_norm_parser.h"
 #include <memory>
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 STATUS OnnxLpNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                                schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx LpNormParser";
@@ -38,13 +37,12 @@ STATUS OnnxLpNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
     return RET_NULL_PTR;
   }
 
-  auto onnx_node_attr = onnx_node.attribute();
-  for (int i = 0; i < onnx_node_attr.size(); ++i) {
-    MS_ASSERT(onnx_node_attr.at(i) != nullptr);
-    if (onnx_node_attr.at(i).name() == "axis") {
-      attr->axis = onnx_node_attr.at(i).i();
-    } else if (onnx_node_attr.at(i).name() == "p") {
-      attr->p = onnx_node_attr.at(i).i();
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "axis") {
+      attr->axis = onnx_node_attr.i();
+    } else if (attribute_name == "p") {
+      attr->p = onnx_node_attr.i();
     }
   }
 
@@ -54,5 +52,4 @@ STATUS OnnxLpNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
 }
 
 OnnxNodeRegistrar g_onnxLpNormParser("LpNormalization", new OnnxLpNormParser());
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

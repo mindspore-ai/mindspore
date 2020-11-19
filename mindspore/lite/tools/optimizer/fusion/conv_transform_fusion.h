@@ -31,7 +31,7 @@ class ConvTransformFusion : public PatternProcessPass {
   virtual const void InitTransParam(const CNodePtr &, int, float *, float *) const = 0;
   const void GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
   const void CalNewWeightTensor(float *, int, int, const float *) const;
-  const void CalNewBiasTensor(float *, int, bool, const float *, const float *) const;
+  static const void CalNewBiasTensor(float *, int, bool, const float *, const float *);
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV_TRANSFORM_FUSION_H_

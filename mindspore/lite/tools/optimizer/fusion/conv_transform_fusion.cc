@@ -233,14 +233,11 @@ const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kerne
     delete[] tmp_weight_data;
     return;
   }
-
-  if (tmp_weight_data != nullptr) {
-    delete[] tmp_weight_data;
-  }
+  delete[] tmp_weight_data;
 }
 
 const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, bool bias_flag,
-                                                 const float *trans_scale, const float *trans_bias) const {
+                                                 const float *trans_scale, const float *trans_bias) {
   MS_ASSERT(bias_data != nullptr);
   if (bias_flag) {
     auto tmp_bias_data = new (std::nothrow) float[kernel_num];

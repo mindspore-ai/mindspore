@@ -58,7 +58,7 @@ class DequantUtil {
         }
       }
     } else if (input_tensor->GetQuantParams().size() != kPerTensor) {
-      size_t channels = static_cast<size_t>(input_tensor->Batch());
+      auto channels = static_cast<size_t>(input_tensor->Batch());
       if (input_tensor->GetQuantParams().size() != channels) {
         MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->GetQuantParams().size() << channels;
         free(dequant_datas);
@@ -136,6 +136,10 @@ class DequantUtil {
 
   template <typename T1, typename T2>
   static void UnPackUtil(const schema::Tensor *input_tensor, int origin_bit, void *unpack_int_data) {
+    if (input_tensor == nullptr || input_tensor->data() == nullptr) {
+      MS_LOG(ERROR) << "tensor data is null";
+      return;
+    }
     auto weight_data = input_tensor->data()->data();
     int pack_size =
       input_tensor->dataType() == kNumberTypeInt8 ? input_tensor->data()->size() : input_tensor->data()->size() / 2;

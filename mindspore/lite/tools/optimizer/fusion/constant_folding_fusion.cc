@@ -110,8 +110,9 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   parameter->set_default_param(param_value);
   return parameter;
 }
-kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs, OpParameter *parameter,
-                                  lite::InnerContext *context, mindspore::lite::PrimitiveC *primitive) {
+kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, const std::vector<Tensor *> &outputs,
+                                  OpParameter *parameter, lite::InnerContext *context,
+                                  mindspore::lite::PrimitiveC *primitive) {
   MS_ASSERT(nullptr != lite_primitive);
   auto data_type = inputs.front()->data_type();
   kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, (schema::PrimitiveType)primitive->Type()};
@@ -163,15 +164,15 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
 }  //  namespace
 void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *output_tensor) {
   if (input_tensor != nullptr) {
-    for (size_t i = 0; i < input_tensor->size(); i++) {
-      delete (*input_tensor)[i];
-      (*input_tensor)[i] = nullptr;
+    for (auto &i : *input_tensor) {
+      delete i;
+      i = nullptr;
     }
   }
   if (output_tensor != nullptr) {
-    for (size_t i = 0; i < output_tensor->size(); i++) {
-      delete (*output_tensor)[i];
-      (*output_tensor)[i] = nullptr;
+    for (auto &i : *output_tensor) {
+      delete i;
+      i = nullptr;
     }
   }
 }
@@ -231,9 +232,9 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
     // here, input_tensor's format need to be transposed nhwc according to fmkType,
     // but for the time being, we only transpose the tensor with 0/1/2/3D.
     // Others should be added in future.
-    for (size_t j = 0; j < input_tensors.size(); ++j) {
-      input_tensors[j]->SetFormat(schema::Format::Format_NHWC);
-      if (input_tensors[j]->shape().size() == 4) {
+    for (auto &input_tensor : input_tensors) {
+      input_tensor->SetFormat(schema::Format::Format_NHWC);
+      if (input_tensor->shape().size() == 4) {
         MS_LOG(INFO) << "init input_tensor format to nhwc";
       }
     }

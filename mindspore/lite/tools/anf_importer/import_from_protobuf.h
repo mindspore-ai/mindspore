@@ -57,17 +57,17 @@ class AnfImporterFromProtobuf : public AnfImporter {
                                   const schema::QuantType &quantType);
   bool BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
                                const CNodePtr &cnode_ptr);
-  bool GetAttrValueForCNode(const PrimitivePtr &prim, const onnx::AttributeProto &attr_proto);
-  bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const std::string &attr_name,
-                                 const onnx::TensorProto &attr_tensor);
-  ValuePtr ObtainCNodeAttrInScalarForm(const onnx::TensorProto &attr_tensor);
-  bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const std::string &attr_name,
-                                   const onnx::TensorProto &attr_tensor);
+  static bool GetAttrValueForCNode(const PrimitivePtr &prim, const onnx::AttributeProto &attr_proto);
+  static bool ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const std::string &attr_name,
+                                        const onnx::TensorProto &attr_tensor);
+  static ValuePtr ObtainCNodeAttrInScalarForm(const onnx::TensorProto &attr_tensor);
+  static bool ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const std::string &attr_name,
+                                          const onnx::TensorProto &attr_tensor);
   bool BuildValueNodeForFuncGraph(const onnx::NodeProto &node_proto);
   bool ObtainValueNodeInTensorForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
   bool GetAttrValueForValueNode(const std::string &value_node_name, const onnx::AttributeProto &attr_proto);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const onnx::TensorProto &attr_tensor);
-  std::unordered_map<std::string, abstract::AbstractTensorPtr> GetAbstractForCNode(
+  static std::unordered_map<std::string, abstract::AbstractTensorPtr> GetAbstractForCNode(
     const onnx::AttributeProto &attr_proto);
 
  private:

@@ -19,8 +19,7 @@
 #include <memory>
 #include <vector>
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 constexpr int32_t kSingleGroup = 1;
 bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx DepthwiseConvParser";
@@ -140,6 +139,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     }
     std::vector<int> weight_shape;
     auto size = (*nodeIter).dims_size();
+    weight_shape.reserve(size);
     for (int i = 0; i < size; ++i) {
       weight_shape.emplace_back((*nodeIter).dims(i));
     }
@@ -157,7 +157,6 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     auto iter = std::find_if((*nodeIter).attribute().begin(), (*nodeIter).attribute().end(),
                              [](const onnx::AttributeProto &attr) { return attr.name() == "shape"; });
     if (iter != (*nodeIter).attribute().end()) {
-      MS_ASSERT(iter->ints() != nullptr);
       MS_ASSERT(iter->ints().begin() != nullptr);
       MS_ASSERT(iter->ints().end() != nullptr);
       dims.insert(dims.begin(), iter->ints().begin(), iter->ints().end());
@@ -188,5 +187,4 @@ OnnxNodeRegistrar g_onnxConvParser("Conv", new OnnxConvParser());
 OnnxNodeRegistrar g_onnxInt8ConvParser("Int8Conv", new OnnxConvParser());
 OnnxNodeRegistrar g_onnxConvReluParser("ConvRelu", new OnnxConvParser());
 OnnxNodeRegistrar g_onnxInt8ConvReluParser("Int8ConvRelu", new OnnxConvParser());
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
