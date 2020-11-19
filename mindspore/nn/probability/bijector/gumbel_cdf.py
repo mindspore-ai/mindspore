@@ -53,6 +53,7 @@ class GumbelCDF(Bijector):
         ...         ans2 = self.gum.inverse(value)
         ...         ans3 = self.gum.forward_log_jacobian(value)
         ...         ans4 = self.gum.inverse_log_jacobian(value)
+        ...
     """
 
     def __init__(self,

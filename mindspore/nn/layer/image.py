@@ -52,13 +52,14 @@ class ImageGradients(Cell):
 
     Examples:
         >>> net = nn.ImageGradients()
-        >>> image = Tensor(np.array([[[[1,2],[3,4]]]]), dtype=mstype.int32)
+        >>> image = Tensor(np.array([[[[1,2],[3,4]]]]), dtype=mindspore.int32)
         >>> output = net(image)
         >>> print(output)
-        [[[[2,2]
-           [0,0]]]]
-        [[[[1,0]
-           [1,0]]]]
+        (Tensor(shape=[1, 1, 2, 2], dtype=Int32, value=
+        [[[[2, 2],
+           [0, 0]]]]), Tensor(shape=[1, 1, 2, 2], dtype=Int32, value=
+        [[[[1, 0],
+           [1, 0]]]]))
     """
     def __init__(self):
         super(ImageGradients, self).__init__()
@@ -214,8 +215,8 @@ class SSIM(Cell):
         >>> net = nn.SSIM()
         >>> img1 = Tensor(np.random.random((1,3,16,16)), mindspore.float32)
         >>> img2 = Tensor(np.random.random((1,3,16,16)), mindspore.float32)
-        >>> ssim = net(img1, img2)
-        >>> print(ssim)
+        >>> output = net(img1, img2)
+        >>> print(output)
         [0.12174469]
     """
     def __init__(self, max_val=1.0, filter_size=11, filter_sigma=1.5, k1=0.01, k2=0.03):
@@ -290,11 +291,11 @@ class MSSSIM(Cell):
 
     Examples:
         >>> net = nn.MSSSIM(power_factors=(0.033, 0.033, 0.033))
-        >>> img1 = Tensor(np.random.random((1, 3, 128, 128)))
-        >>> img2 = Tensor(np.random.random((1, 3, 128, 128)))
-        >>> result = net(img1, img2)
-        >>> print(result)
-        [0.20930639]
+        >>> img1 = Tensor(np.random.random((1,3,128,128)))
+        >>> img2 = Tensor(np.random.random((1,3,128,128)))
+        >>> output = net(img1, img2)
+        >>> print(output)
+        [0.22965115]
     """
     def __init__(self, max_val=1.0, power_factors=(0.0448, 0.2856, 0.3001, 0.2363, 0.1333), filter_size=11,
                  filter_sigma=1.5, k1=0.01, k2=0.03):
@@ -382,9 +383,9 @@ class PSNR(Cell):
         >>> net = nn.PSNR()
         >>> img1 = Tensor(np.random.random((1,3,16,16)))
         >>> img2 = Tensor(np.random.random((1,3,16,16)))
-        >>> psnr = net(img1, img2)
-        >>> print(psnr)
-        [7.8297315]
+        >>> output = net(img1, img2)
+        >>> print(output)
+        [7.7229595]
     """
     def __init__(self, max_val=1.0):
         super(PSNR, self).__init__()
@@ -452,8 +453,7 @@ class CentralCrop(Cell):
         >>> net = nn.CentralCrop(central_fraction=0.5)
         >>> image = Tensor(np.random.random((4, 3, 4, 4)), mindspore.float32)
         >>> output = net(image)
-        >>> result = output.shape
-        >>> print(result)
+        >>> print(output.shape)
         (4, 3, 2, 2)
     """
 

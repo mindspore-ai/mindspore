@@ -52,66 +52,67 @@ class Uniform(Distribution):
         >>>
         >>> # To use a Uniform distribution in a network.
         >>> class net(Cell):
-        >>>     def __init__(self)
-        >>>         super(net, self).__init__():
-        >>>         self.u1 = msd.Uniform(0.0, 1.0, dtype=mstype.float32)
-        >>>         self.u2 = msd.Uniform(dtype=mstype.float32)
-        >>>
-        >>>     # All the following calls in construct are valid.
-        >>>     def construct(self, value, low_b, high_b, low_a, high_a):
-        >>>
-        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments.
-        >>>         # Args:
-        >>>         #     value (Tensor): the value to be evaluated.
-        >>>         #     low (Tensor): the lower bound of distribution. Default: self.low.
-        >>>         #     high (Tensor): the higher bound of distribution. Default: self.high.
-        >>>
-        >>>         # Examples of `prob`.
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'prob' by the name of the function.
-        >>>         ans = self.u1.prob(value)
-        >>>         # Evaluate with respect to distribution b.
-        >>>         ans = self.u1.prob(value, low_b, high_b)
-        >>>         # `high` and `low` must be passed in during function calls.
-        >>>         ans = self.u2.prob(value, low_a, high_a)
-        >>>
-        >>>
-        >>>         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
-        >>>         # Args:
-        >>>         #     low (Tensor): the lower bound of distribution. Default: self.low.
-        >>>         #     high (Tensor): the higher bound of distribution. Default: self.high.
-        >>>
-        >>>         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
-        >>>         ans = self.u1.mean() # return 0.5
-        >>>         ans = self.u1.mean(low_b, high_b) # return (low_b + high_b) / 2
-        >>>         # `high` and `low` must be passed in during function calls.
-        >>>         ans = self.u2.mean(low_a, high_a)
-        >>>
-        >>>         # Interfaces of 'kl_loss' and 'cross_entropy' are the same.
-        >>>         # Args:
-        >>>         #     dist (str): the type of the distributions. Should be "Uniform" in this case.
-        >>>         #     low_b (Tensor): the lower bound of distribution b.
-        >>>         #     high_b (Tensor): the upper bound of distribution b.
-        >>>         #     low_a (Tensor): the lower bound of distribution a. Default: self.low.
-        >>>         #     high_a (Tensor): the upper bound of distribution a. Default: self.high.
-        >>>
-        >>>         # Examples of `kl_loss`. `cross_entropy` is similar.
-        >>>         ans = self.u1.kl_loss('Uniform', low_b, high_b)
-        >>>         ans = self.u1.kl_loss('Uniform', low_b, high_b, low_a, high_a)
-        >>>         # Additional `high` and `low` must be passed in.
-        >>>         ans = self.u2.kl_loss('Uniform', low_b, high_b, low_a, high_a)
-        >>>
-        >>>
-        >>>         # Examples of `sample`.
-        >>>         # Args:
-        >>>         #     shape (tuple): the shape of the sample. Default: ()
-        >>>         #     low (Tensor): the lower bound of the distribution. Default: self.low.
-        >>>         #     high (Tensor): the upper bound of the distribution. Default: self.high.
-        >>>         ans = self.u1.sample()
-        >>>         ans = self.u1.sample((2,3))
-        >>>         ans = self.u1.sample((2,3), low_b, high_b)
-        >>>         ans = self.u2.sample((2,3), low_a, high_a)
+        ...     def __init__(self)
+        ...         super(net, self).__init__():
+        ...         self.u1 = msd.Uniform(0.0, 1.0, dtype=mstype.float32)
+        ...         self.u2 = msd.Uniform(dtype=mstype.float32)
+        ...
+        ...     # All the following calls in construct are valid.
+        ...     def construct(self, value, low_b, high_b, low_a, high_a):
+        ...
+        ...         # Private interfaces of probability functions corresponding to public interfaces, including
+        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments.
+        ...         # Args:
+        ...         #     value (Tensor): the value to be evaluated.
+        ...         #     low (Tensor): the lower bound of distribution. Default: self.low.
+        ...         #     high (Tensor): the higher bound of distribution. Default: self.high.
+        ...
+        ...         # Examples of `prob`.
+        ...         # Similar calls can be made to other probability functions
+        ...         # by replacing 'prob' by the name of the function.
+        ...         ans = self.u1.prob(value)
+        ...         # Evaluate with respect to distribution b.
+        ...         ans = self.u1.prob(value, low_b, high_b)
+        ...         # `high` and `low` must be passed in during function calls.
+        ...         ans = self.u2.prob(value, low_a, high_a)
+        ...
+        ...
+        ...         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
+        ...         # Args:
+        ...         #     low (Tensor): the lower bound of distribution. Default: self.low.
+        ...         #     high (Tensor): the higher bound of distribution. Default: self.high.
+        ...
+        ...         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
+        ...         ans = self.u1.mean() # return 0.5
+        ...         ans = self.u1.mean(low_b, high_b) # return (low_b + high_b) / 2
+        ...         # `high` and `low` must be passed in during function calls.
+        ...         ans = self.u2.mean(low_a, high_a)
+        ...
+        ...         # Interfaces of 'kl_loss' and 'cross_entropy' are the same.
+        ...         # Args:
+        ...         #     dist (str): the type of the distributions. Should be "Uniform" in this case.
+        ...         #     low_b (Tensor): the lower bound of distribution b.
+        ...         #     high_b (Tensor): the upper bound of distribution b.
+        ...         #     low_a (Tensor): the lower bound of distribution a. Default: self.low.
+        ...         #     high_a (Tensor): the upper bound of distribution a. Default: self.high.
+        ...
+        ...         # Examples of `kl_loss`. `cross_entropy` is similar.
+        ...         ans = self.u1.kl_loss('Uniform', low_b, high_b)
+        ...         ans = self.u1.kl_loss('Uniform', low_b, high_b, low_a, high_a)
+        ...         # Additional `high` and `low` must be passed in.
+        ...         ans = self.u2.kl_loss('Uniform', low_b, high_b, low_a, high_a)
+        ...
+        ...
+        ...         # Examples of `sample`.
+        ...         # Args:
+        ...         #     shape (tuple): the shape of the sample. Default: ()
+        ...         #     low (Tensor): the lower bound of the distribution. Default: self.low.
+        ...         #     high (Tensor): the upper bound of the distribution. Default: self.high.
+        ...         ans = self.u1.sample()
+        ...         ans = self.u1.sample((2,3))
+        ...         ans = self.u1.sample((2,3), low_b, high_b)
+        ...         ans = self.u2.sample((2,3), low_a, high_a)
+        ...
     """
 
     def __init__(self,

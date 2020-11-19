@@ -31,14 +31,14 @@ class SparseToDense(Cell):
 
     Examples:
         >>> class SparseToDenseCell(nn.Cell):
-        >>>     def __init__(self, dense_shape):
-        >>>         super(SparseToDenseCell, self).__init__()
-        >>>         self.dense_shape = dense_shape
-        >>>         self.sparse_to_dense = nn.SparseToDense()
-        >>>     def construct(self, indices, values):
-        >>>         sparse = SparseTensor(indices, values, self.dense_shape)
-        >>>         return self.sparse_to_dense(sparse)
-        >>>
+        ...     def __init__(self, dense_shape):
+        ...         super(SparseToDenseCell, self).__init__()
+        ...         self.dense_shape = dense_shape
+        ...         self.sparse_to_dense = nn.SparseToDense()
+        ...     def construct(self, indices, values):
+        ...         sparse = SparseTensor(indices, values, self.dense_shape)
+        ...         return self.sparse_to_dense(sparse)
+        ...
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.float32)
         >>> dense_shape = (3, 4)

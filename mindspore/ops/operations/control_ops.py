@@ -51,27 +51,26 @@ class ControlDepend(Primitive):
 
     Examples:
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.control_depend = P.ControlDepend()
-        >>>         self.softmax = P.Softmax()
-        >>>
-        >>>     def construct(self, x, y):
-        >>>         mul = x * y
-        >>>         softmax = self.softmax(x)
-        >>>         ret = self.control_depend(mul, softmax)
-        >>>         return ret
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.control_depend = P.ControlDepend()
+        ...         self.softmax = P.Softmax()
+        ...
+        ...     def construct(self, x, y):
+        ...         mul = x * y
+        ...         softmax = self.softmax(x)
+        ...         ret = self.control_depend(mul, softmax)
+        ...         return ret
+        ...
         >>> x = Tensor(np.ones([4, 5]), dtype=mindspore.float32)
         >>> y = Tensor(np.ones([4, 5]), dtype=mindspore.float32)
         >>> net = Net()
         >>> output = net(x, y)
         >>> print(output)
-        [[1.	1.	1.	1.	1.]
-         [1.	1.	1.	1.	1.]
-         [1.	1.	1.	1.	1.]
-         [1.	1.	1.	1.	1.]]
-        >>> print(output.dtype)
-        Float32
+        [[1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]
+         [1. 1. 1. 1. 1.]]
     """
 
     @prim_attr_register
@@ -100,29 +99,30 @@ class GeSwitch(PrimitiveWithInfer):
 
     Examples:
         >>> class Net(nn.Cell):
-        >>> 	def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.square = P.Square()
-        >>>         self.add = P.TensorAdd()
-        >>>         self.value = Tensor(np.full((1), 3), mindspore.float32)
-        >>>         self.switch = P.GeSwitch()
-        >>>         self.merge = P.Merge()
-        >>>         self.less = P.Less()
-        >>>
-        >>>     def construct(self, x, y):
-        >>>         cond = self.less(x, y)
-        >>>         st1, sf1 = self.switch(x, cond)
-        >>>         st2, sf2 = self.switch(y, cond)
-        >>>         add_ret = self.add(st1, st2)
-        >>>         st3, sf3 = self.switch(self.value, cond)
-        >>>         sq_ret = self.square(sf3)
-        >>>         ret = self.merge((add_ret, sq_ret))
-        >>>         return ret[0]
-        >>>
+        ... 	def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.square = P.Square()
+        ...         self.add = P.TensorAdd()
+        ...         self.value = Tensor(np.full((1), 3), mindspore.float32)
+        ...         self.switch = P.GeSwitch()
+        ...         self.merge = P.Merge()
+        ...         self.less = P.Less()
+        ...
+        ...     def construct(self, x, y):
+        ...         cond = self.less(x, y)
+        ...         st1, sf1 = self.switch(x, cond)
+        ...         st2, sf2 = self.switch(y, cond)
+        ...         add_ret = self.add(st1, st2)
+        ...         st3, sf3 = self.switch(self.value, cond)
+        ...         sq_ret = self.square(sf3)
+        ...         ret = self.merge((add_ret, sq_ret))
+        ...         return ret[0]
+        ...
         >>> x = Tensor(10.0, dtype=mindspore.float32)
         >>> y = Tensor(5.0, dtype=mindspore.float32)
         >>> net = Net()
         >>> output = net(x, y)
+        >>> print(output)
     """
 
     @prim_attr_register

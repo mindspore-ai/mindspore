@@ -53,75 +53,76 @@ class LogNormal(msd.TransformedDistribution):
         >>>
         >>> # To use a LogNormal distribution in a network.
         >>> class net(Cell):
-        >>>     def __init__(self):
-        >>>         super(net, self).__init__():
-        >>>         self.n1 = msd.LogNormal(0.0, 1.0, dtype=mstype.float32)
-        >>>         self.n2 = msd.LogNormal(dtype=mstype.float32)
-        >>>
-        >>>     # The following calls are valid in construct.
-        >>>     def construct(self, value, loc_b, scale_b, loc_a, scale_a):
-        >>>
-        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same
-        >>>         # arguments as follows.
-        >>>         # Args:
-        >>>         #     value (Tensor): the value to be evaluated.
-        >>>         #     loc (Tensor): the loc of distribution. Default: None. If `loc` is passed in as None,
-        >>>         #         the mean of the underlying Normal distribution will be used.
-        >>>         #     scale (Tensor): the scale of distribution. Default: None. If `scale` is passed in as None,
-        >>>         #         the standard deviation of the underlying Normal distribution will be used.
-        >>>
-        >>>         # Examples of `prob`.
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'prob' by the name of the function.
-        >>>         ans = self.n1.prob(value)
-        >>>         # Evaluate with respect to distribution b.
-        >>>         ans = self.n1.prob(value, loc_b, scale_b)
-        >>>         # `loc` and `scale` must be passed in during function calls since they were not passed in construct.
-        >>>         ans = self.n2.prob(value, loc_a, scale_a)
-        >>>
-        >>>
-        >>>         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
-        >>>         # Args:
-        >>>         #     loc (Tensor): the loc of distribution. Default: None. If `loc` is passed in as None,
-        >>>         #         the mean of the underlying Normal distribution will be used.
-        >>>         #     scale (Tensor): the scale of distribution. Default: None. If `scale` is passed in as None,
-        >>>         #         the standard deviation of the underlying Normal distribution will be used.
-        >>>
-        >>>         # Example of `mean`. `sd`, `var`, and `entropy` are similar.
-        >>>         ans = self.n1.mean() # return 0.0
-        >>>         ans = self.n1.mean(loc_b, scale_b) # return mean_b
-        >>>         # `loc` and `scale` must be passed in during function calls since they were not passed in construct.
-        >>>         ans = self.n2.mean(loc_a, scale_a)
-        >>>
-        >>>
-        >>>         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
-        >>>         # Args:
-        >>>         #     dist (str): the type of the distributions. Only "Normal" is supported.
-        >>>         #     loc_b (Tensor): the loc of distribution b.
-        >>>         #     scale_b (Tensor): the scale distribution b.
-        >>>         #     loc_a (Tensor): the loc of distribution a. Default: None. If `loc` is passed in as None,
-        >>>         #         the mean of the underlying Normal distribution will be used.
-        >>>         #     scale_a (Tensor): the scale distribution a. Default: None. If `scale` is passed in as None,
-        >>>         #         the standard deviation of the underlying Normal distribution will be used.
-        >>>
-        >>>         # Examples of `kl_loss`. `cross_entropy` is similar.
-        >>>         ans = self.n1.kl_loss('Normal', loc_b, scale_b)
-        >>>         ans = self.n1.kl_loss('Normal', loc_b, scale_b, loc_a, scale_a)
-        >>>         # Additional `loc` and `scale` must be passed in since they were not passed in construct.
-        >>>         ans = self.n2.kl_loss('Normal', loc_b, scale_b, loc_a, scale_a)
-        >>>
-        >>>         # Examples of `sample`.
-        >>>         # Args:
-        >>>         #     shape (tuple): the shape of the sample. Default: ()
-        >>>         #     loc (Tensor): the loc of the distribution. Default: None. If `loc` is passed in as None,
-        >>>         #         the mean of the underlying Normal distribution will be used.
-        >>>         #     scale (Tensor): the scale of the distribution. Default: None. If `scale` is passed in as None,
-        >>>         #         the standard deviation of the underlying Normal distribution will be used.
-        >>>         ans = self.n1.sample()
-        >>>         ans = self.n1.sample((2,3))
-        >>>         ans = self.n1.sample((2,3), loc_b, scale_b)
-        >>>         ans = self.n2.sample((2,3), loc_a, scale_a)
+        ...     def __init__(self):
+        ...         super(net, self).__init__():
+        ...         self.n1 = msd.LogNormal(0.0, 1.0, dtype=mstype.float32)
+        ...         self.n2 = msd.LogNormal(dtype=mstype.float32)
+        ...
+        ...     # The following calls are valid in construct.
+        ...     def construct(self, value, loc_b, scale_b, loc_a, scale_a):
+        ...
+        ...         # Private interfaces of probability functions corresponding to public interfaces, including
+        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same
+        ...         # arguments as follows.
+        ...         # Args:
+        ...         #     value (Tensor): the value to be evaluated.
+        ...         #     loc (Tensor): the loc of distribution. Default: None. If `loc` is passed in as None,
+        ...         #         the mean of the underlying Normal distribution will be used.
+        ...         #     scale (Tensor): the scale of distribution. Default: None. If `scale` is passed in as None,
+        ...         #         the standard deviation of the underlying Normal distribution will be used.
+        ...
+        ...         # Examples of `prob`.
+        ...         # Similar calls can be made to other probability functions
+        ...         # by replacing 'prob' by the name of the function.
+        ...         ans = self.n1.prob(value)
+        ...         # Evaluate with respect to distribution b.
+        ...         ans = self.n1.prob(value, loc_b, scale_b)
+        ...         # `loc` and `scale` must be passed in during function calls since they were not passed in construct.
+        ...         ans = self.n2.prob(value, loc_a, scale_a)
+        ...
+        ...
+        ...         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
+        ...         # Args:
+        ...         #     loc (Tensor): the loc of distribution. Default: None. If `loc` is passed in as None,
+        ...         #         the mean of the underlying Normal distribution will be used.
+        ...         #     scale (Tensor): the scale of distribution. Default: None. If `scale` is passed in as None,
+        ...         #         the standard deviation of the underlying Normal distribution will be used.
+        ...
+        ...         # Example of `mean`. `sd`, `var`, and `entropy` are similar.
+        ...         ans = self.n1.mean() # return 0.0
+        ...         ans = self.n1.mean(loc_b, scale_b) # return mean_b
+        ...         # `loc` and `scale` must be passed in during function calls since they were not passed in construct.
+        ...         ans = self.n2.mean(loc_a, scale_a)
+        ...
+        ...
+        ...         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
+        ...         # Args:
+        ...         #     dist (str): the type of the distributions. Only "Normal" is supported.
+        ...         #     loc_b (Tensor): the loc of distribution b.
+        ...         #     scale_b (Tensor): the scale distribution b.
+        ...         #     loc_a (Tensor): the loc of distribution a. Default: None. If `loc` is passed in as None,
+        ...         #         the mean of the underlying Normal distribution will be used.
+        ...         #     scale_a (Tensor): the scale distribution a. Default: None. If `scale` is passed in as None,
+        ...         #         the standard deviation of the underlying Normal distribution will be used.
+        ...
+        ...         # Examples of `kl_loss`. `cross_entropy` is similar.
+        ...         ans = self.n1.kl_loss('Normal', loc_b, scale_b)
+        ...         ans = self.n1.kl_loss('Normal', loc_b, scale_b, loc_a, scale_a)
+        ...         # Additional `loc` and `scale` must be passed in since they were not passed in construct.
+        ...         ans = self.n2.kl_loss('Normal', loc_b, scale_b, loc_a, scale_a)
+        ...
+        ...         # Examples of `sample`.
+        ...         # Args:
+        ...         #     shape (tuple): the shape of the sample. Default: ()
+        ...         #     loc (Tensor): the loc of the distribution. Default: None. If `loc` is passed in as None,
+        ...         #         the mean of the underlying Normal distribution will be used.
+        ...         #     scale (Tensor): the scale of the distribution. Default: None. If `scale` is passed in as None,
+        ...         #         the standard deviation of the underlying Normal distribution will be used.
+        ...         ans = self.n1.sample()
+        ...         ans = self.n1.sample((2,3))
+        ...         ans = self.n1.sample((2,3), loc_b, scale_b)
+        ...         ans = self.n2.sample((2,3), loc_a, scale_a)
+        ...
     """
 
     def __init__(self,

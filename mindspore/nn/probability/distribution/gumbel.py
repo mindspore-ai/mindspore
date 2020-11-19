@@ -50,47 +50,48 @@ class Gumbel(TransformedDistribution):
         >>>
         >>> # To use a Gumbel distribution in a network.
         >>> class net(Cell):
-        >>>     def __init__(self):
-        >>>         super(net, self).__init__():
-        >>>         self.g1 = msd.Gumbel(0.0, 1.0, dtype=mstype.float32)
-        >>>
-        >>>     # The following calls are valid in construct.
-        >>>     def construct(self, value, loc_b, scale_b):
-        >>>
-        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same
-        >>>         # arguments as follows.
-        >>>         # Args:
-        >>>         #     value (Tensor): the value to be evaluated.
-        >>>
-        >>>         # Examples of `prob`.
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing 'prob' by the name of the function.
-        >>>         ans = self.g1.prob(value)
-        >>>
-        >>>         # Functions `mean`, `mode`, sd`, `var`, and `entropy` do not take in any argument.
-        >>>         ans = self.g1.mean()
-        >>>         ans = self.g1.mode()
-        >>>         ans = self.g1.sd()
-        >>>         ans = self.g1.entropy()
-        >>>         ans = self.g1.var()
-        >>>
-        >>>         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
-        >>>         # Args:
-        >>>         #     dist (str): the type of the distributions. Only "Gumbel" is supported.
-        >>>         #     loc_b (Tensor): the loc of distribution b.
-        >>>         #     scale_b (Tensor): the scale distribution b.
-        >>>
-        >>>         # Examples of `kl_loss`. `cross_entropy` is similar.
-        >>>         ans = self.g1.kl_loss('Gumbel', loc_b, scale_b)
-        >>>         ans = self.g1.cross_entropy('Gumbel', loc_b, scale_b)
-        >>>
-        >>>         # Examples of `sample`.
-        >>>         # Args:
-        >>>         #     shape (tuple): the shape of the sample. Default: ()
-        >>>
-        >>>         ans = self.g1.sample()
-        >>>         ans = self.g1.sample((2,3))
+        ...     def __init__(self):
+        ...         super(net, self).__init__():
+        ...         self.g1 = msd.Gumbel(0.0, 1.0, dtype=mstype.float32)
+        ...
+        ...     # The following calls are valid in construct.
+        ...     def construct(self, value, loc_b, scale_b):
+        ...
+        ...         # Private interfaces of probability functions corresponding to public interfaces, including
+        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same
+        ...         # arguments as follows.
+        ...         # Args:
+        ...         #     value (Tensor): the value to be evaluated.
+        ...
+        ...         # Examples of `prob`.
+        ...         # Similar calls can be made to other probability functions
+        ...         # by replacing 'prob' by the name of the function.
+        ...         ans = self.g1.prob(value)
+        ...
+        ...         # Functions `mean`, `mode`, sd`, `var`, and `entropy` do not take in any argument.
+        ...         ans = self.g1.mean()
+        ...         ans = self.g1.mode()
+        ...         ans = self.g1.sd()
+        ...         ans = self.g1.entropy()
+        ...         ans = self.g1.var()
+        ...
+        ...         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
+        ...         # Args:
+        ...         #     dist (str): the type of the distributions. Only "Gumbel" is supported.
+        ...         #     loc_b (Tensor): the loc of distribution b.
+        ...         #     scale_b (Tensor): the scale distribution b.
+        ...
+        ...         # Examples of `kl_loss`. `cross_entropy` is similar.
+        ...         ans = self.g1.kl_loss('Gumbel', loc_b, scale_b)
+        ...         ans = self.g1.cross_entropy('Gumbel', loc_b, scale_b)
+        ...
+        ...         # Examples of `sample`.
+        ...         # Args:
+        ...         #     shape (tuple): the shape of the sample. Default: ()
+        ...
+        ...         ans = self.g1.sample()
+        ...         ans = self.g1.sample((2,3))
+        ...
     """
 
     def __init__(self,

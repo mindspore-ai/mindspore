@@ -53,6 +53,7 @@ class ScalarAffine(Bijector):
         ...         ans2 = self.s1.inverse(value)
         ...         ans3 = self.s1.forward_log_jacobian(value)
         ...         ans4 = self.s1.inverse_log_jacobian(value)
+        ...
     """
 
     def __init__(self,

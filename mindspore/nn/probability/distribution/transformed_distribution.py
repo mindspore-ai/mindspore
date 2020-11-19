@@ -54,19 +54,20 @@ class TransformedDistribution(Distribution):
         >>> import mindspore.nn.probability.distribution as msd
         >>> import mindspore.nn.probability.bijector as msb
         >>> ln = msd.TransformedDistribution(msb.Exp(),
-        >>>                                  msd.Normal(0.0, 1.0, dtype=mstype.float32))
-        >>>
+        ...                                  msd.Normal(0.0, 1.0, dtype=mstype.float32))
+        ...
         >>> # To use a transformed distribution in a network.
         >>> class net(Cell):
-        >>>     def __init__(self):
-        >>>         super(net, self).__init__():
-        >>>         self.ln = msd.TransformedDistribution(msb.Exp(),
-        >>>                                               msd.Normal(0.0, 1.0, dtype=mstype.float32))
-        >>>
-        >>>     def construct(self, value):
-        >>>         # Similar calls can be made to other functions
-        >>>         # by replacing 'sample' by the name of the function.
-        >>>         ans = self.ln.sample(shape=(2, 3))
+        ...     def __init__(self):
+        ...         super(net, self).__init__():
+        ...         self.ln = msd.TransformedDistribution(msb.Exp(),
+        ...                                               msd.Normal(0.0, 1.0, dtype=mstype.float32))
+        ...
+        ...     def construct(self, value):
+        ...         # Similar calls can be made to other functions
+        ...         # by replacing 'sample' by the name of the function.
+        ...         ans = self.ln.sample(shape=(2, 3))
+        ...
     """
 
     def __init__(self,

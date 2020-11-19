@@ -78,10 +78,10 @@ class Dropout(Cell):
         >>> net.set_train()
         >>> output = net(x)
         >>> print(output)
-        [[[0., 1.25, 0.],
-          [1.25, 1.25, 1.25]],
-         [[1.25, 1.25, 1.25],
-          [1.25, 1.25, 1.25]]]
+        [[[0.   1.25 0.  ]
+          [1.25 1.25 1.25]]
+         [[1.25 1.25 1.25]
+          [1.25 1.25 1.25]]]
     """
 
     def __init__(self, keep_prob=0.5, dtype=mstype.float32):
@@ -320,8 +320,8 @@ class ClipByNorm(Cell):
         >>> net = nn.ClipByNorm()
         >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
         >>> clip_norm = Tensor(np.array([100]).astype(np.float32))
-        >>> result = net(input, clip_norm).shape
-        >>> print(result)
+        >>> output = net(input, clip_norm)
+        >>> print(output.shape)
         (4, 16)
 
     """
@@ -392,7 +392,7 @@ class Norm(Cell):
         >>> input = Tensor(np.random.randint(0, 10, [2, 4]), mindspore.float32)
         >>> output = net(input)
         >>> print(output)
-        [2.236068 9.848858 4. 5.656854]
+        [7.81025  6.708204 0.      8.602325]
     """
 
     def __init__(self, axis=(), keep_dims=False):
@@ -514,7 +514,12 @@ class Pad(Cell):
         ...         return self.pad(x)
         >>> x = np.random.random(size=(2, 3)).astype(np.float32)
         >>> pad = Net()
-        >>> ms_output = pad(Tensor(x))
+        >>> output = pad(Tensor(x))
+        >>> print(output)
+        [[0.         0.         0.         0.         0.         0.        ]
+         [0.         0.         0.82691735 0.36147234 0.70918983 0.        ]
+         [0.         0.         0.7842975  0.44726616 0.4353459  0.        ]
+         [0.         0.         0.         0.         0.         0.        ]]
     """
 
     def __init__(self, paddings, mode="CONSTANT"):
@@ -574,9 +579,8 @@ class Unfold(Cell):
         >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 2, 2, 1], rates=[1, 2, 2, 1])
         >>> image = Tensor(np.ones([2, 3, 6, 6]), dtype=mstype.float16)
         >>> output = net(image)
-        >>> print(output)
-        [[[[1, 1] [1, 1]] [[1, 1], [1, 1]] [[1, 1] [1, 1]], [[1, 1] [1, 1]], [[1, 1] [1, 1]],
-                [[1, 1], [1, 1]]]]
+        >>> print(output.shape)
+        (2, 12, 2, 2)
     """
 
     def __init__(self, ksizes, strides, rates, padding="valid"):
@@ -627,8 +631,8 @@ class MatrixDiag(Cell):
     Examples:
         >>> x = Tensor(np.array([1, -1]), mstype.float32)
         >>> matrix_diag = nn.MatrixDiag()
-        >>> result = matrix_diag(x)
-        >>> print(result)
+        >>> output = matrix_diag(x)
+        >>> print(output)
         [[1.   0.]
          [0.  -1.]]
     """
@@ -659,9 +663,11 @@ class MatrixDiagPart(Cell):
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> matrix_diag_part = nn.MatrixDiagPart()
-        >>> result = matrix_diag_part(x)
-        >>> print(result)
-        [[-1., 1.], [-1., 1.], [-1., 1.]]
+        >>> output = matrix_diag_part(x)
+        >>> print(output)
+        [[-1.  1.]
+         [-1.  1.]
+         [-1.  1.]]
     """
     def __init__(self):
         super(MatrixDiagPart, self).__init__()
@@ -692,9 +698,14 @@ class MatrixSetDiag(Cell):
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
         >>> matrix_set_diag = nn.MatrixSetDiag()
-        >>> result = matrix_set_diag(x, diagonal)
-        >>> print(result)
-        [[[-1, 0], [0, 2]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
+        >>> output = matrix_set_diag(x, diagonal)
+        >>> print(output)
+        [[[-1.  0.]
+          [ 0.  2.]]
+         [[-1.  0.]
+          [ 0.  1.]]
+         [[-1.  0.]
+          [ 0.  1.]]]
     """
     def __init__(self):
         super(MatrixSetDiag, self).__init__()

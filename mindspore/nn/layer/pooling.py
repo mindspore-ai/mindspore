@@ -107,19 +107,7 @@ class MaxPool2d(_PoolNd):
     Examples:
         >>> pool = nn.MaxPool2d(kernel_size=3, stride=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
-        >>> print(x)
-        [[[[1. 5. 5. 1.]
-           [0. 3. 4. 8.]
-           [4. 2. 7. 6.]
-           [4. 9. 0. 1.]]
-          [[3. 6. 2. 6.]
-           [4. 4. 7. 8.]
-           [0. 0. 4. 0.]
-           [1. 8. 7. 0.]]]]
         >>> output = pool(x)
-        >>> reuslt = output.shape
-        >>> print(result)
-        (1, 2, 2, 2)
         >>> print(output)
         [[[[7. 8.]
            [9. 9.]]
@@ -272,19 +260,7 @@ class AvgPool2d(_PoolNd):
     Examples:
         >>> pool = nn.AvgPool2d(kernel_size=3, stride=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
-        >>> print(x)
-        [[[[5. 5. 9. 9.]
-            [8. 4. 3. 0.]
-            [2. 7. 1. 2.]
-            [1. 8. 3. 3.]]
-           [[6. 8. 2. 4.]
-            [3. 0. 2. 1.]
-            [0. 8. 9. 7.]
-            [2. 1. 4. 9.]]]]
         >>> output = pool(x)
-        >>> result  = output.shape
-        >>> print(result)
-        (1, 2, 2, 2)
         >>> print(output)
         [[[[4.888889  4.4444447]
            [4.111111  3.4444444]]

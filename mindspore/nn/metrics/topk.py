@@ -39,7 +39,9 @@ class TopKCategoricalAccuracy(Metric):
         >>> topk = nn.TopKCategoricalAccuracy(3)
         >>> topk.clear()
         >>> topk.update(x, y)
-        >>> result = topk.eval()
+        >>> output = topk.eval()
+        >>> print(output)
+        0.6666666666666666
     """
     def __init__(self, k):
         super(TopKCategoricalAccuracy, self).__init__()
@@ -103,7 +105,9 @@ class Top1CategoricalAccuracy(TopKCategoricalAccuracy):
         >>> topk = nn.Top1CategoricalAccuracy()
         >>> topk.clear()
         >>> topk.update(x, y)
-        >>> result = topk.eval()
+        >>> output = topk.eval()
+        >>> print(output)
+        0.0
     """
     def __init__(self):
         super(Top1CategoricalAccuracy, self).__init__(1)
@@ -121,7 +125,9 @@ class Top5CategoricalAccuracy(TopKCategoricalAccuracy):
         >>> topk = nn.Top5CategoricalAccuracy()
         >>> topk.clear()
         >>> topk.update(x, y)
-        >>> result = topk.eval()
+        >>> output = topk.eval()
+        >>> print(output)
+        1.0
     """
     def __init__(self):
         super(Top5CategoricalAccuracy, self).__init__(5)

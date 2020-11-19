@@ -50,62 +50,63 @@ class Bernoulli(Distribution):
         >>>
         >>> # To use the Bernoulli distribution in a network.
         >>> class net(Cell):
-        >>>     def __init__(self):
-        >>>         super(net, self).__init__():
-        >>>         self.b1 = msd.Bernoulli(0.5, dtype=mstype.int32)
-        >>>         self.b2 = msd.Bernoulli(dtype=mstype.int32)
-        >>>
-        >>>     # All the following calls in construct are valid.
-        >>>     def construct(self, value, probs_b, probs_a):
-        >>>
-        >>>         # Private interfaces of probability functions corresponding to public interfaces, including
-        >>>         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
-        >>>         # Args:
-        >>>         #     value (Tensor): the value to be evaluated.
-        >>>         #     probs1 (Tensor): the probability of success. Default: self.probs.
-        >>>
-        >>>         # Examples of `prob`.
-        >>>         # Similar calls can be made to other probability functions
-        >>>         # by replacing `prob` by the name of the function.
-        >>>         ans = self.b1.prob(value)
-        >>>         # Evaluate `prob` with respect to distribution b.
-        >>>         ans = self.b1.prob(value, probs_b)
-        >>>         # `probs` must be passed in during function calls.
-        >>>         ans = self.b2.prob(value, probs_a)
-        >>>
-        >>>
-        >>>         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
-        >>>         # Args:
-        >>>         #     probs1 (Tensor): the probability of success. Default: self.probs.
-        >>>
-        >>>         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
-        >>>         ans = self.b1.mean() # return 0.5
-        >>>         ans = self.b1.mean(probs_b) # return probs_b
-        >>>         # `probs` must be passed in during function calls.
-        >>>         ans = self.b2.mean(probs_a)
-        >>>
-        >>>
-        >>>         # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:
-        >>>         # Args:
-        >>>         #     dist (str): the name of the distribution. Only 'Bernoulli' is supported.
-        >>>         #     probs1_b (Tensor): the probability of success of distribution b.
-        >>>         #     probs1_a (Tensor): the probability of success of distribution a. Default: self.probs.
-        >>>
-        >>>         # Examples of kl_loss. `cross_entropy` is similar.
-        >>>         ans = self.b1.kl_loss('Bernoulli', probs_b)
-        >>>         ans = self.b1.kl_loss('Bernoulli', probs_b, probs_a)
-        >>>         # An additional `probs_a` must be passed in.
-        >>>         ans = self.b2.kl_loss('Bernoulli', probs_b, probs_a)
-        >>>
-        >>>
-        >>>         # Examples of `sample`.
-        >>>         # Args:
-        >>>         #     shape (tuple): the shape of the sample. Default: ().
-        >>>         #     probs1 (Tensor): the probability of success. Default: self.probs.
-        >>>         ans = self.b1.sample()
-        >>>         ans = self.b1.sample((2,3))
-        >>>         ans = self.b1.sample((2,3), probs_b)
-        >>>         ans = self.b2.sample((2,3), probs_a)
+        ...     def __init__(self):
+        ...         super(net, self).__init__():
+        ...         self.b1 = msd.Bernoulli(0.5, dtype=mstype.int32)
+        ...         self.b2 = msd.Bernoulli(dtype=mstype.int32)
+        ...
+        ...     # All the following calls in construct are valid.
+        ...     def construct(self, value, probs_b, probs_a):
+        ...
+        ...         # Private interfaces of probability functions corresponding to public interfaces, including
+        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
+        ...         # Args:
+        ...         #     value (Tensor): the value to be evaluated.
+        ...         #     probs1 (Tensor): the probability of success. Default: self.probs.
+        ...
+        ...         # Examples of `prob`.
+        ...         # Similar calls can be made to other probability functions
+        ...         # by replacing `prob` by the name of the function.
+        ...         ans = self.b1.prob(value)
+        ...         # Evaluate `prob` with respect to distribution b.
+        ...         ans = self.b1.prob(value, probs_b)
+        ...         # `probs` must be passed in during function calls.
+        ...         ans = self.b2.prob(value, probs_a)
+        ...
+        ...
+        ...         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
+        ...         # Args:
+        ...         #     probs1 (Tensor): the probability of success. Default: self.probs.
+        ...
+        ...         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
+        ...         ans = self.b1.mean() # return 0.5
+        ...         ans = self.b1.mean(probs_b) # return probs_b
+        ...         # `probs` must be passed in during function calls.
+        ...         ans = self.b2.mean(probs_a)
+        ...
+        ...
+        ...         # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:
+        ...         # Args:
+        ...         #     dist (str): the name of the distribution. Only 'Bernoulli' is supported.
+        ...         #     probs1_b (Tensor): the probability of success of distribution b.
+        ...         #     probs1_a (Tensor): the probability of success of distribution a. Default: self.probs.
+        ...
+        ...         # Examples of kl_loss. `cross_entropy` is similar.
+        ...         ans = self.b1.kl_loss('Bernoulli', probs_b)
+        ...         ans = self.b1.kl_loss('Bernoulli', probs_b, probs_a)
+        ...         # An additional `probs_a` must be passed in.
+        ...         ans = self.b2.kl_loss('Bernoulli', probs_b, probs_a)
+        ...
+        ...
+        ...         # Examples of `sample`.
+        ...         # Args:
+        ...         #     shape (tuple): the shape of the sample. Default: ().
+        ...         #     probs1 (Tensor): the probability of success. Default: self.probs.
+        ...         ans = self.b1.sample()
+        ...         ans = self.b1.sample((2,3))
+        ...         ans = self.b1.sample((2,3), probs_b)
+        ...         ans = self.b2.sample((2,3), probs_a)
+        ...
     """
 
     def __init__(self,
