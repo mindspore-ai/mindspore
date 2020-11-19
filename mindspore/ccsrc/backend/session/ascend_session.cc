@@ -855,9 +855,6 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
         if (memo->find(child_graph) != memo->end()) {
           continue;
         }
-        if (child_graph->get_output_null()) {
-          continue;
-        }
         AscendControlParser::InsertMultipleAssignToGraph(NOT_NULL(child_graph), nullptr,
                                                          NOT_NULL(child_graph->output()), NOT_NULL(output_param));
       }

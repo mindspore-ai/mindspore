@@ -134,12 +134,7 @@ AnfNodePtr FuncGraphSpecializer::ReplicateDisconnectedNode(const AnfNodePtr &nod
     auto inputs = c_node->inputs();
     std::vector<AnfNodePtr> new_inputs;
     (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(new_inputs),
-                         [this](const AnfNodePtr &inp) -> AnfNodePtr {
-                           if (inp->isa<ValueNode>()) {
-                             return inp;
-                           }
-                           return ReplicateDisconnectedNode(inp);
-                         });
+                         [this](const AnfNodePtr &inp) -> AnfNodePtr { return ReplicateDisconnectedNode(inp); });
     auto c_new_node = new_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(c_new_node);
     c_new_node->set_inputs(new_inputs);

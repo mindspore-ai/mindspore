@@ -38,13 +38,7 @@ namespace session {
 using AnfWithOutIndex = std::pair<AnfNodePtr, size_t>;
 class KernelGraph : public FuncGraph {
  public:
-  KernelGraph()
-      : graph_id_(0),
-        start_label_(nullptr),
-        end_goto_(nullptr),
-        null_output_(false),
-        current_epoch_(0),
-        is_dynamic_shape_(false) {
+  KernelGraph() : graph_id_(0), start_label_(nullptr), end_goto_(nullptr), current_epoch_(0), is_dynamic_shape_(false) {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
     execution_order_ = {};
     executable_ = true;
@@ -75,7 +69,6 @@ class KernelGraph : public FuncGraph {
     parent_graph_ = graph.parent_graph_;
     start_label_ = graph.start_label_;
     end_goto_ = graph.end_goto_;
-    null_output_ = graph.null_output_;
     front_to_internal_outputs_map_ = graph.front_to_internal_outputs_map_;
     internal_outputs_to_front_map_ = graph.internal_outputs_to_front_map_;
     internal_outputs_tensor_map_ = graph.internal_outputs_tensor_map_;
@@ -190,8 +183,6 @@ class KernelGraph : public FuncGraph {
   CNodePtr get_start_label() { return start_label_; }
   void set_end_goto(const CNodePtr &end_goto) { end_goto_ = end_goto; }
   CNodePtr get_end_goto() { return end_goto_; }
-  bool get_output_null() { return null_output_; }
-  void set_output_null(bool is_output_null) { null_output_ = is_output_null; }
   void PrintGraphExecuteOrder() const;
   const std::map<std::string, std::pair<AnfNodePtr, int>> &summary_nodes() const { return summary_nodes_; }
   void set_summary_nodes(const std::map<std::string, std::pair<AnfNodePtr, int>> &nodes) { summary_nodes_ = nodes; }
@@ -343,7 +334,6 @@ class KernelGraph : public FuncGraph {
 
   CNodePtr start_label_;
   CNodePtr end_goto_;
-  bool null_output_{false};
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_to_internal_outputs_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<int, std::pair<AnfNodePtr, bool>>> internal_outputs_to_front_map_;
   std::unordered_map<AnfNodePtr, std::unordered_map<int, tensor::TensorPtr>> internal_outputs_tensor_map_;
