@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/nn/uniform_candidate_sampler_gpu_kernel.h"
+#include "backend/kernel_compiler/gpu/random/uniform_candidate_sampler_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {

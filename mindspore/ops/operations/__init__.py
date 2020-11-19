@@ -57,7 +57,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps, Tan)
 
 from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, UniformInt, UniformReal,
-                         RandomCategorical, StandardLaplace, Multinomial)
+                         RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler)
 from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
@@ -79,7 +79,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Adam
                      FusedSparseFtrl, FusedSparseProximalAdagrad,
                      ApplyAdaMax, ApplyAdadelta, ApplyAdagrad, ApplyAdagradV2,
                      ApplyAddSign, ApplyPowerSign, ApplyGradientDescent, ApplyProximalGradientDescent,
-                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK, UniformCandidateSampler)
+                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell, InTopK)
 from . import _quant_ops
 from ._quant_ops import *
 from .other_ops import (Assign, InplaceAssign, IOU, BoundingBoxDecode, BoundingBoxEncode,
