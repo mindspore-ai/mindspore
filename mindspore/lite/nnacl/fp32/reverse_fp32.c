@@ -16,10 +16,13 @@
 
 #include "nnacl/fp32/reverse_fp32.h"
 #include <string.h>
-#include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/nnacl_utils.h"
 
 int Reverse(const float *input, float *output, size_t elem_size, int *index) {
+  for (int i = 0; i < elem_size; i++) {
+    NNACL_ASSERT(index[i] >= 0);
+  }
   for (int i = 0; i < elem_size; i++) {
     output[index[i]] = input[i];
   }

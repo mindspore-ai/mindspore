@@ -176,6 +176,11 @@ int DoTransposeFp32(const float *in_data, float *out_data, int *input_shape, con
     (void)memcpy(out_data, in_data, data_size);
     return NNACL_OK;
   }
+  for (int i = 0; i < num_axes; ++i) {
+    if (perm[i] < 0) {
+      return NNACL_PARAM_INVALID;
+    }
+  }
   if (num_axes == 2) {
     TransposeDim2Fp32(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
   } else if (num_axes == 3) {
