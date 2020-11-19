@@ -1,0 +1,88 @@
+/**
+ * To download necessary library from HuaWei server.
+ * Including mindspore-lite .so file, minddata-lite .so file and model file.
+ * The libraries can be downloaded manually.
+ */
+def mindsporeLite_Version = "mindspore-lite-maven-1.0.1"
+def targetPredictModelFile = "src/main/assets/style_predict_quant.ms"
+def targetTransferModelFile = "src/main/assets/style_transfer_quant.ms"
+def modelPredictDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/style_lite/style_predict_quant.ms"
+def modelTransferDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/style_lite/style_transfer_quant.ms"
+def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/java/${mindsporeLite_Version}.zip"
+def mindSporeLibrary = "libs/${mindsporeLite_Version}.zip"
+def cleantargetMindSporeInclude = "libs"
+def targetMindSporeInclude = "libs/"
+
+
+task downloadPredictModelFile(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${modelPredictDownloadUrl}"
+    }
+    sourceUrl = "${modelPredictDownloadUrl}"
+    target = file("${targetPredictModelFile}")
+}
+
+task downloadTransferModelFile(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${modelTransferDownloadUrl}"
+    }
+    sourceUrl = "${modelTransferDownloadUrl}"
+    target = file("${targetTransferModelFile}")
+}
+
+
+task downloadMindSporeLibrary(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${mindsporeLiteDownloadUrl}"
+    }
+    sourceUrl = "${mindsporeLiteDownloadUrl}"
+    target = file("${mindSporeLibrary}")
+}
+
+task unzipMindSporeInclude(type: Copy, dependsOn: ['downloadMindSporeLibrary']) {
+    doFirst {
+        println "Unzipping ${mindSporeLibrary}"
+    }
+    from zipTree("${mindSporeLibrary}")
+    into "${targetMindSporeInclude}"
+}
+
+task cleanUnusedmindsporeFiles(type: Delete, dependsOn: ['unzipMindSporeInclude']) {
+    delete fileTree("${cleantargetMindSporeInclude}").matching {
+        include "*.zip"
+    }
+}
+
+if (file("libs/mindspore-lite-1.0.1.aar").exists()){
+    downloadMindSporeLibrary.enabled = false
+    unzipMindSporeInclude.enabled = false
+    cleanUnusedmindsporeFiles.enabled = false
+}
+
+
+if (file("src/main/assets/style_transfer_quant.ms").exists()){
+    downloadTransferModelFile.enabled = false
+}
+
+if (file("src/main/assets/style_predict_quant.ms").exists()){
+    downloadPredictModelFile.enabled = false
+}
+
+preBuild.dependsOn downloadPredictModelFile
+preBuild.dependsOn downloadTransferModelFile
+preBuild.dependsOn downloadMindSporeLibrary
+preBuild.dependsOn unzipMindSporeInclude
+preBuild.dependsOn cleanUnusedmindsporeFiles
+
+class DownloadUrlTask extends DefaultTask {
+    @Input
+    String sourceUrl
+
+    @OutputFile
+    File target
+
+    @TaskAction
+    void download() {
+        ant.get(src: sourceUrl, dest: target)
+    }
+}

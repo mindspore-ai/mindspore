@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    android:orientation="vertical"
+    tools:context=".TestActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:layout_alignParentTop="true"
+        android:background="#66000000">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableStart="@drawable/logo2"
+            android:drawablePadding="5dp"
+            android:gravity="center_vertical"
+            android:text="MindSpore StyleTransfer"
+            android:textColor="#ffffff"
+            android:textSize="20sp" />
+    </androidx.appcompat.widget.Toolbar>
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/img_origin"
+                android:layout_width="256dp"
+                android:layout_height="256dp"
+                android:layout_margin="10dp"
+                android:scaleType="fitXY"
+                android:src="@android:drawable/ic_menu_gallery" />
+
+            <ImageView
+                android:id="@+id/img_style"
+                android:layout_width="256dp"
+                android:layout_height="256dp"
+                android:layout_margin="10dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/style_chose" />
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+    <FrameLayout
+        android:layout_width="256dp"
+        android:layout_height="256dp"
+        android:layout_gravity="center"
+        android:layout_margin="20dp">
+
+        <ProgressBar
+            android:visibility="invisible"
+            android:id="@+id/progress_circular"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+
+        <ImageView
+            android:id="@+id/img_result"
+            android:layout_width="256dp"
+            android:layout_height="256dp"
+            android:padding="4dp"
+            android:src="@android:drawable/ic_menu_report_image" />
+    </FrameLayout>
+</LinearLayout>
