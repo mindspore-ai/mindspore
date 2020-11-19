@@ -50,8 +50,7 @@ if __name__ == '__main__':
     else:
         raise ValueError("Unsupport platform.")
 
-    loss = nn.SoftmaxCrossEntropyWithLogits(
-        is_grad=False, sparse=True, reduction='mean')
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 
     if args_opt.model == 'ghostnet':
         net = ghostnet_1x(num_classes=config_platform.num_classes)
