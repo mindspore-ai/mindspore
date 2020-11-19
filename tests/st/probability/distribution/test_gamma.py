@@ -298,11 +298,11 @@ class Net(nn.Cell):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.Gamma = msd.Gamma(np.array([3.0]), np.array([1.0]), dtype=dtype.float32)
+        self.get_flags = msd.Gamma(np.array([3.0]), np.array([1.0]), dtype=dtype.float32)
 
     def construct(self, x_, y_):
-        kl = self.Gamma.kl_loss('Gamma', x_, y_)
-        prob = self.Gamma.prob(kl)
+        kl = self.g.kl_loss('Gamma', x_, y_)
+        prob = self.g.prob(kl)
         return prob
 
 def test_multiple_graphs():

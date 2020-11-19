@@ -76,11 +76,11 @@ class Poisson(Distribution):
         ...         ans = self.p2.prob(value, rate_a)
         ...
         ...
-        ...         # Functions `mean`, `sd`, and 'var' have the same arguments as follows.
+        ...         # Functions `mean`, `mode`, `sd`, and 'var' have the same arguments as follows.
         ...         # Args:
         ...         #     rate (Tensor): the rate of the distribution. Default: self.rate.
         ...
-        ...         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
+        ...         # Examples of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
         ...         ans = self.p1.mean() # return 2
         ...         ans = self.p1.mean(rate_b) # return 1 / rate_b
         ...         # `rate` must be passed in during function calls.
