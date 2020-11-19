@@ -13,175 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iostream>
-#include <memory>
-#include "src/common/log_adapter.h"
-#include "common/common_test.h"
-#include "mindspore/lite/src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/pooling2d.h"
-#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
+#include "ut/src/runtime/kernel/opencl/common.h"
+#include "nnacl/pooling_parameter.h"
 
-namespace mindspore {
+namespace mindspore::lite::opencl::test {
 
-class TestPoolingOpenCL : public mindspore::CommonTest {};
+class TestOpenCL_Pooling : public CommonTest {};
 
-void InitPoolingParam(PoolingParameter *param) {
-  param->input_batch_ = 1;
-  param->input_h_ = 2;
-  param->input_w_ = 2;
-  param->input_channel_ = 4;
-
-  param->output_batch_ = 1;
-  param->output_h_ = 1;
-  param->output_w_ = 1;
-  param->output_channel_ = 4;
-
-  param->window_h_ = 2;
-  param->window_w_ = 2;
-
-  param->stride_h_ = 2;
-  param->stride_w_ = 2;
-
-  param->pad_u_ = 0;
-  param->pad_d_ = 0;
-  param->pad_l_ = 0;
-  param->pad_r_ = 0;
-}
-
-void RunTestCasePooling(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16,
-                        PoolMode pool_mode) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
-  ocl_runtime->Init();
-  size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
-  ocl_runtime->SetFp16Enable(enable_fp16);
-  auto allocator = ocl_runtime->GetAllocator();
-  int n = shape[0];
-  int h = shape[1];
-  int w = shape[2];
-  int c = shape[3];
-  int oh = shape[4];
-  int ow = shape[5];
-  auto param = static_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param create error.";
-    return;
-  }
-  InitPoolingParam(param);
+namespace {
+// PrimitiveType_Pooling: src/ops/populate/pooling_populate.cc
+OpParameter *CreateParameter(PoolMode pool_mode, int window_h, int window_w, int stride_h, int stride_w, int pad_u,
+                             int pad_d, int pad_l, int pad_r, RoundMode round_mode = RoundMode_No,
+                             ActType act_type = ActType_No) {
+  auto *param = test::CreateParameter<PoolingParameter>(schema::PrimitiveType_Pooling);
+  param->global_ = false;
+  param->window_w_ = window_w;
+  param->window_h_ = window_h;
+  param->pad_u_ = pad_u;
+  param->pad_d_ = pad_d;
+  param->pad_l_ = pad_l;
+  param->pad_r_ = pad_r;
+  param->stride_w_ = stride_w;
+  param->stride_h_ = stride_h;
+  param->avg_mode_ = 0;
   param->pool_mode_ = pool_mode;
-  std::vector<int> input_shape = {n, h, w, c};
-  auto tensor_x_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
-                                                     input_shape, schema::Format_NHWC);
-  auto tensor_x = tensor_x_ptr.get();
-  if (tensor_x == nullptr) {
-    MS_LOG(ERROR) << "tensor_x create error.";
-    return;
-  }
-  std::vector<int> out_shape = {n, oh, ow, c};
-  auto tensor_out_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
-                                                       out_shape, schema::Format_NHWC);
-  auto tensor_out = tensor_out_ptr.get();
-  if (tensor_out == nullptr) {
-    MS_LOG(ERROR) << "tensor_out create error.";
-    return;
-  }
-  std::vector<lite::Tensor *> inputs{tensor_x};
-  std::vector<lite::Tensor *> outputs{tensor_out};
-  auto arith_kernel = kernel::OpenCLKernelCreator<kernel::PoolingOpenCLKernel>(
-    inputs, outputs, reinterpret_cast<OpParameter *>(param), nullptr, kernel::KernelKey(), nullptr);
-  if (arith_kernel == nullptr) {
-    MS_LOG(ERROR) << "arith_kernel create error.";
-    return;
-  }
+  param->round_mode_ = round_mode;
+  param->act_type_ = act_type;
+  return reinterpret_cast<OpParameter *>(param);
+}
+}  // namespace
 
-  inputs[0]->MallocData(allocator);
-
-  std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs, outputs, kernels, kernels, kernels);
-  auto pGraph = pGraph_ptr.get();
-  if (pGraph == nullptr) {
-    MS_LOG(ERROR) << "pGraph create error.";
-    return;
+TEST_F(TestOpenCL_Pooling, Avg) {
+  std::vector<int> input_shape = {1, 2, 2, 4};
+  std::vector<int> output_shape = {1, 1, 1, 4};
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  float output_data[] = {6, 7, 8, 9};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(PoolMode_AvgPool, 2, 2, 2, 2, 0, 0, 0, 0);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  pGraph->Init();
-  memcpy(inputs[0]->MutableData(), input_data, inputs[0]->ElementsNum() * dtype_size);
-  pGraph->Run();
-
-  if (enable_fp16) {
-    CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float16_t>(1e-3),
-                  2e-2);
-  } else {
-    CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
-  }
-
-  for (auto t : inputs) {
-    t->set_data(nullptr);
-  }
-  for (auto t : outputs) {
-    t->set_data(nullptr);
-  }
-
-  MS_LOG(INFO) << "Test AvgPool2d passed";
 }
 
-TEST_F(TestPoolingOpenCL, AvgPoolingFp32) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int c = 4;
-  int oh = 1;
-  int ow = 1;
-  std::vector<int> shape = {n, h, w, c, oh, ow};
-  std::vector<float> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
-                                   8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
-  std::vector<float> output_data = {6.0f, 7.0f, 8.0f, 9.0f};
-
-  RunTestCasePooling(shape, input_data.data(), output_data.data(), false, PoolMode_AvgPool);
+TEST_F(TestOpenCL_Pooling, Max) {
+  std::vector<int> input_shape = {1, 2, 2, 4};
+  std::vector<int> output_shape = {1, 1, 1, 4};
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  float output_data[] = {12, 13, 14, 15};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(PoolMode_MaxPool, 2, 2, 2, 2, 0, 0, 0, 0);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestPoolingOpenCL, AvgPoolingFp16) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int c = 4;
-  int oh = 1;
-  int ow = 1;
-  std::vector<int> shape = {n, h, w, c, oh, ow};
-  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
-                                       8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
-  std::vector<float16_t> output_data = {6.0f, 7.0f, 8.0f, 9.0f};
-
-  RunTestCasePooling(shape, input_data.data(), output_data.data(), true, PoolMode_AvgPool);
-}
-
-TEST_F(TestPoolingOpenCL, MaxPoolingFp32) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int c = 4;
-  int oh = 1;
-  int ow = 1;
-  std::vector<int> shape = {n, h, w, c, oh, ow};
-  std::vector<float> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
-                                   8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
-  std::vector<float> output_data = {12.0f, 13.0f, 14.0f, 15.0f};
-
-  RunTestCasePooling(shape, input_data.data(), output_data.data(), false, PoolMode_MaxPool);
-}
-
-TEST_F(TestPoolingOpenCL, MaxPoolingFp16) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int c = 4;
-  int oh = 1;
-  int ow = 1;
-  std::vector<int> shape = {n, h, w, c, oh, ow};
-  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
-                                       8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f};
-  std::vector<float16_t> output_data = {12.0f, 13.0f, 14.0f, 15.0f};
-
-  RunTestCasePooling(shape, input_data.data(), output_data.data(), true, PoolMode_MaxPool);
-}
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

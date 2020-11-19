@@ -33,91 +33,81 @@ using mindspore::schema::PrimitiveType_Pad;
 
 namespace mindspore::kernel {
 
-int PadOpenCLKernel::Init() {
+int PadOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<PadParameter *>(op_parameter_);
-  std::set<std::string> build_options;
-
-  if (in_tensors_.empty()) {
-    MS_LOG(ERROR) << "PadOpenCLKernel in_tensors is empty";
+  if (in_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "Pad only support 1 input Tensor.";
     return RET_ERROR;
   }
-  if (out_tensors_.empty()) {
-    MS_LOG(ERROR) << "PadOpenCLKernel out_tensors is empty";
+  if (out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "Pad only support 1 output Tensor.";
     return RET_ERROR;
   }
-  if (param->paddings_[0] || param->paddings_[1] || param->paddings_[6] || param->paddings_[7]) {
-    MS_LOG(ERROR) << "PadOpenCLKernel not support pad at Batch/Channel axis";
+  auto in_ndim = in_tensors_.front()->shape().size();
+  if (in_ndim < 1 || in_ndim > 4) {
+    MS_LOG(ERROR) << "Pad only supports 1D-4D input Tensor but get " << in_ndim << "D.";
+    return RET_ERROR;
+  }
+  auto out_ndim = in_tensors_.front()->shape().size();
+  if (out_ndim < 1 || out_ndim > 4) {
+    MS_LOG(ERROR) << "Pad only supports 1D-4D output Tensor but get " << out_ndim << "D.";
+    return RET_ERROR;
+  }
+  if (in_ndim != out_ndim) {
+    MS_LOG(ERROR) << "Pad: input ndim != output ndim.";
     return RET_ERROR;
   }
   if (param->pad_mode_ != PaddingMode_CONSTANT) {
-    MS_LOG(ERROR) << "PadOpenCLKernel only support CONSTANT MODE";
+    MS_LOG(ERROR) << "Pad only support CONSTANT MODE.";
     return RET_ERROR;
   }
+  return RET_OK;
+}
 
-  auto input_tensor = in_tensors_[0];
-  auto output_tensor = out_tensors_[0];
-
-  CI_ = input_tensor->Channel();
-  IH_ = input_tensor->Height();
-  IW_ = input_tensor->Width();
-  CO_ = output_tensor->Channel();
-  OH_ = output_tensor->Height();
-  OW_ = output_tensor->Width();
-  CI_SLICES_ = UP_DIV(CI_, C4NUM);
-  CO_SLICES_ = UP_DIV(CO_, C4NUM);
-
+int PadOpenCLKernel::Prepare() {
   const std::string source = pad_source;
   const std::string program_name = "Pad";
-  const std::string kernel_name = "Pad_NHWC4";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
-
-  MS_LOG(DEBUG) << "Pad Init Done!";
+  ocl_runtime_->BuildKernel(kernel_, program_name, "Pad");
+  SetConstArgs();
   return RET_OK;
+}
+
+void PadOpenCLKernel::SetConstArgs() {
+  auto input = GpuTensorInfo(in_tensors_.front());
+  auto output = GpuTensorInfo(out_tensors_.front());
+  cl_int4 input_shape = {static_cast<cl_int>(input.N), static_cast<cl_int>(input.H), static_cast<cl_int>(input.W),
+                         static_cast<cl_int>(input.C)};
+  cl_int4 output_shape = {static_cast<cl_int>(output.N), static_cast<cl_int>(output.H), static_cast<cl_int>(output.W),
+                          static_cast<cl_int>(output.C)};
+  cl_int2 io_slices = {static_cast<cl_int>(input.Slice), static_cast<cl_int>(output.Slice)};
+
+  int ndim = in_tensors_.front()->shape().size();
+  std::vector<int> pad_before_ori;
+  pad_before_ori.reserve(ndim);
+  for (size_t i = 0; i < ndim; i++) {
+    pad_before_ori.push_back(param_->paddings_[MAX_PAD_SIZE - 2 * ndim + 2 * i]);
+  }
+  cl_int4 pad_before;
+  Broadcast2GpuShape(pad_before.s, pad_before_ori.data(), ndim, 0);
+
+  int arg_cn = 2;
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, io_slices);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, pad_before);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn, static_cast<cl_float>(param_->constant_value_));
+
+  AlignGlobalLocal({output.N * output.H, output.W, output.Slice}, {8, 4, 1});
 }
 
 int PadOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " Running!";
-
-  auto param = reinterpret_cast<PadParameter *>(op_parameter_);
-  cl_int4 input_shape = {1, IH_, IW_, CI_SLICES_};
-  cl_int4 output_shape = {1, OH_, OW_, CO_SLICES_};
-  cl_int2 pad_top_left = {param->paddings_[2], param->paddings_[4]};
-
-  int arg_cn = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, pad_top_left);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, static_cast<cl_float>(param->constant_value_));
-
-  std::vector<size_t> global = {static_cast<size_t>(OH_), static_cast<size_t>(OW_), static_cast<size_t>(CO_SLICES_)};
-  std::vector<size_t> local = {8, 4, 1};
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
-
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLPadKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                           const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                           const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                           const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) PadOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Create OpenCL Pad kernel failed!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: Pad";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Pad, OpenCLPadKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Pad, OpenCLPadKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Pad, OpenCLKernelCreator<PadOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Pad, OpenCLKernelCreator<PadOpenCLKernel>)
 }  // namespace mindspore::kernel

@@ -39,8 +39,8 @@ class SpaceToDepthOpenCLKernel : public OpenCLKernel {
 
  private:
   cl::Kernel kernel_;
-  Image2DInfo in_shape_ = Image2DInfo(nullptr);
-  Image2DInfo out_shape_ = Image2DInfo(nullptr);
+  GpuTensorInfo in_shape_ = GpuTensorInfo(nullptr);
+  GpuTensorInfo out_shape_ = GpuTensorInfo(nullptr);
 };
 }  // namespace mindspore::kernel
 

@@ -245,10 +245,9 @@ int ArithmeticOpenCLKernel::Prepare() {
     kernel_name_ += "_BUF";
   }
   std::string program_name = "Arithmetic";
-  std::set<std::string> build_options;
   std::string source = arithmetic_source;
   ocl_runtime_->LoadSource(program_name, source);
-  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name_, build_options);
+  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name_);
 #endif
   if (error_code != RET_OK) {
     return error_code;
@@ -270,7 +269,7 @@ int ArithmeticOpenCLKernel::Run() {
   auto input_1_ptr = inputs_weight_ptrs_[1] == nullptr ? in_tensors_[1]->data_c() : inputs_weight_ptrs_[1];
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_1_ptr);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

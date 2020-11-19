@@ -34,8 +34,8 @@ int OneHotOpenCLKernel::CheckSpecs() { return RET_OK; }
 int OneHotOpenCLKernel::Prepare() {
   std::string kernel_name = "OneHot";
   auto param = reinterpret_cast<OneHotParameter *>(op_parameter_);
-  in_shape_ = Image2DInfo(in_tensors_[0]);
-  out_shape_ = Image2DInfo(out_tensors_[0]);
+  in_shape_ = GpuTensorInfo(in_tensors_[0]);
+  out_shape_ = GpuTensorInfo(out_tensors_[0]);
   axis_ = out_shape_.AlignAxis(param->axis_);
   if (in_tensors_[0]->shape().size() == 1 && axis_ == 0) {
     kernel_name += "2DAxis0";
@@ -82,7 +82,7 @@ void OneHotOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, depth_);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, on_value_);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, off_value_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<int>(out_shape_.C));
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx, static_cast<int>(out_shape_.C));
 }
 void OneHotOpenCLKernel::SetGlobalLocal() {
   global_range_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
@@ -90,10 +90,9 @@ void OneHotOpenCLKernel::SetGlobalLocal() {
 
 int OneHotOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  int arg_idx = 0;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return mindspore::lite::RET_OK;
 }
 

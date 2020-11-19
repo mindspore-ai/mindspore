@@ -23,20 +23,21 @@
 
 namespace mindspore::kernel {
 
-class SliceOpenCLKernel : public OpenCLKernel {
+class StridedSliceOpenCLKernel : public OpenCLKernel {
  public:
-  SliceOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs)
+  StridedSliceOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                           const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
-  ~SliceOpenCLKernel() override = default;
-
-  int Prepare() override;
-  int Run() override;
+  ~StridedSliceOpenCLKernel() override = default;
 
   int CheckSpecs() override;
+
+  int Prepare() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+
+  int Run() override;
 
  private:
   int InitConstArgs();

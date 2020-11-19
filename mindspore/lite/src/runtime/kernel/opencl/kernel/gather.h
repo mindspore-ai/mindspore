@@ -45,6 +45,7 @@ class GatherOpenCLKernel : public OpenCLKernel {
  private:
   cl::Kernel kernel_;
   int32_t *indices_data_{nullptr};
+  int axis_ = {0};
 };
 }  // namespace mindspore::kernel
 #endif

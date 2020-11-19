@@ -35,7 +35,7 @@ struct OpenCLToFormatParameter {
 };
 
 template <typename SrcT, typename DstT>
-void Broadcast2GpuShape(const SrcT *src, DstT *dst, int src_num) {
+void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
   auto *N = dst;
   auto *H = dst + 1;
   auto *W = dst + 2;
@@ -60,37 +60,26 @@ void Broadcast2GpuShape(const SrcT *src, DstT *dst, int src_num) {
 }
 
 template <typename SrcT, typename DstT>
-void Broadcast2GpuShape(const SrcT *src, DstT *dst, int src_num, DstT default_value) {
+void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num, DstT default_value) {
   for (int i = 0; i < 4; ++i) {
     dst[i] = default_value;
   }
-  Broadcast2GpuShape(src, dst, src_num);
+  Broadcast2GpuShape(dst, src, src_num);
 }
 
-struct Image2DInfo {
-  explicit Image2DInfo(const lite::Tensor *tensor) {
+struct GpuTensorInfo {
+  explicit GpuTensorInfo(const lite::Tensor *tensor) {
     if (tensor == nullptr) {
       return;
     }
-    auto shape = tensor->shape();
-    OriDim = shape.size();
-    if (OriDim == 1) {
-      N = shape[0];
-    } else if (OriDim == 2) {
-      N = shape[0];
-      C = shape[1];
-    } else if (OriDim == 3) {
-      N = shape[0];
-      W = shape[1];
-      C = shape[2];
-    } else if (OriDim == 4) {
-      N = shape[0];
-      H = shape[1];
-      W = shape[2];
-      C = shape[3];
-    } else if (OriDim >= 5) {
-      MS_LOG(ERROR) << "GPU doesn't support Tensor with ndim>=" << OriDim;
-    }
+    auto shape_ori = tensor->shape();
+    NDim = shape_ori.size();
+    cl_int4 shape;
+    Broadcast2GpuShape(shape.s, shape_ori.data(), shape_ori.size(), 1);
+    N = shape.s[0];
+    H = shape.s[1];
+    W = shape.s[2];
+    C = shape.s[3];
     Slice = UP_DIV(C, C4NUM);
 
     FLT_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half) : sizeof(cl_float);
@@ -117,14 +106,14 @@ struct Image2DInfo {
   }
 
   int AlignAxis(int oriAxis) const {
-    if (OriDim == 0) {
+    if (NDim == 0) {
       return 0;
     }
-    int no_neg_axis = (oriAxis + OriDim) % OriDim;
+    int no_neg_axis = static_cast<int>((oriAxis + NDim) % NDim);
     if (no_neg_axis == 0) {
       return 0;
     }
-    return no_neg_axis + 4 - OriDim;
+    return static_cast<int>(no_neg_axis + 4 - NDim);
   }
 
   size_t N{1};
@@ -140,7 +129,7 @@ struct Image2DInfo {
   size_t ElementsC4Num{};
   size_t OriginSize{};
   size_t Image2DSize{};
-  size_t OriDim{};
+  size_t NDim{};
 };
 
 class OpenCLKernel : public LiteKernel {
@@ -205,7 +194,7 @@ class OpenCLKernel : public LiteKernel {
     if (idx >= out_tensors_.size()) {
       return RET_ERROR;
     }
-    auto img_info = Image2DInfo(out_tensors_[idx]);
+    auto img_info = GpuTensorInfo(out_tensors_[idx]);
     size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
     *img_size = {img_info.width, img_info.height, img_dtype};
     return RET_OK;

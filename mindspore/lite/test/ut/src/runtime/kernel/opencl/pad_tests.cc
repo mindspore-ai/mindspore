@@ -13,155 +13,221 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <memory>
-#include "src/common/log_adapter.h"
-#include "common/common_test.h"
-#include "mindspore/lite/src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/pad.h"
-#include "nnacl/pack.h"
+#include "ut/src/runtime/kernel/opencl/common.h"
+#include "nnacl/pad_parameter.h"
 
-using mindspore::kernel::LiteKernel;
-using mindspore::kernel::PadOpenCLKernel;
-using mindspore::kernel::SubGraphOpenCLKernel;
-using mindspore::lite::Tensor;
-using mindspore::schema::Format;
-using mindspore::schema::Format_NC4HW4;
-using mindspore::schema::Format_NHWC;
-using mindspore::schema::Format_NHWC4;
-using mindspore::schema::NodeType_ValueNode;
-using mindspore::schema::PaddingMode;
-using mindspore::schema::PaddingMode_CONSTANT;
-using mindspore::schema::PaddingMode_REFLECT;
-using mindspore::schema::PaddingMode_SYMMETRIC;
+namespace mindspore::lite::opencl::test {
 
-namespace mindspore {
+class TestOpenCL_Pad : public CommonTest {};
 
-class TestPadOpenCL : public mindspore::CommonTest {};
-
-void TEST_MAIN(PadParameter *param, Format input_format, Format output_format, Format op_format, const TypeId data_type,
-               const std::vector<int> &input_shape, const std::vector<int> &output_shape, const float *input_data,
-               const float *expect_data) {
-  auto ocl_runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
-  auto ocl_runtime = ocl_runtime_wrapper.GetInstance();
-  ocl_runtime->Init();
-  ocl_runtime->SetFp16Enable(data_type == kNumberTypeFloat16);
-  auto allocator = ocl_runtime->GetAllocator();
-
-  MS_LOG(DEBUG) << "create Tensors";
-  auto input = Tensor(kNumberTypeFloat32, input_shape, input_format, lite::Tensor::CONST_TENSOR);
-  auto output = Tensor(kNumberTypeFloat32, output_shape, output_format, lite::Tensor::CONST_TENSOR);
-
-  MS_LOG(DEBUG) << "create OpenCL Kernel";
-  std::vector<lite::Tensor *> inputs{&input};
-  std::vector<lite::Tensor *> outputs{&output};
-  auto kernel = std::make_unique<PadOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  if (kernel == nullptr) {
-    return;
-  }
-  kernel->Init();
-
-  MS_LOG(DEBUG) << "create SubGraph";
-  std::vector<kernel::LiteKernel *> kernels{kernel.release()};
-  auto sub_graph = new (std::nothrow) SubGraphOpenCLKernel({&input}, {&output}, kernels, kernels, kernels);
-  input.MallocData(allocator);
-  sub_graph->Init();
-  memcpy(input.data_c(), input_data, input.Size());
-  sub_graph->Run();
-  if (CommonTest::CompareOutputData(reinterpret_cast<float *>(output.data_c()), const_cast<float *>(expect_data),
-                                    static_cast<size_t>(output.ElementsNum()))) {
-    FAIL();
-  } else {
-    std::cout << "COMPARE SUCCESS!\n";
-  }
-
-  MS_LOG(DEBUG) << "release resources";
-  input.set_data(nullptr);
-  output.set_data(nullptr);
-  delete sub_graph;
-}
-
-TEST_F(TestPadOpenCL, TestPad3) {
-  auto param = static_cast<PadParameter *>(malloc(sizeof(PadParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "PadParameter create error.";
-    return;
-  }
-  param->pad_mode_ = PaddingMode_CONSTANT;
-  param->constant_value_ = 0.0f;
+namespace {
+// PrimitiveType_Pad: src/ops/populate/pad_populate.cc
+OpParameter *CreateParameter(const std::vector<int> &paddings, float constant_value) {
+  auto *param = test::CreateParameter<PadParameter>(schema::PrimitiveType_Pad);
+  param->pad_mode_ = schema::PaddingMode_CONSTANT;
+  param->constant_value_ = constant_value;
   param->padding_length = MAX_PAD_SIZE;
-  int paddings[MAX_PAD_SIZE] = {0, 0, 3, 3, 3, 3, 0, 0};
-  memcpy(param->paddings_, paddings, sizeof(paddings));
-
-  float input_data[48] = {0.0,  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0,
-                          12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0,
-                          24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0,
-                          36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0};
-  float expect_data[300] = {
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0, 0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  12.0, 13.0, 14.0, 15.0,
-    16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  36.0,
-    37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
-    0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0};
-
-  TEST_MAIN(param, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat32, {1, 4, 4, 3}, {1, 10, 10, 3}, input_data,
-            expect_data);
-  TEST_MAIN(param, Format_NHWC, Format_NHWC, Format_NC4HW4, kNumberTypeFloat32, {1, 4, 4, 3}, {1, 10, 10, 3},
-            input_data, expect_data);
-  TEST_MAIN(param, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat16, {1, 4, 4, 3}, {1, 10, 10, 3}, input_data,
-            expect_data);
-  TEST_MAIN(param, Format_NHWC, Format_NHWC, Format_NC4HW4, kNumberTypeFloat16, {1, 4, 4, 3}, {1, 10, 10, 3},
-            input_data, expect_data);
-}
-
-TEST_F(TestPadOpenCL, TestPad4) {
-  auto param = static_cast<PadParameter *>(malloc(sizeof(PadParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "PadParameter create error.";
-    return;
+  int size = paddings.size();
+  for (size_t i = 0; i < MAX_PAD_SIZE - size; ++i) {
+    param->paddings_[i] = 0;
   }
-  param->pad_mode_ = PaddingMode_CONSTANT;
-  param->constant_value_ = 1.0f;
-  param->padding_length = MAX_PAD_SIZE;
-  int paddings[MAX_PAD_SIZE] = {0, 0, 3, 3, 3, 3, 0, 0};
-  memcpy(param->paddings_, paddings, sizeof(paddings));
+  for (size_t i = 0; i < size; i++) {
+    param->paddings_[MAX_PAD_SIZE - size + i] = paddings[i];
+  }
+  return reinterpret_cast<OpParameter *>(param);
+}
+}  // namespace
 
-  float input_data[48] = {0.0,  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0,
-                          12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0,
-                          24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0,
-                          36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0};
-  float expect_data[300] = {
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  0.0,  1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,  9.0,  10.0, 11.0, 1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  12.0, 13.0, 14.0, 15.0,
-    16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  36.0,
-    37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0, 1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,
-    1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0};
-
-  TEST_MAIN(param, Format_NHWC, Format_NHWC, Format_NHWC4, kNumberTypeFloat32, {1, 4, 4, 3}, {1, 10, 10, 3}, input_data,
-            expect_data);
+TEST_F(TestOpenCL_Pad, 1D) {
+  float input_data[] = {1, 1, 1, 1};
+  float output_data[] = {2, 2, 2, 1, 1, 1, 1, 2, 2};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({3, 2}, 2);
+    TestMain({{{4}, input_data, VAR}}, {{9}, output_data}, param, fp16_enable);
+  }
 }
 
-}  // namespace mindspore
+TEST_F(TestOpenCL_Pad, 2D) {
+  float input_data[] = {1, 1, 1, 1, 1, 2, 2, 2, 2, 2};
+  float output_data[] = {10, 10, 10, 10, 10, 10, 10, 10, 10, 1,  1,  1,  1,  1,  10, 10,
+                         10, 2,  2,  2,  2,  2,  10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({1, 1, 1, 2}, 10);
+    TestMain({{{2, 5}, input_data, VAR}}, {{4, 8}, output_data}, param, fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_Pad, 4D) {
+  float input_data[48] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+                          16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+                          32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47};
+  float output_data[300] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({0, 0, 3, 3, 3, 3, 0, 0}, 0);
+    TestMain({{{1, 4, 4, 3}, input_data, VAR}}, {{1, 10, 10, 3}, output_data}, param, fp16_enable);
+  }
+
+  float output_data1[] = {
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 1, 1, 1, 1, 1, 1, 1, 1};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({0, 0, 3, 3, 3, 3, 0, 0}, 1);
+    TestMain({{{1, 4, 4, 3}, input_data, VAR}}, {{1, 10, 10, 3}, output_data1}, param, fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_Pad, test0) {
+  std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>, std::vector<float>, std::vector<float>,
+                         std::vector<int>, float>>
+    cases = {
+      {"SimpleConstTest",
+       {1, 2, 2, 1},
+       {3, 2, 4, 1},
+       {1, 2, 3, 4},
+       {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+       {1, 1, 0, 0, 1, 1, 0, 0},
+       0},
+      {"SimpleConstImageStyleTest",
+       {1, 2, 2, 1},
+       {1, 4, 4, 1},
+       {1, 2, 3, 4},
+       {0, 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 0, 0, 0, 0, 0},
+       {0, 0, 1, 1, 1, 1, 0, 0},
+       0},
+      {"SimpleConst1DTest", {2}, {5}, {2, 3}, {0, 2, 3, 0, 0}, {1, 2}, 0},
+      {"SimpleDynamicTest",
+       {1, 2, 2, 1},
+       {1, 4, 4, 1},
+       {1, 2, 3, 4},
+       {0, 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 0, 0, 0, 0, 0},
+       {0, 0, 1, 1, 1, 1, 0, 0},
+       0},
+      {"AdvancedConstTest",
+       {1, 2, 3, 1},
+       {2, 4, 6, 1},
+       {1, 2, 3, 4, 5, 6},
+       {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1, 2, 3, 0, 0, 0, 4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+       {1, 0, 0, 2, 0, 3, 0, 0},
+       0},
+      {"AdvancedConstImageStyleTest",
+       {1, 2, 3, 1},
+       {1, 4, 7, 1},
+       {1, 2, 3, 4, 5, 6},
+       {0, 1, 2, 3, 0, 0, 0, 0, 4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+       {0, 0, 0, 2, 1, 3, 0, 0},
+       0},
+      {"AdvancedDynamicTest",
+       {1, 2, 3, 1},
+       {1, 4, 7, 1},
+       {1, 2, 3, 4, 5, 6},
+       {0, 1, 2, 3, 0, 0, 0, 0, 4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+       {0, 0, 0, 2, 1, 3, 0, 0},
+       0},
+      {"SimpleConstTestUint8",
+       {1, 2, 2, 1},
+       {1, 4, 4, 1},
+       {1, 2, 3, 4},
+       {0, 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 0, 0, 0, 0, 0},
+       {0, 0, 1, 1, 1, 1, 0, 0},
+       0},
+      {"SimpleConstTestInt8",
+       {1, 2, 2, 1},
+       {1, 4, 4, 1},
+       {1, 2, 3, 4},
+       {0, 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 0, 0, 0, 0, 0},
+       {0, 0, 1, 1, 1, 1, 0, 0},
+       0},
+      {"SimpleConstFloat32ValuedTestUint8",
+       {1, 2, 2, 1},
+       {1, 4, 4, 1},
+       {1, 2, 3, 4},
+       {5, 5, 5, 5, 5, 1, 2, 5, 5, 3, 4, 5, 5, 5, 5, 5},
+       {0, 0, 1, 1, 1, 1, 0, 0},
+       5},
+      {"SimpleConstFloat32ValuedTestInt8",
+       {1, 2, 2, 1},
+       {1, 4, 4, 1},
+       {1, 2, 3, 4},
+       {5, 5, 5, 5, 5, 1, 2, 5, 5, 3, 4, 5, 5, 5, 5, 5},
+       {0, 0, 1, 1, 1, 1, 0, 0},
+       5},
+      {"Simple4DConstFloat32ValuedTest",
+       {1, 1, 2, 1},
+       {2, 1, 2, 2},
+       {3, 3},
+       {3, 5, 3, 5, 5, 5, 5, 5},
+       {0, 1, 0, 0, 0, 0, 0, 1},
+       5},
+      {"SimpleConstInt32ValuedTest",
+       {1, 2, 2, 1},
+       {1, 4, 4, 1},
+       {1, 2, 3, 4},
+       {5, 5, 5, 5, 5, 1, 2, 5, 5, 3, 4, 5, 5, 5, 5, 5},
+       {0, 0, 1, 1, 1, 1, 0, 0},
+       5},
+      {"SimpleDynamicTest",
+       {1, 2, 2, 1},
+       {1, 4, 4, 1},
+       {1, 2, 3, 4},
+       {0, 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 0, 0, 0, 0, 0},
+       {0, 0, 1, 1, 1, 1, 0, 0},
+       0},
+      {"SimpleDynamicValuedTest",
+       {1, 2, 2, 1},
+       {1, 4, 4, 1},
+       {1, 2, 3, 4},
+       {5, 5, 5, 5, 5, 1, 2, 5, 5, 3, 4, 5, 5, 5, 5, 5},
+       {0, 0, 1, 1, 1, 1, 0, 0},
+       5},
+      {"AdvancedConstTest",
+       {1, 2, 3, 1},
+       {1, 4, 7, 1},
+       {1, 2, 3, 4, 5, 6},
+       {0, 1, 2, 3, 0, 0, 0, 0, 4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+       {0, 0, 0, 2, 1, 3, 0, 0},
+       0},
+      {"AdvancedDynamicTest",
+       {1, 2, 3, 1},
+       {1, 4, 7, 1},
+       {1, 2, 3, 4, 5, 6},
+       {0, 1, 2, 3, 0, 0, 0, 0, 4, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+       {0, 0, 0, 2, 1, 3, 0, 0},
+       0},
+    };
+
+  for (auto &case_ : cases) {
+    auto &name = std::get<0>(case_);
+    auto &input_shape = std::get<1>(case_);
+    auto &output_shape = std::get<2>(case_);
+    auto input_data = std::get<3>(case_).data();
+    auto output_data = std::get<4>(case_).data();
+    auto &paddings = std::get<5>(case_);
+    auto constant_value = std::get<6>(case_);
+    std::cout << name << std::endl;
+    for (auto fp16_enable : {false, true}) {
+      auto *param = CreateParameter(paddings, constant_value);
+      TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+    }
+  }
+}
+
+}  // namespace mindspore::lite::opencl::test

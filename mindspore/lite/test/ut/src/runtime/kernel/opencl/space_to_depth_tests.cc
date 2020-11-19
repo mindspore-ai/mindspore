@@ -13,256 +13,154 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iostream>
-#include <memory>
-#include "src/common/log_adapter.h"
-#include "common/common_test.h"
-#include "mindspore/lite/src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/space_to_depth.h"
-#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
+#include "ut/src/runtime/kernel/opencl/common.h"
+#include "nnacl/fp32/space_to_depth_fp32.h"
 
-namespace mindspore {
-class TestSpaceToDepthOpenCL : public mindspore::CommonTest {
- public:
-  TestSpaceToDepthOpenCL() {}
-};
+namespace mindspore::lite::opencl::test {
 
-void RunTestCaseSpaceToDepth(const std::vector<int> &shape_in, const std::vector<int> &shape_out, void *input_data,
-                             void *output_data, bool enable_fp16, int block_size) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
-  ocl_runtime->Init();
-  size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
-  ocl_runtime->SetFp16Enable(enable_fp16);
-  auto allocator = ocl_runtime->GetAllocator();
-  auto param = static_cast<SpaceToDepthParameter *>(malloc(sizeof(SpaceToDepthParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param_ptr create error.";
-    return;
-  }
+class TestOpenCL_SpaceToDepth : public CommonTest {};
+
+namespace {
+// PrimitiveType_SpaceToDepth: src/ops/populate/space_to_depth_populate.cc
+OpParameter *CreateParameter(int block_size) {
+  auto *param = test::CreateParameter<SpaceToDepthParameter>(schema::PrimitiveType_SpaceToDepth);
   param->block_size_ = block_size;
-  auto tensor_x_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
-                                                     shape_in, schema::Format_NHWC);
-  auto tensor_x = tensor_x_ptr.get();
-  if (tensor_x == nullptr) {
-    MS_LOG(ERROR) << "tensor_x create error.";
-    return;
+  return reinterpret_cast<OpParameter *>(param);
+}
+}  // namespace
+
+TEST_F(TestOpenCL_SpaceToDepth, AlignTest1) {
+  int block_size = 2;
+  std::vector<int> input_shape = {1, 2, 2, 4};
+  std::vector<int> output_shape = {1, 1, 1, 16};
+  float input_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+  float output_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(block_size);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  auto tensor_out_ptr =
-    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), shape_out);
-  auto tensor_out = tensor_out_ptr.get();
-  if (tensor_out == nullptr) {
-    MS_LOG(ERROR) << "tensor_out create error.";
-    return;
+}
+
+TEST_F(TestOpenCL_SpaceToDepth, AlignTest2) {
+  int block_size = 2;
+  std::vector<int> input_shape = {1, 4, 4, 4};
+  std::vector<int> output_shape = {1, 2, 2, 16};
+  float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+                        22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+                        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63};
+  float output_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  16, 17, 18, 19, 20, 21, 22, 23, 8,  9,  10, 11, 12, 13,
+                         14, 15, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 48, 49, 50, 51,
+                         52, 53, 54, 55, 40, 41, 42, 43, 44, 45, 46, 47, 56, 57, 58, 59, 60, 61, 62, 63};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(block_size);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  std::vector<lite::Tensor *> inputs{tensor_x};
-  std::vector<lite::Tensor *> outputs{tensor_out};
-  auto arith_kernel = kernel::OpenCLKernelCreator<kernel::SpaceToDepthOpenCLKernel>(
-    inputs, outputs, reinterpret_cast<OpParameter *>(param), nullptr, kernel::KernelKey(), nullptr);
-  if (arith_kernel == nullptr) {
-    MS_LOG(ERROR) << "arith_kernel create error.";
-    return;
+}
+
+TEST_F(TestOpenCL_SpaceToDepth, AlignTest3) {
+  int block_size = 3;
+  std::vector<int> input_shape = {1, 6, 6, 4};
+  std::vector<int> output_shape = {1, 2, 2, 36};
+  float input_data[] = {0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,  16,  17,
+                        18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,
+                        36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,
+                        54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,  70,  71,
+                        72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,  84,  85,  86,  87,  88,  89,
+                        90,  91,  92,  93,  94,  95,  96,  97,  98,  99,  100, 101, 102, 103, 104, 105, 106, 107,
+                        108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125,
+                        126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143};
+  float output_data[] = {0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  24,  25,  26,  27,  28,  29,
+                         30,  31,  32,  33,  34,  35,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,
+                         12,  13,  14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  36,  37,  38,  39,  40,  41,
+                         42,  43,  44,  45,  46,  47,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,  70,  71,
+                         72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,  96,  97,  98,  99,  100, 101,
+                         102, 103, 104, 105, 106, 107, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131,
+                         84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,  108, 109, 110, 111, 112, 113,
+                         114, 115, 116, 117, 118, 119, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(block_size);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
+}
 
-  inputs[0]->MallocData(allocator);
+TEST_F(TestOpenCL_SpaceToDepth, NotAlignTest1) {
+  int block_size = 2;
+  std::vector<int> input_shape = {1, 2, 2, 1};
+  std::vector<int> output_shape = {1, 1, 1, 4};
+  float input_data[] = {0, 1, 2, 3};
+  float output_data[] = {0, 1, 2, 3};
 
-  std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs, outputs, kernels, kernels, kernels);
-  auto pGraph = pGraph_ptr.get();
-  if (pGraph == nullptr) {
-    MS_LOG(ERROR) << "pGraph create error.";
-    return;
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(block_size);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  pGraph->Init();
-  memcpy(inputs[0]->MutableData(), input_data, inputs[0]->ElementsNum() * dtype_size);
-  pGraph->Run();
-
-  if (enable_fp16) {
-    CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float16_t>(1e-3),
-                  2e-2);
-  } else {
-    CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
-  }
-  for (auto t : inputs) {
-    t->set_data(nullptr);
-  }
-  for (auto t : outputs) {
-    t->set_data(nullptr);
-  }
-
-  MS_LOG(INFO) << "Test SpaceToDepth passed";
 }
 
-TEST_F(TestSpaceToDepthOpenCL, AlignTest1Fp32) {
-  std::vector<int> shape_in = {1, 2, 2, 4};
-  std::vector<int> shape_out = {1, 1, 1, 16};
-  std::vector<float> input_data = {1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,
-                                   9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f};
-  std::vector<float> output_data = {1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,
-                                    9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f};
-
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), false, 2);
-}
-
-TEST_F(TestSpaceToDepthOpenCL, AlignTest1Fp16) {
-  std::vector<int> shape_in = {1, 2, 2, 4};
-  std::vector<int> shape_out = {1, 1, 1, 16};
-  std::vector<float16_t> input_data = {1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,
-                                       9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f};
-  std::vector<float16_t> output_data = {1.0f, 2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,
-                                        9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f};
-
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), true, 2);
-}
-
-TEST_F(TestSpaceToDepthOpenCL, AlignTest2Fp32) {
-  std::vector<int> shape_in = {1, 4, 4, 4};
-  std::vector<int> shape_out = {1, 2, 2, 16};
-  std::vector<float> input_data = {
-    0.0f,  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,  9.0f,  10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f,
-    16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f, 24.0f, 25.0f, 26.0f, 27.0f, 28.0f, 29.0f, 30.0f, 31.0f,
-    32.0f, 33.0f, 34.0f, 35.0f, 36.0f, 37.0f, 38.0f, 39.0f, 40.0f, 41.0f, 42.0f, 43.0f, 44.0f, 45.0f, 46.0f, 47.0f,
-    48.0f, 49.0f, 50.0f, 51.0f, 52.0f, 53.0f, 54.0f, 55.0f, 56.0f, 57.0f, 58.0f, 59.0f, 60.0f, 61.0f, 62.0f, 63.0f};
-  std::vector<float> output_data = {
-    0.0f,  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f,
-    8.0f,  9.0f,  10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 24.0f, 25.0f, 26.0f, 27.0f, 28.0f, 29.0f, 30.0f, 31.0f,
-    32.0f, 33.0f, 34.0f, 35.0f, 36.0f, 37.0f, 38.0f, 39.0f, 48.0f, 49.0f, 50.0f, 51.0f, 52.0f, 53.0f, 54.0f, 55.0f,
-    40.0f, 41.0f, 42.0f, 43.0f, 44.0f, 45.0f, 46.0f, 47.0f, 56.0f, 57.0f, 58.0f, 59.0f, 60.0f, 61.0f, 62.0f, 63.0f};
-
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), false, 2);
-}
-
-TEST_F(TestSpaceToDepthOpenCL, AlignTest2Fp16) {
-  std::vector<int> shape_in = {1, 4, 4, 4};
-  std::vector<int> shape_out = {1, 2, 2, 16};
-  std::vector<float16_t> input_data = {
-    0.0f,  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,  9.0f,  10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f,
-    16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f, 24.0f, 25.0f, 26.0f, 27.0f, 28.0f, 29.0f, 30.0f, 31.0f,
-    32.0f, 33.0f, 34.0f, 35.0f, 36.0f, 37.0f, 38.0f, 39.0f, 40.0f, 41.0f, 42.0f, 43.0f, 44.0f, 45.0f, 46.0f, 47.0f,
-    48.0f, 49.0f, 50.0f, 51.0f, 52.0f, 53.0f, 54.0f, 55.0f, 56.0f, 57.0f, 58.0f, 59.0f, 60.0f, 61.0f, 62.0f, 63.0f};
-  std::vector<float16_t> output_data = {
-    0.0f,  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f,
-    8.0f,  9.0f,  10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 24.0f, 25.0f, 26.0f, 27.0f, 28.0f, 29.0f, 30.0f, 31.0f,
-    32.0f, 33.0f, 34.0f, 35.0f, 36.0f, 37.0f, 38.0f, 39.0f, 48.0f, 49.0f, 50.0f, 51.0f, 52.0f, 53.0f, 54.0f, 55.0f,
-    40.0f, 41.0f, 42.0f, 43.0f, 44.0f, 45.0f, 46.0f, 47.0f, 56.0f, 57.0f, 58.0f, 59.0f, 60.0f, 61.0f, 62.0f, 63.0f};
-
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), true, 2);
-}
-
-TEST_F(TestSpaceToDepthOpenCL, AlignTest3Fp32) {
-  std::vector<int> shape_in = {1, 6, 6, 4};
-  std::vector<int> shape_out = {1, 2, 2, 36};
-  std::vector<float> input_data = {
-    0.0f,   1.0f,   2.0f,   3.0f,   4.0f,   5.0f,   6.0f,   7.0f,   8.0f,   9.0f,   10.0f,  11.0f,  12.0f,  13.0f,
-    14.0f,  15.0f,  16.0f,  17.0f,  18.0f,  19.0f,  20.0f,  21.0f,  22.0f,  23.0f,  24.0f,  25.0f,  26.0f,  27.0f,
-    28.0f,  29.0f,  30.0f,  31.0f,  32.0f,  33.0f,  34.0f,  35.0f,  36.0f,  37.0f,  38.0f,  39.0f,  40.0f,  41.0f,
-    42.0f,  43.0f,  44.0f,  45.0f,  46.0f,  47.0f,  48.0f,  49.0f,  50.0f,  51.0f,  52.0f,  53.0f,  54.0f,  55.0f,
-    56.0f,  57.0f,  58.0f,  59.0f,  60.0f,  61.0f,  62.0f,  63.0f,  64.0f,  65.0f,  66.0f,  67.0f,  68.0f,  69.0f,
-    70.0f,  71.0f,  72.0f,  73.0f,  74.0f,  75.0f,  76.0f,  77.0f,  78.0f,  79.0f,  80.0f,  81.0f,  82.0f,  83.0f,
-    84.0f,  85.0f,  86.0f,  87.0f,  88.0f,  89.0f,  90.0f,  91.0f,  92.0f,  93.0f,  94.0f,  95.0f,  96.0f,  97.0f,
-    98.0f,  99.0f,  100.0f, 101.0f, 102.0f, 103.0f, 104.0f, 105.0f, 106.0f, 107.0f, 108.0f, 109.0f, 110.0f, 111.0f,
-    112.0f, 113.0f, 114.0f, 115.0f, 116.0f, 117.0f, 118.0f, 119.0f, 120.0f, 121.0f, 122.0f, 123.0f, 124.0f, 125.0f,
-    126.0f, 127.0f, 128.0f, 129.0f, 130.0f, 131.0f, 132.0f, 133.0f, 134.0f, 135.0f, 136.0f, 137.0f, 138.0f, 139.0f,
-    140.0f, 141.0f, 142.0f, 143.0f};
-  std::vector<float> output_data = {
-    0.0f,   1.0f,   2.0f,   3.0f,   4.0f,   5.0f,   6.0f,   7.0f,   8.0f,   9.0f,   10.0f,  11.0f,  24.0f,  25.0f,
-    26.0f,  27.0f,  28.0f,  29.0f,  30.0f,  31.0f,  32.0f,  33.0f,  34.0f,  35.0f,  48.0f,  49.0f,  50.0f,  51.0f,
-    52.0f,  53.0f,  54.0f,  55.0f,  56.0f,  57.0f,  58.0f,  59.0f,  12.0f,  13.0f,  14.0f,  15.0f,  16.0f,  17.0f,
-    18.0f,  19.0f,  20.0f,  21.0f,  22.0f,  23.0f,  36.0f,  37.0f,  38.0f,  39.0f,  40.0f,  41.0f,  42.0f,  43.0f,
-    44.0f,  45.0f,  46.0f,  47.0f,  60.0f,  61.0f,  62.0f,  63.0f,  64.0f,  65.0f,  66.0f,  67.0f,  68.0f,  69.0f,
-    70.0f,  71.0f,  72.0f,  73.0f,  74.0f,  75.0f,  76.0f,  77.0f,  78.0f,  79.0f,  80.0f,  81.0f,  82.0f,  83.0f,
-    96.0f,  97.0f,  98.0f,  99.0f,  100.0f, 101.0f, 102.0f, 103.0f, 104.0f, 105.0f, 106.0f, 107.0f, 120.0f, 121.0f,
-    122.0f, 123.0f, 124.0f, 125.0f, 126.0f, 127.0f, 128.0f, 129.0f, 130.0f, 131.0f, 84.0f,  85.0f,  86.0f,  87.0f,
-    88.0f,  89.0f,  90.0f,  91.0f,  92.0f,  93.0f,  94.0f,  95.0f,  108.0f, 109.0f, 110.0f, 111.0f, 112.0f, 113.0f,
-    114.0f, 115.0f, 116.0f, 117.0f, 118.0f, 119.0f, 132.0f, 133.0f, 134.0f, 135.0f, 136.0f, 137.0f, 138.0f, 139.0f,
-    140.0f, 141.0f, 142.0f, 143.0f};
-
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), false, 3);
-}
-
-TEST_F(TestSpaceToDepthOpenCL, NotAlignTest1Fp32) {
-  std::vector<int> shape_in = {1, 2, 2, 1};
-  std::vector<int> shape_out = {1, 1, 1, 4};
-  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
-  std::vector<float> output_data = {0.0f, 1.0f, 2.0f, 3.0f};
-
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), false, 2);
-}
-
-TEST_F(TestSpaceToDepthOpenCL, NotAlignTest1Fp16) {
-  std::vector<int> shape_in = {1, 2, 2, 1};
-  std::vector<int> shape_out = {1, 1, 1, 4};
-  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
-  std::vector<float16_t> output_data = {0.0f, 1.0f, 2.0f, 3.0f};
-
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), true, 2);
-}
-
-TEST_F(TestSpaceToDepthOpenCL, NotAlignTest2Fp32) {
-  std::vector<int> shape_in = {1, 2, 2, 3};
-  std::vector<int> shape_out = {1, 1, 1, 12};
-  std::vector<float> input_data = {
-    0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f,
+TEST_F(TestOpenCL_SpaceToDepth, NotAlignTest2) {
+  int block_size = 2;
+  std::vector<int> input_shape = {1, 2, 2, 3};
+  std::vector<int> output_shape = {1, 1, 1, 12};
+  float input_data[] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
   };
-  std::vector<float> output_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
+  float output_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), false, 2);
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(block_size);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestSpaceToDepthOpenCL, NotAlignTest3Fp32) {
-  std::vector<int> shape_in = {1, 4, 4, 3};
-  std::vector<int> shape_out = {1, 2, 2, 12};
-  std::vector<float> input_data = {0.0f,  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,  9.0f,  10.0f, 11.0f,
-                                   12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f,
-                                   24.0f, 25.0f, 26.0f, 27.0f, 28.0f, 29.0f, 30.0f, 31.0f, 32.0f, 33.0f, 34.0f, 35.0f,
-                                   36.0f, 37.0f, 38.0f, 39.0f, 40.0f, 41.0f, 42.0f, 43.0f, 44.0f, 45.0f, 46.0f, 47.0f};
-  std::vector<float> output_data = {0.0f,  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f,
-                                    6.0f,  7.0f,  8.0f,  9.0f,  10.0f, 11.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f,
-                                    24.0f, 25.0f, 26.0f, 27.0f, 28.0f, 29.0f, 36.0f, 37.0f, 38.0f, 39.0f, 40.0f, 41.0f,
-                                    30.0f, 31.0f, 32.0f, 33.0f, 34.0f, 35.0f, 42.0f, 43.0f, 44.0f, 45.0f, 46.0f, 47.0f};
+TEST_F(TestOpenCL_SpaceToDepth, NotAlignTest3) {
+  int block_size = 2;
+  std::vector<int> input_shape = {1, 4, 4, 3};
+  std::vector<int> output_shape = {1, 2, 2, 12};
+  float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                        24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47};
+  float output_data[] = {0,  1,  2,  3,  4,  5,  12, 13, 14, 15, 16, 17, 6,  7,  8,  9,
+                         10, 11, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 36, 37,
+                         38, 39, 40, 41, 30, 31, 32, 33, 34, 35, 42, 43, 44, 45, 46, 47};
 
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), false, 2);
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(block_size);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestSpaceToDepthOpenCL, NotAlignTest4Fp32) {
-  std::vector<int> shape_in = {1, 6, 6, 6};
-  std::vector<int> shape_out = {1, 2, 2, 54};
-  std::vector<float> input_data = {
-    0.0f,   1.0f,   2.0f,   3.0f,   4.0f,   5.0f,   6.0f,   7.0f,   8.0f,   9.0f,   10.0f,  11.0f,  12.0f,  13.0f,
-    14.0f,  15.0f,  16.0f,  17.0f,  18.0f,  19.0f,  20.0f,  21.0f,  22.0f,  23.0f,  24.0f,  25.0f,  26.0f,  27.0f,
-    28.0f,  29.0f,  30.0f,  31.0f,  32.0f,  33.0f,  34.0f,  35.0f,  36.0f,  37.0f,  38.0f,  39.0f,  40.0f,  41.0f,
-    42.0f,  43.0f,  44.0f,  45.0f,  46.0f,  47.0f,  48.0f,  49.0f,  50.0f,  51.0f,  52.0f,  53.0f,  54.0f,  55.0f,
-    56.0f,  57.0f,  58.0f,  59.0f,  60.0f,  61.0f,  62.0f,  63.0f,  64.0f,  65.0f,  66.0f,  67.0f,  68.0f,  69.0f,
-    70.0f,  71.0f,  72.0f,  73.0f,  74.0f,  75.0f,  76.0f,  77.0f,  78.0f,  79.0f,  80.0f,  81.0f,  82.0f,  83.0f,
-    84.0f,  85.0f,  86.0f,  87.0f,  88.0f,  89.0f,  90.0f,  91.0f,  92.0f,  93.0f,  94.0f,  95.0f,  96.0f,  97.0f,
-    98.0f,  99.0f,  100.0f, 101.0f, 102.0f, 103.0f, 104.0f, 105.0f, 106.0f, 107.0f, 108.0f, 109.0f, 110.0f, 111.0f,
-    112.0f, 113.0f, 114.0f, 115.0f, 116.0f, 117.0f, 118.0f, 119.0f, 120.0f, 121.0f, 122.0f, 123.0f, 124.0f, 125.0f,
-    126.0f, 127.0f, 128.0f, 129.0f, 130.0f, 131.0f, 132.0f, 133.0f, 134.0f, 135.0f, 136.0f, 137.0f, 138.0f, 139.0f,
-    140.0f, 141.0f, 142.0f, 143.0f, 144.0f, 145.0f, 146.0f, 147.0f, 148.0f, 149.0f, 150.0f, 151.0f, 152.0f, 153.0f,
-    154.0f, 155.0f, 156.0f, 157.0f, 158.0f, 159.0f, 160.0f, 161.0f, 162.0f, 163.0f, 164.0f, 165.0f, 166.0f, 167.0f,
-    168.0f, 169.0f, 170.0f, 171.0f, 172.0f, 173.0f, 174.0f, 175.0f, 176.0f, 177.0f, 178.0f, 179.0f, 180.0f, 181.0f,
-    182.0f, 183.0f, 184.0f, 185.0f, 186.0f, 187.0f, 188.0f, 189.0f, 190.0f, 191.0f, 192.0f, 193.0f, 194.0f, 195.0f,
-    196.0f, 197.0f, 198.0f, 199.0f, 200.0f, 201.0f, 202.0f, 203.0f, 204.0f, 205.0f, 206.0f, 207.0f, 208.0f, 209.0f,
-    210.0f, 211.0f, 212.0f, 213.0f, 214.0f, 215.0f};
-  std::vector<float> output_data = {
-    0.0f,   1.0f,   2.0f,   3.0f,   4.0f,   5.0f,   6.0f,   7.0f,   8.0f,   9.0f,   10.0f,  11.0f,  12.0f,  13.0f,
-    14.0f,  15.0f,  16.0f,  17.0f,  36.0f,  37.0f,  38.0f,  39.0f,  40.0f,  41.0f,  42.0f,  43.0f,  44.0f,  45.0f,
-    46.0f,  47.0f,  48.0f,  49.0f,  50.0f,  51.0f,  52.0f,  53.0f,  72.0f,  73.0f,  74.0f,  75.0f,  76.0f,  77.0f,
-    78.0f,  79.0f,  80.0f,  81.0f,  82.0f,  83.0f,  84.0f,  85.0f,  86.0f,  87.0f,  88.0f,  89.0f,  18.0f,  19.0f,
-    20.0f,  21.0f,  22.0f,  23.0f,  24.0f,  25.0f,  26.0f,  27.0f,  28.0f,  29.0f,  30.0f,  31.0f,  32.0f,  33.0f,
-    34.0f,  35.0f,  54.0f,  55.0f,  56.0f,  57.0f,  58.0f,  59.0f,  60.0f,  61.0f,  62.0f,  63.0f,  64.0f,  65.0f,
-    66.0f,  67.0f,  68.0f,  69.0f,  70.0f,  71.0f,  90.0f,  91.0f,  92.0f,  93.0f,  94.0f,  95.0f,  96.0f,  97.0f,
-    98.0f,  99.0f,  100.0f, 101.0f, 102.0f, 103.0f, 104.0f, 105.0f, 106.0f, 107.0f, 108.0f, 109.0f, 110.0f, 111.0f,
-    112.0f, 113.0f, 114.0f, 115.0f, 116.0f, 117.0f, 118.0f, 119.0f, 120.0f, 121.0f, 122.0f, 123.0f, 124.0f, 125.0f,
-    144.0f, 145.0f, 146.0f, 147.0f, 148.0f, 149.0f, 150.0f, 151.0f, 152.0f, 153.0f, 154.0f, 155.0f, 156.0f, 157.0f,
-    158.0f, 159.0f, 160.0f, 161.0f, 180.0f, 181.0f, 182.0f, 183.0f, 184.0f, 185.0f, 186.0f, 187.0f, 188.0f, 189.0f,
-    190.0f, 191.0f, 192.0f, 193.0f, 194.0f, 195.0f, 196.0f, 197.0f, 126.0f, 127.0f, 128.0f, 129.0f, 130.0f, 131.0f,
-    132.0f, 133.0f, 134.0f, 135.0f, 136.0f, 137.0f, 138.0f, 139.0f, 140.0f, 141.0f, 142.0f, 143.0f, 162.0f, 163.0f,
-    164.0f, 165.0f, 166.0f, 167.0f, 168.0f, 169.0f, 170.0f, 171.0f, 172.0f, 173.0f, 174.0f, 175.0f, 176.0f, 177.0f,
-    178.0f, 179.0f, 198.0f, 199.0f, 200.0f, 201.0f, 202.0f, 203.0f, 204.0f, 205.0f, 206.0f, 207.0f, 208.0f, 209.0f,
-    210.0f, 211.0f, 212.0f, 213.0f, 214.0f, 215.0f};
+TEST_F(TestOpenCL_SpaceToDepth, NotAlignTest4) {
+  int block_size = 3;
+  std::vector<int> input_shape = {1, 6, 6, 6};
+  std::vector<int> output_shape = {1, 2, 2, 54};
+  float input_data[] = {
+    0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20,  21,
+    22,  23,  24,  25,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,
+    44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,
+    66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,  84,  85,  86,  87,
+    88,  89,  90,  91,  92,  93,  94,  95,  96,  97,  98,  99,  100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+    110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131,
+    132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153,
+    154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
+    176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197,
+    198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215};
+  float output_data[] = {
+    0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,  16,  17,  36,  37,  38,  39,
+    40,  41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  72,  73,  74,  75,  76,  77,  78,  79,
+    80,  81,  82,  83,  84,  85,  86,  87,  88,  89,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,
+    30,  31,  32,  33,  34,  35,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,
+    70,  71,  90,  91,  92,  93,  94,  95,  96,  97,  98,  99,  100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
+    110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 144, 145, 146, 147, 148, 149,
+    150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189,
+    190, 191, 192, 193, 194, 195, 196, 197, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+    140, 141, 142, 143, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179,
+    198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215};
 
-  RunTestCaseSpaceToDepth(shape_in, shape_out, input_data.data(), output_data.data(), false, 3);
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(block_size);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
 }
-}  // namespace mindspore
+
+}  // namespace mindspore::lite::opencl::test

@@ -22,8 +22,10 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/cast.h"
 
-namespace mindspore {
-class TestCastSelfOpenCL : public mindspore::CommonTest {
+// PrimitiveType_Cast: src/ops/populate/cast_populate.cc
+
+namespace mindspore::lite::opencl::test {
+class TestCastSelfOpenCL : public CommonTest {
  public:
   TestCastSelfOpenCL() {}
 };
@@ -208,4 +210,4 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   }
   delete sub_graph;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

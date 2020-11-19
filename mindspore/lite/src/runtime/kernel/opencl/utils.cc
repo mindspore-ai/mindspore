@@ -260,7 +260,7 @@ void PrintTensor(const lite::Tensor *tensor, MemType mem_type, int n, const std:
     return;
   }
 
-  Image2DInfo img_info(tensor);
+  GpuTensorInfo img_info(tensor);
   auto size = mem_type == MemType::BUF ? img_info.OriginSize : img_info.Image2DSize;
   std::vector<char> data(size);
   auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();

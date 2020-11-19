@@ -90,11 +90,10 @@ int SpaceToBatchNDOpenCLKernel::Prepare() {
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
 
-  std::set<std::string> build_options;
   std::string source = space_to_batch_nd_source;
   std::string program_name = "space_to_batch_nd";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
 
   SetGlobalLocal();
@@ -106,9 +105,9 @@ int SpaceToBatchNDOpenCLKernel::Prepare() {
 int SpaceToBatchNDOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
 
-  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
 
   return RET_OK;
 }

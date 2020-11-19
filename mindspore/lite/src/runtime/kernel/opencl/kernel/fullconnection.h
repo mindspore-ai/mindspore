@@ -48,8 +48,8 @@ class FullConnectionOpenCLKernel : public OpenCLKernel {
   bool transposeB{true};
   float activation_min_{-FLT_MAX};
   float activation_max_{FLT_MAX};
-  Image2DInfo inShape = Image2DInfo(nullptr);
-  Image2DInfo outShape = Image2DInfo(nullptr);
+  GpuTensorInfo inShape = GpuTensorInfo(nullptr);
+  GpuTensorInfo outShape = GpuTensorInfo(nullptr);
 };
 }  // namespace mindspore::kernel
 

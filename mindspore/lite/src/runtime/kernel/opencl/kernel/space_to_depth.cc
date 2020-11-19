@@ -35,8 +35,8 @@ int SpaceToDepthOpenCLKernel::CheckSpecs() { return RET_OK; }
 
 int SpaceToDepthOpenCLKernel::Prepare() {
   std::string kernel_name;
-  in_shape_ = Image2DInfo(in_tensors_[0]);
-  out_shape_ = Image2DInfo(out_tensors_[0]);
+  in_shape_ = GpuTensorInfo(in_tensors_[0]);
+  out_shape_ = GpuTensorInfo(out_tensors_[0]);
   if (in_shape_.C % C4NUM != 0) {
     kernel_name = "SpaceToDepth";
   } else {
@@ -45,11 +45,10 @@ int SpaceToDepthOpenCLKernel::Prepare() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  std::set<std::string> build_options;
   std::string source = space_to_depth_source;
   std::string program_name = "SpaceToDepth";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
   SetConstArgs();
   SetGlobalLocal();
@@ -78,7 +77,7 @@ int SpaceToDepthOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return mindspore::lite::RET_OK;
 }
 

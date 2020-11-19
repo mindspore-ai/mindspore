@@ -13,171 +13,75 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iostream>
-#include <memory>
-#include "src/common/log_adapter.h"
-#include "common/common_test.h"
-#include "mindspore/lite/src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/scale.h"
-#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
+#include "ut/src/runtime/kernel/opencl/common.h"
+#include "nnacl/scale.h"
 
-namespace mindspore {
-class TestScaleOpenCL : public mindspore::CommonTest {
- public:
-  TestScaleOpenCL() {}
-};
+namespace mindspore::lite::opencl::test {
 
-void RunTestCaseScale(void *input_data0, const std::vector<int> &input_shape, void *scale_data, void *offset_data,
-                      const std::vector<int> &weight_shape, void *output_data, const std::vector<int> &out_shape,
-                      bool enable_fp16, int axis, int act_type = schema::ActivationType_NO_ACTIVATION) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
-  ocl_runtime->Init();
-  size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
-  ocl_runtime->SetFp16Enable(enable_fp16);
-  auto allocator = ocl_runtime->GetAllocator();
-  auto param = static_cast<ScaleParameter *>(malloc(sizeof(ScaleParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param_ptr create error.";
-    return;
-  }
+class TestOpenCL_Scale : public CommonTest {};
+
+namespace {
+// PrimitiveType_Resize: src/ops/populate/scale_populate.cc
+OpParameter *CreateParameter(int axis, int activation_type = schema::ActivationType_NO_ACTIVATION) {
+  auto *param = test::CreateParameter<ScaleParameter>(schema::PrimitiveType_Scale);
   param->axis_ = axis;
-  param->activation_type_ = act_type;
-  auto tensor_x_ptr =
-    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), input_shape);
-  auto tensor_x = tensor_x_ptr.get();
-  if (tensor_x == nullptr) {
-    MS_LOG(ERROR) << "tensor_x create error.";
-    return;
-  }
+  param->activation_type_ = activation_type;
+  return reinterpret_cast<OpParameter *>(param);
+}
+}  // namespace
 
-  auto tensor_scale_ptr =
-    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), weight_shape,
-                                   schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
-  auto tensor_scale = tensor_scale_ptr.get();
-  if (tensor_scale == nullptr) {
-    MS_LOG(ERROR) << "tensor_scale create error.";
-    return;
+TEST_F(TestOpenCL_Scale, Axis1) {
+  int axis = 1;
+  std::vector<int> input_shape = {1, 2, 2, 3};
+  std::vector<int> weight_shape = {input_shape[axis]};
+  std::vector<int> output_shape = input_shape;
+  float input_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+  float scale_data[] = {1, 2};
+  float offset_data[] = {1, 2};
+  float output_data[] = {2, 3, 4, 5, 6, 7, 16, 18, 20, 22, 24, 26};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(axis);
+    TestMain({{input_shape, input_data, VAR},
+              {weight_shape, scale_data, CONST_TENSOR},
+              {weight_shape, offset_data, CONST_TENSOR}},
+             {output_shape, output_data}, param, fp16_enable);
   }
-  tensor_scale->set_data(scale_data);
-  auto tensor_offset_ptr =
-    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), weight_shape,
-                                   schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
-  auto tensor_offset = tensor_offset_ptr.get();
-  if (tensor_offset == nullptr) {
-    MS_LOG(ERROR) << "tensor_offset create error.";
-    return;
-  }
-  tensor_offset->set_data(offset_data);
-  auto tensor_out_ptr =
-    std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32), out_shape);
-  auto tensor_out = tensor_out_ptr.get();
-  if (tensor_out == nullptr) {
-    MS_LOG(ERROR) << "tensor_out create error.";
-    return;
-  }
-  std::vector<lite::Tensor *> inputs{tensor_x, tensor_scale, tensor_offset};
-  std::vector<lite::Tensor *> outputs{tensor_out};
-  auto op_kernel_ptr =
-    std::make_unique<kernel::ScaleOpenCLKernel>(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  auto op_kernel = op_kernel_ptr.release();
-  if (op_kernel == nullptr) {
-    MS_LOG(ERROR) << "op_kernel create error.";
-    return;
-  }
-  op_kernel->Init();
-  inputs[0]->MallocData(allocator);
-
-  std::vector<kernel::LiteKernel *> kernels{op_kernel};
-
-  std::vector<lite::Tensor *> inputs_g{tensor_x};
-  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs_g, outputs, kernels, kernels, kernels);
-  auto pGraph = pGraph_ptr.get();
-  if (pGraph == nullptr) {
-    MS_LOG(ERROR) << "pGraph create error.";
-    return;
-  }
-  pGraph->Init();
-  memcpy(inputs[0]->MutableData(), input_data0, tensor_x->ElementsNum() * dtype_size);
-  pGraph->Run();
-  if (enable_fp16) {
-    CompareOutput(outputs[0]->MutableData(), output_data, tensor_out->ElementsNum(), static_cast<float16_t>(1e-3),
-                  2e-2);
-  } else {
-    CompareOutput(outputs[0]->MutableData(), output_data, tensor_out->ElementsNum(), static_cast<float>(1e-5));
-  }
-
-  for (auto t : inputs) {
-    t->set_data(nullptr);
-  }
-  for (auto t : outputs) {
-    t->set_data(nullptr);
-  }
-  MS_LOG(INFO) << "TestScale passed";
 }
 
-TEST_F(TestScaleOpenCL, ScaleAxis3Fp32) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int c = 3;
-  std::vector<int> in_shape0 = {n, h, w, c};
-  std::vector<int> weight_shape = {c};
-  std::vector<int> out_shape = {n, h, w, c};
-  std::vector<float> input_data = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f};
-  std::vector<float> scale_data = {1.0f, 2.0f, 3.0f};
-  std::vector<float> offset_data = {1.0f, 2.0f, 3.0f};
-  std::vector<float> output_data = {2.0f, 6.0f, 12.0f, 5.0f, 12.0f, 21.0f, 8.0f, 18.0f, 30.0f, 11.0f, 24.0f, 39.0f};
-  RunTestCaseScale(input_data.data(), in_shape0, scale_data.data(), offset_data.data(), weight_shape,
-                   output_data.data(), out_shape, false, 3);
+TEST_F(TestOpenCL_Scale, Axis3) {
+  int axis = 3;
+  std::vector<int> input_shape = {1, 2, 2, 3};
+  std::vector<int> weight_shape = {input_shape[axis]};
+  std::vector<int> output_shape = input_shape;
+  float input_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+  float scale_data[] = {1, 2, 3};
+  float offset_data[] = {1, 2, 3};
+  float output_data[] = {2, 6, 12, 5, 12, 21, 8, 18, 30, 11, 24, 39};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(axis);
+    TestMain({{input_shape, input_data, VAR},
+              {weight_shape, scale_data, CONST_TENSOR},
+              {weight_shape, offset_data, CONST_TENSOR}},
+             {output_shape, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestScaleOpenCL, ScaleAxis1Fp32) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int c = 3;
-  std::vector<int> in_shape0 = {n, h, w, c};
-  std::vector<int> weight_shape = {h};
-  std::vector<int> out_shape = {n, h, w, c};
-  std::vector<float> input_data = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f};
-  std::vector<float> scale_data = {1.0f, 2.0f};
-  std::vector<float> offset_data = {1.0f, 2.0f};
-  std::vector<float> output_data = {2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 16.0f, 18.0f, 20.0f, 22.0f, 24.0f, 26.0f};
-  RunTestCaseScale(input_data.data(), in_shape0, scale_data.data(), offset_data.data(), weight_shape,
-                   output_data.data(), out_shape, false, 1);
+TEST_F(TestOpenCL_Scale, Axis3RELU6) {
+  int axis = 3;
+  std::vector<int> input_shape = {1, 2, 2, 3};
+  std::vector<int> weight_shape = {input_shape[axis]};
+  std::vector<int> output_shape = input_shape;
+  float input_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+  float scale_data[] = {1, 2, -1};
+  float offset_data[] = {1, 2, 3};
+  float output_data[] = {2, 6, 0, 5, 6, 0, 6, 6, 0, 6, 6, 0};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(axis, schema::ActivationType_RELU6);
+    TestMain({{input_shape, input_data, VAR},
+              {weight_shape, scale_data, CONST_TENSOR},
+              {weight_shape, offset_data, CONST_TENSOR}},
+             {output_shape, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestScaleOpenCL, ScaleAxis3ReLU6Fp32) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int c = 3;
-  std::vector<int> in_shape0 = {n, h, w, c};
-  std::vector<int> weight_shape = {c};
-  std::vector<int> out_shape = {n, h, w, c};
-  std::vector<float> input_data = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f};
-  std::vector<float> scale_data = {1.0f, 2.0f, -1.0f};
-  std::vector<float> offset_data = {1.0f, 2.0f, 3.0f};
-  std::vector<float> output_data = {2.0f, 6.0f, 0.0f, 5.0f, 6.0f, 0.0f, 6.0f, 6.0f, 0.0f, 6.0f, 6.0f, 0.0f};
-  RunTestCaseScale(input_data.data(), in_shape0, scale_data.data(), offset_data.data(), weight_shape,
-                   output_data.data(), out_shape, false, 3, schema::ActivationType_RELU6);
-}
-
-TEST_F(TestScaleOpenCL, ScaleAxis3Fp16) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int c = 3;
-  std::vector<int> in_shape0 = {n, h, w, c};
-  std::vector<int> weight_shape = {c};
-  std::vector<int> out_shape = {n, h, w, c};
-  std::vector<float16_t> input_data = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f};
-  std::vector<float16_t> scale_data = {1.0f, 2.0f, 3.0f};
-  std::vector<float16_t> offset_data = {1.0f, 2.0f, 3.0f};
-  std::vector<float16_t> output_data = {2.0f, 6.0f, 12.0f, 5.0f, 12.0f, 21.0f, 8.0f, 18.0f, 30.0f, 11.0f, 24.0f, 39.0f};
-  RunTestCaseScale(input_data.data(), in_shape0, scale_data.data(), offset_data.data(), weight_shape,
-                   output_data.data(), out_shape, true, 3);
-}
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

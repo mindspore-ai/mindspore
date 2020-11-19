@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/common_test.h"
 #include "nnacl/slice_parameter.h"
-#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
+#include "ut/src/runtime/kernel/opencl/common.h"
 
-namespace mindspore {
+namespace mindspore::lite::opencl::test {
 
-class TestSliceOpenCL : public mindspore::CommonTest {};
+class TestOpenCL_Slice : public CommonTest {};
 
-OpParameter *GetSliceParameter(const std::vector<int> &begin, const std::vector<int> &size) {
-  auto param = static_cast<SliceParameter *>(malloc(sizeof(SliceParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "SliceParameter create error.";
-    return nullptr;
-  }
-  param->op_parameter_.type_ = schema::PrimitiveType_Slice;
+namespace {
+// PrimitiveType_Slice: src/ops/populate/slice_populate.cc
+OpParameter *CreateParameter(const std::vector<int> &begin, const std::vector<int> &size) {
+  auto *param = test::CreateParameter<SliceParameter>(schema::PrimitiveType_Slice);
   param->param_length_ = begin.size();
   for (int i = 0; i < begin.size(); ++i) {
     param->begin_[i] = begin[i];
@@ -35,21 +31,22 @@ OpParameter *GetSliceParameter(const std::vector<int> &begin, const std::vector<
   }
   return reinterpret_cast<OpParameter *>(param);
 }
+}  // namespace
 
-TEST_F(TestSliceOpenCL, 4D) {
+TEST_F(TestOpenCL_Slice, 4D) {
   float input_data[] = {-0.45816937, 0.92391545,  -0.9135602, -1.4002057, 1.1080881,  0.40712625,  -0.28128958,
                         0.09470133,  0.19801073,  0.04927751, -1.2808367, 0.1470597,  0.03393711,  -0.33282498,
                         -1.0433807,  -1.3678077,  -0.6423931, 0.5584889,  0.28965706, 0.5343769,   0.75480366,
                         -1.9328151,  -0.48714373, 1.711132,   -1.8871949, -0.2987629, -0.14000037, -0.080552,
                         0.95056856,  -0.06886655, 0.5316237,  0.05787678};
-  float expect_data[] = {-0.9135602,  -1.4002057,  1.1080881,  0.40712625, -0.28128958, -1.2808367, 0.1470597,
+  float output_data[] = {-0.9135602,  -1.4002057,  1.1080881,  0.40712625, -0.28128958, -1.2808367, 0.1470597,
                          0.03393711,  -0.33282498, -1.0433807, 0.28965706, 0.5343769,   0.75480366, -1.9328151,
                          -0.48714373, -0.14000037, -0.080552,  0.95056856, -0.06886655, 0.5316237};
-  auto param = GetSliceParameter({0, 0, 0, 2}, {1, 2, 2, 5});
-  TestMain({{{1, 2, 2, 8}, input_data, Tensor::Category::VAR}}, {{1, 2, 2, 5}, expect_data}, param, false);
+  auto param = CreateParameter({0, 0, 0, 2}, {1, 2, 2, 5});
+  TestMain({{{1, 2, 2, 8}, input_data, VAR}}, {{1, 2, 2, 5}, output_data}, param, false);
 }
 
-TEST_F(TestSliceOpenCL, tflite_cpu) {
+TEST_F(TestOpenCL_Slice, test0) {
   std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>, std::vector<float>, std::vector<float>,
                          std::vector<int>, std::vector<int>>>
     cases = {{"In1D", {4}, {2}, {1, 2, 3, 4}, {2, 3}, {1}, {2}},
@@ -146,18 +143,16 @@ TEST_F(TestSliceOpenCL, tflite_cpu) {
     auto &input_shape = std::get<1>(case_);
     auto &output_shape = std::get<2>(case_);
     auto &input_data = std::get<3>(case_);
-    auto &expect_data = std::get<4>(case_);
+    auto &output_data = std::get<4>(case_);
     auto &begin = std::get<5>(case_);
     auto &size = std::get<6>(case_);
 
     std::cout << name << std::endl;
-    auto *param = GetSliceParameter(begin, size);
-    TestMain({{input_shape, input_data.data(), Tensor::Category::VAR}}, {output_shape, expect_data.data()}, param,
-             false);
-    param = GetSliceParameter(begin, size);
-    TestMain({{input_shape, input_data.data(), Tensor::Category::VAR}}, {output_shape, expect_data.data()}, param,
-             true);
+    auto *param = CreateParameter(begin, size);
+    TestMain({{input_shape, input_data.data(), VAR}}, {output_shape, output_data.data()}, param, false);
+    param = CreateParameter(begin, size);
+    TestMain({{input_shape, input_data.data(), VAR}}, {output_shape, output_data.data()}, param, true);
   }
 }  // namespace mindspore
 
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

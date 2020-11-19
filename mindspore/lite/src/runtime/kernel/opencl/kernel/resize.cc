@@ -63,11 +63,10 @@ int ResizeOpenCLKernel::Prepare() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  std::set<std::string> build_options;
   std::string source = resize_source;
   std::string program_name = "Resize";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
   SetConstArgs();
   SetGlobalLocal();
@@ -102,7 +101,7 @@ void ResizeOpenCLKernel::SetConstArgs() {
 
 void ResizeOpenCLKernel::SetGlobalLocal() {
   local_range_ = {};
-  auto out_shape = Image2DInfo(out_tensors_[0]);
+  auto out_shape = GpuTensorInfo(out_tensors_[0]);
   global_range_ = {out_shape.Slice, out_shape.W, out_shape.H};
 }
 
@@ -111,7 +110,7 @@ int ResizeOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

@@ -24,7 +24,10 @@ using mindspore::lite::Tensor;
 using mindspore::schema::PrimitiveType_Fill;
 using mindspore::schema::PrimitiveType_Shape;
 using mindspore::schema::Format::Format_NHWC;
-namespace mindspore {
+
+// PrimitiveType_Fill: src/ops/populate/fill_populate.cc
+
+namespace mindspore::lite::opencl::test {
 class TestFillOpenCLCI : public mindspore::CommonTest {
  public:
   TestFillOpenCLCI() {}
@@ -142,4 +145,4 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
   ASSERT_EQ(0, CompareOutputData(output_data_gpu, correctOutput, output_tensor.ElementsNum(), 0.0001));
   delete sub_graph;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

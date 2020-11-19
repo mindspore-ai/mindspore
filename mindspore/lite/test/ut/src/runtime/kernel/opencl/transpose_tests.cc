@@ -13,153 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iostream>
-#include <memory>
-#include "src/common/log_adapter.h"
-#include "common/common_test.h"
-#include "mindspore/lite/src/common/file_utils.h"
-#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/transpose.h"
-#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
+#include "ut/src/runtime/kernel/opencl/common.h"
+#include "nnacl/transpose.h"
 
-namespace mindspore {
-class TestTransposeOpenCL : public mindspore::CommonTest {
- public:
-  TestTransposeOpenCL() {}
-};
+namespace mindspore::lite::opencl::test {
 
-void RunTestTranspose(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
-  ocl_runtime->Init();
-  size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
-  ocl_runtime->SetFp16Enable(enable_fp16);
-  auto param = static_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param_ptr create error.";
-    return;
-  }
-  param->num_axes_ = 4;
-  param->perm_[0] = shape[3];
-  param->perm_[1] = shape[4];
-  param->perm_[2] = shape[5];
-  param->perm_[3] = shape[6];
-  auto allocator = ocl_runtime->GetAllocator();
-  int h = shape[0];
-  int w = shape[1];
-  int c = shape[2];
-  std::vector<int> input_shape = {1, h, w, c};
-  auto tensor_x_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
-                                                     input_shape, schema::Format_NHWC);
-  auto tensor_x = tensor_x_ptr.get();
-  if (tensor_x == nullptr) {
-    MS_LOG(ERROR) << "tensor_x create error.";
-    return;
-  }
-  std::vector<int> out_shape = {input_shape[param->perm_[0]], input_shape[param->perm_[1]],
-                                input_shape[param->perm_[2]], input_shape[param->perm_[3]]};
-  auto tensor_out_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
-                                                       out_shape, schema::Format_NHWC);
-  auto tensor_out = tensor_out_ptr.get();
-  if (tensor_out == nullptr) {
-    MS_LOG(ERROR) << "tensor_out create error.";
-    return;
-  }
-  std::vector<lite::Tensor *> inputs{tensor_x};
-  std::vector<lite::Tensor *> outputs{tensor_out};
-  auto arith_kernel = kernel::OpenCLKernelCreator<kernel::TransposeOpenCLKernel>(
-    inputs, outputs, reinterpret_cast<OpParameter *>(param), nullptr, kernel::KernelKey(), nullptr);
-  if (arith_kernel == nullptr) {
-    MS_LOG(ERROR) << "arith_kernel create error.";
-    return;
-  }
+class TestOpenCL_Transpose : public CommonTest {};
 
-  inputs[0]->MallocData(allocator);
-
-  std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs, outputs, kernels, kernels, kernels);
-  auto pGraph = pGraph_ptr.get();
-  if (pGraph == nullptr) {
-    MS_LOG(ERROR) << "pGraph create error.";
-    return;
+namespace {
+// PrimitiveType_Transpose: src/ops/populate/transpose_populate.cc
+//                          src/ops/populate/nchw2nhwc_populate.cc
+//                          src/ops/populate/nhwc2nchw_populate.cc
+OpParameter *CreateParameter(const std::vector<int> &perm) {
+  auto *param = test::CreateParameter<TransposeParameter>(schema::PrimitiveType_Transpose);
+  param->num_axes_ = perm.size();
+  for (int i = 0; i < perm.size(); ++i) {
+    param->perm_[i] = perm[i];
   }
-  pGraph->Init();
-  memcpy(inputs[0]->MutableData(), input_data, h * w * c * dtype_size);
-  pGraph->Run();
+  return reinterpret_cast<OpParameter *>(param);
+}
+}  // namespace
 
-  if (enable_fp16) {
-    CompareOutput(outputs[0]->MutableData(), output_data, h * w * c, static_cast<float16_t>(1e-3), 2e-2);
-  } else {
-    CompareOutput(outputs[0]->MutableData(), output_data, h * w * c, static_cast<float>(1e-5));
+TEST_F(TestOpenCL_Transpose, NHWC2NCHW) {
+  std::vector<int> input_shape = {1, 2, 2, 3};
+  std::vector<int> perm = {0, 3, 1, 2};
+  std::vector<int> output_shape;
+  for (int axis : perm) {
+    output_shape.push_back(input_shape[axis]);
   }
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  float output_data[] = {0, 3, 6, 9, 1, 4, 7, 10, 2, 5, 8, 11};
 
-  for (auto t : inputs) {
-    t->set_data(nullptr);
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(perm);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  for (auto t : outputs) {
-    t->set_data(nullptr);
-  }
-
-  MS_LOG(INFO) << "Test TransposeFp32 passed";
 }
 
-TEST_F(TestTransposeOpenCL, TransposeNHWC2NCHWFp32) {
-  int h = 2;
-  int w = 2;
-  int c = 3;
-  int perm0 = 0;
-  int perm1 = 3;
-  int perm2 = 1;
-  int perm3 = 2;
-  std::vector<int> shape = {h, w, c, perm0, perm1, perm2, perm3};
-  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
-  std::vector<float> output_data = {0.0f, 3.0f, 6.0f, 9.0f, 1.0f, 4.0f, 7.0f, 10.0f, 2.0f, 5.0f, 8.0f, 11.0f};
+TEST_F(TestOpenCL_Transpose, NCHW2NHWC) {
+  std::vector<int> input_shape = {1, 2, 2, 3};
+  std::vector<int> perm = {0, 2, 3, 1};
+  std::vector<int> output_shape;
+  for (int axis : perm) {
+    output_shape.push_back(input_shape[axis]);
+  }
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  float output_data[] = {0, 6, 1, 7, 2, 8, 3, 9, 4, 10, 5, 11};
 
-  RunTestTranspose(shape, input_data.data(), output_data.data(), false);
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(perm);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestTransposeOpenCL, TransposeNHWC2NCHWFp16) {
-  int h = 2;
-  int w = 2;
-  int c = 3;
-  int perm0 = 0;
-  int perm1 = 3;
-  int perm2 = 1;
-  int perm3 = 2;
-  std::vector<int> shape = {h, w, c, perm0, perm1, perm2, perm3};
-  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
-  std::vector<float16_t> output_data = {0.0f, 3.0f, 6.0f, 9.0f, 1.0f, 4.0f, 7.0f, 10.0f, 2.0f, 5.0f, 8.0f, 11.0f};
-
-  RunTestTranspose(shape, input_data.data(), output_data.data(), true);
-}
-
-TEST_F(TestTransposeOpenCL, TransposeNCHW2NHWCFp32) {
-  int h = 2;
-  int w = 2;
-  int c = 3;
-  int perm0 = 0;
-  int perm1 = 2;
-  int perm2 = 3;
-  int perm3 = 1;
-  std::vector<int> shape = {h, w, c, perm0, perm1, perm2, perm3};
-  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
-  std::vector<float> output_data = {0.0f, 6.0f, 1.0f, 7.0f, 2.0f, 8.0f, 3.0f, 9.0f, 4.0f, 10.0f, 5.0f, 11.0f};
-
-  RunTestTranspose(shape, input_data.data(), output_data.data(), false);
-}
-
-TEST_F(TestTransposeOpenCL, TransposeNCHW2NHWCFp16) {
-  int h = 2;
-  int w = 2;
-  int c = 3;
-  int perm0 = 0;
-  int perm1 = 2;
-  int perm2 = 3;
-  int perm3 = 1;
-  std::vector<int> shape = {h, w, c, perm0, perm1, perm2, perm3};
-  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f};
-  std::vector<float16_t> output_data = {0.0f, 6.0f, 1.0f, 7.0f, 2.0f, 8.0f, 3.0f, 9.0f, 4.0f, 10.0f, 5.0f, 11.0f};
-
-  RunTestTranspose(shape, input_data.data(), output_data.data(), true);
-}
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

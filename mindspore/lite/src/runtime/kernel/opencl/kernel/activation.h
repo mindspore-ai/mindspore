@@ -45,7 +45,7 @@ class ActivationOpenCLKernel : public OpenCLKernel {
   cl::Kernel kernel_;
   int type_;
   float alpha_;
-  Image2DInfo outShape = Image2DInfo(nullptr);
+  GpuTensorInfo outShape = GpuTensorInfo(nullptr);
 };
 
 }  // namespace mindspore::kernel

@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/common_test.h"
+#include "ut/src/runtime/kernel/opencl/common.h"
 #include "nnacl/strided_slice.h"
-#include "mindspore/lite/test/ut/src/runtime/kernel/opencl/utils_tests.h"
 
-namespace mindspore {
+namespace mindspore::lite::opencl::test {
 
-class TestStridedSliceOpenCL : public mindspore::CommonTest {};
+class TestOpenCL_StridedSlice : public CommonTest {};
 
-OpParameter *GetStridedSliceParameter(const std::vector<int> &begins, const std::vector<int> &ends,
-                                      const std::vector<int> &strides) {
-  auto param = static_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "create StridedSliceParameter error.";
-    return nullptr;
-  }
-  param->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
+namespace {
+// PrimitiveType_StridedSlice: src/ops/populate/strided_slice_populate.cc
+OpParameter *CreateParameter(const std::vector<int> &begins, const std::vector<int> &ends,
+                             const std::vector<int> &strides) {
+  auto *param = test::CreateParameter<StridedSliceParameter>(schema::PrimitiveType_StridedSlice);
   param->num_axes_ = begins.size();
   for (int i = 0; i < begins.size(); ++i) {
     param->begins_[i] = begins[i];
@@ -37,84 +33,109 @@ OpParameter *GetStridedSliceParameter(const std::vector<int> &begins, const std:
   }
   return reinterpret_cast<OpParameter *>(param);
 }
+}  // namespace
 
-TEST_F(TestStridedSliceOpenCL, 1D) {
+TEST_F(TestOpenCL_StridedSlice, 1D) {
   float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
                         18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
-  float expect_data[] = {3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33};
-  auto *param = GetStridedSliceParameter({3}, {36}, {3});
-  TestMain({{{36}, input_data, Tensor::Category::VAR}}, {{11}, expect_data}, param, false);
+  float output_data[] = {3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({3}, {36}, {3});
+    TestMain({{{36}, input_data, VAR}}, {{11}, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestStridedSliceOpenCL, 2D) {
+TEST_F(TestOpenCL_StridedSlice, 2D) {
   float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
                         18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
-  float expect_data[] = {11, 14};
-  auto *param = GetStridedSliceParameter({1, 2}, {3, 8}, {2, 3});
-  TestMain({{{4, 9}, input_data, Tensor::Category::VAR}}, {{1, 2}, expect_data}, param, false);
+  float output_data[] = {11, 14};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({1, 2}, {3, 8}, {2, 3});
+    TestMain({{{4, 9}, input_data, VAR}}, {{1, 2}, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestStridedSliceOpenCL, 3D) {
+TEST_F(TestOpenCL_StridedSlice, 3D) {
   float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
                         18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
-  float expect_data[] = {11, 14};
-  auto *param = GetStridedSliceParameter({0, 1, 2}, {1, 3, 8}, {1, 2, 3});
-  TestMain({{{1, 4, 9}, input_data, Tensor::Category::VAR}}, {{1, 1, 2}, expect_data}, param, false);
+  float output_data[] = {11, 14};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({0, 1, 2}, {1, 3, 8}, {1, 2, 3});
+    TestMain({{{1, 4, 9}, input_data, VAR}}, {{1, 1, 2}, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestStridedSliceOpenCL, 4D) {
+TEST_F(TestOpenCL_StridedSlice, 4D) {
   float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
                         18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
 
-  float expect_data0[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
+  float output_data0[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
                           18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
-  auto *param = GetStridedSliceParameter({0, 0, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-  TestMain({{{2, 2, 3, 3}, input_data, Tensor::Category::VAR}}, {{2, 2, 3, 3}, expect_data0}, param, false);
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({0, 0, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
+    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{2, 2, 3, 3}, output_data0}, param, fp16_enable);
+  }
 
-  param = GetStridedSliceParameter({0, 0, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-  TestMain({{{2, 2, 3, 3}, input_data, Tensor::Category::VAR}}, {{2, 2, 3, 3}, expect_data0}, param, true);
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({0, 0, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
+    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{2, 2, 3, 3}, output_data0}, param, fp16_enable);
+  }
 
-  float expect_data1[] = {18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
-  param = GetStridedSliceParameter({1, 0, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-  TestMain({{{2, 2, 3, 3}, input_data, Tensor::Category::VAR}}, {{1, 2, 3, 3}, expect_data1}, param, false);
+  float output_data1[] = {18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({1, 0, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
+    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{1, 2, 3, 3}, output_data1}, param, fp16_enable);
+  }
 
-  float expect_data2[] = {27, 28, 29, 30, 31, 32, 33, 34, 35};
-  param = GetStridedSliceParameter({1, 1, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-  TestMain({{{2, 2, 3, 3}, input_data, Tensor::Category::VAR}}, {{1, 1, 3, 3}, expect_data2}, param, false);
+  float output_data2[] = {27, 28, 29, 30, 31, 32, 33, 34, 35};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({1, 1, 0, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
+    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{1, 1, 3, 3}, output_data2}, param, fp16_enable);
+  }
 
-  float expect_data3[] = {33, 34, 35};
-  param = GetStridedSliceParameter({1, 1, 2, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
-  TestMain({{{2, 2, 3, 3}, input_data, Tensor::Category::VAR}}, {{1, 1, 1, 3}, expect_data3}, param, false);
+  float output_data3[] = {33, 34, 35};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({1, 1, 2, 0}, {2, 2, 3, 3}, {1, 1, 1, 1});
+    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{1, 1, 1, 3}, output_data3}, param, fp16_enable);
+  }
 
-  float expect_data4[] = {34};
-  param = GetStridedSliceParameter({1, 1, 2, 1}, {2, 2, 3, 2}, {1, 1, 1, 1});
-  TestMain({{{2, 2, 3, 3}, input_data, Tensor::Category::VAR}}, {{1, 1, 1, 1}, expect_data4}, param, false);
+  float output_data4[] = {34};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({1, 1, 2, 1}, {2, 2, 3, 2}, {1, 1, 1, 1});
+    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{1, 1, 1, 1}, output_data4}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestStridedSliceOpenCL, 4D_stride2) {
+TEST_F(TestOpenCL_StridedSlice, 4D_stride2) {
   float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
                         18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
-  float expect_data[] = {13, 14, 31, 32};
-  auto *param = GetStridedSliceParameter({0, 1, 1, 1}, {1, 4, 3, 3}, {2, 2, 2, 1});
-  TestMain({{{1, 4, 3, 3}, input_data, Tensor::Category::VAR}}, {{1, 2, 1, 2}, expect_data}, param, false);
+  float output_data[] = {13, 14, 31, 32};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({0, 1, 1, 1}, {1, 4, 3, 3}, {2, 2, 2, 1});
+    TestMain({{{1, 4, 3, 3}, input_data, VAR}}, {{1, 2, 1, 2}, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestStridedSliceOpenCL, 4D_to_3D) {
+TEST_F(TestOpenCL_StridedSlice, 4D_to_3D) {
   float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
                         18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
-  float expect_data[] = {18, 20, 21, 23, 27, 29, 30, 32};
-  auto *param = GetStridedSliceParameter({1, 0, 0, 0}, {2, 2, 2, 3}, {1, 1, 1, 2});
-  TestMain({{{2, 2, 3, 3}, input_data, Tensor::Category::VAR}}, {{2, 2, 2}, expect_data}, param, false);
+  float output_data[] = {18, 20, 21, 23, 27, 29, 30, 32};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({1, 0, 0, 0}, {2, 2, 2, 3}, {1, 1, 1, 2});
+    TestMain({{{2, 2, 3, 3}, input_data, VAR}}, {{2, 2, 2}, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestStridedSliceOpenCL, In1D_OutOfRangeBeginNegativeStride) {
+TEST_F(TestOpenCL_StridedSlice, In1D_OutOfRangeBeginNegativeStride) {
   float input_data[] = {1, 2, 3, 4};
-  float expect_data[] = {4, 3, 2};
-  auto *param = GetStridedSliceParameter({5}, {0}, {-1});
-  TestMain({{{4}, input_data, Tensor::Category::VAR}}, {{3}, expect_data}, param, false);
+  float output_data[] = {4, 3, 2};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({5}, {0}, {-1});
+    TestMain({{{4}, input_data, VAR}}, {{3}, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestStridedSliceOpenCL, tflite_cpu) {
+TEST_F(TestOpenCL_StridedSlice, test0) {
   std::vector<float> values(32768);
   for (int i = 0; i < values.size(); ++i) {
     values[i] = i % 1000;
@@ -290,28 +311,30 @@ TEST_F(TestStridedSliceOpenCL, tflite_cpu) {
     auto &name = std::get<0>(case_);
     auto &input_shape = std::get<1>(case_);
     auto &output_shape = std::get<2>(case_);
-    auto &input_data = std::get<3>(case_);
-    auto &expect_data = std::get<4>(case_);
+    auto input_data = std::get<3>(case_).data();
+    auto output_data = std::get<4>(case_).data();
     auto &begin = std::get<5>(case_);
     auto &end = std::get<6>(case_);
     auto &stride = std::get<7>(case_);
-
     std::cout << name << std::endl;
-    auto *param = GetStridedSliceParameter(begin, end, stride);
-    TestMain({{input_shape, input_data.data(), Tensor::Category::VAR}}, {output_shape, expect_data.data()}, param,
-             false);
-    param = GetStridedSliceParameter(begin, end, stride);
-    TestMain({{input_shape, input_data.data(), Tensor::Category::VAR}}, {output_shape, expect_data.data()}, param,
-             true);
+
+    for (auto fp16_enable : {false, true}) {
+      auto *param = CreateParameter(begin, end, stride);
+      TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+    }
   }
 }
 
-TEST_F(TestStridedSliceOpenCL, tflite_opencl) {
-  float input_data[] = {0.1f,  0.2f,  0.3f,  0.4,  1.1f,  1.2f,  1.3f,  1.4,  10.1f, 10.2f, 10.3f, 10.4,
-                        11.1f, 11.2f, 11.3f, 11.4, 20.1f, 20.2f, 20.3f, 20.4, 21.1f, 21.2f, 21.3f, 21.4};
-  float expect_data[] = {10.2, 10.4, 20.2, 20.4};
-  auto *param = GetStridedSliceParameter({0, 1, 0, 1}, {1, 3, 2, 4}, {1, 1, 2, 2});
-  TestMain({{{1, 3, 2, 4}, input_data, Tensor::Category::VAR}}, {{1, 2, 1, 2}, expect_data}, param, false);
+TEST_F(TestOpenCL_StridedSlice, test1) {
+  float input_data[] = {0.1,  0.2,  0.3,  0.4,  1.1,  1.2,  1.3,  1.4,  10.1, 10.2, 10.3, 10.4,
+                        11.1, 11.2, 11.3, 11.4, 20.1, 20.2, 20.3, 20.4, 21.1, 21.2, 21.3, 21.4};
+  float output_data[] = {10.2, 10.4, 20.2, 20.4};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter({0, 1, 0, 1}, {1, 3, 2, 4}, {1, 1, 2, 2});
+    TestMain({{{1, 3, 2, 4}, input_data, VAR}}, {{1, 2, 1, 2}, output_data}, param, fp16_enable,
+             fp16_enable ? 1e-2 : 1e-9);
+  }
 }
 
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

@@ -51,7 +51,7 @@ class SoftmaxOpenCLKernel : public OpenCLKernel {
   std::vector<size_t> local_size_;
   std::vector<size_t> global_size_;
   int axis_{0};
-  Image2DInfo out_shape = Image2DInfo(nullptr);
+  GpuTensorInfo out_shape = GpuTensorInfo(nullptr);
 };
 
 }  // namespace mindspore::kernel

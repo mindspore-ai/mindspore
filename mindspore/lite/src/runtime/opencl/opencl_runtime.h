@@ -112,11 +112,11 @@ class OpenCLRuntime {
   std::vector<std::vector<unsigned char>> GetProgramBinaries(const cl::Program &program);
   bool LoadSource(const std::string &program_name, const std::string &source);
   int BuildKernel(cl::Kernel &kernel, const std::string &program_name, const std::string &kernel_name,
-                  const std::set<std::string> &build_options);
+                  const std::set<std::string> &build_options = {});
   int RunKernel(const cl::Kernel &kernel, const std::vector<size_t> &global, const std::vector<size_t> &local,
-                cl::CommandQueue *command_queue);  // !!!To be deleted
+                cl::CommandQueue *command_queue = nullptr);  // !!!To be deleted
   int RunKernel(const cl::Kernel &kernel, const cl::NDRange &global, const cl::NDRange &local,
-                cl::CommandQueue *command_queue);
+                cl::CommandQueue *command_queue = nullptr);
   bool CopyDeviceMemToHost(void *dst, const void *src, size_t size, cl::CommandQueue *command_queue = nullptr,
                            bool sync = false) const;
   bool CopyHostMemToDevice(const void *dst, const void *src, size_t size, cl::CommandQueue *command_queue = nullptr,

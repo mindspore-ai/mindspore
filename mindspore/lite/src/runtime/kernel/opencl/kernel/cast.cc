@@ -100,8 +100,7 @@ int CastOpenCLKernel::Run() {
   int arg_cn = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());   // input tensor
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());  // out tensor
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
-
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 
