@@ -716,7 +716,7 @@ bool Merge(const std::vector<LiteMat> &mv, LiteMat &dst) {
 
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r) {
-  if (top < 0 || bottom <= 0 || left < 0 || right < 0) {
+  if (top < 0 || bottom < 0 || left < 0 || right < 0) {
     return false;
   }
   if (src.IsEmpty()) {

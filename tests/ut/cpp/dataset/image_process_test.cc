@@ -387,15 +387,13 @@ TEST_F(MindDataImageProcess, TestPadd) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
 
-  cv::Mat resize_256_image;
-  cv::resize(image, resize_256_image, cv::Size(256, 256), CV_INTER_LINEAR);
   int left = 10;
-  int right = 10;
-  int top = 10;
-  int bottom = 10;
+  int right = 20;
+  int top = 30;
+  int bottom = 40;
   cv::Mat b_image;
   cv::Scalar color = cv::Scalar(255, 255, 255);
-  cv::copyMakeBorder(resize_256_image, b_image, top, bottom, left, right, cv::BORDER_CONSTANT, color);
+  cv::copyMakeBorder(image, b_image, top, bottom, left, right, cv::BORDER_CONSTANT, color);
   cv::Mat rgba_mat;
   cv::cvtColor(image, rgba_mat, CV_BGR2RGBA);
 
@@ -403,13 +401,48 @@ TEST_F(MindDataImageProcess, TestPadd) {
   bool ret =
     InitFromPixel(rgba_mat.data, LPixelType::RGBA2BGR, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
   ASSERT_TRUE(ret == true);
-  LiteMat lite_mat_resize;
-  ret = ResizeBilinear(lite_mat_bgr, lite_mat_resize, 256, 256);
   ASSERT_TRUE(ret == true);
   LiteMat makeborder;
-  ret = Pad(lite_mat_resize, makeborder, top, bottom, left, right, PaddBorderType::PADD_BORDER_CONSTANT, 255, 255, 255);
+  ret = Pad(lite_mat_bgr, makeborder, top, bottom, left, right, PaddBorderType::PADD_BORDER_CONSTANT, 255, 255, 255);
   ASSERT_TRUE(ret == true);
-  cv::Mat dst_image(256 + top + bottom, 256 + left + right, CV_8UC3, makeborder.data_ptr_);
+  size_t total_size = makeborder.height_ * makeborder.width_ * makeborder.channel_;
+  double distance = 0.0f;
+  for (size_t i = 0; i < total_size; i++) {
+    distance += pow((uint8_t)b_image.data[i] - ((uint8_t*)makeborder)[i], 2);
+  }
+  distance = sqrt(distance / total_size);
+  EXPECT_EQ(distance, 0.0f);
+}
+
+TEST_F(MindDataImageProcess, TestPadZero) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  int left = 0;
+  int right = 0;
+  int top = 0;
+  int bottom = 0;
+  cv::Mat b_image;
+  cv::Scalar color = cv::Scalar(255, 255, 255);
+  cv::copyMakeBorder(image, b_image, top, bottom, left, right, cv::BORDER_CONSTANT, color);
+  cv::Mat rgba_mat;
+  cv::cvtColor(image, rgba_mat, CV_BGR2RGBA);
+
+  LiteMat lite_mat_bgr;
+  bool ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2BGR, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_bgr);
+  ASSERT_TRUE(ret == true);
+  ASSERT_TRUE(ret == true);
+  LiteMat makeborder;
+  ret = Pad(lite_mat_bgr, makeborder, top, bottom, left, right, PaddBorderType::PADD_BORDER_CONSTANT, 255, 255, 255);
+  ASSERT_TRUE(ret == true);
+  size_t total_size = makeborder.height_ * makeborder.width_ * makeborder.channel_;
+  double distance = 0.0f;
+  for (size_t i = 0; i < total_size; i++) {
+    distance += pow((uint8_t)b_image.data[i] - ((uint8_t*)makeborder)[i], 2);
+  }
+  distance = sqrt(distance / total_size);
+  EXPECT_EQ(distance, 0.0f);
 }
 
 TEST_F(MindDataImageProcess, TestGetDefaultBoxes) {
