@@ -292,7 +292,7 @@ void MatMulInt8_4x16_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row
     for (int c = 0; c < col; c++) {
       int r4div = r / C4NUM, r4mod = r % C4NUM;
       int c16div = c / C16NUM, c16mod = c % C16NUM;
-      size_t ci = r * col + c;
+      size_t ci = r * stride + c;
       int32_t value = 0;
       for (int d = 0; d < deep_4; d++) {
         int d4div = d / C4NUM, d4mod = d % C4NUM;
