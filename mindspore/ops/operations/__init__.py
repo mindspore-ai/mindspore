@@ -34,7 +34,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         UnsortedSegmentProd, UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
                         SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence, EmbeddingLookup,
                         Unique, GatherD, Identity, RepeatElements)
-from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
+from .comm_ops import (AllGather, AllReduce, _AlltoAll, AllSwap, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice, Send, Receive,
                        _HostAllGather, _HostReduceScatter)
@@ -295,6 +295,7 @@ __all__ = [
     'UnsortedSegmentProd',
     "AllGather",
     "AllReduce",
+    "AllSwap",
     "ReduceScatter",
     "Broadcast",
     "ReduceOp",

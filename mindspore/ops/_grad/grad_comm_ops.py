@@ -21,7 +21,7 @@ from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.comm_ops import (AllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
                                    _GetTensorSlice, _MirrorOperator, ReduceOp, Send, Receive,
-                                   ReduceScatter, _HostReduceScatter, _VirtualDiv)
+                                   ReduceScatter, _HostReduceScatter, _VirtualDiv, AllSwap)
 from .grad_base import bprop_getters
 
 
@@ -150,6 +150,21 @@ def get_bprop_reduce_scatter(self):
 
     def bprop(x, out, dout):
         dx = reduce_scatter_grad(dout)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(AllSwap)
+def get_bprop_allswap(self):
+    """Generate bprop for AllSwap."""
+    all_swap_grad = AllSwap(self.group)
+    if self.instance_name:
+        instance_name = "grad" + self.instance_name
+        all_to_all_grad.set_prim_instance_name(instance_name)
+
+    def bprop(x, send_size, recv_size, out, dout):
+        dx = all_swap_grad(dout, recv_size, send_size)
         return (dx,)
 
     return bprop
