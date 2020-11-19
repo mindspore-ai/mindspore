@@ -73,9 +73,9 @@ const std::map<std::string, OperatorType> DictOpType{
   {PRELU, OperatorType::kRecPReLU},
   // Elm-wise OP
   {TRANSPOSE, OperatorType::kRecElmWiseOp},
-  {TRANSPOSE, OperatorType::kRecElmWiseOp},
   {L2_NORMALIZE, OperatorType::kRecElmWiseOp},
   {TENSOR_ADD, OperatorType::kRecElmWiseOp},
+  {TENSOR_DOT, OperatorType::kRecElmWiseOp},
   {SUB, OperatorType::kRecElmWiseOp},
   {MUL, OperatorType::kRecElmWiseOp},
   {DIV, OperatorType::kRecElmWiseOp},
