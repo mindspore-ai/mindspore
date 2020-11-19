@@ -95,7 +95,7 @@ void UpdateKernelInfo(const std::vector<AnfNodePtr> &node_list) {
           auto selected_kernel_info_ptr = kernel_info_list[index];
           ResetKernelBuildInfo(cnode);
           AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info_ptr, cnode.get());
-          SetTensorDeviceInfo(*selected_kernel_info_ptr, cnode);
+          SetTensorDeviceInfo(cnode);
           break;
         }
     }
@@ -477,7 +477,7 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const std::vector<std::pair
   auto graph_selected_info = graph_info_builder.Build();
   MS_EXCEPTION_IF_NULL(graph_selected_info);
   AnfAlgo::SetSelectKernelBuildInfo(graph_selected_info, kernel_node.get());
-  SetTensorDeviceInfo(*graph_selected_info, kernel_node);
+  SetTensorDeviceInfo(kernel_node);
 }
 
 void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph) {

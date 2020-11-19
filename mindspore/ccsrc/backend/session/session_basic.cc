@@ -1398,6 +1398,10 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   cnode->set_abstract(op_run_info.abstract);
   // get output dynamic shape info
   AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(op_run_info.is_dynamic_shape), cnode);
+  if (op_run_info.is_auto_mixed_precision) {
+    AnfAlgo::SetNodeAttr(kAttrPynativeNextOpName, MakeValue(op_run_info.next_op_name), cnode);
+    AnfAlgo::SetNodeAttr(kAttrPynativeNextIndex, MakeValue(op_run_info.next_input_index), cnode);
+  }
   // set execution order
   std::vector<CNodePtr> exe_order = {cnode};
   graph->set_execution_order(exe_order);

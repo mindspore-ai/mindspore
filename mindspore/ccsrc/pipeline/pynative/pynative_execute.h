@@ -81,7 +81,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool grad_flag() { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
 
-  py::tuple RunOpInner(const py::args &args);
+  py::tuple RunOpInner(const OpExecInfoPtr &op_exec_info);
   void NewGraph(const py::object &cell, const py::args &args);
   py::object Run(const py::tuple &args, const py::object &phase);
   py::object CheckGraph(const py::object &cell, const py::args &args);
@@ -108,6 +108,12 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   std::string ParseNodeName(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
                             parse::AstMainType type);
 
+  py::object DoParamMixPrecisionCast(bool *is_cast, const py::object obj, const std::string &op_name, size_t index);
+  py::object DoParamMixPrecisionCastTuple(bool *is_cast, const py::tuple tuple, const std::string &op_name,
+                                          size_t index);
+  py::object DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name, size_t index);
+  void DoSignatrueCast(const PrimitivePyPtr &prim, const std::map<SignatureEnumDType, TypeId> &dst_type,
+                       const std::vector<SignatureEnumDType> &dtypes, const OpExecInfoPtr &op_exec_info);
   // run op
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   MsBackendPolicy InitEnv(const OpExecInfoPtr &op_exec_info);
@@ -129,8 +135,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out);
 
   // construct grad graph
-  void Pushp();
-  void Popp();
+  void PushCurrentGraphToStack();
+  void PopGraphStack();
   void NewGraphInner(const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args, const FuncGraphPtr &g);
   void EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
@@ -148,19 +154,17 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   abstract::AbstractBasePtrList GetArgsSpec(const py::args &args);
 
   // hold graph(forward and grad) info
-  void set_pyobj(FuncGraphPtr g, const std::string obj) { graph_info_map_[g].objects.push_back(obj); }
-  void set_node_map(const FuncGraphPtr &g, const py::object &node, const AnfNodePtr &cnode, bool is_param = false);
-  void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node) {
-    graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int64_t>{-1});
+  void SetPyObjInGraphInfoMap(FuncGraphPtr g, const std::string obj) { graph_info_map_[g].objects.push_back(obj); }
+  void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
+                                  bool is_param = false);
+  void SetNodeMapInGraphInfoMap(FuncGraphPtr g, const std::string id, AnfNodePtr node, int64_t index = -1) {
+    graph_info_map_[g].node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
   }
-  void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node, int index) {
-    graph_info_map_[g].node_map[obj] = std::make_pair(node, std::vector<int64_t>{index});
+  void SetNodeMapInGraphInfoMap(FuncGraphPtr g, const std::string id, AnfNodePtr node, std::vector<int64_t> index) {
+    graph_info_map_[g].node_map[id] = std::make_pair(node, index);
   }
-  void set_node_map(const FuncGraphPtr &g, const std::string &obj, AnfNodePtr node, std::vector<int64_t> index) {
-    graph_info_map_[g].node_map[obj] = std::make_pair(node, index);
-  }
-  void set_tuple_node_map(const FuncGraphPtr &g, const py::object &node, const AnfNodePtr &cnode,
-                          const std::vector<int64_t> &idx, bool is_param = false);
+  void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,
+                                      const std::vector<int64_t> &index_sequence, bool is_param = false);
 
   static std::shared_ptr<PynativeExecutor> executor_;
   static std::mutex instance_lock_;
@@ -176,7 +180,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   FuncGraphPtr df_builder_{nullptr};
   ResourcePtr resource_{nullptr};
   // Records forwrad graph, the bottom is top graph
-  std::stack<FuncGraphPtr> graph_context_;
+  std::stack<FuncGraphPtr> graph_stack_;
   std::unordered_set<std::string> top_graph_cells_;
 
   // record all info of a graph
@@ -195,6 +199,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   std::unordered_map<std::string, std::string> obj_to_forward_id_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
   std::unordered_map<std::string, AbstractListMap> prim_abs_list_;
+  const inline static std::string kOpsFunctionModelName = "mindspore.ops.functional";
+  const inline static std::string kMSDtypeModelName = "mindspore.common.dtype";
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;
