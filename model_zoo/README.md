@@ -65,7 +65,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
     - [Natural Language Processing](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/nlp)       
         - [DS-CNN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/nlp/dscnn/README.md)     
     - [Audio](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio)
-        - [FCN-4](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio/music_auto_tagging/README.md)    
+        - [FCN-4](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio/fcn-4/README.md)    
 
 - [Community](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/community) 
 
