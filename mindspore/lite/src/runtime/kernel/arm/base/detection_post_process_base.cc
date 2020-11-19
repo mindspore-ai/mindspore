@@ -133,6 +133,16 @@ void DetectionPostProcessBaseCPUKernel::FreeAllocatedBuffer() {
     context_->allocator->Free(params_->selected_);
     params_->selected_ = nullptr;
   }
+  if (desc_.data_type == kNumberTypeInt8) {
+    if (input_boxes_ != nullptr) {
+      context_->allocator->Free(input_boxes_);
+      input_boxes_ = nullptr;
+    }
+    if (input_scores_ != nullptr) {
+      context_->allocator->Free(input_scores_);
+      input_scores_ = nullptr;
+    }
+  }
 }
 
 int DetectionPostProcessBaseCPUKernel::Run() {
