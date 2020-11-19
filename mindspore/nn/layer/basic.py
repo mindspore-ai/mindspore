@@ -190,10 +190,10 @@ class Dense(Cell):
         ValueError: If weight_init or bias_init shape is incorrect.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
+        - **input** (Tensor) - Tensor of shape :math:`(*, in\_channels)`.
 
     Outputs:
-        Tensor of shape :math:`(N, out\_channels)`.
+        Tensor of shape :math:`(*, out\_channels)`.
 
     Examples:
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
@@ -203,7 +203,7 @@ class Dense(Cell):
         [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
          [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
     """
-    @cell_attr_register(attrs=['has_bias', 'activation'])
+    @cell_attr_register(attrs=['has_bias', 'activation', 'in_channels', 'out_channels'])
     def __init__(self,
                  in_channels,
                  out_channels,
