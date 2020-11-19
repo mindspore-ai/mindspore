@@ -49,6 +49,9 @@ void CacheSwapHashmapCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 
   hashmap_length_ = hashmap_shape[0];
+  if (hashmap_length_ <= 0) {
+    MS_LOG(EXCEPTION) << "Hashmap length must > 0";
+  }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
 

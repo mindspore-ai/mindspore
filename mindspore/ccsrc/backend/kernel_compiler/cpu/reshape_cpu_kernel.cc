@@ -21,7 +21,7 @@ namespace kernel {
 void ReshapeCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   node_ = kernel_node;
-  x_data_type_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  x_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   type_size_ = GetTypeByte(TypeIdToType(x_data_type_));
 }
 

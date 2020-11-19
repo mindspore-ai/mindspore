@@ -85,6 +85,9 @@ void MapCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Dimension of HashMap must be 2, (n, 4)";
   }
   hashmap_length_ = hashmap_shape[0];
+  if (hashmap_length_ <= 0) {
+    MS_LOG(EXCEPTION) << "Hashmap length must > 0";
+  }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
 
@@ -154,9 +157,14 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
       hashmap[tmp_entry].step = step_[0];
     }
   }
-  MS_LOG(INFO) << "Miss count: " << miss_count;
-  MS_LOG(INFO) << "Avg search count: " << total_count / count_size;
-  MS_LOG(INFO) << "Cache hit rate: " << hit_count / count_size;
+  if (miss_count != 0) {
+    MS_LOG(INFO) << "Miss count: " << miss_count;
+  }
+  if (count_size != 0) {
+    MS_LOG(INFO) << "Avg search count: " << total_count / count_size;
+    MS_LOG(INFO) << "Cache hit rate: " << hit_count / count_size;
+  }
+
   float total_insert_count = 0;
   float total_delete_count = 0;
   // swap hash map
@@ -193,8 +201,10 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     total_delete_count += (compress_count + delete_count);
     total_insert_count += tag_count;
   }
-  MS_LOG(INFO) << "Insert count: " << total_insert_count / miss_count;
-  MS_LOG(INFO) << "Delete count: " << total_delete_count / miss_count;
+  if (miss_count != 0) {
+    MS_LOG(INFO) << "Insert count: " << total_insert_count / miss_count;
+    MS_LOG(INFO) << "Delete count: " << total_delete_count / miss_count;
+  }
   // update step
   step_[0] += 1;
   // update cache idx

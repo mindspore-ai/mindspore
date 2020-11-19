@@ -72,13 +72,18 @@ void UpdateCacheCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   max_num_ = *reinterpret_cast<T *>(inputs[3]->addr);
 
   size_t one_length_size = input_x_dtype_size_ * update_length_;
+  auto max_size = inputs[0]->size;
   for (size_t i = 0; i < batch_size_; ++i) {
     if (indices[i] < 0 || indices[i] >= max_num_) continue;
 
     char *tmp = update + i * one_length_size;
-    int ret = memcpy_s(input_x + indices[i] * one_length_size, one_length_size, tmp, one_length_size);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+    if (indices[i] * one_length_size + one_length_size <= max_size) {
+      int ret = memcpy_s(input_x + indices[i] * one_length_size, one_length_size, tmp, one_length_size);
+      if (ret != 0) {
+        MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Memcpy out of size";
     }
   }
 }
