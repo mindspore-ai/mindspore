@@ -42,8 +42,10 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
     T *dloss = GetDeviceAddress<T>(inputs, 2);
     T *weight = GetDeviceAddress<T>(inputs, 3);
     T *dx = GetDeviceAddress<T>(outputs, 0);
-    BinaryCrossEntropyLossGrad(input_size_, reduction_, input_x, input_y, weight, dloss, dx,
-                               reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (input_size_ > 0) {
+      BinaryCrossEntropyLossGrad(input_size_, reduction_, input_x, input_y, weight, dloss, dx,
+                                 reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
     return true;
   }
 
@@ -52,7 +54,6 @@ class BinaryCrossEntropyGradGpuKernel : public GpuKernel {
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
     }
-
     string reduction = GetAttr<string>(kernel_node, "reduction");
     if (reduction == "none") {
       reduction_ = 0;
