@@ -535,7 +535,7 @@ AbstractBasePtr InferImplGpuConvertToDynamicShape(const AnalysisEnginePtr &, con
   ShapeVector input_shape = input->shape()->shape();
   int32_t input_rank = input_shape.size();
   ShapeVector inferred_shape(input_rank, Shape::SHP_ANY);
-  ShapeVector min_shape = {1};
+  ShapeVector min_shape(input_rank, 1);
   ShapeVector max_shape = input_shape;
 
   ShapePtr shape = std::make_shared<Shape>(inferred_shape, min_shape, max_shape);
