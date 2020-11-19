@@ -18,9 +18,6 @@
 #include <cmath>
 #include <memory>
 
-const int ELTWISE_MIN_INPUT_SIZE = 2;
-const float ELTWISE_SUM_COEFF_EPSILON = 1e-5;
-
 namespace mindspore {
 namespace lite {
 STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
@@ -42,13 +39,13 @@ STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe
     return RET_NULL_PTR;
   }
 
-  if (proto.bottom_size() < ELTWISE_MIN_INPUT_SIZE) {
+  if (proto.bottom_size() < 2) {
     MS_LOG(ERROR) << "Eltwise Op " << proto.name() << " need at least 2 inputs,but input size is "
                   << proto.bottom_size();
     return RET_ERROR;
   }
 
-  const caffe::EltwiseParameter eltwiseParam = proto.eltwise_param();
+  const caffe::EltwiseParameter &eltwiseParam = proto.eltwise_param();
   if (eltwiseParam.coeff_size() != 0 && eltwiseParam.coeff_size() != proto.bottom_size()) {
     MS_LOG(ERROR) << "Coeff size(" << eltwiseParam.coeff_size()
                   << ") check fail, Eltwise Layer takes one coefficient per bottom blob.";
@@ -60,8 +57,8 @@ STATUS CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe
     return RET_ERROR;
   }
 
-  if (eltwiseParam.coeff_size() != 0 && (fabs(eltwiseParam.coeff(0) - 1) > ELTWISE_SUM_COEFF_EPSILON ||
-                                         fabs(eltwiseParam.coeff(1) - 1) > ELTWISE_SUM_COEFF_EPSILON)) {
+  if (eltwiseParam.coeff_size() != 0 &&
+      (std::fabs(eltwiseParam.coeff(0) - 1) > 1e-5 || std::fabs(eltwiseParam.coeff(1) - 1) > 1e-5)) {
     MS_LOG(ERROR) << "Eltwise only support coefficient 1 for summation now.";
     return RET_ERROR;
   }

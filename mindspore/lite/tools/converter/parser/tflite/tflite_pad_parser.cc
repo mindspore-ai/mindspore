@@ -18,7 +18,6 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <map>
 
 namespace mindspore {
 namespace lite {
@@ -26,6 +25,9 @@ STATUS TflitePadParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique
                               const std::unique_ptr<tflite::ModelT> &tflite_model,
                               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TflitePadParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -74,7 +76,7 @@ STATUS TflitePadParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique
         return RET_NOT_SUPPORT;
     }
   } else {
-    MS_LOG(ERROR) << "this pad:" << node_name << " hasn't been supported";
+    MS_LOG(ERROR) << node_name << " hasn't been supported";
     return RET_NOT_FIND_OP;
   }
 

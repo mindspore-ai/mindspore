@@ -239,7 +239,7 @@ int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node
   node->set_abstract(abstract_tensor);
 
   if (default_para_map_.find(value_proto.name()) != default_para_map_.end()) {
-    auto *tensor_info = new Tensor(kDefaultValueSwitchMap[tensor_typeproto.elem_type()], shape);
+    auto *tensor_info = new (std::nothrow) Tensor(kDefaultValueSwitchMap[tensor_typeproto.elem_type()], shape);
     if (tensor_info == nullptr) {
       return RET_MEMORY_FAILED;
     }
@@ -345,7 +345,6 @@ ValuePtr AnfImporterFromProtobuf::ObtainCNodeAttrInScalarForm(const onnx::Tensor
       MS_LOG(ERROR) << "Obtain attr in scalar-form has not support input type: " << attr_tensor_type;
       return {};
   }
-  return {};
 }
 
 bool AnfImporterFromProtobuf::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const std::string &attr_name,
@@ -871,7 +870,7 @@ int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
 }
 
 onnx::ModelProto *AnfImporterFromProtobuf::ReadOnnxFromBinary(const std::string &model_path) {
-  auto onnx_model = new onnx::ModelProto;
+  auto onnx_model = new (std::nothrow) onnx::ModelProto;
   if (RET_OK != ValidateFileStr(model_path, ".mindir")) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.mindir";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_INPUT_PARAM_INVALID);

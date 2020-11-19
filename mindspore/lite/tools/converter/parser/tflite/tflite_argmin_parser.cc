@@ -25,6 +25,9 @@ STATUS TfliteArgminParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
                                  const std::unique_ptr<tflite::ModelT> &tflite_model,
                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteArgminParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -48,7 +51,12 @@ STATUS TfliteArgminParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
 
   // get axis attr
   auto axis_idx = tflite_op->inputs[1];
-  auto buffer_idx = tflite_subgraph->tensors[axis_idx]->buffer;
+  auto axis_tensor = tflite_subgraph->tensors[axis_idx].get();
+  if (axis_tensor == nullptr) {
+    MS_LOG(ERROR) << "axis_tensor is null";
+    return RET_NULL_PTR;
+  }
+  auto buffer_idx = axis_tensor->buffer;
   auto &buf_data = tflite_model->buffers[buffer_idx];
   if (buf_data == nullptr) {
     MS_LOG(ERROR) << "the buf data is null";
@@ -69,6 +77,6 @@ STATUS TfliteArgminParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   return RET_OK;
 }
 
-TfliteNodeRegister g_TfliteArgminParser("Argmin", new TfliteArgminParser());
+TfliteNodeRegister g_tfliteArgminParser("Argmin", new TfliteArgminParser());
 }  // namespace lite
 }  // namespace mindspore

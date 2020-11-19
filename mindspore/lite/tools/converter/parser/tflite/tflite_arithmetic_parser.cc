@@ -18,7 +18,6 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <map>
 
 namespace mindspore {
 namespace lite {
@@ -26,6 +25,9 @@ STATUS TfliteDoubleInputOpParser::Parse(TfliteTensorsInfo *tensors_info,
                                         const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model,
                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -165,11 +167,14 @@ STATUS TfliteDoubleInputOpParser::Parse(TfliteTensorsInfo *tensors_info,
     }
     op->primitive->value.type = schema::PrimitiveType_Minimum;
     op->primitive->value.value = attr.release();
+  } else {
+    MS_LOG(ERROR) << node_name << " hasn't been supported";
+    return RET_NOT_FIND_OP;
   }
 
   // set input
-  for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
-    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  for (int input : tflite_op->inputs) {
+    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
@@ -179,6 +184,9 @@ STATUS TfliteSingleInputOpParser::Parse(TfliteTensorsInfo *tensors_info,
                                         const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model,
                                         const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -303,6 +311,9 @@ STATUS TfliteSingleInputOpParser::Parse(TfliteTensorsInfo *tensors_info,
     }
     op->primitive->value.type = schema::PrimitiveType_Neg;
     op->primitive->value.value = attr.release();
+  } else {
+    MS_LOG(ERROR) << node_name << " hasn't been supported";
+    return RET_NOT_FIND_OP;
   }
 
   AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
@@ -314,6 +325,9 @@ STATUS TfliteCompareOpParser::Parse(TfliteTensorsInfo *tensors_info,
                                     const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                     const std::unique_ptr<tflite::ModelT> &tflite_model,
                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -381,45 +395,48 @@ STATUS TfliteCompareOpParser::Parse(TfliteTensorsInfo *tensors_info,
     }
     op->primitive->value.type = schema::PrimitiveType_LessEqual;
     op->primitive->value.value = attr.release();
+  } else {
+    MS_LOG(ERROR) << node_name << " hasn't been supported";
+    return RET_NOT_FIND_OP;
   }
 
-  for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
-    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  for (int input : tflite_op->inputs) {
+    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteAddParser("Add", new TfliteAddParser());
-TfliteNodeRegister g_tfliteSubParser("Sub", new TfliteSubParser());
-TfliteNodeRegister g_TfliteMulParser("Mul", new TfliteMulParser());
-TfliteNodeRegister g_TfliteDivParser("Div", new TfliteDivParser());
-TfliteNodeRegister g_tfliteFloorDivParser("FloorDiv", new TfliteFloorDivParser());
-TfliteNodeRegister g_tfliteFloorModParser("FloorMod", new TfliteFloorModParser());
-TfliteNodeRegister g_tfliteRealDivParser("RealDiv", new TfliteRealDivParser());
-TfliteNodeRegister g_TflitePowParser("Pow", new TflitePowParser());
-TfliteNodeRegister g_tfliteSquaredDifferenceParser("SquaredDifference", new TfliteSquaredDifferenceParser());
-TfliteNodeRegister g_TfliteMaximumParser("Maximum", new TfliteMaximumParser());
-TfliteNodeRegister g_TfliteMinimumParser("Minimum", new TfliteMinimumParser());
+TfliteNodeRegister g_tfliteAddParser("Add", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tfliteSubParser("Sub", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tfliteMulParser("Mul", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tfliteDivParser("Div", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tfliteFloorDivParser("FloorDiv", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tfliteFloorModParser("FloorMod", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tfliteRealDivParser("RealDiv", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tflitePowParser("Pow", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tfliteSquaredDifferenceParser("SquaredDifference", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tfliteMaximumParser("Maximum", new TfliteDoubleInputOpParser());
+TfliteNodeRegister g_tfliteMinimumParser("Minimum", new TfliteDoubleInputOpParser());
 
-TfliteNodeRegister g_TfliteAbsParser("Abs", new TfliteAbsParser());
-TfliteNodeRegister g_TfliteExpParser("Exp", new TfliteExpParser());
-TfliteNodeRegister g_TfliteSqrtParser("Sqrt", new TfliteSqrtParser());
-TfliteNodeRegister g_tfliteRsqrtParser("Rsqrt", new TfliteRsqrtParser());
-TfliteNodeRegister g_TfliteSquareParser("Square", new TfliteSquareParser());
-TfliteNodeRegister g_TfliteSinParser("Sin", new TfliteSinParser());
-TfliteNodeRegister g_TfliteCosParser("Cos", new TfliteCosParser());
-TfliteNodeRegister g_TfliteLogParser("Log", new TfliteLogParser());
-TfliteNodeRegister g_tfliteRoundParser("Round", new TfliteRoundParser());
-TfliteNodeRegister g_TfliteCeilParser("Ceil", new TfliteCeilParser());
-TfliteNodeRegister g_tfliteFloorParser("flOOR", new TfliteFloorParser());
-TfliteNodeRegister g_tfliteNegParser("Neg", new TfliteNegParser());
+TfliteNodeRegister g_tfliteAbsParser("Abs", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteExpParser("Exp", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteSqrtParser("Sqrt", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteRsqrtParser("Rsqrt", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteSquareParser("Square", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteSinParser("Sin", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteCosParser("Cos", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteLogParser("Log", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteRoundParser("Round", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteCeilParser("Ceil", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteFloorParser("flOOR", new TfliteSingleInputOpParser());
+TfliteNodeRegister g_tfliteNegParser("Neg", new TfliteSingleInputOpParser());
 
-TfliteNodeRegister g_tfliteEqualParser("Equal", new TfliteEqualParser());
-TfliteNodeRegister g_tfliteNotEqualParser("NotEqual", new TfliteNotEqualParser());
-TfliteNodeRegister g_tfliteGreaterEParser("Greater", new TfliteGreaterParser());
-TfliteNodeRegister g_tfliteGreaterEqualParser("GreaterEqual", new TfliteGreaterEqualParser());
-TfliteNodeRegister g_tfliteLessParser("Less", new TfliteLessParser());
-TfliteNodeRegister g_tfliteLessEqualParser("LessEqual", new TfliteLessEqualParser());
+TfliteNodeRegister g_tfliteEqualParser("Equal", new TfliteCompareOpParser());
+TfliteNodeRegister g_tfliteNotEqualParser("NotEqual", new TfliteCompareOpParser());
+TfliteNodeRegister g_tfliteGreaterEParser("Greater", new TfliteCompareOpParser());
+TfliteNodeRegister g_tfliteGreaterEqualParser("GreaterEqual", new TfliteCompareOpParser());
+TfliteNodeRegister g_tfliteLessParser("Less", new TfliteCompareOpParser());
+TfliteNodeRegister g_tfliteLessEqualParser("LessEqual", new TfliteCompareOpParser());
 }  // namespace lite
 }  // namespace mindspore

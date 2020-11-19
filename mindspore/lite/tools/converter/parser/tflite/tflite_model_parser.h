@@ -46,10 +46,10 @@ class TfliteModelParser : public ModelParser {
  protected:
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const char *model_path);
 
-  STATUS CopyConstTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
-                             const tflite::TensorT *tflite_tensor, schema::TensorT *tensor);
+  static STATUS CopyConstTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
+                                    const tflite::TensorT *tflite_tensor, schema::TensorT *tensor);
 
-  void SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor, schema::TensorT *tensor);
+  static void SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor, schema::TensorT *tensor);
 
   STATUS ConvertOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
                    const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, const QuantType &quant_type,
@@ -61,7 +61,7 @@ class TfliteModelParser : public ModelParser {
 
   STATUS GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::MetaGraphT *sub_graph);
 
-  STATUS ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph);
+  static STATUS ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph);
 
   QuantType quantType = QuantType_QUANT_NONE;
   char *tfliteModelBuf = nullptr;

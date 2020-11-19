@@ -26,23 +26,23 @@ namespace mindspore {
 namespace lite {
 class CaffeConvBaseParser {
  public:
-  CaffeConvBaseParser() {}
+  CaffeConvBaseParser() = default;
 
-  virtual ~CaffeConvBaseParser() {}
+  virtual ~CaffeConvBaseParser() = default;
 
-  STATUS ParsePads(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *pad);
+  static STATUS ParsePads(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *pad);
 
-  STATUS ParseStrides(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *stride);
+  static STATUS ParseStrides(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *stride);
 
-  STATUS ParseDilations(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *dilation);
+  static STATUS ParseDilations(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *dilation);
 
-  STATUS ParseKernels(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *kernel);
+  static STATUS ParseKernels(const caffe::ConvolutionParameter &conv_param, std::vector<int64_t> *kernel);
 
-  int ParseGroup(const caffe::ConvolutionParameter &convParam, const std::string &layerType);
+  static int ParseGroup(const caffe::ConvolutionParameter &convParam, const std::string &layerType);
 
-  int ParseChannelOut(const caffe::ConvolutionParameter &convParam, int32_t *channelOut);
+  static int ParseChannelOut(const caffe::ConvolutionParameter &convParam, int32_t *channelOut);
 
-  STATUS ParseWeight(const caffe::LayerParameter &weight, std::vector<schema::TensorT *> *weightVec);
+  static STATUS ParseWeight(const caffe::LayerParameter &weight, std::vector<schema::TensorT *> *weightVec);
 };
 }  // namespace lite
 }  // namespace mindspore

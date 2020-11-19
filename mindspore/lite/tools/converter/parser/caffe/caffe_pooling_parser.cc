@@ -17,9 +17,6 @@
 #include "tools/converter/parser/caffe/caffe_pooling_parser.h"
 #include <memory>
 
-const uint32_t INNERPRODUCT_WINDOW_DEFAULT_VALUE = 0;
-const uint32_t INNERPRODUCT_PAD_DEFAULT_VALUE = 0;
-
 namespace mindspore {
 namespace lite {
 STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
@@ -43,7 +40,7 @@ STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto, const caffe
 
   attr->format = schema::Format::Format_NCHW;
 
-  const caffe::PoolingParameter poolingParam = proto.pooling_param();
+  const caffe::PoolingParameter &poolingParam = proto.pooling_param();
   auto status = ParsePads(poolingParam, attr.get());
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
@@ -68,15 +65,12 @@ STATUS CaffePoolingParser::Parse(const caffe::LayerParameter &proto, const caffe
     return RET_ERROR;
   }
 
-  // default roundMode RoundMode_CEIL
   attr->roundMode = schema::RoundMode_CEIL;
   if (poolingParam.has_round_mode()) {
     if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_FLOOR) {
       attr->roundMode = schema::RoundMode_FLOOR;
     } else if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_CEIL) {
       attr->roundMode = schema::RoundMode_CEIL;
-    } else {
-      MS_ASSERT(false);
     }
   }
   attr->padMode = schema::PadMode_CAFFE;
@@ -127,8 +121,8 @@ STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingPa
       MS_LOG(ERROR) << "With Global_pooling: true Filter size cannot specified";
       return RET_ERROR;
     }
-    attr->windowH = INNERPRODUCT_WINDOW_DEFAULT_VALUE;
-    attr->windowW = INNERPRODUCT_WINDOW_DEFAULT_VALUE;
+    attr->windowH = 0;
+    attr->windowW = 0;
     attr->global = true;
   } else {
     if (poolingParam.has_kernel_size() == (poolingParam.has_kernel_h() || poolingParam.has_kernel_w())) {
@@ -157,7 +151,7 @@ STATUS CaffePoolingParser::ParsePoolingMode(const caffe::PoolingParameter &pooli
   } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
     attr->poolingMode = schema::PoolMode_MEAN_POOLING;
   } else {
-    MS_LOG(ERROR) << "Pooling param`s PoolingMode is not MAX either AVE. MindSpore support MAX and AVE only.";
+    MS_LOG(ERROR) << "MindSpore support MAX and AVE PoolingMode only.";
     return RET_ERROR;
   }
   return RET_OK;

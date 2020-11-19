@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_AND_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_AND_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_LOGICAL_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_LOGICAL_PARSER_H
 
 #include <memory>
 #include <vector>
@@ -33,22 +33,7 @@ class TfliteLogicalParser : public TfliteNodeParser {
                const std::unique_ptr<tflite::ModelT> &tflite_model,
                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) override;
 };
-
-class TfliteLogicalAndParser : public TfliteLogicalParser {
- public:
-  TfliteLogicalAndParser() : TfliteLogicalParser() {}
-};
-
-class TfliteLogicalNotParser : public TfliteLogicalParser {
- public:
-  TfliteLogicalNotParser() : TfliteLogicalParser() {}
-};
-
-class TfliteLogicalOrParser : public TfliteLogicalParser {
- public:
-  TfliteLogicalOrParser() : TfliteLogicalParser() {}
-};
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_LOGICAL_AND_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_LOGICAL_PARSER_H

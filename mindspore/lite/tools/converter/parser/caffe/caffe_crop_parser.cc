@@ -17,13 +17,15 @@
 #include "tools/converter/parser/caffe/caffe_crop_parser.h"
 #include <memory>
 
-const int32_t CROP_AXIS = 2;
-
 namespace mindspore {
 namespace lite {
 STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                               schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeCropParser";
+  if (weightVec == nullptr) {
+    MS_LOG(ERROR) << "weightVec is null";
+    return RET_NULL_PTR;
+  }
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,22 +43,23 @@ STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::L
   }
 
   if (!proto.has_crop_param()) {
-    attr->axis = CROP_AXIS;
+    attr->axis = 2;
     std::vector<int64_t> offsets(2, 0);
     attr->offsets = offsets;
   } else {
-    const caffe::CropParameter cropParam = proto.crop_param();
+    const caffe::CropParameter &cropParam = proto.crop_param();
     if (cropParam.has_axis()) {
       if (cropParam.axis() == -1) {
         MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
       }
       attr->axis = cropParam.axis();
     } else {
-      attr->axis = CROP_AXIS;
+      attr->axis = 2;
     }
 
     if (cropParam.offset_size() != 0) {
       std::vector<int64_t> offsets;
+      offsets.reserve(cropParam.offset_size());
       for (int i = 0; i < cropParam.offset_size(); i++) {
         offsets.push_back(cropParam.offset(i));
       }

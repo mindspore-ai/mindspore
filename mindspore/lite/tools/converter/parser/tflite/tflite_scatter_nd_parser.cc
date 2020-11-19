@@ -17,8 +17,6 @@
 #include "tools/converter/parser/tflite/tflite_scatter_nd_parser.h"
 #include <vector>
 #include <memory>
-#include <utility>
-#include <map>
 
 namespace mindspore {
 namespace lite {
@@ -27,6 +25,9 @@ STATUS TfliteScatterNdParser::Parse(TfliteTensorsInfo *tensors_info,
                                     const std::unique_ptr<tflite::ModelT> &tflite_model,
                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteScatterNdParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -51,8 +52,6 @@ STATUS TfliteScatterNdParser::Parse(TfliteTensorsInfo *tensors_info,
   op->primitive->value.type = schema::PrimitiveType_ScatterND;
   op->primitive->value.value = attr.release();
 
-  // in tflite, kIndices = 0, kUpdates = 1, kShape = 2
-  // in mslite, kScatterShapeIndex = 0, kScatterIndicesIndex = 1, kScatterUpdateIndex = 2;
   AddOpInput(op, tensors_info, tflite_op->inputs[2], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   AddOpInput(op, tensors_info, tflite_op->inputs[1], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
@@ -60,6 +59,6 @@ STATUS TfliteScatterNdParser::Parse(TfliteTensorsInfo *tensors_info,
   return RET_OK;
 }
 
-TfliteNodeRegister g_TfliteScatterNdParser("ScatterNd", new TfliteScatterNdParser());
+TfliteNodeRegister g_tfliteScatterNdParser("ScatterNd", new TfliteScatterNdParser());
 }  // namespace lite
 }  // namespace mindspore

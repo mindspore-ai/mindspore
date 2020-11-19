@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_ANF_EXPORTER_ANF_EXPORTER_H_
-#define MINDSPORE_LITE_SRC_ANF_EXPORTER_ANF_EXPORTER_H_
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_ANF_EXPORTER_ANF_EXPORTER_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_ANF_EXPORTER_ANF_EXPORTER_H_
 
 #include <map>
 #include <string>
@@ -36,21 +36,22 @@ class AnfExporter {
                        schema::CNodeT *fb_node);
   int SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                      schema::CNodeT *fb_node);
-  void RemoveIfMakeTuple(const CNodePtr &cnode);
-  void RemoveIfDepend(const CNodePtr &cnode);
+  static void RemoveIfMakeTuple(const CNodePtr &cnode);
+  static void RemoveIfDepend(const CNodePtr &cnode);
 
  protected:
-  int ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, schema::CNodeT *output_cnode);
-  int ConvertInputParameter(const std::shared_ptr<AnfNode> input_anode,
+  int ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, schema::CNodeT *output_cnode);
+  int ConvertInputParameter(const std::shared_ptr<AnfNode> &input_anode,
                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *output_cnode);
-  int ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
+  int ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_anode,
                             const std::unique_ptr<schema::MetaGraphT> &meta_graphT, schema::CNodeT *output_cnode);
   void SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                           schema::CNodeT *return_node);
-  bool IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType type);
-  int ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                        const std::shared_ptr<PrimitiveC> primitive, const std::unique_ptr<schema::CNodeT> &dst_node);
+  static bool IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType type);
+  static int ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
+                               const std::shared_ptr<PrimitiveC> &primitive,
+                               const std::unique_ptr<schema::CNodeT> &dst_node);
 
  private:
   std::map<std::string, int> node_id_map_;
@@ -62,4 +63,4 @@ class AnfExporter {
 // and clear.
 schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false, bool copy_primitive = false);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_ANF_EXPORTER_ANF_EXPORTER_H_
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_ANF_EXPORTER_ANF_EXPORTER_H_

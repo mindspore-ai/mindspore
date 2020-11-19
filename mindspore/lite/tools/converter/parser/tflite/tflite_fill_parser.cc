@@ -17,7 +17,6 @@
 #include "tools/converter/parser/tflite/tflite_fill_parser.h"
 #include <vector>
 #include <memory>
-#include <map>
 
 namespace mindspore {
 namespace lite {
@@ -25,6 +24,9 @@ STATUS TfliteFillParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniqu
                                const std::unique_ptr<tflite::ModelT> &tflite_model,
                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteFillParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -56,6 +58,6 @@ STATUS TfliteFillParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniqu
   return RET_OK;
 }
 
-TfliteNodeRegister g_TfliteFillParser("Fill", new TfliteFillParser());
+TfliteNodeRegister g_tfliteFillParser("Fill", new TfliteFillParser());
 }  // namespace lite
 }  // namespace mindspore

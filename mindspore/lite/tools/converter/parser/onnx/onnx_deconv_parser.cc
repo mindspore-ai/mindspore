@@ -71,14 +71,12 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
     return RET_NULL_PTR;
   }
 
-  // set default params
   attr->padMode = schema::PadMode_NOTSET;
   attr->group = 1;
   attr->strideW = 1;
   attr->strideH = 1;
   attr->dilateW = 1;
   attr->dilateH = 1;
-  // set opdef each attr params
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
       attr->group = static_cast<int32_t>(onnx_node_attr.i());
@@ -144,10 +142,14 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
   }
   std::vector<int> weight_shape;
   auto size = (*nodeIter).dims_size();
+  weight_shape.reserve(size);
   for (int i = 0; i < size; ++i) {
     weight_shape.emplace_back((*nodeIter).dims(i));
   }
-  MS_ASSERT(weight_shape.size() == 4);
+  if (weight_shape.size() != 4) {
+    MS_LOG(ERROR) << "weight_shape.size() should be 4, but is " << weight_shape.size();
+    return RET_ERROR;
+  }
   attr->channelIn = weight_shape[0];
   attr->channelOut = weight_shape[1] * attr->group;
 

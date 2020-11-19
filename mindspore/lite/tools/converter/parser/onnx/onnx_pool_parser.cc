@@ -15,7 +15,6 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_pool_parser.h"
-
 #include <memory>
 
 namespace mindspore {

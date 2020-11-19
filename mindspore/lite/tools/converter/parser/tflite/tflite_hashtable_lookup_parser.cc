@@ -17,7 +17,6 @@
 #include "tools/converter/parser/tflite/tflite_hashtable_lookup_parser.h"
 #include <vector>
 #include <memory>
-#include <map>
 
 namespace mindspore {
 namespace lite {
@@ -27,6 +26,9 @@ STATUS TfliteHashtableLookupParser::Parse(TfliteTensorsInfo *tensors_info,
                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteHashtableLookupParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -45,11 +47,11 @@ STATUS TfliteHashtableLookupParser::Parse(TfliteTensorsInfo *tensors_info,
 
   op->primitive->value.type = schema::PrimitiveType_HashtableLookup;
   op->primitive->value.value = attr.release();
-  for (size_t i = 0; i < tflite_op->inputs.size(); ++i) {
-    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  for (int input : tflite_op->inputs) {
+    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
-  for (size_t i = 0; i < tflite_op->outputs.size(); ++i) {
-    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  for (int output : tflite_op->outputs) {
+    AddOpOutput(op, tensors_info, output, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   return RET_OK;
 }

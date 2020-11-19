@@ -23,6 +23,11 @@ namespace mindspore {
 namespace lite {
 schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   std::unique_ptr<schema::TensorT> weight = std::make_unique<schema::TensorT>();
+  if (weight == nullptr) {
+    MS_LOG(ERROR) << "new weight failed";
+    return nullptr;
+  }
+
   weight->format = schema::Format::Format_NCHW;
   std::vector<int32_t> shapeVec;
   ConvertShape(proto, &shapeVec);
@@ -32,8 +37,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
 
   // cal Weight num
   int count = 1;
-  for (size_t i = 0; i < shapeVec.size(); ++i) {
-    int dim = shapeVec[i];
+  for (int dim : shapeVec) {
     if (dim <= 0) {
       MS_LOG(ERROR) << "Convert weight fail, Blob size invalid";
       return nullptr;
@@ -48,6 +52,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
   // get weight
   std::unique_ptr<float[]> buf = std::make_unique<float[]>(count);
   if (buf == nullptr) {
+    MS_LOG(ERROR) << "new weight buf failed";
     return nullptr;
   }
   if (proto.double_data_size() > 0) {
@@ -74,6 +79,7 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
                     << "blob.data_size:%d" << proto.data_size();
       return nullptr;
     }
+
     weight->data.resize(count * sizeof(float));
     const float *data_ptr = proto.data().data();
     if (data_ptr == nullptr) {
@@ -91,8 +97,12 @@ schema::TensorT *ConvertWeight(const caffe::BlobProto &proto) {
 }
 
 STATUS ConvertShape(const caffe::BlobProto &proto, std::vector<int32_t> *shape) {
-  shape->clear();
+  if (shape == nullptr) {
+    MS_LOG(ERROR) << "shape is null";
+    return RET_ERROR;
+  }
 
+  shape->clear();
   if (proto.has_num() || proto.has_channels() || proto.has_height() || proto.has_width()) {
     shape->push_back(proto.num());
     shape->push_back(proto.channels());

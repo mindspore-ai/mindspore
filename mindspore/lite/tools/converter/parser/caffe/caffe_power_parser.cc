@@ -18,10 +18,6 @@
 #include <memory>
 #include <vector>
 
-static const float CAFFE_POWER_DEFAULT_POWER = 1.0;
-static const float CAFFE_POWER_DEFAULT_SCALE = 1.0;
-static const float CAFFE_POWER_DEFAULT_SHIFT = 0.0;
-
 namespace mindspore {
 namespace lite {
 STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
@@ -43,15 +39,15 @@ STATUS CaffePowerParser::Parse(const caffe::LayerParameter &proto, const caffe::
     return RET_NULL_PTR;
   }
 
-  const caffe::PowerParameter powerParam = proto.power_param();
+  const caffe::PowerParameter &powerParam = proto.power_param();
   if (proto.has_power_param()) {
-    attr->power = powerParam.has_power() ? powerParam.power() : CAFFE_POWER_DEFAULT_POWER;
-    attr->scale = powerParam.has_scale() ? powerParam.scale() : CAFFE_POWER_DEFAULT_SCALE;
-    attr->shift = powerParam.has_shift() ? powerParam.shift() : CAFFE_POWER_DEFAULT_SHIFT;
+    attr->power = powerParam.has_power() ? powerParam.power() : 1.0;
+    attr->scale = powerParam.has_scale() ? powerParam.scale() : 1.0;
+    attr->shift = powerParam.has_shift() ? powerParam.shift() : 0.0;
   } else {
-    attr->power = CAFFE_POWER_DEFAULT_POWER;
-    attr->scale = CAFFE_POWER_DEFAULT_SCALE;
-    attr->shift = CAFFE_POWER_DEFAULT_SHIFT;
+    attr->power = 1.0;
+    attr->scale = 1.0;
+    attr->shift = 0.0;
   }
 
   op->name = proto.name();

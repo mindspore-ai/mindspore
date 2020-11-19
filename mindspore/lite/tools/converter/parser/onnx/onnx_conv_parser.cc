@@ -67,7 +67,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-  // set default params
+
   attr->strideH = 1;
   attr->strideW = 1;
   attr->dilateH = 1;
@@ -75,6 +75,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   attr->group = 1;
   attr->padMode = schema::PadMode_NOTSET;
   attr->format = schema::Format::Format_NCHW;
+
   // set opdef each attr params
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
@@ -157,8 +158,10 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     auto iter = std::find_if((*nodeIter).attribute().begin(), (*nodeIter).attribute().end(),
                              [](const onnx::AttributeProto &attr) { return attr.name() == "shape"; });
     if (iter != (*nodeIter).attribute().end()) {
-      MS_ASSERT(iter->ints().begin() != nullptr);
-      MS_ASSERT(iter->ints().end() != nullptr);
+      if (iter->ints().begin() == nullptr || iter->ints().end() == nullptr) {
+        MS_LOG(ERROR) << "dims insert failed";
+        return RET_ERROR;
+      }
       dims.insert(dims.begin(), iter->ints().begin(), iter->ints().end());
     }
     attr->channelOut = dims[0];

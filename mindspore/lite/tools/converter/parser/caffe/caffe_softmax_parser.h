@@ -26,7 +26,7 @@ namespace lite {
 class CaffeSoftmaxParser : public CaffeNodeParser {
  public:
   CaffeSoftmaxParser() : CaffeNodeParser("softmax") {}
-  ~CaffeSoftmaxParser() = default;
+  ~CaffeSoftmaxParser() override = default;
 
   STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;

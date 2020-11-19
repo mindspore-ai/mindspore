@@ -17,7 +17,6 @@
 #include "tools/converter/parser/tflite/tflite_depthwise_conv_parser.h"
 #include <vector>
 #include <memory>
-#include <map>
 
 namespace mindspore {
 namespace lite {
@@ -27,6 +26,9 @@ STATUS TfliteDepthwiseConv2DParser::Parse(TfliteTensorsInfo *tensors_info,
                                           const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                           schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteDepthwiseConv2DParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;

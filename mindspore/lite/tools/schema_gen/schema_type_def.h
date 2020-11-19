@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_TOOLS_SCHEMA_GEN_SCHEMA_TYPE_DEF_H_
 #define MINDSPORE_LITE_TOOLS_SCHEMA_GEN_SCHEMA_TYPE_DEF_H_
+
 #include <string>
 #include "tools/schema_gen/schema_type_register.h"
 

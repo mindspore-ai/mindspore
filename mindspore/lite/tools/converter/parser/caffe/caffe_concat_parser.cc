@@ -17,8 +17,6 @@
 #include "tools/converter/parser/caffe/caffe_concat_parser.h"
 #include <memory>
 
-const int32_t CONCAT_DEFAULT_AXIS = 1;
-
 namespace mindspore {
 namespace lite {
 STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
@@ -40,7 +38,7 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe:
     return RET_NULL_PTR;
   }
 
-  const caffe::ConcatParameter concatParam = proto.concat_param();
+  const caffe::ConcatParameter &concatParam = proto.concat_param();
   if (concatParam.has_axis() && concatParam.has_concat_dim()) {
     MS_LOG(ERROR) << "Concat param in caffe have concat_dim and axis simultaneously, return fail";
     return RET_ERROR;
@@ -48,19 +46,19 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe:
 
   if (concatParam.has_concat_dim()) {
     MS_LOG(DEBUG) << "Concat dim , set axis: " << concatParam.concat_dim();
-    int32_t concat_dim_value = (int32_t)concatParam.concat_dim();
+    auto concat_dim_value = (int32_t)concatParam.concat_dim();
     if (concat_dim_value < 0) {
       MS_LOG(ERROR) << "concat_dim value in model is smaller than 0:" << concat_dim_value;
       return RET_ERROR;
     }
     attr->axis = concat_dim_value;
   } else if (concatParam.has_axis()) {
-    MS_LOG(DEBUG) << "axis , set axis: " << concatParam.axis();
-    int32_t tmpInt = (int32_t)concatParam.axis();
+    MS_LOG(DEBUG) << "set axis: " << concatParam.axis();
+    auto tmpInt = (int32_t)concatParam.axis();
     attr->axis = tmpInt;
   } else {
-    MS_LOG(DEBUG) << "default , set axis: " << CONCAT_DEFAULT_AXIS;
-    attr->axis = CONCAT_DEFAULT_AXIS;
+    MS_LOG(DEBUG) << "by default, set axis = 1";
+    attr->axis = 1;
   }
   attr->n = proto.bottom_size();
 

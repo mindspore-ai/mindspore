@@ -18,13 +18,15 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <map>
 
 namespace mindspore {
 namespace lite {
 STATUS TflitePoolingParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                   const std::unique_ptr<tflite::ModelT> &tflite_model,
                                   const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -50,6 +52,9 @@ STATUS TflitePoolingParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   } else if (std::strcmp(node_name, "MaxPooling") == 0) {
     MS_LOG(DEBUG) << "parse TfliteMaxPoolingParser";
     attr->poolingMode = schema::PoolMode_MAX_POOLING;
+  } else {
+    MS_LOG(ERROR) << node_name << " hasn't been supported";
+    return RET_NOT_FIND_OP;
   }
 
   const auto &tflite_attr = tflite_op->builtin_options.AsPool2DOptions();
@@ -63,7 +68,6 @@ STATUS TflitePoolingParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   attr->strideH = tflite_attr->stride_h;
   attr->padMode = GetPadMode(tflite_attr->padding);
   attr->format = schema::Format::Format_NHWC;
-
   attr->global = false;
   attr->roundMode = schema::RoundMode_FLOOR;
   attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
@@ -92,7 +96,7 @@ STATUS TflitePoolingParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteMeanPoolingParser("MeanPooling", new TfliteMeanPoolingParser());
-TfliteNodeRegister g_tfliteMaxPoolingParser("MaxPooling", new TfliteMaxPoolingParser());
+TfliteNodeRegister g_tfliteMeanPoolingParser("MeanPooling", new TflitePoolingParser());
+TfliteNodeRegister g_tfliteMaxPoolingParser("MaxPooling", new TflitePoolingParser());
 }  // namespace lite
 }  // namespace mindspore

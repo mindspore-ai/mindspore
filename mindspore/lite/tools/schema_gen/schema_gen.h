@@ -22,7 +22,7 @@ namespace mindspore::lite {
 class SchemaGenFlags : public virtual FlagParser {
  public:
   SchemaGenFlags() { AddFlag(&SchemaGenFlags::export_path_, "exportPath", "schema define export path", "."); }
-  ~SchemaGenFlags() = default;
+  ~SchemaGenFlags() override = default;
 
  public:
   std::string export_path_ = ".";

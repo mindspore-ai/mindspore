@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_PREDICT_GRAPH_UTIL_H
-#define MINDSPORE_PREDICT_GRAPH_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H
+#define MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H
 
 #include <cstdlib>
 #include <unordered_map>
@@ -23,7 +23,6 @@
 #include <string>
 #include <memory>
 #include <vector>
-
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 #include "src/common/graph_util.h"
@@ -73,19 +72,19 @@ STATUS ReplaceTensorOfNode(schema::MetaGraphT *graphT, uint32_t nodeIdx, uint32_
 
 NodeIter InsertNode(schema::MetaGraphT *graphT, uint32_t existNodeIdx, InsertPlace place, size_t inoutIndex,
                     std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode,
-                    OpDefCopyer opDefCopyer = GetSimpleOpCopyer());
+                    const OpDefCopyer &opDefCopyer = GetSimpleOpCopyer());
 
 NodeIter InsertNode(schema::MetaGraphT *graphT, NodeIter existNodeIter, InsertPlace place, size_t inoutIndexIdx,
                     std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode,
-                    OpDefCopyer opDefCopyer = GetSimpleOpCopyer());
+                    const OpDefCopyer &opDefCopyer = GetSimpleOpCopyer());
 
 NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, size_t inputIndexIdx,
-                          std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, OpDefCopyer opDefCopyer);
+                          std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, const OpDefCopyer &opDefCopyer);
 
 NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, size_t outputIndexIdx,
-                         std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, OpDefCopyer opDefCopyer);
+                         std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, const OpDefCopyer &opDefCopyer);
 
-STATUS ValidateFileStr(const std::string &modelFile, std::string fileType);
+STATUS ValidateFileStr(const std::string &modelFile, const std::string &fileType);
 
 void TransformAttrByAxes(int *origin_attr, int *axes, int element_size);
 
@@ -97,4 +96,4 @@ std::string GetModelName(const std::string &modelFile);
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_PREDICT_GRAPH_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_GRAPH_UTIL_H

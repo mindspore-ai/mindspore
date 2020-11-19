@@ -47,12 +47,12 @@ STATUS CaffeInspector::ParseInput() {
 }
 
 STATUS CaffeInspector::FindInputAndOutput() {
-  for (auto iter : layerBottoms) {
+  for (const auto &iter : layerBottoms) {
     if (layerTops.find(iter) == layerTops.end()) {
       graphInput.insert(iter);
     }
   }
-  for (auto iter : layerTops) {
+  for (const auto &iter : layerTops) {
     if (layerBottoms.find(iter) == layerBottoms.end()) {
       graphOutput.insert(iter);
     }
@@ -62,7 +62,7 @@ STATUS CaffeInspector::FindInputAndOutput() {
 
 STATUS CaffeInspector::SetTopsAndBottoms() {
   for (int32_t i = 0; i < net.layer_size(); i++) {
-    caffe::LayerParameter &layer = const_cast<caffe::LayerParameter &>(net.layer(i));
+    auto &layer = const_cast<caffe::LayerParameter &>(net.layer(i));
     if (layer.top_size() == 1 && layer.bottom_size() == 1 && layer.top(0) == layer.bottom(0)) {
       continue;
     }

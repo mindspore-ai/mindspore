@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_COMMON_STORAGE_H_
-#define PREDICT_COMMON_STORAGE_H_
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_STORAGE_H
+#define MINDSPORE_LITE_TOOLS_COMMON_STORAGE_H
 
 #include <fstream>
 #include <string>
@@ -27,11 +27,11 @@ namespace mindspore {
 namespace lite {
 class Storage {
  public:
-  int Save(const schema::MetaGraphT &graph, const std::string &outputPath);
+  static int Save(const schema::MetaGraphT &graph, const std::string &outputPath);
 
-  schema::MetaGraphT *Load(const std::string &inputPath);
+  static schema::MetaGraphT *Load(const std::string &inputPath);
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_COMMON_STORAGE_H_
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_STORAGE_H

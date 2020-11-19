@@ -17,7 +17,6 @@
 #include "tools/converter/parser/tflite/tflite_fullyconnected_parser.h"
 #include <vector>
 #include <memory>
-#include <map>
 
 namespace mindspore {
 namespace lite {
@@ -27,6 +26,9 @@ STATUS TfliteFullyConnectedParser::Parse(TfliteTensorsInfo *tensors_info,
                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                          schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteFullyConnectedParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -69,6 +71,6 @@ STATUS TfliteFullyConnectedParser::Parse(TfliteTensorsInfo *tensors_info,
 }
 
 TfliteNodeRegister g_tfliteFullyConnectedParser("FullyConnected", new TfliteFullyConnectedParser());
-TfliteNodeRegister g_tfliteFakeQuantParser("FakeQuant", new TfliteFakeQuantParser());
+TfliteNodeRegister g_tfliteFakeQuantParser("FakeQuant", new TfliteFullyConnectedParser());
 }  // namespace lite
 }  // namespace mindspore

@@ -25,6 +25,9 @@ STATUS TfliteWhileParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
                                 const std::unique_ptr<tflite::ModelT> &tflite_model,
                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteWhileParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -46,18 +49,17 @@ STATUS TfliteWhileParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
     MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
     return RET_NULL_PTR;
   }
-
   attr->condSubgraphIndex = tflite_attr->cond_subgraph_index;
   attr->bodySubgraphIndex = tflite_attr->body_subgraph_index;
 
   op->primitive->value.type = schema::PrimitiveType_While;
   op->primitive->value.value = attr.release();
 
-  for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
-    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  for (int input : tflite_op->inputs) {
+    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
-  for (size_t i = 0; i < tflite_op->outputs.size(); i++) {
-    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  for (int output : tflite_op->outputs) {
+    AddOpOutput(op, tensors_info, output, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   return RET_OK;
 }

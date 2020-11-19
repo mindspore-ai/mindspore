@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace lite {
-CaffeNodeParserRegistry::CaffeNodeParserRegistry() {}
+CaffeNodeParserRegistry::CaffeNodeParserRegistry() = default;
 
 CaffeNodeParserRegistry::~CaffeNodeParserRegistry() {
   for (auto ite : parsers) {

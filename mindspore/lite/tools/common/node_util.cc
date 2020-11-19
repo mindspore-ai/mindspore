@@ -160,6 +160,7 @@ std::vector<schema::PrimitiveType> GetInt8OpList() { return int8OpList; }
 
 STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::vector<int32_t> &src_dims,
                               mindspore::schema::Format dst_format, std::vector<int32_t> *dst_dims) {
+  MS_ASSERT(nullptr != dst_dims);
   if ((src_dims.size() != DIM_DEFAULT_SIZE && src_dims.size() != 3) || src_format == dst_format) {
     MS_LOG(ERROR) << "Convert format , src size " << src_dims.size()
                   << " <3 or src format is equal to dst format,not need convert";
@@ -189,7 +190,7 @@ STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::v
       return RET_ERROR;
   }
 
-  if (nchw_dim.size() == 0) {
+  if (nchw_dim.empty()) {
     MS_LOG(ERROR) << "Param nchw_dim is empty!";
     return RET_ERROR;
   }
@@ -215,6 +216,10 @@ STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::v
 
 STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t *filterK, int32_t *filterC,
                     int32_t *filterH, int32_t *filterW) {
+  if (filterK == nullptr || filterC == nullptr || filterH == nullptr || filterW == nullptr) {
+    MS_LOG(ERROR) << "null input";
+    return RET_NULL_PTR;
+  }
   MS_ASSERT(oriDims.size() == 4);
   if (type == kKCHW2HWCK || type == kKCHW2HWKC || type == kKCHW2KHWC || type == kKCHW2CKHW) {
     *filterK = oriDims.at(KCHW_K);
@@ -282,6 +287,7 @@ STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filt
 
 STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
   if (tensor == nullptr) {
+    MS_LOG(ERROR) << "tensor is null";
     return RET_NULL_PTR;
   }
   std::vector<int32_t> oriDims = tensor->dims;

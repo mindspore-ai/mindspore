@@ -26,7 +26,7 @@ namespace lite {
 class CaffeSigmoidParser : public CaffeNodeParser {
  public:
   CaffeSigmoidParser() : CaffeNodeParser("sigmoid") {}
-  ~CaffeSigmoidParser() = default;
+  ~CaffeSigmoidParser() override = default;
 
   STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;

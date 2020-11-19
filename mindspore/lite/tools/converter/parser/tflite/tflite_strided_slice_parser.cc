@@ -17,7 +17,6 @@
 #include "tools/converter/parser/tflite/tflite_strided_slice_parser.h"
 #include <vector>
 #include <memory>
-#include <map>
 
 namespace mindspore {
 namespace lite {
@@ -26,6 +25,9 @@ STATUS TfliteStridedSliceParser::Parse(TfliteTensorsInfo *tensors_info,
                                        const std::unique_ptr<tflite::ModelT> &tflite_model,
                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteStridedSliceParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -41,7 +43,6 @@ STATUS TfliteStridedSliceParser::Parse(TfliteTensorsInfo *tensors_info,
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-
   const auto &tflite_attr = tflite_op->builtin_options.AsStridedSliceOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op: %s attr failed", op->name.c_str();

@@ -39,8 +39,6 @@ STATUS CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, const caffe::
   }
 
   attr->type = schema::ActivationType_RELU6;
-  // relu: negative_slope = 0, no parameter;
-  // leakyrelu: negative_slope != 0;
   if (proto.has_relu_param() && proto.relu_param().has_negative_slope()) {
     float negative_slope = proto.relu_param().negative_slope();
     if (0 != negative_slope) {

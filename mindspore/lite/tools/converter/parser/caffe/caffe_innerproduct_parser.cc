@@ -22,6 +22,10 @@ namespace lite {
 STATUS CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                       schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeInnerProductParser";
+  if (weightVec == nullptr) {
+    MS_LOG(ERROR) << "weightVec is null";
+    return RET_NULL_PTR;
+  }
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -38,7 +42,7 @@ STATUS CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto, const 
     return RET_NULL_PTR;
   }
 
-  const caffe::InnerProductParameter innerProductParam = proto.inner_product_param();
+  const caffe::InnerProductParameter &innerProductParam = proto.inner_product_param();
   if (!innerProductParam.has_num_output()) {
     MS_LOG(ERROR) << "InnerProduct Parse num_output for " << proto.name().c_str() << " failed.";
     return RET_ERROR;
@@ -62,8 +66,6 @@ STATUS CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto, const 
     MS_LOG(ERROR) << "InnerProduct No filter data in layer " << weight.name().c_str();
     return RET_ERROR;
   }
-
-  // parse filter
   auto filter = ConvertWeight(weight.blobs(0));
   if (filter == nullptr) {
     MS_LOG(ERROR) << "InnerProduct parse weight for layer " << weight.name().c_str() << " failed";

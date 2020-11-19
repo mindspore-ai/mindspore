@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_PARSE_UTILS_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_PARSE_UTILS_H_
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_PROTOBUF_UTILS_H
+#define MINDSPORE_LITE_TOOLS_COMMON_PROTOBUF_UTILS_H
 
 #include <string>
 #include <vector>
@@ -35,4 +35,4 @@ STATUS ReadProtoFromBinaryFile(const char *file, google::protobuf::Message *mess
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_PARSE_UTILS_H_
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_PROTOBUF_UTILS_H

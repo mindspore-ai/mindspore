@@ -39,7 +39,7 @@ STATUS CaffeEluParser::Parse(const caffe::LayerParameter &proto, const caffe::La
   }
 
   if (proto.has_elu_param()) {
-    const caffe::ELUParameter eluParameter = proto.elu_param();
+    const caffe::ELUParameter &eluParameter = proto.elu_param();
     if (eluParameter.has_alpha()) {
       attr->alpha = eluParameter.alpha();
     }
