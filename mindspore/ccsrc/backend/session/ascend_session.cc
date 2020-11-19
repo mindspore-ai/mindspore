@@ -169,7 +169,7 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   HardwareOptimize(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
   // load graphs to debugger.
-  if (debugger_) {
+  if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     LoadGraphsToDbg(NOT_NULL(root_graph), NOT_NULL(&memo));
   }
   memo.clear();
