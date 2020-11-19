@@ -110,6 +110,8 @@ int DivInt8CPUKernel::Run() {
       MS_LOG(ERROR) << "Memory allocation failed";
       context_->allocator->Free(tile0_data_);
       context_->allocator->Free(tile1_data_);
+      tile0_data_ = nullptr;
+      tile1_data_ = nullptr;
       return RET_ERROR;
     }
     TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->MutableData()),
@@ -120,6 +122,8 @@ int DivInt8CPUKernel::Run() {
   if (broadcast_) {
     context_->allocator->Free(tile0_data_);
     context_->allocator->Free(tile1_data_);
+    tile0_data_ = nullptr;
+    tile1_data_ = nullptr;
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DivInt8Run function error error_code[" << ret << "]";

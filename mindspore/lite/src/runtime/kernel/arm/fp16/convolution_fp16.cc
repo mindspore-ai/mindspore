@@ -154,25 +154,26 @@ int ConvolutionFP16CPUKernel::Run() {
   auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get Execute tensor failed.";
+    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     return ret;
   }
 
   ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
-
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionFp16Impl, this, thread_count_);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "conv fp16 error error_code[" << error_code << "]";
+    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  FreeTmpBuffer();
+
+  ret = ParallelLaunch(this->context_->thread_pool_, ConvolutionFp16Impl, this, thread_count_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "conv fp16 error ret[" << ret << "]";
+  }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
-  return RET_OK;
+  FreeTmpBuffer();
+  return ret;
 }
 
 ConvParameter *CreateNewConvParameterFp16(ConvParameter *parameter) {
@@ -354,7 +355,6 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
       MS_LOG(ERROR) << "Get new conv parameter failed.";
       return nullptr;
     }
-
     // create new input for each group
     auto in_tensor = CreateInputTensor(inputs.front()->data_type(), in_shape, infered_flag);
     if (in_tensor == nullptr) {

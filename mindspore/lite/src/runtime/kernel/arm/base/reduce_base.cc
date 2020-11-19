@@ -101,6 +101,10 @@ int ReduceBaseCPUKernel::Init() {
   if (in_tensors_.size() > 1) {
     auto axes_ptr = in_tensors_.at(1);
     num_axes_ = axes_ptr->ElementsNum();
+    if (axes_ptr->ElementsNum() > REDUCE_MAX_AXES_NUM) {
+      MS_LOG(ERROR) << "input axes invalid.";
+      return RET_ERROR;
+    }
     memcpy(axes_, axes_ptr->MutableData(), axes_ptr->Size());
   } else {
     num_axes_ = reduce_param->num_axes_;

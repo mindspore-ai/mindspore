@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_OPT_OP_HANDLER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_OPT_OP_HANDLER_H_
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -42,3 +44,4 @@ void MatMulDpInt8_optimize_handler(const int8_t *a, const int8_t *b, int8_t *dst
 #ifdef __cplusplus
 }
 #endif
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_OPT_OP_HANDLER_H_

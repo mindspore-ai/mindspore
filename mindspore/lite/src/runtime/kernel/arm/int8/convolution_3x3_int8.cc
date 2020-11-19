@@ -218,6 +218,7 @@ int Convolution3x3Int8CPUKernel::Run() {
   auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
   auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->MutableData());

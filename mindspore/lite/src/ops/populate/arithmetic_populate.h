@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_SRC_OPS_POPULATE_ARITHMETIC_POPULATE_H_
+#define MINDSPORE_LITE_SRC_OPS_POPULATE_ARITHMETIC_POPULATE_H_
 
 #include "src/ops/arithmetic.h"
 
@@ -21,3 +23,4 @@ namespace lite {
 ArithmeticParameter *PopulateArithmeticCommonPara(const mindspore::lite::PrimitiveC *primitive);
 }  // namespace lite
 }  // namespace mindspore
+#endif  // MINDSPORE_LITE_SRC_OPS_POPULATE_ARITHMETIC_POPULATE_H_

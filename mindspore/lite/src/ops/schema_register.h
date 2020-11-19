@@ -24,7 +24,6 @@ using GetSchemaDef = std::function<std::string()>;
 
 class SchemaRegisterImpl {
  public:
-  SchemaRegisterImpl() = default;
   static SchemaRegisterImpl *Instance() {
     static SchemaRegisterImpl instance;
     return &instance;

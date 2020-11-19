@@ -52,25 +52,32 @@ int FullconnectionInt8CPUKernel::ReSize() {
   d16_ = UP_ROUND(fc_param_->deep_, 16);
   thread_count_ = MSMIN(thread_count_, UP_DIV(c4_, 4));
   thread_stride_ = UP_DIV(UP_DIV(c4_, 4), thread_count_);
+
   a_r4x16_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(r4_ * d16_ * sizeof(int8_t)));
-  if (!a_r4x16_ptr_) return RET_MEMORY_FAILED;
-  memset(a_r4x16_ptr_, 0, r4_ * d16_ * sizeof(int8_t));
   b_c16x4_ptr_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(c4_ * d16_ * sizeof(int8_t)));
-  if (!b_c16x4_ptr_) return RET_MEMORY_FAILED;
-  memset(b_c16x4_ptr_, 0, c4_ * d16_ * sizeof(int8_t));
   input_sums_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(r4_ * sizeof(int)));
-  if (!input_sums_) return RET_MEMORY_FAILED;
-  memset(input_sums_, 0, r4_ * sizeof(int));
   weight_bias_sums_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(c4_ * sizeof(int)));
-  if (!weight_bias_sums_) return RET_MEMORY_FAILED;
+  if (a_r4x16_ptr_ == nullptr || b_c16x4_ptr_ == nullptr || input_sums_ == nullptr || weight_bias_sums_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    FreeTmpBuffer();
+    return RET_MEMORY_FAILED;
+  }
+  memset(a_r4x16_ptr_, 0, r4_ * d16_ * sizeof(int8_t));
+  memset(b_c16x4_ptr_, 0, c4_ * d16_ * sizeof(int8_t));
+  memset(input_sums_, 0, r4_ * sizeof(int));
   memset(weight_bias_sums_, 0, c4_ * sizeof(int));
+
   if (in_tensors_.size() == 3) {
     auto bias_len = fc_param_->col_8_ * sizeof(int);
     bias_ptr_ = reinterpret_cast<int *>(ctx_->allocator->Malloc(bias_len));
-    if (!bias_ptr_) return RET_MEMORY_FAILED;
+    if (bias_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "Memory allocation failed";
+      FreeTmpBuffer();
+      return RET_MEMORY_FAILED;
+    }
     memcpy(bias_ptr_, in_tensors_[2]->data_c(), bias_len);
   } else {
-    bias_ptr_ = NULL;
+    bias_ptr_ = nullptr;
   }
 
   auto input_tensor = in_tensors_[0];

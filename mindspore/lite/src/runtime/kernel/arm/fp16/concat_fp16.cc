@@ -105,10 +105,6 @@ int ConcatFp16CPUKernel::Run() {
     const auto in_tensor = in_tensors_[i];
     if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
       auto in_tensor_data = reinterpret_cast<float *>(in_tensor->MutableData());
-      if (in_tensor_data == nullptr) {
-        MS_LOG(ERROR) << "got nullptr when cast in_tensor to float ptr";
-        return RET_ERROR;
-      }
       Float32ToFloat16(in_tensor_data, fp16_inputs_[i], in_tensor->ElementsNum());
     } else {
       fp16_inputs_[i] = reinterpret_cast<float16_t *>(in_tensor->MutableData());

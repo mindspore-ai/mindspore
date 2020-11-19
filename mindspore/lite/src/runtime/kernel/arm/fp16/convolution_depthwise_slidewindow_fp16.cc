@@ -35,7 +35,7 @@ ConvolutionDepthwiseSWFp16CPUKernel::~ConvolutionDepthwiseSWFp16CPUKernel() {
     sliding_ = nullptr;
   }
   if (packed_weight_ != nullptr) {
-    delete packed_weight_;
+    free(packed_weight_);
     packed_weight_ = nullptr;
   }
 }
@@ -143,12 +143,17 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
   auto ret = InitBuffer();
   if (ret != 0) {
     MS_LOG(ERROR) << "Convolution depthwise fp16 InitBuffer failed.";
-    return RET_ERROR;
+    context_->allocator->Free(packed_input_);
+    context_->allocator->Free(packed_output_);
+    return ret;
   }
 
   ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get Execute tensor failed.";
+    context_->allocator->Free(packed_input_);
+    context_->allocator->Free(packed_output_);
+    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     return ret;
   }
   if (need_align_) {
@@ -164,7 +169,6 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
   ret = ParallelLaunch(this->context_->thread_pool_, ConvDwSWFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwSWFp16Run error: error_code[" << ret << "]";
-    return RET_ERROR;
   }
   if (need_align_) {
     PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
@@ -176,5 +180,4 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel
