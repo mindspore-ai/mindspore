@@ -79,6 +79,20 @@ class UnsortedSegmentMinInfo : public UnsortedSegmentOpInfo {
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 };
 
+class UnsortedSegmentMaxInfo : public UnsortedSegmentOpInfo {
+ public:
+  UnsortedSegmentMaxInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                         const PrimitiveAttrs &attrs)
+      : UnsortedSegmentOpInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<UnsortedSegmentMinCost>()) {}
+  ~UnsortedSegmentMaxInfo() override = default;
+
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
+  Status InferForwardCommunication() override { return SUCCESS; }
+
+ protected:
+  Status ComputeReplaceGraph(const CNodePtr &cnode);
+};
+
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_UNSORTEDSEGMENTOP_INFO_H_

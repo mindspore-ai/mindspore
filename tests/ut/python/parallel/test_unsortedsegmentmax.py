@@ -22,6 +22,7 @@ from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops.operations.comm_ops import _VirtualDataset
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -33,7 +34,8 @@ grad_all = C.GradOperation(get_all=True)
 class Net(nn.Cell):
     def __init__(self, strategy1, strategy2, num_segments):
         super(Net, self).__init__()
-        self.merge_op = P.UnsortedSegmentSum().shard((strategy1, strategy2))
+        self.virtual_dataset = _VirtualDataset()
+        self.merge_op = P.UnsortedSegmentMax().shard((strategy1, strategy2))
         self.num_segments = num_segments
 
     def construct(self, vectors, segment_ids):
@@ -53,8 +55,8 @@ class GradWrap(nn.Cell):
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
-        self.network = network
         self.loss = VirtualLoss()
+        self.network = network
 
     def construct(self, x, y):
         predict = self.network(x, y)
@@ -62,17 +64,17 @@ class NetWithLoss(nn.Cell):
 
 
 def compile_graph(x, y, segments, strategy1, strategy2, auto=False):
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2, segments)))
+    net.set_auto_parallel()
+    net.set_train()
     if auto:
         context.set_auto_parallel_context(parallel_mode="auto_parallel")
     else:
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net = GradWrap(NetWithLoss(Net(strategy1, strategy2, segments)))
-    net.set_auto_parallel()
-    net.set_train()
     _executor.compile(net, x, y)
 
 
-def test_unsortedsegmentsum_model_parallel_slice_1d():
+def test_UnsortedSegmentMax_model_parallel_slice_1d():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     x = Tensor(np.ones(8), ms.float32)
     y = Tensor(np.ones(8), ms.int32)
@@ -82,7 +84,7 @@ def test_unsortedsegmentsum_model_parallel_slice_1d():
     compile_graph(x, y, num_segments, strategy1, strategy2)
 
 
-def test_unsortedsegmentsum_model_parallel_no_slice_1d():
+def test_UnsortedSegmentMax_model_parallel_no_slice_1d():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     x = Tensor(np.ones(8), ms.float32)
     y = Tensor(np.ones(8), ms.int32)
@@ -92,7 +94,7 @@ def test_unsortedsegmentsum_model_parallel_no_slice_1d():
     compile_graph(x, y, num_segments, strategy1, strategy2)
 
 
-def test_unsortedsegmentsum_model_parallel_index_slice_2d():
+def test_UnsortedSegmentMax_model_parallel_index_slice_2d():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 8)), ms.float32)
     y = Tensor(np.arange(4), ms.int32)
@@ -102,17 +104,7 @@ def test_unsortedsegmentsum_model_parallel_index_slice_2d():
     compile_graph(x, y, num_segments, strategy1, strategy2)
 
 
-def test_unsortedsegmentsum_model_parallel_index_slice_3d():
-    context.set_auto_parallel_context(device_num=4, global_rank=0)
-    x = Tensor(np.ones((4, 4, 8)), ms.float32)
-    y = Tensor(np.ones((4, 4)), ms.int32)
-    num_segments = 16
-    strategy1 = (2, 2, 1)
-    strategy2 = (2, 2)
-    compile_graph(x, y, num_segments, strategy1, strategy2)
-
-
-def test_unsortedsegmentsum_model_parallel_vector_slice_2d():
+def test_UnsortedSegmentMax_model_parallel_vector_slice_2d():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 8)), ms.float32)
     y = Tensor(np.ones(4), ms.int32)
@@ -122,7 +114,7 @@ def test_unsortedsegmentsum_model_parallel_vector_slice_2d():
     compile_graph(x, y, num_segments, strategy1, strategy2)
 
 
-def test_unsortedsegmentsum_model_parallel_vector_slice_3d():
+def test_UnsortedSegmentMax_model_parallel_vector_slice_3d():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 8, 8)), ms.float32)
     y = Tensor(np.ones(4), ms.int32)
@@ -132,7 +124,7 @@ def test_unsortedsegmentsum_model_parallel_vector_slice_3d():
     compile_graph(x, y, num_segments, strategy1, strategy2)
 
 
-def test_unsortedsegmentsum_model_parallel_index_vector_slice_2d():
+def test_UnsortedSegmentMax_model_parallel_index_vector_slice_2d():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 8)), ms.float32)
     y = Tensor(np.ones(4), ms.int32)
@@ -142,21 +134,29 @@ def test_unsortedsegmentsum_model_parallel_index_vector_slice_2d():
     compile_graph(x, y, num_segments, strategy1, strategy2)
 
 
-def test_unsortedsegmentsum_model_parallel_index_vector_slice_3d():
+def test_UnsortedSegmentMax_model_parallel_index_vector_slice_3d():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     x = Tensor(np.ones((4, 4, 8)), ms.float32)
-    y = Tensor(np.ones((4, 4)), ms.int32)
+    y = Tensor(np.ones((4)), ms.int32)
     num_segments = 16
     strategy1 = (2, 1, 2)
-    strategy2 = (2, 1)
+    strategy2 = (2,)
     compile_graph(x, y, num_segments, strategy1, strategy2)
 
-
-def test_unsortedsegmentsum_model_parallel_repeat_caculate():
+def test_UnsortedSegmentMax_model_parallel_float16():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
-    x = Tensor(np.ones((4, 4, 8)), ms.float32)
-    y = Tensor(np.ones((4, 4)), ms.int32)
+    x = Tensor(np.ones((4, 4, 8)), ms.float16)
+    y = Tensor(np.ones((4)), ms.int32)
     num_segments = 16
-    strategy1 = (1, 1, 1)
-    strategy2 = (1, 1)
+    strategy1 = (2, 1, 2)
+    strategy2 = (2,)
+    compile_graph(x, y, num_segments, strategy1, strategy2)
+
+def test_UnsortedSegmentMax_model_parallel_int32():
+    context.set_auto_parallel_context(device_num=4, global_rank=0)
+    x = Tensor(np.ones((4, 4, 8)), ms.int32)
+    y = Tensor(np.ones((4)), ms.int32)
+    num_segments = 16
+    strategy1 = (2, 1, 2)
+    strategy2 = (2,)
     compile_graph(x, y, num_segments, strategy1, strategy2)

@@ -332,5 +332,41 @@ Status UnsortedSegmentMinInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   return SUCCESS;
 }
 
+// The UnsortedSegmentMaxInfo is almost same with UnsortedSegmentMinInfo
+// Except the reduceMin op in the ComputeReplaceGraph is replaced with reduceMax op
+ReplaceGraphPtr UnsortedSegmentMaxInfo::replace_graph(const CNodePtr &cnode) {
+  auto input_id_strategy = strategy_->GetInputDim().at(1);
+  // 1. the two input shapes are same, and the strategy is not all ones
+  if (std::any_of(input_id_strategy.begin(), input_id_strategy.end(), [](const int64_t &shard) { return shard > 1; })) {
+    if (ComputeReplaceGraph(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
+    }
+  }
+  return replace_graph_;
+}
+
+Status UnsortedSegmentMaxInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph();
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << "GenerateGraph Init failed";
+    return FAILED;
+  }
+  // Get the attributes of the UnsortedSegmentMin
+  auto num_segments = GetValue<int64_t>(input_value_.at(2));
+  // Step1: Output branch
+  auto segment_max = gen_g.PushBack({gen_g.NewOpInst(UNSORTED_SEGMENT_MAX), gen_g.virtual_input_node(),
+                                     gen_g.virtual_input_node(), CreatInt64Imm(num_segments)});
+  auto expandim_output = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), segment_max, CreatInt64Imm(0)});
+  auto all_gather_output = gen_g.PushBack({gen_g.NewOpInst(ALL_GATHER), expandim_output});
+  auto final_output = gen_g.PushBack({gen_g.NewOpInst(REDUCE_MAX), all_gather_output, CreatInt64Imm(0)});
+
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(segment_max, 1),
+                                                             std::make_pair(segment_max, 2)};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, final_output));
+
+  return SUCCESS;
+}
+
 }  // namespace parallel
 }  // namespace mindspore
