@@ -55,6 +55,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitBuffer() {
     packed_output_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(pack_output_size * sizeof(float16_t)));
     if (packed_output_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
+      context_->allocator->Free(packed_input_);
       return RET_ERROR;
     }
   }
@@ -86,6 +87,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
+    MS_ASSERT(ori_bias);
     for (int i = 0; i < bias_tensor->ElementsNum(); i++) {
       bias_fp16[i] = (float16_t)ori_bias[i];
     }
@@ -161,8 +163,6 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
   } else {
     packed_input_ = execute_input_;
-  }
-  if (!need_align_) {
     packed_output_ = execute_output_;
   }
 

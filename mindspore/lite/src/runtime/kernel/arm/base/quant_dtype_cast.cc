@@ -39,8 +39,11 @@ int QuantDTypeCastCPUKernel::Init() {
     return RET_PARAM_INVALID;
   }
   auto in_tensor = in_tensors_.front();
+  MS_ASSERT(in_tensor);
   auto out_tensor = out_tensors_.front();
+  MS_ASSERT(out_tensor);
   auto param = reinterpret_cast<QuantDTypeCastParameter *>(op_parameter_);
+  MS_ASSERT(param);
   if (param->srcT == kNumberTypeFloat32 && param->dstT == kNumberTypeInt8) {
     if (in_tensor->data_type() != kNumberTypeFloat32 || out_tensor->data_type() != kNumberTypeInt8) {
       MS_LOG(ERROR) << "param data type and tensor data type do not match.";
@@ -177,7 +180,11 @@ int QuantDTypeCastCPUKernel::Run() {
              out_tensors_[0]->data_type() == TypeId::kNumberTypeInt8) {
     int8_ptr_ = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
     int8_out_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
-    float32_ptr_ = new float[in_tensors_[0]->ElementsNum()];
+    float32_ptr_ = new (std::nothrow) float[in_tensors_[0]->ElementsNum()];
+    if (float32_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "new float[] failed";
+      return RET_ERROR;
+    }
   } else if (in_tensors_[0]->data_type() == TypeId::kNumberTypeUInt8 &&
              out_tensors_[0]->data_type() == TypeId::kNumberTypeFloat32) {
     uint8_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_[0]->data_c());

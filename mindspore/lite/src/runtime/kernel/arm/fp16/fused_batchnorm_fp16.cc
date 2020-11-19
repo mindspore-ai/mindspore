@@ -27,8 +27,10 @@ using mindspore::schema::PrimitiveType_FusedBatchNorm;
 namespace mindspore::kernel {
 int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
-
+  MS_ASSERT(param);
   if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
+    MS_ASSERT(in_tensors_.size() == 5);
+    MS_ASSERT(out_tensors_.size() == 1);
     auto input = in_tensors_.at(0);
     auto scale = in_tensors_.at(1);
     auto offset = in_tensors_.at(2);
@@ -50,6 +52,7 @@ int FusedBatchnormFp16CPUKernel::DoExecute(int task_id) {
       context_->allocator->Free(mean_fp16);
       context_->allocator->Free(variance_fp16);
       context_->allocator->Free(output_fp16);
+      return RET_ERROR;
     }
     Float32ToFloat16(reinterpret_cast<float *>(input->MutableData()), reinterpret_cast<float16_t *>(input_fp16),
                      input->ElementsNum());

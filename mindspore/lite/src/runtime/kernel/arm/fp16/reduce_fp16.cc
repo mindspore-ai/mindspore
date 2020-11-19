@@ -118,7 +118,7 @@ int ReduceFp16CPUKernel::Run() {
 }
 
 void ReduceFp16CPUKernel::FreeTmpBuffer() {
-  for (auto buffer : data_buffers_) {
+  for (auto &buffer : data_buffers_) {
     if (buffer != nullptr) {
       context_->allocator->Free(buffer);
       buffer = nullptr;

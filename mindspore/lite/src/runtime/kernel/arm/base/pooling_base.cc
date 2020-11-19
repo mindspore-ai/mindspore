@@ -38,11 +38,16 @@ int PoolingBaseCPUKernel::SetQuantParam() {
   pooling_quant_arg_[0] = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (pooling_quant_arg_[0] == nullptr) {
     MS_LOG(ERROR) << "malloc pooling_quant_arg[0] failed.";
+    free(pooling_quant_arg_);
+    pooling_quant_arg_ = nullptr;
     return RET_MEMORY_FAILED;
   }
   pooling_quant_arg_[1] = reinterpret_cast<QuantArg *>(malloc(sizeof(QuantArg)));
   if (pooling_quant_arg_[1] == nullptr) {
     MS_LOG(ERROR) << "malloc pooling_quant_arg[1] failed.";
+    free(*pooling_quant_arg_);
+    free(pooling_quant_arg_);
+    pooling_quant_arg_ = nullptr;
     return RET_MEMORY_FAILED;
   }
   auto *input_tensor = in_tensors_.at(kInputIndex);

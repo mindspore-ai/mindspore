@@ -72,7 +72,8 @@ ARITHMETIC_FUNC_INFO_FP16 arithmetic_fun_table_fp16[] = {
   {PrimitiveType_Minimum, schema::ActivationType_NO_ACTIVATION, ElementMinimumFp16, ElementOptMinimumFp16}};
 
 ArithmeticFuncFp16 GetArithmeticFun(int primitive_type, int activation_type) {
-  for (size_t i = 0; i < sizeof(arithmetic_fun_table_fp16); i++) {
+  size_t length = sizeof(arithmetic_fun_table_fp16) / sizeof(ARITHMETIC_FUNC_INFO_FP16);
+  for (size_t i = 0; i < length; i++) {
     if (arithmetic_fun_table_fp16[i].primitive_type_ == primitive_type &&
         arithmetic_fun_table_fp16[i].activation_type_ == activation_type) {
       return arithmetic_fun_table_fp16[i].func_;
@@ -82,7 +83,8 @@ ArithmeticFuncFp16 GetArithmeticFun(int primitive_type, int activation_type) {
 }
 
 ArithmeticOptFuncFp16 GetOptimizedArithmeticFun(int primitive_type, int activation_type) {
-  for (size_t i = 0; i < sizeof(arithmetic_fun_table_fp16); i++) {
+  size_t length = sizeof(arithmetic_fun_table_fp16) / sizeof(ARITHMETIC_FUNC_INFO_FP16);
+  for (size_t i = 0; i < length; i++) {
     if (arithmetic_fun_table_fp16[i].primitive_type_ == primitive_type &&
         arithmetic_fun_table_fp16[i].activation_type_ == activation_type) {
       return arithmetic_fun_table_fp16[i].opt_func_;

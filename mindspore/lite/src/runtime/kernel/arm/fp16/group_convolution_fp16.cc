@@ -155,6 +155,8 @@ int GroupConvolutionFP16CPUKernel::SeparateInput(int group_id) {
   if (in_tensors_.front()->data_type() == kNumberTypeFloat16) {
     float16_t *src_ptr = reinterpret_cast<float16_t *>(ori_in_data_) + group_id * sub_in_channel;
     float16_t *dst_ptr = reinterpret_cast<float16_t *>(sub_in_data);
+    MS_ASSERT(src_ptr);
+    MS_ASSERT(dst_ptr);
     for (int i = 0; i < in_plane; ++i) {
       memcpy(dst_ptr, src_ptr, sub_in_channel * sizeof(float16_t));
       src_ptr += ori_in_channel;
@@ -163,6 +165,8 @@ int GroupConvolutionFP16CPUKernel::SeparateInput(int group_id) {
   } else {
     float *src_ptr = reinterpret_cast<float *>(ori_in_data_) + group_id * sub_in_channel;
     float *dst_ptr = reinterpret_cast<float *>(sub_in_data);
+    MS_ASSERT(src_ptr);
+    MS_ASSERT(dst_ptr);
     for (int i = 0; i < in_plane; ++i) {
       memcpy(dst_ptr, src_ptr, sub_in_channel * sizeof(float));
       src_ptr += ori_in_channel;
@@ -180,6 +184,7 @@ void GroupConvolutionFP16CPUKernel::PostConcat(int group_id) {
   int sub_out_channel = conv_param_->output_channel_;
   int ori_out_channel = sub_out_channel * group_num_;
   auto sub_out_data = reinterpret_cast<float16_t *>(group_convs_[group_id]->out_tensors().front()->data_c());
+  MS_ASSERT(sub_out_data);
   float16_t *src_ptr = sub_out_data;
   float16_t *dst_ptr = ori_out_data_ + group_id * sub_out_channel;
   for (int i = 0; i < out_plane; ++i) {
@@ -192,6 +197,7 @@ void GroupConvolutionFP16CPUKernel::PostConcat(int group_id) {
 int GroupConvolutionFP16CPUKernel::Run() {
   ori_in_data_ = in_tensors().front()->data_c();
   ori_out_data_ = reinterpret_cast<float16_t *>(out_tensors().front()->data_c());
+  MS_ASSERT(ori_out_data_);
   for (int i = 0; i < group_num_; ++i) {
     // first, separate group conv input into several parts. This step must be in runtime stage.
     auto ret = SeparateInput(i);
