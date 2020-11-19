@@ -31,8 +31,11 @@ class CastOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
 
   ~CastOpenCLKernel() override = default;
+  int Prepare() override;
 
-  int Init() override;
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
   int Run() override;
 

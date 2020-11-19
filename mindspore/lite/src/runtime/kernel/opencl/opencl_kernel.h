@@ -112,7 +112,7 @@ struct Image2DInfo {
   size_t RowPitch() const {
     auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
     int alignment = runtime_wrapper.GetInstance()->GetImagePitchAlignment();
-    size_t row_pitch = (width + alignment - 1) / alignment * alignment * FLT4_size;
+    size_t row_pitch = UP_ROUND(width, alignment) * FLT4_size;
     return row_pitch;
   }
 

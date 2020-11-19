@@ -31,9 +31,12 @@ class SparseToDenseOpenCLKernel : public OpenCLKernel {
 
   ~SparseToDenseOpenCLKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int InitWeights() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
+  int CheckSpecs() override;
 
  private:
   int InferShapeTo4D();
@@ -47,12 +50,19 @@ class SparseToDenseOpenCLKernel : public OpenCLKernel {
   float weight_scalar_{0.f};
   void *weight_vector_{nullptr};
   int input_dim_{1};
+  int inshapeindex1_dim{1};
+  cl_int stride_w{1};
   std::vector<int32_t> output_shape_;
 
-  size_t N_{1};
-  size_t H_{1};
-  size_t W_{1};
-  size_t C_{1};
+  cl_int n_{1};
+  cl_int h_{1};
+  cl_int w_{1};
+  cl_int c_{1};
+
+  cl_int out_n_{1};
+  cl_int out_h_{1};
+  cl_int out_w_{1};
+  cl_int out_c_{1};
 };
 }  // namespace mindspore::kernel
 #endif

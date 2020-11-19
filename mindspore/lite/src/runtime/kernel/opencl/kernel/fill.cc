@@ -62,7 +62,11 @@ int FillOpenCLKernel::RunShape() {
   return RET_OK;
 }
 
-int FillOpenCLKernel::Init() {
+void FillOpenCLKernel::SetConstArgs() {}
+
+void FillOpenCLKernel::SetGlobalLocal() {}
+
+int FillOpenCLKernel::CheckSpecs() {
   auto param = this->op_parameter_;
 
   if (out_tensors_[0]->shape().size() > 4) {
@@ -76,6 +80,8 @@ int FillOpenCLKernel::Init() {
   return RET_OK;
 }
 
+int FillOpenCLKernel::Prepare() { return RET_OK; }
+
 int FillOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   auto param = this->op_parameter_;
@@ -88,28 +94,9 @@ int FillOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *FillOpenCLKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                            const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                            const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                            const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) FillOpenCLKernel(opParameter, inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << " new FillOpenCLKernel failed ";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << " Init kernel failed, name: fill ";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Fill, FillOpenCLKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Shape, FillOpenCLKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Fill, FillOpenCLKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Shape, FillOpenCLKernelCreator);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Fill, OpenCLKernelCreator<FillOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Shape, OpenCLKernelCreator<FillOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Fill, OpenCLKernelCreator<FillOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Shape, OpenCLKernelCreator<FillOpenCLKernel>);
 
 }  // namespace mindspore::kernel
