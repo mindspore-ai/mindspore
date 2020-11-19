@@ -64,11 +64,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   // for now - trainning is not supporting fuse operations
   if (config != nullptr && !config->trainModel) {
     // remove quantdtype when awaretraining
-    if (config->fmk == lite::converter::FmkType_ONNX) {
-      auto remove_identity_pass = std::make_shared<opt::RemoveIdentityOpPass>();
-      remove_identity_pass->SetFmkType(config->fmk);
-      pm->AddPass(remove_identity_pass);
-    }
+    pm->AddPass(std::make_shared<opt::RemoveIdentityOpPass>());
     pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
     pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
     pm->AddPass(std::make_shared<opt::ConvScaleFusion>());

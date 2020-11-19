@@ -60,6 +60,12 @@ class TfliteCustomParser : public TfliteNodeParser {
 
   STATUS FftImag(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
                  const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  STATUS Identity(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                  const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  STATUS BatchMatMul(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                     const std::unique_ptr<tflite::OperatorT> &tflite_op);
 };
 }  // namespace lite
 }  // namespace mindspore

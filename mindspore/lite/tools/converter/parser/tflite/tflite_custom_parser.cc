@@ -181,6 +181,33 @@ STATUS TfliteCustomParser::FftImag(const std::vector<uint8_t> &custom_attr, sche
   return RET_OK;
 }
 
+STATUS TfliteCustomParser::Identity(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                                    const std::unique_ptr<tflite::OperatorT> &tflite_op) {
+  std::unique_ptr<schema::IdentityT> attr = std::make_unique<schema::IdentityT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  op->primitive->value.type = schema::PrimitiveType_Identity;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
+}
+
+STATUS TfliteCustomParser::BatchMatMul(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                                       const std::unique_ptr<tflite::OperatorT> &tflite_op) {
+  std::unique_ptr<schema::MatMulT> attr = std::make_unique<schema::MatMulT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  attr->broadcast = false;
+  attr->transposeA = false;
+  attr->transposeB = false;
+  op->primitive->value.type = schema::PrimitiveType_MatMul;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
+}
+
 STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                  const std::unique_ptr<tflite::ModelT> &tflite_model,
                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
@@ -216,6 +243,10 @@ STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
     status = FftReal(custom_attr, op, tflite_op);
   } else if (custom_type == "FlexImag") {
     status = FftImag(custom_attr, op, tflite_op);
+  } else if (custom_type == "FlexIdentityN" || custom_type == "FlexIdentity") {
+    status = Identity(custom_attr, op, tflite_op);
+  } else if (custom_type == "FlexBatchMatMul") {
+    status = BatchMatMul(custom_attr, op, tflite_op);
   } else {
     MS_LOG(ERROR) << "the custom op hasn't been supported now";
     status = RET_NOT_FIND_OP;
