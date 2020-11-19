@@ -260,6 +260,9 @@ bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 /// \brief Calculates the division between the two images for each element
 bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
 
+/// \brief Calculates the multiply between the two images for each element
+bool Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINI_MAT_H_

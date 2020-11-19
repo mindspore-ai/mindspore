@@ -822,3 +822,60 @@ TEST_F(MindDataImageProcess, TestDivideFloat) {
                     static_cast<FLOAT32_C1 *>(dst_float.data_ptr_)[i].c1);
   }
 }
+
+TEST_F(MindDataImageProcess, TestMultiplyUint8) {
+  const size_t cols = 4;
+  // Test uint8
+  LiteMat src1_uint8(1, cols);
+  LiteMat src2_uint8(1, cols);
+  LiteMat expect_uint8(1, cols);
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<UINT8_C1 *>(src1_uint8.data_ptr_)[i] = 8;
+    static_cast<UINT8_C1 *>(src2_uint8.data_ptr_)[i] = 4;
+    static_cast<UINT8_C1 *>(expect_uint8.data_ptr_)[i] = 32;
+  }
+  LiteMat dst_uint8;
+  EXPECT_TRUE(Multiply(src1_uint8, src2_uint8, &dst_uint8));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_EQ(static_cast<UINT8_C1 *>(expect_uint8.data_ptr_)[i].c1,
+              static_cast<UINT8_C1 *>(dst_uint8.data_ptr_)[i].c1);
+  }
+}
+
+TEST_F(MindDataImageProcess, TestMultiplyUInt16) {
+  const size_t cols = 4;
+  // Test int16
+  LiteMat src1_int16(1, cols, LDataType(LDataType::UINT16));
+  LiteMat src2_int16(1, cols, LDataType(LDataType::UINT16));
+  LiteMat expect_int16(1, cols, LDataType(LDataType::UINT16));
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<UINT16_C1 *>(src1_int16.data_ptr_)[i] = 60000;
+    static_cast<UINT16_C1 *>(src2_int16.data_ptr_)[i] = 2;
+    static_cast<UINT16_C1 *>(expect_int16.data_ptr_)[i] = 65535;
+  }
+  LiteMat dst_int16;
+  EXPECT_TRUE(Multiply(src1_int16, src2_int16, &dst_int16));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_EQ(static_cast<UINT16_C1 *>(expect_int16.data_ptr_)[i].c1,
+              static_cast<UINT16_C1 *>(dst_int16.data_ptr_)[i].c1);
+  }
+}
+
+TEST_F(MindDataImageProcess, TestMultiplyFloat) {
+  const size_t cols = 4;
+  // Test float
+  LiteMat src1_float(1, cols, LDataType(LDataType::FLOAT32));
+  LiteMat src2_float(1, cols, LDataType(LDataType::FLOAT32));
+  LiteMat expect_float(1, cols, LDataType(LDataType::FLOAT32));
+  for (size_t i = 0; i < cols; i++) {
+    static_cast<FLOAT32_C1 *>(src1_float.data_ptr_)[i] = 30.0f;
+    static_cast<FLOAT32_C1 *>(src2_float.data_ptr_)[i] = -2.0f;
+    static_cast<FLOAT32_C1 *>(expect_float.data_ptr_)[i] = -60.0f;
+  }
+  LiteMat dst_float;
+  EXPECT_TRUE(Multiply(src1_float, src2_float, &dst_float));
+  for (size_t i = 0; i < cols; i++) {
+    EXPECT_FLOAT_EQ(static_cast<FLOAT32_C1 *>(expect_float.data_ptr_)[i].c1,
+                    static_cast<FLOAT32_C1 *>(dst_float.data_ptr_)[i].c1);
+  }
+}
