@@ -20,7 +20,9 @@
 #include <vector>
 #include <memory>
 #include "minddata/dataset/core/constants.h"
+#ifdef ENABLE_ANDROID
 #include "minddata/dataset/include/de_tensor.h"
+#endif
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/transforms.h"
 
@@ -35,10 +37,16 @@ class Execute {
   /// \brief Constructor
   explicit Execute(std::shared_ptr<TensorOperation> op);
 
+#ifdef ENABLE_ANDROID
   /// \brief callable function to execute the TensorOperation in eager mode
   /// \param[inout] input - the tensor to be transformed
   /// \return - the output tensor, nullptr if Compute fails
   std::shared_ptr<tensor::MSTensor> operator()(std::shared_ptr<tensor::MSTensor> input);
+#endif
+
+  /// \brief callable function to execute the TensorOperation in eager mode
+  /// \param[inout] input - the tensor to be transformed
+  /// \return - the output tensor, nullptr if Compute fails
   std::shared_ptr<dataset::Tensor> operator()(std::shared_ptr<dataset::Tensor> input);
 
  private:

@@ -57,6 +57,7 @@ SET(DE_UT_SRCS
         distributed_sampler_test.cc
         epoch_ctrl_op_test.cc
         equalize_op_test.cc
+	execute_test.cc
         execution_tree_test.cc
         fill_op_test.cc
         global_context_test.cc

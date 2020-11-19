@@ -15,7 +15,9 @@
  */
 
 #include "minddata/dataset/include/execute.h"
+#ifdef ENABLE_ANDROID
 #include "minddata/dataset/include/de_tensor.h"
+#endif
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #ifndef ENABLE_ANDROID
@@ -29,6 +31,7 @@ namespace dataset {
 
 Execute::Execute(std::shared_ptr<TensorOperation> op) : op_(std::move(op)) {}
 
+#ifdef ENABLE_ANDROID
 std::shared_ptr<tensor::MSTensor> Execute::operator()(std::shared_ptr<tensor::MSTensor> input) {
   // Build the op
   if (op_ == nullptr) {
@@ -52,6 +55,7 @@ std::shared_ptr<tensor::MSTensor> Execute::operator()(std::shared_ptr<tensor::MS
   }
   return std::make_shared<tensor::DETensor>(std::move(de_output));
 }
+#endif
 
 std::shared_ptr<dataset::Tensor> Execute::operator()(std::shared_ptr<dataset::Tensor> input) {
   // Build the op
