@@ -131,6 +131,36 @@ def test_sampled_softmax_loss_none_sampler():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     case_no_sampler()
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_sampledsoftmaxloss_reduction_invalid():
+    # Check 'reduction'
+    with pytest.raises(ValueError):
+        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction="")
+
+    with pytest.raises(ValueError):
+        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction="invalid")
+
+    # reduction can be None, as defined in _Loss
+    # with pytest.raises(ValueError):
+    #     nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, reduction=None)  #
+
+    # Check 'num_true'
+    with pytest.raises(ValueError):
+        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, num_true=0)
+
+    # Check 'sampled_values'
+    with pytest.raises(ValueError):
+        sampled_values_more_para = (Tensor(np.array([1])), Tensor(np.array([1])),
+                                    Tensor(np.array([1])), Tensor(np.array([1])))
+        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7,
+                              sampled_values=sampled_values_more_para)
+
+    with pytest.raises(TypeError):
+        sampled_values_wrong_type = Tensor(np.array([1]))
+        nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7,
+                              sampled_values=sampled_values_wrong_type)
 
 if __name__ == "__main__":
     test_sampled_softmax_loss_assigned_sampler()
