@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/strided_slice.h"
+#include "src/ops/populate/strided_slice_populate.h"
 #include <algorithm>
 
 #ifndef PRIMITIVE_WRITEABLE
