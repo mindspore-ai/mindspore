@@ -13,19 +13,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-DATA_DIR=$1
-DEVICE_ID=$2
+if [ $# != 2 ] && [ $# != 3 ]
+then
+    echo "Usage: 
+          sh run_standalone_train_for_gpu.sh [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional) 
+          "
+exit 1
+fi
 
-current_exec_path=$(pwd)
-echo ${current_exec_path}
+# check dataset file
+if [ ! -d $2 ]
+then
+    echo "error: DATASET_PATH=$2 is not a directory"    
+exit 1
+fi
 
-curtime=`date '+%Y%m%d-%H%M%S'`
+BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+export PYTHONPATH=${BASEPATH}:$PYTHONPATH
+if [ -d "../train" ];
+then
+    rm -rf ../train
+fi
+mkdir ../train
+cd ../train || exit
 
-rm ${current_exec_path}/device_${DEVICE_ID}/ -rf
-mkdir ${current_exec_path}/device_${DEVICE_ID}
-echo ${curtime} > ${current_exec_path}/device_${DEVICE_ID}/starttime
+export CUDA_VISIBLE_DEVICES=$1
 
-CUDA_VISIBLE_DEVICES=${DEVICE_ID} python ${current_exec_path}/train.py \
-                                         --GPU \
-                                         --data_path ${DATA_DIR} \
-                                         --cur_time ${curtime} > ${current_exec_path}/device_${DEVICE_ID}/efficientnet_b0.log 2>&1 &
+if [ $# == 2 ]
+then
+    python ${BASEPATH}/../train.py --GPU --data_path $2 > train.log 2>&1 &
+fi
+
+if [ $# == 3 ]
+then
+    python ${BASEPATH}/../train.py --GPU --data_path $2 --resume $3 > train.log 2>&1 &
+fi

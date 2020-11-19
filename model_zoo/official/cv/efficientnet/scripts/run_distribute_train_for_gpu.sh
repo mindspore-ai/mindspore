@@ -13,20 +13,57 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-DATA_DIR=$1
+if [ $# != 3 ] && [ $# != 4 ]
+then
+    echo "Usage:
+          sh run_distribute_train_for_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+          "
+exit 1
+fi
 
-current_exec_path=$(pwd)
-echo ${current_exec_path}
+if [ $1 -lt 1 ] && [ $1 -gt 8 ]
+then
+    echo "error: DEVICE_NUM=$1 is not in (1-8)"
+exit 1
+fi
 
-curtime=`date '+%Y%m%d-%H%M%S'`
-RANK_SIZE=8
+# check dataset file
+if [ ! -d $3 ]
+then
+    echo "error: DATASET_PATH=$3 is not a directory"
+exit 1
+fi
 
-rm ${current_exec_path}/device_parallel/ -rf
-mkdir ${current_exec_path}/device_parallel
-echo ${curtime} > ${current_exec_path}/device_parallel/starttime
+export DEVICE_NUM=$1
+export RANK_SIZE=$1
 
-mpirun --allow-run-as-root -n $RANK_SIZE python ${current_exec_path}/train.py \
-                                                --GPU \
-                                                --distributed \
-                                                --data_path ${DATA_DIR} \
-                                                --cur_time ${curtime} > ${current_exec_path}/device_parallel/efficientnet_b0.log 2>&1 &
+BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+export PYTHONPATH=${BASEPATH}:$PYTHONPATH
+if [ -d "../train" ];
+then
+    rm -rf ../train
+fi
+mkdir ../train
+cd ../train || exit
+
+export CUDA_VISIBLE_DEVICES="$2"
+
+if [ $# == 3 ]
+then
+    mpirun -n $1 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
+    python ${BASEPATH}/../train.py \
+        --GPU \
+        --distributed \
+        --data_path $3 > train.log 2>&1 &
+fi
+
+if [ $# == 4 ]
+then
+    mpirun -n $1 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
+    python ${BASEPATH}/../train.py \
+        --GPU \
+        --distributed \
+        --data_path $3 \
+        --resume $4 > train.log 2>&1 &
+fi
+
