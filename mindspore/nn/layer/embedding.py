@@ -248,7 +248,7 @@ class EmbeddingLookup(Cell):
                 shp = self.shape(indices) + (self.embedding_size,)
                 indices_flatten = self.reshape(indices, (-1,))
                 unique_id, unique_idx = self.unique(indices_flatten)
-                weight_unique = self.gatherv2(unique_id)
+                weight_unique = self.gatherv2(self.embedding_table, unique_id, 0)
                 weight_flatten = self.gather_revert(weight_unique, unique_idx, 0)
                 out = self.reshape(weight_flatten, shp)
             else:
