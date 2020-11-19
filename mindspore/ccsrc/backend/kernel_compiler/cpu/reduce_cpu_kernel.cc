@@ -40,6 +40,9 @@ void ReduceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   CheckAxis(kernel_node);
+  if (shape_.empty()) {
+    shape_.push_back(1);
+  }
   for (size_t i = 0; i < shape_.size(); ++i) {
     if (shape_[i] <= 0) {
       MS_LOG(EXCEPTION) << "shape value is invalid.";
