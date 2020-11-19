@@ -173,11 +173,15 @@ Status ValidateDatasetColumnParam(const std::string &dataset_name, const std::st
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
-  std::set<std::string> columns_set(columns.begin(), columns.end());
-  if (columns_set.size() != columns.size()) {
-    std::string err_msg = dataset_name + ":" + column_param + ": Every column name should not be same with others";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  std::set<std::string> columns_set;
+  for (auto &column_name : columns) {
+    auto result = columns_set.insert(column_name);
+    if (result.second == false) {
+      std::string err_msg = dataset_name + ":" + column_param +
+                            ": Invalid parameter, duplicate column names are not allowed: " + *result.first;
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
   }
   return Status::OK();
 }

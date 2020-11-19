@@ -128,7 +128,6 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
 
  protected:
   std::vector<std::shared_ptr<DatasetNode>> children;
-  std::shared_ptr<DatasetNode> parent;
   std::shared_ptr<DatasetCache> cache_;
   Status AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops);
 
