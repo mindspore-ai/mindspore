@@ -928,9 +928,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
       } else {
         // if input is a ValueNode<FuncGraph>
         FuncGraphPtr child_graph = AnfAlgo::GetValueNodeFuncGraph(node);
-        if (front_backend_graph_map_.find(child_graph) != front_backend_graph_map_.end()) {
-          is_trace_back = true;
-        } else {
+        if (front_backend_graph_map_.find(child_graph) == front_backend_graph_map_.end()) {
           (void)ConstructKernelGraph(child_graph, all_out_graph);
         }
         (void)CreateValueNodeKernelGraph(node, graph.get());
