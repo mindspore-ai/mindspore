@@ -172,6 +172,8 @@ using TransposeCost = ActivationCost;
 using TransposeCostPtr = std::shared_ptr<TransposeCost>;
 using StridedSliceCost = ActivationCost;
 using StridedSliceCostPtr = std::shared_ptr<StridedSliceCost>;
+using SliceCost = ActivationCost;
+using SliceCostPtr = std::shared_ptr<SliceCost>;
 using SplitCost = ActivationCost;
 using SplitCostPtr = std::shared_ptr<SplitCost>;
 

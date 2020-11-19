@@ -184,6 +184,7 @@ REGISTER(EmbeddingLookupInfo);
 REGISTER(TileInfo);
 REGISTER(BroadcastToInfo);
 REGISTER(StridedSliceInfo);
+REGISTER(SliceInfo);
 REGISTER(DropoutInfo);
 REGISTER(PackInfo);
 REGISTER(ConcatInfo);
