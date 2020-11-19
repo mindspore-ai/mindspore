@@ -23,9 +23,6 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-int GatherNd::GetBatchDims() const { return this->primitive_->value.AsGatherNd()->batchDims; }
-
-void GatherNd::SetBatchDims(int batch_dims) { this->primitive_->value.AsGatherNd()->batchDims = batch_dims; }
 
 #else
 int GatherNd::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
@@ -37,12 +34,11 @@ int GatherNd::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffer
     return RET_ERROR;
   }
 
-  auto val_offset = schema::CreateGatherNd(*fbb, attr->batchDims());
+  auto val_offset = schema::CreateGatherNd(*fbb);
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_GatherNd, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
 }
-int GatherNd::GetBatchDims() const { return this->primitive_->value_as_GatherNd()->batchDims(); }
 
 PrimitiveC *GatherNdCreator(const schema::Primitive *primitive) {
   return PrimitiveC::NewPrimitiveC<GatherNd>(primitive);

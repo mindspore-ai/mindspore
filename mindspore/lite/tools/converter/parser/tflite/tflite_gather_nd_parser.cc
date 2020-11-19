@@ -34,8 +34,6 @@ PrimitiveC *TfliteGatherNdParser::ParseLitePrimitive(const std::unique_ptr<tflit
     return nullptr;
   }
 
-  attr->batchDims = 0;
-
   primitive->value.type = schema::PrimitiveType_GatherNd;
   primitive->value.value = attr.release();
   return PrimitiveC::Create(primitive.release());

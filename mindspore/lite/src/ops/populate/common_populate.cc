@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-#include "src/ops/gather_nd.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/gatherNd_fp32.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulateGatherNdParameter(const mindspore::lite::PrimitiveC *primitive) {
-  GatherNdParameter *gather_nd_param = reinterpret_cast<GatherNdParameter *>(malloc(sizeof(GatherNdParameter)));
-  if (gather_nd_param == nullptr) {
-    MS_LOG(ERROR) << "malloc GatherNdParameter failed.";
+OpParameter *PopulateCommonParameter(const mindspore::lite::PrimitiveC *primitive) {
+  auto *common_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  if (common_parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc OpParameter failed.";
     return nullptr;
   }
-  memset(gather_nd_param, 0, sizeof(GatherNdParameter));
-  gather_nd_param->op_parameter_.type_ = primitive->Type();
-  return reinterpret_cast<OpParameter *>(gather_nd_param);
+  memset(common_parameter, 0, sizeof(OpParameter));
+  return common_parameter;
 }
 
-Registry GatherNdParameterRegistry(schema::PrimitiveType_GatherNd, PopulateGatherNdParameter);
+Registry ZerosLikeParameterRegistry(schema::PrimitiveType_ZerosLike, PopulateCommonParameter);
 
 }  // namespace lite
 }  // namespace mindspore
