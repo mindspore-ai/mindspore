@@ -3070,6 +3070,35 @@ class LSTM(PrimitiveWithInfer):
 
     Supported Platforms:
         ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_size = 10
+        >>> hidden_size = 2
+        >>> num_layers = 1
+        >>> seq_len = 5
+        >>> batch_size = 2
+        >>>
+        >>> net = P.LSTM(input_size, hidden_size, num_layers, True, False, 0.0)
+        >>> input = Tensor(np.ones([seq_len, batch_size, input_size]).astype(np.float32))
+        >>> h0 = Tensor(np.ones([num_layers, batch_size, hidden_size]).astype(np.float32))
+        >>> c0 = Tensor(np.ones([num_layers, batch_size, hidden_size]).astype(np.float32))
+        >>> w = Tensor(np.ones([112, 1, 1]).astype(np.float32))
+        >>> output, hn, cn, _, _ = net(input, h0, c0, w)
+        >>> print(output)
+        [[[0.9640267  0.9640267 ]
+          [0.9640267  0.9640267 ]]
+
+         [[0.9950539  0.9950539 ]
+          [0.9950539  0.9950539 ]]
+
+         [[0.99932843 0.99932843]
+          [0.99932843 0.99932843]]
+
+         [[0.9999084  0.9999084 ]
+          [0.9999084  0.9999084 ]]
+
+         [[0.9999869  0.9999869 ]
+          [0.9999869  0.9999869 ]]]
     """
 
     @prim_attr_register
