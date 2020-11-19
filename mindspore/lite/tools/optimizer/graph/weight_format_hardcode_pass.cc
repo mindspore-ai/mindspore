@@ -121,7 +121,12 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const AnfNodePtr &conv_node,
       if (op_type == schema::PrimitiveType_Conv2D) {
         param_value->set_format(schema::Format::Format_KCHW);
       } else if (op_type == schema::PrimitiveType_DepthwiseConv2D) {
-        param_value->set_format(schema::Format::Format_CKHW);
+        // the format is initialized to NUM_OF_FORMAT, and set to NHWC in const folding.
+        if (param_value->format() == schema::Format::Format_NHWC) {
+          param_value->set_format(schema::Format::Format_KCHW);
+        } else {
+          param_value->set_format(schema::Format::Format_CKHW);
+        }
       } else if (op_type == schema::PrimitiveType_DeDepthwiseConv2D) {
         param_value->set_format(schema::Format::Format_CKHW);
       } else if (op_type == schema::PrimitiveType_DeConv2D) {

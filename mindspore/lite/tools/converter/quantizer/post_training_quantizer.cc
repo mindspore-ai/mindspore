@@ -833,7 +833,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
         MS_LOG(WARNING) << "index value node is null";
         continue;
       }
-      size_t index = GetValue<int>(index_value_node->value());
+      size_t index = CastToInt(index_value_node->value(), false).front();
       auto input_node = cnode->input(1);
       MS_ASSERT(input_node != nullptr);
       auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);

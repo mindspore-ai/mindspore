@@ -31,6 +31,7 @@ class Floor : public ArithmeticSelf {
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Floor, ArithmeticSelf);
   explicit Floor(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif

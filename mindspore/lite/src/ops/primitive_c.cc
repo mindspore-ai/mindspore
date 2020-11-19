@@ -219,12 +219,6 @@ void PrimitiveC::CalFloatScopeByMeanAndStddev(const double &mean, const double &
 void PrimitiveC::FillDefaultInputQuantParamIfNeed(const size_t &inputSize) {
   std::vector<schema::QuantParamT> quants;
   schema::QuantParamT quantParam;
-  // fill input_quant_param_ by not inited quant_parm
-  if (input_quant_param_.size() < inputSize) {
-    schema::QuantParamT tmpQuantParam;
-    quants.emplace_back(tmpQuantParam);
-    input_quant_param_.insert(input_quant_param_.end(), inputSize - input_quant_param_.size(), quants);
-  }
 
   if (input_quant_param_.size() == kDoubleNum) {
     quants.clear();
@@ -234,6 +228,12 @@ void PrimitiveC::FillDefaultInputQuantParamIfNeed(const size_t &inputSize) {
     quantParam.scale = input_quant_param_.at(0).at(0).scale * input_quant_param_.at(1).at(0).scale;
     quants.emplace_back(quantParam);
     input_quant_param_.emplace_back(quants);
+  }
+  // fill input_quant_param_ by not inited quant_parm
+  if (input_quant_param_.size() < inputSize) {
+    schema::QuantParamT tmpQuantParam;
+    quants.emplace_back(tmpQuantParam);
+    input_quant_param_.insert(input_quant_param_.end(), inputSize - input_quant_param_.size(), quants);
   }
 }
 
@@ -574,6 +574,10 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Resize>(prim, inputs, quantType);
   } else if (op_type == "ResizeBilinear") {
     return NewPrimitiveC<Resize>(prim, inputs, quantType);
+  } else if (op_type == "Floor") {
+    return NewPrimitiveC<Floor>(prim, inputs, quantType);
+  } else if (op_type == "Minimum") {
+    return NewPrimitiveC<Minimum>(prim, inputs, quantType);
 
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
