@@ -93,7 +93,6 @@ TEST_F(SchedulerTest, TestConstructSubGraphsTwoBranch) {
   concat->primitive->value.type = mindspore::schema::PrimitiveType_Concat;
   auto concat_primitive = new mindspore::schema::ConcatT;
   concat_primitive->axis = 3;
-  concat_primitive->n = 2;
   concat->primitive->value.value = concat_primitive;
   concat->name = "concat";
 
@@ -255,7 +254,6 @@ TEST_F(SchedulerTest, TestConstructSubGraphsThreeBranch) {
   concat->primitive->value.type = mindspore::schema::PrimitiveType_Concat;
   auto concat_primitive = new mindspore::schema::ConcatT;
   concat_primitive->axis = 3;
-  concat_primitive->n = 2;
   concat->primitive->value.value = concat_primitive;
   concat->name = "concat";
 

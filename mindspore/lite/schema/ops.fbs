@@ -168,7 +168,7 @@ table FlattenGrad {
 }
 table Concat {
     axis: int;
-    n: int;
+    n: int;  // DEPRECATED
 }
 
 table SoftMax {
@@ -822,6 +822,7 @@ table Gather {
 }
 
 table GatherNd {
+    batchDims: int;  // DEPRECATED
 }
 
 table Fill {

@@ -60,7 +60,6 @@ STATUS CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe:
     MS_LOG(DEBUG) << "by default, set axis = 1";
     attr->axis = 1;
   }
-  attr->n = proto.bottom_size();
 
   op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Concat;

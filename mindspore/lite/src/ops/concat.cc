@@ -27,10 +27,8 @@ namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 int Concat::GetAxis() const { return this->primitive_->value.AsConcat()->axis; }
-int Concat::GetN() const { return this->primitive_->value.AsConcat()->n; }
 
 void Concat::SetAxis(int axis) { this->primitive_->value.AsConcat()->axis = axis; }
-void Concat::SetN(int n) { this->primitive_->value.AsConcat()->n = n; }
 
 int Concat::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
@@ -71,13 +69,12 @@ int Concat::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
     MS_LOG(ERROR) << "value_as_Concat return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateConcat(*fbb, attr->axis(), attr->n());
+  auto val_offset = schema::CreateConcat(*fbb, attr->axis());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Concat, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
 }
 int Concat::GetAxis() const { return this->primitive_->value_as_Concat()->axis(); }
-int Concat::GetN() const { return this->primitive_->value_as_Concat()->n(); }
 
 PrimitiveC *ConcatCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Concat>(primitive); }
 Registry ConcatRegistry(schema::PrimitiveType_Concat, ConcatCreator);
