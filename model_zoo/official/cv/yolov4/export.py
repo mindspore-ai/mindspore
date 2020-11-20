@@ -12,54 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Convert ckpt to air."""
-import os
 import argparse
-
 import numpy as np
 
 import mindspore
-from mindspore import context
-from mindspore import Tensor
+from mindspore import context, Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
 
 from src.yolo import YOLOV4CspDarkNet53
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
+parser = argparse.ArgumentParser(description='yolov4 export')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument("--testing_shape", type=int, default=608, help="test shape")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--file_name", type=str, default="ssd.air", help="output file name.")
+parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+args = parser.parse_args()
 
-def save_air():
-    """Save mindir file"""
-    print('============= YOLOV4 start save air ==================')
-
-    parser = argparse.ArgumentParser(description='Convert ckpt to air')
-    parser.add_argument('--pretrained', type=str, default='', help='pretrained model to load')
-    parser.add_argument('--batch_size', type=int, default=8, help='batch size')
-
-    args = parser.parse_args()
-    network = YOLOV4CspDarkNet53(is_training=False)
-    input_shape = Tensor(tuple([416, 416]), mindspore.float32)
-    if os.path.isfile(args.pretrained):
-        param_dict = load_checkpoint(args.pretrained)
-        param_dict_new = {}
-        for key, values in param_dict.items():
-            if key.startswith('moments.'):
-                continue
-            elif key.startswith('yolo_network.'):
-                param_dict_new[key[13:]] = values
-
-            else:
-                param_dict_new[key] = values
-
-        load_param_into_net(network, param_dict_new)
-        print('load model {} success'.format(args.pretrained))
-
-        input_data = np.random.uniform(low=0, high=1.0, size=(args.batch_size, 3, 416, 416)).astype(np.float32)
-
-        tensor_input_data = Tensor(input_data)
-        export(network, tensor_input_data, input_shape, file_name='yolov4.air', file_format='AIR')
-
-        print("export model success.")
-
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
 
 if __name__ == "__main__":
-    save_air()
+    ts_shape = args.testing_shape
+
+    network = YOLOV4CspDarkNet53(is_training=False)
+
+    param_dict = load_checkpoint(args.ckpt_file)
+    load_param_into_net(network, param_dict)
+
+    input_shape = Tensor(tuple([ts_shape, ts_shape]), mindspore.float32)
+    input_data = Tensor(np.zeros([args.batch_size, 3, ts_shape, ts_shape]), mindspore.float32)
+
+    export(network, input_data, input_shape, file_name=args.file_name, file_format=args.file_format)
