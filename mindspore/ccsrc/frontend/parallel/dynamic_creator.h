@@ -179,6 +179,7 @@ REGISTER(SquareInfo);
 REGISTER(UniformCandidateSamplerInfo);
 REGISTER(UnsortedSegmentSumInfo);
 REGISTER(UnsortedSegmentMinInfo);
+REGISTER(UnsortedSegmentMaxInfo);
 REGISTER(GatherV2PInfo);
 REGISTER(EmbeddingLookupInfo);
 REGISTER(TileInfo);

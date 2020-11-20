@@ -305,6 +305,7 @@ constexpr char UNSORTEF_SEGMENT_MIND[] = "UnsortedSegmentMinD";
 constexpr char UNSORTEF_SEGMENT_PRODD[] = "UnsortedSegmentProdD";
 constexpr char UNSORTED_SEGMENT_SUM[] = "UnsortedSegmentSum";
 constexpr char UNSORTED_SEGMENT_MIN[] = "UnsortedSegmentMin";
+constexpr char UNSORTED_SEGMENT_MAX[] = "UnsortedSegmentMax";
 constexpr char DEPTHWISE_CONV2D_NATIVE[] = "DepthwiseConv2dNative";
 constexpr char DEPTHWISE_CONV2D[] = "DepthwiseConv2D";
 constexpr char ADD[] = "Add";
