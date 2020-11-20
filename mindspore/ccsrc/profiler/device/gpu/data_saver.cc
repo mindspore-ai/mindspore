@@ -275,7 +275,6 @@ void DataSaver::WriteStepTrace(const std::string &saver_base_dir) {
   // write step trace time info into file
   uint32_t factor = 10;
   std::vector<std::string> op_name_arr;
-  op_name_arr.push_back(step_trace_op_name.trace_iter_start);
   op_name_arr.push_back(step_trace_op_name.trace_fp_start);
   op_name_arr.push_back(step_trace_op_name.trace_bp_end);
   op_name_arr.push_back(step_trace_op_name.trace_iter_end);

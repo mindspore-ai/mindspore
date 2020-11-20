@@ -43,6 +43,7 @@ class BaseStepTraceParser:
         job_id (int): The job id used to define the start of new step. Default: 0.
         skip_first_step (bool): Whether skip the first step or not.
     """
+
     def __init__(self, input_dir, output_file_path, job_id=0, skip_first_step=False):
         self._input_dir = input_dir
         self._output_path = output_file_path
@@ -333,6 +334,7 @@ class BaseStepTraceParser:
 
 class GpuStepTraceParser(BaseStepTraceParser):
     """The parser for gpu step trace data."""
+
     def record_point_info(self, source_file, output_path):
         """
         Record point info into json.
@@ -344,7 +346,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
         Returns:
             dict, parsed point info.
         """
-        fp_start, bp_end = 1, 2
+        fp_start, bp_end = 0, 1
         try:
             with open(source_file, 'r') as f:
                 lines = f.readlines()
@@ -374,7 +376,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
     def _parse(self, source_file):
         """Parse source step trace files."""
         log.info("Start to parse step trace file.")
-        iter_start, fp_start, bp_end, iter_end = 0, 1, 2, 3
+        fp_start, bp_end, iter_end, iter_start = 0, 1, 2, 3
         reduce_start = 4
         start_time, end_time = 0, 1
 
@@ -382,15 +384,16 @@ class GpuStepTraceParser(BaseStepTraceParser):
         try:
             with open(source_file, 'r') as f:
                 lines = f.readlines()
-                step_trace_info_all = [line.strip().split() for line in lines]
+                step_trace_info_all = [line.strip().split()[1:] for line in lines]
                 num_of_step = len(step_trace_info_all[0])
-                # in callback mode that set the profiling step range, each op count is not equal
-                step_trace_info_all = [line[-num_of_step:] for line in step_trace_info_all]
+                iter_start_info = [step_trace_info_all[fp_start][0]] + \
+                    step_trace_info_all[iter_end][:num_of_step]
+                step_trace_info_all.insert(iter_start, iter_start_info)
         except (IOError, OSError) as err:
             log.warning(f'Failed to read {source_file}', err)
             raise ProfilerIOException
 
-        for step_num in range(1, num_of_step):
+        for step_num in range(num_of_step):
             step_trace = {
                 'start': int(step_trace_info_all[iter_start][step_num].split(',')[start_time]),
                 'fp': int(step_trace_info_all[fp_start][step_num].split(',')[start_time]),
