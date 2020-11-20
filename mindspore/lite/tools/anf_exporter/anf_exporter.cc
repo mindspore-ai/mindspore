@@ -408,7 +408,7 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
     node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
     output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
     meta_graphT->allTensors.emplace_back(std::move(paramTensor));
-  } else if (value->isa<mindspore::Int32Imm>()) {
+  } else if (value->isa<mindspore::Int32Imm>() || value->isa<mindspore::Int64Imm>()) {
     auto valueAbstract = valueNode->abstract();
     auto abstractScalar = utils::cast<abstract::AbstractScalarPtr>(valueAbstract);
     auto typePtr = abstractScalar->GetTypeTrack();

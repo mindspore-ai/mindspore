@@ -154,9 +154,9 @@ int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
           const int nchw2nhwc[] = {0, 3, 1, 2};
           attr->input_shape.resize(valTuplPtr->size());
           for (size_t i = 0; i < valTuplPtr->size(); i++) {
-            auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+            auto elem = (*valTuplPtr)[i];
             MS_ASSERT(elem != nullptr);
-            attr->input_shape[nchw2nhwc[i]] = elem->value();
+            attr->input_shape[nchw2nhwc[i]] = CastToInt(elem, false).front();
           }
         }
       }

@@ -70,9 +70,9 @@ int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
           auto valTuplPtr = dyn_cast<ValueTuple>(value);
           MS_ASSERT(valTuplPtr != nullptr);
           for (size_t i = 0; i < valTuplPtr->size(); i++) {
-            auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+            auto elem = (*valTuplPtr)[i];
             MS_ASSERT(elem != nullptr);
-            attr->multiples.emplace_back(elem->value());
+            attr->multiples.emplace_back(CastToInt(elem, false).front());
           }
         } else {
           int multiple = CastToInt(value, false).front();
