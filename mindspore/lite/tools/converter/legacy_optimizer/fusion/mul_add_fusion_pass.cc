@@ -137,7 +137,7 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
   MS_ASSERT(addNode != nullptr);
   // replace mulNode as scale
   mulNode->primitive->value.type = schema::PrimitiveType_Scale;
-  std::unique_ptr<ScaleT> scaleParam(new ScaleT());
+  std::unique_ptr<ScaleT> scaleParam(new (std::nothrow) ScaleT());
   if (scaleParam == nullptr) {
     MS_LOG(ERROR) << "new transposeParam failed";
     return RET_ERROR;

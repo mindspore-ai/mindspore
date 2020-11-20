@@ -34,6 +34,7 @@
 namespace mindspore {
 namespace lite {
 STATUS FusionPass::Run(schema::MetaGraphT *graph) {
+  MS_ASSERT(graph != nullptr);
   auto ret = DefinePattern();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DefinePattern Error " << ret;

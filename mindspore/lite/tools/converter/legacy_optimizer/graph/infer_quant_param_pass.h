@@ -35,5 +35,4 @@ class InferQuantParamPass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // LITE_INFER_QUANT_PARAM_PASS_H

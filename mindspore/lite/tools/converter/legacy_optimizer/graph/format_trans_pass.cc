@@ -186,6 +186,7 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
 NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place,
                                                 size_t inoutIdx, FormatTransNodeType nodeType, STATUS *errorCode) {
   MS_ASSERT((*existNodeIter) != nullptr);
+  MS_ASSERT(graph != nullptr);
   auto existNodeName = (*existNodeIter)->name;
   std::string tileName;
   if (place == kBefore) {

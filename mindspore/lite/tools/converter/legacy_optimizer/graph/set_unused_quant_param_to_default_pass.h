@@ -30,5 +30,4 @@ class SetUnusedQuantParamToDefaultPass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // LITE_UNUSED_QUANT_PARAM_DATA_REMOVE_PASS_H

@@ -63,7 +63,8 @@ STATUS FormatTransFusionPass::DefinePattern() {
 
     passOp->left = nc2nhOp;
     nh2ncOp->left = passOp;
-    std::unique_ptr<FusionPattern> nc2NhAndNh2NcPassFusionPattern(new FusionPattern(kNc2NhAndNh2NcPassFusionPattern));
+    std::unique_ptr<FusionPattern> nc2NhAndNh2NcPassFusionPattern(new (std::nothrow)
+                                                                    FusionPattern(kNc2NhAndNh2NcPassFusionPattern));
     if (nc2NhAndNh2NcPassFusionPattern == nullptr) {
       MS_LOG(ERROR) << "new " << kNc2NhAndNh2NcPassFusionPattern << "failed";
       return RET_ERROR;

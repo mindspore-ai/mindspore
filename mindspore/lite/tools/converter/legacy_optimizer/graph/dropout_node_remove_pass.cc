@@ -32,6 +32,10 @@ STATUS IsolateDropoutNode(schema::MetaGraphT *graphT, size_t nodeIdx) {
   }
 
   CNodeT *node = graphT->nodes.at(nodeIdx).get();
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "node is nullptr";
+    return RET_ERROR;
+  }
   auto inputTensorIdxes = node->inputIndex;
   auto outputTensorIdxes = node->outputIndex;
   auto preNodeIdxes = GetInputNodeIdx(*graphT, nodeIdx);
@@ -103,6 +107,10 @@ STATUS DropoutNodeRemovePass::Run(schema::MetaGraphT *graph) {
   bool ifChanged = false;
   for (size_t i = 0; i < graph->nodes.size(); i++) {
     auto &node = graph->nodes.at(i);
+    if (node->primitive == nullptr) {
+      MS_LOG(ERROR) << "node->primitive is nullptr";
+      return RET_ERROR;
+    }
     if (node->primitive->value.type == schema::PrimitiveType_Dropout) {
       ifChanged = true;
       auto status = IsolateDropoutNode(graph, i);

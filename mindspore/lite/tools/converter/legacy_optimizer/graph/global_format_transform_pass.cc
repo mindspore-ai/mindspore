@@ -105,6 +105,7 @@ STATUS ConvertNcTensor2Nh(TensorT *tensor, const std::vector<int> &pad_dims) {
   return RET_OK;
 }
 STATUS GlobalFormatTransformPass::TransWeightToNhwc(MetaGraphT *graph, const std::set<size_t> &pre_not_trans_nodes) {
+  MS_ASSERT(graph != nullptr);
   if (pre_not_trans_nodes.empty()) {
     return RET_OK;
   }

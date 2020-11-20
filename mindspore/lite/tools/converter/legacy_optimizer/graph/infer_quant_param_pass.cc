@@ -23,6 +23,7 @@
 
 namespace mindspore::lite {
 STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
+  MS_ASSERT(graph != nullptr);
   auto *quantParamRegister = QuantParamCalcRegister::GetInstance();
 
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
@@ -58,6 +59,7 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
 }
 
 void InferQuantParamPass::DetermineNodeQuantType(const schema::MetaGraphT &graph, schema::CNodeT *cnode) {
+  MS_ASSERT(graph != nullptr);
   MS_ASSERT(cnode != nullptr);
   bool canQuant = true;
   for (auto &inputTensorIdx : cnode->inputIndex) {

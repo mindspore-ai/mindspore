@@ -26,6 +26,8 @@
 namespace mindspore {
 namespace lite {
 bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node) {
+  MS_ASSERT(graph != nullptr);
+  MS_ASSERT(node != nullptr);
   auto input_node_indexes = GetInputNodeIdx(*graph, *node);
   pre_type_ = schema::PrimitiveType_NONE;
   size_t has_trans_count = 0;
@@ -34,6 +36,8 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     MS_ASSERT(graph->nodes.size() > input_node_index);
     auto &pre_node = graph->nodes.at(input_node_index);
     MS_ASSERT(pre_node != nullptr);
+    MS_ASSERT(pre_node->primitive != nullptr);
+    MS_ASSERT(pre_node->primitive->value != nullptr);
     if (pre_type_ == schema::PrimitiveType_NONE) {
       if (pre_node->primitive->value.type == schema::PrimitiveType_Nchw2Nhwc ||
           pre_node->primitive->value.type == schema::PrimitiveType_Nhwc2Nchw) {
@@ -61,6 +65,8 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     MS_ASSERT(graph->nodes.size() > output_node_index);
     auto &post_node = graph->nodes.at(output_node_index);
     MS_ASSERT(post_node != nullptr);
+    MS_ASSERT(post_node->primitive != nullptr);
+    MS_ASSERT(post_node->primitive->value != nullptr);
     if (post_type_ == schema::PrimitiveType_NONE) {
       if (post_node->primitive->value.type == schema::PrimitiveType_Nchw2Nhwc ||
           post_node->primitive->value.type == schema::PrimitiveType_Nhwc2Nchw) {

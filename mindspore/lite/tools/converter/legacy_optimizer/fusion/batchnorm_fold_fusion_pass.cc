@@ -331,9 +331,17 @@ STATUS BatchNormFoldFusionPass::GenNewWeightTensor() {
   MS_ASSERT(muTensor->dataType == DataType_DT_FLOAT);
   void *miData = muTensor->data.data();
   auto *castedMiData = static_cast<float *>(miData);
+  if (channelOut == 0) {
+    MS_LOG(ERROR) << "divisor 'channelOut' cannot be 0";
+    return RET_ERROR;
+  }
   size_t stride = weightShapeSize / channelOut;
   for (int i = 0; i < channelOut; i++) {
     for (size_t j = 0; j < stride; j++) {
+      if (fabs(castedMiData[i]) <= 0.0f) {
+        MS_LOG(ERROR) << "divisor 'castedMiData' cannot be 0";
+        return RET_ERROR;
+      }
       castedNewWeightData[i * stride + j] = castedOldWeightData[i * stride + j] * castedGammaData[i] / castedMiData[i];
     }
   }
@@ -367,6 +375,10 @@ STATUS BatchNormFoldFusionPass::GenNewBiasTensor() {  // bias has no quant
   void *sigmaData = sigmaTensor->data.data();
   auto *castedSigmaData = static_cast<float *>(sigmaData);
   for (int i = 0; i < channelOut; i++) {
+    if (fabs(castedSigmaData[i]) <= 0.0f) {
+      MS_LOG(ERROR) << "divisor 'castedSigmaData' cannot be 0";
+      return RET_ERROR;
+    }
     castedNewBiasData[i] = castedBetaData[i] - castedGammaData[i] * castedMiData[i] / castedSigmaData[i];
   }
   return RET_OK;

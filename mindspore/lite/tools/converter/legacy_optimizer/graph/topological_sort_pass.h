@@ -37,5 +37,4 @@ class TopologicalSortPass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // MINDSPORE_PREDICT_TOPOLOGICAL_SORT_PASS_H

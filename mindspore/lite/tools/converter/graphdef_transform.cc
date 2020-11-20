@@ -154,6 +154,10 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   {
     Optimizer quantNodeOptimizer;
     auto dTypeTransPass = new (std::nothrow) DTypeTransPass();
+    if (dTypeTransPass == nullptr) {
+      MS_LOG(ERROR) << "new dTypeTransPass failed";
+      return RET_MEMORY_FAILED;
+    }
     dTypeTransPass->SetInputDataDType(ctx.inputDataType);
     dTypeTransPass->SetOutputDataDType(ctx.outputDataType);
     quantNodeOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());

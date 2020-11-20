@@ -19,6 +19,7 @@
 
 namespace mindspore::lite {
 STATUS SetUnusedQuantParamToDefaultPass::Run(schema::MetaGraphT *graph) {
+  MS_ASSERT(graph != nullptr);
   for (auto &tensor : graph->allTensors) {
     for (auto &quant_param : tensor->quantParams) {
       quant_param->min = 0;
@@ -29,5 +30,4 @@ STATUS SetUnusedQuantParamToDefaultPass::Run(schema::MetaGraphT *graph) {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::lite

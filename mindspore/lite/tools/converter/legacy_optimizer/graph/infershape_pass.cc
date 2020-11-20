@@ -31,6 +31,7 @@ constexpr int DEFAULT_DIM_VALUE = -1;
 namespace {
 std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::vector<uint32_t> &tensor_indexs,
                                                 const schema::PrimitiveType node_type) {
+  MS_ASSERT(graph != nullptr);
   std::vector<Tensor *> lite_tensors;
   for (size_t i = 0; i < tensor_indexs.size(); i++) {
     auto &tensorT = graph->allTensors.at(tensor_indexs[i]);

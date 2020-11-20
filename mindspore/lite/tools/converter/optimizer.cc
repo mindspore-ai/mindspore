@@ -46,12 +46,13 @@ void Optimizer::AddPass(NodePass *nodePass) {
 }
 
 STATUS Optimizer::Run(schema::MetaGraphT *graphDefT) {
+  MS_ASSERT(graphDefT != nullptr);
   STATUS status;
   bool ifNotChanged = true;
   // each node should go through all node pass not each node pass go through all node
   for (auto &opDef : graphDefT->nodes) {
     for (auto pass : this->nodePasses) {
-      status = pass->Run(new GraphNode(graphDefT, opDef.get()));
+      status = pass->Run(new (std::nothrow) GraphNode(graphDefT, opDef.get()));
       if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
         MS_LOG(ERROR) << "Run NodePass failed";
         return status;
