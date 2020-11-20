@@ -661,11 +661,14 @@ void Pipeline::Run() {
         if (func_graph != nullptr && func_graph->manager() != nullptr) {
           auto manager = func_graph->manager();
           size_t graph_nums = manager->func_graphs().size();
+          int64_t sinksize = ConfigManager::GetInstance().iter_num();
           if (graph_nums == 1) {
-            int64_t sinksize = ConfigManager::GetInstance().iter_num();
             resource_->set_gpu_loopsink(true, sinksize);
-            MS_LOG(INFO) << "Change gpu_loopsink_flag_ to true,set loopsink size to " << sinksize;
+          } else {
+            resource_->set_gpu_loopsink(false, sinksize);
           }
+          MS_LOG(INFO) << "Change gpu_loopsink_flag_ to " << resource_->gpu_loopsink_flag() << ", set loopsink size to "
+                       << sinksize;
         }
       }
       if (!result) {
