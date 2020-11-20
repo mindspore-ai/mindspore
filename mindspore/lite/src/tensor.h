@@ -134,6 +134,20 @@ class Tensor : public mindspore::tensor::MSTensor {
     }
   }
 
+ private:
+  template <typename T>
+  std::string DataToString(void *data, size_t data_number) const {
+    if (data == nullptr) {
+      return "Data of tensor is nullptr";
+    }
+    std::ostringstream oss;
+    auto casted_data = static_cast<T *>(data);
+    for (size_t i = 0; i < 40 && i < data_number; i++) {
+      oss << " " << casted_data[i];
+    }
+    return oss.str();
+  }
+
  protected:
   void *data_ = nullptr;
   void *device_data_ = nullptr;

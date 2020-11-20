@@ -66,6 +66,11 @@ class LiteSession : public session::LiteSession {
              const std::vector<std::vector<int>> &dims) override;
 
  protected:
+  void ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lite::Tensor *dst_tensor);
+
+  int ConvertTensorsData(const lite::Model *model, size_t tensor_index, const schema::Tensor *src_tensor,
+                         lite::Tensor *dst_tensor);
+
   int ConvertTensors(const lite::Model *model);
 
   void InitGraphInOutTensors(const lite::Model *model);

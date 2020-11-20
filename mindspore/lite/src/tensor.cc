@@ -256,54 +256,19 @@ std::string Tensor::ToString() const {
   oss << std::endl << "Data:";
   switch (this->data_type_) {
     case kNumberTypeFloat32: {
-      auto data = static_cast<float *>(this->data_);
-      if (data == nullptr) {
-        return "Data of tensor is nullptr";
-      } else {
-        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
-          oss << " " << data[i];
-        }
-      }
+      oss << DataToString<float>(this->data_c(), this->ElementsNum());
     } break;
     case kNumberTypeFloat16: {
-      auto data = static_cast<int16_t *>(this->data_);
-      if (data == nullptr) {
-        oss << " Data of tensor is nullptr";
-      } else {
-        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
-          oss << " " << data[i];
-        }
-      }
+      oss << DataToString<int16_t>(this->data_c(), this->ElementsNum());
     } break;
     case kNumberTypeInt32: {
-      auto data = static_cast<int32_t *>(this->data_);
-      if (data == nullptr) {
-        oss << " Data of tensor is nullptr";
-      } else {
-        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
-          oss << " " << data[i];
-        }
-      }
+      oss << DataToString<int32_t>(this->data_c(), this->ElementsNum());
     } break;
     case kNumberTypeInt16: {
-      auto data = static_cast<int16_t *>(this->data_);
-      if (data == nullptr) {
-        oss << " Data of tensor is nullptr";
-      } else {
-        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
-          oss << " " << data[i];
-        }
-      }
+      oss << DataToString<int16_t>(this->data_c(), this->ElementsNum());
     } break;
     case kNumberTypeInt8: {
-      auto data = static_cast<int8_t *>(this->data_);
-      if (data == nullptr) {
-        oss << " Data of tensor is nullptr";
-      } else {
-        for (int i = 0; i < 40 && i < this->ElementsNum(); i++) {
-          oss << " " << static_cast<int32_t>(data[i]);
-        }
-      }
+      oss << DataToString<int8_t>(this->data_c(), this->ElementsNum());
     } break;
     default:
       oss << "Unsupported data type to print";

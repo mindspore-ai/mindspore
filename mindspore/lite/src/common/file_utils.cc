@@ -18,12 +18,10 @@
 #include <fcntl.h>
 #include <cstdlib>
 #include <climits>
-#include <cmath>
 #include "securec/include/securec.h"
 
 namespace mindspore {
 namespace lite {
-#define MAX_FILENAME_LEN 1024
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
     MS_LOG(ERROR) << "file is nullptr";

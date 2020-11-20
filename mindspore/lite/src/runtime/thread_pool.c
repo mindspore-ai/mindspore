@@ -44,7 +44,6 @@
 #define RET_TP_SYSTEM_ERROR (-1)
 
 #define MAX_THREAD_NUM (8)
-#define MAX_THREAD_POOL_NUM (4)
 #define DEFAULT_SPIN_COUNT (30000)
 
 typedef struct {
@@ -509,59 +508,73 @@ int BindMasterThread(struct ThreadPool *thread_pool, bool is_bind) {
   return RET_TP_OK;
 }
 
+int FreeBindSalverThreads(struct ThreadPool *thread_pool) {
+  cpu_set_t mask;
+  CPU_ZERO(&mask);
+  for (int i = 0; i < gHigNum + gMidNum; ++i) {
+    CPU_SET(cpu_cores[i], &mask);
+  }
+  for (int i = 0; i < thread_pool->thread_num - 1; ++i) {
+    Thread *thread = GetThread(thread_pool, i);
+    if (thread == NULL) {
+      LOG_ERROR("get thread failed, thread_id: %d", i);
+      return false;
+    }
+    int ret = SetAffinity(thread->pthread, &mask);
+    if (ret != RET_TP_OK) {
+      LOG_ERROR("set thread affinity failed");
+      return RET_TP_ERROR;
+    }
+  }
+  return RET_TP_OK;
+}
+
+int DoBindSalverThreads(struct ThreadPool *thread_pool) {
+  cpu_set_t mask;
+  unsigned int attach_id;
+  for (int i = 0; i < thread_pool->thread_num - 1; ++i) {
+    if (thread_pool->mode == MID_MODE) {
+      int core_id = gHigNum + gMidNum - i - 2;
+      if (core_id >= 0) {
+        attach_id = cpu_cores[core_id];
+      } else {
+        attach_id = cpu_cores[0];
+      }
+    } else {
+      attach_id = cpu_cores[i + 1];
+    }
+    LOG_INFO("mode: %d, attach id: %u", thread_pool->mode, attach_id);
+    CPU_ZERO(&mask);
+    CPU_SET(attach_id, &mask);
+    Thread *thread = GetThread(thread_pool, i);
+    if (thread == NULL) {
+      LOG_ERROR("get thread failed, thread_id: %d", i);
+      return false;
+    }
+    int ret = SetAffinity(thread->pthread, &mask);
+    if (ret != RET_TP_OK) {
+      LOG_ERROR("set thread affinity failed");
+      return RET_TP_ERROR;
+    }
+  }
+  return RET_TP_OK;
+}
+
 int BindSalverThreads(struct ThreadPool *thread_pool, bool is_bind) {
   if (thread_pool == NULL) {
     LOG_ERROR("get thread pool instane failed");
     return RET_TP_ERROR;
   }
-  cpu_set_t mask;
+  int ret;
   if (is_bind && thread_pool->mode != NO_BIND_MODE) {
-    unsigned int attach_id;
-    for (int i = 0; i < thread_pool->thread_num - 1; ++i) {
-      if (thread_pool->mode == MID_MODE) {
-        int core_id = gHigNum + gMidNum - i - 2;
-        if (core_id >= 0) {
-          attach_id = cpu_cores[core_id];
-        } else {
-          attach_id = cpu_cores[0];
-        }
-      } else {
-        attach_id = cpu_cores[i + 1];
-      }
-      LOG_INFO("mode: %d, attach id: %u", thread_pool->mode, attach_id);
-      CPU_ZERO(&mask);
-      CPU_SET(attach_id, &mask);
-      Thread *thread = GetThread(thread_pool, i);
-      if (thread == NULL) {
-        LOG_ERROR("get thread failed, thread_id: %d", i);
-        return false;
-      }
-      int ret = SetAffinity(thread->pthread, &mask);
-      if (ret != RET_TP_OK) {
-        LOG_ERROR("set thread affinity failed");
-        return RET_TP_ERROR;
-      }
-    }
+    ret = DoBindSalverThreads(thread_pool);
   } else {
-    CPU_ZERO(&mask);
-    for (int i = 0; i < gHigNum + gMidNum; ++i) {
-      CPU_SET(cpu_cores[i], &mask);
-    }
-    for (int i = 0; i < thread_pool->thread_num - 1; ++i) {
-      Thread *thread = GetThread(thread_pool, i);
-      if (thread == NULL) {
-        LOG_ERROR("get thread failed, thread_id: %d", i);
-        return false;
-      }
-      int ret = SetAffinity(thread->pthread, &mask);
-      if (ret != RET_TP_OK) {
-        LOG_ERROR("set thread affinity failed");
-        return RET_TP_ERROR;
-      }
-    }
+    ret = FreeBindSalverThreads(thread_pool);
   }
-  LOG_INFO("BindSalverThreads success");
-  return RET_TP_OK;
+  if (ret == RET_TP_OK) {
+    LOG_INFO("BindSalverThreads success");
+  }
+  return ret;
 }
 #endif
 
@@ -782,46 +795,6 @@ int CreateNewThread(struct ThreadPool *thread_pool, int thread_id) {
   return RET_TP_OK;
 }
 
-int ReConfigThreadPool(struct ThreadPool *thread_pool, int thread_num, int mode) {
-  LOG_INFO("reconfig thread pool, thread_num: %d, mode: %d", thread_num, mode);
-  if (thread_num <= 0 || thread_num > MAX_THREAD_NUM) {
-    LOG_ERROR("invalid thread num: %d", thread_num);
-    return RET_TP_ERROR;
-  }
-  if (thread_pool == NULL) {
-    LOG_ERROR("get thread pool instane failed");
-    return RET_TP_ERROR;
-  }
-  if (thread_num <= thread_pool->thread_num) {
-    LOG_INFO("no need to add thread");
-    return RET_TP_OK;
-  }
-  int curr_thread_num = thread_pool->thread_num;
-  thread_pool->thread_num = thread_num > MAX_THREAD_NUM ? MAX_THREAD_NUM : thread_num;
-  thread_pool->mode = mode;
-  if (thread_pool->thread_list == NULL) {
-    thread_pool->thread_list = (ThreadList *)malloc(sizeof(ThreadList));
-    if (thread_pool->thread_list == NULL) {
-      LOG_ERROR("create thread list failed");
-      DestroyThreadPool(thread_pool);
-      return RET_TP_ERROR;
-    }
-    thread_pool->thread_list->head = NULL;
-    thread_pool->thread_list->tail = NULL;
-    thread_pool->thread_list->size = 0;
-    pthread_mutex_init(&thread_pool->thread_list->lock, NULL);
-  }
-  int add_thread_num = thread_pool->thread_num - curr_thread_num;
-  for (int i = curr_thread_num - 1, j = 0; j < add_thread_num; ++i, ++j) {
-    int ret = CreateNewThread(thread_pool, i);
-    if (ret != RET_TP_OK) {
-      LOG_ERROR("create new thread failed");
-      return RET_TP_ERROR;
-    }
-  }
-  return BindThreads(thread_pool, true, mode);
-}
-
 ThreadPool *CreateThreadPool(int thread_num, int mode) {
   LOG_INFO("create thread pool, thread_num: %d, mode: %d", thread_num, mode);
   if (thread_num <= 0 || thread_num > MAX_THREAD_NUM) {
@@ -871,18 +844,6 @@ ThreadPool *CreateThreadPool(int thread_num, int mode) {
     return NULL;
   }
   return thread_pool;
-}
-
-int ConfigThreadPool(struct ThreadPool *thread_pool, int thread_num, int mode) {
-  if (thread_num <= 0 || thread_num > MAX_THREAD_NUM) {
-    LOG_ERROR("invalid thread num: %d", thread_num);
-    return RET_TP_ERROR;
-  }
-  int ret = ReConfigThreadPool(thread_pool, thread_num, mode);
-  if (ret != RET_TP_OK) {
-    LOG_ERROR("reconfig thread pool failed, thread_num: %d, mode: %d", thread_num, mode);
-  }
-  return ret;
 }
 
 void ActivateThreadPool(struct ThreadPool *thread_pool) {
