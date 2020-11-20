@@ -48,6 +48,9 @@ class ScalarSummary(PrimitiveWithInfer):
         - **name** (str) - The name of the input variable, it must not be an empty string.
         - **value** (Tensor) - The value of scalar, and the shape of value must be [] or [1].
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> class SummaryDemo(nn.Cell):
         ...     def __init__(self,):
@@ -87,6 +90,9 @@ class ImageSummary(PrimitiveWithInfer):
         - **name** (str) - The name of the input variable, it must not be an empty string.
         - **value** (Tensor) - The value of image, the rank of tensor must be 4.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -124,6 +130,9 @@ class TensorSummary(PrimitiveWithInfer):
     Inputs:
         - **name** (str) - The name of the input variable.
         - **value** (Tensor) - The value of tensor, and the rank of tensor must be greater than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
@@ -163,6 +172,9 @@ class HistogramSummary(PrimitiveWithInfer):
     Inputs:
         - **name** (str) - The name of the input variable.
         - **value** (Tensor) - The value of tensor, and the rank of tensor must be greater than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
@@ -207,6 +219,9 @@ class InsertGradientOf(PrimitiveWithInfer):
 
     Outputs:
         Tensor, returns `input_x` directly. `InsertGradientOf` does not affect the forward result.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> def clip_gradient(dx):
@@ -318,6 +333,9 @@ class Print(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Union[Tensor, str]) - The graph node to attach to. The input supports
           multiple strings and tensors which are separated by ','.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> class PrintDemo(nn.Cell):

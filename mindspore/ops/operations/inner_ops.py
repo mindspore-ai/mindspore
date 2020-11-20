@@ -32,6 +32,9 @@ class ScalarCast(PrimitiveWithInfer):
     Outputs:
         Scalar. The type is the same as the python type corresponding to `input_y`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> scalar_cast = P.ScalarCast()
         >>> output = scalar_cast(255.0, mindspore.int32)

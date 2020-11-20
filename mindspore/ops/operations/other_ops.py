@@ -37,6 +37,9 @@ class Assign(PrimitiveWithCheck):
     Outputs:
         Tensor, has the same type as original `variable`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -120,6 +123,9 @@ class BoundingBoxEncode(PrimitiveWithInfer):
     Outputs:
         Tensor, encoded bounding boxes.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
         >>> groundtruth_box = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
@@ -172,6 +178,9 @@ class BoundingBoxDecode(PrimitiveWithInfer):
 
     Outputs:
         Tensor, decoded boxes.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
@@ -227,6 +236,9 @@ class CheckValid(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with shape of (N,) and dtype of bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore
@@ -297,6 +309,9 @@ class IOU(PrimitiveWithInfer):
     Raises:
         KeyError: When `mode` is not 'iou' or 'iof'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> iou = P.IOU()
         >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
@@ -343,6 +358,9 @@ class MakeRefKey(Primitive):
 
     Outputs:
         RefKeyType, made from the Parameter name.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import functional as F
@@ -544,6 +562,9 @@ class PopulationCount(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the sam  shape as the input.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> population_count = P.PopulationCount()

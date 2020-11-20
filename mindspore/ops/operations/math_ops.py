@@ -135,6 +135,9 @@ class TensorAdd(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> add = P.TensorAdd()
         >>> input_x = Tensor(np.array([1,2,3]).astype(np.float32))
@@ -169,6 +172,9 @@ class AssignAdd(PrimitiveWithInfer):
         - **variable** (Parameter) - The `Parameter`.
         - **value** (Union[numbers.Number, Tensor]) - The value to be added to the `variable`.
           It must have the same shape as `variable` if it is a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -221,6 +227,9 @@ class AssignSub(PrimitiveWithInfer):
         - **variable** (Parameter) - The `Parameter`.
         - **value** (Union[numbers.Number, Tensor]) - The value to be subtracted from the `variable`.
           It must have the same shape as `variable` if it is a Tensor.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -344,6 +353,9 @@ class ReduceMean(_Reduce):
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMean(keep_dims=True)
@@ -377,6 +389,9 @@ class ReduceSum(_Reduce):
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
@@ -419,6 +434,9 @@ class ReduceAll(_Reduce):
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = P.ReduceAll(keep_dims=True)
@@ -458,6 +476,9 @@ class ReduceAny(_Reduce):
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = P.ReduceAny(keep_dims=True)
@@ -496,6 +517,9 @@ class ReduceMax(_Reduce):
           the shape of output is :math:`(x_1, x_3, ..., x_R)`.
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
@@ -541,6 +565,9 @@ class ReduceMin(_Reduce):
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMin(keep_dims=True)
@@ -576,6 +603,9 @@ class ReduceProd(_Reduce):
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceProd(keep_dims=True)
@@ -600,6 +630,9 @@ class CumProd(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> a, b, c, = 1, 2, 3
@@ -661,6 +694,9 @@ class MatMul(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, M)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x1 = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
@@ -741,6 +777,9 @@ class BatchMatMul(MatMul):
     Outputs:
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
         >>> input_y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
@@ -800,6 +839,9 @@ class CumSum(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape of the output tensor is consistent with the input tensor's.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input = Tensor(np.array([[3, 4, 6, 10],[1, 6, 7, 9],[4, 3, 8, 7],[1, 3, 7, 9]]).astype(np.float32))
         >>> cumsum = P.CumSum()
@@ -844,6 +886,9 @@ class AddN(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as each entry of the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class NetAddN(nn.Cell):
@@ -928,6 +973,9 @@ class AccumulateNV2(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and dtype as each entry of the `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> class NetAccumulateNV2(nn.Cell):
         ...     def __init__(self):
@@ -987,6 +1035,9 @@ class Neg(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and dtype as input.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> neg = P.Neg()
         >>> input_x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
@@ -1031,6 +1082,9 @@ class InplaceAdd(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as input_x.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> indices = (0, 1)
@@ -1090,6 +1144,9 @@ class InplaceSub(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as input_x.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> indices = (0, 1)
@@ -1155,6 +1212,9 @@ class Sub(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.int32)
@@ -1194,6 +1254,9 @@ class Mul(_MathBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -1235,6 +1298,9 @@ class SquaredDifference(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([2.0, 4.0, 6.0]), mindspore.float32)
@@ -1258,6 +1324,9 @@ class Square(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -1297,6 +1366,9 @@ class Rsqrt(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type and shape as `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_tensor = Tensor([[4, 4], [9, 9]], mindspore.float32)
@@ -1338,6 +1410,9 @@ class Sqrt(PrimitiveWithCheck):
     Outputs:
         Tensor, has the same shape as the `input_x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
         >>> sqrt = P.Sqrt()
@@ -1372,6 +1447,9 @@ class Reciprocal(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
@@ -1427,6 +1505,9 @@ class Pow(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> input_y = 3.0
@@ -1462,6 +1543,9 @@ class Exp(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
@@ -1502,6 +1586,9 @@ class Expm1(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as the `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
         >>> expm1 = P.Expm1()
@@ -1539,6 +1626,9 @@ class HistogramFixedWidth(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the type is int32.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mindspore.float16)
@@ -1578,6 +1668,9 @@ class Log(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as the `input_x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> log = P.Log()
@@ -1616,6 +1709,9 @@ class Log1p(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as the `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> log1p = P.Log1p()
@@ -1647,6 +1743,9 @@ class Erf(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
         >>> erf = P.Erf()
@@ -1677,6 +1776,9 @@ class Erfc(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
@@ -1720,6 +1822,9 @@ class Minimum(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
@@ -1760,6 +1865,9 @@ class Maximum(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
@@ -1799,6 +1907,9 @@ class RealDiv(_MathBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
@@ -1841,6 +1952,9 @@ class Div(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
@@ -1879,6 +1993,9 @@ class DivNoNan(_MathBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)
@@ -1926,6 +2043,9 @@ class FloorDiv(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
@@ -1958,6 +2078,9 @@ class TruncateDiv(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
@@ -1988,6 +2111,9 @@ class TruncateMod(_MathBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -2021,6 +2147,9 @@ class Mod(_MathBinaryOp):
     Raises:
         ValueError: When `input_x` and `input_y` are not the same dtype.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
@@ -2047,6 +2176,9 @@ class Floor(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
@@ -2089,6 +2221,9 @@ class FloorMod(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
@@ -2108,6 +2243,9 @@ class Ceil(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
@@ -2150,6 +2288,9 @@ class Xdivy(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.float32)
         >>> input_y = Tensor(np.array([2, 2, 2]), mindspore.float32)
@@ -2186,6 +2327,9 @@ class Xlogy(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
         >>> input_y = Tensor(np.array([2, 2, 2]), mindspore.float32)
@@ -2208,6 +2352,9 @@ class Acosh(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> acosh = P.Acosh()
@@ -2236,6 +2383,9 @@ class Cosh(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> cosh = P.Cosh()
@@ -2267,6 +2417,9 @@ class Asinh(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> asinh = P.Asinh()
         >>> input_x = Tensor(np.array([-5.0, 1.5, 3.0, 100.0]), mindspore.float32)
@@ -2296,6 +2449,9 @@ class Sinh(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> sinh = P.Sinh()
@@ -2350,6 +2506,9 @@ class Equal(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> equal = P.Equal()
@@ -2396,6 +2555,9 @@ class ApproximateEqual(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the shape of 'x1', and the data type is bool.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> x1 = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> x2 = Tensor(np.array([2, 4, 6]), mindspore.float32)
@@ -2433,6 +2595,9 @@ class EqualCount(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the type same as input tensor and size as (1,).
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -2477,6 +2642,9 @@ class NotEqual(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> not_equal = P.NotEqual()
@@ -2516,6 +2684,9 @@ class Greater(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
@@ -2553,6 +2724,9 @@ class GreaterEqual(_LogicBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -2592,6 +2766,9 @@ class Less(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
@@ -2630,6 +2807,9 @@ class LessEqual(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
@@ -2657,6 +2837,9 @@ class LogicalNot(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape is the same as the `input_x`, and the dtype is bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
@@ -2698,6 +2881,9 @@ class LogicalAnd(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
         >>> input_y = Tensor(np.array([True, True, False]), mindspore.bool_)
@@ -2730,6 +2916,9 @@ class LogicalOr(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
         >>> input_y = Tensor(np.array([True, True, False]), mindspore.bool_)
@@ -2752,6 +2941,9 @@ class IsNan(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> is_nan = P.IsNan()
@@ -2781,6 +2973,9 @@ class IsInf(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> is_inf = P.IsInf()
         >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
@@ -2808,6 +3003,9 @@ class IsFinite(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> is_finite = P.IsFinite()
@@ -2840,6 +3038,9 @@ class FloatStatus(PrimitiveWithInfer):
     Outputs:
         Tensor, has the shape of `(1,)`, and has the same dtype of input `mindspore.dtype.float32` or
         `mindspore.dtype.float16`.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> float_status = P.FloatStatus()
@@ -2874,6 +3075,9 @@ class NPUAllocFloatStatus(PrimitiveWithInfer):
     Outputs:
         Tensor, has the shape of `(8,)`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> alloc_status = P.NPUAllocFloatStatus()
         >>> output = alloc_status()
@@ -2907,6 +3111,9 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`. All the elements in the tensor will be zero.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> alloc_status = P.NPUAllocFloatStatus()
@@ -2950,6 +3157,9 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`. All the elements in the tensor will be zero.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> alloc_status = P.NPUAllocFloatStatus()
         >>> get_status = P.NPUGetFloatStatus()
@@ -2987,6 +3197,9 @@ class Cos(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> cos = P.Cos()
         >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
@@ -3017,6 +3230,9 @@ class ACos(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> acos = P.ACos()
         >>> input_x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
@@ -3044,6 +3260,9 @@ class Sin(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> sin = P.Sin()
@@ -3074,6 +3293,9 @@ class Asin(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> asin = P.Asin()
@@ -3125,6 +3347,9 @@ class NMSWithMask(PrimitiveWithInfer):
         - **selected_mask** (Tensor) - The shape of tensor is :math:`(N,)`. A mask list of
           valid output bounding boxes.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> bbox = np.random.rand(128, 5)
         >>> bbox[:, 2] += bbox[:, 0]
@@ -3163,6 +3388,9 @@ class Abs(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
@@ -3208,6 +3436,9 @@ class Sign(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and type as the `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
          >>> input_x = Tensor(np.array([[2.0, 0.0, -1.0]]), mindspore.float32)
          >>> sign = P.Sign()
@@ -3237,6 +3468,9 @@ class Round(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and type as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
          >>> input_x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
@@ -3270,6 +3504,9 @@ class Tan(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> tan = P.Tan()
         >>> input_x = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
@@ -3299,6 +3536,9 @@ class Atan(PrimitiveWithInfer):
 
     Outputs:
         A Tensor, has the same type as the input.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
@@ -3331,6 +3571,9 @@ class Atanh(PrimitiveWithInfer):
 
     Outputs:
         A Tensor, has the same type as the input.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
@@ -3371,6 +3614,9 @@ class Atan2(_MathBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is same as `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([0, 1]), mindspore.float32)
         >>> input_y = Tensor(np.array([1, 1]), mindspore.float32)
@@ -3395,6 +3641,9 @@ class SquareSumAll(PrimitiveWithInfer):
     Outputs:
         - **output_y1** (Tensor) - The same type as the `input_x1`.
         - **output_y2** (Tensor) - The same type as the `input_x1`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x1 = Tensor(np.array([0, 0, 2, 0]), mindspore.float32)
@@ -3438,6 +3687,9 @@ class BitwiseAnd(_BitwiseBinaryOp):
     Outputs:
         Tensor, has the same type as the `input_x1`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
@@ -3464,6 +3716,9 @@ class BitwiseOr(_BitwiseBinaryOp):
 
     Outputs:
         Tensor, has the same type as the `input_x1`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -3492,6 +3747,9 @@ class BitwiseXor(_BitwiseBinaryOp):
     Outputs:
         Tensor, has the same type as the `input_x1`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
@@ -3512,6 +3770,9 @@ class BesselI0e(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> bessel_i0e = P.BesselI0e()
@@ -3544,6 +3805,9 @@ class BesselI1e(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> bessel_i1e = P.BesselI1e()
         >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
@@ -3574,6 +3838,9 @@ class Inv(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and data type as `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> inv = P.Inv()
@@ -3606,6 +3873,9 @@ class Invert(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> invert = P.Invert()
         >>> input_x = Tensor(np.array([25, 4, 13, 9]), mindspore.int16)
@@ -3635,6 +3905,9 @@ class Eps(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type and shape as `input_x`, but filled with `input_x` dtype minimum val.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor([4, 1, 2, 3], mindspore.float32)

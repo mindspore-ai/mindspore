@@ -34,6 +34,9 @@ class StandardNormal(PrimitiveWithInfer):
     Outputs:
         Tensor. The shape is the same as the input `shape`. The dtype is float32.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> shape = (4, 16)
         >>> stdnormal = P.StandardNormal(seed=2)
@@ -80,6 +83,9 @@ class StandardLaplace(PrimitiveWithInfer):
 
     Outputs:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> shape = (4, 16)
@@ -132,6 +138,9 @@ class Gamma(PrimitiveWithInfer):
     Outputs:
         Tensor. The shape must be the broadcasted shape of Input "shape" and shapes of alpha and beta.
         The dtype is float32.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> shape = (2, 2)
@@ -189,6 +198,9 @@ class Poisson(PrimitiveWithInfer):
         Tensor. Its shape must be the broadcasted shape of `shape` and the shape of `mean`.
         The dtype is int32.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> shape = (4, 16)
         >>> mean = Tensor(5.0, mstype.float32)
@@ -244,6 +256,9 @@ class UniformInt(PrimitiveWithInfer):
     Outputs:
         Tensor. The shape is the same as the input 'shape', and the data type is int32.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> shape = (2, 4)
         >>> minval = Tensor(1, mstype.int32)
@@ -295,6 +310,9 @@ class UniformReal(PrimitiveWithInfer):
 
     Outputs:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> shape = (2, 2)
@@ -350,6 +368,9 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         - **index** (Tensor) - The output shape is 2-D.
         - **mask** (Tensor) - The output shape is 1-D.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> rnd_choice_mask = P.RandomChoiceWithMask()
         >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
@@ -393,6 +414,9 @@ class RandomCategorical(PrimitiveWithInfer):
 
     Outputs:
         - **output** (Tensor) - The output Tensor with shape [batch_size, num_samples].
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -468,6 +492,9 @@ class Multinomial(PrimitiveWithInfer):
 
     Outputs:
         Tensor with the same rows as input, each row has num_samples sampled indices.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> input = Tensor([0., 9., 4., 0.], mstype.float32)

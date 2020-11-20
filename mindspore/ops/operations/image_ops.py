@@ -53,6 +53,9 @@ class CropAndResize(PrimitiveWithInfer):
     Outputs:
         A 4-D tensor of shape [num_boxes, crop_height, crop_width, depth] with type: float32.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> class CropAndResizeNet(nn.Cell):
         ...     def __init__(self, crop_size):
