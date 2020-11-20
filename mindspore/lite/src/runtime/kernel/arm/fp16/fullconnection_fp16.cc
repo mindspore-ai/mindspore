@@ -122,6 +122,10 @@ int FullconnectionFP16CPUKernel::ReSize() {
   if (out_tensors_[0]->data_type() == kNumberTypeFloat32) {
     output_fp16_ =
       reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(fc_param_->row_ * fc_param_->col_ * sizeof(float16_t)));
+    if (output_fp16_ == nullptr) {
+      FreeTmpBuffer();
+      return RET_MEMORY_FAILED;
+    }
   }
   return RET_OK;
 }  // namespace mindspore::kernel

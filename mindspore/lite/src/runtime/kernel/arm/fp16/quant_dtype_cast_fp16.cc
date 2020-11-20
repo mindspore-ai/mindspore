@@ -87,6 +87,8 @@ int QuantDTypeCastFp16CPUKernel::QuantDTypeCast(int task_id) {
   auto quant_arg = !out_tensors_.front()->GetQuantParams().empty() ? out_tensors_.front()->GetQuantParams().front()
                                                                    : in_tensors_.front()->GetQuantParams().front();
   int ret;
+  MS_ASSERT(int8_ptr_);
+  MS_ASSERT(float16_ptr_);
   if (inverse_) {
     ret = DoDequantizeInt8ToFp16(int8_ptr_ + thread_offset, float16_ptr_ + thread_offset, quant_arg.scale,
                                  quant_arg.zeroPoint, num_unit_thread);

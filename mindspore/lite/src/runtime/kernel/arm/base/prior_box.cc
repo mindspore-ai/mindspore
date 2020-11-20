@@ -79,11 +79,14 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
     if (!exist) {
       different_aspect_ratios.emplace_back(ratio);
       if (prior_box_param_->flip) {
+        MS_ASSERT(fabs(ratio) > 1e-5);
         different_aspect_ratios.emplace_back(1.0f / ratio);
       }
     }
   }
 
+  MS_ASSERT(fmap_w);
+  MS_ASSERT(fmap_h);
   for (int i = 0; i < fmap_h; i++) {
     float cy = i + prior_box_param_->offset;
     for (int j = 0; j < fmap_w; j++) {

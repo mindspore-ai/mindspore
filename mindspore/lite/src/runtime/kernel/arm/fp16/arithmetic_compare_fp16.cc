@@ -45,7 +45,8 @@ ARITHMETIC_COMPARE_FUNC_INFO_FP16 arithmetic_cp_fun_table_fp16[] = {
    ElementOptGreaterEqualFp16}};
 
 ArithmeticCompareFuncFp16 GetArithmeticCompareFun(int primitive_type, int activation_type) {
-  for (size_t i = 0; i < sizeof(arithmetic_cp_fun_table_fp16); i++) {
+  size_t length = sizeof(arithmetic_cp_fun_table_fp16) / sizeof(ARITHMETIC_COMPARE_FUNC_INFO_FP16);
+  for (size_t i = 0; i < length; i++) {
     if (arithmetic_cp_fun_table_fp16[i].primitive_type_ == primitive_type &&
         arithmetic_cp_fun_table_fp16[i].activation_type_ == activation_type) {
       return arithmetic_cp_fun_table_fp16[i].func_;
@@ -55,7 +56,8 @@ ArithmeticCompareFuncFp16 GetArithmeticCompareFun(int primitive_type, int activa
 }
 
 ArithmeticCompareOptFuncFp16 GetOptimizedArithmeticCompareFun(int primitive_type, int activation_type) {
-  for (size_t i = 0; i < sizeof(arithmetic_cp_fun_table_fp16); i++) {
+  size_t length = sizeof(arithmetic_cp_fun_table_fp16) / sizeof(ARITHMETIC_COMPARE_FUNC_INFO_FP16);
+  for (size_t i = 0; i < length; i++) {
     if (arithmetic_cp_fun_table_fp16[i].primitive_type_ == primitive_type &&
         arithmetic_cp_fun_table_fp16[i].activation_type_ == activation_type) {
       return arithmetic_cp_fun_table_fp16[i].opt_func_;
