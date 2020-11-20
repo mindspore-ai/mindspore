@@ -597,7 +597,7 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
   auto reshape_tuple = reshape_value_tuple->value();
 
   (void)std::transform(std::begin(reshape_tuple), std::end(reshape_tuple), std::back_inserter(shape),
-                       [](const ValuePtr &e) -> int { return GetValue<int>(e); });
+                       [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
 
   auto max_shape = shape;
   auto min_shape = shape;

@@ -33,6 +33,9 @@ void SearchCacheIdxCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 
   hashmap_length_ = hashmap_shape[0];
+  if (hashmap_length_ <= 0) {
+    MS_LOG(EXCEPTION) << "Hashmap length must > 0";
+  }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
 
@@ -96,8 +99,10 @@ void SearchCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
       output_miss_emb_idx[i] = -1;
     }
   }
-  MS_LOG(INFO) << "avg search count: " << total_count / count_size;
-  MS_LOG(INFO) << "cache hit rate: " << hit_count / count_size;
+  if (count_size != 0) {
+    MS_LOG(INFO) << "avg search count: " << total_count / count_size;
+    MS_LOG(INFO) << "cache hit rate: " << hit_count / count_size;
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore

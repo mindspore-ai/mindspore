@@ -67,8 +67,12 @@ void AssignCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_y = reinterpret_cast<T *>(inputs[1]->addr);
+  auto max_size = inputs[0]->size;
   size_t total_size = input_x_dtype_size_ * batch_size_;
-
+  if (total_size > max_size) {
+    MS_LOG(EXCEPTION) << "Memcpy size must <= max_size, but got memcpy size is : " << total_size
+                      << ", max size is : " << max_size;
+  }
   int ret = memcpy_s(input_x, total_size, input_y, total_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
