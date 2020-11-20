@@ -77,5 +77,4 @@ class FbQuantizer {
   schema::MetaGraphT *graph = nullptr;
 };
 }  // namespace mindspore::lite::quant
-
 #endif

@@ -22,8 +22,7 @@
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 static constexpr int CONVLUTION_INPUT_NUM = 3;
 
 class QuantParamCalcer {
@@ -77,7 +76,5 @@ class QuantParamCalcRegister {
   QuantParamCalcRegister();
   std::unordered_map<schema::PrimitiveType, std::shared_ptr<QuantParamCalcer>> _registerMap;
 };
-}  // namespace lite
-}  // namespace mindspore
-
+}  // namespace mindspore::lite
 #endif

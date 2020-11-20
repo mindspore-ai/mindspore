@@ -30,9 +30,7 @@
 using std::string;
 using std::vector;
 
-namespace mindspore {
-namespace lite {
-namespace quant {
+namespace mindspore::lite::quant {
 const std::vector<schema::PrimitiveType> QuantStrategy::conv_types = {
   schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_Conv2D,
   schema::PrimitiveType_DepthwiseConv2D};
@@ -42,6 +40,7 @@ QuantStrategy::QuantStrategy(size_t weightSize, size_t convWeightQuantChannelThr
     : mWeightSize(weightSize), mConvWeightQuantChannelThreshold(convWeightQuantChannelThreshold) {}
 
 bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
+  MS_ASSERT(node != nullptr);
   auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(node->input(0));
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr";
@@ -53,7 +52,6 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
   if (node->size() < 3) {
     return false;
   }
-
   auto inputNode = node->input(2);
   if (!inputNode->isa<Parameter>()) {
     return false;
@@ -63,7 +61,6 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
   if (abstract_base == nullptr) {
     return false;
   }
-
   if (!utils::isa<abstract::ShapePtr>(abstract_base->GetShapeTrack())) {
     MS_LOG(INFO) << "Shape of Abstract of parameter should be ShapePtr " << paramNode->name();
     return false;
@@ -81,11 +78,11 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
     MS_LOG(INFO) << "channel less mConvWeightQuantChannelThreshold!" << weight_shape[0];
     return false;
   }
-
   return true;
 }
 
 bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
+  MS_ASSERT(node != nullptr);
   if (!node->isa<CNode>()) {
     return false;
   }
@@ -121,6 +118,7 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
 }
 
 bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
+  MS_ASSERT(node != nullptr);
   auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(node->input(0));
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr";
@@ -210,7 +208,15 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
 
   auto quantMinFloat = static_cast<double>(quant_min);
   auto quantMaxFloat = static_cast<double>(quant_max);
+  if (fabs(quantMaxFloat - quantMinFloat) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor cannot be 0";
+    return RET_ERROR;
+  }
   double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
+  if (fabs(scale) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor 'scale' cannot be 0";
+    return RET_ERROR;
+  }
   const double zeroPointFromMin = quantMinFloat - mMin / scale;
   int zeroPoint = static_cast<int32_t>(std::round(zeroPointFromMin));
 
@@ -262,7 +268,15 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
   const int8_t quantMax = std::numeric_limits<int8_t>::max();
   auto quantMinFloat = static_cast<double>(quantMin);
   auto quantMaxFloat = static_cast<double>(quantMax);
+  if (fabs(quantMaxFloat - quantMinFloat) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor cannot be 0";
+    return RET_ERROR;
+  }
   double scale = (mMax - mMin) / (quantMaxFloat - quantMinFloat);
+  if (fabs(scale) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor 'scale' cannot be 0";
+    return RET_ERROR;
+  }
   const double zeroPointFromMin = quantMinFloat - mMin / scale;
   const double zeroPointFromMax = quantMaxFloat - mMax / scale;
   const double zpFromMinError = std::abs(quantMinFloat) + std::abs(mMin / scale);
@@ -300,8 +314,16 @@ static bool SearchLowerBound(const std::vector<float> &data, const size_t &index
   if (max_tmp - data.at(index) < delta) {
     return false;
   }
+  if (fabs(max_tmp - *min_tmp) <= 0.0f || fabs(length - *min_idx) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor cannot be 0";
+    return false;
+  }
   float range_ratio = (data.at(index) - *min_tmp) / (max_tmp - *min_tmp);
   float index_ratio = static_cast<float>(index - *min_idx) / (length - *min_idx);
+  if (fabs(index_ratio) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor cannot be 0";
+    return false;
+  }
   if (index_ratio > 0 && range_ratio / index_ratio > ratio) {
     *min_idx = index;
     *min_tmp = data.at(index);
@@ -315,8 +337,16 @@ static bool SearchUpperBound(const std::vector<float> &data, const size_t &index
   if (data.at(index) - min_tmp < delta) {
     return false;
   }
+  if (fabs(*max_tmp - min_tmp) <= 0.0f || fabs(length - *max_idx) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor cannot be 0";
+    return false;
+  }
   float range_ratio = (*max_tmp - data.at(index)) / (*max_tmp - min_tmp);
   float index_ratio = static_cast<float>(index - *max_idx) / (length - *max_idx);
+  if (fabs(index_ratio) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor cannot be 0";
+    return false;
+  }
   if (index_ratio > 0 && range_ratio / index_ratio > ratio) {
     *max_idx = index;
     *max_tmp = data.at(index);
@@ -328,7 +358,7 @@ static float CalPercentile(const std::vector<float> &datas, const int &outlier_p
   const int size = datas.size();
   float val = outlier_percent / 100.0 * size;
   int index = std::ceil(val);
-  float result = 0.0;
+  float result;
   if (index - val > 0) {
     result = datas.at(index - 1);
   } else {
@@ -374,6 +404,7 @@ static std::vector<float> InitClusters(float *data, size_t elem_count, size_t k)
     return clusters;
   }
   // init cluster
+  MS_ASSERT(k != 1);
   float ratio = static_cast<float>(data_unique.size()) / (k - 1);
   std::sort(data_unique.begin(), data_unique.end());
   for (size_t i = 0; i < k; i++) {
@@ -388,6 +419,8 @@ static std::vector<float> InitClusters(float *data, size_t elem_count, size_t k)
 }
 
 std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam) {
+  MS_ASSERT(data != nullptr);
+  MS_ASSERT(quantParam != nullptr);
   std::vector<float> clusters = InitClusters(data, elem_count, k);
   std::vector<int8_t> clusters_index{};
   double error{0};
@@ -412,7 +445,7 @@ std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epoc
       clusters_data[index].emplace_back(data[i]);
     }
     for (size_t j = 0; j < clusters.size(); j++) {
-      if (clusters_data[j].size() > 0) {
+      if (!clusters_data[j].empty()) {
         clusters[j] = std::accumulate(clusters_data[j].begin(), clusters_data[j].end(), 0.0) / clusters_data[j].size();
       }
     }
@@ -421,7 +454,7 @@ std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epoc
       error_cur += pow(data[j] - clusters[clusters_index[j]], 2);
     }
     error_cur = pow(error_cur / elem_count, 0.5);
-    if (std::abs((error_cur - error) / error_cur) < 1e-6) {
+    if (std::abs((error_cur - error) / error_cur) <= 0.0f) {
       break;
     }
     error = error_cur;
@@ -430,7 +463,7 @@ std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epoc
   return clusters_index;
 }
 
-schema::PrimitiveType NodePrimitiveType(CNodePtr cnode) {
+schema::PrimitiveType NodePrimitiveType(const CNodePtr &cnode) {
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "cnode is null";
     return schema::PrimitiveType_NONE;
@@ -442,6 +475,4 @@ schema::PrimitiveType NodePrimitiveType(CNodePtr cnode) {
   }
   return (schema::PrimitiveType)primitive_c->Type();
 }
-}  // namespace quant
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite::quant

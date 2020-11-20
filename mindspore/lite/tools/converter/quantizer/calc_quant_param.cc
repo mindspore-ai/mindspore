@@ -80,9 +80,6 @@ int QuantParamCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
       inputParamDone++;
       continue;
     }
-    MS_ASSERT(graph->allTensors.size() > node.inputIndex.at(i));
-
-    MS_ASSERT(tensor != nullptr);
     if (!tensor->data.empty() && !IsContain(graph->inputIndex, node.inputIndex.at(i))) {
       auto status = ComputeConstQuantParam((*tensor), quantParam.get());
       if (status != RET_OK) {
@@ -104,10 +101,7 @@ int QuantParamCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
       outputParamDone++;
       continue;
     }
-
-    if (!tensor->data.empty()) {
-      MS_ASSERT(false);
-    }
+    MS_ASSERT(tensor->data.empty());
   }
   return RET_OK;
 }
@@ -487,7 +481,7 @@ class CalcActivation : public QuantParamCalcer {
     }
   }
 };
-QuantParamCalcRegister::~QuantParamCalcRegister() {}
+QuantParamCalcRegister::~QuantParamCalcRegister() = default;
 
 QuantParamCalcRegister::QuantParamCalcRegister() {
   bool hasError = false;

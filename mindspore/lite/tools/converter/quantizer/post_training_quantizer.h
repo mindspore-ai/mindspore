@@ -29,9 +29,7 @@
 #include "tools/converter/converter.h"
 #include "include/ms_tensor.h"
 
-namespace mindspore {
-namespace lite {
-namespace quant {
+namespace mindspore::lite::quant {
 class Calibrator;
 
 struct MaxMin {
@@ -178,7 +176,7 @@ class Calibrator {
 
   STATUS CollectImages();
 
-  STATUS GenerateInputData(int input_index, int image_index, mindspore::tensor::MSTensor *tensor) const;
+  STATUS GenerateInputData(size_t input_index, size_t image_index, mindspore::tensor::MSTensor *tensor) const;
 
   size_t GetBatchNum() const { return config_param_.batch_count; }
 
@@ -232,7 +230,5 @@ class Calibrator {
 
   void AddImage(const std::string &file, size_t index);
 };
-}  // namespace quant
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_POSTRAINING_QUANTIZER_H

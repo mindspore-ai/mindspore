@@ -20,7 +20,6 @@
 #include "src/ops/primitive_c.h"
 
 namespace mindspore::lite::quant {
-
 ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector<schema::QuantParamT> &quant_params) {
   std::unique_ptr<schema::PrimitiveT> primitive = std::make_unique<schema::PrimitiveT>();
   schema::QuantDTypeCastT quant_dtype_cast;
@@ -37,7 +36,7 @@ ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector
   return NewValueNode(primTValue);
 }
 
-STATUS QuantCast::Run(FuncGraphPtr graph) {
+STATUS QuantCast::Run(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
@@ -109,5 +108,4 @@ STATUS QuantCast::Run(FuncGraphPtr graph) {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::lite::quant
