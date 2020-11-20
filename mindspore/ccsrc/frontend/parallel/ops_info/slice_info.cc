@@ -279,6 +279,5 @@ Status SliceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
   return SUCCESS;
 }
-
 }  // namespace parallel
 }  // namespace mindspore

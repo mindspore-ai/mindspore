@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status UniformCandidateSamplerInfo::GetUniformSamplerAttrInt64(const std::string &args, int64_t *value) {
   auto iter = attrs_.find(args);
   if (iter == attrs_.end()) {
@@ -276,7 +275,6 @@ Status UniformCandidateSamplerInfo::InitForCostModel(const StrategyPtr &strategy
 
 ReplaceGraphPtr UniformCandidateSamplerInfo::replace_graph(const CNodePtr &cnode) {
   auto input_strategy = strategy_->GetInputDim().at(0);
-
   // Only when the axis-1 is sharded, we need to modify the attribute
   if (input_strategy.size() == 2 && input_strategy[1] > 1) {
     if (ComputeReplaceGraph(cnode) != SUCCESS) {
@@ -311,6 +309,5 @@ Status UniformCandidateSamplerInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
   return SUCCESS;
 }
-
 }  // namespace parallel
 }  // namespace mindspore

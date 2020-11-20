@@ -22,7 +22,6 @@
 #include <algorithm>
 #include <memory>
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
-#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/group_manager.h"
@@ -33,8 +32,6 @@
 namespace mindspore {
 namespace parallel {
 static std::unordered_map<AnfNodePtr, std::set<int>> parameter_color_map;
-static std::pair<bool, int> IsSharedNode(const AnfNodePtr &node, const AnfNodeIndexSet &node_users);
-static bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name);
 static int send_tag = 0;
 static int recv_tag = 0;
 
@@ -236,7 +233,7 @@ void PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const AnfNode
   manager_->SetEdge(use_node, index, recv);
 }
 
-static std::pair<bool, int> IsSharedNode(const AnfNodePtr &node, const AnfNodeIndexSet &node_users) {
+std::pair<bool, int> PipelineTransformer::IsSharedNode(const AnfNodePtr &node, const AnfNodeIndexSet &node_users) {
   std::set<int> tag_set;
   auto node_stage = node->stage();
   int min_tag = node_stage;
@@ -368,7 +365,7 @@ void PipelineTransformer::ElimGraphStage() {
   }
 }
 
-static bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
+bool PipelineTransformer::IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   ValueNodePtr anf_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(anf_node);
   PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();

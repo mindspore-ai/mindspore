@@ -54,11 +54,6 @@ static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS};
 // g_RefMap, for CNode B input i is a RefKey[Parameter C],
 // it will be one item in map with key: C, and value: (B, i)
 static std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
-static void HandleNoUsedParameter(const FuncGraphPtr &root);
-static CNodePtr ReplaceNode(const Operator &op, const AnfNodePtr &pre_node, const FuncGraphPtr &func_graph,
-                            const std::string &instance_name);
-static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &parameter,
-                                    const std::string &opt_shard_group);
 
 void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input) {
   if (new_node_input.empty()) {

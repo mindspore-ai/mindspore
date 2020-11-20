@@ -331,7 +331,6 @@ Status UnsortedSegmentMinInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
 
   return SUCCESS;
 }
-
 // The UnsortedSegmentMaxInfo is almost same with UnsortedSegmentMinInfo
 // Except the reduceMin op in the ComputeReplaceGraph is replaced with reduceMax op
 ReplaceGraphPtr UnsortedSegmentMaxInfo::replace_graph(const CNodePtr &cnode) {
@@ -351,9 +350,8 @@ Status UnsortedSegmentMaxInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "GenerateGraph Init failed";
     return FAILED;
   }
-  // Get the attributes of the UnsortedSegmentMin
+  // Get the attributes of the UnsortedSegmentMax
   auto num_segments = GetValue<int64_t>(input_value_.at(2));
-  // Step1: Output branch
   auto segment_max = gen_g.PushBack({gen_g.NewOpInst(UNSORTED_SEGMENT_MAX), gen_g.virtual_input_node(),
                                      gen_g.virtual_input_node(), CreatInt64Imm(num_segments)});
   auto expandim_output = gen_g.PushBack({gen_g.NewOpInst(EXPAND_DIMS), segment_max, CreatInt64Imm(0)});

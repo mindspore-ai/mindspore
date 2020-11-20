@@ -18,9 +18,11 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PIPELINE_TRANSFORMER_PIPELINE_TRANSFORMER_H_
 
 #include <utility>
+#include <string>
 #include "ir/value.h"
 #include "ir/graph_utils.h"
 #include "base/base.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 
 namespace mindspore {
 namespace parallel {
@@ -49,6 +51,8 @@ class PipelineTransformer {
   void ElimParameter();
 
  private:
+  std::pair<bool, int> IsSharedNode(const AnfNodePtr &node, const AnfNodeIndexSet &node_users);
+  bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name);
   void DoBroadCast(const FuncGraphPtr &func);
   SendAttr InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, const int &user_node_stage,
                       const int &node_stage);
