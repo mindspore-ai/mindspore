@@ -24,10 +24,11 @@ from mindspore.ops import composite as C
 
 
 class Batchnorm_Net(Cell):
-    def __init__(self, c, weight, bias, moving_mean, moving_var_init):
+    def __init__(self, c, weight, bias, moving_mean, moving_var_init, use_batch_statistics=None):
         super(Batchnorm_Net, self).__init__()
         self.bn = BatchNorm2d(c, eps=0.00001, momentum=0.1, beta_init=bias, gamma_init=weight,
-                              moving_mean_init=moving_mean, moving_var_init=moving_var_init)
+                              moving_mean_init=moving_mean, moving_var_init=moving_var_init,
+                              use_batch_statistics=use_batch_statistics)
 
     def construct(self, input_data):
         x = self.bn(input_data)
@@ -69,7 +70,8 @@ def test_train_forward():
     error = np.ones(shape=[1, 2, 4, 4]) * 1.0e-4
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var_init))
+    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias),
+                           Tensor(moving_mean), Tensor(moving_var_init))
     bn_net.set_train()
     output = bn_net(Tensor(x))
     diff = output.asnumpy() - expect_output
@@ -77,7 +79,8 @@ def test_train_forward():
     assert np.all(-diff < error)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var_init))
+    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias),
+                           Tensor(moving_mean), Tensor(moving_var_init))
     bn_net.set_train()
     output = bn_net(Tensor(x))
     diff = output.asnumpy() - expect_output
@@ -85,12 +88,14 @@ def test_train_forward():
     assert np.all(-diff < error)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var_init))
+    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias),
+                           Tensor(moving_mean), Tensor(moving_var_init))
     bn_net.set_train(False)
     output = bn_net(Tensor(x))
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias), Tensor(moving_mean), Tensor(moving_var_init))
+    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias),
+                           Tensor(moving_mean), Tensor(moving_var_init))
     bn_net.set_train(False)
     output = bn_net(Tensor(x))
 
@@ -127,5 +132,49 @@ def test_train_backward():
     bn_grad = Grad(bn_net)
     output = bn_grad(Tensor(x), Tensor(grad))
     diff = output[0].asnumpy() - expect_output
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_train_stats_false_forward():
+    x = np.array([[
+        [[1, 3, 3, 5], [2, 4, 6, 8], [3, 6, 7, 7], [4, 3, 8, 2]],
+        [[5, 7, 6, 3], [3, 5, 6, 7], [9, 4, 2, 5], [7, 5, 8, 1]]]]).astype(np.float32)
+
+    expect_output = np.array([[[[3.707105, 5.121315, 5.121315, 6.535525],
+                                [4.41421, 5.8284197, 7.24263, 8.656839],
+                                [5.121315, 7.24263, 7.9497347, 7.9497347],
+                                [5.8284197, 5.121315, 8.656839, 4.41421]],
+
+                               [[6.535525, 7.9497347, 7.24263, 5.121315],
+                                [5.121315, 6.535525, 7.24263, 7.9497347],
+                                [9.363945, 5.8284197, 4.41421, 6.535525],
+                                [7.9497347, 6.535525, 8.656839, 3.707105]]]]).astype(np.float32)
+
+    weight = np.ones(2).astype(np.float32)
+    bias = np.ones(2).astype(np.float32) * 3
+    moving_mean = np.zeros(2).astype(np.float32)
+    moving_var_init = np.ones(2).astype(np.float32) * 2
+    error = np.ones(shape=[1, 2, 4, 4]) * 1.0e-4
+    use_batch_statistics = False
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias), Tensor(moving_mean),
+                           Tensor(moving_var_init), use_batch_statistics)
+    bn_net.set_train()
+    output = bn_net(Tensor(x))
+    diff = output.asnumpy() - expect_output
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    bn_net = Batchnorm_Net(2, Tensor(weight), Tensor(bias), Tensor(moving_mean),
+                           Tensor(moving_var_init), use_batch_statistics)
+    bn_net.set_train()
+    output = bn_net(Tensor(x))
+    diff = output.asnumpy() - expect_output
     assert np.all(diff < error)
     assert np.all(-diff < error)
