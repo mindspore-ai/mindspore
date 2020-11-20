@@ -87,6 +87,7 @@ int GetMaxDivisorStrategy1(int x, int divisor) {
 }
 
 std::vector<size_t> GetCommonGlobalSize(const std::vector<size_t> &local, const std::vector<size_t> &global) {
+  MS_ASSERT(local.size() == global.size() && local.size() == 3);
   std::vector<size_t> result(3);
   for (int i = 0; i < 3; ++i) {
     result[i] = UP_ROUND(global[i], local[i]);
@@ -95,6 +96,7 @@ std::vector<size_t> GetCommonGlobalSize(const std::vector<size_t> &local, const 
 }
 
 std::vector<size_t> GetCommonLocalSize(const std::vector<size_t> &global, int max_size) {
+  MS_ASSERT(global.size() == 3);
   size_t local_z = GetMaxDivisorStrategy0(global[2], 8);
   if (local_z == 0) {
     MS_LOG(ERROR) << "Divide by zero";
@@ -239,6 +241,7 @@ std::string CLErrorCode(cl_int error_code) {
 }
 
 int WriteToBin(const std::string &file_path, void *data, size_t size) {
+  MS_ASSERT(data);
   std::ofstream out_file;
 
   out_file.open(file_path.c_str(), std::ios::binary);
@@ -256,7 +259,7 @@ int WriteToBin(const std::string &file_path, void *data, size_t size) {
 }
 
 void PrintTensor(const lite::Tensor *tensor, MemType mem_type, int n, const std::string &out_file) {
-  if (tensor->data_c() == nullptr) {
+  if (tensor == nullptr || tensor->data_c() == nullptr) {
     return;
   }
 
@@ -305,6 +308,9 @@ void PrintTensor(const lite::Tensor *tensor, MemType mem_type, int n, const std:
 }
 
 void PrintKernelOutput(OpenCLKernel *kernel, int n, const std::string &out_file) {
+  if (kernel == nullptr) {
+    return;
+  }
   printf("%-30s", kernel->name().c_str());
   if (!kernel->out_tensors().empty()) {
     PrintTensor(kernel->out_tensors()[0], kernel->GetMemType(), n, out_file);

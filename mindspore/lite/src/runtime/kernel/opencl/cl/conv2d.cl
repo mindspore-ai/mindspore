@@ -67,7 +67,7 @@ __kernel void Conv2D_H1W1C1(__read_only image2d_t input, __write_only image2d_t 
     }
   }
 
-  if (bias) {
+  if (bias != 0) {
     out_h0_w0_c0 += bias[co_slice0];
   }
 
@@ -135,7 +135,7 @@ __kernel void Conv2D_H2W1C1(__read_only image2d_t input, __write_only image2d_t 
     }
   }
 
-  if (bias) {
+  if (bias != 0) {
     out_h0_w0_c0 += bias[co_slice0];
     out_h1_w0_c0 += bias[co_slice0];
   }
@@ -224,7 +224,7 @@ __kernel void Conv2D_H2W1C2(__read_only image2d_t input, __write_only image2d_t 
     }
   }
 
-  if (bias) {
+  if (bias != 0) {
     out_h0_w0_c0 += bias[co_slice0];
     out_h1_w0_c0 += bias[co_slice0];
     out_h0_w0_c1 += bias[co_slice1];
@@ -357,7 +357,7 @@ __kernel void Conv2D_H2W2C2(__read_only image2d_t input, __write_only image2d_t 
     }
   }
 
-  if (bias) {
+  if (bias != 0) {
     out_h0_w0_c0 += bias[co_slice0];
     out_h0_w1_c0 += bias[co_slice0];
     out_h1_w0_c0 += bias[co_slice0];

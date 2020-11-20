@@ -21,14 +21,13 @@
 
 namespace mindspore::lite::opencl {
 
-int OpenCLExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return RET_OK; }
-
 int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &outputs,
                         std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator, const KernelCallBack &before,
                         const KernelCallBack &after) {
+  int ret;
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
   for (auto *kernel : kernels) {
-    MS_ASSERT(nullptr != kernel);
+    MS_ASSERT(kernel);
     CallBackParam callbackParam;
     callbackParam.node_name = kernel->name();
 
@@ -41,19 +40,27 @@ int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &ou
     auto cur_outputs = kernel->out_tensors();
     for (auto i = 0; i < cur_outputs.size(); ++i) {
       auto *output = cur_outputs.at(i);
-      MS_ASSERT(nullptr != output);
+      MS_ASSERT(output);
       if (op_kernel->GetMemType() == lite::opencl::MemType::IMG) {
         std::vector<size_t> img_size;
-        op_kernel->GetImageSize(i, &img_size);
+        ret = op_kernel->GetImageSize(i, &img_size);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "GetImageSize failed";
+          return ret;
+        }
         auto data_ptr = allocator_->Malloc(output->Size(), img_size);
         output->set_data(data_ptr);
       } else {
-        output->MallocData(allocator_);
+        ret = output->MallocData(allocator_);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "MallocData failed";
+          return ret;
+        }
       }
     }
 
-    auto ret = kernel->Run();
-    if (0 != ret) {
+    ret = kernel->Run();
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
       return ret;
     }
@@ -64,9 +71,9 @@ int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &ou
       }
     }
     for (auto input_kernel : kernel->in_kernels()) {
-      MS_ASSERT(nullptr != input_kernel);
+      MS_ASSERT(input_kernel);
       ret = input_kernel->DecOutTensorRefCount();
-      if (0 != ret) {
+      if (ret != RET_OK) {
         MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
       }
     }

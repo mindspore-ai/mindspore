@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OPENCL_ALLOCATOR_H_
-#define MINDSPORE_LITE_SRC_OPENCL_ALLOCATOR_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_OPENCL_ALLOCATOR_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_OPENCL_ALLOCATOR_H_
 
 #include <memory>
 #include <string>
@@ -28,17 +28,6 @@
 #include "CL/cl2.hpp"
 
 namespace mindspore::lite::opencl {
-
-#define MS_HOST_BUFFER 0
-#define MS_CL_BUFFER (1 << 1)
-#define MS_CL_IMAGE2D (1 << 2)
-typedef int32_t OpenCLMemoryType;
-
-struct OpenclMemory {
-  void *host_ptr{nullptr};
-  void *device_ptr{nullptr};
-  OpenCLMemoryType mem_type{MS_HOST_BUFFER | MS_CL_BUFFER};
-};
 
 class OpenCLRuntime;
 enum class MemType : char { BUF, IMG };
@@ -95,4 +84,4 @@ class OpenCLAllocator : public Allocator {
 
 }  // namespace mindspore::lite::opencl
 
-#endif  // MINDSPORE_LITE_SRC_OPENCL_ALLOCATOR_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_OPENCL_ALLOCATOR_H_
