@@ -82,9 +82,9 @@ int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
           auto valTuplPtr = dyn_cast<ValueTuple>(value);
           MS_ASSERT(valTuplPtr != nullptr);
           for (size_t i = 0; i < valTuplPtr->size(); i++) {
-            auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+            auto elem = (*valTuplPtr)[i];
             MS_ASSERT(elem != nullptr);
-            attr->axes.emplace_back(elem->value());
+            attr->axes.emplace_back(CastToInt(elem, false).front());
           }
         } else {
           int axes_item = CastToInt(value, false).front();

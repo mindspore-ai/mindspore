@@ -152,9 +152,9 @@ int Conv2DGradFilter::UnPackAttr(const Primitive &prim, const std::vector<AnfNod
           const int nchw2nhwc[] = {0, 3, 1, 2};
           attr->filter_shape.resize(valTuplPtr->size());
           for (size_t i = 0; i < valTuplPtr->size(); i++) {
-            auto elem = dyn_cast<Int32Imm>((*valTuplPtr)[i]);
+            auto elem = (*valTuplPtr)[i];
             MS_ASSERT(elem != nullptr);
-            attr->filter_shape[nchw2nhwc[i]] = elem->value();
+            attr->filter_shape[nchw2nhwc[i]] = CastToInt(elem, false).front();
           }
         }
       }
