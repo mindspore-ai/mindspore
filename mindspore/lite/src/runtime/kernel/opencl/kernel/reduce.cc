@@ -96,7 +96,7 @@ int ReduceOpenCLKernel::CheckSpecs() {
 }
 
 int ReduceOpenCLKernel::Prepare() {
-  outShape = Image2DInfo(out_tensors_[0]);
+  outShape = GpuTensorInfo(out_tensors_[0]);
   auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
   if (reduce_param == nullptr) {
     return RET_NULL_PTR;
@@ -120,11 +120,10 @@ int ReduceOpenCLKernel::Prepare() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  std::set<std::string> build_options;
   std::string source = reduce_source;
   std::string program_name = "Reduce";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
   SetConstArgs();
   SetGlobalLocal();
@@ -165,7 +164,7 @@ int ReduceOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return mindspore::lite::RET_OK;
 }
 

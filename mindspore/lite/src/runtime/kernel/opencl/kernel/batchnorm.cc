@@ -91,8 +91,7 @@ int BatchNormOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[3]->data_c());   // mean
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[4]->data_c());   // variance
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());  // out tensor
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
-
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

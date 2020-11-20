@@ -43,8 +43,8 @@ int ReshapeOpenCLKernel::CheckSpecs() {
 }
 
 void ReshapeOpenCLKernel::SetConstArgs() {
-  auto in = Image2DInfo(in_tensors_.front());
-  auto out = Image2DInfo(out_tensors_.front());
+  auto in = GpuTensorInfo(in_tensors_.front());
+  auto out = GpuTensorInfo(out_tensors_.front());
   cl_int4 src_size = {cl_int(in.C), cl_int(in.W), cl_int(in.H), cl_int(in.N)};
   cl_int4 dst_size = {cl_int(out.width), cl_int(out.height), cl_int(out.C), cl_int(out.C * out.W)};
 
@@ -54,7 +54,7 @@ void ReshapeOpenCLKernel::SetConstArgs() {
 }
 
 void ReshapeOpenCLKernel::SetGlobalLocal() {
-  auto out = Image2DInfo(out_tensors_.front());
+  auto out = GpuTensorInfo(out_tensors_.front());
   std::vector<size_t> local = {};
   std::vector<size_t> global{out.width, out.height};
   OpenCLKernel::AlignGlobalLocal(global, local);
@@ -65,11 +65,10 @@ int ReshapeOpenCLKernel::Prepare() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  std::set<std::string> build_options;
   std::string source = reshape_source;
   std::string program_name = "reshape";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
 
   SetGlobalLocal();
@@ -82,7 +81,7 @@ int ReshapeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

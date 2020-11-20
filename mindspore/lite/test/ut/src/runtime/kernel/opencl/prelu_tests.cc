@@ -30,8 +30,10 @@ using mindspore::kernel::SubGraphOpenCLKernel;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace mindspore {
-class TestPReluOpenCL : public mindspore::CommonTest {};
+// PrimitiveType_PReLU: src/ops/populate/p_relu_populate.cc
+
+namespace mindspore::lite::opencl::test {
+class TestPReluOpenCL : public CommonTest {};
 
 void LoadDataPRelu(void *dst, size_t dst_size, const std::string &file_path) {
   if (file_path.empty()) {
@@ -193,4 +195,4 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
   delete param;
   delete sub_graph;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

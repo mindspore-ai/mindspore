@@ -76,7 +76,7 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
   auto in_shape = in_tensors_[0]->shape();
   auto in_shape_align = in_shape;
   in_shape_align[3] = UP_ROUND(in_shape[3], C4NUM);
-  im_in_ = Image2DInfo(in_tensors_[0]);
+  im_in_ = GpuTensorInfo(in_tensors_[0]);
   auto out_shape_align = in_shape_align;
   out_shape_align.at(param->axis_) = param->axis_ == 3 ? UP_ROUND(param->topk_, C4NUM) : param->topk_;
   int reduce_len = GetUpPow2(in_shape.at(param->axis_));
@@ -152,8 +152,7 @@ int ArgMinMaxOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
   ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
-
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

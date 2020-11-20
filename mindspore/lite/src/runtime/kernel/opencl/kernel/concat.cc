@@ -114,11 +114,10 @@ int ConcatOpenCLKernel::Prepare() {
   }
   kernel_name += "_NHWC4";
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
-  std::set<std::string> build_options;
   std::string source = concat_source;
   std::string program_name = "Concat";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetGlobalLocal();
   SetConstArgs();
@@ -146,7 +145,7 @@ int ConcatOpenCLKernel::Run() {
     MS_LOG(ERROR) << "unsupported input size :" << in_tensors_.size();
     return RET_ERROR;
   }
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

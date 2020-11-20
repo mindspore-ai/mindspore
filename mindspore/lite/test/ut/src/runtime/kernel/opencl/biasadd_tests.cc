@@ -29,7 +29,10 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore {
-class TestBiasAddOpenCL : public mindspore::CommonTest {};
+
+// PrimitiveType_BiasAdd: src/ops/populate/bias_add_populate.cc
+
+class TestBiasAddOpenCL : public CommonTest {};
 
 void LoadDataBiasAdd(void *dst, size_t dst_size, const std::string &file_path) {
   if (file_path.empty()) {

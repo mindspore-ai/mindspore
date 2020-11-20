@@ -44,8 +44,8 @@ class OneHotOpenCLKernel : public OpenCLKernel {
   float on_value_{1.0f};
   float off_value_{0.0f};
   int axis_{0};
-  Image2DInfo in_shape_ = Image2DInfo(nullptr);
-  Image2DInfo out_shape_ = Image2DInfo(nullptr);
+  GpuTensorInfo in_shape_ = GpuTensorInfo(nullptr);
+  GpuTensorInfo out_shape_ = GpuTensorInfo(nullptr);
 };
 }  // namespace mindspore::kernel
 

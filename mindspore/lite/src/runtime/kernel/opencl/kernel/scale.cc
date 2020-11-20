@@ -49,7 +49,7 @@ ScaleOpenCLKernel::~ScaleOpenCLKernel() {
 
 void ScaleOpenCLKernel::Image2dGetWorkGroupSize() {
   local_size_ = {16, 16};
-  auto image2d_info = Image2DInfo(out_tensors_[0]);
+  auto image2d_info = GpuTensorInfo(out_tensors_[0]);
   global_size_ = {image2d_info.width, image2d_info.height};
 }
 
@@ -69,7 +69,7 @@ int ScaleOpenCLKernel::InitWeights() {
       offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, in_tensors_[2]->data_c());
       return RET_OK;
     }
-    auto image2d_info = Image2DInfo(in_tensors_[1]);
+    auto image2d_info = GpuTensorInfo(in_tensors_[1]);
     int pack_weight_size = image2d_info.ElementsC4Num;
     int plane = image2d_info.H * image2d_info.W;
     int channel = image2d_info.C;
@@ -185,10 +185,9 @@ int ScaleOpenCLKernel::Init() {
     kernel_name += "_BUF";
   }
   std::string program_name = "Scale";
-  std::set<std::string> build_options;
   std::string source = scale_source;
   ocl_runtime_->LoadSource(program_name, source);
-  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
   if (error_code != RET_OK) {
     return error_code;
@@ -244,7 +243,7 @@ int ScaleOpenCLKernel::Run() {
     }
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, act_type);
-  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_);
   return RET_OK;
 }
 

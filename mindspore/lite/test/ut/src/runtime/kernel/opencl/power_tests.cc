@@ -21,10 +21,12 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/power.h"
 
+// PrimitiveType_Power: src/ops/populate/power_populate.cc
+
 using mindspore::lite::Tensor;
 using mindspore::schema::Format::Format_NHWC;
-namespace mindspore {
-class TestPowerOpenCLCI : public mindspore::CommonTest {
+namespace mindspore::lite::opencl::test {
+class TestPowerOpenCLCI : public CommonTest {
  public:
   TestPowerOpenCLCI() {}
 };
@@ -166,4 +168,4 @@ TEST_F(TestPowerOpenCLCI, broadcast) {
   TEST_MAIN(input_data1, input_data1, expect_data, data_type, shape_a, shape_b, output_shape, true);
 }
 
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

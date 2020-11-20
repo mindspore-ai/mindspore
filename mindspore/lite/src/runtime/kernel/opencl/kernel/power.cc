@@ -35,7 +35,6 @@ int PowerOpenCLKernel::Init() {
   use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
   auto param = reinterpret_cast<PowerParameter *>(this->op_parameter_);
   std::string kernel_name = "power";
-  std::set<std::string> build_options;
   std::string source = power_source;
   std::string program_name = "power";
   broadcast_ = param->broadcast_;
@@ -55,7 +54,7 @@ int PowerOpenCLKernel::Init() {
   scale_ = param->scale_;
   shift_ = param->shift_;
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   return RET_OK;
 }
@@ -133,7 +132,7 @@ int PowerOpenCLKernel::Run() {
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter);
   }
 
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global, local);
   return RET_OK;
 }
 

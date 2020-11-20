@@ -38,8 +38,6 @@ class ToFormatOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
-  int InitNHWC();
-
   cl::Kernel kernel_;
   size_t N_{1};
   size_t H_{1};

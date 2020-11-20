@@ -67,7 +67,7 @@ int SoftmaxOpenCLKernel::CheckSpecs() {
 int SoftmaxOpenCLKernel::Prepare() {
   std::string kernel_name = "SoftMax";
 
-  out_shape = Image2DInfo(out_tensors_[0]);
+  out_shape = GpuTensorInfo(out_tensors_[0]);
   std::string source = softmax_source;
   if (out_shape.H == 1 && out_shape.W == 1 && axis_ == 3) {
     // support 4d tensor
@@ -81,10 +81,9 @@ int SoftmaxOpenCLKernel::Prepare() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime->GetKernelFromBinary(kernel_name);
 #else
-  std::set<std::string> build_options;
   std::string program_name = "SoftMax";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
   SetConstArgs();
   SetGlobalLocal();
@@ -135,7 +134,7 @@ int SoftmaxOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   // run opengl kernel
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return lite::RET_OK;
 }
 

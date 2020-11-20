@@ -70,11 +70,10 @@ int PoolingOpenCLKernel::Prepare() {
 #else
   kernel_name += "_NHWC4";
   kernel_name += "_IMG";
-  std::set<std::string> build_options;
   std::string source = pooling2d_source;
   std::string program_name = "Pooling2d";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
   SetConstArgs();
   SetGlobalLocal();
@@ -112,7 +111,7 @@ int PoolingOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return mindspore::lite::RET_OK;
 }
 

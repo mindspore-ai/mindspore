@@ -96,7 +96,7 @@ int SparseToDenseOpenCLKernel::CheckSpecs() {
                   << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
-  if (out_tensors_[0]->shape().size() > 2 || in_tensors_.size() < 3) {
+  if (out_tensors_[0]->shape().size() > 3 || in_tensors_.size() < 3) {
     MS_LOG(ERROR) << " only support dim <= 2 and in_tensors_.size >= 3";
     return RET_ERROR;
   }
@@ -121,7 +121,7 @@ int SparseToDenseOpenCLKernel::CheckSpecs() {
 
 void SparseToDenseOpenCLKernel::SetConstArgs() {
   auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
-  Image2DInfo img_info(out_tensors_[0]);
+  GpuTensorInfo img_info(out_tensors_[0]);
   size_t dtype = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
   stride_w = img_info.RowPitch() / dtype;
   cl_int2 input_shape = {n_ * h_, w_ * UP_DIV(c_, C4NUM)};
@@ -148,11 +148,10 @@ int SparseToDenseOpenCLKernel::Prepare() {
   inshapeindex1_dim = in_tensors_[0]->shape()[1];
   weight_scalar_ = in_tensors_[2]->IsScalar();
   std::string kernel_name = "SparseToDense" + std::string(weight_scalar_ ? "Scalar" : "Vector");
-  std::set<std::string> build_options;
   std::string source = sparse_to_dense_source;
   std::string program_name = "SparseToDense";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 
   if (in_tensors_.size() > 3) {
     auto input_tensor3 = in_tensors_[3];
@@ -210,7 +209,7 @@ int SparseToDenseOpenCLKernel::Run() {
   } else {
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_scalar_);
   }
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

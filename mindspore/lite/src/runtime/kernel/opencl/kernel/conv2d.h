@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONVOLUTION_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONVOLUTION_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONV2D_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONV2D_H_
 
 #include <vector>
 #include <string>
@@ -27,23 +27,27 @@
 
 namespace mindspore::kernel {
 
-class ConvolutionOpenCLKernel : public OpenCLKernel {
+class Conv2DOpenCLKernel : public OpenCLKernel {
  public:
-  ConvolutionOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                          const std::vector<lite::Tensor *> &outputs)
+  Conv2DOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs), param_(reinterpret_cast<ConvParameter *>(parameter)) {}
-  ~ConvolutionOpenCLKernel() override = default;
+  ~Conv2DOpenCLKernel() override = default;
 
-  int Init() override;
-  int Run() override;
-  int InitWeights() override;
+  int CheckSpecs() override;
+
+  int Prepare() override;
   void SetGlobalLocal() override;
+  int InitWeights() override;
+  void SetConstArgs() override;
+
+  int Run() override;
 
  private:
   void SetBlockSize();
-  int InitWeight();
+  int InitFilter();
   int InitBias();
-  int GenerateWinogradWeight();
+  int GenerateWinogradFilter();
 
   bool UseWinograd4x4To6x6() {
     const bool attr_valid = param_->kernel_h_ == 3 && param_->kernel_w_ == 3 && param_->stride_h_ == 1 &&
@@ -58,8 +62,9 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
   cl::Kernel kernel_4x4to36_;
   cl::Kernel kernel_conv_;
   cl::Kernel kernel_36to4x4_;
-  std::vector<size_t> global_;
-  std::vector<size_t> local_;
+  cl::NDRange global_4x4to36_, local_4x4to36_;
+  cl::NDRange global_conv_, local_conv_;
+  cl::NDRange global_36to4x4_, local_36to4x4_;
 
   bool use_fp16_{false};
   size_t sizeof_FLT_{4};
@@ -95,4 +100,4 @@ class ConvolutionOpenCLKernel : public OpenCLKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONVOLUTION_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_CONV2D_H_

@@ -13,169 +13,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iostream>
-#include <memory>
-#include "common/common_test.h"
-#include "src/common/file_utils.h"
-#include "src/common/log_adapter.h"
-#include "src/runtime/kernel/opencl/kernel/resize.h"
-#include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "src/runtime/opencl/opencl_runtime.h"
-#include "test/ut/src/runtime/kernel/opencl/utils_tests.h"
+#include "ut/src/runtime/kernel/opencl/common.h"
+#include "nnacl/resize_parameter.h"
 
-namespace mindspore {
-class TestResizeOpenCL : public mindspore::CommonTest {
- public:
-  TestResizeOpenCL() {}
-};
+namespace mindspore::lite::opencl::test {
 
-void RunTestCaseResize(const std::vector<int> &shape, void *input_data, void *output_data, bool enable_fp16,
-                       int resize_mode, bool align_corners) {
-  auto ocl_runtime = lite::opencl::OpenCLRuntimeWrapper().GetInstance();
-  ocl_runtime->Init();
-  size_t dtype_size = enable_fp16 ? sizeof(float16_t) : sizeof(float);
-  ocl_runtime->SetFp16Enable(enable_fp16);
-  auto allocator = ocl_runtime->GetAllocator();
-  auto param = static_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "param_ptr create error.";
-    return;
-  }
-  int n = shape[0];
-  int h = shape[1];
-  int w = shape[2];
-  int oh = shape[3];
-  int ow = shape[4];
-  int c = shape[5];
-  param->new_height_ = oh;
-  param->new_width_ = ow;
+class TestOpenCL_Resize : public CommonTest {};
+
+namespace {
+// PrimitiveType_Resize: src/ops/populate/resize_populate.cc
+OpParameter *CreateParameter(schema::ResizeMethod method, int new_height, int new_width, bool align_corners) {
+  auto *param = test::CreateParameter<ResizeParameter>(schema::PrimitiveType_Resize);
+  param->new_height_ = new_height;
+  param->new_width_ = new_width;
   param->align_corners_ = align_corners;
-  param->method_ = resize_mode;
-  std::vector<int> input_shape = {n, h, w, c};
-  auto tensor_x_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
-                                                     input_shape, schema::Format_NHWC);
-  auto tensor_x = tensor_x_ptr.get();
-  if (tensor_x == nullptr) {
-    MS_LOG(ERROR) << "tensor_x create error.";
-    return;
-  }
-  std::vector<int> out_shape = {n, oh, ow, c};
-  auto tensor_out_ptr = std::make_unique<lite::Tensor>(TypeId(enable_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32),
-                                                       out_shape, schema::Format_NHWC);
-  auto tensor_out = tensor_out_ptr.get();
-  if (tensor_out == nullptr) {
-    MS_LOG(ERROR) << "tensor_out create error.";
-    return;
-  }
-  std::vector<lite::Tensor *> inputs{tensor_x};
-  std::vector<lite::Tensor *> outputs{tensor_out};
-  auto arith_kernel = kernel::OpenCLKernelCreator<kernel::ResizeOpenCLKernel>(
-    inputs, outputs, reinterpret_cast<OpParameter *>(param), nullptr, kernel::KernelKey(), nullptr);
-  if (arith_kernel == nullptr) {
-    MS_LOG(ERROR) << "arith_kernel create error.";
-    return;
-  }
-
-  inputs[0]->MallocData(allocator);
-
-  std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs, outputs, kernels, kernels, kernels);
-  auto pGraph = pGraph_ptr.get();
-  if (pGraph == nullptr) {
-    MS_LOG(ERROR) << "pGraph create error.";
-    return;
-  }
-  pGraph->Init();
-  memcpy(inputs[0]->MutableData(), input_data, inputs[0]->ElementsNum() * dtype_size);
-  pGraph->Run();
-
-  if (enable_fp16) {
-    CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float16_t>(1e-3),
-                  2e-2);
-  } else {
-    CompareOutput(outputs[0]->MutableData(), output_data, outputs[0]->ElementsNum(), static_cast<float>(1e-5));
-  }
-  for (auto t : inputs) {
-    t->set_data(nullptr);
-  }
-  for (auto t : outputs) {
-    t->set_data(nullptr);
-  }
-
-  MS_LOG(INFO) << "Test Resize passed";
+  param->method_ = method;
+  param->preserve_aspect_ratio_ = false;
+  return reinterpret_cast<OpParameter *>(param);
 }
+}  // namespace
 
-TEST_F(TestResizeOpenCL, ResizeBilinearFp32) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
+TEST_F(TestOpenCL_Resize, Bilinear) {
+  schema::ResizeMethod method = schema::ResizeMethod_LINEAR;
   int oh = 4;
   int ow = 4;
-  int c = 1;
   bool align_corners = false;
-  std::vector<int> shape = {n, h, w, oh, ow, c};
-  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
-  std::vector<float> output_data = {0.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.5f, 2.0f, 2.0f,
-                                    2.0f, 2.5f, 3.0f, 3.0f, 2.0f, 2.5f, 3.0f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), false, schema::ResizeMethod_LINEAR, align_corners);
+
+  std::vector<int> input_shape = {1, 2, 2, 1};
+  std::vector<int> output_shape = {1, oh, ow, 1};
+  float input_data[] = {0, 1, 2, 3};
+  float output_data[] = {0, 0.5, 1, 1, 1, 1.5, 2, 2, 2, 2.5, 3, 3, 2, 2.5, 3, 3};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(method, oh, ow, align_corners);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestResizeOpenCL, ResizeBilinearFp16) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int oh = 4;
-  int ow = 4;
-  int c = 1;
-  bool align_corners = false;
-  std::vector<int> shape = {n, h, w, oh, ow, c};
-  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
-  std::vector<float16_t> output_data = {0.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.5f, 2.0f, 2.0f,
-                                        2.0f, 2.5f, 3.0f, 3.0f, 2.0f, 2.5f, 3.0f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), true, schema::ResizeMethod_LINEAR, align_corners);
-}
-
-TEST_F(TestResizeOpenCL, ResizeBilinearAlignFp32) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
+TEST_F(TestOpenCL_Resize, Bilinear_AlignCorners) {
+  schema::ResizeMethod method = schema::ResizeMethod_LINEAR;
   int oh = 3;
   int ow = 3;
-  int c = 1;
   bool align_corners = true;
-  std::vector<int> shape = {n, h, w, oh, ow, c};
-  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
-  std::vector<float> output_data = {0.0f, 0.5f, 1.0f, 1.0f, 1.5f, 2.0f, 2.0f, 2.5f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), false, schema::ResizeMethod_LINEAR, align_corners);
+
+  std::vector<int> input_shape = {1, 2, 2, 1};
+  std::vector<int> output_shape = {1, oh, ow, 1};
+  float input_data[] = {0, 1, 2, 3};
+  float output_data[] = {0, 0.5, 1, 1, 1.5, 2, 2, 2.5, 3};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(method, oh, ow, align_corners);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestResizeOpenCL, ResizeNearestNeighborFp32) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
+TEST_F(TestOpenCL_Resize, NEAREST) {
+  schema::ResizeMethod method = schema::ResizeMethod_NEAREST;
   int oh = 4;
   int ow = 4;
-  int c = 1;
   bool align_corners = false;
-  std::vector<int> shape = {n, h, w, oh, ow, c};
-  std::vector<float> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
-  std::vector<float> output_data = {0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-                                    2.0f, 2.0f, 3.0f, 3.0f, 2.0f, 2.0f, 3.0f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), false, schema::ResizeMethod_NEAREST, align_corners);
+
+  std::vector<int> input_shape = {1, 2, 2, 1};
+  std::vector<int> output_shape = {1, oh, ow, 1};
+  float input_data[] = {0, 1, 2, 3};
+  float output_data[] = {0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(method, oh, ow, align_corners);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
 }
 
-TEST_F(TestResizeOpenCL, ResizeNearestNeighborFp16) {
-  int n = 1;
-  int h = 2;
-  int w = 2;
-  int oh = 4;
-  int ow = 4;
-  int c = 1;
-  bool align_corners = false;
-  std::vector<int> shape = {n, h, w, oh, ow, c};
-  std::vector<float16_t> input_data = {0.0f, 1.0f, 2.0f, 3.0f};
-  std::vector<float16_t> output_data = {0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
-                                        2.0f, 2.0f, 3.0f, 3.0f, 2.0f, 2.0f, 3.0f, 3.0f};
-  RunTestCaseResize(shape, input_data.data(), output_data.data(), true, schema::ResizeMethod_NEAREST, align_corners);
-}
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

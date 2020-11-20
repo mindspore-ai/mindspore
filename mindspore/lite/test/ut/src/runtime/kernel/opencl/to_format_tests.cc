@@ -22,8 +22,8 @@
 #include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/to_format.h"
 
-namespace mindspore {
-class TestToFormatOpenCL : public mindspore::CommonTest {
+namespace mindspore::lite::opencl::test {
+class TestToFormatOpenCL : public CommonTest {
  public:
   TestToFormatOpenCL() {}
 };
@@ -103,4 +103,4 @@ TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
   ASSERT_EQ(0, CompareOutputData(output_data, correct_data, h * w * c, 0.00001));
   MS_LOG(INFO) << "Test TransposeFp32 passed";
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite::opencl::test

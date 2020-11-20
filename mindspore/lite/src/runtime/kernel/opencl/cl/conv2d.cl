@@ -28,9 +28,9 @@ __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP 
     return;                                                                       \
   }
 
-__kernel void Convolution_H1W1C1(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
-                                 __global FLT4 *bias, const int4 input_shape, const int4 output_shape,
-                                 const int4 kernel_stride, const int4 pad, const int2 dilation, const int act_type) {
+__kernel void Conv2D_H1W1C1(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
+                            __global FLT4 *bias, const int4 input_shape, const int4 output_shape,
+                            const int4 kernel_stride, const int4 pad, const int2 dilation, const int act_type) {
   const int BlockH = 1;
   const int BlockW = 1;
   const int BlockC = 1;
@@ -84,9 +84,9 @@ __kernel void Convolution_H1W1C1(__read_only image2d_t input, __write_only image
   }
 }
 
-__kernel void Convolution_H2W1C1(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
-                                 __global FLT4 *bias, const int4 input_shape, const int4 output_shape,
-                                 const int4 kernel_stride, const int4 pad, const int2 dilation, const int act_type) {
+__kernel void Conv2D_H2W1C1(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
+                            __global FLT4 *bias, const int4 input_shape, const int4 output_shape,
+                            const int4 kernel_stride, const int4 pad, const int2 dilation, const int act_type) {
   const int BlockH = 2;
   const int BlockW = 1;
   const int BlockC = 1;
@@ -161,9 +161,9 @@ __kernel void Convolution_H2W1C1(__read_only image2d_t input, __write_only image
   }
 }
 
-__kernel void Convolution_H2W1C2(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
-                                 __global FLT4 *bias, const int4 input_shape, const int4 output_shape,
-                                 const int4 kernel_stride, const int4 pad, const int2 dilation, const int act_type) {
+__kernel void Conv2D_H2W1C2(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
+                            __global FLT4 *bias, const int4 input_shape, const int4 output_shape,
+                            const int4 kernel_stride, const int4 pad, const int2 dilation, const int act_type) {
   const int BlockH = 2;
   const int BlockW = 1;
   const int BlockC = 2;
@@ -268,9 +268,9 @@ __kernel void Convolution_H2W1C2(__read_only image2d_t input, __write_only image
   }
 }
 
-__kernel void Convolution_H2W2C2(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
-                                 __global FLT4 *bias, const int4 input_shape, const int4 output_shape,
-                                 const int4 kernel_stride, const int4 pad, const int2 dilation, const int act_type) {
+__kernel void Conv2D_H2W2C2(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
+                            __global FLT4 *bias, const int4 input_shape, const int4 output_shape,
+                            const int4 kernel_stride, const int4 pad, const int2 dilation, const int act_type) {
   const int BlockH = 2;
   const int BlockW = 2;
   const int BlockC = 2;

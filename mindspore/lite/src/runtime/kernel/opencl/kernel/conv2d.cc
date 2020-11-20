@@ -18,12 +18,12 @@
 #include <set>
 #include <algorithm>
 #include "src/common/utils.h"
-#include "src/runtime/kernel/opencl/kernel/convolution.h"
+#include "src/runtime/kernel/opencl/kernel/conv2d.h"
 #include "src/runtime/kernel/opencl/kernel/fullconnection.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/runtime/kernel/opencl/cl/convolution.cl.inc"
+#include "src/runtime/kernel/opencl/cl/conv2d.cl.inc"
 #include "src/runtime/kernel/opencl/cl/winograd.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -38,19 +38,43 @@ namespace mindspore::kernel {
 constexpr size_t CI_TILE = C4NUM;
 constexpr size_t CO_TILE = C4NUM;
 
-int ConvolutionOpenCLKernel::Init() {
+int Conv2DOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 2 && in_tensors_.size() != 3) {
+    MS_LOG(ERROR) << "Conv2D only supports 2 or 3 input Tensor but get " << in_tensors_.size();
+    return RET_ERROR;
+  }
+  if (out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "Conv2D only supports 1 output Tensor but get " << out_tensors_.size();
+    return RET_ERROR;
+  }
+  if (in_tensors_.front()->shape().size() != 4) {
+    MS_LOG(ERROR) << "Conv2D only supports 4D input Tensor but get " << in_tensors_.front()->shape().size() << "D.";
+    return RET_ERROR;
+  }
+  if (in_tensors_[1]->shape().size() != 4) {
+    MS_LOG(ERROR) << "Conv2D only supports 4D filter Tensor but get " << in_tensors_[1]->shape().size() << "D.";
+    return RET_ERROR;
+  }
+  if (out_tensors_.front()->shape().size() != 4) {
+    MS_LOG(ERROR) << "Conv2D only supports 4D output Tensor but get " << out_tensors_.front()->shape().size() << "D.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int Conv2DOpenCLKernel::Prepare() {
   use_fp16_ = ocl_runtime_->GetFp16Enable();
   sizeof_FLT_ = use_fp16_ ? sizeof(float16_t) : sizeof(float);
 
-  auto input_tensor = in_tensors_[0];
-  auto output_tensor = out_tensors_[0];
-  batch_size_ = input_tensor->Batch();
-  CI_ = input_tensor->Channel();
-  IH_ = input_tensor->Height();
-  IW_ = input_tensor->Width();
-  CO_ = output_tensor->Channel();
-  OH_ = output_tensor->Height();
-  OW_ = output_tensor->Width();
+  auto input_shape = in_tensors_.front()->shape();
+  auto output_shape = out_tensors_.front()->shape();
+  batch_size_ = input_shape[0];
+  IH_ = input_shape[1];
+  IW_ = input_shape[2];
+  CI_ = input_shape[3];
+  OH_ = output_shape[1];
+  OW_ = output_shape[2];
+  CO_ = output_shape[3];
   CI_SLICES_ = UP_DIV(CI_, C4NUM);
   CO_SLICES_ = UP_DIV(CO_, C4NUM);
   KH_ = param_->kernel_h_;
@@ -63,26 +87,21 @@ int ConvolutionOpenCLKernel::Init() {
   TILES_XY_ = TILES_X_ * TILES_Y_;
   use_winograd_ = UseWinograd4x4To6x6();
 
-  if (!use_winograd_) {
-    SetBlockSize();
-    SetGlobalLocal();
-  }
-
   // build kernel
-  std::set<std::string> build_options;
   if (use_winograd_) {
     MS_LOG(DEBUG) << "use winograd";
-    std::string program_name = "Winograd";
+    std::string program_name = "winograd";
     ocl_runtime_->LoadSource(program_name, winograd_source);
-    ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36", build_options);
-    ocl_runtime_->BuildKernel(kernel_conv_, program_name, "WinogradConvolution", build_options);
-    ocl_runtime_->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4", build_options);
+    ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36");
+    ocl_runtime_->BuildKernel(kernel_conv_, program_name, "WinogradConvolution");
+    ocl_runtime_->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4");
   } else {
-    std::string program_name = "Convolution";
-    std::string kernel_name = "Convolution_H" + std::to_string(block_size_.H) + "W" + std::to_string(block_size_.W) +
-                              "C" + std::to_string(block_size_.C);
-    ocl_runtime_->LoadSource("Convolution", convolution_source);
-    ocl_runtime_->BuildKernel(kernel_conv_, program_name, kernel_name, build_options);
+    SetBlockSize();
+    std::string program_name = "conv2d";
+    std::string kernel_name = "Conv2D_H" + std::to_string(block_size_.H) + "W" + std::to_string(block_size_.W) + "C" +
+                              std::to_string(block_size_.C);
+    ocl_runtime_->LoadSource(program_name, conv2d_source);
+    ocl_runtime_->BuildKernel(kernel_conv_, program_name, kernel_name);
   }
 
   // allocate winograd memory
@@ -102,12 +121,12 @@ int ConvolutionOpenCLKernel::Init() {
   }
 
   InitWeights();
-
-  MS_LOG(DEBUG) << "Convolution Init Done!";
+  SetGlobalLocal();
+  SetConstArgs();
   return RET_OK;
 }
 
-int ConvolutionOpenCLKernel::GenerateWinogradWeight() {
+int Conv2DOpenCLKernel::GenerateWinogradFilter() {
   constexpr float Gt[] = {1.0000000000, 1.0000000000, 1.0000000000,  1.0000000000, 1.0000000000,  0.0000000000,
                           0.0000000000, 0.7071067691, -0.7071067691, 1.4142135382, -1.4142135382, 0.0000000000,
                           0.0000000000, 0.4999999702, 0.4999999702,  1.9999998808, 1.9999998808,  1.0000000000};
@@ -159,7 +178,7 @@ int ConvolutionOpenCLKernel::GenerateWinogradWeight() {
   return RET_OK;
 }
 
-int ConvolutionOpenCLKernel::InitWeight() {
+int Conv2DOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
 
   // allocate memory
@@ -175,7 +194,7 @@ int ConvolutionOpenCLKernel::InitWeight() {
 
   // rearrange weight
   if (use_winograd_) {
-    GenerateWinogradWeight();
+    GenerateWinogradFilter();
   } else {
     auto weight_tensor = in_tensors_[1];
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
@@ -201,7 +220,7 @@ int ConvolutionOpenCLKernel::InitWeight() {
   return RET_OK;
 }
 
-int ConvolutionOpenCLKernel::InitBias() {
+int Conv2DOpenCLKernel::InitBias() {
   auto allocator = ocl_runtime_->GetAllocator();
 
   // align bias from C to C4
@@ -236,15 +255,15 @@ int ConvolutionOpenCLKernel::InitBias() {
   return RET_OK;
 }
 
-int ConvolutionOpenCLKernel::InitWeights() {
-  InitWeight();
+int Conv2DOpenCLKernel::InitWeights() {
+  InitFilter();
   if (has_bias_) {
     InitBias();
   }
   return RET_OK;
 }
 
-void ConvolutionOpenCLKernel::SetBlockSize() {
+void Conv2DOpenCLKernel::SetBlockSize() {
   auto task_size = static_cast<float>(batch_size_ * OH_ * OW_ * CO_SLICES_);
   auto task_size_per_cu = task_size / ocl_runtime_->DeviceComputeUnits();
   int block_size;
@@ -277,35 +296,44 @@ void ConvolutionOpenCLKernel::SetBlockSize() {
   }
 }
 
-void ConvolutionOpenCLKernel::SetGlobalLocal() {
-  size_t global_h = batch_size_ * UP_DIV(OH_, block_size_.H);
-  size_t global_w = UP_DIV(OW_, block_size_.W);
-  size_t global_c = UP_DIV(CO_SLICES_, block_size_.C);
-
-  constexpr int local_c_max = 16;
-  constexpr int local_hw_max = 256;
-  constexpr int OH_threshold = 100;
-  constexpr int OW_threshold = 100;
-  constexpr int OC_threshold = 64;
-  size_t local_c = GetMaxDivisor(global_c, local_c_max);
-  local_c = std::max<size_t>(local_c, 1);
-  size_t local_hw = local_hw_max / local_c;
-  size_t local_h;
-  size_t local_w;
-  if (OH_ >= OH_threshold && OW_ >= OW_threshold && CO_ <= OC_threshold) {  // c -> w -> h
-    local_w = std::min(global_w, local_hw);
-    local_h = std::min(local_hw / local_w, global_h);
-  } else {  // c -> h -> w
-    local_h = std::min(global_h, local_hw);
-    local_w = std::min(local_hw / local_h, global_w);
-  }
-
-  global_ = {global_h, global_w, global_c};
-  local_ = {local_h, local_w, local_c};
+void AlignWinogradGlobalLocal(const std::vector<int> &global, const std::vector<int> &local, cl::NDRange *global_range,
+                              cl::NDRange *local_range) {
+  *local_range = cl::NDRange(local[0], local[1], local[2]);
+  *global_range =
+    cl::NDRange(UP_ROUND(global[0], local[0]), UP_ROUND(global[1], local[1]), UP_ROUND(global[2], local[2]));
 }
 
-int ConvolutionOpenCLKernel::Run() {
-  MS_LOG(DEBUG) << this->name() << " Running!";
+void Conv2DOpenCLKernel::SetGlobalLocal() {
+  if (use_winograd_) {
+    AlignWinogradGlobalLocal({TILES_XY_, 6, CI_SLICES_}, {8, 6, 4}, &global_4x4to36_, &local_4x4to36_);
+    AlignWinogradGlobalLocal({UP_DIV(TILES_XY_, 2), 36, UP_DIV(CO_SLICES_, 2)}, {8, 6, 2}, &global_conv_, &local_conv_);
+    AlignWinogradGlobalLocal({TILES_XY_, 4, CO_SLICES_}, {32, 4, 2}, &global_36to4x4_, &local_36to4x4_);
+  } else {
+    size_t global_h = batch_size_ * UP_DIV(OH_, block_size_.H);
+    size_t global_w = UP_DIV(OW_, block_size_.W);
+    size_t global_c = UP_DIV(CO_SLICES_, block_size_.C);
+    constexpr int local_c_max = 16;
+    constexpr int local_hw_max = 256;
+    constexpr int OH_threshold = 100;
+    constexpr int OW_threshold = 100;
+    constexpr int OC_threshold = 64;
+    size_t local_c = GetMaxDivisor(global_c, local_c_max);
+    local_c = std::max<size_t>(local_c, 1);
+    size_t local_hw = local_hw_max / local_c;
+    size_t local_h;
+    size_t local_w;
+    if (OH_ >= OH_threshold && OW_ >= OW_threshold && CO_ <= OC_threshold) {  // c -> w -> h
+      local_w = std::min(global_w, local_hw);
+      local_h = std::min(local_hw / local_w, global_h);
+    } else {  // c -> h -> w
+      local_h = std::min(global_h, local_hw);
+      local_w = std::min(local_hw / local_h, global_w);
+    }
+    AlignGlobalLocal({global_h, global_w, global_c}, {local_h, local_w, local_c});
+  }
+}
+
+void Conv2DOpenCLKernel::SetConstArgs() {
   auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
   cl_int act_type = 0;
   if (param->act_type_ == ActType_Relu) {
@@ -318,37 +346,33 @@ int ConvolutionOpenCLKernel::Run() {
 
   int arg_cn;
   if (use_winograd_) {
-    arg_cn = 0;
+    arg_cn = 1;
     cl_int4 _4x4to36_out_shape = {1, 36, TILES_XY_, CI_SLICES_};
-    ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-    ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, winograd_mem0_, lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, winograd_mem0_);
     ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, input_shape);
-    ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn++, _4x4to36_out_shape);
+    ocl_runtime_->SetKernelArg(kernel_4x4to36_, arg_cn, _4x4to36_out_shape);
 
     arg_cn = 0;
     cl_int4 conv_in_shape = {1, 36, TILES_XY_, CI_SLICES_};
     cl_int4 conv_out_shape = {1, 36, TILES_XY_, CO_SLICES_};
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem0_, lite::opencl::MemType::IMG);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem1_, lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem0_);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem1_);
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, conv_in_shape);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, conv_out_shape);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn, conv_out_shape);
 
-    arg_cn = 0;
+    arg_cn = 2;
     cl_int4 _36to4x4_in_shape = {1, 16, TILES_XY_, CO_SLICES_};
-    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, winograd_mem1_, lite::opencl::MemType::IMG);
-    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, 0, winograd_mem1_);
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, _36to4x4_in_shape);
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, output_shape);
-    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, act_type);
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn, act_type);
   } else {
-    arg_cn = 0;
+    arg_cn = 2;
     cl_int4 kernel_stride = {KH_, KW_, param->stride_h_, param->stride_w_};
     cl_int4 pad = {param->pad_u_, param->pad_d_, param->pad_l_, param->pad_r_};
     cl_int2 dilation = {param->dilation_h_, param->dilation_w_};
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, in_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::IMG);
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, input_shape);
@@ -356,71 +380,86 @@ int ConvolutionOpenCLKernel::Run() {
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, kernel_stride);
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, pad);
     ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, dilation);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, act_type);
+    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn, act_type);
   }
+}
 
+int Conv2DOpenCLKernel::Run() {
   if (use_winograd_) {
-    ocl_runtime_->RunKernel(kernel_4x4to36_, std::vector<size_t>({size_t(TILES_XY_), 6, size_t(CI_SLICES_)}),
-                            std::vector<size_t>({8, 6, 4}), nullptr);
-    ocl_runtime_->RunKernel(kernel_conv_,
-                            std::vector<size_t>({size_t(UP_DIV(TILES_XY_, 2)), 36, size_t(UP_DIV(CO_SLICES_, 2))}),
-                            std::vector<size_t>({8, 6, 2}), nullptr);
-    ocl_runtime_->RunKernel(kernel_36to4x4_, std::vector<size_t>({size_t(TILES_XY_), 4, size_t(CO_SLICES_)}),
-                            std::vector<size_t>({32, 4, 2}), nullptr);
-  } else {
-    ocl_runtime_->RunKernel(kernel_conv_, global_, local_, nullptr);
-  }
+    ocl_runtime_->SetKernelArg(kernel_4x4to36_, 0, in_tensors_.front()->data_c());
+    ocl_runtime_->RunKernel(kernel_4x4to36_, global_4x4to36_, local_4x4to36_);
 
+    ocl_runtime_->RunKernel(kernel_conv_, global_conv_, local_conv_);
+
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, 1, out_tensors_.front()->data_c());
+    ocl_runtime_->RunKernel(kernel_36to4x4_, global_36to4x4_, local_36to4x4_);
+  } else {
+    ocl_runtime_->SetKernelArg(kernel_conv_, 0, in_tensors_.front()->data_c());
+    ocl_runtime_->SetKernelArg(kernel_conv_, 1, out_tensors_.front()->data_c());
+    ocl_runtime_->RunKernel(kernel_conv_, global_range_, local_range_);
+  }
   return RET_OK;
+}
+
+bool UseFcReplaceConv(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                      ConvParameter *param) {
+  auto input_shape = inputs.front()->shape();
+  auto output_shape = inputs.front()->shape();
+  // IH=1 IW=1 OH=1 OW=1
+  bool hw_is_1 = input_shape.size() == 4 && input_shape[1] == 1 && input_shape[2] == 1 && output_shape.size() == 4 &&
+                 output_shape[1] == 1 && output_shape[2] == 1;
+  bool attr_valid = param->kernel_h_ == 1 && param->kernel_w_ == 1 && param->stride_h_ == 1 && param->stride_w_ == 1 &&
+                    param->pad_u_ == 0 && param->pad_d_ == 0 && param->pad_l_ == 0 && param->pad_r_ == 0 &&
+                    param->dilation_h_ == 1 && param->dilation_w_ == 1;
+  return hw_is_1 && attr_valid;
+}
+
+OpParameter *CreateFcParam(const ConvParameter *conv_param) {
+  auto fc_param = static_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
+  if (fc_param == nullptr) {
+    MS_LOG(ERROR) << "Create FullConnection kernel param failed.";
+    return nullptr;
+  }
+  fc_param->op_parameter_.type_ = PrimitiveType_FullConnection;
+  fc_param->a_transpose_ = false;
+  fc_param->b_transpose_ = true;
+  fc_param->act_type_ = conv_param->act_type_;
+  return reinterpret_cast<OpParameter *>(fc_param);
 }
 
 kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                    const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                    const mindspore::lite::PrimitiveC *primitive) {
-  kernel::LiteKernel *kernel;
-  bool is_hw1 = inputs[0]->shape().size() == 4 && inputs[0]->shape()[1] == 1 && inputs[0]->shape()[2] == 1 &&
-                outputs[0]->shape().size() == 4 && outputs[0]->shape()[1] == 1 && outputs[0]->shape()[2] == 1;
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  bool is_pad_stride_ok = conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1 && conv_param->stride_h_ == 1 &&
-                          conv_param->stride_w_ == 1 && conv_param->pad_u_ == 0 && conv_param->pad_d_ == 0 &&
-                          conv_param->pad_l_ == 0 && conv_param->pad_r_ == 0 && conv_param->dilation_h_ == 1 &&
-                          conv_param->dilation_w_ == 1;
-
+  kernel::OpenCLKernel *kernel;
   OpParameter *real_param;
-  if (is_hw1 && is_pad_stride_ok) {
-    auto fc_param = static_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
-    if (fc_param == nullptr) {
-      MS_LOG(ERROR) << "Create OpenCL FullConnection kernel param failed!";
-      return nullptr;
-    }
-    fc_param->op_parameter_.type_ = PrimitiveType_FullConnection;
-    fc_param->a_transpose_ = false;
-    fc_param->b_transpose_ = true;
-    fc_param->act_type_ = conv_param->act_type_;
-    kernel = new (std::nothrow) FullConnectionOpenCLKernel(reinterpret_cast<OpParameter *>(fc_param), inputs, outputs);
-    real_param = reinterpret_cast<OpParameter *>(fc_param);
+  auto *conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  if (UseFcReplaceConv(inputs, outputs, conv_param)) {
+    auto *fc_param = CreateFcParam(conv_param);
+    kernel = new (std::nothrow) FullConnectionOpenCLKernel(fc_param, inputs, outputs);
+    real_param = fc_param;
     if (kernel == nullptr) {
-      MS_LOG(ERROR) << "Create OpenCL FullConnection kernel failed!";
+      MS_LOG(ERROR) << "Create FullConnection kernel failed.";
       free(fc_param);
       free(conv_param);
       return nullptr;
     } else {
       free(conv_param);
+      MS_LOG(INFO) << "use FullConnection to replace Convolution.";
     }
   } else {
-    kernel = new (std::nothrow) ConvolutionOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs);
+    kernel = new (std::nothrow) Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs);
     real_param = reinterpret_cast<OpParameter *>(conv_param);
     if (kernel == nullptr) {
-      MS_LOG(ERROR) << "Create OpenCL Convolution kernel failed!";
+      MS_LOG(ERROR) << "Create Convolution kernel failed.";
       free(conv_param);
       return nullptr;
     }
   }
 
-  auto ret = kernel->Init();
+  int ret = kernel->CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: Convolution";
+    MS_LOG(ERROR) << "Init Convolution kernel failed.";
     delete kernel;
     free(real_param);
     return nullptr;

@@ -13,271 +13,176 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iostream>
-#include <memory>
-#include "src/common/log_adapter.h"
-#include "common/common_test.h"
-#include "src/runtime/kernel/opencl/utils.h"
-#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/kernel/argminmax.h"
+#include "ut/src/runtime/kernel/opencl/common.h"
+#include "nnacl/arg_min_max_parameter.h"
 
-namespace mindspore {
-class TestArgMinMaxOpenCL : public mindspore::CommonTest {
- public:
-  TestArgMinMaxOpenCL() {}
-};
-template <typename T>
-void test_main_argminmax(void *input_data, void *correct_data, const std::vector<int> &input_shape,
-                         const std::vector<int> &output_shape, ArgMinMaxParameter *param, TypeId data_type,
-                         schema::Format format) {
-  MS_LOG(INFO) << " begin test ";
-  auto ocl_runtime_wrap = lite::opencl::OpenCLRuntimeWrapper();
-  auto ocl_runtime = ocl_runtime_wrap.GetInstance();
-  ocl_runtime->Init();
-  auto allocator = ocl_runtime->GetAllocator();
+namespace mindspore::lite::opencl::test {
 
-  auto tensor_a = lite::Tensor(TypeId(data_type), input_shape, format);
-  auto tensor_c = lite::Tensor(TypeId(data_type), output_shape, format);
-  std::vector<lite::Tensor *> inputs{&tensor_a};
-  std::vector<lite::Tensor *> outputs{&tensor_c};
-  size_t input_size = tensor_a.Size();
+class TestOpenCL_ArgMinMax : public CommonTest {};
 
-  auto *pkernel =
-    new (std::nothrow) kernel::ArgMinMaxOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
-  if (pkernel == nullptr) {
-    MS_LOG(INFO) << "new SpaceToBatchNDOpenCLKernel failed ";
-    return;
-  }
-  pkernel->Init();
-
-  // to do allocate memory for inputs and outputs
-  for (auto &input_tensor : inputs) {
-    input_tensor->MallocData(allocator);
-  }
-
-  MS_LOG(INFO) << " initialize sub_graph ";
-  std::vector<kernel::LiteKernel *> kernels{pkernel};
-  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
-  if (sub_graph == nullptr) {
-    delete pkernel;
-    MS_LOG(INFO) << " new SubGraphOpenCLKernel failed ";
-    return;
-  }
-  sub_graph->Init();
-
-  MS_LOG(INFO) << " init tensors ";
-  T *input_ptr = reinterpret_cast<T *>(inputs[0]->MutableData());
-  memcpy(input_ptr, input_data, input_size);
-  std::cout << "==================input data================" << std::endl;
-  for (auto i = 0; i < inputs[0]->ElementsNum(); ++i) {
-    std::cout << input_ptr[i] << ", ";
-  }
-  std::cout << std::endl;
-
-  sub_graph->Run();
-
-  auto *output_data = reinterpret_cast<T *>(outputs[0]->MutableData());
-  std::cout << "==================output data================" << std::endl;
-  for (auto i = 0; i < outputs[0]->ElementsNum(); ++i) {
-    std::cout << output_data[i] << ", ";
-  }
-  std::cout << std::endl;
-  std::cout << "==================correct data================" << std::endl;
-  for (auto i = 0; i < outputs[0]->ElementsNum(); ++i) {
-    std::cout << static_cast<T *>(correct_data)[i] << ", ";
-  }
-  std::cout << std::endl;
-  CommonTest::CompareOutputData<T>(output_data, static_cast<T *>(correct_data), outputs[0]->ElementsNum(), 0.0001);
-  delete sub_graph;
+namespace {
+// PrimitiveType_ArgMin: src/ops/populate/argmin_populate.cc
+// PrimitiveType_ArgMax: src/ops/populate/argmax_populate.cc
+OpParameter *CreateParameter(schema::PrimitiveType type, int axis, int topk, bool out_value, bool keep_dims = false,
+                             int axis_type = 0) {
+  auto *param = test::CreateParameter<ArgMinMaxParameter>(type);
+  param->axis_ = axis;
+  param->topk_ = topk;
+  param->axis_type_ = axis_type;
+  param->out_value_ = out_value;
+  param->keep_dims_ = keep_dims;
+  return reinterpret_cast<OpParameter *>(param);
 }
-TEST_F(TestArgMinMaxOpenCL, axis0topk2index) {
-  ArgMinMaxParameter *param = std::make_unique<ArgMinMaxParameter>().release();
-  if (param == nullptr) {
-    return;
-  }
-  std::vector<float> in_data = {100, 2,  4,  50, 11, 12, 34, 35, 10, 20, 40, 5,
-                                7,   80, 10, 11, 55, 25, 5,  15, 18, 8,  15, 16};
-  std::vector<float> except_out = {0, 2, 1, 0, 2, 1, 0, 0, 2, 1, 2, 2, 0, 0, 2, 2};
-  param->dims_size_ = 4;
-  param->axis_ = 0;
-  param->topk_ = 2;
-  param->get_max_ = true;
-  param->out_value_ = false;
-  std::vector<int> in_shape = {3, 2, 2, 2};
-  std::vector<int> out_shape = {2, 2, 2, 2};
+}  // namespace
 
-  TypeId data_type = kNumberTypeFloat32;
-  schema::Format format = schema::Format_NHWC;
-  test_main_argminmax<float>(in_data.data(), except_out.data(), in_shape, out_shape, param, data_type, format);
-}
-TEST_F(TestArgMinMaxOpenCL, axis0topk2value) {
-  ArgMinMaxParameter *param = std::make_unique<ArgMinMaxParameter>().release();
-  if (param == nullptr) {
-    return;
+TEST_F(TestOpenCL_ArgMinMax, axis0topk2index) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 0;
+  int topk = 2;
+  bool out_value = false;
+  std::vector<int> input_shape = {3, 2, 2, 2};
+  std::vector<int> output_shape = {2, 2, 2, 2};
+  float input_data[] = {100, 2, 4, 50, 11, 12, 34, 35, 10, 20, 40, 5, 7, 80, 10, 11, 55, 25, 5, 15, 18, 8, 15, 16};
+  float output_data[] = {0, 2, 1, 0, 2, 1, 0, 0, 2, 1, 2, 2, 0, 0, 2, 2};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  std::vector<float> in_data = {100, 2,  4,  50, 11, 12, 34, 35, 10, 20, 40, 5,
-                                7,   80, 10, 11, 55, 25, 5,  15, 18, 8,  15, 16};
-  std::vector<float> except_out = {100, 25, 40, 50, 18, 80, 34, 35, 55, 20, 5, 15, 11, 12, 15, 16};
-  param->dims_size_ = 4;
-  param->axis_ = 0;
-  param->topk_ = 2;
-  param->get_max_ = true;
-  param->out_value_ = true;
-  std::vector<int> in_shape = {3, 2, 2, 2};
-  std::vector<int> out_shape = {2, 2, 2, 2};
-
-  TypeId data_type = kNumberTypeFloat32;
-  schema::Format format = schema::Format_NHWC;
-  test_main_argminmax<float>(in_data.data(), except_out.data(), in_shape, out_shape, param, data_type, format);
 }
-TEST_F(TestArgMinMaxOpenCL, axis1topk2index) {
-  ArgMinMaxParameter *param = std::make_unique<ArgMinMaxParameter>().release();
-  if (param == nullptr) {
-    return;
+
+TEST_F(TestOpenCL_ArgMinMax, axis0topk2value) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 0;
+  int topk = 2;
+  bool out_value = true;
+  std::vector<int> input_shape = {3, 2, 2, 2};
+  std::vector<int> output_shape = {2, 2, 2, 2};
+  float input_data[] = {100, 2, 4, 50, 11, 12, 34, 35, 10, 20, 40, 5, 7, 80, 10, 11, 55, 25, 5, 15, 18, 8, 15, 16};
+  float output_data[] = {100, 25, 40, 50, 18, 80, 34, 35, 55, 20, 5, 15, 11, 12, 15, 16};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  std::vector<float> in_data = {100, 2,  200, 4,  50, 6,  11, 12, 13, 34, 35, 36,  9,  6, 17, 10, 20, 30,
-                                10,  20, 30,  40, 5,  60, 7,  80, 90, 10, 11, 120, 18, 5, 16, 9,  22, 23};
-  std::vector<float> except_out = {0, 1, 0, 1, 0, 1, 1, 2, 2, 2, 1, 2, 2, 1, 1, 0, 2, 1, 0, 0, 0, 1, 1, 0};
-  param->dims_size_ = 4;
-  param->axis_ = 1;
-  param->topk_ = 2;
-  param->get_max_ = true;
-  param->out_value_ = false;
-  std::vector<int> in_shape = {2, 3, 2, 3};
-  std::vector<int> out_shape = {2, 2, 2, 3};
-
-  TypeId data_type = kNumberTypeFloat32;
-  schema::Format format = schema::Format_NHWC;
-  test_main_argminmax<float>(in_data.data(), except_out.data(), in_shape, out_shape, param, data_type, format);
 }
-TEST_F(TestArgMinMaxOpenCL, axis1topk2value) {
-  ArgMinMaxParameter *param = std::make_unique<ArgMinMaxParameter>().release();
-  if (param == nullptr) {
-    return;
+
+TEST_F(TestOpenCL_ArgMinMax, axis1topk2index) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 1;
+  int topk = 2;
+  bool out_value = false;
+  std::vector<int> input_shape = {2, 3, 2, 3};
+  std::vector<int> output_shape = {2, 2, 2, 3};
+  float input_data[] = {100, 2,  200, 4,  50, 6,  11, 12, 13, 34, 35, 36,  9,  6, 17, 10, 20, 30,
+                        10,  20, 30,  40, 5,  60, 7,  80, 90, 10, 11, 120, 18, 5, 16, 9,  22, 23};
+  float output_data[] = {0, 1, 0, 1, 0, 1, 1, 2, 2, 2, 1, 2, 2, 1, 1, 0, 2, 1, 0, 0, 0, 1, 1, 0};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  std::vector<float> in_data = {100, 2,  200, 4,  50, 6,  11, 12, 13, 34, 35, 36,  9,  6, 17, 10, 20, 30,
-                                10,  20, 30,  40, 5,  60, 7,  80, 90, 10, 11, 120, 18, 5, 16, 9,  22, 23};
-  std::vector<float> except_out = {100, 12, 200, 34, 50, 36,  11, 6,  17, 10, 35, 30,
-                                   18,  80, 90,  40, 22, 120, 10, 20, 30, 10, 11, 60};
-  param->dims_size_ = 4;
-  param->axis_ = 1;
-  param->topk_ = 2;
-  param->get_max_ = true;
-  param->out_value_ = true;
-  std::vector<int> in_shape = {2, 3, 2, 3};
-  std::vector<int> out_shape = {2, 2, 2, 3};
-
-  TypeId data_type = kNumberTypeFloat32;
-  schema::Format format = schema::Format_NHWC;
-  test_main_argminmax<float>(in_data.data(), except_out.data(), in_shape, out_shape, param, data_type, format);
 }
-TEST_F(TestArgMinMaxOpenCL, axis2topk1index) {
-  ArgMinMaxParameter *param = std::make_unique<ArgMinMaxParameter>().release();
-  if (param == nullptr) {
-    return;
+
+TEST_F(TestOpenCL_ArgMinMax, axis1topk2value) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 1;
+  int topk = 2;
+  bool out_value = true;
+  std::vector<int> input_shape = {2, 3, 2, 3};
+  std::vector<int> output_shape = {2, 2, 2, 3};
+  float input_data[] = {100, 2,  200, 4,  50, 6,  11, 12, 13, 34, 35, 36,  9,  6, 17, 10, 20, 30,
+                        10,  20, 30,  40, 5,  60, 7,  80, 90, 10, 11, 120, 18, 5, 16, 9,  22, 23};
+  float output_data[] = {100, 12, 200, 34, 50, 36,  11, 6,  17, 10, 35, 30,
+                         18,  80, 90,  40, 22, 120, 10, 20, 30, 10, 11, 60};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  param->dims_size_ = 4;
-  param->axis_ = 2;
-  param->topk_ = 1;
-  param->get_max_ = true;
-  param->out_value_ = false;
-  std::vector<float> in_data = {10, 20, 30, 11, 15, 10, 5, 10, 12, 10, 20, 30, 11, 15, 10, 5, 10, 12,
-                                10, 20, 30, 11, 15, 10, 5, 10, 12, 10, 20, 30, 11, 15, 10, 5, 10, 12,
-                                10, 20, 30, 11, 15, 10, 5, 10, 12, 10, 20, 30, 11, 15, 10, 5, 10, 12};
-  std::vector<float> except_out = {1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0};
-  std::vector<int> in_shape = {2, 3, 3, 3};
-  std::vector<int> out_shape = {2, 3, 1, 3};
-
-  TypeId data_type = kNumberTypeFloat32;
-  schema::Format format = schema::Format_NHWC;
-  test_main_argminmax<float>(in_data.data(), except_out.data(), in_shape, out_shape, param, data_type, format);
 }
-TEST_F(TestArgMinMaxOpenCL, axis2topk2value) {
-  ArgMinMaxParameter *param = std::make_unique<ArgMinMaxParameter>().release();
-  if (param == nullptr) {
-    return;
+
+TEST_F(TestOpenCL_ArgMinMax, axis2topk1index) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 2;
+  int topk = 1;
+  bool out_value = false;
+  std::vector<int> input_shape = {2, 3, 3, 3};
+  std::vector<int> output_shape = {2, 3, 1, 3};
+  float input_data[] = {10, 20, 30, 11, 15, 10, 5, 10, 12, 10, 20, 30, 11, 15, 10, 5, 10, 12,
+                        10, 20, 30, 11, 15, 10, 5, 10, 12, 10, 20, 30, 11, 15, 10, 5, 10, 12,
+                        10, 20, 30, 11, 15, 10, 5, 10, 12, 10, 20, 30, 11, 15, 10, 5, 10, 12};
+  float output_data[] = {1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  std::vector<float> in_data = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90,
-                                20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
-                                30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
-  std::vector<float> except_out = {30, 45, 30, 50, 90, 20, 20, 25, 40, 50, 30, 45, 30, 50, 90, 20, 20, 25, 40, 50,
-                                   30, 45, 30, 50, 90, 20, 20, 25, 40, 50, 30, 45, 30, 50, 90, 20, 20, 25, 40, 50};
-  param->dims_size_ = 4;
-  param->axis_ = 2;
-  param->topk_ = 2;
-  param->get_max_ = true;
-  param->out_value_ = true;
-  std::vector<int> in_shape = {2, 2, 3, 5};
-  std::vector<int> out_shape = {1, 2, 2, 5};
-
-  TypeId data_type = kNumberTypeFloat32;
-  schema::Format format = schema::Format_NHWC;
-  test_main_argminmax<float>(in_data.data(), except_out.data(), in_shape, out_shape, param, data_type, format);
 }
-TEST_F(TestArgMinMaxOpenCL, axis2topk2index) {
-  ArgMinMaxParameter *param = std::make_unique<ArgMinMaxParameter>().release();
-  if (param == nullptr) {
-    return;
+
+TEST_F(TestOpenCL_ArgMinMax, axis2topk2value) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 2;
+  int topk = 2;
+  bool out_value = true;
+  std::vector<int> input_shape = {2, 2, 3, 5};
+  std::vector<int> output_shape = {1, 2, 2, 5};
+  float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90,
+                        20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
+                        30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
+  float output_data[] = {30, 45, 30, 50, 90, 20, 20, 25, 40, 50, 30, 45, 30, 50, 90, 20, 20, 25, 40, 50};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  std::vector<float> in_data = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90,
-                                20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
-                                30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
-  std::vector<float> except_out = {2, 2, 0, 2, 0, 1, 0, 2, 0, 1, 2, 2, 0, 2, 0, 1, 0, 2, 0, 1,
-                                   2, 2, 0, 2, 0, 1, 0, 2, 0, 1, 2, 2, 0, 2, 0, 1, 0, 2, 0, 1};
-  param->dims_size_ = 4;
-  param->axis_ = 2;
-  param->topk_ = 2;
-  param->get_max_ = true;
-  param->out_value_ = false;
-  std::vector<int> in_shape = {2, 2, 3, 5};
-  std::vector<int> out_shape = {2, 2, 2, 5};
-
-  TypeId data_type = kNumberTypeFloat32;
-  schema::Format format = schema::Format_NHWC;
-  test_main_argminmax<float>(in_data.data(), except_out.data(), in_shape, out_shape, param, data_type, format);
 }
-TEST_F(TestArgMinMaxOpenCL, axis3topk2index) {
-  ArgMinMaxParameter *param = std::make_unique<ArgMinMaxParameter>().release();
-  if (param == nullptr) {
-    return;
+
+TEST_F(TestOpenCL_ArgMinMax, axis2topk2index) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 2;
+  int topk = 2;
+  bool out_value = false;
+  std::vector<int> input_shape = {2, 2, 3, 5};
+  std::vector<int> output_shape = {2, 2, 2, 5};
+  float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90,
+                        20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
+                        30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
+  float output_data[] = {2, 2, 0, 2, 0, 1, 0, 2, 0, 1, 2, 2, 0, 2, 0, 1, 0, 2, 0, 1,
+                         2, 2, 0, 2, 0, 1, 0, 2, 0, 1, 2, 2, 0, 2, 0, 1, 0, 2, 0, 1};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  std::vector<float> in_data = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90,
-                                20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
-                                30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
-  std::vector<float> except_out = {4, 3, 4, 0, 3, 1, 4, 3, 4, 0, 3, 1, 4, 3, 4, 0, 3, 1, 4, 3, 4, 0, 3, 1};
-  param->dims_size_ = 4;
-  param->axis_ = 3;
-  param->topk_ = 2;
-  param->get_max_ = true;
-  param->out_value_ = false;
-  std::vector<int> in_shape = {2, 2, 3, 5};
-  std::vector<int> out_shape = {2, 2, 3, 2};
-
-  TypeId data_type = kNumberTypeFloat32;
-  schema::Format format = schema::Format_NHWC;
-  test_main_argminmax<float>(in_data.data(), except_out.data(), in_shape, out_shape, param, data_type, format);
 }
-TEST_F(TestArgMinMaxOpenCL, axis3topk2value) {
-  ArgMinMaxParameter *param = std::make_unique<ArgMinMaxParameter>().release();
-  if (param == nullptr) {
-    return;
+
+TEST_F(TestOpenCL_ArgMinMax, axis3topk2index) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 3;
+  int topk = 2;
+  bool out_value = false;
+  std::vector<int> input_shape = {2, 2, 3, 5};
+  std::vector<int> output_shape = {2, 2, 3, 2};
+  float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90,
+                        20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
+                        30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
+  float output_data[] = {4, 3, 4, 0, 3, 1, 4, 3, 4, 0, 3, 1, 4, 3, 4, 0, 3, 1, 4, 3, 4, 0, 3, 1};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
-  std::vector<float> in_data = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90,
-                                20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
-                                30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
-  std::vector<float> except_out = {90, 40, 50, 20, 50, 45, 90, 40, 50, 20, 50, 45,
-                                   90, 40, 50, 20, 50, 45, 90, 40, 50, 20, 50, 45};
-  param->dims_size_ = 4;
-  param->axis_ = 3;
-  param->topk_ = 2;
-  param->get_max_ = true;
-  param->out_value_ = true;
-  std::vector<int> in_shape = {2, 2, 3, 5};
-  std::vector<int> out_shape = {2, 2, 3, 2};
-
-  TypeId data_type = kNumberTypeFloat32;
-  schema::Format format = schema::Format_NHWC;
-  test_main_argminmax<float>(in_data.data(), except_out.data(), in_shape, out_shape, param, data_type, format);
 }
-}  // namespace mindspore
+
+TEST_F(TestOpenCL_ArgMinMax, axis3topk2value) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 3;
+  int topk = 2;
+  bool out_value = true;
+  std::vector<int> input_shape = {2, 2, 3, 5};
+  std::vector<int> output_shape = {2, 2, 3, 2};
+  float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90,
+                        20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
+                        30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
+  float output_data[] = {90, 40, 50, 20, 50, 45, 90, 40, 50, 20, 50, 45,
+                         90, 40, 50, 20, 50, 45, 90, 40, 50, 20, 50, 45};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
+
+}  // namespace mindspore::lite::opencl::test

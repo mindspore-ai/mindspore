@@ -103,12 +103,11 @@ int PReluOpenCLKernel::Init() {
   }
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
 
-  std::set<std::string> build_options;
   std::string source = prelu_source;
   std::string program_name = "PRelu";
   std::string kernel_name = "PRelu_" + std::string(weight_is_scalar ? "scalar" : "vector");
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 
   InitWeights();
   MS_LOG(DEBUG) << program_name << " init Done!";
@@ -133,7 +132,7 @@ int PReluOpenCLKernel::Run() {
 
   std::vector<size_t> local = {4, 4, 1};
   std::vector<size_t> global = {static_cast<size_t>(H_), static_cast<size_t>(W_), static_cast<size_t>(CO_SLICES_)};
-  auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+  auto ret = ocl_runtime_->RunKernel(kernel_, global, local);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
     return mindspore::lite::RET_ERROR;

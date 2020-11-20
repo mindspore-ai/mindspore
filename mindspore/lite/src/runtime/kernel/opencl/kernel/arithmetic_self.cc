@@ -157,8 +157,7 @@ int ArithmeticSelfOpenCLKernel::Run() {
   int arg_cn = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
-
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

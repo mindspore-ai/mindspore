@@ -31,6 +31,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::ActivationType_HSIGMOID;
 using mindspore::schema::ActivationType_HSWISH;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
@@ -44,9 +45,9 @@ namespace mindspore::kernel {
 
 std::string ActivationOpenCLKernel::GetActTypeString(int act_type) {
   static std::map<int, std::string> supported_act_type = {
-    {ActivationType_LEAKY_RELU, "LeakyRelu"}, {ActivationType_RELU, "Relu"}, {ActivationType_SIGMOID, "Sigmoid"},
-    {ActivationType_RELU6, "Relu6"},          {ActivationType_TANH, "Tanh"}, {ActivationType_SWISH, "Swish"},
-    {ActivationType_HSWISH, "HSwish"}};
+    {ActivationType_LEAKY_RELU, "LeakyRelu"}, {ActivationType_RELU, "Relu"},        {ActivationType_SIGMOID, "Sigmoid"},
+    {ActivationType_RELU6, "Relu6"},          {ActivationType_TANH, "Tanh"},        {ActivationType_SWISH, "Swish"},
+    {ActivationType_HSWISH, "HSwish"},        {ActivationType_HSIGMOID, "HSigmoid"}};
   auto result_iter = supported_act_type.find(act_type);
   if (result_iter != supported_act_type.end()) {
     return result_iter->second;
@@ -63,13 +64,12 @@ int ActivationOpenCLKernel::CheckSpecs() {
 }
 
 int ActivationOpenCLKernel::Prepare() {
-  outShape = Image2DInfo(out_tensors_[0]);
+  outShape = GpuTensorInfo(out_tensors_[0]);
   std::string source = activation_source;
-  std::set<std::string> build_options;
   std::string program_name = "Activation";
   ocl_runtime_->LoadSource(program_name, source);
   std::string kernel_name = GetActTypeString(type_);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " init Done!";
@@ -101,7 +101,7 @@ int ActivationOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  auto ret = ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  auto ret = ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel:" << this->name() << " fail.";
     return RET_ERROR;

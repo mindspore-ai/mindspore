@@ -41,7 +41,7 @@ class ReduceOpenCLKernel : public OpenCLKernel {
   cl_float4 GenC4Mask();
   static std::string GetReduceTypeStr(int type);
   cl::Kernel kernel_;
-  Image2DInfo outShape = Image2DInfo(nullptr);
+  GpuTensorInfo outShape = GpuTensorInfo(nullptr);
   bool use_local_{false};
   bool wc_reduce_{false};
   static const size_t LOCAL_CACHE_THREAD{16};

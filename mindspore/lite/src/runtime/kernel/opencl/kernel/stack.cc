@@ -73,11 +73,10 @@ int StackOpenCLKernel::Init() {
     return RET_ERROR;
   }
   MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
-  std::set<std::string> build_options;
   std::string source = stack_source;
   std::string program_name = "stack";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 
   return RET_OK;
 }
@@ -184,7 +183,7 @@ int StackOpenCLKernel::Run() {
   std::vector<size_t> global = {OH_, OW_, OC_};
   StackGetWorkGroup(global, &local, max_global[0]);
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape);
-  ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global, local);
   return RET_OK;
 }
 

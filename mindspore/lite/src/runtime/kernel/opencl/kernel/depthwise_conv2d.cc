@@ -69,10 +69,9 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
   std::string program_name = "DepthwiseConv2d";
-  std::set<std::string> build_options;
   std::string source = depthwise_conv2d_source;
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
   InitWeights();
   SetGlobalLocal();
@@ -193,7 +192,7 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return mindspore::lite::RET_OK;
 }
 

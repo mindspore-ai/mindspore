@@ -71,12 +71,11 @@ int BiasAddOpenCLKernel::Init() {
     return mindspore::lite::RET_ERROR;
   }
   InitWeights();
-  std::set<std::string> build_options;
   std::string source = biasadd_source;
   std::string program_name = "BiasAdd";
   std::string kernel_name = "BiasAdd";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 
   MS_LOG(DEBUG) << program_name << " Init Done!";
   return mindspore::lite::RET_OK;
@@ -95,7 +94,7 @@ int BiasAddOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, data_type[schema::Format::Format_NHWC4]);
   std::vector<size_t> local = {1, 1};
   std::vector<size_t> global = {static_cast<size_t>(global_size.s[1]), static_cast<size_t>(global_size.s[2])};
-  auto ret = ocl_runtime_->RunKernel(kernel_, global, local, nullptr);
+  auto ret = ocl_runtime_->RunKernel(kernel_, global, local);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
     return mindspore::lite::RET_ERROR;
