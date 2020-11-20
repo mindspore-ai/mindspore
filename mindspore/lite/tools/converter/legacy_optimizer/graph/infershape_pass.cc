@@ -29,9 +29,23 @@ namespace {
 constexpr int DEFAULT_DIM_VALUE = -1;
 }
 namespace {
+void FreeTensors(std::vector<Tensor *> input_tensors, std::vector<Tensor *> output_tensors) {
+  for (auto &tensor : input_tensors) {
+    delete tensor;
+  }
+  for (auto &tensor : output_tensors) {
+    delete tensor;
+  }
+  input_tensors.clear();
+  input_tensors.shrink_to_fit();
+  output_tensors.clear();
+  output_tensors.shrink_to_fit();
+}
+
 std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::vector<uint32_t> &tensor_indexs,
                                                 const schema::PrimitiveType node_type) {
   std::vector<Tensor *> lite_tensors;
+  bool convert_succ = true;
   for (size_t i = 0; i < tensor_indexs.size(); i++) {
     auto &tensorT = graph->allTensors.at(tensor_indexs[i]);
     auto tensor_shape = tensorT->dims;
@@ -40,7 +54,8 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
       TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
     if (lite_tensor == nullptr) {
       MS_LOG(ERROR) << "lite tensor is nullptr";
-      return std::vector<Tensor *>();
+      convert_succ = false;
+      break;
     }
     auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
     // when tensorT as param input
@@ -51,14 +66,20 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
     auto ret = lite_tensor->MallocData();
     if (ret != 0) {
       MS_LOG(ERROR) << "Malloc tensor data failed";
-      return std::vector<Tensor *>();
+      convert_succ = false;
+      break;
     }
     ret = memcpy_s(lite_tensor->MutableData(), lite_tensor->Size(), tensorT->data.data(), lite_tensor_size);
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
-      return std::vector<Tensor *>();
+      convert_succ = false;
+      break;
     }
     lite_tensors.emplace_back(lite_tensor.release());
+  }
+  if (!convert_succ) {
+    FreeTensors(lite_tensors, {});
+    return {};
   }
   return lite_tensors;
 }
@@ -80,13 +101,8 @@ void PrintTensorShape(const std::vector<Tensor *> &input_tensors, const std::vec
     MS_LOG(DEBUG) << "output shape" << i++ << ":" << oss.str();
   }
 }
-void FreeTensors(std::vector<Tensor *> input_tensors, std::vector<Tensor *> output_tensors) {
-  input_tensors.clear();
-  input_tensors.shrink_to_fit();
-  output_tensors.clear();
-  output_tensors.shrink_to_fit();
-}
 }  // namespace
+
 STATUS InferShapePass::Run(MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   for (auto idx : graph->inputIndex) {
@@ -130,12 +146,7 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name
                    << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type) << "flag set to false.";
-      for (auto input_tensor : input_tensors) {
-        delete input_tensor;
-      }
-      for (auto output_tensor : output_tensors) {
-        delete output_tensor;
-      }
+      FreeTensors(input_tensors, output_tensors);
       return RET_INFER_INVALID;
     } else if (ret != RET_OK) {
       MS_LOG(WARNING) << "InferShape failed, name: " << node->name
