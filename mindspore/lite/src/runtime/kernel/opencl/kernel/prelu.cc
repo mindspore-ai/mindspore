@@ -125,7 +125,7 @@ int PReluOpenCLKernel::Run() {
   if (weight_is_scalar) {
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_scalar_);
   } else {
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_vector_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, weight_vector_, lite::opencl::MemType::BUF);
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, 2);
