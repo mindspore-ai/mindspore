@@ -128,8 +128,8 @@ TdtStatus TdtPlugin::translate(const TensorRow &ts_row, std::vector<DataItem> &i
     data_item.dataPtr_ =
       std::shared_ptr<void>(reinterpret_cast<uchar *>(&(*ts->begin<uint8_t>())), [](const void *elem) {});
     items.emplace_back(data_item);
-    MS_LOG(INFO) << "TDT data type is TDT_TENSOR, tensor type is " << datatype << ", tensor shape is " << dataShapes
-                 << ", data length is " << ts->Size() << ".";
+    MS_LOG(DEBUG) << "TDT data type is TDT_TENSOR, tensor type is " << datatype << ", tensor shape is " << dataShapes
+                  << ", data length is " << ts->Size() << ".";
   }
   return SUCCESS;
 }
