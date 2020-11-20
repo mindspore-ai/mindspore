@@ -82,6 +82,19 @@ std::string GraphDesc::DataShapeToString(const std::vector<size_t> &shape) {
   oss << "\"";
   return oss.str();
 }
+
+std::string TaskStreamOpNameDesc::ToString() {
+  std::string desc = op_name_;
+  // op_name "task_id stream_id" "task_id stream_id"
+  for (auto pair : stream_id_task_id_pairs_) {
+    desc.append(" ");
+    desc.append(std::to_string(pair.first));
+    desc.append("_");
+    desc.append(std::to_string(pair.second));
+  }
+  desc.append("\n");
+  return desc;
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

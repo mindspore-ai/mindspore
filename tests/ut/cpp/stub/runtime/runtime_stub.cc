@@ -147,4 +147,6 @@ int AdxDataDumpServerInit() { return 0; }
 
 int AdxDataDumpServerUnInit() { return 0; }
 
+RTS_API rtError_t rtGetTaskIdAndStreamID(uint32_t *taskid, uint32_t *streamid) { return RT_ERROR_NONE; }
+
 RTS_API rtError_t rtSetTaskFailCallback(rtTaskFailCallback callback) {return RT_ERROR_NONE; }
