@@ -45,12 +45,17 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
   void FreeRunBuf();
 
  public:
-  int DoRun(int task_id);
+  int OcRun(int task_id);
+  int HwRun(int task_id);
+  int OcOptPre(int task_id);
 
  private:
-  int RunArm32(int task_id);
-  int RunArm64(int task_id);
-  int RunArm64Opt(int task_id);
+  int RunArm32Oc(int task_id);
+  int RunArm64Oc(int task_id);
+  int RunArm64OptOc(int task_id);
+  int RunArm32Hw(int task_id);
+  int RunArm64Hw(int task_id);
+  int RunArm64OptHw(int task_id);
 
  private:
   void FreeResizeBuf();
@@ -71,9 +76,12 @@ class Convolution1x1Int8CPUKernel : public ConvolutionBaseCPUKernel {
   int8_t *packed_input_ = nullptr;
   int8_t *input_ptr_ = nullptr;
   int8_t *output_ptr_ = nullptr;
-  size_t thread_count_ = 1;
-  size_t thread_stride_ = 0;
+  size_t thread_count_hw_ = 1;
+  size_t thread_stride_hw_ = 0;
+  size_t thread_count_oc_ = 1;
+  size_t thread_stride_oc_ = 0;
   bool pre_trans_input_ = false;
+  bool parallel_by_oc_ = false;
   size_t input_sum_size_ = 0;
   MatMulParameter *matmul_param_ = nullptr;
   MATMUL_OPT_DP_FUNC matmul_func_ = nullptr;
