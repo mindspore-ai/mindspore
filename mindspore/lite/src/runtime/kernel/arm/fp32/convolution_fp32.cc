@@ -146,21 +146,20 @@ int ConvolutionCPUKernel::Run() {
   auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
-
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionImpl, this, thread_count_);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "conv error error_code[" << error_code << "]";
     FreeTmpBuffer();
     return RET_ERROR;
   }
+
+  ret = ParallelLaunch(this->context_->thread_pool_, ConvolutionImpl, this, thread_count_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "conv error error_code[" << ret << "]";
+  }
   FreeTmpBuffer();
-  return RET_OK;
+  return ret;
 }
 
 ConvParameter *CreateNewConvParameter(ConvParameter *parameter) {
-  auto conv_parameter = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  auto conv_parameter = new (std::nothrow) ConvParameter;
   if (conv_parameter == nullptr) {
     MS_LOG(ERROR) << "Malloc new conv parameter failed.";
     return nullptr;

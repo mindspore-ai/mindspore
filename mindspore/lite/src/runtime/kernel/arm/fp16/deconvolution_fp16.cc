@@ -183,7 +183,7 @@ int DeConvolutionFp16CPUKernel::Run() {
 
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "deconv fp32 InitRunBuf error! error_code[" << error_code << "]";
+    MS_LOG(ERROR) << "deconv fp16 InitRunBuf error! error_code[" << error_code << "]";
     ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     FreeRunBuf();
     return RET_ERROR;
@@ -197,7 +197,7 @@ int DeConvolutionFp16CPUKernel::Run() {
 
     error_code = ParallelLaunch(this->context_->thread_pool_, DeConvFp16Run, this, thread_count_);
     if (error_code != RET_OK) {
-      MS_LOG(ERROR) << "deconv fp32 run error! error_code[" << error_code << "]";
+      MS_LOG(ERROR) << "deconv fp16 run error! error_code[" << error_code << "]";
     }
   }
 

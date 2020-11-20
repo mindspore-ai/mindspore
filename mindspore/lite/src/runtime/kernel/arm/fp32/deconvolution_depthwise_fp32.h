@@ -36,11 +36,12 @@ class DeconvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
   int ReSize() override;
   int Run() override;
 
-  int InitBuffer();
   int InitWeightBias();
   int Execute(int task_id);
 
  private:
+  int InitPackedInputOutput();
+  void FreePackedInputOutput();
   SlidingWindowParam *sliding_ = nullptr;
   float *packed_weight_ = nullptr;
   float *packed_input_ = nullptr;

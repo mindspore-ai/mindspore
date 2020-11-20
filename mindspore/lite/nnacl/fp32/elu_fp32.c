@@ -23,7 +23,7 @@ void Calculate_Data(const float *input_data, float *output_data, int num, EluPar
 }
 
 int Elu(const float *input_data, float *output_data, EluParameter *parameter, int task_id) {
-  for (size_t i = task_id; i < parameter->in_size_; i += parameter->thread_num_) {
+  for (size_t i = task_id; i < parameter->in_size_; i += parameter->op_parameter_.thread_num_) {
     Calculate_Data(input_data, output_data, i, parameter);
   }
   return NNACL_OK;

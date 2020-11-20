@@ -58,8 +58,8 @@ int LayerNormCPUKernel::DoLayerNorm(int thread_id) {
 }
 
 int LayerNormRun(void *cdata, int task_id) {
-  auto LayerNormData = reinterpret_cast<LayerNormCPUKernel *>(cdata);
-  auto ret = LayerNormData->DoLayerNorm(task_id);
+  auto kernel = reinterpret_cast<LayerNormCPUKernel *>(cdata);
+  auto ret = kernel->DoLayerNorm(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LayerNormRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;

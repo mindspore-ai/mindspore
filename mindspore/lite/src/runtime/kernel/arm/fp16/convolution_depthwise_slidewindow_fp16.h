@@ -45,11 +45,12 @@ class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseFP16CPUKernel 
   int ReSize() override;
   int Run() override;
 
-  int InitBuffer();
+  int InitPackedInputOutput();
   int InitWeightBias();
   int Execute(int task_id);
 
  private:
+  void FreePackedInputOutput();
   SlidingWindowParam *sliding_ = nullptr;
   float16_t *packed_weight_ = nullptr;
   float16_t *packed_input_ = nullptr;
