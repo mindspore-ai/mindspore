@@ -205,7 +205,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
     auto output_nums = GetOutputTensorNum(input_cnode);
     std::vector<Tensor *> output_tensors;
     for (size_t j = 0; j < output_nums; j++) {
-      output_tensors.push_back(new Tensor());
+      output_tensors.push_back(new (std::nothrow) Tensor());
     }
     auto lite_primitive = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
     if (lite_primitive == nullptr) {

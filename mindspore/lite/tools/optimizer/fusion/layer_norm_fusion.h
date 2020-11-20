@@ -48,7 +48,6 @@ class LayerNormFusion : public PatternProcessPass {
   VarPtr beta_;
   VarPtr epsilon_;
 };
-
 }  // namespace opt
 }  // namespace mindspore
 

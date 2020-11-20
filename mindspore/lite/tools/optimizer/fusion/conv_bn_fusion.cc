@@ -57,6 +57,11 @@ void CalTransale(const AnfNodePtr &bn_scale_node, const AnfNodePtr &bn_var_node,
   for (int32_t i = 0; i < kernel_num; i++) {
     float tmp = trans_scale[i] + eps;
     tmp = pow(tmp, POW_NUM);
+    if (tmp <= 0.0f) {
+      MS_LOG(ERROR) << "divisor cannot be 0";
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
+      return;
+    }
     trans_scale[i] = 1 / tmp;
   }
   if (bn_scale_node != nullptr) {

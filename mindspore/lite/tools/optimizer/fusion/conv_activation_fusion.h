@@ -25,9 +25,9 @@ namespace mindspore {
 namespace opt {
 class ConvActivationFusion : public PatternProcessPass {
  public:
-  explicit ConvActivationFusion(bool multigraph = true, const std::string &name = "conv_activation_fusion",
-                                schema::PrimitiveType primitive = schema::PrimitiveType_LeakyReLU,
-                                schema::ActivationType activation = schema::ActivationType_LEAKY_RELU)
+  ConvActivationFusion(bool multigraph = true, const std::string &name = "conv_activation_fusion",
+                       schema::PrimitiveType primitive = schema::PrimitiveType_LeakyReLU,
+                       schema::ActivationType activation = schema::ActivationType_LEAKY_RELU)
       : PatternProcessPass(name, multigraph), primitive_type(primitive), activation_type(activation) {}
   ~ConvActivationFusion() override = default;
   const BaseRef DefinePattern() const override;

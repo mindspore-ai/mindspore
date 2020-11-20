@@ -32,7 +32,6 @@ const BaseRef ConvActivationFusion::DefinePattern() const {
   auto prim = new schema::PrimitiveT();
   prim->value.type = primitive_type;
   auto prim_value = std::make_shared<lite::PrimitiveC>(prim);
-
   return VectorRef({prim_value, conv_var});
 }
 

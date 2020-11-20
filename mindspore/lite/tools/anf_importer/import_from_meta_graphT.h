@@ -27,7 +27,7 @@
 namespace mindspore::lite {
 class AnfImporterFromMetaGraphT : public AnfImporter {
  public:
-  explicit AnfImporterFromMetaGraphT(schema::MetaGraphT *meta_graph, FuncGraphPtr func_graph)
+  AnfImporterFromMetaGraphT(schema::MetaGraphT *meta_graph, FuncGraphPtr func_graph)
       : meta_graph_(meta_graph), func_graph_(std::move(func_graph)) {}
 
   ~AnfImporterFromMetaGraphT() override = default;
