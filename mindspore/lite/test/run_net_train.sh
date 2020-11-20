@@ -200,6 +200,7 @@ function Print_Result() {
 basepath=$(pwd)
 echo ${basepath}
 
+train_io_path=""
 # Example:run_net_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
 while getopts "r:m:d:i:e:v" opt; do
@@ -209,7 +210,7 @@ while getopts "r:m:d:i:e:v" opt; do
             echo "release_path is ${OPTARG}"
             ;;
         m)
-	    models_path=${OPTARG}
+	    models_path=${OPTARG}"/models_train"
             echo "models_path is ${OPTARG}"
             ;;
         i)
@@ -233,6 +234,11 @@ while getopts "r:m:d:i:e:v" opt; do
             exit 1;;
     esac
 done
+
+if [[ $train_io_path == "" ]]
+then
+  train_io_path=${models_path}/input_output
+fi
 
 arm64_path=${release_path}/android_aarch64
 file=$(ls ${arm64_path}/*runtime-arm64*train.tar.gz)
@@ -258,9 +264,9 @@ process_unit_x86=${file_name_array[5]}
 # Set models config filepath
 models_mindspore_train_config=${basepath}/models_ms_train.cfg
 
-ms_models_path=${models_path}/ms_models
+ms_models_path=${basepath}/ms_models_train
 
-logs_path=${models_path}/logs
+logs_path=${basepath}/logs_train
 rm -rf ${logs_path}
 mkdir -p ${logs_path}
 
@@ -331,7 +337,7 @@ adb_cmd_arm32_run_file=${logs_path}/adb_arm32_cmd_run.txt
 
 # Copy the MindSpore models:
 echo "Push files to net_train_test folder and run net_train"
-net_train_test_path=${models_path}/net_train_test
+net_train_test_path=${basepath}/net_train_test
 rm -rf ${net_train_test_path}
 mkdir -p ${net_train_test_path}
 cp -a ${ms_models_path}/*.ms ${net_train_test_path} || exit 1
