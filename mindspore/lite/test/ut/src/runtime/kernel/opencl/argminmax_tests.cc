@@ -44,7 +44,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis0topk2index) {
   std::vector<int> output_shape = {2, 2, 2, 2};
   float input_data[] = {100, 2, 4, 50, 11, 12, 34, 35, 10, 20, 40, 5, 7, 80, 10, 11, 55, 25, 5, 15, 18, 8, 15, 16};
   float output_data[] = {0, 2, 1, 0, 2, 1, 0, 0, 2, 1, 2, 2, 0, 0, 2, 2};
-  for (auto fp16_enable : {false}) {
+  for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
@@ -59,7 +59,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis0topk2value) {
   std::vector<int> output_shape = {2, 2, 2, 2};
   float input_data[] = {100, 2, 4, 50, 11, 12, 34, 35, 10, 20, 40, 5, 7, 80, 10, 11, 55, 25, 5, 15, 18, 8, 15, 16};
   float output_data[] = {100, 25, 40, 50, 18, 80, 34, 35, 55, 20, 5, 15, 11, 12, 15, 16};
-  for (auto fp16_enable : {false}) {
+  for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
@@ -75,7 +75,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis1topk2index) {
   float input_data[] = {100, 2,  200, 4,  50, 6,  11, 12, 13, 34, 35, 36,  9,  6, 17, 10, 20, 30,
                         10,  20, 30,  40, 5,  60, 7,  80, 90, 10, 11, 120, 18, 5, 16, 9,  22, 23};
   float output_data[] = {0, 1, 0, 1, 0, 1, 1, 2, 2, 2, 1, 2, 2, 1, 1, 0, 2, 1, 0, 0, 0, 1, 1, 0};
-  for (auto fp16_enable : {false}) {
+  for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
@@ -92,7 +92,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis1topk2value) {
                         10,  20, 30,  40, 5,  60, 7,  80, 90, 10, 11, 120, 18, 5, 16, 9,  22, 23};
   float output_data[] = {100, 12, 200, 34, 50, 36,  11, 6,  17, 10, 35, 30,
                          18,  80, 90,  40, 22, 120, 10, 20, 30, 10, 11, 60};
-  for (auto fp16_enable : {false}) {
+  for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
@@ -109,7 +109,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis2topk1index) {
                         10, 20, 30, 11, 15, 10, 5, 10, 12, 10, 20, 30, 11, 15, 10, 5, 10, 12,
                         10, 20, 30, 11, 15, 10, 5, 10, 12, 10, 20, 30, 11, 15, 10, 5, 10, 12};
   float output_data[] = {1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0};
-  for (auto fp16_enable : {false}) {
+  for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
@@ -121,12 +121,13 @@ TEST_F(TestOpenCL_ArgMinMax, axis2topk2value) {
   int topk = 2;
   bool out_value = true;
   std::vector<int> input_shape = {2, 2, 3, 5};
-  std::vector<int> output_shape = {1, 2, 2, 5};
+  std::vector<int> output_shape = {2, 2, 2, 5};
   float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90,
                         20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
                         30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
-  float output_data[] = {30, 45, 30, 50, 90, 20, 20, 25, 40, 50, 30, 45, 30, 50, 90, 20, 20, 25, 40, 50};
-  for (auto fp16_enable : {false}) {
+  float output_data[] = {30, 45, 30, 50, 90, 20, 20, 25, 40, 50, 30, 45, 30, 50, 90, 20, 20, 25, 40, 50,
+                         30, 45, 30, 50, 90, 20, 20, 25, 40, 50, 30, 45, 30, 50, 90, 20, 20, 25, 40, 50};
+  for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
@@ -144,7 +145,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis2topk2index) {
                         30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
   float output_data[] = {2, 2, 0, 2, 0, 1, 0, 2, 0, 1, 2, 2, 0, 2, 0, 1, 0, 2, 0, 1,
                          2, 2, 0, 2, 0, 1, 0, 2, 0, 1, 2, 2, 0, 2, 0, 1, 0, 2, 0, 1};
-  for (auto fp16_enable : {false}) {
+  for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
@@ -161,7 +162,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis3topk2index) {
                         20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50,
                         30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
   float output_data[] = {4, 3, 4, 0, 3, 1, 4, 3, 4, 0, 3, 1, 4, 3, 4, 0, 3, 1, 4, 3, 4, 0, 3, 1};
-  for (auto fp16_enable : {false}) {
+  for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
@@ -179,10 +180,9 @@ TEST_F(TestOpenCL_ArgMinMax, axis3topk2value) {
                         30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30};
   float output_data[] = {90, 40, 50, 20, 50, 45, 90, 40, 50, 20, 50, 45,
                          90, 40, 50, 20, 50, 45, 90, 40, 50, 20, 50, 45};
-  for (auto fp16_enable : {false}) {
+  for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
 }
-
 }  // namespace mindspore::lite::opencl::test

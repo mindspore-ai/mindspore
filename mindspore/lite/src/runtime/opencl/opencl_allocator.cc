@@ -83,7 +83,7 @@ void *OpenCLAllocator::CreateBuffer(size_t size, void *data, size_t flags, cl::B
 }
 
 void *OpenCLAllocator::CreateImage2D(size_t size, const std::vector<size_t> &img_size, void *data, size_t flags,
-                                     cl::Buffer **buffer, cl::Image2D **image) {
+                                     bool is_map, cl::Buffer **buffer, cl::Image2D **image) {
   cl_int ret = CL_SUCCESS;
   cl::ImageFormat image_format(CL_RGBA, img_size[2]);
   if (data == nullptr) {
@@ -99,16 +99,19 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const std::vector<size_t> &img
     return nullptr;
   }
   MS_LOG(DEBUG) << "Malloc a new Image2D, width=" << img_size[0] << ", height=" << img_size[1];
-  std::vector<size_t> region{img_size[0], img_size[1], 1};
-  void *host_ptr = ocl_runtime_->MapBuffer(**image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
-  if (host_ptr == nullptr) {
-    delete *buffer;
-    delete *image;
-    MS_LOG(ERROR) << "Map image failed, can not found image :" << *image << ", host_ptr=" << host_ptr;
-    return nullptr;
+  void *host_ptr = nullptr;
+  if (is_map) {
+    std::vector<size_t> region{img_size[0], img_size[1], 1};
+    host_ptr = ocl_runtime_->MapBuffer(**image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
+    if (host_ptr == nullptr) {
+      delete *buffer;
+      delete *image;
+      MS_LOG(ERROR) << "Map image failed, can not found image :" << *image << ", host_ptr=" << host_ptr;
+      return nullptr;
+    }
+    cl::Memory *mem = *image;
+    ocl_runtime_->UnmapBuffer(*mem, host_ptr);
   }
-  cl::Memory *mem = *image;
-  ocl_runtime_->UnmapBuffer(*mem, host_ptr);
   return host_ptr;
 }
 
@@ -149,11 +152,12 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size, 
       }
     }
     if (!img_size.empty()) {
-      host_ptr = CreateImage2D(size, img_size, data, flags, &buffer, &image);
-      if (host_ptr == nullptr) {
+      void *host_ptr_im = CreateImage2D(size, img_size, data, flags, data != nullptr, &buffer, &image);
+      if (data != nullptr && host_ptr_im == nullptr) {
         UnLock();
         return nullptr;
       }
+      host_ptr = (data != nullptr) ? host_ptr_im : host_ptr;
     }
   }
   MemBuf *mem_buf = new (std::nothrow) MemBuf;

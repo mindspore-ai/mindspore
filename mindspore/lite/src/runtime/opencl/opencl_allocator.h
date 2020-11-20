@@ -72,8 +72,8 @@ class OpenCLAllocator : public Allocator {
   void UnLock();
   void *MinimumFit(size_t size, const std::vector<size_t> &img_size);
   void *CreateBuffer(size_t size, void *data, size_t flags, cl::Buffer **buffer);
-  void *CreateImage2D(size_t size, const std::vector<size_t> &img_size, void *data, size_t flags, cl::Buffer **buffer,
-                      cl::Image2D **image);
+  void *CreateImage2D(size_t size, const std::vector<size_t> &img_size, void *data, size_t flags, bool is_map,
+                      cl::Buffer **buffer, cl::Image2D **image);
   struct MemBuf {
     size_t size_;
     void *device_ptr_;

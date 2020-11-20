@@ -80,7 +80,8 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
   auto out_shape_align = in_shape_align;
   out_shape_align.at(param->axis_) = param->axis_ == 3 ? UP_ROUND(param->topk_, C4NUM) : param->topk_;
   int reduce_len = GetUpPow2(in_shape.at(param->axis_));
-  cus_size_ = {reduce_len, static_cast<int>(im_in_.RowPitch() / C4NUM), 1, 1};
+  int dtype_size = in_tensors_[0]->data_type() == kNumberTypeFloat16 ? sizeof(int16_t) : sizeof(float);
+  cus_size_ = {reduce_len, static_cast<int>(im_in_.RowPitch() / dtype_size), 1, 1};
   cus_size_.s[2] = UP_ROUND(im_in_.width * C4NUM, cus_size_.s[1]) - im_in_.width * C4NUM;
   cus_size_.s[3] = im_in_.W * UP_ROUND(param->topk_, C4NUM);
   cus_size_.s[3] = UP_ROUND(cus_size_.s[3], cus_size_.s[1]) - cus_size_.s[3];
