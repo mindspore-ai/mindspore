@@ -1,3 +1,18 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.mindspore.himindspore;
 
 import android.Manifest;
@@ -11,7 +26,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,25 +34,27 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
+import com.alibaba.android.arouter.facade.annotation.Route;
+import com.alibaba.android.arouter.launcher.ARouter;
 import com.mindspore.himindspore.base.BaseActivity;
-import com.mindspore.himindspore.imageclassification.ui.ImageMainActivity;
 import com.mindspore.himindspore.mvp.MainContract;
 import com.mindspore.himindspore.mvp.MainPresenter;
 import com.mindspore.himindspore.net.FileDownLoadObserver;
 import com.mindspore.himindspore.net.UpdateInfoBean;
-import com.mindspore.himindspore.objectdetection.ui.ObjectDetectionMainActivity;
 
 import java.io.File;
 
-public class SplashActivity extends BaseActivity<MainPresenter> implements MainContract.View, View.OnClickListener {
+@Route(path = "/himindspore/SplashActivity")
+public class SplashActivity extends BaseActivity<MainPresenter> implements MainContract.View {
 
     private static final String TAG = "SplashActivity";
     private static final int REQUEST_PERMISSION = 1;
 
-    private Button btnImage, btnObject, btnContract, btnAdvice;
     private boolean isHasPermssion;
+    private int now_version;
 
     private ProgressDialog progressDialog;
+    private TextView versionText;
 
     private static final String CODE_URL = "https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/lite";
     private static final String HELP_URL = "https://github.com/mindspore-ai/mindspore/issues";
@@ -46,17 +63,8 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     @Override
     protected void init() {
         presenter = new MainPresenter(this);
-
-        btnImage = findViewById(R.id.btn_image);
-        btnObject = findViewById(R.id.btn_object);
-        btnContract = findViewById(R.id.btn_contact);
-        btnAdvice = findViewById(R.id.btn_advice);
-
-        btnImage.setOnClickListener(this);
-        btnObject.setOnClickListener(this);
-        btnContract.setOnClickListener(this);
-        btnAdvice.setOnClickListener(this);
-
+        versionText = findViewById(R.id.tv_vision);
+        showPackaeInfo();
         requestPermissions();
         getUpdateInfo();
     }
@@ -64,6 +72,18 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     @Override
     public int getLayout() {
         return R.layout.activity_splash;
+    }
+
+    private void showPackaeInfo() {
+        try {
+            PackageManager packageManager = this.getPackageManager();
+            PackageInfo packageInfo = packageManager.getPackageInfo(this.getPackageName(), 0);
+            now_version = packageInfo.versionCode;
+            versionText.setText("Version: " + packageInfo.versionName);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void requestPermissions() {
@@ -87,26 +107,64 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     }
 
 
-    @Override
-    public void onClick(View view) {
-        if (R.id.btn_image == view.getId()) {
-            if (isHasPermssion) {
-                startActivity(new Intent(SplashActivity.this, ImageMainActivity.class));
-            } else {
-                requestPermissions();
-            }
-        } else if (R.id.btn_object == view.getId()) {
-            if (isHasPermssion) {
-                startActivity(new Intent(SplashActivity.this, ObjectDetectionMainActivity.class));
-            } else {
-                requestPermissions();
-            }
-        } else if (R.id.btn_contact == view.getId()) {
-            openBrowser(CODE_URL);
-        } else if (R.id.btn_advice == view.getId()) {
-            openBrowser(HELP_URL);
+    public void onClickImage(View view) {
+        if (isHasPermssion) {
+            ARouter.getInstance().build("/imageobject/ImageCameraActivity")
+                    .withInt("OPEN_TYPE", 1).navigation();
+        } else {
+            requestPermissions();
         }
     }
+
+    public void onClickGarbage(View view) {
+        if (isHasPermssion) {
+            ARouter.getInstance().build("/imageobject/ImageCameraActivity")
+                    .withInt("OPEN_TYPE", 2).navigation();
+        } else {
+            requestPermissions();
+        }
+    }
+
+    public void onClickPhotoDetection(View view) {
+        if (isHasPermssion) {
+            ARouter.getInstance().build("/imageobject/ObjectPhotoActivity").navigation();
+        } else {
+            requestPermissions();
+        }
+    }
+
+    public void onClickCameraDetection(View view) {
+        if (isHasPermssion) {
+            ARouter.getInstance().build("/imageobject/ObjectCameraActivity").navigation();
+        } else {
+            requestPermissions();
+        }
+    }
+
+    public void onClickPoseNet(View view) {
+        if (isHasPermssion) {
+            ARouter.getInstance().build("/posenet/PosenetMainActivity").navigation(this);
+        } else {
+            requestPermissions();
+        }
+    }
+
+    public void onClickStyleTransfer(View view) {
+        if (isHasPermssion) {
+            ARouter.getInstance().build("/styletransfer/StyleMainActivity").navigation(this);
+        } else {
+            requestPermissions();
+        }
+    }
+
+    public void onClickSouceCode(View view) {
+        openBrowser(CODE_URL);
+    }
+
+    public void onClickHelp(View view) {
+        openBrowser(HELP_URL);
+    }
+
 
     public void openBrowser(String url) {
         Intent intent = new Intent();
@@ -160,16 +218,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     }
 
 
-    private int now_version;
-
     public void showUpdate(final UpdateInfoBean updateInfo) {
-        try {
-            PackageManager packageManager = this.getPackageManager();
-            PackageInfo packageInfo = packageManager.getPackageInfo(this.getPackageName(), 0);
-            now_version = packageInfo.versionCode;
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
 
         if (now_version == updateInfo.getVersionCode()) {
             Toast.makeText(this, "已经是最新版本", Toast.LENGTH_SHORT).show();
@@ -244,5 +293,6 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
         }
         return directoryPath;
     }
+
 
 }

@@ -8,22 +8,16 @@ android {
         applicationId "com.mindspore.himindspore"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "1.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        externalNativeBuild {
-            cmake {
-                arguments "-DANDROID_STL=c++_shared"
-                cppFlags "-std=c++17"
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [moduleName: project.getName()]
             }
         }
-        ndk {
-            abiFilters 'arm64-v8a'
-        }
-    }
-    aaptOptions {
-        noCompress '.so', 'ms'
+
     }
 
     buildTypes {
@@ -32,25 +26,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
-        customDebugType {
-            debuggable true
-        }
     }
-    externalNativeBuild {
-        cmake {
-            path file('CMakeLists.txt')
-        }
-    }
-    ndkVersion '21.3.6528147'
 
-    sourceSets{
-        main {
-            jniLibs.srcDirs = ['libs']
-        }
+    aaptOptions {
+        noCompress "ms"
     }
-    packagingOptions{
-        pickFirst 'lib/arm64-v8a/libmlkit-label-MS.so'
-    }
+
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -58,22 +39,15 @@ android {
     }
 }
 
-// Before gradle build.
-// To download some necessary libraries.
-apply from:'download.gradle'
-
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.cardview:cardview:1.0.0'
     testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    implementation 'com.sun.mail:android-mail:1.6.5'
-    implementation 'com.sun.mail:android-activation:1.6.5'
-
 
     implementation 'com.trello.rxlifecycle2:rxlifecycle:2.2.2'
     implementation 'com.trello.rxlifecycle2:rxlifecycle-components:2.2.2'
@@ -85,4 +59,11 @@ dependencies {
 
     implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
     implementation 'org.greenrobot:eventbus:3.0.0'
+
+    implementation 'com.alibaba:arouter-api:1.2.1'
+    annotationProcessor 'com.alibaba:arouter-compiler:1.1.2'
+
+    implementation project(':posenet')
+    implementation project(':imageObject')
+    implementation project(':styletransfer')
 }
