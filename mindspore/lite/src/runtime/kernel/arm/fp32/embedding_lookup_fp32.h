@@ -27,30 +27,20 @@ class EmbeddingLookupCPUKernel : public LiteKernel {
   explicit EmbeddingLookupCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                     const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
-  ~EmbeddingLookupCPUKernel() override {
-    if (input_addr_ != nullptr) {
-      free(input_addr_);
-    }
-    if (embedding_lookup_parameter_->is_regulated_ != nullptr) {
-      free(embedding_lookup_parameter_->is_regulated_);
-    }
-  };
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    param_ = reinterpret_cast<EmbeddingLookupParameter *>(parameter);
+  }
+  ~EmbeddingLookupCPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int DoExcute(int task_id);
 
- protected:
-  const lite::InnerContext *ctx_ = nullptr;
-  int thread_count_ = 1;
-  EmbeddingLookupParameter *embedding_lookup_parameter_ = nullptr;
-
  private:
+  void FreeRunBuff();
+  EmbeddingLookupParameter *param_ = nullptr;
   float *input_addr_ = nullptr;
-  float *output_addr_ = nullptr;
-  int *ids_addr_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

@@ -24,25 +24,21 @@
 namespace mindspore::kernel {
 class EluCPUKernel : public LiteKernel {
  public:
-  explicit EluCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                        const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {}
-  ~EluCPUKernel() override{};
+  EluCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+               const mindspore::lite::PrimitiveC *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    elu_parameter_ = reinterpret_cast<EluParameter *>(op_parameter_);
+  }
+  ~EluCPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int DoExcute(int task_id);
 
- protected:
-  const lite::InnerContext *ctx_ = nullptr;
-  int thread_count_ = 1;
-  EluParameter *elu_parameter_ = nullptr;
-
  private:
-  float *input_addr = nullptr;
-  float *output_addr = nullptr;
+  EluParameter *elu_parameter_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

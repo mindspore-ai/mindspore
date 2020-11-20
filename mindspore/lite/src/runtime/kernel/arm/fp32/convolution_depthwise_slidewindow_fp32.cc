@@ -70,7 +70,7 @@ int ConvolutionDepthwiseSWCPUKernel::InitWeightBias() {
   return RET_OK;
 }
 
-int ConvolutionDepthwiseSWCPUKernel::InitBuffer() {
+int ConvolutionDepthwiseSWCPUKernel::InitPackedInputOutput() {
   if (conv_param_->input_channel_ % C4NUM != 0) {
     need_align_ = true;
     int IC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
@@ -134,9 +134,10 @@ int ConvDwSWRun(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseSWCPUKernel::Run() {
-  auto ret = InitBuffer();
+  auto ret = InitPackedInputOutput();
   if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp32 InitBuffer failed.";
+    MS_LOG(ERROR) << "Convolution depthwise fp32 InitPackedInputOutput failed.";
+    FreePackedInputOutput();
     return RET_ERROR;
   }
   auto input_tensor = in_tensors_.at(kInputIndex);
@@ -159,16 +160,22 @@ int ConvolutionDepthwiseSWCPUKernel::Run() {
   ret = ParallelLaunch(this->context_->thread_pool_, ConvDwSWRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwSWRun error: error_code[" << ret << "]";
-    return RET_ERROR;
   }
 
   if (need_align_) {
     PackNHWC4ToNHWCFp32(packed_output_, output_ptr, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+  }
+  FreePackedInputOutput();
+  return ret;
+}
+
+void ConvolutionDepthwiseSWCPUKernel::FreePackedInputOutput() {
+  if (need_align_) {
     context_->allocator->Free(packed_input_);
     context_->allocator->Free(packed_output_);
+    packed_input_ = nullptr;
+    packed_output_ = nullptr;
   }
-
-  return RET_OK;
 }
 }  // namespace mindspore::kernel

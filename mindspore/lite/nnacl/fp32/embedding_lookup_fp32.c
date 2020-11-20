@@ -47,7 +47,7 @@ int CopyData(float *input_data, int *ids, float *output_data, int num, Embedding
 }
 
 int EmbeddingLookup(float *input_data, int *ids, float *output_data, EmbeddingLookupParameter *parameter, int task_id) {
-  for (size_t i = task_id; i < parameter->ids_size_; i += parameter->thread_num) {
+  for (size_t i = task_id; i < parameter->ids_size_; i += parameter->op_parameter_.thread_num_) {
     int ret = CopyData(input_data, ids, output_data, i, parameter);
     if (ret != NNACL_OK) {
       return ret;

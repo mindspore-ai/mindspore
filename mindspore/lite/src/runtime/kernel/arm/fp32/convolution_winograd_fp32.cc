@@ -222,17 +222,16 @@ int ConvolutionWinogradCPUKernel::Run() {
   auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
-    return RET_ERROR;
-  }
-
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionWinogradImpl, this, thread_count_);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "conv winograd error error_code[" << error_code << "]";
     FreeTmpBuffer();
     return RET_ERROR;
   }
 
+  ret = ParallelLaunch(this->context_->thread_pool_, ConvolutionWinogradImpl, this, thread_count_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "conv winograd error error_code[" << ret << "]";
+  }
+
   FreeTmpBuffer();
-  return RET_OK;
+  return ret;
 }
 }  // namespace mindspore::kernel

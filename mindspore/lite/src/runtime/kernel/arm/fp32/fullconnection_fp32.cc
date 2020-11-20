@@ -44,7 +44,9 @@ void FullconnectionCPUKernel::FreeBuf() {
 int FullconnectionCPUKernel::ReSize() {
   FreeBuf();
   int row = 1;
-  for (size_t i = 0; i < out_tensors_[0]->shape().size() - 1; ++i) row *= (out_tensors_[0]->shape())[i];
+  for (size_t i = 0; i < out_tensors_[0]->shape().size() - 1; ++i) {
+    row *= (out_tensors_[0]->shape())[i];
+  }
   fc_param_->row_ = row;
   fc_param_->col_ = out_tensors_[0]->shape().back();
   fc_param_->deep_ = (in_tensors_[1]->shape())[1];

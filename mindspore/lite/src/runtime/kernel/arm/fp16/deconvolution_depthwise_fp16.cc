@@ -53,7 +53,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitSlideParam() {
   return RET_OK;
 }
 
-int DeconvolutionDepthwiseFp16CPUKernel::InitBuffer() {
+int DeconvolutionDepthwiseFp16CPUKernel::InitPackedInputOutput() {
   if (conv_param_->input_channel_ % C8NUM != 0) {
     need_align_ = true;
     int C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
@@ -156,19 +156,17 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "Only support input channel equals output channel.";
     return RET_ERROR;
   }
-  auto ret = InitBuffer();
+  auto ret = InitPackedInputOutput();
   if (ret != 0) {
-    MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitBuffer failed.";
-    context_->allocator->Free(packed_input_);
-    context_->allocator->Free(packed_output_);
+    MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitPackedInputOutput failed.";
+    FreePackedInputOutput();
     return RET_ERROR;
   }
 
   ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get Execute tensor failed.";
-    context_->allocator->Free(packed_input_);
-    context_->allocator->Free(packed_output_);
+    FreePackedInputOutput();
     ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     return ret;
   }
@@ -191,12 +189,20 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   if (need_align_) {
     PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
-    context_->allocator->Free(packed_input_);
-    context_->allocator->Free(packed_output_);
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
+  FreePackedInputOutput();
   return ret;
+}
+
+void DeconvolutionDepthwiseFp16CPUKernel::FreePackedInputOutput() {
+  if (need_align_) {
+    context_->allocator->Free(packed_input_);
+    context_->allocator->Free(packed_output_);
+    packed_input_ = nullptr;
+    packed_output_ = nullptr;
+  }
 }
 
 kernel::LiteKernel *CpuDeconvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,

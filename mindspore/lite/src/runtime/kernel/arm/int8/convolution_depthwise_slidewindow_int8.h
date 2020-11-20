@@ -36,10 +36,11 @@ class ConvolutionDepthwiseSWInt8CPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
 
   int InitWeightBias();
-  int InitBuffer();
+  int InitPackedInputOutput();
   int Execute(int task_id);
 
  private:
+  void FreePackedInputOutput();
   int ReinitQuantParam();
   int ReinitFreeBefore();
   void FreeTmpQuant();

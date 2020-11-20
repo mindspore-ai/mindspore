@@ -22,7 +22,6 @@
 typedef struct EluParameter {
   OpParameter op_parameter_;
   float alpha_;
-  int thread_num_;
   int in_size_;
 } EluParameter;
 

@@ -26,7 +26,6 @@ typedef struct EmbeddingLookupParameter {
   int ids_size_;
   int layer_size_;
   int layer_num_;
-  int thread_num;
 } EmbeddingLookupParameter;
 
 #ifdef __cplusplus

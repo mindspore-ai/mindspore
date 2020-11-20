@@ -40,7 +40,7 @@ ConvolutionDepthwiseSWFp16CPUKernel::~ConvolutionDepthwiseSWFp16CPUKernel() {
   }
 }
 
-int ConvolutionDepthwiseSWFp16CPUKernel::InitBuffer() {
+int ConvolutionDepthwiseSWFp16CPUKernel::InitPackedInputOutput() {
   if (conv_param_->input_channel_ % C8NUM != 0) {
     need_align_ = true;
     int C8 = UP_DIV(conv_param_->input_channel_, C8NUM);
@@ -142,19 +142,17 @@ static int ConvDwSWFp16Run(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
-  auto ret = InitBuffer();
+  auto ret = InitPackedInputOutput();
   if (ret != 0) {
-    MS_LOG(ERROR) << "Convolution depthwise fp16 InitBuffer failed.";
-    context_->allocator->Free(packed_input_);
-    context_->allocator->Free(packed_output_);
+    MS_LOG(ERROR) << "Convolution depthwise fp16 InitPackedInputOutput failed.";
+    FreePackedInputOutput();
     return ret;
   }
 
   ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get Execute tensor failed.";
-    context_->allocator->Free(packed_input_);
-    context_->allocator->Free(packed_output_);
+    FreePackedInputOutput();
     ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     return ret;
   }
@@ -173,11 +171,19 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
   if (need_align_) {
     PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
-    context_->allocator->Free(packed_input_);
-    context_->allocator->Free(packed_output_);
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
-  return RET_OK;
+  FreePackedInputOutput();
+  return ret;
+}
+
+void ConvolutionDepthwiseSWFp16CPUKernel::FreePackedInputOutput() {
+  if (need_align_) {
+    context_->allocator->Free(packed_input_);
+    context_->allocator->Free(packed_output_);
+    packed_input_ = nullptr;
+    packed_output_ = nullptr;
+  }
 }
 }  // namespace mindspore::kernel

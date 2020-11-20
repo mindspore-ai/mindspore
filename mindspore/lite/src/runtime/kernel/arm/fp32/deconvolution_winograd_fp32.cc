@@ -390,6 +390,7 @@ int DeConvolutionWinogradCPUKernel::Run() {
   auto ret = InitRunBuf();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InitRunBuf fail!ret: " << ret;
+    FreeRunBuf();
     return ret;
   }
 
@@ -410,5 +411,4 @@ int DeConvolutionWinogradCPUKernel::Run() {
   FreeRunBuf();
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

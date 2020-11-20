@@ -82,7 +82,7 @@ int DeconvolutionDepthwiseCPUKernel::InitWeightBias() {
   return RET_OK;
 }
 
-int DeconvolutionDepthwiseCPUKernel::InitBuffer() {
+int DeconvolutionDepthwiseCPUKernel::InitPackedInputOutput() {
   if (conv_param_->input_channel_ % C4NUM != 0) {
     need_align_ = true;
     int IC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
@@ -151,9 +151,10 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto ret = InitBuffer();
+  auto ret = InitPackedInputOutput();
   if (ret != 0) {
-    MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitBuffer failed.ret: " << ret;
+    MS_LOG(ERROR) << "Deconvolution depthwise fp32 InitPackedInputOutput failed.ret: " << ret;
+    FreePackedInputOutput();
     return ret;
   }
 
@@ -176,16 +177,23 @@ int DeconvolutionDepthwiseCPUKernel::Run() {
   ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwRun, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwRun error: error_code[" << ret << "]";
-    return RET_ERROR;
   }
 
   if (need_align_) {
     PackNHWC4ToNHWCFp32(packed_output_, output_addr, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
+  }
+  FreePackedInputOutput();
+  return ret;
+}
+
+void DeconvolutionDepthwiseCPUKernel::FreePackedInputOutput() {
+  if (need_align_) {
     context_->allocator->Free(packed_input_);
     context_->allocator->Free(packed_output_);
+    packed_input_ = nullptr;
+    packed_output_ = nullptr;
   }
-  return RET_OK;
 }
 
 kernel::LiteKernel *CpuDeconvDwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,

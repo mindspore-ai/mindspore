@@ -56,13 +56,12 @@ int InstanceNormCPUKernel::DoInstanceNorm(int task_id) {
 }
 
 int InstanceNormRun(void *cdata, int task_id) {
-  auto InstanceNormData = reinterpret_cast<InstanceNormCPUKernel *>(cdata);
-  auto ret = InstanceNormData->DoInstanceNorm(task_id);
+  auto kernel = reinterpret_cast<InstanceNormCPUKernel *>(cdata);
+  auto ret = kernel->DoInstanceNorm(task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "InstanceNormRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_ERROR;
   }
-  return RET_OK;
+  return ret;
 }
 
 int InstanceNormCPUKernel::Run() {

@@ -26,13 +26,9 @@ using mindspore::schema::PrimitiveType_Elu;
 
 namespace mindspore::kernel {
 int EluCPUKernel::Init() {
-  elu_parameter_ = reinterpret_cast<EluParameter *>(op_parameter_);
-  elu_parameter_->thread_num_ = thread_count_;
-
   if (!InferShapeDone()) {
     return RET_OK;
   }
-
   return ReSize();
 }
 
@@ -42,6 +38,8 @@ int EluCPUKernel::ReSize() {
 }
 
 int EluCPUKernel::DoExcute(int task_id) {
+  auto input_addr = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
   Elu(input_addr, output_addr, elu_parameter_, task_id);
   return RET_OK;
 }
@@ -57,10 +55,7 @@ int EluRun(void *cdata, int task_id) {
 }
 
 int EluCPUKernel::Run() {
-  input_addr = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
-  output_addr = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
-
-  auto ret = ParallelLaunch(this->context_->thread_pool_, EluRun, this, elu_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, EluRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Elu error: error_code[" << ret << "]";
     return RET_ERROR;
@@ -72,16 +67,6 @@ kernel::LiteKernel *CpuEluFp32KernelCreator(const std::vector<lite::Tensor *> &i
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
                                             const lite::InnerContext *ctx, const KernelKey &desc,
                                             const mindspore::lite::PrimitiveC *primitive) {
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "parameter is nullptr";
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "ctx is nullptr";
-    free(parameter);
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == PrimitiveType_Elu);
   auto *kernel = new (std::nothrow) EluCPUKernel(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create Kernel failed, name: " << parameter->name_;
