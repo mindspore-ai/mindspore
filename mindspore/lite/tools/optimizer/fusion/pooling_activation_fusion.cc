@@ -41,6 +41,8 @@ const BaseRef PoolingActivationFusion::DefinePattern() const {
 
 const AnfNodePtr PoolingActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                   const EquivPtr &) const {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(node != nullptr);
   MS_LOG(DEBUG) << "pooling activation pass process:" << schema::EnumNamesPrimitiveType()[primitive_type];
   CheckIfFuncGraphIsNull(func_graph);
 

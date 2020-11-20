@@ -81,6 +81,9 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
   }
 }
 int GenConvNewBias(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, const CNodePtr &bias_node) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(conv_node != nullptr);
+  MS_ASSERT(bias_node != nullptr);
   AnfNodePtr conv_bias_node = nullptr;
   AnfNodePtr conv_weight_node = nullptr;
   if (conv_node->inputs().size() == kConvNoBiasLen) {
@@ -158,6 +161,8 @@ const BaseRef ConvBiasaddFusion::DefinePattern() const {
 
 const AnfNodePtr ConvBiasaddFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                             const EquivPtr &) const {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(node != nullptr);
   MS_LOG(DEBUG) << "Enter pass process";
   if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
     return nullptr;

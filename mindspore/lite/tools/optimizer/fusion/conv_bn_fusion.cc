@@ -111,6 +111,8 @@ const BaseRef ConvBatchNormFusion::DefinePattern() const {
 const void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num, float *trans_scale,
                                                float *trans_bias) const {
   MS_ASSERT(bn_node != nullptr);
+  MS_ASSERT(trans_bias != nullptr);
+  MS_ASSERT(trans_scale != nullptr);
   AnfNodePtr bn_mean_node = nullptr;
   AnfNodePtr bn_variance_node = nullptr;
   AnfNodePtr bn_scale_node = nullptr;
