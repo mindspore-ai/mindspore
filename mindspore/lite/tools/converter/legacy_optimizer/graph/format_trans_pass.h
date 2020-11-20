@@ -55,5 +55,4 @@ class FormatTransPass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // MINDSPORE_PREDICT_FORMAT_TRANS_PASS_H

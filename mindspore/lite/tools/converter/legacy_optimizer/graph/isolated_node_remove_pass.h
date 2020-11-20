@@ -32,5 +32,4 @@ class IsolatedNodeRemovePass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // MINDSPORE_PREDICT_ISOLATED_NODE_REMOVE_PASS_H

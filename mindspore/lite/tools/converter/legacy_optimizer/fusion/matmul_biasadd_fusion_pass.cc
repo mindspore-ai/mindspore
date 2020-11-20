@@ -94,7 +94,7 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
 
   // 2. change matmul to full connection op
   matMulNode->name += "-fc";
-  std::unique_ptr<FullConnectionT> fcAttr(new FullConnectionT());
+  std::unique_ptr<FullConnectionT> fcAttr(new (std::nothrow) FullConnectionT());
   if (fcAttr == nullptr) {
     MS_LOG(ERROR) << "new FullConnectionT node failed";
     return RET_ERROR;
@@ -151,7 +151,7 @@ STATUS MatMulBiasAddFusionPass::InsertTransposeNode(MetaGraphT *graph, const std
     }
     transNode->name = "transpose" + std::to_string(id++);
     transNode->primitive->value.type = schema::PrimitiveType_Transpose;
-    std::unique_ptr<TransposeT> transposeParam(new TransposeT());
+    std::unique_ptr<TransposeT> transposeParam(new (std::nothrow) TransposeT());
     if (transposeParam == nullptr) {
       MS_LOG(ERROR) << "new transposeParam failed";
       return RET_ERROR;

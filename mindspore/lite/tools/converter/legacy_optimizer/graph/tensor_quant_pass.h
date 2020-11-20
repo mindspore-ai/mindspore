@@ -32,5 +32,4 @@ class TensorQuantPass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // LITE_TENSOR_QUANT_PASS_H

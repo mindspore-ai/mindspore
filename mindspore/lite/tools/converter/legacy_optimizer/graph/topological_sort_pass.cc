@@ -70,6 +70,7 @@ STATUS TopologicalSortPass::Run(schema::MetaGraphT *graph) {
 
 bool TopologicalSortPass::IsNodeNonDepend(const std::unique_ptr<schema::CNodeT> &node,
                                           const std::vector<size_t> &sinkedTensorIdxes) {
+  MS_ASSERT(node != nullptr);
   for (auto inputIdx : node->inputIndex) {
     if (!IsContain(sinkedTensorIdxes, size_t(inputIdx))) {
       return false;

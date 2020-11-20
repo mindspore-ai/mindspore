@@ -79,5 +79,4 @@ class DTypeTransPass : public GraphPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // MINDSPORE_PREDICT_DTYPE_TRANS_PASS_H

@@ -23,7 +23,12 @@
 
 namespace mindspore::lite {
 STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
+  MS_ASSERT(graph != nullptr);
   for (auto &node : graph->nodes) {
+    if (node == nullptr || node->primitive == nullptr) {
+      MS_LOG(ERROR) << " node or node->primitive is nullptr";
+      return RET_ERROR;
+    }
     if (node->primitive->value.type == PrimitiveType_QuantDTypeCast) {
       auto attr = node->primitive->value.AsQuantDTypeCast();
       auto &inputTensor = graph->allTensors.at(node->inputIndex.front());
@@ -97,6 +102,10 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
         }
         void *biasData = tensor->data.data();
         auto *rawDatas = static_cast<float *>(biasData);
+        if (fabs(quantParam->scale) <= 0.0f) {
+          MS_LOG(ERROR) << "divisor 'scale' cannot be 0";
+          return RET_ERROR;
+        }
         for (size_t i = 0; i < bShapeSize; ++i) {
           qDatas[i] = (int32_t)std::round(rawDatas[i] / quantParam->scale);
         }
@@ -117,5 +126,4 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::lite

@@ -83,5 +83,4 @@ class BatchNormFoldFusionPass : public FusionPass {
 };
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // MINDSPORE_PREDICT_BATCHNORM_FOLD_FUSION_PASS_H
