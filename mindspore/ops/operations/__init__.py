@@ -180,6 +180,8 @@ __all__ = [
     'Invert',
     'TruncatedNormal',
     'Fill',
+    'Ones',
+    'Zeros',
     'OnesLike',
     'ZerosLike',
     'Select',

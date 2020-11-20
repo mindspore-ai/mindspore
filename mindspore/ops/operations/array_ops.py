@@ -1121,22 +1121,24 @@ class Fill(PrimitiveWithInfer):
 
 
 class Ones(PrimitiveWithInfer):
-    """
+    r"""
     Creates a tensor filled with value ones.
 
     Creates a tensor with shape described by the first argument and
     fills it with value ones in type of the second argument.
 
     Inputs:
-        - **shape** (tuple) - The specified shape of output tensor. Only constant value is allowed.
+        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
+        Only constant positive int is allowed.
         - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same type and shape as input value.
+        Tensor, has the same type and shape as input shape value.
 
     Examples:
+        >>> from mindspore.ops import operations as P
         >>> ones = P.Ones()
-        >>> output = Ones((2, 2), mindspore.float32)
+        >>> output = ones((2, 2), mindspore.float32)
         >>> print(output)
         [[1.0, 1.0],
          [1.0, 1.0]]
@@ -1147,40 +1149,46 @@ class Ones(PrimitiveWithInfer):
         """Initialize Fill"""
 
     def __infer__(self, dims, dtype):
-        validator.check_value_type("shape", dims['value'], [tuple], self.name)
-        for i, item in enumerate(dims['value']):
-            validator.check_positive_int(item, f'dims[{i}]', self.name)
+        if isinstance(dims['value'], int):
+            shape = (dims['value'],)
+        else:
+            shape = dims['value']
+        validator.check_value_type("shape", shape, [tuple], self.name)
+        for i, item in enumerate(shape):
+            validator.check_non_negative_int(item, shape[i], self.name)
         valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                        mstype.uint8, mstype.uint32, mstype.uint64,
                        mstype.float16, mstype.float32, mstype.float64]
         validator.check_types_same_and_valid({"value": dtype['value']}, valid_types, self.name)
         x_nptype = mstype.dtype_to_nptype(dtype['value'])
-        ret = np.ones(dims['value'], x_nptype)
+        ret = np.ones(shape, x_nptype)
         out = {
             'value': Tensor(ret),
-            'shape': dims['value'],
+            'shape': shape,
             'dtype': x_nptype,
         }
         return out
 
 
 class Zeros(PrimitiveWithInfer):
-    """
+    r"""
     Creates a tensor filled with value zeros.
 
     Creates a tensor with shape described by the first argument and
     fills it with value zeros in type of the second argument.
 
     Inputs:
-        - **shape** (tuple) - The specified shape of output tensor. Only constant value is allowed.
+        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
+        Only constant positive int is allowed.
         - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
 
     Outputs:
-        Tensor, has the same type and shape as input value.
+        Tensor, has the same type and shape as input shape value.
 
     Examples:
+        >>> from mindspore.ops import operations as P
         >>> zeros = P.Zeros()
-        >>> output = Zeros((2, 2), mindspore.float32)
+        >>> output = zeros((2, 2), mindspore.float32)
         >>> print(output)
         [[0.0, 0.0],
          [0.0, 0.0]]
@@ -1192,18 +1200,22 @@ class Zeros(PrimitiveWithInfer):
         """Initialize Fill"""
 
     def __infer__(self, dims, dtype):
-        validator.check_value_type("shape", dims['value'], [tuple], self.name)
-        for i, item in enumerate(dims['value']):
-            validator.check_positive_int(item, f'dims[{i}]', self.name)
+        if isinstance(dims['value'], int):
+            shape = (dims['value'],)
+        else:
+            shape = dims['value']
+        validator.check_value_type("shape", shape, [tuple], self.name)
+        for i, item in enumerate(shape):
+            validator.check_non_negative_int(item, shape[i], self.name)
         valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                        mstype.uint8, mstype.uint32, mstype.uint64,
                        mstype.float16, mstype.float32, mstype.float64]
         validator.check_types_same_and_valid({"value": dtype['value']}, valid_types, self.name)
         x_nptype = mstype.dtype_to_nptype(dtype['value'])
-        ret = np.zeros(dims['value'], x_nptype)
+        ret = np.zeros(shape, x_nptype)
         out = {
             'value': Tensor(ret),
-            'shape': dims['value'],
+            'shape': shape,
             'dtype': x_nptype,
         }
         return out
