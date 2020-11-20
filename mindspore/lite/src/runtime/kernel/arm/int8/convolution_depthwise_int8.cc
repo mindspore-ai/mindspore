@@ -55,6 +55,7 @@ int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
+    free(tmp_weight);
     return RET_ERROR;
   }
 
@@ -143,6 +144,8 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   auto ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Depthwise int8 ReSize error!";
+    context_->allocator->Free(row_buffer_);
+    row_buffer_ = nullptr;
     return ret;
   }
 
@@ -155,11 +158,10 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   ret = ParallelLaunch(this->context_->thread_pool_, ConvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvDwInt8Run error: error_code[" << ret << "]";
-    return RET_ERROR;
   }
-
   context_->allocator->Free(row_buffer_);
-  return RET_OK;
+  row_buffer_ = nullptr;
+  return ret;
 }
 
 kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,

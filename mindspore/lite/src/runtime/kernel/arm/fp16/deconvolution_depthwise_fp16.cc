@@ -35,7 +35,7 @@ DeconvolutionDepthwiseFp16CPUKernel::~DeconvolutionDepthwiseFp16CPUKernel() {
     sliding_ = nullptr;
   }
   if (packed_weight_ != nullptr) {
-    delete packed_weight_;
+    free(packed_weight_);
     packed_weight_ = nullptr;
   }
 }
@@ -159,12 +159,17 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   auto ret = InitBuffer();
   if (ret != 0) {
     MS_LOG(ERROR) << "Deconvolution depthwise fp16 InitBuffer failed.";
+    context_->allocator->Free(packed_input_);
+    context_->allocator->Free(packed_output_);
     return RET_ERROR;
   }
 
   ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get Execute tensor failed.";
+    context_->allocator->Free(packed_input_);
+    context_->allocator->Free(packed_output_);
+    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     return ret;
   }
   if (need_align_) {
@@ -181,7 +186,6 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwFp16Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwFp16Run error: error_code[" << ret << "]";
-    return RET_ERROR;
   }
 
   if (need_align_) {
@@ -192,7 +196,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::Run() {
   }
   ConvolutionBaseFP16CPUKernel::IfCastOutput();
   ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
-  return RET_OK;
+  return ret;
 }
 
 kernel::LiteKernel *CpuDeconvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,

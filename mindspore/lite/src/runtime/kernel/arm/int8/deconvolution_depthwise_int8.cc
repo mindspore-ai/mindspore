@@ -117,10 +117,6 @@ int DeconvolutionDepthwiseInt8CPUKernel::InitBuffer() {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  if (packed_input_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
@@ -177,6 +173,13 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
   auto ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Deconv Depthwise int8 InitBuffer error!";
+    context_->allocator->Free(packed_input_);
+    packed_input_ = nullptr;
+    context_->allocator->Free(output_buffer_);
+    output_buffer_ = nullptr;
+    if (need_align_) {
+      context_->allocator->Free(packed_output_);
+    }
     return ret;
   }
 
@@ -194,17 +197,19 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
   ret = ParallelLaunch(this->context_->thread_pool_, DeconvDwInt8Run, this, conv_param_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DeconvDwInt8Run error: error_code[" << ret << "]";
-    return RET_ERROR;
   }
 
   if (need_align_) {
     PackNHWC4ToNHWCInt8(packed_output_, output_addr, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
     context_->allocator->Free(packed_output_);
+    packed_output_ = nullptr;
   }
   context_->allocator->Free(packed_input_);
+  packed_input_ = nullptr;
   context_->allocator->Free(output_buffer_);
-  return RET_OK;
+  output_buffer_ = nullptr;
+  return ret;
 }
 
 kernel::LiteKernel *CpuDeconvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,

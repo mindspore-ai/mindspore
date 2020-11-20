@@ -256,6 +256,7 @@ int DeConvInt8CPUKernel::Run() {
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv int8 InitRunBuf error! error_code[" << error_code << "]";
+    FreeRunBuf();
     return RET_ERROR;
   }
 
@@ -270,12 +271,10 @@ int DeConvInt8CPUKernel::Run() {
     error_code = ParallelLaunch(this->context_->thread_pool_, DeConvInt8Run, this, thread_count_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "deconv int8 run error! error_code[" << error_code << "]";
-      return RET_ERROR;
     }
   }
-
   FreeRunBuf();
-  return RET_OK;
+  return error_code;
 }
 
 kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,

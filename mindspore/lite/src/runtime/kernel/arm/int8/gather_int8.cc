@@ -83,15 +83,9 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
   int count = MSMIN(stride, outer_size - stride * task_id);
   auto thread_stride = stride * task_id;
 
-  int error_code;
   input_ptr += thread_stride * limit;
   output_ptr += thread_stride * indices_element_size;
-  error_code = GatherInt8(input_ptr, output_ptr, count, inner_size, limit, indices_ptr, indices_element_size, param_);
-
-  if (error_code != RET_OK) {
-    return RET_ERROR;
-  }
-  return RET_OK;
+  return GatherInt8(input_ptr, output_ptr, count, inner_size, limit, indices_ptr, indices_element_size, param_);
 }
 
 int GatherInt8Run(void *cdata, int task_id) {

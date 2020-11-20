@@ -67,12 +67,15 @@ void ConvolutionBaseCPUKernel::FreeQuantParam() {
   }
   if (conv_quant_arg_->input_quant_args_ != nullptr) {
     free(conv_quant_arg_->input_quant_args_);
+    conv_quant_arg_->input_quant_args_ = nullptr;
   }
   if (conv_quant_arg_->filter_quant_args_ != nullptr) {
     free(conv_quant_arg_->filter_quant_args_);
+    conv_quant_arg_->filter_quant_args_ = nullptr;
   }
   if (conv_quant_arg_->output_quant_args_ != nullptr) {
     free(conv_quant_arg_->output_quant_args_);
+    conv_quant_arg_->output_quant_args_ = nullptr;
   }
 }
 

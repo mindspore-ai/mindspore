@@ -48,6 +48,7 @@ class Registry {
   Registry(schema::PrimitiveType primitive_type, ParameterCreator creator) {
     PopulateRegistry::GetInstance()->insertParameterMap(primitive_type, creator);
   }
+  ~Registry() = default;
 };
 OpParameter *PopulateArithmetic(const mindspore::lite::PrimitiveC *primitive);
 OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *primitive);

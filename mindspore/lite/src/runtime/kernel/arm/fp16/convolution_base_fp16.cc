@@ -91,9 +91,11 @@ void ConvolutionBaseFP16CPUKernel::IfCastOutput() {
 void ConvolutionBaseFP16CPUKernel::FreeTmpBuffer() {
   if (in_data_type_ == kNumberTypeFloat32) {
     context_->allocator->Free(execute_input_);
+    execute_input_ = nullptr;
   }
   if (out_data_type_ == kNumberTypeFloat32) {
     context_->allocator->Free(execute_output_);
+    execute_output_ = nullptr;
   }
 }
 

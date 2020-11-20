@@ -61,6 +61,7 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   packed_weight_ = reinterpret_cast<int16_t *>(malloc(pack_weight_size * sizeof(int16_t)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
+    free(tmp_weight);
     return RET_ERROR;
   }
   bool filter_per_channel = conv_param_->conv_quant_arg_.per_channel_ & FILTER_PER_CHANNEL;

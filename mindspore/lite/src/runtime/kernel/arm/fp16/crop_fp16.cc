@@ -62,15 +62,10 @@ static int CropFp16Run(void *cdata, int task_id) {
 
 int CropFp16CPUKernel::Run() {
   input_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(kInputIndex), context_);
-  if (input_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "input or output is nullptr";
-    return RET_ERROR;
-  }
-
   output_ptr_ = MallocOutputFp16(out_tensors_.at(kOutputIndex), context_);
-  if (output_ptr_ == nullptr) {
-    FreeInputAndOutput();
+  if (input_ptr_ == nullptr || output_ptr_ == nullptr) {
     MS_LOG(ERROR) << "input or output is nullptr";
+    FreeInputAndOutput();
     return RET_ERROR;
   }
 
@@ -78,16 +73,12 @@ int CropFp16CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch failed: " << ret;
     FreeInputAndOutput();
-    return ret;
   }
   if (out_tensors_.at(kOutputIndex)->data_type() == kNumberTypeFloat32) {
     Float16ToFloat32(output_ptr_, reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData()),
                      out_tensors_.at(kOutputIndex)->ElementsNum());
   }
   FreeInputAndOutput();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Crop error error_code[" << ret << "]";
-  }
   return ret;
 }
 

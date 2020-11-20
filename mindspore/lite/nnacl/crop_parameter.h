@@ -30,8 +30,8 @@ typedef struct CropParameter {
   int64_t offset_[CROP_OFFSET_MAX_SIZE];
   int64_t in_offset_[CROP_OFFSET_MAX_SIZE];
   int64_t axis_;
-  const int *in_shape_;
-  const int *out_shape_;
+  int *in_shape_;
+  int *out_shape_;
   int input_dim_;
 } CropParameter;
 
