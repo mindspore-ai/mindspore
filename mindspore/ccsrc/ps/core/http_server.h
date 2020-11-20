@@ -32,6 +32,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <atomic>
 
 namespace mindspore {
 namespace ps {
@@ -55,7 +56,12 @@ class HttpServer {
  public:
   // Server address only support IPV4 now, and should be in format of "x.x.x.x"
   explicit HttpServer(const std::string &address, std::uint16_t port)
-      : server_address_(address), server_port_(port), event_base_(nullptr), event_http_(nullptr), is_init_(false) {}
+      : server_address_(address),
+        server_port_(port),
+        event_base_(nullptr),
+        event_http_(nullptr),
+        is_init_(false),
+        is_stop_(true) {}
 
   ~HttpServer();
 
@@ -84,6 +90,7 @@ class HttpServer {
   struct event_base *event_base_;
   struct evhttp *event_http_;
   bool is_init_;
+  std::atomic<bool> is_stop_;
 };
 
 }  // namespace core

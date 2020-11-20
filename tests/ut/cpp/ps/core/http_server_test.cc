@@ -43,11 +43,19 @@ class TestHttpServer : public UT::Common {
     std::string path_param = resp->GetPathParam("key1");
     std::string header_param = resp->GetHeadParam("headerKey");
     std::string post_param = resp->GetPostParam("postKey");
-    std::string post_message = resp->GetPostMsg();
+    unsigned char *data = nullptr;
+    const uint64_t len = resp->GetPostMsg(&data);
+    char post_message[len + 1];
+    if (memset_s(post_message, len + 1, 0, len + 1) != 0) {
+      MS_LOG(EXCEPTION) << "The memset_s error";
+    }
+    if (memcpy_s(post_message, len, data, len) != 0) {
+      MS_LOG(EXCEPTION) << "The memset_s error";
+    }
     EXPECT_STREQ(path_param.c_str(), "value1");
     EXPECT_STREQ(header_param.c_str(), "headerValue");
     EXPECT_STREQ(post_param.c_str(), "postValue");
-    EXPECT_STREQ(post_message.c_str(), "postKey=postValue");
+    EXPECT_STREQ(post_message, "postKey=postValue");
 
     const std::string rKey("headKey");
     const std::string rVal("headValue");
@@ -79,11 +87,19 @@ class TestHttpServer : public UT::Common {
         std::string path_param = resp->GetPathParam("key1");
         std::string header_param = resp->GetHeadParam("headerKey");
         std::string post_param = resp->GetPostParam("postKey");
-        std::string post_message = resp->GetPostMsg();
+        unsigned char *data = nullptr;
+        const uint64_t len = resp->GetPostMsg(&data);
+        char post_message[len + 1];
+        if (memset_s(post_message, len + 1, 0, len + 1) != 0) {
+          MS_LOG(EXCEPTION) << "The memset_s error";
+        }
+        if (memcpy_s(post_message, len, data, len) != 0) {
+          MS_LOG(EXCEPTION) << "The memset_s error";
+        }
         EXPECT_STREQ(path_param.c_str(), "value1");
         EXPECT_STREQ(header_param.c_str(), "headerValue");
         EXPECT_STREQ(post_param.c_str(), "postValue");
-        EXPECT_STREQ(post_message.c_str(), "postKey=postValue");
+        EXPECT_STREQ(post_message, "postKey=postValue");
 
         const std::string rKey("headKey");
         const std::string rVal("headValue");
@@ -157,6 +173,6 @@ TEST_F(TestHttpServer, addressException) {
   ASSERT_THROW(server_exception->RegisterRoute("/handler", &http_handler_func), std::exception);
 }
 
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore
