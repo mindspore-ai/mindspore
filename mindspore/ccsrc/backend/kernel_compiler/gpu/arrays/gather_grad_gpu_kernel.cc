@@ -20,6 +20,14 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
   GatherDGrad,
+  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  GatherGradGpuKernel, int, double)
+MS_REG_GPU_KERNEL_TWO(
+  GatherDGrad,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  GatherGradGpuKernel, int64_t, double)
+MS_REG_GPU_KERNEL_TWO(
+  GatherDGrad,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   GatherGradGpuKernel, int, float)
 MS_REG_GPU_KERNEL_TWO(

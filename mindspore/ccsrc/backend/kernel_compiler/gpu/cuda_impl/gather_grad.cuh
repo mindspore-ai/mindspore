@@ -17,7 +17,8 @@
 #ifndef MINDSPORE_GATHER_GRAD_GPU_CU_H
 #define MINDSPORE_GATHER_GRAD_GPU_CU_H
 template <typename T, typename S>
-void GatherGrad(const T *index, const S *grad, S *output, const size_t output_dim0,
-                const size_t output_dim1, const size_t output_dim2, cudaStream_t stream);
+void GatherGrad(const T *index, const S *grad, S *output, const size_t dim_before_axis,
+                const size_t dim_at_axis_index, const size_t dim_at_axis_output, const size_t dim_after_axis,
+                cudaStream_t stream);
 
 #endif
