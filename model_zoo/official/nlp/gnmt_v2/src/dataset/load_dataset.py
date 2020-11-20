@@ -60,20 +60,20 @@ def _load_dataset(input_files, schema_file, batch_size, epoch_count=1,
         ds = de.TFRecordDataset(
             input_files, schema_file,
             columns_list=[
-                "src", "src_padding", "src_length",
+                "src", "src_padding",
                 "prev_opt",
                 "target", "tgt_padding"
             ],
-            shuffle=shuffle, num_shards=rank_size, shard_id=rank_id,
+            shuffle=False, num_shards=rank_size, shard_id=rank_id,
             shard_equal_rows=True, num_parallel_workers=8)
 
         ori_dataset_size = ds.get_dataset_size()
         print(f" | Dataset size: {ori_dataset_size}.")
-
+        if shuffle:
+            ds = ds.shuffle(buffer_size=ori_dataset_size // 20)
         type_cast_op = deC.TypeCast(mstype.int32)
         ds = ds.map(input_columns="src", operations=type_cast_op, num_parallel_workers=8)
         ds = ds.map(input_columns="src_padding", operations=type_cast_op, num_parallel_workers=8)
-        ds = ds.map(input_columns="src_length", operations=type_cast_op, num_parallel_workers=8)
         ds = ds.map(input_columns="prev_opt", operations=type_cast_op, num_parallel_workers=8)
         ds = ds.map(input_columns="target", operations=type_cast_op, num_parallel_workers=8)
         ds = ds.map(input_columns="tgt_padding", operations=type_cast_op, num_parallel_workers=8)
@@ -81,13 +81,11 @@ def _load_dataset(input_files, schema_file, batch_size, epoch_count=1,
         ds = ds.rename(
             input_columns=["src",
                            "src_padding",
-                           "src_length",
                            "prev_opt",
                            "target",
                            "tgt_padding"],
             output_columns=["source_eos_ids",
                             "source_eos_mask",
-                            "source_eos_length",
                             "target_sos_ids",
                             "target_eos_ids",
                             "target_eos_mask"]
@@ -97,26 +95,24 @@ def _load_dataset(input_files, schema_file, batch_size, epoch_count=1,
         ds = de.TFRecordDataset(
             input_files, schema_file,
             columns_list=[
-                "src", "src_padding", "src_length"
+                "src", "src_padding"
             ],
-            shuffle=shuffle, num_shards=rank_size, shard_id=rank_id,
+            shuffle=False, num_shards=rank_size, shard_id=rank_id,
             shard_equal_rows=True, num_parallel_workers=8)
 
         ori_dataset_size = ds.get_dataset_size()
         print(f" | Dataset size: {ori_dataset_size}.")
-
+        if shuffle:
+            ds = ds.shuffle(buffer_size=ori_dataset_size // 20)
         type_cast_op = deC.TypeCast(mstype.int32)
         ds = ds.map(input_columns="src", operations=type_cast_op, num_parallel_workers=8)
         ds = ds.map(input_columns="src_padding", operations=type_cast_op, num_parallel_workers=8)
-        ds = ds.map(input_columns="src_length", operations=type_cast_op, num_parallel_workers=8)
 
         ds = ds.rename(
             input_columns=["src",
-                           "src_padding",
-                           "src_length"],
+                           "src_padding"],
             output_columns=["source_eos_ids",
-                            "source_eos_mask",
-                            "source_eos_length"]
+                            "source_eos_mask"]
         )
         ds = ds.batch(batch_size, drop_remainder=drop_remainder)
 

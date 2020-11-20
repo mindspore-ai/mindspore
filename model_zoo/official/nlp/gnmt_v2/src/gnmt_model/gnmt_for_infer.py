@@ -66,13 +66,11 @@ class GNMTInferCell(nn.Cell):
 
     def construct(self,
                   source_ids,
-                  source_mask,
-                  source_len):
+                  source_mask):
         """Defines the computation performed."""
 
         predicted_ids = self.network(source_ids,
-                                     source_mask,
-                                     source_len)
+                                     source_mask)
 
         return predicted_ids
 
@@ -143,21 +141,18 @@ def gnmt_infer(config, dataset):
                                     [config.batch_size, 1]), mstype.int32)
     source_mask_pad = Tensor(np.tile(np.array([[1, 1] + [0] * (config.seq_length - 2)]),
                                      [config.batch_size, 1]), mstype.int32)
-    source_len_pad = Tensor(np.tile(np.array([[2]]), [config.batch_size, 1]), mstype.int32)
     for batch in dataset.create_dict_iterator():
         source_sentences.append(batch["source_eos_ids"].asnumpy())
         source_ids = Tensor(batch["source_eos_ids"], mstype.int32)
         source_mask = Tensor(batch["source_eos_mask"], mstype.int32)
-        source_len = Tensor(batch["source_eos_length"], mstype.int32)
 
         active_num = shape(source_ids)[0]
         if active_num < config.batch_size:
             source_ids = concat((source_ids, source_ids_pad[active_num:, :]))
             source_mask = concat((source_mask, source_mask_pad[active_num:, :]))
-            source_len = concat((source_len, source_len_pad[active_num:, :]))
 
         start_time = time.time()
-        predicted_ids = model.predict(source_ids, source_mask, source_len)
+        predicted_ids = model.predict(source_ids, source_mask)
 
         print(f" | BatchIndex = {batch_index}, Batch size: {config.batch_size}, active_num={active_num}, "
               f"Time cost: {time.time() - start_time}.")

@@ -109,8 +109,7 @@ class GNMT(nn.Cell):
             self.beam_decoder.add_flags(loop_can_unroll=True)
         self.shape = P.Shape()
 
-    def construct(self, source_ids, source_mask=None, source_len=None,
-                  target_ids=None):
+    def construct(self, source_ids, source_mask=None, target_ids=None):
         """
         Construct network.
 
@@ -121,8 +120,6 @@ class GNMT(nn.Cell):
             source_mask (Tensor): Source sentences padding mask with shape (N, T),
                 where 0 indicates padding position.
             target_ids (Tensor): Target sentences with shape (N, T').
-            target_mask (Tensor): Target sentences padding mask with shape (N, T'),
-                where 0 indicates padding position.
 
         Returns:
             Tuple[Tensor], network outputs.
@@ -133,7 +130,7 @@ class GNMT(nn.Cell):
         # T, N, D
         inputs = self.transpose(src_embeddings, self.transpose_orders)
         # encoder. encoder_outputs: [T, N, D]
-        encoder_outputs = self.gnmt_encoder(inputs, source_len=source_len)
+        encoder_outputs = self.gnmt_encoder(inputs)
 
         # decoder.
         if self.is_training:
