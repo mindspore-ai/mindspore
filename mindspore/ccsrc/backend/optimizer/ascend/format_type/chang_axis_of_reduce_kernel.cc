@@ -57,8 +57,9 @@ void ConvertReduceAttrFraczAnd6HD(const CNodePtr &cnode) {
   std::vector<int64_t> convert_axis;
   SafeCheckFunction(cnode, axis);
   auto format = AnfAlgo::GetInputFormat(cnode, 0);
-  if (format != kOpFormat_FRAC_Z || format != kOpFormat_C1HWNCoC0) {
-    MS_LOG(EXCEPTION) << "The node [" << cnode->DebugString() << "] format " << format << " is not 5hd";
+  if (format != kOpFormat_FRAC_Z && format != kOpFormat_C1HWNCoC0) {
+    MS_LOG(EXCEPTION) << "The node [" << cnode->DebugString() << "] format " << format
+                      << " is not needed to change the axis";
   }
   for (auto elem : axis) {
     switch (elem) {

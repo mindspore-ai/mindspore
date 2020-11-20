@@ -327,7 +327,7 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
   auto next_op_name = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrPynativeNextOpName);
   auto iter = kNextOpFormatList.find(next_op_name);
   if (iter == kNextOpFormatList.end()) {
-    MS_LOG(WARNING) << "The op name " << next_op_name << "has been not setted in the next op map ";
+    MS_LOG(INFO) << "The op name " << next_op_name << "has been not setted in the next op map ";
     return;
   }
   if (iter->second.size() < next_index) {
