@@ -33,13 +33,12 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph,
   Status retval = SUCCESS;
 
   try {
-    size_t maxIndex = 0;
     std::unordered_map<size_t, SomasSolverTensorDescPtr> &tensors = *ptensors;
     std::unordered_map<size_t, SomasSolverTensorDescPtr>::iterator max =
       std::max_element(tensors.begin(), tensors.end(),
                        [](const std::pair<size_t, SomasSolverTensorDescPtr> &a,
                           const std::pair<size_t, SomasSolverTensorDescPtr> &b) { return a.first < b.first; });
-    maxIndex = max->first;
+    size_t maxIndex = max->first;
     if (maxIndex > pConstraints->Rows() - 1) {
       MS_LOG(WARNING) << "ERROR: MaxIndex invalid, MaxIndex " << maxIndex << ", Rows " << pConstraints->Rows();
       return FAILED;

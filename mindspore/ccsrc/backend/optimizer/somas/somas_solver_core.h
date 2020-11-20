@@ -42,6 +42,8 @@ class SomasSolverCore {
         verify_(false),
         all_(true),
         best_sol_(0),
+        best_sort_(kGreaterSizeSmallerIndex),
+        best_branching_(kBest),
         sort_strategy_(kGreaterSizeSmallerIndex),
         branching_strategy_(kBest),
         sol_count_(0),

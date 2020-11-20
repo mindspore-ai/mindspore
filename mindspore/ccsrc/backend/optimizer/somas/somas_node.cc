@@ -30,9 +30,8 @@ void SomasNode::ComputeAncestorNodes() {
       this->anc_stream_max_order_[ancestorId] = std::max(this->anc_stream_max_order_[ancestorId], node->GetId());
     }
     for (SomasStreamPtr stream : node->GetStream()->ancestor_streams_) {
-      int64_t streamId = stream->GetId();
-      this->anc_stream_max_order_[streamId] =
-        std::max(this->anc_stream_max_order_[streamId], node->anc_stream_max_order_[streamId]);
+      this->anc_stream_max_order_[stream->GetId()] =
+        std::max(this->anc_stream_max_order_[stream->GetId()], node->anc_stream_max_order_[stream->GetId()]);
     }
   }
 }
