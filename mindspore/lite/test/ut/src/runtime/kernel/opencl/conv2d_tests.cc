@@ -21,7 +21,7 @@ namespace mindspore::lite::opencl::test {
 class TestOpenCL_Conv2D : public CommonTest {};
 
 namespace {
-// PrimitiveType_Concat: src/ops/populate/conv2d_populate.cc
+// PrimitiveType_Conv2D: src/ops/populate/conv2d_populate.cc
 ConvParameter *CreateParameter(const std::string &attr, ActType act_type) {
   auto *param = test::CreateParameter<ConvParameter>(schema::PrimitiveType_Conv2D);
   param->act_type_ = act_type;

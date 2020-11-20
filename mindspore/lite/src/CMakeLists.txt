@@ -40,7 +40,7 @@ set(LITE_SRC
 if (SUPPORT_GPU)
     set(LITE_SRC
             ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/subgraph_opencl_kernel.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/opencl_subgraph.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/utils.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_executor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_allocator.cc

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include <set>
 #include "src/runtime/opencl/opencl_executor.h"
 #include "src/runtime/kernel/opencl/utils.h"
@@ -26,11 +26,11 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
 
-SubGraphOpenCLKernel::~SubGraphOpenCLKernel() { UnInit(); }
+OpenCLSubGraph::~OpenCLSubGraph() { UnInit(); }
 
-void SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
-  const std::vector<lite::Tensor *> &in_tensors, const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
-  MemType mem_type) {
+void OpenCLSubGraph::ReplaceOutTensorAndKernelToNull(const std::vector<lite::Tensor *> &in_tensors,
+                                                     const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
+                                                     MemType mem_type) {
   for (size_t i = 0; i < in_tensors.size(); ++i) {
     for (auto &jv : in_kernels.at(i)) {
       MS_ASSERT(jv);
@@ -62,10 +62,10 @@ void SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
   }
 }
 
-void SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
-                                                              const std::vector<kernel::LiteKernel *> &in_kernels,
-                                                              lite::Tensor *new_tensor,
-                                                              kernel::LiteKernel *in_convert_op, MemType mem_type) {
+void OpenCLSubGraph::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
+                                                        const std::vector<kernel::LiteKernel *> &in_kernels,
+                                                        lite::Tensor *new_tensor, kernel::LiteKernel *in_convert_op,
+                                                        MemType mem_type) {
   MS_ASSERT(in_convert_op);
   auto in_opencl_op = reinterpret_cast<OpenCLKernel *>(in_convert_op);
   for (auto &iv : in_kernels) {
@@ -96,11 +96,11 @@ void SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToConvert(const lite::Tensor
   }
 }
 
-int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
-                                        const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
-                                        std::vector<lite::Tensor *> *out_tensors,
-                                        std::vector<OpenCLToFormatParameter *> *out_parameters,
-                                        std::vector<LiteKernel *> *out_convert_ops, MemType mem_type) {
+int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
+                                  const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
+                                  std::vector<lite::Tensor *> *out_tensors,
+                                  std::vector<OpenCLToFormatParameter *> *out_parameters,
+                                  std::vector<LiteKernel *> *out_convert_ops, MemType mem_type) {
   MS_ASSERT(out_tensors);
   MS_ASSERT(out_parameters);
   MS_ASSERT(out_convert_ops);
@@ -120,7 +120,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     auto *new_tensor = new (std::nothrow) lite::Tensor();
     MS_ASSERT(new_tensor);
     if (new_tensor == nullptr) {
-      MS_LOG(ERROR) << "SubGraphOpenCLKernel new tensor failed!";
+      MS_LOG(ERROR) << "OpenCLSubGraph new tensor failed!";
       return RET_ERROR;
     }
     new_tensor->CopyTensor(*in_tensors[i]);
@@ -141,7 +141,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     auto *parameter = static_cast<OpenCLToFormatParameter *>(malloc(sizeof(OpenCLToFormatParameter)));
     MS_ASSERT(parameter);
     if (parameter == nullptr) {
-      MS_LOG(ERROR) << "SubGraphOpenCLKernel new parameter failed!";
+      MS_LOG(ERROR) << "OpenCLSubGraph new parameter failed!";
       delete new_tensor;
       new_tensor = nullptr;
       return RET_ERROR;
@@ -161,7 +161,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     }
     MS_ASSERT(in_convert_op);
     if (in_convert_op == nullptr) {
-      MS_LOG(ERROR) << "SubGraphOpenCLKernel create op failed!";
+      MS_LOG(ERROR) << "OpenCLSubGraph create op failed!";
       delete new_tensor;
       new_tensor = nullptr;
       free(parameter);
@@ -189,7 +189,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
   return RET_OK;
 }
 
-int SubGraphOpenCLKernel::Init() {
+int OpenCLSubGraph::Init() {
   allocator_ = ocl_runtime_->GetAllocator();
   MS_LOG(DEBUG) << "input num=" << in_tensors_.size() << ", output num=" << out_tensors_.size();
   for (const auto tensor : in_tensors_) {
@@ -233,7 +233,7 @@ int SubGraphOpenCLKernel::Init() {
   return RET_OK;
 }
 
-void SubGraphOpenCLKernel::UpdateTensorDataType() {
+void OpenCLSubGraph::UpdateTensorDataType() {
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
   MS_ASSERT(in_tensors_[0]);
   if (is_fp16 && (in_tensors_[0]->data_type() == kNumberTypeFloat32)) {
@@ -253,7 +253,7 @@ void SubGraphOpenCLKernel::UpdateTensorDataType() {
   }
 }
 
-int SubGraphOpenCLKernel::MallocTensorWithReuse() {
+int OpenCLSubGraph::MallocTensorWithReuse() {
   int ret;
   kernel::LiteKernelUtil::InitTensorRefCount(nodes_);
   for (auto *kernel : nodes_) {
@@ -297,10 +297,9 @@ int SubGraphOpenCLKernel::MallocTensorWithReuse() {
   return RET_OK;
 }
 
-void SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
-                                                 const std::vector<kernel::LiteKernel *> &in_kernels,
-                                                 std::vector<std::vector<kernel::LiteKernel *>> *out_kernels,
-                                                 bool is_from) {
+void OpenCLSubGraph::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
+                                           const std::vector<kernel::LiteKernel *> &in_kernels,
+                                           std::vector<std::vector<kernel::LiteKernel *>> *out_kernels, bool is_from) {
   std::vector<std::set<lite::Tensor *>> ksets;
   for (auto jv : in_kernels) {
     MS_ASSERT(jv);
@@ -321,32 +320,24 @@ void SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::Tensor 
   }
 }
 
-void SubGraphOpenCLKernel::GetInOutNodes() {
-  std::vector<std::set<lite::Tensor *>> ksets_in;
-  std::vector<std::set<lite::Tensor *>> ksets_out;
-  for (auto jv : nodes_) {
-    MS_ASSERT(jv);
-    std::set<lite::Tensor *> kset;
-    kset.insert(jv->in_tensors().begin(), jv->in_tensors().end());
-    ksets_in.emplace_back(kset);
-
-    kset.clear();
-    kset.insert(jv->out_tensors().begin(), jv->out_tensors().end());
-    ksets_out.emplace_back(kset);
-  }
-  for (size_t j = 0; j < nodes_.size(); ++j) {
-    if (std::find_if(in_tensors_.begin(), in_tensors_.end(),
-                     [&ksets_in, &j](lite::Tensor *val) { return ksets_in[j].count(val); }) != in_tensors_.end()) {
-      in_nodes_.emplace_back(nodes_.at(j));
+void OpenCLSubGraph::GetInOutNodes() {
+  for (auto *node : nodes_) {
+    for (auto *tensor : node->in_tensors()) {
+      if (std::find(in_tensors_.begin(), in_tensors_.end(), tensor) != in_tensors_.end()) {
+        in_nodes_.emplace_back(node);
+        break;
+      }
     }
-    if (std::find_if(out_tensors_.begin(), out_tensors_.end(),
-                     [&ksets_out, &j](lite::Tensor *val) { return ksets_out[j].count(val); }) != out_tensors_.end()) {
-      out_nodes_.emplace_back(nodes_.at(j));
+    for (auto *tensor : node->out_tensors()) {
+      if (std::find(out_tensors_.begin(), out_tensors_.end(), tensor) != out_tensors_.end()) {
+        out_nodes_.emplace_back(node);
+        break;
+      }
     }
   }
 }
 
-int SubGraphOpenCLKernel::Prepare() {
+int OpenCLSubGraph::Prepare() {
   executor_ = new (std::nothrow) lite::opencl::OpenCLExecutor();
   if (executor_ == nullptr) {
     MS_LOG(ERROR) << "Create OpenCLExecutor fail";
@@ -361,7 +352,7 @@ int SubGraphOpenCLKernel::Prepare() {
   return RET_OK;
 }
 
-void SubGraphOpenCLKernel::UnInit() {
+void OpenCLSubGraph::UnInit() {
   for (const auto &tensor : in_convert_tensors_) {
     delete tensor;
   }
@@ -379,11 +370,11 @@ void SubGraphOpenCLKernel::UnInit() {
   delete this->executor_;
 }
 
-int SubGraphOpenCLKernel::InferShape() { return RET_OK; }
+int OpenCLSubGraph::InferShape() { return RET_OK; }
 
-int SubGraphOpenCLKernel::ReSize() { return RET_OK; }
+int OpenCLSubGraph::ReSize() { return RET_OK; }
 
-int SubGraphOpenCLKernel::Run() {
+int OpenCLSubGraph::Run() {
   if (executor_ == nullptr) {
     MS_LOG(ERROR) << "executor is nullptr";
     return RET_ERROR;

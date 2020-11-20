@@ -39,8 +39,20 @@ class ConcatOpenCLKernel : public OpenCLKernel {
   int Run() override;
 
  private:
-  int RunAxis0();
+  std::vector<size_t> local;
+  uint32_t OH = {1};
+  uint32_t OW = {1};
+  uint32_t OC = {1};
+  std::vector<size_t> global;
+  bool Align_{true};
+  bool enable_fp16_{false};
+  cl_int stride_w{1};
+  cl_int4 in_shape_{};
+  cl_int4 out_shape_{};
+  int axis_{0};
 
+ private:
+  int RunAxis0();
   cl::Kernel kernel_;
 };
 

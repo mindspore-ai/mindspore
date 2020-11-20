@@ -20,13 +20,13 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "mindspore/lite/src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/prelu.h"
 #include "mindspore/lite/nnacl/prelu_parameter.h"
 
 using mindspore::kernel::LiteKernel;
+using mindspore::kernel::OpenCLSubGraph;
 using mindspore::kernel::PReluOpenCLKernel;
-using mindspore::kernel::SubGraphOpenCLKernel;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
@@ -150,7 +150,7 @@ TEST_F(TestPReluOpenCL, PReluFp32_dim4) {
 
   MS_LOG(INFO) << "initialize sub_graph";
   std::vector<kernel::LiteKernel *> kernels{prelu_kernel};
-  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel({input_tensor}, outputs, kernels, kernels, kernels);
+  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph({input_tensor}, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
     MS_LOG(ERROR) << "Create kernel sub_graph error";
     delete input_tensor;

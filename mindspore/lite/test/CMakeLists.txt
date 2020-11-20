@@ -83,7 +83,7 @@ if (SUPPORT_GPU)
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}
             ${GPU_KERNEL_OP_SRC}
-            ${LITE_DIR}/src/runtime/kernel/opencl/subgraph_opencl_kernel.cc
+            ${LITE_DIR}/src/runtime/kernel/opencl/opencl_subgraph.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/utils.cc
             )
 endif()

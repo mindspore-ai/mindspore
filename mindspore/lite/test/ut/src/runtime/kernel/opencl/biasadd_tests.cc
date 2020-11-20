@@ -19,12 +19,12 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "mindspore/lite/src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/biasadd.h"
 
 using mindspore::kernel::BiasAddOpenCLKernel;
 using mindspore::kernel::LiteKernel;
-using mindspore::kernel::SubGraphOpenCLKernel;
+using mindspore::kernel::OpenCLSubGraph;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
@@ -157,7 +157,7 @@ TEST_F(TestBiasAddOpenCL, BiasAddFp32_dim4) {
 
   MS_LOG(INFO) << "initialize sub_graph";
   std::vector<kernel::LiteKernel *> kernels{biasadd_kernel};
-  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel({input_tensor}, outputs, kernels, kernels, kernels);
+  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph({input_tensor}, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
     MS_LOG(ERROR) << "Create sub_graph kernel error.";
     delete input_tensor;

@@ -25,7 +25,7 @@
 #include "src/kernel_registry.h"
 #include "src/sub_graph_kernel.h"
 #if SUPPORT_GPU
-#include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #endif
 
@@ -241,7 +241,7 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   if (type == kernel::kGpuSubGraph) {
 #if SUPPORT_GPU
     auto sub_kernel = new (std::nothrow)
-      kernel::SubGraphOpenCLKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+      kernel::OpenCLSubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
     return sub_kernel;
 #else
     return nullptr;
