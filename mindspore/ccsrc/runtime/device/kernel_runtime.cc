@@ -475,7 +475,7 @@ DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node,
   }
   auto cnode = anf_node->cast<CNodePtr>();
   if (opt::IsNopNode(cnode)) {
-    size_t kNopNodeInputSize = 2;
+    const size_t kNopNodeInputSize = 2;
     if (cnode->size() != kNopNodeInputSize) {
       MS_LOG(EXCEPTION) << cnode->fullname_with_scope() << " has invalid input size: " << cnode->size();
     }

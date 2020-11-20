@@ -33,6 +33,7 @@
 #endif
 #include "backend/optimizer/common/helper.h"
 #include "utils/ms_context.h"
+#include "debug/common.h"
 
 namespace mindspore {
 namespace somas {
@@ -364,6 +365,7 @@ void Somas::RefNodeProcess(const session::KernelGraph *graph) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     if (kernel_mod == nullptr) {
       MS_LOG(WARNING) << "Kernel mode is NULL Of " << kernel->fullname_with_scope();
+      continue;
     }
     auto output_sizes = kernel_mod->GetOutputSizeList();
     size_t output_index = 0;
@@ -602,7 +604,7 @@ static bool ValidSubset(std::set<SomasStreamPtr> destStreams, std::set<SomasStre
             tensor->GetSourceNode()->anc_stream_max_order_[stream->GetId()]) {
         return false;
       }
-    } else {  // stream == tensor->GetSourceStream()
+    } else {
       if (ancestorTensor->max_destination_id_[stream] >= tensor->lifetime_.start_) {
         return false;
       }
@@ -1054,23 +1056,17 @@ void Somas::DumpSomasBasicIR(const string filename) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
   }
-  char real_path[PATH_MAX] = {0};
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, filename.c_str(), PATH_MAX) == nullptr) {
-    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return;
   }
-#else
-  if (realpath(filename.c_str(), real_path) == nullptr) {
-    MS_LOG(DEBUG) << "Dir " << filename << " does not exit.";
-  }
-#endif
 
-  std::string path_string = real_path;
-  ChangeFileMode(path_string, S_IRWXU);
-  std::ofstream ofs(real_path);
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs(real_path.value());
 
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path << "' failed!";
+    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
     return;
   }
   ofs << "All Tensors:\n\n";
@@ -1146,23 +1142,18 @@ void Somas::DumpOfflineIR(const string filename) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
   }
-  char real_path[PATH_MAX] = {0};
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, filename.c_str(), PATH_MAX) == nullptr) {
-    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
-  }
-#else
-  if (realpath(filename.c_str(), real_path) == nullptr) {
-    MS_LOG(DEBUG) << "Dir " << filename << " does not exit.";
-  }
-#endif
 
-  std::string path_string = real_path;
-  ChangeFileMode(path_string, S_IRWXU);
-  std::ofstream ofs(real_path);
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return;
+  }
+
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs(real_path.value());
 
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path << "' failed!";
+    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
     return;
   }
 
@@ -1222,23 +1213,18 @@ void Somas::DumpSomasMemoryIR(const string filename) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
   }
-  char real_path[PATH_MAX] = {0};
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, filename.c_str(), PATH_MAX) == nullptr) {
-    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
-  }
-#else
-  if (realpath(filename.c_str(), real_path) == nullptr) {
-    MS_LOG(DEBUG) << "Dir " << filename << " does not exit.";
-  }
-#endif
 
-  std::string path_string = real_path;
-  ChangeFileMode(path_string, S_IRWXU);
-  std::ofstream ofs(real_path);
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return;
+  }
+
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs(real_path.value());
 
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path << "' failed!";
+    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
     return;
   }
 
@@ -1344,23 +1330,18 @@ void Somas::DumpSomasMemoryPoolInfoIR(const string filename) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
   }
-  char real_path[PATH_MAX] = {0};
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, filename.c_str(), PATH_MAX) == nullptr) {
-    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
-  }
-#else
-  if (realpath(filename.c_str(), real_path) == nullptr) {
-    MS_LOG(DEBUG) << "Dir " << filename << " does not exit.";
-  }
-#endif
 
-  std::string path_string = real_path;
-  ChangeFileMode(path_string, S_IRWXU);
-  std::ofstream ofs(real_path);
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return;
+  }
+
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs(real_path.value());
 
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path << "' failed!";
+    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
     return;
   }
 
@@ -1514,6 +1495,5 @@ uint8_t *Somas::GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const 
   }
   return ptr;
 }
-
 }  // namespace somas
 }  // namespace mindspore

@@ -100,6 +100,7 @@ bool FootPrint::findFirst(stack<Interval> *merged, const BlockTensor &block, siz
 }
 void FootPrint::Merge(vector<Interval> *interval_v, stack<Interval> *s) {
   MS_EXCEPTION_IF_NULL(s);
+  MS_EXCEPTION_IF_NULL(interval_v);
   sort((*interval_v).begin(), (*interval_v).end(),
        [](Interval &i1, Interval &i2) { return (i1.lb() < i2.lb()) || (i1.lb() == i2.lb() && i1.ub() < i2.ub()); });
   (*s).push((*interval_v)[0]);
@@ -199,9 +200,8 @@ void FootPrint::addElem(BlockTensor *block, const size_t &offset) {
 void FootPrint::printStats() {
   MS_LOG(DEBUG) << "Footprint blocks: " << m_starts_.size() << " \toffset: " << m_offset_;
 }
-bool FastHeuristic::Eval(  // unordered_map<size_t, SomasSolverTensorDescPtr> &tensors_m,
-  vector<BlockTensor> *block_tensors_v, std::shared_ptr<FootPrint> foot_print,
-  const std::shared_ptr<Array> &pConstraints) {
+bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, std::shared_ptr<FootPrint> foot_print,
+                         const std::shared_ptr<Array> &pConstraints) {
   MS_EXCEPTION_IF_NULL(foot_print);
   auto start = std::chrono::system_clock::now();
 

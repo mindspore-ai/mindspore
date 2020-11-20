@@ -53,6 +53,10 @@ class Interval {
     m_a_ = a;
     m_b_ = b;
   }
+  ~Interval() = default;
+
+  size_t m_a_;
+  size_t m_b_;
   bool intersect(const Interval &i) { return (in(i.m_a_) || in(i.m_b_)); }
   bool in(const size_t &a) { return ((a > m_a_) && (a < m_b_)); }
   Interval intersection(const Interval &i) {
@@ -74,10 +78,6 @@ class Interval {
     m_b_ = in.m_b_;
     return *this;
   }
-
- private:
-  size_t m_a_;
-  size_t m_b_;
 };
 
 class BlockTensor {
@@ -97,6 +97,7 @@ class BlockTensor {
         m_bre_allocate_(true),
         offsets_(),
         m_size_(0) {}
+  ~BlockTensor() = default;
 
   BlockTensor &operator=(const BlockTensor &bt) {
     m_bre_allocate_ = bt.m_bre_allocate_;
@@ -121,14 +122,16 @@ class BlockTensor {
 class FootPrint : public std::enable_shared_from_this<FootPrint> {
  public:
   uint32_t m_solId_;
+  std::shared_ptr<FootPrint> m_foot_print_next_;
 
   FootPrint()
-      : m_offset_(0),
-        m_starts_(),
-        m_foot_print_next_(NULL),
+      : m_foot_print_next_(NULL),
+        m_offset_(0),
+        m_starts_({}),
         m_alignment_(0),
         m_branching_strategy_(0),
         m_algorithm_(0) {}
+  ~FootPrint() = default;
   void setAlignment(const size_t a) { m_alignment_ = a; }
   void setBranchingStrategy(uint32_t bs) { m_branching_strategy_ = bs; }
   void setCurrentSol(uint32_t solId) { m_solId_ = solId; }
@@ -151,7 +154,6 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
  private:
   size_t m_offset_;
   vector<BlockTensor *> m_starts_;
-  std::shared_ptr<FootPrint> m_foot_print_next_;
   size_t m_alignment_;
   uint32_t m_branching_strategy_;
   uint32_t m_algorithm_;
@@ -160,12 +162,12 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
 class FastHeuristic {
  public:
   FastHeuristic() : m_alignment_(512), m_tensors_allocated_(0) {}
+  ~FastHeuristic() = default;
 
   void setAlignment(const size_t &a) { m_alignment_ = a; }
   void Destroy();
-  bool Eval(  // unordered_map<size_t, SomasSolverTensorDescPtr> &tensors_m,
-    vector<BlockTensor> *block_tensors_v, std::shared_ptr<FootPrint> foot_print,
-    const std::shared_ptr<Array> &pConstraints);
+  bool Eval(vector<BlockTensor> *block_tensors_v, std::shared_ptr<FootPrint> foot_print,
+            const std::shared_ptr<Array> &pConstraints);
 
  private:
   size_t m_alignment_;
