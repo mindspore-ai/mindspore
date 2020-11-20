@@ -35,7 +35,7 @@ from .activation import get_activation
 
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
-           'Tril', 'Triu', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']
+           'Tril', 'Triu', 'Interpolate', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']
 
 
 class Dropout(Cell):
@@ -546,6 +546,61 @@ class Pad(Cell):
         else:
             x = self.pad(x, self.paddings)
         return x
+
+
+@constexpr
+def interpolate(shape, size, scale):
+    """Check input and calculate shape"""
+    if size is None and scale is None:
+        raise ValueError("size and scale both none")
+    if size is not None and scale is not None:
+        raise ValueError("size and scale both not none")
+    if size is not None:
+        Validator.check_int(len(size), 2, Rel.EQ, "size", "interpolate")
+        return size
+    Validator.check_int(scale, 1, Rel.GE, "scale factor", "interpolate")
+    ret = (scale * shape[2], scale * shape[3])
+    return ret
+
+
+class Interpolate(Cell):
+    r"""
+    Samples the input tensor to the given size or scale_factor. Now, only support
+    bilinear interpolation.
+
+    Args:
+        size (Union[tuple[int], list[int]]): A tuple or list of 2 int elements '(new_height, new_width)',
+            the new size of the tensor. Default: None.
+        scale_factor (int): The scale factor of new size of the tensor. The value should be positive integer.
+            Default: None.
+        align_corners (bool): If true, rescale input by '(new_height - 1) / (height - 1)', which exactly aligns
+            the 4 corners of images and resized images. If false, rescale by 'new_height / height'. Default: False.
+
+    Inputs:
+        - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape:
+        math:'(batch, channels, height, width)', with data type of float32 or float64.
+
+    Outputs:
+        Resized tensor.
+        If size is set, the result is 4-D tensor with shape:math:'(batch, channels, new_height, new_width)'
+        in float32.
+        If scale is set, the result is 4-D tensor with shape:math:'(batch, channels, scale_factor * height,
+        scale_factor * width)' in float32
+
+    Examples:
+        >>> from mindspore.ops import operations as P
+        >>> tensor = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
+        >>> interpolate = nn.Interpolate()
+        >>> result = interpolate(tensor, size=(5,5))
+        >>> assert result.shape == (1, 1, 5, 5)
+    """
+    def __init__(self):
+        super(Interpolate, self).__init__()
+
+    def construct(self, x, size=None, scale_factor=None, align_corners=False):
+        shape = interpolate(x.shape, size, scale_factor)
+        resize_bilinear = P.ResizeBilinear(shape, align_corners)
+        return resize_bilinear(x)
 
 
 class Unfold(Cell):
