@@ -683,6 +683,16 @@ bool AscendKernelRuntime::SyncStream() {
   return true;
 }
 
+void AscendKernelRuntime::CreateContext() {
+  if (rt_context_ == nullptr) {
+    auto ret = rtCtxCreate(&rt_context_, 0, device_id_);
+    if (ret != RT_ERROR_NONE) {
+      MS_EXCEPTION(DeviceProcessError) << "Call rtCtxCreate, ret[" << static_cast<int>(ret) << "]";
+    }
+  }
+  InnerSetContext();
+}
+
 bool AscendKernelRuntime::InitDevice() {
   int device_count = 0;
   auto ret = rtGetDeviceCount(&device_count);
@@ -713,12 +723,7 @@ bool AscendKernelRuntime::InitDevice() {
     MS_LOG(ERROR) << "Call rtCtxGetCurrent failed, ret[" << ret << "]";
     return false;
   }
-
-  ret = rtCtxCreate(&rt_context_, 0, device_id_);
-  if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Call rtCtxCreate, ret[" << static_cast<int>(ret) << "]";
-  }
-  InnerSetContext();
+  CreateContext();
   ret = rtStreamCreate(&stream_, 0);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rtStreamCreate, ret[" << ret << "]";

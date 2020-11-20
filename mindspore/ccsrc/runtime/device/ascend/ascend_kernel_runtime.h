@@ -52,6 +52,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void ClearGlobalIdleMem() override;
   bool SyncStream() override;
   void SetContext() override;
+  void CreateContext() override;
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
