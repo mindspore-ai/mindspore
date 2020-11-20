@@ -52,7 +52,7 @@ class SequentialSamplerRT : public SamplerRT {
   // Printer for debugging purposes.
   // @param out - output stream to write to
   // @param show_all - bool to show detailed vs summary
-  void Print(std::ostream &out, bool show_all) const override;
+  void SamplerPrint(std::ostream &out, bool show_all) const override;
 
  private:
   int64_t current_id_;   // The id sequencer.  Each new id increments from this

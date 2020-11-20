@@ -50,7 +50,7 @@ class RandomSamplerRT : public SamplerRT {
   // @return - The error code return
   Status ResetSampler() override;
 
-  void Print(std::ostream &out, bool show_all) const override;
+  void SamplerPrint(std::ostream &out, bool show_all) const override;
 
  private:
   uint32_t seed_;

@@ -181,11 +181,11 @@ Status WeightedRandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_b
   return Status::OK();
 }
 
-void WeightedRandomSamplerRT::Print(std::ostream &out, bool show_all) const {
+void WeightedRandomSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
   out << "\nSampler: WeightedRandomSampler";
   if (show_all) {
     // Call the super class for displaying any common detailed info
-    SamplerRT::Print(out, show_all);
+    SamplerRT::SamplerPrint(out, show_all);
     // Then add our own info if any
   }
 }

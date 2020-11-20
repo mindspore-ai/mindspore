@@ -97,11 +97,11 @@ Status SequentialSamplerRT::ResetSampler() {
   return Status::OK();
 }
 
-void SequentialSamplerRT::Print(std::ostream &out, bool show_all) const {
+void SequentialSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
   out << "\nSampler: SequentialSampler";
   if (show_all) {
     // Call the super class for displaying any common detailed info
-    SamplerRT::Print(out, show_all);
+    SamplerRT::SamplerPrint(out, show_all);
     // Then add our own info
     out << "\nStart index: " << start_index_;
   }

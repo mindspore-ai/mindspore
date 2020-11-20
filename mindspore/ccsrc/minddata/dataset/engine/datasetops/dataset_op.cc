@@ -252,7 +252,7 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
         << "\nNumber repeats per epoch : " << op_num_repeats_per_epoch_;
     if (sampler_) {
       out << "\nSampler:\n";
-      sampler_->Print(out, show_all);
+      sampler_->SamplerPrint(out, show_all);
     }
   }
 }

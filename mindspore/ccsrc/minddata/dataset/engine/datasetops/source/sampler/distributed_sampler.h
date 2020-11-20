@@ -65,7 +65,7 @@ class DistributedSamplerRT : public SamplerRT {
 
   int64_t CalculateNumSamples(int64_t num_rows) override;
 
-  void Print(std::ostream &out, bool show_all) const override;
+  void SamplerPrint(std::ostream &out, bool show_all) const override;
 
  private:
   int64_t cnt_;  // number of samples that have already been filled in to buffer

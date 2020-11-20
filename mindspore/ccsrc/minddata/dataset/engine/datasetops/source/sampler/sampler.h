@@ -126,7 +126,7 @@ class SamplerRT {
   // A print method typically used for debugging
   // @param out - The output stream to write output to
   // @param show_all - A bool to control if you want to show all info or just a summary
-  virtual void Print(std::ostream &out, bool show_all) const;
+  virtual void SamplerPrint(std::ostream &out, bool show_all) const;
 
   // << Stream output operator overload
   // @notes This allows you to write the debug print info using stream operators
@@ -134,7 +134,7 @@ class SamplerRT {
   // @param sampler - reference to teh sampler to print
   // @return - the output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, const SamplerRT &sampler) {
-    sampler.Print(out, false);
+    sampler.SamplerPrint(out, false);
     return out;
   }
 

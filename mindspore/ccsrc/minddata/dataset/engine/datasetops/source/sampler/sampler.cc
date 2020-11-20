@@ -78,7 +78,7 @@ Status SamplerRT::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64
   return Status::OK();
 }
 
-void SamplerRT::Print(std::ostream &out, bool show_all) const {
+void SamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
   // Sampler printing is usually only called in the show_all mode.
   // Derived classes will display the name, then call back to this base
   // for common info.
