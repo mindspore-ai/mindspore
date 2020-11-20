@@ -3080,6 +3080,7 @@ class ScatterUpdate(_ScatterOp_Dynamic):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
         - **indices** (Tensor) - The index of input tensor. With int32 data type.
+            If there are duplicates in indices, the order for updating is undefined.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
           and updates.shape = indices.shape + input_x.shape[1:].
 
