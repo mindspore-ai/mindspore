@@ -158,6 +158,7 @@ class AnfNode : public Base {
     return os;
   }
   size_t seen_{0};
+  size_t extra_seen_{0};
 
   template <typename T>
   void set_user_data(const std::string &key, const std::shared_ptr<T> &value) {
