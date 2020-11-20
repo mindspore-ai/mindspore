@@ -99,8 +99,8 @@ int Concat::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
     return RET_PARAM_INVALID;
   }
   output->set_data_type(input0->data_type());
-  output->SetFormat(input0->GetFormat());
-  if (!GetInferFlag()) {
+  output->set_format(input0->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
 

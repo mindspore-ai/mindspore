@@ -65,9 +65,9 @@ int Lstm::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   MS_ASSERT(output != nullptr);
   for (int i = 0; i < kLstmOutputNum; i++) {
     outputs_[i]->set_data_type(input->data_type());
-    outputs_[i]->SetFormat(input->GetFormat());
+    outputs_[i]->set_format(input->format());
   }
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
 

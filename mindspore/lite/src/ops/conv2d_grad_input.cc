@@ -140,8 +140,8 @@ int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
       attr->activationType = schema::ActivationType_NO_ACTIVATION;
     }
 
-    if (inputs.size() >= kAnfPopulaterThree) {
-      auto input_shape = inputs[kAnfPopulaterTwo];
+    if (inputs.size() >= kAnfPopulaterInputNumThree) {
+      auto input_shape = inputs[kAnfPopulaterInputNumTwo];
       MS_ASSERT(input_shape != nullptr);
       if (input_shape->isa<ValueNode>()) {
         auto valueNode = input_shape->cast<ValueNodePtr>();
@@ -239,7 +239,7 @@ int Conv2DGradInput::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor
   MS_ASSERT(out != nullptr);
   out->set_shape(GetInputShape());
   out->set_data_type(in0->data_type());
-  out->SetFormat(in0->GetFormat());
+  out->set_format(in0->format());
 
   return RET_OK;
 }

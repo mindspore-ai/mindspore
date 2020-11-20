@@ -35,13 +35,13 @@ int QuantizedAddCPUKernel::Init() {
   auto *input1 = in_tensors_.at(1);
   auto *output = out_tensors_.at(0);
 
-  para_.in0_zp_ = input0->GetQuantParams().front().zeroPoint * -1;
-  para_.in1_zp_ = input1->GetQuantParams().front().zeroPoint * -1;
-  para_.out_zp_ = output->GetQuantParams().front().zeroPoint;
+  para_.in0_zp_ = input0->quant_params().front().zeroPoint * -1;
+  para_.in1_zp_ = input1->quant_params().front().zeroPoint * -1;
+  para_.out_zp_ = output->quant_params().front().zeroPoint;
 
-  const double in0_scale = input0->GetQuantParams().front().scale;
-  const double in1_scale = input1->GetQuantParams().front().scale;
-  const double out_scale = output->GetQuantParams().front().scale;
+  const double in0_scale = input0->quant_params().front().scale;
+  const double in1_scale = input1->quant_params().front().scale;
+  const double out_scale = output->quant_params().front().scale;
 
   para_.left_shift_ = 20;
   const double twice_max_input_scale = 2 * std::max(in0_scale, in1_scale);

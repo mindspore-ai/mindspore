@@ -28,15 +28,15 @@ char *ReadFile(const char *file, size_t *size) {
     return nullptr;
   }
   MS_ASSERT(size != nullptr);
-  std::string realPath = RealPath(file);
-  std::ifstream ifs(realPath);
+  std::string real_path = RealPath(file);
+  std::ifstream ifs(real_path);
   if (!ifs.good()) {
-    MS_LOG(ERROR) << "file: " << realPath << " is not exist";
+    MS_LOG(ERROR) << "file: " << real_path << " is not exist";
     return nullptr;
   }
 
   if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "file: " << realPath << " open failed";
+    MS_LOG(ERROR) << "file: " << real_path << " open failed";
     return nullptr;
   }
 
@@ -44,7 +44,7 @@ char *ReadFile(const char *file, size_t *size) {
   *size = ifs.tellg();
   std::unique_ptr<char[]> buf(new (std::nothrow) char[*size]);
   if (buf == nullptr) {
-    MS_LOG(ERROR) << "malloc buf failed, file: " << realPath;
+    MS_LOG(ERROR) << "malloc buf failed, file: " << real_path;
     ifs.close();
     return nullptr;
   }
@@ -65,21 +65,21 @@ std::string RealPath(const char *path) {
     MS_LOG(ERROR) << "path is too long";
     return "";
   }
-  auto resolvedPath = std::make_unique<char[]>(PATH_MAX);
-  if (resolvedPath == nullptr) {
-    MS_LOG(ERROR) << "new resolvedPath failed";
+  auto resolved_path = std::make_unique<char[]>(PATH_MAX);
+  if (resolved_path == nullptr) {
+    MS_LOG(ERROR) << "new resolved_path failed";
     return "";
   }
 #ifdef _WIN32
-  char *real_path = _fullpath(resolvedPath.get(), path, 1024);
+  char *real_path = _fullpath(resolved_path.get(), path, 1024);
 #else
-  char *real_path = realpath(path, resolvedPath.get());
+  char *real_path = realpath(path, resolved_path.get());
 #endif
   if (real_path == nullptr || strlen(real_path) == 0) {
     MS_LOG(ERROR) << "file path is not valid : " << path;
     return "";
   }
-  std::string res = resolvedPath.get();
+  std::string res = resolved_path.get();
   return res;
 }
 }  // namespace lite

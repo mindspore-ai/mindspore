@@ -171,11 +171,10 @@ kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *>
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
   kernel::LiteKernel *kernel = nullptr;
-  auto act_quant_size =
-    MSMAX(inputs[kInputIndex]->GetQuantParams().size(), outputs[kOutputIndex]->GetQuantParams().size());
+  auto act_quant_size = MSMAX(inputs[kInputIndex]->quant_params().size(), outputs[kOutputIndex]->quant_params().size());
   if (act_quant_size == 1) {  // per tensor
     auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-    if (primitive != nullptr && primitive->GetInferFlag()) {
+    if (primitive != nullptr && primitive->infer_flag()) {
       conv_param->input_h_ = inputs[kInputIndex]->Height();
       conv_param->input_w_ = inputs[kInputIndex]->Width();
       conv_param->input_channel_ = inputs[kInputIndex]->Channel();

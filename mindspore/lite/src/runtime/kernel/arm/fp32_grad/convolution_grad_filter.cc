@@ -56,7 +56,7 @@ int ConvolutionGradFilterCPUKernel::Init() {
   int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
   int k = conv_param->output_channel_ / conv_param->group_;
   size_t mat_alloc = MatSizeTotal(k, n, chunk, n);
-  SetWorkspaceSize((ws_size + mat_alloc) * sizeof(float));
+  set_workspace_size((ws_size + mat_alloc) * sizeof(float));
   return RET_OK;
 }
 
@@ -89,8 +89,8 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   int n = k_h * k_w * in_ch / groups;
   int k = out_ch / groups;
 
-  float *workspace = reinterpret_cast<float *>(GetWorkspace());
-  float *mat_workspace = workspace + ws_size;
+  float *workspace_temp = reinterpret_cast<float *>(workspace());
+  float *mat_workspace = workspace_temp + ws_size;
   // zero out pointer
   memset(dw_addr, 0, out_dw->Size());
   for (i = 0; i < batch; ++i) {
@@ -98,7 +98,7 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
       for (int ci = 0; ci < m; ci += chunk) {
         int real_chunk = MSMIN(m - ci, chunk);
         float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
-        float *mat_b = workspace;
+        float *mat_b = workspace_temp;
         float *mat_c = dw_addr + j * nweights / groups;
         float *im = x_addr + (i * in_ch * in_h * in_w) + j * (in_ch / groups);
         memset(mat_b, 0, n * real_chunk * sizeof(float));

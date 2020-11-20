@@ -104,9 +104,9 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   Category category() { return this->category_; }
 
-  void SetFormat(schema::Format format) { this->format_ = format; }
+  void set_format(schema::Format format) { this->format_ = format; }
 
-  schema::Format GetFormat() { return this->format_; }
+  schema::Format format() { return this->format_; }
 
   size_t ref_count() { return this->ref_count_; }
 
@@ -118,11 +118,11 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void AddQuantParam(const QuantArg &quant_arg);
 
-  std::vector<QuantArg> GetQuantParams() const;
+  std::vector<QuantArg> quant_params() const;
 
-  std::vector<float> GetQuantClusters() const;
+  std::vector<float> quant_clusters() const;
 
-  void SetQuantClusters(const std::vector<float> &clusters);
+  void set_quant_clusters(const std::vector<float> &clusters);
 
   bool IsConst();
 

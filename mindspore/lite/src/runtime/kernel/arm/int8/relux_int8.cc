@@ -33,10 +33,10 @@ int ReluXInt8CPUKernel::Init() {
   MS_ASSERT(input);
   MS_ASSERT(output);
 
-  quant_arg_.input_arg.scale_ = input->GetQuantParams().front().scale;
-  quant_arg_.input_arg.zp_ = input->GetQuantParams().front().zeroPoint;
-  quant_arg_.output_arg.scale_ = output->GetQuantParams().front().scale;
-  quant_arg_.output_arg.zp_ = output->GetQuantParams().front().zeroPoint;
+  quant_arg_.input_arg.scale_ = input->quant_params().front().scale;
+  quant_arg_.input_arg.zp_ = input->quant_params().front().zeroPoint;
+  quant_arg_.output_arg.scale_ = output->quant_params().front().scale;
+  quant_arg_.output_arg.zp_ = output->quant_params().front().zeroPoint;
 
   const double multiplier = quant_arg_.input_arg.scale_ / quant_arg_.output_arg.scale_;
   QuantizeRoundParameter(multiplier, &quant_arg_.input_multiplier_, &quant_arg_.left_shift_, &quant_arg_.right_shift_);

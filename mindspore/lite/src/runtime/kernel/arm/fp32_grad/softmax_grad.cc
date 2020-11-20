@@ -51,7 +51,7 @@ int SoftmaxGradCPUKernel::Init() {
   for (size_t i = axis + 1; i < in_dims; i++) {
     inner_size_ *= in_shape[i];
   }
-  SetWorkspaceSize(inner_size_ * (1 + in_shape[axis]) * sizeof(float));
+  set_workspace_size(inner_size_ * (1 + in_shape[axis]) * sizeof(float));
   return RET_OK;
 }
 
@@ -61,7 +61,7 @@ int SoftmaxGradCPUKernel::Execute(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto yt_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
-  float *sum_data_ = static_cast<float *>(GetWorkspace());
+  float *sum_data_ = static_cast<float *>(workspace());
   float *sum_mul_ = sum_data_ + inner_size_;
   SoftmaxGrad(input_ptr, yt_ptr, output_ptr, sum_data_, sum_mul_, reinterpret_cast<SoftmaxParameter *>(op_parameter_));
 

@@ -41,13 +41,13 @@ int SplitInt8CPUKernel::Init() {
 
   auto in_tensor = in_tensors_.at(kInputIndex);
 
-  auto in_quant_args = in_tensor->GetQuantParams();
+  auto in_quant_args = in_tensor->quant_params();
   param->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   param->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
   MS_ASSERT(param->num_split_ == this->out_tensors_.size());
   for (int i = 0; i < param->num_split_; i++) {
     auto *out_tensor = out_tensors_.at(i);
-    auto out_quant_args = out_tensor->GetQuantParams();
+    auto out_quant_args = out_tensor->quant_params();
     param->quant_arg_.out_args_[i].scale_ = out_quant_args.front().scale;
     param->quant_arg_.out_args_[i].zp_ = out_quant_args.front().zeroPoint;
   }

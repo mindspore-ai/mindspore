@@ -61,9 +61,9 @@ int SparseToDense::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor 
   }
   auto input2 = inputs_.at(2);
   outputs_[0]->set_data_type(input2->data_type());
-  outputs_[0]->SetFormat(input2->GetFormat());
+  outputs_[0]->set_format(input2->format());
 
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   if (this->primitive_ == nullptr) {

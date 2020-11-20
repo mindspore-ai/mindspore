@@ -91,11 +91,11 @@ int FusedBatchNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
     if (outputs_.size() <= i) break;
     outputs_.at(i)->set_shape(inputs_.at(i)->shape());
     outputs_.at(i)->set_data_type(inputs_.at(i)->data_type());
-    outputs_.at(i)->SetFormat(inputs_.at(i)->GetFormat());
+    outputs_.at(i)->set_format(inputs_.at(i)->format());
   }
   if (outputs_.size() > 5) {
     outputs_.at(5)->set_data_type(inputs_.at(0)->data_type());
-    outputs_.at(5)->SetFormat(inputs_.at(0)->GetFormat());
+    outputs_.at(5)->set_format(inputs_.at(0)->format());
     outputs_.at(5)->set_shape({1});
   }
   return 0;

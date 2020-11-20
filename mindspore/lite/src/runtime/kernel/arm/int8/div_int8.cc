@@ -39,12 +39,12 @@ int DivInt8CPUKernel::Init() {
 
   broadcast_ = input0->ElementsNum() != input1->ElementsNum();
 
-  param_.in0_args_.scale_ = input0->GetQuantParams().front().scale;
-  param_.in0_args_.zp_ = -input0->GetQuantParams().front().zeroPoint;
-  param_.in1_args_.scale_ = input1->GetQuantParams().front().scale;
-  param_.in1_args_.zp_ = -input1->GetQuantParams().front().zeroPoint;
-  param_.out_args_.scale_ = output->GetQuantParams().front().scale;
-  param_.out_args_.zp_ = output->GetQuantParams().front().zeroPoint;
+  param_.in0_args_.scale_ = input0->quant_params().front().scale;
+  param_.in0_args_.zp_ = -input0->quant_params().front().zeroPoint;
+  param_.in1_args_.scale_ = input1->quant_params().front().scale;
+  param_.in1_args_.zp_ = -input1->quant_params().front().zeroPoint;
+  param_.out_args_.scale_ = output->quant_params().front().scale;
+  param_.out_args_.zp_ = output->quant_params().front().zeroPoint;
 
   const double real_multiplier = param_.in0_args_.scale_ / (param_.in1_args_.scale_ * param_.out_args_.scale_);
 

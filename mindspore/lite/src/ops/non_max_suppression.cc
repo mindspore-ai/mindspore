@@ -62,7 +62,7 @@ int NonMaxSuppression::InferShape(std::vector<Tensor *> inputs_, std::vector<Ten
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   output->set_data_type(kNumberTypeInt32);
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   MS_LOG(INFO) << "NonMaxSuppression infer shape in runtime.";
   return RET_INFER_INVALID;
 }

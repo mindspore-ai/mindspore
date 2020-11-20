@@ -83,9 +83,9 @@ int AddN::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs
     MS_LOG(ERROR) << "input size" << inputs.size() << " is error!";
     return RET_INPUT_TENSOR_ERROR;
   }
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   output->set_data_type(input->data_type());
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   output->set_shape(input->shape());

@@ -120,9 +120,9 @@ int Split::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   }
   for (int i = 0; i < number_split; ++i) {
     outputs_[i]->set_data_type(input->data_type());
-    outputs_[i]->SetFormat(input->GetFormat());
+    outputs_[i]->set_format(input->format());
   }
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   size_t split_dim = GetSplitDim() == -1 ? input->shape().size() - 1 : GetSplitDim();
@@ -148,7 +148,7 @@ int Split::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
     output_shape[split_dim] = split_dim_i;
     outputs_[i]->set_shape(output_shape);
     outputs_[i]->set_data_type(input->data_type());
-    outputs_[i]->SetFormat(input->GetFormat());
+    outputs_[i]->set_format(input->format());
   }
   return RET_OK;
 }

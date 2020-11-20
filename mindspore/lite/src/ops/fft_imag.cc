@@ -41,8 +41,8 @@ int FftImag::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   output->set_data_type(TypeId::kNumberTypeFloat32);
-  output->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  output->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto input_shape = input->shape();

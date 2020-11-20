@@ -26,7 +26,9 @@ using mindspore::lite::RET_OK;
 void *LiteKernel::workspace_ = nullptr;
 
 void LiteKernel::AllocWorkspace(size_t size) {
-  if (size == 0) return;
+  if (size == 0) {
+    return;
+  }
   workspace_ = malloc(size);
   if (workspace_ == nullptr) {
     MS_LOG(ERROR) << "fail to alloc " << size;
@@ -74,10 +76,10 @@ int LiteKernel::FreeWorkTensor() const {
 
 int LiteKernel::PreProcess() {
   if (!InferShapeDone()) {
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(true);
+    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
     auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
     if (ret != 0) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(false);
+      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }
@@ -279,8 +281,8 @@ int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *ke
 void LiteKernelUtil::InitIOKernels(std::vector<kernel::LiteKernel *> &kernels) {
   for (auto *kernel : kernels) {
     // clean io kernels
-    kernel->SetInKernel({});
-    kernel->SetOutKernel({});
+    kernel->set_in_kernel({});
+    kernel->set_out_kernel({});
     // find io kernels
     for (auto *search_kernel : kernels) {
       if (search_kernel == kernel) {

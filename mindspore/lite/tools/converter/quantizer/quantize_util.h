@@ -315,7 +315,7 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
   if (quantType == QuantType_PostTraining) {
     primitive_c->AddInputQuantParam(quant_params);
   } else {
-    primitive_c->SetInputQuantParam(WEIGHT_INDEX, quant_params);
+    primitive_c->set_input_quant_param(WEIGHT_INDEX, quant_params);
   }
   return RET_OK;
 }

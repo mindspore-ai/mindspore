@@ -51,10 +51,10 @@ int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
         nullptr);
       if (mem_type == MemType::IMG) {
         jv->set_in_tensors(tensors);
-        jv->SetInKernel(kernels);
+        jv->set_in_kernel(kernels);
       } else {
         jv->set_out_tensors(tensors);
-        jv->SetOutKernel(kernels);
+        jv->set_out_kernel(kernels);
       }
     }
   }
@@ -81,11 +81,11 @@ int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToConvert(const lite::Tensor 
       tensors.emplace_back(new_tensor);
     }
     if (mem_type == MemType::IMG) {
-      iv->SetInKernel(kernels);
+      iv->set_in_kernel(kernels);
       iv->set_in_tensors(tensors);
       in_opencl_op->AddOutKernel(iv);
     } else {
-      iv->SetOutKernel(kernels);
+      iv->set_out_kernel(kernels);
       iv->set_out_tensors(tensors);
       in_convert_op->AddInKernel(iv);
     }
@@ -118,11 +118,11 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     }
     new_tensor->CopyTensor(*in_tensors[i]);
     if (mem_type == MemType::IMG) {
-      new_tensor->SetFormat(dst_format);
-      in_tensors[i]->SetFormat(src_format);
+      new_tensor->set_format(dst_format);
+      in_tensors[i]->set_format(src_format);
     } else {
-      new_tensor->SetFormat(src_format);
-      in_tensors[i]->SetFormat(dst_format);
+      new_tensor->set_format(src_format);
+      in_tensors[i]->set_format(dst_format);
     }
 
     out_tensors->emplace_back(new_tensor);

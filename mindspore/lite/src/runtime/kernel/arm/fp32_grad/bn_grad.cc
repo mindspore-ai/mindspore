@@ -35,7 +35,7 @@ namespace mindspore::kernel {
 int BNGradCPUKernel::Init() {
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
-  SetWorkspaceSize(2 * channels * sizeof(float));
+  set_workspace_size(2 * channels * sizeof(float));
   return RET_OK;
 }
 
@@ -60,9 +60,9 @@ int BNGradCPUKernel::Execute(int task_id) {
   size_t spatial = input_x->Height() * input_x->Width();
   float eps = bn_param->epsilon_;
 
-  float *workspace = static_cast<float *>(GetWorkspace());
-  std::fill(workspace, workspace + GetWorkspaceSize() / sizeof(*workspace), 0.f);
-  float *dxhat_sum = workspace;
+  float *workspace_temp = static_cast<float *>(workspace());
+  std::fill(workspace_temp, workspace_temp + workspace_size() / sizeof(*workspace_temp), 0.f);
+  float *dxhat_sum = workspace_temp;
   float *dxhathat_sum = dxhat_sum + channels;
 
   float *x = reinterpret_cast<float *>(input_x->MutableData());

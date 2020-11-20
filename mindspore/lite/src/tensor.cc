@@ -35,13 +35,13 @@ Tensor::Tensor(const Tensor &tensor) {
   }
 }
 
-int Tensor::CopyTensorData(const Tensor &srcTensor) {
-  if (srcTensor.data_ == nullptr) {
-    MS_LOG(ERROR) << "data of srcTensor is nullptr";
+int Tensor::CopyTensorData(const Tensor &src_tensor) {
+  if (src_tensor.data_ == nullptr) {
+    MS_LOG(ERROR) << "data of src tensor is nullptr";
     return RET_PARAM_INVALID;
   }
   size_t data_size = this->Size();
-  MS_ASSERT(data_size == srcTensor.Size());
+  MS_ASSERT(data_size == src_tensor.Size());
   if (this->data_ == nullptr) {
     if (data_size > kMaxMallocSize) {
       MS_LOG(ERROR) << "Malloc size is too big while coping data, " << data_size << " bytes";
@@ -53,17 +53,17 @@ int Tensor::CopyTensorData(const Tensor &srcTensor) {
       return RET_ERROR;
     }
   }
-  memcpy(this->data_, srcTensor.data_, data_size);
+  memcpy(this->data_, src_tensor.data_, data_size);
   return RET_OK;
 }
 
-int Tensor::CopyTensor(const Tensor &srcTensor, bool copyData) {
-  this->data_type_ = srcTensor.data_type_;
-  this->shape_ = srcTensor.shape_;
-  this->category_ = srcTensor.category_;
-  this->format_ = srcTensor.format_;
-  if (copyData) {
-    auto ret = CopyTensorData(srcTensor);
+int Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data) {
+  this->data_type_ = src_tensor.data_type_;
+  this->shape_ = src_tensor.shape_;
+  this->category_ = src_tensor.category_;
+  this->format_ = src_tensor.format_;
+  if (copy_data) {
+    auto ret = CopyTensorData(src_tensor);
     if (0 != ret) {
       MS_LOG(ERROR) << "CopyTensorData error";
       return RET_ERROR;
@@ -330,11 +330,11 @@ bool Tensor::IsScalar() { return this->category_ == CONST_SCALAR && this->data_ 
 
 void Tensor::AddQuantParam(const QuantArg &quant_arg) { this->quant_params_.push_back(quant_arg); }
 
-std::vector<QuantArg> Tensor::GetQuantParams() const { return this->quant_params_; }
+std::vector<QuantArg> Tensor::quant_params() const { return this->quant_params_; }
 
-std::vector<float> Tensor::GetQuantClusters() const { return this->quant_clusters_; }
+std::vector<float> Tensor::quant_clusters() const { return this->quant_clusters_; }
 
-void Tensor::SetQuantClusters(const std::vector<float> &clusters) { this->quant_clusters_ = clusters; }
+void Tensor::set_quant_clusters(const std::vector<float> &clusters) { this->quant_clusters_ = clusters; }
 
 std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src) {
   std::vector<tensor::MSTensor *> target(src.size());

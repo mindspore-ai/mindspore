@@ -83,19 +83,19 @@ int Dropout::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   MS_ASSERT(input != nullptr);
   auto output0 = outputs_.front();
   MS_ASSERT(output0 != nullptr);
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   output0->set_shape(input->shape());
   output0->set_data_type(input->data_type());
-  output0->SetFormat(input->GetFormat());
+  output0->set_format(input->format());
 
   if (outputs_.size() > 1) {
     auto output1 = outputs_[1];
     MS_ASSERT(output1 != nullptr);
     output1->set_shape(input->shape());
     output1->set_data_type(input->data_type());
-    output1->SetFormat(input->GetFormat());
+    output1->set_format(input->format());
   }
 
   return RET_OK;

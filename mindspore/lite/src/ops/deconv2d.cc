@@ -172,8 +172,8 @@ void DeConv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::Primitiv
   }
   attr->channelMultiplier = channel_mutiplier;
 
-  MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
-  auto input_node = inputs[kAnfPopulaterOne];
+  MS_ASSERT(inputs.size() == kAnfPopulaterInputNumTwo);
+  auto input_node = inputs[kAnfPopulaterInputNumOne];
   MS_ASSERT(input_node != nullptr);
   if (input_node->isa<Parameter>()) {
     auto param_node = input_node->cast<ParameterPtr>();
@@ -306,9 +306,9 @@ int DeConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::
   MS_ASSERT(weight != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   output->set_data_type(input->data_type());
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   int32_t input_h = input->Height();

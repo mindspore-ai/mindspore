@@ -103,8 +103,8 @@ int Squeeze::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   }
   auto *in_tensor = inputs_.front();
   outputs_.front()->set_data_type(in_tensor->data_type());
-  outputs_.front()->SetFormat(in_tensor->GetFormat());
-  if (!GetInferFlag()) {
+  outputs_.front()->set_format(in_tensor->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto in_shape = in_tensor->shape();

@@ -109,7 +109,7 @@ Registry BinaryCrossEntropyGradRegistry(schema::PrimitiveType_BinaryCrossEntropy
 int BinaryCrossEntropyGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   Tensor *x = inputs_[0];
   Tensor *out = outputs_[0];
-  out->SetFormat(x->GetFormat());
+  out->set_format(x->format());
   out->set_data_type(x->data_type());
   std::vector<int> x_shape = x->shape();
   std::vector<int> output_shape(x_shape.size());

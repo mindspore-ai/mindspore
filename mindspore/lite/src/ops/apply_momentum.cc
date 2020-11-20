@@ -93,7 +93,7 @@ int ApplyMomentum::InferShape(std::vector<lite::Tensor *> inputs, std::vector<li
     auto *out = outputs.front();
     MS_ASSERT(out != nullptr);
     out->set_data_type(inputs[0]->data_type());
-    out->SetFormat(inputs[0]->GetFormat());
+    out->set_format(inputs[0]->format());
     out->set_shape({1});
   }
 

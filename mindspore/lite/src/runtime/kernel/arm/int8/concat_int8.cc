@@ -46,13 +46,13 @@ int ConcatInt8CPUKernel::Init() {
   }
   for (size_t i = 0; i < input_num; i++) {
     auto *input_tensor = in_tensors_.at(i);
-    auto quant_args = input_tensor->GetQuantParams();
+    auto quant_args = input_tensor->quant_params();
     concat_param_->quant_arg_.in_args_[i].scale_ = quant_args.front().scale;
     concat_param_->quant_arg_.in_args_[i].zp_ = quant_args.front().zeroPoint;
   }
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  auto quant_args = output_tensor->GetQuantParams();
+  auto quant_args = output_tensor->quant_params();
   concat_param_->quant_arg_.out_args_.scale_ = quant_args.front().scale;
   concat_param_->quant_arg_.out_args_.zp_ = quant_args.front().zeroPoint;
 

@@ -77,11 +77,11 @@ int ResizeInt8CPUKernel::Init() {
   quant_out_ = new (std::nothrow) QuantArg;
   MS_ASSERT(quant_out_);
   auto input = in_tensors_.at(0);
-  quant_in_->zp_ = input->GetQuantParams().front().zeroPoint;
-  quant_in_->scale_ = input->GetQuantParams().front().scale;
+  quant_in_->zp_ = input->quant_params().front().zeroPoint;
+  quant_in_->scale_ = input->quant_params().front().scale;
   auto output = out_tensors_.at(0);
-  quant_out_->zp_ = output->GetQuantParams().front().zeroPoint;
-  quant_out_->scale_ = output->GetQuantParams().front().scale;
+  quant_out_->zp_ = output->quant_params().front().zeroPoint;
+  quant_out_->scale_ = output->quant_params().front().scale;
 
   multiplier_ = new (std::nothrow) QuantMulArg;
   MS_ASSERT(multiplier_);

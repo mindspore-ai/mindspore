@@ -100,10 +100,10 @@ int ArithmeticFP16CPUKernel::Init() {
 
 int ArithmeticFP16CPUKernel::PreProcess() {
   if (!InferShapeDone()) {
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(true);
+    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
     auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
     if (ret != 0) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(false);
+      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }

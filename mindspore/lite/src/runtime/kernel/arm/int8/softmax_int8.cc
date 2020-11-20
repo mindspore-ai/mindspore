@@ -40,14 +40,14 @@ int SoftmaxInt8CPUKernel::Init() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
   MS_ASSERT(input_tensor);
 
-  auto in_quant_args = input_tensor->GetQuantParams();
+  auto in_quant_args = input_tensor->quant_params();
   quant_params_.in_quant_args_.scale_ = in_quant_args.front().scale;
   quant_params_.in_quant_args_.zp_ = -in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   MS_ASSERT(out_tensor);
 
-  auto out_quant_args = out_tensor->GetQuantParams();
+  auto out_quant_args = out_tensor->quant_params();
   quant_params_.out_quant_arg_.scale_ = out_quant_args.front().scale;
   quant_params_.out_quant_arg_.zp_ = -out_quant_args.front().zeroPoint;
   quant_params_.output_activation_min_ = std::numeric_limits<int8_t>::min();

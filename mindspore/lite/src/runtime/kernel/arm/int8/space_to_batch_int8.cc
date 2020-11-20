@@ -31,11 +31,11 @@ int SpaceToBatchInt8CPUKernel::Run() {
   auto input_ptr = reinterpret_cast<const int8_t *>(input_tensor->MutableData());
   auto output_ptr = reinterpret_cast<int8_t *>(output_tensor->MutableData());
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
-  if (output_tensor->GetQuantParams().empty()) {
+  if (output_tensor->quant_params().empty()) {
     MS_LOG(ERROR) << "SpaceToBatchInt8 need quantization parameters which is not found.";
     return RET_ERROR;
   }
-  auto quant_arg = output_tensor->GetQuantParams().front();
+  auto quant_arg = output_tensor->quant_params().front();
 
   if (param->need_paddings_) {
     DoSpaceToBatchPaddingNHWCInt8(input_ptr, output_ptr, param, quant_arg.zeroPoint);

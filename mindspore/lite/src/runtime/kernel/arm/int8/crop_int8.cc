@@ -37,12 +37,12 @@ int CropInt8CPUKernel::Init() {
     return ret;
   }
   auto *input_tensor = in_tensors_.at(kInputIndex);
-  auto in_quant_args = input_tensor->GetQuantParams();
+  auto in_quant_args = input_tensor->quant_params();
   crop_para_->quant_arg.in_args_.scale_ = in_quant_args.front().scale;
   crop_para_->quant_arg.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
-  auto out_quant_args = out_tensor->GetQuantParams();
+  auto out_quant_args = out_tensor->quant_params();
   crop_para_->quant_arg.out_args_.scale_ = out_quant_args.front().scale;
   crop_para_->quant_arg.out_args_.zp_ = out_quant_args.front().zeroPoint;
 

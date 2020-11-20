@@ -49,7 +49,7 @@ void TestL2NormFp32::TearDown() {
 void TestL2NormFp32::Init(const std::vector<int> &input_shape, const std::vector<int> &output_shape, float *input_data,
                           float *output_data, const int axis_num, ActType activation_type, const int thread_num) {
   in_tensor_.set_data_type(kNumberTypeFloat32);
-  in_tensor_.SetFormat(Format_NHWC);
+  in_tensor_.set_format(Format_NHWC);
   in_tensor_.set_shape(input_shape);
   out_tensor_.set_data_type(kNumberTypeFloat32);
   out_tensor_.set_shape(output_shape);

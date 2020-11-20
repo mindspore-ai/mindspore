@@ -41,10 +41,10 @@ int Arithmetic::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite
 
   auto input_shape0 = input0->shape();
   auto input_shape1 = input1->shape();
-  auto format = input0->GetFormat();
-  output->SetFormat(format);
+  auto format = input0->format();
+  output->set_format(format);
   output->set_data_type(input0->data_type());
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   if (input_shape0.size() > 10 || input_shape1.size() > 10) {
@@ -69,7 +69,7 @@ int Arithmetic::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite
       }
       in_shape1_[i] = input_shape1[i];
     }
-    format = input0->GetFormat();
+    format = input0->format();
   } else if (input_shape0.size() > input_shape1.size()) {
     ndim_ = input_shape0.size();
     auto fill_dim_num = input_shape0.size() - input_shape1.size();

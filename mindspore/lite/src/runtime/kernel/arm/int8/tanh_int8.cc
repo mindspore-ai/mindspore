@@ -25,10 +25,10 @@ int TanhInt8CPUKernel::Init() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
 
-  tanh_quant_.in_scale_ = input->GetQuantParams().front().scale;
-  tanh_quant_.in_zp_ = input->GetQuantParams().front().zeroPoint;
-  tanh_quant_.out_scale_ = output->GetQuantParams().front().scale;
-  tanh_quant_.out_zp_ = output->GetQuantParams().front().zeroPoint;
+  tanh_quant_.in_scale_ = input->quant_params().front().scale;
+  tanh_quant_.in_zp_ = input->quant_params().front().zeroPoint;
+  tanh_quant_.out_scale_ = output->quant_params().front().scale;
+  tanh_quant_.out_zp_ = output->quant_params().front().zeroPoint;
 
   if (!InferShapeDone()) {
     return RET_OK;

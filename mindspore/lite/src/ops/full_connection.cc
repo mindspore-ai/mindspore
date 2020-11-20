@@ -69,7 +69,7 @@ int FullConnection::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
   MS_ASSERT(input1 != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   if ((GetHasBias() && inputs_.size() != kMultiNum) || (!GetHasBias() && inputs_.size() != kDoubleNum)) {
@@ -114,7 +114,7 @@ int FullConnection::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
   }
   output->set_shape(out_shape);
   output->set_data_type(input0->data_type());
-  output->SetFormat(input0->GetFormat());
+  output->set_format(input0->format());
 
   return RET_OK;
 }

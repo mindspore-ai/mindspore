@@ -63,9 +63,9 @@ int Unstack::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outp
   for (auto &out : outputs) {
     MS_ASSERT(out != nullptr);
     out->set_data_type(input->data_type());
-    out->SetFormat(input->GetFormat());
+    out->set_format(input->format());
   }
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   std::vector<int> output_shape;

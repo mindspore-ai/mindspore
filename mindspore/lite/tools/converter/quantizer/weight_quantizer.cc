@@ -130,7 +130,7 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
     }
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
     abstractTensor->element()->set_type(TypeIdToType(type_id));
-    primitive_c->SetQuantType(schema::QuantType_WeightQuant);
+    primitive_c->set_quant_type(schema::QuantType_WeightQuant);
   }
   return RET_OK;
 }
@@ -208,7 +208,7 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
     }
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
     abstractTensor->element()->set_type(TypeIdToType(type_id));
-    primitive_c->SetQuantType(schema::QuantType_WeightQuant);
+    primitive_c->set_quant_type(schema::QuantType_WeightQuant);
   }
 
   return RET_OK;

@@ -149,7 +149,7 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       auto output_dims = output_tensors[i]->shape();
       auto &output_tensor = graph->allTensors.at(node->outputIndex[i]);
       output_tensor->dims.swap(output_dims);
-      output_tensor->format = output_tensors[i]->GetFormat();
+      output_tensor->format = output_tensors[i]->format();
       output_tensor->dataType = output_tensors[i]->data_type();
     }
     FreeTensors(input_tensors, output_tensors);

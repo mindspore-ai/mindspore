@@ -138,8 +138,8 @@ int Conv2DGradFilter::UnPackAttr(const Primitive &prim, const std::vector<AnfNod
       attr->activationType = schema::ActivationType_NO_ACTIVATION;
     }
 
-    if (inputs.size() >= kAnfPopulaterThree) {
-      auto filter_shape = inputs[kAnfPopulaterTwo];
+    if (inputs.size() >= kAnfPopulaterInputNumThree) {
+      auto filter_shape = inputs[kAnfPopulaterInputNumTwo];
       MS_ASSERT(filter_shape != nullptr);
       if (filter_shape->isa<ValueNode>()) {
         auto valueNode = filter_shape->cast<ValueNodePtr>();
@@ -239,7 +239,7 @@ int Conv2DGradFilter::InferShape(std::vector<Tensor *> inputs, std::vector<Tenso
 
   out->set_shape(GetFilterShape());
   out->set_data_type(in0->data_type());
-  out->SetFormat(in0->GetFormat());
+  out->set_format(in0->format());
 
   return RET_OK;
 }

@@ -53,7 +53,7 @@ int DepthToSpaceCPUKernel::Run() {
   float *output_data = reinterpret_cast<float *>(output->MutableData());
   auto in_shape = input->shape();
   DepthToSpaceParameter *param = reinterpret_cast<DepthToSpaceParameter *>(op_parameter_);
-  if (input->GetFormat() == schema::Format::Format_NHWC) {
+  if (input->format() == schema::Format::Format_NHWC) {
     DepthToSpaceForNHWC(input_data, output_data, in_shape.data(), param);
     return RET_OK;
   } else {

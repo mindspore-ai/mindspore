@@ -95,7 +95,7 @@ void KernelRegistry::RegKernel(const KERNEL_ARCH arch, const TypeId data_type, c
   creator_arrays_[index] = creator;
 }
 
-bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &newCreators) { return false; }
+bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &new_creators) { return false; }
 
 const kernel::KernelCreator *KernelRegistry::GetCreatorArrays() { return creator_arrays_; }
 

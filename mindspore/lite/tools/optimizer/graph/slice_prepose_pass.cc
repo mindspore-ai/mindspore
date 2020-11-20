@@ -94,7 +94,7 @@ schema::SliceT *GetSliceT(const CNodePtr &cnode) {
   if (primc == nullptr) {
     return nullptr;
   }
-  auto primt = primc->GetPrimitiveT();
+  auto primt = primc->primitiveT();
   if (primt == nullptr || primt->value.AsSlice() == nullptr) {
     return nullptr;
   }
@@ -109,7 +109,7 @@ schema::SoftMaxT *GetSoftmaxT(const CNodePtr &cnode) {
   if (primc == nullptr) {
     return nullptr;
   }
-  auto primt = primc->GetPrimitiveT();
+  auto primt = primc->primitiveT();
   if (primt == nullptr || primt->value.AsSoftMax() == nullptr) {
     return nullptr;
   }
@@ -124,7 +124,7 @@ schema::ReshapeT *GetReshapeT(const CNodePtr &cnode) {
   if (primc == nullptr) {
     return nullptr;
   }
-  auto primt = primc->GetPrimitiveT();
+  auto primt = primc->primitiveT();
   if (primt == nullptr || primt->value.AsReshape() == nullptr) {
     return nullptr;
   }
@@ -139,7 +139,7 @@ schema::FullConnectionT *GetFcT(const CNodePtr &cnode) {
   if (primc == nullptr) {
     return nullptr;
   }
-  auto primt = primc->GetPrimitiveT();
+  auto primt = primc->primitiveT();
   if (primt == nullptr || primt->value.AsFullConnection() == nullptr) {
     return nullptr;
   }
@@ -230,7 +230,7 @@ ValueNodePtr SlicePreposePass::CopySliceValueNode(const FuncGraphPtr &graph, con
     MS_LOG(ERROR) << "primitive_c is nullptr";
     return nullptr;
   }
-  auto primitive_t = primitive_c->GetPrimitiveT();
+  auto primitive_t = primitive_c->primitiveT();
   auto new_primitive_t = std::make_unique<schema::PrimitiveT>();
   if (new_primitive_t == nullptr) {
     MS_LOG(ERROR) << "primitive_t is nullptr";
@@ -1057,7 +1057,7 @@ bool SlicePreposePass::PreposeWithTranspose(const FuncGraphPtr &graph, const CNo
     MS_LOG(ERROR) << "transpose_primc is nullptr";
     return false;
   }
-  auto transpose_primt = transpose_primc->GetPrimitiveT();
+  auto transpose_primt = transpose_primc->primitiveT();
   if (transpose_primt == nullptr || transpose_primt->value.AsTranspose() == nullptr) {
     MS_LOG(ERROR) << "transpose_primt is nullptr";
     return false;

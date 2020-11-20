@@ -113,8 +113,8 @@ int Power::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> output
   auto output_tensor = outputs[0];
   MS_ASSERT(output_tensor != nullptr);
   output_tensor->set_data_type(x_tensor->data_type());
-  output_tensor->SetFormat(x_tensor->GetFormat());
-  if (!GetInferFlag()) {
+  output_tensor->set_format(x_tensor->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   if (exp_tensor != nullptr) {

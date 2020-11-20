@@ -29,12 +29,12 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 int ArithmeticSelfInt8CPUKernel::Init() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
-  auto in_quant_args = input_tensor->GetQuantParams();
+  auto in_quant_args = input_tensor->quant_params();
   para_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   para_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint * (-1);
 
   auto *out_tensor = out_tensors_.at(kOutputIndex);
-  auto out_quant_args = out_tensor->GetQuantParams();
+  auto out_quant_args = out_tensor->quant_params();
   para_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
   para_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 

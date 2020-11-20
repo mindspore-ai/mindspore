@@ -35,10 +35,10 @@ int HswishInt8CPUKernel::Init() {
   MS_ASSERT(input);
   MS_ASSERT(output);
 
-  quant_arg_.input_scale = input->GetQuantParams().front().scale;
-  quant_arg_.input_zp = input->GetQuantParams().front().zeroPoint;
-  quant_arg_.output_scale = output->GetQuantParams().front().scale;
-  quant_arg_.output_zp = output->GetQuantParams().front().zeroPoint;
+  quant_arg_.input_scale = input->quant_params().front().scale;
+  quant_arg_.input_zp = input->quant_params().front().zeroPoint;
+  quant_arg_.output_scale = output->quant_params().front().scale;
+  quant_arg_.output_zp = output->quant_params().front().zeroPoint;
 
   const float output_multiplier = (1.0f / 128.0f) * quant_arg_.input_scale / quant_arg_.output_scale;
 

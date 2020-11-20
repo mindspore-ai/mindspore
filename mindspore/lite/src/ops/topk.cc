@@ -65,10 +65,10 @@ int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   auto output1 = outputs_.at(1);
   MS_ASSERT(output1 != nullptr);
   output0->set_data_type(input->data_type());
-  output0->SetFormat(input->GetFormat());
+  output0->set_format(input->format());
   output1->set_data_type(kNumberTypeInt32);
-  output1->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  output1->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto out_shape = input->shape();

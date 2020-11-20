@@ -78,17 +78,17 @@ int StridedSlice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr
     attr->ellipsisMask = CastToInt(prim.GetAttr("ellipsis_mask"), false).front();
     attr->newAxisMask = CastToInt(prim.GetAttr("new_axis_mask"), false).front();
     attr->shrinkAxisMask = CastToInt(prim.GetAttr("shrink_axis_mask"), false).front();
-    auto inputNodeFirst = inputs[kAnfPopulaterOne];
+    auto inputNodeFirst = inputs[kAnfPopulaterInputNumOne];
     std::vector<int> beginVec;
     GetAttrDataFromInput(inputNodeFirst, &beginVec);
     attr->begin = beginVec;
 
-    auto inputNodeSecond = inputs[kAnfPopulaterTwo];
+    auto inputNodeSecond = inputs[kAnfPopulaterInputNumTwo];
     std::vector<int> endVec;
     GetAttrDataFromInput(inputNodeSecond, &endVec);
     attr->end = endVec;
 
-    auto inputNodeThird = inputs[kAnfPopulaterThree];
+    auto inputNodeThird = inputs[kAnfPopulaterInputNumThree];
     std::vector<int> strideVec;
     GetAttrDataFromInput(inputNodeThird, &strideVec);
     attr->stride = strideVec;
@@ -343,10 +343,10 @@ int StridedSlice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   }
   auto input = inputs.at(0);
   outputs.front()->set_data_type(input->data_type());
-  outputs[0]->SetFormat(input->GetFormat());
+  outputs[0]->set_format(input->format());
   MS_ASSERT(input != nullptr);
   auto input_shape = input->shape();
-  auto inferflag = GetInferFlag();
+  auto inferflag = infer_flag();
 
   in_shape_.clear();
   begins_.clear();

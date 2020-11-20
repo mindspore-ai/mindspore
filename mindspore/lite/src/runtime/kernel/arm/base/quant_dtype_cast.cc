@@ -104,13 +104,12 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_n_stride_;
-  if (in_tensors_.front()->GetQuantParams().empty() && out_tensors_.front()->GetQuantParams().empty()) {
+  if (in_tensors_.front()->quant_params().empty() && out_tensors_.front()->quant_params().empty()) {
     MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
     return RET_ERROR;
   }
-  auto quant_arg = out_tensors_.front()->GetQuantParams().front().inited
-                     ? out_tensors_.front()->GetQuantParams().front()
-                     : in_tensors_.front()->GetQuantParams().front();
+  auto quant_arg = out_tensors_.front()->quant_params().front().inited ? out_tensors_.front()->quant_params().front()
+                                                                       : in_tensors_.front()->quant_params().front();
   int ret = RET_OK;
   if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
     ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, quant_arg.scale,
@@ -129,11 +128,11 @@ int QuantDTypeCastCPUKernel::QuantDTypeCast(int task_id) {
   } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeInt8) {
     ret = UInt8ToInt8(uint8_ptr_ + thread_offset, int8_ptr_ + thread_offset, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeInt8) {
-    auto input_quant_arg = in_tensors_.front()->GetQuantParams().front();
+    auto input_quant_arg = in_tensors_.front()->quant_params().front();
     ret = DoDequantizeInt8ToFp32(int8_ptr_ + thread_offset, float32_ptr_ + thread_offset, num_unit_thread,
                                  input_quant_arg.scale, input_quant_arg.zeroPoint);
     if (ret) {
-      auto output_quant_arg = out_tensors_.front()->GetQuantParams().front();
+      auto output_quant_arg = out_tensors_.front()->quant_params().front();
       ret = DoQuantizeFp32ToInt8(float32_ptr_ + thread_offset, int8_out_ptr_ + thread_offset, output_quant_arg.scale,
                                  output_quant_arg.zeroPoint, num_unit_thread);
     }

@@ -102,7 +102,7 @@ Registry BinaryCrossEntropyRegistry(schema::PrimitiveType_BinaryCrossEntropy, Bi
 int BinaryCrossEntropy::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   Tensor *x = inputs_[0];
   Tensor *out = outputs_[0];
-  out->SetFormat(x->GetFormat());
+  out->set_format(x->format());
   out->set_data_type(x->data_type());
   int reduction = GetReduction();
   if (reduction == 1 || reduction == 2) {

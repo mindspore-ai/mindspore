@@ -35,7 +35,7 @@ void DetectionPostProcessTestInit(std::vector<lite::Tensor *> *inputs_, std::vec
     reinterpret_cast<float *>(mindspore::lite::ReadFile(input_boxes_path.c_str(), &input_boxes_size));
   auto *input_boxes = new lite::Tensor;
   input_boxes->set_data_type(kNumberTypeFloat32);
-  input_boxes->SetFormat(schema::Format_NHWC);
+  input_boxes->set_format(schema::Format_NHWC);
   input_boxes->set_shape({1, 1917, 4});
   input_boxes->MallocData();
   memcpy(input_boxes->MutableData(), input_boxes_data, input_boxes_size);
@@ -47,7 +47,7 @@ void DetectionPostProcessTestInit(std::vector<lite::Tensor *> *inputs_, std::vec
     reinterpret_cast<float *>(mindspore::lite::ReadFile(input_scores_path.c_str(), &input_scores_size));
   auto *input_scores = new lite::Tensor;
   input_scores->set_data_type(kNumberTypeFloat32);
-  input_scores->SetFormat(schema::Format_NHWC);
+  input_scores->set_format(schema::Format_NHWC);
   input_scores->set_shape({1, 1917, 91});
   input_scores->MallocData();
   memcpy(input_scores->MutableData(), input_scores_data, input_scores_size);
@@ -63,7 +63,7 @@ void DetectionPostProcessTestInit(std::vector<lite::Tensor *> *inputs_, std::vec
   quant_arg.scale = 0.00645306;
   input_anchors->AddQuantParam(quant_arg);
   input_anchors->set_data_type(kNumberTypeUInt8);
-  input_anchors->SetFormat(schema::Format_NHWC);
+  input_anchors->set_format(schema::Format_NHWC);
   input_anchors->set_shape({1917, 4});
   input_anchors->MallocData();
   memcpy(input_anchors->MutableData(), input_anchors_data, input_anchors_size);
@@ -72,28 +72,28 @@ void DetectionPostProcessTestInit(std::vector<lite::Tensor *> *inputs_, std::vec
   auto *output_boxes = new lite::Tensor;
   output_boxes->set_data_type(kNumberTypeFloat32);
   output_boxes->set_shape({1, 10, 4});
-  output_boxes->SetFormat(schema::Format_NHWC);
+  output_boxes->set_format(schema::Format_NHWC);
   output_boxes->MallocData();
   memset(output_boxes->MutableData(), 0, output_boxes->ElementsNum() * sizeof(float));
 
   auto *output_classes = new lite::Tensor;
   output_classes->set_data_type(kNumberTypeFloat32);
   output_classes->set_shape({1, 10});
-  output_classes->SetFormat(schema::Format_NHWC);
+  output_classes->set_format(schema::Format_NHWC);
   output_classes->MallocData();
   memset(output_classes->MutableData(), 0, output_classes->ElementsNum() * sizeof(float));
 
   auto *output_scores = new lite::Tensor;
   output_scores->set_data_type(kNumberTypeFloat32);
   output_scores->set_shape({1, 10});
-  output_scores->SetFormat(schema::Format_NHWC);
+  output_scores->set_format(schema::Format_NHWC);
   output_scores->MallocData();
   memset(output_scores->MutableData(), 0, output_scores->ElementsNum() * sizeof(float));
 
   auto *output_num_det = new lite::Tensor;
   output_num_det->set_data_type(kNumberTypeFloat32);
   output_num_det->set_shape({1});
-  output_num_det->SetFormat(schema::Format_NHWC);
+  output_num_det->set_format(schema::Format_NHWC);
   output_num_det->MallocData();
   memset(output_num_det->MutableData(), 0, output_num_det->ElementsNum() * sizeof(float));
 

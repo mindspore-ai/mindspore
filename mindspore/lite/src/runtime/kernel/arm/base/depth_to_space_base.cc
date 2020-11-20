@@ -33,7 +33,7 @@ namespace mindspore::kernel {
 int DepthToSpaceBaseCPUKernel::Init() { return RET_OK; }
 
 int DepthToSpaceBaseCPUKernel::ReSize() {
-  if (in_tensors_[0]->GetFormat() != schema::Format::Format_NHWC) {
+  if (in_tensors_[0]->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "depth_to_space only support NHWC now!";
     return RET_FORMAT_ERR;
   }

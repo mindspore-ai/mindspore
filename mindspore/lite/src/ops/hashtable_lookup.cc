@@ -54,10 +54,10 @@ int HashtableLookup::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
   hits_shape.push_back(input->DimensionSize(0));
 
   output->set_data_type(values->data_type());
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   hits->set_shape(hits_shape);
   hits->set_data_type(kNumberTypeUInt8);
-  hits->SetFormat(input->GetFormat());
+  hits->set_format(input->format());
 
   if (input->data_c() == nullptr) {
     MS_LOG(INFO) << "Do infer shape in runtime.";

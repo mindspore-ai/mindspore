@@ -175,12 +175,12 @@ int ScaleInt8CPUKernel::InitQuantArgs() {
   auto input = in_tensors_.at(0);
   auto scale = in_tensors_.at(1);
   auto output = out_tensors_.at(0);
-  auto input_scale = input->GetQuantParams().front().scale;
-  auto scale_scale = scale->GetQuantParams().front().scale;
-  auto output_scale = output->GetQuantParams().front().scale;
-  scale_param_->input_zp_ = input->GetQuantParams().front().zeroPoint;
-  scale_param_->scale_zp_ = scale->GetQuantParams().front().zeroPoint;
-  scale_param_->output_zp_ = output->GetQuantParams().front().zeroPoint;
+  auto input_scale = input->quant_params().front().scale;
+  auto scale_scale = scale->quant_params().front().scale;
+  auto output_scale = output->quant_params().front().scale;
+  scale_param_->input_zp_ = input->quant_params().front().zeroPoint;
+  scale_param_->scale_zp_ = scale->quant_params().front().zeroPoint;
+  scale_param_->output_zp_ = output->quant_params().front().zeroPoint;
 
   // (in * scale + offset) / output
   const double input_output_multiplier = input_scale * scale_scale / output_scale;
@@ -191,8 +191,8 @@ int ScaleInt8CPUKernel::InitQuantArgs() {
 
   if (in_tensors_.size() == kScaleBiasInputsSize) {
     auto offset = in_tensors_.at(2);
-    auto offset_scale = offset->GetQuantParams().front().scale;
-    scale_param_->offset_zp_ = offset->GetQuantParams().front().zeroPoint;
+    auto offset_scale = offset->quant_params().front().scale;
+    scale_param_->offset_zp_ = offset->quant_params().front().zeroPoint;
 
     const double offset_multiplier = offset_scale / output_scale;
     QuantizeMultiplier(offset_multiplier, &scale_param_->offset_mul_arg_.multiplier_, &shift);

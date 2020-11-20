@@ -61,14 +61,14 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
   }
   // compute alpha, beta;
   auto eps = batchnorm_param_->epsilon_;
-  auto zp_in = input->GetQuantParams().front().zeroPoint;
-  auto zp_mean = mean->GetQuantParams().front().zeroPoint;
-  auto zp_var = variance->GetQuantParams().front().zeroPoint;
-  auto zp_out = output->GetQuantParams().front().zeroPoint;
-  auto s_in = input->GetQuantParams().front().scale;
-  auto s_mean = mean->GetQuantParams().front().scale;
-  auto s_var = variance->GetQuantParams().front().scale;
-  auto s_out = output->GetQuantParams().front().scale;
+  auto zp_in = input->quant_params().front().zeroPoint;
+  auto zp_mean = mean->quant_params().front().zeroPoint;
+  auto zp_var = variance->quant_params().front().zeroPoint;
+  auto zp_out = output->quant_params().front().zeroPoint;
+  auto s_in = input->quant_params().front().scale;
+  auto s_mean = mean->quant_params().front().scale;
+  auto s_var = variance->quant_params().front().scale;
+  auto s_out = output->quant_params().front().scale;
 
   for (int i = 0; i < batchnorm_param_->channel_; ++i) {
     float tmp = s_out * sqrt(eps + s_var * (var_ptr[i] - zp_var));
@@ -105,18 +105,18 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
   }
   // compute alpha, beta;
   auto eps = batchnorm_param_->epsilon_;
-  auto zp_in = input->GetQuantParams().front().zeroPoint;
-  auto zp_scale = scale->GetQuantParams().front().zeroPoint;
-  auto zp_offset = offset->GetQuantParams().front().zeroPoint;
-  auto zp_mean = mean->GetQuantParams().front().zeroPoint;
-  auto zp_var = variance->GetQuantParams().front().zeroPoint;
-  auto zp_out = output->GetQuantParams().front().zeroPoint;
-  auto s_in = input->GetQuantParams().front().scale;
-  auto s_scale = scale->GetQuantParams().front().scale;
-  auto s_offset = offset->GetQuantParams().front().scale;
-  auto s_mean = mean->GetQuantParams().front().scale;
-  auto s_var = variance->GetQuantParams().front().scale;
-  auto s_out = output->GetQuantParams().front().scale;
+  auto zp_in = input->quant_params().front().zeroPoint;
+  auto zp_scale = scale->quant_params().front().zeroPoint;
+  auto zp_offset = offset->quant_params().front().zeroPoint;
+  auto zp_mean = mean->quant_params().front().zeroPoint;
+  auto zp_var = variance->quant_params().front().zeroPoint;
+  auto zp_out = output->quant_params().front().zeroPoint;
+  auto s_in = input->quant_params().front().scale;
+  auto s_scale = scale->quant_params().front().scale;
+  auto s_offset = offset->quant_params().front().scale;
+  auto s_mean = mean->quant_params().front().scale;
+  auto s_var = variance->quant_params().front().scale;
+  auto s_out = output->quant_params().front().scale;
 
   float mul_12 = s_in * s_scale;
   float mul_24 = s_scale * s_mean;

@@ -60,7 +60,7 @@ void InitConvDwCreator(std::vector<lite::Tensor *> *inputs, std::vector<lite::Te
 
   auto *input = new lite::Tensor;
   input->set_data_type(kNumberTypeFloat32);
-  input->SetFormat(schema::Format_NHWC);
+  input->set_format(schema::Format_NHWC);
   input->set_shape({conv_param->input_batch_, conv_param->input_h_, conv_param->input_w_, conv_param->input_channel_});
   input->MallocData();
   memcpy(input->MutableData(), input_data, input_size);
@@ -91,7 +91,7 @@ void InitConvDwCreator(std::vector<lite::Tensor *> *inputs, std::vector<lite::Te
   output->set_data_type(kNumberTypeFloat32);
   output->set_shape(
     {conv_param->output_batch_, conv_param->output_h_, conv_param->output_w_, conv_param->output_channel_});
-  output->SetFormat(schema::Format_NHWC);
+  output->set_format(schema::Format_NHWC);
   output->MallocData();
   memset(output->MutableData(), 0, output->ElementsNum() * sizeof(float));
   outputs->push_back(output);

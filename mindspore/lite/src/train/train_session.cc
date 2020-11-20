@@ -74,14 +74,14 @@ void TrainSession::AllocWorkSpace() {
   size_t workspace_size = 0;
   for (auto ori_kernel : kernels_) {
     if (ori_kernel->subgraph_type() == kernel::kNotSubGraph) {
-      if (workspace_size < ori_kernel->GetWorkspaceSize()) {
-        workspace_size = ori_kernel->GetWorkspaceSize();
+      if (workspace_size < ori_kernel->workspace_size()) {
+        workspace_size = ori_kernel->workspace_size();
       }
     } else {
       auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(ori_kernel);
       for (auto kernel : sub_graph->nodes()) {
-        if (workspace_size < kernel->GetWorkspaceSize()) {
-          workspace_size = kernel->GetWorkspaceSize();
+        if (workspace_size < kernel->workspace_size()) {
+          workspace_size = kernel->workspace_size();
         }
       }
     }
@@ -369,7 +369,7 @@ void TrainSession::MarkOptimizedKernels() {
       if (!IsOptimizer(kernel)) {
         for (auto it : kernel->in_tensors()) {
           if (std::find(ot.begin(), ot.end(), it) != ot.end()) {
-            kernel->SetTrainable(true);
+            kernel->set_trainable(true);
             break;
           }
         }
@@ -380,7 +380,7 @@ void TrainSession::MarkOptimizedKernels() {
         if (!IsOptimizer(sb_kernel)) {
           for (auto it : sb_kernel->in_tensors()) {
             if (std::find(ot.begin(), ot.end(), it) != ot.end()) {
-              sb_kernel->SetTrainable(true);
+              sb_kernel->set_trainable(true);
               break;
             }
           }

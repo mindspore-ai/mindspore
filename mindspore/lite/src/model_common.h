@@ -32,7 +32,7 @@ namespace mindspore::lite {
 int ConvertSubGraph(const schema::SubGraph &sub_graph, Model *model);
 
 template <typename T = schema::MetaGraph, typename U = schema::CNode>
-bool ConvertNodes(const T &meta_graph, Model *model, int schema_version = 0) {
+bool ConvertNodes(const T &meta_graph, Model *model, int schema_version = SCHEMA_CUR) {
   MS_ASSERT(model != nullptr);
   for (size_t i = 0; i < meta_graph.nodes()->size(); ++i) {
     auto *node = new (std::nothrow) Model::Node();
@@ -53,7 +53,7 @@ bool ConvertNodes(const T &meta_graph, Model *model, int schema_version = 0) {
       delete node;
       return false;
     }
-    node->primitive_->SetQuantType(static_cast<schema::QuantType>(c_node->quantType()));
+    node->primitive_->set_quant_type(static_cast<schema::QuantType>(c_node->quantType()));
     node->name_ = c_node->name()->c_str();
     node->node_type_ = static_cast<NodeType>(c_node->nodeType());
     auto count = c_node->inputIndex()->size();

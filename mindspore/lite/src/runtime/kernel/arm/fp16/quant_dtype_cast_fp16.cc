@@ -80,12 +80,12 @@ int QuantDTypeCastFp16CPUKernel::QuantDTypeCast(int task_id) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_n_stride_;
-  if (in_tensors_.front()->GetQuantParams().empty() && out_tensors_.front()->GetQuantParams().empty()) {
+  if (in_tensors_.front()->quant_params().empty() && out_tensors_.front()->quant_params().empty()) {
     MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
     return RET_ERROR;
   }
-  auto quant_arg = !out_tensors_.front()->GetQuantParams().empty() ? out_tensors_.front()->GetQuantParams().front()
-                                                                   : in_tensors_.front()->GetQuantParams().front();
+  auto quant_arg = !out_tensors_.front()->quant_params().empty() ? out_tensors_.front()->quant_params().front()
+                                                                 : in_tensors_.front()->quant_params().front();
   int ret;
   if (inverse_) {
     ret = DoDequantizeInt8ToFp16(int8_ptr_ + thread_offset, float16_ptr_ + thread_offset, quant_arg.scale,

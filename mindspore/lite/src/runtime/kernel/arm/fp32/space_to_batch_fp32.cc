@@ -37,7 +37,7 @@ int SpaceToBatchCPUKernel::Init() {
 int SpaceToBatchCPUKernel::ReSize() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-  if (input_tensor->GetFormat() != schema::Format_NHWC) {
+  if (input_tensor->format() != schema::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_batch only support NHWC now!";
     return RET_FORMAT_ERR;
   }

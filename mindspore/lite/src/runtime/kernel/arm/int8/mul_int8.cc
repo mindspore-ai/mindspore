@@ -37,12 +37,12 @@ int MulInt8CPUKernel::Init() {
   MS_ASSERT(input1);
   MS_ASSERT(output);
 
-  para_.mul_quant_arg_.in_quant_args_[0].scale_ = input0->GetQuantParams().front().scale;
-  para_.mul_quant_arg_.in_quant_args_[0].zp_ = input0->GetQuantParams().front().zeroPoint * -1;
-  para_.mul_quant_arg_.in_quant_args_[1].scale_ = input1->GetQuantParams().front().scale;
-  para_.mul_quant_arg_.in_quant_args_[1].zp_ = input1->GetQuantParams().front().zeroPoint * -1;
-  para_.mul_quant_arg_.out_quant_arg_.scale_ = output->GetQuantParams().front().scale;
-  para_.mul_quant_arg_.out_quant_arg_.zp_ = output->GetQuantParams().front().zeroPoint;
+  para_.mul_quant_arg_.in_quant_args_[0].scale_ = input0->quant_params().front().scale;
+  para_.mul_quant_arg_.in_quant_args_[0].zp_ = input0->quant_params().front().zeroPoint * -1;
+  para_.mul_quant_arg_.in_quant_args_[1].scale_ = input1->quant_params().front().scale;
+  para_.mul_quant_arg_.in_quant_args_[1].zp_ = input1->quant_params().front().zeroPoint * -1;
+  para_.mul_quant_arg_.out_quant_arg_.scale_ = output->quant_params().front().scale;
+  para_.mul_quant_arg_.out_quant_arg_.zp_ = output->quant_params().front().zeroPoint;
   para_.mul_quant_arg_.output_activation_max_ = std::numeric_limits<int8_t>::max();
   para_.mul_quant_arg_.output_activation_min_ = std::numeric_limits<int8_t>::min();
 

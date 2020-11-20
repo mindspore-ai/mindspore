@@ -48,11 +48,11 @@ uint64_t GetTimeUs() {
     return 0;
   }
   // USECS_IN_SEC *NSECS_IN_USEC;
-  auto retval = static_cast<uint64_t>((ts.tv_sec * USEC) + (ts.tv_nsec / MSEC));
-  return retval;
+  auto ret_val = static_cast<uint64_t>((ts.tv_sec * USEC) + (ts.tv_nsec / MSEC));
+  return ret_val;
 }
 
-std::string Remove(const std::string &from, const std::string &subStr, Mode mode) {
+std::string RemoveSubStr(const std::string &from, const std::string &subStr, RemoveSubStrMode mode) {
   std::string result = from;
   if (mode == PREFIX) {
     if (from.substr(0, subStr.length()) == subStr) {
@@ -90,8 +90,8 @@ std::vector<std::string> StrSplit(const std::string &str, const std::string &pat
 }
 
 std::vector<std::string> Tokenize(const std::string &src, const std::string &delimiters,
-                                  const Option<size_t> &maxTokenNum) {
-  if (maxTokenNum.IsSome() && maxTokenNum.Get() == 0) {
+                                  const Option<size_t> &max_token_num) {
+  if (max_token_num.IsSome() && max_token_num.Get() == 0) {
     return {};
   }
 
@@ -104,7 +104,7 @@ std::vector<std::string> Tokenize(const std::string &src, const std::string &del
       break;
     }
     size_t delimiter = src.find_first_of(delimiters, nonDelimiter);
-    if (delimiter == std::string::npos || (maxTokenNum.IsSome() && tokens.size() == maxTokenNum.Get() - 1)) {
+    if (delimiter == std::string::npos || (max_token_num.IsSome() && tokens.size() == max_token_num.Get() - 1)) {
       tokens.push_back(src.substr(nonDelimiter));
       break;
     }

@@ -74,7 +74,7 @@ int ScaleOpenCLKernel::InitWeights() {
     int plane = image2d_info.H * image2d_info.W;
     int channel = image2d_info.C;
     int batch = image2d_info.N;
-    if (in_tensors_[0]->GetFormat() == in_tensors_[1]->GetFormat()) {
+    if (in_tensors_[0]->format() == in_tensors_[1]->format()) {
       if (in_tensors_[0]->data_type() == in_tensors_[1]->data_type()) {
         scale_ptr_ = allocator->Malloc(in_tensors_[1]->ElementsNum(), img_size, in_tensors_[1]->data_c());
         offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, in_tensors_[2]->data_c());
@@ -83,8 +83,8 @@ int ScaleOpenCLKernel::InitWeights() {
                       << in_tensors_[0]->data_type();
         return RET_ERROR;
       }
-    } else if (in_tensors_[0]->GetFormat() == schema::Format_NHWC) {
-      if (in_tensors_[1]->GetFormat() == schema::Format_NHWC) {
+    } else if (in_tensors_[0]->format() == schema::Format_NHWC) {
+      if (in_tensors_[1]->format() == schema::Format_NHWC) {
         if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
           auto *scale = new (std::nothrow) float[pack_weight_size];
           if (scale == nullptr) {
@@ -129,8 +129,8 @@ int ScaleOpenCLKernel::InitWeights() {
           return RET_ERROR;
         }
       } else {
-        MS_LOG(ERROR) << "Unsupport format transpose from " << in_tensors_[1]->GetFormat() << "to "
-                      << in_tensors_[0]->GetFormat();
+        MS_LOG(ERROR) << "Unsupport format transpose from " << in_tensors_[1]->format() << "to "
+                      << in_tensors_[0]->format();
         return RET_ERROR;
       }
     }

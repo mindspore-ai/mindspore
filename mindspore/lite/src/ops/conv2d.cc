@@ -179,8 +179,8 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
   }
   attr->channelMultiplier = channel_mutiplier;
 
-  MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
-  auto input_node = inputs[kAnfPopulaterOne];
+  MS_ASSERT(inputs.size() == kAnfPopulaterInputNumTwo);
+  auto input_node = inputs[kAnfPopulaterInputNumOne];
   MS_ASSERT(input_node != nullptr);
   if (input_node->isa<Parameter>()) {
     auto param_node = input_node->cast<ParameterPtr>();
@@ -192,7 +192,7 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
       MS_ASSERT(abstractTensor != nullptr);
       if (utils::isa<abstract::ShapePtr>(abstractTensor->BuildShape())) {
         auto dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
-        attr->channelIn = dims[kAnfPopulaterOne];
+        attr->channelIn = dims[kAnfPopulaterInputNumOne];
       }
     }
   }
@@ -372,14 +372,14 @@ int Conv2D::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   MS_ASSERT(input_tensor != nullptr);
   MS_ASSERT(out_tensor != nullptr);
 
-  out_tensor->SetFormat(input_tensor->GetFormat());
+  out_tensor->set_format(input_tensor->format());
   out_tensor->set_data_type(input_tensor->data_type());
   pad_l_ = GetPadLeft();
   pad_u_ = GetPadUp();
   pad_d_ = GetPadDown();
   pad_r_ = GetPadRight();
 
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto in_shape = input_tensor->shape();

@@ -79,8 +79,8 @@ int Where::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   auto input1 = inputs_.at(1);
   auto input2 = inputs_.at(2);
   output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  output->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   int num = input0->ElementsNum();

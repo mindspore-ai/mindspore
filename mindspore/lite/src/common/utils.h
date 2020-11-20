@@ -148,10 +148,10 @@ std::vector<std::string> StrSplit(const std::string &str, const std::string &pat
 std::vector<std::string> Tokenize(const std::string &src, const std::string &delimiters,
                                   const Option<size_t> &maxTokenNum = Option<size_t>(None()));
 
-enum Mode { PREFIX, SUFFIX, ANY };
+enum RemoveSubStrMode { PREFIX, SUFFIX, ANY };
 
 // remove redundant charactor
-std::string Remove(const std::string &from, const std::string &subStr, Mode mode = ANY);
+std::string RemoveSubStr(const std::string &from, const std::string &subStr, RemoveSubStrMode mode = ANY);
 
 template <typename T>
 inline Option<T> GenericParseValue(const std::string &value) {

@@ -47,7 +47,7 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
 
     auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(clip_cnode->input(0));
     MS_ASSERT(primitive_c != nullptr);
-    auto primT = primitive_c->GetPrimitiveT();
+    auto primT = primitive_c->primitiveT();
     if (primT == nullptr || primT->value.AsClip() == nullptr) {
       MS_LOG(ERROR) << "primT is null";
       return false;

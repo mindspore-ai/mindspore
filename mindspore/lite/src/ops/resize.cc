@@ -129,8 +129,8 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
     return RET_NULL_PTR;
   }
   output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  output->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
 
@@ -151,7 +151,7 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
             MS_LOG(INFO) << "Resize op size can't cast int.";
             return RET_INFER_INVALID;
           }
-          switch (shape_tensor->GetFormat()) {
+          switch (shape_tensor->format()) {
             case schema::Format_NCHW:
               output_shape.push_back(data[2] * input->Height());
               output_shape.push_back(data[3] * input->Width());
@@ -170,7 +170,7 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
             MS_LOG(INFO) << "Resize op size can't cast float.";
             return RET_INFER_INVALID;
           }
-          switch (shape_tensor->GetFormat()) {
+          switch (shape_tensor->format()) {
             case schema::Format_NCHW:
               output_shape.push_back(data[2] * input->Height());
               output_shape.push_back(data[3] * input->Width());

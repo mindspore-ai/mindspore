@@ -227,10 +227,10 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
   MS_ASSERT(input);
   MS_ASSERT(output);
 
-  quant_arg_.in_scale_ = input->GetQuantParams().front().scale;
-  quant_arg_.in_zp_ = input->GetQuantParams().front().zeroPoint;
-  quant_arg_.out_scale_ = output->GetQuantParams().front().scale;
-  quant_arg_.out_zp_ = output->GetQuantParams().front().zeroPoint;
+  quant_arg_.in_scale_ = input->quant_params().front().scale;
+  quant_arg_.in_zp_ = input->quant_params().front().zeroPoint;
+  quant_arg_.out_scale_ = output->quant_params().front().scale;
+  quant_arg_.out_zp_ = output->quant_params().front().zeroPoint;
 
   // (quant_out - out_zp) * out_scale = (quant_in - in_zp) * in_scale
   const double input_output_multiplier = quant_arg_.in_scale_ / quant_arg_.out_scale_;

@@ -51,8 +51,8 @@ int Transpose::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &
       MS_LOG(ERROR) << "new TransposeT failed";
       return RET_ERROR;
     }
-    MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
-    auto inputNode = inputs[kAnfPopulaterOne];
+    MS_ASSERT(inputs.size() == kAnfPopulaterInputNumTwo);
+    auto inputNode = inputs[kAnfPopulaterInputNumOne];
     if (inputNode->isa<ValueNode>()) {
       auto valNode = inputNode->cast<ValueNodePtr>();
       MS_ASSERT(valNode != nullptr);
@@ -120,8 +120,8 @@ int Transpose::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  output->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   MS_ASSERT(inputs_.size() == kSingleNum || inputs_.size() == kDoubleNum);

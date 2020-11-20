@@ -68,7 +68,7 @@ int SqueezeInt8CPUKernel::Init() {
 
   for (size_t i = 0; i < input_num; i++) {
     auto *input_tensor = in_tensors_.at(i);
-    auto quant_args = input_tensor->GetQuantParams();
+    auto quant_args = input_tensor->quant_params();
     MS_ASSERT(quant_args.size() == 1);
     quant_Squeeze_parm_->in_quant_args_[i].scale_ = quant_args.front().scale;
     quant_Squeeze_parm_->in_quant_args_[i].zp_ = quant_args.front().zeroPoint;
@@ -77,7 +77,7 @@ int SqueezeInt8CPUKernel::Init() {
   MS_ASSERT(this->out_tensors_.size() == 1);
   auto output_tensor = out_tensors_.at(0);
   MS_ASSERT(output_tensor != nullptr);
-  auto quant_args = output_tensor->GetQuantParams();
+  auto quant_args = output_tensor->quant_params();
   MS_ASSERT(quant_args.size() == 1);
   quant_Squeeze_parm_->out_quant_args_.scale_ = quant_args.front().scale;
   quant_Squeeze_parm_->out_quant_args_.zp_ = quant_args.front().zeroPoint;

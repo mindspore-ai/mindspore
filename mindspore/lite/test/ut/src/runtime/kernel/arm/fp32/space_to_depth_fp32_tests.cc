@@ -53,7 +53,7 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   lite::Tensor input_tensor;
   input_tensor.set_data(input.data());
   input_tensor.set_shape(in_shape);
-  input_tensor.SetFormat(schema::Format_NHWC);
+  input_tensor.set_format(schema::Format_NHWC);
   input_tensor.set_data_type(kNumberTypeFloat32);
   std::vector<lite::Tensor *> inputs_tensor;
   inputs_tensor.push_back(&input_tensor);
@@ -65,7 +65,7 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   lite::Tensor output_tensor;
   output_tensor.set_data(output.data());
   output_tensor.set_shape(out_shape);
-  output_tensor.SetFormat(schema::Format_NHWC);
+  output_tensor.set_format(schema::Format_NHWC);
   output_tensor.set_data_type(kNumberTypeFloat32);
   std::vector<lite::Tensor *> outputs_tensor;
   outputs_tensor.push_back(&output_tensor);

@@ -57,7 +57,7 @@ int ParallelExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor 
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
       return RET_ERROR;
     }
-    if (inTensor->GetFormat() != schema::Format::Format_NHWC) {
+    if (inTensor->format() != schema::Format::Format_NHWC) {
       MS_LOG(ERROR) << "Model input tensor should be NHWC";
       return RET_ERROR;
     }
