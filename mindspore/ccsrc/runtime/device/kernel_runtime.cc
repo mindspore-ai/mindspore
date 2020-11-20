@@ -477,12 +477,11 @@ DeviceAddressPtr KernelRuntime::PreAssignCNodeMemory(const AnfNodePtr &anf_node,
   auto cnode = anf_node->cast<CNodePtr>();
   if (opt::IsNopNode(cnode)) {
     size_t kNopNodeInputSize = 2;
-    size_t kNopNodeRealInputIndex = 1;
     if (cnode->size() != kNopNodeInputSize) {
       MS_LOG(EXCEPTION) << cnode->fullname_with_scope() << " has invalid input size: " << cnode->size();
     }
     auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
-    return PreAssignCNodeMemory(cnode->input(kNopNodeRealInputIndex), input_node_with_index.second);
+    return PreAssignCNodeMemory(input_node_with_index.first, input_node_with_index.second);
   }
   auto kernel_mod = AnfAlgo::GetKernelMod(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
