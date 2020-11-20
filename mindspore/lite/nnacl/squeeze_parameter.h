@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SQUEEZE_PARAMETER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SQUEEZE_PARAMETER_H_
+#ifndef MINDSPORE_LITE_NNACL_SQUEEZE_PARAMETER_H_
+#define MINDSPORE_LITE_NNACL_SQUEEZE_PARAMETER_H_
 #include "nnacl/op_base.h"
 #include "nnacl/quantization/quantize.h"
 
@@ -35,4 +35,4 @@ typedef struct SqueezeParameter {
   int input_dim_;
 } SqueezeParameter;
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_SQUEEZE_PARAMETER_H_
+#endif  // MINDSPORE_LITE_NNACL_SQUEEZE_PARAMETER_H_
