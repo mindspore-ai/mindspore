@@ -75,6 +75,9 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
 }
 
 bool PassManager::Run(const FuncGraphPtr &func_graph) const {
+  if (func_graph == nullptr) {
+    return false;
+  }
   bool changed = false;
   // run all passes
   bool change = true;

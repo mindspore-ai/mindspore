@@ -44,6 +44,8 @@ const BaseRef ConvTupleActivationFusion::DefinePattern() const {
 
 const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                     const EquivPtr &) const {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(node != nullptr);
   MS_LOG(DEBUG) << "conv tuple activation pass process:" << schema::EnumNamesPrimitiveType()[primitive_type];
   if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
     return nullptr;

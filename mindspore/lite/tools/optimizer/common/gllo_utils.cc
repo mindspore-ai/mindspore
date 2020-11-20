@@ -112,6 +112,10 @@ VarNodePtr CreateVarNodeWithSexp(const BaseRef &sexp, const BaseRef &graph) {
 
 AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
                             bool multigraph) {
+  if (primitive_vars == nullptr) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return nullptr;
+  }
   MS_LOG(DEBUG) << "HandleSexpVector sexp: " + sexp.ToString() + ", graph " + graph.ToString();
   std::vector<AnfNodePtr> input_nodes;
   const auto &tuple = utils::cast<VectorRef>(sexp);
@@ -499,6 +503,10 @@ bool IsQuantNode(const BaseRef &n) {
 }
 
 bool CheckIsAllInputsParam(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return 0;
+  }
   if (utils::isa<CNode>(node)) {
     auto cnode = node->cast<CNodePtr>();
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
@@ -537,6 +545,10 @@ size_t GetOutputTensorNum(const AnfNodePtr &node) {
 }
 
 bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node) {
+  if (node == nullptr || graph == nullptr) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return 0;
+  }
   auto output_node_list = GetRealNodeUsedList(graph, node);
   if (output_node_list->size() != 1) {
     MS_LOG(DEBUG) << "fusion node has multi output nodes";
@@ -548,7 +560,7 @@ bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node) {
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,
                                                                              const AnfNodePtr &node) {
   auto output_node_list = std::make_shared<std::vector<std::pair<AnfNodePtr, int>>>();
-  if (graph == nullptr) {
+  if (graph == nullptr || node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
   }
