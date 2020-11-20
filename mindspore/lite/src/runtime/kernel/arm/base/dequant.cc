@@ -23,7 +23,7 @@ float *DequantUtil::DequantWeight(lite::Tensor *input_tensor) {
     MS_LOG(ERROR) << "Conv weight input type error." << input_tensor->data_type();
     return nullptr;
   }
-  if (input_tensor->GetQuantParams().empty()) {
+  if (input_tensor->quant_params().empty()) {
     MS_LOG(ERROR) << "No quant param.";
     return nullptr;
   }

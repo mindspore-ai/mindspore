@@ -50,9 +50,9 @@ int GatherNdInt8CPUKernel::ReSize() {
     free(in_offset_);
     in_offset_ = nullptr;
   }
-  auto in_quant_args = in_tensors_.at(0)->GetQuantParams();
-  auto ind_quant_args = in_tensors_.at(1)->GetQuantParams();
-  auto out_quant_args = out_tensors_.at(0)->GetQuantParams();
+  auto in_quant_args = in_tensors_.at(0)->quant_params();
+  auto ind_quant_args = in_tensors_.at(1)->quant_params();
+  auto out_quant_args = out_tensors_.at(0)->quant_params();
   param_.alpha_ = in_quant_args.front().scale / out_quant_args.front().scale;
   param_.zp_in_ = in_quant_args.front().zeroPoint;
   param_.zp_out_ = out_quant_args.front().zeroPoint;

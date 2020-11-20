@@ -43,7 +43,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest1) {
   input_tensor.set_data(input.data());
   input_tensor.set_shape(in_shape);
   input_tensor.set_data_type(kNumberTypeInt8);
-  input_tensor.SetFormat(schema::Format_NHWC);
+  input_tensor.set_format(schema::Format_NHWC);
 
   input_tensor.AddQuantParam(quant_arg);
   std::vector<lite::Tensor *> inputs_tensor;
@@ -104,7 +104,7 @@ TEST_F(QuantDTypeCastTestFp32, QuantDTypeCastTest2) {
   lite::Tensor output_tensor;
   output_tensor.set_data(output.data());
   output_tensor.set_shape(out_shape);
-  output_tensor.SetFormat(schema::Format_NHWC);
+  output_tensor.set_format(schema::Format_NHWC);
   output_tensor.set_data_type(kNumberTypeInt8);
   std::vector<lite::Tensor *> outputs_tensor;
   outputs_tensor.emplace_back(&output_tensor);

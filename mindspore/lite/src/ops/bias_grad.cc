@@ -111,7 +111,7 @@ int BiasGrad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> out
   }
   out->set_shape(inshape);
   out->set_data_type(in0->data_type());
-  out->SetFormat(in0->GetFormat());
+  out->set_format(in0->format());
 
   return RET_OK;
 }

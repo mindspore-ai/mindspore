@@ -30,10 +30,10 @@ int L2NormInt8CPUKernel::Init() {
   MS_ASSERT(input);
   MS_ASSERT(output);
 
-  quant_param_.in_.scale_ = input->GetQuantParams().front().scale;
-  quant_param_.in_.zp_ = input->GetQuantParams().front().zeroPoint;
-  quant_param_.out_.scale_ = output->GetQuantParams().front().scale;
-  quant_param_.out_.zp_ = output->GetQuantParams().front().zeroPoint;
+  quant_param_.in_.scale_ = input->quant_params().front().scale;
+  quant_param_.in_.zp_ = input->quant_params().front().zeroPoint;
+  quant_param_.out_.scale_ = output->quant_params().front().scale;
+  quant_param_.out_.zp_ = output->quant_params().front().zeroPoint;
   return ReSize();
 }
 

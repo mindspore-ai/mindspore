@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_BatchToSpaceND;
 
 namespace mindspore::kernel {
 int BatchToSpaceBaseCPUKernel::Init() {
-  if (in_tensors_[0]->GetFormat() != schema::Format::Format_NHWC) {
+  if (in_tensors_[0]->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "batch_to_space only support NHWC now!";
     return RET_FORMAT_ERR;
   }

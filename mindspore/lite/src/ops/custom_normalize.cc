@@ -48,7 +48,7 @@ int CustomNormalize::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
   MS_ASSERT(output != nullptr);
 
   output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
 
   if (input->data_c() == nullptr) {
     MS_LOG(INFO) << "Do infer shape in runtime.";

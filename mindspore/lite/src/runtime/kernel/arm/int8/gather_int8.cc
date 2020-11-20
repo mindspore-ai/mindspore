@@ -34,8 +34,8 @@ namespace mindspore::kernel {
 int GatherInt8CPUKernel::Init() {
   axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
   batchDims_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->batchDims_;
-  auto in_quant_args = in_tensors_.at(0)->GetQuantParams();
-  auto out_quant_args = out_tensors_.at(0)->GetQuantParams();
+  auto in_quant_args = in_tensors_.at(0)->quant_params();
+  auto out_quant_args = out_tensors_.at(0)->quant_params();
   param_.alpha_ = in_quant_args.front().scale / out_quant_args.front().scale;
   param_.zp_in_ = in_quant_args.front().zeroPoint;
   param_.zp_out_ = out_quant_args.front().zeroPoint;

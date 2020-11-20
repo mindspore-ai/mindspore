@@ -26,7 +26,7 @@
 namespace mindspore {
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 
-int EnvToInt(const char *env) {
+int StrToInt(const char *env) {
   if (env == nullptr) return 2;
   if (strcmp(env, "0") == 0) return 0;
   if (strcmp(env, "1") == 0) return 1;
@@ -37,7 +37,7 @@ int EnvToInt(const char *env) {
 
 bool IsPrint(int level) {
   static const char *env = std::getenv("GLOG_v");
-  static int ms_level = EnvToInt(env);
+  static int ms_level = StrToInt(env);
   if (level < 0) {
     level = 2;
   }

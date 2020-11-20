@@ -94,7 +94,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   MS_ASSERT(labels != nullptr);
   MS_ASSERT(ins != nullptr);
 
-  float *losses_ = static_cast<float *>(GetWorkspace());
+  float *losses_ = static_cast<float *>(workspace());
   float *sum_data_ = losses_ + data_size;
   std::fill(losses_, losses_ + data_size, 0.f);
   std::fill(sum_data_, sum_data_ + sm_params_.input_shape_[0], 0.f);
@@ -142,7 +142,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
     return RET_ERROR;
   }
   size_t data_size = in_tensors_.at(0)->ElementsNum();
-  SetWorkspaceSize((data_size + dims[0]) * sizeof(float));
+  set_workspace_size((data_size + dims[0]) * sizeof(float));
   sm_params_.n_dim_ = 2;
   sm_params_.element_size_ = data_size;
   sm_params_.axis_ = 1;

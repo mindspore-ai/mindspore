@@ -149,9 +149,9 @@ int ConvolutionBaseCPUKernel::MallocQuantParam() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto output_tensor = out_tensors_.at(kOutputIndex);
-  size_t input_arg_num = input_tensor->GetQuantParams().size();
-  size_t filter_arg_num = weight_tensor->GetQuantParams().size();
-  size_t output_arg_num = output_tensor->GetQuantParams().size();
+  size_t input_arg_num = input_tensor->quant_params().size();
+  size_t filter_arg_num = weight_tensor->quant_params().size();
+  size_t output_arg_num = output_tensor->quant_params().size();
   conv_quant_arg_->input_arg_num_ = input_arg_num;
   conv_quant_arg_->filter_arg_num_ = filter_arg_num;
   conv_quant_arg_->output_arg_num_ = output_arg_num;
@@ -178,7 +178,7 @@ int ConvolutionBaseCPUKernel::SetInputTensorQuantParam() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto in_arg_num = conv_quant_arg_->input_arg_num_;
   if (in_arg_num == kPerTensor) {
-    auto input_quant_arg = input_tensor->GetQuantParams().front();
+    auto input_quant_arg = input_tensor->quant_params().front();
     conv_quant_arg_->input_quant_args_[0].zp_ = input_quant_arg.zeroPoint;
     conv_quant_arg_->input_quant_args_[0].scale_ = input_quant_arg.scale;
   } else {
@@ -193,11 +193,11 @@ int ConvolutionBaseCPUKernel::SetFilterTensorQuantParam() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto weight_arg_num = conv_quant_arg_->filter_arg_num_;
   if (weight_arg_num == kPerTensor) {
-    auto weight_quant_arg = weight_tensor->GetQuantParams().front();
+    auto weight_quant_arg = weight_tensor->quant_params().front();
     conv_quant_arg_->filter_quant_args_[0].zp_ = weight_quant_arg.zeroPoint;
     conv_quant_arg_->filter_quant_args_[0].scale_ = weight_quant_arg.scale;
   } else {
-    auto weight_quant_arg = weight_tensor->GetQuantParams();
+    auto weight_quant_arg = weight_tensor->quant_params();
     for (size_t i = 0; i < weight_arg_num; ++i) {
       conv_quant_arg_->filter_quant_args_[i].zp_ = weight_quant_arg[i].zeroPoint;
       conv_quant_arg_->filter_quant_args_[i].scale_ = weight_quant_arg[i].scale;
@@ -210,7 +210,7 @@ int ConvolutionBaseCPUKernel::SetOutputTensorQuantParam() {
   auto output_tensor = out_tensors_.at(kOutputIndex);
   auto out_arg_num = conv_quant_arg_->output_arg_num_;
   if (out_arg_num == kPerTensor) {
-    auto output_quant_arg = output_tensor->GetQuantParams().front();
+    auto output_quant_arg = output_tensor->quant_params().front();
     conv_quant_arg_->output_quant_args_[0].zp_ = output_quant_arg.zeroPoint;
     conv_quant_arg_->output_quant_args_[0].scale_ = output_quant_arg.scale;
   } else {

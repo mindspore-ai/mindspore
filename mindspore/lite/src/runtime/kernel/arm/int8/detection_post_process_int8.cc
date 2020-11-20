@@ -56,11 +56,11 @@ int DetectionPostProcessInt8CPUKernel::Dequantize(lite::Tensor *tensor, float **
     MS_LOG(ERROR) << "Malloc data failed.";
     return RET_ERROR;
   }
-  if (tensor->GetQuantParams().empty()) {
+  if (tensor->quant_params().empty()) {
     MS_LOG(ERROR) << "null quant param";
     return RET_ERROR;
   }
-  quant_param_ = tensor->GetQuantParams().front();
+  quant_param_ = tensor->quant_params().front();
   data_fp32_ = *data;
   quant_size_ = tensor->ElementsNum();
   thread_n_stride_ = UP_DIV(quant_size_, op_parameter_->thread_num_);

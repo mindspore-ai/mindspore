@@ -153,13 +153,13 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
   for (size_t i = 1; i < stack_cnode->inputs().size(); i++) {
     auto fullconnect_node2 = stack_cnode->input(i)->cast<CNodePtr>();
     auto fc_prim = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(fullconnect_node2->input(0));
-    auto fc_input_quantParams = fc_prim->GetInputQuantParams();
+    auto fc_input_quantParams = fc_prim->input_quant_params();
     if (fc_input_quantParams.size() > 1 && !fc_input_quantParams[1].empty()) {
       jointed_quant_params.push_back(fc_input_quantParams[1][0]);
     }
   }
   auto fc_prim = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(fullconnect_cnode->input(0));
-  auto rmatmul_quant_params = fc_prim->GetInputQuantParams();
+  auto rmatmul_quant_params = fc_prim->input_quant_params();
   rmatmul_quant_params.pop_back();
   rmatmul_quant_params.pop_back();
   // no bias quantParams
@@ -168,8 +168,8 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
     MS_LOG(ERROR) << "matmul_cvalue is nullptr.";
     return nullptr;
   }
-  matmul_cvalue->SetInputQuantParams(rmatmul_quant_params);
-  matmul_cvalue->SetOutputQuantParams(fc_prim->GetOutputQuantParams());
+  matmul_cvalue->set_input_quant_params(rmatmul_quant_params);
+  matmul_cvalue->set_output_quant_params(fc_prim->output_quant_params());
   auto matmul_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(matmul_cvalue));
   std::vector<AnfNodePtr> matmul_inputs = {matmul_value_node, left_matmul_input};
 
@@ -181,11 +181,11 @@ const AnfNodePtr BatchMatMulFusion::Process(const FuncGraphPtr &func_graph, cons
       return node;
     }
     auto prim = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(matmul_value_node);
-    if (prim->GetPrimitiveT()->value.AsMatMul() == nullptr) {
-      MS_LOG(ERROR) << "prim->GetPrimitiveT()->value.AsMatMul() is nullptr.";
+    if (prim->primitiveT()->value.AsMatMul() == nullptr) {
+      MS_LOG(ERROR) << "prim->primitiveT()->value.AsMatMul() is nullptr.";
       return nullptr;
     }
-    prim->GetPrimitiveT()->value.AsMatMul()->transposeB = true;
+    prim->primitiveT()->value.AsMatMul()->transposeB = true;
     matmul_inputs.push_back(rmatmul_paramter);
   } else {
     auto right_reshape_cnode = right_reshape_node->cast<CNodePtr>();

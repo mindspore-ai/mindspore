@@ -43,8 +43,8 @@ kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::T
   // data of second tensor of fc may be nullptr
   auto *restore_data = weight_tensor->data_c();
   auto restore_type = weight_tensor->data_type();
-  bool dequant_flag = !weight_tensor->GetQuantParams().empty() && weight_tensor->GetQuantParams().front().inited &&
-                      restore_data != nullptr;
+  bool dequant_flag =
+    !weight_tensor->quant_params().empty() && weight_tensor->quant_params().front().inited && restore_data != nullptr;
   if (dequant_flag) {
     auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {

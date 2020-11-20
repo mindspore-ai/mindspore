@@ -78,7 +78,7 @@ int LayerNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite:
   MS_ASSERT(input != nullptr);
   auto output = outputs_.at(0);
   MS_ASSERT(output != nullptr);
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   output->set_data_type(input->data_type());
 
   if (GetElementwiseAffine() && inputs_.size() != kMultiNum) {
@@ -102,7 +102,7 @@ int LayerNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite:
       return RET_PARAM_INVALID;
     }
   }
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
 

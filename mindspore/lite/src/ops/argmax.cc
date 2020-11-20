@@ -71,9 +71,9 @@ int ArgMax::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
     return RET_ERROR;
   }
 
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   output->set_data_type(input->data_type());
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   std::vector<int> output_shape(input->shape());

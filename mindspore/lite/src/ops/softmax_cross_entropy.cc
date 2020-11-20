@@ -103,14 +103,14 @@ int SoftmaxCrossEntropy::InferShape(std::vector<Tensor *> inputs, std::vector<Te
   outshape.push_back(1);
   out->set_shape(outshape);
   out->set_data_type(in0->data_type());
-  out->SetFormat(in0->GetFormat());
+  out->set_format(in0->format());
 
   if (1 < outputs.size()) {
     auto *grads = outputs.at(1);
     MS_ASSERT(grads != nullptr);
     grads->set_shape(in0->shape());
     grads->set_data_type(in0->data_type());
-    grads->SetFormat(in0->GetFormat());
+    grads->set_format(in0->format());
   }
   return RET_OK;
 }

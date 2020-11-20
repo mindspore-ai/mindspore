@@ -34,11 +34,11 @@ int SliceInt8CPUKernel::Init() {
   MS_ASSERT(input);
   MS_ASSERT(output);
 
-  auto in_quant_args = input->GetQuantParams();
+  auto in_quant_args = input->quant_params();
   param_->quant_arg_.in_args_.scale_ = in_quant_args.front().scale;
   param_->quant_arg_.in_args_.zp_ = in_quant_args.front().zeroPoint;
 
-  auto out_quant_args = output->GetQuantParams();
+  auto out_quant_args = output->quant_params();
   param_->quant_arg_.out_args_.scale_ = out_quant_args.front().scale;
   param_->quant_arg_.out_args_.zp_ = out_quant_args.front().zeroPoint;
 

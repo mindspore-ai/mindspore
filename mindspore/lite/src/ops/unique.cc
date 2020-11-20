@@ -62,9 +62,9 @@ int Unique::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   MS_ASSERT(output1 != nullptr);
   output0->set_data_type(input->data_type());
   output1->set_data_type(kNumberTypeInt32);
-  output1->SetFormat(input->GetFormat());
-  output0->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  output1->set_format(input->format());
+  output0->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   output0->set_shape(input->shape());

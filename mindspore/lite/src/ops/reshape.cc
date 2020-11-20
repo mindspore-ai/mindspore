@@ -47,8 +47,8 @@ int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
   }
   if (this->primitive_->value.value == nullptr) {
     auto attr = new (std::nothrow) schema::ReshapeT();
-    MS_ASSERT(inputs.size() == kAnfPopulaterThree - 1);
-    auto inputNode = inputs[kAnfPopulaterTwo - 1];
+    MS_ASSERT(inputs.size() == kAnfPopulaterInputNumThree - 1);
+    auto inputNode = inputs[kAnfPopulaterInputNumTwo - 1];
     if (inputNode->isa<ValueNode>()) {
       auto valueNode = inputNode->cast<ValueNodePtr>();
       MS_ASSERT(valueNode != nullptr);
@@ -171,8 +171,8 @@ int Reshape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  output->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
 

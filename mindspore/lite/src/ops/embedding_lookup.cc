@@ -67,9 +67,9 @@ int EmbeddingLookup::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
   MS_ASSERT(ids != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  output->SetFormat(params_->GetFormat());
+  output->set_format(params_->format());
   output->set_data_type(params_->data_type());
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
 

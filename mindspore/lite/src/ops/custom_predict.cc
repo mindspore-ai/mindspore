@@ -69,10 +69,10 @@ int CustomPredict::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor 
 
   output0->set_shape(shape);
   output0->set_data_type(kNumberTypeInt32);
-  output0->SetFormat(input->GetFormat());
+  output0->set_format(input->format());
   output1->set_shape(shape);
   output1->set_data_type(kNumberTypeFloat32);
-  output1->SetFormat(input->GetFormat());
+  output1->set_format(input->format());
   return RET_OK;
 }
 }  // namespace lite

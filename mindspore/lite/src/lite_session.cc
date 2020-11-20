@@ -74,7 +74,7 @@ void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lit
     for (size_t j = 0; j < quant_clusters->size(); j++) {
       clusters.push_back(quant_clusters->Get(j));
     }
-    dst_tensor->SetQuantClusters(clusters);
+    dst_tensor->set_quant_clusters(clusters);
   }
 }
 

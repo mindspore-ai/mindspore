@@ -44,9 +44,9 @@ const std::set<int> kSupportDataType = {kNumberTypeBool,  kNumberTypeUInt8,   kN
 
 #ifdef PRIMITIVE_WRITEABLE
 using TensorPtr = std::shared_ptr<mindspore::tensor::Tensor>;
-constexpr int kAnfPopulaterOne = 1;
-constexpr int kAnfPopulaterTwo = 2;
-constexpr int kAnfPopulaterThree = 3;
+constexpr int kAnfPopulaterInputNumOne = 1;
+constexpr int kAnfPopulaterInputNumTwo = 2;
+constexpr int kAnfPopulaterInputNumThree = 3;
 static std::map<std::string, schema::ActivationType> kActivationTypeMap{{"ReLU", schema::ActivationType_RELU},
                                                                         {"ReLU6", schema::ActivationType_RELU6},
                                                                         {"Sigmoid", schema::ActivationType_SIGMOID},
@@ -75,7 +75,7 @@ class PrimitiveC : public mindspore::Primitive {
 
   int Type() const;
 
-  schema::PrimitiveT *GetPrimitiveT() const;
+  schema::PrimitiveT *primitiveT() const;
 
   void ClearPrimitiveT();
 
@@ -90,13 +90,13 @@ class PrimitiveC : public mindspore::Primitive {
     }
   }
 
-  void SetInputQuantParams(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param);
+  void set_input_quant_params(const std::vector<std::vector<schema::QuantParamT>> &input_quant_param);
 
-  void SetInputQuantParam(const size_t &index, const std::vector<schema::QuantParamT> &input_quant_param);
+  void set_input_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &input_quant_param);
 
-  void SetOutputQuantParams(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param);
+  void set_output_quant_params(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param);
 
-  void SetOutputQuantParam(const size_t &index, const std::vector<schema::QuantParamT> &output_quant_param);
+  void set_output_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &output_quant_param);
 
   bool IsInputQuantParamsInited();
 
@@ -106,21 +106,21 @@ class PrimitiveC : public mindspore::Primitive {
 
   void AddInputQuantParam(std::vector<schema::QuantParamT> quant_param);
 
-  std::vector<std::vector<schema::QuantParamT>> GetInputQuantParams() const;
+  std::vector<std::vector<schema::QuantParamT>> input_quant_params() const;
 
   void AddOutputQuantParam(std::vector<schema::QuantParamT> quant_param);
 
-  std::vector<std::vector<schema::QuantParamT>> GetOutputQuantParams() const;
+  std::vector<std::vector<schema::QuantParamT>> output_quant_params() const;
 
-  void SetQuantType(const schema::QuantType &quant_type);
+  void set_quant_type(const schema::QuantType &quant_type);
 
-  schema::QuantType GetQuantType() const;
+  schema::QuantType quant_type() const;
 
-  virtual int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_);
+  virtual int InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs);
 
-  bool GetInferFlag() const;
+  bool infer_flag() const;
 
-  void SetInferFlag(bool flag);
+  void set_infer_flag(bool flag);
 
   static PrimitiveC *Create(mindspore::schema::Primitive *primitive) { return Create(primitive->UnPack()); }
 
@@ -162,16 +162,16 @@ class PrimitiveC {
 
   static PrimitiveC *Create(const schema::Primitive *primitive);
 
-  bool GetInferFlag() const;
+  bool infer_flag() const;
 
-  void SetInferFlag(bool flag);
+  void set_infer_flag(bool flag);
 
   virtual int InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs);
 
   int Type() const;
 
-  void SetQuantType(schema::QuantType quant_type);
-  schema::QuantType GetQuantType() const;
+  void set_quant_type(schema::QuantType quant_type);
+  schema::QuantType quant_type() const;
 
   template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
   static PrimitiveC *NewPrimitiveC(const schema::Primitive *primitive) {

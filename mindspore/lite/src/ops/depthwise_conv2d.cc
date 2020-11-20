@@ -127,8 +127,8 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
   auto channel_multiplier = CastToInt(prim.GetAttr("channel_multiplier"), false).front();
   attr->channelMultiplier = channel_multiplier;
 
-  MS_ASSERT(inputs.size() == kAnfPopulaterTwo);
-  auto inputNode = inputs[kAnfPopulaterOne];
+  MS_ASSERT(inputs.size() == kAnfPopulaterInputNumTwo);
+  auto inputNode = inputs[kAnfPopulaterInputNumOne];
   MS_ASSERT(inputNode != nullptr);
   if (inputNode->isa<Parameter>()) {
     auto paramNode = inputNode->cast<ParameterPtr>();
@@ -139,7 +139,7 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
       MS_ASSERT(abstractTensor != nullptr);
       if (utils::isa<abstract::ShapePtr>(abstractTensor->BuildShape())) {
         auto dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
-        attr->channelIn = dims[kAnfPopulaterOne];
+        attr->channelIn = dims[kAnfPopulaterInputNumOne];
       }
     }
   }
@@ -211,14 +211,14 @@ int DepthwiseConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
   MS_ASSERT(weight != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   output->set_data_type(input->data_type());
   pad_l_ = GetPadLeft();
   pad_u_ = GetPadUp();
   pad_d_ = GetPadDown();
   pad_r_ = GetPadRight();
 
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto in_shape = input->shape();

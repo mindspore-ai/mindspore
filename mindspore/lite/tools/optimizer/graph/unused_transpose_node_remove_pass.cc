@@ -51,7 +51,7 @@ bool RemoveUnusedTransposeOpPass::Run(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "Transpose node of onnx need to removed which has not primitiveC";
         return RET_ERROR;
       }
-      auto primT = primPtr->GetPrimitiveT();
+      auto primT = primPtr->primitiveT();
       if (primT == nullptr) {
         MS_LOG(ERROR) << "Transpose node of onnx need to removed which has not primitiveC";
         return RET_ERROR;
@@ -74,7 +74,7 @@ bool RemoveUnusedTransposeOpPass::Run(const FuncGraphPtr &func_graph) {
         MS_LOG(ERROR) << "Transpose node of onnx need to removed which has not primitiveC";
         return RET_ERROR;
       }
-      auto primT = primPtr->GetPrimitiveT();
+      auto primT = primPtr->primitiveT();
       if (primT == nullptr) {
         MS_LOG(ERROR) << "Transpose node of onnx need to removed which has not primitiveT";
         return RET_ERROR;

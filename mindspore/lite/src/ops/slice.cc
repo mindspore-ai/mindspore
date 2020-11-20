@@ -59,8 +59,8 @@ int Slice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    if (inputs.size() >= kAnfPopulaterThree) {
-      auto beginNode = inputs[kAnfPopulaterOne];
+    if (inputs.size() >= kAnfPopulaterInputNumThree) {
+      auto beginNode = inputs[kAnfPopulaterInputNumOne];
       MS_ASSERT(beginNode != nullptr);
       if (beginNode->isa<ValueNode>()) {
         auto valueNode = beginNode->cast<ValueNodePtr>();
@@ -77,7 +77,7 @@ int Slice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
           }
         }
       }
-      auto sizeNode = inputs[kAnfPopulaterTwo];
+      auto sizeNode = inputs[kAnfPopulaterInputNumTwo];
       MS_ASSERT(sizeNode != nullptr);
       if (sizeNode->isa<ValueNode>()) {
         auto valueNode = sizeNode->cast<ValueNodePtr>();
@@ -173,8 +173,8 @@ int Slice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tens
   }
   auto input = inputs.at(0);
   outputs[0]->set_data_type(input->data_type());
-  outputs[0]->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  outputs[0]->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto input_shape = input->shape();

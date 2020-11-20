@@ -40,7 +40,7 @@ abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(li
   }
   new_value->set_tensor_shape(tensor->shape());
   new_value->set_tensor_type(tensor->data_type());
-  new_value->set_format(tensor->GetFormat());
+  new_value->set_format(tensor->format());
   new_abstract->set_value(new_value);
   return new_abstract;
 }
@@ -150,7 +150,7 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
     }
     tensor->set_shape(param_value_lite->tensor_shape());
     tensor->set_data_type(param_value_lite->tensor_type());
-    tensor->SetFormat(schema::Format(param_value_lite->format()));
+    tensor->set_format(schema::Format(param_value_lite->format()));
 
     if (utils::isa<ParameterPtr>(input)) {
       auto parameter = input->cast<ParameterPtr>();
@@ -251,7 +251,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(ERROR) << "origin_primc is nullptr";
       return false;
     }
-    auto origin_primt = origin_primc->GetPrimitiveT();
+    auto origin_primt = origin_primc->primitiveT();
     if (origin_primt == nullptr) {
       MS_LOG(ERROR) << "origin_primt is nullptr";
       return false;

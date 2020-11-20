@@ -45,9 +45,9 @@ int Nchw2Nhwc::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite:
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  output->SetFormat(schema::Format::Format_NHWC);
+  output->set_format(schema::Format::Format_NHWC);
   output->set_data_type(input->data_type());
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   std::vector<int> nchw_shape = input->shape();

@@ -92,13 +92,13 @@ int SpaceToBatchND::InferShape(std::vector<lite::Tensor *> inputs, std::vector<l
   }
 
   auto input = inputs.at(0);
-  if (input->GetFormat() != schema::Format::Format_NHWC) {
+  if (input->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_batch_nd only support NHWC now!";
     return RET_ERROR;
   }
   outputs[0]->set_data_type(input->data_type());
-  outputs[0]->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  outputs[0]->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto input_shape = input->shape();

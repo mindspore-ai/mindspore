@@ -81,8 +81,8 @@ int Stack::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> output
   auto input = inputs.at(0);
   auto input0_data_type = input->data_type();
   outputs[0]->set_data_type(input0_data_type);
-  outputs[0]->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  outputs[0]->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto input_shape = input->shape();

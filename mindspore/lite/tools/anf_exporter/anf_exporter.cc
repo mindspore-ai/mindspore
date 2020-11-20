@@ -95,10 +95,10 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   MS_ASSERT(primitive != nullptr);
   MS_ASSERT(dst_node != nullptr);
   // add quant param
-  dst_node->quantType = primitive->GetQuantType();
+  dst_node->quantType = primitive->quant_type();
   MS_LOG(DEBUG) << "node: " << dst_node->name << " add QuantParam";
   // activation
-  auto input_quant_params = primitive->GetInputQuantParams();
+  auto input_quant_params = primitive->input_quant_params();
   auto node_type = (schema::PrimitiveType)primitive->Type();
   if (!input_quant_params.empty()) {
     for (size_t i = 0; i < input_quant_params.size(); i++) {
@@ -125,7 +125,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   // output
   auto output_index = dst_node->outputIndex[0];
   auto tensor_output = meta_graph->allTensors[output_index].get();
-  auto output_quant_params = primitive->GetOutputQuantParams();
+  auto output_quant_params = primitive->output_quant_params();
   if (output_quant_params.empty()) {
     if (node_type != schema::PrimitiveType_QuantDTypeCast) {
       MS_LOG(DEBUG) << "node: " << dst_node->name << " output quant params is empty";
@@ -220,7 +220,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
 #ifdef SUPPORT_TRAIN
     RemoveIfDepend(cnode);
 #endif
-    auto primT = primitive_c->GetPrimitiveT();
+    auto primT = primitive_c->primitiveT();
     auto node = std::make_unique<schema::CNodeT>();
     if (node == nullptr) {
       MS_LOG(ERROR) << "object failed to be constructed";

@@ -67,13 +67,13 @@ int SpaceToDepth::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   }
 
   auto input = inputs.at(0);
-  if (input->GetFormat() != schema::Format::Format_NHWC) {
+  if (input->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return 1;
   }
-  outputs[0]->SetFormat(input->GetFormat());
+  outputs[0]->set_format(input->format());
   outputs[0]->set_data_type(input->data_type());
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto input_shape = input->shape();

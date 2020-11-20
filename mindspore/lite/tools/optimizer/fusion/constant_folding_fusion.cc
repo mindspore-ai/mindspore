@@ -90,7 +90,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   MS_ASSERT(param_value != nullptr);
   param_value->set_tensor_shape(shape);
   param_value->set_tensor_type(type_id);
-  param_value->set_format(tensor->GetFormat());
+  param_value->set_format(tensor->format());
   if (tensor->MutableData() != nullptr) {
     auto size = tensor->Size();
     auto tensor_data = new (std::nothrow) uint8_t[size];
@@ -211,7 +211,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
       FreeTensors(&input_tensors, &output_tensors);
       return nullptr;
     }
-    auto inputQuantParams = lite_primitive->GetInputQuantParams();
+    auto inputQuantParams = lite_primitive->input_quant_params();
     for (size_t m = 0; m < inputQuantParams.size(); m++) {
       for (auto inputQuantParam : inputQuantParams[m]) {
         lite::QuantArg quant_arg{};
@@ -220,7 +220,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
         input_tensors[m]->AddQuantParam(quant_arg);
       }
     }
-    auto outputQuantParams = lite_primitive->GetOutputQuantParams();
+    auto outputQuantParams = lite_primitive->output_quant_params();
     for (size_t m = 0; m < outputQuantParams.size(); m++) {
       for (auto outputQuantParam : outputQuantParams[m]) {
         lite::QuantArg quant_arg{};
@@ -233,7 +233,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
     // but for the time being, we only transpose the tensor with 0/1/2/3D.
     // Others should be added in future.
     for (auto &input_tensor : input_tensors) {
-      input_tensor->SetFormat(schema::Format::Format_NHWC);
+      input_tensor->set_format(schema::Format::Format_NHWC);
       if (input_tensor->shape().size() == 4) {
         MS_LOG(INFO) << "init input_tensor format to nhwc";
       }

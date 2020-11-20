@@ -44,9 +44,9 @@ class DequantUtil {
       return nullptr;
     }
     if (input_tensor->shape().size() == kPerBatch &&
-        input_tensor->GetQuantParams().size() == static_cast<size_t>(input_tensor->shape()[0])) {  // per batch matmul
+        input_tensor->quant_params().size() == static_cast<size_t>(input_tensor->shape()[0])) {  // per batch matmul
       auto per_batch_size = input_tensor->shape()[0];
-      auto quant_param = input_tensor->GetQuantParams();
+      auto quant_param = input_tensor->quant_params();
       for (int i = 0; i < per_batch_size; i++) {
         auto param = quant_param.at(i);
         auto scale = param.scale;
@@ -57,15 +57,15 @@ class DequantUtil {
             static_cast<float>((quant_datas[i * matrix_size + j] - zero_point) * scale);
         }
       }
-    } else if (input_tensor->GetQuantParams().size() != kPerTensor) {
+    } else if (input_tensor->quant_params().size() != kPerTensor) {
       auto channels = static_cast<size_t>(input_tensor->Batch());
-      if (input_tensor->GetQuantParams().size() != channels) {
-        MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->GetQuantParams().size() << channels;
+      if (input_tensor->quant_params().size() != channels) {
+        MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->quant_params().size() << channels;
         free(dequant_datas);
         return nullptr;
       }
       size_t per_channel_size = input_tensor->ElementsNum() / channels;
-      auto quant_param = input_tensor->GetQuantParams();
+      auto quant_param = input_tensor->quant_params();
       for (size_t i = 0; i < channels; i++) {
         auto param = quant_param.at(i);
         auto scale = param.scale;
@@ -82,8 +82,8 @@ class DequantUtil {
         }
       }
     } else {
-      auto quant_param = input_tensor->GetQuantParams();
-      auto quant_clusters = input_tensor->GetQuantClusters();
+      auto quant_param = input_tensor->quant_params();
+      auto quant_clusters = input_tensor->quant_clusters();
       auto param = quant_param.front();
       auto scale = param.scale;
       auto zero_point = param.zeroPoint;

@@ -115,13 +115,13 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<Tensor *> *tenso
       MS_LOG(ERROR) << "Op " << node->name_ << " should exist in model!";
       return RET_ERROR;
     }
-    primitive->SetInferFlag(!infer_shape_interrupt);
+    primitive->set_infer_flag(!infer_shape_interrupt);
     auto ret = primitive->InferShape(inputs, outputs);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name_
                    << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()))
                    << "flag set to false.";
-      primitive->SetInferFlag(false);
+      primitive->set_infer_flag(false);
       infer_shape_interrupt = true;
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, name: " << node->name_ << ", type: "

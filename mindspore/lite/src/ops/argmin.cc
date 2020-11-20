@@ -69,9 +69,9 @@ int ArgMin::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
   if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "tensor number is error.";
   }
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   output->set_data_type(input->data_type());
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   auto input_shape_size = input->shape().size();

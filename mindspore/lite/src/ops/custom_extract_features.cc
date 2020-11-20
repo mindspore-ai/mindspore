@@ -50,9 +50,9 @@ int CustomExtractFeatures::InferShape(std::vector<Tensor *> inputs_, std::vector
   MS_ASSERT(output1 != nullptr);
 
   output0->set_data_type(kNumberTypeInt32);
-  output0->SetFormat(input->GetFormat());
+  output0->set_format(input->format());
   output1->set_data_type(kNumberTypeFloat32);
-  output1->SetFormat(input->GetFormat());
+  output1->set_format(input->format());
 
   if (input->data_c() == nullptr) {
     MS_LOG(INFO) << "Do infer shape in runtime.";

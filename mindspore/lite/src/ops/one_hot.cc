@@ -112,8 +112,8 @@ int OneHot::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outpu
     return RET_NULL_PTR;
   }
   output->set_data_type(on_value->data_type());
-  output->SetFormat(on_value->GetFormat());
-  if (!GetInferFlag()) {
+  output->set_format(on_value->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   const auto input_shape = input->shape();

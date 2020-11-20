@@ -117,13 +117,13 @@ int SubGraphKernel::ReSize(bool is_interrupt) {
     for (auto &output : outputs) {
       output->FreeData();
     }
-    primitive->SetInferFlag(!is_interrupt);
+    primitive->set_infer_flag(!is_interrupt);
     auto ret = primitive->InferShape(inputs, outputs);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()))
                    << "flag set to false.";
-      primitive->SetInferFlag(false);
+      primitive->set_infer_flag(false);
       is_interrupt = true;
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, type: "

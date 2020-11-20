@@ -97,7 +97,7 @@ int While::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   }
   for (size_t i = 0; i < inputs_.size(); i++) {
     outputs_[i]->set_data_type(inputs_[i]->data_type());
-    outputs_[i]->SetFormat(inputs_[i]->GetFormat());
+    outputs_[i]->set_format(inputs_[i]->format());
     outputs_[i]->set_shape(inputs_[i]->shape());
   }
 

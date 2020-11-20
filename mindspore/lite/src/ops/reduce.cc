@@ -70,8 +70,8 @@ int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     }
 
     attr->keepDims = GetValue<bool>(prim.GetAttr("keep_dims"));
-    if (inputs.size() == kAnfPopulaterTwo) {
-      auto inputNode = inputs[kAnfPopulaterOne];
+    if (inputs.size() == kAnfPopulaterInputNumTwo) {
+      auto inputNode = inputs[kAnfPopulaterInputNumOne];
       MS_ASSERT(inputNode != nullptr);
       if (inputNode->isa<ValueNode>()) {
         auto valueNode = inputNode->cast<ValueNodePtr>();
@@ -150,8 +150,8 @@ int Reduce::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
     return RET_NULL_PTR;
   }
   output->set_data_type(input->data_type());
-  output->SetFormat(input->GetFormat());
-  if (!GetInferFlag()) {
+  output->set_format(input->format());
+  if (!infer_flag()) {
     return RET_OK;
   }
   if (this->primitive_ == nullptr) {

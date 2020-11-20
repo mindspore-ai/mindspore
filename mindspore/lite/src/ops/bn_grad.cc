@@ -106,9 +106,9 @@ int BNGrad::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Ten
   outputs[0]->set_data_type(in->data_type());
   outputs[1]->set_data_type(scale->data_type());
   outputs[2]->set_data_type(scale->data_type());
-  outputs[0]->SetFormat(in->GetFormat());
-  outputs[1]->SetFormat(scale->GetFormat());
-  outputs[2]->SetFormat(scale->GetFormat());
+  outputs[0]->set_format(in->format());
+  outputs[1]->set_format(scale->format());
+  outputs[2]->set_format(scale->format());
   return RET_OK;
 }
 }  // namespace lite

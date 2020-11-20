@@ -78,7 +78,7 @@ int OnesLike::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> ou
   std::vector<int> output_shape(x_shape.size());
   output_shape.assign(x_shape.begin(), x_shape.end());
   out->set_shape(output_shape);
-  out->SetFormat(x->GetFormat());
+  out->set_format(x->format());
   out->set_data_type(x->data_type());
   return RET_OK;
 }

@@ -51,9 +51,9 @@ int PoolingBaseCPUKernel::SetQuantParam() {
     return RET_MEMORY_FAILED;
   }
   auto *input_tensor = in_tensors_.at(kInputIndex);
-  auto in_quant_arg = input_tensor->GetQuantParams();
+  auto in_quant_arg = input_tensor->quant_params();
   auto *out_tensor = out_tensors_.at(kOutputIndex);
-  auto out_quant_arg = out_tensor->GetQuantParams();
+  auto out_quant_arg = out_tensor->quant_params();
   pooling_quant_arg_[0][0].scale_ = in_quant_arg.front().scale;
   pooling_quant_arg_[0][0].zp_ = in_quant_arg.front().zeroPoint;
   pooling_quant_arg_[1][0].scale_ = out_quant_arg.front().scale;

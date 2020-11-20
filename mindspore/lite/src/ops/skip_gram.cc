@@ -73,7 +73,7 @@ int SkipGram::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> ou
   auto input = inputs_.front();
   auto output = outputs_.front();
   MS_ASSERT(input != nullptr);
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   output->set_data_type(input->data_type());
 
   if (input->data_c() == nullptr) {

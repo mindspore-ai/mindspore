@@ -77,9 +77,9 @@ int BroadcastTo::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> 
   }
 
   auto input = inputs.at(0);
-  outputs[0]->SetFormat(input->GetFormat());
+  outputs[0]->set_format(input->format());
   outputs[0]->set_data_type(input->data_type());
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   std::vector<int32_t> dst_shape(GetDstShape());

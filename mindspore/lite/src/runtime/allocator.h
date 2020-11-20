@@ -63,13 +63,13 @@ class DefaultAllocator : public Allocator {
     void *buf;
   };
 
-  std::mutex lock;
+  std::mutex lock_;
   // <membuf->buf, membuf>
-  std::unordered_map<void *, MemBuf *> allocatedList;
-  std::multimap<size_t, MemBuf *> freeList;
+  std::unordered_map<void *, MemBuf *> allocatedList_;
+  std::multimap<size_t, MemBuf *> freeList_;
   // 6 is empirical value
-  int shiftFactor = 6;
-  bool lockFlag = false;
+  int shiftFactor_ = 6;
+  bool lockFlag_ = false;
 };
 
 #define MAX_MALLOC_SIZE (2000 * 1024 * 1024)

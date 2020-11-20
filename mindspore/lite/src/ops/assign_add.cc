@@ -86,7 +86,7 @@ int AssignAdd::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
     output_shape[i] = x_shape[i];
   }
   out->set_shape(output_shape);
-  out->SetFormat(x->GetFormat());
+  out->set_format(x->format());
   out->set_data_type(x->data_type());
   return RET_OK;
 }

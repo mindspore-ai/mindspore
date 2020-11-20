@@ -61,7 +61,7 @@ void TestPadFp32::Prepare(const std::vector<int> &input_shape, const std::vector
                           float *output_data, PaddingMode mode, int *paddings, int padding_length, float constant_value,
                           const int thread_num) {
   in_tensor_.set_data_type(kNumberTypeFloat32);
-  in_tensor_.SetFormat(Format_NHWC);
+  in_tensor_.set_format(Format_NHWC);
   in_tensor_.set_shape(input_shape);
   out_tensor_.set_data_type(kNumberTypeFloat32);
   out_tensor_.set_shape(output_shape);

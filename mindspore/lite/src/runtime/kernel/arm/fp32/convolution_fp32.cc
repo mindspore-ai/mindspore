@@ -256,7 +256,7 @@ lite::Tensor *CreateOutputTensorFp32(std::vector<int> out_shape, const std::vect
     return nullptr;
   }
   out_tensor->set_data_type(outputs.at(index)->data_type());
-  out_tensor->SetFormat(outputs.at(index)->GetFormat());
+  out_tensor->set_format(outputs.at(index)->format());
   if (infered_flag) {
     out_tensor->set_shape(out_shape);
     auto ret = out_tensor->MallocData();
@@ -292,7 +292,7 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
   int out_unit;
   bool has_bias = inputs.size() == 3;
   bool use_winograd = false;
-  bool infered_flag = primitive != nullptr && primitive->GetInferFlag();
+  bool infered_flag = primitive != nullptr && primitive->infer_flag();
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
 
   std::vector<int> in_shape;
@@ -396,7 +396,7 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   int group = conv_param->group_;
   bool use_winograd = false;
   int out_unit;
-  if (primitive != nullptr && primitive->GetInferFlag()) {
+  if (primitive != nullptr && primitive->infer_flag()) {
     conv_param->input_h_ = inputs.front()->Height();
     conv_param->input_w_ = inputs.front()->Width();
     conv_param->input_channel_ = inputs.front()->Channel();
@@ -410,8 +410,8 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->data_c();
   auto restore_type = weight_tensor->data_type();
-  bool dequant_flag = !weight_tensor->GetQuantParams().empty() && weight_tensor->GetQuantParams().front().inited &&
-                      restore_data != nullptr;
+  bool dequant_flag =
+    !weight_tensor->quant_params().empty() && weight_tensor->quant_params().front().inited && restore_data != nullptr;
   if (dequant_flag) {
     auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {

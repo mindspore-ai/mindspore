@@ -203,7 +203,7 @@ int PoolingGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
   grad_output->set_shape(output_shape);
   grad_output->set_data_type(input->data_type());
   // todo: temp fix
-  grad_output->SetFormat(input->GetFormat());
+  grad_output->set_format(input->format());
   return RET_OK;
 }
 }  // namespace lite

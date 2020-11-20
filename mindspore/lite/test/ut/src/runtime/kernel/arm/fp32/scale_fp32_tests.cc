@@ -66,13 +66,13 @@ void TestScaleFp32::Prepare(const std::vector<int> &input_shape, const std::vect
                             float *input_data, float *scale_data, float *offset_data, float *output_data, int axis,
                             ActivationType act_type, const int thread_num) {
   in_tensor_.set_data_type(kNumberTypeFloat32);
-  in_tensor_.SetFormat(Format_NHWC);
+  in_tensor_.set_format(Format_NHWC);
   in_tensor_.set_shape(input_shape);
   scale_tensor_.set_data_type(kNumberTypeFloat32);
-  scale_tensor_.SetFormat(Format_NHWC);
+  scale_tensor_.set_format(Format_NHWC);
   scale_tensor_.set_shape(scale_shape);
   offset_tensor_.set_data_type(kNumberTypeFloat32);
-  offset_tensor_.SetFormat(Format_NHWC);
+  offset_tensor_.set_format(Format_NHWC);
   offset_tensor_.set_shape(offset_shape);
   out_tensor_.set_data_type(kNumberTypeFloat32);
   out_tensor_.set_shape(output_shape);

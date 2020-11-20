@@ -81,17 +81,17 @@ int FullconnectionInt8CPUKernel::ReSize() {
   }
 
   auto input_tensor = in_tensors_[0];
-  auto params = input_tensor->GetQuantParams();
+  auto params = input_tensor->quant_params();
   MS_ASSERT(params.size() == 1);
   quant_params_.input.zp_ = params.front().zeroPoint;
   quant_params_.input.scale_ = params.front().scale;
   auto weight_tensor = in_tensors_[1];
-  params = weight_tensor->GetQuantParams();
+  params = weight_tensor->quant_params();
   MS_ASSERT(params.size() == 1);
   quant_params_.weight.zp_ = params.front().zeroPoint;
   quant_params_.weight.scale_ = params.front().scale;
   auto output_tensor = out_tensors_[0];
-  params = output_tensor->GetQuantParams();
+  params = output_tensor->quant_params();
   MS_ASSERT(params.size() == 1);
   quant_params_.output.zp_ = params.front().zeroPoint;
   quant_params_.output.scale_ = params.front().scale;

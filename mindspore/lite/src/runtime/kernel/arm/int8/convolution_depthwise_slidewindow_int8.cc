@@ -162,15 +162,15 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
     MS_LOG(ERROR) << "malloc input_zp_ failed.";
     return RET_ERROR;
   }
-  if (input_tensor->GetQuantParams().size() == kPerTensor) {
+  if (input_tensor->quant_params().size() == kPerTensor) {
     for (int i = 0; i < channel; i++) {
-      auto input_quant_arg = input_tensor->GetQuantParams().front();
+      auto input_quant_arg = input_tensor->quant_params().front();
       input_zp_[i] = input_quant_arg.zeroPoint;
       input_scale_[i] = input_quant_arg.scale;
     }
   } else {
     for (int i = 0; i < channel; i++) {
-      auto input_quant_arg = input_tensor->GetQuantParams()[i];
+      auto input_quant_arg = input_tensor->quant_params()[i];
       input_zp_[i] = input_quant_arg.zeroPoint;
       input_scale_[i] = input_quant_arg.scale;
     }
@@ -187,15 +187,15 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
     MS_LOG(ERROR) << "malloc output_zp_ failed.";
     return RET_ERROR;
   }
-  if (output_tensor->GetQuantParams().size() == kPerTensor) {
+  if (output_tensor->quant_params().size() == kPerTensor) {
     for (int i = 0; i < channel; i++) {
-      auto output_quant_arg = output_tensor->GetQuantParams().front();
+      auto output_quant_arg = output_tensor->quant_params().front();
       output_zp_[i] = output_quant_arg.zeroPoint;
       output_scale_[i] = output_quant_arg.scale;
     }
   } else {
     for (int i = 0; i < channel; i++) {
-      auto output_quant_arg = output_tensor->GetQuantParams()[i];
+      auto output_quant_arg = output_tensor->quant_params()[i];
       output_zp_[i] = output_quant_arg.zeroPoint;
       output_scale_[i] = output_quant_arg.scale;
     }
@@ -238,14 +238,14 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
     return RET_ERROR;
   }
   auto weight_tensor = in_tensors_.at(kWeightIndex);
-  if (weight_tensor->GetQuantParams().size() == kPerTensor) {
+  if (weight_tensor->quant_params().size() == kPerTensor) {
     for (int i = 0; i < channel; i++) {
-      auto weight_quant_arg = weight_tensor->GetQuantParams().front();
+      auto weight_quant_arg = weight_tensor->quant_params().front();
       weight_scale_[i] = weight_quant_arg.scale;
     }
   } else {
     for (int i = 0; i < channel; i++) {
-      auto weight_quant_arg = weight_tensor->GetQuantParams()[i];
+      auto weight_quant_arg = weight_tensor->quant_params()[i];
       weight_scale_[i] = weight_quant_arg.scale;
     }
   }

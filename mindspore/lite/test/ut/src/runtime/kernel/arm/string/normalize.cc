@@ -47,7 +47,7 @@ class TestNormalize : public mindspore::CommonTest {
 
 void TestNormalize::NormalizeTestInit() {
   input_tensor_.set_data_type(kObjectTypeString);
-  input_tensor_.SetFormat(schema::Format_NHWC);
+  input_tensor_.set_format(schema::Format_NHWC);
 
   std::vector<StringPack> str_pack;
   const char sentence1[] = "  I don't know what happened\n";
@@ -57,7 +57,7 @@ void TestNormalize::NormalizeTestInit() {
   mindspore::lite::WriteStringsToTensor(&input_tensor_, str_pack);
 
   output_tensor_.set_data_type(kObjectTypeString);
-  output_tensor_.SetFormat(schema::Format_NHWC);
+  output_tensor_.set_format(schema::Format_NHWC);
 }
 
 TEST_F(TestNormalize, TestSentence) {

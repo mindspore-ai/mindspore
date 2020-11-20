@@ -181,15 +181,15 @@ int DetectionPostProcess::InferShape(std::vector<lite::Tensor *> inputs_, std::v
   auto num_det = outputs_.at(3);
   MS_ASSERT(num_det != nullptr);
 
-  detected_boxes->SetFormat(boxes->GetFormat());
+  detected_boxes->set_format(boxes->format());
   detected_boxes->set_data_type(kNumberTypeFloat32);
-  detected_classes->SetFormat(boxes->GetFormat());
+  detected_classes->set_format(boxes->format());
   detected_classes->set_data_type(kNumberTypeFloat32);
-  detected_scores->SetFormat(boxes->GetFormat());
+  detected_scores->set_format(boxes->format());
   detected_scores->set_data_type(kNumberTypeFloat32);
-  num_det->SetFormat(boxes->GetFormat());
+  num_det->set_format(boxes->format());
   num_det->set_data_type(kNumberTypeFloat32);
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
   const auto max_detections = GetMaxDetections();

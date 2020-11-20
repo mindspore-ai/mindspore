@@ -92,7 +92,7 @@ int MaximumGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
   MS_ASSERT(x2 != nullptr);
   MS_ASSERT(dx1 != nullptr);
   MS_ASSERT(dx2 != nullptr);
-  if (!GetInferFlag()) {
+  if (!infer_flag()) {
     return RET_OK;
   }
 

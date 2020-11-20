@@ -169,7 +169,7 @@ int GroupConv2DGradInput::InferShape(std::vector<Tensor *> inputs, std::vector<T
   out->set_shape(GetInputShape());
 
   out->set_data_type(in0->data_type());
-  out->SetFormat(in0->GetFormat());
+  out->set_format(in0->format());
 
   return RET_OK;
 }

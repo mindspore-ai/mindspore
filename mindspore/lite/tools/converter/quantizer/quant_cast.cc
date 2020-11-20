@@ -27,7 +27,7 @@ ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector
   quant_dtype_cast.dstT = dst_type;  // kNumberTypeFloat32;
   primitive->value.Set(quant_dtype_cast);
   auto primTValue = std::make_shared<PrimitiveC>(primitive.release());
-  primTValue->SetQuantType(schema::QuantType_PostTraining);
+  primTValue->set_quant_type(schema::QuantType_PostTraining);
   for (auto &quant_param : quant_params) {
     std::vector<schema::QuantParamT> quant_params_in = {quant_param};
     primTValue->AddInputQuantParam(quant_params_in);
@@ -45,7 +45,7 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
     if (primitive_c == nullptr) {
       MS_LOG(WARNING) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
     } else {
-      curnode_quant_type = primitive_c->GetQuantType();
+      curnode_quant_type = primitive_c->quant_type();
     }
 
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
@@ -69,7 +69,7 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
                         << " PrimitiveC is null";
           continue;
         }
-        input_cnode_quant_type = input_cnode_primitive_c->GetQuantType();
+        input_cnode_quant_type = input_cnode_primitive_c->quant_type();
       }
 
       if (curnode_quant_type != input_cnode_quant_type) {
@@ -77,11 +77,11 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
         if (curnode_quant_type == schema::QuantType_PostTraining &&
             input_cnode_quant_type == schema::QuantType_QUANT_NONE) {
           value_node =
-            NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitive_c->GetInputQuantParams()[i - 1]);
+            NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitive_c->input_quant_params()[i - 1]);
         } else if (curnode_quant_type == schema::QuantType_QUANT_NONE &&
                    input_cnode_quant_type == schema::QuantType_PostTraining) {
           value_node = NewQuantCastValueNode(kNumberTypeInt8, kNumberTypeFloat32,
-                                             input_cnode_primitive_c->GetOutputQuantParams().front());
+                                             input_cnode_primitive_c->output_quant_params().front());
         }
         if (value_node == nullptr) {
           MS_LOG(WARNING) << "value_node is null! "

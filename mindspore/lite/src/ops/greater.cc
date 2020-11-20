@@ -43,7 +43,7 @@ int Greater::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   MS_ASSERT(output != nullptr);
   output->set_shape(input->shape());
   output->set_data_type(TypeId::kNumberTypeBool);
-  output->SetFormat(input->GetFormat());
+  output->set_format(input->format());
   return RET_OK;
 }
 

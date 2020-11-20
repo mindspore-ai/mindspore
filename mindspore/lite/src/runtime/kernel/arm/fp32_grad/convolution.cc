@@ -56,7 +56,7 @@ int ConvolutionTrainCPUKernel::Init() {
   const int k = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ / conv_param_->group_;
   ws_size = chunk * k;
   int mat_alloc = MatSizeTotal(chunk, n, k, 0);
-  SetWorkspaceSize((ws_size + mat_alloc) * sizeof(float));
+  set_workspace_size((ws_size + mat_alloc) * sizeof(float));
   return RET_OK;
 }
 
@@ -86,13 +86,13 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
   const int m = out_h * out_w;
   const int n = out_ch / groups;
   const int k = k_h * k_w * in_ch / groups;
-  float *workspace = static_cast<float *>(GetWorkspace());
-  float *mat_workspace = workspace + ws_size;
+  float *workspace_temp = static_cast<float *>(workspace());
+  float *mat_workspace = workspace_temp + ws_size;
   for (int i = 0; i < batch; ++i) {
     for (int j = 0; j < groups; ++j) {
       for (int ci = 0; ci < m; ci += chunk) {
         int real_chunk = MSMIN(m - ci, chunk);
-        float *mat_a = workspace;
+        float *mat_a = workspace_temp;
         const float *mat_b = w_addr + j * nweights / groups;
         float *mat_c = y_addr + (i * groups) * n * m + j * (out_ch / groups) + ci * out_ch;
         float *im = x_addr + (i * groups) * (in_ch / groups) * in_h * in_w + j * (in_ch / groups);

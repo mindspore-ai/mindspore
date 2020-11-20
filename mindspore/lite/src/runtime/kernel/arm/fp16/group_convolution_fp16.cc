@@ -72,11 +72,11 @@ int GroupConvolutionFP16CPUKernel::PreProcess() {
   if (!InferShapeDone()) {
     auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
     if (ret != RET_OK) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(false);
+      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->SetInferFlag(true);
+    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
     ret = ReSize();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ReSize fail!ret: " << ret;

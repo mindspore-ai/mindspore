@@ -70,7 +70,7 @@ int LshProjection::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor 
 
   auto out_tensor = outputs_.front();
   out_tensor->set_data_type(kNumberTypeInt32);
-  out_tensor->SetFormat(schema::Format::Format_NHWC);
+  out_tensor->set_format(schema::Format::Format_NHWC);
 
   std::vector<int> out_shape;
   switch (GetLshType()) {

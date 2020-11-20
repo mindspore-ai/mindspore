@@ -138,7 +138,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
 
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel = nullptr;
-  if (primitive != nullptr && primitive->GetInferFlag()) {
+  if (primitive != nullptr && primitive->infer_flag()) {
     conv_param->input_h_ = inputs[kInputIndex]->Height();
     conv_param->input_w_ = inputs[kInputIndex]->Width();
     conv_param->input_channel_ = inputs[kInputIndex]->Channel();

@@ -38,17 +38,17 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
   lite::Tensor *input = in_tensors_.at(0);
   lite::Tensor *output = out_tensors_.at(0);
 
-  quant_param_.in_zp_ = input->GetQuantParams().front().zeroPoint;
-  quant_param_.in_scale_ = input->GetQuantParams().front().scale;
-  quant_param_.out_zp_ = output->GetQuantParams().front().zeroPoint;
-  quant_param_.out_scale_ = output->GetQuantParams().front().scale;
+  quant_param_.in_zp_ = input->quant_params().front().zeroPoint;
+  quant_param_.in_scale_ = input->quant_params().front().scale;
+  quant_param_.out_zp_ = output->quant_params().front().zeroPoint;
+  quant_param_.out_scale_ = output->quant_params().front().scale;
 
   if (param_->elementwise_affine_) {
     lite::Tensor *gamma_tensor = in_tensors_.at(1);
     lite::Tensor *beta_tensor = in_tensors_.at(2);
 
-    double gamma_scale = gamma_tensor->GetQuantParams().front().scale;
-    int gamma_zp = gamma_tensor->GetQuantParams().front().zeroPoint;
+    double gamma_scale = gamma_tensor->quant_params().front().scale;
+    int gamma_zp = gamma_tensor->quant_params().front().zeroPoint;
     gamma_ptr_ = reinterpret_cast<float *>(malloc(gamma_tensor->ElementsNum() * sizeof(float)));
     if (gamma_ptr_ == nullptr) {
       MS_LOG(ERROR) << "malloc gamma_ptr_ failed";
