@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
-
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_SPLIT_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_SPLIT_PARSER_H_
 #include <string>
-#include "proto/node_def.pb.h"
-#include "ir/dtype/type_id.h"
-#include "include/errorcode.h"
+#include <memory>
+#include <map>
+#include <vector>
+#include "tools/converter/parser/tf/tf_node_parser.h"
 
 namespace mindspore {
 namespace lite {
-class TensorFlowUtils {
+class TFSplitParser : public TFNodeParser {
  public:
-  static bool FindAttrValue(const tensorflow::NodeDef &nodeDef, const std::string &attr_name,
-                            tensorflow::AttrValue *attr_value);
+  TFSplitParser() = default;
+  ~TFSplitParser() override = default;
+
+  STATUS Parse(const tensorflow::NodeDef &tf_op, const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+               PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_SPLIT_PARSER_H_

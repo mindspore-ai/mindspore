@@ -44,6 +44,7 @@ class ModelParser {
     return func_graph;
   }
 
+ protected:
   virtual schema::MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
                                         const QuantType &quant_type = QuantType_QUANT_NONE) = 0;
 

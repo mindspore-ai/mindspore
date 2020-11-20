@@ -126,8 +126,10 @@ int Flags::Init(int argc, const char **argv) {
     this->fmk = FmkType_TFLITE;
   } else if (this->fmkIn == "ONNX") {
     this->fmk = FmkType_ONNX;
+  } else if (this->fmkIn == "TF") {
+    this->fmk = FmkType_TF;
   } else {
-    std::cerr << "INPUT ILLEGAL: fmk must be TFLITE|CAFFE|MINDIR|ONNX";
+    std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX";
     return RET_INPUT_PARAM_INVALID;
   }
 

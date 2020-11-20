@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_NODE_PARSER_H
 
 #include <string>
+#include <vector>
 #include <map>
 #include <memory>
 #include "tools/converter/parser/tf/tf_util.h"
@@ -32,12 +33,14 @@ class TFNodeParser {
 
   virtual ~TFNodeParser() = default;
 
-  virtual STATUS Parse(const tensorflow::NodeDef *tf_op, const std::unique_ptr<tensorflow::GraphDef> &tf_model,
-                       PrimitiveC *primitiveC, int *output_size) {
+  virtual STATUS Parse(const tensorflow::NodeDef &tf_op,
+                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
+                       std::vector<std::string> *inputs, int *output_size) {
     return RET_OK;
   }
+
+  STATUS AddOpInput(const tensorflow::NodeDef &tf_op, const int idx, std::vector<std::string> *inputs);
 };
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_NODE_PARSER_H

@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
-
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_CONVERTER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_CONVERTER_H_
 #include <string>
-#include "proto/node_def.pb.h"
-#include "ir/dtype/type_id.h"
-#include "include/errorcode.h"
-
+#include <memory>
+#include "tools/converter/converter.h"
 namespace mindspore {
 namespace lite {
-class TensorFlowUtils {
+class TFConverter : public Converter {
  public:
-  static bool FindAttrValue(const tensorflow::NodeDef &nodeDef, const std::string &attr_name,
-                            tensorflow::AttrValue *attr_value);
+  TFConverter();
+
+  ~TFConverter() = default;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
+
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_CONVERTER_H_

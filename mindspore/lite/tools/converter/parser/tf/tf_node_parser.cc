@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
-
+#include "tools/converter/parser/tf/tf_node_parser.h"
 #include <string>
-#include "proto/node_def.pb.h"
-#include "ir/dtype/type_id.h"
-#include "include/errorcode.h"
+#include <memory>
+#include <vector>
+#include "tools/converter/parser/tf/tf_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-class TensorFlowUtils {
- public:
-  static bool FindAttrValue(const tensorflow::NodeDef &nodeDef, const std::string &attr_name,
-                            tensorflow::AttrValue *attr_value);
-};
+STATUS TFNodeParser::AddOpInput(const tensorflow::NodeDef &tf_op, const int idx, std::vector<std::string> *inputs) {
+  if (tf_op.input_size() <= idx) {
+    MS_LOG(ERROR) << "input idx is greater than op input size";
+    return RET_PARAM_INVALID;
+  }
+  inputs->push_back(tf_op.input(idx));
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
