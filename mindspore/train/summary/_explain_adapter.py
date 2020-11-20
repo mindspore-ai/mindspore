@@ -28,8 +28,8 @@ def check_explain_proto(explain):
     if not isinstance(explain, Explain):
         raise TypeError(f'Plugin explainer expects a {Explain.__name__} value.')
 
-    if not explain.image_id and not explain.metadata.label and not explain.benchmark:
-        raise ValueError(f'The Metadata and image id and benchmark must have one fill in.')
+    if not explain.image_path and not explain.inference and not explain.metadata.label and not explain.benchmark:
+        raise ValueError('One of metadata, image path, inference or benchmark has to be filled in.')
 
 
 def package_explain_event(explain_str):
