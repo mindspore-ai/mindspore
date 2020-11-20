@@ -50,13 +50,6 @@ class OnnxDivParser : public OnnxNodeParser {
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
 
-class OnnxMeanParser : public OnnxNodeParser {
- public:
-  OnnxMeanParser() : OnnxNodeParser("Mean") {}
-  ~OnnxMeanParser() override = default;
-  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
-};
-
 class OnnxPowParser : public OnnxNodeParser {
  public:
   OnnxPowParser() : OnnxNodeParser("Power") {}

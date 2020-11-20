@@ -28,7 +28,7 @@ class OnnxConverter : public Converter {
  public:
   OnnxConverter();
 
-  ~OnnxConverter() = default;
+  ~OnnxConverter() override = default;
 };
 }  // namespace lite
 }  // namespace mindspore

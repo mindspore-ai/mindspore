@@ -23,8 +23,7 @@
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 class TfliteCustomParser : public TfliteNodeParser {
  public:
   TfliteCustomParser() : TfliteNodeParser("Custom") {}
@@ -33,41 +32,40 @@ class TfliteCustomParser : public TfliteNodeParser {
                const std::unique_ptr<tflite::ModelT> &tflite_model,
                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) override;
 
-  STATUS DetectPostProcess(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                           const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static STATUS DetectPostProcess(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                                  const std::unique_ptr<tflite::OperatorT> &tflite_op);
 
-  STATUS AudioSpectrogram(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+  static STATUS AudioSpectrogram(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                                 const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  static STATUS Mfcc(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                     const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  static STATUS Predict(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                        const std::unique_ptr<tflite::OperatorT> &tflite_op);
+
+  static STATUS Normalize(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
                           const std::unique_ptr<tflite::OperatorT> &tflite_op);
 
-  STATUS Mfcc(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-              const std::unique_ptr<tflite::OperatorT> &tflite_op);
-
-  STATUS Predict(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                 const std::unique_ptr<tflite::OperatorT> &tflite_op);
-
-  STATUS Normalize(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                   const std::unique_ptr<tflite::OperatorT> &tflite_op);
-
-  STATUS ExtractFeatures(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                         const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static STATUS ExtractFeatures(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                                const std::unique_ptr<tflite::OperatorT> &tflite_op);
 
   STATUS Rfft(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
               const std::unique_ptr<tflite::OperatorT> &tflite_op, const std::unique_ptr<tflite::ModelT> &tflite_model,
               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph);
 
-  STATUS FftReal(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                 const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static STATUS FftReal(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                        const std::unique_ptr<tflite::OperatorT> &tflite_op);
 
-  STATUS FftImag(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                 const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static STATUS FftImag(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                        const std::unique_ptr<tflite::OperatorT> &tflite_op);
 
-  STATUS Identity(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                  const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static STATUS Identity(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                         const std::unique_ptr<tflite::OperatorT> &tflite_op);
 
-  STATUS BatchMatMul(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                     const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static STATUS BatchMatMul(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
+                            const std::unique_ptr<tflite::OperatorT> &tflite_op);
 };
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_CUSTOM_PARSER_H

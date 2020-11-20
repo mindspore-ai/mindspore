@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_NODE_PARSER_H
 
 #include <string>
+#include <utility>
 #include <vector>
 #include "google/protobuf/message.h"
 #include "proto/onnx.pb.h"
@@ -29,13 +30,13 @@ namespace mindspore {
 namespace lite {
 class OnnxNodeParser {
  public:
-  explicit OnnxNodeParser(const std::string nodeName) : name(nodeName) {}
+  explicit OnnxNodeParser(std::string nodeName) : name(std::move(nodeName)) {}
 
   virtual ~OnnxNodeParser() = default;
 
   virtual STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) = 0;
 
-  STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
+  static STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
 
   static STATUS set_opset_version(int version) {
     opset_version_ = version;
@@ -44,9 +45,9 @@ class OnnxNodeParser {
   static int opset_version() { return opset_version_; }
 
  protected:
-  schema::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
+  static schema::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
 
-  void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
+  static void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
 
   const std::string name;
 

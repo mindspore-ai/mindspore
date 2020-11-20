@@ -25,6 +25,9 @@ namespace lite {
 STATUS TfliteResizeParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                  const std::unique_ptr<tflite::ModelT> &tflite_model,
                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -42,7 +45,7 @@ STATUS TfliteResizeParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   }
   attr->coordinateTransformMode = schema::CoordinateTransformMode_COMMON;
   std::vector<std::string> node_name_str;
-  Split(op->name.data(), &node_name_str, "-");
+  Split(op->name, &node_name_str, "-");
   const char *node_name = node_name_str.data()->c_str();
   if (std::strcmp(node_name, "ResizeBilinear") == 0) {
     MS_LOG(DEBUG) << "parse TfliteResizeBilinearParser";
@@ -118,7 +121,7 @@ STATUS TfliteResizeParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   return RET_OK;
 }
 
-TfliteNodeRegister g_tfliteResizeBilinearParser("ResizeBilinear", new TfliteResizeBilinearParser());
-TfliteNodeRegister g_tfliteResizeNearestNeighborParser("NearestNeighbor", new TfliteResizeNearestNeighborParser());
+TfliteNodeRegister g_tfliteResizeBilinearParser("ResizeBilinear", new TfliteResizeParser());
+TfliteNodeRegister g_tfliteResizeNearestNeighborParser("NearestNeighbor", new TfliteResizeParser());
 }  // namespace lite
 }  // namespace mindspore

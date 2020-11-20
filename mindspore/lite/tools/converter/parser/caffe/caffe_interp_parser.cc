@@ -38,7 +38,7 @@ STATUS CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe:
     return RET_NULL_PTR;
   }
 
-  const caffe::InterpParameter interpParam = proto.interp_param();
+  const caffe::InterpParameter &interpParam = proto.interp_param();
   if (interpParam.has_height()) {
     int64_t height = interpParam.height();
     if (height < 0) {

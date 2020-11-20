@@ -30,12 +30,6 @@ class OnnxReluParser : public OnnxNodeParser {
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
 
-class OnnxLeakeyReluParser : public OnnxReluParser {
- public:
-  OnnxLeakeyReluParser() : OnnxReluParser() {}
-  ~OnnxLeakeyReluParser() override = default;
-};
-
 class OnnxPReluParser : public OnnxNodeParser {
  public:
   OnnxPReluParser() : OnnxNodeParser("Prelu") {}

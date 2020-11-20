@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace lite {
-TfliteNodeParserRegistry::TfliteNodeParserRegistry() {}
+TfliteNodeParserRegistry::TfliteNodeParserRegistry() = default;
 
 TfliteNodeParserRegistry::~TfliteNodeParserRegistry() {
   for (auto ite : parsers) {

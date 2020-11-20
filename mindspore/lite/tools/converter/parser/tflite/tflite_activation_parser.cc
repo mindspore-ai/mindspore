@@ -18,7 +18,6 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <map>
 
 namespace mindspore {
 namespace lite {
@@ -26,6 +25,9 @@ STATUS TfliteActivationParser::Parse(TfliteTensorsInfo *tensors_info,
                                      const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                      const std::unique_ptr<tflite::ModelT> &tflite_model,
                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -71,6 +73,9 @@ STATUS TfliteActivationParser::Parse(TfliteTensorsInfo *tensors_info,
     }
     attr->alpha = tflite_attr->alpha;
     attr->type = schema::ActivationType_LEAKY_RELU;
+  } else {
+    MS_LOG(ERROR) << node_name << " hasn't been supported";
+    return RET_NOT_FIND_OP;
   }
 
   op->primitive->value.type = schema::PrimitiveType_Activation;
@@ -81,12 +86,12 @@ STATUS TfliteActivationParser::Parse(TfliteTensorsInfo *tensors_info,
   return RET_OK;
 }
 
-TfliteNodeRegister g_TfliteReluParser("Relu", new TfliteReluParser());
-TfliteNodeRegister g_TfliteRelu6Parser("Relu6", new TfliteRelu6Parser());
-TfliteNodeRegister g_TfliteTanhParser("Tanh", new TfliteTanhParser());
-TfliteNodeRegister g_TfliteSwishParser("Swish", new TfliteSwishParser());
-TfliteNodeRegister g_TfliteHardSwishParser("HardSwish", new TfliteHardSwishParser());
-TfliteNodeRegister g_tfliteLogisticParser("Logistic", new TfliteLogisticParser());
-TfliteNodeRegister g_TfliteLeakyReluParser("LeakyRelu", new TfliteLeakyReluParser());
+TfliteNodeRegister g_tfliteReluParser("Relu", new TfliteActivationParser());
+TfliteNodeRegister g_tfliteRelu6Parser("Relu6", new TfliteActivationParser());
+TfliteNodeRegister g_tfliteTanhParser("Tanh", new TfliteActivationParser());
+TfliteNodeRegister g_tfliteSwishParser("Swish", new TfliteActivationParser());
+TfliteNodeRegister g_tfliteHardSwishParser("HardSwish", new TfliteActivationParser());
+TfliteNodeRegister g_tfliteLogisticParser("Logistic", new TfliteActivationParser());
+TfliteNodeRegister g_tfliteLeakyReluParser("LeakyRelu", new TfliteActivationParser());
 }  // namespace lite
 }  // namespace mindspore

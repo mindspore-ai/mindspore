@@ -24,7 +24,6 @@ Option<std::string> FlagParser::ParseFlags(int argc, const char *const *argv, bo
                                            bool supportDuplicate) {
   MS_ASSERT(argv != nullptr);
   const int FLAG_PREFIX_LEN = 2;
-  // Get binary name
   binName = GetFileName(argv[0]);
 
   std::multimap<std::string, Option<std::string>> keyValues;
@@ -45,9 +44,7 @@ Option<std::string> FlagParser::ParseFlags(int argc, const char *const *argv, bo
     Option<std::string> value = Option<std::string>(None());
 
     size_t pos = flagItem.find_first_of('=');
-    if (pos == std::string::npos && flagItem.find("--no-") != std::string::npos) {
-      key = flagItem.substr(FLAG_PREFIX_LEN);
-    } else if (pos == std::string::npos) {
+    if (pos == std::string::npos) {
       key = flagItem.substr(FLAG_PREFIX_LEN);
     } else {
       key = flagItem.substr(FLAG_PREFIX_LEN, pos - FLAG_PREFIX_LEN);
@@ -81,10 +78,10 @@ bool FlagParser::GetRealFlagName(std::string *flagName, const std::string &oriFl
 // Inner parse function
 Option<std::string> FlagParser::InnerParseFlags(std::multimap<std::string, Option<std::string>> *keyValues) {
   MS_ASSERT(keyValues != nullptr);
-  for (auto it = keyValues->begin(); it != keyValues->end(); ++it) {
+  for (auto &keyValue : *keyValues) {
     std::string flagName;
-    bool opaque = GetRealFlagName(&flagName, (*it).first);
-    Option<std::string> flagValue = (*it).second;
+    bool opaque = GetRealFlagName(&flagName, keyValue.first);
+    Option<std::string> flagValue = keyValue.second;
 
     auto item = flags.find(flagName);
     if (item == flags.end()) {
@@ -133,7 +130,7 @@ Option<std::string> FlagParser::InnerParseFlags(std::multimap<std::string, Optio
   return Option<std::string>(None());
 }
 
-void Replaceall(std::string *str, const std::string &oldValue, const std::string &newValue) {
+void ReplaceAll(std::string *str, const std::string &oldValue, const std::string &newValue) {
   if (str == nullptr) {
     MS_LOG(ERROR) << "Input str is nullptr";
     return;
@@ -153,9 +150,9 @@ std::string FlagParser::Usage(const Option<std::string> &usgMsg) const {
   std::string usageString = usgMsg.IsSome() ? usgMsg.Get() + "\n" : "";
   // usage of bin name
   usageString += usageMsg.IsNone() ? "\nusage: " + binName + " [options]\n" : usageMsg.Get() + "\n";
-  // help line of help message, usageLine:message of parametors
-  std::string helpLine = "";
-  std::string usageLine = "";
+  // help line of help message, usageLine:message of parameters
+  std::string helpLine;
+  std::string usageLine;
   uint32_t i = 0;
   for (auto flag = flags.begin(); flag != flags.end(); flag++) {
     std::string flagName = flag->second.flagName;
@@ -165,7 +162,7 @@ std::string FlagParser::Usage(const Option<std::string> &usgMsg) const {
     if (++i <= flags.size()) {
       // add parameter help message of each line
       thisLine += " " + helpInfo;
-      Replaceall(&helpInfo, "\n\r", "\n");
+      ReplaceAll(&helpInfo, "\n\r", "\n");
       usageLine += thisLine + "\n";
     } else {
       // breif help message

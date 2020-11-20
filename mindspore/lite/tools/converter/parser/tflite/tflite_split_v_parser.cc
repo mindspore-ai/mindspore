@@ -25,7 +25,9 @@ STATUS TfliteSplitVParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
                                  const std::unique_ptr<tflite::ModelT> &tflite_model,
                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteSplitVParser";
-
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -65,7 +67,12 @@ STATUS TfliteSplitVParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
     MS_LOG(ERROR) << "axis_tensor is null";
     return RET_NULL_PTR;
   }
-  auto axis = *(reinterpret_cast<int32_t *>(tflite_model->buffers[axis_tensor->buffer]->data.data()));
+  const auto &axis_buf = tflite_model->buffers[axis_tensor->buffer];
+  if (axis_buf == nullptr) {
+    MS_LOG(ERROR) << "axis_buf is null";
+    return RET_NULL_PTR;
+  }
+  auto axis = *(reinterpret_cast<int32_t *>(axis_buf->data.data()));
   if (axis < 0) {
     axis += tensor_shape.size();
   }
@@ -79,12 +86,12 @@ STATUS TfliteSplitVParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   op->primitive->value.value = attr.release();
 
   AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  for (size_t i = 0; i < tflite_op->outputs.size(); i++) {
-    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  for (int output : tflite_op->outputs) {
+    AddOpOutput(op, tensors_info, output, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   return RET_OK;
 }
 
-TfliteNodeRegister g_TfliteSplitVParser("SplitV", new TfliteSplitVParser());
+TfliteNodeRegister g_tfliteSplitVParser("SplitV", new TfliteSplitVParser());
 }  // namespace lite
 }  // namespace mindspore

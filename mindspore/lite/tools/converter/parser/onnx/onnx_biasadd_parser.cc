@@ -38,7 +38,6 @@ STATUS OnnxBiasAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
     return RET_NULL_PTR;
   }
 
-  // use channel dim as axis
   attr->axis = {1};
 
   op->primitive->value.type = schema::PrimitiveType_BiasAdd;

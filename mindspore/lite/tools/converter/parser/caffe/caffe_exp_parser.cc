@@ -39,7 +39,7 @@ STATUS CaffeExpParser::Parse(const caffe::LayerParameter &proto, const caffe::La
     return RET_NULL_PTR;
   }
 
-  const caffe::ExpParameter exp_param = proto.exp_param();
+  const caffe::ExpParameter &exp_param = proto.exp_param();
   if (exp_param.has_base()) {
     attr->base = exp_param.base();
   } else {

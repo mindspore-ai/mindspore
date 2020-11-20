@@ -15,12 +15,14 @@
  */
 #ifndef MINDSPORE_LITE_TOOLS_SCHEMA_GEN_SCHEMA_TYPE_REGISTER_H_
 #define MINDSPORE_LITE_TOOLS_SCHEMA_GEN_SCHEMA_TYPE_REGISTER_H_
+#include <utility>
+
 #include "src/ops/schema_register.h"
 
 namespace mindspore::lite::ops {
 class SchemaTypeRegister {
  public:
-  explicit SchemaTypeRegister(GetSchemaDef func) { SchemaRegisterImpl::Instance()->TypePush(func); }
+  explicit SchemaTypeRegister(GetSchemaDef func) { SchemaRegisterImpl::Instance()->TypePush(std::move(func)); }
   ~SchemaTypeRegister() = default;
 };
 }  // namespace mindspore::lite::ops

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_PREDICT_TENSOR_UTIL_H
-#define MINDSPORE_PREDICT_TENSOR_UTIL_H
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_TENSOR_UTIL_H
+#define MINDSPORE_LITE_TOOLS_COMMON_TENSOR_UTIL_H
 
 #include <cmath>
 #include <unordered_map>
@@ -58,13 +58,11 @@ std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schem
 std::unique_ptr<schema::QuantParamT> CopyQuantParamArrayT(
   const std::unique_ptr<schema::QuantParamT> &srcQuantParamArray);
 
-using MSGraphDefTPtr = std::shared_ptr<schema::MetaGraphT>;
-
 enum Category { CONST = 0, GRAPH_INPUT = 1, OP_OUTPUT = 2, TF_CONST = 3 };
 
 class TensorCache {
  public:
-  TensorCache() {}
+  TensorCache() = default;
 
   ~TensorCache() { tensors.clear(); }
 
@@ -97,12 +95,12 @@ class TensorCache {
     return -1;
   }
 
-  void UpdateTensorIndex(const std::string &name, int index) {
+  void UpdateTensorIndex(const std::string &name, int idx) {
     auto iter = tensorIndex.find(name);
     if (iter != tensorIndex.end()) {
-      tensorIndex[name] = index;
+      tensorIndex[name] = idx;
     } else {
-      tensorIndex.insert(make_pair(name, index));
+      tensorIndex.insert(make_pair(name, idx));
     }
   }
 
@@ -120,4 +118,4 @@ class TensorCache {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_PREDICT_TENSOR_UTIL_H
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_TENSOR_UTIL_H

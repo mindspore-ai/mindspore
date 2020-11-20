@@ -15,7 +15,6 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_relu_parser.h"
-
 #include <memory>
 #include <vector>
 #include "securec/include/securec.h"
@@ -63,7 +62,6 @@ STATUS OnnxReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
 STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
                               schema::CNodeT *op) {
   MS_LOG(DEBUG) << "onnx PReluParser";
-
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -113,7 +111,7 @@ STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
 }
 
 OnnxNodeRegistrar g_onnxReluParser("Relu", new OnnxReluParser());
-OnnxNodeRegistrar g_onnxLeakyReluParser("LeakyRelu", new OnnxLeakeyReluParser());
+OnnxNodeRegistrar g_onnxLeakyReluParser("LeakyRelu", new OnnxReluParser());
 OnnxNodeRegistrar g_onnxPReluParser("PRelu", new OnnxPReluParser());
 }  // namespace lite
 }  // namespace mindspore

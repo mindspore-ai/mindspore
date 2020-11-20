@@ -54,7 +54,10 @@ STATUS CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::CNodeT *op, sch
 STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                        schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeDeconvolutionParser";
-
+  if (weightVec == nullptr) {
+    MS_LOG(ERROR) << "weightVec is null";
+    return RET_NULL_PTR;
+  }
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -69,11 +72,10 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const
 
   attr->format = schema::Format::Format_NCHW;
 
-  const caffe::ConvolutionParameter convParam = proto.convolution_param();
-  CaffeConvBaseParser convParser;
+  const caffe::ConvolutionParameter &convParam = proto.convolution_param();
   // parse pad
   std::vector<int64_t> pad(4, 0);
-  auto status = convParser.ParsePads(convParam, &pad);
+  auto status = CaffeConvBaseParser::ParsePads(convParam, &pad);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
     return RET_ERROR;
@@ -85,7 +87,7 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const
 
   // parse stride
   std::vector<int64_t> stride(2, 0);
-  status = convParser.ParseStrides(convParam, &stride);
+  status = CaffeConvBaseParser::ParseStrides(convParam, &stride);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseStrides for " << proto.name().c_str() << " failed";
     return RET_ERROR;
@@ -95,7 +97,7 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const
 
   // parse dilation
   std::vector<int64_t> dilation(2, 0);
-  status = convParser.ParseDilations(convParam, &dilation);
+  status = CaffeConvBaseParser::ParseDilations(convParam, &dilation);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseDilations for " << proto.name().c_str() << " failed";
     return RET_ERROR;
@@ -105,7 +107,7 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const
 
   // parse kernel
   std::vector<int64_t> kernel(2, 0);
-  status = convParser.ParseKernels(convParam, &kernel);
+  status = CaffeConvBaseParser::ParseKernels(convParam, &kernel);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseKernels for " << proto.name().c_str() << " failed";
     return RET_ERROR;
@@ -114,8 +116,8 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const
   attr->kernelW = kernel[1];
 
   attr->hasBias = convParam.bias_term();
-  attr->group = convParser.ParseGroup(convParam, proto.type());
-  auto ret = convParser.ParseChannelOut(convParam, &(attr->channelOut));
+  attr->group = CaffeConvBaseParser::ParseGroup(convParam, proto.type());
+  auto ret = CaffeConvBaseParser::ParseChannelOut(convParam, &(attr->channelOut));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "deconv channel get failed";
     return RET_ERROR;
@@ -127,7 +129,6 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const
     else
       attr->channelIn = weightBlob.shape().dim(1) * attr->group;
   } else {
-    // get shape information from Blob parameters(caffe proto v1)
     attr->channelIn = weightBlob.num() * attr->group;
   }
   attr->padMode = schema::PadMode_CAFFE;
@@ -142,7 +143,7 @@ STATUS CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto, const
     return RET_ERROR;
   }
 
-  status = convParser.ParseWeight(weight, weightVec);
+  status = CaffeConvBaseParser::ParseWeight(weight, weightVec);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseWeight for " << proto.name().c_str() << " failed";
     return RET_ERROR;

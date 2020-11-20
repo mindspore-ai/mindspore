@@ -39,7 +39,7 @@ STATUS CaffeReduceParser::Parse(const caffe::LayerParameter &proto, const caffe:
     return RET_NULL_PTR;
   }
 
-  const caffe::ReductionParameter reduce_param = proto.reduction_param();
+  const caffe::ReductionParameter &reduce_param = proto.reduction_param();
   if (reduce_param.has_operation()) {
     switch (reduce_param.operation()) {
       case caffe::ReductionParameter_ReductionOp_MEAN:
@@ -72,6 +72,7 @@ STATUS CaffeReduceParser::Parse(const caffe::LayerParameter &proto, const caffe:
   }
   attr->reduceToEnd = true;
   attr->keepDims = false;
+
   op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Reduce;
   op->primitive->value.value = attr.release();

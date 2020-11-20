@@ -18,13 +18,15 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <map>
 
 namespace mindspore {
 namespace lite {
 STATUS TfliteReduceParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                  const std::unique_ptr<tflite::ModelT> &tflite_model,
                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -51,7 +53,6 @@ STATUS TfliteReduceParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   std::vector<std::string> node_name_str;
   Split(op->name, &node_name_str, "-");
   const char *node_name = node_name_str.data()->c_str();
-
   if (std::strcmp(node_name, "ReduceMax") == 0) {
     MS_LOG(DEBUG) << "parse TfliteReduceMaxParser";
     attr->mode = schema::ReduceMode_ReduceMax;
@@ -67,10 +68,9 @@ STATUS TfliteReduceParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   } else if (std::strcmp(node_name, "Mean") == 0) {
     MS_LOG(DEBUG) << "parse TfliteMeanParser";
     attr->mode = schema::ReduceMode_ReduceMean;
-  } else if (std::strcmp(node_name, "ReduceAny") == 0) {
-    // attr->mode;
-    MS_LOG(ERROR) << "ms-lite haven't supported REDUCE_ANY now";
-    return RET_NOT_SUPPORT;
+  } else {
+    MS_LOG(ERROR) << node_name << " hasn't been supported";
+    return RET_NOT_FIND_OP;
   }
 
   if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->axes)) {
@@ -86,11 +86,10 @@ STATUS TfliteReduceParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   return RET_OK;
 }
 
-TfliteNodeRegister g_TfliteSumParser("Sum", new TfliteSumParser());
-TfliteNodeRegister g_TfliteMeanParser("Mean", new TfliteMeanParser());
-TfliteNodeRegister g_TfliteReduceMaxParser("ReduceMax", new TfliteReduceMaxParser());
-TfliteNodeRegister g_TfliteReduceMinParser("ReduceMin", new TfliteReduceMinParser());
-TfliteNodeRegister g_TfliteReduceProdParser("ReduceProd", new TfliteReduceProdParser());
-TfliteNodeRegister g_TfliteReduceAnyParser("ReduceAny", new TfliteReduceAnyParser());
+TfliteNodeRegister g_tfliteSumParser("Sum", new TfliteReduceParser());
+TfliteNodeRegister g_tfliteMeanParser("Mean", new TfliteReduceParser());
+TfliteNodeRegister g_tfliteReduceMaxParser("ReduceMax", new TfliteReduceParser());
+TfliteNodeRegister g_tfliteReduceMinParser("ReduceMin", new TfliteReduceParser());
+TfliteNodeRegister g_tfliteReduceProdParser("ReduceProd", new TfliteReduceParser());
 }  // namespace lite
 }  // namespace mindspore

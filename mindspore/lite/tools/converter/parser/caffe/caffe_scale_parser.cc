@@ -17,14 +17,15 @@
 #include "tools/converter/parser/caffe/caffe_scale_parser.h"
 #include <memory>
 
-const int32_t NCHW_DIM_C = 1;
-const int32_t DIM_DEFAULT_SIZE = 4;
-
 namespace mindspore {
 namespace lite {
 STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeScaleParser";
+  if (weightVec == nullptr) {
+    MS_LOG(ERROR) << "weightVec is null";
+    return RET_NULL_PTR;
+  }
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -47,10 +48,10 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::
     return RET_ERROR;
   }
 
-  const caffe::ScaleParameter scaleParam = weight.scale_param();
-  int axis = NCHW_DIM_C;
+  const caffe::ScaleParameter &scaleParam = weight.scale_param();
+  int axis = 1;
   if (scaleParam.has_axis()) {
-    uint32_t axis_index = NCHW_DIM_C;
+    uint32_t axis_index = 1;
     if (GetAxisIndex(scaleParam.axis(), &axis_index)) {
       MS_LOG(ERROR) << "scale get axis failed for layer " << weight.name().c_str();
       return RET_ERROR;
@@ -93,7 +94,7 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::
 }
 
 STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index) {
-  if (axis < -DIM_DEFAULT_SIZE || axis >= DIM_DEFAULT_SIZE) {
+  if (axis < -4 || axis >= 4) {
     MS_LOG(ERROR) << "Scale axis value(" << axis << ") is not correct";
     return RET_ERROR;
   }
@@ -102,7 +103,7 @@ STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index)
     MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
   }
 
-  *axis_index = (axis + DIM_DEFAULT_SIZE) % DIM_DEFAULT_SIZE;
+  *axis_index = (axis + 4) % 4;
   return RET_OK;
 }
 

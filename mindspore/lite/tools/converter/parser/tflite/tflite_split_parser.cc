@@ -25,6 +25,9 @@ STATUS TfliteSplitParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
                                 const std::unique_ptr<tflite::ModelT> &tflite_model,
                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteSplitParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -54,6 +57,7 @@ STATUS TfliteSplitParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
     return RET_NULL_PTR;
   }
   const auto tensor_shape = shape_tensor->shape;
+
   const auto &axis_tensor = tflite_subgraph->tensors[tflite_op->inputs[0]];
   if (axis_tensor == nullptr) {
     MS_LOG(ERROR) << "axis_tensor is null";
@@ -68,6 +72,10 @@ STATUS TfliteSplitParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
     return RET_ERROR;
   }
   attr->splitDim = axis;
+  if (num_splits == 0) {
+    MS_LOG(ERROR) << "Divide-by-zero error!";
+    return RET_ERROR;
+  }
   if (tensor_shape[axis] % num_splits != 0 && tensor_shape[axis] / num_splits != 0) {
     MS_LOG(ERROR) << "num_splits can't divide tensor's length at axis " << axis;
     return RET_ERROR;
@@ -83,12 +91,12 @@ STATUS TfliteSplitParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
   op->primitive->value.value = attr.release();
 
   AddOpInput(op, tensors_info, tflite_op->inputs[1], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  for (size_t i = 0; i < tflite_op->outputs.size(); i++) {
-    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  for (int output : tflite_op->outputs) {
+    AddOpOutput(op, tensors_info, output, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   return RET_OK;
 }
 
-TfliteNodeRegister g_TfliteSplitParser("Split", new TfliteSplitParser());
+TfliteNodeRegister g_tfliteSplitParser("Split", new TfliteSplitParser());
 }  // namespace lite
 }  // namespace mindspore

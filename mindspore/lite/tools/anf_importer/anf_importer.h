@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_ANF_IMPORTER_ANF_IMPORTER_H_
-#define MINDSPORE_LITE_SRC_ANF_IMPORTER_ANF_IMPORTER_H_
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_ANF_IMPORTER_ANF_IMPORTER_H_
+#define MINDSPORE_LITE_TOOLS_COMMON_ANF_IMPORTER_ANF_IMPORTER_H_
 
 #include <unordered_map>
 #include "ir/func_graph.h"
@@ -51,4 +51,4 @@ class AnfImporter {
 };
 }  // namespace mindspore::lite
 
-#endif  // MINDSPORE_LITE_SRC_ANF_IMPORTER_ANF_IMPORTER_H_
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_ANF_IMPORTER_ANF_IMPORTER_H_

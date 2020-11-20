@@ -176,7 +176,7 @@ size_t GetDataTypeSize(const TypeId &data_type) {
     case TypeId::kNumberTypeFloat32:
       return sizeof(float);
     case TypeId::kNumberTypeFloat16:
-      return sizeof(float) >> 1;
+      return sizeof(float) / 2;
     case TypeId::kNumberTypeInt8:
       return sizeof(int8_t);
     case TypeId::kNumberTypeInt32:
@@ -237,6 +237,11 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::P
 }
 
 void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr) {
+  MS_ASSERT(dst_str != nullptr);
+  if (src_str.empty()) {
+    MS_LOG(ERROR) << "src_str is empty";
+    return;
+  }
   std::string ::size_type p1 = 0, p2 = src_str.find(chr);
   while (std::string::npos != p2) {
     dst_str->push_back(src_str.substr(p1, p2 - p1));

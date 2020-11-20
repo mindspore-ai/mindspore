@@ -43,7 +43,6 @@ STATUS OnnxTopkParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       attr->k = static_cast<int32_t>(onnx_node_attr.i());
     }
   }
-  // attr->sorted;
 
   op->primitive->value.type = schema::PrimitiveType_TopK;
   op->primitive->value.value = attr.release();

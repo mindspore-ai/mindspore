@@ -22,7 +22,6 @@
 #include "src/param_value_lite.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
-#include "tools/common/tensor_util.h"
 
 namespace mindspore::lite {
 int AnfImporterFromMetaGraphT::ConverterConstTensor() {
@@ -31,11 +30,9 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
   for (size_t i = 0; i < meta_graph_->allTensors.size(); i++) {
     auto &tensor = meta_graph_->allTensors.at(i);
     MS_ASSERT(tensor != nullptr);
-    // converter weight and graph input into parameter node
     if (tensor->nodeType != schema::NodeType::NodeType_ValueNode) {
       continue;
     }
-    MS_ASSERT(tensor->dims() != nullptr);
     auto parameter = func_graph_->add_parameter();
     std::vector<int> shape(tensor->dims.size());
     std::copy(tensor->dims.begin(), tensor->dims.end(), shape.begin());
@@ -45,11 +42,12 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
     (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
                          [](const int32_t &value) { return static_cast<int64_t>(value); });
     auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+    MS_ASSERT(nullptr != abstract_tensor);
     parameter->set_abstract(abstract_tensor);
     parameter->set_name("const_" + std::to_string(i) + "_parameter");
 
     ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-    MS_ASSERT(param_value != nullptr);
+    MS_ASSERT(nullptr != param_value);
     param_value->set_tensor_shape(shape);
     param_value->set_tensor_type(type_id);
     param_value->set_format(tensor->format);
@@ -123,7 +121,9 @@ abstract::AbstractTensorPtr AnfImporterFromMetaGraphT::ConvertTensorToAbstractTe
   std::vector<int64_t> shape_vector;
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
                        [](const int32_t &value) { return static_cast<int64_t>(value); });
-  return std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  auto ptr = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  MS_ASSERT(nullptr != ptr);
+  return ptr;
 }
 
 int AnfImporterFromMetaGraphT::ConvertAbstract(const std::unique_ptr<schema::CNodeT> &src_cnode,
@@ -175,15 +175,16 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
       return RET_NULL_PTR;
     }
     std::vector<AnfNodePtr> op_inputs = {anf_primitive};
-    for (unsigned int j : cNode->inputIndex) {
+    for (int j : cNode->inputIndex) {
       auto node = GetNode(j);
       if (nullptr == node) {
         MS_LOG(ERROR) << "Can't find input node.";
-        return RET_ERROR;
+        return RET_NULL_PTR;
       }
       op_inputs.push_back(node);
     }
     auto new_cnode = func_graph_->NewCNode(op_inputs);
+    MS_ASSERT(nullptr != new_cnode);
     new_cnode->set_fullname_with_scope(cNode->name);
     auto status = ConvertAbstract(cNode, new_cnode);
     if (status != RET_OK) {
@@ -195,10 +196,8 @@ int AnfImporterFromMetaGraphT::ConverterCNode() {
 }
 
 int AnfImporterFromMetaGraphT::AddReturnCNode() {
-  if (meta_graph_ == nullptr || func_graph_ == nullptr) {
-    MS_LOG(ERROR) << "meta_graph or func_graph is nullptr";
-    return RET_NULL_PTR;
-  }
+  MS_ASSERT(nullptr != meta_graph_);
+  MS_ASSERT(nullptr != func_graph_);
   if (meta_graph_->outputIndex.size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
     auto make_tuple_prim_ptr = GetMakeTuplePrim();
@@ -229,6 +228,7 @@ int AnfImporterFromMetaGraphT::AddReturnCNode() {
     op_inputs.emplace_back(value_node);
     op_inputs.emplace_back(make_tuple_cnode);
     auto cnode = func_graph_->NewCNode(op_inputs);
+    MS_ASSERT(nullptr != cnode);
     cnode->set_fullname_with_scope("return");
     func_graph_->set_return(cnode);
   } else {

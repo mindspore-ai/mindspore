@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <cfloat>
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
 #include "tools/common/graph_util.h"

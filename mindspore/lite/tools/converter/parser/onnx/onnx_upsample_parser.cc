@@ -15,7 +15,6 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_upsample_parser.h"
-
 #include <memory>
 
 namespace mindspore {

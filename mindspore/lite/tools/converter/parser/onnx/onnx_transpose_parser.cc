@@ -41,13 +41,7 @@ STATUS OnnxTransposeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx
   attr->conjugate = false;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "axes") {
-      attr->perm.resize(onnx_node_attr.ints_size());
-      for (int i = 0; i < onnx_node_attr.ints_size(); ++i) {
-        attr->perm[i] = onnx_node_attr.ints(i);
-      }
-    }
-    if (attribute_name == "perm") {
+    if (attribute_name == "axes" || attribute_name == "perm") {
       attr->perm.resize(onnx_node_attr.ints_size());
       for (int i = 0; i < onnx_node_attr.ints_size(); ++i) {
         attr->perm[i] = onnx_node_attr.ints(i);

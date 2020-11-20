@@ -25,6 +25,9 @@ STATUS TfliteTransposeParser::Parse(TfliteTensorsInfo *tensors_info,
                                     const std::unique_ptr<tflite::ModelT> &tflite_model,
                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteTransposeParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -45,7 +48,6 @@ STATUS TfliteTransposeParser::Parse(TfliteTensorsInfo *tensors_info,
     MS_LOG(ERROR) << "get transpose -> perm failed";
     return RET_ERROR;
   }
-
   attr->conjugate = false;
   op->primitive->value.type = schema::PrimitiveType_Transpose;
   op->primitive->value.value = attr.release();

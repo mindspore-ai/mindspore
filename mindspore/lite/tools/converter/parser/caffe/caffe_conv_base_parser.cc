@@ -17,13 +17,6 @@
 #include "tools/converter/parser/caffe/caffe_conv_base_parser.h"
 #include <algorithm>
 
-const uint32_t PAD_DEFAULT_VALUE = 0;
-const uint32_t STRIDE_DEFAULT_VALUE = 1;
-const uint32_t DILATION_DEFAULT_VALUE = 1;
-const int32_t SPATIAL_DIM_DEFAULT_SIZE = 2;
-const uint32_t DEFAULT_CONV_GROUP = 1;
-static const int CAFFE_CONV_BIAS_DIM_NUM = 1;
-
 namespace mindspore {
 namespace lite {
 STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convParam, std::vector<int64_t> *pad) {
@@ -40,15 +33,15 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
     }
 
     if (!convParam.has_pad_h()) {
-      (*pad)[0] = PAD_DEFAULT_VALUE;
-      (*pad)[1] = PAD_DEFAULT_VALUE;
+      (*pad)[0] = 0;
+      (*pad)[1] = 0;
       (*pad)[2] = convParam.pad_w();
       (*pad)[3] = convParam.pad_w();
     } else if (!convParam.has_pad_w()) {
       (*pad)[0] = convParam.pad_h();
       (*pad)[1] = convParam.pad_h();
-      (*pad)[2] = PAD_DEFAULT_VALUE;
-      (*pad)[3] = PAD_DEFAULT_VALUE;
+      (*pad)[2] = 0;
+      (*pad)[3] = 0;
     } else {
       (*pad)[0] = convParam.pad_h();
       (*pad)[1] = convParam.pad_h();
@@ -56,15 +49,14 @@ STATUS CaffeConvBaseParser::ParsePads(const caffe::ConvolutionParameter &convPar
       (*pad)[3] = convParam.pad_w();
     }
   } else {
-    // default 2D
     const int num_pad_dims = convParam.pad_size();
-    int num_spatial_dims = std::max(num_pad_dims, SPATIAL_DIM_DEFAULT_SIZE);
+    int num_spatial_dims = std::max(num_pad_dims, 2);
 
     std::vector<int64_t> vec;
+    vec.reserve(num_spatial_dims);
     for (int i = 0; i < num_spatial_dims; ++i) {
-      vec.push_back((num_pad_dims == 0) ? PAD_DEFAULT_VALUE : convParam.pad((num_pad_dims == 1) ? 0 : i));
+      vec.push_back((num_pad_dims == 0) ? 0 : convParam.pad((num_pad_dims == 1) ? 0 : i));
     }
-    // default 2D
     (*pad)[0] = vec[0];
     (*pad)[1] = vec[0];
     (*pad)[2] = vec[1];
@@ -87,13 +79,13 @@ STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &conv
     (*stride)[1] = convParam.stride_w();
   } else {
     const int num_stride_dims = convParam.stride_size();
-    int num_spatial_dims = std::max(num_stride_dims, SPATIAL_DIM_DEFAULT_SIZE);
+    int num_spatial_dims = std::max(num_stride_dims, 2);
 
     std::vector<int64_t> vec;
+    vec.reserve(num_spatial_dims);
     for (int i = 0; i < num_spatial_dims; ++i) {
-      vec.push_back((num_stride_dims == 0) ? STRIDE_DEFAULT_VALUE : convParam.stride((num_stride_dims == 1) ? 0 : i));
+      vec.push_back((num_stride_dims == 0) ? 1 : convParam.stride((num_stride_dims == 1) ? 0 : i));
     }
-    // default 2D
     (*stride)[0] = vec[0];
     (*stride)[1] = vec[1];
   }
@@ -103,17 +95,15 @@ STATUS CaffeConvBaseParser::ParseStrides(const caffe::ConvolutionParameter &conv
 STATUS CaffeConvBaseParser::ParseDilations(const caffe::ConvolutionParameter &convParam,
                                            std::vector<int64_t> *dilation) {
   const int num_dilation_dims = convParam.dilation_size();
-  int num_spatial_dims = std::max(num_dilation_dims, SPATIAL_DIM_DEFAULT_SIZE);
+  int num_spatial_dims = std::max(num_dilation_dims, 2);
 
   std::vector<int64_t> vec;
+  vec.reserve(num_spatial_dims);
   for (int i = 0; i < num_spatial_dims; ++i) {
-    vec.push_back((num_dilation_dims == 0) ? DILATION_DEFAULT_VALUE
-                                           : convParam.dilation((num_dilation_dims == 1) ? 0 : i));
+    vec.push_back((num_dilation_dims == 0) ? 1 : convParam.dilation((num_dilation_dims == 1) ? 0 : i));
   }
-  // default 2D
   (*dilation)[0] = vec[0];
   (*dilation)[1] = vec[1];
-
   return RET_OK;
 }
 
@@ -131,9 +121,11 @@ STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &conv
       return RET_ERROR;
     }
   } else if (convParam.kernel_size_size() != 0) {
-    int kernel_size = convParam.kernel_size_size();
-    int num_spatial_dims = std::max(kernel_size, SPATIAL_DIM_DEFAULT_SIZE);
+    const int kernel_size = convParam.kernel_size_size();
+    int num_spatial_dims = std::max(kernel_size, 2);
+
     std::vector<int64_t> vec;
+    vec.reserve(num_spatial_dims);
     for (int i = 0; i < num_spatial_dims; i++) {
       vec.push_back(convParam.kernel_size((kernel_size == 1) ? 0 : i));
     }
@@ -141,24 +133,25 @@ STATUS CaffeConvBaseParser::ParseKernels(const caffe::ConvolutionParameter &conv
     (*kernel)[0] = vec[0];
     (*kernel)[1] = vec[1];
   } else {
+    MS_LOG(ERROR) << "conv does not have kernel info.";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
 int CaffeConvBaseParser::ParseGroup(const caffe::ConvolutionParameter &convParam, const std::string &layerType) {
-  // group default 1
-  int group = 0;
   if (convParam.has_group()) {
-    group = convParam.group();
+    return convParam.group();
   } else {
-    layerType == "ConvolutionDepthwise" ? (group = convParam.num_output()) : (group = DEFAULT_CONV_GROUP);
+    return layerType == "ConvolutionDepthwise" ? static_cast<int>(convParam.num_output()) : 1;
   }
-  return group;
 }
 
 int CaffeConvBaseParser::ParseChannelOut(const caffe::ConvolutionParameter &convParam, int32_t *channelOut) {
-  MS_ASSERT(channelOut != nullptr);
+  if (channelOut == nullptr) {
+    MS_LOG(ERROR) << "channelOut is null";
+    return RET_NULL_PTR;
+  }
   if (!convParam.has_num_output()) {
     MS_LOG(ERROR) << "Parse num_output for failed.";
     return RET_ERROR;
@@ -169,7 +162,11 @@ int CaffeConvBaseParser::ParseChannelOut(const caffe::ConvolutionParameter &conv
 
 STATUS CaffeConvBaseParser::ParseWeight(const caffe::LayerParameter &weight,
                                         std::vector<schema::TensorT *> *weightVec) {
-  // Layer must have Filter
+  if (weightVec == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+
   if (weight.blobs_size() == 0) {
     MS_LOG(ERROR) << "No filter data in layer " << weight.name().c_str();
     return RET_ERROR;
@@ -182,8 +179,7 @@ STATUS CaffeConvBaseParser::ParseWeight(const caffe::LayerParameter &weight,
   }
   weightVec->push_back(filter);
 
-  // parse bias
-  const caffe::ConvolutionParameter convParam = weight.convolution_param();
+  const caffe::ConvolutionParameter &convParam = weight.convolution_param();
   if (convParam.bias_term() && weight.blobs_size() > 1) {
     auto bias = ConvertWeight(weight.blobs(1));
     if (bias == nullptr) {
@@ -192,7 +188,7 @@ STATUS CaffeConvBaseParser::ParseWeight(const caffe::LayerParameter &weight,
     }
 
     std::vector<int32_t> shape = bias->dims;
-    if (shape.size() != CAFFE_CONV_BIAS_DIM_NUM) {
+    if (shape.size() != 1) {
       MS_LOG(ERROR) << "Bias dim-num of layer " << weight.name().c_str() << " is not supported";
       return RET_ERROR;
     }

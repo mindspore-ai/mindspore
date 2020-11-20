@@ -39,7 +39,7 @@ STATUS OnnxLstmParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "direction") {
-      auto direction = onnx_node_attr.s();
+      const auto &direction = onnx_node_attr.s();
       attr->bidirection = direction == "bidirectional";
     }
   }

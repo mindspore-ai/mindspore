@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_COMMON_OPTION_H_
-#define PREDICT_COMMON_OPTION_H_
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_OPTION_H
+#define MINDSPORE_LITE_TOOLS_COMMON_OPTION_H
 
 #include <type_traits>
 #include <utility>
@@ -56,7 +56,7 @@ class Option {
     }
   }
 
-  virtual ~Option() {}
+  virtual ~Option() = default;
 
   bool IsNone() const { return state == NONE; }
 
@@ -116,4 +116,4 @@ class Option {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_COMMON_OPTION_H_
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_OPTION_H

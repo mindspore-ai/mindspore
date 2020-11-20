@@ -25,7 +25,7 @@ namespace lite {
 class OnnxLpNormParser : public OnnxNodeParser {
  public:
   OnnxLpNormParser() : OnnxNodeParser("LpNorm") {}
-  ~OnnxLpNormParser() = default;
+  ~OnnxLpNormParser() override = default;
 
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };

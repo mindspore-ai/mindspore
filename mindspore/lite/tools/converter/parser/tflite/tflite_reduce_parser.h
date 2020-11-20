@@ -33,36 +33,6 @@ class TfliteReduceParser : public TfliteNodeParser {
                const std::unique_ptr<tflite::ModelT> &tflite_model,
                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) override;
 };
-
-class TfliteReduceMaxParser : public TfliteReduceParser {
- public:
-  TfliteReduceMaxParser() : TfliteReduceParser() {}
-};
-
-class TfliteReduceMinParser : public TfliteReduceParser {
- public:
-  TfliteReduceMinParser() : TfliteReduceParser() {}
-};
-
-class TfliteReduceProdParser : public TfliteReduceParser {
- public:
-  TfliteReduceProdParser() : TfliteReduceParser() {}
-};
-
-class TfliteSumParser : public TfliteReduceParser {
- public:
-  TfliteSumParser() : TfliteReduceParser() {}
-};
-
-class TfliteMeanParser : public TfliteReduceParser {
- public:
-  TfliteMeanParser() : TfliteReduceParser() {}
-};
-
-class TfliteReduceAnyParser : public TfliteReduceParser {
- public:
-  TfliteReduceAnyParser() : TfliteReduceParser() {}
-};
 }  // namespace lite
 }  // namespace mindspore
 

@@ -40,13 +40,6 @@ OnnxNodeParser *OnnxNodeParserRegistry::GetNodeParser(const std::string &name) {
   if (it != parsers.end()) {
     return it->second;
   }
-  /* should not support vague name, otherwise may get wrong parser. ex. PRelu and Relu
-  for (auto const &i : parsers) {
-    if (name.find(i.first) != std::string::npos) {
-      return i.second;
-    }
-  }
-   */
   return nullptr;
 }
 }  // namespace lite

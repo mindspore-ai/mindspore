@@ -26,7 +26,7 @@ namespace lite {
 class CaffeInnerProductParser : public CaffeNodeParser {
  public:
   CaffeInnerProductParser() : CaffeNodeParser("innerproduct") {}
-  ~CaffeInnerProductParser() = default;
+  ~CaffeInnerProductParser() override = default;
 
   STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
                std::vector<schema::TensorT *> *weightVec) override;

@@ -50,7 +50,7 @@ int Storage::Save(const schema::MetaGraphT &graph, const std::string &outputPath
 }
 
 schema::MetaGraphT *Storage::Load(const std::string &inputPath) {
-  size_t size;
+  size_t size = 0;
   auto buf = ReadFile(inputPath.c_str(), &size);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "the file buffer is nullptr";
@@ -58,7 +58,7 @@ schema::MetaGraphT *Storage::Load(const std::string &inputPath) {
   }
 
   flatbuffers::Verifier verify((const uint8_t *)buf, size);
-  if (false == schema::VerifyMetaGraphBuffer(verify)) {
+  if (!schema::VerifyMetaGraphBuffer(verify)) {
     MS_LOG(ERROR) << "the buffer is invalid and fail to create meta graph";
     return nullptr;
   }

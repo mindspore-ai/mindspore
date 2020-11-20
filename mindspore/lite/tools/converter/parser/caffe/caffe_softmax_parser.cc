@@ -17,8 +17,6 @@
 #include "tools/converter/parser/caffe/caffe_softmax_parser.h"
 #include <memory>
 
-static const int32_t CAFFE_SOFTMAX_DEFAULT_AXIS = 1;
-
 namespace mindspore {
 namespace lite {
 STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
@@ -42,11 +40,11 @@ STATUS CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe
 
   if (proto.has_softmax_param() && proto.softmax_param().has_axis()) {
     if (proto.softmax_param().axis() == -1) {
-      MS_LOG(ERROR) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
+      MS_LOG(DEBUG) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
     }
     attr->axis = proto.softmax_param().axis();
   } else {
-    attr->axis = CAFFE_SOFTMAX_DEFAULT_AXIS;
+    attr->axis = 1;
   }
 
   op->name = proto.name();

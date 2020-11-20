@@ -33,16 +33,6 @@ class TfliteResizeParser : public TfliteNodeParser {
                const std::unique_ptr<tflite::ModelT> &tflite_model,
                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) override;
 };
-
-class TfliteResizeBilinearParser : public TfliteResizeParser {
- public:
-  TfliteResizeBilinearParser() : TfliteResizeParser() {}
-};
-
-class TfliteResizeNearestNeighborParser : public TfliteResizeParser {
- public:
-  TfliteResizeNearestNeighborParser() : TfliteResizeParser() {}
-};
 }  // namespace lite
 }  // namespace mindspore
 

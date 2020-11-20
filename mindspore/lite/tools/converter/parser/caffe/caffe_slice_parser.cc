@@ -33,7 +33,6 @@ STATUS CaffeSliceParser::Parse(const caffe::LayerParameter &proto, const caffe::
   }
 
   std::unique_ptr<schema::SplitT> attr = std::make_unique<schema::SplitT>();
-
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
@@ -56,12 +55,12 @@ STATUS CaffeSliceParser::Parse(const caffe::LayerParameter &proto, const caffe::
     attr->sizeSplits = size_splits;
   }
 
-  // The axis along which to slice -- may be negative to index from the end (e.g., -1 for the last axis).
   if (slice_param.has_axis()) {
     attr->splitDim = slice_param.axis();
   } else if (slice_param.has_slice_dim()) {
     attr->splitDim = slice_param.slice_dim();
   }
+
   op->name = proto.name();
   op->primitive->value.type = schema::PrimitiveType_Split;
   op->primitive->value.value = attr.release();

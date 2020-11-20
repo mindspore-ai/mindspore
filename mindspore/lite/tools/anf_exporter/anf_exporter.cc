@@ -89,7 +89,7 @@ void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
 }
 
 int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                                   const std::shared_ptr<PrimitiveC> primitive,
+                                   const std::shared_ptr<PrimitiveC> &primitive,
                                    const std::unique_ptr<schema::CNodeT> &dst_node) {
   MS_ASSERT(meta_graph != nullptr);
   MS_ASSERT(primitive != nullptr);
@@ -173,7 +173,7 @@ void AnfExporter::SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &
 
 int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                      schema::CNodeT *return_node) {
-  MS_ASSERT(nullptr != meta_graph);
+  MS_ASSERT(nullptr != meta_graphT);
   MS_ASSERT(nullptr != return_node);
   for (size_t i = 1; i < cnode->inputs().size(); i++) {
     auto input_node = cnode->input(i);
@@ -191,8 +191,8 @@ int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_pt
       return RET_ERROR;
     }
   }
-  for (size_t i = 0; i < return_node->inputIndex.size(); ++i) {
-    meta_graphT->outputIndex.push_back(return_node->inputIndex[i]);
+  for (unsigned int &i : return_node->inputIndex) {
+    meta_graphT->outputIndex.push_back(i);
   }
   return RET_OK;
 }
@@ -272,7 +272,7 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
   return meta_graphT.release();
 }
 
-int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, schema::CNodeT *output_cnode) {
+int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, schema::CNodeT *output_cnode) {
   std::string input_name = input_anode->fullname_with_scope();
   auto input_cnode = utils::cast<CNodePtr>(input_anode);
 
@@ -336,7 +336,7 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> input_anode, s
   return RET_OK;
 }
 
-int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> input_anode,
+int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> &input_anode,
                                        const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                        schema::CNodeT *output_cnode) {
   auto paramNode = input_anode->cast<ParameterPtr>();
@@ -382,7 +382,7 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> input_anod
   return RET_OK;
 }
 
-int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
+int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_anode,
                                        const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                        schema::CNodeT *output_cnode) {
   auto valueNode = input_anode->cast<ValueNodePtr>();
@@ -478,7 +478,7 @@ int AnfExporter::ConvertInputValueNode(std::shared_ptr<AnfNode> input_anode,
 
 int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                 schema::CNodeT *fb_node) {
-  MS_ASSERT(nullptr != meta_graph);
+  MS_ASSERT(nullptr != meta_graphT);
   MS_ASSERT(nullptr != fb_node);
   if (cnode->inputs().size() <= 1) {
     return RET_OK;
@@ -518,14 +518,14 @@ int AnfExporter::SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<sch
 
 void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                                   schema::CNodeT *fb_node) {
-  MS_ASSERT(nullptr != graph);
+  MS_ASSERT(nullptr != meta_graphT);
   MS_ASSERT(nullptr != fb_node);
   std::string cnode_name = fb_node->name;
 
   if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
     auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
     for (size_t i = 0; i < tuple->size(); i++) {
-      auto msTensor = new schema::TensorT();
+      auto msTensor = new (std::nothrow) schema::TensorT();
       msTensor->nodeType = schema::NodeType_CNode;
       fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
 #ifdef SUPPORT_TRAIN
@@ -552,7 +552,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
 #endif
     }
   } else {
-    auto ms_tensor = new schema::TensorT();
+    auto ms_tensor = new (std::nothrow) schema::TensorT();
     ms_tensor->nodeType = schema::NodeType_CNode;
     ms_tensor->dataType = TypeId::kNumberTypeFloat32;
     fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());

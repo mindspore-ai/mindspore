@@ -39,7 +39,7 @@ STATUS CaffeTileParser::Parse(const caffe::LayerParameter &proto, const caffe::L
     return RET_NULL_PTR;
   }
 
-  const caffe::TileParameter tile_param = proto.tile_param();
+  const caffe::TileParameter &tile_param = proto.tile_param();
   std::vector<int> dims;
   std::vector<int> multiples;
   dims.clear();

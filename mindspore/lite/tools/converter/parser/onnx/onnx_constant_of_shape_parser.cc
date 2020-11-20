@@ -52,7 +52,7 @@ STATUS OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_graph, cons
           attr->value.push_back(static_cast<float>(onnx_node_attr.i()));
           break;
         case onnx::AttributeProto_AttributeType_TENSOR: {
-          auto tensor = onnx_node_attr.t();
+          const auto &tensor = onnx_node_attr.t();
           auto ret = GetTensorDataFromOnnx(tensor, &attr->value, &attr->dataType);
           if (ret != RET_OK) {
             return ret;

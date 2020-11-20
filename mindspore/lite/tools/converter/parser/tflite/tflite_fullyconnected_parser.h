@@ -33,11 +33,6 @@ class TfliteFullyConnectedParser : public TfliteNodeParser {
                const std::unique_ptr<tflite::ModelT> &tflite_model,
                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) override;
 };
-
-class TfliteFakeQuantParser : public TfliteFullyConnectedParser {
- public:
-  TfliteFakeQuantParser() : TfliteFullyConnectedParser() {}
-};
 }  // namespace lite
 }  // namespace mindspore
 

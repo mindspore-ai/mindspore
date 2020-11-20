@@ -22,6 +22,10 @@ namespace lite {
 STATUS CaffePReluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffePReluParser";
+  if (weightVec == nullptr) {
+    MS_LOG(ERROR) << "weightVec is null";
+    return RET_NULL_PTR;
+  }
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -38,7 +42,7 @@ STATUS CaffePReluParser::Parse(const caffe::LayerParameter &proto, const caffe::
     return RET_NULL_PTR;
   }
 
-  const caffe::PReLUParameter pReluParam = proto.prelu_param();
+  const caffe::PReLUParameter &pReluParam = proto.prelu_param();
   if (pReluParam.has_channel_shared()) {
     attr->channelShared = pReluParam.channel_shared();
   } else {
@@ -49,7 +53,6 @@ STATUS CaffePReluParser::Parse(const caffe::LayerParameter &proto, const caffe::
     MS_LOG(ERROR) << "PRelu No blobs data in layer " << proto.name().c_str();
     return RET_ERROR;
   }
-
   auto slope = ConvertWeight(weight.blobs(0));
   if (slope == nullptr) {
     MS_LOG(ERROR) << "CaffePRelu convert slope for layer " << weight.name().c_str() << " failed.";

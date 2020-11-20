@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MEAN_POOLING_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MEAN_POOLING_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_POOLING_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_POOLING_PARSER_H
 
 #include <vector>
 #include <memory>
@@ -33,17 +33,7 @@ class TflitePoolingParser : public TfliteNodeParser {
                const std::unique_ptr<tflite::ModelT> &tflite_model,
                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) override;
 };
-
-class TfliteMeanPoolingParser : public TflitePoolingParser {
- public:
-  TfliteMeanPoolingParser() : TflitePoolingParser() {}
-};
-
-class TfliteMaxPoolingParser : public TflitePoolingParser {
- public:
-  TfliteMaxPoolingParser() : TflitePoolingParser() {}
-};
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_CONV_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_POOLING_PARSER_H

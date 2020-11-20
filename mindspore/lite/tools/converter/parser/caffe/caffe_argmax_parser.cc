@@ -38,17 +38,16 @@ STATUS CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto, const caffe:
     return RET_NULL_PTR;
   }
 
-  // set default params
   attr->outMaxValue = false;
   attr->topK = 1;
-  const caffe::ArgMaxParameter argmaxParam = proto.argmax_param();
+  const caffe::ArgMaxParameter &argmaxParam = proto.argmax_param();
   if (argmaxParam.has_out_max_val()) {
     attr->outMaxValue = argmaxParam.out_max_val();
   }
   if (argmaxParam.has_top_k()) {
     attr->topK = argmaxParam.top_k();
   }
-  int32_t axisType;
+  int32_t axisType = 0;
   int32_t axis = 0;
   if (!argmaxParam.has_axis()) {
     axisType = 2;

@@ -18,7 +18,6 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include "flatbuffers/flatbuffers.h"
 #include "flatbuffers/flexbuffers.h"
 
 namespace mindspore {
@@ -212,6 +211,9 @@ STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
                                  const std::unique_ptr<tflite::ModelT> &tflite_model,
                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
   MS_LOG(DEBUG) << "parse TfliteCustomParser";
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -222,8 +224,14 @@ STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
     return RET_NULL_PTR;
   }
   const auto &custom_attr = tflite_op->custom_options;
-  const auto &opcode_index = tflite_op->opcode_index;
-  const auto &custom_type = tflite_model->operator_codes[opcode_index]->custom_code;
+  const auto opcode_index = tflite_op->opcode_index;
+  const auto &operator_code = tflite_model->operator_codes[opcode_index];
+  if (operator_code == nullptr) {
+    MS_LOG(ERROR) << "operator_code is null";
+    return RET_NULL_PTR;
+  }
+  const auto &custom_type = operator_code->custom_code;
+
   int status = RET_OK;
   if (custom_type == "TFLite_Detection_PostProcess") {
     status = DetectPostProcess(custom_attr, op, tflite_op);
@@ -254,11 +262,12 @@ STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   if (status != RET_OK) {
     return status;
   }
-  for (size_t i = 0; i < tflite_op->inputs.size(); ++i) {
-    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+
+  for (int input : tflite_op->inputs) {
+    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
-  for (size_t i = 0; i < tflite_op->outputs.size(); ++i) {
-    AddOpOutput(op, tensors_info, tflite_op->outputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
+  for (int output : tflite_op->outputs) {
+    AddOpOutput(op, tensors_info, output, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   }
   return status;
 }

@@ -48,11 +48,10 @@ STATUS OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
     MS_LOG(ERROR) << "can not find node: " << onnx_expand_power;
     return RET_ERROR;
   }
-  const int64_t *dataPtr = nullptr;
   for (const auto &attrPower : nodeIter->attribute()) {
     if (attrPower.name() == "value") {
       const auto &t = attrPower.t();
-      dataPtr = reinterpret_cast<const int64_t *>(t.raw_data().data());
+      auto *dataPtr = reinterpret_cast<const int64_t *>(t.raw_data().data());
       for (int i = 0; i < t.dims(0); ++i) {
         dst_shape.emplace_back(dataPtr[i]);
       }

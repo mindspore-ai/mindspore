@@ -38,7 +38,7 @@ STATUS CaffePermuteParser::Parse(const caffe::LayerParameter &proto, const caffe
     return RET_NULL_PTR;
   }
 
-  const caffe::PermuteParameter permuteParam = proto.permute_param();
+  const caffe::PermuteParameter &permuteParam = proto.permute_param();
   const int num_order_dims = permuteParam.order_size();
   attr->perm.resize(num_order_dims);
   for (int i = 0; i < num_order_dims; ++i) {

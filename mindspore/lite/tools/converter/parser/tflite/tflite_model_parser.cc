@@ -32,7 +32,7 @@ TfliteModelParser::TfliteModelParser() = default;
 TfliteModelParser::~TfliteModelParser() { delete[](this->tfliteModelBuf); }
 
 std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *model_path) {
-  size_t size;
+  size_t size = 0;
   tfliteModelBuf = ReadFile(model_path, &size);
   if (tfliteModelBuf == nullptr) {
     MS_LOG(ERROR) << "the file buffer is nullptr";
@@ -48,11 +48,20 @@ std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *m
 
 STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                               const tflite::TensorT *tflite_tensor, schema::TensorT *tensor) {
+  MS_ASSERT(tensor != nullptr);
+  MS_ASSERT(tflite_tensor != nullptr);
   auto buffer_idx = tflite_tensor->buffer;
-  if (!tflite_model_buffer[buffer_idx]->data.empty()) {
-    auto data_size = tflite_model_buffer[buffer_idx]->data.size();
+
+  const auto &buf = tflite_model_buffer[buffer_idx];
+  if (buf == nullptr) {
+    MS_LOG(ERROR) << "tensor is null";
+    return RET_NULL_PTR;
+  }
+
+  if (!buf->data.empty()) {
+    auto data_size = buf->data.size();
     tensor->data.resize(data_size);
-    if (memcpy_s(tensor->data.data(), data_size, tflite_model_buffer[buffer_idx]->data.data(), data_size) != EOK) {
+    if (memcpy_s(tensor->data.data(), data_size, buf->data.data(), data_size) != EOK) {
       MS_LOG(ERROR) << "memcpy tensor data failed";
       return RET_MEMORY_FAILED;
     }
@@ -65,9 +74,20 @@ STATUS TfliteModelParser::CopyConstTensorData(const std::vector<std::unique_ptr<
 
 void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::TensorT> &tflite_tensor,
                                             schema::TensorT *tensor) {
+  MS_ASSERT(tensor != nullptr);
   tensor->quantParams.clear();
+
+  if (tflite_tensor->quantization == nullptr) {
+    MS_LOG(ERROR) << "tflite_tensor->quantization is null";
+    return;
+  }
   for (size_t i = 0; i < tflite_tensor->quantization->scale.size(); i++) {
     std::unique_ptr<schema::QuantParamT> quant_param = std::make_unique<QuantParamT>();
+    if (quant_param == nullptr) {
+      MS_LOG(ERROR) << "quant_param is null";
+      return;
+    }
+
     if (!tflite_tensor->quantization->scale.empty()) {
       quant_param->scale = tflite_tensor->quantization->scale[i];
     }
@@ -91,14 +111,27 @@ void TfliteModelParser::SetTensorQuantParam(const std::unique_ptr<tflite::Tensor
 STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflite_model,
                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                     const QuantType &quant_type, schema::MetaGraphT *sub_graph) {
+  MS_ASSERT(tflite_model != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
+  MS_ASSERT(sub_graph != nullptr);
+
   int idx = 0;
   int status = RET_OK;
   NoSupportOp::GetInstance()->SetFmkType("TFLITE");
   for (const auto &tflite_op : tflite_subgraph->operators) {
-    auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
-    auto op_type = GetMSOpType(tflite_op_type);
+    const auto opcode_index = tflite_op->opcode_index;
+    const auto &operator_code = tflite_model->operator_codes[opcode_index];
+    if (operator_code == nullptr) {
+      MS_LOG(ERROR) << "operator_code is null";
+      return RET_ERROR;
+    }
+    auto op_type = GetMSOpType(operator_code->builtin_code);
 
     auto op = std::make_unique<schema::CNodeT>();
+    if (op == nullptr) {
+      MS_LOG(ERROR) << "op is null";
+      return RET_NULL_PTR;
+    }
     op->name = op_type + "-" + std::to_string(idx++);
     op->quantType = quant_type;
     MS_LOG(INFO) << "parse op: " << op->name.c_str();
@@ -114,8 +147,7 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
       status = (status == RET_OK ? status_node : status);
       if (status_node != RET_OK) {
         if (status_node == RET_NOT_FIND_OP) {
-          op_type =
-            (op_type != "Custom" ? op_type : (tflite_model->operator_codes[tflite_op->opcode_index])->custom_code);
+          op_type = (op_type != "Custom" ? op_type : operator_code->custom_code);
           NoSupportOp::GetInstance()->InsertOp(op_type);
         } else {
           MS_LOG(ERROR) << "node " << op_type.c_str() << " parser failed";
@@ -136,10 +168,11 @@ STATUS TfliteModelParser::ConvertOp(const std::unique_ptr<tflite::ModelT> &tflit
 STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                         const std::vector<std::unique_ptr<tflite::BufferT>> &tflite_model_buffer,
                                         schema::MetaGraphT *sub_graph) {
+  MS_ASSERT(tflite_subgraph != nullptr);
+  MS_ASSERT(sub_graph != nullptr);
   std::set<int> output_index;
   for (const auto &tflite_op : tflite_subgraph->operators) {
-    for (size_t j = 0; j < tflite_op->outputs.size(); ++j) {
-      int idx = tflite_op->outputs[j];
+    for (int idx : tflite_op->outputs) {
       if (idx < 0) {
         idx += tflite_subgraph->tensors.size();
       }
@@ -152,7 +185,16 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
       idx += tflite_subgraph->tensors.size();
     }
     const auto &tflite_tensor = tflite_subgraph->tensors[idx];
+    if (tflite_tensor == nullptr) {
+      MS_LOG(ERROR) << "tflite_tensor is null";
+      return RET_NULL_PTR;
+    }
+
     std::unique_ptr<schema::TensorT> tensor = std::make_unique<schema::TensorT>();
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "tensor is null";
+      return RET_NULL_PTR;
+    }
 
     tensor->format = tensorsInfo.tensorsFormat[i];
     tensor->dataType = GetTfliteDataType(tflite_tensor->type);
@@ -170,6 +212,10 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
 
     // add data for const tensor
     auto &tensor_buffer = tflite_model_buffer.at(tflite_tensor->buffer);
+    if (tensor_buffer == nullptr) {
+      MS_LOG(ERROR) << "tensor_buffer is null";
+      return RET_NULL_PTR;
+    }
     auto isConst = (!tensor_buffer->data.empty());
     if (isConst) {
       int status = CopyConstTensorData(tflite_model_buffer, tflite_tensor.get(), tensor.get());
@@ -209,17 +255,13 @@ STATUS TfliteModelParser::ConvertTensor(const std::unique_ptr<tflite::SubGraphT>
 
 STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
                                        schema::MetaGraphT *sub_graph) {
-  int id;
-
+  MS_ASSERT(sub_graph != nullptr);
+  MS_ASSERT(tflite_subgraph != nullptr);
   // graph input
   std::vector<int> graph_inputs;
   for (size_t i = 0; i < tflite_subgraph->inputs.size(); i++) {
     const int idx = tflite_subgraph->inputs[i];
-    if (idx < 0) {
-      id = idx + tflite_subgraph->tensors.size();
-    } else {
-      id = idx;
-    }
+    int id = idx < 0 ? idx + tflite_subgraph->tensors.size() : idx;
     auto iter = tensorsInfo.tensorsIdMap.find(id);
     if (iter != tensorsInfo.tensorsIdMap.end()) {
       graph_inputs.push_back(iter->second);
@@ -234,11 +276,7 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
   std::vector<int> graph_outputs;
   for (size_t i = 0; i < tflite_subgraph->outputs.size(); i++) {
     const int idx = tflite_subgraph->outputs[i];
-    if (idx < 0) {
-      id = idx + tflite_subgraph->tensors.size();
-    } else {
-      id = idx;
-    }
+    int id = idx < 0 ? idx + tflite_subgraph->tensors.size() : idx;
     auto iter = tensorsInfo.tensorsIdMap.find(id);
     if (iter != tensorsInfo.tensorsIdMap.end()) {
       graph_outputs.push_back(iter->second);
@@ -252,21 +290,30 @@ STATUS TfliteModelParser::GetGraphInfo(const std::unique_ptr<tflite::SubGraphT> 
 }
 
 STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph) {
+  MS_ASSERT(sub_graph != nullptr);
   for (auto &op : sub_graph->nodes) {
+    if (op->primitive == nullptr) {
+      MS_LOG(ERROR) << "op->primitive is null";
+      return RET_NULL_PTR;
+    }
     if (op->primitive->value.type == schema::PrimitiveType_DepthwiseConv2D) {
       auto attr = op->primitive->value.AsDepthwiseConv2D();
+      if (attr == nullptr) {
+        MS_LOG(ERROR) << "attr is null";
+        return RET_NULL_PTR;
+      }
       if (attr->channelMultiplier > 1) {
         // get channel attr
         if (op->inputIndex.empty()) {
           MS_LOG(ERROR) << "the input of DepthwiseConv2D is null";
           return RET_NULL_PTR;
         }
-        auto data_id = op->inputIndex[0];
+        const auto data_id = op->inputIndex[0];
         if (sub_graph->allTensors.size() <= data_id) {
           MS_LOG(ERROR) << "the number of allTensors is less than " << data_id;
           return RET_ERROR;
         }
-        auto &data_tensor = sub_graph->allTensors.at(data_id);
+        const auto &data_tensor = sub_graph->allTensors.at(data_id);
         if (data_tensor == nullptr) {
           MS_LOG(ERROR) << "the data tensor is null";
           return RET_NULL_PTR;
@@ -277,6 +324,10 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph)
           return RET_NO_CHANGE;
         }
         std::unique_ptr<schema::Conv2DT> conv_attr = std::make_unique<schema::Conv2DT>();
+        if (conv_attr == nullptr) {
+          MS_LOG(ERROR) << "conv_attr is null";
+          return RET_NULL_PTR;
+        }
         if (data_shape[3] == 1) {
           conv_attr->channelIn = data_shape[3];
           conv_attr->channelOut = conv_attr->channelIn * attr->channelMultiplier;
@@ -336,7 +387,8 @@ STATUS TfliteModelParser::ConvertGroupDepthwiseOp(schema::MetaGraphT *sub_graph)
 
 std::unique_ptr<schema::MetaGraphT> TfliteModelParser::ConstructMainGraph(
   const std::unique_ptr<tflite::ModelT> &tflite_model, const QuantType &quant_type) {
-  if (tflite_model->subgraphs.size() < 1) {
+  MS_ASSERT(tflite_model != nullptr);
+  if (tflite_model->subgraphs.empty()) {
     MS_LOG(ERROR) << "read tflite model main subgraphs failed";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
     return nullptr;
@@ -388,6 +440,11 @@ std::unique_ptr<schema::MetaGraphT> TfliteModelParser::ConstructMainGraph(
 
 schema::MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
                                                  const QuantType &quant_type) {
+  if (model_file.empty()) {
+    MS_LOG(ERROR) << "model_file is empty";
+    return nullptr;
+  }
+
   // load graph
   auto tflite_model = ReadTfliteModel(model_file.c_str());
   if (tflite_model == nullptr) {

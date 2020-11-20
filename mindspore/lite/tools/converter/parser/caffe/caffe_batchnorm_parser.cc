@@ -19,12 +19,6 @@
 #include <memory>
 #include "tools/common/tensor_util.h"
 
-#define CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT 0.00001
-#define CAFFE_BATCH_NORM_ESP_DEFAULT_DIFF_FLOAT 0.000000001
-
-static const int CAFFE_BATCHNORMAL_BOTTOM_SIZE = 1;
-static const int CAFFE_BATCHNORMAL_TOP_SIZE = 1;
-
 namespace mindspore {
 namespace lite {
 using STATUS = int;
@@ -32,6 +26,10 @@ using STATUS = int;
 STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
                                    schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
   MS_LOG(DEBUG) << "parse CaffeBatchNormParser";
+  if (weightVec == nullptr) {
+    MS_LOG(ERROR) << "weightVec is null";
+    return RET_NULL_PTR;
+  }
   if (op == nullptr) {
     MS_LOG(ERROR) << "op is null";
     return RET_NULL_PTR;
@@ -48,43 +46,38 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caf
     return RET_NULL_PTR;
   }
 
-  const caffe::BatchNormParameter batchNormParam = proto.batch_norm_param();
-  // check bottom size
-  if (proto.bottom_size() != CAFFE_BATCHNORMAL_BOTTOM_SIZE) {
-    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "bottom numbers is error, it must be "
-                  << CAFFE_BATCHNORMAL_BOTTOM_SIZE << "but is " << proto.bottom_size();
+  const caffe::BatchNormParameter &batchNormParam = proto.batch_norm_param();
+  if (proto.bottom_size() != 1) {
+    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "bottom numbers is error, it must be 1, but is "
+                  << proto.bottom_size();
     return RET_ERROR;
   }
-
-  // check top size
-  if (proto.top_size() != CAFFE_BATCHNORMAL_TOP_SIZE) {
-    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "top numbers is error, it must be "
-                  << CAFFE_BATCHNORMAL_TOP_SIZE << "but is " << proto.top_size();
+  if (proto.top_size() != 1) {
+    MS_LOG(ERROR) << "Layer " << proto.name().c_str() << "top numbers is error, it must be 1, but is "
+                  << proto.top_size();
     return RET_ERROR;
   }
 
   if (batchNormParam.has_eps()) {
-    if (fabs(CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT - batchNormParam.eps()) < CAFFE_BATCH_NORM_ESP_DEFAULT_DIFF_FLOAT) {
-      attr->epsilon = CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT;
+    if (std::fabs(1e-5 - batchNormParam.eps()) < 1e-9) {
+      attr->epsilon = 1e-5;
     } else {
       auto tmpAuto = batchNormParam.eps();
       attr->epsilon = tmpAuto;
     }
   } else {
-    attr->epsilon = CAFFE_BATCH_NORM_ESP_DEFAULT_FLOAT;
+    attr->epsilon = 1e-5;
   }
 
   const float blob2Data =
     (weight.blobs(2).double_data_size() > 0) ? weight.blobs(2).double_data(0) : weight.blobs(2).data(0);
   const float scaleFactor = blob2Data == 0 ? 0 : 1 / blob2Data;
 
-  // parse weight gamma
   auto gamma = ConvertWeight(weight.blobs(0));
   if (gamma == nullptr) {
     MS_LOG(ERROR) << "Convert blobs(0) for layer " << weight.name().c_str() << " failed";
     return RET_ERROR;
   }
-
   auto estimatedMean = reinterpret_cast<float *>(gamma->data.data());
   auto estimatedMeanShapeSize = GetShapeSize(*gamma);
   for (size_t i = 0; i < estimatedMeanShapeSize; i++) {
@@ -93,13 +86,11 @@ STATUS CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caf
   estimatedMean = nullptr;
   weightVec->push_back(gamma);
 
-  // parse weight beta
   auto beta = ConvertWeight(weight.blobs(1));
   if (beta == nullptr) {
     MS_LOG(ERROR) << "Convert blobs(1) for layer " << weight.name().c_str() << " failed";
     return RET_ERROR;
   }
-
   auto estimatedVariance = reinterpret_cast<float *>(beta->data.data());
   size_t estimatedVarianceShapeSize = GetShapeSize(*beta);
   for (size_t i = 0; i < estimatedVarianceShapeSize; i++) {

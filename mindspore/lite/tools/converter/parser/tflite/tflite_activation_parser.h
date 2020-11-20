@@ -34,41 +34,6 @@ class TfliteActivationParser : public TfliteNodeParser {
                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) override;
 };
 
-class TfliteReluParser : public TfliteActivationParser {
- public:
-  TfliteReluParser() : TfliteActivationParser() {}
-};
-
-class TfliteRelu6Parser : public TfliteActivationParser {
- public:
-  TfliteRelu6Parser() : TfliteActivationParser() {}
-};
-
-class TfliteTanhParser : public TfliteActivationParser {
- public:
-  TfliteTanhParser() : TfliteActivationParser() {}
-};
-
-class TfliteLogisticParser : public TfliteActivationParser {
- public:
-  TfliteLogisticParser() : TfliteActivationParser() {}
-};
-
-class TfliteSwishParser : public TfliteActivationParser {
- public:
-  TfliteSwishParser() : TfliteActivationParser() {}
-};
-
-class TfliteHardSwishParser : public TfliteActivationParser {
- public:
-  TfliteHardSwishParser() : TfliteActivationParser() {}
-};
-
-class TfliteLeakyReluParser : public TfliteActivationParser {
- public:
-  TfliteLeakyReluParser() : TfliteActivationParser() {}
-};
-
 }  // namespace lite
 }  // namespace mindspore
 

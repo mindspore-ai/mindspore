@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef PREDICT_COMMON_FLAG_PARSER_H_
-#define PREDICT_COMMON_FLAG_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_COMMON_FLAG_PARSER_H
+#define MINDSPORE_LITE_TOOLS_COMMON_FLAG_PARSER_H
 
 #include <functional>
 #include <map>
 #include <utility>
 #include <string>
-
 #include "src/common/utils.h"
 #include "tools/common/option.h"
 
 namespace mindspore {
 namespace lite {
-struct FlagInfo;
-
 struct Nothing {};
 
 class FlagParser {
@@ -44,6 +41,7 @@ class FlagParser {
 
   template <typename Flags, typename T1, typename T2>
   void AddFlag(T1 *t1, const std::string &flagName, const std::string &helpInfo, const T2 *t2);
+
   template <typename Flags, typename T1, typename T2>
   void AddFlag(T1 *t1, const std::string &flagName, const std::string &helpInfo, const T2 &t2);
 
@@ -94,7 +92,7 @@ class FlagParser {
 
   Option<std::string> InnerParseFlags(std::multimap<std::string, Option<std::string>> *values);
 
-  bool GetRealFlagName(std::string *flagName, const std::string &oriFlagName);
+  static bool GetRealFlagName(std::string *flagName, const std::string &oriFlagName);
 
   std::map<std::string, FlagInfo> flags;
 };
@@ -181,7 +179,7 @@ void FlagParser::AddFlag(T1 *t1, const std::string &flagName, const std::string 
 
   FlagInfo flagItem;
 
-  // flagItem is as a output parameter
+  // flagItem is as an output parameter
   ConstructFlag(t1, flagName, helpInfo, flagItem);
   flagItem.parse = [t1](FlagParser *base, const std::string &value) -> Option<Nothing> {
     if (base != nullptr) {
@@ -301,4 +299,4 @@ void FlagParser::AddFlag(Option<T> Flags::*t, const std::string &flagName, const
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // PREDICT_COMMON_FLAG_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_COMMON_FLAG_PARSER_H
