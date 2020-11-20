@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_STRIDED_SLICE_H_
-#define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_STRIDED_SLICE_H_
+#ifndef MINDSPORE_LITE_NNACL_STRIDED_SLICE_H_
+#define MINDSPORE_LITE_NNACL_STRIDED_SLICE_H_
 
 #include "nnacl/op_base.h"
 
@@ -38,4 +38,4 @@ int DoStridedSlice(const void *inputs, void *output, StridedSliceParameter *para
 }
 #endif
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_STRIDED_SLICE_H_
+#endif  // MINDSPORE_LITE_NNACL_STRIDED_SLICE_H_
