@@ -285,11 +285,12 @@ class BatchNorm1d(_BatchNorm):
 
     Examples:
         >>> net = nn.BatchNorm1d(num_features=4)
+        >>> np.random.seed(0)
         >>> input = Tensor(np.random.randint(0, 255, [2, 4]), mindspore.float32)
         >>> output = net(input)
         >>> print(output)
-        [[210.99895  136.99931   89.99955  240.9988  ]
-         [ 87.99956  157.9992    89.99955   42.999786]]
+        [[171.99915   46.999763  116.99941  191.99904 ]
+         [ 66.999664 250.99875   194.99902  102.99948 ]]
     """
 
     def __init__(self,
@@ -370,15 +371,18 @@ class BatchNorm2d(_BatchNorm):
 
     Examples:
         >>> net = nn.BatchNorm2d(num_features=3)
+        >>> np.random.seed(0)
         >>> input = Tensor(np.random.randint(0, 255, [1, 3, 2, 2]), mindspore.float32)
         >>> output = net(input)
         >>> print(output)
-        [[[[128.99936  53.99973]
-           [191.99904 183.99908]]
-          [[146.99927 182.99908]
-           [184.99907 120.9994 ]]
-          [[ 33.99983 234.99883]
-           [188.99905  11.99994]]]]
+        [[[[171.99915   46.999763 ]
+           [116.99941  191.99904  ]]
+
+          [[ 66.999664 250.99875  ]
+           [194.99902  102.99948  ]]
+
+          [[  8.999955 210.99895  ]
+           [ 20.999895 241.9988   ]]]]
     """
 
     def __init__(self,
@@ -455,9 +459,34 @@ class GlobalBatchNorm(_BatchNorm):
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> global_bn_op = nn.GlobalBatchNorm(num_features=3, device_num_each_group=4)
-        >>> input = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
-        >>> global_bn_op(input)
+        >>> # This example should be run with multiple processes. Refer to the run_distribute_train.sh
+        >>> import os
+        >>> import numpy as np
+        >>> from mindspore.communication import init
+        >>> from mindspore import context
+        >>> from mindspore.context import ParallelMode
+        >>> from mindspore import nn, Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>>
+        >>> device_id = int(os.environ["DEVICE_ID"])
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True,
+        >>>                     device_id=int(device_id))
+        >>> init()
+        >>> context.reset_auto_parallel_context()
+        >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
+        >>> np.random.seed(0)
+        >>> global_bn_op = nn.GlobalBatchNorm(num_features=3, device_num_each_group=2)
+        >>> input = Tensor(np.random.randint(0, 255, [1, 3, 2, 2]), mstype.float32)
+        >>> output = global_bn_op(input)
+        >>> print(output)
+        [[[[171.99915    46.999763]
+           [116.99941   191.99904 ]]
+
+          [[ 66.999664  250.99875 ]
+           [194.99902   102.99948 ]]
+
+          [[  8.999955  210.99895 ]
+           [ 20.9999895 241.9988  ]]]]
     """
 
     def __init__(self,

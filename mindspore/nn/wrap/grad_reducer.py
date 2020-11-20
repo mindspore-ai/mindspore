@@ -246,16 +246,19 @@ class DistributedGradReducer(Cell):
         ValueError: If degree is not a int or less than 0.
 
     Examples:
-        >>> from mindspore.communication import init, get_group_size
+        >>> # This example should be run with multiple processes. Refer to the run_distribute_train.sh
+        >>> import os
+        >>> import numpy as np
+        >>> from mindspore.communication import init
         >>> from mindspore.ops import composite as C
         >>> from mindspore.ops import operations as P
         >>> from mindspore.ops import functional as F
         >>> from mindspore import context
         >>> from mindspore.context import ParallelMode
+        >>> from mindspore import Parameter, Tensor
         >>> from mindspore import nn
-        >>> from mindspore import ParameterTuple
-        >>> from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
-        >>>                                        _get_parallel_mode)
+        >>> from mindspore.nn.wrap.cell_wrapper import WithLossCell
+        >>> from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean)
         >>>
         >>> device_id = int(os.environ["DEVICE_ID"])
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True,
@@ -295,12 +298,28 @@ class DistributedGradReducer(Cell):
         >>>             grads = self.grad_reducer(grads)
         >>>         return F.depend(loss, self.optimizer(grads))
         >>>
-        >>> network = Net()
-        >>> optimizer = nn.Momentum(network.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> train_cell = TrainingWrapper(network, optimizer)
-        >>> inputs = Tensor(np.ones([16, 16]).astype(np.float32))
-        >>> label = Tensor(np.zeros([16, 16]).astype(np.float32))
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self, in_features, out_features):
+        >>>         super(Net, self).__init__()
+        >>>         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        >>>                                 name='weight')
+        >>>         self.matmul = P.MatMul()
+        >>>
+        >>>     def construct(self, x):
+        >>>         output = self.matmul(x, self.weight)
+        >>>         return output
+        >>>
+        >>> size, in_features, out_features = 16, 16, 10
+        >>> network = Net(in_features, out_features)
+        >>> loss = nn.MSELoss()
+        >>> net_with_loss = WithLossCell(network, loss)
+        >>> optimizer = nn.Momentum(net_with_loss.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> train_cell = TrainingWrapper(net_with_loss, optimizer)
+        >>> inputs = Tensor(np.ones([size, in_features]).astype(np.float32))
+        >>> label = Tensor(np.zeros([size, out_features]).astype(np.float32))
         >>> grads = train_cell(inputs, label)
+        >>> print(grads)
+        256.0
     """
 
     def __init__(self, parameters, mean=True, degree=None):

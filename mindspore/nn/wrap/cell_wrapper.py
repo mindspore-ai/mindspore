@@ -248,6 +248,16 @@ class GetNextSingleOp(Cell):
         queue_name (str): Queue name to fetch the data.
 
     For detailed information, refer to `ops.operations.GetNext`.
+
+    Examples:
+        >>> # Refer to dataset_helper.py for detail usage.
+        >>> data_set = get_dataset()
+        >>> dataset_shapes = data_set.output_shapes()
+        >>> np_types = data_set.output_types()
+        >>> dataset_types = convert_type(dataset_shapes, np_types)
+        >>> queue_name = data_set.__TRANSFER_DATASET__.queue_name
+        >>> getnext_op = GetNextSingleOp(dataset_types, dataset_shapes, queue_name)
+        >>> getnext_op()
     """
 
     def __init__(self, dataset_types, dataset_shapes, queue_name):

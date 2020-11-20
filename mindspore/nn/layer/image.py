@@ -291,11 +291,12 @@ class MSSSIM(Cell):
 
     Examples:
         >>> net = nn.MSSSIM(power_factors=(0.033, 0.033, 0.033))
-        >>> img1 = Tensor(np.random.random((1,3,128,128)))
-        >>> img2 = Tensor(np.random.random((1,3,128,128)))
+        >>> np.random.seed(0)
+        >>> img1 = Tensor(np.random.random((1, 3, 128, 128)))
+        >>> img2 = Tensor(np.random.random((1, 3, 128, 128)))
         >>> output = net(img1, img2)
         >>> print(output)
-        [0.22965115]
+        [0.20607519]
     """
     def __init__(self, max_val=1.0, power_factors=(0.0448, 0.2856, 0.3001, 0.2363, 0.1333), filter_size=11,
                  filter_sigma=1.5, k1=0.01, k2=0.03):
