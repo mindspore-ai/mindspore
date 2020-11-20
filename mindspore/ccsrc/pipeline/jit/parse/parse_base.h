@@ -106,6 +106,7 @@ const char NAMED_PRIMITIVE_COMPARE[] = "Compare";
 const char NAMED_PRIMITIVE_NAMECONSTANT[] = "NameConstant";
 const char NAMED_PRIMITIVE_COMPARATORS[] = "comparators";
 const char NAMED_PRIMITIVE_SLICE[] = "slice";
+const char NAMED_PRIMITIVE_NAME[] = "Name";
 const char NAMED_PRIMITIVE_NUM[] = "Num";
 const char NAMED_PRIMITIVE_STR[] = "Str";
 const char NAMED_PRIMITIVE_ITER[] = "iter";
