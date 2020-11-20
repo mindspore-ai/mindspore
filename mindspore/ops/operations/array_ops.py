@@ -928,6 +928,107 @@ class Fill(PrimitiveWithInfer):
         return out
 
 
+class Ones(PrimitiveWithInfer):
+    r"""
+    Creates a tensor filled with value ones.
+
+    Creates a tensor with shape described by the first argument and
+    fills it with value ones in type of the second argument.
+
+    Inputs:
+        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
+        Only constant positive int is allowed.
+        - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
+
+    Outputs:
+        Tensor, has the same type and shape as input shape value.
+
+    Examples:
+        >>> from mindspore.ops import operations as P
+        >>> ones = P.Ones()
+        >>> output = ones((2, 2), mindspore.float32)
+        >>> print(output)
+        [[1.0, 1.0],
+         [1.0, 1.0]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Fill"""
+
+    def __infer__(self, dims, dtype):
+        if isinstance(dims['value'], int):
+            shape = (dims['value'],)
+        else:
+            shape = dims['value']
+        validator.check_value_type("shape", shape, [tuple], self.name)
+        for i, item in enumerate(shape):
+            validator.check_integer(item, shape[i], 0, Rel.GE, self.name)
+        valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                       mstype.uint8, mstype.uint32, mstype.uint64,
+                       mstype.float16, mstype.float32, mstype.float64]
+        validator.check_tensor_type_same({"value": dtype['value']}, valid_types, self.name)
+        x_nptype = mstype.dtype_to_nptype(dtype['value'])
+        ret = np.ones(shape, x_nptype)
+        out = {
+            'value': Tensor(ret),
+            'shape': shape,
+            'dtype': x_nptype,
+        }
+        return out
+
+
+class Zeros(PrimitiveWithInfer):
+    r"""
+    Creates a tensor filled with value zeros.
+
+    Creates a tensor with shape described by the first argument and
+    fills it with value zeros in type of the second argument.
+
+    Inputs:
+        - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
+        Only constant positive int is allowed.
+        - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
+
+    Outputs:
+        Tensor, has the same type and shape as input shape value.
+
+    Examples:
+        >>> from mindspore.ops import operations as P
+        >>> zeros = P.Zeros()
+        >>> output = zeros((2, 2), mindspore.float32)
+        >>> print(output)
+        [[0.0, 0.0],
+         [0.0, 0.0]]
+
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Fill"""
+
+    def __infer__(self, dims, dtype):
+        if isinstance(dims['value'], int):
+            shape = (dims['value'],)
+        else:
+            shape = dims['value']
+        validator.check_value_type("shape", shape, [tuple], self.name)
+        for i, item in enumerate(shape):
+            validator.check_integer(item, shape[i], 0, Rel.GE, self.name)
+        valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                       mstype.uint8, mstype.uint32, mstype.uint64,
+                       mstype.float16, mstype.float32, mstype.float64]
+        validator.check_tensor_type_same({"value": dtype['value']}, valid_types, self.name)
+        x_nptype = mstype.dtype_to_nptype(dtype['value'])
+        ret = np.zeros(shape, x_nptype)
+        out = {
+            'value': Tensor(ret),
+            'shape': shape,
+            'dtype': x_nptype,
+        }
+        return out
+
+
 class OnesLike(PrimitiveWithInfer):
     """
     Creates a new tensor. The values of all elements are 1.

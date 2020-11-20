@@ -22,7 +22,7 @@ A collection of operators to build neural networks or to compute functions.
 from .image_ops import (CropAndResize)
 from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
-                        Fill, GatherNd, GatherV2, SparseGatherV2, InvertPermutation,
+                        Fill, Ones, Zeros, GatherNd, GatherV2, SparseGatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
                         Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue,
                         SameTypeShape, ScatterAdd, ScatterSub, ScatterMul, ScatterDiv, ScatterMax, ScatterMin,
@@ -174,6 +174,8 @@ __all__ = [
     'Invert',
     'TruncatedNormal',
     'Fill',
+    'Ones',
+    'Zeros',
     'OnesLike',
     'ZerosLike',
     'Select',
