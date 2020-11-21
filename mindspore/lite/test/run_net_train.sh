@@ -85,7 +85,7 @@ function Run_x86() {
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_net_train_result_file}
         else
-            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_net_train_result_file}
+            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_net_train_result_file}; return 1
         fi
     done < ${models_mindspore_train_config}
 }
@@ -131,10 +131,10 @@ function Run_arm() {
     fi
 
     cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite.so ${net_train_test_path}/libmindspore-lite.so || exit 1
-    if [ "$1" == arm64 ]; then    
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-fp16.so ${net_train_test_path}/libmindspore-lite-fp16.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-optimize.so ${net_train_test_path}/libmindspore-lite-optimize.so || exit 1
-    fi    
+#    if [ "$1" == arm64 ]; then
+#        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-fp16.so ${net_train_test_path}/libmindspore-lite-fp16.so || exit 1
+#        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-optimize.so ${net_train_test_path}/libmindspore-lite-optimize.so || exit 1
+#    fi
     cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/net_train/net_train ${net_train_test_path}/net_train || exit 1
 
     # adb push all needed files to the phone
@@ -157,12 +157,15 @@ function Run_arm() {
         echo ${model_name}'_train' >> "${run_arm_log_file}"
         adb -s ${device_id} push ${train_io_path}/${model_name}_input*.bin ${train_io_path}/${model_name}_outputs.bin  /data/local/tmp/net_train_test >> ${adb_push_log_file}
         echo 'cd /data/local/tmp/net_train_test' > ${adb_cmd_run_file}
+        echo 'chmod 777 net_train' >> ${adb_cmd_run_file}
         if [ "$1" == arm64 ]; then
+            echo 'cp  /data/local/tmp/libc++_shared.so ./' >> ${adb_cmd_run_file}
             echo 'export LD_LIBRARY_PATH=/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${run_arm_log_file}"
             echo 'export LD_LIBRARY_PATH=/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${adb_cmd_run_file}"
-        elif [ "$1" == arm32 ]; then 
-            echo 'export LD_LIBRARY_PATH=/data/local/tmp/:/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${run_arm_log_file}"
-            echo 'export LD_LIBRARY_PATH=/data/local/tmp/:/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${adb_cmd_run_file}"
+        elif [ "$1" == arm32 ]; then
+            echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> ${adb_cmd_run_file}
+            echo 'export LD_LIBRARY_PATH=/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${run_arm_log_file}"
+            echo 'export LD_LIBRARY_PATH=/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${adb_cmd_run_file}"
         fi    
 
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
@@ -170,7 +173,7 @@ function Run_arm() {
         if [ $? = 0 ]; then
             run_result=$1': '${model_name}'_train pass'; echo ${run_result} >> ${run_net_train_result_file}
         else
-            run_result=$1': '${model_name}'_train failed'; echo ${run_result} >> ${run_net_train_result_file}
+            run_result=$1': '${model_name}'_train failed'; echo ${run_result} >> ${run_net_train_result_file}; return 1
         fi
     done < ${models_mindspore_train_config}
 }
@@ -382,16 +385,19 @@ function Print_Benchmark_Result() {
 if [[ ${Run_x86_status} != 0 ]];then
     echo "Run_x86 failed"
     cat ${run_x86_log_file}
+    exit 1
 fi
 
 if [[ ${Run_arm64_status} != 0 ]];then
     echo "Run_arm64 failed"
     cat ${run_arm64_log_file}
+    exit 1
 fi
 
 if [[ ${Run_arm32_status} != 0 ]];then
     echo "Run_arm32 failed"
     cat ${run_arm32_log_file}
+    exit 1
 fi
 
 echo "Test ended - Results:"

@@ -692,7 +692,7 @@ STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<sch
 }
 
 STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node) {
-  MS_ASSERT(node->primitive->value != nullptr);
+  MS_ASSERT(node->primitive != nullptr);
   auto type = node->primitive->value.type;
   auto input1_ndim = graph->allTensors.at(node->inputIndex[0])->dims.size();
   if (input1_ndim != 4) {
