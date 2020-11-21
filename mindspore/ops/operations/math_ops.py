@@ -360,7 +360,8 @@ class ReduceMean(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMean(keep_dims=True)
         >>> output = op(input_x, 1)
-        >>> output.shape
+        >>> result = output.shape
+        >>> print(result)
         (3, 1, 5, 6)
     """
 
@@ -525,7 +526,8 @@ class ReduceMax(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMax(keep_dims=True)
         >>> output = op(input_x, 1)
-        >>> output.shape
+        >>> result = output.shape
+        >>> print(result)
         (3, 1, 5, 6)
     """
 
@@ -572,7 +574,8 @@ class ReduceMin(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMin(keep_dims=True)
         >>> output = op(input_x, 1)
-        >>> output.shape
+        >>> result = output.shape
+        >>> print(result)
         (3, 1, 5, 6)
     """
 
@@ -610,7 +613,8 @@ class ReduceProd(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceProd(keep_dims=True)
         >>> output = op(input_x, 1)
-        >>> output.shape
+        >>> reuslt = output.shape
+        >>> print(result)
         (3, 1, 5, 6)
     """
 

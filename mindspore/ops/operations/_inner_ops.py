@@ -132,7 +132,8 @@ class Range(PrimitiveWithInfer):
     Examples:
         >>> range = P.Range(1.0, 8.0, 2.0)
         >>> x = Tensor(np.array([1, 2, 3, 2]), mindspore.int32)
-        >>> range(x)
+        >>> output = range(x)
+        >>> print(output)
         [3, 5, 7, 5]
     """
 
@@ -524,7 +525,8 @@ class DynamicGRUV2(PrimitiveWithInfer):
         >>> init_h = Tensor(np.random.rand(8, 16).astype(np.float16))
         >>> dynamic_gru_v2 = P.DynamicGRUV2()
         >>> output = dynamic_gru_v2(x, weight_i, weight_h, bias_i, bias_h, None, init_h)
-        >>> output[0].shape
+        >>> result = output[0].shape
+        >>> print(result)
         (2, 8, 16)
     """
 

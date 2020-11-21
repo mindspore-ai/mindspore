@@ -1136,7 +1136,8 @@ class Ones(PrimitiveWithInfer):
 
     Examples:
         >>> ones = P.Ones()
-        >>> Ones((2, 2), mindspore.float32)
+        >>> output = Ones((2, 2), mindspore.float32)
+        >>> print(output)
         [[1.0, 1.0],
          [1.0, 1.0]]
     """
@@ -1179,7 +1180,8 @@ class Zeros(PrimitiveWithInfer):
 
     Examples:
         >>> zeros = P.Zeros()
-        >>> Zeros((2, 2), mindspore.float32)
+        >>> output = Zeros((2, 2), mindspore.float32)
+        >>> print(output)
         [[0.0, 0.0],
          [0.0, 0.0]]
 
@@ -2751,7 +2753,8 @@ class Diag(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4])
         >>> diag = P.Diag()
-        >>> diag(input_x)
+        >>> output = diag(input_x)
+        >>> print(output)
         [[1, 0, 0, 0],
          [0, 2, 0, 0],
          [0, 0, 3, 0],

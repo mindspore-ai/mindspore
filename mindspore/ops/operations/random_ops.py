@@ -41,7 +41,8 @@ class StandardNormal(PrimitiveWithInfer):
         >>> shape = (4, 16)
         >>> stdnormal = P.StandardNormal(seed=2)
         >>> output = stdnormal(shape)
-        >>> output.shape
+        >>> result = output.shape
+        >>> print(result)
         (4, 16)
     """
 
@@ -91,7 +92,8 @@ class StandardLaplace(PrimitiveWithInfer):
         >>> shape = (4, 16)
         >>> stdlaplace = P.StandardLaplace(seed=2)
         >>> output = stdlaplace(shape)
-        >>> output.shape
+        >>> result = output.shape
+        >>> print(result)
         (4, 16)
     """
 
@@ -375,9 +377,11 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         >>> rnd_choice_mask = P.RandomChoiceWithMask()
         >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
         >>> output_y, output_mask = rnd_choice_mask(input_x)
-        >>> output_y.shape
+        >>> result = output_y.shape
+        >>> print(result)
         (256, 2)
-        >>> output_mask.shape
+        >>> result = output_mask.shape
+        >>> print(reuslt)
         (256,)
     """
 
