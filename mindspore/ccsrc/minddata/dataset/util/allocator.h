@@ -69,7 +69,7 @@ class Allocator {
   }
 
   pointer allocate(std::size_t n) {
-    void *p;
+    void *p = nullptr;
     Status rc = pool_->Allocate(n * sizeof(T), &p);
     if (rc.IsOk()) {
       return reinterpret_cast<pointer>(p);
