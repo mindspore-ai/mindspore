@@ -171,7 +171,7 @@ __kernel void Winograd36To4x4(__read_only image2d_t input, __write_only image2d_
       acc += AtM_row[y] * At[idx];
     }
 
-    if (bias) {
+    if (bias != 0) {
       acc += bias[slice];
     }
 

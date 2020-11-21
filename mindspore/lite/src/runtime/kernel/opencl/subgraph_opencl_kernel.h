@@ -41,7 +41,6 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
     subgraph_type_ = kGpuSubGraph;
     this->name_ = "GpuSubGraph";
-    this->executor_ = new lite::opencl::OpenCLExecutor();
     nodes_set_.insert(nodes.begin(), nodes.end());
   }
   ~SubGraphOpenCLKernel() override;
@@ -56,23 +55,23 @@ class SubGraphOpenCLKernel : public SubGraphKernel {
   int Run(const KernelCallBack &before, const KernelCallBack &after) override { return this->Run(); };
 
  private:
-  int UnInit();
-  int UpdateTensorDataType();
+  void UnInit();
+  void UpdateTensorDataType();
   int MallocTensorWithReuse();
-  int ReplaceOutTensorAndKernelToNull(const std::vector<lite::Tensor *> &in_tensors,
-                                      const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
-                                      lite::opencl::MemType mem_type);
-  int ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
-                                         const std::vector<kernel::LiteKernel *> &in_kernels, lite::Tensor *new_tensor,
-                                         kernel::LiteKernel *in_convert_op, lite::opencl::MemType mem_type);
-  int GetInOutNodes();
+  void ReplaceOutTensorAndKernelToNull(const std::vector<lite::Tensor *> &in_tensors,
+                                       const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
+                                       lite::opencl::MemType mem_type);
+  void ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
+                                          const std::vector<kernel::LiteKernel *> &in_kernels, lite::Tensor *new_tensor,
+                                          kernel::LiteKernel *in_convert_op, lite::opencl::MemType mem_type);
+  void GetInOutNodes();
   int GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
                     const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
                     std::vector<lite::Tensor *> *out_tensors, std::vector<OpenCLToFormatParameter *> *out_parameters,
                     std::vector<LiteKernel *> *out_convert_ops, lite::opencl::MemType mem_type);
-  int GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
-                            const std::vector<kernel::LiteKernel *> &in_kernels,
-                            std::vector<std::vector<kernel::LiteKernel *>> *out_kernels, bool is_from);
+  void GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
+                             const std::vector<kernel::LiteKernel *> &in_kernels,
+                             std::vector<std::vector<kernel::LiteKernel *>> *out_kernels, bool is_from);
   lite::opencl::OpenCLAllocator *allocator_{nullptr};
   std::vector<lite::Tensor *> in_convert_tensors_;
   std::vector<lite::Tensor *> out_convert_tensors_;

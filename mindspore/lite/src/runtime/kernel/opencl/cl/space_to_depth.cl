@@ -10,6 +10,7 @@ __kernel void SpaceToDepth(__read_only image2d_t src_data, __write_only image2d_
   int Y = get_global_id(1);  // W
   int Z = get_global_id(2);  // H * N
   if (X >= out_shape.w || Y >= out_shape.z || Z >= out_shape.x * out_shape.y) return;
+  if (out_shape.y == 0 || ci_size == 0 || block_size == 0) return;
   int N = Z / out_shape.y;
   int H = Z % out_shape.y;
   int co_base = X * C4NUM;
@@ -43,6 +44,7 @@ __kernel void SpaceToDepthAlign(__read_only image2d_t src_data, __write_only ima
   int Y = get_global_id(1);  // W
   int Z = get_global_id(2);  // H * N
   if (X >= out_shape.w || Y >= out_shape.z || Z >= out_shape.x * out_shape.y) return;
+  if (out_shape.y == 0 || in_shape.w == 0 || block_size == 0) return;
 
   int N = Z / out_shape.y;
   int H = Z % out_shape.y;

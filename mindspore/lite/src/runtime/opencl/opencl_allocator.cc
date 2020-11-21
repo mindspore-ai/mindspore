@@ -66,6 +66,7 @@ void *OpenCLAllocator::MinimumFit(size_t size, const std::vector<size_t> &img_si
 
 void *OpenCLAllocator::CreateBuffer(size_t size, void *data, size_t flags, cl::Buffer **buffer) {
   cl_int ret = CL_SUCCESS;
+  MS_ASSERT(buffer);
   *buffer = new (std::nothrow) cl::Buffer(*ocl_runtime_->Context(), flags, size, data, &ret);
   if (*buffer == nullptr) {
     MS_LOG(ERROR) << "Create OpenCL buffer failed! (ERROR CODE: " << ret << ")";
@@ -78,7 +79,11 @@ void *OpenCLAllocator::CreateBuffer(size_t size, void *data, size_t flags, cl::B
     return nullptr;
   }
   cl::Memory *mem = *buffer;
-  ocl_runtime_->UnmapBuffer(*mem, host_ptr);
+  MS_ASSERT(mem);
+  ret = ocl_runtime_->UnmapBuffer(*mem, host_ptr);
+  if (ret != RET_OK) {
+    MS_LOG(WARNING) << "UnmapBuffer failed.";
+  }
   return host_ptr;
 }
 
@@ -110,7 +115,10 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const std::vector<size_t> &img
       return nullptr;
     }
     cl::Memory *mem = *image;
-    ocl_runtime_->UnmapBuffer(*mem, host_ptr);
+    ret = ocl_runtime_->UnmapBuffer(*mem, host_ptr);
+    if (ret != CL_SUCCESS) {
+      MS_LOG(WARNING) << "UnmapBuffer failed.";
+    }
   }
   return host_ptr;
 }
@@ -131,7 +139,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size, 
   }
   Lock();
   void *host_ptr = MinimumFit(size, img_size);
-  if ((host_ptr != nullptr) && (data == nullptr)) {
+  if (host_ptr != nullptr && data == nullptr) {
     UnLock();
     return host_ptr;
   }
@@ -188,7 +196,10 @@ void OpenCLAllocator::Free(void *buf) {
   auto iter = allocated_list_.find(buf);
   if (iter != allocated_list_.end()) {
     if (iter->second->map_flags) {
-      UnmapBuffer(buf);
+      int ret = UnmapBuffer(buf);
+      if (ret != RET_OK) {
+        MS_LOG(WARNING) << "UnmapBuffer failed.";
+      }
       iter->second->map_flags = false;
     }
     auto mem_buf = iter->second;
@@ -240,7 +251,10 @@ void OpenCLAllocator::Clear() {
   auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
   for (auto it = allocated_list_.begin(); it != allocated_list_.end(); it++) {
     if (it->second->map_flags) {
-      UnmapBuffer(it->second->host_ptr_);
+      int ret = UnmapBuffer(it->second->host_ptr_);
+      if (ret != RET_OK) {
+        MS_LOG(WARNING) << "UnmapBuffer failed.";
+      }
     }
     if (svm_capabilities) {
       clSVMFree((*ocl_runtime_->Context())(), it->second->host_ptr_);
@@ -295,7 +309,11 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
         MS_LOG(ERROR) << "Map buffer failed, can not found buffer :" << host_ptr;
         return nullptr;
       }
-      ocl_runtime_->MapBuffer(host_ptr, flags, it->second->size_, static_cast<cl::CommandQueue *>(command_queue), sync);
+      int ret = ocl_runtime_->MapBuffer(host_ptr, flags, it->second->size_,
+                                        static_cast<cl::CommandQueue *>(command_queue), sync);
+      if (ret != RET_OK) {
+        MS_LOG(WARNING) << "MapBuffer failed.";
+      }
     }
     return host_ptr;
   }
@@ -313,14 +331,16 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
     return host_ptr;
   }
   MemBuf *mem_buf = it->second;
-  void *new_host_ptr{nullptr};
+  MS_ASSERT(mem_buf);
+  void *new_host_ptr;
   if (mem_buf->img_size.empty()) {
     cl::Buffer *buffer = static_cast<cl::Buffer *>(mem_buf->device_ptr_);
+    MS_ASSERT(buffer);
     new_host_ptr = ocl_runtime_->MapBuffer(*buffer, flags, mem_buf->size_, nullptr, sync);
   } else {
-    cl::ImageFormat image_format(CL_RGBA, mem_buf->img_size[2]);
     std::vector<size_t> region{mem_buf->img_size[0], mem_buf->img_size[1], 1};
     cl::Image2D *image = static_cast<cl::Image2D *>(mem_buf->image_ptr_);
+    MS_ASSERT(image);
     new_host_ptr = ocl_runtime_->MapBuffer(*image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
   }
   if (new_host_ptr == nullptr) {
@@ -373,6 +393,7 @@ MemType OpenCLAllocator::GetMemType(void *host_ptr) {
     return mem_type;
   }
   MemBuf *mem_buf = it->second;
+  MS_ASSERT(mem_buf);
   if (mem_buf->img_size.empty()) {
     mem_type = MemType::BUF;
   } else {
@@ -383,6 +404,7 @@ MemType OpenCLAllocator::GetMemType(void *host_ptr) {
 }
 
 int OpenCLAllocator::GetImageSize(void *host_ptr, std::vector<size_t> *img_size) {
+  MS_ASSERT(img_size);
   Lock();
   auto it = allocated_list_.find(host_ptr);
   if (it == allocated_list_.end()) {
@@ -391,6 +413,7 @@ int OpenCLAllocator::GetImageSize(void *host_ptr, std::vector<size_t> *img_size)
     return RET_OK;
   }
   MemBuf *mem_buf = it->second;
+  MS_ASSERT(mem_buf);
   if (!mem_buf->img_size.empty()) {
     *img_size = mem_buf->img_size;
   }

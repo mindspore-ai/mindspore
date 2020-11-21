@@ -100,8 +100,14 @@ int OpenCLRuntime::Init() {
   std::vector<cl::Device> devices;
   for (auto it = platforms.begin(); it != platforms.end(); ++it) {
     std::string platform_name;
-    it->getInfo(CL_PLATFORM_NAME, &platform_name);
-    it->getDevices(CL_DEVICE_TYPE_GPU, &devices);
+    ret = it->getInfo(CL_PLATFORM_NAME, &platform_name);
+    if (ret != CL_SUCCESS) {
+      MS_LOG(WARNING) << CLErrorCode(ret);
+    }
+    ret = it->getDevices(CL_DEVICE_TYPE_GPU, &devices);
+    if (ret != CL_SUCCESS) {
+      MS_LOG(WARNING) << CLErrorCode(ret);
+    }
     MS_LOG(INFO) << "Platform (" << platform_name << ") has " << devices.size() << " GPUs";
 
     if (devices.size() > 0) {
@@ -178,9 +184,18 @@ int OpenCLRuntime::Init() {
   }
 
   // get cache size, compute units and frequency.
-  device_->getInfo(CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, &global_memery_cachesize_);
-  device_->getInfo(CL_DEVICE_MAX_COMPUTE_UNITS, &compute_units_);
-  device_->getInfo(CL_DEVICE_MAX_CLOCK_FREQUENCY, &max_freq_);
+  ret = device_->getInfo(CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, &global_memery_cachesize_);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(WARNING) << CLErrorCode(ret);
+  }
+  ret = device_->getInfo(CL_DEVICE_MAX_COMPUTE_UNITS, &compute_units_);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(WARNING) << CLErrorCode(ret);
+  }
+  ret = device_->getInfo(CL_DEVICE_MAX_CLOCK_FREQUENCY, &max_freq_);
+  if (ret != CL_SUCCESS) {
+    MS_LOG(WARNING) << CLErrorCode(ret);
+  }
   cl_device_fp_config fp_config;
   auto success = device_->getInfo(CL_DEVICE_HALF_FP_CONFIG, &fp_config);
   support_fp16_ = CL_SUCCESS == success && fp_config > 0;
@@ -281,7 +296,9 @@ uint32_t OpenCLRuntime::DeviceMaxFreq() const { return max_freq_; }
 uint64_t OpenCLRuntime::GetMaxWorkGroupSize(const cl::Kernel &kernel) {
   uint64_t max_workgroup_size = 0;
   int ret = kernel.getWorkGroupInfo(*device_, CL_KERNEL_WORK_GROUP_SIZE, &max_workgroup_size);
-  if (ret != 0) max_workgroup_size = 0;
+  if (ret != CL_SUCCESS) {
+    max_workgroup_size = 0;
+  }
   return max_workgroup_size;
 }
 
@@ -421,7 +438,10 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
   static int cnt = 0;
   const int flush_period = 10;
   if (cnt % flush_period == 0) {
-    command_queue->flush();
+    auto flush_ret = command_queue->flush();
+    if (flush_ret != CL_SUCCESS) {
+      MS_LOG(WARNING) << "CL Flush failed:" << CLErrorCode(ret);
+    }
   }
   cnt++;
   MS_LOG(DEBUG) << "RunKernel success!";
@@ -454,7 +474,10 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const cl::NDRange &global
   static int cnt = 0;
   const int flush_period = 10;
   if (cnt % flush_period == 0) {
-    command_queue->flush();
+    auto flush_ret = command_queue->flush();
+    if (flush_ret != CL_SUCCESS) {
+      MS_LOG(WARNING) << "CL Flush failed:" << CLErrorCode(ret);
+    }
   }
   cnt++;
   MS_LOG(DEBUG) << "RunKernel success!";

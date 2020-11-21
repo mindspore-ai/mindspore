@@ -28,11 +28,12 @@ using mindspore::lite::opencl::MemType;
 
 SubGraphOpenCLKernel::~SubGraphOpenCLKernel() { UnInit(); }
 
-int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
+void SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
   const std::vector<lite::Tensor *> &in_tensors, const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
   MemType mem_type) {
   for (size_t i = 0; i < in_tensors.size(); ++i) {
     for (auto &jv : in_kernels.at(i)) {
+      MS_ASSERT(jv);
       auto tensors = (mem_type == MemType::IMG) ? jv->in_tensors() : jv->out_tensors();
       auto ft = std::find_if(tensors.begin(), tensors.end(),
                              [&in_tensors, &i](lite::Tensor *kv) { return kv == in_tensors.at(i); });
@@ -43,6 +44,7 @@ int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
       std::replace_if(
         kernels.begin(), kernels.end(),
         [this, &in_tensors, &i](kernel::LiteKernel *kv) {
+          MS_ASSERT(kv);
           return std::find_if(kv->in_tensors().begin(), kv->in_tensors().end(),
                               [&in_tensors, &i](lite::Tensor *xv) { return xv == in_tensors.at(i); }) !=
                    kv->in_tensors().end() &&
@@ -58,14 +60,16 @@ int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
       }
     }
   }
-  return RET_OK;
 }
-int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
-                                                             const std::vector<kernel::LiteKernel *> &in_kernels,
-                                                             lite::Tensor *new_tensor,
-                                                             kernel::LiteKernel *in_convert_op, MemType mem_type) {
+
+void SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToConvert(const lite::Tensor *in_tensor,
+                                                              const std::vector<kernel::LiteKernel *> &in_kernels,
+                                                              lite::Tensor *new_tensor,
+                                                              kernel::LiteKernel *in_convert_op, MemType mem_type) {
+  MS_ASSERT(in_convert_op);
   auto in_opencl_op = reinterpret_cast<OpenCLKernel *>(in_convert_op);
   for (auto &iv : in_kernels) {
+    MS_ASSERT(iv);
     auto kernels = (mem_type == MemType::IMG) ? iv->in_kernels() : iv->out_kernels();
     auto fk = std::find_if(kernels.begin(), kernels.end(), [&](kernel::LiteKernel *kv) { return kv == nullptr; });
     if (fk != kernels.end()) {
@@ -90,13 +94,16 @@ int SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToConvert(const lite::Tensor 
       in_convert_op->AddInKernel(iv);
     }
   }
-  return RET_OK;
 }
+
 int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
                                         const std::vector<std::vector<kernel::LiteKernel *>> &in_kernels,
                                         std::vector<lite::Tensor *> *out_tensors,
                                         std::vector<OpenCLToFormatParameter *> *out_parameters,
                                         std::vector<LiteKernel *> *out_convert_ops, MemType mem_type) {
+  MS_ASSERT(out_tensors);
+  MS_ASSERT(out_parameters);
+  MS_ASSERT(out_convert_ops);
   out_tensors->clear();
   out_parameters->clear();
   out_convert_ops->clear();
@@ -167,6 +174,7 @@ int SubGraphOpenCLKernel::GenToFormatOp(const std::vector<lite::Tensor *> &in_te
     // replace in_tensor of inner kernel which use out tensor
     if (mem_type == MemType::BUF) {
       for (auto &iv : loop_kernels[i]) {
+        MS_ASSERT(iv);
         auto tensors = iv->in_tensors();
         auto jv = std::find(tensors.begin(), tensors.end(), in_tensors.at(i));
         if (jv != tensors.end()) {
@@ -185,9 +193,11 @@ int SubGraphOpenCLKernel::Init() {
   allocator_ = ocl_runtime_->GetAllocator();
   MS_LOG(DEBUG) << "input num=" << in_tensors_.size() << ", output num=" << out_tensors_.size();
   for (const auto tensor : in_tensors_) {
+    MS_ASSERT(tensor);
     tensor->set_allocator(allocator_);
   }
   for (const auto tensor : out_tensors_) {
+    MS_ASSERT(tensor);
     tensor->set_allocator(allocator_);
   }
 
@@ -223,72 +233,83 @@ int SubGraphOpenCLKernel::Init() {
   return RET_OK;
 }
 
-int SubGraphOpenCLKernel::UpdateTensorDataType() {
+void SubGraphOpenCLKernel::UpdateTensorDataType() {
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
+  MS_ASSERT(in_tensors_[0]);
   if (is_fp16 && (in_tensors_[0]->data_type() == kNumberTypeFloat32)) {
     std::set<lite::Tensor *> out_set;
     out_set.insert(in_tensors_.begin(), in_tensors_.end());
     out_set.insert(out_tensors_.begin(), out_tensors_.end());
     for (auto iv : nodes_) {
+      MS_ASSERT(iv);
       auto cur_outs = iv->out_tensors();
       for (auto jv : cur_outs) {
         if (out_set.count(jv) == 0) {
+          MS_ASSERT(jv);
           jv->set_data_type(kNumberTypeFloat16);
         }
       }
     }
   }
-  return RET_OK;
 }
 
 int SubGraphOpenCLKernel::MallocTensorWithReuse() {
+  int ret;
   kernel::LiteKernelUtil::InitTensorRefCount(nodes_);
   for (auto *kernel : nodes_) {
-    MS_ASSERT(nullptr != kernel);
+    MS_ASSERT(kernel);
     auto *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
     auto outputs = kernel->out_tensors();
     for (auto i = 0; i < outputs.size(); ++i) {
       auto *output = outputs.at(i);
-      MS_ASSERT(nullptr != output);
+      MS_ASSERT(output);
       if (op_kernel->GetMemType() == MemType::IMG) {
         std::vector<size_t> img_size;
-        op_kernel->GetImageSize(i, &img_size);
+        ret = op_kernel->GetImageSize(i, &img_size);
+        if (ret != RET_OK) {
+          MS_LOG(WARNING) << "GetImageSize failed";
+        }
         auto data_ptr = allocator_->Malloc(output->Size(), img_size);
         output->set_data(data_ptr);
       } else {
-        output->MallocData(allocator_);
+        ret = output->MallocData(allocator_);
+        if (ret != RET_OK) {
+          MS_LOG(WARNING) << "MallocData failed";
+        }
       }
       output->set_allocator(allocator_);
     }
     for (auto input_kernel : kernel->in_kernels()) {
-      MS_ASSERT(nullptr != input_kernel);
-      auto ret = input_kernel->DecOutTensorRefCount();
-      if (0 != ret) {
+      MS_ASSERT(input_kernel);
+      ret = input_kernel->DecOutTensorRefCount();
+      if (ret != RET_OK) {
         MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
       }
     }
   }
   for (auto kernel : out_kernels_) {
-    MS_ASSERT(nullptr != kernel);
-    auto ret = kernel->DecOutTensorRefCount();
-    if (0 != ret) {
+    MS_ASSERT(kernel);
+    ret = kernel->DecOutTensorRefCount();
+    if (ret != RET_OK) {
       MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
     }
   }
   return RET_OK;
 }
 
-int SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
-                                                const std::vector<kernel::LiteKernel *> &in_kernels,
-                                                std::vector<std::vector<kernel::LiteKernel *>> *out_kernels,
-                                                bool is_from) {
+void SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
+                                                 const std::vector<kernel::LiteKernel *> &in_kernels,
+                                                 std::vector<std::vector<kernel::LiteKernel *>> *out_kernels,
+                                                 bool is_from) {
   std::vector<std::set<lite::Tensor *>> ksets;
   for (auto jv : in_kernels) {
+    MS_ASSERT(jv);
     auto tens = is_from ? jv->in_tensors() : jv->out_tensors();
     std::set<lite::Tensor *> kset;
     kset.insert(tens.begin(), tens.end());
     ksets.emplace_back(kset);
   }
+  MS_ASSERT(out_kernels);
   for (auto in_tensor : in_tensors) {
     std::vector<kernel::LiteKernel *> kvec;
     for (size_t j = 0; j < in_kernels.size(); ++j) {
@@ -298,13 +319,13 @@ int SubGraphOpenCLKernel::GetKernelFromToTensor(const std::vector<lite::Tensor *
     }
     out_kernels->emplace_back(kvec);
   }
-  return RET_OK;
 }
 
-int SubGraphOpenCLKernel::GetInOutNodes() {
+void SubGraphOpenCLKernel::GetInOutNodes() {
   std::vector<std::set<lite::Tensor *>> ksets_in;
   std::vector<std::set<lite::Tensor *>> ksets_out;
   for (auto jv : nodes_) {
+    MS_ASSERT(jv);
     std::set<lite::Tensor *> kset;
     kset.insert(jv->in_tensors().begin(), jv->in_tensors().end());
     ksets_in.emplace_back(kset);
@@ -323,10 +344,15 @@ int SubGraphOpenCLKernel::GetInOutNodes() {
       out_nodes_.emplace_back(nodes_.at(j));
     }
   }
-  return RET_OK;
 }
 
 int SubGraphOpenCLKernel::Prepare() {
+  executor_ = new (std::nothrow) lite::opencl::OpenCLExecutor();
+  if (executor_ == nullptr) {
+    MS_LOG(ERROR) << "Create OpenCLExecutor fail";
+    return RET_ERROR;
+  }
+
   auto ret = Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "OpenCL subgraph init fail";
@@ -335,7 +361,7 @@ int SubGraphOpenCLKernel::Prepare() {
   return RET_OK;
 }
 
-int SubGraphOpenCLKernel::UnInit() {
+void SubGraphOpenCLKernel::UnInit() {
   for (const auto &tensor : in_convert_tensors_) {
     delete tensor;
   }
@@ -351,7 +377,6 @@ int SubGraphOpenCLKernel::UnInit() {
   in_convert_ops_.clear();
   out_convert_ops_.clear();
   delete this->executor_;
-  return RET_OK;
 }
 
 int SubGraphOpenCLKernel::InferShape() { return RET_OK; }
@@ -363,21 +388,28 @@ int SubGraphOpenCLKernel::Run() {
     MS_LOG(ERROR) << "executor is nullptr";
     return RET_ERROR;
   }
+  int ret;
   for (auto &tensor : in_tensors_) {
+    MS_ASSERT(tensor);
     if (tensor->data_c() == nullptr) {
       MS_LOG(ERROR) << "OpenCL subgraph input tensor data is null";
       return RET_ERROR;
     }
     allocator_->UnmapBuffer(tensor->data_c());
+    ret = allocator_->UnmapBuffer(tensor->data_c());
+    if (ret != RET_OK) {
+      return ret;
+    }
   }
 
-  auto ret = executor_->Run(in_tensors_, out_tensors_, nodes_, allocator_);
-  if (RET_OK != ret) {
+  ret = executor_->Run(in_tensors_, out_tensors_, nodes_, allocator_);
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
     return ret;
   }
-  ocl_runtime_->SyncCommandQueue();
-
+  if (!ocl_runtime_->SyncCommandQueue()) {
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel

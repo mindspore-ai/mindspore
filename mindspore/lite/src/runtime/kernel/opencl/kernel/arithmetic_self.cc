@@ -42,6 +42,8 @@ using mindspore::schema::PrimitiveType_Square;
 namespace mindspore::kernel {
 
 void ArithmeticSelfOpenCLKernel::GetKernelName(std::string *kernel_name, ArithmeticSelfParameter *param) {
+  MS_ASSERT(kernel_name);
+  MS_ASSERT(param);
   switch (param->op_parameter_.type_) {
     case PrimitiveType_Abs:
       kernel_name[0] += "_ElementAbs";

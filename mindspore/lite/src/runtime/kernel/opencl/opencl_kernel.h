@@ -36,6 +36,8 @@ struct OpenCLToFormatParameter {
 
 template <typename SrcT, typename DstT>
 void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
+  MS_ASSERT(dst);
+  MS_ASSERT(src);
   auto *N = dst;
   auto *H = dst + 1;
   auto *W = dst + 2;
@@ -54,13 +56,15 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
     *H = src[1];
     *W = src[2];
     *C = src[3];
-  } else if (src_num >= 5) {
+  } else if (src_num > 4) {
     MS_LOG(ERROR) << "GPU doesn't support ndim>=" << src_num;
   }
 }
 
 template <typename SrcT, typename DstT>
 void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num, DstT default_value) {
+  MS_ASSERT(dst);
+  MS_ASSERT(src);
   for (int i = 0; i < 4; ++i) {
     dst[i] = default_value;
   }
@@ -101,6 +105,7 @@ struct GpuTensorInfo {
   size_t RowPitch() const {
     auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
     int alignment = runtime_wrapper.GetInstance()->GetImagePitchAlignment();
+    MS_ASSERT(alignment);
     size_t row_pitch = UP_ROUND(width, alignment) * FLT4_size;
     return row_pitch;
   }
@@ -143,31 +148,31 @@ class OpenCLKernel : public LiteKernel {
   int AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local) {
     std::vector<size_t> internal_global_ws = global;
     for (size_t i = 0; i < local.size(); ++i) {
-      internal_global_ws[i] = UP_ROUND(global[i], local[i]);
+      internal_global_ws.at(i) = UP_ROUND(global.at(i), local.at(i));
     }
 
     MS_LOG(DEBUG) << "global size: " << global.size() << ", local size: " << local.size();
     for (size_t i = 0; i < global.size(); i++) {
-      MS_LOG(DEBUG) << "global[" << i << "] = " << global[i];
+      MS_LOG(DEBUG) << "global[" << i << "] = " << global.at(i);
     }
     for (size_t i = 0; i < local.size(); i++) {
-      MS_LOG(DEBUG) << "local[" << i << "] = " << local[i];
+      MS_LOG(DEBUG) << "local[" << i << "] = " << local.at(i);
     }
 
     if (global.size() == 1) {
-      global_range_ = cl::NDRange(internal_global_ws[0]);
+      global_range_ = cl::NDRange(internal_global_ws.at(0));
       if (!local.empty()) {
-        local_range_ = cl::NDRange(local[0]);
+        local_range_ = cl::NDRange(local.at(0));
       }
     } else if (global.size() == 2) {
-      global_range_ = cl::NDRange(internal_global_ws[0], internal_global_ws[1]);
+      global_range_ = cl::NDRange(internal_global_ws.at(0), internal_global_ws.at(1));
       if (!local.empty()) {
-        local_range_ = cl::NDRange(local[0], local[1]);
+        local_range_ = cl::NDRange(local.at(0), local.at(1));
       }
     } else if (global.size() == 3) {
-      global_range_ = cl::NDRange(internal_global_ws[0], internal_global_ws[1], internal_global_ws[2]);
+      global_range_ = cl::NDRange(internal_global_ws.at(0), internal_global_ws.at(1), internal_global_ws.at(2));
       if (!local.empty()) {
-        local_range_ = cl::NDRange(local[0], local[1], local[2]);
+        local_range_ = cl::NDRange(local.at(0), local.at(1), local.at(2));
       }
     } else {
       MS_LOG(ERROR) << "Not supported NDRange!";
@@ -191,6 +196,7 @@ class OpenCLKernel : public LiteKernel {
     return RET_ERROR;
   }
   int GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+    MS_ASSERT(img_size);
     if (idx >= out_tensors_.size()) {
       return RET_ERROR;
     }

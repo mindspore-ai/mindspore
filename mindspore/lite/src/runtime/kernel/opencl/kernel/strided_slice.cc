@@ -169,6 +169,7 @@ void StridedSliceOpenCLKernel::SetGlobalLocal() {
   const int max_divider = 8;
   auto max_work_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
   size_t local_c = GetMaxDivisorStrategy0(global[2], max_divider);
+  local_c = std::max<size_t>(local_c, 1);
   size_t local_hw = max_work_group_size / local_c;
   size_t local_h = std::min(UP_DIV(global[0], 2), local_hw);
   size_t local_w = std::min(local_hw / local_h, global[1]);

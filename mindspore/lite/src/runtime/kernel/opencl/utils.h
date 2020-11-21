@@ -61,6 +61,8 @@ std::vector<size_t> GetImage2dShapeFromNHWC(const std::vector<int> &tensor_shape
 
 template <class T1, class T2>
 void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
+  MS_ASSERT(src);
+  MS_ASSERT(dst);
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
     int src_offset = b * plane * channel;
@@ -81,6 +83,8 @@ void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane, int channel, c
 
 template <class T1, class T2>
 void PackNHWCToNHWC4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
+  MS_ASSERT(src);
+  MS_ASSERT(dst);
   int c4 = UP_DIV(channel, C4NUM);
   int nhwc4_batch_unit_offset = c4 * C4NUM * plane;
   int ic_remainder_ = channel % C4NUM;
@@ -106,6 +110,8 @@ void PackNHWCToNHWC4(void *src, void *dst, int batch, int plane, int channel, co
 
 template <class T1, class T2>
 void PackNHWCToNC4HW4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
+  MS_ASSERT(src);
+  MS_ASSERT(dst);
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
     int src_oc_offset = b * plane * channel;
@@ -142,6 +148,11 @@ std::vector<T> MatrixMultiply(const T A[], const T B[], int M, int N, int K) {
 template <typename SRC_T, typename DST_T>
 void ConvertConvWeight4DTo7D(void *src, void *dst, size_t CO, size_t KH, size_t KW, size_t CI, size_t OGroup = 1,
                              const size_t CI_TILE = 4, const size_t CO_TILE = 4) {
+  MS_ASSERT(src);
+  MS_ASSERT(dst);
+  MS_ASSERT(CI_TILE);
+  MS_ASSERT(CO_TILE);
+  MS_ASSERT(OGroup);
   if (CO_TILE == 0 || CI_TILE == 0) return;
   auto origin_weight = reinterpret_cast<SRC_T *>(src);
   auto packed_weight = reinterpret_cast<DST_T *>(dst);
