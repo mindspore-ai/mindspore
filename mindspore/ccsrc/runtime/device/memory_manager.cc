@@ -220,6 +220,7 @@ bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr address, size_t 
     return false;
   }
   address->ptr_ = device_ptr;
+  address->size_ = size;
   address->from_mem_pool_ = true;
   return true;
 }
