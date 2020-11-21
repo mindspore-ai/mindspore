@@ -120,6 +120,10 @@ bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC && format != "NHWC") {
     return false;
   }
+  auto shape = AnfAlgo::GetInputDeviceShape(node, 0);
+  if (shape.back() % kBNChannelMultipleFactor != 0) {
+    return false;
+  }
 
   auto relu_grad = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(relu_grad);
