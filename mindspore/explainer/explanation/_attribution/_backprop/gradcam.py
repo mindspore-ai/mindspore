@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-""" GradCAM and GuidedGradCAM. """
+"""GradCAM."""
 
 from mindspore.ops import operations as op
 
@@ -98,7 +98,7 @@ class GradCAM(IntermediateLayerAttribution):
         """
         Hook function to deal with the backward gradient.
 
-        The arguments are set as required by Cell.register_back_hook
+        The arguments are set as required by `Cell.register_backward_hook`.
         """
         self._intermediate_grad = grad_input
 

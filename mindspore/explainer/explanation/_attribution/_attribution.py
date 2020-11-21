@@ -16,32 +16,24 @@
 
 from typing import Callable
 
-import mindspore as ms
+from mindspore.train._utils import check_value_type
+from mindspore.nn import Cell
 
 class Attribution:
-    r"""
+    """
     Basic class of attributing the salient score
 
-    The explainers which explanation through attributing the relevance scores
-    should inherit this class.
+    The explainers which explanation through attributing the relevance scores should inherit this class.
 
     Args:
-        network (ms.nn.Cell): The black-box model to explanation.
+        network (Cell): The black-box model to explain.
     """
 
     def __init__(self, network):
-        self._verify_model(network)
+        check_value_type("network", network, Cell)
         self._model = network
         self._model.set_train(False)
         self._model.set_grad(False)
-
-    @staticmethod
-    def _verify_model(model):
-        """
-        Verify the input `network` for __init__ function.
-        """
-        if not isinstance(model, ms.nn.Cell):
-            raise TypeError("The parsed `network` must be a `mindspore.nn.Cell` object.")
 
 
     __call__: Callable
