@@ -22,7 +22,7 @@ class Exp(PowerTransform):
     This Bijector performs the operation:
 
     .. math::
-        Y = exp(x).
+        Y = \exp(x).
 
     Args:
         name (str): The name of the Bijector. Default: 'Exp'.

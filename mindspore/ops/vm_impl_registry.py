@@ -37,7 +37,7 @@ Examples:
 
 def get_vm_impl_fn(prim):
     """
-    Get the virtual implementation function by a primitive object or primitive name.
+    Gets the virtual implementation function by a primitive object or primitive name.
 
     Args:
         prim (Union[Primitive, str]): primitive object or name for operator register.

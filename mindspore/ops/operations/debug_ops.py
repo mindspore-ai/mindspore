@@ -84,7 +84,7 @@ class ScalarSummary(PrimitiveWithInfer):
 
 class ImageSummary(PrimitiveWithInfer):
     """
-    Outputs image tensor to protocol buffer through image summary operator.
+    Outputs the image tensor to protocol buffer through image summary operator.
 
     Inputs:
         - **name** (str) - The name of the input variable, it must not be an empty string.
@@ -167,7 +167,7 @@ class TensorSummary(PrimitiveWithInfer):
 
 class HistogramSummary(PrimitiveWithInfer):
     """
-    Outputs tensor to protocol buffer through histogram summary operator.
+    Outputs the tensor to protocol buffer through histogram summary operator.
 
     Inputs:
         - **name** (str) - The name of the input variable.
@@ -209,7 +209,7 @@ class HistogramSummary(PrimitiveWithInfer):
 
 class InsertGradientOf(PrimitiveWithInfer):
     """
-    Attaches callback to graph node that will be invoked on the node's gradient.
+    Attaches callback to the graph node that will be invoked on the node's gradient.
 
     Args:
         f (Function): MindSpore's Function. Callback function.
@@ -325,7 +325,7 @@ class HookBackward(PrimitiveWithInfer):
 
 class Print(PrimitiveWithInfer):
     """
-    Outputs tensor or string to stdout.
+    Outputs the tensor or string to stdout.
 
     Note:
         In pynative mode, please use python print function.
@@ -368,7 +368,7 @@ class Print(PrimitiveWithInfer):
 
 class Assert(PrimitiveWithInfer):
     """
-    Asserts that the given condition is true.
+    Asserts that the given condition is True.
     If input condition evaluates to false, print the list of tensor in data.
 
     Args:

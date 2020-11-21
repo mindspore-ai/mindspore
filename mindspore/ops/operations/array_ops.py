@@ -187,7 +187,7 @@ class ExpandDims(PrimitiveWithInfer):
 
 class DType(PrimitiveWithInfer):
     """
-    Returns the data type of input tensor as mindspore.dtype.
+    Returns the data type of the input tensor as mindspore.dtype.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -219,7 +219,7 @@ class DType(PrimitiveWithInfer):
 
 class SameTypeShape(PrimitiveWithInfer):
     """
-    Checks whether data type and shape of two tensors are the same.
+    Checks whether the data type and shape of two tensors are the same.
 
     Raises:
         TypeError: If the data types of two tensors are not the same.
@@ -344,7 +344,7 @@ class Cast(PrimitiveWithInfer):
 
 class IsSubClass(PrimitiveWithInfer):
     """
-    Checks whether one type is subtraction class of another type.
+    Checks whether this type is a sub-class of another type.
 
     Inputs:
         - **sub_type** (mindspore.dtype) - The type to be checked. Only constant value is allowed.
@@ -427,7 +427,7 @@ class IsInstance(PrimitiveWithInfer):
 
 class Reshape(PrimitiveWithInfer):
     """
-    Reshapes input tensor with the same values based on a given shape tuple.
+    Reshapes the input tensor with the same values based on a given shape tuple.
 
     Raises:
         ValueError: Given a shape tuple, if it has several -1; or if the product
@@ -525,7 +525,7 @@ class Reshape(PrimitiveWithInfer):
 
 class Shape(PrimitiveWithInfer):
     """
-    Returns the shape of input tensor.
+    Returns the shape of the input tensor.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -559,7 +559,7 @@ class Shape(PrimitiveWithInfer):
 
 class DynamicShape(Primitive):
     """
-    Returns the shape of input tensor.
+    Returns the shape of the input tensor.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -651,7 +651,7 @@ class Squeeze(PrimitiveWithInfer):
 
 class Transpose(PrimitiveWithCheck):
     """
-    Permutes the dimensions of input tensor according to input permutation.
+    Permutes the dimensions of the input tensor according to input permutation.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -723,7 +723,7 @@ class Unique(Primitive):
 
 class GatherV2(PrimitiveWithCheck):
     """
-    Returns a slice of input tensor based on the specified indices and axis.
+    Returns a slice of the input tensor based on the specified indices and axis.
 
     Inputs:
         - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -802,7 +802,7 @@ class SparseGatherV2(GatherV2):
 
 class Padding(PrimitiveWithInfer):
     """
-    Extends the last dimension of input tensor from 1 to pad_dim_size, by filling with 0.
+    Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
 
     Args:
         pad_dim_size (int): The value of the last dimension of x to be extended, which must be positive.
@@ -848,7 +848,7 @@ class Padding(PrimitiveWithInfer):
 
 class UniqueWithPad(PrimitiveWithInfer):
     """
-    Return unique elements and relative indexes in 1-D tensor, fill with pad num.
+    Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
 
     Inputs:
         - **x** (Tensor) - The tensor need to be unique. Must be 1-D vector with types: int32, int64.
@@ -889,7 +889,7 @@ class UniqueWithPad(PrimitiveWithInfer):
 
 class Split(PrimitiveWithInfer):
     """
-    Splits input tensor into output_num of tensors along the given axis and output numbers.
+    Splits the input tensor into output_num of tensors along the given axis and output numbers.
 
     Args:
         axis (int): Index of the split position. Default: 0.
@@ -1032,7 +1032,7 @@ class TruncatedNormal(PrimitiveWithInfer):
 
 class Size(PrimitiveWithInfer):
     r"""
-    Returns the elements count size of a tensor.
+    Returns the size of a tensor.
 
     Returns an int scalar representing the elements size of input, the total number of elements in the tensor.
 
@@ -1363,7 +1363,7 @@ class ScalarToArray(PrimitiveWithInfer):
 
 class ScalarToTensor(PrimitiveWithInfer):
     """
-    Converts a scalar to a `Tensor`, and convert data type to specified type.
+    Converts a scalar to a `Tensor`, and converts the data type to the specified type.
 
     Inputs:
         - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
@@ -1471,7 +1471,7 @@ class InvertPermutation(PrimitiveWithInfer):
 
 class Argmax(PrimitiveWithInfer):
     """
-    Returns the indices of the max value of a tensor across the axis.
+    Returns the indices of the maximum value of a tensor across the axis.
 
     If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor will be
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
@@ -1523,7 +1523,7 @@ class Argmax(PrimitiveWithInfer):
 
 class Argmin(PrimitiveWithInfer):
     """
-    Returns the indices of the min value of a tensor across the axis.
+    Returns the indices of the minimum value of a tensor across the axis.
 
     If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
     :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
@@ -1630,7 +1630,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
 
 class ArgMinWithValue(PrimitiveWithInfer):
     """
-    Calculates the minimum value with corresponding index, return indices and values.
+    Calculates the minimum value with corresponding index, and returns indices and values.
 
     Calculates the minimum value along with the given axis for the input tensor. It returns the minimum values and
     indices.
@@ -1770,7 +1770,7 @@ class Tile(PrimitiveWithInfer):
 
 class UnsortedSegmentSum(PrimitiveWithInfer):
     r"""
-    Computes the sum along segments of a tensor.
+    Computes the sum of a tensor along segments.
 
     Calculates a tensor such that :math:`\text{output}[i] = \sum_{segment\_ids[j] == i} \text{data}[j, \ldots]`, where
     :math:`j` is a tuple describing the index of element in data.  `segment_ids` selects which elements in data to sum
@@ -1853,7 +1853,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
 
 class UnsortedSegmentMin(PrimitiveWithInfer):
     """
-    Computes the minimum along segments of a tensor.
+    Computes the minimum of a tensor along segments.
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
@@ -1971,7 +1971,7 @@ class UnsortedSegmentMax(PrimitiveWithInfer):
 
 class UnsortedSegmentProd(PrimitiveWithInfer):
     """
-    Computes the product along segments of a tensor.
+    Computes the product of a tensor along segments.
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
@@ -2029,9 +2029,9 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
 
 class Concat(PrimitiveWithInfer):
     r"""
-    Concats tensor in specified axis.
+    Connect tensor in the specified axis.
 
-    Concats input tensors along with the given axis.
+    Connect input tensors along with the given axis.
 
     Note:
         The input data is a tuple of tensors. These tensors have the same rank `R`. Set the given axis as `m`, and
@@ -2392,7 +2392,7 @@ class ReverseV2(PrimitiveWithInfer):
 
 class Rint(PrimitiveWithInfer):
     """
-    Returns element-wise integer closest to x.
+    Returns an integer that is closest to x element-wise.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor, which must be one of the following types:
@@ -2932,7 +2932,7 @@ class ScatterNd(PrimitiveWithInfer):
 
 class ResizeNearestNeighbor(PrimitiveWithInfer):
     r"""
-    Resizes the input tensor by using nearest neighbor algorithm.
+    Resizes the input tensor by using the nearest neighbor algorithm.
 
     Resizes the input tensor to a given size by using the nearest neighbor algorithm. The nearest
     neighbor algorithm selects the value of the nearest point and does not consider the
@@ -3022,7 +3022,7 @@ class GatherNd(PrimitiveWithInfer):
 
 class TensorScatterUpdate(PrimitiveWithInfer):
     """
-    Updates tensor value using given values, along with the input indices.
+    Updates tensor values using given values, along with the input indices.
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be equal to indices.shape[-1].
@@ -3068,7 +3068,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
 
 class ScatterUpdate(_ScatterOp_Dynamic):
     """
-    Updates tensor value by using input indices and value.
+    Updates tensor values by using input indices and value.
 
     Using given values to update tensor value, along with the input indices.
 
@@ -3115,7 +3115,7 @@ class ScatterUpdate(_ScatterOp_Dynamic):
 
 class ScatterNdUpdate(_ScatterNdOp):
     """
-    Updates tensor value by using input indices and value.
+    Updates tensor values by using input indices and value.
 
     Using given values to update tensor value, along with the input indices.
 
@@ -3165,7 +3165,7 @@ class ScatterNdUpdate(_ScatterNdOp):
 
 class ScatterMax(_ScatterOp):
     """
-    Updates the value of the input tensor through the max operation.
+    Updates the value of the input tensor through the maximum operation.
 
     Using given values to update tensor value through the max operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
@@ -3210,7 +3210,7 @@ class ScatterMax(_ScatterOp):
 
 class ScatterMin(_ScatterOp):
     """
-    Updates the value of the input tensor through the min operation.
+    Updates the value of the input tensor through the minimum operation.
 
     Using given values to update tensor value through the min operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
@@ -3249,7 +3249,7 @@ class ScatterMin(_ScatterOp):
 
 class ScatterAdd(_ScatterOp_Dynamic):
     """
-    Updates the value of the input tensor through the add operation.
+    Updates the value of the input tensor through the addition operation.
 
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
@@ -3333,7 +3333,7 @@ class ScatterSub(_ScatterOp):
 
 class ScatterMul(_ScatterOp):
     """
-    Updates the value of the input tensor through the mul operation.
+    Updates the value of the input tensor through the multiply operation.
 
     Using given values to update tensor value through the mul operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
@@ -3372,7 +3372,7 @@ class ScatterMul(_ScatterOp):
 
 class ScatterDiv(_ScatterOp):
     """
-    Updates the value of the input tensor through the div operation.
+    Updates the value of the input tensor through the divide operation.
 
     Using given values to update tensor value through the div operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
@@ -3411,7 +3411,7 @@ class ScatterDiv(_ScatterOp):
 
 class ScatterNdAdd(_ScatterNdOp):
     """
-    Applies sparse addition to individual values or slices in a Tensor.
+    Applies sparse addition to individual values or slices in a tensor.
 
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
@@ -3449,7 +3449,7 @@ class ScatterNdAdd(_ScatterNdOp):
 
 class ScatterNdSub(_ScatterNdOp):
     """
-    Applies sparse subtraction to individual values or slices in a Tensor.
+    Applies sparse subtraction to individual values or slices in a tensor.
 
     Using given values to update tensor value through the subtraction operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
@@ -3487,7 +3487,7 @@ class ScatterNdSub(_ScatterNdOp):
 
 class ScatterNonAliasingAdd(_ScatterNdOp):
     """
-    Applies sparse addition to input using individual values or slices.
+    Applies sparse addition to the input using individual values or slices.
 
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
@@ -3652,7 +3652,7 @@ class DepthToSpace(PrimitiveWithInfer):
 
 class SpaceToBatch(PrimitiveWithInfer):
     r"""
-    Divides spatial dimensions into blocks and combine the block size with the original batch.
+    Divides spatial dimensions into blocks and combines the block size with the original batch.
 
     This operation will divide spatial dimensions (H, W) into blocks with `block_size`, the output tensor's H and W
     dimension is the corresponding number of blocks after division. The output tensor's batch dimension is the
@@ -3810,7 +3810,7 @@ class BatchToSpace(PrimitiveWithInfer):
 
 class SpaceToBatchND(PrimitiveWithInfer):
     r"""
-    Divides spatial dimensions into blocks and combine the block size with the original batch.
+    Divides spatial dimensions into blocks and combines the block size with the original batch.
 
     This operation will divide spatial dimensions (H, W) into blocks with block_shape, the output tensor's H and W
     dimension is the corresponding number of blocks after division. The output tensor's batch dimension is the
@@ -3910,7 +3910,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
 class BatchToSpaceND(PrimitiveWithInfer):
     r"""
-    Divides batch dimension with blocks and interleave these blocks back into spatial dimensions.
+    Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
     This operation will divide batch dimension N into blocks with block_shape, the output tensor's N dimension
     is the corresponding number of blocks after division. The output tensor's H, W dimension is product of original H, W
