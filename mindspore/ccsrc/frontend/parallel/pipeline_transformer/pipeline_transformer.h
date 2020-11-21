@@ -65,6 +65,7 @@ class PipelineTransformer {
   int64_t per_stage_rank_num_;
   TypePtr type_ptr_;
   ValueListPtr shape_;
+  AnfNodePtr virtual_param_;
 };
 }  // namespace parallel
 }  // namespace mindspore

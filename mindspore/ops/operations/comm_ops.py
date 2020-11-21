@@ -116,7 +116,7 @@ class AllReduce(PrimitiveWithInfer):
         return x_dtype
 
 
-class Send(PrimitiveWithInfer):
+class _Send(PrimitiveWithInfer):
     """
     Send tensors from src_rank to the specified dest_rank.
 
@@ -145,7 +145,7 @@ class Send(PrimitiveWithInfer):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
         >>>         self.depend = P.Depend()
-        >>>         self.send = P.Send(st_tag=0, dest_rank=8, group="hccl_world_group")
+        >>>         self.send = P._Send(st_tag=0, dest_rank=8, group="hccl_world_group")
         >>>
         >>>     def construct(self, x):
         >>>         out = self.depend(x, self.send(x))
@@ -170,7 +170,7 @@ class Send(PrimitiveWithInfer):
         return x_dtype
 
 
-class Receive(PrimitiveWithInfer):
+class _Receive(PrimitiveWithInfer):
     """
     receive tensors from src_rank.
 
@@ -201,11 +201,11 @@ class Receive(PrimitiveWithInfer):
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.send = P.Receive(st_tag=0, src_rank=0, shape=[2, 8], dtype=np.float32,
+        >>>         self.recv = P._Receive(st_tag=0, src_rank=0, shape=[2, 8], dtype=np.float32,
         >>>                               group="hccl_world_group")
         >>>
         >>>     def construct(self, x):
-        >>>         out = self.depend(x, self.send(x))
+        >>>         out = self.depend(x, self.recv(x))
         >>>         return out
         >>>
         >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
@@ -220,10 +220,10 @@ class Receive(PrimitiveWithInfer):
         self.dtype = dtype
         self.group = group
 
-    def infer_shape(self):
+    def infer_shape(self, x_shape=None):
         return self.shape
 
-    def infer_dtype(self):
+    def infer_dtype(self, x_dtype=None):
         return self.dtype
 
 

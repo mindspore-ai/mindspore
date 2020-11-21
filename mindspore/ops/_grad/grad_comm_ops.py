@@ -20,7 +20,7 @@ from .. import operations as P
 from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.comm_ops import (AllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
-                                   _GetTensorSlice, _MirrorOperator, ReduceOp, Send, Receive,
+                                   _GetTensorSlice, _MirrorOperator, ReduceOp, _Send, _Receive,
                                    ReduceScatter, _HostReduceScatter, _VirtualDiv, AllSwap)
 from .grad_base import bprop_getters
 
@@ -77,12 +77,12 @@ def get_bprop_all_reduce(self):
     return bprop
 
 
-@bprop_getters.register(Send)
+@bprop_getters.register(_Send)
 def get_bprop_send(self):
     """Generate bprop for Send."""
     shape = self.get_attr_dict()["shape"]
     dtype = self.get_attr_dict()["dtype"]
-    send_grad = Receive(self.sr_tag, self.rank, shape, dtype, self.group)
+    send_grad = _Receive(self.sr_tag, self.rank, shape, dtype, self.group)
 
     def bprop(x, out, dout):
         dx = send_grad()
@@ -90,15 +90,16 @@ def get_bprop_send(self):
     return bprop
 
 
-@bprop_getters.register(Receive)
+@bprop_getters.register(_Receive)
 def get_bprop_receive(self):
     """Generate bprop for Receive."""
-    receive_grad = Send(self.tag, self.rank, self.group)
+    receive_grad = _Send(self.tag, self.rank, self.group)
     depend = P.Depend()
+    cast = P.Cast()
 
-    def bprop(out, dout):
+    def bprop(x, out, dout):
         send_out = receive_grad(dout)
-        dx = depend(dout, send_out)
+        dx = depend(cast(zeros_like(x), F.dtype(x)), send_out)
         return (dx,)
     return bprop
 
