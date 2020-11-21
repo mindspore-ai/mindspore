@@ -26,7 +26,7 @@ parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--testing_shape", type=int, default=608, help="test shape")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="ssd.air", help="output file name.")
+parser.add_argument("--file_name", type=str, default="yolov4.air", help="output file name.")
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
 args = parser.parse_args()
 
