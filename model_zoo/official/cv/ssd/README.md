@@ -1,49 +1,59 @@
 # Contents
 
-- [SSD Description](#ssd-description)
-- [Model Architecture](#model-architecture)
-- [Dataset](#dataset)
-- [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)    
-- [Script Description](#script-description)
-    - [Script and Sample Code](#script-and-sample-code)
-    - [Script Parameters](#script-parameters)
-    - [Training Process](#training-process)
-        - [Training](#training)
-    - [Evaluation Process](#evaluation-process)
-        - [Evaluation](#evaluation)
-    - [Export MindIR](#export-mindir)
-- [Model Description](#model-description)
-    - [Performance](#performance)  
-        - [Evaluation Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
-- [Description of Random Situation](#description-of-random-situation)
-- [ModelZoo Homepage](#modelzoo-homepage)
+- [Contents](#contents)
+    - [SSD Description](#ssd-description)
+    - [Model Architecture](#model-architecture)
+    - [Dataset](#dataset)
+    - [Environment Requirements](#environment-requirements)
+    - [Quick Start](#quick-start)
+        - [Prepare the model](#prepare-the-model)
+        - [Run the scripts](#run-the-scripts)
+    - [Script Description](#script-description)
+        - [Script and Sample Code](#script-and-sample-code)
+        - [Script Parameters](#script-parameters)
+        - [Training Process](#training-process)
+            - [Training on Ascend](#training-on-ascend)
+            - [Training on GPU](#training-on-gpu)
+        - [Evaluation Process](#evaluation-process)
+            - [Evaluation on Ascend](#evaluation-on-ascend)
+            - [Evaluation on GPU](#evaluation-on-gpu)
+        - [Export MindIR](#export-mindir)
+    - [Model Description](#model-description)
+        - [Performance](#performance)
+            - [Evaluation Performance](#evaluation-performance)
+            - [Inference Performance](#inference-performance)
+    - [Description of Random Situation](#description-of-random-situation)
+    - [ModelZoo Homepage](#modelzoo-homepage)
 
+## [SSD Description](#contents)
 
-# [SSD Description](#contents)
- 
 SSD discretizes the output space of bounding boxes into a set of default boxes over different aspect ratios and scales per feature map location. At prediction time, the network generates scores for the presence of each object category in each default box and produces adjustments to the box to better match the object shape.Additionally, the network combines predictions from multiple feature maps with different resolutions to naturally handle objects of various sizes.
 
 [Paper](https://arxiv.org/abs/1512.02325):   Wei Liu, Dragomir Anguelov, Dumitru Erhan, Christian Szegedy, Scott Reed, Cheng-Yang Fu, Alexander C. Berg.European Conference on Computer Vision (ECCV), 2016 (In press).
 
-# [Model Architecture](#contents)
+## [Model Architecture](#contents)
 
 The SSD approach is based on a feed-forward convolutional network that produces a fixed-size collection of bounding boxes and scores for the presence of object class instances in those boxes, followed by a non-maximum suppression step to produce the final detections. The early network layers are based on a standard architecture used for high quality image classification, which is called the base network. Then add auxiliary structure to the network to produce detections.
 
-# [Dataset](#contents)
+We present two different base architecture.
+
+- **ssd300**, reference from the paper. Using mobilenetv2 as backbone and the same bbox predictor as the paper pressent.
+- ***ssd-mobilenet-v1-fpn**, using mobilenet-v1 and FPN as feature extractor with weight-shared box predcitors.
+
+## [Dataset](#contents)
+
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
-Dataset used: [COCO2017](<http://images.cocodataset.org/>) 
+Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
 - Dataset size：19G
-  - Train：18G，118000 images  
-  - Val：1G，5000 images 
-  - Annotations：241M，instances，captions，person_keypoints etc
+    - Train：18G，118000 images  
+    - Val：1G，5000 images
+    - Annotations：241M，instances，captions，person_keypoints etc
 - Data format：image and json files
-  - Note：Data will be processed in dataset.py
+    - Note：Data will be processed in dataset.py
 
-# [Environment Requirements](#contents)
+## [Environment Requirements](#contents)
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
@@ -52,19 +62,19 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 - We use COCO2017 as training dataset in this example by default, and you can also use your own datasets.
   First, install Cython ,pycocotool and opencv to process data and to get evaluation result.
 
-    ```
+    ```shell
     pip install Cython
 
     pip install pycocotools
 
     pip install opencv-python
-
     ```
+
     1. If coco dataset is used. **Select dataset to coco when run script.**
 
         Change the `coco_root` and other settings you need in `src/config.py`. The directory structure is as follows:
-        
-        ```
+
+        ```shell
         .
         └─coco_dataset
           ├─annotations
@@ -72,12 +82,12 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
             └─instance_val2017.json
           ├─val2017
           └─train2017
-
         ```
 
     2. If VOC dataset is used. **Select dataset to voc when run script.**
         Change `classes`, `num_classes`, `voc_json` and `voc_root` in `src/config.py`. `voc_json` is the path of json file with coco format for evalution, `voc_root` is the path of VOC dataset, the directory structure is as follows:
-        ```
+
+        ```shell
         .
         └─voc_dataset
           └─train
@@ -92,33 +102,42 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
             ...
             ├─xxxx.jpg
             └─xxxx.xml
-
         ```
 
     3. If your own dataset is used. **Select dataset to other when run script.**
         Organize the dataset infomation into a TXT file, each row in the file is as follows:
 
-        ```
+        ```shell
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
-
         ```
 
-        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `image_dir`(dataset directory) and the relative path in `anno_path`(the TXT file path), `image_dir` and `anno_path` are setting in `src/config.py`. 
+        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `image_dir`(dataset directory) and the relative path in `anno_path`(the TXT file path), `image_dir` and `anno_path` are setting in `src/config.py`.
 
-# [Quick Start](#contents)
+## [Quick Start](#contents)
 
-After installing MindSpore via the official website, you can start training and evaluation as follows: 
+### Prepare the model
+
+1. Chose the model by chaning the `using_model` in `src/confgi.py`. The optional models are: `ssd300`, `ssd_mobilenet_v1_fpn`.
+2. Change the datset config in the corresponding config. `src/config_ssd300.py` or `src/config_ssd_mobilenet_v1_fpn.py`.
+3. If you are running with `ssd_mobilenet_v1_fpn`, you need a pretrained model for `mobilenet_v1`. Set the checkpoint path to `feature_extractor_base_param` in `src/config_ssd_mobilenet_v1_fpn.py`. For more detail about training mobilnet_v1, please refer to the mobilenetv1 model.
+
+### Run the scripts
+
+After installing MindSpore via the official website, you can start training and evaluation as follows:
+
 - runing on Ascend
 
-```
+```shell
 # distributed training on Ascend
 sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
 
 # run eval on Ascend
 sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
+
 - runing on GPU
-```
+
+```shell
 # distributed training on GPU
 sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET]
 
@@ -130,7 +149,7 @@ sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 
 **CPU is usually used for fine-tuning, which needs pre_trained checkpoint.**
 
-```
+```shell
 # training on CPU
 python train.py --run_platform=CPU --lr=[LR] --dataset=[DATASET] --epoch_size=[EPOCH_SIZE] --batch_size=[BATCH_SIZE] --pre_trained=[PRETRAINED_CKPT] --filter_weight=True --save_checkpoint_epochs=1
 
@@ -138,14 +157,14 @@ python train.py --run_platform=CPU --lr=[LR] --dataset=[DATASET] --epoch_size=[E
 python eval.py --run_platform=CPU --dataset=[DATASET] --checkpoint_path=[PRETRAINED_CKPT]
 ```
 
-# [Script Description](#contents) 
+## [Script Description](#contents)
 
-## [Script and Sample Code](#contents)
+### [Script and Sample Code](#contents)
 
 ```shell
 .
 └─ cv
-  └─ ssd      
+  └─ ssd
     ├─ README.md                      # descriptions about SSD
     ├─ scripts
       ├─ run_distribute_train.sh      # shell script for distributed on ascend
@@ -167,9 +186,9 @@ python eval.py --run_platform=CPU --dataset=[DATASET] --checkpoint_path=[PRETRAI
     └─ mindspore_hub_conf.py          # mindspore hub interface
 ```
 
-## [Script Parameters](#contents)
+### [Script Parameters](#contents)
 
-  ```
+  ```shell
   Major parameters in train.py and config.py as follows:
 
     "device_num": 1                                  # Use device nums
@@ -195,19 +214,20 @@ python eval.py --run_platform=CPU --dataset=[DATASET] --checkpoint_path=[PRETRAI
 
   ```
 
-
-## [Training Process](#contents)
+### [Training Process](#contents)
 
 To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will generate [mindrecord](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/convert_dataset.html) files by `coco_root`(coco dataset), `voc_root`(voc dataset) or `image_dir` and `anno_path`(own dataset). **Note if mindrecord_dir isn't empty, it will use mindrecord_dir instead of raw images.**
 
-### Training on Ascend
+#### Training on Ascend
 
 - Distribute mode
 
-```
+```shell
     sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
+
 We need five or seven parameters for this scripts.
+
 - `DEVICE_NUM`: the device number for distributed train.
 - `EPOCH_NUM`: epoch num for distributed train.
 - `LR`: learning rate init value for distributed train.
@@ -216,9 +236,9 @@ We need five or seven parameters for this scripts.
 - `PRE_TRAINED :` the path of pretrained checkpoint file, it is better to use absolute path.
 - `PRE_TRAINED_EPOCH_SIZE :` the epoch num of pretrained.
 
-    Training result will be stored in the current path, whose folder name begins with "LOG".  Under this, you can find checkpoint file together with result like the followings in log
+Training result will be stored in the current path, whose folder name begins with "LOG".  Under this, you can find checkpoint file together with result like the followings in log
 
-```
+```shell
 epoch: 1 step: 458, loss is 3.1681802
 epoch time: 228752.4654865265, per step time: 499.4595316299705
 epoch: 2 step: 458, loss is 2.8847265
@@ -235,14 +255,16 @@ epoch: 500 step: 458, loss is 0.5548882
 epoch time: 39064.8467540741, per step time: 85.29442522723602
 ```
 
-### Training on GPU
+#### Training on GPU
 
 - Distribute mode
 
-```
+```shell
     sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
+
 We need five or seven parameters for this scripts.
+
 - `DEVICE_NUM`: the device number for distributed train.
 - `EPOCH_NUM`: epoch num for distributed train.
 - `LR`: learning rate init value for distributed train.
@@ -250,9 +272,9 @@ We need five or seven parameters for this scripts.
 - `PRE_TRAINED :` the path of pretrained checkpoint file, it is better to use absolute path.
 - `PRE_TRAINED_EPOCH_SIZE :` the epoch num of pretrained.
 
-    Training result will be stored in the current path, whose folder name is "LOG".  Under this, you can find checkpoint files together with result like the followings in log
+Training result will be stored in the current path, whose folder name is "LOG".  Under this, you can find checkpoint files together with result like the followings in log
 
-```
+```shell
 epoch: 1 step: 1, loss is 420.11783
 epoch: 1 step: 2, loss is 434.11032
 epoch: 1 step: 3, loss is 476.802
@@ -263,14 +285,16 @@ epoch time: 150753.701, per step time: 329.157
 
 ```
 
-## [Evaluation Process](#contents)
+### [Evaluation Process](#contents)
 
-### Evaluation on Ascend
+#### Evaluation on Ascend
 
+```shell
+sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
-sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID] 
-```
+
 We need two parameters for this scripts.
+
 - `DATASET`：the dataset mode of evaluation dataset.
 - `CHECKPOINT_PATH`: the absolute path for checkpoint file.
 - `DEVICE_ID`: the device id for eval.
@@ -279,7 +303,7 @@ We need two parameters for this scripts.
 
 Inference result will be stored in the example path, whose folder name begins with "eval". Under this, you can find result like the followings in log.
 
-```
+```shell
 Average Precision (AP) @[ IoU=0.50:0.95 | area= all | maxDets=100 ] = 0.238
 Average Precision (AP) @[ IoU=0.50 | area= all | maxDets=100 ] = 0.400
 Average Precision (AP) @[ IoU=0.75 | area= all | maxDets=100 ] = 0.240
@@ -298,12 +322,14 @@ Average Recall (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.697
 mAP: 0.23808886505483504
 ```
 
-### Evaluation on GPU
+#### Evaluation on GPU
 
-```
+```shell
 sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
+
 We need two parameters for this scripts.
+
 - `DATASET`：the dataset mode of evaluation dataset.
 - `CHECKPOINT_PATH`: the absolute path for checkpoint file.
 - `DEVICE_ID`: the device id for eval.
@@ -312,7 +338,7 @@ We need two parameters for this scripts.
 
 Inference result will be stored in the example path, whose folder name begins with "eval". Under this, you can find result like the followings in log.
 
-```
+```shell
 Average Precision (AP) @[ IoU=0.50:0.95 | area= all | maxDets=100 ] = 0.224
 Average Precision (AP) @[ IoU=0.50 | area= all | maxDets=100 ] = 0.375
 Average Precision (AP) @[ IoU=0.75 | area= all | maxDets=100 ] = 0.228
@@ -331,17 +357,19 @@ Average Recall (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.686
 mAP: 0.2244936111705981
 ```
 
-## [Export MindIR](#contents)
+### [Export MindIR](#contents)
 
-```
+```shell
 python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
+
 The ckpt_file parameter is required.
 
-# [Model Description](#contents)
-## [Performance](#contents)
+## [Model Description](#contents)
 
-### Evaluation Performance
+### [Performance](#contents)
+
+#### Evaluation Performance
 
 | Parameters                 | Ascend                                                       | GPU                                                          |
 | -------------------------- | -------------------------------------------------------------| -------------------------------------------------------------|
@@ -356,10 +384,9 @@ The ckpt_file parameter is required.
 | Speed                      | 8pcs: 90ms/step                                              | 8pcs: 121ms/step                                             |
 | Total time                 | 8pcs: 4.81hours                                              | 8pcs: 12.31hours                                             |
 | Parameters (M)             | 34                                                           | 34                                                           |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> |
 
-
-### Inference Performance
+#### Inference Performance
 
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | ----------------------------| ----------------------------|
@@ -373,10 +400,10 @@ The ckpt_file parameter is required.
 | Accuracy            | IoU=0.50: 23.8%             | IoU=0.50: 22.4%             |
 | Model for inference | 34M(.ckpt file)             | 34M(.ckpt file)             |
 
-# [Description of Random Situation](#contents)
+## [Description of Random Situation](#contents)
 
-In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py. 
+In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py.
 
+## [ModelZoo Homepage](#contents)
 
-# [ModelZoo Homepage](#contents)  
  Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  
