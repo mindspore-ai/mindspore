@@ -47,6 +47,7 @@
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_with_bbox_op.h"
+#include "minddata/dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
 #include "minddata/dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
 #include "minddata/dataset/kernels/image/random_posterize_op.h"
@@ -279,6 +280,17 @@ std::shared_ptr<RandomResizedCropOperation> RandomResizedCrop(std::vector<int32_
                                                               std::vector<float> ratio, InterpolationMode interpolation,
                                                               int32_t max_attempts) {
   auto op = std::make_shared<RandomResizedCropOperation>(size, scale, ratio, interpolation, max_attempts);
+  // Input validation
+  return op->ValidateParams() ? op : nullptr;
+}
+
+// Function to create RandomResizedCropOperation.
+std::shared_ptr<RandomResizedCropWithBBoxOperation> RandomResizedCropWithBBox(std::vector<int32_t> size,
+                                                                              std::vector<float> scale,
+                                                                              std::vector<float> ratio,
+                                                                              InterpolationMode interpolation,
+                                                                              int32_t max_attempts) {
+  auto op = std::make_shared<RandomResizedCropWithBBoxOperation>(size, scale, ratio, interpolation, max_attempts);
   // Input validation
   return op->ValidateParams() ? op : nullptr;
 }
@@ -1437,6 +1449,85 @@ std::shared_ptr<TensorOp> RandomResizedCropOperation::Build() {
     width = size_[1];
   }
   std::shared_ptr<RandomCropAndResizeOp> tensor_op = std::make_shared<RandomCropAndResizeOp>(
+    height, width, scale_[0], scale_[1], ratio_[0], ratio_[1], interpolation_, max_attempts_);
+  return tensor_op;
+}
+
+// RandomResizedCropWithBBoxOperation
+RandomResizedCropWithBBoxOperation::RandomResizedCropWithBBoxOperation(std::vector<int32_t> size,
+                                                                       std::vector<float> scale,
+                                                                       std::vector<float> ratio,
+                                                                       InterpolationMode interpolation,
+                                                                       int32_t max_attempts)
+    : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
+
+Status RandomResizedCropWithBBoxOperation::ValidateParams() {
+  // size
+  if (size_.size() != 2 && size_.size() != 1) {
+    std::string err_msg =
+      "RandomResizedCropWithBBox: size must be a vector of one or two values, got: " + std::to_string(size_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (size_[0] <= 0 || (size_.size() == 2 && size_[1] <= 0)) {
+    std::string err_msg = "RandomResizedCropWithBBox: size must only contain positive integers.";
+    MS_LOG(ERROR) << "RandomResizedCropWithBBox: size must only contain positive integers, got: " << size_;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  // scale
+  if (scale_.size() != 2) {
+    std::string err_msg =
+      "RandomResizedCropWithBBox: scale must be a vector of two values, got: " + std::to_string(scale_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (scale_[0] < 0 || scale_[1] < 0) {
+    std::string err_msg = "RandomResizedCropWithBBox: scale must be greater than or equal to 0.";
+    MS_LOG(ERROR) << "RandomResizedCropWithBBox: scale must be greater than or equal to 0, got: " << scale_;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (scale_[1] < scale_[0]) {
+    std::string err_msg = "RandomResizedCropWithBBox: scale must have a size of two in the format of (min, max).";
+    MS_LOG(ERROR) << "RandomResizedCropWithBBox: scale must have a size of two in the format of (min, max), but got: "
+                  << scale_;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  // ratio
+  if (ratio_.size() != 2) {
+    std::string err_msg =
+      "RandomResizedCropWithBBox: ratio must be a vector of two values, got: " + std::to_string(ratio_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (ratio_[0] < 0 || ratio_[1] < 0) {
+    std::string err_msg = "RandomResizedCropWithBBox: ratio must be greater than or equal to 0.";
+    MS_LOG(ERROR) << "RandomResizedCropWithBBox: ratio must be greater than or equal to 0, got: " << ratio_;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (ratio_[1] < ratio_[0]) {
+    std::string err_msg = "RandomResizedCropWithBBox: ratio must have a size of two in the format of (min, max).";
+    MS_LOG(ERROR) << "RandomResizedCropWithBBox: ratio must have a size of two in the format of (min, max), but got: "
+                  << ratio_;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  // max_attempts
+  if (max_attempts_ < 1) {
+    std::string err_msg = "RandomResizedCropWithBBox: max_attempts must be greater than or equal to 1, got: " +
+                          std::to_string(max_attempts_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> RandomResizedCropWithBBoxOperation::Build() {
+  int32_t height = size_[0];
+  int32_t width = size_[0];
+  // User specified the width value.
+  if (size_.size() == 2) {
+    width = size_[1];
+  }
+  std::shared_ptr<RandomCropAndResizeWithBBoxOp> tensor_op = std::make_shared<RandomCropAndResizeWithBBoxOp>(
     height, width, scale_[0], scale_[1], ratio_[0], ratio_[1], interpolation_, max_attempts_);
   return tensor_op;
 }

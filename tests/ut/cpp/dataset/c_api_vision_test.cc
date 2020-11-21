@@ -1969,6 +1969,133 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
   EXPECT_EQ(random_resized_crop, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
+  // Testing RandomResizedCropWithBBox with default values
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 4));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCropWithBBox({5});
+  EXPECT_NE(random_resized_crop, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_resized_crop}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 5, true);
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
+  // Testing RandomResizedCropWithBBox with non-default values
+  // Create an VOC Dataset
+  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 4));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCropWithBBox(
+    {5, 10}, {0.25, 0.75}, {0.5, 1.25}, mindspore::dataset::InterpolationMode::kArea, 20);
+  EXPECT_NE(random_resized_crop, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_resized_crop}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 10, true);
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail1) {
+  // This should fail because size has negative value
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCropWithBBox({5, -10});
+  EXPECT_EQ(random_resized_crop, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail2) {
+  // This should fail because scale isn't in {min, max} format
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCropWithBBox({5, 10}, {4, 3});
+  EXPECT_EQ(random_resized_crop, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail3) {
+  // This should fail because ratio isn't in {min, max} format
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCropWithBBox({5, 10}, {4, 5}, {7, 6});
+  EXPECT_EQ(random_resized_crop, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail4) {
+  // This should fail because scale has a size of more than 2
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCropWithBBox({5, 10, 20}, {4, 5}, {7, 6});
+  EXPECT_EQ(random_resized_crop, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestRandomRotation) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomRotation.";
 
@@ -2116,8 +2243,8 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicyFail) {
   EXPECT_EQ(random_select_subpolicy1, nullptr);
 
   // RandomSelectSubpolicy: policy must not be empty
-  std::shared_ptr<TensorOperation> random_select_subpolicy2 = vision::RandomSelectSubpolicy(
-    {{{vision::Invert(), 0.5}, {vision::Equalize(), 0.5}}, {{nullptr, 1}}});
+  std::shared_ptr<TensorOperation> random_select_subpolicy2 =
+    vision::RandomSelectSubpolicy({{{vision::Invert(), 0.5}, {vision::Equalize(), 0.5}}, {{nullptr, 1}}});
   EXPECT_EQ(random_select_subpolicy2, nullptr);
 
   // RandomSelectSubpolicy: policy must not be empty
@@ -2125,13 +2252,13 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicyFail) {
   EXPECT_EQ(random_select_subpolicy3, nullptr);
 
   // RandomSelectSubpolicy: policy must not be empty
-  std::shared_ptr<TensorOperation> random_select_subpolicy4 = vision::RandomSelectSubpolicy(
-    {{{vision::Invert(), 0.5}, {vision::Equalize(), 0.5}}, {}});
+  std::shared_ptr<TensorOperation> random_select_subpolicy4 =
+    vision::RandomSelectSubpolicy({{{vision::Invert(), 0.5}, {vision::Equalize(), 0.5}}, {}});
   EXPECT_EQ(random_select_subpolicy4, nullptr);
 
   // RandomSelectSubpolicy: policy must not be empty
-  std::shared_ptr<TensorOperation> random_select_subpolicy5 = vision::RandomSelectSubpolicy(
-    {{{}, {vision::Equalize(), 0.5}}, {{vision::Resize({15, 15}), 1}}});
+  std::shared_ptr<TensorOperation> random_select_subpolicy5 =
+    vision::RandomSelectSubpolicy({{{}, {vision::Equalize(), 0.5}}, {{vision::Resize({15, 15}), 1}}});
   EXPECT_EQ(random_select_subpolicy5, nullptr);
 }
 
@@ -2569,7 +2696,8 @@ TEST_F(MindDataTestPipeline, TestRescaleFail) {
 }
 
 TEST_F(MindDataTestPipeline, TestSoftDvppDecodeRandomCropResizeJpegSuccess1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSoftDvppDecodeRandomCropResizeJpegSuccess1 with single integer input.";
+  MS_LOG(INFO)
+    << "Doing MindDataTestPipeline-TestSoftDvppDecodeRandomCropResizeJpegSuccess1 with single integer input.";
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -2610,7 +2738,8 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeRandomCropResizeJpegSuccess1) {
 }
 
 TEST_F(MindDataTestPipeline, TestSoftDvppDecodeRandomCropResizeJpegSuccess2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSoftDvppDecodeRandomCropResizeJpegSuccess2 with (height, width) input.";
+  MS_LOG(INFO)
+    << "Doing MindDataTestPipeline-TestSoftDvppDecodeRandomCropResizeJpegSuccess2 with (height, width) input.";
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";

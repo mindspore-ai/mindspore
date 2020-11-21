@@ -64,6 +64,7 @@ class RandomPosterizeOperation;
 class RandomResizeOperation;
 class RandomResizeWithBBoxOperation;
 class RandomResizedCropOperation;
+class RandomResizedCropWithBBoxOperation;
 class RandomRotationOperation;
 class RandomSelectSubpolicyOperation;
 class RandomSharpnessOperation;
@@ -340,6 +341,23 @@ std::shared_ptr<RandomResizeWithBBoxOperation> RandomResizeWithBBox(std::vector<
 ///     crop_area (default=10). If exceeded, fall back to use center_crop instead.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomResizedCropOperation> RandomResizedCrop(
+  std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0}, std::vector<float> ratio = {3. / 4., 4. / 3.},
+  InterpolationMode interpolation = InterpolationMode::kLinear, int32_t max_attempts = 10);
+
+/// \brief Function to create a RandomResizedCropWithBBox TensorOperation.
+/// \notes Crop the input image to a random size and aspect ratio.
+/// \param[in] size A vector representing the output size of the cropped image.
+///     If size is a single value, a square crop of size (size, size) is returned.
+///     If size has 2 values, it should be (height, width).
+/// \param[in] scale Range [min, max) of respective size of the original
+///     size to be cropped (default=(0.08, 1.0))
+/// \param[in] ratio Range [min, max) of aspect ratio to be cropped
+///     (default=(3. / 4., 4. / 3.)).
+/// \param[in] interpolation Image interpolation mode (default=InterpolationMode::kLinear)
+/// \param[in] max_attempts The maximum number of attempts to propose a valid
+///     crop_area (default=10). If exceeded, fall back to use center_crop instead.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RandomResizedCropWithBBoxOperation> RandomResizedCropWithBBox(
   std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0}, std::vector<float> ratio = {3. / 4., 4. / 3.},
   InterpolationMode interpolation = InterpolationMode::kLinear, int32_t max_attempts = 10);
 
@@ -850,6 +868,27 @@ class RandomResizedCropOperation : public TensorOperation {
                                       int32_t max_attempts = 10);
 
   ~RandomResizedCropOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+ private:
+  std::vector<int32_t> size_;
+  std::vector<float> scale_;
+  std::vector<float> ratio_;
+  InterpolationMode interpolation_;
+  int32_t max_attempts_;
+};
+
+class RandomResizedCropWithBBoxOperation : public TensorOperation {
+ public:
+  explicit RandomResizedCropWithBBoxOperation(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
+                                              std::vector<float> ratio = {3. / 4., 4. / 3.},
+                                              InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+                                              int32_t max_attempts = 10);
+
+  ~RandomResizedCropWithBBoxOperation() = default;
 
   std::shared_ptr<TensorOp> Build() override;
 
