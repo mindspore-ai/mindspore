@@ -791,13 +791,13 @@ int AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncG
     cnode_ptr = BuildCNodeForFuncGraph(outputFuncGraph, node_proto, quantType);
     if (cnode_ptr == nullptr) {
       MS_LOG(ERROR) << "Build CNode for funcgraph fail at index: : " << i;
-      status = (status == RET_OK ? RET_NULL_PTR : status);
+      return RET_ERROR;
     }
 
     auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode_ptr->input(0));
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "primitive_c is nullptr";
-      status = RET_ERROR;
+      return RET_ERROR;
     }
 
 #ifdef SUPPORT_TRAIN

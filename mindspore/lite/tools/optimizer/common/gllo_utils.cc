@@ -510,7 +510,7 @@ bool CheckIsAllInputsParam(const AnfNodePtr &node) {
   if (utils::isa<CNode>(node)) {
     auto cnode = node->cast<CNodePtr>();
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
-      if (!utils::isa<Parameter>(cnode->input(i))) {
+      if (!utils::isa<Parameter>(cnode->input(i)) && !utils::isa<ValueNodePtr>(cnode->input(i))) {
         return false;
       }
     }
@@ -589,7 +589,7 @@ size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   MS_ASSERT(output_index_value_node != nullptr);
   auto value_node = output_index_value_node->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
-  return IntToSize(GetValue<int>(value_node->value()));
+  return IntToSize(lite::CastToInt(value_node->value(), false).front());
 }
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(const FuncGraphPtr &graph,
                                                                                         const AnfNodePtr &node,

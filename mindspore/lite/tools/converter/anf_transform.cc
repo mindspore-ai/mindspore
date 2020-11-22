@@ -55,11 +55,14 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     MS_LOG(ERROR) << "config shoud be specified";
     return nullptr;
   }
-  // fusion const_fold
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
+
+  // fusion const_fold
+  auto cf_pm = std::make_shared<opt::PassManager>("constant folding pass manager", false);
+  cf_pm->AddPass(std::make_shared<opt::ConstFoldPass>());
 
   // for now - trainning is not supporting fuse operations
   if (config != nullptr && !config->trainModel) {
@@ -114,9 +117,9 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     remove_unused_transpose_pass->SetFmkType(config->fmk);
     pm->AddPass(remove_unused_transpose_pass);
   }
-  pm->AddPass(std::make_shared<opt::ConstFoldPass>());
   pm->AddPass(std::make_shared<opt::ConvConvFusion>());
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
+  optimizer->AddPassManager(cf_pm);
   optimizer->AddPassManager(convert_pm);
   optimizer->AddPassManager(pm);
   optimizer->AddPassManager(graph_pm);
