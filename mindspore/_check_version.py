@@ -15,6 +15,7 @@
 """version and config check"""
 import os
 import sys
+import subprocess
 from pathlib import Path
 from abc import abstractmethod, ABCMeta
 from packaging import version
@@ -188,6 +189,17 @@ class AscendEnvChecker(EnvChecker):
             logger.warning(f"MindSpore version {__version__} and Ascend 910 AI software package version {v} does not "
                            "match, reference to the match info on: https://www.mindspore.cn/install")
 
+    def check_deps_version(self):
+        # in order to update the change of 'LD_LIBRARY_PATH' env, run a sub process
+        input_args = ["--mindspore_version=" + __version__]
+        for v in self.version:
+            input_args.append("--supported_version=" + v)
+        deps_version_checker = os.path.join(os.path.split(os.path.realpath(__file__))[0], "_check_deps_version.py")
+        call_cmd = [sys.executable, deps_version_checker] + input_args
+        process = subprocess.run(call_cmd, timeout=300, text=True, capture_output=True, check=False)
+        if process.stdout.strip() != "":
+            logger.warning(process.stdout.strip())
+
     def set_env(self):
         if not self.tbe_path:
             self._check_env()
@@ -198,11 +210,14 @@ class AscendEnvChecker(EnvChecker):
             import te
         except RuntimeError:
             if Path(self.tbe_path).is_dir():
-                os.environ['LD_LIBRARY_PATH'] = self.tbe_path
+                os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']
             else:
                 raise EnvironmentError(
                     f"No such directory: {self.tbe_path}, Please check if Ascend 910 AI software package is "
                     "installed correctly.")
+
+        # check te version after set te env
+        self.check_deps_version()
 
         if Path(self.op_impl_path).is_dir():
             sys.path.append(self.op_impl_path)
