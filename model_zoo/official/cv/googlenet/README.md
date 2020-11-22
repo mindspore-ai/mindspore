@@ -158,7 +158,7 @@ Parameters for both training and evaluation can be set in config.py
 
   ```python
   'pre_trained': 'False'    # whether training based on the pre-trained model
-  'nump_classes': 10        # the number of classes in the dataset
+  'num_classes': 10        # the number of classes in the dataset
   'lr_init': 0.1            # initial learning rate
   'batch_size': 128         # training batch size
   'epoch_size': 125         # total training epochs
@@ -174,6 +174,39 @@ Parameters for both training and evaluation can be set in config.py
   'onnx_filename': 'googlenet.onnx' # file name of the onnx model used in export.py
   'air_filename': 'googlenet.air' # file name of the air model used in export.py
   ```
+
+- config for GoogleNet, ImageNet dataset
+
+  ```python
+  'pre_trained': 'False'    # whether training based on the pre-trained model
+  'num_classes': 1000       # the number of classes in the dataset
+  'lr_init': 0.1            # initial learning rate
+  'batch_size': 256         # training batch size
+  'epoch_size': 300         # total training epochs
+  'momentum': 0.9           # momentum
+  'weight_decay': 1e-4      # weight decay value
+  'image_height': 224       # image height used as input to the model
+  'image_width': 224        # image width used as input to the model
+  'data_path': './ImageNet_Original/train/'  # absolute full path to the train datasets
+  'val_data_path': './ImageNet_Original/val/'  # absolute full path to the evaluation datasets
+  'device_target': 'Ascend' # device running the program
+  'device_id': 0            # device ID used to train or evaluate the dataset. Ignore it when you use run_train.sh for distributed training
+  'keep_checkpoint_max': 10 # only keep the last keep_checkpoint_max checkpoint
+  'checkpoint_path': './train_googlenet_cifar10-125_390.ckpt'  # the absolute full path to save the checkpoint file
+  'onnx_filename': 'googlenet.onnx' # file name of the onnx model used in export.py
+  'air_filename': 'googlenet.air'   # file name of the air model used in export.py
+  'lr_scheduler': 'exponential'     # learning rate scheduler
+  'lr_epochs': [70, 140, 210, 280]  # epoch of lr changing
+  'lr_gamma': 0.3            # decrease lr by a factor of exponential lr_scheduler
+  'eta_min': 0.0             # eta_min in cosine_annealing scheduler
+  'T_max': 150               # T-max in cosine_annealing scheduler
+  'warmup_epochs': 0         # warmup epoch
+  'is_dynamic_loss_scale': 0 # dynamic loss scale
+  'loss_scale': 1024         # loss scale
+  'label_smooth_factor': 0.1 # label_smooth_factor
+  'use_label_smooth': True   # label smooth
+  ```
+
 
 For more configuration details, please refer the script `config.py`.
 
