@@ -560,7 +560,7 @@ class RandomPosterize(cde.RandomPosterizeOp):
             Bits values must be in range of [1,8], and include at
             least one integer value in the given range. It must be in
             (min, max) or integer format. If min=max, then it is a single fixed
-            magnitude operation (default=[8, 8]).
+            magnitude operation (default=(8, 8)).
 
     Examples:
         >>> import mindspore.dataset.vision.c_transforms as c_vision
@@ -1062,7 +1062,7 @@ class HWC2CHW(cde.ChannelSwapOp):
     Examples:
         >>> import mindspore.dataset.vision.c_transforms as c_vision
         >>>
-        >>> transforms_list = [c_vision.Decode(), c_vision.RandomHorizontalFlip(0.75), c_vision.RandomCrop(),
+        >>> transforms_list = [c_vision.Decode(), c_vision.RandomHorizontalFlip(0.75), c_vision.RandomCrop(512),
         >>>     c_vision.HWC2CHW()]
         >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """

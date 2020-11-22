@@ -338,7 +338,7 @@ class Compose(cde.ComposeOp):
         >>> import mindspore.dataset.transforms.c_transforms as c_transforms
         >>> import mindspore.dataset.vision.c_transforms as c_vision
         >>>
-        >>> compose = c_transforms.Compose([c_vision.Decode(), c_vision.RandomCrop()])
+        >>> compose = c_transforms.Compose([c_vision.Decode(), c_vision.RandomCrop(512)])
         >>> data1 = data1.map(operations=compose)
     """
 
@@ -359,7 +359,7 @@ class RandomApply(cde.RandomApplyOp):
         >>> import mindspore.dataset.transforms.c_transforms as c_transforms
         >>> import mindspore.dataset.vision.c_transforms as c_vision
         >>>
-        >>> rand_apply = c_transforms.RandomApply([c_vision.RandomCrop()])
+        >>> rand_apply = c_transforms.RandomApply([c_vision.RandomCrop(512)])
         >>> data1 = data1.map(operations=rand_apply)
     """
 
@@ -379,7 +379,7 @@ class RandomChoice(cde.RandomChoiceOp):
         >>> import mindspore.dataset.transforms.c_transforms as c_transforms
         >>> import mindspore.dataset.vision.c_transforms as c_vision
         >>>
-        >>> rand_choice = c_transforms.RandomChoice([c_vision.CenterCrop(), c_vision.RandomCrop()])
+        >>> rand_choice = c_transforms.RandomChoice([c_vision.CenterCrop(50), c_vision.RandomCrop(512)])
         >>> data1 = data1.map(operations=rand_choice)
     """
 
