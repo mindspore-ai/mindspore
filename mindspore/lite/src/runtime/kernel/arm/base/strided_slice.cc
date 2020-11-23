@@ -20,7 +20,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
-#include "src/ops/populate/populate_register.h"
+#include "src/ops/populate/strided_slice_populate.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

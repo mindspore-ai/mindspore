@@ -20,7 +20,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/int8/add_int8.h"
 #include "src/runtime/runtime_api.h"
-#include "src/ops/populate/populate_register.h"
+#include "src/ops/populate/arithmetic_populate.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

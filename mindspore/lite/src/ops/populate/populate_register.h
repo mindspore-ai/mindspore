@@ -21,6 +21,7 @@
 
 namespace mindspore {
 namespace lite {
+
 class PopulateRegistry {
  public:
   static PopulateRegistry *GetInstance() {
@@ -50,8 +51,7 @@ class Registry {
   }
   ~Registry() = default;
 };
-OpParameter *PopulateArithmetic(const mindspore::lite::PrimitiveC *primitive);
-OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *primitive);
+
 }  // namespace lite
 }  // namespace mindspore
 #endif

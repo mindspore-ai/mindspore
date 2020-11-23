@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "src/ops/populate/strided_slice_populate.h"
 #include "src/ops/strided_slice.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
@@ -46,5 +47,6 @@ OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *pr
 }
 
 Registry StridedSliceParameterRegistry(schema::PrimitiveType_StridedSlice, PopulateStridedSliceParameter);
+
 }  // namespace lite
 }  // namespace mindspore
