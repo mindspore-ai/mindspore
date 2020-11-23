@@ -52,20 +52,20 @@ uint64_t GetTimeUs() {
   return ret_val;
 }
 
-std::string RemoveSubStr(const std::string &from, const std::string &subStr, RemoveSubStrMode mode) {
+std::string RemoveSubStr(const std::string &from, const std::string &sub_str, RemoveSubStrMode mode) {
   std::string result = from;
   if (mode == PREFIX) {
-    if (from.substr(0, subStr.length()) == subStr) {
-      result = from.substr(subStr.size());
+    if (from.substr(0, sub_str.length()) == sub_str) {
+      result = from.substr(sub_str.size());
     }
   } else if (mode == SUFFIX) {
-    if (from.rfind(subStr) == from.size() - subStr.size()) {
-      result = from.substr(0, from.size() - subStr.size());
+    if (from.rfind(sub_str) == from.size() - sub_str.size()) {
+      result = from.substr(0, from.size() - sub_str.size());
     }
   } else {
     size_t index;
-    while ((index = result.find(subStr)) != std::string::npos) {
-      result = result.erase(index, subStr.size());
+    while ((index = result.find(sub_str)) != std::string::npos) {
+      result = result.erase(index, sub_str.size());
     }
   }
 

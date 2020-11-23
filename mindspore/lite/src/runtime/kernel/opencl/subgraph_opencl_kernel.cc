@@ -53,10 +53,10 @@ void SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToNull(
         nullptr);
       if (mem_type == MemType::IMG) {
         jv->set_in_tensors(tensors);
-        jv->set_in_kernel(kernels);
+        jv->set_in_kernels(kernels);
       } else {
         jv->set_out_tensors(tensors);
-        jv->set_out_kernel(kernels);
+        jv->set_out_kernels(kernels);
       }
     }
   }
@@ -85,11 +85,11 @@ void SubGraphOpenCLKernel::ReplaceOutTensorAndKernelToConvert(const lite::Tensor
       tensors.emplace_back(new_tensor);
     }
     if (mem_type == MemType::IMG) {
-      iv->set_in_kernel(kernels);
+      iv->set_in_kernels(kernels);
       iv->set_in_tensors(tensors);
       in_opencl_op->AddOutKernel(iv);
     } else {
-      iv->set_out_kernel(kernels);
+      iv->set_out_kernels(kernels);
       iv->set_out_tensors(tensors);
       in_convert_op->AddInKernel(iv);
     }

@@ -281,8 +281,8 @@ int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *ke
 void LiteKernelUtil::InitIOKernels(std::vector<kernel::LiteKernel *> &kernels) {
   for (auto *kernel : kernels) {
     // clean io kernels
-    kernel->set_in_kernel({});
-    kernel->set_out_kernel({});
+    kernel->set_in_kernels({});
+    kernel->set_out_kernels({});
     // find io kernels
     for (auto *search_kernel : kernels) {
       if (search_kernel == kernel) {

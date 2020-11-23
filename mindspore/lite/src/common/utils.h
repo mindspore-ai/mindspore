@@ -151,7 +151,7 @@ std::vector<std::string> Tokenize(const std::string &src, const std::string &del
 enum RemoveSubStrMode { PREFIX, SUFFIX, ANY };
 
 // remove redundant charactor
-std::string RemoveSubStr(const std::string &from, const std::string &subStr, RemoveSubStrMode mode = ANY);
+std::string RemoveSubStr(const std::string &from, const std::string &sub_str, RemoveSubStrMode mode = ANY);
 
 template <typename T>
 inline Option<T> GenericParseValue(const std::string &value) {
