@@ -33,7 +33,9 @@ FasterRcnn is a two-stage target detection network,This network uses a region pr
 
 # Dataset
 
-Dataset used: [COCO2017](<http://images.cocodataset.org/>) 
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
+
+Dataset used: [COCO2017](<https://cocodataset.org/>) 
 
 - Dataset size：19G
   - Train：18G，118000 images  
@@ -148,7 +150,7 @@ sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
  
-> Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
+> Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/utils/hccl_tools).
 > As for PRETRAINED_MODEL，it should be a ResNet50 checkpoint that trained over ImageNet2012. Ready-made pretrained_models are not available now. Stay tuned.
 > The original dataset path needs to be in the config.py,you can select "coco_root" or "image_dir".
 
@@ -207,9 +209,9 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 | Parameters                 | FasterRcnn                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，56cores；Memory，314G             |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
 | uploaded Date              | 08/31/2020 (month/day/year)                                 |
-| MindSpore Version          | 0.7.0-beta                                                       |
+| MindSpore Version          | 1.0.0                                                       |
 | Dataset                    | COCO2017                                                   |
 | Training Parameters        | epoch=12,  batch_size=2          |
 | Optimizer                  | SGD                                                         |
@@ -217,7 +219,7 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 | Speed                      | 1pc: 190 ms/step;  8pcs: 200 ms/step                          |
 | Total time                 | 1pc: 37.17 hours;  8pcs: 4.89 hours                          |
 | Parameters (M)             | 250                                                         |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn |
+| Scripts                    | [fasterrcnn script](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/faster_rcnn) |
 
 
 ### Evaluation Performance
@@ -227,7 +229,7 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 | Model Version       | V1                |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 08/31/2020 (month/day/year) |
-| MindSpore Version   | 0.7.0-beta                       |
+| MindSpore Version   | 1.0.0                       |
 | Dataset             | COCO2017    |
 | batch_size          | 2                         |
 | outputs             | mAP                 |
@@ -235,4 +237,5 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 | Model for inference | 250M (.ckpt file)         |
 
 # [ModelZoo Homepage](#contents)  
- Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo). 
+ 
