@@ -32,13 +32,6 @@ def exp_generic(input_x):
     return exp(input_x)
 
 
-def expm1_generic(input_x):
-    """
-    Expm1 ops under GPU context.
-    """
-    return exp_generic(input_x) - 1.0
-
-
 def log_generic(input_x):
     """
     Log op on Ascend is calculated as log(abs(x)).

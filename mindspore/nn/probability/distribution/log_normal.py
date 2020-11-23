@@ -19,7 +19,7 @@ from mindspore.common import dtype as mstype
 import mindspore.nn.probability.bijector as msb
 import mindspore.nn.probability.distribution as msd
 from ._utils.utils import check_distribution_name
-from ._utils.custom_ops import exp_generic, expm1_generic, log_generic
+from ._utils.custom_ops import exp_generic, log_generic
 
 class LogNormal(msd.TransformedDistribution):
     """
@@ -146,7 +146,7 @@ class LogNormal(msd.TransformedDistribution):
 
         #ops needed for the class
         self.exp = exp_generic
-        self.expm1 = expm1_generic
+        self.expm1 = P.Expm1()
         self.log = log_generic
         self.const = P.ScalarToArray()
         self.erf = P.Erf()

@@ -15,7 +15,7 @@
 """Power Bijector"""
 from mindspore.ops import operations as P
 from ..distribution._utils.utils import check_greater_equal_zero
-from ..distribution._utils.custom_ops import exp_generic, expm1_generic, log_generic, log1p_generic
+from ..distribution._utils.custom_ops import exp_generic, log_generic
 from .bijector import Bijector
 
 
@@ -73,9 +73,9 @@ class PowerTransform(Bijector):
         self.dtypeop = P.DType()
         self.cast = P.Cast()
         self.exp = exp_generic
-        self.expm1 = expm1_generic
+        self.expm1 = P.Expm1()
         self.log = log_generic
-        self.log1p = log1p_generic
+        self.log1p = P.Log1p()
 
     @property
     def power(self):

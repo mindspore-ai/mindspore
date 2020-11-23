@@ -16,7 +16,7 @@
 import numpy as np
 from mindspore.ops import operations as P
 from mindspore.nn.layer.activation import LogSigmoid
-from ..distribution._utils.custom_ops import exp_generic, expm1_generic, log_generic
+from ..distribution._utils.custom_ops import exp_generic, log_generic
 from .bijector import Bijector
 
 
@@ -65,7 +65,7 @@ class Softplus(Bijector):
 
         self.exp = exp_generic
         self.log = log_generic
-        self.expm1 = expm1_generic
+        self.expm1 = P.Expm1()
         self.abs = P.Abs()
         self.dtypeop = P.DType()
         self.cast = P.Cast()

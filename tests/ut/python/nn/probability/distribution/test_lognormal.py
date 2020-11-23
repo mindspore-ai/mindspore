@@ -175,15 +175,16 @@ class LogNormalBasics(nn.Cell):
 
     def construct(self):
         mean = self.n.mean()
-        sd = self.n.sd()
         mode = self.n.mode()
         entropy = self.n.entropy()
-        return mean + sd + mode + entropy
+        return mean + mode + entropy
 
 def test_bascis():
     """
     Test mean/sd/mode/entropy functionality of LogNormal.
     """
+    from mindspore import context
+    context.set_context(device_target="Ascend")
     net = LogNormalBasics()
     ans = net()
     assert isinstance(ans, Tensor)

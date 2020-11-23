@@ -20,7 +20,7 @@ from mindspore._checkparam import Validator
 from mindspore.common import dtype as mstype
 from .distribution import Distribution
 from ._utils.utils import check_greater_zero
-from ._utils.custom_ops import exp_generic, expm1_generic, log_generic, log1p_generic
+from ._utils.custom_ops import exp_generic, log_generic
 
 
 class Logistic(Distribution):
@@ -124,11 +124,11 @@ class Logistic(Distribution):
         self.const = P.ScalarToArray()
         self.dtypeop = P.DType()
         self.exp = exp_generic
-        self.expm1 = expm1_generic
+        self.expm1 = P.Expm1()
         self.fill = P.Fill()
         self.less = P.Less()
         self.log = log_generic
-        self.log1p = log1p_generic
+        self.log1p = P.Log1p()
         self.logicalor = P.LogicalOr()
         self.erf = P.Erf()
         self.greater = P.Greater()
