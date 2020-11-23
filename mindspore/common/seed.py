@@ -57,6 +57,8 @@ def set_seed(seed):
         TypeError: If seed isn't a int.
 
     Examples:
+        >>> from mindspore.ops import composite as C
+        >>>
         >>> # 1. If global seed is not set, numpy.random and initializer will choose a random seed:
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2

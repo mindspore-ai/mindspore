@@ -105,10 +105,11 @@ class Model:
         >>>         return out
         >>>
         >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-        >>> dataset = get_dataset()
+        >>> # For details about how to build the dataset, please refer to the tutorial document on the official website.
+        >>> dataset = create_custom_dataset()
         >>> model.train(2, dataset)
     """
 
@@ -514,9 +515,6 @@ class Model:
         When setting pynative mode or CPU, the training process will be performed with dataset not sink.
 
         Note:
-            If dataset_sink_mode is True, epoch of training should be equal to the count of repeat
-            operation in dataset processing. Otherwise, errors could occur since the amount of data
-            is not equal to the required amount of training .
             If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
             If sink_size > 0, each epoch the dataset can be traversed unlimited times until you get sink_size
@@ -541,7 +539,7 @@ class Model:
                              If dataset_sink_mode is False, set sink_size as invalid. Default: -1.
 
         Examples:
-            >>> dataset = get_dataset()
+            >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
             >>> loss_scale_manager = FixedLossScaleManager()
@@ -659,7 +657,7 @@ class Model:
             Dict, which returns the loss value and metrics values for the model in the test mode.
 
         Examples:
-            >>> dataset = get_dataset()
+            >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
