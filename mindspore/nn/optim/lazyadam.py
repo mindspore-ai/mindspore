@@ -183,6 +183,9 @@ class LazyAdam(Optimizer):
     Outputs:
         Tensor[bool], the value is True.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay

@@ -68,6 +68,9 @@ class LARS(Optimizer):
     Outputs:
         Union[Tensor[bool], tuple[Parameter]], it depends on the output of `optimizer`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()

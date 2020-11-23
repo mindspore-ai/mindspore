@@ -91,6 +91,9 @@ class L1Loss(_Loss):
     Outputs:
         Tensor, loss float tensor.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> loss = nn.L1Loss()
         >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -132,6 +135,9 @@ class MSELoss(_Loss):
 
     Outputs:
         Tensor, weighted loss float tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> loss = nn.MSELoss()
@@ -179,6 +185,9 @@ class SmoothL1Loss(_Loss):
 
     Outputs:
         Tensor, loss float tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = nn.SmoothL1Loss()
@@ -233,6 +242,9 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
     Outputs:
         Tensor, a tensor of the same shape as logits with the component-wise
         logistic losses.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
@@ -511,6 +523,9 @@ class BCELoss(_Loss):
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `inputs`.
         Otherwise, the output is a scalar.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> weight = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]]), mindspore.float32)
         >>> loss = nn.BCELoss(weight=weight, reduction='mean')
@@ -569,6 +584,9 @@ class CosineEmbeddingLoss(_Loss):
     Outputs:
         - **loss** (Tensor) - If `reduction` is "none", its shape is the same as `y`'s shape, otherwise a scalar value
           will be returned.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x1 = Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), mindspore.float32)

@@ -196,6 +196,9 @@ class Conv2d(_Conv):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or `(N, H_{out}, W_{out}, C_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
@@ -372,6 +375,9 @@ class Conv1d(_Conv):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = nn.Conv1d(120, 240, 4, has_bias=False, weight_init='normal')
         >>> input = Tensor(np.ones([1, 120, 640]), mindspore.float32)
@@ -542,6 +548,9 @@ class Conv2dTranspose(_Conv):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = nn.Conv2dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')
@@ -718,6 +727,9 @@ class Conv1dTranspose(_Conv):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, W_{out})`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = nn.Conv1dTranspose(3, 64, 4, has_bias=False, weight_init='normal', pad_mode='pad')

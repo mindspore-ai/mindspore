@@ -272,6 +272,9 @@ class Adam(Optimizer):
     Outputs:
         Tensor[bool], the value is True.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
@@ -407,6 +410,9 @@ class AdamWeightDecay(Optimizer):
     Outputs:
         tuple[bool], all elements are True.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
@@ -534,6 +540,9 @@ class AdamOffload(Optimizer):
 
     Outputs:
         Tensor[bool], the value is True.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = Net()

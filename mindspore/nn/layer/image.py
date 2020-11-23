@@ -50,6 +50,9 @@ class ImageGradients(Cell):
         - **dy** (Tensor) - vertical image gradients, the same type and shape as input.
         - **dx** (Tensor) - horizontal image gradients, the same type and shape as input.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = nn.ImageGradients()
         >>> image = Tensor(np.array([[[[1,2],[3,4]]]]), dtype=mindspore.int32)
@@ -211,6 +214,9 @@ class SSIM(Cell):
     Outputs:
         Tensor, has the same dtype as img1. It is a 1-D tensor with shape N, where N is the batch num of img1.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = nn.SSIM()
         >>> img1 = Tensor(np.random.random((1,3,16,16)), mindspore.float32)
@@ -288,6 +294,9 @@ class MSSSIM(Cell):
 
     Outputs:
         Tensor, the value is in range [0, 1]. It is a 1-D tensor with shape N, where N is the batch num of img1.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> net = nn.MSSSIM(power_factors=(0.033, 0.033, 0.033))
@@ -380,6 +389,9 @@ class PSNR(Cell):
     Outputs:
         Tensor, with dtype mindspore.float32. It is a 1-D tensor with shape N, where N is the batch num of img1.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = nn.PSNR()
         >>> img1 = Tensor(np.random.random((1,3,16,16)))
@@ -449,6 +461,9 @@ class CentralCrop(Cell):
 
     Outputs:
         Tensor, 3-D or 4-D float tensor, according to the input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.CentralCrop(central_fraction=0.5)

@@ -104,6 +104,9 @@ class MaxPool2d(_PoolNd):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> pool = nn.MaxPool2d(kernel_size=3, stride=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
@@ -170,6 +173,9 @@ class MaxPool1d(_PoolNd):
 
     Outputs:
         Tensor of shape :math:`(N, C, L_{out}))`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> max_pool = nn.MaxPool1d(kernel_size=3, stride=1)
@@ -257,6 +263,9 @@ class AvgPool2d(_PoolNd):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> pool = nn.AvgPool2d(kernel_size=3, stride=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
@@ -321,6 +330,9 @@ class AvgPool1d(_PoolNd):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> pool = nn.AvgPool1d(kernel_size=6, stride=1)

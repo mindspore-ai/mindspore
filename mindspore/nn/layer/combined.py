@@ -76,6 +76,9 @@ class Conv2dBnAct(Cell):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = nn.Conv2dBnAct(120, 240, 4, has_bn=True, activation='relu')
         >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
@@ -167,6 +170,9 @@ class DenseBnAct(Cell):
 
     Outputs:
         Tensor of shape :math:`(N, out\_channels)`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> net = nn.DenseBnAct(3, 4)

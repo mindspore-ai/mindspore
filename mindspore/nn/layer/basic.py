@@ -72,6 +72,9 @@ class Dropout(Cell):
     Outputs:
         Tensor, output tensor with the same shape as the input.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
         >>> net = nn.Dropout(keep_prob=0.8)
@@ -139,6 +142,9 @@ class Flatten(Cell):
         Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
         the product of the remaining dimensions.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input = Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
         >>> net = nn.Flatten()
@@ -194,6 +200,9 @@ class Dense(Cell):
 
     Outputs:
         Tensor of shape :math:`(*, out\_channels)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
@@ -316,6 +325,9 @@ class ClipByNorm(Cell):
     Outputs:
         Tensor, clipped tensor with the same shape as the input, whose type is float32.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = nn.ClipByNorm()
         >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
@@ -387,6 +399,9 @@ class Norm(Cell):
         Tensor, output tensor with dimensions in 'axis' reduced to 1 will be returned if 'keep_dims' is True;
         otherwise a Tensor with dimensions in 'axis' removed is returned.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = nn.Norm(axis=0)
         >>> input = Tensor(np.random.randint(0, 10, [2, 4]), mindspore.float32)
@@ -444,6 +459,9 @@ class OneHot(Cell):
         Tensor, the one-hot tensor of data type 'dtype' with dimension at 'axis' expanded to 'depth' and filled with
         on_value and off_value.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> net = nn.OneHot(depth=4, axis=1)
         >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
@@ -500,6 +518,9 @@ class Pad(Cell):
           according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
           is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the Outputs is
           [[2,1,1,2,3,3,2],[2,1,1,2,3,3,2],[5,4,4,5,6,6,5],[8,7,7,8,9,9,8],[8,7,7,8,9,9,8]].
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> from mindspore import Tensor
@@ -587,6 +608,9 @@ class Interpolate(Cell):
         If scale is set, the result is 4-D tensor with shape:math:'(batch, channels, scale_factor * height,
         scale_factor * width)' in float32
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> from mindspore.ops import operations as P
         >>> tensor = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
@@ -629,6 +653,9 @@ class Unfold(Cell):
     Outputs:
         Tensor, a 4-D tensor whose data type is same as 'input_x',
         and the shape is [out_batch, out_depth, out_row, out_col], the out_batch is the same as the in_batch.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 2, 2, 1], rates=[1, 2, 2, 1])
@@ -674,6 +701,9 @@ class Tril(Cell):
 
     Outputs:
         Tensor, has the same type as input `x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2], [3, 4]]))
@@ -757,6 +787,9 @@ class MatrixDiag(Cell):
     Outputs:
         Tensor, has the same type as input `x`. The shape must be x.shape + (x.shape[-1], ).
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> x = Tensor(np.array([1, -1]), mstype.float32)
         >>> matrix_diag = nn.MatrixDiag()
@@ -788,6 +821,9 @@ class MatrixDiagPart(Cell):
 
     Outputs:
         Tensor, has the same type as input `x`. The shape must be x.shape[:-2] + [min(x.shape[-2:])].
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
@@ -822,6 +858,9 @@ class MatrixSetDiag(Cell):
 
     Outputs:
         Tensor, has the same type and shape as input `x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)

@@ -83,6 +83,9 @@ class Optimizer(Cell):
     Raises:
         ValueError: If the learning_rate is a Tensor, but the dimension of tensor is greater than 1.
         TypeError: If the learning_rate is not any of the three types: float, Tensor, nor Iterable.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
 
     def __init__(self, learning_rate, parameters, weight_decay=0.0, loss_scale=1.0):

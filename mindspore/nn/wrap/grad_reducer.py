@@ -245,6 +245,9 @@ class DistributedGradReducer(Cell):
     Raises:
         ValueError: If degree is not a int or less than 0.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> # This example should be run with multiple processes. Refer to the run_distribute_train.sh
         >>> import os

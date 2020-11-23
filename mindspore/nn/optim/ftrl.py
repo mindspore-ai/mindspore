@@ -126,6 +126,9 @@ class FTRL(Optimizer):
     Outputs:
         tuple[Parameter], the updated parameters, the shape is the same as `params`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay

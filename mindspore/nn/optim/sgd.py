@@ -103,6 +103,9 @@ class SGD(Optimizer):
     Raises:
         ValueError: If the momentum, dampening or weight_decay value is less than 0.0.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay

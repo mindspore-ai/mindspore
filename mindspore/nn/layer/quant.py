@@ -587,6 +587,9 @@ class Conv2dBnFoldQuant(Cell):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
         >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
@@ -772,6 +775,9 @@ class Conv2dBnWithoutFoldQuant(Cell):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
         >>> conv2d_no_bnfold = nn.Conv2dBnWithoutFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
@@ -893,6 +899,9 @@ class Conv2dQuant(Cell):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
         >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
@@ -993,6 +1002,9 @@ class DenseQuant(Cell):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
@@ -1100,6 +1112,9 @@ class ActQuant(_QuantActivation):
     Outputs:
         Tensor, with the same type and shape as the `input`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
         >>> act_quant = nn.ActQuant(nn.ReLU(), quant_config=qconfig)
@@ -1162,6 +1177,9 @@ class TensorAddQuant(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_x1`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
         >>> add_quant = nn.TensorAddQuant(quant_config=qconfig)
@@ -1209,6 +1227,9 @@ class MulQuant(Cell):
 
     Outputs:
         Tensor, with the same type and shape as the `input_x1`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> qconfig = compression.quant.create_quant_config()

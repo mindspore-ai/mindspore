@@ -1135,6 +1135,9 @@ class Ones(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same type and shape as input shape value.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> from mindspore.ops import operations as P
         >>> ones = P.Ones()
@@ -1184,6 +1187,9 @@ class Zeros(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type and shape as input shape value.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> from mindspore.ops import operations as P

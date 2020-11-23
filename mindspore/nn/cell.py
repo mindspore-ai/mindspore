@@ -51,6 +51,9 @@ class Cell(Cell_):
     Args:
         auto_prefix (bool): Recursively generate namespaces. Default: True.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> class MyCell(Cell):
         >>>    def __init__(self):

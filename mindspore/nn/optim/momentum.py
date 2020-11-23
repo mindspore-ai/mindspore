@@ -104,6 +104,9 @@ class Momentum(Optimizer):
     Raises:
         ValueError: If the momentum is less than 0.0.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay

@@ -283,6 +283,9 @@ class BatchNorm1d(_BatchNorm):
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out})`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> net = nn.BatchNorm1d(num_features=4)
         >>> np.random.seed(0)
@@ -368,6 +371,9 @@ class BatchNorm2d(_BatchNorm):
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.BatchNorm2d(num_features=3)
@@ -457,6 +463,9 @@ class GlobalBatchNorm(_BatchNorm):
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> # This example should be run with multiple processes. Refer to the run_distribute_train.sh
@@ -557,6 +566,9 @@ class LayerNorm(Cell):
     Outputs:
         Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input_x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> x = Tensor(np.ones([20, 5, 10, 10]), mindspore.float32)
         >>> shape1 = x.shape[1:]
@@ -629,6 +641,9 @@ class GroupNorm(Cell):
 
     Outputs:
         Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> goup_norm_op = nn.GroupNorm(2, 2)
