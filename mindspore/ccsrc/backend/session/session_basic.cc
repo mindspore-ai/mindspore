@@ -1527,6 +1527,17 @@ bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
   return false;
 }
 
+void SessionBasic::UpdateAllGraphDynamicShapeAttr(const std::vector<KernelGraphPtr> &all_graphs) {
+  bool is_dynamic = false;
+  for (const auto &graph : all_graphs) {
+    UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+    is_dynamic = graph->is_dynamic_shape() || is_dynamic;
+  }
+  if (is_dynamic && all_graphs.size() > 1) {
+    MS_LOG(EXCEPTION) << "Dynamic shape is not supported with control flow.";
+  }
+}
+
 void SessionBasic::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &root_graph) {
   for (const auto &cnode : root_graph->execution_order()) {
     auto output_dynamic = IsNodeOutputDynamicShape(NOT_NULL(cnode));
