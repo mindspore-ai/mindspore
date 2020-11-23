@@ -164,6 +164,8 @@ class Bijector(Cell):
                 self.common_dtype = value_t.dtype
             elif value_t.dtype != self.common_dtype:
                 raise TypeError(f"{name} should have the same dtype as other arguments.")
+            # check if the parameters are casted into float-type tensors
+            validator.check_type_name("dtype", value_t.dtype, mstype.float_type, type(self).__name__)
         # check if the dtype of the input_parameter agrees with the bijector's dtype
         elif value_t.dtype != self.dtype:
             raise TypeError(f"{name} should have the same dtype as the bijector's dtype.")

@@ -47,7 +47,7 @@ class Geometric(Distribution):
         >>> # The following creates two independent Geometric distributions.
         >>> n = msd.Geometric([0.5, 0.5], dtype=mstype.int32)
         >>>
-        >>> # A Geometric distribution can be initilized without arguments.
+        >>> # A Geometric distribution can be initialized without arguments.
         >>> # In this case, `probs` must be passed in through arguments during function calls.
         >>> n = msd.Geometric(dtype=mstype.int32)
         >>>
@@ -109,7 +109,6 @@ class Geometric(Distribution):
         ...         ans = self.g1.sample((2,3))
         ...         ans = self.g1.sample((2,3), probs_b)
         ...         ans = self.g2.sample((2,3), probs_a)
-        ...
     """
 
     def __init__(self,

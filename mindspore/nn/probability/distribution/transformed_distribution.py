@@ -67,7 +67,6 @@ class TransformedDistribution(Distribution):
         ...         # Similar calls can be made to other functions
         ...         # by replacing 'sample' by the name of the function.
         ...         ans = self.ln.sample(shape=(2, 3))
-        ...
     """
 
     def __init__(self,

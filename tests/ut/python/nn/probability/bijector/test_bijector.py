@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,6 +99,14 @@ def test_arguments_same_type():
     assert isinstance(bijector, msb.Bijector)
     bijector = MyBijector(1.0, 2.0)
     assert isinstance(bijector, msb.Bijector)
+    with pytest.raises(TypeError):
+        MyBijector(1, 2)
+    with pytest.raises(TypeError):
+        MyBijector([1, 2], [2, 4])
+    with pytest.raises(TypeError):
+        MyBijector(np.array([1, 2]).astype(np.int32), np.array([1, 2]).astype(np.int32))
+    with pytest.raises(TypeError):
+        MyBijector(Tensor([1, 2], dtype=dtype.int32), Tensor([1, 2], dtype=dtype.int32))
 
 def test_arguments_with_dtype_specified():
     """
@@ -118,12 +126,20 @@ def test_arguments_with_dtype_specified():
         MySecondBijector(None, param2_2)
     param1_3 = Tensor(1.0, dtype=dtype.float32)
     param2_3 = Tensor(2.0, dtype=dtype.float32)
-    bijector = MyBijector(param1_3, param2_3)
+    bijector = MySecondBijector(param1_3, param2_3)
     assert isinstance(bijector, msb.Bijector)
     param1_4 = np.array(2.0).astype(np.float32)
     param2_4 = np.array(1.0).astype(np.float32)
-    bijector = MyBijector(param1_4, param2_4)
+    bijector = MySecondBijector(param1_4, param2_4)
     assert isinstance(bijector, msb.Bijector)
+    with pytest.raises(TypeError):
+        MySecondBijector(1, 2)
+    with pytest.raises(TypeError):
+        MySecondBijector([1, 2], [2, 4])
+    with pytest.raises(TypeError):
+        MySecondBijector(np.array([1, 2]).astype(np.int32), np.array([1, 2]).astype(np.int32))
+    with pytest.raises(TypeError):
+        MySecondBijector(Tensor([1, 2], dtype=dtype.int32), Tensor([1, 2], dtype=dtype.int32))
 
 class Net1(nn.Cell):
     """

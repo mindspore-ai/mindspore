@@ -44,7 +44,7 @@ class Bernoulli(Distribution):
         >>> # The following creates two independent Bernoulli distributions.
         >>> b = msd.Bernoulli([0.5, 0.5], dtype=mstype.int32)
         >>>
-        >>> # A Bernoulli distribution can be initilized without arguments.
+        >>> # A Bernoulli distribution can be initialized without arguments.
         >>> # In this case, `probs` must be passed in through arguments during function calls.
         >>> b = msd.Bernoulli(dtype=mstype.int32)
         >>>
@@ -106,7 +106,6 @@ class Bernoulli(Distribution):
         ...         ans = self.b1.sample((2,3))
         ...         ans = self.b1.sample((2,3), probs_b)
         ...         ans = self.b2.sample((2,3), probs_a)
-        ...
     """
 
     def __init__(self,

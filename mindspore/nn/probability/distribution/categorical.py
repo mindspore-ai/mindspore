@@ -99,7 +99,6 @@ class Categorical(Distribution):
         ...         ans = self.ca.sample((2,3))
         ...         ans = self.ca.sample((2,3), probs_b)
         ...         ans = self.ca1.sample((2,3), probs_a)
-        ...
     """
 
     def __init__(self,

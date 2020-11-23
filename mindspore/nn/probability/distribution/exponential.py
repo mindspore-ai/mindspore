@@ -46,7 +46,7 @@ class Exponential(Distribution):
         >>> # The following creates two independent Exponential distributions.
         >>> e = msd.Exponential([0.5, 0.5], dtype=mstype.float32)
         >>>
-        >>> # An Exponential distribution can be initilized without arguments.
+        >>> # An Exponential distribution can be initialized without arguments.
         >>> # In this case, `rate` must be passed in through `args` during function calls.
         >>> e = msd.Exponential(dtype=mstype.float32)
         >>>
@@ -108,7 +108,6 @@ class Exponential(Distribution):
         ...         ans = self.e1.sample((2,3))
         ...         ans = self.e1.sample((2,3), rate_b)
         ...         ans = self.e2.sample((2,3), rate_a)
-        ...
     """
 
     def __init__(self,
@@ -187,7 +186,7 @@ class Exponential(Distribution):
     def _sd(self, rate=None):
         r"""
         .. math::
-            sd(EXP) = \frac{1.0}{\lambda}.
+            SD(EXP) = \frac{1.0}{\lambda}.
         """
         rate = self._check_param_type(rate)
         return 1.0 / rate

@@ -61,7 +61,7 @@ class PowerTransform(Bijector):
     """
 
     def __init__(self,
-                 power=0,
+                 power=0.,
                  name='PowerTransform'):
         param = dict(locals())
         param['param_dict'] = {'power': power}
