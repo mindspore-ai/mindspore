@@ -25,16 +25,16 @@ typedef struct SpaceToBatchParameter {
   int paddings_[4];
   int input_shape_[4];
   int output_shape_[4];
+  int in_stride_[4];
+  int out_stride_[4];
   int padded_in_shape_[4];
-  int padded_input_element_num;
 } SpaceToBatchParameter;
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoSpaceToBatchNHWC(const float *input, float *output, const int *block_sizes, const int *in_shape,
-                        const int *out_shape);
-void DoSpaceToBatchPaddingNHWC(const float *input, float *output, const int *in_shape, const int *padding,
-                               const int *out_shape);
+
+void DoSpaceToBatch(const float *input, float *output, const int *in_shape, const int *out_shape, const int *in_stride,
+                    const int *out_stride, const int *blocks, const int *paddings, int thread, int task_id);
 #ifdef __cplusplus
 }
 #endif
