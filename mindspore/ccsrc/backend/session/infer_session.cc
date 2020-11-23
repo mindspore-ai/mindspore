@@ -370,7 +370,8 @@ Status MSInferSession::CheckModelInputs(uint32_t graph_id, const std::vector<ten
 
 Status MSInferSession::GetModelInputsInfo(uint32_t model_id, std::vector<inference::InferTensor> *tensor_list) const {
   vector<tensor::TensorPtr> inputs;
-  session_impl_->GetModelInputsInfo(model_id, &inputs);
+  vector<std::string> input_names;
+  session_impl_->GetModelInputsInfo(model_id, &inputs, &input_names);
   if (inputs.size() == 0) {
     MS_LOG(ERROR) << "The model inputs is NULL";
     return FAILED;

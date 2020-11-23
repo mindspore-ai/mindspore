@@ -102,7 +102,10 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                 std::string *error_msg) const {
     return true;
   }
-  virtual void GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs) const {}
+  void GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs,
+                          std::vector<std::string> *inputs_name) const;
+  void GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *outputs,
+                           std::vector<std::string> *outputs_name) const;
   std::vector<tensor::TensorPtr> GetInputNeedLockTensors(const GraphId &graph_id,
                                                          const std::vector<tensor::TensorPtr> &inputs);
   // Get graph by graph id, if not exist return null ptr

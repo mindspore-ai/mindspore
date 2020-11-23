@@ -91,7 +91,6 @@ Status AclModel::InitEnv() {
     MS_LOG(ERROR) << "DVPP init resource failed";
     return FAILED;
   }
-  ModelConverter::RegAllOp();
 
   MS_LOG(INFO) << "Init acl success, device id " << device_id_;
   init_flag_ = true;

@@ -24,6 +24,7 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 
 #include "graph/model.h"
+#include "cxx_api/model/model_converter_utils/multi_process.h"
 
 namespace py = pybind11;
 
@@ -238,6 +239,131 @@ Buffer ModelConverter::ReadFile(const std::string &file) {
 }
 
 Buffer ModelConverter::LoadMindIR(const Buffer &model_data) {
+  if (Py_IsInitialized() == 0) {
+    MS_LOG_INFO << "Call LoadMindIRInner directly";
+    return LoadMindIRInner(model_data);
+  }
+  MultiProcess multi_process;
+  Buffer buffer_ret;
+  auto parent_process = [&model_data, &buffer_ret](MultiProcess *multi_process) -> Status {
+    MS_EXCEPTION_IF_NULL(multi_process);
+    // send original model to child
+    auto status = multi_process->SendMsg(model_data.Data(), model_data.DataSize());
+    if (!status.IsSuccess()) {
+      MS_LOG_ERROR << "Send original model to child process failed";
+      return FAILED;
+    }
+    // receive convert model result from child
+    CreateBufferCall call = [&buffer_ret](size_t msg_len) -> uint8_t * {
+      buffer_ret.ResizeData(msg_len);
+      return reinterpret_cast<uint8_t *>(buffer_ret.MutableData());
+    };
+    status = multi_process->ReceiveMsg(call);
+    if (!status.IsSuccess()) {
+      MS_LOG_ERROR << "Receive result model from child process failed";
+      return FAILED;
+    }
+    return SUCCESS;
+  };
+  auto child_process = [this](MultiProcess *multi_process) -> Status {
+    MS_EXCEPTION_IF_NULL(multi_process);
+    // receive original model from parent
+    Buffer model;
+    CreateBufferCall call = [&model](size_t msg_len) -> uint8_t * {
+      model.ResizeData(msg_len);
+      return reinterpret_cast<uint8_t *>(model.MutableData());
+    };
+    auto status = multi_process->ReceiveMsg(call);
+    if (!status.IsSuccess()) {
+      MS_LOG_ERROR << "Receive original model from parent process failed";
+      return FAILED;
+    }
+    Buffer model_result = LoadMindIRInner(model);
+    if (model_result.DataSize() == 0) {
+      MS_LOG_ERROR << "Convert model from MindIR to OM failed";
+      return FAILED;
+    }
+    // send result model to parent
+    status = multi_process->SendMsg(model_result.Data(), model_result.DataSize());
+    if (!status.IsSuccess()) {
+      MS_LOG_ERROR << "Send result model to parent process failed";
+      return FAILED;
+    }
+    return SUCCESS;
+  };
+  auto status = multi_process.MainProcess(parent_process, child_process);
+  if (!status.IsSuccess()) {
+    MS_LOG_ERROR << "Convert MindIR model to OM model failed";
+  } else {
+    MS_LOG_INFO << "Convert MindIR model to OM model success";
+  }
+  return buffer_ret;
+}
+
+Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
+  if (Py_IsInitialized() == 0) {
+    MS_LOG_INFO << "Call LoadAscendIRInner directly";
+    return LoadAscendIRInner(model_data);
+  }
+  MultiProcess multi_process;
+  Buffer buffer_ret;
+  auto parent_process = [&model_data, &buffer_ret](MultiProcess *multi_process) -> Status {
+    MS_EXCEPTION_IF_NULL(multi_process);
+    // send original model to child
+    auto status = multi_process->SendMsg(model_data.Data(), model_data.DataSize());
+    if (!status.IsSuccess()) {
+      MS_LOG_ERROR << "Send original model to child process failed";
+      return FAILED;
+    }
+    // receive convert model result from child
+    CreateBufferCall call = [&buffer_ret](size_t msg_len) -> uint8_t * {
+      buffer_ret.ResizeData(msg_len);
+      return reinterpret_cast<uint8_t *>(buffer_ret.MutableData());
+    };
+    status = multi_process->ReceiveMsg(call);
+    if (!status.IsSuccess()) {
+      MS_LOG_ERROR << "Receive result model from child process failed";
+      return FAILED;
+    }
+    return SUCCESS;
+  };
+  auto child_process = [this](MultiProcess *multi_process) -> Status {
+    MS_EXCEPTION_IF_NULL(multi_process);
+    // receive original model from parent
+    Buffer model;
+    CreateBufferCall call = [&model](size_t msg_len) -> uint8_t * {
+      model.ResizeData(msg_len);
+      return reinterpret_cast<uint8_t *>(model.MutableData());
+    };
+    auto status = multi_process->ReceiveMsg(call);
+    if (!status.IsSuccess()) {
+      MS_LOG_ERROR << "Receive original model from parent process failed";
+      return FAILED;
+    }
+    Buffer model_result = LoadAscendIRInner(model);
+    if (model_result.DataSize() == 0) {
+      MS_LOG_ERROR << "Convert model from AIR to OM failed";
+      return FAILED;
+    }
+    // send result model to parent
+    status = multi_process->SendMsg(model_result.Data(), model_result.DataSize());
+    if (!status.IsSuccess()) {
+      MS_LOG_ERROR << "Send result model to parent process failed";
+      return FAILED;
+    }
+    return SUCCESS;
+  };
+  auto status = multi_process.MainProcess(parent_process, child_process);
+  if (!status.IsSuccess()) {
+    MS_LOG_ERROR << "Convert AIR model to OM model failed";
+  } else {
+    MS_LOG_INFO << "Convert AIR model to OM model success";
+  }
+  return buffer_ret;
+}
+
+Buffer ModelConverter::LoadMindIRInner(const Buffer &model_data) {
+  RegAllOp();
   auto func_graph = ConvertMindIrToFuncGraph(model_data);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Convert MindIR to FuncGraph failed.";
@@ -259,7 +385,8 @@ Buffer ModelConverter::LoadMindIR(const Buffer &model_data) {
   return om_data;
 }
 
-Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
+Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
+  RegAllOp();
   ge::Model load_model = ge::Model("loadmodel", "version2");
   ge::Status ret =
     ge::Model::Load(reinterpret_cast<const uint8_t *>(model_data.Data()), model_data.DataSize(), load_model);

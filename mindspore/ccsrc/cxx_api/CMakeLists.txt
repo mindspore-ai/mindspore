@@ -6,22 +6,25 @@ set(LOAD_ONNX_SRC
 file(GLOB_RECURSE API_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR} "ops/*.cc")
 
 if (ENABLE_ACL)
-    file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR} "model/acl/*.cc")
+    file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR} "model/acl/*.cc" "model/model_converter_utils/*.cc")
+elseif (ENABLE_D)
+    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "model/ms/*.cc")
 endif ()
 
 set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
-              ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
-              ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
-              ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
-              ${API_ACL_SRC}
-              ${API_OPS_SRC}
-              ${LOAD_ONNX_SRC})
+        ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
+        ${API_MS_INFER_SRC}
+        ${API_ACL_SRC}
+        ${API_OPS_SRC}
+        ${LOAD_ONNX_SRC})
 
 add_library(mindspore_shared_lib SHARED ${MSLIB_SRC})
 set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore PUBLIC_HEADER "${API_INCLUDE}")
 
 target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-        -Wl,--whole-archive mindspore -Wl,--no-whole-archive mindspore_gvar mindspore::protobuf)
+        -Wl,--whole-archive mindspore -Wl,--no-whole-archive proto_input mindspore_gvar mindspore::protobuf)
 
 if (ENABLE_CPU)
     target_link_libraries(mindspore_shared_lib PRIVATE mindspore::dnnl mindspore::mkldnn)
@@ -58,5 +61,13 @@ if (ENABLE_ACL)
     find_library(acl_runtime libruntime.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
     find_library(ge_compiler libge_compiler.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
     target_link_libraries(mindspore_shared_lib PRIVATE ${acl} ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime}
-                                                       ${ge_compiler} mindspore::jpeg_turbo)
+            ${ge_compiler} mindspore::jpeg_turbo)
 endif ()
+
+
+# Before build inference
+if (ENABLE_D)
+    find_library(adump_server libadump_server.a ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+    target_link_libraries(mindspore_shared_lib PRIVATE ${adump_server})
+endif ()
+
