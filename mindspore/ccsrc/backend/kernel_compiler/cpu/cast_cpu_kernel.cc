@@ -43,6 +43,10 @@ void LaunchCast(const std::vector<kernel::AddressPtr> &inputs, const std::vector
   threads.reserve(thread_num);
   size_t start = 0;
   size_t once_compute_size = (lens + thread_num - 1) / thread_num;
+  if (thread_num < 1 || once_compute_size < 1) {
+    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num << "; once_compute_size " << once_compute_size;
+    return;
+  }
   while (start < lens) {
     size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
     threads.emplace_back(std::thread(Cast<S, T>, input, output, start, end));
