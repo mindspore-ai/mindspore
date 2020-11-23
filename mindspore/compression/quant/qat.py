@@ -140,7 +140,7 @@ class QuantizationAwareTraining(Quantizer):
             support QAT. Default: OptimizeOption.QAT
 
     Examples:
-        >>> class Net(nn.Cell):
+        >>> class LeNet5(nn.Cell):
         >>>     def __init__(self, num_class=10, channel=1):
         >>>         super(LeNet5, self).__init__()
         >>>         self.type = "fusion"
@@ -168,7 +168,7 @@ class QuantizationAwareTraining(Quantizer):
         >>>         x = self.fc3(x)
         >>>         return x
         >>>
-        >>> net = Net()
+        >>> net = LeNet5()
         >>> quantizer = QuantizationAwareTraining(bn_fold=False, per_channel=[True, False], symmetric=[True, False])
         >>> net_qat = quantizer.quantize(net)
     """
