@@ -210,7 +210,10 @@ class AscendEnvChecker(EnvChecker):
             import te
         except RuntimeError:
             if Path(self.tbe_path).is_dir():
-                os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']
+                if os.getenv('LD_LIBRARY_PATH'):
+                    os.environ['LD_LIBRARY_PATH'] = self.tbe_path + ":" + os.environ['LD_LIBRARY_PATH']
+                else:
+                    os.environ['LD_LIBRARY_PATH'] = self.tbe_path
             else:
                 raise EnvironmentError(
                     f"No such directory: {self.tbe_path}, Please check if Ascend 910 AI software package is "
