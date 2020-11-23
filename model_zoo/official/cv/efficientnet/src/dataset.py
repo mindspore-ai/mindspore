@@ -85,7 +85,6 @@ def create_dataset(batch_size, train_data_url='', workers=8, distributed=False):
                                    input_columns=["image", "label"],
                                    num_parallel_workers=2,
                                    drop_remainder=True)
-    ds_train = ds_train.repeat(1)
     return ds_train
 
 
@@ -121,5 +120,4 @@ def create_dataset_val(batch_size=128, val_data_url='', workers=8, distributed=F
     dataset = dataset.map(input_columns=["label"], operations=type_cast_op, num_parallel_workers=workers)
     dataset = dataset.map(input_columns=["image"], operations=ctrans, num_parallel_workers=workers)
     dataset = dataset.batch(batch_size, drop_remainder=True, num_parallel_workers=workers)
-    dataset = dataset.repeat(1)
     return dataset

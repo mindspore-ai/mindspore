@@ -13,15 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-DATA_DIR=$1
-DEVICE_ID=$2
-PATH_CHECKPOINT=$3
+if [ $# != 2 ]
+then
+    echo "GPU: sh run_eval_for_gpu.sh [DATASET_PATH] [CHECKPOINT_PATH]"
+exit 1
+fi
 
-current_exec_path=$(pwd)
-echo ${current_exec_path}
+# check dataset file
+if [ ! -d $1 ]
+then
+    echo "error: DATASET_PATH=$1 is not a directory"
+exit 1
+fi
 
-curtime=`date '+%Y%m%d-%H%M%S'`
+# check checkpoint file
+if [ ! -f $2 ]
+then
+    echo "error: CHECKPOINT_PATH=$2 is not a file"
+exit 1
+fi
 
-echo ${curtime} > ${current_exec_path}/eval_starttime
+BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+export PYTHONPATH=${BASEPATH}:$PYTHONPATH
 
-CUDA_VISIBLE_DEVICES=${DEVICE_ID} python ./eval.py --platform 'GPU' --data_path ${DATA_DIR} --checkpoint ${PATH_CHECKPOINT} > ${current_exec_path}/eval.log 2>&1 &
+if [ -d "../eval" ];
+then
+    rm -rf ../eval
+fi
+mkdir ../eval
+cd ../eval || exit
+
+python ${BASEPATH}/../eval.py --platform 'GPU' --data_path $1 --checkpoint=$2 > ./eval.log 2>&1 &
