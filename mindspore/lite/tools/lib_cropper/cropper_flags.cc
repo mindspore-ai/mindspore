@@ -92,8 +92,13 @@ int CropperFlags::Init(int argc, const char **argv) {
 
   if (this->output_file_.empty()) {
     this->output_file_ = this->package_file_;
+  } else {
+    std::string folder_name = this->output_file_.substr(0, this->output_file_.rfind('/'));
+    folder_name = RealPath(folder_name.c_str());
+    if (folder_name.empty()) {
+      return RET_OK;
+    }
   }
-  this->output_file_ = RealPath(this->output_file_.c_str());
   if (this->output_file_.empty()) {
     return RET_INPUT_PARAM_INVALID;
   }
