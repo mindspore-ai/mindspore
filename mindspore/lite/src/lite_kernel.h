@@ -146,9 +146,9 @@ class LiteKernel {
     }
   }
 
-  void set_in_kernel(const std::vector<LiteKernel *> &kernel) { this->in_kernels_ = kernel; }
+  void set_in_kernels(const std::vector<LiteKernel *> &kernel) { this->in_kernels_ = kernel; }
 
-  void set_out_kernel(const std::vector<LiteKernel *> &kernel) { this->out_kernels_ = kernel; }
+  void set_out_kernels(const std::vector<LiteKernel *> &kernel) { this->out_kernels_ = kernel; }
 
   const std::vector<LiteKernel *> &in_kernels() const { return this->in_kernels_; }
 
