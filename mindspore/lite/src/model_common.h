@@ -34,6 +34,10 @@ int ConvertSubGraph(const schema::SubGraph &sub_graph, Model *model);
 template <typename T = schema::MetaGraph, typename U = schema::CNode>
 bool ConvertNodes(const T &meta_graph, Model *model, int schema_version = SCHEMA_CUR) {
   MS_ASSERT(model != nullptr);
+  if (meta_graph.nodes() == nullptr) {
+    MS_LOG(ERROR) << "meta_graph is invalid, please check your model file.";
+    return false;
+  }
   for (size_t i = 0; i < meta_graph.nodes()->size(); ++i) {
     auto *node = new (std::nothrow) Model::Node();
     if (node == nullptr) {
@@ -74,6 +78,10 @@ bool ConvertNodes(const T &meta_graph, Model *model, int schema_version = SCHEMA
 template <typename T = schema::MetaGraph>
 bool ConvertTensors(const T &meta_graph, Model *model) {
   MS_ASSERT(model != nullptr);
+  if (meta_graph.allTensors() == nullptr) {
+    MS_LOG(ERROR) << "meta_graph is invalid, please check your model file.";
+    return false;
+  }
   auto tensor_count = meta_graph.allTensors()->size();
   for (uint32_t i = 0; i < tensor_count; ++i) {
     auto *tensor = meta_graph.allTensors()->template GetAs<schema::Tensor>(i);
@@ -89,6 +97,11 @@ bool ConvertTensors(const T &meta_graph, Model *model) {
 template <typename T = schema::MetaGraph>
 int MetaGraphMappingSubGraph(const T &meta_graph, Model *model) {
   MS_ASSERT(model != nullptr);
+  if (meta_graph.inputIndex() == nullptr || meta_graph.outputIndex() == nullptr || meta_graph.nodes() == nullptr ||
+      meta_graph.allTensors() == nullptr) {
+    MS_LOG(ERROR) << "meta_graph is invalid, please check your model file.";
+    return RET_ERROR;
+  }
   auto *subgraph = new (std::nothrow) Model::SubGraph();
   if (subgraph == nullptr) {
     MS_LOG(ERROR) << "new subGraph fail!";
@@ -109,7 +122,7 @@ int MetaGraphMappingSubGraph(const T &meta_graph, Model *model) {
   for (uint32_t i = 0; i < node_count; ++i) {
     subgraph->node_indices_.push_back(i);
   }
-  auto tensor_count = meta_graph.nodes()->size();
+  auto tensor_count = meta_graph.allTensors()->size();
   for (uint32_t i = 0; i < tensor_count; ++i) {
     subgraph->tensor_indices_.push_back(i);
   }
