@@ -28,6 +28,7 @@ from .multitype_ops.ones_like_impl import ones_like
 from .multitype_ops.zeros_like_impl import zeros_like
 from .random_ops import normal, laplace, uniform, gamma, poisson, multinomial
 from .math_ops import count_nonzero, TensorDot
+from .array_ops import repeat_elements
 
 
 __all__ = [
@@ -51,4 +52,5 @@ __all__ = [
     'clip_by_value',
     'clip_by_global_norm',
     'count_nonzero',
-    'TensorDot']
+    'TensorDot',
+    'repeat_elements']

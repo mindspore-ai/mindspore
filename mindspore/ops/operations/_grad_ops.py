@@ -1912,24 +1912,3 @@ class LRNGrad(PrimitiveWithInfer):
 
     def infer_shape(self, grads, x, y):
         return x
-
-
-class RepeatElementsGrad(PrimitiveWithInfer):
-    """Gradients of RepeatElements operation."""
-
-    @prim_attr_register
-    def __init__(self, rep, axis=0):
-        self.init_prim_io_names(inputs=['dy'], outputs=['dx'])
-        validator.check_value_type("rep", rep, [int], self.name)
-        validator.check_value_type("axis", axis, [int], self.name)
-        self.rep = rep
-        self.axis = axis
-
-    def infer_dtype(self, dy_type):
-        validator.check_type_name("dy_type", dy_type, [mstype.float16, mstype.float32, mstype.int32], self.name)
-        return dy_type
-
-    def infer_shape(self, dy_shape):
-        dx_shape = dy_shape
-        dx_shape[self.axis] = dy_shape[self.axis] // self.rep
-        return dx_shape
