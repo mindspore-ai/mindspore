@@ -244,7 +244,6 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
                       << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
                       << ", inputs size " << out_node_inputs.size();
   }
-  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
 

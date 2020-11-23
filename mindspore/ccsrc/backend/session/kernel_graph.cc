@@ -69,9 +69,6 @@ std::vector<AnfNodePtr> GetCallRealOutputs(const AnfNodePtr &call_node) {
   std::vector<AnfNodePtr> real_inputs;
   auto child_graphs = AnfAlgo::GetCallSwitchKernelGraph(node->cast<CNodePtr>());
   for (const auto &child_graph : child_graphs) {
-    if (child_graph->get_output_null()) {
-      continue;
-    }
     auto real_input = child_graph->output();
     auto child_real_inputs = GetCallRealOutputs(real_input);
     std::copy(child_real_inputs.begin(), child_real_inputs.end(), std::back_inserter(real_inputs));

@@ -82,7 +82,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
-  void CreateCNodeKernelGraph(const AnfNodePtr node, KernelGraphPtr graph);
+  bool CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph *graph);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
