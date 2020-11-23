@@ -145,7 +145,7 @@ kernel::LiteKernel *CpuDeConvGradFilterFp32KernelCreator(const std::vector<lite:
   }
 
   auto ret = kernel->Init();
-  if (RET_OK != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;

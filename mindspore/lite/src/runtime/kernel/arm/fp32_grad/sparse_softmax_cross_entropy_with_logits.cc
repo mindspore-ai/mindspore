@@ -85,7 +85,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   auto labels = reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
   float *out = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  float *grads = NULL;
+  float *grads = nullptr;
   if (IsTrain() && out_tensors_.size() > 1) {
     grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
   }
@@ -164,7 +164,7 @@ kernel::LiteKernel *CpuSparseSoftmaxCrossEntropyFp32KernelCreator(
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (RET_OK != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
@@ -172,5 +172,4 @@ kernel::LiteKernel *CpuSparseSoftmaxCrossEntropyFp32KernelCreator(
   }
   return kernel;
 }
-
 }  // namespace mindspore::kernel

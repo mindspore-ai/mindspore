@@ -77,7 +77,9 @@ int SgdCPUKernel::Init() {
   // Only for test with uninitialized Data
   size_t elem_num = in_tensors_[0]->ElementsNum();
   auto accumulate = reinterpret_cast<float *>(in_tensors_[3]->MutableData());
-  for (size_t i = 0; i < elem_num; i++) accumulate[i] = 0.0;
+  for (size_t i = 0; i < elem_num; i++) {
+    accumulate[i] = 0.0;
+  }
 
   if (sgd_param_->dampening_ < 0.0f) {
     MS_LOG(ERROR) << "dampening should be at least 0.0";
@@ -105,7 +107,7 @@ kernel::LiteKernel *CpuSgdFp32KernelCreator(const std::vector<lite::Tensor *> &i
   }
 
   auto ret = kernel->Init();
-  if (RET_OK != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;

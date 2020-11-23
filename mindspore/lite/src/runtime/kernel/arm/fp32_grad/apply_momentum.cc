@@ -29,7 +29,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ApplyMomentum;
 
 namespace mindspore::kernel {
-
 int ApplyMomentumCPUKernel::ReSize() { return RET_OK; }
 
 int ApplyMomentumCPUKernel::Execute(int task_id) {
@@ -55,6 +54,7 @@ int ApplyMomentumCPUKernel::Execute(int task_id) {
 }
 
 int ApplyMomentumRun(void *cdata, int task_id) {
+  MS_ASSERT(cdata != nullptr);
   auto applyMomentum_kernel = reinterpret_cast<ApplyMomentumCPUKernel *>(cdata);
   auto error_code = applyMomentum_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -89,13 +89,12 @@ kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Te
   }
 
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
     return nullptr;
   }
-
   return kernel;
 }
 

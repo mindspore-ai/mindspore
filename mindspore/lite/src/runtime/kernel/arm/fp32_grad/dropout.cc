@@ -115,6 +115,7 @@ kernel::LiteKernel *CpuDropoutFp32KernelCreator(const std::vector<lite::Tensor *
   auto *kernel = new (std::nothrow) DropoutCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Dropout new kernel failed.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

@@ -43,7 +43,6 @@ class ConvolutionGradFilterCPUKernel : public LiteKernel {
   const int chunk = C12NUM;
 #endif
 };
-
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_

@@ -42,6 +42,7 @@ int AssignCPUKernel::Execute(int task_id) {
 }
 
 int AssignRun(void *cdata, int task_id) {
+  MS_ASSERT(cdata != nullptr);
   auto Assign_kernel = reinterpret_cast<AssignCPUKernel *>(cdata);
   auto error_code = Assign_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -68,16 +69,19 @@ kernel::LiteKernel *CpuAssignFp32KernelCreator(const std::vector<lite::Tensor *>
                                                const lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Assign);
   auto *kernel = new (std::nothrow) AssignCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new AssignCPUKernel fail!";
+    free(opParameter);
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
     return nullptr;
   }
-
   return kernel;
 }
 

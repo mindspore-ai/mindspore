@@ -45,6 +45,10 @@ int AdamCPUKernel::Execute(int task_id) {
   auto eps = reinterpret_cast<float *>(in_tensors_[8]->MutableData())[0];
   auto gradient = reinterpret_cast<float *>(in_tensors_[9]->MutableData());
   size_t elem_num = in_tensors_[0]->ElementsNum();
+  if (fabs(1 - beta1_power) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor cannot be 0";
+    return RET_ERROR;
+  }
   auto update_lr = learning_rate * std::sqrt(1 - beta2_power) / (1 - beta1_power);
 
   if (adam_param_->use_nesterov_) {  // Nadam
@@ -64,6 +68,7 @@ int AdamCPUKernel::Execute(int task_id) {
 }
 
 int AdamRun(void *cdata, int task_id) {
+  MS_ASSERT(cdata != nullptr);
   auto Adam_kernel = reinterpret_cast<AdamCPUKernel *>(cdata);
   auto error_code = Adam_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -90,16 +95,19 @@ kernel::LiteKernel *CpuAdamFp32KernelCreator(const std::vector<lite::Tensor *> &
                                              const lite::PrimitiveC *primitive) {
   MS_ASSERT(desc.type == schema::PrimitiveType_Adam);
   auto *kernel = new (std::nothrow) AdamCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  MS_ASSERT(kernel != nullptr);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new AdamCPUKernel fail!";
+    free(opParameter);
+    return nullptr;
+  }
 
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
     return nullptr;
   }
-
   return kernel;
 }
 

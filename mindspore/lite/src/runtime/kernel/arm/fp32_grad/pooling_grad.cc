@@ -77,6 +77,7 @@ int PoolingGradCPUKernel::Execute(int task_id) {
 }
 
 int PoolingGradImpl(void *cdata, int task_id) {
+  MS_ASSERT(cdata != nullptr);
   auto pooling = reinterpret_cast<PoolingGradCPUKernel *>(cdata);
   auto error_code = pooling->Execute(task_id);
   if (error_code != RET_OK) {
@@ -92,7 +93,9 @@ int PoolingGradCPUKernel::Run() {
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   int size =
     pooling_param->input_w_ * pooling_param->input_h_ * pooling_param->input_channel_ * pooling_param->output_batch_;
-  for (int i = 0; i < size; i++) output_ptr[i] = 0.0;
+  for (int i = 0; i < size; i++) {
+    output_ptr[i] = 0.0;
+  }
 
   int error_code = ParallelLaunch(this->context_->thread_pool_, PoolingGradImpl, this, 1);
   if (error_code != RET_OK) {

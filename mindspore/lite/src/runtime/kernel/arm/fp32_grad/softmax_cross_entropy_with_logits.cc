@@ -61,7 +61,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   auto ins = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   float *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  float *grads = NULL;
+  float *grads = nullptr;
   if (IsTrain() && out_tensors_.size() > 1) {
     grads = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
   }
@@ -104,7 +104,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
   param_->number_of_classes_ = dims[1];
   param_->batch_size_ = dims[0];
   for (unsigned int i = 0; i < dims.size(); i++) param_->input_shape_[i] = dims[i];
-  if (2 != this->in_tensors_.size()) {
+  if (this->in_tensors_.size() != 2) {
     MS_LOG(ERROR) << "softmax entropy loss should have two inputs";
     return RET_ERROR;
   }
@@ -139,7 +139,7 @@ kernel::LiteKernel *CpuSoftmaxCrossEntropyFp32KernelCreator(const std::vector<li
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (RET_OK != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;

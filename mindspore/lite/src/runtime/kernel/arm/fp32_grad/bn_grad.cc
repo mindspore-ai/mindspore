@@ -28,7 +28,6 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-// using mindspore::lite::REG_OP;
 using mindspore::schema::PrimitiveType_BNGrad;
 
 namespace mindspore::kernel {
@@ -84,6 +83,7 @@ int BNGradCPUKernel::Execute(int task_id) {
 }
 
 int BNGradRun(void *cdata, int task_id) {
+  MS_ASSERT(cdata != nullptr);
   auto bn_kernel = reinterpret_cast<BNGradCPUKernel *>(cdata);
   if (task_id == 0) {
     auto error_code = bn_kernel->Execute(task_id);
@@ -117,7 +117,7 @@ kernel::LiteKernel *CpuBNGradFp32KernelCreator(const std::vector<lite::Tensor *>
     return nullptr;
   }
   auto ret = kernel->Init();
-  if (RET_OK != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;

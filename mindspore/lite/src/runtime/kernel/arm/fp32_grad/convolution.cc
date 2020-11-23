@@ -27,11 +27,11 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 int ConvolutionTrainCPUKernel::Init() {
-  if (2 > in_tensors_.size()) {
+  if (in_tensors_.size() < 2) {
     MS_LOG(ERROR) << "Convolution should have at least two inputs";
     return RET_ERROR;
   }
-  if (1 != out_tensors_.size()) {
+  if (out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "Convolution should have one output";
     return RET_ERROR;
   }
@@ -105,6 +105,7 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
 }
 
 int ConvolutionTrainRun(void *cdata, int task_id) {
+  MS_ASSERT(cdata != nullptr);
   auto conv_kernel = reinterpret_cast<ConvolutionTrainCPUKernel *>(cdata);
   auto error_code = conv_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -138,7 +139,7 @@ kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor
   }
 
   auto ret = kernel->Init();
-  if (RET_OK != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
@@ -146,5 +147,4 @@ kernel::LiteKernel *CpuConvTrainFp32KernelCreator(const std::vector<lite::Tensor
   }
   return kernel;
 }
-
 }  // namespace mindspore::kernel

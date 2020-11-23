@@ -122,6 +122,7 @@ int ConvolutionGradInputCPUKernel::Execute(int task_id) {
 }
 
 int ConvolutionGradInputRun(void *cdata, int task_id) {
+  MS_ASSERT(cdata != nullptr);
   auto convinput_kernel = reinterpret_cast<ConvolutionGradInputCPUKernel *>(cdata);
   auto error_code = convinput_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -157,7 +158,7 @@ kernel::LiteKernel *CpuConvGradInputFp32KernelCreator(const std::vector<lite::Te
   }
 
   auto ret = kernel->Init();
-  if (0 != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
@@ -168,5 +169,4 @@ kernel::LiteKernel *CpuConvGradInputFp32KernelCreator(const std::vector<lite::Te
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Conv2DGradInput, CpuConvGradInputFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_GroupConv2DGradInput, CpuConvGradInputFp32KernelCreator)
-
 }  // namespace mindspore::kernel
