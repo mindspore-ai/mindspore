@@ -38,6 +38,8 @@ class Fbeta(Metric):
         >>> metric = nn.Fbeta(1)
         >>> metric.update(x, y)
         >>> fbeta = metric.eval()
+        >>> print(fbeta)
+        [0.66666667  0.66666667]
     """
     def __init__(self, beta):
         super(Fbeta, self).__init__()
