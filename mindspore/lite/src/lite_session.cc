@@ -571,7 +571,11 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }  // namespace lite
 
 session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {
-  auto session = new lite::LiteSession();
+  auto session = new (std::nothrow) lite::LiteSession();
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "create sesssion failed";
+    return nullptr;
+  }
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "init sesssion failed";

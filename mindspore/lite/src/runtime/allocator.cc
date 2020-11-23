@@ -23,7 +23,7 @@ std::shared_ptr<Allocator> Allocator::Create() {
   return std::shared_ptr<Allocator>(new (std::nothrow) DefaultAllocator());
 }
 
-DefaultAllocator::DefaultAllocator() {}
+DefaultAllocator::DefaultAllocator() = default;
 
 DefaultAllocator::~DefaultAllocator() { Clear(); }
 
@@ -94,13 +94,13 @@ size_t DefaultAllocator::GetTotalSize() {
   Lock();
   size_t totalSize = 0;
 
-  for (auto it = allocatedList_.begin(); it != allocatedList_.end(); it++) {
-    auto membuf = it->second;
+  for (auto &it : allocatedList_) {
+    auto membuf = it.second;
     totalSize += membuf->size;
   }
 
-  for (auto it = freeList_.begin(); it != freeList_.end(); it++) {
-    auto membuf = it->second;
+  for (auto &it : freeList_) {
+    auto membuf = it.second;
     totalSize += membuf->size;
   }
   UnLock();
@@ -110,13 +110,13 @@ size_t DefaultAllocator::GetTotalSize() {
 void DefaultAllocator::Clear() {
   Lock();
 
-  for (auto it = allocatedList_.begin(); it != allocatedList_.end(); it++) {
-    free(it->second);
+  for (auto &it : allocatedList_) {
+    free(it.second);
   }
   allocatedList_.clear();
 
-  for (auto it = freeList_.begin(); it != freeList_.end(); it++) {
-    free(it->second);
+  for (auto &it : freeList_) {
+    free(it.second);
   }
   freeList_.clear();
   UnLock();

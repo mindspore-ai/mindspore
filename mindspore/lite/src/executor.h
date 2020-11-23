@@ -35,7 +35,7 @@ class Executor {
                   const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
 
  protected:
-  int CheckInputs(std::vector<Tensor *> &in_tensors);
+  static int CheckInputs(std::vector<Tensor *> &in_tensors);
 };
 }  // namespace mindspore::lite
 #endif

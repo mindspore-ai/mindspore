@@ -31,7 +31,7 @@ int ParallelExecutor::Prepare(const std::vector<mindspore::kernel::LiteKernel *>
 }
 
 static int RunKernel(void *data, int index) {
-  ParallelExecutor *executor = reinterpret_cast<ParallelExecutor *>(data);
+  auto *executor = reinterpret_cast<ParallelExecutor *>(data);
   auto kernel = executor->GetReadyKernel(index);
   auto ret = kernel->Run();
   executor->SetResult(index, ret);
@@ -65,16 +65,19 @@ int ParallelExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor 
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
 
   for (auto kernel : kernels) {
-    if (kernel->in_kernels().size() == 0) {
+    if (kernel->in_kernels().empty()) {
       readyKernels.emplace_back(kernel);
       continue;
     }
     refCount[kernel] = kernel->in_kernels().size();
   }
   std::vector<kernel::LiteKernel *> newReadyKernels;
-  while (readyKernels.size() > 0) {
+  while (!readyKernels.empty()) {
     results.resize(readyKernels.size(), RET_OK);
-    ParallelLaunch(thread_pool_, RunKernel, this, readyKernels.size());
+    if (0 != ParallelLaunch(thread_pool_, RunKernel, this, readyKernels.size())) {
+      MS_LOG(ERROR) << "ParallelLaunch failed ";
+      return RET_ERROR;
+    }
 
     if (std::find_if(results.begin(), results.end(), [](const int &ret) { return (ret != 0); }) != results.end()) {
       return RET_ERROR;

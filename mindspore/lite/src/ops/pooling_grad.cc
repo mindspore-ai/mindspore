@@ -198,11 +198,9 @@ int PoolingGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
     }
   }
   auto grad_output = outputs_.at(0);
-  // todo: fmk type
   auto output_shape = input->shape();
   grad_output->set_shape(output_shape);
   grad_output->set_data_type(input->data_type());
-  // todo: temp fix
   grad_output->set_format(input->format());
   return RET_OK;
 }

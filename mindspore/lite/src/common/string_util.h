@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_COMMON_STRING_UTIL_H_
-#define MINDSPORE_LITE_COMMON_STRING_UTIL_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_STRING_UTIL_H_
+#define MINDSPORE_LITE_SRC_COMMON_STRING_UTIL_H_
 
 #include <vector>
 #include <string>
@@ -52,4 +52,4 @@ uint64_t StringHash64(const char *s, size_t len);
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_COMMON_STRING_UTIL_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_STRING_UTIL_H_

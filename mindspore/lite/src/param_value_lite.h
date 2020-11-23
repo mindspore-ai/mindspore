@@ -37,15 +37,15 @@ class ParamValueLite : public Value {
   }
   MS_DECLARE_PARENT(ParamValueLite, Value)
   size_t tensor_size() const { return tensor_size_; }
-  void set_tensor_size(size_t size) { tensor_size_ = size; }
+  void set_tensor_size(const size_t size) { tensor_size_ = size; }
   void *tensor_addr() const { return tensor_addr_; }
   void set_tensor_addr(void *addr) { tensor_addr_ = addr; }
 
   std::vector<int> tensor_shape() const { return tensor_shape_; }
-  void set_tensor_shape(std::vector<int> tensor_shape) { tensor_shape_ = std::move(tensor_shape); }
+  void set_tensor_shape(const std::vector<int> &tensor_shape) { tensor_shape_ = tensor_shape; }
 
   TypeId tensor_type() const { return type_id_; }
-  void set_tensor_type(TypeId type_id) { type_id_ = type_id; }
+  void set_tensor_type(const TypeId type_id) { type_id_ = type_id; }
 
   int tensor_shape_size() const {
     int size = 1;

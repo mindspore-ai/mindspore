@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef PREDICT_SRC_RUNTIME_RUNTIME_API_H_
-#define PREDICT_SRC_RUNTIME_RUNTIME_API_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_API_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_API_H_
 #include <memory>
 
 #ifndef INTERNAL_API_DLL
@@ -40,4 +40,4 @@ INTERNAL_API_DLL int LiteBackendRegisterSystemLibSymbol(const char *name, void *
 #ifdef __cplusplus
 }
 #endif
-#endif  // PREDICT_SRC_RUNTIME_RUNTIME_API_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_API_H_

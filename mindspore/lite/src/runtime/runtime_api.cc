@@ -16,7 +16,6 @@
 
 #include "src/runtime/runtime_api.h"
 #include <mutex>
-#include <string>
 #include "src/common/log_adapter.h"
 
 static std::mutex gWorkspaceMutex;

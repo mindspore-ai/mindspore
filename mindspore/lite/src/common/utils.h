@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_COMMON_UTILS_H_
-#define MINDSPORE_LITE_COMMON_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_UTILS_H_
+#define MINDSPORE_LITE_SRC_COMMON_UTILS_H_
 
-#include <stdint.h>
 #include <ctime>
 #include <cstdint>
 #include <vector>
@@ -185,4 +184,4 @@ inline Option<bool> GenericParseValue(const std::string &value) {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_COMMON_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_UTILS_H_

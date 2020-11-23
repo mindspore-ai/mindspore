@@ -35,7 +35,7 @@ class KernelRegistry {
   virtual ~KernelRegistry();
 
   static KernelRegistry *GetInstance();
-  int Init();
+  static int Init();
   virtual kernel::KernelCreator GetCreator(const kernel::KernelKey &desc);
   const kernel::KernelCreator *GetCreatorArrays();
   int GetCreatorFuncIndex(kernel::KernelKey desc);

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_PARALLEL_EXECUTOR_H_
-#define MINDSPORE_LITE_PARALLEL_EXECUTOR_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_PARALLEL_EXECUTOR_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_PARALLEL_EXECUTOR_H_
 
 #include <vector>
 #include <unordered_map>
@@ -28,7 +28,7 @@ namespace mindspore::lite {
 class ParallelExecutor : public Executor {
  public:
   ParallelExecutor() = default;
-  virtual ~ParallelExecutor();
+  ~ParallelExecutor() override;
 
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override;
 
@@ -42,8 +42,8 @@ class ParallelExecutor : public Executor {
   std::unordered_map<kernel::LiteKernel *, size_t> refCount;
   std::vector<kernel::LiteKernel *> readyKernels;
   std::vector<int> results;
-  struct ThreadPool *thread_pool_ = NULL;
+  struct ThreadPool *thread_pool_ = nullptr;
 };
 
 }  // namespace mindspore::lite
-#endif
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_PARALLEL_EXECUTOR_H_

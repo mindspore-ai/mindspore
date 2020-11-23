@@ -72,10 +72,6 @@ int Scheduler::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
       return RET_ERROR;
     }
     auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
-    if (sub_graph == nullptr) {
-      MS_LOG(ERROR) << "node " << kernel->name() << " is neither a kernel or a sub_graph";
-      return RET_ERROR;
-    }
     auto ret = sub_graph->ReSize(infer_shape_interrupt);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape is interrupted";
@@ -133,7 +129,7 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<Tensor *> *tenso
   return RET_OK;
 }
 
-int Scheduler::BuildKernels(const lite::Model *model, std::vector<Tensor *> *tensors,
+int Scheduler::BuildKernels(const lite::Model *model, const std::vector<Tensor *> *tensors,
                             std::vector<kernel::LiteKernel *> *kernels) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(tensors != nullptr);
@@ -244,21 +240,21 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
   if (type == kernel::kGpuSubGraph) {
 #if SUPPORT_GPU
-    auto sub_kernel =
-      new kernel::SubGraphOpenCLKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    auto sub_kernel = new (std::nothrow)
+      kernel::SubGraphOpenCLKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
     return sub_kernel;
 #else
     return nullptr;
 #endif
   }
   if (type == kernel::kCpuFP16SubGraph) {
-    auto sub_kernel =
-      new kernel::CpuFp16SubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    auto sub_kernel = new (std::nothrow)
+      kernel::CpuFp16SubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
     return sub_kernel;
   }
   if (type == kernel::kCpuFP32SubGraph) {
-    auto sub_kernel =
-      new kernel::CpuFp32SubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    auto sub_kernel = new (std::nothrow)
+      kernel::CpuFp32SubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
     return sub_kernel;
   }
   return nullptr;
@@ -344,7 +340,7 @@ void Scheduler::SetKernelTensorDataType(kernel::LiteKernel *kernel) {
   }
 }
 
-kernel::SubGraphType Scheduler::GetKernelSubGraphType(kernel::LiteKernel *kernel) {
+kernel::SubGraphType Scheduler::GetKernelSubGraphType(const kernel::LiteKernel *kernel) {
   if (kernel == nullptr) {
     return kernel::kNotSubGraph;
   }

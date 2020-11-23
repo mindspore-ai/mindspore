@@ -52,7 +52,6 @@ int Sub::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
       this->primitive_ = nullptr;
       return RET_ERROR;
     }
-    // todo: confirm the activationType
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
     this->primitive_->value.value = attr;
   }

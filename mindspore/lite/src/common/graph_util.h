@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_COMMON_GRAPH_UTIL_H_
-#define MINDSPORE_LITE_COMMON_GRAPH_UTIL_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_GRAPH_UTIL_H_
+#define MINDSPORE_LITE_SRC_COMMON_GRAPH_UTIL_H_
 
 #include <string>
 #include <unordered_map>
@@ -35,8 +35,8 @@ std::vector<size_t> GetGraphInputNodes(const lite::Model *model);
 
 std::vector<size_t> GetGraphOutputNodes(const lite::Model *model);
 
-std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, const size_t tensor_idx);
+std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, size_t tensor_idx);
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_COMMON_GRAPH_UTIL_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_GRAPH_UTIL_H_
