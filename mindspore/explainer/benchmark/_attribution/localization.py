@@ -16,7 +16,7 @@
 import numpy as np
 
 from mindspore.train._utils import check_value_type
-from .metric import AttributionMetric
+from .metric import LabelSensitiveMetric
 from ..._operators import maximum, reshape, Tensor
 from ..._utils import format_tensor_to_ndarray
 
@@ -37,7 +37,7 @@ def _mask_out_saliency(saliency, threshold):
     return mask_out
 
 
-class Localization(AttributionMetric):
+class Localization(LabelSensitiveMetric):
     r"""
     Provides evaluation on the localization capability of XAI methods.
 

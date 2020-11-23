@@ -22,7 +22,6 @@ from .intermediate_layer import IntermediateLayerAttribution
 from ...._utils import ForwardProbe, retrieve_layer, unify_inputs, unify_targets
 
 
-
 def _gradcam_aggregation(attributions):
     """
     Aggregate the gradient and activation to get the final _attribution.
@@ -76,10 +75,7 @@ class GradCAM(IntermediateLayerAttribution):
         >>> gradcam = GradCAM(net, layer=layer_name)
     """
 
-    def __init__(
-            self,
-            network,
-            layer=""):
+    def __init__(self, network, layer=""):
         super(GradCAM, self).__init__(network, layer)
 
         self._saliency_cell = retrieve_layer(self._backward_model, target_layer=layer)

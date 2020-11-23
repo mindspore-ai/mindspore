@@ -13,15 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Predefined Attribution explainers."""
-from ._backprop.gradcam import GradCAM
-from ._backprop.gradient import Gradient
-from ._backprop.modified_relu import Deconvolution, GuidedBackprop
-from ._perturbation.rise import RISE
+
+from .attribution import Attribution
 
 __all__ = [
-    'Gradient',
-    'Deconvolution',
-    'GuidedBackprop',
-    'GradCAM',
-    'RISE'
+    'Attribution'
 ]

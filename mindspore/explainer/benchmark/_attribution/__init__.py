@@ -13,11 +13,3 @@
 # limitations under the License.
 # ============================================================================
 """Predefined XAI metrics"""
-
-from .faithfulness import Faithfulness
-from .localization import Localization
-
-__all__ = [
-    "Faithfulness",
-    "Localization"
-]

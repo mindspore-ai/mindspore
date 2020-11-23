@@ -18,7 +18,7 @@
 from mindspore.train._utils import check_value_type
 from mindspore.nn import Cell
 
-from .._attribution import Attribution
+from ..attribution import Attribution
 from ...._operators import softmax
 
 

@@ -13,19 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Packaged operations based on MindSpore."""
-from typing import List, Tuple, Union, Callable
-
-import numpy as np
-
-import mindspore
-import mindspore.ops.operations as op
-from mindspore import nn
-
-_Axis = Union[int, Tuple[int, ...], List[int]]
-_Idx = Union[int, mindspore.Tensor, Tuple[int, ...], Tuple[mindspore.Tensor, ...]]
-_Number = Union[int, float, np.int, np.float]
-_Shape = Union[int, Tuple[int, ...]]
-Tensor = mindspore.Tensor
 
 __all__ = [
     'absolute',
@@ -41,6 +28,7 @@ __all__ = [
     'mean',
     'mul',
     'sort',
+    'sqrt',
     'squeeze',
     'tile',
     'reshape',
@@ -50,6 +38,20 @@ __all__ = [
     'Tensor',
     'summation'
 ]
+
+from typing import List, Tuple, Union, Callable
+
+import numpy as np
+
+import mindspore
+from mindspore import nn
+import mindspore.ops.operations as op
+
+_Axis = Union[int, Tuple[int, ...], List[int]]
+_Idx = Union[int, mindspore.Tensor, Tuple[int, ...], Tuple[mindspore.Tensor, ...]]
+_Number = Union[int, float, np.int, np.float]
+_Shape = Union[int, Tuple[int, ...]]
+Tensor = mindspore.Tensor
 
 
 def absolute(inputs: Tensor) -> Tensor:

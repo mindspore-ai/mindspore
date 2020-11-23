@@ -16,6 +16,7 @@
 
 __all__ = [
     'ForwardProbe',
+    'abs_max',
     'calc_auc',
     'calc_correlation',
     'format_tensor_to_ndarray',
@@ -29,7 +30,6 @@ __all__ = [
 ]
 
 from typing import Tuple, Union
-import math
 
 import numpy as np
 from PIL import Image
@@ -41,6 +41,21 @@ import mindspore.ops.operations as op
 _Array = np.ndarray
 _Module = nn.Cell
 _Tensor = ms.Tensor
+
+
+def abs_max(gradients):
+    """
+    Transform gradients to saliency through abs then take max along channels.
+
+    Args:
+        gradients (_Tensor): Gradients which will be transformed to saliency map.
+
+    Returns:
+        _Tensor, saliency map integrated from gradients.
+    """
+    gradients = op.Abs()(gradients)
+    saliency = op.ReduceMax(keep_dims=True)(gradients, axis=1)
+    return saliency
 
 
 def generate_one_hot(indices, depth):
@@ -96,7 +111,7 @@ def retrieve_layer_by_name(model: _Module, layer_name: str):
         - target_layer (_Module)
 
     Raise:
-        ValueError: is module with given layer_name is not found in the model,
+        ValueError: if module with given layer_name is not found in the model,
             raise ValueError.
 
     """
@@ -201,23 +216,28 @@ def format_tensor_to_ndarray(x: Union[ms.Tensor, np.ndarray]) -> np.ndarray:
 
 def calc_correlation(x: Union[ms.Tensor, np.ndarray],
                      y: Union[ms.Tensor, np.ndarray]) -> float:
-    """Calculate Pearson correlation coefficient between two arrays. """
+    """Calculate Pearson correlation coefficient between two vectors."""
     x = format_tensor_to_ndarray(x)
     y = format_tensor_to_ndarray(y)
-    faithfulness = -np.corrcoef(x, y)[0, 1]
-    if math.isnan(faithfulness):
+
+    if len(x.shape) > 1 or len(y.shape) > 1:
+        raise ValueError('"calc_correlation" only support 1-dim vectors currently, but get shape {} and {}.'
+                         .format(len(x.shape), len(y.shape)))
+
+    if np.all(x == 0) or np.all(y == 0):
         return np.float(0)
+    faithfulness = -np.corrcoef(x, y)[0, 1]
     return faithfulness
 
 
-def calc_auc(x: _Array) -> float:
+def calc_auc(x: _Array) -> _Array:
     """Calculate the Aera under Curve."""
     # take mean for multiple patches if the model is fully convolutional model
     if len(x.shape) == 4:
         x = np.mean(np.mean(x, axis=2), axis=3)
 
     auc = (x.sum() - x[0] - x[-1]) / len(x)
-    return float(auc)
+    return auc
 
 
 def rank_pixels(inputs: _Array, descending: bool = True) -> _Array:
@@ -235,13 +255,17 @@ def rank_pixels(inputs: _Array, descending: bool = True) -> _Array:
         rank_pixels(x, descending=False)
         >> np.array([[3, 2, 0], [4, 5, 1]])
     """
-    if len(inputs.shape) != 2:
-        raise ValueError('Only support 2D array currently')
-    flatten_saliency = inputs.reshape(-1)
+    if len(inputs.shape) < 2 or len(inputs.shape) > 3:
+        raise ValueError('Only support 2D or 3D inputs currently.')
+
+    batch_size = inputs.shape[0]
+    flatten_saliency = inputs.reshape(batch_size, -1)
     factor = -1 if descending else 1
-    sorted_arg = np.argsort(factor * flatten_saliency, axis=0)
+    sorted_arg = np.argsort(factor * flatten_saliency, axis=1)
     flatten_rank = np.zeros_like(sorted_arg)
-    flatten_rank[sorted_arg] = np.arange(0, sorted_arg.shape[0])
+    arange = np.arange(flatten_saliency.shape[1])
+    for i in range(batch_size):
+        flatten_rank[i][sorted_arg[i]] = arange
     rank_map = flatten_rank.reshape(inputs.shape)
     return rank_map
 

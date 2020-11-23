@@ -33,11 +33,10 @@ from mindspore.train._utils import check_value_type
 from mindspore.train.summary._summary_adapter import _convert_image_format
 from mindspore.train.summary.summary_record import SummaryRecord
 from mindspore.train.summary_pb2 import Explain
-
 from .benchmark import Localization
-from .benchmark._attribution.metric import AttributionMetric
 from .explanation import RISE
-from .explanation._attribution._attribution import Attribution
+from .benchmark._attribution.metric import AttributionMetric, LabelSensitiveMetric, LabelAgnosticMetric
+from .explanation._attribution.attribution import Attribution
 
 # datafile directory names
 _DATAFILE_DIRNAME_PREFIX = "_explain_"
@@ -293,7 +292,8 @@ class ExplainRunner:
                         benchmark.benchmark_method = bench.__class__.__name__
 
                         benchmark.total_score = bench.performance
-                        benchmark.label_score.extend(bench.class_performances)
+                        if isinstance(bench, LabelSensitiveMetric):
+                            benchmark.label_score.extend(bench.class_performances)
 
                     print(spacer.format("Finish running and writing explanation and benchmark data for {}. "
                                         "Time elapsed: {:.3f} s".format(exp.__class__.__name__, time() - start)))
@@ -603,7 +603,6 @@ class ExplainRunner:
         Args:
             next_element (Tuple): Data of one step
             explainer (`_Attribution`): An Attribution object to generate saliency maps.
-            imageid_labels (dict): A dict that maps the image_id and its union labels.
         """
         inputs, labels, _ = self._unpack_next_element(next_element)
         for idx, inp in enumerate(inputs):
@@ -615,10 +614,22 @@ class ExplainRunner:
                     if label in labels[idx]:
                         res = benchmarker.evaluate(explainer, inp, targets=label, mask=bboxes[idx][label],
                                                    saliency=saliency)
+                        if np.any(res == np.nan):
+                            res = np.zeros_like(res)
                         benchmarker.aggregate(res, label)
-                else:
+                elif isinstance(benchmarker, LabelSensitiveMetric):
                     res = benchmarker.evaluate(explainer, inp, targets=label, saliency=saliency)
+                    if np.any(res == np.nan):
+                        res = np.zeros_like(res)
                     benchmarker.aggregate(res, label)
+                elif isinstance(benchmarker, LabelAgnosticMetric):
+                    res = benchmarker.evaluate(explainer, inp)
+                    if np.any(res == np.nan):
+                        res = np.zeros_like(res)
+                    benchmarker.aggregate(res)
+                else:
+                    raise TypeError('Benchmarker must be one of LabelSensitiveMetric or LabelAgnosticMetric, but'
+                                    'receive {}'.format(type(benchmarker)))
 
     def _save_original_image(self, sample_id: int, image):
         """Save an image to summary directory."""
