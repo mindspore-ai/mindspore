@@ -32,6 +32,7 @@ namespace {
 int NegGradRun(void *cdata, int thread_id) {
   MS_ASSERT(cdata != nullptr);
   auto kernel = reinterpret_cast<NegGradCPUKernel *>(cdata);
+  MS_ASSERT(kernel != nullptr);
   return kernel->DoNegGrad(thread_id);
 }
 }  // namespace

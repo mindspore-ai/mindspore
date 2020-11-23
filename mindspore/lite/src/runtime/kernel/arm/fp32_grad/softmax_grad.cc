@@ -43,6 +43,7 @@ int SoftmaxGradCPUKernel::Init() {
   auto axis = param->axis_;
   if ((axis < -1) || (axis > param->n_dim_)) {
     MS_LOG(ERROR) << "SoftmaxGrad axis is invalid!";
+    return RET_ERROR;
   } else if (axis == -1) {
     axis = param->axis_ = (in_dims - 1);
   }
@@ -108,5 +109,4 @@ kernel::LiteKernel *CpuSoftmaxGradFp32KernelCreator(const std::vector<lite::Tens
   }
   return kernel;
 }
-
 }  // namespace mindspore::kernel

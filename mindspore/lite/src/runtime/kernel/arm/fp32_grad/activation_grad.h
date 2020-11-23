@@ -40,7 +40,6 @@ class ActivationGradCPUKernel : public LiteKernel {
  private:
   ActivationParameter *param_act_grad_;
 };
-
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_ACTIVATION_GRAD_H_

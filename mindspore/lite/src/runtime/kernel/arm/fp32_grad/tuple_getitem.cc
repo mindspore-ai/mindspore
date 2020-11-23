@@ -30,11 +30,11 @@ using mindspore::schema::PrimitiveType_TupleGetItem;
 namespace mindspore::kernel {
 
 int TupleGetItemCPUKernel::Init() {
-  if (1 != in_tensors_.size()) {
+  if (in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "Tuple Grad Filter should have one input";
     return RET_ERROR;
   }
-  if (1 != out_tensors_.size()) {
+  if (out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "Tuple Grad Filter should have one output";
     return RET_ERROR;
   }
@@ -48,7 +48,6 @@ int TupleGetItemCPUKernel::Execute(int task_id) {
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
   memcpy(out, in, in_tensors_.at(0)->Size());
-
   return RET_OK;
 }
 

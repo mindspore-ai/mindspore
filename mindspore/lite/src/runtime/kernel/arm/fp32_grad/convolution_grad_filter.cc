@@ -111,6 +111,7 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
 }
 
 int ConvolutionGradFilterRun(void *cdata, int task_id) {
+  MS_ASSERT(cdata != nullptr);
   auto convfilter_kernel = reinterpret_cast<ConvolutionGradFilterCPUKernel *>(cdata);
   auto error_code = convfilter_kernel->Execute(task_id);
   if (error_code != RET_OK) {
@@ -145,7 +146,7 @@ kernel::LiteKernel *CpuConvGradFilterFp32KernelCreator(const std::vector<lite::T
   }
 
   auto ret = kernel->Init();
-  if (RET_OK != ret) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;

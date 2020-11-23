@@ -28,11 +28,11 @@ using mindspore::schema::PrimitiveType_PowerGrad;
 
 namespace mindspore::kernel {
 int PowerGradCPUKernel::Init() {
-  if (2 != in_tensors_.size()) {
+  if (in_tensors_.size() != 2) {
     MS_LOG(ERROR) << "Power Grad Filter should have 2 inputs";
     return RET_ERROR;
   }
-  if (1 != out_tensors_.size()) {
+  if (out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "Power Grad Filter should have one output";
     return RET_ERROR;
   }

@@ -33,7 +33,7 @@ using mindspore::schema::PrimitiveType_ActivationGrad;
 
 namespace mindspore::kernel {
 int ActivationGradCPUKernel::Init() {
-  if (2 != in_tensors_.size()) {
+  if (in_tensors_.size() != 2) {
     MS_LOG(ERROR) << "ActivationGrad should have 2 input tensors";
     return RET_ERROR;
   }
@@ -86,6 +86,7 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
 }
 
 int ActivationGradRun(void *cdata, int task_id) {
+  MS_ASSERT(cdata != nullptr);
   auto activationGrad_kernel = reinterpret_cast<ActivationGradCPUKernel *>(cdata);
   auto error_code = activationGrad_kernel->DoActivation(task_id);
   if (error_code != RET_OK) {

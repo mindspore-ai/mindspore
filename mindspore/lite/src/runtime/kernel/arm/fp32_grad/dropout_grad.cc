@@ -102,6 +102,7 @@ kernel::LiteKernel *CpuDropoutGradFp32KernelCreator(const std::vector<lite::Tens
   auto *kernel = new (std::nothrow) DropoutGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "DropoutGrad new kernel failed.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
