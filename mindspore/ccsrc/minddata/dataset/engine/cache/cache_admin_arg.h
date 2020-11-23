@@ -35,7 +35,6 @@ class CacheAdminArgHandler {
   static constexpr int32_t kDefaultLogLevel = 1;
   static constexpr float kMemoryCapRatio = 0.8;
   static const char kServerBinary[];
-  static const char kDefaultSpillDir[];
 
   // These are the actual command types to execute
   enum class CommandId : int16_t {

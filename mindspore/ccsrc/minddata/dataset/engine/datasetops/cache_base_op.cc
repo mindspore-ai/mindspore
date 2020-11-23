@@ -84,9 +84,9 @@ Status CacheBase::FetchSamplesToWorkers() {
   // Instead of sending sampler id to WorkerEntry, we send them to the Prefetcher which will redirect them
   // to the WorkerEntry.
   do {
-    if (AllowCacheMiss() && wait_cnt > 0) {
-      MS_LOG(WARNING) << "Epoch: " << wait_cnt << " Cache Miss : " << num_cache_miss_
-                      << " Total number of rows : " << row_cnt_;
+    if (AllowCacheMiss() && wait_cnt > 0 && wait_cnt % op_num_repeats_per_epoch() == 0) {
+      MS_LOG(INFO) << "Epoch: " << op_current_epochs_ << " Cache Miss : " << num_cache_miss_
+                   << " Total number of rows : " << row_cnt_;
     }
     num_cache_miss_ = 0;
     row_cnt_ = 0;
@@ -167,8 +167,8 @@ Status CacheBase::FetchSamplesToWorkers() {
   }
   // Dump the last epoch result (approximately) without waiting for the worker threads to come back.
   if (AllowCacheMiss()) {
-    MS_LOG(WARNING) << "Epoch: " << wait_cnt << " Cache Miss : " << num_cache_miss_
-                    << " Total number of rows : " << row_cnt_;
+    MS_LOG(INFO) << "Epoch: " << wait_cnt / op_num_repeats_per_epoch() << " Cache Miss : " << num_cache_miss_
+                 << " Total number of rows : " << row_cnt_;
   }
   return Status::OK();
 }
