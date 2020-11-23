@@ -344,6 +344,7 @@ const size_t kShape5dDims = 5;
 const size_t kShape1dDims = 1;
 const size_t kCubeSize = 16;
 const size_t kMemAlignSize = 512;
+const size_t kBNChannelMultipleFactor = 4;
 const int kParameterDataTensorMask = 0;
 const int kParameterWeightTensorMask = 1;
 const int kValueNodeTensorMask = 2;

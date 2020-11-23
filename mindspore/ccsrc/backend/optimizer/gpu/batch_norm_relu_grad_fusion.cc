@@ -44,6 +44,10 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC && format != "NHWC") {
     return nullptr;
   }
+  auto shape = AnfAlgo::GetInputDeviceShape(node, 0);
+  if (shape.back() % kBNChannelMultipleFactor != 0) {
+    return nullptr;
+  }
 
   auto relu_grad = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(relu_grad);
