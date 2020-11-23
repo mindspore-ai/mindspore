@@ -132,7 +132,6 @@ Parameters for both training and evaluation can be set in config.py.
   "input_dim": 64,                   # User and item embedding dimension
   "l2": 0.03                   # l2 coefficient
   "neighbor_dropout": [0.0, 0.2, 0.3]# Dropout ratio for different aggregation layer
-  "num_graphs":5                     # Num of sample graph
   ```
   config.py for more configuration.
   
@@ -193,21 +192,32 @@ Parameters for both training and evaluation can be set in config.py.
   ```
 # [Model Description](#contents)
 ## [Performance](#contents)
-
+### Evaluation Performance
 | Parameter                            | BGCF                                      |
 | ------------------------------------ | ----------------------------------------- |
+| Model Version                        | Inception V1                              |
 | Resource                             | Ascend 910                                |
 | uploaded Date                        | 09/23/2020(month/day/year)                                          |
 | MindSpore Version                    | 1.0.0                                          |
 | Dataset                              | Amazon-Beauty                             |
-| Training Parameter                   | epoch=600                                 |
+| Training Parameter                   | epoch=600,steps=12,batch_size=5000,lr=0.001                                 |
 | Optimizer                            | Adam                                      |
 | Loss Function                        | BPR loss                                  |
-| Recall@20                            | 0.1534                                    |
-| NDCG@20                              | 0.0912                                    |
 | Training Cost                        | 25min                                     |
 | Scripts                              | [bgcf script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/bgcf)                                          |
 
+### Inference Performance
+| Parameter                            | BGCF                                      |
+| ------------------------------------ | ----------------------------------------- |
+| Model Version                        | Inception V1                              |
+| Resource                             | Ascend 910                                |
+| uploaded Date                        | 09/23/2020(month/day/year)                                          |
+| MindSpore Version                    | 1.0.0                                          |
+| Dataset                              | Amazon-Beauty                             |
+| Batch_size                           | 5000                             |
+| Output                               | probability                            |
+| Recall@20                            | 0.1534                                    |
+| NDCG@20                              | 0.0912                                    |
 # [Description of random situation](#contents)
 
 BGCF model contains lots of dropout operations, if you want to disable dropout, set the neighbor_dropout to [0.0, 0.0, 0.0] in src/config.py. 
