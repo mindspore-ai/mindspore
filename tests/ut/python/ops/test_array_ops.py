@@ -59,10 +59,24 @@ def test_ones():
     assert np.sum(output.asnumpy()) == 6
 
 
+def test_ones_1():
+    ones = P.Ones()
+    output = ones(2, mstype.int32)
+    assert output.asnumpy().shape == (2,)
+    assert np.sum(output.asnumpy()) == 2
+
+
 def test_zeros():
     zeros = P.Zeros()
     output = zeros((2, 3), mstype.int32)
     assert output.asnumpy().shape == (2, 3)
+    assert np.sum(output.asnumpy()) == 0
+
+
+def test_zeros_1():
+    zeros = P.Zeros()
+    output = zeros(2, mstype.int32)
+    assert output.asnumpy().shape == (2,)
     assert np.sum(output.asnumpy()) == 0
 
 
