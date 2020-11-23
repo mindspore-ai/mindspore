@@ -565,6 +565,13 @@ void AscendSession::BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph
 void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  const auto &kernels = kernel_graph->execution_order();
+  auto iter = std::find_if(kernels.begin(), kernels.end(), [](const CNodePtr &kernel) {
+    return AnfAlgo::GetKernelType(kernel) == AICPU_KERNEL && AnfAlgo::GetBooleanAttr(kernel, kAttrOutputIsDynamicShape);
+  });
+  if (iter == kernels.end()) {
+    return;
+  }
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   if (!runtime_instance->GenDynamicKernel(kernel_graph.get())) {

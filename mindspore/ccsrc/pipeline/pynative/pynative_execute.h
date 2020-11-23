@@ -46,6 +46,7 @@ using GradOperationPtr = std::shared_ptr<prim::GradOperation>;
 
 struct PrimAbsInfo {
   abstract::AbstractBasePtr abs;
+  bool is_dynamic_shape = false;
   std::unordered_map<std::string, ValuePtr> attrs;
 };
 

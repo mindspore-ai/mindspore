@@ -624,6 +624,7 @@ py::tuple PynativeExecutor::RunOpInner(const OpExecInfoPtr &op_exec_info) {
     if (abs_list.find(args_spec_list) != abs_list.end()) {
       MS_LOG(DEBUG) << "Match prim ok " << op_exec_info->op_name;
       op_exec_info->abstract = abs_list[args_spec_list].abs;
+      op_exec_info->is_dynamic_shape = abs_list[args_spec_list].is_dynamic_shape;
       prim->set_evaluate_added_attrs(abs_list[args_spec_list].attrs);
       is_find = true;
     }
@@ -634,17 +635,18 @@ py::tuple PynativeExecutor::RunOpInner(const OpExecInfoPtr &op_exec_info) {
     if (ignore_infer_prim.find(op_exec_info->op_name) == ignore_infer_prim.end()) {
       PynativeInfer(prim, op_exec_info->op_inputs, op_exec_info.get(), args_spec_list);
     }
+    // get output dynamic shape info
+    auto abstract = op_exec_info->abstract;
+    MS_EXCEPTION_IF_NULL(abstract);
+    auto shape = abstract->BuildShape();
+    MS_EXCEPTION_IF_NULL(shape);
+    auto shape_info = shape->ToString();
+    if (shape_info.find("-1") != string::npos) {
+      op_exec_info->is_dynamic_shape = true;
+    }
   }
-
   if (cnode != nullptr) {
     cnode->set_abstract(op_exec_info->abstract);
-  }
-
-  // get output dynamic shape info
-  MS_EXCEPTION_IF_NULL(op_exec_info->abstract);
-  auto abstract_info = op_exec_info->abstract->ToString();
-  if (abstract_info.find("-1") != string::npos) {
-    op_exec_info->is_dynamic_shape = true;
   }
 
   op_exec_info->inputs_mask = op_masks;
@@ -668,6 +670,7 @@ py::tuple PynativeExecutor::RunOpInner(const OpExecInfoPtr &op_exec_info) {
     // const_value need infer every step
     auto &out = prim_abs_list_[prim->id()];
     out[args_spec_list].abs = op_exec_info->abstract;
+    out[args_spec_list].is_dynamic_shape = op_exec_info->is_dynamic_shape;
     out[args_spec_list].attrs = prim->evaluate_added_attrs();
     MS_LOG(DEBUG) << "Set prim " << op_exec_info->op_name << mindspore::ToString(args_spec_list);
   }
