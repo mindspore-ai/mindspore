@@ -472,6 +472,19 @@ def get_bprop_sigmoid(self):
     return bprop
 
 
+@bprop_getters.register(G.SigmoidGrad)
+def get_bprop_sigmoid_grad(self):
+    """Grad definition for `SigmoidGrad` operation."""
+    sigmoid_grad = G.SigmoidGrad()
+
+    def bprop(y, grad, out, dout):
+        ddy = dout * grad * (1. - 2 * y)
+        d2x = sigmoid_grad(y, dout)
+        return (ddy, d2x)
+
+    return bprop
+
+
 @bprop_getters.register(P.Softmax)
 def get_bprop_softmax(self):
     """Grad definition for `Softmax` operation."""
