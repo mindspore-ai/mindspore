@@ -91,6 +91,7 @@ class LARS(Optimizer):
         self.learning_rate = Parameter(Tensor(0.0, dtype=mstype.float32), name="fake_lr")
         self.decay_flags = optimizer.decay_flags
         self.reciprocal_scale = optimizer.reciprocal_scale
+        self.need_scale = optimizer.need_scale
         self.hyper_map = C.HyperMap()
         self.lars = P.LARSUpdate(epsilon, coefficient, use_clip)
         self.cast = P.Cast()
@@ -136,7 +137,7 @@ class LARS(Optimizer):
         else:
             lr = self.learning_rate
 
-        if self.reciprocal_scale != 1.0:
+        if self.need_scale:
             gradients = self.hyper_map(F.partial(_grad_scale, self.reciprocal_scale), gradients)
 
         if self.is_group:
