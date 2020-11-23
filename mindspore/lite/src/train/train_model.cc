@@ -49,12 +49,14 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   const void *meta_graph = GetMetaGraphByVerison(model->buf, schema_version);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "meta_graph is nullptr!";
+    free(model->buf);
     delete (model);
     return nullptr;
   }
 
   int status = GenerateModelByVersion(meta_graph, model, schema_version);
   if (status != RET_OK) {
+    free(model->buf);
     delete (model);
     MS_LOG(ERROR) << "fail to generate model";
     return nullptr;
@@ -73,17 +75,16 @@ char *TrainModel::ExportBuf(char *buffer, size_t *len) const {
     MS_LOG(ERROR) << "Model::Export is only available for Train Session";
     return nullptr;
   }
-
   if (*len < buf_size_ && buffer != nullptr) {
     MS_LOG(ERROR) << "Buffer is too small, Export Failed";
     return nullptr;
   }
   if (buffer == nullptr) {
     buffer = reinterpret_cast<char *>(malloc(buf_size_));
-  }
-  if (buffer == nullptr) {
-    MS_LOG(ERROR) << "allocated model buf fail!";
-    return nullptr;
+    if (buffer == nullptr) {
+      MS_LOG(ERROR) << "allocated model buf fail!";
+      return nullptr;
+    }
   }
 
   memcpy(buffer, buf, buf_size_);
