@@ -39,7 +39,7 @@ class StandardNormal(PrimitiveWithInfer):
 
     Examples:
         >>> shape = (4, 16)
-        >>> stdnormal = P.StandardNormal(seed=2)
+        >>> stdnormal = ops.StandardNormal(seed=2)
         >>> output = stdnormal(shape)
         >>> result = output.shape
         >>> print(result)
@@ -90,7 +90,7 @@ class StandardLaplace(PrimitiveWithInfer):
 
     Examples:
         >>> shape = (4, 16)
-        >>> stdlaplace = P.StandardLaplace(seed=2)
+        >>> stdlaplace = ops.StandardLaplace(seed=2)
         >>> output = stdlaplace(shape)
         >>> result = output.shape
         >>> print(result)
@@ -148,7 +148,7 @@ class Gamma(PrimitiveWithInfer):
         >>> shape = (2, 2)
         >>> alpha = Tensor(1.0, mstype.float32)
         >>> beta = Tensor(1.0, mstype.float32)
-        >>> gamma = P.Gamma(seed=3)
+        >>> gamma = ops.Gamma(seed=3)
         >>> output = gamma(shape, alpha, beta)
         >>> print(output)
         [[0.21962446 0.33740655]
@@ -206,7 +206,7 @@ class Poisson(PrimitiveWithInfer):
     Examples:
         >>> shape = (4, 16)
         >>> mean = Tensor(5.0, mstype.float32)
-        >>> poisson = P.Poisson(seed=5)
+        >>> poisson = ops.Poisson(seed=5)
         >>> output = poisson(shape, mean)
     """
 
@@ -265,7 +265,7 @@ class UniformInt(PrimitiveWithInfer):
         >>> shape = (2, 4)
         >>> minval = Tensor(1, mstype.int32)
         >>> maxval = Tensor(5, mstype.int32)
-        >>> uniform_int = P.UniformInt(seed=10)
+        >>> uniform_int = ops.UniformInt(seed=10)
         >>> output = uniform_int(shape, minval, maxval)
         >>> print(output)
         [[4 2 1 3]
@@ -318,7 +318,7 @@ class UniformReal(PrimitiveWithInfer):
 
     Examples:
         >>> shape = (2, 2)
-        >>> uniformreal = P.UniformReal(seed=2)
+        >>> uniformreal = ops.UniformReal(seed=2)
         >>> output = uniformreal(shape)
         >>> print(output)
         [[0.4359949 0.18508208]
@@ -374,7 +374,7 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> rnd_choice_mask = P.RandomChoiceWithMask()
+        >>> rnd_choice_mask = ops.RandomChoiceWithMask()
         >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
         >>> output_y, output_mask = rnd_choice_mask(input_x)
         >>> result = output_y.shape
@@ -426,7 +426,7 @@ class RandomCategorical(PrimitiveWithInfer):
         >>> class Net(nn.Cell):
         ...   def __init__(self, num_sample):
         ...     super(Net, self).__init__()
-        ...     self.random_categorical = P.RandomCategorical(mindspore.int64)
+        ...     self.random_categorical = ops.RandomCategorical(mindspore.int64)
         ...     self.num_sample = num_sample
         ...   def construct(self, logits, seed=0):
         ...     return self.random_categorical(logits, self.num_sample, seed)
@@ -502,7 +502,7 @@ class Multinomial(PrimitiveWithInfer):
 
     Examples:
         >>> input = Tensor([0., 9., 4., 0.], mstype.float32)
-        >>> multinomial = P.Multinomial(seed=10)
+        >>> multinomial = ops.Multinomial(seed=10)
         >>> output = multinomial(input, 2)
     """
 
@@ -561,7 +561,7 @@ class UniformCandidateSampler(PrimitiveWithInfer):
             each of sampled_candidates. Shape: (num_sampled, ).
 
     Examples:
-        >>> sampler = P.UniformCandidateSampler(1, 3, False, 4)
+        >>> sampler = ops.UniformCandidateSampler(1, 3, False, 4)
         >>> output1, output2, output3 = sampler(Tensor(np.array([[1],[3],[4],[6],[3]], dtype=np.int32)))
         >>> print(output1, output2, output3)
         [1, 1, 3], [[0.75], [0.75], [0.75], [0.75], [0.75]], [0.75, 0.75, 0.75]

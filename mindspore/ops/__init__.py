@@ -18,17 +18,7 @@ Operators can be used in the construct function of Cell.
 
 Examples:
 
-    >>> from mindspore.ops import operations as P
-    >>> from mindspore.ops import composite as C
-    >>> from mindspore.ops import functional as F
     >>> import mindspore.ops as ops
-
-Note:
-    - The Primitive operators in operations need to be instantiated before being used.
-    - The composite operators are the pre-defined combination of operators.
-    - The functional operators are the pre-instantiated Primitive operators, which can be used directly as a function.
-    - For functional operators usage, please refer to
-      https://gitee.com/mindspore/mindspore/blob/master/mindspore/ops/functional.py
 """
 
 from .primitive import Primitive, PrimitiveWithInfer, prim_attr_register

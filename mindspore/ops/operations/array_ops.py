@@ -148,7 +148,7 @@ class ExpandDims(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> expand_dims = P.ExpandDims()
+        >>> expand_dims = ops.ExpandDims()
         >>> output = expand_dims(input_tensor, 0)
         >>> print(output)
         [[[2. 2.]
@@ -200,7 +200,7 @@ class DType(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> output = P.DType()(input_tensor)
+        >>> output = ops.DType()(input_tensor)
         >>> print(output)
         Float32
     """
@@ -239,7 +239,7 @@ class SameTypeShape(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> input_y = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> output = P.SameTypeShape()(input_x, input_y)
+        >>> output = ops.SameTypeShape()(input_x, input_y)
         >>> print(output)
         [[2. 2.]
          [2. 2.]]
@@ -284,7 +284,7 @@ class Cast(PrimitiveWithInfer):
         >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
         >>> input_x = Tensor(input_np)
         >>> type_dst = mindspore.float16
-        >>> cast = P.Cast()
+        >>> cast = ops.Cast()
         >>> output = cast(input_x, type_dst)
         >>> print(output.dtype)
         Float16
@@ -357,7 +357,7 @@ class IsSubClass(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> output = P.IsSubClass()(mindspore.int32,  mindspore.intc)
+        >>> output = ops.IsSubClass()(mindspore.int32,  mindspore.intc)
         >>> print(output)
         True
     """
@@ -397,7 +397,7 @@ class IsInstance(PrimitiveWithInfer):
 
     Examples:
         >>> a = 1
-        >>> output = P.IsInstance()(a, mindspore.int32)
+        >>> output = ops.IsInstance()(a, mindspore.int32)
         >>> print(output)
         False
     """
@@ -447,7 +447,7 @@ class Reshape(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> reshape = P.Reshape()
+        >>> reshape = ops.Reshape()
         >>> output = reshape(input_tensor, (3, 2))
         >>> print(output)
         [[-0.1  0.3]
@@ -539,7 +539,7 @@ class Shape(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> shape = P.Shape()
+        >>> shape = ops.Shape()
         >>> output = shape(input_tensor)
         >>> print(output)
         (3, 2, 1)
@@ -572,7 +572,7 @@ class DynamicShape(Primitive):
 
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> shape = P.DynamicShape()
+        >>> shape = ops.DynamicShape()
         >>> output = shape(input_tensor)
     """
 
@@ -610,7 +610,7 @@ class Squeeze(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> squeeze = P.Squeeze(2)
+        >>> squeeze = ops.Squeeze(2)
         >>> output = squeeze(input_tensor)
         >>> print(output)
         [[1. 1.]
@@ -669,7 +669,7 @@ class Transpose(PrimitiveWithCheck):
     Examples:
         >>> input_tensor = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
         >>> perm = (0, 2, 1)
-        >>> transpose = P.Transpose()
+        >>> transpose = ops.Transpose()
         >>> output = transpose(input_tensor, perm)
         >>> print(output)
         [[[ 1.  4.]
@@ -711,7 +711,7 @@ class Unique(Primitive):
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
-        >>> output = P.Unique()(x)
+        >>> output = ops.Unique()(x)
         >>> print(output)
         (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 1]))
     """
@@ -743,7 +743,7 @@ class GatherV2(PrimitiveWithCheck):
         >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
-        >>> output = P.GatherV2()(input_params, input_indices, axis)
+        >>> output = ops.GatherV2()(input_params, input_indices, axis)
         >>> print(output)
         [[ 2.  7.]
          [ 4. 54.]
@@ -796,7 +796,7 @@ class SparseGatherV2(GatherV2):
         >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
-        >>> out = P.SparseGatherV2()(input_params, input_indices, axis)
+        >>> out = ops.SparseGatherV2()(input_params, input_indices, axis)
     """
 
 
@@ -820,7 +820,7 @@ class Padding(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.array([[8], [10]]), mindspore.float32)
         >>> pad_dim_size = 4
-        >>> output = P.Padding(pad_dim_size)(x)
+        >>> output = ops.Padding(pad_dim_size)(x)
         >>> print(output)
         [[ 8.  0.  0.  0.]
          [10.  0.  0.  0.]]
@@ -865,7 +865,7 @@ class UniqueWithPad(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.array([1, 1, 5, 5, 4, 4, 3, 3, 2, 2,]), mindspore.int32)
         >>> pad_num = 8
-        >>> output = P.UniqueWithPad()(x, pad_num)
+        >>> output = ops.UniqueWithPad()(x, pad_num)
         >>> print(output)
         (Tensor(shape=[10], dtype=Int32, value= [1, 5, 4, 3, 2, 8, 8, 8, 8, 8]),
          Tensor(shape=[10], dtype=Int32, value= [0, 0, 1, 1, 2, 2, 3, 3, 4, 4]))
@@ -911,7 +911,7 @@ class Split(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> split = P.Split(1, 2)
+        >>> split = ops.Split(1, 2)
         >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]), mindspore.int32)
         >>> output = split(x)
         >>> print(output)
@@ -973,7 +973,7 @@ class Rank(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> rank = P.Rank()
+        >>> rank = ops.Rank()
         >>> output = rank(input_tensor)
         >>> print(output)
         2
@@ -1009,7 +1009,7 @@ class TruncatedNormal(PrimitiveWithInfer):
 
     Examples:
         >>> shape = (1, 2, 3)
-        >>> truncated_normal = P.TruncatedNormal()
+        >>> truncated_normal = ops.TruncatedNormal()
         >>> output = truncated_normal(shape)
     """
 
@@ -1048,7 +1048,7 @@ class Size(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> size = P.Size()
+        >>> size = ops.Size()
         >>> output = size(input_tensor)
         >>> print(output)
         4
@@ -1090,7 +1090,7 @@ class Fill(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> fill = P.Fill()
+        >>> fill = ops.Fill()
         >>> output = fill(mindspore.float32, (2, 2), 1)
         >>> print(output)
         [[1. 1.]
@@ -1139,8 +1139,8 @@ class Ones(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> from mindspore.ops import operations as P
-        >>> ones = P.Ones()
+        >>> from mindspore.ops import operations as ops
+        >>> ones = ops.Ones()
         >>> output = ones((2, 2), mindspore.float32)
         >>> print(output)
         [[1.0, 1.0],
@@ -1192,8 +1192,8 @@ class Zeros(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> from mindspore.ops import operations as P
-        >>> zeros = P.Zeros()
+        >>> from mindspore.ops import operations as ops
+        >>> zeros = ops.Zeros()
         >>> output = zeros((2, 2), mindspore.float32)
         >>> print(output)
         [[0.0, 0.0],
@@ -1243,7 +1243,7 @@ class OnesLike(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> oneslike = P.OnesLike()
+        >>> oneslike = ops.OnesLike()
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
         >>> output = oneslike(x)
         >>> print(output)
@@ -1279,7 +1279,7 @@ class ZerosLike(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> zeroslike = P.ZerosLike()
+        >>> zeroslike = ops.ZerosLike()
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> output = zeroslike(x)
         >>> print(output)
@@ -1313,7 +1313,7 @@ class TupleToArray(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> type = P.TupleToArray()((1,2,3))
+        >>> type = ops.TupleToArray()((1,2,3))
         >>> print(type)
         [1 2 3]
     """
@@ -1359,7 +1359,7 @@ class ScalarToArray(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> op = P.ScalarToArray()
+        >>> op = ops.ScalarToArray()
         >>> data = 1.0
         >>> output = op(data)
         >>> print(output)
@@ -1395,7 +1395,7 @@ class ScalarToTensor(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> op = P.ScalarToTensor()
+        >>> op = ops.ScalarToTensor()
         >>> data = 1
         >>> output = op(data, mindspore.float32)
         >>> print(output)
@@ -1441,7 +1441,7 @@ class InvertPermutation(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> invert = P.InvertPermutation()
+        >>> invert = ops.InvertPermutation()
         >>> input_data = (3, 4, 0, 2, 1)
         >>> output = invert(input_data)
         >>> print(output)
@@ -1510,7 +1510,7 @@ class Argmax(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
-        >>> output = P.Argmax(output_type=mindspore.int32)(input_x)
+        >>> output = ops.Argmax(output_type=mindspore.int32)(input_x)
         >>> print(output)
         1
     """
@@ -1562,7 +1562,7 @@ class Argmin(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
-        >>> index = P.Argmin()(input_x)
+        >>> index = ops.Argmin()(input_x)
         >>> print(index)
         2
     """
@@ -1623,7 +1623,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
-        >>> index, output = P.ArgMaxWithValue()(input_x)
+        >>> index, output = ops.ArgMaxWithValue()(input_x)
     """
 
     @prim_attr_register
@@ -1678,7 +1678,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
-        >>> output = P.ArgMinWithValue()(input_x)
+        >>> output = ops.ArgMinWithValue()(input_x)
         >>> print(output)
         (Tensor(shape=[], dtype=Int32, value= 2), Tensor(shape=[], dtype=Float32, value= 0.0595638))
     """
@@ -1735,7 +1735,7 @@ class Tile(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> tile = P.Tile()
+        >>> tile = ops.Tile()
         >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
         >>> multiples = (2, 3)
         >>> output = tile(input_x, multiples)
@@ -1816,7 +1816,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
         >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
         >>> num_segments = 4
-        >>> output = P.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
+        >>> output = ops.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
         >>> print(output)
         [3. 3. 4. 0.]
     """
@@ -1894,7 +1894,7 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
         >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
         >>> num_segments = 2
-        >>> unsorted_segment_min = P.UnsortedSegmentMin()
+        >>> unsorted_segment_min = ops.UnsortedSegmentMin()
         >>> output = unsorted_segment_min(input_x, segment_ids, num_segments)
         >>> print(output)
         [[1. 2. 3.]
@@ -1953,7 +1953,7 @@ class UnsortedSegmentMax(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
         >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
         >>> num_segments = 2
-        >>> unsorted_segment_max = P.UnsortedSegmentMax()
+        >>> unsorted_segment_max = ops.UnsortedSegmentMax()
         >>> output = unsorted_segment_max(input_x, segment_ids, num_segments)
         >>> print(output)
         [[1. 2. 3.]
@@ -2009,7 +2009,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
         >>> segment_ids = Tensor(np.array([0, 1, 0]).astype(np.int32))
         >>> num_segments = 2
-        >>> unsorted_segment_prod = P.UnsortedSegmentProd()
+        >>> unsorted_segment_prod = ops.UnsortedSegmentProd()
         >>> output = unsorted_segment_prod(input_x, segment_ids, num_segments)
         >>> print(output)
         [[4. 4. 3.]
@@ -2075,7 +2075,7 @@ class Concat(PrimitiveWithInfer):
     Examples:
         >>> data1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
         >>> data2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
-        >>> op = P.Concat()
+        >>> op = ops.Concat()
         >>> output = op((data1, data2))
         >>> print(output)
         [[0 1]
@@ -2129,7 +2129,7 @@ class ParallelConcat(PrimitiveWithInfer):
     Examples:
         >>> data1 = Tensor(np.array([[0, 1]]).astype(np.int32))
         >>> data2 = Tensor(np.array([[2, 1]]).astype(np.int32))
-        >>> op = P.ParallelConcat()
+        >>> op = ops.ParallelConcat()
         >>> output = op((data1, data2))
         >>> print(output)
         [[0 1]
@@ -2216,7 +2216,7 @@ class Pack(PrimitiveWithInfer):
     Examples:
         >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
         >>> data2 = Tensor(np.array([2, 3]).astype(np.float32))
-        >>> pack = P.Pack()
+        >>> pack = ops.Pack()
         >>> output = pack([data1, data2])
         >>> print(output)
         [[0. 1.]
@@ -2269,7 +2269,7 @@ class Unpack(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> unpack = P.Unpack()
+        >>> unpack = ops.Unpack()
         >>> input_x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
         >>> output = unpack(input_x)
         >>> print(output)
@@ -2330,7 +2330,7 @@ class Slice(PrimitiveWithInfer):
         >>> data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
         ...                         [[3, 3, 3], [4, 4, 4]],
         ...                         [[5, 5, 5], [6, 6, 6]]]).astype(np.int32))
-        >>> slice = P.Slice()
+        >>> slice = ops.Slice()
         >>> output = slice(data, (1, 0, 0), (1, 1, 3))
         >>> print(output)
         [[[3 3 3]]]
@@ -2385,7 +2385,7 @@ class ReverseV2(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.int32)
-        >>> op = P.ReverseV2(axis=[1])
+        >>> op = ops.ReverseV2(axis=[1])
         >>> output = op(input_x)
         >>> print(output)
         [[4 3 2 1]
@@ -2427,7 +2427,7 @@ class Rint(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([-1.6, -0.1, 1.5, 2.0]), mindspore.float32)
-        >>> op = P.Rint()
+        >>> op = ops.Rint()
         >>> output = op(input_x)
         >>> print(output)
         [-2.  0.  2.  2.]
@@ -2489,7 +2489,7 @@ class Select(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> select = P.Select()
+        >>> select = ops.Select()
         >>> input_cond = Tensor([True, False])
         >>> input_x = Tensor([2,3], mindspore.float32)
         >>> input_y = Tensor([1,2], mindspore.float32)
@@ -2628,7 +2628,7 @@ class StridedSlice(PrimitiveWithInfer):
     Examples
         >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
         ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
-        >>> slice = P.StridedSlice()
+        >>> slice = ops.StridedSlice()
         >>> output = slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
         >>> print(output)
         [[[3. 3. 3.]]]
@@ -2773,7 +2773,7 @@ class Diag(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4])
-        >>> diag = P.Diag()
+        >>> diag = ops.Diag()
         >>> output = diag(input_x)
         >>> print(output)
         [[1, 0, 0, 0],
@@ -2826,7 +2826,7 @@ class DiagPart(PrimitiveWithInfer):
         ...                   [0, 2, 0, 0],
         ...                   [0, 0, 3, 0],
         ...                   [0, 0, 0, 4]])
-        >>> diag_part = P.DiagPart()
+        >>> diag_part = ops.DiagPart()
         >>> output = diag_part(input_x)
         >>> print(output)
         [1 2 3 4]
@@ -2879,7 +2879,7 @@ class Eye(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> eye = P.Eye()
+        >>> eye = ops.Eye()
         >>> output = eye(2, 2, mindspore.int32)
         >>> print(output)
         [[1 0]
@@ -2918,7 +2918,7 @@ class ScatterNd(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> op = P.ScatterNd()
+        >>> op = ops.ScatterNd()
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.array([3.2, 1.1]), mindspore.float32)
         >>> shape = (3, 3)
@@ -2975,7 +2975,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mindspore.float32)
-        >>> resize = P.ResizeNearestNeighbor((2, 2))
+        >>> resize = ops.ResizeNearestNeighbor((2, 2))
         >>> output = resize(input_tensor)
         >>> print(output)
         [[[[-0.1  0.3]
@@ -3020,7 +3020,7 @@ class GatherNd(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> op = P.GatherNd()
+        >>> op = ops.GatherNd()
         >>> output = op(input_x, indices)
         >>> print(output)
         [-0.1  0.5]
@@ -3061,7 +3061,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
-        >>> op = P.TensorScatterUpdate()
+        >>> op = ops.TensorScatterUpdate()
         >>> output = op(input_x, indices, update)
         >>> print(output)
         [[ 1.   0.3  3.6]
@@ -3120,7 +3120,7 @@ class ScatterUpdate(_ScatterOp_Dynamic):
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
         >>> np_updates = np.array([[2.0, 1.2, 1.0], [3.0, 1.2, 1.0]])
         >>> updates = Tensor(np_updates, mindspore.float32)
-        >>> op = P.ScatterUpdate()
+        >>> op = ops.ScatterUpdate()
         >>> output = op(input_x, indices, updates)
         >>> print(output)
         [[2.  1.2 1. ]
@@ -3164,7 +3164,7 @@ class ScatterNdUpdate(_ScatterNdOp):
         >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
-        >>> op = P.ScatterNdUpdate()
+        >>> op = ops.ScatterNdUpdate()
         >>> output = op(input_x, indices, update)
         >>> print(output)
         [[ 1.   0.3  3.6]
@@ -3215,7 +3215,7 @@ class ScatterMax(_ScatterOp):
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.ones([2, 2, 3]) * 88, mindspore.float32)
-        >>> scatter_max = P.ScatterMax()
+        >>> scatter_max = ops.ScatterMax()
         >>> output = scatter_max(input_x, indices, update)
         >>> print(output)
         [[88. 88. 88.]
@@ -3260,7 +3260,7 @@ class ScatterMin(_ScatterOp):
         >>> input_x = Parameter(Tensor(np.array([[0.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.ones([2, 2, 3]), mindspore.float32)
-        >>> scatter_min = P.ScatterMin()
+        >>> scatter_min = ops.ScatterMin()
         >>> output = scatter_min(input_x, indices, update)
         >>> print(output)
         [[0. 1. 1.]
@@ -3299,7 +3299,7 @@ class ScatterAdd(_ScatterOp_Dynamic):
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.ones([2, 2, 3]), mindspore.float32)
-        >>> scatter_add = P.ScatterAdd()
+        >>> scatter_add = ops.ScatterAdd()
         >>> output = scatter_add(input_x, indices, updates)
         >>> print(output)
         [[1. 1. 1.]
@@ -3345,7 +3345,7 @@ class ScatterSub(_ScatterOp):
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]]), mindspore.float32)
-        >>> scatter_sub = P.ScatterSub()
+        >>> scatter_sub = ops.ScatterSub()
         >>> output = scatter_sub(input_x, indices, updates)
         >>> print(output)
         [[-1.0, -1.0, -1.0], [-1.0, -1.0, -1.0]]
@@ -3383,7 +3383,7 @@ class ScatterMul(_ScatterOp):
         >>> input_x = Parameter(Tensor(np.array([[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
         >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
-        >>> scatter_mul = P.ScatterMul()
+        >>> scatter_mul = ops.ScatterMul()
         >>> output = scatter_mul(input_x, indices, updates)
         >>> print(output)
         [[2. 2. 2.]
@@ -3422,7 +3422,7 @@ class ScatterDiv(_ScatterOp):
         >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
         >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
-        >>> scatter_div = P.ScatterDiv()
+        >>> scatter_div = ops.ScatterDiv()
         >>> output = scatter_div(input_x, indices, updates)
         >>> print(output)
         [[3. 3. 3.]
@@ -3461,7 +3461,7 @@ class ScatterNdAdd(_ScatterNdOp):
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_nd_add = P.ScatterNdAdd()
+        >>> scatter_nd_add = ops.ScatterNdAdd()
         >>> output = scatter_nd_add(input_x, indices, updates)
         >>> print(output)
         [ 1. 10.  9.  4. 12.  6.  7. 17.]
@@ -3499,7 +3499,7 @@ class ScatterNdSub(_ScatterNdOp):
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_nd_sub = P.ScatterNdSub()
+        >>> scatter_nd_sub = ops.ScatterNdSub()
         >>> output = scatter_nd_sub(input_x, indices, updates)
         >>> print(output)
         [ 1. -6. -3.  4. -2.  6.  7. -1.]
@@ -3534,7 +3534,7 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_non_aliasing_add = P.ScatterNonAliasingAdd()
+        >>> scatter_non_aliasing_add = ops.ScatterNonAliasingAdd()
         >>> output = scatter_non_aliasing_add(input_x, indices, updates)
         >>> print(output)
         [ 1. 10.  9.  4. 12.  6.  7. 17.]
@@ -3580,7 +3580,7 @@ class SpaceToDepth(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.random.rand(1,3,2,2), mindspore.float32)
         >>> block_size = 2
-        >>> space_to_depth = P.SpaceToDepth(block_size)
+        >>> space_to_depth = ops.SpaceToDepth(block_size)
         >>> output = space_to_depth(x)
         >>> print(output)
         (1, 12, 1, 1)
@@ -3641,7 +3641,7 @@ class DepthToSpace(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.random.rand(1,12,1,1), mindspore.float32)
         >>> block_size = 2
-        >>> depth_to_space = P.DepthToSpace(block_size)
+        >>> depth_to_space = ops.DepthToSpace(block_size)
         >>> output = depth_to_space(x)
         >>> print(output.shape)
         (1, 3, 2, 2)
@@ -3710,7 +3710,7 @@ class SpaceToBatch(PrimitiveWithInfer):
     Examples:
         >>> block_size = 2
         >>> paddings = [[0, 0], [0, 0]]
-        >>> space_to_batch = P.SpaceToBatch(block_size, paddings)
+        >>> space_to_batch = ops.SpaceToBatch(block_size, paddings)
         >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
         >>> output = space_to_batch(input_x)
         >>> print(output)
@@ -3787,7 +3787,7 @@ class BatchToSpace(PrimitiveWithInfer):
     Examples:
         >>> block_size = 2
         >>> crops = [[0, 0], [0, 0]]
-        >>> batch_to_space = P.BatchToSpace(block_size, crops)
+        >>> batch_to_space = ops.BatchToSpace(block_size, crops)
         >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
         >>> output = batch_to_space(input_x)
         >>> print(output)
@@ -3868,7 +3868,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
     Examples:
         >>> block_shape = [2, 2]
         >>> paddings = [[0, 0], [0, 0]]
-        >>> space_to_batch_nd = P.SpaceToBatchND(block_shape, paddings)
+        >>> space_to_batch_nd = ops.SpaceToBatchND(block_shape, paddings)
         >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
         >>> output = space_to_batch_nd(input_x)
         >>> print(output)
@@ -3967,7 +3967,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
     Examples:
         >>> block_shape = [2, 2]
         >>> crops = [[0, 0], [0, 0]]
-        >>> batch_to_space_nd = P.BatchToSpaceND(block_shape, crops)
+        >>> batch_to_space_nd = ops.BatchToSpaceND(block_shape, crops)
         >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
         >>> output = batch_to_space_nd(input_x)
         >>> print(output)
@@ -4050,7 +4050,7 @@ class BroadcastTo(PrimitiveWithInfer):
     Examples:
         >>> shape = (2, 3)
         >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.float32))
-        >>> broadcast_to = P.BroadcastTo(shape)
+        >>> broadcast_to = ops.BroadcastTo(shape)
         >>> output = broadcast_to(input_x)
         >>> print(output)
         [[1. 2. 3.]
@@ -4107,7 +4107,7 @@ class Meshgrid(PrimitiveWithInfer):
         >>> y = np.array([5, 6, 7]).astype(np.int32)
         >>> z = np.array([8, 9, 0, 1, 2]).astype(np.int32)
         >>> inputs = (x, y, z)
-        >>> meshgrid = P.Meshgrid(indexing="xy")
+        >>> meshgrid = ops.Meshgrid(indexing="xy")
         >>> meshgrid(inputs)
         (Tensor(shape=[3, 4, 6], dtype=UInt32, value=
          [[[1, 1, 1, 1, 1],
@@ -4203,7 +4203,7 @@ class InplaceUpdate(PrimitiveWithInfer):
         >>> indices = (0, 1)
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
-        >>> inplace_update = P.InplaceUpdate(indices)
+        >>> inplace_update = ops.InplaceUpdate(indices)
         >>> output = inplace_update(x, v)
         >>> print(output)
         [[0.5 1. ]
@@ -4262,7 +4262,7 @@ class ReverseSequence(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
         >>> seq_lengths = Tensor(np.array([1, 2, 3]))
-        >>> reverse_sequence = P.ReverseSequence(seq_dim=1)
+        >>> reverse_sequence = ops.ReverseSequence(seq_dim=1)
         >>> output = reverse_sequence(x, seq_lengths)
         >>> print(output)
         [[1. 2. 3.]
@@ -4322,7 +4322,7 @@ class EditDistance(PrimitiveWithInfer):
         >>> from mindspore import context
         >>> from mindspore import Tensor
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.operations as P
+        >>> import mindspore.ops.operations as ops
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>> class EditDistance(nn.Cell):
         ...     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
@@ -4437,7 +4437,7 @@ class Sort(PrimitiveWithInfer):
 
     Examples:
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
-        >>> sort = P.Sort()
+        >>> sort = ops.Sort()
         >>> output = sort(x)
         >>> print(output)
         (Tensor(shape=[3, 3], dtype=Float16, value=
@@ -4489,7 +4489,7 @@ class EmbeddingLookup(PrimitiveWithInfer):
         >>> input_params = Tensor(np.array([[8, 9], [10, 11], [12, 13], [14, 15]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([[5, 2], [8, 5]]), mindspore.int32)
         >>> offset = 4
-        >>> output = P.EmbeddingLookup()(input_params, input_indices, offset)
+        >>> output = ops.EmbeddingLookup()(input_params, input_indices, offset)
         >>> print(output)
         [[[10. 11.]
           [ 0.  0.]]
@@ -4545,7 +4545,7 @@ class GatherD(PrimitiveWithInfer):
         >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
         >>> index = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int32)
         >>> dim = 1
-        >>> output = P.GatherD()(x, dim, index)
+        >>> output = ops.GatherD()(x, dim, index)
         >>> print(output)
         [[1 1]
          [4 3]]
@@ -4594,7 +4594,7 @@ class Identity(PrimitiveWithInfer):
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
-        >>> output = P.Identity()(x)
+        >>> output = ops.Identity()(x)
         >>> print(output)
         [1 2 3 4]
     """

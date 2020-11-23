@@ -38,7 +38,7 @@ class SparseToDense(PrimitiveWithInfer):
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.float32)
         >>> dense_shape = (3, 4)
-        >>> out = P.SparseToDense()(indices, values, dense_shape)
+        >>> out = ops.SparseToDense()(indices, values, dense_shape)
     """
 
     @prim_attr_register

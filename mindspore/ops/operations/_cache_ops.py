@@ -94,7 +94,7 @@ class SearchCacheIdx(PrimitiveWithInfer):
                                                 [21, 9, -5, 1]], np.int32)), name="hashmap")
         >>> indices = Tensor(np.array([10, 2, 25, 5, 3], np.int32))
         >>> step = 0, emb_max_num = 25, cache_max_num = 10
-        >>> ops = P.SearchCacheIdx()
+        >>> ops = ops.SearchCacheIdx()
         >>> cache_idx, miss_idx, miss_emb_idx = ops(hashmap, indices, step, emb_max_num, cache_max_num)
         cache_idx : [5, 1, 10, -1, 3]
         miss_idx : [-1, -1, -1, 3, -1]

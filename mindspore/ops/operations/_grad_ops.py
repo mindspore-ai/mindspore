@@ -496,7 +496,7 @@ class DropoutGrad(PrimitiveWithInfer):
         Tensor, the value of generated mask for input shape.
 
     Examples:
-        >>> dropout_grad = P.DropoutGrad(keep_prob=0.5)
+        >>> dropout_grad = ops.DropoutGrad(keep_prob=0.5)
         >>> in = Tensor((20, 16, 50, 50))
         >>> out = dropout_grad(in)
     """

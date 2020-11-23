@@ -57,7 +57,7 @@ class ControlDepend(Primitive):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.control_depend = P.ControlDepend()
-        ...         self.softmax = P.Softmax()
+        ...         self.softmax = ops.Softmax()
         ...
         ...     def construct(self, x, y):
         ...         mul = x * y
@@ -104,12 +104,12 @@ class GeSwitch(PrimitiveWithInfer):
         >>> class Net(nn.Cell):
         ... 	def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.square = P.Square()
-        ...         self.add = P.TensorAdd()
+        ...         self.square = ops.Square()
+        ...         self.add = ops.TensorAdd()
         ...         self.value = Tensor(np.full((1), 3), mindspore.float32)
-        ...         self.switch = P.GeSwitch()
-        ...         self.merge = P.Merge()
-        ...         self.less = P.Less()
+        ...         self.switch = ops.GeSwitch()
+        ...         self.merge = ops.Merge()
+        ...         self.less = ops.Less()
         ...
         ...     def construct(self, x, y):
         ...         cond = self.less(x, y)
@@ -159,7 +159,7 @@ class Merge(PrimitiveWithInfer):
         tuple. Output is tuple(`data`, `output_index`). The `data` has the same shape of `inputs` element.
 
     Examples:
-        >>> merge = P.Merge()
+        >>> merge = ops.Merge()
         >>> input_x = Tensor(np.linspace(0, 8, 8).reshape(2, 4), mindspore.float32)
         >>> input_y = Tensor(np.random.randint(-4, 4, (2, 4)), mindspore.float32)
         >>> result = merge((input_x, input_y))
