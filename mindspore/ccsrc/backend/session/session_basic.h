@@ -135,6 +135,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   friend class RunGraphTask;
   friend class BuildOpTask;
   friend class RunOpTask;
+  virtual bool IsSupportSummary() { return true; }
   virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
                                    VectorRef *outputs,
                                    std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node);
