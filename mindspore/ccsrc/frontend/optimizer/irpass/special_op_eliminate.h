@@ -102,6 +102,25 @@ class VirtualDatasetEliminater : public AnfVisitor {
   void Visit(const AnfNodePtr &) override {}
 };
 
+// {prim::kPrimReceive, X} -> prim::kPrimReceive
+class ReceiveEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!IsPrimitiveCNode(node, prim::kPrimReceive) || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->inputs().size() == 1) {
+      return nullptr;
+    }
+    std::vector<AnfNodePtr> args = {cnode->input(0)};
+    return node->func_graph()->NewCNode(args);
+  }
+
+  void Visit(const AnfNodePtr &) override {}
+};
+
 // {prim::kPrimSameTypeShape, X, Y} -> X
 class SameEliminater : public AnfVisitor {
  public:
