@@ -105,7 +105,7 @@ class Optimizer(Cell):
         weight_decay = self._preprocess_weight_decay(weight_decay)
 
         self._unique = True
-        self._target = 'Ascend'
+        self._target = context.get_context("device_target")
         self.dynamic_lr = False
         self.assignadd = None
         self.global_step = None
@@ -194,8 +194,7 @@ class Optimizer(Cell):
     @property
     def target(self):
         """The method is used to determine whether the parameter is updated on host or device. The input type is str
-           and can only be 'CPU' and 'Ascend'. In GPU environment, users can only configure value as 'CPU'.
-           The method is read-only."""
+           and can only be 'CPU', 'Ascend' or 'GPU'."""
         return self._target
 
     @target.setter

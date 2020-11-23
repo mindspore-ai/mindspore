@@ -350,8 +350,8 @@ class Adam(Optimizer):
         if not isinstance(value, str):
             raise TypeError("The value must be str type, but got value type is {}".format(type(value)))
 
-        if value not in ('CPU', 'Ascend'):
-            raise ValueError("The value must be 'CPU' or 'Ascend', but got value {}".format(value))
+        if value not in ('CPU', 'Ascend', 'GPU'):
+            raise ValueError("The value must be 'CPU', 'Ascend' or 'GPU', but got value {}".format(value))
 
         self._is_device = (value != 'CPU')
         self._target = value
