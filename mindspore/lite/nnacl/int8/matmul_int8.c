@@ -250,6 +250,41 @@ void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
   return;
 }
 
+#ifndef ENABLE_ARM
+void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
+                   const int *bias, int mini, int maxi, int out_zp, int32_t *multiplier, int32_t *left_shift,
+                   int32_t *right_shift, int stride, int filter_peroc, int32_t *filter_zp) {
+  int col_tile = C4NUM;
+  /* support per-layer && weight per-channel */
+  /*  row4x16-major * row16x2-major => (int8)row-major*/
+  for (int r = 0; r < row; r++) {
+    for (int c = 0; c < col; c++) {
+      int r4div = r / C4NUM, r4mod = r % C4NUM;
+      int c4div = c / col_tile, c4mod = c % col_tile;
+      size_t ci = r * stride + c;
+      int32_t value = 0;
+      for (int d = 0; d < deep16; d++) {
+        int d16div = d / C16NUM, d16mod = d % C16NUM;
+        size_t ai = r4div * deep16 * C4NUM + d16div * C4NUM * C16NUM + r4mod * C16NUM + d16mod;
+        size_t bi = c4div * deep16 * col_tile + d16div * col_tile * C16NUM + c4mod * C16NUM + d16mod;
+        value = value + a[ai] * b[bi];
+      }
+      int32_t cur_input_sum = filter_peroc ? a_sums[r] * filter_zp[c] : a_sums[r];
+      value -= cur_input_sum;
+      value += bias[c];
+      int32_t cur_left_shift = filter_peroc ? left_shift[c] : left_shift[0];
+      int32_t cur_right_shift = filter_peroc ? right_shift[c] : right_shift[0];
+      int32_t cur_multiplier = filter_peroc ? multiplier[c] : multiplier[0];
+      value = MultiplyByQuantizedMultiplier(value, cur_multiplier, cur_left_shift, cur_right_shift) + out_zp;
+      value = MSMIN(maxi, value);
+      value = MSMAX(mini, value);
+      dst[ci] = (int8_t)value;
+    }
+  }
+  return;
+}
+#endif
+
 void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
                       int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,

@@ -92,27 +92,19 @@ int Convolution1x1Int8OcOptPre(void *cdata, int task_id) {
 }
 
 int Convolution1x1Int8CPUKernel::OcRun(int task_id) {
-#ifdef ENABLE_ARM32
-  return RunArm32Oc(task_id);
-#else
   if (support_optimize_) {
     return RunArm64OptOc(task_id);
   } else {
-    return RunArm64Oc(task_id);
+    return RunArmOc(task_id);
   }
-#endif
 }
 
 int Convolution1x1Int8CPUKernel::HwRun(int task_id) {
-#ifdef ENABLE_ARM32
-  return RunArm32Hw(task_id);
-#else
   if (support_optimize_) {
     return RunArm64OptHw(task_id);
   } else {
-    return RunArm64Hw(task_id);
+    return RunArmHw(task_id);
   }
-#endif
 }
 
 int Convolution1x1Int8CPUKernel::InitRunBuf() {
@@ -124,6 +116,7 @@ int Convolution1x1Int8CPUKernel::InitRunBuf() {
 
   size_t size = support_optimize_ ? UP_ROUND(matmul_param_->row_, C8NUM) * UP_ROUND(matmul_param_->deep_, C4NUM)
                                   : UP_ROUND(matmul_param_->row_, C4NUM) * UP_ROUND(matmul_param_->deep_, C16NUM);
+
   packed_input_ = reinterpret_cast<int8_t *>(ctx_->allocator->Malloc(size * sizeof(int8_t)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "conv1x1 int8 Malloc packed_input_ error!";
@@ -333,8 +326,8 @@ int Convolution1x1Int8CPUKernel::InitParam() {
   matmul_param_->deep_4_ = UP_ROUND(matmul_param_->deep_, C4NUM);
   matmul_param_->deep_16_ = UP_ROUND(matmul_param_->deep_, C16NUM);
 
-  int row_pack_count = 0;
-  int col_pack_count = 0;
+  int row_pack_count;
+  int col_pack_count;
 
 #ifdef ENABLE_ARM32
   row_pack_count = C4NUM;
@@ -350,15 +343,7 @@ int Convolution1x1Int8CPUKernel::InitParam() {
 #endif
 
   /* init input sum size */
-  if (support_optimize_) {
-    input_sum_size_ = UP_ROUND(matmul_param_->row_, row_pack_count);
-  } else {
-    if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
-      input_sum_size_ = UP_ROUND(matmul_param_->col_, col_pack_count) * UP_ROUND(matmul_param_->row_, row_pack_count);
-    } else {
-      input_sum_size_ = UP_ROUND(matmul_param_->row_, row_pack_count);
-    }
-  }
+  input_sum_size_ = UP_ROUND(matmul_param_->row_, row_pack_count);
 
   if (pre_trans_input_) {
     input_ptr_ = reinterpret_cast<int8_t *>(malloc(matmul_param_->row_ * matmul_param_->deep_ * sizeof(int8_t)));
@@ -404,7 +389,7 @@ void Convolution1x1Int8CPUKernel::Pre1x1Trans(int8_t *src_input, int8_t *src_out
   return;
 }
 
-int Convolution1x1Int8CPUKernel::RunArm64Hw(int task_id) {
+int Convolution1x1Int8CPUKernel::RunArmHw(int task_id) {
   int cur_stride = thread_stride_hw_ * C4NUM;
   int res_stride = matmul_param_->row_ - task_id * thread_stride_hw_ * C4NUM;
   int cur_hw = MSMIN(cur_stride, res_stride);
@@ -415,51 +400,20 @@ int Convolution1x1Int8CPUKernel::RunArm64Hw(int task_id) {
   int8_t *hw_in = input_ptr_ + task_id * thread_stride_hw_ * C4NUM * conv_param_->input_channel_;
   int8_t *hw_out = output_ptr_ + task_id * thread_stride_hw_ * C4NUM * conv_param_->output_channel_;
   int8_t *hw_packed_in = packed_input_ + task_id * thread_stride_hw_ * C4NUM * matmul_param_->deep_16_;
-  int32_t *hw_input_sum = filter_peroc_ ? input_sum_ + task_id * thread_stride_hw_ * C4NUM * matmul_param_->col_4_
-                                        : input_sum_ + task_id * thread_stride_hw_ * C4NUM;
+  int32_t *hw_input_sum = input_sum_ + task_id * thread_stride_hw_ * C4NUM;
 
   RowMajor2Row16x4MajorInt8(hw_in, hw_packed_in, cur_hw, matmul_param_->deep_);
 
   if (filter_peroc_) {
-    PackInputSum16x4PerChannel(hw_packed_in, hw_input_sum, filter_zp_ptr_, cur_hw, matmul_param_->deep_,
-                               matmul_param_->col_);
+    PackInputSum16x4PerLayer(hw_packed_in, hw_input_sum, 1, UP_ROUND(cur_hw, C4NUM), matmul_param_->deep_16_);
   } else {
     PackInputSum16x4PerLayer(hw_packed_in, hw_input_sum, conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_,
                              UP_ROUND(cur_hw, C4NUM), matmul_param_->deep_16_);
   }
 
   Conv1x1Int8(hw_packed_in, packed_weight_, hw_out, hw_input_sum, reinterpret_cast<int32_t *>(bias_data_), cur_hw,
-              matmul_param_->col_, matmul_param_->deep_16_, left_shift_, right_shift_, multiplier_, conv_param_);
-  return RET_OK;
-}
-
-int Convolution1x1Int8CPUKernel::RunArm32Hw(int task_id) {
-  int cur_stride = thread_stride_hw_ * C4NUM;
-  int res_stride = matmul_param_->row_ - task_id * thread_stride_hw_ * C4NUM;
-  int cur_hw = MSMIN(cur_stride, res_stride);
-  if (cur_hw <= 0) {
-    return RET_OK;
-  }
-
-  int8_t *hw_in = input_ptr_ + task_id * thread_stride_hw_ * C4NUM * conv_param_->input_channel_;
-  int8_t *hw_out = output_ptr_ + task_id * thread_stride_hw_ * C4NUM * conv_param_->output_channel_;
-  int8_t *hw_packed_in = packed_input_ + task_id * thread_stride_hw_ * C4NUM * matmul_param_->deep_16_;
-  int32_t *hw_input_sum = filter_peroc_ ? input_sum_ + task_id * thread_stride_hw_ * C4NUM * matmul_param_->col_2_
-                                        : input_sum_ + task_id * thread_stride_hw_ * C4NUM;
-
-  RowMajor2Row16x4MajorInt8(hw_in, hw_packed_in, cur_hw, matmul_param_->deep_);
-
-  if (filter_peroc_) {
-    PackInputSum16x4PerChannelArm32(hw_packed_in, hw_input_sum, filter_zp_ptr_, cur_hw, conv_param_->input_channel_,
-                                    conv_param_->output_channel_);
-  } else {
-    PackInputSum16x4PerLayer(hw_packed_in, hw_input_sum, conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_,
-                             UP_ROUND(cur_hw, C4NUM), matmul_param_->deep_16_);
-  }
-
-  Conv1x1Int8Arm32(hw_packed_in, packed_weight_, hw_out, hw_input_sum, reinterpret_cast<int32_t *>(bias_data_), cur_hw,
-                   matmul_param_->col_, matmul_param_->deep_16_, left_shift_, right_shift_, multiplier_, conv_param_);
-
+              matmul_param_->col_, matmul_param_->deep_16_, left_shift_, right_shift_, multiplier_, conv_param_,
+              filter_zp_ptr_);
   return RET_OK;
 }
 
@@ -489,26 +443,6 @@ int Convolution1x1Int8CPUKernel::RunArm64OptHw(int task_id) {
   return RET_OK;
 }
 
-int Convolution1x1Int8CPUKernel::RunArm32Oc(int task_id) {
-  int stride = thread_stride_oc_ * C2NUM;
-  int cur_stride = task_id * stride;
-  int res_stride = matmul_param_->col_ - cur_stride;
-  int cur_oc = MSMIN(stride, res_stride);
-  if (cur_oc <= 0) {
-    return RET_OK;
-  }
-
-  int32_t *cur_input_sum = filter_peroc_ ? input_sum_ + cur_stride * matmul_param_->row_4_ : input_sum_;
-  int32_t *cur_left_shift = filter_peroc_ ? left_shift_ + cur_stride : conv_param_->conv_quant_arg_.left_shift_;
-  int32_t *cur_right_shift = filter_peroc_ ? right_shift_ + cur_stride : conv_param_->conv_quant_arg_.right_shift_;
-  int32_t *cur_multiplier = filter_peroc_ ? multiplier_ + cur_stride : conv_param_->conv_quant_arg_.quant_multiplier_;
-
-  Conv1x1Int8Arm32(packed_input_, packed_weight_ + cur_stride * matmul_param_->deep_16_, output_ptr_ + cur_stride,
-                   cur_input_sum, reinterpret_cast<int32_t *>(bias_data_) + cur_stride, matmul_param_->row_, cur_oc,
-                   matmul_param_->deep_16_, cur_left_shift, cur_right_shift, cur_multiplier, conv_param_);
-  return RET_OK;
-}
-
 int Convolution1x1Int8CPUKernel::RunArm64OptOc(int task_id) {
   int stride = thread_stride_oc_ * C16NUM;
   int cur_stride = task_id * stride;
@@ -531,8 +465,13 @@ int Convolution1x1Int8CPUKernel::RunArm64OptOc(int task_id) {
   return RET_OK;
 }
 
-int Convolution1x1Int8CPUKernel::RunArm64Oc(int task_id) {
-  int stride = thread_stride_oc_ * C4NUM;
+int Convolution1x1Int8CPUKernel::RunArmOc(int task_id) {
+#ifdef ENABLE_ARM32
+  int col_tile = C2NUM;
+#else
+  int col_tile = C4NUM;
+#endif
+  int stride = thread_stride_oc_ * col_tile;
   int cur_stride = task_id * stride;
   int res_stride = matmul_param_->col_ - cur_stride;
   int cur_oc = MSMIN(stride, res_stride);
@@ -540,14 +479,14 @@ int Convolution1x1Int8CPUKernel::RunArm64Oc(int task_id) {
     return RET_OK;
   }
 
-  int32_t *cur_input_sum = filter_peroc_ ? input_sum_ + cur_stride * matmul_param_->row_4_ : input_sum_;
   int32_t *cur_left_shift = filter_peroc_ ? left_shift_ + cur_stride : conv_param_->conv_quant_arg_.left_shift_;
   int32_t *cur_right_shift = filter_peroc_ ? right_shift_ + cur_stride : conv_param_->conv_quant_arg_.right_shift_;
   int32_t *cur_multiplier = filter_peroc_ ? multiplier_ + cur_stride : conv_param_->conv_quant_arg_.quant_multiplier_;
+  int32_t *cur_zp = filter_peroc_ ? filter_zp_ptr_ + cur_stride : filter_zp_ptr_;
 
   Conv1x1Int8(packed_input_, packed_weight_ + cur_stride * matmul_param_->deep_16_, output_ptr_ + cur_stride,
-              cur_input_sum, reinterpret_cast<int32_t *>(bias_data_) + cur_stride, matmul_param_->row_, cur_oc,
-              matmul_param_->deep_16_, cur_left_shift, cur_right_shift, cur_multiplier, conv_param_);
+              input_sum_, reinterpret_cast<int32_t *>(bias_data_) + cur_stride, matmul_param_->row_, cur_oc,
+              matmul_param_->deep_16_, cur_left_shift, cur_right_shift, cur_multiplier, conv_param_, cur_zp);
 
   return RET_OK;
 }
@@ -592,7 +531,12 @@ int Convolution1x1Int8CPUKernel::Run() {
         ParallelLaunch(this->context_->thread_pool_, Convolution1x1Int8OcOptPre, this, thread_count_hw_);
       } else {
         RowMajor2Row16x4MajorInt8(input_ptr_, packed_input_, matmul_param_->row_, matmul_param_->deep_);
-        PackInputSum16x4Int8(packed_input_, input_sum_, filter_zp_ptr_, conv_param_);
+        if (filter_peroc_) {
+          PackInputSum16x4PerLayer(packed_input_, input_sum_, 1, matmul_param_->row_4_, matmul_param_->deep_16_);
+        } else {
+          PackInputSum16x4PerLayer(packed_input_, input_sum_, conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_,
+                                   matmul_param_->row_4_, matmul_param_->deep_16_);
+        }
       }
       /* matmul parallel by oc */
       error_code = ParallelLaunch(this->context_->thread_pool_, Convolution1x1Int8OcRun, this, thread_count_oc_);
