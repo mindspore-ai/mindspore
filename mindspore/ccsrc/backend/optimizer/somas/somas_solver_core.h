@@ -33,7 +33,7 @@ class SomasSolverCore {
  public:
   /// Interface Function: receive parameters, creates the model to solve and then save the result
   SomasSolverCore(const std::unordered_map<size_t, SomasSolverTensorDescPtr> &tensors,
-                  std::vector<DynamicBitSet> *constraints)
+                  const std::vector<DynamicBitSet> *constraints)
       : tensors_(tensors),
         constraints_(*constraints),
         upperbound_(SIZE_MAX),

@@ -117,8 +117,8 @@ void FootPrint::Merge(vector<Interval> *interval_v, stack<Interval> *s) {
 
   return;
 }
-void FootPrint::ConstrainedBLocks(std::vector<DynamicBitSet> *constraints, const BlockTensor &b1, const BlockTensor &b2,
-                                  vector<Interval> *oInterval) {
+void FootPrint::ConstrainedBLocks(const std::vector<DynamicBitSet> *constraints, const BlockTensor &b1,
+                                  const BlockTensor &b2, vector<Interval> *oInterval) {
   MS_EXCEPTION_IF_NULL(oInterval);
   // propagate
   size_t acum = m_offset_;
@@ -136,7 +136,7 @@ void FootPrint::ConstrainedBLocks(std::vector<DynamicBitSet> *constraints, const
     acum += p1->size_;
   }
 }
-bool FootPrint::findOffset(std::vector<DynamicBitSet> *constraints, const BlockTensor &block, size_t *offset) {
+bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const BlockTensor &block, size_t *offset) {
   MS_EXCEPTION_IF_NULL(offset);
   bool bretval = true;
   vector<Interval> l_interval;
@@ -201,7 +201,7 @@ void FootPrint::printStats() {
   MS_LOG(DEBUG) << "Footprint blocks: " << m_starts_.size() << " \toffset: " << m_offset_;
 }
 bool FastHeuristic::Eval(vector<BlockTensor> *block_tensors_v, std::shared_ptr<FootPrint> foot_print,
-                         std::vector<DynamicBitSet> *pConstraints) {
+                         const std::vector<DynamicBitSet> *pConstraints) {
   MS_EXCEPTION_IF_NULL(foot_print);
   auto start = std::chrono::system_clock::now();
 

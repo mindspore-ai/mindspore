@@ -62,9 +62,11 @@ class DynamicBitSet {
   size_t bit_size_;
   std::vector<uint64_t> bit_;
 
-  inline size_t GetIndex(size_t index) { return index / bit_width_; }
+  inline size_t GetIndex(size_t index) const { return index / bit_width_; }
 
-  inline uint64_t GetBitMask(size_t index) { return (((uint64_t)0x1) << (bit_width_ - 1 - (index % bit_width_))); }
+  inline uint64_t GetBitMask(size_t index) const {
+    return (((uint64_t)0x1) << (bit_width_ - 1 - (index % bit_width_)));
+  }
 
   inline void Reset(uint64_t val) {
     bit_.clear();
@@ -88,7 +90,7 @@ class DynamicBitSet {
 
   void SetBitFalse(size_t index) { bit_[GetIndex(index)] &= (~GetBitMask(index)); }
 
-  bool IsBitTrue(size_t index) { return (bit_[GetIndex(index)] & GetBitMask(index)) != 0x0; }
+  bool IsBitTrue(size_t index) const { return (bit_[GetIndex(index)] & GetBitMask(index)) != 0x0; }
 
   void Log() {
     std::cout << "Start Print Bitset ";
@@ -156,14 +158,14 @@ class SomasSolverPre {
   size_t GetMaxOffset() { return max_offset_; }
 
   Status Solving(const session::KernelGraph *graph, std::unordered_map<size_t, SomasSolverTensorDescPtr> *tensors,
-                 std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,
+                 const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,
                  bool bVerifySolution,  // true -> Check continuous and non overlapping constraints solution
                  bool ball = true,      // true -> run full set of heuristics, false -> run single heuristic specified
                  SortingType sorting = kGreaterSizeSmallerIndex, FittingType fitting = kBest,
                  AlgorithmType algorithm = kManyObjects);
 
   void Log(const session::KernelGraph *graph, const unordered_map<size_t, SomasSolverTensorDescPtr> &tensors,
-           std::vector<DynamicBitSet> *pConstraints_v, const vector<vector<size_t>> &continuous_v);
+           const std::vector<DynamicBitSet> *pConstraints_v, const vector<vector<size_t>> &continuous_v);
 
  private:
   size_t max_offset_;
