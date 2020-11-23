@@ -75,6 +75,9 @@ class DynamicLossScaleUpdateCell(Cell):
     Outputs:
         Tensor, a scalar Tensor with shape :math:`()`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
@@ -155,6 +158,9 @@ class FixedLossScaleUpdateCell(Cell):
     Args:
         loss_scale_value (float): Initializes loss scale.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
@@ -219,6 +225,9 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         - **loss** (Tensor) -  Tensor with shape :math:`()`.
         - **overflow** (Tensor) -  Tensor with shape :math:`()`, type is bool.
         - **loss scaling value** (Tensor) -  Tensor with shape :math:`()`
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import numpy as np

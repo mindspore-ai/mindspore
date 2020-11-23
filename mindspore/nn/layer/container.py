@@ -80,6 +80,9 @@ class SequentialCell(Cell):
     Outputs:
         Tensor, the output Tensor with shape depending on the input and defined sequence of Cells.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid')
         >>> bn = nn.BatchNorm2d(2)
@@ -183,6 +186,9 @@ class CellList(_CellListBase, Cell):
 
     Args:
         args (list, optional): List of subclass of Cell.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> conv = nn.Conv2d(100, 20, 3)

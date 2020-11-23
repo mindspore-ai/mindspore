@@ -67,6 +67,9 @@ class Softmax(Cell):
     Outputs:
         Tensor, which has the same type and shape as `x` with values in the range[0,1].
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> softmax = nn.Softmax()
@@ -103,6 +106,9 @@ class LogSoftmax(Cell):
 
     Outputs:
         Tensor, which has the same type and shape as the input as `x` with values in the range[-inf,0).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
@@ -174,6 +180,9 @@ class ReLU(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
         >>> relu = nn.ReLU()
@@ -203,6 +212,9 @@ class ReLU6(Cell):
 
     Outputs:
         Tensor, which has the same type as `input_data`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
@@ -241,6 +253,9 @@ class LeakyReLU(Cell):
 
     Outputs:
         Tensor, has the same type and shape as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
@@ -287,6 +302,9 @@ class Tanh(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 2, 1]), mindspore.float16)
         >>> tanh = nn.Tanh()
@@ -319,6 +337,9 @@ class GELU(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> gelu = nn.GELU()
@@ -350,6 +371,9 @@ class Sigmoid(Cell):
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
@@ -389,6 +413,9 @@ class PReLU(Cell):
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([[[[0.1, 0.6], [0.9, 0.9]]]]), mindspore.float32)
@@ -444,6 +471,9 @@ class HSwish(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hswish = nn.HSwish()
@@ -479,6 +509,9 @@ class HSigmoid(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hsigmoid = nn.HSigmoid()
@@ -513,6 +546,9 @@ class LogSigmoid(Cell):
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = nn.LogSigmoid()

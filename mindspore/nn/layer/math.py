@@ -60,6 +60,9 @@ class ReduceLogSumExp(Cell):
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = nn.ReduceLogSumExp(1, keep_dims=True)
@@ -97,6 +100,9 @@ class Range(Cell):
 
     Outputs:
         Tensor, the dtype is int if the dtype of `start`, `limit` and `delta` all are int. Otherwise, dtype is float.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> net = nn.Range(1, 8, 2)
@@ -151,6 +157,9 @@ class LinSpace(Cell):
 
     Outputs:
         Tensor, With type same as `start`. The shape is 1-D with length of `num`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> linspace = nn.LinSpace(1, 10, 5)
@@ -224,6 +233,9 @@ class LGamma(Cell):
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
@@ -758,6 +770,9 @@ class MatMul(Cell):
     Outputs:
         Tensor, the shape of the output tensor depends on the dimension of input tensors.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> net = nn.MatMul()
         >>> input_x1 = Tensor(np.ones(shape=[3, 2, 3]), mindspore.float32)
@@ -829,6 +844,9 @@ class Moments(Cell):
     Outputs:
         - **mean** (Tensor) - The mean of input x, with the same date type as input x.
         - **variance** (Tensor) - The variance of input x, with the same date type as input x.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> net = nn.Moments(axis=3, keep_dims=True)

@@ -235,6 +235,9 @@ class Lamb(Optimizer):
     Outputs:
         tuple[bool], all elements are True.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay

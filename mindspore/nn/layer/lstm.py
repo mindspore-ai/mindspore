@@ -95,6 +95,9 @@ class LSTM(Cell):
         - **hx_n** (tuple) - A tuple of two Tensor (h_n, c_n) both of shape
           (num_directions * `num_layers`, batch_size, `hidden_size`).
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> net = nn.LSTM(10, 12, 2, has_bias=True, batch_first=True, bidirectional=False)
         >>> input = Tensor(np.ones([3, 5, 10]).astype(np.float32))
@@ -302,6 +305,9 @@ class LSTMCell(Cell):
         - **c** - A Tensor with shape (num_directions, batch_size, `hidden_size`).
         - **reserve** - reserved
         - **state** - reserved
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
 
     Examples:
         >>> net = nn.LSTMCell(10, 12, has_bias=True, batch_first=True, bidirectional=False)

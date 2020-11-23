@@ -60,6 +60,9 @@ class Embedding(Cell):
     Outputs:
         Tensor of shape :math:`(\text{batch_size}, \text{input_length}, \text{embedding_size})`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = nn.Embedding(20000, 768,  True)
         >>> input_data = Tensor(np.ones([8, 128]), mindspore.int32)
@@ -159,6 +162,9 @@ class EmbeddingLookup(Cell):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)

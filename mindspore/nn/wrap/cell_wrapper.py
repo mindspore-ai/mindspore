@@ -78,6 +78,9 @@ class WithLossCell(Cell):
     Outputs:
         Tensor, a scalar tensor with shape :math:`()`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = Net()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
@@ -134,6 +137,9 @@ class WithGradCell(Cell):
     Outputs:
         list, a list of Tensors with identical shapes as trainable weights.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> # For a defined network Net without loss function
         >>> net = Net()
@@ -186,6 +192,9 @@ class TrainOneStepCell(Cell):
 
     Outputs:
         Tensor, a scalar Tensor with shape :math:`()`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = Net()
@@ -248,6 +257,9 @@ class GetNextSingleOp(Cell):
         queue_name (str): Queue name to fetch the data.
 
     For detailed information, refer to `ops.operations.GetNext`.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> # Refer to dataset_helper.py for detail usage.
@@ -346,6 +358,9 @@ class WithEvalCell(Cell):
         Tuple, containing a scalar loss Tensor, a network output Tensor of shape :math:`(N, \ldots)`
         and a label Tensor of shape :math:`(N, \ldots)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> # For a defined network Net without loss function
         >>> net = Net()
@@ -379,6 +394,9 @@ class ParameterUpdate(Cell):
 
     Raises:
         KeyError: If parameter with the specified name does not exist.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> network = Net()
