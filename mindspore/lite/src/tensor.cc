@@ -18,6 +18,7 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include <functional>
 #include "src/tensor.h"
 #include "securec/include/securec.h"
 #include "include/errorcode.h"
@@ -25,8 +26,8 @@
 namespace mindspore {
 namespace lite {
 #define kMaxMallocSize 1024 * 1024 * 100
-Tensor::Tensor(const TypeId data_type, const std::vector<int> &shape, const schema::Format &format, Category category)
-    : data_type_(data_type), shape_(shape), format_(format), category_(category) {}
+Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const schema::Format &format, Category category)
+    : data_type_(data_type), shape_(std::move(shape)), format_(format), category_(category) {}
 
 Tensor::Tensor(const Tensor &tensor) {
   auto ret = CopyTensor(tensor, true);
@@ -234,7 +235,7 @@ int32_t Tensor::ElementsC4Num() const {
   return result;
 }
 
-int Tensor::DimensionSize(size_t index) const {
+int Tensor::DimensionSize(const size_t index) const {
   int dim_size = -1;
   if (index < shape_.size()) {
     dim_size = shape_[index];
@@ -277,12 +278,12 @@ std::string Tensor::ToString() const {
   return oss.str();
 }
 
-int Tensor::MallocData(mindspore::lite::Allocator *allocator) {
+int Tensor::MallocData(const mindspore::lite::Allocator *allocator) {
   if (nullptr != this->data_) {
     return RET_OK;
   }
   if (allocator != nullptr) {
-    allocator_ = allocator;
+    allocator_ = const_cast<mindspore::lite::Allocator *>(allocator);
   }
   if (allocator_ == nullptr) {
     this->data_ = malloc(this->Size());

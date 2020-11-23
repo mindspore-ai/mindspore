@@ -38,7 +38,7 @@ class Scheduler {
   kernel::LiteKernel *ScheduleNode(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                    const mindspore::lite::PrimitiveC *primitive, const Model::Node *cnode);
 
-  int BuildKernels(const lite::Model *model, std::vector<Tensor *> *tensors,
+  int BuildKernels(const lite::Model *model, const std::vector<Tensor *> *tensors,
                    std::vector<kernel::LiteKernel *> *kernels);
 
   static int InferShape(const lite::Model *model, std::vector<Tensor *> *tensors);
@@ -55,7 +55,7 @@ class Scheduler {
 
   static void SetKernelTensorDataType(kernel::LiteKernel *kernel);
 
-  static kernel::SubGraphType GetKernelSubGraphType(kernel::LiteKernel *kernel);
+  static kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel);
 
  protected:
   InnerContext *context_ = nullptr;

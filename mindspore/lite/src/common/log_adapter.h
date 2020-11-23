@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_COMMON_LOG_ADAPTER_H_
-#define MINDSPORE_LITE_COMMON_LOG_ADAPTER_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_LOG_ADAPTER_H_
+#define MINDSPORE_LITE_SRC_COMMON_LOG_ADAPTER_H_
 #ifdef USE_GLOG
 #include "utils/log_adapter.h"
 #else
@@ -113,4 +113,4 @@ class LogWriter {
 #define MS_ASSERT(f) ((void)0)
 #endif
 #endif
-#endif  // MINDSPORE_LITE_COMMON_LOG_ADAPTER_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_LOG_ADAPTER_H_

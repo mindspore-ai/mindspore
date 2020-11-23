@@ -93,7 +93,12 @@ int LiteKernel::PreProcess() {
   auto outputs = this->out_tensors();
   for (auto *output : outputs) {
     MS_ASSERT(output != nullptr);
-    output->MallocData();
+
+    auto ret = output->MallocData();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "MallocData failed";
+      return ret;
+    }
   }
   return RET_OK;
 }
@@ -308,5 +313,5 @@ void LiteKernelUtil::InitTensorRefCount(std::vector<kernel::LiteKernel *> &kerne
   }
 }
 
-int LiteKernelUtil::SetInput(LiteKernel &kernelMod, std::vector<lite::Tensor *> inputs) { return -1; }
+int LiteKernelUtil::SetInput(LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs) { return -1; }
 }  // namespace mindspore::kernel

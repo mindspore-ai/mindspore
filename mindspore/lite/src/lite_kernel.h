@@ -217,7 +217,7 @@ class LiteKernelUtil {
 
   static void InitTensorRefCount(std::vector<kernel::LiteKernel *> &kernels);
 
-  static int SetInput(LiteKernel &kernelMod, std::vector<lite::Tensor *> inputs);
+  static int SetInput(LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
 };
 }  // namespace mindspore::kernel
 

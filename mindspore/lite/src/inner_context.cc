@@ -52,10 +52,10 @@ int InnerContext::Init() {
 }
 
 InnerContext::~InnerContext() {
-  if (this->thread_pool_ != NULL) {
+  if (this->thread_pool_ != nullptr) {
     DestroyThreadPool(this->thread_pool_);
     free(this->thread_pool_);
-    this->thread_pool_ = NULL;
+    this->thread_pool_ = nullptr;
   }
 }
 

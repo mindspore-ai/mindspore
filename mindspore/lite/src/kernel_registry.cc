@@ -73,7 +73,7 @@ int KernelRegistry::GetCreatorFuncIndex(const kernel::KernelKey desc) {
   return index;
 }
 
-void KernelRegistry::RegKernel(const KernelKey desc, kernel::KernelCreator creator) {
+void KernelRegistry::RegKernel(const KernelKey desc, const kernel::KernelCreator creator) {
   int index = GetCreatorFuncIndex(desc);
   if (index >= array_size_) {
     MS_LOG(ERROR) << "invalid kernel key, arch " << desc.arch << ", data_type" << desc.data_type << ",op type "
@@ -96,8 +96,6 @@ void KernelRegistry::RegKernel(const KERNEL_ARCH arch, const TypeId data_type, c
 }
 
 bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &new_creators) { return false; }
-
-const kernel::KernelCreator *KernelRegistry::GetCreatorArrays() { return creator_arrays_; }
 
 kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors,
                                               const std::vector<Tensor *> &out_tensors, const PrimitiveC *primitive,
@@ -124,5 +122,5 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_te
   return nullptr;
 }
 
-KernelRegistry::~KernelRegistry() {}
+KernelRegistry::~KernelRegistry() = default;
 }  // namespace mindspore::lite

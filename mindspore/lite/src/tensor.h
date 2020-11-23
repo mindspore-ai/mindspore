@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_IR_TENSOR_H_
-#define MINDSPORE_LITE_SRC_IR_TENSOR_H_
+#ifndef MINDSPORE_LITE_SRC_TENSOR_H_
+#define MINDSPORE_LITE_SRC_TENSOR_H_
 
 #include <memory>
 #include <vector>
@@ -49,18 +49,18 @@ class Tensor : public mindspore::tensor::MSTensor {
   };
   Tensor() = default;
 
-  Tensor(const TypeId data_type, const std::vector<int> &shape,
-         const schema::Format &format = schema::Format::Format_NHWC, Category category = VAR);
+  Tensor(TypeId data_type, std::vector<int> shape, const schema::Format &format = schema::Format::Format_NHWC,
+         Category category = VAR);
 
   Tensor(const Tensor &tensor);
 
-  virtual ~Tensor();
+  ~Tensor() override;
 
   int CopyTensorData(const Tensor &srcTensor);
 
   int CopyTensor(const Tensor &srcTensor, bool copyData = false);
 
-  virtual Tensor &operator=(const Tensor &tensor);
+  Tensor &operator=(const Tensor &tensor);
 
   virtual bool operator==(const Tensor &tensor);
 
@@ -92,7 +92,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   mindspore::lite::Allocator *allocator() const { return this->allocator_; }
 
-  int MallocData(mindspore::lite::Allocator *allocator = nullptr);
+  int MallocData(const mindspore::lite::Allocator *allocator = nullptr);
 
   int FreeData();
 
@@ -108,7 +108,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   schema::Format format() { return this->format_; }
 
-  size_t ref_count() { return this->ref_count_; }
+  size_t ref_count() const { return this->ref_count_; }
 
   void set_ref_count(size_t ref_count) { this->ref_count_ = ref_count; }
 
@@ -218,4 +218,4 @@ std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &sr
 }  // namespace mindspore
 
 using TensorPtr = std::shared_ptr<mindspore::lite::Tensor>;
-#endif  // MINDSPORE_LITE_SRC_IR_TENSOR_H_
+#endif  // MINDSPORE_LITE_SRC_TENSOR_H_

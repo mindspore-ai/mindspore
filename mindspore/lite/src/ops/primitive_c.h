@@ -79,9 +79,9 @@ class PrimitiveC : public mindspore::Primitive {
 
   void ClearPrimitiveT();
 
-  bool operator==(const Value &rhs) const {
+  bool operator==(const Value &rhs) const override {
     if (rhs.isa<PrimitiveC>()) {
-      auto other_prim = static_cast<const PrimitiveC &>(rhs);
+      auto other_prim = dynamic_cast<const PrimitiveC &>(rhs);
       auto a = this->primitive_->value.type;
       auto b = other_prim.primitive_->value.type;
       return a == b;
@@ -104,11 +104,11 @@ class PrimitiveC : public mindspore::Primitive {
 
   void ClearInputOutputQuantParam();
 
-  void AddInputQuantParam(std::vector<schema::QuantParamT> quant_param);
+  void AddInputQuantParam(const std::vector<schema::QuantParamT> &quant_param);
 
   std::vector<std::vector<schema::QuantParamT>> input_quant_params() const;
 
-  void AddOutputQuantParam(std::vector<schema::QuantParamT> quant_param);
+  void AddOutputQuantParam(const std::vector<schema::QuantParamT> &quant_param);
 
   std::vector<std::vector<schema::QuantParamT>> output_quant_params() const;
 
@@ -126,7 +126,7 @@ class PrimitiveC : public mindspore::Primitive {
 
   static PrimitiveC *Create(mindspore::schema::PrimitiveT *primitive);
 
-  void GetAttrDataFromInput(const AnfNodePtr inputNode, std::vector<int> *data);
+  static void GetAttrDataFromInput(const AnfNodePtr &inputNode, std::vector<int> *data);
 
   static std::shared_ptr<PrimitiveC> Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
                                             const schema::QuantType &quantType);
@@ -135,7 +135,7 @@ class PrimitiveC : public mindspore::Primitive {
   void PopulaterInputQuantParam(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
                                 bool narrowRangeQuantParam, int32_t numbitsRangeQuantParam);
   void PopulaterOutputQuantParam(const Primitive &prim, bool narrowRangeQuantParam, int32_t numbitsRangeQuantParam);
-  void CalFloatScopeByMeanAndStddev(const double &mean, const double &stdDev, float *mMin, float *mMax);
+  static void CalFloatScopeByMeanAndStddev(const double &mean, const double &stdDev, float *mMin, float *mMax);
 
  protected:
   virtual int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) { return RET_ERROR; }

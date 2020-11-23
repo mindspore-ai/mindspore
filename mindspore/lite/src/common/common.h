@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_COMMON_COMMON_H_
-#define MINDSPORE_LITE_COMMON_COMMON_H_
+#ifndef MINDSPORE_LITE_SRC_COMMON_COMMON_H_
+#define MINDSPORE_LITE_SRC_COMMON_COMMON_H_
 
 #include <string>
 #include "src/tensor.h"
@@ -56,4 +56,4 @@ static const schema::Format DEFAULT_FORMAT = schema::Format::Format_NCHW;
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_COMMON_COMMON_H_
+#endif  // MINDSPORE_LITE_SRC_COMMON_COMMON_H_

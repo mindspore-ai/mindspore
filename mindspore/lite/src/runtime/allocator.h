@@ -34,7 +34,7 @@ struct AllocatorContext {
 class Allocator {
  public:
   Allocator() : name("default") {}
-  virtual ~Allocator() {}
+  virtual ~Allocator() = default;
   virtual void *Malloc(size_t size) = 0;
   virtual void Free(void *ptr) = 0;
   virtual void SetContext(const AllocatorContext &ctx) {}
