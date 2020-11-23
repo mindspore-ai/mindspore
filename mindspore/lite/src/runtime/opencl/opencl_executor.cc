@@ -36,7 +36,6 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
   if (is_tune) {
     opencl_runtime_ins->SetProfiling(true);
   }
-  kernel::LiteKernelUtil::InitTensorRefCount(kernels);
   for (auto *kernel : kernels) {
     MS_ASSERT(kernel);
     CallBackParam callbackParam;
@@ -82,6 +81,11 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
         MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
         return ret;
       }
+      ret = kernel->PostProcess();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
+        return ret;
+      }
       if (profiling_tmp) {
         MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
                      << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
@@ -90,13 +94,6 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
     if (after != nullptr) {
       if (!after(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()), callbackParam)) {
         MS_LOG(ERROR) << "run kernel after_callback failed, name: " << kernel->name();
-      }
-    }
-    for (auto input_kernel : kernel->in_kernels()) {
-      MS_ASSERT(input_kernel);
-      ret = input_kernel->DecOutTensorRefCount();
-      if (ret != RET_OK) {
-        MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
       }
     }
   }

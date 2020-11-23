@@ -258,7 +258,8 @@ union PrimitiveType {
     SmoothL1LossGrad,
     SigmoidCrossEntropyWithLogits,
     SigmoidCrossEntropyWithLogitsGrad,
-    Reciprocal
+    Reciprocal,
+    Merge,
 }
 
 enum QuantType: int {

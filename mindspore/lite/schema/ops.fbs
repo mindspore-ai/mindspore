@@ -1223,3 +1223,6 @@ table SigmoidCrossEntropyWithLogitsGrad {
 
 table Reciprocal {
 }
+
+table Merge {
+}

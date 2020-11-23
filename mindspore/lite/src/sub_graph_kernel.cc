@@ -149,6 +149,12 @@ int SubGraphKernel::ReSize(bool is_interrupt) {
   return RET_OK;
 }
 
+void SubGraphKernel::InitOutTensorInitRefCount() {
+  for (auto *node : nodes_) {
+    node->InitOutTensorInitRefCount();
+  }
+}
+
 int CpuSubGraph::Prepare() {
   auto ret = SubGraphKernel::Prepare();
   if (ret != RET_OK) {

@@ -164,6 +164,7 @@ class OpenCLKernel : public LiteKernel {
 
   int Prepare() override { return RET_OK; }
   int PreProcess() override { return RET_ERROR; }
+  int PostProcess() override;
   int ReSize() override { return RET_ERROR; }
   int Run() override { return RET_ERROR; }
 

@@ -5,4 +5,5 @@ set_property(SOURCE ${TFLITE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID
 add_library(tflite_parser_mid OBJECT
         ${TFLITE_SRC_LIST}
         )
+add_dependencies(tflite_parser_mid tflite_fbs_src)
 target_link_libraries(tflite_parser_mid mindspore::flatbuffers)

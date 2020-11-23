@@ -33,23 +33,23 @@ struct InnerContext : public Context {
 
   int Init();
 
-  bool IsCpuFloat16Enabled();
+  bool IsCpuFloat16Enabled() const;
 
-  bool IsGpuFloat16Enabled();
+  bool IsGpuFloat16Enabled() const;
 
-  bool IsCpuEnabled();
+  bool IsCpuEnabled() const;
 
-  bool IsGpuEnabled();
+  bool IsGpuEnabled() const;
 
-  bool IsNpuEnabled();
+  bool IsNpuEnabled() const;
 
-  CpuDeviceInfo GetCpuInfo();
+  CpuDeviceInfo GetCpuInfo() const;
 
-  GpuDeviceInfo GetGpuInfo();
+  GpuDeviceInfo GetGpuInfo() const;
 
   NpuDeviceInfo GetNpuInfo() const;
 
-  int IsValid();
+  int IsValid() const;
 
   virtual ~InnerContext();
 };

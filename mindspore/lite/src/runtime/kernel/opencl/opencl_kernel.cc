@@ -71,6 +71,14 @@ int OpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   return RET_OK;
 }
 
+int OpenCLKernel::PostProcess() {
+  for (auto *output : this->out_tensors()) {
+    MS_ASSERT(output != nullptr);
+    output->ResetRefCount();
+  }
+  return FreeInWorkTensor();
+}
+
 std::vector<BaseTuningParameter> OpenCLKernel::GenerateTuningParam() {
   size_t ndim = global_size_.size();
   std::vector<BaseTuningParameter> tuning_params = {};
