@@ -44,7 +44,6 @@ class AscendInferenceSession : public AscendSession {
   template <typename T>
   std::string PrintInputShape(std::vector<T> shape) const;
   std::string InputsInfo(const std::vector<ParameterPtr> &paras, const std::vector<tensor::TensorPtr> &inputs) const;
-  void GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs) const override;
 
  protected:
   GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;

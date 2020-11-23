@@ -34,6 +34,8 @@
 #include "ir/func_graph_cloner.h"
 #include "utils/utils.h"
 #include "debug/anf_ir_dump.h"
+#include "mindspore/core/base/base_ref_utils.h"
+
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/worker.h"
 #include "ps/util.h"
@@ -1086,6 +1088,61 @@ void SessionBasic::CreateOutputTensors(const GraphId &graph_id, const std::vecto
     MS_EXCEPTION_IF_NULL(item);
     MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";
     outputs->emplace_back(CreateNodeOutputTensors(item, kernel_graph, input_tensors, tensor_to_node));
+  }
+}
+
+void SessionBasic::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs,
+                                      std::vector<std::string> *inputs_name) const {
+  MS_LOG(INFO) << "Start get model inputs, graph id : " << graph_id;
+  auto kernel_graph = GetGraph(graph_id);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(inputs);
+  MS_EXCEPTION_IF_NULL(inputs_name);
+  auto kernel_graph_inputs = kernel_graph->inputs();
+  vector<ParameterPtr> paras;
+  // find parameters of graph inputs
+  for (size_t i = 0; i < kernel_graph_inputs.size(); ++i) {
+    if (!kernel_graph_inputs[i]->isa<Parameter>()) {
+      MS_LOG(ERROR) << "Kernel graph inputs have anfnode which is not Parameter.";
+      continue;
+    }
+    auto parameter = kernel_graph_inputs[i]->cast<ParameterPtr>();
+    if (!AnfAlgo::IsParameterWeight(parameter)) {
+      vector<int64_t> input_shape;
+      auto parameter_shape = AnfAlgo::GetOutputDeviceShape(parameter, 0);
+      (void)std::transform(parameter_shape.begin(), parameter_shape.end(), std::back_inserter(input_shape),
+                           [](const size_t dim) { return SizeToLong(dim); });
+      auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
+      auto data_type = kernel_build_info->GetOutputDeviceType(0);
+      auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
+      inputs->push_back(ms_tensor);
+      inputs_name->push_back(parameter->name());
+    }
+  }
+}
+
+void SessionBasic::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *outputs,
+                                       std::vector<std::string> *output_names) const {
+  std::vector<tensor::TensorPtr> inputs;
+  std::vector<std::string> input_names;
+  GetModelInputsInfo(graph_id, &inputs, &input_names);
+
+  auto kernel_graph = GetGraph(graph_id);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(output_names);
+
+  VectorRef vector_outputs;
+  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
+  auto anf_outputs = kernel_graph->outputs();
+  for (auto &item : anf_outputs) {
+    MS_EXCEPTION_IF_NULL(item);
+    MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";
+    vector_outputs.emplace_back(CreateNodeOutputTensors(item, kernel_graph, inputs, &tensor_to_node));
+  }
+  *outputs = TransformVectorRefToMultiTensor(vector_outputs);
+  for (size_t i = 0; i < outputs->size(); i++) {
+    output_names->push_back("output" + std::to_string(i));
   }
 }
 

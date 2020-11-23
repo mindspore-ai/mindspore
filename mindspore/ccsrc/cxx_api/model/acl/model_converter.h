@@ -45,6 +45,9 @@ class ModelConverter {
   transform::DfGraphPtr ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph);
   Buffer BuildAirModel(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &acl_options);
   AclModelOptions *options_;
+
+  Buffer LoadMindIRInner(const Buffer &model_data);
+  Buffer LoadAscendIRInner(const Buffer &model_data);
 };
 }  // namespace mindspore::api
 

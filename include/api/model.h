@@ -50,9 +50,15 @@ class MS_API Model {
   Status GetInputsInfo(std::vector<Tensor> *tensor_list) const;
   Status GetOutputsInfo(std::vector<Tensor> *tensor_list) const;
 
+  static bool CheckModelSupport(const std::string& device_type, ModelType model_type);
+
  private:
   std::shared_ptr<ModelImpl> impl_;
 };
+
+extern MS_API const char* kDeviceTypeAscendCL;
+extern MS_API const char* kDeviceTypeAscendMS;
+
 }  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

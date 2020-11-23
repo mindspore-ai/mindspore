@@ -70,6 +70,12 @@ class ModelFactory {
     return nullptr;
   }
 
+  bool CheckModelSupport(const std::string &device_type, ModelType /*model_type*/) {
+    return std::any_of(
+      model_creators_.begin(), model_creators_.end(),
+      [&device_type](const std::pair<std::string, ModelCreator> &item) { return item.first == device_type; });
+  }
+
  private:
   ModelFactory() = default;
   ~ModelFactory() = default;
@@ -86,7 +92,7 @@ class ModelRegistrar {
 
 #define API_REG_MODEL(DEVICE_NAME, MODEL_CLASS)                              \
   static const ModelRegistrar g_api_model_registrar__##DEVICE_NAME##_##_reg( \
-    #DEVICE_NAME, [](uint32_t device_id) { return std::make_shared<MODEL_CLASS>(device_id); });
+    kDeviceType##DEVICE_NAME, [](uint32_t device_id) { return std::make_shared<MODEL_CLASS>(device_id); });
 
 }  // namespace mindspore::api
 

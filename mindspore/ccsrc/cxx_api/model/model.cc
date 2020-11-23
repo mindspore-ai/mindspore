@@ -18,6 +18,9 @@
 #include "utils/utils.h"
 
 namespace mindspore::api {
+const char *kDeviceTypeAscendCL = "AscendCL";
+const char *kDeviceTypeAscendMS = "AscendMS";
+
 Status Model::LoadModel(const Buffer &model_data, ModelType type, const std::map<std::string, std::string> &options) {
   MS_EXCEPTION_IF_NULL(impl_);
   return impl_->LoadModel(model_data, type, options);
@@ -95,4 +98,9 @@ Model::Model(NetWork network, const std::string &device_type, uint32_t device_id
 }
 
 Model::~Model() {}
+
+bool Model::CheckModelSupport(const std::string &device_type, ModelType model_type) {
+  return ModelFactory::Instance().CheckModelSupport(device_type, model_type);
+}
+
 }  // namespace mindspore::api
