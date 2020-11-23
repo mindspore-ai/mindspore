@@ -68,13 +68,22 @@ def any_(x, axis=(), keep_dims=False):
     return reduce_any(x, axis)
 
 
-def transpose(x):
+def transpose(x, *axis):
     """Implementation of `transpose`."""
+    new_order = None
     shape = F.shape(x)
     length = F.tuple_len(shape)
-    perm = F.make_range(0, length)
-    revert_perm = F.tuple_reversed(perm)
-    out = trans(x, revert_perm)
+    if not axis:
+        perm = F.make_range(0, length)
+        new_order = F.tuple_reversed(perm)
+
+    elif len(axis) == 1:
+        new_order = convert_list_to_tuple(axis[0])
+
+    elif len(axis) == length:
+        new_order = axis
+
+    out = trans(x, new_order)
     return out
 
 
@@ -194,7 +203,7 @@ def check_type_same(x_type, base_type):
 
 @constexpr
 def check_is_tensor(x):
-    """check whether x is list or tuple."""
+    """check whether x is tensor."""
     if isinstance(x, mstype.tensor_type):
         return True
     return False
@@ -250,6 +259,14 @@ def check_view_shape(x):
         x = x[0]
     return x
 
+@constexpr
+def convert_list_to_tuple(shp):
+    """Check the type of the shape, if is list, convert to tuple"""
+    if not isinstance(shp, (list, tuple)):
+        raise ValueError(f"The shape variable should be a list or tuple, but got {type(shp)}")
+    if isinstance(shp, list):
+        shp = tuple(shp)
+    return shp
 
 def tensor_bool(x):
     """tensor as conditon, if is constant, return immediate bool value"""
