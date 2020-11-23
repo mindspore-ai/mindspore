@@ -21,7 +21,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ApproximateZerosLike(float *input, float *output, int number);
+void ApproximateZerosLike(float *output, int number);
 #ifdef __cplusplus
 }
 #endif

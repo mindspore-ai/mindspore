@@ -53,10 +53,6 @@ int FusedBatchNorm::UnPackAttr(const Primitive &prim, const std::vector<AnfNodeP
     attr->epsilon = GetValue<float>(prim.GetAttr("epsilon"));
     attr->momentum = GetValue<float>(prim.GetAttr("momentum"));
     this->primitive_->value.value = attr;
-    if (this->primitive_->value.value == nullptr) {
-      MS_LOG(ERROR) << "new primitiveT value failed";
-      return RET_ERROR;
-    }
   }
   return RET_OK;
 }
@@ -88,7 +84,9 @@ Registry FusedBatchNormRegistry(schema::PrimitiveType_FusedBatchNorm, FusedBatch
 
 int FusedBatchNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   for (size_t i = 0; i < inputs_.size(); i++) {
-    if (outputs_.size() <= i) break;
+    if (outputs_.size() <= i) {
+      break;
+    }
     outputs_.at(i)->set_shape(inputs_.at(i)->shape());
     outputs_.at(i)->set_data_type(inputs_.at(i)->data_type());
     outputs_.at(i)->set_format(inputs_.at(i)->format());

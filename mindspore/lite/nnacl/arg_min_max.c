@@ -38,17 +38,13 @@ void ArgMinMaxTopk1(const void *input, void *output, const int *shape, ArgMinMax
   int axis_count = 1;
   int after_axis_count = 1;
   GetCalcParameter(shape, param->dims_size_, param->axis_, &pre_axis_count, &axis_count, &after_axis_count);
-  switch (param->data_type_) {
-    case FLOAT_DATA_TYPE: {
-      if (param->get_max_) {
-        ArgMax(input, output, param, pre_axis_count, axis_count, after_axis_count);
-      } else {
-        ArgMin(input, output, param, pre_axis_count, axis_count, after_axis_count);
-      }
-      break;
-    }
-    default:
-      break;
+  if (param->data_type_ != FLOAT_DATA_TYPE) {
+    return;
+  }
+  if (param->get_max_) {
+    ArgMax(input, output, param, pre_axis_count, axis_count, after_axis_count);
+  } else {
+    ArgMin(input, output, param, pre_axis_count, axis_count, after_axis_count);
   }
 }
 

@@ -52,10 +52,6 @@ int BiasGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &i
       attr->axis = CastToInt(prim.GetAttr("axis"), true);
     }
     this->primitive_->value.value = attr;
-    if (this->primitive_->value.value == nullptr) {
-      MS_LOG(ERROR) << "primitive value is nullptr";
-      return RET_ERROR;
-    }
   }
   return RET_OK;
 }
@@ -91,11 +87,11 @@ Registry BiasGradRegistry(schema::PrimitiveType_BiasGrad, BiasGradCreator);
 #endif
 
 int BiasGrad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
-  if (1 != inputs.size()) {
+  if (inputs.size() != 1) {
     MS_LOG(ERROR) << "BiasGrad should have one input";
     return RET_ERROR;
   }
-  if (1 != outputs.size()) {
+  if (outputs.size() != 1) {
     MS_LOG(ERROR) << "BiasGrad should have one output";
     return RET_ERROR;
   }

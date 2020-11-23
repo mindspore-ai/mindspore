@@ -53,6 +53,7 @@ STATUS CaffeReduceParser::Parse(const caffe::LayerParameter &proto, const caffe:
         break;
       case caffe::ReductionParameter_ReductionOp_ASUM:
         attr->mode = schema::ReduceMode_ReduceASum;
+        break;
       default:
         MS_LOG(ERROR) << "reduce parse params fail, unsupported opration: " << reduce_param.operation();
         return RET_ERROR;

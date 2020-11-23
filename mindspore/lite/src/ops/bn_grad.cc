@@ -56,10 +56,6 @@ int BNGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
       attr->eps = GetValue<float>(prim.GetAttr("epsilon"));
     }
     this->primitive_->value.value = attr;
-    if (this->primitive_->value.value == nullptr) {
-      MS_LOG(ERROR) << "primitive value is nullptr";
-      return RET_ERROR;
-    }
   }
   return RET_OK;
 }
@@ -85,11 +81,11 @@ float BNGrad::GetEps() const { return this->primitive_->value_as_BNGrad()->eps()
 float BNGrad::GetMomentum() const { return this->primitive_->value_as_BNGrad()->momentum(); }
 #endif
 int BNGrad::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
-  if (6 != inputs.size()) {
+  if (inputs.size() != 6) {
     MS_LOG(ERROR) << "BNGrad should have five inputs";
     return RET_ERROR;
   }
-  if (3 != outputs.size()) {
+  if (outputs.size() != 3) {
     MS_LOG(ERROR) << "BNGrad should have three outputs";
     return RET_ERROR;
   }

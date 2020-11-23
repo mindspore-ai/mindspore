@@ -79,7 +79,7 @@ Registry ApplyMomentumRegistry(schema::PrimitiveType_ApplyMomentum, ApplyMomentu
 #endif
 
 int ApplyMomentum::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
-  if (5 != inputs.size()) {
+  if (inputs.size() != 5) {
     MS_LOG(ERROR) << "ApplyMomentum should have at least 5 input tensors";
     return RET_ERROR;
   }

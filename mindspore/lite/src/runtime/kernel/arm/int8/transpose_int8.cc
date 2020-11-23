@@ -118,7 +118,7 @@ int TransposeInt8CPUKernel::DoTranspose(int task_id) {
     position = position_ + task_id * transpose_param_->num_axes_;
   }
 
-  auto ret = DoTransposeInt8(in_ptr_, out_ptr_, in_shape_, out_shape_, transpose_param_, thread_offset,
+  auto ret = DoTransposeInt8(in_ptr_, out_ptr_, out_shape_, transpose_param_, thread_offset,
                              thread_offset + num_unit_thread, dim_size, position);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Transpose error task_id[" << task_id << "] error_code[" << ret << "]";

@@ -124,6 +124,10 @@ void ConvertConvWeight(const ParameterPtr &param_node) {
 void DeConv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group,
                                          const std::vector<AnfNodePtr> &inputs) {
   auto attr = std::make_unique<schema::DeDepthwiseConv2DT>();
+  if (attr.get() == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    return;
+  }
   auto format = GetValue<std::string>(prim.GetAttr("data_format"));
   if (format == "NCHW") {
     attr->format = schema::Format::Format_NCHW;
@@ -186,6 +190,10 @@ void DeConv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::Primitiv
 
 void DeConv2D::PopulaterDeConv2DSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group) {
   auto attr = std::make_unique<schema::DeConv2DT>();
+  if (attr.get() == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    return;
+  }
   attr->group = group;
   auto format = GetValue<std::string>(prim.GetAttr("data_format"));
   if (format == "NCHW") {

@@ -19,24 +19,21 @@
 
 int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr,
                       LocalResponseNormParameter *param) {
-  int i, j, k;
-  int left, right;
-
   int depth_radius = param->depth_radius_;
   float bias = param->bias_;
   float alpha = param->alpha_;
   float beta = param->beta_;
 
-  for (i = 0; i < out_size; i++) {
+  for (int i = 0; i < out_size; i++) {
     float *in_data = input_ptr + i * channel;
     float *out_data = output_ptr + i * channel;
 
-    for (j = 0; j < channel; j++) {
-      left = MSMAX(0, j - depth_radius);
-      right = MSMIN(channel - 1, j + depth_radius);
+    for (int j = 0; j < channel; j++) {
+      int left = MSMAX(0, j - depth_radius);
+      int right = MSMIN(channel - 1, j + depth_radius);
 
       float sum = 0.0;
-      for (k = left; k <= right; k++) {
+      for (int k = left; k <= right; k++) {
         const float in_val = in_data[k];
         sum += in_val * in_val;
       }

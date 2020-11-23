@@ -116,11 +116,10 @@ void WinogradTransRight(const float *S, const float *B, float *M, size_t w, size
 }
 #endif
 
-union float32_bits {
+typedef union float32_bits {
   unsigned int u;
   float f;
-};
-typedef union float32_bits float32_bits;
+} float32_bits;
 
 float ShortToFloat32(uint16_t src_value) {
   const float32_bits magic = {113 << 23};

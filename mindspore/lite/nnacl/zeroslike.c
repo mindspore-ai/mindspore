@@ -17,4 +17,4 @@
 #include <stdio.h>
 #include <string.h>
 
-void ApproximateZerosLike(float *input, float *output, int number) { memset(output, 0.0, number * sizeof(float)); }
+void ApproximateZerosLike(float *output, int number) { memset(output, 0.0, number * sizeof(float)); }

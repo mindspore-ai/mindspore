@@ -23,7 +23,9 @@ void Polynomial(const float *interval, float *m, int degree) {
   for (int i = 0; i < degree; ++i) {
     float mul = 1;
     for (int j = 0; j < degree; ++j) {
-      if (i == j) continue;
+      if (i == j) {
+        continue;
+      }
       mul *= (interval[i] - interval[j]);
     }
     m[i] = mul;
@@ -35,7 +37,9 @@ void DiagonalPlusMatrix(const float *matrix, float *diagonal_matrix, int degree)
   memset(diagonal_matrix, 0, data_num * sizeof(float));
   for (int i = 0; i < degree; ++i) {
     for (int j = 0; j < degree; ++j) {
-      if (j == i) diagonal_matrix[i * (degree + 1) + j] = matrix[i];
+      if (j == i) {
+        diagonal_matrix[i * (degree + 1) + j] = matrix[i];
+      }
     }
   }
   diagonal_matrix[data_num - 1] = 1;
@@ -207,7 +211,10 @@ int CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *ma
   MatrixTranspose(matrix_a, matrix_at, in_unit, out_unit);
 
   // get matrix B
-  B(interval, matrix_bt, in_unit);
+  int ret = B(interval, matrix_bt, in_unit);
+  if (ret != NNACL_OK) {
+    return ret;
+  }
   MatrixTranspose(matrix_bt, matrix_b, in_unit, in_unit);
   MatrixMultiply(diagonal_matrix, matrix_b, matrix_bt, in_unit, in_unit, in_unit);
   MatrixTranspose(matrix_bt, matrix_b, in_unit, in_unit);

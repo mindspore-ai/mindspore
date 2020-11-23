@@ -35,6 +35,8 @@ void Fp16Crop(const float16_t *input, float16_t *output, int task_id, CropParame
     case 4:
       Fp16Crop4D(input, output, task_id, para);
       break;
+    default:
+      break;
   }
 }
 

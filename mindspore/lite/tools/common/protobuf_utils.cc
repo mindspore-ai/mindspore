@@ -59,6 +59,7 @@ STATUS ReadProtoFromText(const char *file, google::protobuf::Message *message) {
   bool status = google::protobuf::TextFormat::Parse(&input, message);
   if (!status) {
     MS_LOG(ERROR) << "call [google::protobuf::TextFormat::Parse] func status fail, please check your text file.";
+    fs.close();
     return RET_ERROR;
   }
 

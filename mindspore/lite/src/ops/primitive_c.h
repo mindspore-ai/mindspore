@@ -64,8 +64,7 @@ class PrimitiveC : public mindspore::Primitive {
 
   // Argument primitive is deliverd into PrimitiveC and will be deleted in ~PrimitiveC().
   // Caller should not delete primitive.
-  explicit PrimitiveC(const std::string &name, schema::PrimitiveT *primitive)
-      : Primitive(name), primitive_(primitive) {}
+  PrimitiveC(const std::string &name, schema::PrimitiveT *primitive) : Primitive(name), primitive_(primitive) {}
 
   PrimitiveC() : Primitive(""), primitive_(nullptr) {}
 
@@ -175,7 +174,7 @@ class PrimitiveC {
 
   template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
   static PrimitiveC *NewPrimitiveC(const schema::Primitive *primitive) {
-    auto primc = new T();
+    auto primc = new (std::nothrow) T();
     if (primc == nullptr) {
       MS_LOG(ERROR) << "new PrimitiveC failed";
       return nullptr;

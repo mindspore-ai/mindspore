@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include <math.h>
+#include <float.h>
 
 #define ACCURACY_DATA 0.00000001
 
@@ -964,7 +965,7 @@ int ElementNotEqual(const float *input0, const float *input1, float *output, con
   }
 #endif
   for (; index < element_size; index++) {
-    output[index] = (float)(input0[index] != input1[index]);
+    output[index] = (float)(fabsf(input0[index] - input1[index]) > FLT_EPSILON);
   }
   return NNACL_OK;
 }
@@ -996,7 +997,7 @@ int ElementEqual(const float *input0, const float *input1, float *output, const 
   }
 #endif
   for (; index < element_size; index++) {
-    output[index] = (float)(input0[index] == input1[index]);
+    output[index] = (float)(fabsf(input0[index] - input1[index]) <= FLT_EPSILON);
   }
   return NNACL_OK;
 }

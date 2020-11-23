@@ -28,11 +28,10 @@ inline int Stride(const int *shape, int rank, int index) {
 
 int Gather(float *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
            float *output) {
-  int i, m;
-  for (m = 0; m < outer_size; ++m) {
+  for (int m = 0; m < outer_size; ++m) {
     float *inputm = input + inner_size * m * limit;
     float *outputm = output + inner_size * m * indices_element_size;
-    for (i = 0; i < indices_element_size; ++i) {
+    for (int i = 0; i < indices_element_size; ++i) {
       if (indices[i] < 0 || indices[i] > limit) {
         return NNACL_ERR;
       }
@@ -44,11 +43,10 @@ int Gather(float *input, int outer_size, int inner_size, int limit, const int *i
 
 int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, const int *indices,
                 int indices_element_size, int32_t *output) {
-  int i, m;
-  for (m = 0; m < outer_size; ++m) {
+  for (int m = 0; m < outer_size; ++m) {
     const int32_t *inputm = input + inner_size * m * limit;
     int32_t *outputm = output + inner_size * m * indices_element_size;
-    for (i = 0; i < indices_element_size; ++i) {
+    for (int i = 0; i < indices_element_size; ++i) {
       if (indices[i] < 0 || indices[i] > limit) {
         return NNACL_ERR;
       }

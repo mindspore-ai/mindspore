@@ -17,6 +17,7 @@
 #include "nnacl/fp32/broadcast_to_fp32.h"
 #include <string.h>
 #include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
 
 void PadBroadcastShapeInfo(BroadcastShapeInfo *shape_info) {
   if (shape_info->input_shape_size_ < DIMENSION_4D) {
@@ -51,7 +52,7 @@ void PadBroadcastShapeInfo(BroadcastShapeInfo *shape_info) {
 
 int BroadcastTo(const float *input, BroadcastShapeInfo *shape_info, float *output) {
   if (shape_info->input_shape_size_ > DIMENSION_4D || shape_info->output_shape_size_ > DIMENSION_4D) {
-    return -1;
+    return NNACL_ERR;
   }
   PadBroadcastShapeInfo(shape_info);
   size_t input_dim_offset[DIMENSION_4D - 1];
@@ -98,5 +99,5 @@ int BroadcastTo(const float *input, BroadcastShapeInfo *shape_info, float *outpu
       memcpy(out_base + output_dim_offset[0] * dim0, out_base, output_dim_offset[0]);
     }
   }
-  return 0;
+  return NNACL_OK;
 }
