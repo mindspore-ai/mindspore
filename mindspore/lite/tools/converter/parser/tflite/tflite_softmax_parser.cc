@@ -17,7 +17,6 @@
 #include "tools/converter/parser/tflite/tflite_softmax_parser.h"
 #include <vector>
 #include <memory>
-#include "src/ops/softmax.h"
 
 namespace mindspore::lite {
 STATUS TfliteSoftmaxParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
@@ -53,12 +52,19 @@ STATUS TfliteSoftmaxParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   return RET_OK;
 }
 
-STATUS TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                  const std::unique_ptr<tflite::ModelT> &tflite_model, PrimitiveC *primitiveC) {
-  auto softmaxPrimitive = new SoftMax();
-  softmaxPrimitive->SetAxis(-1);
-  primitiveC = softmaxPrimitive;
-  return RET_OK;
+PrimitiveC *TfliteSoftmaxParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  std::unique_ptr<schema::SoftMaxT> attr = std::make_unique<schema::SoftMaxT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  attr->axis = -1;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_SoftMax;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 TfliteNodeRegister g_tfliteSoftmaxParser("Softmax", new TfliteSoftmaxParser());

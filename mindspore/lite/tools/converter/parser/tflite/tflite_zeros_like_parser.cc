@@ -52,6 +52,24 @@ STATUS TfliteZerosLikeParser::Parse(TfliteTensorsInfo *tensors_info,
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteZerosLikeParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                      const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+
+  std::unique_ptr<schema::ZerosLikeT> attr = std::make_unique<schema::ZerosLikeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  primitive->value.type = schema::PrimitiveType_ZerosLike;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteZerosLikeParser("ZerosLike", new TfliteZerosLikeParser());
 }  // namespace lite

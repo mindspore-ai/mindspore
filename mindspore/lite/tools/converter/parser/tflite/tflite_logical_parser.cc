@@ -78,6 +78,44 @@ STATUS TfliteLogicalParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteLogicalParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+  auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
+  if (tflite_op_type == tflite::BuiltinOperator_LOGICAL_AND) {
+    MS_LOG(DEBUG) << "parse TfliteLogicalAndParser";
+    std::unique_ptr<schema::LogicalAndT> attr = std::make_unique<schema::LogicalAndT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return nullptr;
+    }
+    primitive->value.type = schema::PrimitiveType_LogicalAnd;
+    primitive->value.value = attr.release();
+  } else if (tflite_op_type == tflite::BuiltinOperator_LOGICAL_NOT) {
+    MS_LOG(DEBUG) << "parse TfliteLogicalNotParser";
+    std::unique_ptr<schema::LogicalNotT> attr = std::make_unique<schema::LogicalNotT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return nullptr;
+    }
+    primitive->value.type = schema::PrimitiveType_LogicalNot;
+    primitive->value.value = attr.release();
+  } else if (tflite_op_type == tflite::BuiltinOperator_LOGICAL_OR) {
+    MS_LOG(DEBUG) << "parse TfliteLogicalOrParser";
+    std::unique_ptr<schema::LogicalOrT> attr = std::make_unique<schema::LogicalOrT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return nullptr;
+    }
+    primitive->value.type = schema::PrimitiveType_LogicalOr;
+    primitive->value.value = attr.release();
+  }
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteLogicalAndParser("LogicalAnd", new TfliteLogicalParser());
 TfliteNodeRegister g_tfliteLogicalNotParser("LogicalNot", new TfliteLogicalParser());

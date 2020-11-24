@@ -62,6 +62,33 @@ STATUS TfliteTopKV2Parser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   }
   return RET_OK;
 }
+PrimitiveC *TfliteTopKV2Parser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto &tflite_subgraph = tflite_model->subgraphs.front();
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+
+  std::unique_ptr<schema::TopKT> attr = std::make_unique<schema::TopKT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  attr->sorted = true;
+  std::vector<int32_t> k;
+  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, k)) {
+    MS_LOG(ERROR) << "get topKV2 -> k failed";
+    return nullptr;
+  }
+  attr->k = k.front();
+
+  primitive->value.type = schema::PrimitiveType_TopK;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteTopKV2Parser("TopKV2", new TfliteTopKV2Parser());
 }  // namespace lite

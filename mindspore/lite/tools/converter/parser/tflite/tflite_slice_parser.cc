@@ -66,6 +66,41 @@ STATUS TfliteSliceParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteSliceParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto &tflite_subgraph = tflite_model->subgraphs.front();
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+
+  std::unique_ptr<schema::SliceT> attr = std::make_unique<schema::SliceT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  attr->format = schema::Format::Format_NHWC;
+
+  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->begin)) {
+    MS_LOG(ERROR) << "get slice -> begin failed";
+    return nullptr;
+  }
+  if (GetTfliteData(tflite_op->inputs[2], tflite_subgraph->tensors, tflite_model->buffers, attr->size)) {
+    MS_LOG(ERROR) << "get slice -> size failed";
+    return nullptr;
+  }
+  std::vector<int> axes;
+  axes.clear();
+  for (size_t i = 0; i < attr->begin.size(); ++i) {
+    axes.push_back(i);
+  }
+  attr->axes = axes;
+  primitive->value.type = schema::PrimitiveType_Slice;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteSliceParser("Slice", new TfliteSliceParser());
 }  // namespace lite

@@ -61,6 +61,32 @@ STATUS TfliteUnstackParser::Parse(TfliteTensorsInfo *tensors_info, const std::un
   }
   return RET_OK;
 }
+PrimitiveC *TfliteUnstackParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+
+  std::unique_ptr<schema::UnstackT> attr = std::make_unique<schema::UnstackT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  const auto &tflite_attr = tflite_op->builtin_options.AsUnpackOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op unstack attr failed";
+    return nullptr;
+  }
+  attr->num = tflite_attr->num;
+  attr->axis = tflite_attr->axis;
+
+  primitive->value.type = schema::PrimitiveType_Unstack;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteUnstackParser("Unstack", new TfliteUnstackParser());
 }  // namespace lite

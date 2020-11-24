@@ -42,7 +42,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_TRANSPOSE, "Transpose"},
   {tflite::BuiltinOperator_PACK, "Stack"},
   {tflite::BuiltinOperator_MEAN, "Mean"},
-  {tflite::BuiltinOperator_RELU6, "Relu6"},
+  {tflite::BuiltinOperator_RELU6, "ReLU6"},
   {tflite::BuiltinOperator_TANH, "Tanh"},
   {tflite::BuiltinOperator_RSQRT, "Rsqrt"},
   {tflite::BuiltinOperator_ARG_MAX, "Argmax"},
@@ -51,7 +51,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_TRANSPOSE_CONV, "DeConv2D"},
   {tflite::BuiltinOperator_PAD, "Pad"},
   {tflite::BuiltinOperator_RESIZE_NEAREST_NEIGHBOR, "NearestNeighbor"},
-  {tflite::BuiltinOperator_RELU, "Relu"},
+  {tflite::BuiltinOperator_RELU, "ReLU"},
   {tflite::BuiltinOperator_LEAKY_RELU, "LeakyRelu"},
   {tflite::BuiltinOperator_SQUEEZE, "Squeeze"},
   {tflite::BuiltinOperator_POW, "Pow"},
@@ -87,7 +87,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_LOGICAL_NOT, "LogicalNot"},
   {tflite::BuiltinOperator_LOGICAL_AND, "LogicalAnd"},
   {tflite::BuiltinOperator_LOGICAL_OR, "LogicalOr"},
-  {tflite::BuiltinOperator_HARD_SWISH, "HardSwish"},
+  {tflite::BuiltinOperator_HARD_SWISH, "HSwish"},
   {tflite::BuiltinOperator_SUM, "Sum"},
   {tflite::BuiltinOperator_REDUCE_PROD, "ReduceProd"},
   {tflite::BuiltinOperator_REDUCE_MAX, "ReduceMax"},
@@ -171,6 +171,16 @@ schema::PadMode GetPadMode(tflite::Padding tflite_padmode) {
   }
 }
 
+std::string GetPadModeStr(tflite::Padding tflite_padmode) {
+  if (tflite_padmode == tflite::Padding_SAME) {
+    return "same";
+  } else if (tflite_padmode == tflite::Padding_VALID) {
+    return "valid";
+  } else {
+    return "pad";
+  }
+}
+
 size_t GetDataTypeSize(const TypeId &data_type) {
   switch (data_type) {
     case TypeId::kNumberTypeFloat32:
@@ -194,7 +204,7 @@ size_t GetDataTypeSize(const TypeId &data_type) {
 }
 
 STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::PadMode pad_mode, int strideH,
-                       int strideW, int windowH, int windowW, std::vector<int> *params) {
+                       int strideW, int windowH, int windowW, std::vector<int64_t> *params) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "the input tensor is null";
     return RET_ERROR;

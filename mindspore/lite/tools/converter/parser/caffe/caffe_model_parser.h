@@ -34,8 +34,8 @@ class CaffeModelParser : public ModelParser {
 
   virtual ~CaffeModelParser();
 
-  schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
-                                const QuantType &quantType = QuantType_QUANT_NONE) override;
+  schema::MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
+                                const QuantType &quant_type = QuantType_QUANT_NONE) override;
 
  private:
   STATUS SetOpInputIdx(const caffe::LayerParameter &layer, schema::CNodeT *op, TensorCache *tensorCache);

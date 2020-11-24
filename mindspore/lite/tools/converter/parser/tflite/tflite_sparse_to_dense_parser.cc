@@ -57,6 +57,25 @@ STATUS TfliteSparseToDenseParser::Parse(TfliteTensorsInfo *tensors_info,
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteSparseToDenseParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+
+  std::unique_ptr<schema::SparseToDenseT> attr = std::make_unique<schema::SparseToDenseT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  attr->validateIndices = false;
+  primitive->value.type = schema::PrimitiveType_SparseToDense;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteSparseToDenseParser("SparseToDense", new TfliteSparseToDenseParser());
 }  // namespace lite

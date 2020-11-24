@@ -60,6 +60,26 @@ STATUS TfliteConcatParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteConcatParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  const auto &tfliteAttr = tflite_op->builtin_options.AsConcatenationOptions();
+  if (tfliteAttr == nullptr) {
+    MS_LOG(ERROR) << "get op concat attr failed";
+    return nullptr;
+  }
+  attr->axis = tfliteAttr->axis;
+  attr->n = tflite_op->inputs.size();
+  primitive->value.type = schema::PrimitiveType_Concat;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteConcatParser("Concat", new TfliteConcatParser());
 }  // namespace lite

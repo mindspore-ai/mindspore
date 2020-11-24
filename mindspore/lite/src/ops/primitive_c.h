@@ -47,13 +47,17 @@ using TensorPtr = std::shared_ptr<mindspore::tensor::Tensor>;
 constexpr int kAnfPopulaterInputNumOne = 1;
 constexpr int kAnfPopulaterInputNumTwo = 2;
 constexpr int kAnfPopulaterInputNumThree = 3;
-static std::map<std::string, schema::ActivationType> kActivationTypeMap{{"ReLU", schema::ActivationType_RELU},
-                                                                        {"ReLU6", schema::ActivationType_RELU6},
-                                                                        {"Sigmoid", schema::ActivationType_SIGMOID},
-                                                                        {"HSwish", schema::ActivationType_HSWISH},
-                                                                        {"HSigmoid", schema::ActivationType_HSIGMOID}};
+static std::map<std::string, schema::ActivationType> kActivationTypeMap{
+  {"ReLU", schema::ActivationType_RELU},
+  {"ReLU6", schema::ActivationType_RELU6},
+  {"Sigmoid", schema::ActivationType_SIGMOID},
+  {"HSwish", schema::ActivationType_HSWISH},
+  {"HSigmoid", schema::ActivationType_HSIGMOID},
+  {"Swish", schema::ActivationType_SWISH},
+  {"LeakyRelu", schema::ActivationType_LEAKY_RELU},
+  {"Tanh", schema::ActivationType_TANH},
+  {"Logistic", schema::ActivationType_SIGMOID}};
 std::vector<int> CastToInt(const ValuePtr value, bool is_vector);
-
 class PrimitiveC : public mindspore::Primitive {
  public:
   // Argument primitive is deliverd into PrimitiveC and will be deleted in ~PrimitiveC().

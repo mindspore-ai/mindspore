@@ -31,22 +31,22 @@ CaffeModelParser::~CaffeModelParser() {}
 
 const std::set<std::string> CaffeModelParser::skipedLayerType = {"Dropout"};
 
-schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, const std::string &weightFile,
-                                                const QuantType &quantType) {
-  int status = ValidateFileStr(modelFile, ".prototxt");
+schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
+                                                const QuantType &quant_type) {
+  int status = ValidateFileStr(model_file, ".prototxt");
   if (status != RET_OK) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.prototxt";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
 
-  if (weightFile.empty()) {
+  if (weight_file.empty()) {
     MS_LOG(ERROR) << "INPUT MISSING: weightFile is necessary";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
     return nullptr;
   }
 
-  status = ValidateFileStr(weightFile, ".caffemodel");
+  status = ValidateFileStr(weight_file, ".caffemodel");
   if (status != RET_OK) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: weightFile must be *.caffemodel";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -57,18 +57,18 @@ schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, co
   TensorCache tensorCache;
 
   caffe::NetParameter proto;
-  status = ReadProtoFromText((const char *)modelFile.c_str(), &proto);
+  status = ReadProtoFromText((const char *)model_file.c_str(), &proto);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Read prototxt file failed, model path: " << modelFile;
+    MS_LOG(ERROR) << "Read prototxt file failed, model path: " << model_file;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
   metaGraph->name = proto.name();
 
   caffe::NetParameter weight;
-  status = ReadProtoFromBinaryFile((const char *)weightFile.c_str(), &weight);
+  status = ReadProtoFromBinaryFile((const char *)weight_file.c_str(), &weight);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Read caffemodel file failed, model path: " << weightFile;
+    MS_LOG(ERROR) << "Read caffemodel file failed, model path: " << weight_file;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
@@ -81,7 +81,7 @@ schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, co
   }
 
   NoSupportOp::GetInstance()->SetFmkType("CAFFE");
-  status = ParseLayer(proto, weight, &tensorCache, metaGraph.get(), quantType);
+  status = ParseLayer(proto, weight, &tensorCache, metaGraph.get(), quant_type);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ParseLayer failed " << status;
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -97,7 +97,7 @@ schema::MetaGraphT *CaffeModelParser::ParseToFb(const std::string &modelFile, co
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
-  metaGraph->name = GetModelName(modelFile);
+  metaGraph->name = GetModelName(model_file);
 
   SetAllTensors(tensorCache, metaGraph.get());
 

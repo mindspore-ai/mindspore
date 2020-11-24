@@ -60,6 +60,26 @@ STATUS TfliteDepthToSpaceParser::Parse(TfliteTensorsInfo *tensors_info,
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteDepthToSpaceParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  std::unique_ptr<schema::DepthToSpaceT> attr = std::make_unique<schema::DepthToSpaceT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  const auto &tflite_attr = tflite_op->builtin_options.AsDepthToSpaceOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op depthtospace attr failed";
+    return nullptr;
+  }
+  attr->blockSize = tflite_attr->block_size;
+  attr->format = schema::Format::Format_NHWC;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Concat;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteDepthToSpaceParser("DepthToSpace", new TfliteDepthToSpaceParser());
 }  // namespace lite

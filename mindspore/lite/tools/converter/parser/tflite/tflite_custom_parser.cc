@@ -271,6 +271,48 @@ STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::uni
   }
   return status;
 }
+PrimitiveC *TfliteCustomParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto &tflite_subgraph = tflite_model->subgraphs.front();
+  auto op = new schema::CNodeT;
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return nullptr;
+  }
+  const auto &custom_attr = tflite_op->custom_options;
+  const auto &opcode_index = tflite_op->opcode_index;
+  const auto &custom_type = tflite_model->operator_codes[opcode_index]->custom_code;
+  int status = RET_OK;
+  if (custom_type == "TFLite_Detection_PostProcess") {
+    status = DetectPostProcess(custom_attr, op, tflite_op);
+  } else if (custom_type == "Predict") {
+    status = Predict(custom_attr, op, tflite_op);
+  } else if (custom_type == "Normalize") {
+    status = Normalize(custom_attr, op, tflite_op);
+  } else if (custom_type == "ExtractFeatures") {
+    status = ExtractFeatures(custom_attr, op, tflite_op);
+  } else if (custom_type == "AudioSpectrogram") {
+    status = AudioSpectrogram(custom_attr, op, tflite_op);
+  } else if (custom_type == "Mfcc") {
+    status = Mfcc(custom_attr, op, tflite_op);
+  } else if (custom_type == "FlexRFFT") {
+    status = Rfft(custom_attr, op, tflite_op, tflite_model, tflite_subgraph);
+  } else if (custom_type == "FlexReal") {
+    status = FftReal(custom_attr, op, tflite_op);
+  } else if (custom_type == "FlexImag") {
+    status = FftImag(custom_attr, op, tflite_op);
+  } else {
+    MS_LOG(ERROR) << "the custom op hasn't been supported now";
+    status = RET_NOT_FIND_OP;
+  }
+  if (status != RET_OK) {
+    return nullptr;
+  }
+  auto primitive = op->primitive.release();
+  delete op;
+  return PrimitiveC::Create(primitive);
+}
 
 TfliteNodeRegister g_tfliteCustomParser("Custom", new TfliteCustomParser());
 }  // namespace lite

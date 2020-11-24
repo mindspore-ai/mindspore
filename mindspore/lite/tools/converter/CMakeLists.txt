@@ -49,6 +49,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/weight_format_transform_pass.cc
         ../optimizer/graph/weight_format_hardcode_pass.cc
         ../optimizer/graph/clip_convert_activation_pass.cc
+        ../optimizer/graph/group_depthwise_op_convert_pass.cc
+        ../optimizer/graph/tflite_inputs_order_exchange_pass.cc
         ../optimizer/graph/unused_cast_node_remove_pass.cc
         ../optimizer/graph/unused_transpose_node_remove_pass.cc
         ../optimizer/graph/identity_remove_pass.cc

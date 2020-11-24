@@ -25,7 +25,6 @@
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include "tools/optimizer/fusion/conv_tuplegetitem_fusion.h"
 #include "tools/optimizer/fusion/constant_folding_fusion.h"
-#include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include "tools/optimizer/fusion/layer_norm_fusion.h"
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
@@ -34,6 +33,8 @@
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
+#include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
+#include "tools/optimizer/graph/tflite_inputs_order_exchange_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
@@ -43,8 +44,7 @@
 #include "tools/converter/quantizer/weight_quantizer.h"
 
 using std::string;
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 AnfTransform::AnfTransform() = default;
 
 AnfTransform::~AnfTransform() = default;
@@ -65,7 +65,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   cf_pm->AddPass(std::make_shared<opt::ConstFoldPass>());
 
   // for now - trainning is not supporting fuse operations
-  if (config != nullptr && !config->trainModel) {
+  if (!config->trainModel) {
     // remove quantdtype when awaretraining
     pm->AddPass(std::make_shared<opt::RemoveIdentityOpPass>());
     pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
@@ -119,6 +119,10 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   }
   pm->AddPass(std::make_shared<opt::ConvConvFusion>());
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
+  if (config->fmk == lite::converter::FmkType_TFLITE) {
+    convert_pm->AddPass(std::make_shared<opt::GroupDepthwiseOpConvertPass>());
+    convert_pm->AddPass(std::make_shared<opt::TfliteInputsOrderExchangePass>());
+  }
   optimizer->AddPassManager(cf_pm);
   optimizer->AddPassManager(convert_pm);
   optimizer->AddPassManager(pm);
@@ -168,5 +172,4 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
 
   return new_graph;
 }
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

@@ -62,6 +62,35 @@ STATUS TfliteStackParser::Parse(TfliteTensorsInfo *tensors_info, const std::uniq
   AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
   return RET_OK;
 }
+PrimitiveC *TfliteStackParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto &tflite_subgraph = tflite_model->subgraphs.front();
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
+  }
+
+  std::unique_ptr<schema::StackT> attr = std::make_unique<schema::StackT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return nullptr;
+  }
+
+  const auto &tflite_attr = tflite_op->builtin_options.AsPackOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op stack attr failed";
+    return nullptr;
+  }
+  attr->axis = tflite_attr->axis;
+  attr->n = tflite_attr->values_count;
+  attr->isScale.assign(tflite_subgraph->tensors[tflite_op->inputs[0]]->shape.begin(),
+                       tflite_subgraph->tensors[tflite_op->inputs[0]]->shape.end());
+
+  primitive->value.type = schema::PrimitiveType_Stack;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
+}
 
 TfliteNodeRegister g_tfliteStackParser("Stack", new TfliteStackParser());
 }  // namespace lite
