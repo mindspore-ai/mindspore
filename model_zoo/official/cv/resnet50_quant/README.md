@@ -106,7 +106,7 @@ Parameters for both training and evaluation can be set in config.py
   'weight_decay': 1e-4          # weight decay value
   'epoch_size': 120             # total training epochs
   'pretrained_epoch_size': 90   # pretraining epochs of resnet50, which is unquantative network of resnet50_quant
-  'data_load_mode': 'mindata'   # the style of loading data into device
+  'data_load_mode': 'original'  # the style of loading data into device, support 'original' or 'mindrecord'
   'save_checkpoint':True        # whether save checkpoint file after training finish
   'save_checkpoint_epochs': 1   # the step from which start to save checkpoint file.
   'keep_checkpoint_max': 50     # only keep the last keep_checkpoint_max checkpoint

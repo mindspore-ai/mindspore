@@ -24,7 +24,7 @@ config_quant = ed({
     "weight_decay": 1e-4,
     "epoch_size": 120,
     "pretrained_epoch_size": 90,
-    "data_load_mode": "mindata",
+    "data_load_mode": "original",
     "save_checkpoint": True,
     "save_checkpoint_epochs": 1,
     "keep_checkpoint_max": 50,

@@ -109,7 +109,7 @@ ResNet-50总体网络架构如下：
   'weight_decay'：1e-4      # 权重衰减值
   'epoch_size'：120         # 训练轮次数
   'pretrained_epoch_size'：90   # 非量化网络预训练轮次数
-  'data_load_mode': 'mindata' # 数据加载模式
+  'data_load_mode': 'original'  # 数据加载模式，支持'original'和'mindrecord'
   'save_checkpoint'：True    # 训练结束后是否保存检查点文件
   "save_checkpoint_epochs": 1 # 开始保存检查点文件的步骤
   'keep_checkpoint_max'：50  # 只保留最后一个keep_checkpoint_max检查点

@@ -43,7 +43,7 @@ config_quant = ed({
     "buffer_size": 1000,
     "image_height": 224,
     "image_width": 224,
-    "data_load_mode": "mindata",
+    "data_load_mode": "original",
     "save_checkpoint": True,
     "save_checkpoint_epochs": 1,
     "keep_checkpoint_max": 50,
