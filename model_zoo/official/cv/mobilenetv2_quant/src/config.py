@@ -24,7 +24,7 @@ config_ascend_quant = ed({
     "data_load_mode": "mindata",
     "epoch_size": 60,
     "start_epoch": 200,
-    "warmup_epochs": 1,
+    "warmup_epochs": 0,
     "lr": 0.3,
     "momentum": 0.9,
     "weight_decay": 4e-5,
@@ -34,7 +34,6 @@ config_ascend_quant = ed({
     "save_checkpoint_epochs": 1,
     "keep_checkpoint_max": 300,
     "save_checkpoint_path": "./checkpoint",
-    "quantization_aware": True,
 })
 
 config_gpu_quant = ed({
@@ -42,7 +41,7 @@ config_gpu_quant = ed({
     "batch_size": 134,
     "epoch_size": 60,
     "start_epoch": 200,
-    "warmup_epochs": 1,
+    "warmup_epochs": 0,
     "lr": 0.3,
     "momentum": 0.9,
     "weight_decay": 4e-5,

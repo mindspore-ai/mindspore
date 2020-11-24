@@ -92,10 +92,10 @@ Parameters for both training and evaluation can be set in config.py
 - config for MobileNetV2-quant, ImageNet2012 dataset
 
   ```python
-  'class_num': 1000         # the number of classes in the dataset
+  'num_classes': 1000       # the number of classes in the dataset
   'batch_size': 134         # training batch size
-  'epoch_size': 60         # training epochs of mobilenetv2-quant
-  'start epoch':200         # pretraining epochs of unquantative network
+  'epoch_size': 60          # training epochs of mobilenetv2-quant
+  'start_epoch':200         # pretraining epochs of unquantative network
   'warmup_epochs': 0        # number of warmup epochs
   'lr': 0.3                 #learning rate
   'momentum': 0.9           # momentum

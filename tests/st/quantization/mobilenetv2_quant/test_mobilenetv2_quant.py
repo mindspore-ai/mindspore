@@ -50,7 +50,6 @@ config_ascend_quant = ed({
     "save_checkpoint_epochs": 1,
     "keep_checkpoint_max": 300,
     "save_checkpoint_path": "./checkpoint",
-    "quantization_aware": True,
 })
 
 dataset_path = "/home/workspace/mindspore_dataset/cifar-10-batches-bin/"
