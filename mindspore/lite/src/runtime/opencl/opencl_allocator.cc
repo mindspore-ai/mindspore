@@ -67,7 +67,7 @@ void *OpenCLAllocator::MinimumFit(size_t size, const std::vector<size_t> &img_si
 void *OpenCLAllocator::CreateBuffer(size_t size, void *data, size_t flags, cl::Buffer **buffer) {
   cl_int ret = CL_SUCCESS;
   MS_ASSERT(buffer);
-  *buffer = new (std::nothrow) cl::Buffer(*ocl_runtime_->Context(), flags, size, data, &ret);
+  *buffer = new (std::nothrow) cl::Buffer(*ocl_runtime_->Context(), static_cast<cl_mem_flags>(flags), size, data, &ret);
   if (*buffer == nullptr) {
     MS_LOG(ERROR) << "Create OpenCL buffer failed! (ERROR CODE: " << ret << ")";
     return nullptr;
@@ -90,6 +90,9 @@ void *OpenCLAllocator::CreateBuffer(size_t size, void *data, size_t flags, cl::B
 void *OpenCLAllocator::CreateImage2D(size_t size, const std::vector<size_t> &img_size, void *data, size_t flags,
                                      bool is_map, cl::Buffer **buffer, cl::Image2D **image) {
   cl_int ret = CL_SUCCESS;
+  MS_ASSERT(buffer);
+  MS_ASSERT(image);
+  MS_ASSERT(img_size.size() == 3);
   cl::ImageFormat image_format(CL_RGBA, img_size[2]);
   if (data == nullptr) {
     *image = new (std::nothrow)
@@ -332,7 +335,7 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
   }
   MemBuf *mem_buf = it->second;
   MS_ASSERT(mem_buf);
-  void *new_host_ptr;
+  void *new_host_ptr{nullptr};
   if (mem_buf->img_size.empty()) {
     cl::Buffer *buffer = static_cast<cl::Buffer *>(mem_buf->device_ptr_);
     MS_ASSERT(buffer);
