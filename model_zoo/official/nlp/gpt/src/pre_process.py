@@ -133,7 +133,7 @@ def tokenize_lambada(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             para = json.loads(line)['text'].replace(
-                "“", '""').replace("”", '"').strip().strip(".")
+                "“", '"').replace("”", '"').strip().strip(".")
             tokenized_text = tokenizer.tokenize(para)
             content += tokenizer.convert_tokens_to_ids(tokenized_text) + [EOT]
     for chunk in chunks(content, SEQ_LEN):

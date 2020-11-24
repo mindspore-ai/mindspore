@@ -33,7 +33,7 @@
 namespace mindspore {
 namespace dataset {
 DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
-                             bool send_epoch_end, int32_t total_batch)
+                             bool send_epoch_end, int32_t total_batch, bool create_data_info_queue)
     : PipelineOp(1),
       channel_name_(channel_name),
       device_type_(device_type),
@@ -41,7 +41,8 @@ DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, i
       prefetch_size_(prefetch_size),
       send_epoch_end_(send_epoch_end),
       stop_send_(false),
-      total_batch_(total_batch) {
+      total_batch_(total_batch),
+      create_data_info_queue_(create_data_info_queue) {
 #ifdef ENABLE_TDTQUE
   ascend_keep_waiting_ = true;
 #endif
@@ -87,6 +88,10 @@ Status DeviceQueueOp::operator()() {
 
   if (device_type_ == DeviceType::Ascend) {
 #ifdef ENABLE_TDTQUE
+    if (create_data_info_queue_) {
+      data_info_queue_ptr_ = std::make_unique<DATA_INFO_QUEUE>(kDataInfoQueueCapacity);
+      RETURN_IF_NOT_OK(data_info_queue_ptr_->Register(tree_->AllTasks()));
+    }
     RETURN_IF_NOT_OK(SendDataToAscend());
 #endif
   } else if (device_type_ == DeviceType::GPU) {
@@ -142,6 +147,13 @@ Status DeviceQueueOp::SendDataToAscend() {
             return Status(StatusCode::kTDTPushFailure, "TDT Push Failed");
           }
         }
+        if (create_data_info_queue_) {
+          DATA_INFO data_info;
+          (void)std::transform(
+            currRow.begin(), currRow.end(), std::back_inserter(data_info),
+            [](const std::shared_ptr<Tensor> &ts) { return std::make_pair(ts->type(), ts->shape()); });
+          RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(data_info));
+        }
 
         if (isProfilingEnable) {
           end_time = ProfilingTime::GetCurMilliSecond();
@@ -157,6 +169,7 @@ Status DeviceQueueOp::SendDataToAscend() {
           profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, send_batch + 1, connector_size);
         }
         send_batch++;
+
         if (total_batch_ > 0 && send_batch >= total_batch_) {
           is_break_loop = true;
           break;
@@ -195,6 +208,21 @@ Status DeviceQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue total batch is " << send_batch;
 
   return Status::OK();
+}
+
+#endif
+
+#ifdef ENABLE_TDTQUE
+Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
+  if (!create_data_info_queue_) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "DataInfo queue is not created.");
+  }
+  RETURN_IF_NOT_OK(data_info_queue_ptr_->PopFront(data_info));
+  return Status::OK();
+}
+#else
+Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
+  return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "GetDataInfo is not supported yet.");
 }
 #endif
 

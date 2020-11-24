@@ -251,11 +251,14 @@ class Model:
             scaling_sens /= self._device_number
         return scaling_sens
 
-    def _exec_preprocess(self, network, is_train, phase, dataset, dataset_sink_mode, sink_size=-1, epoch_num=1):
+    def _exec_preprocess(self, network, is_train, phase, dataset,
+                         dataset_sink_mode, sink_size=-1, epoch_num=1, dataset_helper=None):
         """Initializes dataset."""
         if dataset_sink_mode and not is_train:
             dataset.__loop_size__ = 1
-        dataset_helper = DatasetHelper(dataset, dataset_sink_mode, sink_size, epoch_num)
+
+        if dataset_helper is None:
+            dataset_helper = DatasetHelper(dataset, dataset_sink_mode, sink_size, epoch_num)
 
         if dataset_sink_mode:
             network = connect_network_with_dataset(network, dataset_helper)
@@ -406,15 +409,6 @@ class Model:
             epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size())
             train_dataset.__total_batch__ = epoch * sink_size
 
-        dataset_helper, train_network = self._exec_preprocess(self._train_network,
-                                                              is_train=True,
-                                                              phase='train',
-                                                              dataset=train_dataset,
-                                                              dataset_sink_mode=True,
-                                                              sink_size=sink_size,
-                                                              epoch_num=epoch_num)
-        self._train_network = train_network
-        cb_params.train_network = self._train_network
         cb_params.cur_step_num = 0
 
         run_context = RunContext(cb_params)
@@ -422,9 +416,21 @@ class Model:
 
         # used to stop training for early stop, such as stopAtTIme or stopATStep
         should_stop = False
+        dataset_helper = None
         for i in range(epoch):
             cb_params.cur_epoch_num = i + 1
             list_callback.epoch_begin(run_context)
+            dataset_helper, train_network = self._exec_preprocess(self._train_network,
+                                                                  is_train=True,
+                                                                  phase='train',
+                                                                  dataset=train_dataset,
+                                                                  dataset_sink_mode=True,
+                                                                  sink_size=sink_size,
+                                                                  epoch_num=epoch_num,
+                                                                  dataset_helper=dataset_helper)
+
+            self._train_network = train_network
+            cb_params.train_network = self._train_network
 
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
