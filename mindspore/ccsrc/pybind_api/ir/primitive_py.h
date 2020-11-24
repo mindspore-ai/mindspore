@@ -69,6 +69,7 @@ class PrimitivePy : public Primitive {
 
  private:
   py::function GetComputeFunction() const;
+  void ConvertCTensorToPyTensor(const py::tuple &input_args, py::tuple *convert_args) const;
   void CheckHookConsistency(const py::object &grad_out, const py::object &expected_grad_out) const;
   py::object python_obj_;
   py::function hook_;

@@ -69,8 +69,9 @@ OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
 const std::set<std::string> ignore_infer_prim = {"make_ref", "mixed_precision_cast"};
 const std::set<std::string> force_infer_prim = {"TopK", "DropoutGenMask"};
-const std::set<std::string> ignore_judge_dynamic_cell = {"Cell mindspore.nn.layer.basic.Dense",
-                                                         "Cell mindspore.nn.probability.distribution.normal.Normal"};
+const std::set<std::string> ignore_judge_dynamic_cell = {
+  "Cell mindspore.nn.layer.basic.Dense", "Cell mindspore.nn.probability.distribution.normal.Normal",
+  "Cell src.transformer.create_attn_mask.CreateAttentionMaskFromInputMask"};
 const std::set<std::string> unchanged_named_primitive = {parse::NAMED_PRIMITIVE_ATTRIBUTE,
                                                          parse::NAMED_PRIMITIVE_NAMECONSTANT,
                                                          parse::NAMED_PRIMITIVE_NUM, parse::NAMED_PRIMITIVE_STR};
