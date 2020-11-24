@@ -260,7 +260,7 @@ class ExplainRunner:
                         now = time()
                         self._run_exp_step(next_element, exp, imageid_labels, summary)
                         print(spacer.format("Finish writing {}-th explanation data for {}. Time elapsed: "
-                                            "{:.3f} s".format(idx, time() - now, exp.__class__.__name__)), end='')
+                                            "{:.3f} s".format(idx, exp.__class__.__name__, time() - now)), end='')
                     print(spacer.format(
                         "Finish running and writing explanation data for {}. Time elapsed: {:.3f} s".format(
                             exp.__class__.__name__, time() - start)))
@@ -322,8 +322,9 @@ class ExplainRunner:
                 raise ValueError("The third element of dataset should be bounding boxes with shape of "
                                  "[batch_size, num_ground_truth, 4].")
         else:
-            if True in [isinstance(bench, Localization) for bench in benchmarkers]:
-                raise ValueError("The dataset must provide bboxes if Localization is to be computed.")
+            if benchmarkers is not None:
+                if True in [isinstance(bench, Localization) for bench in benchmarkers]:
+                    raise ValueError("The dataset must provide bboxes if Localization is to be computed.")
 
             if len(next_element) == 2:
                 inputs, labels = next_element
