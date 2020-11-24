@@ -98,6 +98,7 @@ class GPUKernelRuntime : public KernelRuntime {
   void UpdateHostSwapOutQueue(bool mock);
   void ClearSwapInfo(bool mock);
   void AllocInplaceNodeMemory(const session::KernelGraph *graph);
+  bool IsDistributedTraining(const session::KernelGraph *graph);
 
   DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node);
   DeviceAddressPtr GetMutableOutputAddr(const AnfNodePtr &node, size_t i, bool visit_nop_node);

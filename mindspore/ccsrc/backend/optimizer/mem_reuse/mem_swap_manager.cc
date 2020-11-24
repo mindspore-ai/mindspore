@@ -346,7 +346,6 @@ bool MemSwapManager::RetreatSwapInfo() {
     ResetSwapInfo();
     RetreatSwapThreshold();
     if (tensor_size_threshold_idx_ == ordered_tensors_.size() - 1 && distance_threshold_ < kDistanceLowerBound) {
-      MS_LOG(ERROR) << "Retreat swap info failed";
       return false;
     }
   } else {
