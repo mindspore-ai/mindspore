@@ -32,9 +32,11 @@ namespace {
 void FreeTensors(std::vector<Tensor *> input_tensors, std::vector<Tensor *> output_tensors) {
   for (auto &tensor : input_tensors) {
     delete tensor;
+    tensor = nullptr;
   }
   for (auto &tensor : output_tensors) {
     delete tensor;
+    tensor = nullptr;
   }
   input_tensors.clear();
   input_tensors.shrink_to_fit();

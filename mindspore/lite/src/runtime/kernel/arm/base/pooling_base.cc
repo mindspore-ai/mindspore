@@ -48,6 +48,7 @@ int PoolingBaseCPUKernel::SetQuantParam() {
     free(*pooling_quant_arg_);
     free(pooling_quant_arg_);
     pooling_quant_arg_ = nullptr;
+    *this->pooling_quant_arg_ = nullptr;
     return RET_MEMORY_FAILED;
   }
   auto *input_tensor = in_tensors_.at(kInputIndex);
