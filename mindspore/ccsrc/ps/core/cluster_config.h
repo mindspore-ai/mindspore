@@ -28,8 +28,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-constexpr uint32_t kHeartbeatInterval = 3;
-
 class ClusterConfig {
  public:
   static void Init(const uint32_t &worker_num, const uint32_t &server_num, std::unique_ptr<std::string> scheduler_host,
@@ -40,6 +38,10 @@ class ClusterConfig {
   static void set_heartbeat_interval(const uint32_t &heartbeat_interval);
   static std::string scheduler_host();
   static uint16_t scheduler_port();
+  static uint32_t heartbeat_timeout();
+  static void set_heartbeat_timeout(const uint32_t &heartbeat_timeout);
+  static uint32_t cluster_available_timeout();
+  static void set_cluster_available_timeout(const uint32_t &cluster_available_timeout);
 
  private:
   static uint32_t worker_num_;
@@ -47,6 +49,8 @@ class ClusterConfig {
   static uint32_t heartbeat_interval_;
   static std::unique_ptr<std::string> scheduler_host_;
   static uint16_t scheduler_port_;
+  static uint32_t heartbeat_timeout_;
+  static uint32_t cluster_available_timeout_;
 };
 }  // namespace core
 }  // namespace ps

@@ -43,17 +43,31 @@
 #include <functional>
 #include <string>
 #include <utility>
+#include <random>
+#include <sstream>
 
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
+constexpr int kGroup1RandomLength = 8;
+constexpr int kGroup2RandomLength = 4;
+constexpr int kGroup3RandomLength = 4;
+constexpr int kGroup4RandomLength = 4;
+constexpr int kGroup5RandomLength = 12;
+
 class CommUtil {
  public:
   static bool CheckIpWithRegex(const std::string &ip);
   static bool CheckIp(const std::string &ip);
   static void GetAvailableInterfaceAndIP(std::string *interface, std::string *ip);
+  static std::string GenerateUUID();
+
+  static std::random_device rd;
+  static std::mt19937_64 gen;
+  static std::uniform_int_distribution<> dis;
+  static std::uniform_int_distribution<> dis2;
 };
 }  // namespace core
 }  // namespace ps

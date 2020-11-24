@@ -21,11 +21,17 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <algorithm>
 #include <regex>
 
 namespace mindspore {
 namespace ps {
 namespace core {
+std::random_device CommUtil::rd;
+std::mt19937_64 CommUtil::gen(rd());
+std::uniform_int_distribution<> CommUtil::dis = std::uniform_int_distribution<>{0, 15};
+std::uniform_int_distribution<> CommUtil::dis2 = std::uniform_int_distribution<>{8, 11};
+
 bool CommUtil::CheckIpWithRegex(const std::string &ip) {
   std::regex pattern("((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
   std::smatch res;
@@ -75,6 +81,34 @@ void CommUtil::GetAvailableInterfaceAndIP(std::string *interface, std::string *i
   MS_EXCEPTION_IF_NULL(if_address);
   freeifaddrs(if_address);
 }
+
+std::string CommUtil::GenerateUUID() {
+  std::stringstream ss;
+  int i;
+  ss << std::hex;
+  for (i = 0; i < kGroup1RandomLength; i++) {
+    ss << dis(gen);
+  }
+  ss << "-";
+  for (i = 0; i < kGroup2RandomLength; i++) {
+    ss << dis(gen);
+  }
+  ss << "-4";
+  for (i = 0; i < kGroup2RandomLength - 1; i++) {
+    ss << dis(gen);
+  }
+  ss << "-";
+  ss << dis2(gen);
+  for (i = 0; i < kGroup3RandomLength - 1; i++) {
+    ss << dis(gen);
+  }
+  ss << "-";
+  for (i = 0; i < kGroup4RandomLength; i++) {
+    ss << dis(gen);
+  }
+  return ss.str();
+}
+
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

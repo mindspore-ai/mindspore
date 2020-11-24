@@ -19,36 +19,64 @@ import "google/protobuf/any.proto";
 package mindspore.ps.core;
 option optimize_for = LITE_RUNTIME;
 
-enum ClusterCommand {
+enum NodeCommand {
   TERMINATE = 0;
   REGISTER = 1;
-  ACK = 2;
-  HEARTBEAT = 3;
-  FETCH_WORKERS = 4;
-  FETCH_SERVERS = 5;
+  HEARTBEAT = 2;
+  SEND_DATA = 3;
+  FETCH_SERVER = 4;
 }
 
-enum Role {
+enum NodeRole {
   SERVER = 0;
   WORKER = 1;
   SCHEDULER = 2;
 }
 
 message MessageMeta {
-  // hostname or ip
-  string hostname = 1;
-  // the port of this node
-  int32 port = 2;
-  // the command of this message,for example: register、heartbeat、data
-  int32 cmd = 3;
-  // the timestamp of this message
-  int32 timestamp = 4;
-  // data type of message
-  repeated int32 data_type = 5 [packed = true];
-  // message.data_size
-  int32 data_size = 6;
+  // the command of this message,for example: register,heartbeat,data
+  NodeCommand cmd = 1;
+  // the request id of this message
+  uint64 request_id = 2;
 }
 
+message RegisterMessage {
+  // ip
+  string ip = 1;
+  // the port of this node
+  int32 port = 2;
+  // the current Node unique id:0,1,2...
+  string node_id = 3;
+  // the role of the node: worker,server,scheduler
+  NodeRole role = 4;
+}
+
+message RegisterRespMessage {
+  string node_id = 1;
+  int32 rank_id = 2;
+}
+
+message HeartbeatMessage {
+  // the current Node unique id:0,1,2...
+  string node_id = 1;
+}
+
+message HeartbeatRespMessage {
+  // Is the entire system ready to use.
+  bool is_cluster_ready = 1;
+  bool is_cluster_finish = 2;
+}
+
+message FetchServersRespMessage {
+  repeated ServersMeta servers_meta = 1;
+}
+
+message ServersMeta {
+  int32 rank_id = 1;
+  string ip = 2;
+  int32 port = 3;
+
+}
 
 message CommMessage {
   MessageMeta pb_meta = 1;
