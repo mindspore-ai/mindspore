@@ -103,6 +103,9 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   // check cell struct
   bool IsDynamicCell(const py::object &cell);
+  std::string GetCellInfo(const py::object &cell);
+  void ParseInputArgs(const std::shared_ptr<parse::ParseAst> &ast, const py::object &fn_node);
+  bool ParseBodyContext(const std::shared_ptr<parse::ParseAst> &ast, const py::object &fn_node);
   bool ParseIfWhileExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
   bool ParseAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
   bool ParseForExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
@@ -186,6 +189,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   // record all info of a graph
   std::unordered_map<FuncGraphPtr, GraphInfo> graph_info_map_;
+  std::unordered_set<std::string> cell_input_args_;
   std::unordered_map<std::string, bool> cell_dynamic_map_;
   std::unordered_map<std::string, ResourcePtr> cell_resource_map_;
   std::unordered_map<std::string, std::pair<FuncGraphPtr, bool>> cell_graph_map_;
