@@ -378,7 +378,8 @@ class Conv2dBnFoldQuantOneConv(Cell):
         >>>                                      quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
         >>> result = conv2d_bnfold(input)
-        >>> result.shape
+        >>> output = result.shape
+        >>> print(output)
         (2, 6, 2, 2)
     """
 

@@ -365,6 +365,7 @@ class ReLU(GraphKernel):
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu = ReLU()
         >>> result = relu(input_x)
+        >>> print(result)
         [[0, 4.0, 0.0], [2.0, 0.0, 9.0]]
     """
     def __init__(self):
@@ -682,7 +683,8 @@ class LogSoftmax(GraphKernel):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> log_softmax = LogSoftmax()
-        >>> log_softmax(input_x)
+        >>> result = log_softmax(input_x)
+        >>> print(result)
         [-4.4519143, -3.4519143, -2.4519143, -1.4519144, -0.4519144]
     """
 
@@ -739,7 +741,8 @@ class Tanh(GraphKernel):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
         >>> tanh = Tanh()
-        >>> tanh(input_x)
+        >>> result = tanh(input_x)
+        >>> print(result)
         [0.7615941, 0.9640276, 0.9950548, 0.9993293, 0.99990916]
     """
     def __init__(self):
