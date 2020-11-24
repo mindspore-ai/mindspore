@@ -17,7 +17,8 @@
 #ifndef MINDSPORE_GATHER_GPU_CU_H
 #define MINDSPORE_GATHER_GPU_CU_H
 template <typename T, typename S>
-void Gather(const T *input, const S *index, T *output, const size_t output_dim0, const size_t output_dim1,
-              const size_t output_dim2, cudaStream_t stream);
+void Gather(const T *input, const S *index, T *output, const size_t dim_before_axis,
+            const size_t dim_at_axis_input, const size_t dim_at_axis_output,
+            const size_t dim_after_axis, cudaStream_t stream);
 
 #endif

@@ -396,16 +396,11 @@ def get_bprop_gather_v2(self):
 @bprop_getters.register(P.GatherD)
 def get_bprop_gather_d(self):
     """Generate bprop for GatherD"""
-    gather_d = P.GatherD()
 
     def bprop(x, dim, index, out, dout):
-        return P.GatherDGrad(dim)(index, dout)
-
-    def bprop_ascend(x, dim, index, out, dout):
-        return (gather_d(dout, dim, index), zeros_like(dim), zeros_like(index))
-
-    if context.get_context('device_target') == 'Ascend':
-        return bprop_ascend
+        x_shp = shape_op(x)
+        dx = G.GatherDGrad(dim, x_shp)(index, dout)
+        return dx, zeros_like(dim), zeros_like(index)
 
     return bprop
 

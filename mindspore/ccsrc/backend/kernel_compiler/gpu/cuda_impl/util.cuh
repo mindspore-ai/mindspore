@@ -19,6 +19,18 @@
 
 #include <cuda_fp16.h>
 
+__device__ static inline double MsAtomicAdd(double *address, const double val) {
+    unsigned long long int* address_as_ull = (unsigned long long int*)address; // NOLINT
+    unsigned long long int old = *address_as_ull; // NOLINT
+    unsigned long long int assumed; // NOLINT
+    do {
+        assumed = old;
+        old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
+    }
+    while (assumed != old); // NOLINT
+    return __longlong_as_double(old);
+}
+
 __device__ static inline float MsAtomicAdd(float *address, const float val) { return atomicAdd(address, val); }
 
 __device__ static inline int MsAtomicAdd(int *address, int val) { return atomicAdd(address, val); }

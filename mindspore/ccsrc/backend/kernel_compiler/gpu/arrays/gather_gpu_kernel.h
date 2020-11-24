@@ -41,7 +41,7 @@ class GatherGpuFwdKernel : public GpuKernel {
     S *index_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    Gather(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[2],
+    Gather(input_addr, index_addr, output_addr, dims_[0], dims_[1], dims_[2], dims_[3],
            reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -83,15 +83,17 @@ class GatherGpuFwdKernel : public GpuKernel {
     for (size_t i = 0; i < IntToSize(axis_); i++) {
       dim_before_axis *= output_shapes_[i];
     }
-    size_t dim_of_index = output_shapes_[IntToSize(axis_)];
-    size_t dim_after_index = 1;
+    size_t dim_at_axis_input = input_shapes_[IntToSize(axis_)];
+    size_t dim_at_axis_output = output_shapes_[IntToSize(axis_)];
+    size_t dim_after_axis = 1;
     for (size_t i = IntToSize(axis_) + 1; i < output_shapes_.size(); i++) {
-      dim_after_index *= output_shapes_[i];
+      dim_after_axis *= output_shapes_[i];
     }
 
     dims_[0] = dim_before_axis;
-    dims_[1] = dim_of_index;
-    dims_[2] = dim_after_index;
+    dims_[1] = dim_at_axis_input;
+    dims_[2] = dim_at_axis_output;
+    dims_[3] = dim_after_axis;
     return;
   }
   size_t GetSize(const std::vector<size_t> &shape, const bool flag = true) const {
@@ -109,7 +111,7 @@ class GatherGpuFwdKernel : public GpuKernel {
   std::vector<size_t> index_shapes_;
   std::vector<size_t> output_shapes_;
 
-  size_t dims_[3] = {};
+  size_t dims_[4] = {};
   int axis_;
   cudnnHandle_t handle_;
 

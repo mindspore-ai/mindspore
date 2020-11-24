@@ -41,7 +41,7 @@ class GatherGradGpuKernel : public GpuKernel {
     S *grad_addr = GetDeviceAddress<S>(inputs, 1);
     S *output_addr = GetDeviceAddress<S>(outputs, 0);
 
-    GatherGrad(index_addr, grad_addr, output_addr, dims_[0], dims_[1], dims_[2],
+    GatherGrad(index_addr, grad_addr, output_addr, dims_[0], dims_[1], dims_[2], dims_[3],
                reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -84,15 +84,17 @@ class GatherGradGpuKernel : public GpuKernel {
     for (size_t i = 0; i < IntToSize(axis_); i++) {
       dim_before_axis *= output_shapes_[i];
     }
-    size_t dim_of_indices = output_shapes_[IntToSize(axis_)];
-    size_t dim_after_indices = 1;
+    size_t dim_at_axis_index = index_shapes_[IntToSize(axis_)];
+    size_t dim_at_axis_output = output_shapes_[IntToSize(axis_)];
+    size_t dim_after_axis = 1;
     for (size_t i = IntToSize(axis_) + 1; i < output_shapes_.size(); i++) {
-      dim_after_indices *= output_shapes_[i];
+      dim_after_axis *= output_shapes_[i];
     }
 
     dims_[0] = dim_before_axis;
-    dims_[1] = dim_of_indices;
-    dims_[2] = dim_after_indices;
+    dims_[1] = dim_at_axis_index;
+    dims_[2] = dim_at_axis_output;
+    dims_[3] = dim_after_axis;
     return;
   }
   size_t GetSize(const std::vector<size_t> &shape, const bool flag = true) const {
@@ -110,7 +112,7 @@ class GatherGradGpuKernel : public GpuKernel {
   std::vector<size_t> grad_shapes_;
   std::vector<size_t> output_shapes_;
 
-  size_t dims_[3] = {};
+  size_t dims_[4] = {};
   int axis_;
   cudnnHandle_t handle_;
 
