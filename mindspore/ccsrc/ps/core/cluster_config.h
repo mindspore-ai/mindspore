@@ -28,7 +28,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 constexpr uint32_t kHeartbeatInterval = 3;
 
 class ClusterConfig {

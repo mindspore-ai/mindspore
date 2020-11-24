@@ -26,7 +26,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 bool CommUtil::CheckIpWithRegex(const std::string &ip) {
   std::regex pattern("((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
   std::smatch res;
@@ -76,7 +75,6 @@ void CommUtil::GetAvailableInterfaceAndIP(std::string *interface, std::string *i
   MS_EXCEPTION_IF_NULL(if_address);
   freeifaddrs(if_address);
 }
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

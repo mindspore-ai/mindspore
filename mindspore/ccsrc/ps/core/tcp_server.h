@@ -36,7 +36,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 class TcpServer;
 class TcpConnection {
  public:
@@ -106,7 +105,6 @@ class TcpServer {
   std::recursive_mutex connection_mutex_;
   OnServerReceiveMessage message_callback_;
 };
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

@@ -75,7 +75,8 @@ class TestHttpServer : public UT::Common {
         EXPECT_STREQ(resp->GetUriQuery().c_str(), "key1=value1");
         EXPECT_STREQ(resp->GetRequestUri().c_str(), "/httpget?key1=value1");
         EXPECT_STREQ(resp->GetUriPath().c_str(), "/httpget");
-        resp->QuickResponse(200, "get request success!\n");
+        const unsigned char ret[] = "get request success!\n";
+        resp->QuickResponse(200, ret, 22);
       },
       std::placeholders::_1);
 

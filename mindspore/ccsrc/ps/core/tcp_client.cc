@@ -35,7 +35,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 TcpClient::TcpClient(const std::string &address, std::uint16_t port)
     : event_base_(nullptr),
       event_timeout_(nullptr),
@@ -254,7 +253,6 @@ void TcpClient::SendMessageWithTimer() {
   ev = evtimer_new(event_base_, SendHeartBeatCallback, this);
   evtimer_add(ev, &timeout);
 }
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

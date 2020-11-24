@@ -49,7 +49,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 class CommUtil {
  public:
   static bool CheckIpWithRegex(const std::string &ip);
