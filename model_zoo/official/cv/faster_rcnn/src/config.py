@@ -22,7 +22,6 @@ config = ed({
     "img_height": 768,
     "keep_ratio": False,
     "flip_ratio": 0.5,
-    "photo_ratio": 0.5,
     "expand_ratio": 1.0,
 
     # anchor
@@ -109,7 +108,6 @@ config = ed({
     "test_max_per_img": 100,
     "test_batch_size": 2,
 
-    "rpn_head_loss_type": "CrossEntropyLoss",
     "rpn_head_use_sigmoid": True,
     "rpn_head_weight": 1.0,
 
@@ -118,7 +116,6 @@ config = ed({
     "base_step": 58633,
     "total_epoch": 13,
     "warmup_step": 500,
-    "warmup_mode": "linear",
     "warmup_ratio": 1/3.0,
     "sgd_step": [8, 11],
     "sgd_momentum": 0.9,

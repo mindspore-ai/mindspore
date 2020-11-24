@@ -169,7 +169,6 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
   * `--TRAIN_DATASET_SIZE`：训练数据集大小。
   * `--TEST_DATASET_PATH`：测试数据集的路径。
   * `--TEST_BATCH_SIZE`：测试批次大小。
-  * `--TEST_DATASET_SIZE`：测试数据集大小。
   * `--TRAIN_EPOCHS`：总训练轮次。
   * `--CKPT_PATH`：模型检查点文件路径，可用于恢复训练和评估。
   * `--SAVE_PATH`：模型检查点文件保存路径。
