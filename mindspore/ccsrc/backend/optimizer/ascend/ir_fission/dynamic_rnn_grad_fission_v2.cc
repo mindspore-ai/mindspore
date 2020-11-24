@@ -71,10 +71,10 @@ void CreateTLoopNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn
                                         {split_v_output0_shape, split_v_output1_shape}, split_v.get());
 
     AnfAlgo::SetNodeAttr(kAttrSizeSplits,
-                         MakeValue(std::vector<int64_t>{SizeToLong((origin_output2_shape[2] + 15) / 16),
-                                                        SizeToLong((origin_output3_shape[1] + 15) / 16)}),
+                         MakeValue(std::vector<int64_t>{SizeToLong((origin_output2_shape[2] + 15) / 16 * 16),
+                                                        SizeToLong((origin_output3_shape[1] + 15) / 16 * 16)}),
                          split_v);
-    AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue(static_cast<int64_t>(1)), split_v);
+    AnfAlgo::SetNodeAttr(kAttrSplitDim, MakeValue(static_cast<int64_t>(2)), split_v);
     AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue(static_cast<int64_t>(2)), split_v);
 
     basic_lstm_cell_c_state_grad_nodes.emplace_back(basic_lstm_cell_c_state_grad);
@@ -231,7 +231,22 @@ AnfNodePtr AddLSTMInputGradNode(const FuncGraphPtr &func_graph, const CNodePtr &
     pre_split_outputs = split_outputs;
 
     lstm_x_concat_input[idx + 1] = split_outputs[0];
-    lstm_gage_concat_input[idx + 1] = basic_lstm_cell_c_state_grad_outputs[0];
+
+    auto basic_lstm_cell_c_state_grad_outputs_0_shape =
+      AnfAlgo::GetOutputInferShape(basic_lstm_cell_c_state_grad_outputs[0], 0);
+    std::vector<size_t> temp_shape;
+    if (basic_lstm_cell_c_state_grad_outputs_0_shape.size() == 3) {
+      temp_shape = basic_lstm_cell_c_state_grad_outputs_0_shape;
+    } else {
+      temp_shape = {1, basic_lstm_cell_c_state_grad_outputs_0_shape[0],
+                    basic_lstm_cell_c_state_grad_outputs_0_shape[1]};
+    }
+    std::vector<AnfNodePtr> reshape_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())),
+                                             basic_lstm_cell_c_state_grad_outputs[0]};
+    auto reshape = func_graph->NewCNode(reshape_input);
+    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(basic_lstm_cell_c_state_grad_outputs[0], 0)},
+                                        {temp_shape}, reshape.get());
+    lstm_gage_concat_input[idx + 1] = reshape;
   }
 
   // Create lstm_x_concat
