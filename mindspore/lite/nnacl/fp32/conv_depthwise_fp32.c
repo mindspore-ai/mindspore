@@ -93,19 +93,21 @@ void InitSlidingParam(SlidingWindowParam *sliding, const ConvParameter *conv_par
   int top = 0;
   int bottom = conv_param->output_h_;
 
-  for (; left * conv_param->stride_w_ < conv_param->pad_l_; left++) {
+  while (left * conv_param->stride_w_ < conv_param->pad_l_) {
+    left++;
   }
-  for (; (right - 1) * conv_param->stride_w_ - conv_param->pad_l_ + conv_param->kernel_w_ * conv_param->dilation_w_ >
+  while ((right - 1) * conv_param->stride_w_ - conv_param->pad_l_ + conv_param->kernel_w_ * conv_param->dilation_w_ >
            conv_param->input_w_ &&
-         right > left;
-       right--) {
+         right > left) {
+    right--;
   }
-  for (; top * conv_param->stride_h_ < conv_param->pad_u_; top++) {
+  while (top * conv_param->stride_h_ < conv_param->pad_u_) {
+    top++;
   }
-  for (; (bottom - 1) * conv_param->stride_h_ - conv_param->pad_u_ + conv_param->kernel_h_ * conv_param->dilation_h_ >
+  while ((bottom - 1) * conv_param->stride_h_ - conv_param->pad_u_ + conv_param->kernel_h_ * conv_param->dilation_h_ >
            conv_param->input_h_ &&
-         bottom > top;
-       bottom--) {
+         bottom > top) {
+    bottom--;
   }
   sliding->left_ = left;
   sliding->right_ = right;

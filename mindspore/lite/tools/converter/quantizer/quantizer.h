@@ -43,7 +43,7 @@ class Quantizer {
  public:
   explicit Quantizer(FuncGraphPtr graph) : funcGraph(std::move(graph)) {}
 
-  ~Quantizer() = default;
+  virtual ~Quantizer() = default;
 
   virtual STATUS RemoveFakeQuant();
 

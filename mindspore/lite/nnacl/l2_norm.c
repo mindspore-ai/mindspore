@@ -32,6 +32,9 @@ int ThreadDivSqrtSum(const float *input_ptr, float *output_ptr, const L2NormPara
   bool is_relu = param->act_type_ == ActType_Relu;
   bool is_relu6 = param->act_type_ == ActType_Relu6;
   int i;
+  if (sqrt_sum == 0) {
+    return NNACL_ERRCODE_DIVISOR_ZERO;
+  }
   for (i = begin; i < end; i++) {
     float tmp = input_ptr[i] / sqrt_sum;
     if (is_relu) {

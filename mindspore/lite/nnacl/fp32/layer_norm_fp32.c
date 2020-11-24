@@ -27,20 +27,19 @@ int LayerNorm(const int outer_size, const int inner_size, const float *src_data,
   if (affine && (gamma_data == NULL || beta_data == NULL)) {
     return NNACL_NULL_PTR;
   }
-  int i, j;
-  for (j = tid; j < outer_size; j += thread_num) {
+  for (int j = tid; j < outer_size; j += thread_num) {
     const float *src = src_data + j * inner_size;
     float *dst = dst_data + j * inner_size;
     float mean = 0.0f;
     float square_mean = 0.0f;
-    for (i = 0; i < inner_size; i++) {
+    for (int i = 0; i < inner_size; i++) {
       mean += src[i];
       square_mean += src[i] * src[i];
     }
     mean /= (float)inner_size;
     square_mean /= (float)inner_size;
     const float deno = 1 / sqrtf(square_mean - mean * mean + epsilon);
-    for (i = 0; i < inner_size; ++i) {
+    for (int i = 0; i < inner_size; ++i) {
       dst[i] = (src[i] - mean) * deno;
       if (affine) {
         dst[i] = dst[i] * gamma_data[i] + beta_data[i];

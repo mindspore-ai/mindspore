@@ -53,10 +53,6 @@ int Cast::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
     attr->srcT = srcAnf->number_type();
     attr->dstT = dstAnf->number_type();
     this->primitive_->value.value = attr;
-    if (this->primitive_->value.value == nullptr) {
-      MS_LOG(ERROR) << "primitive value is nullptr";
-      return RET_ERROR;
-    }
   }
 
   return RET_OK;

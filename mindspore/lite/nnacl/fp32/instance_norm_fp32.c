@@ -24,14 +24,13 @@ int InstanceNorm(const int outer_size, const int inner_size, const float *src_da
   if (src_data == NULL || dst_data == NULL || scale_data == NULL || bias_data == NULL) {
     return NNACL_NULL_PTR;
   }
-  int i, j;
-  for (j = task_id; j < outer_size; j += thread_num) {
+  for (int j = task_id; j < outer_size; j += thread_num) {
     int offset = (j / param->channel_) * inner_size * param->channel_;
     const float *src = src_data + offset;
     float *dst = dst_data + offset;
     float mean = 0.0f;
     float square_mean = 0.0f;
-    for (i = 0; i < inner_size; i++) {
+    for (int i = 0; i < inner_size; i++) {
       int idx = j % param->channel_ + i * param->channel_;
       mean += src[idx];
       square_mean += src[idx] * src[idx];
@@ -39,7 +38,7 @@ int InstanceNorm(const int outer_size, const int inner_size, const float *src_da
     mean /= (float)inner_size;
     square_mean /= (float)inner_size;
     const float deno = 1 / sqrtf(square_mean - mean * mean + param->epsilon_);
-    for (i = 0; i < inner_size; ++i) {
+    for (int i = 0; i < inner_size; ++i) {
       int idx = j % param->channel_ + i * param->channel_;
       int scale_idx = (j / param->channel_) * param->channel_ + j % param->channel_;
       dst[idx] = ((src[idx] - mean) * deno) * scale_data[scale_idx] + bias_data[scale_idx];

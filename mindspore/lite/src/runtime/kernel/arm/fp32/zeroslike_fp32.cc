@@ -30,10 +30,8 @@ namespace mindspore::kernel {
 int ZerosLikeCPUKernel::Init() { return RET_OK; }
 
 int ZerosLikeCPUKernel::Run() {
-  auto input = in_tensors_.at(0);
-  auto input_data = reinterpret_cast<float *>(input->MutableData());
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  ApproximateZerosLike(input_data, output_data, input->ElementsNum());
+  ApproximateZerosLike(output_data, in_tensors_.at(0)->ElementsNum());
   return RET_OK;
 }
 

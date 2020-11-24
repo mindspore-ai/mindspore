@@ -32,7 +32,7 @@ void FullConnection::SetHasBias(bool has_bias) { this->primitive_->value.AsFullC
 void FullConnection::SetAxis(int axis) { this->primitive_->value.AsFullConnection()->axis = axis; }
 void FullConnection::SetUseAxis(bool use_axis) { this->primitive_->value.AsFullConnection()->useAxis = use_axis; }
 void FullConnection::SetActivationType(int activationType) {
-  this->primitive_->value.AsFullConnection()->activationType = (schema::ActivationType)activationType;
+  this->primitive_->value.AsFullConnection()->activationType = static_cast<schema::ActivationType>(activationType);
 }
 #else
 int FullConnection::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {

@@ -48,7 +48,7 @@ bool DepthwiseConv2D::GetHasBias() const { return this->primitive_->value.AsDept
 int DepthwiseConv2D::GetActivationType() const { return this->primitive_->value.AsDepthwiseConv2D()->activationType; }
 
 void DepthwiseConv2D::SetFormat(int format) {
-  this->primitive_->value.AsDepthwiseConv2D()->format = (schema::Format)format;
+  this->primitive_->value.AsDepthwiseConv2D()->format = static_cast<schema::Format>(format);
 }
 void DepthwiseConv2D::SetChannelIn(int channel_in) {
   this->primitive_->value.AsDepthwiseConv2D()->channelIn = channel_in;
@@ -61,7 +61,7 @@ void DepthwiseConv2D::SetKernelH(int kernel_h) { this->primitive_->value.AsDepth
 void DepthwiseConv2D::SetStrideW(int stride_w) { this->primitive_->value.AsDepthwiseConv2D()->strideW = stride_w; }
 void DepthwiseConv2D::SetStrideH(int stride_h) { this->primitive_->value.AsDepthwiseConv2D()->strideH = stride_h; }
 void DepthwiseConv2D::SetPadMode(int pad_mode) {
-  this->primitive_->value.AsDepthwiseConv2D()->padMode = (schema::PadMode)pad_mode;
+  this->primitive_->value.AsDepthwiseConv2D()->padMode = static_cast<schema::PadMode>(pad_mode);
 }
 void DepthwiseConv2D::SetPadUp(int pad_up) { this->primitive_->value.AsDepthwiseConv2D()->padUp = pad_up; }
 void DepthwiseConv2D::SetPadDown(int pad_down) { this->primitive_->value.AsDepthwiseConv2D()->padDown = pad_down; }
@@ -71,7 +71,7 @@ void DepthwiseConv2D::SetDilateW(int dilate_w) { this->primitive_->value.AsDepth
 void DepthwiseConv2D::SetDilateH(int dilate_h) { this->primitive_->value.AsDepthwiseConv2D()->dilateH = dilate_h; }
 void DepthwiseConv2D::SetHasBias(bool has_bias) { this->primitive_->value.AsDepthwiseConv2D()->hasBias = has_bias; }
 void DepthwiseConv2D::SetActivationType(int activation_type) {
-  this->primitive_->value.AsDepthwiseConv2D()->activationType = (schema::ActivationType)activation_type;
+  this->primitive_->value.AsDepthwiseConv2D()->activationType = static_cast<schema::ActivationType>(activation_type);
 }
 
 int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
