@@ -86,12 +86,12 @@ STATUS TfliteModelParser::ConvertOps() {
   STATUS status = RET_OK;
   int op_idx = 0;
   for (auto &op : tflite_subgraph->operators) {
-    auto tfliteOpType = (tflite_model_->operator_codes[op->opcode_index])->builtin_code;
-    auto op_type = GetMSOpType(tfliteOpType);
+    auto tflite_op_type = (tflite_model_->operator_codes[op->opcode_index])->builtin_code;
+    auto op_type = GetMSOpType(tflite_op_type);
     auto op_name = op_type + "-" + std::to_string(op_idx);
     op_idx++;
     // parse primitive
-    auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(op_type);
+    auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(tflite_op_type);
     if (node_parser == nullptr) {
       NoSupportOp::GetInstance()->InsertOp(op_type);
       status = (status == RET_OK ? RET_NOT_FIND_OP : status);

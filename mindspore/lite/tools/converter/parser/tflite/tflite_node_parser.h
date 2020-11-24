@@ -38,50 +38,9 @@ class TfliteNodeParser {
 
   virtual ~TfliteNodeParser() = default;
 
-  virtual STATUS Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                       const std::unique_ptr<tflite::ModelT> &tflite_model,
-                       const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) = 0;
   virtual lite::PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
     return nullptr;
-  }
-
-  static void AddOpInput(schema::CNodeT *op, TfliteTensorsInfo *tensors_info, int idx, int total,
-                         schema::Format format) {
-    MS_ASSERT(op != nullptr);
-    MS_ASSERT(tensors_info != nullptr);
-    int new_idx = tensors_info->tensorsId.size();
-    auto iter = tensors_info->tensorsIdMap.find(idx);
-    if (iter != tensors_info->tensorsIdMap.end()) {
-      op->inputIndex.emplace_back(iter->second);
-    } else {
-      if (idx < 0) {
-        idx += total;
-      }
-      tensors_info->tensorsId.emplace_back(idx);
-      tensors_info->tensorsFormat.emplace_back(format);
-      tensors_info->tensorsIdMap.insert(std::make_pair(idx, new_idx));
-      op->inputIndex.emplace_back(new_idx);
-    }
-  }
-
-  static void AddOpOutput(schema::CNodeT *op, TfliteTensorsInfo *tensors_info, int idx, int total,
-                          schema::Format format) {
-    MS_ASSERT(op != nullptr);
-    MS_ASSERT(tensors_info != nullptr);
-    int new_idx = tensors_info->tensorsId.size();
-    auto iter = tensors_info->tensorsIdMap.find(idx);
-    if (iter != tensors_info->tensorsIdMap.end()) {
-      op->outputIndex.emplace_back(iter->second);
-    } else {
-      if (idx < 0) {
-        idx += total;
-      }
-      tensors_info->tensorsId.emplace_back(idx);
-      tensors_info->tensorsFormat.emplace_back(format);
-      tensors_info->tensorsIdMap.insert(std::make_pair(idx, new_idx));
-      op->outputIndex.emplace_back(new_idx);
-    }
   }
 
   template <typename T>
