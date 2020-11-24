@@ -61,6 +61,7 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
       auto ret = memcpy_s(tensor_data, size, tensor->data.data(), size);
       if (EOK != ret) {
         MS_LOG(ERROR) << "memcpy_s error";
+        delete[] tensor_data;
         return RET_MEMORY_FAILED;
       }
       param_value->set_tensor_addr(tensor_data);
