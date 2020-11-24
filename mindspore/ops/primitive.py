@@ -35,9 +35,9 @@ class Primitive(Primitive_):
         >>> # or work with prim_attr_register:
         >>> # init a Primitive class with attr1 and attr2
         >>> class Add(Primitive):
-        >>>     @prim_attr_register
-        >>>     def __init__(self, attr1, attr2):
-        >>>         # check attr1 and attr2 or do some initializations
+        ...     @prim_attr_register
+        ...     def __init__(self, attr1, attr2):
+        ...         # check attr1 and attr2 or do some initializations
         >>> # init a Primitive obj with attr1=1 and attr2=2
         >>> add = Add(attr1=1, attr2=2)
     """
