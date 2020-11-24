@@ -37,7 +37,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 void HttpMessageHandler::InitHttpMessage() {
   MS_EXCEPTION_IF_NULL(event_request_);
   event_uri_ = evhttp_request_get_evhttp_uri(event_request_);
@@ -176,10 +175,13 @@ void HttpMessageHandler::SendResponse() {
   evhttp_send_reply(event_request_, resp_code_, nullptr, resp_buf_);
 }
 
-void HttpMessageHandler::QuickResponse(int code, const std::string &body) {
+void HttpMessageHandler::QuickResponse(int code, const unsigned char *body, size_t len) {
   MS_EXCEPTION_IF_NULL(event_request_);
+  MS_EXCEPTION_IF_NULL(body);
   MS_EXCEPTION_IF_NULL(resp_buf_);
-  AddRespString(body);
+  if (evbuffer_add(resp_buf_, body, len) == -1) {
+    MS_LOG(EXCEPTION) << "Add body to response body failed.";
+  }
   evhttp_send_reply(event_request_, code, nullptr, resp_buf_);
 }
 

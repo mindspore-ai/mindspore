@@ -37,7 +37,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 using HttpHeaders = std::map<std::string, std::list<std::string>>;
 
 class HttpMessageHandler {
@@ -79,7 +78,7 @@ class HttpMessageHandler {
 
   // Make sure code and all response body has finished set
   void SendResponse();
-  void QuickResponse(int code, const std::string &body);
+  void QuickResponse(int code, const unsigned char *body, size_t len);
   void SimpleResponse(int code, const HttpHeaders &headers, const std::string &body);
 
   // If message is empty, libevent will use default error code message instead
@@ -100,7 +99,6 @@ class HttpMessageHandler {
   // Body length should no more than MAX_POST_BODY_LEN, default 64kB
   void ParsePostParam();
 };
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

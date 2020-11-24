@@ -32,7 +32,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 void TcpConnection::InitConnection() {
   tcp_message_handler_.SetCallback([&](const CommMessage &message) {
     OnServerReceiveMessage on_server_receive = server_->GetServerReceive();
@@ -301,7 +300,6 @@ void TcpServer::SendMessage(const CommMessage &message) {
 uint16_t TcpServer::BoundPort() const { return server_port_; }
 
 void TcpServer::SetMessageCallback(const OnServerReceiveMessage &cb) { message_callback_ = cb; }
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

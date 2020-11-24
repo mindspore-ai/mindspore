@@ -25,6 +25,7 @@
 #include <event2/keyvalq_struct.h>
 #include <event2/listener.h>
 #include <event2/util.h>
+#include <event2/thread.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -37,7 +38,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 typedef enum eHttpMethod {
   HM_GET = 1 << 0,
   HM_POST = 1 << 1,
@@ -92,7 +92,6 @@ class HttpServer {
   bool is_init_;
   std::atomic<bool> is_stop_;
 };
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

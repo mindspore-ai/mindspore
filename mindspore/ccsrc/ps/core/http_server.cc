@@ -41,7 +41,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 HttpServer::~HttpServer() { Stop(); }
 
 bool HttpServer::InitServer() {
@@ -50,6 +49,10 @@ bool HttpServer::InitServer() {
   }
 
   is_stop_ = false;
+  int result = evthread_use_pthreads();
+  if (result != 0) {
+    MS_LOG(EXCEPTION) << "Use event pthread failed!";
+  }
   event_base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(event_base_);
   event_http_ = evhttp_new(event_base_);
@@ -164,7 +167,6 @@ void HttpServer::Stop() {
     is_stop_ = true;
   }
 }
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
