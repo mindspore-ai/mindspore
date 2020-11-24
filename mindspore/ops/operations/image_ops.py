@@ -60,7 +60,7 @@ class CropAndResize(PrimitiveWithInfer):
         >>> class CropAndResizeNet(nn.Cell):
         ...     def __init__(self, crop_size):
         ...         super(CropAndResizeNet, self).__init__()
-        ...         self.crop_and_resize = P.CropAndResize()
+        ...         self.crop_and_resize = ops.CropAndResize()
         ...         self.crop_size = crop_size
         ...
         ...     def construct(self, x, boxes, box_index):

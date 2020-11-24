@@ -36,7 +36,7 @@ class ScalarCast(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> scalar_cast = P.ScalarCast()
+        >>> scalar_cast = ops.ScalarCast()
         >>> output = scalar_cast(255.0, mindspore.int32)
         >>> print(output)
         255

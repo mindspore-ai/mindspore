@@ -82,7 +82,7 @@ class CusBatchMatMul(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.ones(shape=[2, 128, 128]), mindspore.float32)
         >>> input_y = Tensor(np.ones(shape=[2, 128, 128]), mindspore.float32)
-        >>> cus_batch_matmul = P.CusBatchMatMul()
+        >>> cus_batch_matmul = ops.CusBatchMatMul()
         >>> output = cus_batch_matmul(input_x, input_y)
     """
 
@@ -115,7 +115,7 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.ones(shape=[256, 256]), mindspore.float32)
-        >>> cus_choleskytrsm = P.CusCholeskyTrsm()
+        >>> cus_choleskytrsm = ops.CusCholeskyTrsm()
         >>> output = matmul(input_x)
     """
 
@@ -151,7 +151,7 @@ class CusFusedAbsMax1(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
-        >>> cus_fused_abs_max1 = P.CusFusedAbsMax1()
+        >>> cus_fused_abs_max1 = ops.CusFusedAbsMax1()
         >>> output = cus_fused_abs_max1(input_x)
     """
 
@@ -187,7 +187,7 @@ class CusImg2Col(PrimitiveWithInfer):
         Tensor, the shape of the output tensor is :math:`(N * H_O * W_O, C1 * K_W * K_H * C0)`.
     Examples:
         >>> input_x = Tensor(np.ones(shape=[32, 3, 224, 224]), mindspore.float16)
-        >>> cusimg2col = P.CusImg2Col()
+        >>> cusimg2col = ops.CusImg2Col()
         >>> output = cusimg2col(input_x)
     """
 
@@ -233,7 +233,7 @@ class CusMatMulCubeDenseLeft(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.ones(shape=[16, 16, 16, 16]), mindspore.float16)
         >>> input_y = Tensor(np.ones(shape=[256, 256]), mindspore.float16)
-        >>> matmulcubedenseleft = P.CusMatMulCubeDenseLeft()
+        >>> matmulcubedenseleft = ops.CusMatMulCubeDenseLeft()
         >>> output = matmulcubedenseleft(input_x, input_y)
     """
 
@@ -268,7 +268,7 @@ class CusMatMulCubeFraczRightMul(PrimitiveWithInfer):
         >>> input_x1 = Tensor(np.ones(shape=[256, 256]), mindspore.float16)
         >>> input_x2 = Tensor(np.ones(shape=[16, 16, 16, 16]), mindspore.float16)
         >>> input_x3 = Tensor(np.ones(shape=[1, ]), mindspore.float16)
-        >>> cusmatmulfraczrightmul = P.CusMatMulCubeFraczRightMul()
+        >>> cusmatmulfraczrightmul = ops.CusMatMulCubeFraczRightMul()
         >>> output = cusmatmulfraczrightmul(input_x1, input_x2, input_x3)
     """
 
@@ -307,7 +307,7 @@ class CusMatMulCube(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.ones(shape=[256, 256]), mindspore.float16)
         >>> input_y = Tensor(np.ones(shape=[256, 256]), mindspore.float16)
-        >>> cusmatmulcube = P.CusMatMulCube()
+        >>> cusmatmulcube = ops.CusMatMulCube()
         >>> output = matmul(input_x, input_y)
     """
 
@@ -349,7 +349,7 @@ class CusMatrixCombine(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.ones(shape=[2, 128, 128]), mindspore.float32)
-        >>> cusmatrixcombine = P.CusMatrixCombine()
+        >>> cusmatrixcombine = ops.CusMatrixCombine()
         >>> output = cusmatrixcombine(input_x)
     """
 
@@ -383,7 +383,7 @@ class CusTranspose02314(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.ones(shape=[32, 1, 224, 224, 16]), mindspore.float16)
-        >>> custranspose02314 = P.CusTranspose02314()
+        >>> custranspose02314 = ops.CusTranspose02314()
         >>> output = custranspose02314(input_x)
     """
 
@@ -429,7 +429,7 @@ class CusMatMulCubeDenseRight(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.ones(shape=[256, 256]), mindspore.float16)
         >>> input_y = Tensor(np.ones(shape=[16, 16, 16, 16]), mindspore.float16)
-        >>> cusmatmulcubedenseright = P.CusMatMulCubeDenseRight()
+        >>> cusmatmulcubedenseright = ops.CusMatMulCubeDenseRight()
         >>> output = cusmatmulcubedenseright(input_x, input_y)
     """
 
@@ -464,7 +464,7 @@ class CusMatMulCubeFraczLeftCast(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.ones(shape=[16, 16, 16, 16]), mindspore.float16)
         >>> input_y = Tensor(np.ones(shape=[256, 256]), mindspore.float16)
-        >>> cusmatmulcubefraczleftcast = P.CusMatMulCubeFraczLeftCast()
+        >>> cusmatmulcubefraczleftcast = ops.CusMatMulCubeFraczLeftCast()
         >>> output = cusmatmulcubefraczleftcast(input_x, input_y)
     """
 
@@ -494,7 +494,7 @@ class Im2Col(PrimitiveWithInfer):
         Tensor.
     Examples:
         >>> input_x = Tensor(np.random.rand(32, 3, 224, 224).astype(np.float16))
-        >>> img2col = P.CusMatMulCubeDenseLeft(kernel_size=7, pad=3, stride=2)
+        >>> img2col = ops.CusMatMulCubeDenseLeft(kernel_size=7, pad=3, stride=2)
         >>> output = img2col(input_x)
     """
 
@@ -587,7 +587,7 @@ class UpdateThorGradient(PrimitiveWithInfer):
         >>> for i in range(16):
         ...     input_x3[i,:,:,:] = temp_x3
         >>> input_x3 = Tensor(input_x3)
-        >>> update_thor_gradient = P.UpdateThorGradient(split_dim=128)
+        >>> update_thor_gradient = ops.UpdateThorGradient(split_dim=128)
         >>> output = update_thor_gradient(input_x1, input_x2, input_x3)
     """
 

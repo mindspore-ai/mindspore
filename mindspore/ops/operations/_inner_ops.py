@@ -130,7 +130,7 @@ class Range(PrimitiveWithInfer):
         Tensor, has the same shape and dtype as `input_x`.
 
     Examples:
-        >>> range = P.Range(1.0, 8.0, 2.0)
+        >>> range = ops.Range(1.0, 8.0, 2.0)
         >>> x = Tensor(np.array([1, 2, 3, 2]), mindspore.int32)
         >>> output = range(x)
         >>> print(output)
@@ -199,7 +199,7 @@ class Quant(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor([100.0, 150.0], mstype.float32)
-        >>> quant = P.Quant(80.0, 0.0, False, "Round")
+        >>> quant = ops.Quant(80.0, 0.0, False, "Round")
         >>> y = quant(input_x)
     """
 
@@ -253,7 +253,7 @@ class Dequant(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor([100.0, 150.0], mstype.float32)
-        >>> dequant = P.Dequant(False, False)
+        >>> dequant = ops.Dequant(False, False)
         >>> y = dequant(input_x)
     """
 
@@ -289,7 +289,7 @@ class LinSpace(PrimitiveWithInfer):
         Tensor, has the same shape as `assist`.
 
     Examples:
-        >>> linspace = P.LinSpace()
+        >>> linspace = ops.LinSpace()
         >>> assist = Tensor([5, 5.5], mindspore.float32)
         >>> start = Tensor(1, mindspore.float32)
         >>> stop = Tensor(10, mindspore.float32)
@@ -329,7 +329,7 @@ class MatrixDiag(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.array([1, -1]), mstype.float32)
         >>> assist = Tensor(np.arange(-12, 0).reshape(3, 2, 2), mindspore.float32)
-        >>> matrix_diag = P.MatrixDiag()
+        >>> matrix_diag = ops.MatrixDiag()
         >>> result = matrix_diag(x, assist)
         >>> print(result)
         [[[-12.   11.]
@@ -383,7 +383,7 @@ class MatrixDiagPart(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> assist = Tensor(np.arange(-12, 0).reshape(3, 2, 2), mindspore.float32)
-        >>> matrix_diag_part = P.MatrixDiagPart()
+        >>> matrix_diag_part = ops.MatrixDiagPart()
         >>> result = matrix_diag_part(x, assist)
         >>> print(result)
         [[12., -9.], [8., -5.], [4., -1.]]
@@ -426,7 +426,7 @@ class MatrixSetDiag(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor([[[-1, 0], [0, 1]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]], mindspore.float32)
         >>> diagonal = Tensor([[-1., 2.], [-1., 1.], [-1., 1.]], mindspore.float32)
-        >>> matrix_set_diag = P.MatrixSetDiag()
+        >>> matrix_set_diag = ops.MatrixSetDiag()
         >>> result = matrix_set_diag(x, diagonal)
         >>> print(result)
         [[[-1, 0], [0, 2]], [[-1, 0], [0, 1]], [[-1, 0], [0, 1]]]
@@ -523,7 +523,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
         >>> bias_i = Tensor(np.random.rand(48).astype(np.float16))
         >>> bias_h = Tensor(np.random.rand(48).astype(np.float16))
         >>> init_h = Tensor(np.random.rand(8, 16).astype(np.float16))
-        >>> dynamic_gru_v2 = P.DynamicGRUV2()
+        >>> dynamic_gru_v2 = ops.DynamicGRUV2()
         >>> output = dynamic_gru_v2(x, weight_i, weight_h, bias_i, bias_h, None, init_h)
         >>> result = output[0].shape
         >>> print(result)
@@ -640,7 +640,7 @@ class ConfusionMulGrad(PrimitiveWithInfer):
               the shape of output is :math:`(x_1,x_4,...x_R)`.
 
     Examples:
-        >>> confusion_mul_grad = P.ConfusionMulGrad()
+        >>> confusion_mul_grad = ops.ConfusionMulGrad()
         >>> input_0 = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
         >>> input_1 = Tensor(np.random.randint(0, 4, (2, 3)), mindspore.float32)
         >>> input_2 = Tensor(np.random.randint(-4, 0, (2, 3)), mindspore.float32)

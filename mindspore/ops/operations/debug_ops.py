@@ -55,8 +55,8 @@ class ScalarSummary(PrimitiveWithInfer):
         >>> class SummaryDemo(nn.Cell):
         ...     def __init__(self,):
         ...         super(SummaryDemo, self).__init__()
-        ...         self.summary = P.ScalarSummary()
-        ...         self.add = P.TensorAdd()
+        ...         self.summary = ops.ScalarSummary()
+        ...         self.add = ops.TensorAdd()
         ...
         ...     def construct(self, x, y):
         ...         name = "x"
@@ -97,7 +97,7 @@ class ImageSummary(PrimitiveWithInfer):
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.summary = P.ImageSummary()
+        ...         self.summary = ops.ImageSummary()
         ...
         ...     def construct(self, x):
         ...         name = "image"
@@ -138,8 +138,8 @@ class TensorSummary(PrimitiveWithInfer):
         >>> class SummaryDemo(nn.Cell):
         ...     def __init__(self,):
         ...         super(SummaryDemo, self).__init__()
-        ...         self.summary = P.TensorSummary()
-        ...         self.add = P.TensorAdd()
+        ...         self.summary = ops.TensorSummary()
+        ...         self.add = ops.TensorAdd()
         ...
         ...     def construct(self, x, y):
         ...         x = self.add(x, y)
@@ -180,8 +180,8 @@ class HistogramSummary(PrimitiveWithInfer):
         >>> class SummaryDemo(nn.Cell):
         ...     def __init__(self,):
         ...         super(SummaryDemo, self).__init__()
-        ...         self.summary = P.HistogramSummary()
-        ...         self.add = P.TensorAdd()
+        ...         self.summary = ops.HistogramSummary()
+        ...         self.add = ops.TensorAdd()
         ...
         ...     def construct(self, x, y):
         ...         x = self.add(x, y)
@@ -234,8 +234,8 @@ class InsertGradientOf(PrimitiveWithInfer):
         ...
         ...     return ret
         ...
-        >>> clip = P.InsertGradientOf(clip_gradient)
-        >>> grad_all = C.GradOperation(get_all=True)
+        >>> clip = ops.InsertGradientOf(clip_gradient)
+        >>> grad_all = ops.GradOperation(get_all=True)
         >>> def InsertGradientOfClipDemo():
         ...     def clip_test(x, y):
         ...         x = clip(x)
@@ -289,7 +289,7 @@ class HookBackward(PrimitiveWithInfer):
         ...     print(grad_out)
         ...
         >>> grad_all = GradOperation(get_all=True)
-        >>> hook = P.HookBackward(hook_fn)
+        >>> hook = ops.HookBackward(hook_fn)
         >>> def hook_test(x, y):
         ...     z = x * y
         ...     z = hook(z)
@@ -341,7 +341,7 @@ class Print(PrimitiveWithInfer):
         >>> class PrintDemo(nn.Cell):
         ...     def __init__(self):
         ...         super(PrintDemo, self).__init__()
-        ...         self.print = P.Print()
+        ...         self.print = ops.Print()
         ...
         ...     def construct(self, x, y):
         ...         self.print('Print Tensor x and Tensor y:', x, y)
@@ -382,8 +382,8 @@ class Assert(PrimitiveWithInfer):
         >>> class AssertDemo(nn.Cell):
         ...     def __init__(self):
         ...         super(AssertDemo, self).__init__()
-        ...         self.assert1 = P.Assert(summarize=10)
-        ...         self.add = P.TensorAdd()
+        ...         self.assert1 = ops.Assert(summarize=10)
+        ...         self.add = ops.TensorAdd()
         ...
         ...     def construct(self, x, y):
         ...         data = self.add(x, y)

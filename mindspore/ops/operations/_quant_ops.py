@@ -752,7 +752,7 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
     Performs grad of BatchNormFold operation.
 
     Examples:
-        >>> batch_norm_fold_grad = P.BatchNormFoldGrad()
+        >>> batch_norm_fold_grad = ops.BatchNormFoldGrad()
         >>> d_batch_mean = Tensor(np.random.randint(-2., 2., (1, 2, 2, 3)), mindspore.float32)
         >>> d_batch_std = Tensor(np.random.randn(1, 2, 2, 3), mindspore.float32)
         >>> input_x = Tensor(np.random.randint(0, 256, (4, 1, 4, 6)), mindspore.float32)
@@ -809,7 +809,7 @@ class CorrectionMul(PrimitiveWithInfer):
         - **out** (Tensor) - Tensor has the same shape as x.
 
     Examples:
-        >>> correction_mul = P.CorrectionMul()
+        >>> correction_mul = ops.CorrectionMul()
         >>> input_x = Tensor(np.random.randint(-8, 12, (3, 4)), mindspore.float32)
         >>> batch_std = Tensor(np.array([1.5, 3, 2]), mindspore.float32)
         >>> running_std = Tensor(np.array([2, 1.2, 0.5]), mindspore.float32)
@@ -842,7 +842,7 @@ class CorrectionMulGrad(PrimitiveWithInfer):
     Performs grad of CorrectionMul operation.
 
     Examples:
-        >>> correction_mul_grad = P.CorrectionMulGrad()
+        >>> correction_mul_grad = ops.CorrectionMulGrad()
         >>> dout = Tensor(np.array([1.5, -2.2, 0.7, -3, 1.6, 2.8]).reshape(2, 1, 1, 3), mindspore.float32)
         >>> input_x = Tensor(np.random.randint(0, 256, (2, 1, 1, 3)), mindspore.float32)
         >>> gamma = Tensor(np.array([0.2, -0.2, 2.5, -1.]).reshape(2, 1, 2), mindspore.float32)
@@ -882,7 +882,7 @@ class CorrectionMulGradReduce(PrimitiveWithInfer):
     Performs grad reduce of CorrectionMul operation.
 
     Examples:
-        >>> correction_mul_grad_rd = P.CorrectionMulGradReduce()
+        >>> correction_mul_grad_rd = ops.CorrectionMulGradReduce()
         >>> dout = Tensor(np.array([1.5, -2.2, 0.7, -3, 1.6, 2.8]).reshape(2, 1, 1, 3), mindspore.float32)
         >>> input_x = Tensor(np.random.randint(0, 256, (2, 1, 1, 3)), mindspore.float32)
         >>> gamma = Tensor(np.array([0.2, -0.2, 2.5, -1.]).reshape(2, 1, 2), mindspore.float32)
@@ -926,7 +926,7 @@ class BatchNormFold2(PrimitiveWithInfer):
         - **y** (Tensor) - Tensor has the same shape as x.
 
     Examples:
-        >>> batch_norm_fold2 = P.BatchNormFold2()
+        >>> batch_norm_fold2 = ops.BatchNormFold2()
         >>> input_x = Tensor(np.random.randint(-6, 6, (4, 3)), mindspore.float32)
         >>> beta = Tensor(np.array([0.2, -0.1, 0.25]), mindspore.float32)
         >>> gamma = Tensor(np.array([-0.1, -0.25, 0.1]), mindspore.float32)
@@ -974,7 +974,7 @@ class BatchNormFold2Grad(PrimitiveWithInfer):
     Performs grad of CorrectionAddGrad operation.
 
     Examples:
-        >>> bnf2_grad = P.BatchNormFold2Grad()
+        >>> bnf2_grad = ops.BatchNormFold2Grad()
         >>> input_x = Tensor(np.arange(3*3*12*12).reshape(6, 3, 6, 12), mindspore.float32)
         >>> dout = Tensor(np.random.randint(-32, 32, (6, 3, 6, 12)), mindspore.float32)
         >>> gamma = Tensor(np.random.randint(-4, 4, (3, 1, 1, 2)), mindspore.float32)

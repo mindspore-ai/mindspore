@@ -47,7 +47,7 @@ class Assign(PrimitiveWithCheck):
         ...         self.y = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="y")
         ...
         ...     def construct(self, x):
-        ...         P.Assign()(self.y, x)
+        ...         ops.Assign()(self.y, x)
         ...         return self.y
         ...
         >>> x = Tensor([2.0], mindspore.float32)
@@ -85,7 +85,7 @@ class InplaceAssign(PrimitiveWithInfer):
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.inplace_assign = P.InplaceAssign()
+        ...         self.inplace_assign = ops.InplaceAssign()
         ...
         ...     def construct(self, x):
         ...         val = x - 1.0
@@ -129,7 +129,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
     Examples:
         >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
         >>> groundtruth_box = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
-        >>> boundingbox_encode = P.BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
+        >>> boundingbox_encode = ops.BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
         >>> output = boundingbox_encode(anchor_box, groundtruth_box)
         >>> print(output)
         [[ 5.0000000e-01  5.0000000e-01 -6.5504000e+04  6.9335938e-01]
@@ -185,7 +185,7 @@ class BoundingBoxDecode(PrimitiveWithInfer):
     Examples:
         >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
         >>> deltas = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
-        >>> boundingbox_decode = P.BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
+        >>> boundingbox_decode = ops.BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
         ...                                          max_shape=(768, 1280), wh_ratio_clip=0.016)
         >>> output = boundingbox_decode(anchor_box, deltas)
         >>> print(output)
@@ -245,11 +245,11 @@ class CheckValid(PrimitiveWithInfer):
         >>> import mindspore.nn as nn
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as P
+        >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.check_valid = P.CheckValid()
+        ...         self.check_valid = ops.CheckValid()
         ...     def construct(self, x, y):
         ...         valid_result = self.check_valid(x, y)
         ...         return valid_result
@@ -313,7 +313,7 @@ class IOU(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> iou = P.IOU()
+        >>> iou = ops.IOU()
         >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> output = iou(anchor_boxes, gt_boxes)
@@ -363,16 +363,16 @@ class MakeRefKey(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as F
+        >>> from mindspore.ops import functional as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.y = mindspore.Parameter(Tensor(np.ones([6, 8, 10]), mindspore.int32), name="y")
-        ...         self.make_ref_key = P.MakeRefKey("y")
+        ...         self.make_ref_key = ops.MakeRefKey("y")
         ...
         ...     def construct(self, x):
         ...         key = self.make_ref_key()
-        ...         ref = F.make_ref(key, x, self.y)
+        ...         ref = ops.make_ref(key, x, self.y)
         ...         return ref * x
         ...
         >>> x = Tensor(np.ones([3, 4, 5]), mindspore.int32)
@@ -451,7 +451,7 @@ class CheckBprop(PrimitiveWithInfer):
     Examples:
         >>> input_x = (Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32),)
         >>> input_y = (Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32),)
-        >>> out = P.CheckBprop()(input_x, input_y)
+        >>> out = ops.CheckBprop()(input_x, input_y)
     """
 
     @prim_attr_register
@@ -519,7 +519,7 @@ class ConfusionMatrix(PrimitiveWithInfer):
         Tensor, the confusion matrix, with shape (`num_classes`, `num_classes`).
 
     Examples:
-        >>> confusion_matrix = P.ConfusionMatrix(4)
+        >>> confusion_matrix = ops.ConfusionMatrix(4)
         >>> labels = Tensor([0, 1, 1, 3], mindspore.int32)
         >>> predictions = Tensor([1, 2, 1, 3], mindspore.int32)
         >>> output = confusion_matrix(labels, predictions)
@@ -567,7 +567,7 @@ class PopulationCount(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> population_count = P.PopulationCount()
+        >>> population_count = ops.PopulationCount()
         >>> x_input = Tensor([0, 1, 3], mindspore.int16)
         >>> output = population_count(x_input)
         >>> print(output)

@@ -78,13 +78,13 @@ class AllReduce(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.ops.operations.comm_ops import ReduceOp
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.operations as P
+        >>> import mindspore.ops.operations as ops
         >>>
         >>> init()
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.allreduce_sum = P.AllReduce(ReduceOp.SUM, group="nccl_world_group")
+        ...         self.allreduce_sum = ops.AllReduce(ReduceOp.SUM, group="nccl_world_group")
         ...
         ...     def construct(self, x):
         ...         return self.allreduce_sum(x)
@@ -134,7 +134,7 @@ class Send(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> import mindspore.ops.operations as P
+        >>> import mindspore.ops.operations as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -144,8 +144,8 @@ class Send(PrimitiveWithInfer):
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.depend = P.Depend()
-        >>>         self.send = P.Send(st_tag=0, dest_rank=8, group="hccl_world_group")
+        >>>         self.depend = ops.Depend()
+        >>>         self.send = ops.Send(st_tag=0, dest_rank=8, group="hccl_world_group")
         >>>
         >>>     def construct(self, x):
         >>>         out = self.depend(x, self.send(x))
@@ -191,7 +191,7 @@ class Receive(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> import mindspore.ops.operations as P
+        >>> import mindspore.ops.operations as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -201,7 +201,7 @@ class Receive(PrimitiveWithInfer):
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.recv = P.Receive(st_tag=0, src_rank=0, shape=[2, 8], dtype=np.float32,
+        >>>         self.recv = ops.Receive(st_tag=0, src_rank=0, shape=[2, 8], dtype=np.float32,
         >>>                               group="hccl_world_group")
         >>>
         >>>     def construct(self, x):
@@ -253,7 +253,7 @@ class AllGather(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> import mindspore.ops.operations as P
+        >>> import mindspore.ops.operations as ops
         >>> import mindspore.nn as nn
         >>> from mindspore.communication import init
         >>> from mindspore import Tensor
@@ -262,7 +262,7 @@ class AllGather(PrimitiveWithInfer):
         ... class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.allgather = P.AllGather(group="nccl_world_group")
+        ...         self.allgather = ops.AllGather(group="nccl_world_group")
         ...
         ...     def construct(self, x):
         ...         return self.allgather(x)
@@ -373,14 +373,14 @@ class ReduceScatter(PrimitiveWithInfer):
         >>> from mindspore.communication import init
         >>> from mindspore.ops.operations.comm_ops import ReduceOp
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.operations as P
+        >>> import mindspore.ops.operations as ops
         >>> import numpy as np
         >>>
         >>> init()
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.reducescatter = P.ReduceScatter(ReduceOp.SUM)
+        ...         self.reducescatter = ops.ReduceScatter(ReduceOp.SUM)
         ...
         ...     def construct(self, x):
         ...         return self.reducescatter(x)
@@ -493,14 +493,14 @@ class Broadcast(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
-        >>> import mindspore.ops.operations as P
+        >>> import mindspore.ops.operations as ops
         >>> import numpy as np
         >>>
         >>> init()
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.broadcast = P.Broadcast(1)
+        ...         self.broadcast = ops.Broadcast(1)
         ...
         ...     def construct(self, x):
         ...         return self.broadcast((x,))
