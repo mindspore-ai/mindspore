@@ -47,6 +47,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMinimum, {InferImplMinimum, true}},
     {prim::kPrimDivNoNan, {InferImplDivNoNan, true}},
     {prim::kPrimLinSpace, {InferImplLinSpace, true}},
+    {prim::kPrimAddN, {InferImplAddN, true}},
     // Array
     {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
     {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
