@@ -296,7 +296,7 @@ SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const Address
   inputs_.push_back(grad);
   inputs_.push_back(indices);
   grads_offset_ = grad->size / sizeof(float);
-  indices_offset_ = indices->size / sizeof(int64_t);
+  indices_offset_ = indices->size / sizeof(int);
 }
 
 void SparseAdamOptimInfo::Update(const Values &values, const Lengths &lens) {
@@ -340,7 +340,7 @@ SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const Address
   inputs_.push_back(grad);
   inputs_.push_back(indices);
   grads_offset_ = grad->size / sizeof(float);
-  indices_offset_ = indices->size / sizeof(int64_t);
+  indices_offset_ = indices->size / sizeof(int);
 }
 
 const AddressPtr &SparseFtrlOptimInfo::gradient() {
