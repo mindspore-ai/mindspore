@@ -38,12 +38,12 @@ config_ascend_quant = ed({
 
 config_gpu_quant = ed({
     "num_classes": 1000,
-    "batch_size": 134,
+    "batch_size": 300,
     "epoch_size": 60,
     "start_epoch": 200,
     "warmup_epochs": 0,
-    "lr": 0.3,
-    "momentum": 0.9,
+    "lr": 0.05,
+    "momentum": 0.997,
     "weight_decay": 4e-5,
     "label_smooth": 0.1,
     "loss_scale": 1024,
