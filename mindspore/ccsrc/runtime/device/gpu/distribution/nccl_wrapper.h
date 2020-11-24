@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <nccl.h>
 #include <string>
+#include <vector>
 #include <map>
 #include "runtime/device/gpu/distribution/collective_common.h"
 
@@ -34,16 +35,23 @@ class NCCLWrapper {
   static NCCLWrapper &instance();
   ncclUniqueId nccl_unique_id() const;
   void InitNCCLComm();
-  ncclResult_t AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t datatype,
-                         ncclRedOp_t op, cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
-  ncclResult_t AllGather(const void *input_addr, void *output_addr, size_t count, ncclDataType_t datatype,
-                         cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
-  ncclResult_t ReduceScatter(const void *input_addr, void *output_addr, size_t count, ncclDataType_t datatype,
-                             ncclRedOp_t op, cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
-  ncclResult_t Broadcast(const void *input_addr, void *output_addr, size_t count, ncclDataType_t datatype, int root,
-                         cudaStream_t stream, const std::string &group_name = NCCL_WORLD_GROUP);
+  ncclResult_t AllReduce(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                         ncclRedOp_t op, cudaStream_t stream, const std::string &group_name);
+  ncclResult_t AllGather(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                         cudaStream_t stream, const std::string &group_name);
+  ncclResult_t ReduceScatter(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type,
+                             ncclRedOp_t op, cudaStream_t stream, const std::string &group_name);
+  ncclResult_t Broadcast(const void *input_addr, void *output_addr, size_t count, ncclDataType_t data_type, int root,
+                         cudaStream_t stream, const std::string &group_name);
+  ncclResult_t Send(const void *send_addr, size_t count, ncclDataType_t data_type, int peer_rank, cudaStream_t stream,
+                    const std::string &group_name);
+  ncclResult_t Recv(void *recv_addr, size_t count, ncclDataType_t data_type, int peer_rank, cudaStream_t stream,
+                    const std::string &group_name);
+  ncclResult_t GroupStart();
+  ncclResult_t GroupEnd();
   void AddGroupInfo(const std::string &group_name, NcclGroupInfo *group);
   void DestroyGroup(const std::string &group_name);
+  std::vector<int> GetGroupRanks(const std::string &group_name);
 
  private:
   NCCLWrapper() : comm_init_done_(false) {}

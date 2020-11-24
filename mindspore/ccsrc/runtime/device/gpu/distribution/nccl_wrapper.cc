@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <vector>
 #include "runtime/device/gpu/distribution/nccl_wrapper.h"
 
 namespace mindspore {
@@ -74,6 +75,24 @@ ncclResult_t NCCLWrapper::Broadcast(const void *input_addr, void *output_addr, s
   return ncclBroadcast(input_addr, output_addr, count, data_type, root, group_comm, stream);
 }
 
+ncclResult_t NCCLWrapper::Send(const void *send_addr, size_t count, ncclDataType_t data_type, int peer_rank,
+                               cudaStream_t stream, const std::string &group_name) {
+  CHECK_RET(group_info_.count(group_name), 1, "Failed to find group info for Send by the group name " + group_name);
+  ncclComm_t group_comm = group_info_[group_name].comm;
+  return ncclSend(send_addr, count, data_type, peer_rank, group_comm, stream);
+}
+
+ncclResult_t NCCLWrapper::Recv(void *recv_addr, size_t count, ncclDataType_t data_type, int peer_rank,
+                               cudaStream_t stream, const std::string &group_name) {
+  CHECK_RET(group_info_.count(group_name), 1, "Failed to find group info for Recv by the group name " + group_name);
+  ncclComm_t group_comm = group_info_[group_name].comm;
+  return ncclRecv(recv_addr, count, data_type, peer_rank, group_comm, stream);
+}
+
+ncclResult_t NCCLWrapper::GroupStart() { return ncclGroupStart(); }
+
+ncclResult_t NCCLWrapper::GroupEnd() { return ncclGroupEnd(); }
+
 void NCCLWrapper::AddGroupInfo(const std::string &group_name, NcclGroupInfo *group) {
   if (comm_init_done_) {
     CHECK_RET(ncclCommInitRank(&(group->comm), group->size, group->unique_id, group->rank), ncclSuccess,
@@ -91,6 +110,12 @@ void NCCLWrapper::DestroyGroup(const std::string &group_name) {
   CHECK_RET(ncclCommDestroy(group_comm), ncclSuccess, "Failed to destroy NCCL communicator for " + group_name);
   group_info_.erase(group_iter);
   return;
+}
+
+std::vector<int> NCCLWrapper::GetGroupRanks(const std::string &group_name) {
+  CHECK_RET(group_info_.count(group_name), 1,
+            "Failed to find group info for GetGroupRanks by the group name " + group_name);
+  return group_info_[group_name].group_ranks;
 }
 }  // namespace gpu
 }  // namespace device

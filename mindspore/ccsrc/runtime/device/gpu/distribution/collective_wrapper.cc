@@ -53,3 +53,21 @@ ncclResult_t Broadcast(const void *input_addr, void *output_addr, size_t count, 
                        cudaStream_t stream, const std::string &group) {
   return NCCLWrapper::instance().Broadcast(input_addr, output_addr, count, data_type, root, stream, group);
 }
+
+ncclResult_t Send(const void *send_addr, size_t count, ncclDataType_t data_type, int peer_rank, cudaStream_t stream,
+                  const std::string &group_name) {
+  return NCCLWrapper::instance().Send(send_addr, count, data_type, peer_rank, stream, group_name);
+}
+
+ncclResult_t Recv(void *recv_addr, size_t count, ncclDataType_t data_type, int peer_rank, cudaStream_t stream,
+                  const std::string &group_name) {
+  return NCCLWrapper::instance().Recv(recv_addr, count, data_type, peer_rank, stream, group_name);
+}
+
+ncclResult_t GroupStart() { return NCCLWrapper::instance().GroupStart(); }
+
+ncclResult_t GroupEnd() { return NCCLWrapper::instance().GroupEnd(); }
+
+std::vector<int> GetGroupRanks(const std::string &group_name) {
+  return NCCLWrapper::instance().GetGroupRanks(group_name);
+}

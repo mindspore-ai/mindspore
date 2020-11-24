@@ -48,3 +48,10 @@ extern "C" EXPORT_WRAPPER ncclResult_t ReduceScatter(const void *input_addr, voi
 extern "C" EXPORT_WRAPPER ncclResult_t Broadcast(const void *input_addr, void *output_addr, size_t count,
                                                  ncclDataType_t data_type, int root, cudaStream_t stream,
                                                  const std::string &group);
+extern "C" EXPORT_WRAPPER ncclResult_t Send(const void *send_addr, size_t count, ncclDataType_t data_type,
+                                            int peer_rank, cudaStream_t stream, const std::string &group_name);
+extern "C" EXPORT_WRAPPER ncclResult_t Recv(void *recv_addr, size_t count, ncclDataType_t data_type, int peer_rank,
+                                            cudaStream_t stream, const std::string &group_name);
+extern "C" EXPORT_WRAPPER ncclResult_t GroupStart();
+extern "C" EXPORT_WRAPPER ncclResult_t GroupEnd();
+extern "C" EXPORT_WRAPPER std::vector<int> GetGroupRanks(const std::string &group_name);
