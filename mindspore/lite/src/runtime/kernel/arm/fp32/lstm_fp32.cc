@@ -135,12 +135,14 @@ int LstmCPUKernel::ReSize() {
   ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LstmCPUKernel InitWeightBias error.";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
 
   ret = InitBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LstmCPUKernel InitBuffer error.";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
   return RET_OK;
@@ -157,13 +159,18 @@ int LstmCPUKernel::Run() {
   MS_ASSERT(output != nullptr);
 
   auto input_ptr = reinterpret_cast<float *>(input->MutableData());
+  MS_ASSERT(input_ptr);
   auto output_ptr = reinterpret_cast<float *>(output->MutableData());
-
+  MS_ASSERT(output_ptr);
   auto output_hidden_state = out_tensors_[1];
   memcpy(output_hidden_state->MutableData(), hidden_state->MutableData(), hidden_state->ElementsNum() * sizeof(float));
   auto output_cell_state = out_tensors_[2];
   memcpy(output_cell_state->MutableData(), cell_state->MutableData(), cell_state->ElementsNum() * sizeof(float));
 
+  MS_ASSERT(weight_h_ptr_);
+  MS_ASSERT(weight_i_ptr_);
+  MS_ASSERT(bias_ptr_);
+  MS_ASSERT(gate_buffer_);
   Lstm(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, bias_ptr_,
        reinterpret_cast<float *>(output_hidden_state->MutableData()),
        reinterpret_cast<float *>(output_cell_state->MutableData()), gate_buffer_, lstm_parm_);

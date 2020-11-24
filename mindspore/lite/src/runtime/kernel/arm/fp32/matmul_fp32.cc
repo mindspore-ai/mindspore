@@ -258,6 +258,10 @@ int MatmulCPUKernel::RunImpl(int task_id) {
   auto b = cur_b_ptr_ + task_id * thread_stride_ * C8NUM * params_->deep_;
   auto c = cur_c_ptr_ + task_id * thread_stride_ * C8NUM;
   auto bias = bias_ptr_ ? bias_ptr_ + task_id * thread_stride_ * C8NUM : NULL;
+  MS_ASSERT(cur_a_ptr_);
+  MS_ASSERT(b);
+  MS_ASSERT(c);
+  MS_ASSERT(bias);
   if (is_vector_a_) {
     MatVecMul(cur_a_ptr_, b, c, bias, ActType_No, params_->deep_, cur_oc);
   } else {

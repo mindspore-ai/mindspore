@@ -53,6 +53,7 @@ int TransposeCPUKernel::ReSize() {
   }
   if (this->in_shape_ != nullptr) {
     free(this->in_shape_);
+    in_shape_ = nullptr;
   }
   if (this->out_shape_ != nullptr) {
     free(this->out_shape_);
@@ -89,13 +90,17 @@ int TransposeCPUKernel::TransposeParallel(int task_id) {
   }
   int thread_offset = task_id * thread_h_stride_;
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
-
+  MS_ASSERT(param);
   int *size = nullptr;
   int *position = nullptr;
   if (this->dim_size_ != nullptr && this->position_ != nullptr) {
     size = this->dim_size_ + task_id * param->num_axes_;
     position = this->position_ + task_id * param->num_axes_;
   }
+  MS_ASSERT(in_data_);
+  MS_ASSERT(out_data_);
+  MS_ASSERT(in_shape_);
+  MS_ASSERT(out_shape_);
   auto ret = DoTransposeFp32(in_data_, out_data_, in_shape_, out_shape_, param, thread_offset,
                              thread_offset + num_unit_thread, size, position);
   if (ret != RET_OK) {

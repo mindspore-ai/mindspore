@@ -108,6 +108,7 @@ int ScatterNDCPUKernel::ReSize() {
   }
 
   int *indices_ptr = reinterpret_cast<int *>(indices->MutableData());
+  output_unit_offsets_.clear();
   for (int i = 0; i < num_unit_; i++) {
     int tmp_stride = 0;
     for (int j = 0; j < indice_unit_rank; j++) {

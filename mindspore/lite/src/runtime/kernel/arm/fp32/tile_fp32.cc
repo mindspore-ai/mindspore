@@ -41,6 +41,7 @@ void TileCPUKernel::ComputeStrides(const int *shape, int *strides, int ndim) {
 
 int TileCPUKernel::ReSize() {
   auto tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
+  MS_ASSERT(tile_parameter_);
   tile_parameter_->in_dim_ = in_tensors_[0]->shape().size();
   for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
     tile_parameter_->in_shape_[i] = in_tensors_[0]->shape()[i];
@@ -54,7 +55,8 @@ int TileCPUKernel::ReSize() {
 int TileCPUKernel::Run() {
   auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-
+  MS_ASSERT(input_addr);
+  MS_ASSERT(output_addr);
   Tile(input_addr, output_addr, reinterpret_cast<TileParameter *>(op_parameter_));
   return RET_OK;
 }

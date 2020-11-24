@@ -33,11 +33,9 @@ int TopKInt8CPUKernel::Init() {
 
 int TopKInt8CPUKernel::ReSize() {
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
-  if (parameter->topk_node_list_ != nullptr) {
-    free(parameter->topk_node_list_);
-    parameter->topk_node_list_ = nullptr;
-  }
+  MS_ASSERT(parameter);
   lite::Tensor *input = in_tensors_.at(0);
+  MS_ASSERT(input);
   parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
   parameter->loop_num_ = 1;
   for (size_t i = 0; i < input->shape().size() - 1; ++i) {
@@ -48,8 +46,11 @@ int TopKInt8CPUKernel::ReSize() {
 
 int TopKInt8CPUKernel::Run() {
   int8_t *input_data = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  MS_ASSERT(input_data);
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
+  MS_ASSERT(output_data);
   int32_t *output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->MutableData());
+  MS_ASSERT(output_index);
 
   MS_ASSERT(context_->allocator != nullptr);
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);

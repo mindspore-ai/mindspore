@@ -65,6 +65,9 @@ int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
   auto in_shape = in_tensors_[0]->shape();
   auto out_shape = out_tensors_[0]->shape();
   SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
+  MS_ASSERT(param);
+  MS_ASSERT(input_ptr_);
+  MS_ASSERT(output_ptr_);
   auto ret = SpaceToDepthForNHWC(input_ptr_, output_ptr_, in_shape.data(), out_shape.data(), in_shape.size(),
                                  param->block_size_, thread_offset, thread_offset + num_unit_thread);
   if (ret != RET_OK) {
@@ -93,7 +96,6 @@ int SpaceToDepthCPUKernel::Run() {
       MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";
       return ret;
     }
-    return RET_OK;
   } else {
     MS_LOG(ERROR) << "Only support NHWC now!";
     return RET_ERROR;

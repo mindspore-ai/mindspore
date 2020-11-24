@@ -138,8 +138,11 @@ int MulInt8CPUKernel::ReSize() {
 
 int MulInt8CPUKernel::Run() {
   input0_data_ = static_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  MS_ASSERT(input0_data_);
   input1_data_ = static_cast<int8_t *>(in_tensors_.at(1)->MutableData());
+  MS_ASSERT(input1_data_);
   output_data_ = static_cast<int8_t *>(out_tensors_.at(0)->MutableData());
+  MS_ASSERT(output_data_);
 
   CheckIfFastImpl();
   // can implement fast broadcast mul

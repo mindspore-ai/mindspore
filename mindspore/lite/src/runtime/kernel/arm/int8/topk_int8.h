@@ -30,13 +30,7 @@ class TopKInt8CPUKernel : public LiteKernel {
     TopkParameter *param = reinterpret_cast<TopkParameter *>(op_parameter_);
     param->topk_node_list_ = nullptr;
   }
-  ~TopKInt8CPUKernel() override {
-    TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
-    if (parameter->topk_node_list_ != nullptr) {
-      free(parameter->topk_node_list_);
-      parameter->topk_node_list_ = nullptr;
-    }
-  }
+  ~TopKInt8CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;

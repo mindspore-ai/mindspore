@@ -74,6 +74,11 @@ int ROIPoolingCPUKernel::ReSize() {
 }
 
 int ROIPoolingCPUKernel::DoExecute(int task_id) {
+  MS_ASSERT(in_ptr_);
+  MS_ASSERT(out_ptr_);
+  MS_ASSERT(roi_ptr_);
+  MS_ASSERT(max_c_);
+  MS_ASSERT(param_);
   auto ret = ROIPooling(in_ptr_, out_ptr_, roi_ptr_, max_c_, task_id, param_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ROIPooling Execute error task_id[" << task_id << "] error_code[" << ret << "]";

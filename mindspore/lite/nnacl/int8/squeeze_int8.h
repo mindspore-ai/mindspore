@@ -23,8 +23,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Squeeze(int8_t **inputs, int8_t *output_ptr, int task_id, SqueezeQuantArg *quant_Squeeze_parm,
-             SqueezeParameter *para_, size_t osize);
+void SqueezeInt8(const int8_t *input_ptr, int8_t *output_ptr, int task_id, SqueezeQuantArg *quant_Squeeze_parm,
+                 SqueezeParameter *para_, const int num);
 #ifdef __cplusplus
 }
 #endif

@@ -48,6 +48,7 @@ int RangeCPUKernel::Run() {
     }
   }
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  MS_ASSERT(output_ptr);
   Range(output_ptr, start, limit, delta);
   return RET_OK;
 }

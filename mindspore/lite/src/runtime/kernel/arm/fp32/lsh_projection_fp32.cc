@@ -90,8 +90,10 @@ void LshProjectionCPUKernel::FreeKeys() {
   if (param_->hash_buffs_ != nullptr) {
     for (int i = 0; i < op_parameter_->thread_num_; i++) {
       context_->allocator->Free(param_->hash_buffs_[i]);
+      param_->hash_buffs_[i] = nullptr;
     }
     context_->allocator->Free(param_->hash_buffs_);
+    param_->hash_buffs_ = nullptr;
   }
 }
 

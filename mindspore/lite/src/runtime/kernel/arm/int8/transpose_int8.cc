@@ -25,8 +25,6 @@ using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
 
-TransposeInt8CPUKernel::~TransposeInt8CPUKernel() { return; }
-
 int TransposeInt8CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -114,10 +112,17 @@ int TransposeInt8CPUKernel::DoTranspose(int task_id) {
   int *dim_size = nullptr;
   int *position = nullptr;
   if (extra_dims_) {
+    MS_ASSERT(dim_size_);
     dim_size = dim_size_ + task_id * transpose_param_->num_axes_;
+    MS_ASSERT(position_);
     position = position_ + task_id * transpose_param_->num_axes_;
   }
 
+  MS_ASSERT(in_ptr_);
+  MS_ASSERT(out_ptr_);
+  MS_ASSERT(in_shape_);
+  MS_ASSERT(out_shape_);
+  MS_ASSERT(transpose_param_);
   auto ret = DoTransposeInt8(in_ptr_, out_ptr_, out_shape_, transpose_param_, thread_offset,
                              thread_offset + num_unit_thread, dim_size, position);
   if (ret != RET_OK) {

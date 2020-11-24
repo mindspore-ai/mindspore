@@ -34,6 +34,8 @@ int SqueezeCPUKernel::ReSize() { return RET_OK; }
 int SqueezeCPUKernel::Run() {
   mindspore::lite::STATUS ret = RET_ERROR;
   size_t data_size = in_tensors_.front()->Size();
+  MS_ASSERT(input_ptr);
+  MS_ASSERT(output_ptr);
   if (in_tensors_.front()->data_type() == kNumberTypeInt32) {
     auto input_ptr = reinterpret_cast<int32_t *>(in_tensors_.front()->MutableData());
     auto output_ptr = reinterpret_cast<int32_t *>(out_tensors_.front()->MutableData());

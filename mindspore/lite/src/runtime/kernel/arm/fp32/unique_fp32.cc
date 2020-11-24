@@ -29,8 +29,11 @@ int UniqueCPUKernel::ReSize() { return RET_OK; }
 
 int UniqueCPUKernel::Run() {
   auto input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  MS_ASSERT(input);
   auto output0 = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  MS_ASSERT(output0);
   auto output1 = reinterpret_cast<int *>(out_tensors_.at(1)->MutableData());
+  MS_ASSERT(output1);
 
   int output0_len = 0;
   Unique(input, in_tensors_.at(0)->ElementsNum(), output0, &output0_len, output1);

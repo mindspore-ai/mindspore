@@ -61,6 +61,7 @@ void ParseSentenceToWords(const StringPack &sentence, std::vector<StringPack> *w
 
 int SkipGramCPUKernel::Run() {
   skip_gram_parameter_ = reinterpret_cast<SkipGramParameter *>(op_parameter_);
+  MS_ASSERT(skip_gram_parameter_);
   if (skip_gram_parameter_->ngram_size < 1) {
     MS_LOG(ERROR) << "Skip Gram Parameter Error, NgramSize should be at least 1, get "
                   << skip_gram_parameter_->ngram_size;

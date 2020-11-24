@@ -34,7 +34,7 @@ class SqueezeInt8CPUKernel : public SqueezeBaseCPUKernel {
       : SqueezeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
     para_ = reinterpret_cast<SqueezeParameter *>(parameter);
   }
-  ~SqueezeInt8CPUKernel() override { delete quant_Squeeze_parm_; }
+  ~SqueezeInt8CPUKernel() override;
 
   int Init() override;
   int ReSize() override;
@@ -43,7 +43,7 @@ class SqueezeInt8CPUKernel : public SqueezeBaseCPUKernel {
 
  private:
   SqueezeParameter *para_;
-  SqueezeQuantArg *quant_Squeeze_parm_;
+  SqueezeQuantArg *quant_squeeze_param_;
 };
 
 int SqueezeInt8Run(void *cdata, int task_id);

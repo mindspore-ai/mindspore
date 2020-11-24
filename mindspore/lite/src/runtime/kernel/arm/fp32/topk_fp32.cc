@@ -26,6 +26,7 @@ using mindspore::schema::PrimitiveType_TopK;
 namespace mindspore::kernel {
 int TopKCPUKernel::Init() {
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
+  MS_ASSERT(parameter);
   parameter->topk_node_list_ = nullptr;
   if (!InferShapeDone()) {
     return RET_OK;
@@ -46,11 +47,15 @@ int TopKCPUKernel::ReSize() {
 
 int TopKCPUKernel::Run() {
   auto input_data = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  MS_ASSERT(input_data);
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  MS_ASSERT(output_data);
   auto output_index = reinterpret_cast<int32_t *>(out_tensors_.at(1)->MutableData());
+  MS_ASSERT(output_index);
 
   MS_ASSERT(context_->allocator != nullptr);
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
+  MS_ASSERT(parameter);
   if (in_tensors_.size() == lite::kDoubleNum) {
     auto input_k = reinterpret_cast<int *>(in_tensors_.at(1)->MutableData());
     parameter->k_ = input_k[0];
@@ -66,6 +71,7 @@ int TopKCPUKernel::Run() {
   }
   Topk(input_data, output_data, output_index, reinterpret_cast<TopkParameter *>(op_parameter_));
   context_->allocator->Free(parameter->topk_node_list_);
+  parameter->topk_node_list_ = nullptr;
   return RET_OK;
 }
 

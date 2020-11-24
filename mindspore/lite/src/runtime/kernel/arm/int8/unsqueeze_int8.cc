@@ -32,13 +32,13 @@ int Unsqueezeint8CPUKernel::Init() {
   auto *input_tensor = in_tensors_.at(0);
   auto quant_args = input_tensor->quant_params();
   MS_ASSERT(quant_args.size() == 1);
-  Unsq_para_->quant_arg.in_quant_args_.scale_ = quant_args.front().scale;
-  Unsq_para_->quant_arg.in_quant_args_.zp_ = quant_args.front().zeroPoint;
+  param_->quant_arg.in_quant_args_.scale_ = quant_args.front().scale;
+  param_->quant_arg.in_quant_args_.zp_ = quant_args.front().zeroPoint;
 
   auto out_quant_args = input_tensor->quant_params();
-  Unsq_para_->quant_arg.out_quant_args_.scale_ = out_quant_args.front().scale;
-  Unsq_para_->quant_arg.out_quant_args_.zp_ = out_quant_args.front().zeroPoint;
-  Unsq_para_->thread_count_ = thread_count_;
+  param_->quant_arg.out_quant_args_.scale_ = out_quant_args.front().scale;
+  param_->quant_arg.out_quant_args_.zp_ = out_quant_args.front().zeroPoint;
+  param_->thread_count_ = thread_count_;
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -59,10 +59,12 @@ int Unsqueezeint8CPUKernel::DoUnsqueeze(int task_id) {
   }
 
   auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.front()->MutableData());
+  MS_ASSERT(input_ptr);
   auto output_ptr = reinterpret_cast<int8_t *>(out_tensors_.front()->MutableData());
+  MS_ASSERT(output_ptr);
   size_t data_size = out_tensors_.front()->Size();
 
-  int ret = Int8Unsqueeze(input_ptr, output_ptr, Unsq_para_, data_size, task_id);
+  int ret = Int8Unsqueeze(input_ptr, output_ptr, param_, data_size, task_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return ret;

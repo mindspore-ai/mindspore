@@ -111,7 +111,8 @@ int PReluCPUKernel::Run() {
   auto input_tensor = in_tensors_[0];
   ori_input_ = reinterpret_cast<float *>(input_tensor->MutableData());
   output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
-
+  MS_ASSERT(ori_input_);
+  MS_ASSERT(output_data_);
   if (prelu_param_->channelShared) {
     auto ret = ProcessShareChannelInput();
     if (ret != RET_OK) {

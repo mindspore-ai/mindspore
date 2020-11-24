@@ -86,8 +86,10 @@ int ScaleInt8CPUKernel::InitScaleOffset() {
         input2_data_ = reinterpret_cast<int8_t *>(malloc(out_tensors_.at(0)->Size()));
         if (input2_data_ == nullptr) {
           MS_LOG(ERROR) << "malloc input2_data_  failed.";
-          free(input1_data_);
-          input1_data_ = nullptr;
+          if (malloced_scale_) {
+            free(input1_data_);
+            input1_data_ = nullptr;
+          }
           return RET_ERROR;
         }
         malloced_offset_ = true;
@@ -261,11 +263,15 @@ int ScaleInt8CPUKernel::Scale(int task_id) {
     return lite::RET_OK;
   }
   int8_t *cur_input0_data = input0_data_ + task_id * count_unit_;
+  MS_ASSERT(cur_input0_data);
   int8_t *cur_input1_data = input1_data_ + task_id * count_unit_;
+  MS_ASSERT(cur_input1_data);
   int8_t *cur_output_data = output_data_ + task_id * count_unit_;
+  MS_ASSERT(cur_output_data);
 
   if (has_bias_) {
     int8_t *cur_input2_data = input2_data_ + task_id * count_unit_;
+    MS_ASSERT(cur_input2_data);
     DoScaleWithBiasInt8(cur_input0_data, cur_output_data, cur_input1_data, cur_input2_data, scale_param_,
                         real_dst_count);
   } else {
