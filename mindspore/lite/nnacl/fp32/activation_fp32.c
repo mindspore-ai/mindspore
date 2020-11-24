@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32/activation_fp32.h"
+#include <float.h>
 #include "nnacl/errorcode.h"
 
 int Fp32Relu(const float *src, int length, float *dst) {
@@ -150,14 +151,17 @@ int HardTanh(const float *src, int length, float *dst, float min_val, float max_
     return NNACL_ERR;
   }
   int i = 0;
-  for (i = 0; i < length; ++i) {
-    float in = src[i];
-    if (in < min_val) {
-      dst[i] = min_val;
-    } else if (in > max_val) {
-      dst[i] = max_val;
-    } else {
-      dst[i] = in;
+  if (min_val == FLT_MIN) {
+    for (i = 0; i < length; ++i) {
+      dst[i] = src[i] > max_val ? max_val : src[i];
+    }
+  } else if (max_val == FLT_MAX) {
+    for (i = 0; i < length; ++i) {
+      dst[i] = src[i] < min_val ? min_val : src[i];
+    }
+  } else {
+    for (i = 0; i < length; ++i) {
+      dst[i] = src[i] < min_val ? min_val : (src[i] > max_val ? max_val : src[i]);
     }
   }
   return NNACL_OK;

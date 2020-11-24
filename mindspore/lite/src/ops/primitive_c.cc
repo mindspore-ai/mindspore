@@ -132,6 +132,7 @@
 #include "src/ops/hashtable_lookup.h"
 #include "src/ops/skip_gram.h"
 #include "src/ops/clip.h"
+#include "src/ops/adder.h"
 #include "src/ops/custom_predict.h"
 #include "src/ops/custom_normalize.h"
 #include "src/ops/custom_extract_features.h"
@@ -858,6 +859,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) SkipGram(primitive);
     case schema::PrimitiveType_Clip:
       return new (std::nothrow) Clip(primitive);
+    case schema::PrimitiveType_Adder:
+      return new (std::nothrow) Adder(primitive);
     case schema::PrimitiveType_CustomPredict:
       return new (std::nothrow) CustomPredict(primitive);
     case schema::PrimitiveType_CustomNormalize:

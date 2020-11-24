@@ -35,7 +35,19 @@ int RangeCPUKernel::Run() {
   size_t start = (reinterpret_cast<RangeParameter *>(op_parameter_))->start_;
   size_t limit = (reinterpret_cast<RangeParameter *>(op_parameter_))->limit_;
   size_t delta = (reinterpret_cast<RangeParameter *>(op_parameter_))->delta_;
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  if (in_tensors_.size() == 3) {
+    if ((in_tensors_.at(0)->data_type() == mindspore::kNumberTypeInt32) &&
+        (in_tensors_.at(1)->data_type() == mindspore::kNumberTypeInt32) &&
+        (in_tensors_.at(2)->data_type() == mindspore::kNumberTypeInt32)) {
+      start = *reinterpret_cast<int *>(in_tensors_.at(0)->data_c());
+      limit = *reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
+      delta = *reinterpret_cast<int *>(in_tensors_.at(2)->data_c());
+    } else {
+      MS_LOG(ERROR) << "Unsupported parameter type : " << in_tensors_.at(0)->data_type() << ".";
+      return RET_ERROR;
+    }
+  }
+  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   Range(output_ptr, start, limit, delta);
   return RET_OK;
 }

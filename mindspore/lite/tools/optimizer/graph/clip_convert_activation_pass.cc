@@ -42,9 +42,7 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto clip_cnode = node->cast<CNodePtr>();
-    MS_ASSERT(clip_cnode->inputs().size() > kClipMinIndex);
-    MS_ASSERT(clip_cnode->inputs().size() > kClipMaxIndex);
-
+    MS_ASSERT(clip_cnode->size() >= kClipMinIndex);
     auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(clip_cnode->input(0));
     MS_ASSERT(primitive_c != nullptr);
     auto primT = primitive_c->primitiveT();
@@ -55,19 +53,27 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     float max = primT->value.AsClip()->max;
     float min = primT->value.AsClip()->min;
     if ((min == -1) && (max == -1)) {
-      if (clip_cnode->size() != 4) {
-        MS_LOG(ERROR) << "Clip param invalid";
-        return false;
+      if (clip_cnode->size() > kClipMinIndex) {
+        auto min_param_value = GetLiteParamValue(clip_cnode->input(kClipMinIndex));
+        if (min_param_value->tensor_type() != mindspore::kNumberTypeFloat32) {
+          MS_LOG(ERROR) << "Clip param type invalid";
+          return false;
+        }
+        min = *reinterpret_cast<float *>(min_param_value->tensor_addr());
+      } else {
+        min = FLT_MIN;
       }
-      auto min_param_value = GetLiteParamValue(clip_cnode->input(kClipMinIndex));
-      auto max_param_value = GetLiteParamValue(clip_cnode->input(kClipMaxIndex));
-      if ((min_param_value->tensor_type() != mindspore::kNumberTypeFloat32) ||
-          (max_param_value->tensor_type() != mindspore::kNumberTypeFloat32)) {
-        MS_LOG(ERROR) << "Clip param type invalid";
-        return false;
+
+      if (clip_cnode->size() > kClipMaxIndex) {
+        auto max_param_value = GetLiteParamValue(clip_cnode->input(kClipMaxIndex));
+        if (max_param_value->tensor_type() != mindspore::kNumberTypeFloat32) {
+          MS_LOG(ERROR) << "Clip param type invalid";
+          return false;
+        }
+        max = *reinterpret_cast<float *>(max_param_value->tensor_addr());
+      } else {
+        max = FLT_MAX;
       }
-      min = *reinterpret_cast<float *>(min_param_value->tensor_addr());
-      max = *reinterpret_cast<float *>(max_param_value->tensor_addr());
     }
     auto manager = graph->manager();
 
