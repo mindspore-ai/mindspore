@@ -21,63 +21,6 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteLogicalParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                  const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                  const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::vector<std::string> node_name_str;
-  Split(op->name, &node_name_str, "-");
-  const char *node_name = node_name_str.data()->c_str();
-  if (std::strcmp(node_name, "LogicalAnd") == 0) {
-    MS_LOG(DEBUG) << "parse TfliteLogicalAndParser";
-    std::unique_ptr<schema::LogicalAndT> attr = std::make_unique<schema::LogicalAndT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return RET_NULL_PTR;
-    }
-    op->primitive->value.type = schema::PrimitiveType_LogicalAnd;
-    op->primitive->value.value = attr.release();
-  } else if (std::strcmp(node_name, "LogicalNot") == 0) {
-    MS_LOG(DEBUG) << "parse TfliteLogicalNotParser";
-    std::unique_ptr<schema::LogicalNotT> attr = std::make_unique<schema::LogicalNotT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return RET_NULL_PTR;
-    }
-    op->primitive->value.type = schema::PrimitiveType_LogicalNot;
-    op->primitive->value.value = attr.release();
-  } else if (std::strcmp(node_name, "LogicalOr") == 0) {
-    MS_LOG(DEBUG) << "parse TfliteLogicalOrParser";
-    std::unique_ptr<schema::LogicalOrT> attr = std::make_unique<schema::LogicalOrT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return RET_NULL_PTR;
-    }
-    op->primitive->value.type = schema::PrimitiveType_LogicalOr;
-    op->primitive->value.value = attr.release();
-  } else {
-    MS_LOG(ERROR) << node_name << " hasn't been supported";
-    return RET_NOT_FIND_OP;
-  }
-
-  for (int input : tflite_op->inputs) {
-    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  }
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  return RET_OK;
-}
 PrimitiveC *TfliteLogicalParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
@@ -117,8 +60,8 @@ PrimitiveC *TfliteLogicalParser::ParseLitePrimitive(const std::unique_ptr<tflite
   return PrimitiveC::Create(primitive.release());
 }
 
-TfliteNodeRegister g_tfliteLogicalAndParser("LogicalAnd", new TfliteLogicalParser());
-TfliteNodeRegister g_tfliteLogicalNotParser("LogicalNot", new TfliteLogicalParser());
-TfliteNodeRegister g_tfliteLogicalOrParser("LogicalOr", new TfliteLogicalParser());
+TfliteNodeRegister g_tfliteLogicalAndParser(tflite::BuiltinOperator_LOGICAL_AND, new TfliteLogicalParser());
+TfliteNodeRegister g_tfliteLogicalNotParser(tflite::BuiltinOperator_LOGICAL_NOT, new TfliteLogicalParser());
+TfliteNodeRegister g_tfliteLogicalOrParser(tflite::BuiltinOperator_LOGICAL_OR, new TfliteLogicalParser());
 }  // namespace lite
 }  // namespace mindspore

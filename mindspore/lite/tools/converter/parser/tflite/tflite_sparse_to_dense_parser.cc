@@ -21,42 +21,6 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteSparseToDenseParser::Parse(TfliteTensorsInfo *tensors_info,
-                                        const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                        const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteSparseToDenseParser";
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::SparseToDenseT> attr = std::make_unique<schema::SparseToDenseT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  attr->validateIndices = false;
-
-  op->primitive->value.type = schema::PrimitiveType_SparseToDense;
-  op->primitive->value.value = attr.release();
-
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  AddOpInput(op, tensors_info, tflite_op->inputs[1], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  AddOpInput(op, tensors_info, tflite_op->inputs[2], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  AddOpInput(op, tensors_info, tflite_op->inputs[3], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  return RET_OK;
-}
 PrimitiveC *TfliteSparseToDenseParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
@@ -77,6 +41,7 @@ PrimitiveC *TfliteSparseToDenseParser::ParseLitePrimitive(const std::unique_ptr<
   return PrimitiveC::Create(primitive.release());
 }
 
-TfliteNodeRegister g_tfliteSparseToDenseParser("SparseToDense", new TfliteSparseToDenseParser());
+TfliteNodeRegister g_tfliteSparseToDenseParser(tflite::BuiltinOperator_SPARSE_TO_DENSE,
+                                               new TfliteSparseToDenseParser());
 }  // namespace lite
 }  // namespace mindspore

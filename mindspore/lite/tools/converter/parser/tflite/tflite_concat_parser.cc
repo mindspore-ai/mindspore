@@ -18,48 +18,7 @@
 #include <vector>
 #include <memory>
 
-namespace mindspore {
-namespace lite {
-STATUS TfliteConcatParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteConcatParser";
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  const auto &tfliteAttr = tflite_op->builtin_options.AsConcatenationOptions();
-  if (tfliteAttr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-    return RET_NULL_PTR;
-  }
-  attr->axis = tfliteAttr->axis;
-  attr->n = tflite_op->inputs.size();
-
-  op->primitive->value.type = schema::PrimitiveType_Concat;
-  op->primitive->value.value = attr.release();
-
-  for (int input : tflite_op->inputs) {
-    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  }
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  return RET_OK;
-}
+namespace mindspore::lite {
 PrimitiveC *TfliteConcatParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
@@ -81,6 +40,5 @@ PrimitiveC *TfliteConcatParser::ParseLitePrimitive(const std::unique_ptr<tflite:
   return PrimitiveC::Create(primitive.release());
 }
 
-TfliteNodeRegister g_tfliteConcatParser("Concat", new TfliteConcatParser());
-}  // namespace lite
-}  // namespace mindspore
+TfliteNodeRegister g_tfliteConcatParser(tflite::BuiltinOperator_CONCATENATION, new TfliteConcatParser());
+}  // namespace mindspore::lite

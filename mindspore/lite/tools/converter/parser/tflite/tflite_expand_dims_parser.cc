@@ -20,42 +20,6 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteExpandDimsParser::Parse(TfliteTensorsInfo *tensors_info,
-                                     const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                     const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                     const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteExpandDimsParser";
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::ExpandDimsT> attr = std::make_unique<schema::ExpandDimsT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-  std::vector<int> dims;
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, dims)) {
-    MS_LOG(ERROR) << "get expand_dims -> dim failed";
-    return RET_ERROR;
-  }
-  attr->dim = dims[0];
-  op->primitive->value.type = schema::PrimitiveType_ExpandDims;
-  op->primitive->value.value = attr.release();
-
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  return RET_OK;
-}
 PrimitiveC *TfliteExpandDimsParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                        const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto &tflite_subgraph = tflite_model->subgraphs.front();
@@ -80,6 +44,6 @@ PrimitiveC *TfliteExpandDimsParser::ParseLitePrimitive(const std::unique_ptr<tfl
   primitive->value.value = attr.release();
   return PrimitiveC::Create(primitive.release());
 }
-TfliteNodeRegister g_tfliteExpandDimsParser("ExpandDims", new TfliteExpandDimsParser());
+TfliteNodeRegister g_tfliteExpandDimsParser(tflite::BuiltinOperator_EXPAND_DIMS, new TfliteExpandDimsParser());
 }  // namespace lite
 }  // namespace mindspore

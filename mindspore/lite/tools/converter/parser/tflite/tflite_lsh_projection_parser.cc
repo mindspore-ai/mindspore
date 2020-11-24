@@ -20,50 +20,6 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteLshProjectionParser::Parse(TfliteTensorsInfo *tensors_info,
-                                        const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                        const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                        const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteLshProjectionParser";
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::LshProjectionT> attr = std::make_unique<schema::LshProjectionT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  const auto &tflite_attr = tflite_op->builtin_options.AsLSHProjectionOptions();
-  switch (tflite_attr->type) {
-    case tflite::LSHProjectionType_SPARSE:
-      attr->type = schema::LshProjectionType_SPARSE;
-      break;
-    case tflite::LSHProjectionType_DENSE:
-      attr->type = schema::LshProjectionType_DENSE;
-      break;
-    default:
-      attr->type = schema::LshProjectionType_UNKNOWN;
-  }
-  op->primitive->value.type = schema::PrimitiveType_LshProjection;
-  op->primitive->value.value = attr.release();
-
-  for (int input : tflite_op->inputs) {
-    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  }
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  return RET_OK;
-}
 PrimitiveC *TfliteLshProjectionParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
@@ -94,6 +50,6 @@ PrimitiveC *TfliteLshProjectionParser::ParseLitePrimitive(const std::unique_ptr<
   return PrimitiveC::Create(primitive.release());
 }
 
-TfliteNodeRegister g_tfliteLshProjectionParser("LshProjection", new TfliteLshProjectionParser());
+TfliteNodeRegister g_tfliteLshProjectionParser(tflite::BuiltinOperator_LSH_PROJECTION, new TfliteLshProjectionParser());
 }  // namespace lite
 }  // namespace mindspore

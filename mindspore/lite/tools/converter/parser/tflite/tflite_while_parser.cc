@@ -21,48 +21,6 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteWhileParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteWhileParser";
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::WhileT> attr = std::make_unique<schema::WhileT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  const auto &tflite_attr = tflite_op->builtin_options.AsWhileOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name.c_str() << " attr failed";
-    return RET_NULL_PTR;
-  }
-  attr->condSubgraphIndex = tflite_attr->cond_subgraph_index;
-  attr->bodySubgraphIndex = tflite_attr->body_subgraph_index;
-
-  op->primitive->value.type = schema::PrimitiveType_While;
-  op->primitive->value.value = attr.release();
-
-  for (int input : tflite_op->inputs) {
-    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  }
-  for (int output : tflite_op->outputs) {
-    AddOpOutput(op, tensors_info, output, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  }
-  return RET_OK;
-}
 PrimitiveC *TfliteWhileParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto primitive = std::make_unique<schema::PrimitiveT>();
@@ -91,6 +49,6 @@ PrimitiveC *TfliteWhileParser::ParseLitePrimitive(const std::unique_ptr<tflite::
   return PrimitiveC::Create(primitive.release());
 }
 
-TfliteNodeRegister g_tfliteWhileParser("While", new TfliteWhileParser());
+TfliteNodeRegister g_tfliteWhileParser(tflite::BuiltinOperator_WHILE, new TfliteWhileParser());
 }  // namespace lite
 }  // namespace mindspore

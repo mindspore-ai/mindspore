@@ -21,45 +21,6 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteTileParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                               const std::unique_ptr<tflite::ModelT> &tflite_model,
-                               const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteTileParser";
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::TileT> attr = std::make_unique<schema::TileT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->multiples)) {
-    MS_LOG(ERROR) << "get tile -> multiples failed";
-    return RET_ERROR;
-  }
-  std::vector<int> dims(attr->multiples.size(), 0);
-  for (size_t i = 0; i < dims.size(); ++i) {
-    dims[i] = i;
-  }
-  attr->dims = dims;
-  op->primitive->value.type = schema::PrimitiveType_Tile;
-  op->primitive->value.value = attr.release();
-
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  return RET_OK;
-}
 PrimitiveC *TfliteTileParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto &tflite_subgraph = tflite_model->subgraphs.front();
@@ -89,6 +50,6 @@ PrimitiveC *TfliteTileParser::ParseLitePrimitive(const std::unique_ptr<tflite::O
   return PrimitiveC::Create(primitive.release());
 }
 
-TfliteNodeRegister g_tfliteTileParser("Tile", new TfliteTileParser());
+TfliteNodeRegister g_tfliteTileParser(tflite::BuiltinOperator_TILE, new TfliteTileParser());
 }  // namespace lite
 }  // namespace mindspore

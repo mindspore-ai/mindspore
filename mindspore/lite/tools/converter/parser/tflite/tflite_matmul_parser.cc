@@ -19,41 +19,28 @@
 #include <memory>
 #include <map>
 
-namespace mindspore {
-namespace lite {
-STATUS TfliteMatMulParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteMatMulParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
+namespace mindspore::lite {
+PrimitiveC *TfliteMatMulParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is null";
+    return nullptr;
   }
 
   std::unique_ptr<schema::MatMulT> attr = std::make_unique<schema::MatMulT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
   const auto &tflite_attr = tflite_op->builtin_options.AsBatchMatMulOptions();
   attr->transposeA = tflite_attr->adj_x;
   attr->transposeB = tflite_attr->adj_y;
   attr->broadcast = false;
-  op->primitive->value.type = schema::PrimitiveType_MatMul;
-  op->primitive->value.value = attr.release();
+  primitive->value.type = schema::PrimitiveType_MatMul;
+  primitive->value.value = attr.release();
 
-  for (size_t i = 0; i < tflite_op->inputs.size(); i++) {
-    AddOpInput(op, tensors_info, tflite_op->inputs[i], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  }
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  return RET_OK;
+  return PrimitiveC::Create(primitive.release());
 }
 
-TfliteNodeRegister g_tfliteMatMulParser("MatMul", new TfliteMatMulParser());
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

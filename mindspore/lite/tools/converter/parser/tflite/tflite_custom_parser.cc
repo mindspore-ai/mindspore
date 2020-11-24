@@ -207,70 +207,6 @@ STATUS TfliteCustomParser::BatchMatMul(const std::vector<uint8_t> &custom_attr, 
   return RET_OK;
 }
 
-STATUS TfliteCustomParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteCustomParser";
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-  const auto &custom_attr = tflite_op->custom_options;
-  const auto opcode_index = tflite_op->opcode_index;
-  const auto &operator_code = tflite_model->operator_codes[opcode_index];
-  if (operator_code == nullptr) {
-    MS_LOG(ERROR) << "operator_code is null";
-    return RET_NULL_PTR;
-  }
-  const auto &custom_type = operator_code->custom_code;
-
-  int status = RET_OK;
-  if (custom_type == "TFLite_Detection_PostProcess") {
-    status = DetectPostProcess(custom_attr, op, tflite_op);
-  } else if (custom_type == "Predict") {
-    status = Predict(custom_attr, op, tflite_op);
-  } else if (custom_type == "Normalize") {
-    status = Normalize(custom_attr, op, tflite_op);
-  } else if (custom_type == "ExtractFeatures") {
-    status = ExtractFeatures(custom_attr, op, tflite_op);
-  } else if (custom_type == "AudioSpectrogram") {
-    status = AudioSpectrogram(custom_attr, op, tflite_op);
-  } else if (custom_type == "Mfcc") {
-    status = Mfcc(custom_attr, op, tflite_op);
-  } else if (custom_type == "FlexRFFT") {
-    status = Rfft(custom_attr, op, tflite_op, tflite_model, tflite_subgraph);
-  } else if (custom_type == "FlexReal") {
-    status = FftReal(custom_attr, op, tflite_op);
-  } else if (custom_type == "FlexImag") {
-    status = FftImag(custom_attr, op, tflite_op);
-  } else if (custom_type == "FlexIdentityN" || custom_type == "FlexIdentity") {
-    status = Identity(custom_attr, op, tflite_op);
-  } else if (custom_type == "FlexBatchMatMul") {
-    status = BatchMatMul(custom_attr, op, tflite_op);
-  } else {
-    MS_LOG(ERROR) << "the custom op hasn't been supported now";
-    status = RET_NOT_FIND_OP;
-  }
-  if (status != RET_OK) {
-    return status;
-  }
-
-  for (int input : tflite_op->inputs) {
-    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  }
-  for (int output : tflite_op->outputs) {
-    AddOpOutput(op, tensors_info, output, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  }
-  return status;
-}
 PrimitiveC *TfliteCustomParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto &tflite_subgraph = tflite_model->subgraphs.front();
@@ -314,6 +250,6 @@ PrimitiveC *TfliteCustomParser::ParseLitePrimitive(const std::unique_ptr<tflite:
   return PrimitiveC::Create(primitive);
 }
 
-TfliteNodeRegister g_tfliteCustomParser("Custom", new TfliteCustomParser());
+TfliteNodeRegister g_tfliteCustomParser(tflite::BuiltinOperator_CUSTOM, new TfliteCustomParser());
 }  // namespace lite
 }  // namespace mindspore

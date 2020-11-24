@@ -19,44 +19,7 @@
 #include <vector>
 #include <memory>
 
-namespace mindspore {
-namespace lite {
-STATUS TfliteBroadcastToParser::Parse(TfliteTensorsInfo *tensors_info,
-                                      const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                      const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                      const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteBroadcastToParser";
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::BroadcastToT> attr = std::make_unique<schema::BroadcastToT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->dst_shape)) {
-    MS_LOG(ERROR) << "get broadCastTo -> dst_shape failed";
-    return RET_ERROR;
-  }
-
-  op->primitive->value.type = schema::PrimitiveType_BroadcastTo;
-  op->primitive->value.value = attr.release();
-
-  AddOpInput(op, tensors_info, tflite_op->inputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  return RET_OK;
-}
+namespace mindspore::lite {
 PrimitiveC *TfliteBroadcastToParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto &tflite_subgraph = tflite_model->subgraphs.front();
@@ -80,6 +43,4 @@ PrimitiveC *TfliteBroadcastToParser::ParseLitePrimitive(const std::unique_ptr<tf
   return PrimitiveC::Create(primitive.release());
 }
 
-TfliteNodeRegister g_tfliteBroadcastToParser("BroadcastTo", new TfliteBroadcastToParser());
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

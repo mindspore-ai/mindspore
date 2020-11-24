@@ -31,15 +31,15 @@ class TfliteNodeParserRegistry {
 
   static TfliteNodeParserRegistry *GetInstance();
 
-  TfliteNodeParser *GetNodeParser(const std::string &name);
+  TfliteNodeParser *GetNodeParser(const tflite::BuiltinOperator &type);
 
-  std::unordered_map<std::string, TfliteNodeParser *> parsers;
+  std::unordered_map<tflite::BuiltinOperator, TfliteNodeParser *> parsers;
 };
 
 class TfliteNodeRegister {
  public:
-  TfliteNodeRegister(const std::string &name, TfliteNodeParser *parser) {
-    TfliteNodeParserRegistry::GetInstance()->parsers[name] = parser;
+  TfliteNodeRegister(const tflite::BuiltinOperator &type, TfliteNodeParser *parser) {
+    TfliteNodeParserRegistry::GetInstance()->parsers[type] = parser;
   }
 };
 }  // namespace lite

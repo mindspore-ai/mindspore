@@ -20,50 +20,6 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TfliteOneHotParser::Parse(TfliteTensorsInfo *tensors_info, const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                 const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "parse TfliteOneHotParser";
-  MS_ASSERT(tflite_op != nullptr);
-  MS_ASSERT(tflite_model != nullptr);
-  MS_ASSERT(tflite_subgraph != nullptr);
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::OneHotT> attr = std::make_unique<schema::OneHotT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  const auto &tflite_attr = tflite_op->builtin_options.AsOneHotOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op: " << op->name << " attr failed";
-    return RET_NULL_PTR;
-  }
-  attr->axis = tflite_attr->axis;
-
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive->value.type = schema::PrimitiveType_OneHot;
-  op->primitive->value.value = attr.release();
-
-  for (int input : tflite_op->inputs) {
-    AddOpInput(op, tensors_info, input, tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  }
-  AddOpOutput(op, tensors_info, tflite_op->outputs[0], tflite_subgraph->tensors.size(), schema::Format::Format_NHWC);
-  return RET_OK;
-}
 PrimitiveC *TfliteOneHotParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto &tflite_subgraph = tflite_model->subgraphs.front();
@@ -97,6 +53,6 @@ PrimitiveC *TfliteOneHotParser::ParseLitePrimitive(const std::unique_ptr<tflite:
   return PrimitiveC::Create(primitive.release());
 }
 
-TfliteNodeRegister g_tfliteOneHotParser("OneHot", new TfliteOneHotParser());
+TfliteNodeRegister g_tfliteOneHotParser(tflite::BuiltinOperator_ONE_HOT, new TfliteOneHotParser());
 }  // namespace lite
 }  // namespace mindspore
