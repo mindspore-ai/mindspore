@@ -757,6 +757,7 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
   std::vector<unsigned int> watchpoint_id;
   std::vector<std::string> overflow_ops;
   std::vector<std::vector<DebugServices::parameter_t>> parameters;
+  std::vector<int32_t> error_codes;
 #ifdef ENABLE_D
   overflow_ops = CheckOpOverflow();
 #endif
@@ -768,14 +769,14 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
     tensor_list = tensor_loader->GetNodeTensorMap(watchnode);
     debug_services_->AddWeightsBiasInputs(&tensor_list, kernel);
   }
-  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, overflow_ops, tensor_list,
-                                    initial_suspend_);
+  debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
+                                    tensor_list, initial_suspend_);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     WatchpointHit hit;
     std::vector<DebugServices::parameter_t> &parameter = parameters[i];
     hit.set_id(watchpoint_id[i]);
-
+    hit.set_error_code(error_codes[i]);
     // here TensorProto act as a tensor indicator, not sending tensor content
     TensorProto *tensor_item = hit.mutable_tensor();
     tensor_item->set_node_name(name[i]);
@@ -790,6 +791,7 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
       x->set_disabled(p.disabled);
       x->set_value(p.value);
       x->set_hit(p.hit);
+      x->set_actual_value(p.actual_value);
     }
     hits.push_back(hit);
   }

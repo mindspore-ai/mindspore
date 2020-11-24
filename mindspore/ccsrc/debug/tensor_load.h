@@ -56,7 +56,12 @@ class TensorLoader {
 
   std::map<std::string, std::shared_ptr<TensorData>> GetTensorMap() { return tensor_list_map; }
 
-  std::shared_ptr<TensorData> GetPrevTensor(std::string tensor_name) { return tensor_list_map[tensor_name + ":prev"]; }
+  std::shared_ptr<TensorData> GetPrevTensor(std::string tensor_name) {
+    if (tensor_list_map.find(tensor_name + ":prev") != tensor_list_map.end()) {
+      return tensor_list_map[tensor_name + ":prev"];
+    }
+    return nullptr;
+  }
 
   std::vector<std::shared_ptr<TensorData>> GetNodeTensorMap(std::string node_name) {
     std::vector<std::shared_ptr<TensorData>> tensors;
