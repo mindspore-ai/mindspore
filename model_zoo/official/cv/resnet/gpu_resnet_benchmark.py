@@ -39,6 +39,8 @@ parser.add_argument('--epoch_size', type=str, default="2", help='Epoch_size: def
 parser.add_argument('--print_per_steps', type=str, default="20", help='Print loss and time per steps: default 20')
 parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute')
 parser.add_argument('--dataset_path', type=str, default=None, help='Imagenet dataset path')
+parser.add_argument('--dtype', type=str, choices=["fp32", "fp16", "FP16", "FP32"], default="fp16",\
+     help='Compute data type fp32 or fp16: default fp16')
 args_opt = parser.parse_args()
 
 set_seed(1)
@@ -60,7 +62,7 @@ def pad(image):
     output = np.concatenate((image, zeros), axis=2)
     return output
 
-def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="GPU"):
+def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="GPU", dtype="fp16"):
     ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=4, shuffle=True)
 
     image_size = 224
@@ -81,9 +83,11 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
             C.CenterCrop(image_size),
             C.Normalize(mean=mean, std=std),
         ]
-
+    if dtype == "fp32":
+        trans.append(C.HWC2CHW())
     ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=4)
-    ds = ds.map(operations=pad, input_columns="image", num_parallel_workers=4)
+    if dtype == "fp16":
+        ds = ds.map(operations=pad, input_columns="image", num_parallel_workers=4)
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
     # apply dataset repeat operation
@@ -112,6 +116,7 @@ if __name__ == '__main__':
     epoch_size = int(args_opt.epoch_size)
     total_batch = int(args_opt.batch_size)
     print_per_steps = int(args_opt.print_per_steps)
+    compute_type = str(args_opt.dtype).lower()
 
     # init context
     context.set_context(mode=context.GRAPH_MODE, device_target=dev, save_graphs=False)
@@ -122,14 +127,14 @@ if __name__ == '__main__':
 
     # create dataset
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
-                             batch_size=total_batch, target=dev)
+                             batch_size=total_batch, target=dev, dtype=compute_type)
     step_size = dataset.get_dataset_size()
     if (print_per_steps > step_size or print_per_steps < 1):
         print("Arg: print_per_steps should lessequal to dataset_size ", step_size)
         print("Change to default: 20")
         print_per_steps = 20
     # define net
-    net = resnet(class_num=1001)
+    net = resnet(class_num=1001, dtype=compute_type)
 
     # init weight
     for _, cell in net.cells_and_names():
@@ -163,10 +168,11 @@ if __name__ == '__main__':
     loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, 0.9, 1e-4, 1024)
     loss_scale = FixedLossScaleManager(1024, drop_overflow_update=False)
+    model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'})
     # Mixed precision
-    model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
-                  amp_level="O2", keep_batchnorm_fp32=False)
-
+    if compute_type == "fp16":
+        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
+                      amp_level="O2", keep_batchnorm_fp32=False)
     # define callbacks
     time_cb = MyTimeMonitor(total_batch, print_per_steps)
     loss_cb = LossMonitor()
