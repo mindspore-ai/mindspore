@@ -102,10 +102,10 @@ MobileNetV2总体网络架构如下：
 - 配置MobileNetV2-quant和ImageNet2012数据集。
 
   ```python
-  'class_num':1000         # 数据集类数
+  'num_classes':1000       # 数据集类数
   'batch_size':134         # 训练批次大小
-  'epoch_size':60         # Mobilenetv2-quant的训练轮次
-  'start epoch':200         # 非量化网络预训练轮次
+  'epoch_size':60          # Mobilenetv2-quant的训练轮次
+  'start_epoch':200        # 非量化网络预训练轮次
   'warmup_epochs':0        # 热身轮次
   'lr':0.3                 # 学习率
   'momentum':0.9           # 动量
