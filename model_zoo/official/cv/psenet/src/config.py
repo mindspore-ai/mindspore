@@ -39,7 +39,6 @@ config = ed({
     "TRAIN_ROOT_DIR": 'psenet/ic15/',
     "TRAIN_IS_TRANSFORM": True,
     "TRAIN_LONG_SIZE": 640,
-    "TRAIN_DATASET_SIZE": 1000,
     "TRAIN_MIN_SCALE": 0.4,
     "TRAIN_BATCH_SIZE": 4,
     "TRAIN_REPEAT_NUM": 1800,
@@ -48,7 +47,6 @@ config = ed({
 
     # dataset for test
     "TEST_ROOT_DIR": 'psenet/ic15/',
-    "TEST_DATASET_SIZE": 500,
     "TEST_BUFFER_SIZE": 4,
     "TEST_DROP_REMAINDER": False,
 
