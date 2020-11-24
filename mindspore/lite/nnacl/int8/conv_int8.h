@@ -43,13 +43,10 @@ void Conv1x1PreOptPert(const int8_t *src_input, int8_t *packed_input, int32_t *i
                        size_t plane_size, ConvParameter *conv_param);
 void Conv1x1Int8(const int8_t *packed_input, const int8_t *packed_weight, int8_t *dst, const int32_t *input_sum,
                  const int32_t *bias, int row, int col, int deep16, int32_t *left_shift, int32_t *right_shift,
-                 int32_t *multiplier, ConvParameter *conv_param);
+                 int32_t *multiplier, ConvParameter *conv_param, int32_t *filter_zp);
 void Conv1x1Int8Opt(const int8_t *packed_input, const int8_t *packed_weight, int8_t *dst, const int32_t *input_sum,
                     const int32_t *bias, int row, int col, int deep4, int32_t *left_shift, int32_t *right_shift,
                     int32_t *multiplier, ConvParameter *conv_param, MATMUL_OPT_DP_FUNC matmul_func, int32_t *filter_zp);
-void Conv1x1Int8Arm32(const int8_t *packed_input, const int8_t *packed_weight, int8_t *dst, const int32_t *input_sum,
-                      const int32_t *bias, int row, int col, int deep16, int32_t *left_shift, int32_t *right_shift,
-                      int32_t *multiplier, ConvParameter *conv_param);
 
 // int8 convolution 3x3
 void Conv3x3Int8(int16_t *input_data, int16_t *transed_weight, const int32_t *bias_data, int8_t *output_data,

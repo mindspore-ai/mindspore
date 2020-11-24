@@ -62,10 +62,6 @@ int32x4_t ClacScaledInput(int32x4_t input, int32x4_t left_shift_result_vec, int3
 #endif
 
 #ifdef ENABLE_ARM32
-void IndirectGemmInt8_2x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias, size_t ksize,
-                          size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
-                          size_t act_max, size_t out_zp, int32_t *out_multiplier, int32_t *shift_before,
-                          int32_t *shift_after, size_t asymmetric, size_t per_channel, size_t per_channel_offset);
 void ConvDw3x3Int8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *weight, const int32_t *bias, int height,
                               int width, int in_kh_step, int in_kw_step, int channel, int8_t in_zp, int32_t out_zp,
                               int32_t *out_multiplier, int32_t *left_shift, int32_t *right_shift, int32_t acc_min,
@@ -76,10 +72,6 @@ void ConvDw3x3Int8BorderPixel(int8_t *dst, const int8_t *src, const int16_t *wei
 void PostFuncInt8C4Neon64(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc4div, size_t oc4res,
                           size_t plane, size_t stride, int32_t multiplier, int32_t left_shift, int32_t right_shift,
                           int32_t zp, int32_t mini, int32_t maxi);
-void IndirectGemmInt8_4x4(int8_t *output, const int8_t *input, const int8_t *weight, const int32_t *bias, size_t ksize,
-                          size_t ic4, size_t oc, size_t offset, const int32_t *input_sum, size_t act_min,
-                          size_t act_max, size_t out_zp, int32_t *out_multiplier, int32_t *shift_before,
-                          int32_t *shift_after, size_t asymmetric, size_t per_channel, size_t per_channel_offset);
 void ConvDw3x3Int8Neon64(int8_t *output, const int8_t *input, const int16_t *weight, const int32_t *bias,
                          int input_col_size, int input_row_size, int channel, int output_h, int output_w, int8_t in_zp,
                          int32_t out_zp, int32_t *out_multiplier, int32_t *left_shift, int32_t *right_shift,
