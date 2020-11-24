@@ -69,7 +69,11 @@ STATUS GenNewConvBias(const ParameterPtr &down_bias_node, const ParameterPtr &do
     MS_LOG(ERROR) << "tensor_data is nullptr";
     return RET_ERROR;
   }
-  memset(new_bias_data, 0, new_bias_size * sizeof(float));
+  if (memset_s(new_bias_data, new_bias_size * sizeof(float), 0, new_bias_size * sizeof(float)) != EOK) {
+    MS_LOG(ERROR) << "memset_s failed";
+    delete[] new_bias_data;
+    return RET_ERROR;
+  }
   auto up_bias_size = up_bias_shape[0];
   for (int i = 0; i < new_bias_size; i++) {
     for (int j = 0; j < up_bias_size; j++) {
@@ -112,8 +116,11 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
     MS_LOG(ERROR) << "tensor_data is nullptr";
     return RET_ERROR;
   }
-  memset(new_weight_data, 0, size * sizeof(float));
-
+  if (memset_s(new_weight_data, size * sizeof(float), 0, size * sizeof(float)) != EOK) {
+    MS_LOG(ERROR) << "memset_s failed";
+    delete[] new_weight_data;
+    return RET_ERROR;
+  }
   for (int i = 0; i < cout1; i++) {
     auto down_weight_base = i * cout0;
     auto new_weight_base = i * window_size * cin0;

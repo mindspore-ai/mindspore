@@ -35,7 +35,7 @@ int Cropper::ReadPackage() {
     MS_LOG(DEBUG) << cmd;
 
     FILE *p_file = popen(cmd.c_str(), "r");
-    if (!p_file) {
+    if (p_file == nullptr) {
       MS_LOG(ERROR) << "Error to popen" << this->flags_->package_file_;
       return RET_ERROR;
     }
@@ -140,13 +140,14 @@ int Cropper::GetModelFiles() {
 
     char buf[BUF_SIZE];
     FILE *p_file = popen(cmd.c_str(), "r");
-    if (!p_file) {
+    if (p_file == nullptr) {
       MS_LOG(ERROR) << "Error to popen";
       return RET_ERROR;
     }
     while (fgets(buf, BUF_SIZE, p_file) != nullptr) {
       String realPath = RealPath(String(buf).substr(0, String(buf).length() - 1).c_str());
       if (realPath.empty()) {
+        pclose(p_file);
         return RET_INPUT_PARAM_INVALID;
       }
       this->model_files_.emplace_back(realPath);

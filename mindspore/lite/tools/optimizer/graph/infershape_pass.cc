@@ -89,8 +89,9 @@ STATUS InferShapePass::SetParameterAbstract(const ParameterPtr &parameter) {
       return RET_ERROR;
     }
     auto ret = memcpy_s(tensor_data, new_value->tensor_size(), param_value->tensor_addr(), param_value->tensor_size());
-    if (ret != RET_OK) {
+    if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
+      delete[] tensor_data;
       return RET_ERROR;
     }
     new_value->set_tensor_addr(tensor_data);

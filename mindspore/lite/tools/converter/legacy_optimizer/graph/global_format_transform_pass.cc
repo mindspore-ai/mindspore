@@ -86,7 +86,11 @@ STATUS ConvertNcTensor2Nh(TensorT *tensor, const std::vector<int> &pad_dims) {
     delete[] new_nhwc_data;
     return RET_ERROR;
   }
-  memset(new_nhwc_data, 0, sizeof(float) * size);
+  if (memset_s(new_nhwc_data, sizeof(float) * size, 0, sizeof(float) * size) != EOK) {
+    MS_LOG(ERROR) << "create new nhwc data failed";
+    delete[] new_nhwc_data;
+    return RET_ERROR;
+  }
   auto nchw_data = reinterpret_cast<float *>(tensor->data.data());
   // nchw to nhwc
   for (auto i = 0; i < batch; i++) {
@@ -100,7 +104,11 @@ STATUS ConvertNcTensor2Nh(TensorT *tensor, const std::vector<int> &pad_dims) {
       }
     }
   }
-  memcpy(nchw_data, new_nhwc_data, sizeof(float) * size);
+  if (memcpy_s(nchw_data, tensor->data.size(), new_nhwc_data, sizeof(float) * size) != EOK) {
+    MS_LOG(ERROR) << "memcpy_s failed";
+    delete[] new_nhwc_data;
+    return RET_ERROR;
+  }
   delete[] new_nhwc_data;
   return RET_OK;
 }
@@ -129,7 +137,7 @@ STATUS GlobalFormatTransformPass::TransWeightToNhwc(MetaGraphT *graph, const std
           MS_LOG(ERROR) << "tensor origin tensor size error";
           return RET_ERROR;
         }
-        if (origin_dims.size() == 0) {
+        if (origin_dims.empty()) {
           continue;
         }
         auto pad_dims = origin_dims;
