@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_ACTIVATION_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_ACTIVATION_PARSER_H_
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_ADD_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_ADD_PARSER_H
-
+#include <string>
 #include <memory>
+#include <map>
+#include <vector>
 #include "tools/converter/parser/tf/tf_node_parser.h"
 
 namespace mindspore {
 namespace lite {
-class TFAddParser : public TFNodeParser {
+class TFActivationParser : public TFNodeParser {
  public:
-  TFAddParser() = default;
-  ~TFAddParser() override = default;
+  TFActivationParser() = default;
+  ~TFActivationParser() override = default;
 
-  STATUS Parse(const tensorflow::NodeDef *tf_op, const std::unique_ptr<tensorflow::GraphDef> &tf_model,
-               PrimitiveC *primitiveC, int *output_size) override;
+  STATUS Parse(const tensorflow::NodeDef &tf_op, const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+               PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_ADD_PARSER_H
+
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_ACTIVATION_PARSER_H_

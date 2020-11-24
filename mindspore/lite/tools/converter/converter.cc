@@ -28,6 +28,7 @@
 #include "parser/caffe/caffe_converter.h"
 #include "parser/tflite/tflite_converter.h"
 #include "parser/onnx/onnx_converter.h"
+#include "parser/tf/tf_converter.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/anf_importer/import_from_protobuf.h"
 #include "proto/onnx.pb.h"
@@ -148,6 +149,10 @@ int RunConverter(int argc, const char **argv) {
     case FmkType::FmkType_ONNX: {
       OnnxConverter onnxConverter;
       fb_graph = onnxConverter.Convert(flags.get());
+    } break;
+    case FmkType::FmkType_TF: {
+      TFConverter tfConverter;
+      fb_graph = tfConverter.Convert(flags.get());
     } break;
     default: {
       MS_LOG(ERROR) << "UNSUPPORTED FMKTYPE " << flags->fmk << ":" << RET_INPUT_PARAM_INVALID << " "

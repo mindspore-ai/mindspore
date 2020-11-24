@@ -22,34 +22,15 @@
 
 namespace mindspore {
 namespace lite {
-bool TensorFlowUtils::FindAttrValue(const tensorflow::NodeDef *nodeDef, std::string attr_name,
+bool TensorFlowUtils::FindAttrValue(const tensorflow::NodeDef &nodeDef, const std::string &attr_name,
                                     tensorflow::AttrValue *attr_value) {
-  const google::protobuf::Map<std::string, tensorflow::AttrValue> &attr = nodeDef->attr();
+  const google::protobuf::Map<std::string, tensorflow::AttrValue> &attr = nodeDef.attr();
   const google::protobuf::Map<std::string, tensorflow::AttrValue>::const_iterator it = attr.find(attr_name);
   if (it != attr.end()) {
     *attr_value = it->second;
     return true;
   }
   return false;
-}
-
-bool TensorFlowUtils::TfReadProtoFromBinary(const char *filepath, google::protobuf::Message *message) {
-  std::ifstream fs(filepath, std::ifstream::in | std::ifstream::binary);
-  if (!fs.is_open()) {
-    fprintf(stderr, "open failed %s\n", filepath);
-    return false;
-  }
-
-  google::protobuf::io::IstreamInputStream input(&fs);
-  google::protobuf::io::CodedInputStream codedstr(&input);
-
-  codedstr.SetTotalBytesLimit(INT_MAX, INT_MAX / 2);
-
-  bool success = message->ParseFromCodedStream(&codedstr);
-
-  fs.close();
-
-  return success;
 }
 }  // namespace lite
 }  // namespace mindspore

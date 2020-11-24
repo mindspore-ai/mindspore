@@ -31,29 +31,36 @@
 
 namespace mindspore {
 namespace lite {
-class TFModelParser {
+class TFModelParser : public ModelParser {
  public:
   TFModelParser() = default;
   ~TFModelParser() = default;
 
   FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile, const QuantType &quantType);
 
+ protected:
+  schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
+                                const QuantType &quantType = QuantType_QUANT_NONE) override;
+
  private:
-  STATUS ConvertConstTensor(const tensorflow::NodeDef *op, ParameterPtr parameter);
-  STATUS ConvertOutputTensor(const tensorflow::NodeDef *op, const CNodePtr &anf_node, int output_size);
-  STATUS ConvertOps();
-  STATUS ConvertGraphInputs();
-  STATUS ConvertGraphOutputs();
-
+  AnfNodePtr GetAnfNode(const std::string &name);
   std::string GetOriginInputName(const tensorflow::NodeDef &node);
-
-  void ClipIdentityAndStopGradient();
+  STATUS ConvertConstTensor(const tensorflow::AttrValue &attr_value, const TypeId &type, const ParameterPtr &parameter,
+                            std::vector<int64_t> *shape_vector);
+  STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter);
+  STATUS ConvertGraphInputsAndConsts();
+  STATUS ConvertInputNodes(const tensorflow::NodeDef &node_def, const std::vector<std::string> &input_names,
+                           std::vector<AnfNodePtr> *inputs);
+  STATUS ConvertOutputTensor(const tensorflow::NodeDef &op, const CNodePtr &anf_node, int output_size);
+  STATUS ConvertOps();
+  STATUS ConvertGraphOutputs();
 
   FuncGraphPtr funcGraphPtr;
   std::unique_ptr<tensorflow::GraphDef> tf_graph_def;
   std::map<std::string, const tensorflow::NodeDef *> tf_node_map;
   std::unordered_map<std::string, AnfNodePtr> anf_node_map;
-  std::vector<std::string> graph_input_names, graphOutputNames;
+  std::vector<std::string> graph_input_names;
+  std::vector<std::string> graph_output_names;
 };
 }  // namespace lite
 }  // namespace mindspore

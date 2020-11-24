@@ -13,22 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_BIASSADD_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_BIASSADD_PARSER_H_
 
-#include "tools/converter/parser/tf/tf_add_parser.h"
 #include <string>
 #include <memory>
-#include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include <map>
+#include <vector>
+#include "tools/converter/parser/tf/tf_node_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFAddParser::Parse(const tensorflow::NodeDef *tf_op, const std::unique_ptr<tensorflow::GraphDef> &tf_model,
-                          PrimitiveC *primitiveC, int *output_size) {
-  auto attr = std::make_unique<schema::PrimitiveT>();
-  attr->value.type = schema::PrimitiveType_Add;
-  primitiveC = PrimitiveC::Create(attr.release());
-  MS_LOG(INFO) << "primitive name" << primitiveC->type_name();
-  return RET_OK;
-}
-TFNodeRegistrar g_tfAddParser("Add", new TFAddParser());
+class TFBiasAddParser : public TFNodeParser {
+ public:
+  TFBiasAddParser() = default;
+  ~TFBiasAddParser() override = default;
+
+  STATUS Parse(const tensorflow::NodeDef &tf_op, const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+               PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) override;
+};
 }  // namespace lite
 }  // namespace mindspore
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_BIASSADD_PARSER_H_
