@@ -81,6 +81,18 @@ class PointDesc : public ProfDesc {
  private:
   uint32_t point_id_;
 };
+
+class TaskStreamOpNameDesc : public ProfDesc {
+ public:
+  TaskStreamOpNameDesc(std::string op_name, std::vector<std::pair<uint32_t, uint32_t>> stream_id_task_id_pairs)
+      : ProfDesc(std::move(op_name)), stream_id_task_id_pairs_(std::move(stream_id_task_id_pairs)) {}
+
+  ~TaskStreamOpNameDesc() override = default;
+  std::string ToString() override;
+
+ private:
+  std::vector<std::pair<uint32_t, uint32_t>> stream_id_task_id_pairs_;
+};
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

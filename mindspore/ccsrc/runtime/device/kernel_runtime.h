@@ -116,6 +116,8 @@ class KernelRuntime {
   void AssignCommunicationNodeInputMem(MemType type, const AnfNodePtr &node);
   void AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node);
 
+  virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
+
  private:
   void AssignStaticMemoryOutput(const session::KernelGraph *graph);
   bool LaunchKernelMod(const session::KernelGraph &graph);

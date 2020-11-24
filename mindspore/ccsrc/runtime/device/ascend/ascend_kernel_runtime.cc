@@ -54,6 +54,7 @@
 #include "profiler/device/ascend/profiling_context.h"
 #include "profiler/device/ascend/rt_callback_manager.h"
 #include "utils/config_manager.h"
+#include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
 
 using ge::model_runner::ModelRunner;
 using mindspore::device::ascend::ProfilingManager;
@@ -69,6 +70,7 @@ using std::vector;
 constexpr uint32_t kTupleTaskId = 0;
 constexpr uint32_t kTupleStreamId = 1;
 constexpr uint32_t kTupleArgs = 2;
+constexpr uint32_t kProfilingMaxTaskIdInStream = 65531;
 
 namespace mindspore {
 namespace device {
@@ -216,6 +218,17 @@ void AsyncDataDumpUninit() {
   }
 }
 
+void AscendKernelRuntime::ReportProfilingData() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->get_param<bool>(MS_CTX_ENABLE_PROFILING) &&
+      context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    // Save Profiling Framework data
+    OpNameTaskStreamReporter reporter(device_id_, "nonsink", stream_id_task_id_op_name_map_);
+    reporter.ReportData();
+  }
+}
+
 void AscendKernelRuntime::ReleaseDeviceRes() {
   MS_LOG(INFO) << "Ascend finalize start";
 #ifdef ENABLE_DEBUGGER
@@ -228,6 +241,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     return;
   }
   InnerSetContext();
+  ReportProfilingData();
   // release ge runtime
   ClearGraphModelMap();
 
@@ -822,6 +836,30 @@ bool AscendKernelRuntime::GraphWithEmptyTaskList(const session::KernelGraph *gra
 
 bool AscendKernelRuntime::CheckGraphIdValid(GraphId graph_id) const {
   return task_map_.find(graph_id) != task_map_.end() && graph_model_map_.find(graph_id) != graph_model_map_.end();
+}
+
+void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (!context->get_param<bool>(MS_CTX_ENABLE_PROFILING)) {
+    return;
+  }
+  // save task info
+  uint32_t stream_id;
+  uint32_t task_id;
+  auto rt_ret = rtGetTaskIdAndStreamID(&task_id, &stream_id);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Profiling get task_id stream_id failed";
+  }
+  std::pair<uint32_t, uint32_t> stream_task_pair = {stream_id, task_id};
+  auto try_emplace_ret = stream_id_task_id_op_name_map_.try_emplace(stream_task_pair, kernel_name);
+  if (!try_emplace_ret.second) {
+    MS_LOG(WARNING) << "Profiling duplicate key, task_id:" << stream_task_pair.second
+                      << " stream_id:" << stream_task_pair.first << " name:" << kernel_name;
+  }
+  if (stream_id_task_id_op_name_map_.size() > kProfilingMaxTaskIdInStream) {
+    MS_LOG(EXCEPTION) << "Too many profiling data";
+  }
 }
 }  // namespace ascend
 }  // namespace device

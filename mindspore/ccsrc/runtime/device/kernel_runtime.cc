@@ -853,6 +853,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
         MS_LOG(ERROR) << "Launch kernel failed.";
         return false;
       }
+      KernelLaunchProfiling(kernels[i]->fullname_with_scope());
     }
   }
   return true;
