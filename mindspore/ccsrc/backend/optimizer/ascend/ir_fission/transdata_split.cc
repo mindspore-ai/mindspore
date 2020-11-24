@@ -18,6 +18,7 @@
 #include "backend/optimizer/ascend/ascend_helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "debug/anf_ir_dump.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -99,7 +100,8 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   manager->AddFuncGraph(func_graph);
 
   if (!manager->Replace(node, new_replace_node)) {
-    MS_LOG(EXCEPTION) << "Manager replace node failed";
+    MS_LOG(EXCEPTION) << "Manager replace node failed"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   MS_LOG(INFO) << "Transdata node:" << cnode->DebugString() << "split success.";
   return true;

@@ -18,7 +18,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/utils.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
 const BaseRef MatmulBiasaddFusion::DefinePattern() const {
@@ -43,7 +43,8 @@ const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const A
 
   auto matmul = GetAnfNodeByVar(equiv, matmul_var_);
   if (matmul == nullptr || !matmul->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Get CNode MatMul failed!";
+    MS_LOG(EXCEPTION) << "Get CNode MatMul failed!"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   AnfAlgo::CopyNodeAttrs(matmul, new_node);
   return new_node;

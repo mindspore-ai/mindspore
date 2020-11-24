@@ -19,6 +19,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
 #include "utils/utils.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -28,7 +29,8 @@ void CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lars_v2);
   if (lars_v2->size() != kLarsV2InputNum) {
-    MS_LOG(EXCEPTION) << "Op lars_v2's input not equal " << kLarsV2InputNum;
+    MS_LOG(EXCEPTION) << "Op lars_v2's input not equal " << kLarsV2InputNum
+                      << " trace: " << trace::DumpSourceLines(lars_v2);
   }
 
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kSquareSumAllOpName)), lars_v2->input(1),
@@ -50,10 +52,12 @@ CNodePtr CreateLarsV2Update(const FuncGraphPtr &graph, const CNodePtr &lars_v2,
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(lars_v2);
   if (square_sum_all_outputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "square_sum_all_outputs' size not equal 2";
+    MS_LOG(EXCEPTION) << "square_sum_all_outputs' size not equal 2"
+                      << " trace: " << trace::DumpSourceLines(lars_v2);
   }
   if (lars_v2->size() != kLarsV2InputNum) {
-    MS_LOG(EXCEPTION) << "Op lars_v2's input not equal " << kLarsV2InputNum;
+    MS_LOG(EXCEPTION) << "Op lars_v2's input not equal " << kLarsV2InputNum
+                      << " trace: " << trace::DumpSourceLines(lars_v2);
   }
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kLarsV2UpdateOpName)),
                                     lars_v2->input(1),

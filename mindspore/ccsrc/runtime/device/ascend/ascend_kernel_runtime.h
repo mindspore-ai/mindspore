@@ -88,8 +88,8 @@ class AscendKernelRuntime : public KernelRuntime {
   unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
   unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
   unordered_map<GraphId, std::shared_ptr<DataDumper>> graph_data_dumper_;
-  static std::vector<rtExceptionInfo> exception_infos_;
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
+  static std::vector<rtExceptionInfo> exception_infoes_;
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);

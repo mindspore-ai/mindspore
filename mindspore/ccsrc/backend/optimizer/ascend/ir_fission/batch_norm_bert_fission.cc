@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -65,7 +66,7 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
     MS_LOG(EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
-                      << kBatchNormRealInputNum + 1;
+                      << kBatchNormRealInputNum + 1 << " trace: " << trace::DumpSourceLines(bn);
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(1)};
@@ -91,11 +92,12 @@ AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
     MS_LOG(EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
-                      << kBatchNormRealInputNum + 1;
+                      << kBatchNormRealInputNum + 1 << " trace: " << trace::DumpSourceLines(bn);
   }
   if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
     MS_LOG(EXCEPTION) << "The output size of node bn_training_reduce must be " << kBNTrainingReduceOutputNum
-                      << ", but it is " << bn_training_reduce_outputs.size();
+                      << ", but it is " << bn_training_reduce_outputs.size()
+                      << " trace: " << trace::DumpSourceLines(bn);
   }
   std::vector<AnfNodePtr> bn_training_update_v2_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateV2OpName)),
@@ -111,7 +113,7 @@ AnfNodePtr CreateBNTrainingUpdateV2(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(bn_abstract_tuple);
   if (bn_abstract_tuple->elements().size() != kBatchNormOutputNum) {
     MS_LOG(EXCEPTION) << "The abstract size of node bn must be " << kBatchNormOutputNum << ", but it is "
-                      << bn_abstract_tuple->elements().size();
+                      << bn_abstract_tuple->elements().size() << " trace: " << trace::DumpSourceLines(bn);
   }
   std::vector<AbstractBasePtr> abstract_list{bn_abstract_tuple->elements()[0], bn_abstract_tuple->elements()[3],
                                              bn_abstract_tuple->elements()[4]};
@@ -155,7 +157,8 @@ const AnfNodePtr BatchNormBertFission::Process(const FuncGraphPtr &func_graph, c
                                  &bn_training_update_v2_outputs);
   if (bn_training_update_v2_outputs.size() != kBNTrainingUpdateV2OutputNum) {
     MS_LOG(EXCEPTION) << "The output size of node bn_training_reduce must be " << kBNTrainingUpdateV2OutputNum
-                      << ", but it is " << bn_training_update_v2_outputs.size();
+                      << ", but it is " << bn_training_update_v2_outputs.size()
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);

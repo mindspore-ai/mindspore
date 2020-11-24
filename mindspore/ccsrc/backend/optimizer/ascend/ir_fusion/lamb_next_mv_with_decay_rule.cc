@@ -17,7 +17,7 @@
 #include <utility>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
 AnfNodePtr LambNextMVWithDecayRule::GetLambNextMVWithDecayOutput(const FuncGraphPtr &func_graph,
@@ -97,7 +97,8 @@ const AnfNodePtr LambNextMVWithDecayRule::Process(const FuncGraphPtr &func_graph
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(mul4) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input";
+    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   AnfNodeIndexSet mul4_outputs = manager->node_users()[mul4];
   auto iter = std::find_if(mul4_outputs.begin(), mul4_outputs.end(),

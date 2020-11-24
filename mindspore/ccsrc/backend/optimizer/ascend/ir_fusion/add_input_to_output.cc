@@ -19,6 +19,7 @@
 #include "backend/optimizer/ascend/ir_fusion/input_to_output_registry.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/oplib/oplib.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -107,7 +108,8 @@ const AnfNodePtr AddInputToOutput::Process(const FuncGraphPtr &func_graph, const
   MS_EXCEPTION_IF_NULL(new_abstract_tuple);
   CreateMultipleOutputsOfAnfNode(func_graph, cnode, new_abstract_tuple->size(), &new_outputs);
   if (new_outputs.size() != new_abstract_tuple->size()) {
-    MS_LOG(EXCEPTION) << "Failed to create outputs of " << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "Failed to create outputs of " << cnode->DebugString()
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   return new_outputs[0];
 }

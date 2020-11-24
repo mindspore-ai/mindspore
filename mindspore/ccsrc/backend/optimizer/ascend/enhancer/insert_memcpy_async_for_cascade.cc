@@ -19,6 +19,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/optimizer/ascend/ascend_helper.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -45,7 +46,8 @@ bool IsPartOutputsOfHcclOp(const AnfNodePtr &node, const CNodePtr &cur_hccl, con
   auto &node_users = manager->node_users();
   auto iter = node_users.find(prev_hccl_op);
   if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager";
+    MS_LOG(EXCEPTION) << "node has no output in manager"
+                      << " trace: " << trace::DumpSourceLines(cur_hccl);
   }
   for (const auto &node_index : iter->second) {
     AnfNodePtr output = node_index.first;
@@ -79,7 +81,8 @@ AnfNodePtr InsertMemcpyAsyncForCascade::InsertMemcpyAsync(const FuncGraphPtr &gr
     if (IsPartOutputsOfHcclOp(input, hccl_node, graph)) {
       auto memcpy_async = CreateMemcpyAsyncOp(graph, input);
       if (memcpy_async == nullptr) {
-        MS_LOG(EXCEPTION) << "Create memcpy_async op failed.";
+        MS_LOG(EXCEPTION) << "Create memcpy_async op failed."
+                          << " trace: " << trace::DumpSourceLines(hccl_node);
       }
       if (AnfAlgo::IsNodeDynamicShape(input)) {
         AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), memcpy_async);

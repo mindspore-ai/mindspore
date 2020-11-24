@@ -22,7 +22,7 @@
 
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
 namespace {
@@ -31,27 +31,31 @@ std::tuple<AnfNodePtr, AnfNodePtr, AnfNodePtr, AnfNodePtr> GetSharedNodes(const 
   auto add3 = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(add3);
   if (add3->inputs().size() < kAddInputNum) {
-    MS_LOG(EXCEPTION) << "The input size of Add3 is less than " << kAddInputNum;
+    MS_LOG(EXCEPTION) << "The input size of Add3 is less than " << kAddInputNum
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   auto real_div2_anf = add3->input(1);
   MS_EXCEPTION_IF_NULL(real_div2_anf);
   auto real_div2 = real_div2_anf->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(real_div2);
   if (real_div2->inputs().size() < kRealDivInputNum) {
-    MS_LOG(EXCEPTION) << "The input size of RealDiv2 is less than " << kRealDivInputNum;
+    MS_LOG(EXCEPTION) << "The input size of RealDiv2 is less than " << kRealDivInputNum
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   auto sqrt0_anf = real_div2->input(2);
   MS_EXCEPTION_IF_NULL(sqrt0_anf);
   auto sqrt0 = sqrt0_anf->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sqrt0);
   if (sqrt0->inputs().size() < kRsqrtInputNum) {
-    MS_LOG(EXCEPTION) << "The input size of Sqrt0 is less than " << kSqrtInputNum;
+    MS_LOG(EXCEPTION) << "The input size of Sqrt0 is less than " << kSqrtInputNum
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   auto add2_anf = sqrt0->input(1);
   MS_EXCEPTION_IF_NULL(add2_anf);
   auto add2 = add2_anf->cast<CNodePtr>();
   if (add2->inputs().size() < kAddInputNum) {
-    MS_LOG(EXCEPTION) << "The input size of Add2 is less than " << kAddInputNum;
+    MS_LOG(EXCEPTION) << "The input size of Add2 is less than " << kAddInputNum
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   return std::make_tuple(add3->input(2), real_div2->input(1), add2->input(1), add2->input(2));
 }
@@ -101,10 +105,12 @@ std::tuple<AnfNodePtr, AnfNodePtr> GetAdd0Add1Nodes(const AnfNodePtr &real_div0_
   MS_EXCEPTION_IF_NULL(real_div0);
   MS_EXCEPTION_IF_NULL(real_div1);
   if (real_div0->inputs().size() != kRealDivInputNum) {
-    MS_LOG(EXCEPTION) << "RealDiv0 has wrong input size";
+    MS_LOG(EXCEPTION) << "RealDiv0 has wrong input size"
+                      << " trace: " << trace::DumpSourceLines(real_div0_anf);
   }
   if (real_div1->inputs().size() != kRealDivInputNum) {
-    MS_LOG(EXCEPTION) << "RealDiv1 has wrong input size";
+    MS_LOG(EXCEPTION) << "RealDiv1 has wrong input size"
+                      << " trace: " << trace::DumpSourceLines(real_div1_anf);
   }
   return std::make_tuple(real_div0->input(1), real_div1->input(1));
 }
@@ -165,7 +171,8 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(mul4) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input";
+    MS_LOG(EXCEPTION) << "The Mul4 should be used by at least another node input"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   AnfNodeIndexSet mul4_output_node_index_set = manager->node_users()[mul4];
   auto iter = std::find_if(
@@ -195,7 +202,8 @@ const AnfNodePtr LambNextMVWithDecayV1Rule::Process(const FuncGraphPtr &func_gra
   std::vector<AnfNodePtr> fusion_node_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, fusion_node, kLambNextMVWithDecayV1OutputNum, &fusion_node_outputs);
   if (fusion_node_outputs.size() != kLambNextMVWithDecayV1OutputNum) {
-    MS_LOG(EXCEPTION) << "create multiple outputs for fusion node fail!";
+    MS_LOG(EXCEPTION) << "create multiple outputs for fusion node fail!"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
 
   (void)manager->Replace(add0, fusion_node_outputs[1]);

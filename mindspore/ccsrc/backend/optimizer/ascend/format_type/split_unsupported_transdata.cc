@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -39,7 +40,7 @@ const AnfNodePtr SplitUnsupportedTransData::Process(const FuncGraphPtr &func_gra
   MS_EXCEPTION_IF_NULL(kernel_info);
   if (kernel_info->GetInputNum() != 1 || kernel_info->GetOutputNum() != 1) {
     MS_LOG(EXCEPTION) << "Transdata node's kernel info's input and output format size is not 1"
-                      << ori_trans_data->DebugString();
+                      << ori_trans_data->DebugString() << trace::DumpSourceLines(node);
   }
   return SplitTransData(func_graph, ori_trans_data);
 }

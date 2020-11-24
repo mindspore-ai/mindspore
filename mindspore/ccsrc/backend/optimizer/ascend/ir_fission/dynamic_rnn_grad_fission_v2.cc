@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -290,7 +291,8 @@ AnfNodePtr CreateHConcat(const FuncGraphPtr &func_graph, const CNodePtr &dynamic
   std::vector<AnfNodePtr> splitv_outputs;
   CreateMultipleOutputsOfAnfNode(func_graph, splitv, kSplitVOutputNum, &splitv_outputs);
   if (splitv_outputs.size() != kSplitVOutputNum) {
-    MS_LOG(EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed";
+    MS_LOG(EXCEPTION) << "Create outputs of node " << splitv->DebugString() << " failed"
+                      << " trace: " << trace::DumpSourceLines(dynamic_rnn_grad_cnode);
   }
   auto origin_input4 = dynamic_rnn_grad_cnode->input(5);
   auto origin_input4_shape = AnfAlgo::GetOutputInferShape(origin_input4, 0);

@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -45,7 +46,8 @@ AnfNodePtr CreateNewPack(const FuncGraphPtr &func_graph, const CNodePtr &origin_
     axis += output_shape.size();
   }
   if (axis < 0) {
-    MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range";
+    MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range"
+                      << " trace: " << trace::DumpSourceLines(origin_pack_cnode);
   }
   std::vector<size_t> new_shape;
   for (size_t i = 0; i < output_shape.size() + 1; ++i) {
