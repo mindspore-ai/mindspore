@@ -554,9 +554,11 @@ class Model:
             >>> model.train(2, dataset)
         """
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
+        Validator.check_is_int(sink_size)
         if sink_size == -1:
             sink_size = train_dataset.get_dataset_size()
-        Validator.check_is_int(sink_size)
+            if sink_size == 0:
+                raise ValueError("There is no valid data in dataset, please check dataset file first.")
         if sink_size < -1 or sink_size == 0:
             raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
 
