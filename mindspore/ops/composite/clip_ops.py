@@ -84,7 +84,7 @@ class _ClipByGlobalNorm(Cell):
         super(_ClipByGlobalNorm, self).__init__()
         # Add interface. This parameter is not used at present
         if use_norm is not None:
-            validator.check_number("use_norm", use_norm, 0.0, Rel.GE, self.cls_name)
+            raise ValueError("Input 'use_norm' only supports None currently!")
         validator.check_number("clip_norm", clip_norm, 0.0, Rel.GT, self.cls_name)
         self.clip_norm = Tensor([clip_norm], mstype.float32)
         self.hyper_map = C.HyperMap()
@@ -108,16 +108,17 @@ def _check_value(clip_norm):
 def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
     r"""
     Clips tensor values by the ratio of the sum of their norms.
+
     Note:
-        'input x' should be a tuple or list of tensors. Otherwise, it will raise an error.
+        input 'x' should be a tuple or list of tensors. Otherwise, it will raise an error.
 
     Args:
           x (Union(tuple[Tensor], list[Tensor])): Input data to clip.
-          clip_norm (Union(float, int)): The clipping ratio. Default: 1.0
+          clip_norm (Union(float, int)): The clipping ratio, it should be greater than 0. Default: 1.0
           use_norm (None): The global norm. Default: None. Currently only none is supported.
 
     Returns:
-          Tensor, a clipped Tensor.
+          tuple[Tensor], a clipped Tensor.
 
     Examples:
         >>> x1 = np.array([[2., 3.],[1., 2.]]).astype(np.float32)

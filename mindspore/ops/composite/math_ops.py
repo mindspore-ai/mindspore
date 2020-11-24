@@ -42,7 +42,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     Count number of nonzero elements across axis of input tensor
 
     Args:
-        x (Union(tuple[Tensor], list[Tensor])): Input data is used to count non-zero numbers.
+        x (Tensor): Input data is used to count non-zero numbers.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Only constant value is allowed.
                                                   Default: (), reduce all dimensions.
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
