@@ -125,6 +125,7 @@ enum SubModuleId : int {
   SM_PROFILER,     // profiler
   SM_PS,           // Parameter Server
   SM_LITE,         // LITE
+  SM_HCCL_ADPT,    // Hccl Adapter
   NUM_SUBMODUES    // number of submodules
 };
 

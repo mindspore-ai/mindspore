@@ -181,7 +181,8 @@ static const char *GetSubModuleName(SubModuleId module_id) {
     "VM",         // SM_VM
     "PROFILER",   // SM_PROFILER
     "PS",         // SM_PS
-    "LITE"        // SM_LITE
+    "LITE",       // SM_LITE
+    "HCCL_ADPT"   // SM_HCCL_ADPT
   };
 
   return sub_module_names[module_id % NUM_SUBMODUES];

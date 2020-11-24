@@ -1,0 +1,8 @@
+file(GLOB_RECURSE HCCL_ADAPTER_SRC_LIST ./*.cc)
+set_property(SOURCE ${HCCL_ADAPTER_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_HCCL_ADPT)
+add_library(hccl_adapter SHARED ${HCCL_ADAPTER_SRC_LIST})
+target_include_directories(hccl_adapter PRIVATE ${CMAKE_BINARY_DIR}/proto/ge)
+add_dependencies(hccl_adapter graph)
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_options(hccl_adapter PRIVATE -Wl,-init,mindspore_log_init)
+endif ()

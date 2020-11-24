@@ -216,7 +216,7 @@ if (NOT ENABLE_GE)
 
         if (ENABLE_D)
             install(
-                TARGETS ms_profile
+                TARGETS ms_profile hccl_adapter
                 DESTINATION ${INSTALL_LIB_DIR}
                 COMPONENT mindspore
             )
