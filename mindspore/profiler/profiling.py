@@ -14,6 +14,7 @@
 # ============================================================================
 """Profiling api file."""
 import os
+import stat
 import time
 from enum import Enum
 
@@ -84,6 +85,7 @@ class Profiler:
         self._output_path = os.path.join(self._output_path, "profiler")
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path, exist_ok=True)
+            os.chmod(self._output_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         else:
             logger.warning("The target dir already exists. "
                            "There may be some old profiling data, and they will be rewrote in the end.")

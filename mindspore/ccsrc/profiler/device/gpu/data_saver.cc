@@ -310,7 +310,7 @@ void DataSaver::WriteStepTrace(const std::string &saver_base_dir) {
 void DataSaver::SetStepTraceOpName(ProfilingTraceInfo trace_op_name) { step_trace_op_name = trace_op_name; }
 
 void DataSaver::ChangeFileMode(const std::string &file_path) {
-  if (chmod(common::SafeCStr(file_path), S_IRUSR | S_IWUSR) == -1) {
+  if (chmod(common::SafeCStr(file_path), S_IRUSR) == -1) {
     MS_LOG(WARNING) << "Modify file:" << file_path << " to rw fail.";
     return;
   }
