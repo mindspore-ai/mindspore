@@ -234,7 +234,7 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node, const std::vector<
     operator_info << ") ";
   }
   operator_info << "is not support.";
-  MS_LOG(EXCEPTION) << operator_info.str();
+  MS_EXCEPTION(TypeError) << operator_info.str();
 }
 }  // namespace
 bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
