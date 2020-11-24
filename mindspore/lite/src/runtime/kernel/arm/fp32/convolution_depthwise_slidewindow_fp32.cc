@@ -53,15 +53,20 @@ int ConvolutionDepthwiseSWCPUKernel::InitWeightBias() {
   PackNCHWToNC4HW4Fp32(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
                        weight_tensor->Batch());
 
-  auto bias_tensor = in_tensors_[kBiasIndex];
-  bias_data_ = reinterpret_cast<float *>(malloc(C4NUM * OC4 * sizeof(float)));
+  int malloc_size = MSMAX(conv_param_->output_channel_, C4NUM * OC4);
+  if (malloc_size <= 0) {
+    MS_LOG(ERROR) << "malloc size is wrong";
+    return RET_ERROR;
+  }
+  bias_data_ = reinterpret_cast<float *>(malloc(malloc_size * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
 
-  memset(bias_data_, 0, C4NUM * OC4 * sizeof(float));
+  memset(bias_data_, 0, malloc_size * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
+    auto bias_tensor = in_tensors_[kBiasIndex];
     auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
   }
