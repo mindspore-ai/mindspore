@@ -355,8 +355,8 @@ kernel::SubGraphType Scheduler::GetKernelSubGraphType(const kernel::LiteKernel *
     if (desc.data_type == kNumberTypeFloat16) {
       return kernel::kCpuFP16SubGraph;
     } else if (desc.data_type == kNumberTypeFloat32 || desc.data_type == kNumberTypeInt8 ||
-               desc.data_type == kNumberTypeInt32 || desc.data_type == kNumberTypeBool ||
-               desc.data_type == kNumberTypeUInt8) {
+               desc.data_type == kNumberTypeInt32 || desc.data_type == kNumberTypeInt64 ||
+               desc.data_type == kNumberTypeUInt8 || desc.data_type == kNumberTypeBool) {
       return kernel::kCpuFP32SubGraph;
     }
   }
