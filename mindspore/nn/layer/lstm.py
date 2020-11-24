@@ -125,13 +125,6 @@ class LSTM(Cell):
         self.num_layers = num_layers
         self.bidirectional = bidirectional
         self.dropout = dropout
-        self.reverse_seq = P.ReverseSequence(batch_dim=1, seq_dim=0)
-        self.concat = P.Concat(axis=0)
-        self.concat_2dim = P.Concat(axis=2)
-        self.cast = P.Cast()
-        self.shape = P.Shape()
-        if dropout != 0:
-            self.dropout_op = nn.Dropout(float(dropout))
         self.lstm = P.LSTM(input_size=input_size,
                            hidden_size=hidden_size,
                            num_layers=num_layers,
@@ -143,36 +136,49 @@ class LSTM(Cell):
         gate_size = 4 * hidden_size
         stdv = 1 / math.sqrt(hidden_size)
         num_directions = 2 if bidirectional else 1
-        b0 = np.zeros(gate_size, dtype=np.float16)
-        self.w_list = []
-        self.b_list = []
-        self.rnns_fw = P.DynamicRNN(forget_bias=0.0)
-        self.rnns_bw = P.DynamicRNN(forget_bias=0.0)
-        for layer in range(num_layers):
-            input_layer_size = input_size if layer == 0 else hidden_size * num_directions
-            increment_size = gate_size * input_layer_size
-            increment_size += gate_size * hidden_size
-            w_shape = input_size if layer == 0 else (num_directions * hidden_size)
-            w_np = np.random.uniform(-stdv, stdv, (w_shape + hidden_size, gate_size)).astype(np.float16)
-            self.w_list.append(Parameter(
-                initializer(Tensor(w_np), [w_shape + hidden_size, gate_size]), name='weight_fw' + str(layer)))
-            if has_bias:
-                increment_size += 2 * gate_size
-                b_np = np.random.uniform(-stdv, stdv, gate_size).astype(np.float16)
-                self.b_list.append(Parameter(initializer(Tensor(b_np), [gate_size]), name='bias_fw' + str(layer)))
-            else:
-                self.b_list.append(Parameter(initializer(Tensor(b0), [gate_size]), name='bias_fw' + str(layer)))
-            weight_size += increment_size * num_directions
-            if bidirectional:
-                w_bw_np = np.random.uniform(-stdv, stdv, (w_shape + hidden_size, gate_size)).astype(np.float16)
-                self.w_list.append(Parameter(initializer(Tensor(w_bw_np), [w_shape + hidden_size, gate_size]),
-                                             name='weight_bw' + str(layer)))
-                b_bw_np = np.random.uniform(-stdv, stdv, (4 * hidden_size)).astype(np.float16) if has_bias else b0
-                self.b_list.append(Parameter(initializer(Tensor(b_bw_np), [gate_size]), name='bias_bw' + str(layer)))
-        self.w_list = ParameterTuple(self.w_list)
-        self.b_list = ParameterTuple(self.b_list)
-        w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
-        self.weight = Parameter(initializer(Tensor(w_np), [weight_size, 1, 1]), name='weight')
+        if self.is_ascend:
+            self.reverse_seq = P.ReverseSequence(batch_dim=1, seq_dim=0)
+            self.concat = P.Concat(axis=0)
+            self.concat_2dim = P.Concat(axis=2)
+            self.cast = P.Cast()
+            self.shape = P.Shape()
+            if dropout != 0:
+                self.dropout_op = nn.Dropout(float(dropout))
+            b0 = np.zeros(gate_size, dtype=np.float16)
+            self.w_list = []
+            self.b_list = []
+            self.rnns_fw = P.DynamicRNN(forget_bias=0.0)
+            self.rnns_bw = P.DynamicRNN(forget_bias=0.0)
+
+            for layer in range(num_layers):
+                w_shape = input_size if layer == 0 else (num_directions * hidden_size)
+                w_np = np.random.uniform(-stdv, stdv, (w_shape + hidden_size, gate_size)).astype(np.float16)
+                self.w_list.append(Parameter(
+                    initializer(Tensor(w_np), [w_shape + hidden_size, gate_size]), name='weight_fw' + str(layer)))
+                if has_bias:
+                    b_np = np.random.uniform(-stdv, stdv, gate_size).astype(np.float16)
+                    self.b_list.append(Parameter(initializer(Tensor(b_np), [gate_size]), name='bias_fw' + str(layer)))
+                else:
+                    self.b_list.append(Parameter(initializer(Tensor(b0), [gate_size]), name='bias_fw' + str(layer)))
+                if bidirectional:
+                    w_bw_np = np.random.uniform(-stdv, stdv, (w_shape + hidden_size, gate_size)).astype(np.float16)
+                    self.w_list.append(Parameter(initializer(Tensor(w_bw_np), [w_shape + hidden_size, gate_size]),
+                                                 name='weight_bw' + str(layer)))
+                    b_bw_np = np.random.uniform(-stdv, stdv, (4 * hidden_size)).astype(np.float16) if has_bias else b0
+                    self.b_list.append(Parameter(initializer(Tensor(b_bw_np), [gate_size]),
+                                                 name='bias_bw' + str(layer)))
+            self.w_list = ParameterTuple(self.w_list)
+            self.b_list = ParameterTuple(self.b_list)
+        else:
+            for layer in range(num_layers):
+                input_layer_size = input_size if layer == 0 else hidden_size * num_directions
+                increment_size = gate_size * input_layer_size
+                increment_size += gate_size * hidden_size
+                if has_bias:
+                    increment_size += 2 * gate_size
+                weight_size += increment_size * num_directions
+            w_np = np.random.uniform(-stdv, stdv, (weight_size, 1, 1)).astype(np.float32)
+            self.weight = Parameter(initializer(Tensor(w_np), [weight_size, 1, 1]), name='weight')
 
     def _stacked_bi_dynamic_rnn(self, x, init_h, init_c, weight, bias):
         """stacked bidirectional dynamic_rnn"""
