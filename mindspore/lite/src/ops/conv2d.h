@@ -34,23 +34,23 @@ class Conv2D : public PrimitiveC {
   explicit Conv2D(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-  void SetFormat(int format);
-  void SetGroup(int group);
-  void SetChannelIn(int channel_in);
-  void SetChannelOut(int channel_out);
-  void SetKernelW(int kernel_w);
-  void SetKernelH(int kernel_h);
-  void SetStrideW(int stride_w);
-  void SetStrideH(int stride_h);
-  void SetPadMode(int pad_mode);
-  void SetPadUp(int pad_up);
-  void SetPadDown(int pad_down);
-  void SetPadLeft(int pad_left);
-  void SetPadRight(int pad_right);
-  void SetDilateW(int dilate_w);
-  void SetDilateH(int dilate_h);
-  void SetHasBias(bool has_bias);
-  void SetActivationType(int activation_type);
+  virtual void SetFormat(int format);
+  virtual void SetGroup(int group);
+  virtual void SetChannelIn(int channel_in);
+  virtual void SetChannelOut(int channel_out);
+  virtual void SetKernelW(int kernel_w);
+  virtual void SetKernelH(int kernel_h);
+  virtual void SetStrideW(int stride_w);
+  virtual void SetStrideH(int stride_h);
+  virtual void SetPadMode(int pad_mode);
+  virtual void SetPadUp(int pad_up);
+  virtual void SetPadDown(int pad_down);
+  virtual void SetPadLeft(int pad_left);
+  virtual void SetPadRight(int pad_right);
+  virtual void SetDilateW(int dilate_w);
+  virtual void SetDilateH(int dilate_h);
+  virtual void SetHasBias(bool has_bias);
+  virtual void SetActivationType(int activation_type);
 
  private:
   void PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group,
@@ -67,23 +67,23 @@ class Conv2D : public PrimitiveC {
   int PadLeft() const;
   int PadRight() const;
 
-  int GetFormat() const;
-  int GetGroup() const;
-  int GetChannelIn() const;
-  int GetChannelOut() const;
-  int GetKernelW() const;
-  int GetKernelH() const;
-  int GetStrideW() const;
-  int GetStrideH() const;
-  int GetPadMode() const;
-  int GetPadUp() const;
-  int GetPadDown() const;
-  int GetPadLeft() const;
-  int GetPadRight() const;
-  int GetDilateW() const;
-  int GetDilateH() const;
-  bool GetHasBias() const;
-  int GetActivationType() const;
+  virtual int GetFormat() const;
+  virtual int GetGroup() const;
+  virtual int GetChannelIn() const;
+  virtual int GetChannelOut() const;
+  virtual int GetKernelW() const;
+  virtual int GetKernelH() const;
+  virtual int GetStrideW() const;
+  virtual int GetStrideH() const;
+  virtual int GetPadMode() const;
+  virtual int GetPadUp() const;
+  virtual int GetPadDown() const;
+  virtual int GetPadLeft() const;
+  virtual int GetPadRight() const;
+  virtual int GetDilateW() const;
+  virtual int GetDilateH() const;
+  virtual bool GetHasBias() const;
+  virtual int GetActivationType() const;
 
  protected:
   void ConvInferShape(int input_h, int input_w, int *output_h, int *output_w);
