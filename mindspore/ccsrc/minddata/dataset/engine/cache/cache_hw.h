@@ -63,6 +63,9 @@ class CacheServerHW {
   /// \brief Interleave a given memory block. Used by shared memory only.
   static void InterleaveMemory(void *ptr, size_t sz);
 
+  /// \brief Assign a given memory block to a numa node. Used by shared memory only.
+  void AssignToNode(numa_id_t numa_id, void *ptr, size_t sz);
+
   /// \brief Set default memory policy.
   static Status SetDefaultMemoryPolicy(CachePoolPolicy);
 

@@ -38,6 +38,8 @@
 #include "minddata/dataset/util/lock.h"
 #include "minddata/dataset/util/cond_var.h"
 #include "minddata/dataset/util/queue_map.h"
+#include "minddata/dataset/util/task_manager.h"
+#include "minddata/dataset/util/wait_post.h"
 
 namespace mindspore {
 namespace dataset {
@@ -50,6 +52,7 @@ class CacheClient {
   friend class CreateCacheRequest;
   friend class CacheRowRequest;
   friend class BatchFetchRequest;
+  friend class BatchCacheRowsRequest;
 
   /// \brief A builder to help creating a CacheClient object
   class Builder {
@@ -180,6 +183,11 @@ class CacheClient {
   /// \return Status object
   Status GetStat(CacheServiceStat *);
 
+  /// \brief Get the state of a cache server
+  /// \param[in/out] Pointer to a int8_t
+  /// \return Status object
+  Status GetState(int8_t *);
+
   /// \brief Cache the schema at the cache server
   /// \param map The unordered map of the schema
   /// \return Status object
@@ -230,6 +238,7 @@ class CacheClient {
   int32_t GetPort() const { return port_; }
   int32_t GetNumConnections() const { return num_connections_; }
   int32_t GetPrefetchSize() const { return prefetch_size_; }
+  int32_t GetClientId() const { return client_id_; }
 
   /// MergeOp will notify us when the server can't cache any more rows.
   /// We will stop any attempt to fetch any rows that are most likely
@@ -249,6 +258,20 @@ class CacheClient {
     }
     return false;
   }
+
+  // Default size of the async write buffer
+  constexpr static int64_t kAsyncBufferSize = 16 * 1048576L;  // 16M
+  constexpr static int32_t kNumAsyncBuffer = 2;
+
+  /// Force a final flush to the cache server. Must be called when receving eoe.
+  Status FlushAsyncWriteBuffer() {
+    if (async_buffer_stream_) {
+      return async_buffer_stream_->SyncFlush(true);
+    }
+    return Status::OK();
+  }
+
+  Status AsyncWriteBuffer(std::unique_ptr<DataBuffer> &&in);
 
  private:
   mutable RWLock mux_;
@@ -288,6 +311,62 @@ class CacheClient {
     std::set<row_id_type> gap_;
   };
   std::unique_ptr<CacheMissKeys> cache_miss_keys_;
+
+  /// A data stream of back-to-back serialized tensor rows.
+  class AsyncBufferStream {
+   public:
+    AsyncBufferStream();
+    ~AsyncBufferStream();
+
+    /// \brief Initialize an Ascyn write buffer
+    Status Init(CacheClient *cc);
+
+    /// A worker will call the API AsyncWrite to put a TensorRow into the data stream.
+    /// A background thread will stream the data to the cache server.
+    /// The result of calling AsyncWrite is not immediate known or it can be the last
+    /// result of some previous flush.
+    /// \note Need to call SyncFlush to do the final flush.
+    Status AsyncWrite(const TensorRow &row);
+    Status SyncFlush(bool blocking = false);
+
+    /// This maps a physical shared memory to the data stream.
+    class AsyncWriter {
+     public:
+      friend class AsyncBufferStream;
+      Status Write(int64_t start_addr, int64_t sz, const std::vector<ReadableSlice> &v);
+
+     private:
+      std::shared_ptr<BatchCacheRowsRequest> rq;
+      void *buffer_;
+      int32_t num_ele_;                   // How many tensor rows in this buffer
+      int64_t begin_addr_;                // Start of logical address of the data stream
+      std::atomic<int64_t> end_addr_;     // End of the logical address of the data stream
+      std::atomic<int64_t> bytes_avail_;  // Number of bytes remain
+    };
+
+    /// \brief Release the shared memory during shutdown
+    /// /note but needs comm layer to be alive.
+    Status ReleaseBuffer();
+
+   private:
+    Status flush_rc_;
+    WaitPost writer_wp_;
+    WaitPost flush_wp_;
+    RWLock mux_;
+    TaskGroup vg_;
+    CacheClient *cc_;
+    int64_t offset_addr_;
+    AsyncWriter buf_arr_[kNumAsyncBuffer];
+    int32_t cur_;
+    std::atomic<int64_t> next_addr_;
+
+    /// \brief Entry point of the async flush thread.
+    Status AsyncFlush();
+  };
+  std::shared_ptr<AsyncBufferStream> async_buffer_stream_;
+
+  /// \brief Serialize a Tensor into the async buffer.
+  Status AsyncWriteRow(const TensorRow &row);
 };
 }  // namespace dataset
 }  // namespace mindspore

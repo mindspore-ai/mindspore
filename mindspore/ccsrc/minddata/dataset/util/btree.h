@@ -148,6 +148,12 @@ class BPlusTree {
     acquire_lock_ = on_off;
   }
 
+  void LockShared() { rw_lock_.LockShared(); }
+
+  void LockExclusive() { rw_lock_.LockExclusive(); }
+
+  void Unlock() { rw_lock_.Unlock(); }
+
  private:
   // Abstract class of a node (leaf or inner)
   class BaseNode {
@@ -409,6 +415,21 @@ class BPlusTree {
     bool operator==(const Iterator &x) const { return (x.cur_ == cur_) && (x.slot_ == slot_); }
     bool operator!=(const Iterator &x) const { return (x.cur_ != cur_) || (x.slot_ != slot_); }
 
+    void LockShared() {
+      cur_->rw_lock_.LockShared();
+      locked_ = true;
+    }
+
+    void LockExclusive() {
+      cur_->rw_lock_.LockExclusive();
+      locked_ = true;
+    }
+
+    void Unlock() {
+      cur_->rw_lock_.Unlock();
+      locked_ = false;
+    }
+
    private:
     typename BPlusTree::LeafNode *cur_;
     slot_type slot_;
@@ -457,6 +478,21 @@ class BPlusTree {
 
     bool operator==(const ConstIterator &x) const { return (x.cur_ == cur_) && (x.slot_ == slot_); }
     bool operator!=(const ConstIterator &x) const { return (x.cur_ != cur_) || (x.slot_ != slot_); }
+
+    void LockShared() {
+      cur_->rw_lock_.LockShared();
+      locked_ = true;
+    }
+
+    void LockExclusive() {
+      cur_->rw_lock_.LockExclusive();
+      locked_ = true;
+    }
+
+    void Unlock() {
+      cur_->rw_lock_.Unlock();
+      locked_ = false;
+    }
 
    private:
     const typename BPlusTree::LeafNode *cur_;

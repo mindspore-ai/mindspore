@@ -109,7 +109,14 @@ Status CacheOp::CacheAllRows(int32_t worker_id) {
     RETURN_IF_NOT_OK(this->GetNextInput(&db_ptr, worker_id, 0));
     while (!db_ptr->eof()) {
       if (!db_ptr->eoe()) {
-        RETURN_IF_NOT_OK(cache_client_->WriteBuffer(std::move(db_ptr)));
+        Status rc;
+        // Do the Async write if we attach to the shared memory.
+        rc = cache_client_->AsyncWriteBuffer(std::move(db_ptr));
+        if (rc.get_code() == StatusCode::kNotImplementedYet) {
+          RETURN_IF_NOT_OK(cache_client_->WriteBuffer(std::move(db_ptr)));
+        } else if (rc.IsError()) {
+          return rc;
+        }
       } else {
         // In a repeat-over-cache scenario, any of the "real" leaf operators below us have been set up
         // as non-repeating leaf ops.  As such, they only do one epoch and then quit.  Since we got the
@@ -139,21 +146,41 @@ Status CacheOp::WaitForCachingAllRows() {
   RETURN_IF_NOT_OK(rows_cache_done_.Wait());
   // Move from build phase to fetch phase if we are the one to fill the cache
   if (phase_ == Phase::kBuildPhase) {
+    RETURN_IF_NOT_OK(cache_client_->FlushAsyncWriteBuffer());  // One more flush
     RETURN_IF_NOT_OK(cache_client_->BuildPhaseDone());
     // Move to the next phase
     phase_ = Phase::kFetchPhase;
   }
+  // If we are not the one to create the cache,
+  // wait until the state changed from build phase to fetch base.
+  bool BuildPhaseDone = true;
+  do {
+    int8_t out;
+    RETURN_IF_NOT_OK(cache_client_->GetState(&out));
+    auto state = static_cast<CacheServiceState>(out);
+    switch (state) {
+      case CacheServiceState::kBuildPhase:
+        // Do nothing. Continue to wait.
+        BuildPhaseDone = false;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        break;
+      case CacheServiceState::kFetchPhase:
+        BuildPhaseDone = true;
+        break;
+      case CacheServiceState::kOutOfMemory:
+        return Status(StatusCode::kOutOfMemory, "Cache server is running out of memory");
+      case CacheServiceState::kNoSpace:
+        return Status(StatusCode::kNoSpace, "Cache server is running of out spill storage");
+      case CacheServiceState::kNone:
+      case CacheServiceState::kError:
+      default:
+        RETURN_STATUS_UNEXPECTED("Unexpected state: " + std::to_string(out));
+    }
+  } while (!BuildPhaseDone);
   // Get statistics from the server, and if we are not the one to create the cache,
   // wait until the state changed from build phase to fetch base.
   CacheServiceStat stat{};
-  bool BuildPhaseDone = true;
-  do {
-    RETURN_IF_NOT_OK(cache_client_->GetStat(&stat));
-    BuildPhaseDone = stat.cache_service_state == static_cast<uint8_t>(CacheServiceState::kFetchPhase);
-    if (!BuildPhaseDone) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-  } while (!BuildPhaseDone);
+  RETURN_IF_NOT_OK(cache_client_->GetStat(&stat));
   const row_id_type min_key = stat.min_row_id;
   const row_id_type max_key = stat.max_row_id;
   num_rows_ = max_key - min_key + 1;

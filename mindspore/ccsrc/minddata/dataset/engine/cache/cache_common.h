@@ -37,6 +37,10 @@ namespace dataset {
 /// For too small amount, we won't get any benefit using shared memory method because we need
 /// two rpc requests to use shared memory method.
 constexpr static int32_t kLocalByPassThreshold = 64 * 1024;
+/// \brief Default size (in GB) of shared memory we are going to create
+constexpr static int32_t kDefaultSharedMemorySize = 4;
+/// \brief Memory Cap ratio used by the server
+constexpr static float kDefaultMemoryCapRatio = 0.8;
 /// \brief A flag used by the BatchFetch request (client side) if it can support local bypass
 constexpr static uint32_t kLocalClientSupport = 1;
 /// \brief A flag used by CacheRow request (client side) and BatchFetch (server side) reply to indicate if the data is
@@ -46,7 +50,15 @@ constexpr static uint32_t kDataIsInSharedMemory = 2;
 constexpr static int32_t kSharedMessageSize = 2048;
 
 /// \brief State of CacheService at the server.
-enum class CacheServiceState : uint8_t { kNone = 0, kBuildPhase, kFetchPhase, kNoLocking };
+enum class CacheServiceState : int8_t {
+  kNone = 0,
+  kBuildPhase = 1,
+  kFetchPhase = 2,
+  kNoLocking = 3,
+  kOutOfMemory = 4,
+  kNoSpace = 5,
+  kError = 127
+};
 
 /// \brief Convert a Status object into a protobuf
 /// \param rc[in] Status object

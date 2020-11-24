@@ -122,6 +122,17 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
     if (db_ptr->eoe()) {
       // Ignore it.
       MS_LOG(DEBUG) << "Ignore eoe";
+      // However we need to flush any left over from the async write buffer. But any error
+      // we are getting will just to stop caching but the pipeline will continue
+      Status rc;
+      if ((rc = cache_client_->FlushAsyncWriteBuffer()).IsError()) {
+        cache_missing_rows_ = false;
+        if (rc.IsOutofMemory() || rc.IsNoSpace()) {
+          cache_client_->ServerRunningOutOfResources();
+        } else {
+          MS_LOG(INFO) << "Async row flushing not successful: " << rc.ToString();
+        }
+      }
     } else {
       while (db_ptr->NumRows() > 0) {
         TensorRow row;
@@ -143,6 +154,9 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
             rc = rq->AsyncSendCacheRequest(cache_client_, row);
             if (rc.IsOk()) {
               RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
+            } else if (rc.IsOutofMemory() || rc.IsNoSpace()) {
+              cache_missing_rows_ = false;
+              cache_client_->ServerRunningOutOfResources();
             }
           }
         }
@@ -309,17 +323,25 @@ Status CacheMergeOp::TensorRowCacheRequest::AsyncSendCacheRequest(const std::sha
   if (st_.compare_exchange_strong(expected, State::kDirty)) {
     // We will do a deep copy but write directly into CacheRequest protobuf or shared memory
     Status rc;
-    cleaner_copy_ = std::make_shared<CacheRowRequest>(cc.get());
-    rc = cleaner_copy_->SerializeCacheRowRequest(cc.get(), row);
-    if (rc.IsOk()) {
-      // Send the request async. The cleaner will check the return code.
-      rc = cc->PushRequest(cleaner_copy_);
+    rc = cc->AsyncWriteRow(row);
+    if (rc.get_code() == StatusCode::kNotImplementedYet) {
+      cleaner_copy_ = std::make_shared<CacheRowRequest>(cc.get());
+      rc = cleaner_copy_->SerializeCacheRowRequest(cc.get(), row);
+      if (rc.IsOk()) {
+        // Send the request async. The cleaner will check the return code.
+        rc = cc->PushRequest(cleaner_copy_);
+      }
+    } else if (rc.IsOk()) {
+      // Set the state to clean even though it still sits in the cache client async buffer.
+      // The cleaner will then ignore it once the state is clean.
+      st_ = State::kClean;
     }
     if (rc.IsError()) {
       // Clean up the shared pointer and reset the state back to empty
       cleaner_copy_.reset();
       st_ = State::kEmpty;
     }
+    return rc;
   }
   return Status::OK();
 }

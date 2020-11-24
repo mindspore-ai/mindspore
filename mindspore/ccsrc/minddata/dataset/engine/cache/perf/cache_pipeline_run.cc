@@ -238,6 +238,9 @@ Status CachePipelineRun::RunFirstEpoch() {
     RETURN_IF_NOT_OK(pTask->Join(Task::WaitFlag::kBlocking));
   }
 
+  // Final flush
+  cc_->FlushAsyncWriteBuffer();
+
   // Send a message saying epoch one done for this pipeline.
   EpochDone proto;
   proto.set_pipeline(my_pipeline_);
@@ -291,7 +294,7 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
       buffer->set_tensor_table(std::move(tensor_table));
       // Measure the time to call WriteBuffer
       auto start_tick = std::chrono::steady_clock::now();
-      rc = cc_->WriteBuffer(std::move(buffer));
+      rc = cc_->AsyncWriteBuffer(std::move(buffer));
       auto end_tick = std::chrono::steady_clock::now();
       if (rc.IsError()) {
         if (rc.IsOutofMemory() || rc.IsNoSpace()) {

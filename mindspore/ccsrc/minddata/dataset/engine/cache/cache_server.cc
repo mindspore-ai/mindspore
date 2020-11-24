@@ -106,14 +106,18 @@ Status CacheServer::DoServiceStart() {
   RETURN_IF_NOT_OK(free_list_->Register(&vg_));
   // Start the comm layer
   try {
-    comm_layer_ = std::make_shared<CacheServerGreeterImpl>(port_, shared_memory_sz_in_gb_);
+    comm_layer_ = std::make_shared<CacheServerGreeterImpl>(port_);
     RETURN_IF_NOT_OK(comm_layer_->Run());
-    // Bring up a thread to monitor the unix socket in case it is removed.
-    auto inotify_f = std::bind(&CacheServerGreeterImpl::MonitorUnixSocket, comm_layer_.get());
-    RETURN_IF_NOT_OK(vg_.CreateAsyncTask("Monitor unix socket", inotify_f));
   } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED(e.what());
   }
+#if CACHE_LOCAL_CLIENT
+  RETURN_IF_NOT_OK(CachedSharedMemory::CreateArena(&shm_, port_, shared_memory_sz_in_gb_));
+  // Bring up a thread to monitor the unix socket in case it is removed. But it must be done
+  // after we have created the unix socket.
+  auto inotify_f = std::bind(&CacheServerGreeterImpl::MonitorUnixSocket, comm_layer_.get());
+  RETURN_IF_NOT_OK(vg_.CreateAsyncTask("Monitor unix socket", inotify_f));
+#endif
   // Spawn a few threads to serve the real request.
   auto f = std::bind(&CacheServer::ServerRequest, this, std::placeholders::_1);
   for (auto i = 0; i < num_workers_; ++i) {
@@ -350,11 +354,12 @@ Status CacheServer::CacheRow(CacheRequest *rq, CacheReply *reply) {
 
 Status CacheServer::FastCacheRow(CacheRequest *rq, CacheReply *reply) {
   auto connection_id = rq->connection_id();
+  auto client_id = rq->client_id();
+  CHECK_FAIL_RETURN_UNEXPECTED(client_id != -1, "Client ID not set");
   // Hold the shared lock to prevent the cache from being dropped.
   SharedLock lck(&rwLock_);
   CacheService *cs = GetService(connection_id);
-  auto shared_pool = comm_layer_->GetSharedMemoryPool();
-  auto *base = shared_pool->SharedMemoryBaseAddr();
+  auto *base = SharedMemoryBaseAddr();
   // Ensure we got 3 pieces of data coming in
   CHECK_FAIL_RETURN_UNEXPECTED(rq->buf_data_size() == 3, "Incomplete data");
   // First piece of data is the cookie and is required
@@ -381,8 +386,10 @@ Status CacheServer::FastCacheRow(CacheRequest *rq, CacheReply *reply) {
       rc = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Cookie mismatch");
     }
   }
-  // Return the block to the shared memory.
-  shared_pool->Deallocate(p);
+  // Return the block to the shared memory only if it is not internal request.
+  if (static_cast<BaseRequest::RequestType>(rq->type()) == BaseRequest::RequestType::kCacheRow) {
+    DeallocateSharedMemory(client_id, p);
+  }
   return rc;
 }
 
@@ -450,6 +457,7 @@ Status CacheServer::BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuil
 
 Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
   auto connection_id = rq->connection_id();
+  auto client_id = rq->client_id();
   // Hold the shared lock to prevent the cache from being dropped.
   SharedLock lck(&rwLock_);
   CacheService *cs = GetService(connection_id);
@@ -490,14 +498,13 @@ Status CacheServer::BatchFetchRows(CacheRequest *rq, CacheReply *reply) {
     reply->set_flag(local_bypass ? kDataIsInSharedMemory : 0);
     if (local_bypass) {
       // We will use shared memory
-      auto shared_pool = comm_layer_->GetSharedMemoryPool();
-      auto *base = shared_pool->SharedMemoryBaseAddr();
+      auto *base = SharedMemoryBaseAddr();
       void *q = nullptr;
-      RETURN_IF_NOT_OK(shared_pool->Allocate(mem_sz, &q));
+      RETURN_IF_NOT_OK(AllocateSharedMemory(client_id, mem_sz, &q));
       WritableSlice dest(q, mem_sz);
       Status rc = BatchFetch(fbb, &dest);
       if (rc.IsError()) {
-        shared_pool->Deallocate(q);
+        DeallocateSharedMemory(client_id, q);
         return rc;
       }
       // We can't return the absolute address which makes no sense to the client.
@@ -597,7 +604,7 @@ Status CacheServer::BuildPhaseDone(CacheRequest *rq) {
     // First piece of data is the cookie
     CHECK_FAIL_RETURN_UNEXPECTED(!rq->buf_data().empty(), "Missing cookie");
     auto &cookie = rq->buf_data(0);
-    // We can only allow to switch phase is the cookie match.
+    // We can only allow to switch phase if the cookie match.
     if (cookie == cs->cookie()) {
       RETURN_IF_NOT_OK(cs->BuildPhaseDone());
     } else {
@@ -713,6 +720,203 @@ Status CacheServer::ConnectReset(CacheRequest *rq) {
   return Status::OK();
 }
 
+Status CacheServer::BatchCacheRows(CacheRequest *rq) {
+  CHECK_FAIL_RETURN_UNEXPECTED(rq->buf_data().size() == 3, "Expect three pieces of data");
+  int32_t numQ = GetNumGrpcWorkers();
+  auto rng = GetRandomDevice();
+  std::uniform_int_distribution<session_id_type> distribution(0, numQ - 1);
+  int32_t qID = distribution(rng);
+  std::vector<CacheServerRequest *> cache_rq_list;
+  try {
+    auto &cookie = rq->buf_data(0);
+    auto connection_id = rq->connection_id();
+    auto client_id = rq->client_id();
+    int64_t offset_addr;
+    int32_t num_elem;
+    auto *base = SharedMemoryBaseAddr();
+    offset_addr = strtoll(rq->buf_data(1).data(), nullptr, 10);
+    auto p = reinterpret_cast<char *>(reinterpret_cast<int64_t>(base) + offset_addr);
+    num_elem = strtol(rq->buf_data(2).data(), nullptr, 10);
+    cache_rq_list.reserve(num_elem);
+    // Get a set of free request and push into the queues.
+    for (auto i = 0; i < num_elem; ++i) {
+      auto start = reinterpret_cast<int64_t>(p);
+      auto msg = GetTensorRowHeaderMsg(p);
+      p += msg->size_of_this();
+      for (auto k = 0; k < msg->column()->size(); ++k) {
+        p += msg->data_sz()->Get(k);
+      }
+      CacheServerRequest *cache_rq;
+      RETURN_IF_NOT_OK(GetFreeRequestTag(qID++ % numQ, &cache_rq));
+      cache_rq_list.push_back(cache_rq);
+      // Fill in details.
+      cache_rq->type_ = BaseRequest::RequestType::kInternalCacheRow;
+      cache_rq->st_ = CacheServerRequest::STATE::PROCESS;
+      cache_rq->rq_.set_connection_id(connection_id);
+      cache_rq->rq_.set_type(static_cast<int16_t>(cache_rq->type_));
+      cache_rq->rq_.set_client_id(client_id);
+      cache_rq->rq_.set_flag(kDataIsInSharedMemory);
+      cache_rq->rq_.add_buf_data(cookie);
+      cache_rq->rq_.add_buf_data(std::to_string(start - reinterpret_cast<int64_t>(base)));
+      cache_rq->rq_.add_buf_data(std::to_string(reinterpret_cast<int64_t>(p - start)));
+      RETURN_IF_NOT_OK(PushRequest(GetRandomWorker(), cache_rq));
+    }
+    // Now wait for all of them to come back.
+    Status rc;
+    for (CacheServerRequest *cache_rq : cache_rq_list) {
+      RETURN_IF_NOT_OK(cache_rq->Wait());
+      if (cache_rq->rc_.IsError() && !cache_rq->rc_.IsInterrupted() && rc.IsOk()) {
+        rc = cache_rq->rc_;
+      }
+      RETURN_IF_NOT_OK(ReturnRequestTag(cache_rq));
+    }
+    return rc;
+  } catch (const std::exception &e) {
+    RETURN_STATUS_UNEXPECTED(e.what());
+  }
+  return Status::OK();
+}
+
+void CacheServer::ProcessRequest(CacheServerRequest *cache_req) {
+  bool internal_request = false;
+  auto &rq = cache_req->rq_;
+  auto &reply = cache_req->reply_;
+  // Except for creating a new session, we expect cs is not null.
+  switch (cache_req->type_) {
+    case BaseRequest::RequestType::kCacheRow:
+    case BaseRequest::RequestType::kInternalCacheRow: {
+      // Look into the flag to see where we can find the data and
+      // call the appropriate method.
+      auto flag = rq.flag();
+      if (BitTest(flag, kDataIsInSharedMemory)) {
+        cache_req->rc_ = FastCacheRow(&rq, &reply);
+        internal_request = (cache_req->type_ == BaseRequest::RequestType::kInternalCacheRow);
+      } else {
+        cache_req->rc_ = CacheRow(&rq, &reply);
+      }
+      break;
+    }
+    case BaseRequest::RequestType::kBatchCacheRows: {
+      cache_req->rc_ = BatchCacheRows(&rq);
+      break;
+    }
+    case BaseRequest::RequestType::kBatchFetchRows: {
+      cache_req->rc_ = BatchFetchRows(&rq, &reply);
+      break;
+    }
+    case BaseRequest::RequestType::kInternalFetchRow: {
+      internal_request = true;
+      auto connection_id = rq.connection_id();
+      SharedLock lck(&rwLock_);
+      CacheService *cs = GetService(connection_id);
+      if (cs == nullptr) {
+        std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
+        cache_req->rc_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
+      } else {
+        cache_req->rc_ = cs->InternalFetchRow(flatbuffers::GetRoot<FetchRowMsg>(rq.buf_data(0).data()));
+      }
+      break;
+    }
+    case BaseRequest::RequestType::kCreateCache: {
+      cache_req->rc_ = CreateService(&rq, &reply);
+      break;
+    }
+    case BaseRequest::RequestType::kGetCacheMissKeys: {
+      cache_req->rc_ = GetCacheMissKeys(&rq, &reply);
+      break;
+    }
+    case BaseRequest::RequestType::kDestroyCache: {
+      cache_req->rc_ = DestroyCache(&rq);
+      break;
+    }
+    case BaseRequest::RequestType::kGetStat: {
+      cache_req->rc_ = GetStat(&rq, &reply);
+      break;
+    }
+    case BaseRequest::RequestType::kCacheSchema: {
+      cache_req->rc_ = CacheSchema(&rq);
+      break;
+    }
+    case BaseRequest::RequestType::kFetchSchema: {
+      cache_req->rc_ = FetchSchema(&rq, &reply);
+      break;
+    }
+    case BaseRequest::RequestType::kBuildPhaseDone: {
+      cache_req->rc_ = BuildPhaseDone(&rq);
+      break;
+    }
+    case BaseRequest::RequestType::kDropSession: {
+      cache_req->rc_ = DestroySession(&rq);
+      break;
+    }
+    case BaseRequest::RequestType::kGenerateSessionId: {
+      cache_req->rc_ = GenerateClientSessionID(GenerateSessionID(), &reply);
+      break;
+    }
+    case BaseRequest::RequestType::kAllocateSharedBlock: {
+      cache_req->rc_ = AllocateSharedMemory(&rq, &reply);
+      break;
+    }
+    case BaseRequest::RequestType::kFreeSharedBlock: {
+      cache_req->rc_ = FreeSharedMemory(&rq);
+      break;
+    }
+    case BaseRequest::RequestType::kStopService: {
+      // This command shutdowns everything.
+      // But we first reply back to the client that we receive the request.
+      // The real shutdown work will be done by the caller.
+      cache_req->rc_ = AcknowledgeShutdown(cache_req);
+      break;
+    }
+    case BaseRequest::RequestType::kHeartBeat: {
+      cache_req->rc_ = Status::OK();
+      break;
+    }
+    case BaseRequest::RequestType::kToggleWriteMode: {
+      cache_req->rc_ = ToggleWriteMode(&rq);
+      break;
+    }
+    case BaseRequest::RequestType::kListSessions: {
+      cache_req->rc_ = ListSessions(&reply);
+      break;
+    }
+    case BaseRequest::RequestType::kConnectReset: {
+      cache_req->rc_ = ConnectReset(&rq);
+      break;
+    }
+    case BaseRequest::RequestType::kGetCacheState: {
+      auto connection_id = rq.connection_id();
+      SharedLock lck(&rwLock_);
+      CacheService *cs = GetService(connection_id);
+      if (cs == nullptr) {
+        std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
+        cache_req->rc_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
+      } else {
+        auto state = cs->GetState();
+        reply.set_result(std::to_string(static_cast<int8_t>(state)));
+        cache_req->rc_ = Status::OK();
+      }
+      break;
+    }
+    default:
+      std::string errMsg("Unknown request type : ");
+      errMsg += std::to_string(static_cast<uint16_t>(cache_req->type_));
+      cache_req->rc_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
+  }
+  // Notify it is done, and move on to the next request.
+  Status2CacheReply(cache_req->rc_, &reply);
+  cache_req->st_ = CacheServerRequest::STATE::FINISH;
+  // We will re-tag the request back to the grpc queue. Once it comes back from the client,
+  // the CacheServerRequest, i.e. the pointer cache_req, will be free
+  if (!internal_request) {
+    cache_req->responder_.Finish(reply, grpc::Status::OK, cache_req);
+  } else {
+    // This is an internal request and is not tied to rpc. But need to post because there
+    // is a thread waiting on the completion of this request.
+    cache_req->wp_.Set();
+  }
+}
+
 /// \brief This is the main loop the cache server thread(s) are running.
 /// Each thread will pop a request and send the result back to the client using grpc
 /// \return
@@ -722,121 +926,9 @@ Status CacheServer::ServerRequest(worker_id_t worker_id) {
   auto &my_que = cache_q_->operator[](worker_id);
   // Loop forever until we are interrupted or shutdown.
   while (!global_shutdown_) {
-    bool internal_request = false;
     CacheServerRequest *cache_req = nullptr;
     RETURN_IF_NOT_OK(my_que->PopFront(&cache_req));
-    auto &rq = cache_req->rq_;
-    auto &reply = cache_req->reply_;
-    // Except for creating a new session, we expect cs is not null.
-    switch (cache_req->type_) {
-      case BaseRequest::RequestType::kCacheRow: {
-        // Look into the flag to see where we can find the data and
-        // call the appropriate method.
-        auto flag = rq.flag();
-        if (BitTest(flag, kDataIsInSharedMemory)) {
-          cache_req->rc_ = FastCacheRow(&rq, &reply);
-        } else {
-          cache_req->rc_ = CacheRow(&rq, &reply);
-        }
-        break;
-      }
-      case BaseRequest::RequestType::kInternalFetchRow: {
-        internal_request = true;
-        auto connection_id = rq.connection_id();
-        SharedLock lck(&rwLock_);
-        CacheService *cs = GetService(connection_id);
-        if (cs == nullptr) {
-          std::string errMsg = "Connection " + std::to_string(connection_id) + " not found";
-          cache_req->rc_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
-        } else {
-          cache_req->rc_ = cs->InternalFetchRow(flatbuffers::GetRoot<FetchRowMsg>(rq.buf_data(0).data()));
-        }
-        break;
-      }
-      case BaseRequest::RequestType::kCreateCache: {
-        cache_req->rc_ = CreateService(&rq, &reply);
-        break;
-      }
-      case BaseRequest::RequestType::kGetCacheMissKeys: {
-        cache_req->rc_ = GetCacheMissKeys(&rq, &reply);
-        break;
-      }
-      case BaseRequest::RequestType::kDestroyCache: {
-        cache_req->rc_ = DestroyCache(&rq);
-        break;
-      }
-      case BaseRequest::RequestType::kGetStat: {
-        cache_req->rc_ = GetStat(&rq, &reply);
-        break;
-      }
-      case BaseRequest::RequestType::kCacheSchema: {
-        cache_req->rc_ = CacheSchema(&rq);
-        break;
-      }
-      case BaseRequest::RequestType::kFetchSchema: {
-        cache_req->rc_ = FetchSchema(&rq, &reply);
-        break;
-      }
-      case BaseRequest::RequestType::kBuildPhaseDone: {
-        cache_req->rc_ = BuildPhaseDone(&rq);
-        break;
-      }
-      case BaseRequest::RequestType::kDropSession: {
-        cache_req->rc_ = DestroySession(&rq);
-        break;
-      }
-      case BaseRequest::RequestType::kGenerateSessionId: {
-        cache_req->rc_ = GenerateClientSessionID(GenerateSessionID(), &reply);
-        break;
-      }
-      case BaseRequest::RequestType::kAllocateSharedBlock: {
-        cache_req->rc_ = AllocateSharedMemory(&rq, &reply);
-        break;
-      }
-      case BaseRequest::RequestType::kFreeSharedBlock: {
-        cache_req->rc_ = FreeSharedMemory(&rq);
-        break;
-      }
-      case BaseRequest::RequestType::kStopService: {
-        // This command shutdowns everything.
-        cache_req->rc_ = GlobalShutdown(cache_req);
-        break;
-      }
-      case BaseRequest::RequestType::kHeartBeat: {
-        cache_req->rc_ = Status::OK();
-        break;
-      }
-      case BaseRequest::RequestType::kToggleWriteMode: {
-        cache_req->rc_ = ToggleWriteMode(&rq);
-        break;
-      }
-      case BaseRequest::RequestType::kListSessions: {
-        cache_req->rc_ = ListSessions(&reply);
-        break;
-      }
-      case BaseRequest::RequestType::kConnectReset: {
-        cache_req->rc_ = ConnectReset(&rq);
-        break;
-      }
-      default:
-        std::string errMsg("Unknown request type : ");
-        errMsg += std::to_string(static_cast<uint16_t>(cache_req->type_));
-        cache_req->rc_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
-    }
-    // Notify it is done, and move on to the next request.
-    Status2CacheReply(cache_req->rc_, &reply);
-    cache_req->st_ = CacheServerRequest::STATE::FINISH;
-    // We will re-tag the request back to the grpc queue. Once it comes back from the client,
-    // the CacheServerRequest, i.e. the pointer cache_req, will be free
-    if (!global_shutdown_) {
-      if (!internal_request) {
-        cache_req->responder_.Finish(reply, grpc::Status::OK, cache_req);
-      } else {
-        // This is an internal request and is not tied to rpc. But need to post because there
-        // is a thread waiting on the completion of this request.
-        cache_req->wp_.Set();
-      }
-    }
+    ProcessRequest(cache_req);
   }
   return Status::OK();
 }
@@ -868,6 +960,11 @@ CacheServer::CacheServer(const std::string &spill_path, int32_t num_workers, int
     numa_affinity_ = false;
     MS_LOG(WARNING) << "Warning: This build is not compiled with numa support.  Install libnuma-devel and use a build "
                        "that is compiled with numa support for more optimal performance";
+  }
+  // We create the shared memory and we will destroy it. All other client just detach only.
+  if (shared_memory_sz_in_gb_ > kDefaultSharedMemorySize) {
+    MS_LOG(INFO) << "Shared memory size is readjust to " << kDefaultSharedMemorySize << " GB.";
+    shared_memory_sz_in_gb_ = kDefaultSharedMemorySize;
   }
 }
 
@@ -965,24 +1062,34 @@ session_id_type CacheServer::GenerateSessionID() {
 }
 
 Status CacheServer::AllocateSharedMemory(CacheRequest *rq, CacheReply *reply) {
-  auto requestedSz = strtoll(rq->buf_data(0).data(), nullptr, 10);
-  auto shared_pool = comm_layer_->GetSharedMemoryPool();
-  auto *base = shared_pool->SharedMemoryBaseAddr();
-  void *p = nullptr;
-  RETURN_IF_NOT_OK(shared_pool->Allocate(requestedSz, &p));
-  // We can't return the absolute address which makes no sense to the client.
-  // Instead we return the difference.
-  auto difference = reinterpret_cast<int64_t>(p) - reinterpret_cast<int64_t>(base);
-  reply->set_result(std::to_string(difference));
+  auto client_id = rq->client_id();
+  CHECK_FAIL_RETURN_UNEXPECTED(client_id != -1, "Client ID not set");
+  try {
+    auto requestedSz = strtoll(rq->buf_data(0).data(), nullptr, 10);
+    void *p = nullptr;
+    RETURN_IF_NOT_OK(AllocateSharedMemory(client_id, requestedSz, &p));
+    auto *base = SharedMemoryBaseAddr();
+    // We can't return the absolute address which makes no sense to the client.
+    // Instead we return the difference.
+    auto difference = reinterpret_cast<int64_t>(p) - reinterpret_cast<int64_t>(base);
+    reply->set_result(std::to_string(difference));
+  } catch (const std::exception &e) {
+    RETURN_STATUS_UNEXPECTED(e.what());
+  }
   return Status::OK();
 }
 
 Status CacheServer::FreeSharedMemory(CacheRequest *rq) {
-  auto shared_pool = comm_layer_->GetSharedMemoryPool();
-  auto *base = shared_pool->SharedMemoryBaseAddr();
-  auto addr = strtoll(rq->buf_data(0).data(), nullptr, 10);
-  auto p = reinterpret_cast<void *>(reinterpret_cast<int64_t>(base) + addr);
-  shared_pool->Deallocate(p);
+  auto client_id = rq->client_id();
+  CHECK_FAIL_RETURN_UNEXPECTED(client_id != -1, "Client ID not set");
+  auto *base = SharedMemoryBaseAddr();
+  try {
+    auto addr = strtoll(rq->buf_data(0).data(), nullptr, 10);
+    auto p = reinterpret_cast<void *>(reinterpret_cast<int64_t>(base) + addr);
+    DeallocateSharedMemory(client_id, p);
+  } catch (const std::exception &e) {
+    RETURN_STATUS_UNEXPECTED(e.what());
+  }
   return Status::OK();
 }
 
@@ -992,7 +1099,7 @@ Status CacheServer::RpcRequest(worker_id_t worker_id) {
   return Status::OK();
 }
 
-Status CacheServer::GlobalShutdown(CacheServerRequest *cache_req) {
+Status CacheServer::AcknowledgeShutdown(CacheServerRequest *cache_req) {
   auto *rq = &cache_req->rq_;
   auto *reply = &cache_req->reply_;
   if (!rq->buf_data().empty()) {
@@ -1008,9 +1115,10 @@ Status CacheServer::GlobalShutdown(CacheServerRequest *cache_req) {
     }
   }
   reply->set_result("OK");
-  Status2CacheReply(cache_req->rc_, reply);
-  cache_req->st_ = CacheServerRequest::STATE::FINISH;
-  cache_req->responder_.Finish(*reply, grpc::Status::OK, cache_req);
+  return Status::OK();
+}
+
+void CacheServer::GlobalShutdown() {
   // Let's shutdown in proper order.
   bool expected = false;
   if (global_shutdown_.compare_exchange_strong(expected, true)) {
@@ -1032,7 +1140,6 @@ Status CacheServer::GlobalShutdown(CacheServerRequest *cache_req) {
       it = all_caches_.erase(it);
     }
   }
-  return Status::OK();
 }
 
 worker_id_t CacheServer::GetWorkerByNumaId(numa_id_t numa_id) const {
@@ -1052,6 +1159,12 @@ worker_id_t CacheServer::GetRandomWorker() const {
   std::uniform_int_distribution<worker_id_t> dist(0, num_workers_ - 1);
   return dist(gen);
 }
+
+Status CacheServer::AllocateSharedMemory(int32_t client_id, size_t sz, void **p) {
+  return shm_->AllocateSharedMemory(client_id, sz, p);
+}
+
+void CacheServer::DeallocateSharedMemory(int32_t client_id, void *p) { shm_->DeallocateSharedMemory(client_id, p); }
 
 Status CacheServer::Builder::IpcResourceCleanup() {
   Status rc;
@@ -1124,8 +1237,8 @@ CacheServer::Builder::Builder()
     : top_("/tmp"),
       num_workers_(std::thread::hardware_concurrency() / 2),
       port_(50052),
-      shared_memory_sz_in_gb_(4),
-      memory_cap_ratio_(0.8) {
+      shared_memory_sz_in_gb_(kDefaultSharedMemorySize),
+      memory_cap_ratio_(kDefaultMemoryCapRatio) {
   if (num_workers_ == 0) {
     num_workers_ = 1;
   }

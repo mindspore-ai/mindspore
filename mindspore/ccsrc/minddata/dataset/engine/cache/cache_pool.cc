@@ -168,12 +168,14 @@ Path CachePool::GetSpillPath() const {
 }
 
 CachePool::CacheStat CachePool::GetStat(bool GetMissingKeys) const {
+  tree_->LockShared();  // Prevent any node split while we search.
   CacheStat cs{-1, -1, 0, 0, 0, 0};
   int64_t total_sz = 0;
   if (tree_->begin() != tree_->end()) {
     cs.min_key = tree_->begin().key();
     cs.max_key = cs.min_key;  // will adjust later.
     for (auto it = tree_->begin(); it != tree_->end(); ++it) {
+      it.LockShared();
       total_sz += it.value().sz;
       if (it.value().ptr != nullptr) {
         ++cs.num_mem_cached;
@@ -190,6 +192,7 @@ CachePool::CacheStat CachePool::GetStat(bool GetMissingKeys) const {
         }
       }
       cs.max_key = cur_key;
+      it.Unlock();
     }
   }
   if (total_sz > 0) {
@@ -199,6 +202,7 @@ CachePool::CacheStat CachePool::GetStat(bool GetMissingKeys) const {
       cs.average_cache_sz = 1;
     }
   }
+  tree_->Unlock();
   return cs;
 }
 

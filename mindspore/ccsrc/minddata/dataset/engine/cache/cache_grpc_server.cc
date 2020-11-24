@@ -23,8 +23,7 @@
 
 namespace mindspore {
 namespace dataset {
-CacheServerGreeterImpl::CacheServerGreeterImpl(int32_t port, int32_t shared_memory_sz_in_gb)
-    : port_(port), shm_pool_sz_in_gb_(shared_memory_sz_in_gb), shm_key_(-1) {
+CacheServerGreeterImpl::CacheServerGreeterImpl(int32_t port) : port_(port) {
   // Setup a path for unix socket.
   unix_socket_ = PortToUnixSocketPath(port);
   // We can't generate the ftok key yet until the unix_socket_ is created
@@ -70,14 +69,6 @@ Status CacheServerGreeterImpl::Run() {
   server_ = builder.BuildAndStart();
   if (server_) {
     MS_LOG(INFO) << "Server listening on " << server_address;
-#if CACHE_LOCAL_CLIENT
-    RETURN_IF_NOT_OK(CachedSharedMemoryArena::CreateArena(&shm_pool_, port_, shm_pool_sz_in_gb_));
-    shm_key_ = shm_pool_->GetKey();
-    MS_LOG(INFO) << "Creation of local socket and shared memory successful. Shared memory key " << shm_key_;
-    auto cs = CacheServer::GetInstance().GetHWControl();
-    // This shared memory is a hot memory and we will interleave among all the numa nodes.
-    cs->InterleaveMemory(const_cast<void *>(shm_pool_->SharedMemoryBaseAddr()), shm_pool_sz_in_gb_ * 1073741824L);
-#endif
   } else {
     std::string errMsg = "Fail to start server. ";
     if (port_tcpip != port_) {
@@ -147,14 +138,18 @@ Status CacheServerRequest::operator()(CacheServerGreeter::AsyncService *svc, grp
     // Now we pass the address of this instance to CacheServer's main loop.
     MS_LOG(DEBUG) << "Handle request " << *this;
     // We will distribute the request evenly (or randomly) over all the numa nodes.
-    // The exception is BatchFetch which we need to pre-process here.
-    if (type_ == BaseRequest::RequestType::kBatchFetchRows) {
-      rc_ = cs.BatchFetchRows(&rq_, &reply_);
-      if (!rc_.IsInterrupted()) {
-        Status2CacheReply(rc_, &reply_);
-        st_ = CacheServerRequest::STATE::FINISH;
-        responder_.Finish(reply_, grpc::Status::OK, this);
-      } else {
+    // The exception is BatchFetch and BatchCache which we need to pre-process here.
+    // Also some requests are urgent that we want to process them here too.
+    if (type_ == BaseRequest::RequestType::kBatchFetchRows || type_ == BaseRequest::RequestType::kBatchCacheRows ||
+        type_ == BaseRequest::RequestType::kStopService || type_ == BaseRequest::RequestType::kAllocateSharedBlock ||
+        type_ == BaseRequest::RequestType::kFreeSharedBlock) {
+      cs.ProcessRequest(this);
+      // For cache_admin --stop, ProcessRequest is just acknowledging we receive the request. Now
+      // we call the real function.
+      if (type_ == BaseRequest::RequestType::kStopService) {
+        cs.GlobalShutdown();
+        return Status(StatusCode::kInterrupted);
+      } else if (rc_.IsInterrupted()) {
         return rc_;
       }
     } else {
@@ -191,10 +186,12 @@ Status CacheServerGreeterImpl::MonitorUnixSocket() {
     // If the unix socket is recreated for whatever reason, this server instance will be stale and
     // no other process and communicate with us. In this case we need to shutdown ourselves.
     if (p.Exists()) {
+      auto &cs = CacheServer::GetInstance();
       SharedMemory::shm_key_t key;
       RETURN_IF_NOT_OK(PortToFtok(port_, &key));
-      if (key != shm_key_) {
-        std::string errMsg = "Detecting unix socket has changed. Previous key " + std::to_string(shm_key_) +
+      auto shm_key = cs.GetKey();
+      if (key != shm_key) {
+        std::string errMsg = "Detecting unix socket has changed. Previous key " + std::to_string(shm_key) +
                              ". New key " + std::to_string(key) + ". Shutting down server";
         MS_LOG(ERROR) << errMsg;
         RETURN_STATUS_UNEXPECTED(errMsg);

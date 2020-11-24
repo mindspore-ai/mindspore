@@ -209,6 +209,14 @@ void CacheServerHW::InterleaveMemory(void *ptr, size_t sz) {
 #endif
 }
 
+void CacheServerHW::AssignToNode(numa_id_t numa_id, void *ptr, size_t sz) {
+#ifdef NUMA_ENABLED
+  if (numa_enabled()) {
+    numa_tonode_memory(ptr, sz, numa_id);
+  }
+#endif
+}
+
 bool CacheServerHW::numa_enabled() {
 #ifdef NUMA_ENABLED
   return (numa_available() != -1);

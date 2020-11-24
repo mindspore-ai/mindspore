@@ -53,7 +53,7 @@ Status SharedMessage::Create() {
 
 Status SharedMessage::SendStatus(const Status &rc) {
   CHECK_FAIL_RETURN_UNEXPECTED(msg_qid_ != -1, "Invalid message queue id");
-  StatusMsgBuf msg{
+  CacheMsgBuf msg{
     1,
   };
   msg.body.status.err_code = static_cast<int32_t>(rc.get_code());
@@ -71,7 +71,7 @@ Status SharedMessage::SendStatus(const Status &rc) {
 Status SharedMessage::ReceiveStatus(Status *rc) {
   RETURN_UNEXPECTED_IF_NULL(rc);
   CHECK_FAIL_RETURN_UNEXPECTED(msg_qid_ != -1, "Invalid message queue id");
-  struct StatusMsgBuf msg {};
+  struct CacheMsgBuf msg {};
   auto err = msgrcv(msg_qid_, reinterpret_cast<void *>(&msg), sizeof(msg.body.status), 0, MSG_NOERROR);
   if (err == -1) {
     std::string errMsg = "Failed to call msgrcv. Errno = " + std::to_string(errno);

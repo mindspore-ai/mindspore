@@ -58,7 +58,7 @@ Status CacheRowRequest::SerializeCacheRowRequest(const CacheClient *cc, const Te
   if (sent_using_local_bypass) {
     MS_LOG(DEBUG) << "Requesting " << sz_ << " bytes of shared memory data";
     // Allocate shared memory from the server
-    auto mem_rq = std::make_shared<AllocateSharedBlockRequest>(rq_.connection_id(), sz_);
+    auto mem_rq = std::make_shared<AllocateSharedBlockRequest>(rq_.connection_id(), cc->GetClientId(), sz_);
     RETURN_IF_NOT_OK(cc->PushRequest(mem_rq));
     RETURN_IF_NOT_OK(mem_rq->Wait());
     addr_ = mem_rq->GetAddr();
@@ -305,6 +305,15 @@ Status GetStatRequest::PostReply() {
   return Status::OK();
 }
 
+Status GetCacheStateRequest::PostReply() {
+  try {
+    cache_service_state_ = std::stoi(reply_.result());
+  } catch (const std::exception &e) {
+    RETURN_STATUS_UNEXPECTED(e.what());
+  }
+  return Status::OK();
+}
+
 Status ListSessionsRequest::PostReply() {
   auto *msg = flatbuffers::GetRoot<ListSessionsMsg>(reply_.result().data());
   auto session_vector = msg->sessions();
@@ -333,5 +342,13 @@ Status ServerStopRequest::PostReply() {
   return Status::OK();
 }
 
+BatchCacheRowsRequest::BatchCacheRowsRequest(const CacheClient *cc, int64_t addr, int32_t num_ele)
+    : BaseRequest(RequestType::kBatchCacheRows) {
+  rq_.set_connection_id(cc->server_connection_id_);
+  rq_.set_client_id(cc->client_id_);
+  rq_.add_buf_data(cc->cookie());
+  rq_.add_buf_data(std::to_string(addr));
+  rq_.add_buf_data(std::to_string(num_ele));
+}
 }  // namespace dataset
 }  // namespace mindspore

@@ -78,6 +78,9 @@ class BaseRequest {
     kListSessions = 16,
     kConnectReset = 17,
     kInternalFetchRow = 18,
+    kBatchCacheRows = 19,
+    kInternalCacheRow = 20,
+    kGetCacheState = 21,
     // Add new request before it.
     kRequestUnknown = 32767
   };
@@ -133,10 +136,11 @@ class BaseRequest {
 class FreeSharedBlockRequest : public BaseRequest {
  public:
   friend class CacheServer;
-  explicit FreeSharedBlockRequest(connection_id_type connection_id, int64_t addr)
+  explicit FreeSharedBlockRequest(connection_id_type connection_id, int32_t client_id, int64_t addr)
       : BaseRequest(RequestType::kFreeSharedBlock) {
     rq_.set_connection_id(connection_id);
     rq_.add_buf_data(std::to_string(addr));
+    rq_.set_client_id(client_id);
   }
   ~FreeSharedBlockRequest() override = default;
 };
@@ -178,7 +182,7 @@ class CacheRowRequest : public BaseRequest {
   /// the shared memory by sending another request. The following function will generate a suitable
   /// request for the CacheClient to send.
   std::shared_ptr<FreeSharedBlockRequest> GenerateFreeBlockRequest() {
-    return std::make_shared<FreeSharedBlockRequest>(rq_.connection_id(), addr_);
+    return std::make_shared<FreeSharedBlockRequest>(rq_.connection_id(), rq_.client_id(), addr_);
   }
 
  private:
@@ -269,6 +273,24 @@ class GetStatRequest : public BaseRequest {
 
  private:
   CacheServiceStat stat_{};
+};
+
+/// \brief Get the state of a cache service
+class GetCacheStateRequest : public BaseRequest {
+ public:
+  friend class CacheServer;
+  explicit GetCacheStateRequest(connection_id_type connection_id)
+      : BaseRequest(RequestType::kGetCacheState), cache_service_state_(0) {
+    rq_.set_connection_id(connection_id);
+  }
+  ~GetCacheStateRequest() override = default;
+
+  Status PostReply() override;
+
+  auto GetState() const { return cache_service_state_; }
+
+ private:
+  int8_t cache_service_state_;
 };
 
 /// \brief Request to cache a schema
@@ -367,10 +389,11 @@ class ListSessionsRequest : public BaseRequest {
 class AllocateSharedBlockRequest : public BaseRequest {
  public:
   friend class CacheServer;
-  explicit AllocateSharedBlockRequest(connection_id_type connection_id, size_t requestedSz)
+  explicit AllocateSharedBlockRequest(connection_id_type connection_id, int32_t client_id, size_t requestedSz)
       : BaseRequest(RequestType::kAllocateSharedBlock) {
     rq_.set_connection_id(connection_id);
     rq_.add_buf_data(std::to_string(requestedSz));
+    rq_.set_client_id(client_id);
   }
   ~AllocateSharedBlockRequest() override = default;
 
@@ -419,6 +442,13 @@ class ConnectResetRequest : public BaseRequest {
     CHECK_FAIL_RETURN_UNEXPECTED(rq_.client_id() != -1, "Invalid client id");
     return Status::OK();
   }
+};
+
+class BatchCacheRowsRequest : public BaseRequest {
+ public:
+  friend class CacheServer;
+  explicit BatchCacheRowsRequest(const CacheClient *cc, int64_t addr, int32_t num_ele);
+  ~BatchCacheRowsRequest() override = default;
 };
 }  // namespace dataset
 }  // namespace mindspore
