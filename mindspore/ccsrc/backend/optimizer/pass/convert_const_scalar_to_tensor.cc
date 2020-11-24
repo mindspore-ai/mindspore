@@ -60,6 +60,10 @@ const AnfNodePtr ConvertConstScalarToTensor::Process(const FuncGraphPtr &func_gr
   if (node == nullptr || func_graph == nullptr || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
     return nullptr;
   }
+  // input is scalar, and link to graph return
+  if (node->isa<ValueNode>() && node == func_graph->output()) {
+    return CreateTensorInput(func_graph->cast<KernelGraphPtr>(), node);
+  }
   if (!node->isa<CNode>()) {
     return nullptr;
   }
