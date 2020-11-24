@@ -239,6 +239,7 @@ def create_group(group, rank_ids):
         ValueError: If `rank_ids` size is not larger than 1, or `rank_ids` has duplicate data, or backend is invalid.
         RuntimeError: If hccl/nccl is not available or nccl not supports.
     Examples:
+        >>> init()
         >>> group = "0-1"
         >>> rank_ids = [0,1]
         >>> create_group(group, rank_ids)
