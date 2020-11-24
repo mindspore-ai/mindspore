@@ -3599,6 +3599,9 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
         Tensor, whose shape and data type are the same with `gradient`, is a value that should be added to the
         parameter to be updated.
 
+    Supported Platforms:
+        ``CPU``
+
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
@@ -4063,6 +4066,9 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
 
         - **var** (Tensor) - A Tensor with shape (1,).
         - **accum** (Tensor) - A Tensor with shape (1,).
+
+    Supported Platforms:
+        ``CPU``
 
     Examples:
         >>> import numpy as np
@@ -4957,6 +4963,9 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np

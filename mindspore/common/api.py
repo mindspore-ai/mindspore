@@ -233,25 +233,25 @@ def ms_function(fn=None, obj=None, input_signature=None):
 
     Examples:
         >>> from mindspore.ops import  functional as F
-        >>>
+        ...
         >>> def tensor_add(x, y):
-        >>>     z = F.tensor_add(x, y)
-        >>>     return z
-        >>>
+        ...     z = F.tensor_add(x, y)
+        ...     return z
+        ...
         >>> @ms_function
-        >>> def tensor_add_with_dec(x, y):
-        >>>     z = F.tensor_add(x, y)
-        >>>     return z
-        >>>
+        ... def tensor_add_with_dec(x, y):
+        ...     z = F.tensor_add(x, y)
+        ...     return z
+        ...
         >>> @ms_function(input_signature=(MetaTensor(mindspore.float32, (1, 1, 3, 3)),
-        >>>                               MetaTensor(mindspore.float32, (1, 1, 3, 3))))
-        >>> def tensor_add_with_sig(x, y):
-        >>>     z = F.tensor_add(x, y)
-        >>>     return z
-        >>>
+        ...                               MetaTensor(mindspore.float32, (1, 1, 3, 3))))
+        ... def tensor_add_with_sig(x, y):
+        ...     z = F.tensor_add(x, y)
+        ...     return z
+        ...
         >>> x = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
         >>> y = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
-        >>>
+        ...
         >>> tensor_add_graph = ms_function(fn=tensor_add)
         >>> out = tensor_add_graph(x, y)
         >>> out = tensor_add_with_dec(x, y)

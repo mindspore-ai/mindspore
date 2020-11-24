@@ -51,7 +51,7 @@ class Tensor(Tensor_):
         >>> assert isinstance(t1, Tensor)
         >>> assert t1.shape == (1, 2, 3)
         >>> assert t1.dtype == mindspore.float32
-        >>>
+        ...
         >>> # initialize a tensor with a float scalar
         >>> t2 = Tensor(0.1)
         >>> assert isinstance(t2, Tensor)
