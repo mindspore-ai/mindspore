@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_GATHER_GPU_CU_H
-#define MINDSPORE_GATHER_GPU_CU_H
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_GATHER_V2_CU_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_GATHER_V2_CU_H_
 template <typename T, typename S>
-void CalGatherV2StaticShape(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
-                            size_t input_dim1, cudaStream_t stream);
+void GatherV2(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
+              size_t input_dim1, cudaStream_t stream);
 
-template <typename T, typename S>
-void CalGatherV2DynamicShape(T *input, S *indices, T *output, size_t *input_shape_wksp, size_t input_rank,
-                             size_t *indices_shape_wksp, size_t indices_rank, int64_t *axis_wksp,
-                             size_t *output_shape_wksp, const int max_output_size, cudaStream_t stream);
 #endif
