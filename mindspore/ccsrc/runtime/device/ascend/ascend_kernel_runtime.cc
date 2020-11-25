@@ -267,7 +267,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 #ifdef ENABLE_DEBUGGER
   if (debugger_ && debugger_->debugger_enabled()) {
     debugger_->SetTrainingDone(true);
-    debugger_->SendMetadata();
+    debugger_->SendMetadata(false);
   }
 #endif
   if (!initialized_) {
