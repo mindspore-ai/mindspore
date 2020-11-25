@@ -175,7 +175,7 @@ if (BUILD_MINDDATA STREQUAL "full")
         "${MINDDATA_DIR}/kernels/image/cut_out_op.cc"
         "${MINDDATA_DIR}/kernels/image/cutmix_batch_op.cc"
         "${MINDDATA_DIR}/kernels/image/equalize_op.cc"
-	    "${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc"
+        "${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc"
         "${MINDDATA_DIR}/kernels/image/image_utils.cc"
         "${MINDDATA_DIR}/kernels/image/invert_op.cc"
         "${MINDDATA_DIR}/kernels/image/math_utils.cc"
@@ -237,9 +237,9 @@ if (BUILD_MINDDATA STREQUAL "full")
             )
     include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
 
-#    if (BUILD_MINDDATA_EXAMPLE AND (PLATFORM_ARM32 OR PLATFORM_ARM64))
-#      set(MINDDATA_EXAMPLE_SRC ${CMAKE_CURRENT_SOURCE_DIR}/example/jni-example.cc)
-#    endif ()
+    if (BUILD_MINDDATA_EXAMPLE AND (PLATFORM_ARM32 OR PLATFORM_ARM64))
+	    set(MINDDATA_TODAPI_SRC ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/MDToDApi.cc)
+    endif ()
 
     add_library(minddata-lite SHARED
             ${MINDDATA_API_SRC_FILES}
