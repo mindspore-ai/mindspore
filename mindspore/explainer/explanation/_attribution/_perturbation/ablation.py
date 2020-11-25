@@ -48,7 +48,7 @@ class Ablation:
             inputs (np.ndarray): Input array to perturb. The first dim of inputs is assumed to be the batch size, i.e.,
                 number of samples.
             reference (np.ndarray or float): Array of values to replace the elements in the original inputs. The shape
-                of reference must math the inputs. If scalar is provided, the perturbed elements will be assigned the
+                of reference must match the inputs. If scalar is provided, the perturbed elements will be assigned the
                 given value..
             masks (np.ndarray): Several boolean array to mark the perturbed positions. True marks the pixels to be
                 perturbed, otherwise the pixels will be kept. The shape of masks is assumed to be
@@ -134,9 +134,9 @@ class AblationWithSaliency(Ablation):
                 saliency is expected to be: [batch_size, optional(num_channels), *spatial_size]. If multi-channel
                 saliency is provided, an averaged saliency will be taken to calculate pixel order in spatial dimension.
             num_channels (optional[int]): Number of channels of the input data. In order to match the shape of inputs,
-                num_channels should be provided when input data have channels dimension, even if num_channel. If None is
-                provided, the inputs is assumed to be no-channel data, and the generated mask will have no channel
-                dimension. Default: None.
+                num_channels should be provided when input data have channels dimension, even if num_channel is 1.
+                If None is provided, the inputs is assumed to be no-channel data, and the generated mask will have
+                no channel dimension. Default: None.
 
         Return:
             mask (np.ndarray): boolen mask for generate perturbations.

@@ -16,10 +16,8 @@
 
 import numpy as np
 
-from mindspore import Tensor
 from .metric import LabelAgnosticMetric
 from ... import _operators as ops
-from ...explanation._attribution.attribution import Attribution
 from ..._utils import calc_correlation
 
 
@@ -35,12 +33,12 @@ class ClassSensitivity(LabelAgnosticMetric):
 
     """
 
-    def evaluate(self, explainer: Attribution, inputs: Tensor) -> np.ndarray:
+    def evaluate(self, explainer, inputs):
         """
         Evaluate class sensitivity on a single data sample.
 
         Args:
-            explainer (Attribution): The explainer to be evaluated, see `mindspore.explainer.explanation`.
+            explainer (Explanation): The explainer to be evaluated, see `mindspore.explainer.explanation`.
             inputs (Tensor): A data sample, a 4D tensor of shape :math:`(N, C, H, W)`.
 
         Returns:
@@ -49,7 +47,8 @@ class ClassSensitivity(LabelAgnosticMetric):
         Examples:
             >>> import mindspore as ms
             >>> from mindspore.explainer.explanation import Gradient
-            >>> gradient = Gradient()
+            >>> model = resnet(10)
+            >>> gradient = Gradient(model)
             >>> x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
             >>> class_sensitivity = ClassSensitivity()
             >>> res = class_sensitivity.evaluate(gradient, x)
