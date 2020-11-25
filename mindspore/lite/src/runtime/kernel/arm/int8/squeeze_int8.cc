@@ -61,7 +61,7 @@ int SqueezeInt8CPUKernel::Init() {
     return RET_ERROR;
   }
   auto in_quant_args = in_tensors_.front()->quant_params();
-  MS_ASSERT(quant_args.size() > 0);
+  MS_ASSERT(in_quant_args.size() > 0);
   quant_squeeze_param_->in_quant_args_->scale_ = in_quant_args.front().scale;
   quant_squeeze_param_->in_quant_args_->zp_ = in_quant_args.front().zeroPoint;
 
