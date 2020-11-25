@@ -293,14 +293,38 @@ def check_save(method):
     return new_method
 
 
-def check_iterator(method):
+def check_tuple_iterator(method):
     """A wrapper that wraps a parameter checker around the original create_tuple_iterator and create_dict_iterator."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        _, param_dict = parse_user_args(method, *args, **kwargs)
+        [columns, num_epochs, _], param_dict = parse_user_args(method, *args, **kwargs)
         nreq_param_bool = ['output_numpy']
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+        if num_epochs is not None:
+            type_check(num_epochs, (int,), "num_epochs")
+            check_value(num_epochs, [-1, INT32_MAX], "num_epochs")
+
+        if columns is not None:
+            check_columns(columns, "column_names")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_dict_iterator(method):
+    """A wrapper that wraps a parameter checker around the original create_tuple_iterator and create_dict_iterator."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [num_epochs, _], param_dict = parse_user_args(method, *args, **kwargs)
+        nreq_param_bool = ['output_numpy']
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+        if num_epochs is not None:
+            type_check(num_epochs, (int,), "num_epochs")
+            check_value(num_epochs, [-1, INT32_MAX], "num_epochs")
+
         return method(self, *args, **kwargs)
 
     return new_method
@@ -523,6 +547,8 @@ def check_batch(method):
             sig = ins.signature(batch_size)
             if len(sig.parameters) != 1:
                 raise ValueError("callable batch_size should take one parameter (BatchInfo).")
+        else:
+            check_pos_int32(int(batch_size), "batch_size")
 
         if num_parallel_workers is not None:
             check_num_parallel_workers(num_parallel_workers)
@@ -801,6 +827,21 @@ def check_project(method):
     def new_method(self, *args, **kwargs):
         [columns], _ = parse_user_args(method, *args, **kwargs)
         check_columns(columns, 'columns')
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_schema(method):
+    """check the input arguments of Schema.__init__."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [schema_file], _ = parse_user_args(method, *args, **kwargs)
+
+        if schema_file is not None:
+            type_check(schema_file, (str,), "schema_file")
 
         return method(self, *args, **kwargs)
 
@@ -1261,3 +1302,23 @@ def check_cache_option(cache):
     """Sanity check for cache parameter"""
     if cache is not None:
         type_check(cache, (cache_client.DatasetCache,), "cache")
+
+
+def check_to_device_send(method):
+    """A wrapper that wraps a parameter checker around the check_to_device_send."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [num_epochs], _ = parse_user_args(method, *args, **kwargs)
+
+        if num_epochs is not None:
+            type_check(num_epochs, (int,), "num_epochs")
+            check_value(num_epochs, [-1, INT32_MAX], "num_epochs")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def replace_none(value, default):
+    return value if value is not None else default

@@ -266,7 +266,7 @@ def test_normalize_exception_invalid_size_py():
     logger.info("test_normalize_exception_invalid_size_py")
     data = util_test_normalize([0.75, 0.25], [0.18, 0.32], "python")
     try:
-        _ = data.create_dict_iterator(num_epochs=1).get_next()
+        _ = data.create_dict_iterator(num_epochs=1).__next__()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Length of mean and std must both be 1 or" in str(e)

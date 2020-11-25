@@ -40,21 +40,7 @@ Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<TakeOp> node, bool *mo
 }
 
 Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<MapOp> node, bool *modified) {
-  if (type_ == kOutputShapeAndType) {
-    nodes_to_clear_callback_.push_back(node);
-  } else if (type_ == kDatasetSize) {
-    nodes_to_remove_.push_back(node);
-  }
-  return Status::OK();
-}
-
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<ProjectOp> node, bool *modified) {
-  if (type_ == kDatasetSize) nodes_to_remove_.push_back(node);
-  return Status::OK();
-}
-
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<RenameOp> node, bool *modified) {
-  if (type_ == kDatasetSize) nodes_to_remove_.push_back(node);
+  nodes_to_clear_callback_.push_back(node);
   return Status::OK();
 }
 
@@ -83,5 +69,6 @@ Status GetterPass::RunOnTree(ExecutionTree *tree, bool *modified) {
 
   return Status::OK();
 }
+
 }  // namespace dataset
 }  // namespace mindspore

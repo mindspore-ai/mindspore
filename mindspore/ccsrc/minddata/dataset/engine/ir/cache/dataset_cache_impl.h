@@ -24,8 +24,8 @@
 #include "minddata/dataset/engine/datasetops/cache_op.h"
 #include "minddata/dataset/engine/ir/cache/dataset_cache.h"
 
-namespace mindspore::dataset {
-
+namespace mindspore {
+namespace dataset {
 /// DatasetCache is the IR of CacheClient
 class DatasetCacheImpl : public DatasetCache {
  public:
@@ -67,6 +67,6 @@ class DatasetCacheImpl : public DatasetCache {
   std::optional<int32_t> num_connections_;
   std::optional<int32_t> prefetch_sz_;
 };
-}  // namespace mindspore::dataset
-
+}  // namespace dataset
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_CACHE_DATASET_CACHE_IMPL_H_

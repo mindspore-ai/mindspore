@@ -63,7 +63,7 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
   const std::unordered_map<std::string, int32_t> map = {{"label", 1}, {"image", 0}};
   EXPECT_EQ(tree_adapter.GetColumnNameMap(), map);
 
-  std::vector<size_t> row_sizes = {2, 2, 0, 0};
+  std::vector<size_t> row_sizes = {2, 2, 0};
 
   TensorRow row;
   for (size_t sz : row_sizes) {
@@ -75,7 +75,7 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
   rc = tree_adapter.GetNext(&row);
   EXPECT_TRUE(rc.IsError());
   const std::string err_msg = rc.ToString();
-  EXPECT_TRUE(err_msg.find("EOF has already been reached") != err_msg.npos);
+  EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
 }
 
 TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
@@ -97,7 +97,7 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
   const std::unordered_map<std::string, int32_t> map = tree_adapter.GetColumnNameMap();
   EXPECT_EQ(tree_adapter.GetColumnNameMap(), map);
 
-  std::vector<size_t> row_sizes = {2, 2, 0, 2, 2, 0, 0};
+  std::vector<size_t> row_sizes = {2, 2, 0, 2, 2, 0};
 
   TensorRow row;
   for (size_t sz : row_sizes) {
@@ -107,7 +107,7 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
   }
   rc = tree_adapter.GetNext(&row);
   const std::string err_msg = rc.ToString();
-  EXPECT_TRUE(err_msg.find("EOF has already been reached") != err_msg.npos);
+  EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
 }
 
 TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
@@ -135,7 +135,7 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
   const std::unordered_map<std::string, int32_t> map = {{"label", 0}};
   EXPECT_EQ(tree_adapter.GetColumnNameMap(), map);
 
-  std::vector<size_t> row_sizes = {1, 1, 0, 1, 1, 0, 0};
+  std::vector<size_t> row_sizes = {1, 1, 0, 1, 1, 0};
   TensorRow row;
 
   for (size_t sz : row_sizes) {
@@ -145,5 +145,5 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
   }
   rc = tree_adapter.GetNext(&row);
   const std::string err_msg = rc.ToString();
-  EXPECT_TRUE(err_msg.find("EOF has already been reached") != err_msg.npos);
+  EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
 }

@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/concat_op.h"
@@ -27,7 +28,15 @@ namespace mindspore {
 namespace dataset {
 
 // Function to build ConcatOp
-ConcatNode::ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets) { this->children = datasets; }
+ConcatNode::ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets,
+                       const std::shared_ptr<SamplerObj> &sampler,
+                       const std::vector<std::pair<int, int>> &children_flag_and_nums,
+                       const std::vector<std::pair<int, int>> &children_start_end_index)
+    : sampler_(sampler),
+      children_flag_and_nums_(children_flag_and_nums),
+      children_start_end_index_(children_start_end_index) {
+  this->children = datasets;
+}
 
 Status ConcatNode::ValidateParams() {
   if (children.size() < 2) {
@@ -42,14 +51,25 @@ Status ConcatNode::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
+  if ((children_flag_and_nums_.empty() && !children_start_end_index_.empty()) ||
+      (!children_flag_and_nums_.empty() && children_start_end_index_.empty())) {
+    std::string err_msg = "ConcatNode: children_flag_and_nums and children_start_end_index should be used together";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 
 std::vector<std::shared_ptr<DatasetOp>> ConcatNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
+  if (children_flag_and_nums_.empty() || children_start_end_index_.empty()) {
+    node_ops.push_back(std::make_shared<ConcatOp>(connector_que_size_));
+  } else {
+    node_ops.push_back(std::make_shared<ConcatOp>(connector_que_size_, sampler_->Build(), children_flag_and_nums_,
+                                                  children_start_end_index_));
+  }
 
-  node_ops.push_back(std::make_shared<ConcatOp>(connector_que_size_));
   return node_ops;
 }
 

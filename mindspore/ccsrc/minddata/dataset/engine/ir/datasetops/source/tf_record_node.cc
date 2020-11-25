@@ -118,7 +118,8 @@ std::vector<std::shared_ptr<DatasetOp>> TFRecordNode::Build() {
                                  std::move(data_schema), connector_que_size_, columns_list_, shuffle_files, num_shards_,
                                  shard_id_, shard_equal_rows_, std::move(sampler_->Build()));
 
-  RETURN_EMPTY_IF_ERROR(tf_reader_op->Init());
+  build_status = tf_reader_op->Init();  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
 
   if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
@@ -127,14 +128,17 @@ std::vector<std::shared_ptr<DatasetOp>> TFRecordNode::Build() {
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    RETURN_EMPTY_IF_ERROR(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files));
+    build_status = TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files);
+    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
 
     // Add the shuffle op after this op
-    RETURN_EMPTY_IF_ERROR(AddShuffleOp(sorted_dir_files.size(), num_shards_, num_rows, 0, connector_que_size_,
-                                       rows_per_buffer_, &shuffle_op));
+    build_status = AddShuffleOp(sorted_dir_files.size(), num_shards_, num_rows, 0, connector_que_size_,
+                                rows_per_buffer_, &shuffle_op);
+    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
     node_ops.push_back(shuffle_op);
   }
-  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
 
   // Add TFReaderOp
   node_ops.push_back(tf_reader_op);

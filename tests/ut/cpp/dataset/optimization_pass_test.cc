@@ -132,6 +132,6 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestDatasetSizePass) {
   // verify that Shuffle and RepeatOp are removed, but Batch and ProjectOp are not
   EXPECT_EQ(ss_str.find("ShuffleOp"), ss_str.npos);
   EXPECT_NE(ss_str.find("RepeatOp"), ss_str.npos);
-  EXPECT_EQ(ss_str.find("ProjectOp"), ss_str.npos);
+  EXPECT_NE(ss_str.find("ProjectOp"), ss_str.npos);
   EXPECT_NE(ss_str.find("BatchOp"), ss_str.npos);
 }

@@ -400,6 +400,11 @@ class TFReaderOp : public ParallelOp {
   // @return - Status
   Status ComputeColMap() override;
 
+  // Private function for computing the file list of the specific shard ID. This is because in distributed scenario,
+  // data will be divided into shards by row when equal_rows_per_shard is true, but by file in the opposite case.
+  // @return - Status - the status code returned.
+  Status GetShardFileList(std::vector<std::string> *shard_filenames);
+
   int32_t device_id_;
   int32_t num_devices_;
   int64_t rows_per_buffer_;

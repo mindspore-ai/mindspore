@@ -107,7 +107,7 @@ def test_decode_op():
     # Expect a AttributeError since iter1 has been stopped.
     with pytest.raises(AttributeError) as info:
         iter1.__next__()
-    assert "object has no attribute 'depipeline'" in str(info.value)
+    assert "object has no attribute '_runtime_context'" in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
         iter2.__next__()
@@ -205,7 +205,7 @@ def test_generator_dict_3():
     # Expect a AttributeError since iter1 has been stopped.
     with pytest.raises(AttributeError) as info:
         iter1.__next__()
-    assert "object has no attribute 'depipeline'" in str(info.value)
+    assert "object has no attribute '_runtime_context'" in str(info.value)
 
 
 def test_generator_dict_4():
@@ -396,7 +396,7 @@ def test_generator_tuple_3():
     # Expect a AttributeError since iter1 has been stopped.
     with pytest.raises(AttributeError) as info:
         iter1.__next__()
-    assert "object has no attribute 'depipeline'" in str(info.value)
+    assert "object has no attribute '_runtime_context'" in str(info.value)
 
 
 def test_generator_tuple_4():
@@ -546,7 +546,7 @@ def test_generator_tuple_repeat_repeat_2():
     # Expect a AttributeError since iter1 has been stopped.
     with pytest.raises(AttributeError) as info:
         iter1.__next__()
-    assert "object has no attribute 'depipeline'" in str(info.value)
+    assert "object has no attribute '_runtime_context'" in str(info.value)
 
 
 def test_generator_tuple_repeat_repeat_3():

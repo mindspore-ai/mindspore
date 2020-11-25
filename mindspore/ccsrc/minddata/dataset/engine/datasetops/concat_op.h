@@ -70,9 +70,9 @@ class ConcatOp : public PipelineOp {
   // @note The builder class should be used to call it
   // @param op_connector_size - connector size
   explicit ConcatOp(int32_t op_connector_size);
-  explicit ConcatOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampler,
-                    std::vector<std::pair<int, int>> children_flag_and_nums,
-                    std::vector<std::pair<int, int>> children_start_end_index);
+  ConcatOp(int32_t op_connector_size, const std::shared_ptr<SamplerRT> &sampler,
+           const std::vector<std::pair<int, int>> &children_flag_and_nums,
+           const std::vector<std::pair<int, int>> &children_start_end_index);
 
   // Destructor
   ~ConcatOp() = default;

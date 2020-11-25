@@ -31,8 +31,7 @@ namespace dataset {
 class SyncWaitNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit SyncWaitNode(std::shared_ptr<DatasetNode> child, const std::string &condition_name, int32_t num_batch,
-                        py::function callback);
+  SyncWaitNode(std::shared_ptr<DatasetNode> child, const std::string &condition_name, py::function callback);
 
   /// \brief Destructor
   ~SyncWaitNode() = default;
@@ -47,7 +46,6 @@ class SyncWaitNode : public DatasetNode {
 
  private:
   std::string condition_name_;
-  int32_t num_batch_;
   py::function callback_;
 };
 

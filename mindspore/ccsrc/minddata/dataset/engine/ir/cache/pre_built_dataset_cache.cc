@@ -15,24 +15,19 @@
  */
 #include <memory>
 
-#include "minddata/dataset/engine/ir/cache/dataset_cache_impl.h"
+#include "minddata/dataset/engine/ir/cache/pre_built_dataset_cache.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
 
 namespace mindspore {
 namespace dataset {
 /// Method to initialize the DatasetCache by creating an instance of a CacheClient
 /// \return Status Error code
-Status DatasetCacheImpl::Build() {
-  CacheClient::Builder builder;
-  builder.SetSessionId(session_id_).SetCacheMemSz(cache_mem_sz_).SetSpill(spill_);
-  if (hostname_) builder.SetHostname(hostname_.value());
-  if (port_) builder.SetPort(port_.value());
-  if (num_connections_) builder.SetNumConnections(num_connections_.value());
-  if (prefetch_sz_) builder.SetPrefetchSize(prefetch_sz_.value());
-  return builder.Build(&cache_client_);
+Status PreBuiltDatasetCache::Build() {
+  // we actually want to keep a reference of the runtime object so it can be shared by different pipelines
+  return Status::OK();
 }
 
-Status DatasetCacheImpl::CreateCacheOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) {
+Status PreBuiltDatasetCache::CreateCacheOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) {
   CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "Cache client has not been created yet.");
   std::shared_ptr<CacheOp> cache_op = nullptr;
   RETURN_IF_NOT_OK(CacheOp::Builder().SetNumWorkers(num_workers).SetClient(cache_client_).Build(&cache_op));
@@ -40,5 +35,6 @@ Status DatasetCacheImpl::CreateCacheOp(int32_t num_workers, std::shared_ptr<Data
 
   return Status::OK();
 }
+
 }  // namespace dataset
 }  // namespace mindspore

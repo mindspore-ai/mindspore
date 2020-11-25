@@ -346,6 +346,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Name of the current Op
   virtual std::string Name() const = 0;
 
+  /// Op name and ID getter
+  /// \return Name and ID of the current Op
+  std::string NameWithID() const { return Name() + "(ID:" + std::to_string(id()) + ")"; }
+
   /// Execution Tree getter
   /// \return Pointer to the ExecutionTree the current op belongs to, no ownership
   ExecutionTree *Tree() { return tree_; }

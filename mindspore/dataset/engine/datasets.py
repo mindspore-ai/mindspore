@@ -31,10 +31,10 @@ import sys
 import threading
 
 import copy
+import weakref
 import numpy as np
 
-from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp, MnistOp, ManifestOp, \
-    MindRecordOp, TextFileOp, ClueOp, CsvOp, VOCOp, CocoOp, CBatchInfo
+import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
@@ -43,18 +43,17 @@ from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 import mindspore.dataset.transforms.py_transforms as py_transforms
 
 from . import samplers
-from .iterators import DictIterator, TupleIterator, DummyIterator, SaveOp, Iterator, check_iterator_cleanup, \
-    _set_iterator_cleanup
+from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterator_cleanup, _set_iterator_cleanup, \
+    ITERATORS_LIST, _unset_iterator_cleanup
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_numpyslicesdataset, check_device_send, \
     check_take, check_project, check_imagefolderdataset, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
     check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
-    check_paddeddataset, check_iterator
+    check_paddeddataset, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, replace_none
 from ..core.config import get_callback_timeout
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
-from ..text.utils import DE_C_INTER_SENTENCEPIECE_MODE
 
 try:
     context = import_module("mindspore.context")
@@ -77,7 +76,7 @@ def zip(datasets):
             The number of datasets must be more than 1.
 
     Returns:
-        DatasetOp, ZipDataset.
+        Dataset, ZipDataset.
 
     Raises:
         ValueError: If the number of datasets is 1.
@@ -100,40 +99,11 @@ def zip(datasets):
     return ZipDataset(datasets)
 
 
-def get_num_rows(num_rows, num_shards):
-    """
-    Get the number rows of the dataset according to the shards.
-
-    Args:
-        num_rows (int): Number rows of the dataset. It must be more than 0.
-        num_shards (int or None): Number of shards that the dataset will be divided into.
-            The number of shards must be None or more than 1.
-
-    Returns:
-        Int, number of rows.
-
-    Raises:
-        ValueError: If num_rows is invalid (< 0).
-        ValueError: If num_shards is invalid (<= 0).
-    """
-    if num_rows < 0:
-        raise ValueError("num_rows is invalid, less than 0.")
-
-    if num_shards is not None:
-        if num_shards <= 0:
-            raise ValueError("num_shards is invalid, less than or equal to 0.")
-        if num_rows % num_shards == 0:
-            num_rows = num_rows // num_shards
-        else:
-            num_rows = num_rows // num_shards + 1
-    return num_rows
-
-
 class Dataset:
     """
     Abstract class to represent a dataset in DataEngine's data pipeline.
 
-    This class is the base class of SourceDataset and DatasetOp, and represents
+    This class is the base class of SourceDataset and Dataset, and represents
     a node in the data flow graph.
 
     Args:
@@ -141,22 +111,68 @@ class Dataset:
             (default=None).
     """
 
-    def __init__(self, num_parallel_workers=None):
-        # Note: children and parent are internal variables, not recommand for external using.
-        self.children = []
+    def __init__(self, children=None, num_parallel_workers=None):
+        # Note: children and parent are internal variables, not recommended for external using.
+        self.children = replace_none(children, [])
+        if isinstance(self.children, tuple):
+            self.children = list(self.children)
+        if not isinstance(self.children, list):
+            self.children = [self.children]
+
         self.parent = []
+        for child in self.children:
+            child.parent.append(self)
         self.num_parallel_workers = num_parallel_workers
+
+        # todo check the following:
         self._device_iter = 0
         self._input_indexs = ()
-        self._output_types = None
-        self._output_shapes = None
+        self.saved_output_types = None
+        self.saved_output_shapes = None
+        self._col_names = None
         self.dataset_size = None
         self._batch_size = None
         self._num_classes = None
         self._repeat_count = None
+        self._class_indexing = None
         self._sync = False
 
-    def _noop_mode(self):
+    def create_ir_tree(self):
+        parent = self.parent
+        self.parent = []
+        dataset = copy.deepcopy(self)
+        ir_tree = dataset.parse_tree()
+        self.parent = parent
+        return ir_tree, dataset
+
+    def parse_tree(self):
+        """
+        Internal method to parse the API tree into an IR tree.
+        Returns:
+                DatasetNode. The root of the IR tree.
+        """
+        if len(self.parent) > 1:
+            raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
+        ir_children = [d.parse_tree() for d in self.children]
+        ir_node = self.parse(ir_children)
+        return self._alter_node(ir_node)
+
+    @staticmethod
+    def _alter_node(node):
+        """
+        Internal method to add process pool to copied map node.
+        Returns:
+                DatasetNode. The altered node.
+        """
+        if isinstance(node, MapDataset):
+            if node.python_multiprocessing:
+                # Bootstrap can only be performed on a copy of the original dataset node.
+                # Bootstrap on original dataset node will make all iterators share the same process pool
+                node.iterator_bootstrap()
+        return node
+
+    @staticmethod
+    def _noop_mode():
         if _is_role_sched() or _is_role_pserver():
             return True
         return False
@@ -323,7 +339,7 @@ class Dataset:
 
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
-        '''
+        """
         Add a blocking condition to the input Dataset.
 
         Args:
@@ -342,7 +358,7 @@ class Dataset:
             >>> data = data.batch(batch_size)
             >>> for batch_data in data.create_dict_iterator():
             >>>     data = data.sync_update("callback1")
-        '''
+        """
         return SyncWaitDataset(self, condition_name, num_batch, callback)
 
     @check_shuffle
@@ -869,7 +885,7 @@ class Dataset:
         elif isinstance(datasets, Dataset):
             datasets = (self, datasets)
         else:
-            raise TypeError("Invalid datasets, expected Dataset object or tuple of Dataset, but got %s!" % (datasets))
+            raise TypeError("Invalid datasets, expected Dataset object or tuple of Dataset, but got %s!" % datasets)
         return ZipDataset(datasets)
 
     @check_concat
@@ -959,13 +975,116 @@ class Dataset:
 
         return ProjectDataset(self, columns)
 
-    def build_vocab(self, vocab, columns, freq_range, top_k, special_tokens, special_first):
-        return BuildVocabDataset(self, vocab, columns, freq_range, top_k, special_tokens, special_first)
+    def build_vocab(self, columns, freq_range, top_k, special_tokens, special_first):
+        """
+        Function to create a Vocab from source dataset
 
-    def build_sentencepiece_vocab(self, vocab, col_names, vocab_size,
-                                  character_coverage, model_type, params):
-        return BuildSentencePieceVocabDataset(self, vocab, col_names, vocab_size, character_coverage,
-                                              model_type, params)
+        Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
+        which contains top_k most frequent words (if top_k is specified)
+
+        Args:
+
+            columns(list[str]): Column names to get words from.
+            freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
+                range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
+                an be set to default, which corresponds to 0/total_words separately
+            top_k(int): Number of words to be built into vocab. top_k most frequent words are
+                taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
+            special_tokens(list[str]): A list of strings, each one is a special token
+            special_first(bool): Whether special_tokens will be prepended/appended to vocab, If special_tokens
+                is specified and special_first is set to default, special_tokens will be prepended
+
+        Returns:
+            Vocab node
+
+        Example:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> # data is an instance of Dataset object
+            >>> data = data.build_vocab(columns=["column3", "column1", "column2"], freq_range=(1, 10), top_k=5,
+            >>>                         special_tokens=["<pad>", "<unk>"], special_first=True)
+
+        """
+        vocab = cde.Vocab()
+        columns = replace_none(columns, [])
+        if not isinstance(columns, list):
+            columns = [columns]
+
+        freq_range = replace_none(freq_range, (0, 9223372036854775807))
+        if freq_range[0] is None:
+            freq_range = (0, freq_range[1])
+        if freq_range[1] is None:
+            freq_range = (freq_range[0], 9223372036854775807)
+        special_tokens = replace_none(special_tokens, [])
+        top_k = replace_none(top_k, 9223372036854775807)
+
+        ir_tree, api_tree = self.create_ir_tree()
+
+        # vocab node
+        vocab_node = cde.BuildVocabNode(ir_tree, vocab, columns, freq_range, top_k, special_tokens, special_first)
+
+        runtime_context = cde.PythonRuntimeContext()
+        runtime_context.Init()
+
+        # build vocab
+        consumer = cde.PythonBuildVocabConsumer()
+        consumer.Init(vocab_node)
+        runtime_context.AssignConsumer(consumer)
+
+        consumer.Start()
+        del api_tree
+
+        return vocab
+
+    def build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
+        """
+        Function to create a SentencePieceVocab from source dataset
+
+        Build a SentencePieceVocab from a dataset.
+
+        Args:
+
+            columns(list[str]): Column names to get words from.
+            vocab_size(int): Vocabulary size.
+            character_coverage(int): Percentage of characters covered by the model, must be between
+                        0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
+                        Japanese or Chinese character sets, and 1.0 for other languages with small character sets.
+            model_type(SentencePieceModel): Model type. Choose from unigram (default), bpe, char, or word.
+                                        The input sentence must be pretokenized when using word type.
+            params(dict): contains more optional parameters of sentencepiece library
+
+        Returns:
+            SentencePieceVocab node
+
+        Example:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> # data is an instance of Dataset object
+            >>> data = data.build_sentencepiece_vocab(columns=["column3", "column1", "column2"], vocab_size=5000,
+            >>>                                       character_coverage=0.9995, model_type=SentencePieceModel.Unigram,
+            >>>                                       params={})
+
+        """
+        vocab = cde.SentencePieceVocab()
+
+        ir_tree, api_tree = self.create_ir_tree()
+
+        # vocab node
+        vocab_node = cde.BuildSentenceVocabNode(ir_tree, vocab, columns, vocab_size, character_coverage, model_type,
+                                                params)
+
+        runtime_context = cde.PythonRuntimeContext()
+        runtime_context.Init()
+
+        # build vocab
+        consumer = cde.PythonBuildVocabConsumer()
+        consumer.Init(vocab_node)
+        runtime_context.AssignConsumer(consumer)
+
+        consumer.Start()
+        del api_tree
+
+        return vocab
 
     def apply(self, apply_func):
         """
@@ -1043,56 +1162,9 @@ class Dataset:
             TransferDataset, dataset for transferring.
 
         Raises:
-            TypeError: If device_type is empty.
-            ValueError: If device_type is not 'Ascend', 'GPU' or 'CPU'.
-            RuntimeError: If dataset is unknown.
             RuntimeError: If distribution file path is given but failed to read.
         """
-        queue_name = str(uuid.uuid1())
-
-        if context:
-            device_type = context.get_context("device_target")
-        else:
-            device_type = "CPU"
-
-        if device_type == "":
-            raise TypeError("Please set device_type in context")
-
-        if device_type not in ('Ascend', 'GPU', 'CPU'):
-            raise ValueError("Only CPU, Ascend or GPU device type is supported.")
-
-        def get_distribution(output_dataset):
-            dev_id = 0
-            if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, GeneratorDataset, ImageFolderDataset,
-                                           ManifestDataset, MnistDataset, VOCDataset, CocoDataset, CelebADataset,
-                                           MindDataset)):
-                sampler = output_dataset.sampler
-                if isinstance(sampler, samplers.DistributedSampler):
-                    dev_id = sampler.shard_id
-                return "", dev_id
-            if isinstance(output_dataset, (TFRecordDataset, TextFileDataset, CLUEDataset, CSVDataset)):
-                if output_dataset.shard_id is not None:
-                    dev_id = output_dataset.shard_id
-                return "", dev_id
-
-            if not output_dataset.children:
-                raise RuntimeError("Unknown output_dataset: {}.".format(type(output_dataset)))
-            input_dataset = output_dataset.children[0]
-            return get_distribution(input_dataset)
-
-        distribution_path, device_id = get_distribution(self)
-        if distribution_path == "":
-            return TransferDataset(self, queue_name, device_id, device_type, send_epoch_end, create_data_info_queue)
-        try:
-            with open(distribution_path, 'r') as distribution_f:
-                dist = json.load(distribution_f)
-                device_id = dist["deviceId"]
-        except json.decoder.JSONDecodeError:
-            raise RuntimeError("Json decode error when load distribution file.")
-        except Exception:
-            raise RuntimeError("Failed to read Distribution file.")
-
-        return TransferDataset(self, queue_name, device_id, device_type, send_epoch_end, create_data_info_queue)
+        return TransferDataset(self, send_epoch_end, create_data_info_queue)
 
     @check_save
     def save(self, file_name, num_files=1, file_type='mindrecord'):
@@ -1163,17 +1235,20 @@ class Dataset:
             file_type (str, optional): Dataset format (default='mindrecord').
 
         """
+        # todo(CRC) warning("Used shuffle, repeat, batch before save operator.")
 
-        if num_files == 1:
-            file_names = [file_name]
-        else:
-            suffix = len(str(num_files - 1))
-            file_names = ["{}{}".format(file_name, str(x).rjust(suffix, '0'))
-                          for x in range(num_files)]
+        ir_tree, api_tree = self.create_ir_tree()
 
-        return SaveOp(self).save(file_names, file_type)
+        runtime_context = cde.PythonRuntimeContext()
+        runtime_context.Init()
+        consumer = cde.PythonSaveToDisk(file_name, num_files, file_type)
+        consumer.Init(ir_tree)
+        runtime_context.AssignConsumer(consumer)
 
-    @check_iterator
+        consumer.Save()
+        del api_tree
+
+    @check_tuple_iterator
     def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False):
         """
         Create an iterator over the dataset. The data retrieved will be a list of ndarrays of data.
@@ -1207,11 +1282,11 @@ class Dataset:
         if output_numpy is None:
             output_numpy = False
 
-        if self._noop_mode():
+        if Dataset._noop_mode():
             return DummyIterator(self, 'tuple')
         return TupleIterator(self, columns, num_epochs, output_numpy)
 
-    @check_iterator
+    @check_dict_iterator
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
         """
         Create an iterator over the dataset. The data retrieved will be a dictionary.
@@ -1242,7 +1317,7 @@ class Dataset:
         if output_numpy is None:
             output_numpy = False
 
-        if self._noop_mode():
+        if Dataset._noop_mode():
             return DummyIterator(self, 'dict')
         return DictIterator(self, num_epochs, output_numpy)
 
@@ -1252,29 +1327,55 @@ class Dataset:
 
     @property
     def input_indexs(self):
+        """
+        Get Input Index Information
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> # data is an instance of Dataset object
+            >>> data = ds.NumpySlicesDataset([1, 2, 3], column_names=["col_1"])
+            >>> print(data.input_indexs())
+        """
+        if self._input_indexs != ():
+            return self._input_indexs
+
+        # find input_indexes of children
+        children_input_index = [child.input_indexs for child in self.children]
+
+        # in case of more than one child, return the first input_indexes
+        for cix in children_input_index:
+            if cix != ():
+                return cix
+
+        # if all children's input_indexes are () or the node is a leaf
         return self._input_indexs
 
     @input_indexs.setter
     def input_indexs(self, value):
         self._input_indexs = value
 
-    def _get_pipeline_info(self):
+    def _init_tree_getters(self):
         """
         Get pipeline information.
         """
-        device_iter = TupleIterator(self)
-        self._output_shapes = device_iter.get_output_shapes()
-        self._output_types = device_iter.get_output_types()
-        self._batch_size = device_iter.get_batch_size()
-        self._num_classes = device_iter.num_classes()
-        self._repeat_count = device_iter.get_repeat_count()
-        device_iter.stop()
+        ir_tree, api_tree = self.create_ir_tree()
+
+        runtime_context = cde.PythonRuntimeContext()
+        runtime_context.Init()
+        getter = cde.TreeGetters()
+        getter.Init(ir_tree)
+        runtime_context.AssignConsumer(getter)
+        return getter, runtime_context, api_tree
 
     def get_col_names(self):
         """
         Get names of the columns in the dataset
         """
-        return Iterator(self).get_col_names()
+        if self._col_names is None:
+            runtime_getter = self._init_tree_getters()
+            self._col_names = runtime_getter[0].GetColumnNames()
+        return self._col_names
 
     def output_shapes(self):
         """
@@ -1283,9 +1384,11 @@ class Dataset:
         Return:
             List, list of shapes of each column.
         """
-        if self._output_shapes is None:
-            self._get_pipeline_info()
-        return self._output_shapes
+        if self.saved_output_shapes is None:
+            runtime_getter = self._init_tree_getters()
+            self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
+            self.saved_output_types = runtime_getter[0].GetOutputTypes()
+        return self.saved_output_shapes
 
     def output_types(self):
         """
@@ -1294,9 +1397,11 @@ class Dataset:
         Return:
             List of data types.
         """
-        if self._output_types is None:
-            self._get_pipeline_info()
-        return self._output_types
+        if self.saved_output_types is None:
+            runtime_getter = self._init_tree_getters()
+            self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
+            self.saved_output_types = runtime_getter[0].GetOutputTypes()
+        return self.saved_output_types
 
     def get_dataset_size(self):
         """
@@ -1306,8 +1411,8 @@ class Dataset:
             Number, number of batches.
         """
         if self.dataset_size is None:
-            if self.children:
-                self.dataset_size = self.children[0].get_dataset_size()
+            runtime_getter = self._init_tree_getters()
+            self.dataset_size = runtime_getter[0].GetDatasetSize()
         return self.dataset_size
 
     def num_classes(self):
@@ -1317,9 +1422,12 @@ class Dataset:
         Return:
             Number, number of classes.
         """
-        if self.children:
-            return self.children[0].num_classes()
-        return None
+        if self._num_classes is None:
+            runtime_getter = self._init_tree_getters()
+            self._num_classes = runtime_getter[0].GetNumClasses()
+        if self._num_classes == -1:
+            return None
+        return self._num_classes
 
     def get_sync_notifiers(self):
         if self.children:
@@ -1367,9 +1475,12 @@ class Dataset:
         Return:
             Number, the number of data in a batch.
         """
-        if self.children:
-            return self.children[0].get_batch_size()
-        return 1
+        if self._batch_size is None:
+            runtime_getter = self._init_tree_getters()
+            self._batch_size = runtime_getter[0].GetBatchSize()
+        if self._batch_size is None:
+            self._batch_size = 1
+        return self._batch_size
 
     def get_repeat_count(self):
         """
@@ -1378,9 +1489,25 @@ class Dataset:
         Return:
             Number, the count of repeat.
         """
+        if self._repeat_count is None:
+            runtime_getter = self._init_tree_getters()
+            self._repeat_count = runtime_getter[0].GetRepeatCount()
+        if self._repeat_count is None:
+            self._repeat_count = 1
+        return self._repeat_count
+
+    def get_class_indexing(self):
+        """
+        Get the class index.
+
+        Return:
+            Dict, A str-to-int mapping from label name to index.
+            Dict, A str-to-list<int> mapping from label name to index for Coco ONLY. The second number
+                in the list is used to indicate the super category
+        """
         if self.children:
-            return self.children[0].get_repeat_count()
-        return 1
+            return self.children[0].get_class_indexing()
+        return {}
 
     def reset(self):
         """Reset the dataset for next epoch."""
@@ -1399,11 +1526,17 @@ class Dataset:
 
         return False
 
+    def parse(self, children=None):
+        raise NotImplementedError("Dataset has to implement parse method.")
+
 
 class SourceDataset(Dataset):
     """
     Abstract class to represent a source dataset which produces content to the data pipeline.
     """
+
+    def parse(self, children=None):
+        raise NotImplementedError("Dataset has to implement parse method.")
 
     # No need for __init__ since it is the same as the super's init
 
@@ -1451,9 +1584,12 @@ class MappableDataset(SourceDataset):
     Abstract class to represent a source dataset which supports use of samplers.
     """
 
+    def parse(self, children=None):
+        raise NotImplementedError("Dataset has to implement parse method.")
+
     def __init__(self, num_parallel_workers=None):
         # check if all subclasses use this name
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
         self.sampler = None
 
     def add_sampler(self, new_sampler):
@@ -1611,44 +1747,27 @@ class MappableDataset(SourceDataset):
         return tuple(splits)
 
 
-class DatasetOp(Dataset):
-    """
-    Abstract class to represent an operation on a dataset.
-    """
-
-    # No need for __init__ since it is the same as the super's init
-    def get_class_indexing(self):
-        """
-        Get the class index.
-
-        Return:
-            Dict, A str-to-int mapping from label name to index.
-        """
-        if self.children:
-            return self.children[0].get_class_indexing()
-        raise NotImplementedError("Dataset {} has not supported api get_class_indexing yet.".format(type(self)))
-
-
-class BucketBatchByLengthDataset(DatasetOp):
+class BucketBatchByLengthDataset(Dataset):
     """
     The result of applying BucketBatchByLength operator to the input dataset.
     """
 
     def __init__(self, input_dataset, column_names, bucket_boundaries, bucket_batch_sizes,
                  element_length_function, pad_info, pad_to_bucket_boundary, drop_remainder):
-        super().__init__()
+        super().__init__(children=input_dataset)
 
-        self.column_names = column_names
-        self.bucket_boundaries = bucket_boundaries
-        self.bucket_batch_sizes = bucket_batch_sizes
+        self.column_names = replace_none(column_names, [])
+        self.bucket_boundaries = replace_none(bucket_boundaries, [])
+        self.bucket_batch_sizes = replace_none(bucket_batch_sizes, [])
         self.element_length_function = element_length_function
-        self.pad_info = pad_info
-        self.pad_to_bucket_boundary = pad_to_bucket_boundary
-        self.drop_remainder = drop_remainder
+        self.pad_info = replace_none(pad_info, {})
+        self.pad_to_bucket_boundary = replace_none(pad_to_bucket_boundary, False)
+        self.drop_remainder = replace_none(drop_remainder, False)
 
-        self.children.append(input_dataset)
-        input_dataset.parent.append(self)
-        self._input_indexs = input_dataset.input_indexs
+    def parse(self, children=None):
+        return cde.BucketBatchByLengthNode(children[0], self.column_names, self.bucket_boundaries,
+                                           self.bucket_batch_sizes, self.element_length_function, self.pad_info,
+                                           self.pad_to_bucket_boundary, self.drop_remainder)
 
     def get_args(self):
         args = super().get_args()
@@ -1661,22 +1780,8 @@ class BucketBatchByLengthDataset(DatasetOp):
         args["drop_remainder"] = self.drop_remainder
         return args
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
 
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = 0
-            for _ in self.create_dict_iterator(num_epochs=1, output_numpy=True):
-                num_rows += 1
-            self.dataset_size = num_rows
-        return self.dataset_size
-
-
-class BatchDataset(DatasetOp):
+class BatchDataset(Dataset):
     """
     The result of applying Batch operator to the input dataset.
 
@@ -1714,23 +1819,33 @@ class BatchDataset(DatasetOp):
 
     def __init__(self, input_dataset, batch_size, drop_remainder=False, num_parallel_workers=None,
                  per_batch_map=None, input_columns=None, output_columns=None, column_order=None, pad_info=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(children=input_dataset, num_parallel_workers=num_parallel_workers)
 
         if BatchDataset._is_ancestor_of_repeat(input_dataset):
             logger.warning("Repeat is located before batch, data from two epochs can be batched together.")
 
         BatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
 
-        self.batch_size = batch_size
-        self.drop_remainder = drop_remainder
+        # replace non on input args
+        input_columns = replace_none(input_columns, [])
+        output_columns = replace_none(output_columns, [])
+        column_order = replace_none(column_order, [])
+        # if batch_size is callable, set batch_size to 1 and batch_size_func to that callable function
+        self.batch_size = batch_size if not callable(batch_size) else 1
+        self.batch_size_func = None if not callable(batch_size) else batch_size
+        self.drop_remainder = replace_none(drop_remainder, False)
         self.per_batch_map = per_batch_map
         self.input_columns = input_columns if not isinstance(input_columns, str) else [input_columns]
         self.output_columns = output_columns if not isinstance(output_columns, str) else [output_columns]
         self.column_order = column_order if not isinstance(column_order, str) else [column_order]
-        self.pad_info = pad_info
-        self.children.append(input_dataset)
-        input_dataset.parent.append(self)
-        self._input_indexs = input_dataset.input_indexs
+        self.pad = bool(pad_info is not None)
+        self.pad_info = replace_none(pad_info, dict())
+
+    def parse(self, children=None):
+        return cde.BatchNode(children[0], self.batch_size, self.drop_remainder, self.pad,
+                             self.input_columns, self.output_columns,
+                             self.column_order, self.batch_size_func, self.per_batch_map,
+                             self.pad_info).SetNumWorkers(self.num_parallel_workers)
 
     def get_args(self):
         args = super().get_args()
@@ -1742,31 +1857,6 @@ class BatchDataset(DatasetOp):
         args["column_order"] = self.column_order
         args["pad_info"] = self.pad_info
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            child_size = self.children[0].get_dataset_size()
-            if child_size is not None and isinstance(self.batch_size, int):
-                if self.drop_remainder:
-                    self.dataset_size = math.floor(child_size / self.batch_size)
-                else:
-                    self.dataset_size = math.ceil(child_size / self.batch_size)
-        return self.dataset_size
-
-    def get_batch_size(self):
-        """
-        Get the size of a batch.
-
-        Return:
-            Number, the number of data in a batch.
-        """
-        return self.batch_size
 
     @staticmethod
     def _is_ancestor_of_repeat(dataset):
@@ -1800,7 +1890,7 @@ class BatchDataset(DatasetOp):
             BatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
 
 
-class BatchInfo(CBatchInfo):
+class BatchInfo(cde.CBatchInfo):
     """
     The information object associates with the current batch of tensors.
     """
@@ -1897,7 +1987,7 @@ class BlockReleasePair:
             self.cv.notify_all()
 
 
-class SyncWaitDataset(DatasetOp):
+class SyncWaitDataset(Dataset):
     """
     The result of adding a blocking condition to the input Dataset.
 
@@ -1912,9 +2002,8 @@ class SyncWaitDataset(DatasetOp):
     """
 
     def __init__(self, input_dataset, condition_name, num_batch, callback=None):
-        super().__init__()
-        self.children.append(input_dataset)
-        input_dataset.parent.append(self)
+        super().__init__(children=input_dataset)
+
         # set to the default value, waiting for the batch to update it
         self._condition_name = condition_name
         if isinstance(num_batch, int) and num_batch <= 0:
@@ -1925,6 +2014,9 @@ class SyncWaitDataset(DatasetOp):
             raise RuntimeError("Condition name is already in use.")
         logger.warning("Please remember to add dataset.sync_update(condition=%s), otherwise hanging will result.",
                        condition_name)
+
+    def parse(self, children=None):
+        return cde.SyncWaitNode(children[0], self._condition_name, self._pair.block_func)
 
     def get_sync_notifiers(self):
         return {**self.children[0].get_sync_notifiers(), **{self._condition_name: self._pair.release_func}}
@@ -1965,7 +2057,7 @@ class SyncWaitDataset(DatasetOp):
         return flag
 
 
-class ShuffleDataset(DatasetOp):
+class ShuffleDataset(Dataset):
     """
     The result of applying Shuffle operator to the input Dataset.
 
@@ -1978,14 +2070,15 @@ class ShuffleDataset(DatasetOp):
     """
 
     def __init__(self, input_dataset, buffer_size):
-        super().__init__()
+        super().__init__(children=input_dataset)
         self.buffer_size = buffer_size
-        self.children.append(input_dataset)
-        self.reshuffle_each_epoch = None
-        input_dataset.parent.append(self)
-        self._input_indexs = input_dataset.input_indexs
+        self.reshuffle_each_epoch = True
+
         if self.is_sync():
             raise RuntimeError("No shuffle after sync operators.")
+
+    def parse(self, children=None):
+        return cde.ShuffleNode(children[0], self.buffer_size, self.reshuffle_each_epoch)
 
     def get_args(self):
         args = super().get_args()
@@ -2040,6 +2133,7 @@ class _PythonCallable:
             # This call will send the tensors along with Python callable index to the process pool.
             # Block, yield GIL. Current thread will reacquire GIL once result is returned.
             result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, *args])
+            # todo this check might be wrong
             while check_iterator_cleanup() is False:
                 try:
                     return result.get(30)
@@ -2067,7 +2161,7 @@ class _ExceptHookHandler:
             self.__pool.terminate()
 
 
-class MapDataset(DatasetOp):
+class MapDataset(Dataset):
     """
     The result of applying the Map operator to the input Dataset.
 
@@ -2098,8 +2192,7 @@ class MapDataset(DatasetOp):
 
     def __init__(self, input_dataset, operations=None, input_columns=None, output_columns=None, column_order=None,
                  num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None):
-        super().__init__(num_parallel_workers)
-        self.children.append(input_dataset)
+        super().__init__(children=input_dataset, num_parallel_workers=num_parallel_workers)
         if operations is not None:
             if not isinstance(operations, list):
                 operations = [operations]
@@ -2122,10 +2215,10 @@ class MapDataset(DatasetOp):
         self.operations = operations
         if input_columns is not None and not isinstance(input_columns, list):
             input_columns = [input_columns]
-        self.input_columns = input_columns
+        self.input_columns = replace_none(input_columns, [])
         if output_columns is not None and not isinstance(output_columns, list):
             output_columns = [output_columns]
-        self.output_columns = output_columns
+        self.output_columns = replace_none(output_columns, input_columns)
         self.cache = cache
         self.column_order = column_order
 
@@ -2135,8 +2228,6 @@ class MapDataset(DatasetOp):
             raise ValueError("When length of input_columns and output_columns are not equal,"
                              " column_order must be specified.")
 
-        input_dataset.parent.append(self)
-        self._input_indexs = input_dataset.input_indexs
         self.python_multiprocessing = python_multiprocessing
         self.process_pool = None
 
@@ -2145,6 +2236,14 @@ class MapDataset(DatasetOp):
 
         self.callbacks = callbacks
         self.hook = None
+
+    def parse(self, children=None):
+        column_order = replace_none(self.column_order, [])
+
+        cc = self.cache.cache_client if self.cache else None
+        callbacks = [cb.create_runtime_obj() for cb in self.callbacks] if self.callbacks else []
+        return cde.MapNode(children[0], self.operations, self.input_columns, self.output_columns, column_order, cc,
+                           callbacks).SetNumWorkers(self.num_parallel_workers)
 
     def get_args(self):
         args = super().get_args()
@@ -2157,17 +2256,6 @@ class MapDataset(DatasetOp):
         if self.callbacks is not None:
             args["callbacks"] = [cb.create_runtime_obj() for cb in self.callbacks]
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            self.dataset_size = self.children[0].get_dataset_size()
-        return self.dataset_size
 
     def __deepcopy__(self, memodict):
         if id(self) in memodict:
@@ -2187,6 +2275,9 @@ class MapDataset(DatasetOp):
         new_op.hook = copy.deepcopy(self.hook, memodict)
         new_op.operations = self.operations
         new_op.dataset_size = self.dataset_size
+        new_op.saved_output_types = self.saved_output_types
+        new_op.saved_output_shapes = self.saved_output_shapes
+
         new_op.callbacks = self.callbacks
         if hasattr(self, "__total_batch__"):
             new_op.__total_batch__ = self.__total_batch__
@@ -2232,7 +2323,7 @@ class MapDataset(DatasetOp):
             self.process_pool.close()
 
 
-class FilterDataset(DatasetOp):
+class FilterDataset(Dataset):
     """
     The result of applying filter predicate to the input Dataset.
 
@@ -2246,13 +2337,15 @@ class FilterDataset(DatasetOp):
     """
 
     def __init__(self, input_dataset, predicate, input_columns=None, num_parallel_workers=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(children=input_dataset, num_parallel_workers=num_parallel_workers)
         self.predicate = lambda *args: bool(predicate(*args))
-        self.children.append(input_dataset)
-        input_dataset.parent.append(self)
+
         if input_columns is not None and not isinstance(input_columns, list):
             input_columns = [input_columns]
-        self.input_columns = input_columns
+        self.input_columns = replace_none(input_columns, [])
+
+    def parse(self, children=None):
+        return cde.FilterNode(children[0], self.predicate, self.input_columns)
 
     def get_args(self):
         args = super().get_args()
@@ -2260,22 +2353,8 @@ class FilterDataset(DatasetOp):
         args["input_columns"] = self.input_columns
         return args
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
 
-        Return:
-            Number, num of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = 0
-            for _ in self.create_dict_iterator(num_epochs=1, output_numpy=True):
-                num_rows += 1
-            self.dataset_size = num_rows
-        return self.dataset_size
-
-
-class RepeatDataset(DatasetOp):
+class RepeatDataset(Dataset):
     """
     The result of applying Repeat operator to the input Dataset.
 
@@ -2285,44 +2364,19 @@ class RepeatDataset(DatasetOp):
     """
 
     def __init__(self, input_dataset, count):
-        super().__init__()
-        if count is None:
-            self.count = -1
-        else:
-            self.count = count
-        self.children.append(input_dataset)
-        input_dataset.parent.append(self)
-        self._input_indexs = input_dataset.input_indexs
+        super().__init__(children=input_dataset)
+        self.count = replace_none(count, -1)
+
+    def parse(self, children=None):
+        return cde.RepeatNode(children[0], self.count)
 
     def get_args(self):
         args = super().get_args()
         args["count"] = self.count
         return args
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
 
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            child_size = self.children[0].get_dataset_size()
-            if child_size is not None:
-                self.dataset_size = child_size * self.count
-        return self.dataset_size
-
-    def get_repeat_count(self):
-        """
-        Get the replication times in RepeatDataset.
-
-        Return:
-            Number, the count of repeat.
-        """
-        return self.count
-
-
-class SkipDataset(DatasetOp):
+class SkipDataset(Dataset):
     """
     The result of applying Skip operator to the input Dataset.
 
@@ -2332,33 +2386,19 @@ class SkipDataset(DatasetOp):
     """
 
     def __init__(self, input_dataset, count):
-        super().__init__()
+        super().__init__(input_dataset)
         self.count = count
-        self.children.append(input_dataset)
-        input_dataset.parent.append(self)
-        self._input_indexs = input_dataset.input_indexs
+
+    def parse(self, children=None):
+        return cde.SkipNode(children[0], self.count)
 
     def get_args(self):
         args = super().get_args()
         args["count"] = self.count
         return args
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
 
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            child_size = self.children[0].get_dataset_size()
-            self.dataset_size = 0
-            if self.count >= 0 and self.count < child_size:
-                self.dataset_size = child_size - self.count
-        return self.dataset_size
-
-
-class TakeDataset(DatasetOp):
+class TakeDataset(Dataset):
     """
     The result of applying Take operator to the input Dataset.
 
@@ -2368,34 +2408,19 @@ class TakeDataset(DatasetOp):
     """
 
     def __init__(self, input_dataset, count):
-        super().__init__()
+        super().__init__(children=input_dataset)
         self.count = count
-        self.children.append(input_dataset)
-        input_dataset.parent.append(self)
-        self._input_indexs = input_dataset.input_indexs
+
+    def parse(self, children=None):
+        return cde.TakeNode(children[0], self.count)
 
     def get_args(self):
         args = super().get_args()
         args["count"] = self.count
         return args
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
 
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            child_size = self.children[0].get_dataset_size()
-            if child_size < self.count:
-                self.dataset_size = child_size
-            else:
-                self.dataset_size = self.count
-        return self.dataset_size
-
-
-class ZipDataset(DatasetOp):
+class ZipDataset(Dataset):
     """
     The result of applying Zip operator to the input Dataset.
 
@@ -2407,36 +2432,14 @@ class ZipDataset(DatasetOp):
     """
 
     def __init__(self, datasets):
-        super().__init__()
+        super().__init__(children=datasets)
         for dataset in datasets:
             if not isinstance(dataset, Dataset):
                 raise TypeError("Invalid dataset, expected Dataset object, but got %s!" % type(dataset))
         self.datasets = datasets
-        for data in datasets:
-            self.children.append(data)
-            data.parent.append(self)
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            children_sizes = [c.get_dataset_size() for c in self.children]
-            if all(c is not None for c in children_sizes):
-                self.dataset_size = min(children_sizes)
-        return self.dataset_size
-
-    def num_classes(self):
-        """
-        Get the number of classes in a dataset.
-
-        Return:
-            Number, number of classes.
-        """
-        return None
+    def parse(self, children=None):
+        return cde.ZipNode(children)
 
     def is_sync(self):
         return any([c.is_sync() for c in self.children])
@@ -2446,7 +2449,7 @@ class ZipDataset(DatasetOp):
         return args
 
 
-class ConcatDataset(DatasetOp):
+class ConcatDataset(Dataset):
     """
     The result of applying concat dataset operator to the input Dataset.
 
@@ -2459,15 +2462,12 @@ class ConcatDataset(DatasetOp):
     """
 
     def __init__(self, datasets):
-        super().__init__()
+        super().__init__(children=datasets)
         for dataset in datasets:
             if not isinstance(dataset, Dataset):
                 raise TypeError("Invalid dataset, expected Dataset object, but got %s!" % type(dataset))
         self.datasets = datasets
-        self._sampler = None
-        for data in datasets:
-            self.children.append(data)
-            data.parent.append(self)
+        self._sampler = samplers.SequentialSampler(num_samples=None)
 
         self.children_sizes_ = [c.get_dataset_size() for c in self.children]
         child_index = 0
@@ -2497,19 +2497,8 @@ class ConcatDataset(DatasetOp):
             else:
                 self._children_flag_and_nums.append((1, dataset_len))
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = 0
-            for _ in self.create_dict_iterator(num_epochs=1, output_numpy=True):
-                num_rows += 1
-            self.dataset_size = num_rows
-        return self.dataset_size
+    def parse(self, children=None):
+        return cde.ConcatNode(children, self._sampler, self._children_flag_and_nums, self._children_start_end_index_)
 
     def use_sampler(self, sampler):
         """
@@ -2576,7 +2565,7 @@ class ConcatDataset(DatasetOp):
         return args
 
 
-class RenameDataset(DatasetOp):
+class RenameDataset(Dataset):
     """
     The result of applying Rename operator to the input Dataset.
 
@@ -2587,16 +2576,16 @@ class RenameDataset(DatasetOp):
     """
 
     def __init__(self, input_dataset, input_columns, output_columns):
-        super().__init__()
-        if not isinstance(input_columns, list):
+        super().__init__(children=input_dataset)
+        if input_columns is not None and not isinstance(input_columns, list):
             input_columns = [input_columns]
-        if not isinstance(output_columns, list):
+        if output_columns is not None and not isinstance(output_columns, list):
             output_columns = [output_columns]
-        self.input_column_names = input_columns
-        self.output_column_names = output_columns
-        self.children.append(input_dataset)
-        input_dataset.parent.append(self)
-        self._input_indexs = input_dataset.input_indexs
+        self.input_column_names = replace_none(input_columns, [])
+        self.output_column_names = replace_none(output_columns, [])
+
+    def parse(self, children=None):
+        return cde.RenameNode(children[0], self.input_column_names, self.output_column_names)
 
     def get_args(self):
         args = super().get_args()
@@ -2605,7 +2594,7 @@ class RenameDataset(DatasetOp):
         return args
 
 
-class ProjectDataset(DatasetOp):
+class ProjectDataset(Dataset):
     """
     The result of applying Project operator to the input Dataset.
 
@@ -2617,15 +2606,14 @@ class ProjectDataset(DatasetOp):
     """
 
     def __init__(self, input_dataset, columns, prefetch_size=None):
-        super().__init__()
-        if not isinstance(columns, list):
+        super().__init__(children=input_dataset)
+        if columns is not None and not isinstance(columns, list):
             columns = [columns]
-        self.columns = columns
-        self.children.append(input_dataset)
+        self.columns = replace_none(columns, [])
         self.prefetch_size = prefetch_size
 
-        input_dataset.parent.append(self)
-        self._input_indexs = input_dataset.input_indexs
+    def parse(self, children=None):
+        return cde.ProjectNode(children[0], self.columns)
 
     def get_args(self):
         args = super().get_args()
@@ -2634,42 +2622,88 @@ class ProjectDataset(DatasetOp):
         return args
 
 
-class TransferDataset(DatasetOp):
+class _ToDevice:
+    """
+    Internal class to handle sending data to device.
+    """
+
+    def __init__(self, dataset, num_epochs):
+        ir_tree, self.api_tree = dataset.create_ir_tree()
+
+        self._runtime_context = cde.PythonRuntimeContext()
+        self._runtime_context.Init()
+        self._to_device = cde.ToDevice(num_epochs)
+        self._to_device.Init(ir_tree)
+        self._runtime_context.AssignConsumer(self._to_device)
+
+        # todo remove next when ContextManager is done
+        ITERATORS_LIST.append(weakref.ref(self))
+        _unset_iterator_cleanup()
+
+    def send(self):
+        self._to_device.Send()
+
+    def stop_send(self):
+        self._to_device.StopSend()
+
+    def continue_send(self):
+        self._to_device.ContinueSend()
+
+    def get_data_info(self):
+        return self._to_device.GetDataInfo()
+
+    def release(self):
+        """
+        Manually terminate Device Queue instead of relying on out of scope destruction.
+        """
+        logger.info("Terminating Device Queue. This will also terminate C++ pipeline.")
+        if hasattr(self, '_runtime_context') and self._runtime_context:
+            if hasattr(self, '_to_device') and self._to_device:
+                self._runtime_context.Terminate()
+                del self._to_device
+            del self._runtime_context
+
+    def __deepcopy__(self, memodict):
+        return self
+
+
+class TransferDataset(Dataset):
     """
     The result of applying TDT operator to the input Dataset.
 
     Args:
         input_dataset (Dataset): Input Dataset to be transferred.
-        queue_name (str): Name of device queue.
-        device_id (int): ID of device.
-        device_type (str): Type of device, including "CPU", "GPU", and "Ascend".
         send_epoch_end (bool, optional): Whether to send end of sequence to device or not (default=True).
         create_data_info_queue (bool, optional): Whether to create queue which stores
             types and shapes of data or not(default=False).
+
+    Raises:
+        TypeError: If device_type is empty.
+        ValueError: If device_type is not 'Ascend', 'GPU' or 'CPU'.
+        RuntimeError: If dataset is unknown.
     """
 
-    def __init__(self, input_dataset, queue_name, device_id, device_type, send_epoch_end=True,
-                 create_data_info_queue=False):
-        super().__init__()
-        self.children.append(input_dataset)
-        input_dataset.parent.append(self)
-        self.queue_name = queue_name
-        self._input_indexs = input_dataset.input_indexs
-        self._device_type = device_type
-        self._device_id = device_id
-        self._send_epoch_end = send_epoch_end
-        self.iterator = None
+    def __init__(self, input_dataset, send_epoch_end=True, create_data_info_queue=False):
+        super().__init__(children=input_dataset)
+        self.queue_name = str(uuid.uuid1())
+        self.device_type = context.get_context("device_target") if context else "CPU"
+
+        self._send_epoch_end = replace_none(send_epoch_end, True)
         self._create_data_info_queue = create_data_info_queue
+        self._to_device = None
+
+    def parse(self, children=None):
+        total_batch = 0
+        if hasattr(self.children[0], "__total_batch__"):
+            total_batch = self.children[0].__total_batch__
+        return cde.TransferNode(children[0], self.queue_name, self.device_type, self._send_epoch_end, total_batch,
+                                self._create_data_info_queue)
 
     def get_args(self):
         args = super().get_args()
-        args["queue_name"] = self.queue_name
-        args["device_type"] = self._device_type
-        args["device_id"] = self._device_id
         args["send_epoch_end"] = self._send_epoch_end
         if hasattr(self.children[0], "__total_batch__"):
             args["total_batch"] = self.children[0].__total_batch__
-        args["create_data_info_queue"] = self._create_data_info_queue
         return args
 
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
@@ -2687,22 +2721,35 @@ class TransferDataset(DatasetOp):
     def output_types(self):
         raise RuntimeError("TransferDataset does not support obtaining output_types.")
 
+    @check_to_device_send
     def send(self, num_epochs=-1):
-        # need to keep iterator alive so the executionTree is not destroyed
-        if self._noop_mode():
-            return
-        if self.iterator is not None:
-            del self.iterator
-        self.iterator = TupleIterator(self, num_epochs=num_epochs)
+        """
+        Send to device
+        """
+        if self._to_device is not None:
+            del self._to_device
+        self._to_device = _ToDevice(self, num_epochs)
+        self._to_device.send()
 
     def stop_send(self):
-        self.iterator.depipeline.StopSend()
+        if self._to_device is not None:
+            self._to_device.stop_send()
 
     def continue_send(self):
-        self.iterator.depipeline.ContinueSend()
+        if self._to_device is not None:
+            self._to_device.continue_send()
 
     def get_data_info(self):
-        return self.iterator.depipeline.GetDataInfo()
+        if self._to_device is not None:
+            return self._to_device.get_data_info()
+        raise RuntimeError("Calling get_data_info with bad state.")
+
+    def release(self):
+        """
+        Manually terminate Device Queue instead of relying on out of scope destruction.
+        """
+        if self._to_device is not None:
+            self._to_device.release()
 
 
 class RangeDataset(MappableDataset):
@@ -2720,6 +2767,9 @@ class RangeDataset(MappableDataset):
         self.start = start
         self.stop = stop
         self.step = step
+
+    def parse(self, children=None):
+        raise NotImplementedError("Dataset has to implement parse method.")
 
     def get_args(self):
         args = super().get_args()
@@ -2887,18 +2937,26 @@ class ImageFolderDataset(MappableDataset):
     def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, extensions=None, class_indexing=None,
                  decode=False, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
 
         self.dataset_dir = dataset_dir
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.shuffle_level = shuffle
-        self.extensions = extensions
+        self.extensions = replace_none(extensions, [])
         self.class_indexing = class_indexing
-        self.decode = decode
+        self.decode = replace_none(decode, False)
         self.num_shards = num_shards
         self.shard_id = shard_id
         self.cache = cache
+
+    def parse(self, children=None):
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions,
+                                   self.class_indexing, cc).SetNumWorkers(self.num_parallel_workers)
 
     def get_args(self):
         args = super().get_args()
@@ -2913,31 +2971,6 @@ class ImageFolderDataset(MappableDataset):
         args["shard_id"] = self.shard_id
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = ImageFolderOp.get_num_rows(self.dataset_dir)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            rows_from_sampler = self._get_sampler_dataset_size()
-            if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                self.dataset_size = rows_from_sampler
-        return self.dataset_size
-
-    def num_classes(self):
-        """
-        Get the number of classes in dataset.
-
-        Return:
-            Number, number of classes.
-        """
-        class_index = self.class_indexing if self.class_indexing else {}
-        return ImageFolderOp.get_num_classes(self.dataset_dir, class_index)
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -3039,13 +3072,21 @@ class MnistDataset(MappableDataset):
         >>> # Note: In mnist_dataset dataset, each dictionary has keys "image" and "label"
     """
 
+    def parse(self, children=None):
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+
+        return cde.MnistNode(self.dataset_dir, self.usage, self.sampler, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_mnist_cifar_dataset
     def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
 
         self.dataset_dir = dataset_dir
-        self.usage = usage
+        self.usage = replace_none(usage, "all")
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.shuffle_level = shuffle
@@ -3064,21 +3105,6 @@ class MnistDataset(MappableDataset):
         args["shard_id"] = self.shard_id
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = MnistOp.get_num_rows(self.dataset_dir, "all" if self.usage is None else self.usage)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            rows_from_sampler = self._get_sampler_dataset_size()
-            if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                self.dataset_size = rows_from_sampler
-        return self.dataset_size
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -3125,18 +3151,22 @@ class MindDataset(MappableDataset):
         ValueError: If shard_id is specified but num_shards is None.
     """
 
+    def parse(self, children=None):
+        return cde.MindDataNode(self.dataset_file, self.columns_list, self.sampler, self.new_padded_sample,
+                                self.num_padded).SetNumWorkers(self.num_parallel_workers)
+
     @check_minddataset
     def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None,
                  shuffle=None, num_shards=None, shard_id=None,
                  sampler=None, padded_sample=None,
                  num_padded=None, num_samples=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
         if isinstance(dataset_file, list):
             self.load_dataset = False
         else:
             self.load_dataset = True
         self.dataset_file = dataset_file
-        self.columns_list = columns_list
+        self.columns_list = replace_none(columns_list, [])
         self.shuffle_option = shuffle
         self.num_shards = num_shards
         self.shard_id = shard_id
@@ -3151,11 +3181,17 @@ class MindDataset(MappableDataset):
 
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
-        if num_padded is None:
-            num_padded = 0
 
         self.padded_sample = padded_sample
-        self.num_padded = num_padded
+        self.num_padded = replace_none(num_padded, 0)
+
+        self.new_padded_sample = {}
+        if padded_sample:
+            for k, v in padded_sample.items():
+                if isinstance(v, np.ndarray):
+                    self.new_padded_sample[k] = v.tobytes()
+                else:
+                    self.new_padded_sample[k] = v
 
     def get_args(self):
         args = super().get_args()
@@ -3176,22 +3212,6 @@ class MindDataset(MappableDataset):
         args["padded_sample"] = padded_sample
         args["sampler"] = self.sampler
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            if self.load_dataset:
-                dataset_file = [self.dataset_file]
-            else:
-                dataset_file = self.dataset_file
-            num_rows = MindRecordOp.get_num_rows(dataset_file, self.load_dataset, self.sampler, self.num_padded)
-            self.dataset_size = num_rows
-        return self.dataset_size
 
     def is_shuffled(self):
         if self.shuffle_option is None:
@@ -3603,62 +3623,27 @@ class GeneratorDataset(MappableDataset):
     def __init__(self, source, column_names=None, column_types=None, schema=None, num_samples=None,
                  num_parallel_workers=1, shuffle=None, sampler=None, num_shards=None, shard_id=None,
                  python_multiprocessing=True):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
         self.source = source
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.num_shards = num_shards
         self.python_multiprocessing = python_multiprocessing
+        self.num_parallel_workers = num_parallel_workers
 
         if column_names is not None and not isinstance(column_names, list):
             column_names = [column_names]
-        self.column_names = column_names
+        self.column_names = replace_none(column_names, [])
 
         if column_types is not None:
             self.column_types = mstypelist_to_detypelist(column_types)
         else:
-            self.column_types = column_types
-
+            self.column_types = []
+        self.schema = schema
         if schema is not None:
             self.schema = schema
             if not isinstance(schema, Schema):
                 self.schema = Schema(schema)
-            self.column_names = []
-            self.column_types = []
-            for col in self.schema.columns:
-                self.column_names.append(col["name"])
-                self.column_types.append(DataType(col["type"]))
-
-    def get_args(self):
-        args = super().get_args()
-        args["source"] = self.source
-        args["column_names"] = self.column_names
-        args["column_types"] = self.column_types
-        return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            if hasattr(self.source, "__len__"):
-                if not self.num_shards:
-                    self.dataset_size = len(self.source)
-                else:
-                    self.dataset_size = math.ceil(len(self.source) / self.num_shards)
-
-                rows_from_sampler = self._get_sampler_dataset_size()
-                if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                    self.dataset_size = rows_from_sampler
-            else:
-                num_rows = 0
-                for _ in self.create_dict_iterator(num_epochs=1, output_numpy=True):
-                    num_rows += 1
-                self.dataset_size = num_rows
-        return self.dataset_size
 
     def __deepcopy__(self, memodict):
         if id(self) in memodict:
@@ -3669,11 +3654,14 @@ class GeneratorDataset(MappableDataset):
         new_op.children = copy.deepcopy(self.children, memodict)
         new_op.parent = copy.deepcopy(self.parent, memodict)
         new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
-        new_op.column_types = copy.deepcopy(self.column_types, memodict)
+        new_op.schema = copy.deepcopy(self.schema, memodict)
         new_op.column_names = copy.deepcopy(self.column_names, memodict)
+        new_op.column_types = copy.deepcopy(self.column_types, memodict)
         new_op.num_samples = copy.deepcopy(self.num_samples, memodict)
-        new_op.dataset_size = self.dataset_size
         new_op.sampler = copy.deepcopy(self.sampler)
+        new_op.dataset_size = self.dataset_size
+        new_op.saved_output_types = self.saved_output_types
+        new_op.saved_output_shapes = self.saved_output_shapes
         if hasattr(self, "__total_batch__"):
             new_op.__total_batch__ = self.__total_batch__
         if new_op.sampler is not None and hasattr(self.source, "__getitem__"):
@@ -3712,6 +3700,15 @@ class GeneratorDataset(MappableDataset):
 
     def is_sharded(self):
         return self.sampler.is_sharded()
+
+    def parse(self, children=None):
+        if self.schema is None:
+            return cde.GeneratorNode(self.source, self.column_names, self.column_types) \
+                .SetNumWorkers(self.num_parallel_workers)
+        schema = self.schema
+        if isinstance(schema, Schema):
+            schema = self.schema.cpp_schema
+        return cde.GeneratorNode(self.source, schema).SetNumWorkers(self.num_parallel_workers)
 
 
 class TFRecordDataset(SourceDataset):
@@ -3767,23 +3764,60 @@ class TFRecordDataset(SourceDataset):
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema="./schema.json")
     """
 
+    def parse(self, children=None):
+        # set c++ parameters
+        shuffle_flag = 2
+        if not isinstance(self._shuffle, Shuffle):
+            if self._shuffle:
+                shuffle_flag = 2
+            else:
+                shuffle_flag = 0
+        else:
+            if self._shuffle == Shuffle.GLOBAL:
+                shuffle_flag = 2
+            elif self._shuffle == Shuffle.FILES:
+                shuffle_flag = 1
+
+        schema = self.schema
+        if isinstance(schema, Schema):
+            schema = self.schema.cpp_schema
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+
+        num_shards = replace_none(self.num_shards, 1)
+        shard_id = replace_none(self.shard_id, 0)
+        num_samples = replace_none(self.num_samples, 0)
+
+        return cde.TFRecordNode(self.dataset_files, schema, self.columns_list, num_samples,
+                                shuffle_flag,
+                                num_shards, shard_id,
+                                self.shard_equal_rows, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_tfrecorddataset
     def __init__(self, dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None,
                  shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False, cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
+        # todo push down to c++
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
+        if not isinstance(self.dataset_files, list):
+            self.dataset_files = [self.dataset_files]
         self.num_shards = num_shards
         self.shard_id = shard_id
-        schema_obj = None
-        if (schema is not None) and (not isinstance(schema, Schema)):
-            schema_obj = Schema(schema)  # read the schema file and convert to schema object to validate it
         self.schema = schema
-        self.columns_list = columns_list
+        self._shuffle = shuffle
+        self.columns_list = replace_none(columns_list, [])
         self.num_samples = num_samples
         self.cache = cache
-        if schema_obj is not None and num_samples is None:
-            self.num_samples = schema_obj.num_rows
+        if self.num_samples is None:
+            schema_obj = self.schema
+            if not isinstance(schema_obj, Schema):
+                schema_obj = Schema(schema_obj)
+            schema_num_samples = schema_obj.cpp_schema.get_num_rows()
+            if schema_num_samples != 0:
+                self.num_samples = schema_num_samples
 
         if not isinstance(shuffle, (bool, Shuffle)):
             raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like"
@@ -3806,7 +3840,7 @@ class TFRecordDataset(SourceDataset):
         sampler = None
         self.sampler = _select_sampler(self.num_samples, sampler, sampler_shuffle, num_shards, shard_id,
                                        non_mappable=True)
-        self.shard_equal_rows = shard_equal_rows
+        self.shard_equal_rows = replace_none(shard_equal_rows, False)
 
     def get_args(self):
         args = super().get_args()
@@ -3825,34 +3859,13 @@ class TFRecordDataset(SourceDataset):
         if self.shuffle_files is not None:
             args["shuffle_files"] = self.shuffle_files
         args["shuffle_global"] = (self.shuffle_level == Shuffle.GLOBAL)
-        args["shuffle"] = self.shuffle_level
+        args["shuffle"] = self._shuffle
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         args["shard_equal_rows"] = self.shard_equal_rows
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         args["sampler"] = self.sampler
         return args
-
-    def get_dataset_size(self, estimate=False):
-        """
-        Get the number of batches in an epoch.
-
-        Note:
-            Because the TFRecord format does not save metadata, all files need to be traversed to obtain
-            the total amount of data. Therefore, this api is slow.
-
-        Args:
-            estimate (bool, optional): Fast estimation of the dataset size instead of a full scan.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = TFReaderOp.get_num_rows(self.dataset_files, 8, estimate)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            if self.num_samples is not None and self.num_samples < self.dataset_size:
-                self.dataset_size = self.num_samples
-        return self.dataset_size
 
     def is_shuffled(self):
         return self.shuffle_files
@@ -3945,11 +3958,19 @@ class ManifestDataset(MappableDataset):
 
     """
 
+    def parse(self, children=None):
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.ManifestNode(self.dataset_file, self.usage, self.sampler, self.class_indexing,
+                                self.decode, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_manifestdataset
     def __init__(self, dataset_file, usage="train", num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, class_indexing=None, decode=False, num_shards=None, shard_id=None,
                  cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
 
         self.dataset_file = dataset_file
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
@@ -3959,8 +3980,8 @@ class ManifestDataset(MappableDataset):
 
         self.num_samples = num_samples
         self.class_indexing = class_indexing
-        self.decode = decode
-        self.usage = usage
+        self.decode = replace_none(decode, False)
+        self.usage = replace_none(usage, "train")
         self.shuffle_level = shuffle
         self.num_shards = num_shards
         self.shard_id = shard_id
@@ -3980,41 +4001,6 @@ class ManifestDataset(MappableDataset):
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            if self.class_indexing is None:
-                class_indexing = dict()
-            else:
-                class_indexing = self.class_indexing
-
-            num_rows = ManifestOp.get_num_rows_and_classes(self.dataset_file, class_indexing, self.usage)[0]
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            rows_from_sampler = self._get_sampler_dataset_size()
-
-            if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                self.dataset_size = rows_from_sampler
-        return self.dataset_size
-
-    def num_classes(self):
-        """
-        Get the number of classes in a dataset.
-
-        Return:
-            Number, number of classes.
-        """
-        if self.class_indexing is None:
-            class_indexing = dict()
-        else:
-            class_indexing = self.class_indexing
-
-        return ManifestOp.get_num_rows_and_classes(self.dataset_file, class_indexing, self.usage)[1]
-
     def get_class_indexing(self):
         """
         Get the class index.
@@ -4023,11 +4009,13 @@ class ManifestDataset(MappableDataset):
             Dict, A str-to-int mapping from label name to index.
         """
         if self.class_indexing is None:
-            class_indexing = dict()
-        else:
-            class_indexing = self.class_indexing
-
-        return ManifestOp.get_class_indexing(self.dataset_file, class_indexing, self.usage)
+            if self._class_indexing is None:
+                runtime_getter = self._init_tree_getters()
+                self._class_indexing = runtime_getter[0].GetClassIndexing()
+            self.class_indexing = {}
+            for pair in self._class_indexing:
+                self.class_indexing[pair[0]] = pair[1][0]
+        return self.class_indexing
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -4135,13 +4123,20 @@ class Cifar10Dataset(MappableDataset):
         >>> # In CIFAR10 dataset, each dictionary has keys "image" and "label"
     """
 
+    def parse(self, children=None):
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.Cifar10Node(self.dataset_dir, self.usage, self.sampler, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_mnist_cifar_dataset
     def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
 
         self.dataset_dir = dataset_dir
-        self.usage = usage
+        self.usage = replace_none(usage, "all")
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.num_shards = num_shards
@@ -4160,23 +4155,6 @@ class Cifar10Dataset(MappableDataset):
         args["shuffle"] = self.shuffle_level
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = CifarOp.get_num_rows(self.dataset_dir, "all" if self.usage is None else self.usage, True)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            rows_from_sampler = self._get_sampler_dataset_size()
-
-            if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                self.dataset_size = rows_from_sampler
-
-        return self.dataset_size
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -4283,13 +4261,20 @@ class Cifar100Dataset(MappableDataset):
         >>> # In CIFAR100 dataset, each dictionary has 3 keys: "image", "fine_label" and "coarse_label"
     """
 
+    def parse(self, children=None):
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.Cifar100Node(self.dataset_dir, self.usage, self.sampler, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_mnist_cifar_dataset
     def __init__(self, dataset_dir, usage=None, num_samples=None, num_parallel_workers=None,
                  shuffle=None, sampler=None, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
 
         self.dataset_dir = dataset_dir
-        self.usage = usage
+        self.usage = replace_none(usage, "all")
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.num_shards = num_shards
@@ -4308,23 +4293,6 @@ class Cifar100Dataset(MappableDataset):
         args["shuffle"] = self.shuffle_level
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = CifarOp.get_num_rows(self.dataset_dir, "all" if self.usage is None else self.usage, False)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            rows_from_sampler = self._get_sampler_dataset_size()
-
-            if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                self.dataset_size = rows_from_sampler
-
-        return self.dataset_size
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -4361,28 +4329,43 @@ class RandomDataset(SourceDataset):
             argument can only be specified when num_shards is also specified.
     """
 
+    def parse(self, children=None):
+        schema = self.schema
+        if isinstance(schema, Schema):
+            schema = self.schema.cpp_schema
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.RandomNode(self.total_rows, schema, self.columns_list, cc).SetNumWorkers(
+            self.num_parallel_workers)
+
     @check_random_dataset
     def __init__(self, total_rows=None, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None,
                  cache=None, shuffle=None, num_shards=None, shard_id=None):
-        super().__init__(num_parallel_workers)
-        schema_obj = None
-        if (schema is not None) and (not isinstance(schema, Schema)):
-            schema_obj = Schema(schema)  # read the schema file and convert to schema object to validate it
+        super().__init__(num_parallel_workers=num_parallel_workers)
         self.schema = schema
-        self.columns_list = columns_list
+        self.columns_list = replace_none(columns_list, [])
         sampler = None
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id, non_mappable=True)
+
         self.num_samples = num_samples
+        self.total_rows = total_rows
         self.cache = cache
-        if schema_obj is not None and total_rows is None:
-            self.total_rows = schema_obj.num_rows
-        elif total_rows is None:
-            self.total_rows = 0
-        else:
-            self.total_rows = total_rows
-        self.num_shards = num_shards
-        self.shard_id = shard_id
-        self.shuffle_level = shuffle
+        if self.total_rows is None:
+            schema_obj = self.schema
+            if not isinstance(schema_obj, Schema):
+                schema_obj = Schema(schema_obj)
+            schema_total_rows = schema_obj.cpp_schema.get_num_rows()
+            if schema_total_rows != 0:
+                self.total_rows = schema_total_rows
+        self.total_rows = replace_none(self.total_rows, 0)
+
+        self.num_shards = replace_none(num_shards, 1)
+        self.shard_id = replace_none(shard_id, 0)
+        self.shuffle_level = replace_none(shuffle, False)
+
+        self.num_samples = num_samples
 
     def get_args(self):
         args = super().get_args()
@@ -4401,24 +4384,6 @@ class RandomDataset(SourceDataset):
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         args["sampler"] = self.sampler
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = CifarOp.get_num_rows(self.dataset_dir, True)
-
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            rows_from_sampler = self._get_sampler_dataset_size()
-
-        if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-            self.dataset_size = rows_from_sampler
-
-        return self.dataset_size
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -4455,24 +4420,10 @@ class Schema:
         >>> schema.add_column('col1', de_type=mindspore.int64, shape=[2])
     """
 
+    @check_schema
     def __init__(self, schema_file=None):
-        self.num_rows = None
-        if schema_file is None:
-            self.columns = []
-            self.dataset_type = ''
-        else:
-            if not os.path.isfile(schema_file) or not os.access(schema_file, os.R_OK):
-                raise ValueError("The file %s does not exist or permission denied!" % schema_file)
-            try:
-                with open(schema_file, 'r') as load_f:
-                    json_obj = json.load(load_f)
-            except json.decoder.JSONDecodeError:
-                raise RuntimeError("Schema file failed to load.")
-            except UnicodeDecodeError:
-                raise RuntimeError("Schema file failed to decode.")
-            except Exception:
-                raise RuntimeError("Schema file failed to open.")
-            self.from_json(json_obj)
+        self.schema_file = replace_none(schema_file, "")
+        self.cpp_schema = cde.SchemaObj(self.schema_file)
 
     @check_add_column
     def add_column(self, name, de_type, shape=None):
@@ -4488,20 +4439,15 @@ class Schema:
         Raises:
             ValueError: If column type is unknown.
         """
-        new_column = dict()
-        new_column["name"] = name
         if isinstance(de_type, typing.Type):
             de_type = mstype_to_detype(de_type)
-            new_column["type"] = str(de_type)
+            col_type = str(de_type)
         else:
-            new_column["type"] = str(DataType(de_type))
-
-        if shape is not None:
-            new_column["shape"] = shape
-            new_column["rank"] = len(shape)
+            col_type = str(cde.DataType(de_type))
+        if shape is None:
+            self.cpp_schema.add_column(name, col_type)
         else:
-            new_column["rank"] = 1
-        self.columns.append(new_column)
+            self.cpp_schema.add_column(name, col_type, shape)
 
     def to_json(self):
         """
@@ -4510,75 +4456,11 @@ class Schema:
         Returns:
             Str, JSON string of the schema.
         """
-        json_file = dict()
-        json_file["columns"] = self.columns
-        if self.dataset_type:
-            json_file["datasetType"] = self.dataset_type
-        if self.num_rows:
-            json_file["numRows"] = self.num_rows
-        return json.dumps(json_file, indent=2)
-
-    def parse_columns(self, columns):
-        """
-        Parse the columns and add it to self.
-
-        Args:
-            columns (Union[dict, list[dict]]): Dataset attribute information, decoded from schema file.
-
-                - list[dict], 'name' and 'type' must be in keys, 'shape' optional.
-
-                - dict, columns.keys() as name, columns.values() is dict, and 'type' inside, 'shape' optional.
-
-        Raises:
-            RuntimeError: If failed to parse columns.
-            RuntimeError: If unknown items in columns.
-            RuntimeError: If column's name field is missing.
-            RuntimeError: If column's type field is missing.
-
-        Example:
-            >>> schema = Schema()
-            >>> columns1 = [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
-            >>>             {'name': 'label', 'type': 'int8', 'shape': [1]}]
-            >>> schema.parse_columns(columns1)
-            >>> columns2 = {'image': {'shape': [3, 3], 'type': 'int8'}, 'label': {'shape': [1], 'type': 'int8'}}
-            >>> schema.parse_columns(columns2)
-        """
-        self.columns = []
-        if isinstance(columns, list):
-            for column in columns:
-                try:
-                    name = column.pop("name")
-                except KeyError:
-                    raise RuntimeError("Column's name is missing.")
-                try:
-                    de_type = column.pop("type")
-                except KeyError:
-                    raise RuntimeError("Column's type is missing.")
-                shape = column.pop("shape", None)
-                column.pop("t_impl", None)
-                column.pop("rank", None)
-                if column:
-                    raise RuntimeError("Unknown field {}".format(",".join(column.keys())))
-                self.add_column(name, de_type, shape)
-        elif isinstance(columns, dict):
-            for key, value in columns.items():
-                name = key
-                try:
-                    de_type = value.pop("type")
-                except KeyError:
-                    raise RuntimeError("Column's type is missing.")
-                shape = value.pop("shape", None)
-                value.pop("t_impl", None)
-                value.pop("rank", None)
-                if value:
-                    raise RuntimeError("Unknown field {}".format(",".join(value.keys())))
-                self.add_column(name, de_type, shape)
-        else:
-            raise RuntimeError("columns must be dict or list, columns contain name, type, shape(optional).")
+        return self.cpp_schema.to_json()
 
     def from_json(self, json_obj):
         """
-        Get schema file from JSON file.
+        Get schema file from JSON object.
 
         Args:
             json_obj(dictionary): Object of JSON parsed.
@@ -4588,23 +4470,7 @@ class Schema:
             RuntimeError: if dataset type is missing in the object.
             RuntimeError: if columns are missing in the object.
         """
-        if not isinstance(json_obj, dict) or json_obj is None:
-            raise ValueError("Expected non-empty dict.")
-        for k, v in json_obj.items():
-            if k == "datasetType":
-                self.dataset_type = v
-            elif k == "numRows":
-                self.num_rows = v
-            elif k == "columns":
-                self.parse_columns(v)
-            else:
-                raise RuntimeError("Unknown field %s." % k)
-
-        if self.columns is None:
-            raise RuntimeError("Columns are missing.")
-        if self.num_rows is not None:
-            if not isinstance(self.num_rows, int) or self.num_rows <= 0:
-                raise ValueError("numRows must be greater than 0.")
+        self.cpp_schema.from_string(json.dumps(json_obj, indent=2))
 
     def __str__(self):
         return self.to_json()
@@ -4728,18 +4594,26 @@ class VOCDataset(MappableDataset):
         >>> # In VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
     """
 
+    def parse(self, children=None):
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.VOCNode(self.dataset_dir, self.task, self.usage, self.class_indexing, self.decode,
+                           self.sampler, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_vocdataset
     def __init__(self, dataset_dir, task="Segmentation", usage="train", class_indexing=None, num_samples=None,
                  num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None,
                  cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
         self.dataset_dir = dataset_dir
-        self.task = task
-        self.usage = usage
+        self.task = replace_none(task, "Segmentation")
+        self.usage = replace_none(usage, "train")
         self.class_indexing = class_indexing
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
-        self.decode = decode
+        self.decode = replace_none(decode, False)
         self.shuffle_level = shuffle
         self.num_shards = num_shards
         self.shard_id = shard_id
@@ -4760,33 +4634,6 @@ class VOCDataset(MappableDataset):
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            if self.num_samples is None:
-                num_samples = 0
-            else:
-                num_samples = self.num_samples
-
-            if self.class_indexing is None:
-                class_indexing = dict()
-            else:
-                class_indexing = self.class_indexing
-
-            num_rows = VOCOp.get_num_rows(self.dataset_dir, self.task, self.usage, class_indexing, num_samples)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            rows_from_sampler = self._get_sampler_dataset_size()
-
-            if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                self.dataset_size = rows_from_sampler
-
-        return self.dataset_size
-
     def get_class_indexing(self):
         """
         Get the class index.
@@ -4795,14 +4642,15 @@ class VOCDataset(MappableDataset):
             Dict, A str-to-int mapping from label name to index.
         """
         if self.task != "Detection":
-            raise NotImplementedError()
-
+            raise NotImplementedError("Only 'Detection' support get_class_indexing.")
         if self.class_indexing is None:
-            class_indexing = dict()
-        else:
-            class_indexing = self.class_indexing
-
-        return VOCOp.get_class_indexing(self.dataset_dir, self.task, self.usage, class_indexing)
+            if self._class_indexing is None:
+                runtime_getter = self._init_tree_getters()
+                self._class_indexing = runtime_getter[0].GetClassIndexing()
+            self.class_indexing = {}
+            for pair in self._class_indexing:
+                self.class_indexing[pair[0]] = pair[1][0]
+        return self.class_indexing
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -4939,20 +4787,30 @@ class CocoDataset(MappableDataset):
         >>> # In COCO dataset, each dictionary has keys "image" and "annotation"
     """
 
+    def parse(self, children=None):
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.CocoNode(self.dataset_dir, self.annotation_file, self.task, self.decode,
+                            self.sampler, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_cocodataset
     def __init__(self, dataset_dir, annotation_file, task="Detection", num_samples=None, num_parallel_workers=None,
                  shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
         self.dataset_dir = dataset_dir
         self.annotation_file = annotation_file
-        self.task = task
+        self.task = replace_none(task, "Detection")
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
-        self.decode = decode
+        self.decode = replace_none(decode, False)
         self.shuffle_level = shuffle
         self.num_shards = num_shards
         self.shard_id = shard_id
         self.cache = cache
+        self.dataset_dir = dataset_dir
+        self.annotation_file = annotation_file
 
     def get_args(self):
         args = super().get_args()
@@ -4968,35 +4826,19 @@ class CocoDataset(MappableDataset):
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
 
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = CocoOp.get_num_rows(self.dataset_dir, self.annotation_file, self.task)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            rows_from_sampler = self._get_sampler_dataset_size()
-
-            if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                self.dataset_size = rows_from_sampler
-
-        return self.dataset_size
-
     def get_class_indexing(self):
         """
         Get the class index.
 
         Return:
-            Dict, A str-to-int mapping from label name to index.
+            Dict, A str-to-list<int> mapping from label name to index
         """
         if self.task not in {"Detection", "Panoptic"}:
             raise NotImplementedError("Only 'Detection' and 'Panoptic' support get_class_indexing.")
-
-        class_index = CocoOp.get_class_indexing(self.dataset_dir, self.annotation_file, self.task)
-        return dict(class_index)
+        if self._class_indexing is None:
+            runtime_getter = self._init_tree_getters()
+            self._class_indexing = dict(runtime_getter[0].GetClassIndexing())
+        return self._class_indexing
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -5073,27 +4915,34 @@ class CelebADataset(MappableDataset):
         >>> dataset = ds.CelebADataset(dataset_dir=dataset_dir, usage='train')
     """
 
-    @check_celebadataset
-    def __init__(self, dataset_dir, num_parallel_workers=None, shuffle=None, usage='all', sampler=None, decode=False,
-                 extensions=None, num_samples=None, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers)
-        self.dataset_dir = dataset_dir
-        self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
-        self.num_parallel_workers = num_parallel_workers
-        self.decode = decode
-        self.extensions = extensions
-        self.num_samples = num_samples
-        self.usage = usage
-        self.num_shards = num_shards
-        self.shard_id = shard_id
-        self.shuffle_level = shuffle
-        self.cache = cache
-
-        if usage != "all":
+    def parse(self, children=None):
+        if self.usage != "all":
             dir = os.path.realpath(self.dataset_dir)
             partition_file = os.path.join(dir, "list_eval_partition.txt")
             if os.path.exists(partition_file) is False:
                 raise RuntimeError("Partition file can not be found when usage is not 'all'.")
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.CelebANode(self.dataset_dir, self.usage, self.sampler, self.decode, self.extensions, cc). \
+            SetNumWorkers(self.num_parallel_workers)
+
+    @check_celebadataset
+    def __init__(self, dataset_dir, num_parallel_workers=None, shuffle=None, usage='all', sampler=None, decode=False,
+                 extensions=None, num_samples=None, num_shards=None, shard_id=None, cache=None):
+        super().__init__(num_parallel_workers=num_parallel_workers)
+        self.dataset_dir = dataset_dir
+        self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
+        self.num_parallel_workers = num_parallel_workers
+        self.decode = replace_none(decode, False)
+        self.extensions = replace_none(extensions, [])
+        self.num_samples = num_samples
+        self.usage = replace_none(usage, "all")
+        self.num_shards = num_shards
+        self.shard_id = shard_id
+        self.shuffle_level = shuffle
+        self.cache = cache
 
     def get_args(self):
         args = super().get_args()
@@ -5108,53 +4957,6 @@ class CelebADataset(MappableDataset):
         args["shard_id"] = self.shard_id
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            dir = os.path.realpath(self.dataset_dir)
-            attr_file = os.path.join(dir, "list_attr_celeba.txt")
-            num_rows = ''
-            try:
-                with open(attr_file, 'r') as f:
-                    num_rows = int(f.readline())
-            except FileNotFoundError:
-                raise RuntimeError("attr file can not be found.")
-            except BaseException:
-                raise RuntimeError("Get dataset size failed from attribution file.")
-            if self.usage != 'all':
-                partition_file = os.path.join(dir, "list_eval_partition.txt")
-                usage_type = 0
-                partition_num = 0
-                if self.usage == "train":
-                    usage_type = 0
-                elif self.usage == "valid":
-                    usage_type = 1
-                elif self.usage == "test":
-                    usage_type = 2
-                try:
-                    with open(partition_file, 'r') as f:
-                        for line in f.readlines():
-                            split_line = line.split(' ')
-                            if int(split_line[1]) == usage_type:
-                                partition_num += 1
-                except FileNotFoundError:
-                    raise RuntimeError("Partition file can not be found.")
-                if partition_num < num_rows:
-                    num_rows = partition_num
-
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            if self.num_samples is not None and self.num_samples < self.dataset_size:
-                self.dataset_size = self.num_samples
-            rows_from_sampler = self._get_sampler_dataset_size()
-            if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                self.dataset_size = rows_from_sampler
-        return self.dataset_size
 
     def is_shuffled(self):
         if self.shuffle_level is None:
@@ -5226,13 +5028,35 @@ class CLUEDataset(SourceDataset):
         >>> dataset = ds.CLUEDataset(dataset_files=dataset_files, task='AFQMC', usage='train')
     """
 
+    def parse(self, children=None):
+        # C default values
+        shuffle_flag = 2
+        if not isinstance(self._shuffle, Shuffle):
+            if self._shuffle:
+                shuffle_flag = 2
+            else:
+                shuffle_flag = 0
+        else:
+            if self._shuffle == Shuffle.GLOBAL:
+                shuffle_flag = 2
+            elif self._shuffle == Shuffle.FILES:
+                shuffle_flag = 1
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.CLUENode(self.dataset_files, self.task, self.usage, self.num_samples, shuffle_flag,
+                            self.num_shards,
+                            self.shard_id, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_cluedataset
     def __init__(self, dataset_files, task='AFQMC', usage='train', num_samples=None,
                  num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
         self.dataset_files = self._find_files(dataset_files)
-        self.dataset_files.sort()
-        self.num_samples = num_samples
+        if not isinstance(self.dataset_files, list):
+            self.dataset_files = [self.dataset_files]
+        self.num_samples = replace_none(num_samples, 0)
         self.task_dict = {
             'AFQMC': {
                 'train': {
@@ -5351,11 +5175,14 @@ class CLUEDataset(SourceDataset):
                 }
             }
         }
-        self.cols_to_keyword = self.task_dict[task][usage]
-
+        self.usage = replace_none(usage, 'train')
+        self.cols_to_keyword = self.task_dict[task][self.usage]
+        self.task = replace_none(task, 'AFQMC')
+        self._shuffle = shuffle
         if not isinstance(shuffle, (bool, Shuffle)):
             raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like"
                             " 'Shuffle.GLOBAL' or 'Shuffle.FILES'.")
+        # To be removed later
         if not isinstance(shuffle, Shuffle):
             if shuffle:
                 self.shuffle_level = Shuffle.GLOBAL
@@ -5367,16 +5194,8 @@ class CLUEDataset(SourceDataset):
             self.shuffle_level = shuffle
             self.shuffle_files = True
 
-        self.num_shards = num_shards
-        self.shard_id = shard_id
-
-        # The clue dataset does not directly support a sampler.  It has provided sampling arguments
-        # (shuffle, num_samples, num_shards, shard_id) and it DOES support sampling if somewhere above it in
-        # the pipeline contains a cache.  If there is no cache above it, then this sampler is not used.
-        sampler_shuffle = self.shuffle_files
-        sampler = None
-        self.sampler = _select_sampler(self.num_samples, sampler, sampler_shuffle, num_shards, shard_id,
-                                       non_mappable=True)
+        self.num_shards = replace_none(num_shards, 1)
+        self.shard_id = replace_none(shard_id, 0)
         self.cache = cache
 
     def get_args(self):
@@ -5393,20 +5212,6 @@ class CLUEDataset(SourceDataset):
         args["sampler"] = self.sampler
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = ClueOp.get_num_rows(self.dataset_files)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            if self.num_samples is not None and self.num_samples < self.dataset_size:
-                self.dataset_size = self.num_samples
-        return self.dataset_size
 
     def is_shuffled(self):
         return self.shuffle_files
@@ -5458,42 +5263,55 @@ class CSVDataset(SourceDataset):
         >>> dataset = ds.CSVDataset(dataset_files=dataset_files, column_names=['col1', 'col2', 'col3', 'col4'])
     """
 
+    def parse(self, children=None):
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+        return cde.CSVNode(self.dataset_files, self.field_delim, self.column_defaults, self.column_names,
+                           self.num_samples,
+                           self.shuffle_flag, self.num_shards,
+                           self.shard_id, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_csvdataset
     def __init__(self, dataset_files, field_delim=',', column_defaults=None, column_names=None, num_samples=None,
                  num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
-        self.field_delim = field_delim
-        self.column_defaults = column_defaults
-        self.column_names = column_names
+        self.field_delim = replace_none(field_delim, '')
+        self.column_defaults = replace_none(column_defaults, [])
+        self.column_names = replace_none(column_names, [])
         self.num_samples = num_samples
 
         if not isinstance(shuffle, (bool, Shuffle)):
             raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like"
                             " 'Shuffle.GLOBAL' or 'Shuffle.FILES'.")
+        self.shuffle_flag = 2
         if not isinstance(shuffle, Shuffle):
             if shuffle:
-                self.shuffle_level = Shuffle.GLOBAL
+                self.shuffle_flag = 2
                 self.shuffle_files = True
             else:
-                self.shuffle_level = None
+                self.shuffle_flag = 0
                 self.shuffle_files = False
         else:
-            self.shuffle_level = shuffle
+            if shuffle == Shuffle.GLOBAL:
+                self.shuffle_flag = 2
+            elif shuffle == Shuffle.FILES:
+                self.shuffle_flag = 1
             self.shuffle_files = True
-
-        self.num_shards = num_shards
-        self.shard_id = shard_id
 
         self.cache = cache
         # The CSV dataset does not directly support a sampler.  It has provided sampling arguments
         # (shuffle, num_samples, num_shards, shard_id) and it DOES support sampling if somewhere above it in
         # the pipeline contains a cache.  If there is no cache above it, then this sampler is not used.
-        sampler_shuffle = self.shuffle_files
         sampler = None
-        self.sampler = _select_sampler(self.num_samples, sampler, sampler_shuffle, num_shards, shard_id,
+        self.sampler = _select_sampler(num_samples, sampler, self.shuffle_files, num_shards, shard_id,
                                        non_mappable=True)
+        self.num_shards = replace_none(num_shards, 1)
+        self.shard_id = replace_none(shard_id, 0)
+        self.num_samples = replace_none(num_samples, 0)
 
     def get_args(self):
         args = super().get_args()
@@ -5511,20 +5329,6 @@ class CSVDataset(SourceDataset):
         args["sampler"] = self.sampler
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = CsvOp.get_num_rows(self.dataset_files, self.column_names is None)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            if self.num_samples is not None and self.num_samples < self.dataset_size:
-                self.dataset_size = self.num_samples
-        return self.dataset_size
 
     def is_shuffled(self):
         return self.shuffle_files
@@ -5570,13 +5374,34 @@ class TextFileDataset(SourceDataset):
         >>> dataset = ds.TextFileDataset(dataset_files=dataset_files)
     """
 
+    def parse(self, children=None):
+        shuffle_flag = 2
+        if not isinstance(self._shuffle, Shuffle):
+            if self._shuffle:
+                shuffle_flag = 2
+            else:
+                shuffle_flag = 0
+        else:
+            if self._shuffle == Shuffle.GLOBAL:
+                shuffle_flag = 2
+            elif self._shuffle == Shuffle.FILES:
+                shuffle_flag = 1
+        if self.cache:
+            cc = self.cache.cache_client
+        else:
+            cc = None
+
+        return cde.TextFileNode(self.dataset_files, self.num_samples, shuffle_flag, self.num_shards,
+                                self.shard_id, cc).SetNumWorkers(self.num_parallel_workers)
+
     @check_textfiledataset
     def __init__(self, dataset_files, num_samples=None, num_parallel_workers=None,
                  shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, cache=None):
-        super().__init__(num_parallel_workers)
+        super().__init__(num_parallel_workers=num_parallel_workers)
+        self._shuffle = shuffle
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
-        self.num_samples = num_samples
+        self.num_samples = replace_none(num_samples, 0)
 
         if not isinstance(shuffle, (bool, Shuffle)):
             raise TypeError("shuffle must be of boolean or enum of 'Shuffle' values like"
@@ -5592,8 +5417,8 @@ class TextFileDataset(SourceDataset):
             self.shuffle_level = shuffle
             self.shuffle_files = True
 
-        self.num_shards = num_shards
-        self.shard_id = shard_id
+        self.num_shards = replace_none(num_shards, 1)
+        self.shard_id = replace_none(shard_id, 0)
 
         self.cache = cache
         # The text file dataset does not directly support a sampler.  It has provided sampling arguments
@@ -5601,7 +5426,7 @@ class TextFileDataset(SourceDataset):
         # the pipeline contains a cache.  If there is no cache above it, then this sampler is not used.
         sampler_shuffle = self.shuffle_files
         sampler = None
-        self.sampler = _select_sampler(self.num_samples, sampler, sampler_shuffle, num_shards, shard_id,
+        self.sampler = _select_sampler(num_samples, sampler, sampler_shuffle, num_shards, shard_id,
                                        non_mappable=True)
 
     def get_args(self):
@@ -5617,22 +5442,6 @@ class TextFileDataset(SourceDataset):
         args["sampler"] = self.sampler
         args["cache"] = self.cache.cache_client if self.cache is not None else None
         return args
-
-    def get_dataset_size(self):
-        """
-        Get the number of batches in an epoch.
-
-        Return:
-            Number, number of batches.
-        """
-        if self.dataset_size is None:
-            num_rows = TextFileOp.get_num_rows(self.dataset_files)
-            self.dataset_size = get_num_rows(num_rows, self.num_shards)
-            # If the user gave a num samples in the dataset, then the sampler will limit the rows returned
-            # to that amount.  Account for that here in the row count
-            if self.num_samples is not None and self.num_samples > 0 and num_rows > self.num_samples:
-                self.dataset_size = self.num_samples
-        return self.dataset_size
 
     def is_shuffled(self):
         return self.shuffle_files
@@ -5837,133 +5646,3 @@ class PaddedDataset(GeneratorDataset):
                          shard_id=None, shuffle=False)
         self._dataset_size = len(dataset.padded_samples)
         self.padded_samples = padded_samples
-
-    def get_dataset_size(self):
-        return self._dataset_size
-
-
-class BuildVocabDataset(DatasetOp):
-    """
-    Build a vocab from a dataset. This will collect all the unique words in a dataset and return a vocab
-    which contains top_k most frequent words (if top_k is specified).
-    This function is not meant to be called directly by user. To build vocab, use the function
-    text.Vocab.from_dataset()
-
-    Args:
-        vocab (Vocab): text.vocab object.
-        columns (Union[str, list], optional): Column names to get words from. It can be a list of column names
-            (Default=None, all columns are used, return error if any column is not a string).
-        freq_range (tuple, optional): Tuple of integers (min_frequency, max_frequency). Words within the frequency
-            range will be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
-            can be None, which corresponds to 0/total_words separately (default=None, all words are included).
-        top_k (int, optional): top_k > 0. Number of words to be built into vocab. top_k most frequent words are
-            taken. The top_k is taken after freq_range. If not enough top_k words, all words will be taken
-            (default=None, all words are included).
-        special_tokens (list, optional):  List of strings, each one is a special token, for example
-            special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
-        special_first (bool, optional): Whether special_tokens will be prepended/appended to vocab, If special_tokens
-            is specified and special_first is set to None, special_tokens will be prepended. (default=None).
-        prefetch_size (int, optional): Prefetch number of records ahead of the user's request (default=None).
-    """
-
-    def __init__(self, input_dataset, vocab, columns, freq_range, top_k, special_tokens, special_first,
-                 prefetch_size=None):
-        super().__init__()
-        self.columns = columns
-        self.children.append(input_dataset)
-        self.prefetch_size = prefetch_size
-        self.vocab = vocab
-        self.freq_range = freq_range
-        self.top_k = top_k
-        self.special_tokens = special_tokens
-        self.special_first = special_first
-        input_dataset.parent.append(self)
-
-    def get_args(self):
-        args = super().get_args()
-        args["columns"] = self.columns
-        args["vocab"] = self.vocab
-        args["freq_range"] = self.freq_range
-        args["prefetch_size"] = self.prefetch_size
-        args["top_k"] = self.top_k
-        args["special_tokens"] = self.special_tokens
-        args["special_first"] = self.special_first
-        return args
-
-    def __deepcopy__(self, memodict):
-        if id(self) in memodict:
-            return memodict[id(self)]
-        cls = self.__class__
-        new_op = cls.__new__(cls)
-        memodict[id(self)] = new_op
-        new_op.children = copy.deepcopy(self.children, memodict)
-        new_op.columns = copy.deepcopy(self.columns, memodict)
-        new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
-        new_op.prefetch_size = copy.deepcopy(self.prefetch_size, memodict)
-        new_op.parent = copy.deepcopy(self.parent, memodict)
-        new_op.freq_range = copy.deepcopy(self.freq_range, memodict)
-        new_op.top_k = copy.deepcopy(self.top_k, memodict)
-        new_op.vocab = self.vocab
-        new_op.special_tokens = copy.deepcopy(self.special_tokens)
-        new_op.special_first = copy.deepcopy(self.special_first)
-        new_op.dataset_size = self.dataset_size
-
-        return new_op
-
-
-class BuildSentencePieceVocabDataset(DatasetOp):
-    """
-    Build a SentencePieceVocab from a dataset.
-    This function is not meant to be called directly by user. To build vocab, use the function
-    text.SentencePieceVocab.from_dataset()
-
-    Args:
-        vocab (SentencePieceVocab): text.SentencePieceVocab object.
-        col_names (list): List of column names.
-        vocab_size (int): Vocabulary size. The type is uint32.
-        character_coverage (float): Percentage of characters covered by the model. Good defaults are:
-            0.9995 for languages with rich character sets like Japanese or Chinese character sets,
-            and 1.0 for other languages with small character sets.
-        model_type (SentencePieceModel): Model type. Choose from unigram (default), bpe, char, or word.
-            The input sentence must be pretokenized when using word type.
-        params (dict): A dictionary with no incoming parameters.
-    """
-
-    def __init__(self, input_dataset, vocab, col_names, vocab_size, character_coverage, model_type, params):
-        super().__init__()
-        self.vocab = vocab
-        self.col_names = col_names
-        self.vocab_size = vocab_size
-        self.children.append(input_dataset)
-        self.character_coverage = character_coverage
-        self.model_type = DE_C_INTER_SENTENCEPIECE_MODE[model_type]
-        self.params = params
-        input_dataset.parent.append(self)
-
-    def get_args(self):
-        args = super().get_args()
-        args["vocab"] = self.vocab
-        args["col_names"] = self.col_names
-        args["vocab_size"] = self.vocab_size
-        args["character_coverage"] = self.character_coverage
-        args["model_type"] = self.model_type
-        args["params"] = self.params
-        return args
-
-    def __deepcopy__(self, memodict):
-        if id(self) in memodict:
-            return memodict[id(self)]
-        cls = self.__class__
-        new_op = cls.__new__(cls)
-        memodict[id(self)] = new_op
-        new_op.children = copy.deepcopy(self.children, memodict)
-        new_op.col_names = copy.deepcopy(self.col_names, memodict)
-        new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
-        new_op.vocab_size = copy.deepcopy(self.vocab_size, memodict)
-        new_op.parent = copy.deepcopy(self.parent, memodict)
-        new_op.character_coverage = copy.deepcopy(self.character_coverage, memodict)
-        new_op.params = copy.deepcopy(self.params, memodict)
-        new_op.vocab = self.vocab
-        new_op.model_type = copy.deepcopy(self.model_type)
-        new_op.dataset_size = self.dataset_size
-        return new_op

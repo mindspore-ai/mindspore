@@ -86,7 +86,7 @@ def test_numpyslices_sampler_chain2():
     # Create NumpySlicesDataset with sampler chain
     # Use 2 statements to add child sampler
     np_data = [1, 2, 3, 4]
-    sampler = ds.SequentialSampler(start_index=1, num_samples=2)
+    sampler = ds.SequentialSampler(start_index=1, num_samples=1)
     child_sampler = ds.SequentialSampler(start_index=1, num_samples=2)
     sampler.add_child(child_sampler)
     data1 = ds.NumpySlicesDataset(np_data, sampler=sampler)
@@ -94,20 +94,17 @@ def test_numpyslices_sampler_chain2():
     # Verify dataset size
     data1_size = data1.get_dataset_size()
     logger.info("dataset size is: {}".format(data1_size))
-    # FIXME: Uncomment the following assert when code issue is resolved; at runtime, data1_size is 2 not 4
-    # assert data1_size == 4
+    assert data1_size == 1
 
     # Verify number of rows
-    # FIXME: Uncomment the following assert when code issue is resolved; at runtime, number of rows is 2 not 4
-    # assert sum([1 for _ in data1]) == 4
+    assert sum([1 for _ in data1]) == 1
 
     # Verify dataset contents
-    # FIXME: Uncomment the following test code when runtime code issue is resolved
-    # res = []
-    # for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-    #      logger.info("item: {}".format(item))
-    #      res.append(item)
-    # logger.info("dataset: {}".format(res))
+    res = []
+    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
+        logger.info("item: {}".format(item))
+        res.append(item)
+    logger.info("dataset: {}".format(res))
 
 
 def test_numpyslices_sampler_chain_batch():

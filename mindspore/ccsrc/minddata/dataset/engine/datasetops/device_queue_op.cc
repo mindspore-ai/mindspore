@@ -205,7 +205,6 @@ Status DeviceQueueOp::SendDataToAscend() {
   }
 
   tree_->SetFinished();
-  MS_LOG(INFO) << "Device queue total batch is " << send_batch;
 
   return Status::OK();
 }

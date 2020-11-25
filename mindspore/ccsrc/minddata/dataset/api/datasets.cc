@@ -115,7 +115,8 @@ std::shared_ptr<Iterator> Dataset::CreateIterator(std::vector<std::string> colum
 
 #ifndef ENABLE_ANDROID
 // Function to return a transferred Node that transfers data through a device.
-bool Dataset::DeviceQueue(bool send_epoch_end) {
+bool Dataset::DeviceQueue(std::string queue_name, std::string device_type, int32_t num_epochs, bool send_epoch_end,
+                          int32_t total_batches, bool create_data_info_queue) {
   Status rc;
 
   // Build and launch tree
@@ -126,11 +127,12 @@ bool Dataset::DeviceQueue(bool send_epoch_end) {
     return false;
   }
 
-  // Add TransferNode IR on top of dataset d
-  auto ds = std::make_shared<TransferNode>(shared_from_this()->IRNode(), send_epoch_end);
+  // Add TransferNode IR on top of dataset
+  auto ds = std::make_shared<TransferNode>(shared_from_this()->IRNode(), queue_name, device_type, send_epoch_end,
+                                           total_batches, create_data_info_queue);
 
   // Get ToDevice consumer
-  auto consumer = std::make_unique<ToDevice>(send_epoch_end, -1);
+  auto consumer = std::make_unique<ToDevice>(num_epochs);
   ToDevice *consumer_ = consumer.get();
   rc = consumer->Init(ds);
   if (rc.IsError()) {
@@ -199,127 +201,55 @@ Dataset::Dataset() { tree_getters_ = std::make_shared<TreeGetters>(); }
 
 int64_t Dataset::GetDatasetSize() {
   int64_t dataset_size;
-  Status rc;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetDatasetSize: Initializing RuntimeContext failed.";
-    return -1;
-  }
-  rc = tree_getters_->Init(this->IRNode());
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetDatasetSize: Initializing TreeGetters failed.";
-    return -1;
-  }
-  rc = tree_getters_->GetDatasetSize(&dataset_size);
-  return rc.IsError() ? -1 : dataset_size;
+  RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
+  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), -1);
+  RETURN_SECOND_IF_ERROR(tree_getters_->GetDatasetSize(&dataset_size), -1);
+  return dataset_size;
 }
 
 std::vector<DataType> Dataset::GetOutputTypes() {
   std::vector<DataType> types;
-  Status rc;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetOutputTypes: Initializing RuntimeContext failed.";
-    return types;
-  }
-  rc = tree_getters_->Init(this->IRNode());
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetOutputTypes: Initializing TreeGetters failed.";
-    return types;
-  }
-  rc = tree_getters_->GetOutputTypes(&types);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetOutputTypes: Get Output Types failed.";
-    types.clear();
-    return types;
-  }
+  RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
+  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
+  RETURN_SECOND_IF_ERROR(tree_getters_->GetOutputTypes(&types), {});
   return types;
 }
 
 std::vector<TensorShape> Dataset::GetOutputShapes() {
   std::vector<TensorShape> shapes;
-  Status rc;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetOutputShapes: Initializing RuntimeContext failed.";
-    return shapes;
-  }
-  rc = tree_getters_->Init(this->IRNode());
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetOutputShapes: Initializing TreeGetters failed.";
-    return shapes;
-  }
-  rc = tree_getters_->GetOutputShapes(&shapes);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetOutputShapes: Get Output Shapes failed.";
-    shapes.clear();
-    return shapes;
-  }
+  RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
+  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
+  RETURN_SECOND_IF_ERROR(tree_getters_->GetOutputShapes(&shapes), {});
   return shapes;
 }
 
 int64_t Dataset::GetNumClasses() {
   int64_t num_classes;
-  auto ds = shared_from_this();
-  Status rc;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetNumClasses: Initializing RuntimeContext failed.";
-    return -1;
-  }
-  rc = tree_getters_->Init(ds->IRNode());
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetNumClasses: Initializing TreeGetters failed.";
-    return -1;
-  }
-  rc = tree_getters_->GetNumClasses(&num_classes);
-  return rc.IsError() ? -1 : num_classes;
+  RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
+  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), -1);
+  RETURN_SECOND_IF_ERROR(tree_getters_->GetNumClasses(&num_classes), -1);
+  return num_classes;
 }
 
 std::vector<std::string> Dataset::GetColumnNames() {
   std::vector<std::string> col_names;
-  auto ds = shared_from_this();
-  Status rc;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetColumnNames: Initializing RuntimeContext failed.";
-    return std::vector<std::string>();
-  }
-  rc = tree_getters_->Init(ds->IRNode());
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetColumnNames: Initializing TreeGetters failed.";
-    return std::vector<std::string>();
-  }
-  rc = tree_getters_->GetColumnNames(&col_names);
-  return rc.IsError() ? std::vector<std::string>() : col_names;
+  RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
+  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
+  RETURN_SECOND_IF_ERROR(tree_getters_->GetColumnNames(&col_names), {});
+  return col_names;
 }
 
 std::vector<std::pair<std::string, std::vector<int32_t>>> Dataset::GetClassIndexing() {
   std::vector<std::pair<std::string, std::vector<int32_t>>> output_class_indexing;
-  auto ds = shared_from_this();
-  Status rc;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetClassIndexing: Initializing RuntimeContext failed.";
-    return output_class_indexing;
-  }
-  rc = tree_getters_->Init(ds->IRNode());
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetClassIndexing: Initializing TreeGetters failed.";
-    return output_class_indexing;
-  }
-  rc = tree_getters_->GetClassIndexing(&output_class_indexing);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetClassIndexing: Get Class Index failed.";
-    output_class_indexing.clear();
-    return output_class_indexing;
-  }
+  RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
+  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
+  RETURN_SECOND_IF_ERROR(tree_getters_->GetClassIndexing(&output_class_indexing), {});
   return output_class_indexing;
 }
 
@@ -501,9 +431,13 @@ BucketBatchByLengthDataset::BucketBatchByLengthDataset(
   std::function<TensorRow(TensorRow)> element_length_function,
   const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info, bool pad_to_bucket_boundary,
   bool drop_remainder) {
-  auto ds = std::make_shared<BucketBatchByLengthNode>(input->IRNode(), column_names, bucket_boundaries,
-                                                      bucket_batch_sizes, element_length_function, pad_info,
-                                                      pad_to_bucket_boundary, drop_remainder);
+  std::shared_ptr<TensorOp> c_func = nullptr;
+  if (element_length_function != nullptr) {
+    c_func = std::make_shared<CFuncOp>(element_length_function);
+  }
+  auto ds =
+    std::make_shared<BucketBatchByLengthNode>(input->IRNode(), column_names, bucket_boundaries, bucket_batch_sizes,
+                                              c_func, pad_info, pad_to_bucket_boundary, drop_remainder);
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
@@ -522,7 +456,9 @@ ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datase
 
 FilterDataset::FilterDataset(std::shared_ptr<Dataset> input, std::function<TensorRow(TensorRow)> predicate,
                              std::vector<std::string> input_columns) {
-  auto ds = std::make_shared<FilterNode>(input->IRNode(), predicate, input_columns);
+  std::shared_ptr<TensorOp> c_func = nullptr;
+  if (predicate) c_func = std::make_shared<CFuncOp>(predicate);
+  auto ds = std::make_shared<FilterNode>(input->IRNode(), c_func, input_columns);
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
@@ -604,40 +540,20 @@ ZipDataset::ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) {
 #endif
 int64_t Dataset::GetBatchSize() {
   int64_t batch_size;
-  auto ds = shared_from_this();
-  Status rc;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetBatchSize: Initializing RuntimeContext failed.";
-    return -1;
-  }
-  rc = tree_getters_->Init(ds->IRNode());
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetBatchSize: Initializing TreeGetters failed.";
-    return -1;
-  }
-  rc = tree_getters_->GetBatchSize(&batch_size);
-  return rc.IsError() ? -1 : batch_size;
+  RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
+  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), -1);
+  RETURN_SECOND_IF_ERROR(tree_getters_->GetBatchSize(&batch_size), -1);
+  return batch_size;
 }
 
 int64_t Dataset::GetRepeatCount() {
   int64_t repeat_count;
-  auto ds = shared_from_this();
-  Status rc;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetRepeatCount: Initializing RuntimeContext failed.";
-    return -1;
-  }
-  rc = tree_getters_->Init(ds->IRNode());
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "GetRepeatCount: Initializing TreeGetters failed.";
-    return -1;
-  }
-  rc = tree_getters_->GetRepeatCount(&repeat_count);
-  return rc.IsError() ? 0 : repeat_count;
+  RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
+  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), 0);
+  RETURN_SECOND_IF_ERROR(tree_getters_->GetRepeatCount(&repeat_count), 0);
+  return repeat_count;
 }
 
 std::shared_ptr<Dataset> Dataset::SetNumWorkers(int32_t num_workers) {
@@ -720,62 +636,65 @@ std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remai
 SchemaObj::SchemaObj(const std::string &schema_file) : schema_file_(schema_file), num_rows_(0), dataset_type_("") {}
 
 // SchemaObj init function
-bool SchemaObj::init() {
-  if (schema_file_ != "") {
+Status SchemaObj::init() {
+  if (!schema_file_.empty()) {
     Path schema_file(schema_file_);
-    if (!schema_file.Exists()) {
-      MS_LOG(ERROR) << "The file " << schema_file << " does not exist or permission denied!";
-      return false;
-    }
+    CHECK_FAIL_RETURN_UNEXPECTED(schema_file.Exists(),
+                                 "The file " + schema_file_ + " does not exist or permission denied!");
 
     nlohmann::json js;
     try {
       std::ifstream in(schema_file_);
       in >> js;
-      if (js.find("columns") == js.end()) {
-        MS_LOG(ERROR) << "\"columns\" node is required in the schema json file.";
-        return false;
-      }
+      CHECK_FAIL_RETURN_UNEXPECTED(js.find("columns") != js.end(),
+                                   "\"columns\" node is required in the schema json file.");
     } catch (const std::exception &err) {
-      MS_LOG(ERROR) << "Schema file failed to load";
-      return false;
+      RETURN_STATUS_SYNTAX_ERROR("Schema file failed to load");
     }
     return from_json(js);
   }
-  return true;
+  return Status::OK();
 }
 
-// Function to add a column to schema with a mstype de_type
-bool SchemaObj::add_column(std::string name, TypeId de_type, std::vector<int32_t> shape) {
-  nlohmann::json new_column;
-  new_column["name"] = name;
-  // if de_type is mstype
+// Function to add a column to schema with a mstype de_type and known shape
+Status SchemaObj::add_column(std::string name, TypeId de_type, std::vector<int32_t> shape) {
   DataType data_type = dataset::MSTypeToDEType(de_type);
-  new_column["type"] = data_type.ToString();
-  if (shape.size() > 0) {
-    new_column["shape"] = shape;
-    new_column["rank"] = shape.size();
-  } else {
-    new_column["rank"] = 1;
-  }
-  columns_.push_back(new_column);
-  return true;
+  return add_column(name, data_type.ToString(), shape);
 }
 
-// Function to add a column to schema with a string de_type
-bool SchemaObj::add_column(std::string name, std::string de_type, std::vector<int32_t> shape) {
+// Function to add a column to schema with a string de_type and known shape
+Status SchemaObj::add_column(std::string name, std::string de_type, std::vector<int32_t> shape) {
+  DataType data_type(de_type);
+  CHECK_FAIL_RETURN_UNEXPECTED(data_type != DataType::DE_UNKNOWN, "Type is unknown.");
+
   nlohmann::json new_column;
   new_column["name"] = name;
-  DataType data_type(de_type);
   new_column["type"] = data_type.ToString();
-  if (shape.size() > 0) {
-    new_column["shape"] = shape;
-    new_column["rank"] = shape.size();
-  } else {
-    new_column["rank"] = 1;
-  }
+  new_column["shape"] = shape;
+  new_column["rank"] = shape.size();
+
   columns_.push_back(new_column);
-  return true;
+  return Status::OK();
+}
+
+// Function to add a column to schema with a mstype de_type and without shape
+Status SchemaObj::add_column(std::string name, TypeId de_type) {
+  DataType data_type = dataset::MSTypeToDEType(de_type);
+  return add_column(name, data_type.ToString());
+}
+
+// Function to add a column to schema with a string de_type and without shape
+Status SchemaObj::add_column(std::string name, std::string de_type) {
+  DataType data_type(de_type);
+  CHECK_FAIL_RETURN_UNEXPECTED(data_type != DataType::DE_UNKNOWN, "Type is unknown.");
+
+  nlohmann::json new_column;
+  new_column["name"] = name;
+  new_column["type"] = data_type.ToString();
+  new_column["rank"] = 1;
+
+  columns_.push_back(new_column);
+  return Status::OK();
 }
 
 std::string SchemaObj::to_json() {
@@ -792,7 +711,7 @@ std::string SchemaObj::to_json() {
   return json_file.dump(2);
 }
 
-bool SchemaObj::parse_column(nlohmann::json columns) {
+Status SchemaObj::parse_column(nlohmann::json columns) {
   std::string name, de_type;
   std::vector<int32_t> shape;
 
@@ -802,15 +721,13 @@ bool SchemaObj::parse_column(nlohmann::json columns) {
     for (auto column : columns) {
       auto key_name = column.find("name");
       if (key_name == column.end()) {
-        MS_LOG(ERROR) << "Column's name is missing";
-        return false;
+        RETURN_STATUS_SYNTAX_ERROR("Column's name is missing");
       }
       name = *key_name;
 
       auto key_type = column.find("type");
       if (key_type == column.end()) {
-        MS_LOG(ERROR) << "Column's type is missing";
-        return false;
+        RETURN_STATUS_SYNTAX_ERROR("Column's type is missing");
       }
       de_type = *key_type;
 
@@ -819,17 +736,14 @@ bool SchemaObj::parse_column(nlohmann::json columns) {
       if (key_shape != column.end()) {
         shape.insert(shape.end(), (*key_shape).begin(), (*key_shape).end());
       }
-      if (!add_column(name, de_type, shape)) {
-        return false;
-      }
+      RETURN_IF_NOT_OK(add_column(name, de_type, shape));
     }
   } else if (columns.type() == nlohmann::json::value_t::object) {
     for (const auto &it_child : columns.items()) {
       name = it_child.key();
       auto key_type = it_child.value().find("type");
       if (key_type == it_child.value().end()) {
-        MS_LOG(ERROR) << "Column's type is missing";
-        return false;
+        RETURN_STATUS_SYNTAX_ERROR("Column's type is missing");
       }
       de_type = *key_type;
 
@@ -839,43 +753,45 @@ bool SchemaObj::parse_column(nlohmann::json columns) {
         shape.insert(shape.end(), (*key_shape).begin(), (*key_shape).end());
       }
 
-      if (!add_column(name, de_type, shape)) {
-        return false;
-      }
+      RETURN_IF_NOT_OK(add_column(name, de_type, shape));
     }
   } else {
-    MS_LOG(ERROR) << "columns must be dict or list, columns contain name, type, shape(optional).";
-    return false;
+    RETURN_STATUS_SYNTAX_ERROR("columns must be dict or list, columns contain name, type, shape(optional).");
   }
-  return true;
+  return Status::OK();
 }
 
-bool SchemaObj::from_json(nlohmann::json json_obj) {
+Status SchemaObj::from_json(nlohmann::json json_obj) {
   for (const auto &it_child : json_obj.items()) {
     if (it_child.key() == "datasetType") {
       dataset_type_ = it_child.value();
     } else if (it_child.key() == "numRows") {
       num_rows_ = it_child.value();
     } else if (it_child.key() == "columns") {
-      if (!parse_column(it_child.value())) {
-        MS_LOG(ERROR) << "parse columns failed";
-        return false;
-      }
+      RETURN_IF_NOT_OK(parse_column(it_child.value()));
     } else {
-      MS_LOG(ERROR) << "Unknown field " << it_child.key();
-      return false;
+      RETURN_STATUS_SYNTAX_ERROR("Unknown field " + it_child.key());
     }
   }
   if (columns_.empty()) {
-    MS_LOG(ERROR) << "Columns are missing.";
-    return false;
+    RETURN_STATUS_SYNTAX_ERROR("Columns are missing.");
   }
-  if (num_rows_ <= 0) {
-    MS_LOG(ERROR) << "numRows must be greater than 0";
-    return false;
+  if (num_rows_ < 0) {
+    RETURN_STATUS_SYNTAX_ERROR("numRows must be greater than or equal to 0");
   }
 
-  return true;
+  return Status::OK();
+}
+Status SchemaObj::FromJSONString(const std::string &json_string) {
+  try {
+    nlohmann::json js = nlohmann::json::parse(json_string);
+    CHECK_FAIL_RETURN_UNEXPECTED(js.find("columns") != js.end(),
+                                 "\"columns\" node is required in the schema json JSON.");
+    RETURN_IF_NOT_OK(from_json(js));
+  } catch (const std::exception &err) {
+    RETURN_STATUS_SYNTAX_ERROR("JSON string is failed to parse");
+  }
+  return Status::OK();
 }
 
 // OTHER FUNCTIONS

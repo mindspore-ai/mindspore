@@ -141,8 +141,6 @@ Status ExecutionTree::Launch() {
       " Expected state: " + std::to_string(static_cast<int>(kDeTStateReady));
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
-  std::ostringstream ss;
-  ss << *this;
 
   // Profiling infrastructures need to be initialized before Op launching
   if (profiling_manager_->IsProfilingEnable()) {
@@ -152,6 +150,8 @@ Status ExecutionTree::Launch() {
     RETURN_IF_NOT_OK(profiling_manager_->LaunchMonitor());
   }
 
+  std::ostringstream ss;
+  ss << *this;
   MS_LOG(DEBUG) << "Printing the tree before launch tasks:\n" << ss.str();
   for (auto itr = this->begin(); itr != this->end(); ++itr) {
     // An inlined operator is one that has an output connector size of 0, and it does not
@@ -160,7 +160,7 @@ Status ExecutionTree::Launch() {
     // the launching tree/user thread.  Do not exec any thread for an inlined op.
     itr->state_ = DatasetOp::OpState::kDeOpRunning;
     if (!itr->inlined()) {
-      RETURN_IF_NOT_OK(tg_->CreateAsyncTask("Op launched, OperatorId:" + std::to_string(itr->id()), std::ref(*itr)));
+      RETURN_IF_NOT_OK(tg_->CreateAsyncTask(itr->NameWithID(), std::ref(*itr)));
       // Set the state of the Operator as running. This only matters in Leaf ops, CacheOp and TakeOp
     }
   }
@@ -189,10 +189,10 @@ ExecutionTree::Iterator::Iterator(const std::shared_ptr<DatasetOp> &root) : ind_
 
 // Given the number of workers, launches the worker entry function for each. Essentially a
 // wrapper for the TaskGroup handling that is stored inside the execution tree.
-Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func) {
+Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name) {
   // Launch the workers
   for (int32_t i = 0; i < num_workers; ++i) {
-    RETURN_IF_NOT_OK(tg_->CreateAsyncTask("Parallel Op Worker", std::bind(func, i)));
+    RETURN_IF_NOT_OK(tg_->CreateAsyncTask(name, std::bind(func, i)));
   }
   return Status::OK();
 }

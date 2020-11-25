@@ -177,8 +177,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess2) {
     MS_LOG(INFO) << "Tensor image shape: " << image->shape();
     iter->GetNextRow(&row);
   }
-  // 5 batches of size 2
-  EXPECT_EQ(i, 5);
+  // With 2 boundaries, 3 buckets are created
+  EXPECT_EQ(i, 3);
 
   // Manually terminate the pipeline
   iter->Stop();

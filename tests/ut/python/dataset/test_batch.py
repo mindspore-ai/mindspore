@@ -451,6 +451,10 @@ def test_batch_exception_13():
 
 
 def test_batch_exception_14():
+    """
+    Test per_batch_map and input column name
+    """
+    logger.info("test_batch_exception_14")
     batch_size = 2
     input_columns = ["num"]
     data1 = ds.TFRecordDataset(DATA_DIR)
@@ -458,6 +462,22 @@ def test_batch_exception_14():
         _ = data1.batch(batch_size=batch_size, input_columns=input_columns)
     except ValueError as e:
         assert "per_batch_map and input_columns need to be passed in together." in str(e)
+
+
+def test_batch_exception_15():
+    """
+    Test batch_size = int32 max value + 1
+    """
+    logger.info("test_batch_exception_15")
+    batch_size = 2147483647 + 1
+    input_columns = ["num"]
+    data1 = ds.TFRecordDataset(DATA_DIR)
+    err_msg = ""
+    try:
+        _ = data1.batch(batch_size=batch_size, input_columns=input_columns)
+    except ValueError as e:
+        err_msg = str(e)
+    assert "batch_size is not within the required interval of (1 to 2147483647)" in err_msg
 
 
 if __name__ == '__main__':
@@ -486,4 +506,5 @@ if __name__ == '__main__':
     test_batch_exception_12()
     test_batch_exception_13()
     test_batch_exception_14()
+    test_batch_exception_15()
     logger.info('\n')

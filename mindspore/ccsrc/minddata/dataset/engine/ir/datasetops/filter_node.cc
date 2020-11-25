@@ -28,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 
 // Constructor for FilterNode
-FilterNode::FilterNode(std::shared_ptr<DatasetNode> child, std::function<TensorRow(TensorRow)> predicate,
+FilterNode::FilterNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<TensorOp> predicate,
                        std::vector<std::string> input_columns)
     : predicate_(predicate), input_columns_(input_columns) {
   this->children.push_back(child);
@@ -38,10 +38,7 @@ std::vector<std::shared_ptr<DatasetOp>> FilterNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
-  std::shared_ptr<TensorOp> c_func;
-  c_func = std::make_shared<CFuncOp>(predicate_);
-
-  node_ops.push_back(std::make_shared<FilterOp>(input_columns_, num_workers_, connector_que_size_, c_func));
+  node_ops.push_back(std::make_shared<FilterOp>(input_columns_, num_workers_, connector_que_size_, predicate_));
   return node_ops;
 }
 

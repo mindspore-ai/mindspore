@@ -2,9 +2,11 @@ file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc"
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 if (ENABLE_PYTHON)
     add_library(APItoPython OBJECT
-            python/de_pipeline.cc
             python/pybind_register.cc
-            python/bindings.cc
+            python/pybind_conversion.cc
+            python/bindings/dataset/include/datasets_bindings.cc
+            python/bindings/dataset/include/iterator_bindings.cc
+            python/bindings/dataset/include/schema_bindings.cc
             python/bindings/dataset/engine/cache/bindings.cc
             python/bindings/dataset/core/bindings.cc
             python/bindings/dataset/callback/bindings.cc

@@ -19,7 +19,14 @@
 
 namespace mindspore::dataset {
 
-Status PythonRuntimeContext::Terminate() { return TerminateImpl(); }
+Status PythonRuntimeContext::Terminate() {
+  MS_LOG(INFO) << "Terminating a PythonRuntime";
+  if (tree_consumer_ != nullptr) {
+    return TerminateImpl();
+  }
+  MS_LOG(WARNING) << "TreeConsumer was not initialized";
+  return Status::OK();
+}
 
 Status PythonRuntimeContext::TerminateImpl() {
   CHECK_FAIL_RETURN_UNEXPECTED(tree_consumer_ != nullptr, " Tree Consumer is not initialized");

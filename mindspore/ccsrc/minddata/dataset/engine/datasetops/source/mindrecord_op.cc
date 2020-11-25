@@ -480,13 +480,13 @@ Status MindRecordOp::GetDatasetSize(int64_t *dataset_size) {
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t num_rows = num_rows_, sample_size;
+  int64_t num_rows = num_rows_;
   if (num_rows_ <= 0) {
-    std::shared_ptr<ShardOperator> op;
+    // The last operator is parent sampler
+    std::shared_ptr<ShardOperator> op = operators_.back();
     RETURN_IF_NOT_OK(CountTotalRows(dataset_file_, load_dataset_, op, &num_rows, num_padded_));
   }
-  sample_size = operators_[0]->GetNumSamples(num_rows, 0);
-  *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
+  *dataset_size = num_rows;
   dataset_size_ = *dataset_size;
   return Status::OK();
 }

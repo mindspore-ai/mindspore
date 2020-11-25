@@ -61,6 +61,7 @@ class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
 
 class DistributedSamplerObj;
 class PKSamplerObj;
+class PreBuiltSamplerObj;
 class RandomSamplerObj;
 class SequentialSamplerObj;
 class SubsetRandomSamplerObj;
@@ -169,6 +170,31 @@ class PKSamplerObj : public SamplerObj {
   int64_t num_val_;
   bool shuffle_;
   int64_t num_samples_;
+};
+
+class PreBuiltSamplerObj : public SamplerObj {
+ public:
+#ifndef ENABLE_ANDROID
+  explicit PreBuiltSamplerObj(std::shared_ptr<SamplerRT> sampler);
+
+  explicit PreBuiltSamplerObj(std::shared_ptr<mindrecord::ShardOperator> sampler);
+#endif
+
+  ~PreBuiltSamplerObj() = default;
+
+  std::shared_ptr<SamplerRT> Build() override;
+
+#ifndef ENABLE_ANDROID
+  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+#endif
+
+  bool ValidateParams() override;
+
+ private:
+  std::shared_ptr<SamplerRT> sp_;
+#ifndef ENABLE_ANDROID
+  std::shared_ptr<mindrecord::ShardOperator> sp_minddataset_;
+#endif
 };
 
 class RandomSamplerObj : public SamplerObj {

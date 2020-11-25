@@ -99,9 +99,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
 
   /// \brief Pure virtual function for derived class to get the shard id of specific node
   /// \return Status Status::OK() if get shard id successfully
-  virtual Status GetShardId(int32_t *shard_id) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Method is not implemented yet.");
-  }
+  virtual Status GetShardId(int32_t *shard_id);
 
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator
@@ -126,6 +124,10 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return Status of the node visit
   virtual Status AcceptAfter(NodePass *p, bool *modified);
 
+  /// \brief Method to get status from Node.Build()
+  /// \notes Remove me after changing return val of Build()
+  Status BuildStatus() { return build_status; }
+
  protected:
   std::vector<std::shared_ptr<DatasetNode>> children;
   std::shared_ptr<DatasetCache> cache_;
@@ -135,6 +137,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   int32_t rows_per_buffer_;
   int32_t connector_que_size_;
   int32_t worker_connector_size_;
+  Status build_status;  // remove me after changing return val of Build()
 };
 
 }  // namespace dataset

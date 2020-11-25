@@ -120,7 +120,7 @@ def test_random_apply_exception_random_crop_badinput():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=transform, input_columns=["image"])
     try:
-        _ = data.create_dict_iterator(num_epochs=1).get_next()
+        _ = data.create_dict_iterator(num_epochs=1).__next__()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Crop size" in str(e)

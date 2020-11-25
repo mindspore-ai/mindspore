@@ -41,7 +41,7 @@ class TreeConsumer {
   /// \return Status error code.
   virtual Status Init(std::shared_ptr<DatasetNode> d);
 
-  Status Terminate();
+  virtual Status Terminate();
 
  protected:
   /// The class owns the tree_adapter that handles execution tree operations.
@@ -72,6 +72,11 @@ class IteratorConsumer : public TreeConsumer {
   /// \return Status error code
   Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *out);
 
+  /// Returns the next row in as a map
+  /// \param[out] out std::map of string to Tensor
+  /// \return Status error code
+  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec);
+
  protected:
   /// Method to return the name of the consumer
   /// \return string
@@ -79,6 +84,7 @@ class IteratorConsumer : public TreeConsumer {
 
  private:
   int32_t num_epochs_;
+  std::vector<std::pair<std::string, int32_t>> column_order_;  // key: column name, val: column id
 };
 
 #ifndef ENABLE_ANDROID
@@ -101,7 +107,7 @@ class SaveToDisk : public TreeConsumer {
   /// Save the given dataset to MindRecord format on disk. This is a blocking method (i.e., after returning, all rows
   /// would be written to disk)
   /// \return  Status error code
-  Status Save();
+  virtual Status Save();
 
  protected:
   /// Method to return the name of the consumer
@@ -110,7 +116,7 @@ class SaveToDisk : public TreeConsumer {
 
  private:
   template <typename T, typename S>
-  Status TransfromTensor(const unsigned char *src, const TensorShape &shape, const int64_t num_of_elements,
+  Status TransformTensor(const unsigned char *src, const TensorShape &shape, const int64_t num_of_elements,
                          std::unique_ptr<T> *data, std::unique_ptr<std::vector<uint8_t>> *data_ptr,
                          std::unique_ptr<S> *s, bool need_convert = false);
 
@@ -131,24 +137,29 @@ class SaveToDisk : public TreeConsumer {
 /// Consumer that iterates over the dataset and send it to a device
 class ToDevice : public TreeConsumer {
  public:
-  explicit ToDevice(bool send_epoch_end, int32_t num_epochs = -1)
-      : TreeConsumer(), send_epoch_end_(send_epoch_end), num_epochs_(num_epochs) {}
+  explicit ToDevice(int32_t num_epochs = -1) : TreeConsumer(), num_epochs_(num_epochs) {}
 
   ~ToDevice() = default;
 
   Status Init(std::shared_ptr<DatasetNode> d) override;
 
+  Status Terminate() override;
+
   /// Send the data to device
   /// \return  Status error code
-  Status Send();
+  virtual Status Send();
 
   /// Stop to send data to device
   /// \return  Status error code
-  Status Stop();
+  virtual Status Stop();
 
   /// Continue to send data to device
   /// \return  Status error code
-  Status Continue();
+  virtual Status Continue();
+
+  /// Get data info from TDT
+  /// \return  Status error code
+  virtual Status GetDataInfo(std::vector<DataType> *types, std::vector<TensorShape> *shapes);
 
  protected:
   /// Method to return the name of the consumer
@@ -156,8 +167,6 @@ class ToDevice : public TreeConsumer {
   std::string Name() override { return "ToDevice"; }
 
  private:
-  std::string device_type_;
-  bool send_epoch_end_;
   int32_t num_epochs_;
 };
 
@@ -167,6 +176,7 @@ class TreeGetters : public TreeConsumer {
   TreeGetters();
   ~TreeGetters() = default;
   Status Init(std::shared_ptr<DatasetNode> d) override;
+
   Status GetDatasetSize(int64_t *size);
   Status GetOutputTypes(std::vector<DataType> *types);
   Status GetOutputShapes(std::vector<TensorShape> *shapes);
@@ -175,15 +185,17 @@ class TreeGetters : public TreeConsumer {
   Status GetNumClasses(int64_t *num_classes);
   Status GetColumnNames(std::vector<std::string> *output);
   Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
-  bool isInitialized();
   std::string Name() override { return "TreeGetters"; }
-  Status GetRow(TensorRow *r);
+  virtual Status GetRow(TensorRow *r);
 
  private:
+  std::shared_ptr<DatasetNode> root_;
   int64_t dataset_size_;
-  TensorRow row_;
+  TensorRow first_row_;
   bool init_flag_;  // indicate whether the tree has initialized
-  bool row_flag_;   // indicate whether the first row has been stored in row_
+
+  Status InternalInit(int8_t type);
+  Status InternalInit();
 };
 
 class BuildVocabConsumer : public TreeConsumer {
@@ -197,7 +209,7 @@ class BuildVocabConsumer : public TreeConsumer {
 
   /// Start consuming
   /// \return  Status error code
-  Status Start();
+  virtual Status Start();
 
  protected:
   /// Method to return the name of the consumer

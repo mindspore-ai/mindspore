@@ -61,13 +61,13 @@ class MindData:
     def send(self, num_epochs=-1):
         pass
 
-    def get_data_info(self):
-        pass
-
     def stop_send(self):
         pass
 
     def continue_send(self):
+        pass
+
+    def get_data_info(self):
         pass
 
     def __len__(self):

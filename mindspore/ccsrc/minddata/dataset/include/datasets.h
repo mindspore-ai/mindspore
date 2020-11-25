@@ -145,9 +145,16 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \brief Function to transfer data through a device.
   /// \notes If device is Ascend, features of data will be transferred one by one. The limitation
   ///     of data transmission per time is 256M.
+  /// \param[in] queue_name Channel name (default="", create new unique name).
+  /// \param[in] device_type Type of device (default="", get from MSContext).
+  /// \param[in] num_epochs Number of epochs (default=-1, infinite epochs).
   /// \param[in] send_epoch_end Whether to send end of sequence to device or not (default=true).
+  /// \param[in] total_batches Number of batches to be sent to the device (default=0, all data).
+  /// \param[in] create_data_info_queue Whether to create queue which stores types and shapes
+  ///     of data or not(default=false).
   /// \return Returns true if no error encountered else false.
-  bool DeviceQueue(bool send_epoch_end = true);
+  bool DeviceQueue(std::string queue_name = "", std::string device_type = "", int32_t num_epochs = -1,
+                   bool send_epoch_end = true, int32_t total_batches = 0, bool create_data_info_queue = false);
 
   /// \brief Function to create a Saver to save the dynamic data processed by the dataset pipeline
   /// \note Usage restrictions:
@@ -371,21 +378,34 @@ class SchemaObj {
 
   /// \brief SchemaObj init function
   /// \return bool true if schema init success
-  bool init();
+  Status init();
+
+  /// \brief Add new column to the schema with unknown shape of rank 1
+  /// \param[in] name name of the column.
+  /// \param[in] de_type data type of the column(TypeId).
+  /// \return bool true if schema init success
+  Status add_column(std::string name, TypeId de_type);
+
+  /// \brief Add new column to the schema with unknown shape of rank 1
+  /// \param[in] name name of the column.
+  /// \param[in] de_type data type of the column(std::string).
+  /// \param[in] shape shape of the column.
+  /// \return bool true if schema init success
+  Status add_column(std::string name, std::string de_type);
 
   /// \brief Add new column to the schema
   /// \param[in] name name of the column.
   /// \param[in] de_type data type of the column(TypeId).
   /// \param[in] shape shape of the column.
   /// \return bool true if schema init success
-  bool add_column(std::string name, TypeId de_type, std::vector<int32_t> shape);
+  Status add_column(std::string name, TypeId de_type, std::vector<int32_t> shape);
 
   /// \brief Add new column to the schema
   /// \param[in] name name of the column.
   /// \param[in] de_type data type of the column(std::string).
   /// \param[in] shape shape of the column.
   /// \return bool true if schema init success
-  bool add_column(std::string name, std::string de_type, std::vector<int32_t> shape);
+  Status add_column(std::string name, std::string de_type, std::vector<int32_t> shape);
 
   /// \brief Get a JSON string of the schema
   /// \return JSON string of the schema
@@ -395,25 +415,27 @@ class SchemaObj {
   std::string to_string() { return to_json(); }
 
   /// \brief set a new value to dataset_type
-  inline void set_dataset_type(std::string dataset_type) { dataset_type_ = dataset_type; }
+  inline void set_dataset_type(std::string dataset_type) { dataset_type_ = std::move(dataset_type); }
 
   /// \brief set a new value to num_rows
   inline void set_num_rows(int32_t num_rows) { num_rows_ = num_rows; }
 
   /// \brief get the current num_rows
-  inline int32_t get_num_rows() { return num_rows_; }
+  inline int32_t get_num_rows() const { return num_rows_; }
+
+  Status FromJSONString(const std::string &json_string);
 
  private:
   /// \brief Parse the columns and add it to columns
   /// \param[in] columns dataset attribution information, decoded from schema file.
   ///    support both nlohmann::json::value_t::array and nlohmann::json::value_t::onject.
   /// \return JSON string of the schema
-  bool parse_column(nlohmann::json columns);
+  Status parse_column(nlohmann::json columns);
 
   /// \brief Get schema file from json file
   /// \param[in] json_obj object of json parsed.
   /// \return bool true if json dump success
-  bool from_json(nlohmann::json json_obj);
+  Status from_json(nlohmann::json json_obj);
 
   int32_t num_rows_;
   std::string dataset_type_;

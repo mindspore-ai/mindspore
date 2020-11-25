@@ -18,72 +18,80 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/util/status.h"
 
+#include "utils/ms_context.h"
+
 namespace mindspore {
 namespace dataset {
 
 // Constructor for TransferNode
-TransferNode::TransferNode(std::shared_ptr<DatasetNode> child, bool send_epoch_end)
-    : prefetch_size_(16), send_epoch_end_(send_epoch_end), total_batch_(0) {
+TransferNode::TransferNode(std::shared_ptr<DatasetNode> child, std::string queue_name, std::string device_type,
+                           bool send_epoch_end, int32_t total_batch, bool create_data_info_queue)
+    : prefetch_size_(16),
+      queue_name_(std::move(queue_name)),
+      device_type_(std::move(device_type)),
+      send_epoch_end_(send_epoch_end),
+      total_batch_(total_batch),
+      create_data_info_queue_(create_data_info_queue),
+      device_id_(0) {
   this->children.push_back(child);
 }
 
 // Validator for TransferNode
 Status TransferNode::ValidateParams() {
-  // Check if device_type_ is in {"CPU", "GPU", "Ascend"}
-  RETURN_IF_NOT_OK(ValidateStringValue("TransferNode", device_type_, {"CPU", "GPU", "Ascend"}));
+  if (total_batch_ < 0) {
+    std::string err_msg = "TransferNode: Total batches should be >= 0, value given: ";
+    MS_LOG(ERROR) << err_msg << total_batch_;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   return Status::OK();
 }
 
 // Function to build TransferNode
 std::vector<std::shared_ptr<DatasetOp>> TransferNode::Build() {
-  // Get a uuid for queue name
-  queue_name_ = Services::GetUniqueID();
-  // TODO(CRC):
+  if (queue_name_.empty()) {
+    // Get a uuid for queue name
+    queue_name_ = Services::GetUniqueID();
+  }
+  if (device_type_.empty()) {
+    auto context = MsContext::GetInstance();
+    if (context == nullptr) {
+      device_type_ = kCPUDevice;
+    } else {
+      device_type_ = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+    }
+  }
+
   // Get device type from ms context
-  device_type_ = "CPU";
-  // Get device ID from children
+  // Convert device_type_ from string to DeviceType
+  DeviceQueueOp::DeviceType type;
+  if (device_type_ == kCPUDevice) {
+    type = DeviceQueueOp::DeviceType::CPU;
+  } else if (device_type_ == kGPUDevice) {
+    type = DeviceQueueOp::DeviceType::GPU;
+  } else if (device_type_ == kAscendDevice) {
+    type = DeviceQueueOp::DeviceType::Ascend;
+  } else {
+    MS_LOG(ERROR) << "Unknown device target.";
+    return {};
+  }
+
+  // Get device ID (shard ID) from children
   device_id_ = 0;
-  RETURN_EMPTY_IF_ERROR(TransferNode::get_distribution(shared_from_this(), &device_id_));
+  build_status = this->GetShardId(&device_id_);  // remove me after changing return val of Build()
+  RETURN_EMPTY_IF_ERROR(build_status);
 
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
-  // Convert device_type_ from string to DeviceType
-  DeviceQueueOp::DeviceType type;
-  if (device_type_ == "CPU") {
-    type = DeviceQueueOp::DeviceType::CPU;
-  } else if (device_type_ == "GPU") {
-    type = DeviceQueueOp::DeviceType::GPU;
-  } else if (device_type_ == "Ascend") {
-    type = DeviceQueueOp::DeviceType::Ascend;
-  }
   node_ops.push_back(std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, prefetch_size_, send_epoch_end_,
-                                                     total_batch_, false));
+                                                     total_batch_, create_data_info_queue_));
   return node_ops;
-}
-
-// Function to get the device_id
-Status TransferNode::get_distribution(std::shared_ptr<DatasetNode> ds, int32_t *device_id) {
-  // Get device id according to the type of dataset
-  Status rc = ds->GetShardId(device_id);
-  if (rc != Status::OK()) {
-    // Get device id from the child node
-    if (ds->Children().size()) {
-      ds = ds->Children()[0];
-      return TransferNode::get_distribution(ds, device_id);
-    } else {
-      std::string err_msg = "Unknown dataset type.";
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
-
-  return Status::OK();
 }
 
 }  // namespace dataset

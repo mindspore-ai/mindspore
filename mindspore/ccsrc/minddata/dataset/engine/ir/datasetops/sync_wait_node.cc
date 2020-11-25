@@ -27,9 +27,8 @@ namespace mindspore {
 namespace dataset {
 
 // Constructor for SyncWaitNode
-SyncWaitNode::SyncWaitNode(std::shared_ptr<DatasetNode> child, const std::string &condition_name, int32_t num_batch,
-                           py::function callback)
-    : condition_name_(condition_name), num_batch_(num_batch), callback_(callback) {
+SyncWaitNode::SyncWaitNode(std::shared_ptr<DatasetNode> child, const std::string &condition_name, py::function callback)
+    : condition_name_(condition_name), callback_(callback) {
   this->children.push_back(child);
 }
 
@@ -38,20 +37,16 @@ std::vector<std::shared_ptr<DatasetOp>> SyncWaitNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
-  node_ops.push_back(std::make_shared<BarrierOp>(num_batch_, connector_que_size_, condition_name_, callback_));
+  // Right now barrier should only take num_rows_per_buffer = 1
+  // The reason for this is because having it otherwise can lead to blocking issues
+  // See barrier_op.h for more details
+  int32_t rows_per_buffer = 1;
+  node_ops.push_back(std::make_shared<BarrierOp>(rows_per_buffer, connector_que_size_, condition_name_, callback_));
   return node_ops;
 }
 
 // Function to validate the parameters for SyncWaitNode
-Status SyncWaitNode::ValidateParams() {
-  if (num_batch_ <= 0) {
-    std::string err_msg = "SyncWaitNode: num_batch must be greater than 0, num_batch: " + std::to_string(num_batch_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-
-  return Status::OK();
-}
+Status SyncWaitNode::ValidateParams() { return Status::OK(); }
 
 }  // namespace dataset
 }  // namespace mindspore

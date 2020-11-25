@@ -150,7 +150,7 @@ class ExecutionTree {
   // @param num_workers - The number of workers to launch
   // @param func - The function entry point that workers will execute
   // @return Status - The error code return
-  Status LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func);
+  Status LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name = "");
 
   // Getter method
   // @return shared_ptr to the root operator

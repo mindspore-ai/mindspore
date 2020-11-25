@@ -252,6 +252,24 @@ def test_sync_exception_05():
     assert "Condition name not found" in str(e.value)
 
 
+def test_simple_sync_wait_empty_condition_name():
+    """ callback is none, sync_wait and sync_update's condition_name is empty string ('') """
+    logger.info("test_simple_sync_wait_empty_condition_name")
+    batch_size = 10
+    dataset = ds.GeneratorDataset(gen, column_names=["input"])
+
+    aug = Augment(0)
+    dataset = dataset.sync_wait(condition_name='', num_batch=1)
+    dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
+    dataset = dataset.batch(batch_size)
+
+    count = 0
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        count += 1
+        data = {"loss": count}
+        dataset.sync_update(condition_name="", data=data)
+
+
 if __name__ == "__main__":
     test_simple_sync_wait()
     test_simple_shuffle_sync()
@@ -263,3 +281,4 @@ if __name__ == "__main__":
     test_sync_exception_05()
     test_sync_epoch()
     test_multiple_iterators()
+    test_simple_sync_wait_empty_condition_name()

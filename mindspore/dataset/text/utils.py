@@ -18,12 +18,12 @@ use to_bytes and to_str to encode and decode strings into a specified format.
 """
 from enum import IntEnum
 
-import copy
 import numpy as np
 import mindspore._c_dataengine as cde
 
 from .validators import check_from_file, check_from_list, check_from_dict, check_from_dataset, \
     check_from_dataset_sentencepiece, check_from_file_sentencepiece, check_save_model
+
 
 __all__ = [
     "Vocab", "SentencePieceVocab", "to_str", "to_bytes"
@@ -39,8 +39,7 @@ class Vocab(cde.Vocab):
 
     @classmethod
     @check_from_dataset
-    def from_dataset(cls, dataset, columns=None, freq_range=None, top_k=None, special_tokens=None,
-                     special_first=True):
+    def from_dataset(cls, dataset, columns=None, freq_range=None, top_k=None, special_tokens=None, special_first=True):
         """
         Build a vocab from a dataset.
 
@@ -69,21 +68,7 @@ class Vocab(cde.Vocab):
         Returns:
             Vocab, Vocab object built from dataset.
         """
-
-        vocab = Vocab()
-        if columns is None:
-            columns = []
-        if not isinstance(columns, list):
-            columns = [columns]
-        if freq_range is None:
-            freq_range = (None, None)
-        if special_tokens is None:
-            special_tokens = []
-        root = copy.deepcopy(dataset).build_vocab(vocab, columns, freq_range, top_k, special_tokens, special_first)
-        for d in root.create_dict_iterator(num_epochs=1):
-            if d is not None:
-                raise ValueError("from_dataset should receive data other than None.")
-        return vocab
+        return dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
 
     @classmethod
     @check_from_list
@@ -143,6 +128,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
     """
     SentencePiece obiect that is used to segmentate words
     """
+
     @classmethod
     @check_from_dataset_sentencepiece
     def from_dataset(cls, dataset, col_names, vocab_size, character_coverage, model_type, params):
@@ -164,13 +150,8 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             SentencePiece, SentencePiece object from dataset.
         """
 
-        vocab = SentencePieceVocab()
-        root = copy.deepcopy(dataset).build_sentencepiece_vocab(vocab, col_names, vocab_size, character_coverage,
-                                                                model_type, params)
-        for d in root.create_dict_iterator(num_epochs=1):
-            if d is None:
-                raise ValueError("from_dataset should receive data other than None.")
-        return vocab
+        return dataset.build_sentencepiece_vocab(col_names, vocab_size, character_coverage,
+                                                 DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
 
     @classmethod
     @check_from_file_sentencepiece
@@ -269,6 +250,7 @@ class SentencePieceModel(IntEnum):
     BPE = 1
     CHAR = 2
     WORD = 3
+
 
 DE_C_INTER_SENTENCEPIECE_MODE = {
     SentencePieceModel.UNIGRAM: cde.SentencePieceModel.DE_SENTENCE_PIECE_UNIGRAM,

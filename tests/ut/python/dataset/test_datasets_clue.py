@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import os
+import pytest
 import mindspore.dataset as ds
 
 
@@ -354,6 +355,18 @@ def test_clue_to_device():
     data.send()
 
 
+def test_clue_invalid_files():
+    """
+    Test CLUE with invalid files
+    """
+    AFQMC_DIR = '../data/dataset/testCLUE/afqmc'
+    afqmc_train_json = os.path.join(AFQMC_DIR)
+    with pytest.raises(ValueError) as info:
+        _ = ds.CLUEDataset(afqmc_train_json, task='AFQMC', usage='train', shuffle=False)
+    assert "The following patterns did not match any files" in str(info.value)
+    assert AFQMC_DIR in str(info.value)
+
+
 if __name__ == "__main__":
     test_clue()
     test_clue_num_shards()
@@ -366,3 +379,4 @@ if __name__ == "__main__":
     test_clue_tnews()
     test_clue_wsc()
     test_clue_to_device()
+    test_clue_invalid_files()

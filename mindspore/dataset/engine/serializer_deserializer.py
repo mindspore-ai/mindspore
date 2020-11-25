@@ -283,9 +283,12 @@ def create_node(node):
                         node.get('shard_id'), sampler)
 
     elif dataset_op == 'TFRecordDataset':
+        shuffle = node.get('shuffle')
+        if shuffle is not None and isinstance(shuffle, str):
+            shuffle = de.Shuffle(shuffle)
         pyobj = pyclass(node['dataset_files'], node.get('schema'), node.get('column_list'),
                         node.get('num_samples'), node.get('num_parallel_workers'),
-                        de.Shuffle(node.get('shuffle')), node.get('num_shards'), node.get('shard_id'))
+                        shuffle, node.get('num_shards'), node.get('shard_id'))
 
     elif dataset_op == 'ManifestDataset':
         sampler = construct_sampler(node.get('sampler'))

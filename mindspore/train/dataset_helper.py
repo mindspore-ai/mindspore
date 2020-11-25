@@ -123,6 +123,7 @@ def connect_network_with_dataset(network, dataset_helper):
         network = _DataWrapper(network, dataset_types, dataset_shapes, queue_name)
     return network
 
+
 class DatasetHelper:
     """
     DatasetHelper is a class to process the MindData dataset and it provides the information of dataset.
@@ -196,7 +197,6 @@ class DatasetHelper:
 
     def get_data_info(self):
         return self.iter.get_data_info()
-
 
 class _DatasetIter:
     """Base iter for dataset helper"""
@@ -331,7 +331,6 @@ class _DatasetIterPSLite(_DatasetIter):
 
 class _DatasetIterNormal:
     """Iter for normal(non sink) mode, feed the data from host."""
-
     def __init__(self, dataset, epoch_num=-1):
         self.dataset = dataset
         self.device_num = _get_device_num()

@@ -65,5 +65,7 @@ def mstypelist_to_detypelist(type_list):
     for index, _ in enumerate(type_list):
         if type_list[index] is not None:
             type_list[index] = mstype_to_detype(type_list[index])
+        else:
+            type_list[index] = cde.DataType("")
 
     return type_list

@@ -704,6 +704,8 @@ Status CocoOp::GetDatasetSize(int64_t *dataset_size) {
   }
   if (image_ids_.size() == 0) {
     RETURN_IF_NOT_OK(CountTotalRows(image_folder_path_, annotation_path_, task_type, &num_rows));
+  } else {
+    num_rows = image_ids_.size();
   }
   sample_size = sampler_->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;

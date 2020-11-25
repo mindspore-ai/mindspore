@@ -59,7 +59,8 @@ std::vector<std::shared_ptr<DatasetOp>> AlbumNode::Build() {
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
   auto schema = std::make_unique<DataSchema>();
-  RETURN_EMPTY_IF_ERROR(schema->LoadSchemaFile(schema_path_, column_names_));
+  build_status = schema->LoadSchemaFile(schema_path_, column_names_);
+  RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
 
   // Argument that is not exposed to user in the API.
   std::set<std::string> extensions = {};

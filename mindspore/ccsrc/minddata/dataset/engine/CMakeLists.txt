@@ -18,6 +18,7 @@ set(SRC_FILES_LIST
         dataset_iterator.cc
         tree_adapter.cc
         runtime_context.cc
+        python_runtime_context.cc
         consumers/tree_consumer.cc
         )
 if (ENABLE_PYTHON)

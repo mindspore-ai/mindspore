@@ -117,7 +117,7 @@ def test_iterator_weak_ref():
     _cleanup()
     with pytest.raises(AttributeError) as info:
         itr2.__next__()
-    assert "object has no attribute 'depipeline'" in str(info.value)
+    assert "object has no attribute '_runtime_context'" in str(info.value)
 
     del itr1
     assert len(ITERATORS_LIST) == 6

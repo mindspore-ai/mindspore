@@ -536,6 +536,8 @@ Status VOCOp::GetDatasetSize(int64_t *dataset_size) {
       RETURN_IF_NOT_OK(op->ParseImageIds());
       num_rows = static_cast<int64_t>(op->image_ids_.size());
     }
+  } else {
+    num_rows = image_ids_.size();
   }
   sample_size = sampler_->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
