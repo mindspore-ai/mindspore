@@ -176,18 +176,17 @@ class LinSpace(Cell):
         validator.check_positive_int(num, "num", self.cls_name)
 
         self.is_single = bool(num == 1)
-        self.lin_space = inner.LinSpace()
+        self.lin_space = P.LinSpace()
         self.start = Tensor(start, mstype.float32)
         self.stop = Tensor(stop, mstype.float32)
-        self.assist = Tensor(list(range(num)), mstype.float32)
-        self.num = Tensor(num, mstype.int32)
+        self.num = num
         self.start_array = Tensor([start], mstype.float32)
 
     def construct(self):
         if self.is_single:
             return self.start_array
 
-        lin_space_out = self.lin_space(self.assist, self.start, self.stop, self.num)
+        lin_space_out = self.lin_space(self.start, self.stop, self.num)
         return lin_space_out
 
 @constexpr
