@@ -1,14 +1,15 @@
 ![MindSpore标志](docs/MindSpore-logo.png "MindSpore logo")
-============================================================
 
 [View English](./README.md)
+
+<!-- TOC -->
 
 - [MindSpore介绍](#mindspore介绍)
     - [自动微分](#自动微分)
     - [自动并行](#自动并行)
 - [安装](#安装)
-    - [二进制文件](#二进制文件)
-    - [来源](#来源)
+    - [pip方式安装](#pip方式安装)
+    - [源码编译方式安装](#源码编译方式安装)
     - [Docker镜像](#docker镜像)
 - [快速入门](#快速入门)
 - [文档](#文档)
@@ -16,8 +17,12 @@
     - [治理](#治理)
     - [交流](#交流)
 - [贡献](#贡献)
+- [分支维护策略](#分支维护策略)
+- [现有分支维护状态](#现有分支维护状态)
 - [版本说明](#版本说明)
 - [许可证](#许可证)
+
+<!-- /TOC -->
 
 ## MindSpore介绍
 
@@ -56,7 +61,7 @@ MindSpore自动并行的目的是构建数据并行、模型并行和混合并�
 
 ## 安装
 
-### 二进制文件
+### pip方式安装
 
 MindSpore提供跨多个后端的构建选项：
 
@@ -77,7 +82,7 @@ MindSpore提供跨多个后端的构建选项：
 
 1. 请从[MindSpore下载页面](https://www.mindspore.cn/versions)下载并安装whl包。
 
-    ```
+    ```bash
     pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.0/MindSpore/cpu/ubuntu_x86/mindspore-1.0.0-cp37-cp37m-linux_x86_64.whl
     ```
 
@@ -89,29 +94,41 @@ MindSpore提供跨多个后端的构建选项：
     import mindspore.nn as nn
     from mindspore import Tensor
     from mindspore.ops import operations as P
-    
+
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    
+
     class Mul(nn.Cell):
         def __init__(self):
             super(Mul, self).__init__()
             self.mul = P.Mul()
-    
+
         def construct(self, x, y):
             return self.mul(x, y)
-    
+
     x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
     y = Tensor(np.array([4.0, 5.0, 6.0]).astype(np.float32))
-    
+
     mul = Mul()
     print(mul(x, y))
     ```
-    ```
+
+    ```text
     [ 4. 10. 18.]
     ```
-### 来源
 
-[MindSpore安装](https://www.mindspore.cn/install)。
+使用pip方式，在不同的环境安装MindSpore，可参考以下文档。
+
+- [Ascend环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip.md)
+- [GPU环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip.md)
+- [CPU环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip.md)
+
+### 源码编译方式安装
+
+使用源码编译方式，在不同的环境安装MindSpore，可参考以下文档。
+
+- [Ascend环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source.md)
+- [GPU环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source.md)
+- [CPU环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source.md)
 
 ### Docker镜像
 
@@ -121,27 +138,29 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 | 硬件平台   | Docker镜像仓库                | 标签                       | 说明                                       |
 | :----- | :------------------------ | :----------------------- | :--------------------------------------- |
 | CPU    | `mindspore/mindspore-cpu` | `x.y.z`                  | 已经预安装MindSpore `x.y.z` CPU版本的生产环境。       |
-|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`CPU`后端）。安装详情请参考https://www.mindspore.cn/install 。 |
+|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`CPU`后端）。安装详情请参考<https://www.mindspore.cn/install> 。 |
 |        |                           | `runtime`                | 提供运行时环境安装MindSpore二进制包（`CPU`后端）。         |
 | GPU    | `mindspore/mindspore-gpu` | `x.y.z`                  | 已经预安装MindSpore `x.y.z` GPU版本的生产环境。       |
-|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`GPU CUDA10.1`后端）。安装详情请参考https://www.mindspore.cn/install 。 |
+|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`GPU CUDA10.1`后端）。安装详情请参考<https://www.mindspore.cn/install> 。 |
 |        |                           | `runtime`                | 提供运行时环境安装MindSpore二进制包（`GPU CUDA10.1`后端）。 |
 | Ascend | <center>&mdash;</center>  | <center>&mdash;</center> | 即将推出，敬请期待。                               |
 
 > **注意：** 不建议从源头构建GPU `devel` Docker镜像后直接安装whl包。我们强烈建议您在GPU `runtime` Docker镜像中传输并安装whl包。
 
-* CPU
+- CPU
 
     对于`CPU`后端，可以直接使用以下命令获取并运行最新的稳定镜像：
-    ```
+
+    ```bash
     docker pull mindspore/mindspore-cpu:1.0.0
     docker run -it mindspore/mindspore-cpu:1.0.0 /bin/bash
     ```
 
-* GPU
+- GPU
 
     对于`GPU`后端，请确保`nvidia-container-toolkit`已经提前安装，以下是`Ubuntu`用户安装指南：
-    ```
+
+    ```bash
     DISTRIBUTION=$(. /etc/os-release; echo $ID$VERSION_ID)
     curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
     curl -s -L https://nvidia.github.io/nvidia-docker/$DISTRIBUTION/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list
@@ -149,8 +168,10 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
     sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit nvidia-docker2
     sudo systemctl restart docker
     ```
+
     编辑文件 daemon.json:
-    ```
+
+    ```bash
     $ vim /etc/docker/daemon.json
     {
         "runtimes": {
@@ -161,18 +182,23 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
         }
     }
     ```
+
     再次重启docker:
-    ```
+
+    ```bash
     sudo systemctl daemon-reload
     sudo systemctl restart docker
     ```
+
     使用以下命令获取并运行最新的稳定镜像：
-    ```
+
+    ```bash
     docker pull mindspore/mindspore-gpu:1.0.0
     docker run -it -v /dev/shm:/dev/shm --runtime=nvidia --privileged=true mindspore/mindspore-gpu:1.0.0 /bin/bash
     ```
 
     要测试Docker是否正常工作，请运行下面的Python代码并检查输出：
+
     ```python
     import numpy as np
     import mindspore.context as context
@@ -185,7 +211,8 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
     y = Tensor(np.ones([1,3,3,4]).astype(np.float32))
     print(F.tensor_add(x, y))
     ```
-    ```
+
+    ```text
     [[[ 2.  2.  2.  2.],
     [ 2.  2.  2.  2.],
     [ 2.  2.  2.  2.]],
@@ -204,7 +231,6 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 ## 快速入门
 
 参考[快速入门](https://www.mindspore.cn/tutorial/training/zh-CN/master/quick_start/quick_start.html)实现图片分类。
-
 
 ## 文档
 
@@ -228,6 +254,7 @@ MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore
 欢迎参与贡献。更多详情，请参阅我们的[贡献者Wiki](CONTRIBUTING.md)。
 
 ## 分支维护策略
+
 MindSpore的版本分支有以下几种维护阶段：
 | **状态**       | **持续时间**    | **说明**                                          |
 |-------------|---------------|--------------------------------------------------|
@@ -238,6 +265,7 @@ MindSpore的版本分支有以下几种维护阶段：
 | End Of Life (EOL) |  N/A |  不再接受修改合入该分支。    |
 
 ## 现有分支维护状态
+
 | **分支名** | **当前状态**       | **上线时间** | **后续状态**                        | **EOL 日期**   |
 |--------|--------------|----------------------|-----------------------------------|------------|
 | **r1.1**   | Development  | 2020-12-31 estimated | Maintained <br> 2020-12-31 estimated   |            |
@@ -248,11 +276,6 @@ MindSpore的版本分支有以下几种维护阶段：
 | **r0.3**   | End Of Life  | 2020-05-31           |                                   | 2020-09-30 |
 | **r0.2**   | End Of Life  | 2020-04-30           |                                   | 2020-08-31 |
 | **r0.1**   | End Of Life  | 2020-03-28            |                                   | 2020-06-30 |
-
-
-
-
-
 
 ## 版本说明
 
