@@ -12,10 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-This module provides APIs to load and process various datasets: MNIST,
-CIFAR-10, CIFAR-100, VOC, ImageNet, CelebA dataset, etc. It also supports
-datasets in special format, including mindrecord, tfrecord, manifest. Users
-can also create samplers with this module to sample data.
+This module provides APIs to load and process various common datasets such as MNIST,
+CIFAR-10, CIFAR-100, VOC, ImageNet, CelebA, etc. It also supports datasets in standard
+format, including MindRecord, TFRecord, Manifest, etc. Users can also define their own
+datasets with this module.
+
+Besides, this module provides APIs to sample data while loading.
+
+Please notice that cache is not supported on Windows platform yet. Please do not use it
+while loading and processing data on Windows.
 """
 
 from .core import config
