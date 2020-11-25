@@ -52,7 +52,6 @@ def get_config(version='base', batch_size=1):
             max_position_embeddings=128,
             initializer_range=0.02,
             label_smoothing=0.1,
-            input_mask_from_dataset=True,
             dtype=mstype.float32,
             compute_type=mstype.float16)
     elif version == 'base':
@@ -70,7 +69,6 @@ def get_config(version='base', batch_size=1):
             max_position_embeddings=128,
             initializer_range=0.02,
             label_smoothing=0.1,
-            input_mask_from_dataset=True,
             dtype=mstype.float32,
             compute_type=mstype.float16)
     else:

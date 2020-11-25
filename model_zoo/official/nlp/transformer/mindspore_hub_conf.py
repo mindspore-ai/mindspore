@@ -32,7 +32,6 @@ transformer_net_cfg_large = TransformerConfig(
     max_position_embeddings=128,
     initializer_range=0.02,
     label_smoothing=0.1,
-    input_mask_from_dataset=True,
     dtype=mstype.float32,
     compute_type=mstype.float16
 )
