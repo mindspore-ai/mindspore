@@ -166,13 +166,15 @@ FusionPattern &FusionPattern::Finish() {
   }
   this->outputOpId = ids.front();
   auto outputNode = GetPatternOp(this->outputOpId);
-  MS_ASSERT(outputNode != nullptr);
-  outputNode->isTail = true;
+  if (outputNode != nullptr) {
+    outputNode->isTail = true;
+  }
 
   for (auto inputNodeId : inputNodeIds) {
     auto inputNode = GetPatternOp(inputNodeId);
-    MS_ASSERT(inputNode != nullptr);
-    inputNode->isHead = true;
+    if (inputNode != nullptr) {
+      inputNode->isHead = true;
+    }
   }
   return *this;
 }

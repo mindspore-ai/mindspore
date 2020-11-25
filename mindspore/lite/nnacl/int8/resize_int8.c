@@ -183,7 +183,7 @@ void ComputeNearestNeighborInt(const int32_t pos, const int in_size, const int32
     return;
   }
   *nearest = (in_size * pos) / new_size;
-  if (align_corners) {
+  if (align_corners && new_size != 1) {
     *nearest = ((in_size - 1) * pos + (new_size - 1) / 2) / (new_size - 1);
   }
   *nearest = *nearest < in_size ? *nearest : in_size - 1;

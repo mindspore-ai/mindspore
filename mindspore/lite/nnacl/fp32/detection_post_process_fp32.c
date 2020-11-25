@@ -18,6 +18,7 @@
 #include <math.h>
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
+#include "nnacl/nnacl_utils.h"
 
 float IntersectionOverUnion(const BboxCorner *a, const BboxCorner *b) {
   const float area_a = (a->ymax - a->ymin) * (a->xmax - a->xmin);
@@ -147,11 +148,8 @@ int DetectionPostProcessFast(const int num_boxes, const int num_classes_with_bg,
     for (int j = 0; j < max_classes_per_anchor; ++j) {
       *((BboxCorner *)(output_boxes) + out_num) = *box;
       output_scores[out_num] = input_scores[indexes[j]];
-      if (num_classes_with_bg != 0) {
-        output_classes[out_num++] = (float)(indexes[j] % num_classes_with_bg - first_class_index);
-      } else {
-        return NNACL_ERRCODE_DIVISOR_ZERO;
-      }
+      NNACL_ASSERT(num_classes_with_bg != 0);
+      output_classes[out_num++] = (float)(indexes[j] % num_classes_with_bg - first_class_index);
     }
   }
   *output_num = (float)out_num;
@@ -214,6 +212,7 @@ int DetectionPostProcessRegular(const int num_boxes, const int num_classes_with_
   }
   for (int i = 0; i < param->max_detections_ * param->max_classes_per_detection_; ++i) {
     if (i < all_classes_output_num) {
+      NNACL_ASSERT(num_classes_with_bg != 0);
       const int box_index = all_indexes[i] / num_classes_with_bg;
       const int class_index = all_indexes[i] % num_classes_with_bg - first_class_index;
       *((BboxCorner *)(output_boxes) + i) = *((BboxCorner *)(decoded_boxes) + box_index);

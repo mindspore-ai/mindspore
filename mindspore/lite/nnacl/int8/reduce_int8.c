@@ -189,8 +189,6 @@ int ReduceMeanInt8(const int outer_size, const int inner_size, const int axis_si
       const int32_t *inner_src = outer_src + k;
       int32_t *inner_dst = outer_dst + k;
       int32_t sum = 0;
-      // (x - zp_in) * scale_in = mean[(item - zp_in) * scale_in]
-      // x = mean(item-zp_in) + zp_in
       for (i = 0; i < axis_size; i++) {
         int32_t tmp = inner_src[i * inner_size] - quant->in_zp_;
         if (isAddOverflow(sum, tmp)) {
@@ -226,14 +224,12 @@ int ReduceMeanLastAxis(const int outer_size, const int inner_size, const int axi
       int8_t *inner_dst = outer_dst + k;
       int32_t sum = 0;
       for (i = 0; i < axis_size; i++) {
-        // y = mean(x-zp_in) * scale + zp_out
         int32_t tmp = inner_src[i * inner_size] - quant->in_zp_;
         if (isAddOverflow(tmp, sum)) {
           return NNACL_ERRCODE_ADD_OVERFLOW;
         }
         sum += tmp;
       }
-      // sum / num
       int32_t mean = RoundingDivideByPOT(
         SaturatingRoundingDoublingHighMul(sum * (1 << (unsigned int)quant->mean_left_shift_), quant->mean_multiplier_),
         quant->mean_right_shift_);
@@ -466,7 +462,6 @@ int ReduceProdLastAxis(const int outer_size, const int inner_size, const int axi
       int8_t *inner_dst = outer_dst + k;
       int32_t prod = 1;
       for (i = 0; i < axis_size; i++) {
-        // quant_out = prod(quant_in-zp) * (scale_in^num/scale_out) + zp_out
         int32_t tmp = inner_src[i * inner_size] - quant->in_zp_;
         if (isMulOverflow(prod, tmp)) {
           return NNACL_ERRCODE_MUL_OVERFLOW;
@@ -541,7 +536,6 @@ int ReduceSumSquareLastAxis(const int outer_size, const int inner_size, const in
       const int32_t *inner_src = outer_src + k;
       int8_t *inner_dst = outer_dst + k;
       int32_t sum = 0;
-      // quant_out = sum((quant_in - zp)^2) * scale_in^2 / scale_out + zp_out
       for (i = 0; i < axis_size; i++) {
         int32_t tmp;
         if (isMulOverflow(inner_src[i * inner_size] - quant->in_zp_, inner_src[i * inner_size] - quant->in_zp_)) {

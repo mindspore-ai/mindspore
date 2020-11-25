@@ -550,6 +550,10 @@ bool IsMultiOutputTensors(const FuncGraphPtr &graph, const AnfNodePtr &node) {
     return 0;
   }
   auto output_node_list = GetRealNodeUsedList(graph, node);
+  if (output_node_list == nullptr) {
+    MS_LOG(ERROR) << "output node list is nullptr";
+    return false;
+  }
   if (output_node_list->size() != 1) {
     MS_LOG(DEBUG) << "fusion node has multi output nodes";
     return true;

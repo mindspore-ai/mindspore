@@ -65,12 +65,9 @@ int ROIPooling(float *in_ptr, float *out_ptr, const float *roi, float *max_c, in
         hend = MSMIN(MSMAX(hend + roi_start_h, 0), height_);
         wstart = MSMIN(MSMAX(wstart + roi_start_w, 0), width_);
         wend = MSMIN(MSMAX(wend + roi_start_w, 0), width_);
+        bool is_empty = (hend <= hstart) || (wend <= wstart);
         for (int j = 0; j < channels_; ++j) {
-          max_c[j] = -__FLT_MAX__;
-          bool is_empty = (hend <= hstart) || (wend <= wstart);
-          if (is_empty) {
-            max_c[j] = 0;
-          }
+          max_c[j] = is_empty ? 0 : -__FLT_MAX__;
         }
         int pooled_index = i * param->out_strides_[0] + ph * param->out_strides_[1] + pw * param->out_strides_[2];
         int bd_index = hstart * param->in_strides_[1];

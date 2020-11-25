@@ -47,23 +47,23 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     if (seen_node.count(node) > 0 || !manager->all_nodes().contains(node)) {
       continue;
     }
-    (void) seen_node.insert(node);
+    (void)seen_node.insert(node);
     AnfNodePtr new_node = Run(func_graph, node);
     bool change = (new_node != nullptr);
     if (new_node != nullptr && new_node != node) {
-      (void) manager->Replace(node, new_node);
-      (void) seen_node.erase(node);
+      (void)manager->Replace(node, new_node);
+      (void)seen_node.erase(node);
     } else if (new_node == nullptr) {
       new_node = node;
     }
-    if (new_node && IsValueNode<FuncGraph>(new_node)) {
+    if (IsValueNode<FuncGraph>(new_node)) {
       auto const_func_graph = GetValueNode<FuncGraphPtr>(new_node);
       if (const_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
       }
       to_process.push_back(const_func_graph->output());
-    } else if (new_node && new_node->isa<CNode>()) {
+    } else if (new_node->isa<CNode>()) {
       if (IsGraphKernel(new_node)) {
         to_process.push_back(new_node);
       }
@@ -73,7 +73,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
         return false;
       }
       auto inputs = cnode->inputs();
-      (void) to_process.insert(to_process.end(), inputs.begin(), inputs.end());
+      (void)to_process.insert(to_process.end(), inputs.begin(), inputs.end());
     }
     changes = changes || change;
     if (changes) {
