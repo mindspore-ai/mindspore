@@ -599,7 +599,7 @@ class Interpolate(Cell):
 
     Inputs:
         - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape:
-        math:'(batch, channels, height, width)', with data type of float32 or float64.
+          math:'(batch, channels, height, width)', with data type of float32 or float64.
 
     Outputs:
         Resized tensor.
@@ -609,7 +609,7 @@ class Interpolate(Cell):
         scale_factor * width)' in float32
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import operations as P
@@ -703,7 +703,7 @@ class Tril(Cell):
         Tensor, has the same type as input `x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2], [3, 4]]))
@@ -742,10 +742,13 @@ class Triu(Cell):
     Outputs:
         Tensor, has the same type as input `x`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.array([[1, 2], [3, 4]]))
-        >>> tril = nn.Tril()
-        >>> result = tril(x)
+        >>> triu = nn.Triu()
+        >>> result = triu(x)
         >>> print(result)
         [[1   2]
          [0   4]]
