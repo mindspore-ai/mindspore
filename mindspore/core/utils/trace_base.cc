@@ -111,7 +111,9 @@ std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix, So
   return oss.str();
 }
 
-std::string DumpSourceLines(const AnfNodePtr node) {
+std::string DumpSourceLines(const AnfNodePtr node) { return DumpSourceLines(node.get()); }
+
+std::string DumpSourceLines(AnfNode *node) {
   if (node == nullptr) {
     MS_LOG(WARNING) << "Node is null";
     return "";

@@ -25,7 +25,7 @@
 #include "base/core_ops.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_info.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
 namespace {
@@ -34,7 +34,8 @@ CNodePtr GenerateSquareSumV1(const FuncGraphPtr &graph, const CNodePtr &square, 
   MS_EXCEPTION_IF_NULL(square);
   MS_EXCEPTION_IF_NULL(sum);
   if (square->inputs().size() != kSquareNodeInputNum) {
-    MS_LOG(EXCEPTION) << "Square node has wrong input size";
+    MS_LOG(EXCEPTION) << "Square node has wrong input size"
+                      << " trace: " << trace::DumpSourceLines(square);
   }
   auto prim = std::make_shared<Primitive>(kSquareSumV1OpName);
   MS_EXCEPTION_IF_NULL(prim);
@@ -60,7 +61,8 @@ CNodePtr GenerateSquareSumV2(const FuncGraphPtr &graph, const CNodePtr &square, 
   MS_EXCEPTION_IF_NULL(square);
   MS_EXCEPTION_IF_NULL(sum);
   if (square->inputs().size() != kSquareNodeInputNum) {
-    MS_LOG(EXCEPTION) << "Square node has wrong input size";
+    MS_LOG(EXCEPTION) << "Square node has wrong input size"
+                      << " trace: " << trace::DumpSourceLines(square);
   }
   auto prim = std::make_shared<Primitive>(kSquareSumV2OpName);
   MS_EXCEPTION_IF_NULL(prim);
@@ -83,7 +85,8 @@ std::tuple<CNodePtr, AnfNodePtr, CNodePtr> GetPrevNodes(const AnfNodePtr &node) 
   auto sum = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sum);
   if (sum->inputs().size() != kSumNodeInputNum) {
-    MS_LOG(EXCEPTION) << "ReduceSumD node has wrong input size";
+    MS_LOG(EXCEPTION) << "ReduceSumD node has wrong input size"
+                      << " trace: " << trace::DumpSourceLines(sum);
   }
   auto square_anf = sum->input(1);
   MS_EXCEPTION_IF_NULL(square_anf);
@@ -111,7 +114,8 @@ const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNo
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(square_anf) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "Square node has no output in NodeUsersMap";
+    MS_LOG(EXCEPTION) << "Square node has no output in NodeUsersMap"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   AnfNodePtr ret_node = nullptr;
   if (manager->node_users()[square_anf].size() == 1) {
@@ -122,7 +126,8 @@ const AnfNodePtr SquareSumFusion::Process(const FuncGraphPtr &graph, const AnfNo
     std::vector<AnfNodePtr> square_sumv2_outputs;
     CreateMultipleOutputsOfAnfNode(graph, square_sumv2, kSquareSumv2OutputNum, &square_sumv2_outputs);
     if (square_sumv2_outputs.size() != kSquareSumv2OutputNum) {
-      MS_LOG(EXCEPTION) << "make SquareSumV2 outputs fail";
+      MS_LOG(EXCEPTION) << "make SquareSumV2 outputs fail"
+                        << " trace: " << trace::DumpSourceLines(square_sumv2);
     }
     (void)manager->Replace(square, square_sumv2_outputs[1]);
     ret_node = square_sumv2_outputs[0];

@@ -33,7 +33,7 @@
 #include "frontend/operator/ops.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -321,7 +321,8 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
   if (!AnfAlgo::HasNodeAttr(kAttrPynativeNextIndex, kernel_node) ||
       !AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, kernel_node)) {
     MS_LOG(EXCEPTION) << "The node [" << kernel_node->DebugString() << "] attr of " << kAttrPynativeNextIndex << " or "
-                      << kAttrPynativeNextOpName << " has been not setted yet!";
+                      << kAttrPynativeNextOpName << " has been not setted yet!"
+                      << " trace: " << trace::DumpSourceLines(kernel_node);
   }
   auto next_index = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPynativeNextIndex);
   auto next_op_name = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrPynativeNextOpName);
@@ -332,7 +333,7 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
   }
   if (iter->second.size() < next_index) {
     MS_LOG(EXCEPTION) << "Next input index " << next_index << "is out of range in the next op map max size is "
-                      << iter->second.size();
+                      << iter->second.size() << " trace: " << trace::DumpSourceLines(kernel_node);
   }
   if (AnfAlgo::GetCNodeName(kernel_node) != prim::kPrimCast->name()) {
     MS_LOG(INFO) << "Only supported to change the node Cast's build info!!!";
@@ -469,7 +470,8 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
       MS_LOG(WARNING) << " <<<";
       MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
                               << "] cannot find valid kernel info, not supported the type:" << buffer.str()
-                              << ", please refer to the supported dtypes in candidates kernel info list";
+                              << ", please refer to the supported dtypes in candidates kernel info list."
+                              << " trace: " << trace::DumpSourceLines(kernel_node);
     }
   }
   return select_status;

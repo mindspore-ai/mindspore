@@ -21,7 +21,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "frontend/optimizer/opt.h"
 #include "backend/optimizer/ascend/ascend_helper.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
 namespace {
@@ -61,7 +61,8 @@ void DealControlForGetitem(const CNodePtr &tuple_getitem, const FuncGraphPtr &gr
   auto &node_users = manager->node_users();
   auto iter = node_users.find(tuple_getitem);
   if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager";
+    MS_LOG(EXCEPTION) << "node has no output in manager"
+                      << " trace: " << trace::DumpSourceLines(hccl_node);
   }
   for (const auto &node_index : iter->second) {
     AnfNodePtr output = node_index.first;
@@ -81,7 +82,8 @@ void TransferControl(const CNodePtr &hccl_node, const std::vector<AnfNodePtr> &m
   auto &node_users = manager->node_users();
   auto iter = node_users.find(hccl_node);
   if (iter == node_users.end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager";
+    MS_LOG(EXCEPTION) << "node has no output in manager"
+                      << " trace: " << trace::DumpSourceLines(hccl_node);
   }
   // find hccl_node's output which is a control depend
   for (const auto &node_index : iter->second) {
@@ -140,7 +142,8 @@ bool InsertMemcpyAsyncForHcclOp::NeedInsertMemcpy(const FuncGraphPtr &graph, con
     // when input is used by others
     auto iter = node_users.find(input);
     if (iter == node_users.end()) {
-      MS_LOG(EXCEPTION) << "node has no output in manager";
+      MS_LOG(EXCEPTION) << "node has no output in manager"
+                        << " trace: " << trace::DumpSourceLines(input);
     }
     if (IsNodeOutPutUsedByOtherRealKernel(iter->second)) {
       return true;

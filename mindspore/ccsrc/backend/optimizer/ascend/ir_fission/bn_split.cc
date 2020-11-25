@@ -23,6 +23,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -64,10 +65,12 @@ AnfNodePtr CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, const CNod
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (bn_cnode->inputs().size() != kBnInputNum) {
-    MS_LOG(EXCEPTION) << "BN node has wrong input size";
+    MS_LOG(EXCEPTION) << "BN node has wrong input size"
+                      << " trace: " << trace::DumpSourceLines(bn_cnode);
   }
   if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
-    MS_LOG(EXCEPTION) << "BN1 outputs has wrong input size";
+    MS_LOG(EXCEPTION) << "BN1 outputs has wrong input size"
+                      << " trace: " << trace::DumpSourceLines(bn_cnode);
   }
   // the inputs of BNTrainingUpdate are from the outputs of BNTrainingReduce and the inputs of BN
   std::vector<AnfNodePtr> bn_training_update_inputs = {
@@ -110,7 +113,8 @@ AnfNodePtr SplitFusedBatchNormForTBE(const FuncGraphPtr &func_graph, const AnfNo
     return nullptr;
   }
   if (bn_training_reduce_outputs.size() != kBN1OutputNum) {
-    MS_LOG(EXCEPTION) << "make outputs of op BNTrainingReduce fail";
+    MS_LOG(EXCEPTION) << "make outputs of op BNTrainingReduce fail"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
 
   // Create BNTrainingUpdate node

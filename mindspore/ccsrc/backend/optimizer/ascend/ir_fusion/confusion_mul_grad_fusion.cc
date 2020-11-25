@@ -24,7 +24,7 @@
 #include "utils/utils.h"
 #include "abstract/abstract_value.h"
 #include "backend/optimizer/common/helper.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
 namespace {
@@ -58,7 +58,8 @@ AnfNodePtr GetMul0(const FuncGraphPtr &graph, const AnfNodePtr &input2, const An
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   if (manager->node_users().find(input2) == manager->node_users().end()) {
-    MS_LOG(EXCEPTION) << "node has no output in manager";
+    MS_LOG(EXCEPTION) << "node has no output in manager"
+                      << " trace: " << trace::DumpSourceLines(input2);
   }
 
   AnfNodePtr mul0 = nullptr;

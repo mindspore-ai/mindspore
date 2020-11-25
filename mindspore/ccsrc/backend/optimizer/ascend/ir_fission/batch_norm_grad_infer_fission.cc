@@ -17,6 +17,7 @@
 #include <vector>
 #include "backend/optimizer/common/helper.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -61,15 +62,18 @@ AnfNodePtr BatchNormGradInferFission::CreateBNInferGrad(const FuncGraphPtr &func
   // Set inputs
   auto iter_input0 = (*equiv).find(input0_var_);
   if (iter_input0 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input0 var after matched.";
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input0 var after matched."
+                      << " trace: " << trace::DumpSourceLines(bn_grad);
   }
   auto iter_input2 = (*equiv).find(input2_var_);
   if (iter_input2 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input2 var after matched.";
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input2 var after matched."
+                      << " trace: " << trace::DumpSourceLines(bn_grad);
   }
   auto iter_input4 = (*equiv).find(input4_var_);
   if (iter_input4 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input4 var after matched.";
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input4 var after matched."
+                      << " trace: " << trace::DumpSourceLines(bn_grad);
   }
   std::vector<AnfNodePtr> bn_infer_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNInferGradOpName)), utils::cast<AnfNodePtr>(iter_input0->second),
@@ -80,7 +84,8 @@ AnfNodePtr BatchNormGradInferFission::CreateBNInferGrad(const FuncGraphPtr &func
   auto bn_grad_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn_grad->abstract());
   MS_EXCEPTION_IF_NULL(bn_grad_abstract_tuple);
   if (bn_grad_abstract_tuple->elements().empty()) {
-    MS_LOG(EXCEPTION) << "The abstract tuple of node " << bn_grad->DebugString() << "should not be empty";
+    MS_LOG(EXCEPTION) << "The abstract tuple of node " << bn_grad->DebugString() << "should not be empty"
+                      << " trace: " << trace::DumpSourceLines(bn_grad);
   }
   bn_infer_grad->set_abstract(bn_grad_abstract_tuple->elements()[0]);
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad, bn_infer_grad);
@@ -97,19 +102,23 @@ AnfNodePtr BatchNormGradInferFission::CreateBNTrainingUpdateGrad(const FuncGraph
   // Set inputs
   auto iter_input0 = (*equiv).find(input0_var_);
   if (iter_input0 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input0 var after matched.";
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input0 var after matched."
+                      << " trace: " << trace::DumpSourceLines(bn_grad);
   }
   auto iter_input1 = (*equiv).find(input1_var_);
   if (iter_input1 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input1 var after matched.";
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input1 var after matched."
+                      << " trace: " << trace::DumpSourceLines(bn_grad);
   }
   auto iter_input3 = (*equiv).find(input3_var_);
   if (iter_input3 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input3 var after matched.";
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input3 var after matched."
+                      << " trace: " << trace::DumpSourceLines(bn_grad);
   }
   auto iter_input4 = (*equiv).find(input4_var_);
   if (iter_input4 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input4 var after matched.";
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input4 var after matched."
+                      << " trace: " << trace::DumpSourceLines(bn_grad);
   }
   std::vector<AnfNodePtr> bn_training_update_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateGradOpName)),
@@ -121,7 +130,8 @@ AnfNodePtr BatchNormGradInferFission::CreateBNTrainingUpdateGrad(const FuncGraph
   auto bn_grad_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn_grad->abstract());
   MS_EXCEPTION_IF_NULL(bn_grad_abstract_tuple);
   if (bn_grad_abstract_tuple->elements().size() < kBatchNormGradInferOutputNum) {
-    MS_LOG(EXCEPTION) << "The abstract tuple of node " << bn_grad->DebugString() << "should not be less than 3";
+    MS_LOG(EXCEPTION) << "The abstract tuple of node " << bn_grad->DebugString() << "should not be less than 3"
+                      << trace::DumpSourceLines(bn_grad);
   }
   std::vector<AbstractBasePtr> abstract_list{bn_grad_abstract_tuple->elements()[1],
                                              bn_grad_abstract_tuple->elements()[2]};
@@ -160,7 +170,8 @@ const AnfNodePtr BatchNormGradInferFission::Process(const FuncGraphPtr &func_gra
                                  &bn_training_update_grad_outputs);
   if (bn_training_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
     MS_LOG(EXCEPTION) << "The output size of " << bn_training_update_grad << " should be "
-                      << kBNTrainingUpdateGradOutputNum << ", but it is " << bn_training_update_grad_outputs.size();
+                      << kBNTrainingUpdateGradOutputNum << ", but it is " << bn_training_update_grad_outputs.size()
+                      << trace::DumpSourceLines(node);
   }
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_infer_grad,
                                                bn_training_update_grad_outputs[0], bn_training_update_grad_outputs[1]};

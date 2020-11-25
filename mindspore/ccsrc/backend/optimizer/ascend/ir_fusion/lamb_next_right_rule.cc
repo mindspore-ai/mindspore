@@ -16,7 +16,7 @@
 #include "backend/optimizer/ascend/ir_fusion/lamb_next_right_rule.h"
 #include <vector>
 #include "backend/optimizer/common/helper.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
 AnfNodePtr LambNextRightRule::CreateLambNextRightNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const {
@@ -69,7 +69,8 @@ const AnfNodePtr LambNextRightRule::Process(const FuncGraphPtr &func_graph, cons
   // Set abstract of new node
   auto iter_add1 = (*equiv).find(add1_var_);
   if (iter_add1 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add1 var after matched.";
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add1 var after matched."
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   auto add1 = utils::cast<AnfNodePtr>(iter_add1->second);
   MS_EXCEPTION_IF_NULL(add1);

@@ -22,6 +22,7 @@
 #include "runtime/device/kernel_info.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -98,14 +99,16 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
   std::vector<AnfNodePtr> layer_norm_x_backprop_outputs;
   CreateOutputsOfLayerNormXBackprop(graph, cnode, &layer_norm_x_backprop_outputs);
   if (layer_norm_x_backprop_outputs.size() != kSingleOutputNum) {
-    MS_LOG(EXCEPTION) << "layer_norm_grad_outputs has wrong size";
+    MS_LOG(EXCEPTION) << "layer_norm_grad_outputs has wrong size"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
 
   // create layer_norm_beta_gamma_backprop
   std::vector<AnfNodePtr> layer_norm_beta_gamma_backprop_outputs;
   CreateOutputsOfLayerNormBetaGammaBackprop(graph, cnode, &layer_norm_beta_gamma_backprop_outputs);
   if (layer_norm_beta_gamma_backprop_outputs.size() != kLayerNormBetaGammaBackpropOutputNum) {
-    MS_LOG(EXCEPTION) << "layer_norm_beta_gamma_outputs has wrong size";
+    MS_LOG(EXCEPTION) << "layer_norm_beta_gamma_outputs has wrong size"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), layer_norm_x_backprop_outputs[0],

@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
 using common::SafeCStr;
@@ -36,7 +36,7 @@ void GetOutputCastNodes(const FuncGraphPtr &func_graph, const AnfNodePtr &node, 
     MS_EXCEPTION_IF_NULL(output_cnode);
     if (AnfAlgo::GetCNodeName(output_cnode) != prim::kPrimTupleGetItem->name()) {
       MS_LOG(EXCEPTION) << "The output of node " << node->DebugString() << " should be "
-                        << prim::kPrimTupleGetItem->name();
+                        << prim::kPrimTupleGetItem->name() << " trace: " << trace::DumpSourceLines(node);
     }
     if (manager->node_users().find(output) == manager->node_users().end() ||
         manager->node_users()[output].size() != 1) {
@@ -149,11 +149,13 @@ const AnfNodePtr LayerNormBetaGammaBackpropFusion::Process(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(cast_nodes[0]);
   MS_EXCEPTION_IF_NULL(cast_nodes[1]);
   if (cast_nodes[0]->inputs().size() != kCastInputNum) {
-    MS_LOG(EXCEPTION) << "The cast0 " << cast_nodes[0]->DebugString() << " input size should be " << kCastInputNum;
+    MS_LOG(EXCEPTION) << "The cast0 " << cast_nodes[0]->DebugString() << " input size should be " << kCastInputNum
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   (void)manager->Replace(cast_nodes[0], cast_nodes[0]->input(1));
   if (cast_nodes[1]->inputs().size() != kCastInputNum) {
-    MS_LOG(EXCEPTION) << "The cast1 " << cast_nodes[1]->DebugString() << " input size should be " << kCastInputNum;
+    MS_LOG(EXCEPTION) << "The cast1 " << cast_nodes[1]->DebugString() << " input size should be " << kCastInputNum
+                      << " trace: " << trace::DumpSourceLines(node);
   }
   (void)manager->Replace(cast_nodes[1], cast_nodes[1]->input(1));
   return nullptr;

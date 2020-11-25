@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,7 +36,7 @@ CNodePtr CreateBaseSplitVNode(const FuncGraphPtr &func_graph, const CNodePtr &or
   MS_EXCEPTION_IF_NULL(origin_cnode);
   if (origin_cnode->inputs().size() < kSplitInputNum) {
     MS_LOG(EXCEPTION) << "The input number of split: " << origin_cnode->DebugString() << " should be "
-                      << kSplitInputNum - 1;
+                      << kSplitInputNum - 1 << " trace: " << trace::DumpSourceLines(origin_cnode);
   }
   return CreateSplitVNode(func_graph, origin_cnode->input(1));
 }

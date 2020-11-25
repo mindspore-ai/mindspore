@@ -23,6 +23,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -33,7 +34,8 @@ void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   MS_EXCEPTION_IF_NULL(bn_grad_node);
   const auto &bn_grad_inputs = bn_grad_node->inputs();
   if (bn_grad_inputs.size() < kBNGradInputNum) {
-    MS_LOG(EXCEPTION) << "BNGrad has wrong inputs size";
+    MS_LOG(EXCEPTION) << "BNGrad has wrong inputs size."
+                      << " trace: " << trace::DumpSourceLines(bn_grad_node);
   }
   std::vector<AnfNodePtr> bn_update_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateGradOpName)), bn_grad_inputs[1], bn_grad_inputs[2],
@@ -59,10 +61,12 @@ void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   MS_EXCEPTION_IF_NULL(bn_reduce_grad_outputs);
   const auto &bn_grad_inputs = bn_grad_node->inputs();
   if (bn_grad_inputs.size() < kBNGradInputNum) {
-    MS_LOG(EXCEPTION) << "BNGrad has wrong inputs size";
+    MS_LOG(EXCEPTION) << "BNGrad has wrong inputs size"
+                      << " trace: " << trace::DumpSourceLines(bn_grad_node);
   }
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
-    MS_LOG(EXCEPTION) << "BNTrainingReduceGrad_outputs has wrong size";
+    MS_LOG(EXCEPTION) << "BNTrainingReduceGrad_outputs has wrong size"
+                      << " trace: " << trace::DumpSourceLines(bn_grad_node);
   }
   std::vector<AnfNodePtr> bn_reduce_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceGradOpName)),
@@ -101,7 +105,8 @@ const AnfNodePtr BatchNormGradSplit::Process(const FuncGraphPtr &func_graph, con
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   if (!primitive->HasAttr(kAttrIsTraining)) {
-    MS_LOG(INFO) << "Op BatchNormGrad must have attrs of is_training";
+    MS_LOG(INFO) << "Op BatchNormGrad must have attrs of is_training"
+                 << " trace: " << trace::DumpSourceLines(node);
     return nullptr;
   }
   if (!AnfAlgo::GetNodeAttr<bool>(cnode, kAttrIsTraining)) {
@@ -112,13 +117,15 @@ const AnfNodePtr BatchNormGradSplit::Process(const FuncGraphPtr &func_graph, con
   std::vector<AnfNodePtr> bn_update_grad_outputs;
   CreateOutputsOfUpdateGrad(func_graph, cnode, &bn_update_grad_outputs);
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
-    MS_LOG(EXCEPTION) << "bn_update_grad_outputs has wrong size";
+    MS_LOG(EXCEPTION) << "bn_update_grad_outputs has wrong size"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> bn_reduce_grad_outputs;
   CreateOutputsOfReduceGrad(func_graph, cnode, bn_update_grad_outputs, &bn_reduce_grad_outputs);
   if (bn_reduce_grad_outputs.size() != kSingleOutputNum) {
-    MS_LOG(EXCEPTION) << "bn_reduce_grad_outputs has wrong size";
+    MS_LOG(EXCEPTION) << "bn_reduce_grad_outputs has wrong size"
+                      << " trace: " << trace::DumpSourceLines(node);
   }
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_reduce_grad_outputs[0],

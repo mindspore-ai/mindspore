@@ -27,7 +27,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
 #include "utils/ms_context.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
@@ -133,7 +133,7 @@ AnfNodePtr InsertTransOpForSingleOutput(const FuncGraphPtr &func_graph, const An
   std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, 0);
   if (output_format == kOpFormat_NC1KHKWHWC0) {
     MS_LOG(EXCEPTION) << "got the hw format " << output_format << "when insert the transdata node "
-                      << node->DebugString();
+                      << node->DebugString() << " trace: " << trace::DumpSourceLines(node);
   }
   if (kCommonFormatSet.find(output_format) == kCommonFormatSet.end() && origin_shape.size() > 1) {
     MS_LOG(DEBUG) << "Inserted Transdata " << output_format << " To default , index :0";
@@ -166,7 +166,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
     std::string output_format = AnfAlgo::GetOutputFormat(node, output_idx);
     if (output_format == kOpFormat_NC1KHKWHWC0) {
       MS_LOG(EXCEPTION) << "Got the special format" << output_format << " when insert the transdata node "
-                        << node->DebugString();
+                        << node->DebugString() << " trace: " << trace::DumpSourceLines(node);
     }
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, output_idx);
     std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);

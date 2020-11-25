@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -47,7 +48,8 @@ AnfNodePtr CreateNewConcat(const FuncGraphPtr &func_graph, const CNodePtr &origi
   }
   auto output_shape = AnfAlgo::GetOutputInferShape(origin_concat_cnode, 0);
   if (axis < 0 || axis >= SizeToLong(output_shape.size()) || axis >= SizeToLong(input_shape.size())) {
-    MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range";
+    MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range"
+                      << " trace: " << trace::DumpSourceLines(origin_concat_cnode);
   }
   output_shape[axis] = input_shape[axis] * offset;
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_concat_cnode, 0)}, {output_shape},

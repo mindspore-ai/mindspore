@@ -18,6 +18,7 @@
 #include <memory>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace opt {
@@ -31,7 +32,7 @@ AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
     MS_LOG(EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
-                      << kBatchNormRealInputNum + 1;
+                      << kBatchNormRealInputNum + 1 << " trace: " << trace::DumpSourceLines(bn);
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), bn_cnode->input(1)};
@@ -56,11 +57,12 @@ AnfNodePtr CreateBNTrainingUpdateV3(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(bn_cnode);
   if (bn_cnode->inputs().size() < kBatchNormRealInputNum + 1) {
     MS_LOG(EXCEPTION) << "The input size of node " + bn_cnode->DebugString() + " is less than "
-                      << kBatchNormRealInputNum + 1;
+                      << kBatchNormRealInputNum + 1 << " trace: " << trace::DumpSourceLines(bn);
   }
   if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
     MS_LOG(EXCEPTION) << "The output size of node bn_training_reduce must be " << kBNTrainingReduceOutputNum
-                      << ", but it is " << bn_training_reduce_outputs.size();
+                      << ", but it is " << bn_training_reduce_outputs.size()
+                      << " trace: " << trace::DumpSourceLines(bn);
   }
   std::vector<AnfNodePtr> bn_training_update_v3_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateV3OpName)),
@@ -76,7 +78,7 @@ AnfNodePtr CreateBNTrainingUpdateV3(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(bn_abstract_tuple);
   if (bn_abstract_tuple->elements().size() != kBatchNormOutputNum) {
     MS_LOG(EXCEPTION) << "The abstract size of node bn must be " << kBatchNormOutputNum << ", but it is "
-                      << bn_abstract_tuple->elements().size();
+                      << bn_abstract_tuple->elements().size() << " trace: " << trace::DumpSourceLines(bn);
   }
   bn_training_update_v3->set_abstract(bn->abstract());
   bn_training_update_v3->set_scope(bn->scope());
