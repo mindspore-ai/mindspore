@@ -105,10 +105,6 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL) &&
-      IsPrimitiveCNode(kernel_node, prim::kPrimBatchMatMul)) {
-    kernel_type = KernelType::AKG_KERNEL;
-  }
 
   switch (kernel_type) {
     case KernelType::AKG_KERNEL:
