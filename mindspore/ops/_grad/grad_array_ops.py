@@ -50,6 +50,26 @@ def get_bprop_fill(self):
     return bprop
 
 
+@bprop_getters.register(P.Ones)
+def get_bprop_ones(self):
+    """Generate bprop for Ones"""
+
+    def bprop(dims, dtype, out, dout):
+        return zeros_like(dims)
+
+    return bprop
+
+
+@bprop_getters.register(P.Zeros)
+def get_bprop_zeros(self):
+    """Generate bprop for Zeros"""
+
+    def bprop(dims, dtype, out, dout):
+        return zeros_like(dims)
+
+    return bprop
+
+
 @bprop_getters.register(P.DType)
 def get_bprop_dtype(self):
     """Generate bprop for DType"""

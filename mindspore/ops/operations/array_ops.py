@@ -937,7 +937,7 @@ class Ones(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-        Only constant positive int is allowed.
+          Only constant positive int is allowed.
         - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
 
     Outputs:
@@ -954,7 +954,7 @@ class Ones(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize Fill"""
+        """Initialize Ones"""
 
     def __infer__(self, dims, dtype):
         if isinstance(dims['value'], int):
@@ -987,7 +987,7 @@ class Zeros(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-        Only constant positive int is allowed.
+          Only constant positive int is allowed.
         - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
 
     Outputs:
@@ -1005,7 +1005,7 @@ class Zeros(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """Initialize Fill"""
+        """Initialize Zeros"""
 
     def __infer__(self, dims, dtype):
         if isinstance(dims['value'], int):
