@@ -148,12 +148,15 @@ ConvDw3x3Int8Horizontal:
             b AddZpLoop
         PerChannelPostLoop:
             sqshl v23.4s, v23.4s, v28.4s
-            sqshl v24.4s, v24.4s, v28.4s
             ld1 {v28.4s}, [x10], #16
             sqrdmulh v23.4s, v23.4s, v27.4s
-            sqrdmulh v24.4s, v24.4s, v27.4s
             ld1 {v27.4s}, [x9], #16
             sqrshl v23.4s, v23.4s, v29.4s
+            ld1 {v29.4s}, [x11], #16
+            sqshl v24.4s, v24.4s, v28.4s
+            ld1 {v28.4s}, [x10], #16
+            sqrdmulh v24.4s, v24.4s, v27.4s
+            ld1 {v27.4s}, [x9], #16
             sqrshl v24.4s, v24.4s, v29.4s
             ld1 {v29.4s}, [x11], #16
 
@@ -209,14 +212,14 @@ ConvDw3x3Int8Horizontal:
             b AddZp
         PerChannelPost:
             sqshl v23.4s, v23.4s, v28.4s
-            sqshl v24.4s, v24.4s, v28.4s
             ld1 {v28.4s}, [x10], #16
             sqrdmulh v23.4s, v23.4s, v27.4s
-            sqrdmulh v24.4s, v24.4s, v27.4s
             ld1 {v27.4s}, [x9], #16
             sqrshl v23.4s, v23.4s, v29.4s
-            sqrshl v24.4s, v24.4s, v29.4s
             ld1 {v29.4s}, [x11], #16
+            sqshl v24.4s, v24.4s, v28.4s
+            sqrdmulh v24.4s, v24.4s, v27.4s
+            sqrshl v24.4s, v24.4s, v29.4s
 
         AddZp:
         add v23.4s, v23.4s, v26.4s
