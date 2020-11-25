@@ -18,27 +18,29 @@ Distributions are the high-level components used to construct the probabilistic 
 
 from .distribution import Distribution
 from .transformed_distribution import TransformedDistribution
-from .normal import Normal
 from .bernoulli import Bernoulli
-from .exponential import Exponential
-from .uniform import Uniform
-from .geometric import Geometric
 from .categorical import Categorical
-from .log_normal import LogNormal
-from .logistic import Logistic
-from .gumbel import Gumbel
 from .cauchy import Cauchy
+from .exponential import Exponential
+from .geometric import Geometric
+from .gumbel import Gumbel
+from .logistic import Logistic
+from .log_normal import LogNormal
+from .normal import Normal
+from .poisson import Poisson
+from .uniform import Uniform
 
 __all__ = ['Distribution',
            'TransformedDistribution',
-           'Normal',
            'Bernoulli',
-           'Exponential',
-           'Uniform',
            'Categorical',
-           'Geometric',
-           'LogNormal',
-           'Logistic',
-           'Gumbel',
            'Cauchy',
+           'Exponential',
+           'Geometric',
+           'Gumbel',
+           'Logistic',
+           'LogNormal',
+           'Normal',
+           'Poisson',
+           'Uniform',
            ]
