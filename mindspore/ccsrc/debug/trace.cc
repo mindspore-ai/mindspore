@@ -73,7 +73,7 @@ std::string GetGraphParamString(const FuncGraphPtr &graph, abstract::AbstractBas
 }
 
 void DumpInferStack(std::ostringstream &oss) {
-  auto &infer_stack = GetCurrenGraphInferStack();
+  auto &infer_stack = GetCurrenGraphEvalStack();
   if (infer_stack.empty()) {
     return;
   }
@@ -104,7 +104,7 @@ void DumpInferStack(std::ostringstream &oss) {
 }
 
 void TraceGraphEval() {
-  auto &infer_stack = GetCurrenGraphInferStack();
+  auto &infer_stack = GetCurrenGraphEvalStack();
   std::ostringstream oss;
   if (infer_stack.empty()) {
     return;
@@ -551,9 +551,10 @@ void TraceEvalCNodeLeave() { cnode_debug_stack.pop_back(); }
 
 std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack() { return cnode_debug_stack; }
 
-std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphInferStack() {
+std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphEvalStack() {
   return graph_infer_stack;
 }
+
 void ClearTraceStack() {
   while (!graph_infer_stack.empty()) {
     graph_infer_stack.pop();

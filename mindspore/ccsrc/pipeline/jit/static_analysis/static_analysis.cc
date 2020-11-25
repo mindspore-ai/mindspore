@@ -30,6 +30,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "debug/trace.h"
+#include "debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace abstract {
@@ -181,6 +182,7 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
     auto value_node = node->cast<ValueNodePtr>();
     eval_result = std::make_shared<EvalResult>(EvalValueNode(value_node, conf), nullptr);
   } else if (node->isa<CNode>()) {
+    CheckNoStackInSameFuncGraph(conf);
     auto cnode = node->cast<CNodePtr>();
     trace::TraceEvalCNodeEnter(conf);
     eval_result = EvalCNode(cnode, conf);
@@ -200,6 +202,44 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
 #endif
   MS_LOG(DEBUG) << "End Eval NodeConfig " << conf->ToString() << ", res: " << eval_result->abstract()->ToString();
   return eval_result;
+}
+
+void AnalysisEngine::CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf) {
+  auto &list = trace::GetCNodeDebugStack();
+  if (list.empty()) {
+    return;
+  }
+  auto &previous_stack = list.back();
+  auto previous_cnode_fg = previous_stack->node()->func_graph();
+  auto current_cnode_fg = conf->node()->func_graph();
+  if (previous_cnode_fg != current_cnode_fg) {  // Normal.
+    return;
+  }
+  if (forward_count_ != 0) {  // Ignore Forward Config.
+    return;
+  }
+  auto &infer_stack = trace::GetCurrenGraphEvalStack();
+  if (infer_stack.empty()) {
+    return;
+  }
+  auto top_evaluator = infer_stack.top().first;
+  if (!top_evaluator->isa<BaseFuncGraphEvaluator>()) {
+    MS_LOG(EXCEPTION) << "Top evaluator is " << top_evaluator->ToString();
+  }
+  auto top_fg_evaluator = dyn_cast<BaseFuncGraphEvaluator>(top_evaluator);
+  auto top_context_fg = top_fg_evaluator->graph_context()->func_graph();
+  if (current_cnode_fg != top_context_fg) {  // Ignore FV call.
+    return;
+  }
+  MS_LOG(ERROR) << "Should not use call stack in the same function: " << top_context_fg->ToString() << ", for "
+                << conf->node()->DebugString(2);
+  for (size_t i = 0; i < list.size(); ++i) {
+    auto old_conf = list[i];
+    MS_LOG(ERROR) << "  #" << i << ": " << old_conf->node()->DebugString(2) << ", in "
+                  << old_conf->context()->func_graph()->ToString();
+  }
+  DumpIR("use_stack_error.ir", conf->node()->func_graph());
+  MS_LOG(EXCEPTION) << "To check above CNode stack and dumped use_stack_error.ir";
 }
 
 AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) {

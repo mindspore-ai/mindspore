@@ -40,7 +40,7 @@ void TraceGraphEvalLeave(const abstract::EvaluatorPtr &eval);
 void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg);
 void TraceEvalCNodeLeave();
 std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack();
-std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphInferStack();
+std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphEvalStack();
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs);
 void ClearTraceStack();
 }  // namespace trace
