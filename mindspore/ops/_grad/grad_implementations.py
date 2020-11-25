@@ -21,6 +21,24 @@ from .grad_base import bprops
 # Unused parameters are placeholders.
 
 
+@bprops.register("MaximumGrad")
+def bprop_maximum_grad_grad(x, y, z, out, dout):
+    """Backpropagator for primitive `MaximumGrad`."""
+    return F.zeros_like(x), F.zeros_like(y), F.zeros_like(z)
+
+
+@bprops.register("MinimumGrad")
+def bprop_minimum_grad_grad(x, y, z, out, dout):
+    """Backpropagator for primitive `MinimumGrad`."""
+    return F.zeros_like(x), F.zeros_like(y), F.zeros_like(z)
+
+
+@bprops.register("ReluGrad")
+def bprop_relu_grad_grad(x, y, out, dout):
+    """Backpropagator for primitive `ReluGrad`."""
+    return F.zeros_like(x), F.zeros_like(y)
+
+
 @bprops.register("scalar_add")
 def bprop_scalar_add(x, y, out, dout):
     """Backpropagator for primitive `scalar_add`."""
