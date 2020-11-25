@@ -29,7 +29,7 @@ namespace mindspore {
 namespace dataset {
 
 LiteMat::LiteMat() {
-  data_ptr_ = 0;
+  data_ptr_ = nullptr;
   elem_size_ = 0;
   width_ = 0;
   height_ = 0;
@@ -38,11 +38,11 @@ LiteMat::LiteMat() {
   dims_ = 0;
   size_ = 0;
   data_type_ = LDataType::UINT8;
-  ref_count_ = 0;
+  ref_count_ = nullptr;
 }
 
 LiteMat::LiteMat(int width, LDataType data_type) {
-  data_ptr_ = 0;
+  data_ptr_ = nullptr;
   elem_size_ = 0;
   width_ = 0;
   height_ = 0;
@@ -50,13 +50,13 @@ LiteMat::LiteMat(int width, LDataType data_type) {
   c_step_ = 0;
   dims_ = 0;
   data_type_ = LDataType::UINT8;
-  ref_count_ = 0;
+  ref_count_ = nullptr;
   size_ = 0;
   Init(width, data_type);
 }
 
 LiteMat::LiteMat(int width, int height, LDataType data_type) {
-  data_ptr_ = 0;
+  data_ptr_ = nullptr;
   elem_size_ = 0;
   width_ = 0;
   height_ = 0;
@@ -64,13 +64,13 @@ LiteMat::LiteMat(int width, int height, LDataType data_type) {
   c_step_ = 0;
   dims_ = 0;
   data_type_ = LDataType::UINT8;
-  ref_count_ = 0;
+  ref_count_ = nullptr;
   size_ = 0;
   Init(width, height, data_type);
 }
 
 LiteMat::LiteMat(int width, int height, void *p_data, LDataType data_type) {
-  data_ptr_ = 0;
+  data_ptr_ = nullptr;
   elem_size_ = 0;
   width_ = 0;
   height_ = 0;
@@ -78,13 +78,13 @@ LiteMat::LiteMat(int width, int height, void *p_data, LDataType data_type) {
   c_step_ = 0;
   dims_ = 0;
   data_type_ = LDataType::UINT8;
-  ref_count_ = 0;
+  ref_count_ = nullptr;
   size_ = 0;
   Init(width, height, p_data, data_type);
 }
 
 LiteMat::LiteMat(int width, int height, int channel, LDataType data_type) {
-  data_ptr_ = 0;
+  data_ptr_ = nullptr;
   elem_size_ = 0;
   width_ = 0;
   height_ = 0;
@@ -92,13 +92,13 @@ LiteMat::LiteMat(int width, int height, int channel, LDataType data_type) {
   c_step_ = 0;
   dims_ = 0;
   data_type_ = LDataType::UINT8;
-  ref_count_ = 0;
+  ref_count_ = nullptr;
   size_ = 0;
   Init(width, height, channel, data_type);
 }
 
 LiteMat::LiteMat(int width, int height, int channel, void *p_data, LDataType data_type) {
-  data_ptr_ = 0;
+  data_ptr_ = nullptr;
   elem_size_ = 0;
   width_ = 0;
   height_ = 0;
@@ -106,7 +106,7 @@ LiteMat::LiteMat(int width, int height, int channel, void *p_data, LDataType dat
   c_step_ = 0;
   dims_ = 0;
   data_type_ = LDataType::UINT8;
-  ref_count_ = 0;
+  ref_count_ = nullptr;
   size_ = 0;
   Init(width, height, channel, p_data, data_type);
 }
