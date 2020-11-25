@@ -245,7 +245,7 @@ class XavierUniform(Initializer):
         self.gain = gain
 
     def _initialize(self, arr):
-        n_in, n_out = _calculate_in_and_out(arr)
+        n_in, n_out = _calculate_fan_in_and_fan_out(arr.shape)
 
         boundary = self.gain * math.sqrt(6.0 / (n_in + n_out))
         data = np.random.uniform(-boundary, boundary, arr.shape)
@@ -259,21 +259,27 @@ class HeUniform(Initializer):
     Initialize the array with He kaiming uniform algorithm, and from a uniform distribution collect samples within
     U[-boundary, boundary] The boundary is defined as :
 
-                    where :math:`boundary = \sqrt{\frac{6}{n_{in}}}`.
-
-    where :math:`n_{in}` is the number of input units in the weight tensor.
+                    where :math:`boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan\_in}}}`.
 
     Args:
-        arr (Array): The array to be assigned.
+        negative_slope (int, float, bool): Default: 0, used when nonlinearity is 'leaky_relu'.
+        mode (str): Default: fan_in.
+        nonlinearity (str): Default: leaky_relu.
 
     Returns:
         Array, assigned array.
     """
+    def __init__(self, negative_slope=0, mode='fan_in', nonlinearity='leaky_relu'):
+        super(HeUniform, self).__init__(negative_slope=negative_slope, mode=mode, nonlinearity=nonlinearity)
+        self.negative_slope = negative_slope
+        self.mode = mode
+        self.nonlinearity = nonlinearity
 
     def _initialize(self, arr):
-        n_in, _ = _calculate_in_and_out(arr)
-
-        boundary = math.sqrt(6.0 / n_in)
+        fan = _calculate_correct_fan(arr.shape, self.mode)
+        gain = _calculate_gain(self.nonlinearity, self.negative_slope)
+        std = gain / math.sqrt(fan)
+        boundary = math.sqrt(3.0) * std
         data = np.random.uniform(-boundary, boundary, arr.shape)
 
         _assignment(arr, data)
