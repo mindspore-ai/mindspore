@@ -25,6 +25,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn.cell import Cell
 from mindspore import nn
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 __all__ = ['LSTM', 'LSTMCell']
@@ -35,6 +36,10 @@ def _create_sequence_length(shape):
     num_step, batch_size, _ = shape
     sequence_length = Tensor(np.ones(batch_size, np.int32) * num_step, mstype.int32)
     return sequence_length
+
+@constexpr
+def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
+    validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
 
 class LSTM(Cell):
     r"""
@@ -230,6 +235,9 @@ class LSTM(Cell):
             x = self.transpose(x, (1, 0, 2))
         h, c = hx
         if self.is_ascend:
+            _check_input_dtype(F.dtype(x), "x", [mstype.float32, mstype.float16], self.cls_name)
+            _check_input_dtype(F.dtype(h), "h", [mstype.float32, mstype.float16], self.cls_name)
+            _check_input_dtype(F.dtype(c), "c", [mstype.float32, mstype.float16], self.cls_name)
             x = self.cast(x, mstype.float16)
             h = self.cast(h, mstype.float16)
             c = self.cast(c, mstype.float16)

@@ -274,45 +274,6 @@ class Dequant(PrimitiveWithInfer):
         return mstype.float16
 
 
-class LinSpace(PrimitiveWithInfer):
-    r"""
-    Generates values in an interval. And return the corresponding interpolation accroding to assist.
-
-    Inputs:
-        - **assist** (Tensor[float32]) - The assist value, With shape of 0-D or 1-D.
-        - **start** (Tensor[float32]) - The start of interval, With shape of 0-D.
-        - **stop** (Tensor[float32]) - The end of interval, With shape of 0-D.
-        - **num** (Tensor[int32]) - ticks number in the interval, the ticks include start and stop value.
-          With shape of 0-D.
-
-    Outputs:
-        Tensor, has the same shape as `assist`.
-
-    Examples:
-        >>> linspace = ops.LinSpace()
-        >>> assist = Tensor([5, 5.5], mindspore.float32)
-        >>> start = Tensor(1, mindspore.float32)
-        >>> stop = Tensor(10, mindspore.float32)
-        >>> num = Tensor(5, mindspore.int32)
-        >>> output = linspace(assist, start, stop, num)
-        >>> print(output)
-        [12.25, 13.375]
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        pass
-
-    def infer_shape(self, assist, start, stop, num):
-        return assist
-
-    def infer_dtype(self, assist, start, stop, num):
-        validator.check_tensor_dtype_valid("num", num, (mstype.int32,), self.name)
-        args = {"assist": assist, "start": start, "stop": stop}
-        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32,), self.name)
-        return assist
-
-
 class MatrixDiag(PrimitiveWithInfer):
     """
     Returns a batched diagonal tensor with a given batched diagonal values.

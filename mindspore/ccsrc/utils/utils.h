@@ -61,6 +61,7 @@ constexpr auto kReduceScatterOpName = "ReduceScatter";
 constexpr auto kHostReduceScatterOpName = "HostReduceScatter";
 constexpr auto kMemCpyAsyncOpName = "memcpy_async";
 constexpr auto kTopKOpName = "TopK";
+constexpr auto kLinSpaceOpName = "LinSpace";
 constexpr auto kExtractImagePatchesOpName = "ExtractImagePatches";
 constexpr auto kBNTrainingReduceOpName = "BNTrainingReduce";
 constexpr auto kBNTrainingUpdateOpName = "BNTrainingUpdate";

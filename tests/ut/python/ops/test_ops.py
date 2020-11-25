@@ -2202,11 +2202,10 @@ test_case_array_ops = [
         'skip': ['backward'],
     }),
     ('LinSpace', {
-        'block': inner.LinSpace(),
-        'desc_inputs': [Tensor([5, 5.5], mstype.float32),
-                        Tensor(1, mstype.float32),
-                        Tensor(10, mstype.float32),
-                        Tensor(5, mstype.int32)],
+        'block': P.LinSpace(),
+        'desc_const': [5],
+        'desc_inputs': [Tensor(1, mstype.float32),
+                        Tensor(10, mstype.float32)],
         'skip': ['backward'],
     }),
     ('MatrixDiag', {

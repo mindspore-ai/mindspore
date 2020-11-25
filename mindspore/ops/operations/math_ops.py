@@ -3942,3 +3942,46 @@ class Eps(PrimitiveWithInfer):
             'dtype': input_x['dtype'],
         }
         return out
+
+
+class LinSpace(PrimitiveWithInfer):
+    r"""
+    Generates values in an interval and returns the corresponding interpolation accroding to assist.
+
+    Inputs:
+        - **start** (Tensor[float32]) - The start of interval, With shape of 0-D.
+        - **stop** (Tensor[float32]) - The end of interval, With shape of 0-D.
+        - **num** (int) - Ticks number in the interval, the ticks include start and stop value.
+
+    Outputs:
+        Tensor, has the same shape as `assist`.
+
+    Examples:
+        >>> linspace = P.LinSpace()
+        >>> start = Tensor(1, mindspore.float32)
+        >>> stop = Tensor(10, mindspore.float32)
+        >>> num = 5
+        >>> output = linspace(start, stop, num)
+        >>> print(output)
+        [ 1.    3.25  5.5   7.75 10.  ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize LinSpace"""
+
+    def __infer__(self, start, stop, num):
+        args = {"start": start['dtype'], "stop": start['dtype']}
+        validator.check_tensors_dtypes_same_and_valid(args, (mstype.float32,), self.name)
+        start_shape = start['shape']
+        stop_shape = stop['shape']
+        validator.check_equal_int(len(start_shape), 0, "rank of start_shape", self.name)
+        validator.check_equal_int(len(stop_shape), 0, "rank of stop_shape", self.name)
+        num_v = num['value']
+        validator.check_value_type('num', num_v, [int], self.name)
+        validator.check_positive_int(num_v, "num", self.name)
+        out_shape = [num_v]
+        out = {'shape': out_shape,
+               'dtype': start['dtype'],
+               'value': None}
+        return out
