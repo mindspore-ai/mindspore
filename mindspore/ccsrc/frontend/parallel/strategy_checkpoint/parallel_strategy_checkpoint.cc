@@ -59,6 +59,7 @@ Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
     MS_LOG(ERROR) << "Load strategy file failed";
     return FAILED;
   }
+  input.close();
   size_t node_num = LongToSize(parallel_strategy_map.parallel_strategy_item_size());
   for (size_t i = 0; i < node_num; i++) {
     straspb::ParallelStrategyItem parallel_strategy_item = parallel_strategy_map.parallel_strategy_item(SizeToLong(i));
@@ -137,6 +138,7 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
     MS_LOG(ERROR) << "Save strategy file failed";
     return FAILED;
   }
+  output.close();
   return SUCCESS;
 }
 }  // namespace parallel
