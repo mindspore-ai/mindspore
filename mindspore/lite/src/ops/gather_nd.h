@@ -32,13 +32,10 @@ class GatherNd : public PrimitiveC {
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(GatherNd, PrimitiveC);
   explicit GatherNd(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  void SetBatchDims(int batch_dims);
-
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-  int GetBatchDims() const;
 };
 }  // namespace lite
 }  // namespace mindspore

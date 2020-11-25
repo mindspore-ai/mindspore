@@ -21,7 +21,6 @@
 
 typedef struct GatherNdParameter {
   OpParameter op_parameter_;
-  int batchDims_;
 } GatherNdParameter;
 
 #ifdef __cplusplus

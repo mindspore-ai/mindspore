@@ -822,7 +822,6 @@ table Gather {
 }
 
 table GatherNd {
-    batchDims: int;
 }
 
 table Fill {

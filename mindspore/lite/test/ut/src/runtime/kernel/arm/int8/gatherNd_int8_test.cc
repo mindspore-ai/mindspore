@@ -37,7 +37,6 @@ TEST_F(TestGatherNdInt8, GatherNdTest) {
 
   GatherNdParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_GatherNd;
-  op_param.batchDims_ = 1;
   std::vector<int> shape = {1, 2, 2, 5};
   std::vector<int> out_shape = {1, 3, 5};
 

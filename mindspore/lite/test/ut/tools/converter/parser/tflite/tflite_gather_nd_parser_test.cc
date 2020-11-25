@@ -33,8 +33,6 @@ TEST_F(TestTfliteParserGatherNd, OpType) {
 
 TEST_F(TestTfliteParserGatherNd, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsGatherNd(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsGatherNd();
-  ASSERT_EQ(val->batchDims, 0);
 }
 
 }  // namespace mindspore
