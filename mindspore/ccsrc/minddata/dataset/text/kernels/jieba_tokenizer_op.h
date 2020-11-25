@@ -20,13 +20,12 @@
 #include <memory>
 
 #include "cppjieba/Jieba.hpp"
+#include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
-enum class JiebaMode { kMix = 0, kMp = 1, kHmm = 2 };
 
 class JiebaTokenizerOp : public TensorOp {
  public:

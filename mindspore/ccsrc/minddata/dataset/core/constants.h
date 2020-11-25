@@ -50,6 +50,15 @@ enum class ImageFormat { HWC = 0, CHW = 1, HW = 2 };
 // Possible interpolation modes
 enum class InterpolationMode { kLinear = 0, kNearestNeighbour = 1, kCubic = 2, kArea = 3 };
 
+// Possible JiebaMode modes
+enum class JiebaMode { kMix = 0, kMp = 1, kHmm = 2 };
+
+// Possible values for SPieceTokenizerOutType
+enum class SPieceTokenizerOutType { kString = 0, kInt = 1 };
+
+// Possible values for SPieceTokenizerLoadType
+enum class SPieceTokenizerLoadType { kFile = 0, kModel = 1 };
+
 // convenience functions for 32bit int bitmask
 inline bool BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
 
