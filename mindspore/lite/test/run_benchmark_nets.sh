@@ -164,7 +164,37 @@ function Run_Converter() {
         else
             converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
-    done < ${models_fp16_config}
+    done < ${models_onnx_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
+        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
+        if [ $? = 0 ]; then
+            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_caffe_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
+        cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
+        if [ $? = 0 ]; then
+            converter_result='converter fp16 '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter fp16 '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_tflite_fp16_config}
 
     # Convert tflite weightquant models:
     while read line; do
@@ -951,11 +981,22 @@ function Run_arm64() {
         else
             run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
+    done < ${models_onnx_fp16_config}
 
-        # run benchmark test without clib data
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
+        echo "---------------------------------------------------------" >> "${run_arm64_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
+
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-        echo './benchmark --modelFile='${model_name}'.fp16.ms --warmUpLoopCount=1 --loopCount=2 --enableFp16=true' >> adb_run_cmd.txt
+        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+
         cat adb_run_cmd.txt >> "${run_arm64_log_file}"
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
@@ -963,7 +1004,30 @@ function Run_arm64() {
         else
             run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-    done < ${models_fp16_config}
+    done < ${models_caffe_fp16_config}
+
+    while read line; do
+        fp16_line_info=${line}
+        if [[ $fp16_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
+        echo "---------------------------------------------------------" >> "${run_arm64_log_file}"
+        echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
+
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
+        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+
+        cat adb_run_cmd.txt >> "${run_arm64_log_file}"
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_tflite_fp16_config}
 
     # Run tflite aware training quantization converted models:
     while read line; do
@@ -1302,7 +1366,9 @@ models_tflite_posttraining_config=${basepath}/models_tflite_posttraining.cfg
 models_caffe_posttraining_config=${basepath}/models_caffe_posttraining.cfg
 models_tflite_weightquant_config=${basepath}/models_tflite_weightquant.cfg
 models_onnx_config=${basepath}/models_onnx.cfg
-models_fp16_config=${basepath}/models_fp16.cfg
+models_onnx_fp16_config=${basepath}/models_onnx_fp16.cfg
+models_caffe_fp16_config=${basepath}/models_caffe_fp16.cfg
+models_tflite_fp16_config=${basepath}/models_tflite_fp16.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
 models_mindspore_train_config=${basepath}/models_mindspore_train.cfg
 models_mindspore_mixbit_config=${basepath}/models_mindspore_mixbit.cfg
