@@ -668,7 +668,11 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   if (!mock) {
     // collect weights and bias for dump mode
     debugger_->LoadParametersAndConst();
-    CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+      CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
+    }
   }
   ClearSwapInfo(mock);
   return true;
