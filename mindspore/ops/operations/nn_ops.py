@@ -2157,9 +2157,7 @@ class L2Loss(PrimitiveWithInfer):
     Set `input_x` as x and output as loss.
 
     .. math::
-        loss = sum(x ** 2) / nelement(x)
-
-    :math:`nelement(x)` represents the number of `input_x`.
+        loss = sum(x ** 2) / 2
 
     Inputs:
         - **input_x** (Tensor) - A input Tensor. Data type must be float16 or float32.
@@ -2168,7 +2166,7 @@ class L2Loss(PrimitiveWithInfer):
         Tensor, has the same dtype as `input_x`. The output tensor is the value of loss which is a scalar tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
