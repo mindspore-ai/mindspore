@@ -112,6 +112,7 @@ STATUS ConvertNcTensor2Nh(TensorT *tensor, const std::vector<int> &pad_dims) {
   delete[] new_nhwc_data;
   return RET_OK;
 }
+
 STATUS GlobalFormatTransformPass::TransWeightToNhwc(MetaGraphT *graph, const std::set<size_t> &pre_not_trans_nodes) {
   MS_ASSERT(graph != nullptr);
   if (pre_not_trans_nodes.empty()) {
@@ -185,7 +186,8 @@ STATUS GlobalFormatTransformPass::FindPreNh2NcNodes(MetaGraphT *graph, size_t nc
         }
         // todo multi output,other edge need insert nh2nc node
         auto pre_node_output_indexs = GetOutputNodeIdx(*graph, *pre_node);
-        if ((pre_node_output_indexs.size() != 1) && (node_type == schema::PrimitiveType_Activation)) {
+        if ((pre_node_output_indexs.size() != 1) &&
+            (node_type == schema::PrimitiveType_Activation || node_type == schema::PrimitiveType_Concat)) {
           pre_nh2nc_nodes->clear();
           pre_not_trans_nodes->clear();
           return RET_OK;

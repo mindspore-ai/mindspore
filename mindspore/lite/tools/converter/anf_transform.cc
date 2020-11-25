@@ -35,6 +35,7 @@
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
 #include "tools/optimizer/graph/tflite_inputs_order_exchange_pass.h"
+#include "tools/optimizer/graph/update_conv2d_param_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
@@ -63,6 +64,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   // fusion const_fold
   auto cf_pm = std::make_shared<opt::PassManager>("constant folding pass manager", false);
   cf_pm->AddPass(std::make_shared<opt::ConstFoldPass>());
+  cf_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
 
   // for now - trainning is not supporting fuse operations
   if (!config->trainModel) {
@@ -78,11 +80,11 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
                                                             schema::ActivationType_RELU));
     pm->AddPass(std::make_shared<opt::ConvActivationFusion>(true, "conv_relu6", schema::PrimitiveType_Activation,
                                                             schema::ActivationType_RELU6));
-    pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
     pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(
       true, "conv_tuple_relu", schema::PrimitiveType_Activation, schema::ActivationType_RELU));
     pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>(
       true, "conv_tuple_relu6", schema::PrimitiveType_Activation, schema::ActivationType_RELU6));
+    pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
   }
   auto weight_format_hardcode_pass = std::make_shared<opt::WeightFormatHardCodePass>();
   weight_format_hardcode_pass->SetFmkType(config->fmk);
