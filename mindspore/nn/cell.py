@@ -401,6 +401,8 @@ class Cell(Cell_):
             if self._auto_prefix:
                 value.update_parameters_name(name + '.')
             cells[name] = value
+            if hasattr(self, '_cell_init_args'):
+                self.cell_init_args += str({name: value})
         elif params and name in params:
             if isinstance(value, Tensor) and self._params[name] is not None:
                 self._params[name].set_data(value)
