@@ -637,7 +637,7 @@ STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, 
     *filterK = oriDims.at(lite::CKHW_K);
     *filterH = oriDims.at(lite::CKHW_H);
     *filterW = oriDims.at(lite::CKHW_W);
-  } else if (type == kHWCK2KCHW || type == kHWCK2CKHW) {
+  } else if (type == kHWCK2KCHW || type == kHWCK2CKHW || type == kHWCK2KHWC) {
     *filterH = oriDims.at(lite::HWCK_H);
     *filterW = oriDims.at(lite::HWCK_W);
     *filterC = oriDims.at(lite::HWCK_C);
@@ -975,6 +975,20 @@ STATUS TransFilterFormat(const ParamValueLitePtr &tensor, schema::Format dst_for
             status = TransFilterFormat<int8_t>(tensor, kCHWK2KHWC);
           } else if (data_type == kNumberTypeFloat16) {
             status = TransFilterFormat<float16>(tensor, kCHWK2KHWC);
+          } else {
+            MS_LOG(ERROR) << "Unsupported data_type: " << data_type;
+            return RET_ERROR;
+          }
+          break;
+        case schema::Format::Format_HWCK:
+          if (data_type == kNumberTypeFloat32) {
+            status = TransFilterFormat<float>(tensor, kHWCK2KHWC);
+          } else if (data_type == kNumberTypeUInt8) {
+            status = TransFilterFormat<uint8_t>(tensor, kHWCK2KHWC);
+          } else if (data_type == kNumberTypeInt8) {
+            status = TransFilterFormat<int8_t>(tensor, kHWCK2KHWC);
+          } else if (data_type == kNumberTypeFloat16) {
+            status = TransFilterFormat<float16>(tensor, kHWCK2KHWC);
           } else {
             MS_LOG(ERROR) << "Unsupported data_type: " << data_type;
             return RET_ERROR;

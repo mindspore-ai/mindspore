@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/tf/tf_node_parser.h"
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_PACK_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_PACK_PARSER_H_
 #include <string>
+#include <memory>
+#include <map>
 #include <vector>
+#include "tools/converter/parser/tf/tf_node_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFNodeParser::AddOpInput(const tensorflow::NodeDef &tf_op, const int idx, std::vector<std::string> *inputs) {
-  if (tf_op.input_size() <= idx) {
-    MS_LOG(ERROR) << "input idx is greater than op input size";
-    return RET_PARAM_INVALID;
-  }
-  inputs->push_back(tf_op.input(idx));
-  return RET_OK;
-}
+class TFPackParser : public TFNodeParser {
+ public:
+  TFPackParser() = default;
+  ~TFPackParser() override = default;
+
+  STATUS Parse(const tensorflow::NodeDef &tf_op, const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+               PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) override;
+};
 }  // namespace lite
 }  // namespace mindspore
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_PACK_PARSER_H_

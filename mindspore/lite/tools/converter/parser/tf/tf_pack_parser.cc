@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/tf/tf_activation_parser.h"
+#include "tools/converter/parser/tf/tf_pack_parser.h"
 #include <string>
 #include <memory>
 #include <map>
@@ -22,10 +22,10 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
-                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                 PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF ActivationParser";
+STATUS TFPackParser::Parse(const tensorflow::NodeDef &tf_op,
+                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
+                           std::vector<std::string> *inputs, int *output_size) {
+  MS_LOG(INFO) << "TF PackParser";
   if (primitiveC == nullptr || output_size == nullptr) {
     MS_LOG(ERROR) << "primitiveC is nullptr";
     return RET_NULL_PTR;
@@ -33,28 +33,29 @@ STATUS TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
 
   auto primitive = std::make_unique<schema::PrimitiveT>();
   if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
+    MS_LOG(ERROR) << "New PrimitiveT failed";
     return RET_NULL_PTR;
   }
-  auto attr = std::make_unique<schema::ActivationT>();
+  auto attr = std::make_unique<schema::StackT>();
   if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+    MS_LOG(ERROR) << "new attr failed";
     return RET_NULL_PTR;
   }
 
-  if (tf_op.op() == "Relu") {
-    attr->type = schema::ActivationType_RELU;
-  } else if (tf_op.op() == "Relu6") {
-    attr->type = schema::ActivationType_RELU6;
-  } else if (tf_op.op() == "Sigmoid") {
-    attr->type = schema::ActivationType_SIGMOID;
-  } else if (tf_op.op() == "Tanh") {
-    attr->type = schema::ActivationType_TANH;
-  } else {
-    MS_LOG(ERROR) << "unsupported activation type:" << tf_op.op();
+  tensorflow::AttrValue attr_value;
+  if (!TensorFlowUtils::FindAttrValue(tf_op, "axis", &attr_value)) {
+    MS_LOG(ERROR) << "The axis attr should be specified";
+    return RET_ERROR;
   }
+  attr->axis = static_cast<int32_t>(attr_value.i());
 
-  primitive->value.type = schema::PrimitiveType_Activation;
+  if (!TensorFlowUtils::FindAttrValue(tf_op, "N", &attr_value)) {
+    MS_LOG(ERROR) << "The axis attr should be specified";
+    return RET_ERROR;
+  }
+  attr->n = static_cast<int32_t>(attr_value.i());
+
+  primitive->value.type = schema::PrimitiveType_Stack;
   primitive->value.value = attr.release();
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {
@@ -63,12 +64,14 @@ STATUS TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  return status;
+  for (int i = 0; i < tf_op.input_size(); ++i) {
+    auto status = AddOpInput(tf_op, i, inputs);
+    if (status != RET_OK) {
+      return status;
+    }
+  }
+  return RET_OK;
 }
-TFNodeRegistrar g_tfReluParser("Relu", new TFActivationParser());
-TFNodeRegistrar g_tfRelu6Parser("Relu6", new TFActivationParser());
-TFNodeRegistrar g_tfSigmoidParser("Sigmoid", new TFActivationParser());
-TFNodeRegistrar g_tfTanhParser("Tanh", new TFActivationParser());
+TFNodeRegistrar g_tfPackParser("Pack", new TFPackParser());
 }  // namespace lite
 }  // namespace mindspore

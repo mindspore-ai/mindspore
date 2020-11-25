@@ -69,6 +69,54 @@ STATUS TFArithmeticParser::Parse(const tensorflow::NodeDef &tf_op,
     }
     primitive->value.type = schema::PrimitiveType_Div;
     primitive->value.value = attr.release();
+  } else if (tf_op.op() == "Maximum") {
+    auto attr = std::make_unique<schema::MaximumT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_Maximum;
+    primitive->value.value = attr.release();
+  } else if (tf_op.op() == "Minimum") {
+    auto attr = std::make_unique<schema::MinimumT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_Minimum;
+    primitive->value.value = attr.release();
+  } else if (tf_op.op() == "Greater") {
+    auto attr = std::make_unique<schema::GreaterT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_Greater;
+    primitive->value.value = attr.release();
+  } else if (tf_op.op() == "GreaterEqual") {
+    auto attr = std::make_unique<schema::GreaterEqualT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_GreaterEqual;
+    primitive->value.value = attr.release();
+  } else if (tf_op.op() == "Less") {
+    auto attr = std::make_unique<schema::LessT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_Less;
+    primitive->value.value = attr.release();
+  } else if (tf_op.op() == "LessEqual") {
+    auto attr = std::make_unique<schema::LessEqualT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_LessEqual;
+    primitive->value.value = attr.release();
   }
 
   *primitiveC = PrimitiveC::Create(primitive.release());
@@ -86,8 +134,15 @@ STATUS TFArithmeticParser::Parse(const tensorflow::NodeDef &tf_op,
   return status;
 }
 TFNodeRegistrar g_tfAddParser("Add", new TFArithmeticParser());
+TFNodeRegistrar g_tfAddV2Parser("AddV2", new TFArithmeticParser());
 TFNodeRegistrar g_tfSubParser("Sub", new TFArithmeticParser());
 TFNodeRegistrar g_tfMulParser("Mul", new TFArithmeticParser());
 TFNodeRegistrar g_tfDivParser("Div", new TFArithmeticParser());
+TFNodeRegistrar g_tfMaximumParser("Maximum", new TFArithmeticParser());
+TFNodeRegistrar g_tfMinimumParser("Minimum", new TFArithmeticParser());
+TFNodeRegistrar g_tfGreaterParser("Greater", new TFArithmeticParser());
+TFNodeRegistrar g_tfGreaterEqualParser("GreaterEqual", new TFArithmeticParser());
+TFNodeRegistrar g_tfLessParser("Less", new TFArithmeticParser());
+TFNodeRegistrar g_tfLessEqualParser("LessEqual", new TFArithmeticParser());
 }  // namespace lite
 }  // namespace mindspore

@@ -27,22 +27,6 @@
 
 namespace mindspore {
 namespace lite {
-static const std::unordered_map<int, mindspore::TypeId> TF_TYPE_MAP = {
-  {tensorflow::DT_INT8, mindspore::kNumberTypeInt8},      {tensorflow::DT_UINT8, mindspore::kNumberTypeUInt8},
-  {tensorflow::DT_INT16, mindspore::kNumberTypeInt16},    {tensorflow::DT_UINT16, mindspore::kNumberTypeUInt16},
-  {tensorflow::DT_INT32, mindspore::kNumberTypeInt32},    {tensorflow::DT_INT64, mindspore::kNumberTypeInt64},
-  {tensorflow::DT_HALF, mindspore::kNumberTypeFloat16},   {tensorflow::DT_FLOAT, mindspore::kNumberTypeFloat32},
-  {tensorflow::DT_DOUBLE, mindspore::kNumberTypeFloat64}, {tensorflow::DT_COMPLEX64, mindspore::kNumberTypeComplex64},
-  {tensorflow::DT_BOOL, mindspore::kNumberTypeBool}};
-
-TypeId GetTFDataType(const tensorflow::DataType &tf_data_type) {
-  auto iter = TF_TYPE_MAP.find(tf_data_type);
-  if (iter == TF_TYPE_MAP.end()) {
-    MS_LOG(ERROR) << "unsupported TF data type: " << tf_data_type;
-    return kTypeUnknown;
-  }
-  return iter->second;
-}
 
 AnfNodePtr TFModelParser::GetAnfNode(const std::string &name) {
   AnfNodePtr ret = nullptr;
@@ -152,7 +136,7 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
   tensorflow::AttrValue attr_value;
   TypeId type = kNumberTypeFloat32;
   if (TensorFlowUtils::FindAttrValue(node, "dtype", &attr_value)) {
-    type = GetTFDataType(attr_value.type());
+    type = TensorFlowUtils::GetTFDataType(attr_value.type());
   }
   auto type_ptr = TypeIdToType(type);
 
@@ -414,7 +398,7 @@ STATUS TFModelParser::ConvertGraphOutputs() {
     auto cnode = funcGraphPtr->NewCNode(op_inputs);
     cnode->set_fullname_with_scope("return");
     funcGraphPtr->set_return(cnode);
-  } else {
+  } else if (output_nodes.size() == 1) {
     auto return_prim_ptr = GetReturnPrim();
     if (return_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "GetReturnPrim return nullptr";
