@@ -110,11 +110,11 @@ int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
       attr->padMode = schema::PadMode_NOTSET;
     }
 
-    auto kernel_size = CastToInt(prim.GetAttr("ksize"), true);
+    auto kernel_size = CastToInt(prim.GetAttr("ksize"));
     attr->windowH = kernel_size[2];
     attr->windowW = kernel_size[3];
 
-    auto stride = CastToInt(prim.GetAttr("strides"), true);
+    auto stride = CastToInt(prim.GetAttr("strides"));
     attr->strideH = stride[2];
     attr->strideW = stride[3];
     this->primitive_->value.value = attr;

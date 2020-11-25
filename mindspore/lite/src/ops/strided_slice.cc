@@ -74,11 +74,11 @@ int StridedSlice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr
       MS_LOG(ERROR) << "new StridedSlice failed";
       return RET_ERROR;
     }
-    attr->beginMask = CastToInt(prim.GetAttr("begin_mask"), false).front();
-    attr->endMask = CastToInt(prim.GetAttr("end_mask"), false).front();
-    attr->ellipsisMask = CastToInt(prim.GetAttr("ellipsis_mask"), false).front();
-    attr->newAxisMask = CastToInt(prim.GetAttr("new_axis_mask"), false).front();
-    attr->shrinkAxisMask = CastToInt(prim.GetAttr("shrink_axis_mask"), false).front();
+    attr->beginMask = CastToInt(prim.GetAttr("begin_mask")).front();
+    attr->endMask = CastToInt(prim.GetAttr("end_mask")).front();
+    attr->ellipsisMask = CastToInt(prim.GetAttr("ellipsis_mask")).front();
+    attr->newAxisMask = CastToInt(prim.GetAttr("new_axis_mask")).front();
+    attr->shrinkAxisMask = CastToInt(prim.GetAttr("shrink_axis_mask")).front();
     auto inputNodeFirst = inputs[kAnfPopulaterInputNumOne];
     std::vector<int> beginVec;
     GetAttrDataFromInput(inputNodeFirst, &beginVec);

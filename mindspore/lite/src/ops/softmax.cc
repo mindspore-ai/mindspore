@@ -43,7 +43,7 @@ int SoftMax::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    auto prim_axis = CastToInt(prim.GetAttr("axis"), false).front();
+    auto prim_axis = CastToInt(prim.GetAttr("axis")).front();
     attr->axis = prim_axis;
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {

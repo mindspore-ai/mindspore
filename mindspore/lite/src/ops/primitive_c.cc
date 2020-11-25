@@ -181,17 +181,13 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> CastToInt(const ValuePtr value, bool is_vector) {
+std::vector<int> CastToInt(const ValuePtr value) {
   if (value == nullptr) {
     MS_LOG(WARNING) << "valueptr is nullptr.";
     return {};
   }
   std::vector<int> cur_value;
-  if (is_vector) {
-    if (!utils::isa<ValueSequeuePtr>(value)) {
-      MS_LOG(WARNING) << "valueptr is not a sequence, value may be a scalar.";
-      return {};
-    }
+  if (utils::isa<ValueSequeuePtr>(value)) {
     if (value->cast<ValueSequeuePtr>()->value().front()->type()->number_type() == kNumberTypeInt64) {
       auto origin_value = GetValue<std::vector<int64_t>>(value);
       for (size_t index = 0; index < origin_value.size(); ++index) {
@@ -337,7 +333,7 @@ void PrimitiveC::GetAttrDataFromInput(const AnfNodePtr &inputNode, std::vector<i
       for (size_t i = 0; i < tuple->size(); i++) {
         auto elem = tuple->value()[i];
         MS_ASSERT(elem != nullptr);
-        data->emplace_back(CastToInt(elem, false).front());
+        data->emplace_back(CastToInt(elem).front());
       }
     }
   }

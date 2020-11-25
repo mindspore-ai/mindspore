@@ -589,7 +589,7 @@ size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   MS_ASSERT(output_index_value_node != nullptr);
   auto value_node = output_index_value_node->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
-  return IntToSize(lite::CastToInt(value_node->value(), false).front());
+  return IntToSize(lite::CastToInt(value_node->value()).front());
 }
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(const FuncGraphPtr &graph,
                                                                                         const AnfNodePtr &node,

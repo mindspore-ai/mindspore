@@ -56,7 +56,7 @@ int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
       MS_LOG(INFO) << "Tile's attr dims is set to default";
       attr->dims = {1};
     } else {
-      attr->dims = CastToInt(prim.GetAttr("dims"), true);
+      attr->dims = CastToInt(prim.GetAttr("dims"));
     }
     if (inputs.size() == kAnfPopulaterInputNumTwo) {
       auto inputNode = inputs[kAnfPopulaterInputNumOne];
@@ -72,10 +72,10 @@ int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
           for (size_t i = 0; i < valTuplPtr->size(); i++) {
             auto elem = (*valTuplPtr)[i];
             MS_ASSERT(elem != nullptr);
-            attr->multiples.emplace_back(CastToInt(elem, false).front());
+            attr->multiples.emplace_back(CastToInt(elem).front());
           }
         } else {
-          int multiple = CastToInt(value, false).front();
+          int multiple = CastToInt(value).front();
           attr->multiples = {multiple};
         }
       }

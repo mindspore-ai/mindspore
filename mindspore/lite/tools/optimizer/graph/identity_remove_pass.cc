@@ -67,7 +67,7 @@ int RemoveIdentityOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const 
     MS_LOG(ERROR) << "TupleGetItem's input 2 is not valuenode";
     return lite::RET_ERROR;
   }
-  int index = lite::CastToInt(index_vnode->cast<ValueNodePtr>()->value(), false).front();
+  int index = lite::CastToInt(index_vnode->cast<ValueNodePtr>()->value()).front();
   int input_cnode_inputs_size = get_item_input_cnode->inputs().size();
   if ((index + 1) >= input_cnode_inputs_size) {
     MS_LOG(ERROR) << "value node index is out of range.";

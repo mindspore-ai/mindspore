@@ -423,7 +423,7 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
     paramTensor->dataType = typePtr->type_id();
     paramTensor->dims = {1};
     paramTensor->nodeType = schema::NodeType::NodeType_ValueNode;
-    int real_data = CastToInt(value, false).front();
+    int real_data = CastToInt(value).front();
     paramTensor->data.resize(sizeof(int32_t));
     auto ret = memcpy_s(paramTensor->data.data(), sizeof(int32_t), &real_data, sizeof(int32_t));
     if (ret != EOK) {

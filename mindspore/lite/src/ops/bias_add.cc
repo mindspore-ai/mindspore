@@ -51,7 +51,7 @@ int BiasAdd::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
       MS_LOG(INFO) << "BiasAdd's attr axis is set to default";
       attr->axis = {1};
     } else {
-      attr->axis = CastToInt(prim.GetAttr("axis"), true);
+      attr->axis = CastToInt(prim.GetAttr("axis"));
     }
     this->primitive_->value.value = attr;
   }
