@@ -550,7 +550,7 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(ValueError) as info:
         ds.DatasetCache(session_id=1, size=-1, spilling=True)
-    assert "Input is not within the required interval" in str(info.value)
+    assert "Input size must be greater than 0" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size="1", spilling=True)
@@ -564,6 +564,10 @@ def test_cache_map_parameter_check():
         ds.DatasetCache(session_id=1, size=0, spilling="illegal")
     assert "Argument spilling with value illegal is not of type (<class 'bool'>,)" in str(info.value)
 
+    with pytest.raises(TypeError) as err:
+        ds.DatasetCache(session_id=1, size=0, spilling=True, hostname=50052)
+    assert "Argument hostname with value 50052 is not of type (<class 'str'>,)" in str(err.value)
+
     with pytest.raises(RuntimeError) as err:
         ds.DatasetCache(session_id=1, size=0, spilling=True, hostname="illegal")
     assert "Unexpected error. now cache client has to be on the same host with cache server" in str(err.value)
@@ -574,19 +578,19 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=0, spilling=True, port="illegal")
-    assert "incompatible constructor arguments" in str(info.value)
+    assert "Argument port with value illegal is not of type (<class 'int'>,)" in str(info.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=0, spilling=True, port="50052")
-    assert "incompatible constructor arguments" in str(info.value)
+    assert "Argument port with value 50052 is not of type (<class 'int'>,)" in str(info.value)
 
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(ValueError) as err:
         ds.DatasetCache(session_id=1, size=0, spilling=True, port=0)
-    assert "Unexpected error. port must be positive" in str(err.value)
+    assert "Input port is not within the required interval of (1025 to 65535)" in str(err.value)
 
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(ValueError) as err:
         ds.DatasetCache(session_id=1, size=0, spilling=True, port=65536)
-    assert "Unexpected error. illegal port number" in str(err.value)
+    assert "Input port is not within the required interval of (1025 to 65535)" in str(err.value)
 
     with pytest.raises(TypeError) as err:
         ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=True)
