@@ -328,7 +328,11 @@ int MatmulCPUKernel::Run() {
       cur_b_ptr_ = b_ptr_ + i * params_->deep_ * params_->col_;
       cur_c_ptr_ = c_src + i * params_->row_ * params_->col_;
     } else {
+#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
+      cur_a_ptr_ = a_ptr_ + i * params_->row_4_ * params_->deep_;
+#else
       cur_a_ptr_ = a_ptr_ + i * params_->row_12_ * params_->deep_;
+#endif
       cur_b_ptr_ = b_ptr_ + i * params_->deep_ * params_->col_8_;
       cur_c_ptr_ = c_src + i * params_->row_ * params_->col_;
     }
