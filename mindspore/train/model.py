@@ -563,7 +563,6 @@ class Model:
             raise ValueError("The sink_size must be -1 or positive, but got sink_size {}.".format(sink_size))
 
         _device_number_check(self._parallel_mode, self._device_number)
-        _parameter_broadcast_check(self._parallel_mode, self._parameter_broadcast)
 
         self._train(epoch,
                     train_dataset,
