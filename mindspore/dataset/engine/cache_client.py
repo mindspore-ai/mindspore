@@ -18,7 +18,7 @@
 import copy
 from mindspore._c_dataengine import CacheClient
 
-from ..core.validator_helpers import type_check, check_uint32, check_uint64
+from ..core.validator_helpers import type_check, check_uint32, check_uint64, check_positive, check_value
 
 
 class DatasetCache:
@@ -29,8 +29,20 @@ class DatasetCache:
     def __init__(self, session_id=None, size=0, spilling=False, hostname=None, port=None, num_connections=None,
                  prefetch_size=None):
         check_uint32(session_id, "session_id")
-        check_uint64(size, "size")
+        type_check(size, (int,), "size")
+        if size != 0:
+            check_positive(size, "size")
+            check_uint64(size, "size")
         type_check(spilling, (bool,), "spilling")
+        if hostname is not None:
+            type_check(hostname, (str,), "hostname")
+        if port is not None:
+            type_check(port, (int,), "port")
+            check_value(port, (1025, 65535), "port")
+        if num_connections is not None:
+            check_uint32(num_connections, "num_connections")
+        if prefetch_size is not None:
+            check_uint32(prefetch_size, "prefetch_size")
 
         self.session_id = session_id
         self.size = size

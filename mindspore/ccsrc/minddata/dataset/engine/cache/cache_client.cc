@@ -46,8 +46,8 @@ Status CacheClient::Builder::SanityCheck() {
   CHECK_FAIL_RETURN_UNEXPECTED(num_connections_ > 0, "rpc connections must be positive");
   CHECK_FAIL_RETURN_UNEXPECTED(prefetch_size_ > 0, "prefetch size must be positive");
   CHECK_FAIL_RETURN_UNEXPECTED(!hostname_.empty(), "hostname must not be empty");
-  CHECK_FAIL_RETURN_UNEXPECTED(port_ > 0, "port must be positive");
-  CHECK_FAIL_RETURN_UNEXPECTED(port_ <= 65535, "illegal port number");
+  CHECK_FAIL_RETURN_UNEXPECTED(port_ > 1024, "Port must be in range (1025..65535)");
+  CHECK_FAIL_RETURN_UNEXPECTED(port_ <= 65535, "Port must be in range (1025..65535)");
   CHECK_FAIL_RETURN_UNEXPECTED(hostname_ == "127.0.0.1",
                                "now cache client has to be on the same host with cache server");
   return Status::OK();
