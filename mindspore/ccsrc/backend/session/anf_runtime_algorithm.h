@@ -232,6 +232,9 @@ class AnfRuntimeAlgorithm {
   static bool IsNodeDynamicShape(const AnfNodePtr &node);
   static std::vector<size_t> GetInputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index);
   static std::vector<size_t> GetOutputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index);
+  // Find control_depend real input nodes.
+  static void GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *result,
+                                   std::set<AnfNodePtr> *visited);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

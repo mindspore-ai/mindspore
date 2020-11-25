@@ -15,13 +15,14 @@
  */
 #include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
 
-#include <memory>
-#include <string>
 #include <algorithm>
-#include <unordered_set>
 #include <map>
-#include <set>
+#include <memory>
 #include <queue>
+#include <string>
+#include <set>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "frontend/operator/ops.h"
@@ -97,15 +98,29 @@ IncludeType IncludeFusedBasicOpBackward(const AnfNodePtr &cur_node, const AnfNod
 }
 
 bool CheckCircle(const std::set<AnfNodePtr> &fused_op_set, const AnfNodePtr &check_node,
-                 std::set<AnfNodePtr> *cached_unconnected_set, std::vector<AnfNodePtr> *circle_nodes) {
+                 std::set<AnfNodePtr> *cached_unconnected_set, std::vector<AnfNodePtr> *circle_nodes,
+                 const std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> &depend_prior) {
   if (!check_node->isa<CNode>() || !fused_op_set.count(check_node)) {
     return false;
   }
   circle_nodes->clear();
 
+  auto InputEdges = [&depend_prior](CNodePtr cnode) {
+    std::set<AnfNodePtr> edges;
+    auto range = depend_prior.equal_range(cnode);
+    for (auto iter = range.first; iter != range.second; ++iter) {
+      edges.insert(iter->second.first);
+    }
+    auto inputs = cnode->inputs();
+    for (auto input : inputs) {
+      edges.insert(input);
+    }
+    return edges;
+  };
+
   std::set<AnfNodePtr> cached_done_set;
   auto cnode = check_node->cast<CNodePtr>();
-  const auto &inputs = cnode->inputs();
+  const auto &inputs = InputEdges(cnode);
   // there is a input not in fused_op_set, but the input depends on the fused_op_set
   for (auto input : inputs) {
     if (input->isa<CNode>() && !fused_op_set.count(input)) {
@@ -128,7 +143,7 @@ bool CheckCircle(const std::set<AnfNodePtr> &fused_op_set, const AnfNodePtr &che
 
         if (node->isa<CNode>()) {
           auto cnode_ptr = node->cast<CNodePtr>();
-          for (auto it : cnode_ptr->inputs()) {
+          for (auto it : InputEdges(cnode_ptr)) {
             if (it->isa<CNode>()) {
               todos.push_back(it);
             }
@@ -148,7 +163,9 @@ bool CheckCircle(const std::set<AnfNodePtr> &fused_op_set, const AnfNodePtr &che
   return !circle_nodes->empty();
 }
 
-std::vector<AnfNodePtr> RemoveCircle(const std::vector<AnfNodePtr> &fused_op, bool is_backward) {
+std::vector<AnfNodePtr> RemoveCircle(const std::vector<AnfNodePtr> &fused_op,
+                                     const std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> &depend_prior,
+                                     bool is_backward) {
   std::set<AnfNodePtr> cached_unconnected_set;
   std::set<AnfNodePtr> fused_op_set(fused_op.begin(), fused_op.end());
   auto include = [&fused_op_set](const AnfNodePtr &node) {
@@ -161,7 +178,7 @@ std::vector<AnfNodePtr> RemoveCircle(const std::vector<AnfNodePtr> &fused_op, bo
   std::vector<AnfNodePtr> circle_nodes;
   for (auto iter = fused_op.rbegin(); iter != fused_op.rend(); ++iter) {
     circle_nodes.clear();
-    bool has_circle = CheckCircle(fused_op_set, *iter, &cached_unconnected_set, &circle_nodes);
+    bool has_circle = CheckCircle(fused_op_set, *iter, &cached_unconnected_set, &circle_nodes, depend_prior);
     // delete the circle node and the node which depend on the circle node in fused op
     if (has_circle) {
       auto mng = (*iter)->func_graph()->manager();
@@ -294,7 +311,8 @@ void TopoSortForNodeList(std::vector<AnfNodePtr> *lst) {
   lst->assign(res.begin(), res.end());
 }
 
-std::vector<AnfNodePtr> FindFuseCNodes(const CNodePtr &cnode) {
+std::vector<AnfNodePtr> FindFuseCNodes(const CNodePtr &cnode,
+                                       const std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> &dep_pri) {
   auto func_graph = cnode->func_graph();
   auto mng = func_graph->manager();
   // Search fusable nodes according input direction.
@@ -307,7 +325,7 @@ std::vector<AnfNodePtr> FindFuseCNodes(const CNodePtr &cnode) {
 
   used_nodes.insert(used_nodes.end(), user_nodes.begin() + 1, user_nodes.end());
   if (used_nodes.size() > 1) {
-    used_nodes = RemoveCircle(used_nodes);
+    used_nodes = RemoveCircle(used_nodes, dep_pri);
   }
   used_nodes = RemoveWildGetitem(used_nodes);
   TopoSortForNodeList(&used_nodes);
@@ -316,8 +334,18 @@ std::vector<AnfNodePtr> FindFuseCNodes(const CNodePtr &cnode) {
 
 bool FuseCompositeOps(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto mng = kernel_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(kernel_graph, true);
+    kernel_graph->set_manager(mng);
+  }
+  auto todos = TopoSort(kernel_graph->get_return());
+  std::reverse(todos.begin(), todos.end());
+
+  std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> depend_prior;
+  InitDependPrior(todos, &depend_prior);
+
   bool changed = false;
-  auto &todos = kernel_graph->execution_order();
   for (auto iter = todos.cbegin(); iter != todos.cend(); ++iter) {
     auto node = *iter;
     if (!AnfAlgo::IsGraphKernel(node) || !kernel_graph->nodes().contains(node)) {
@@ -333,13 +361,16 @@ bool FuseCompositeOps(const std::shared_ptr<session::KernelGraph> &kernel_graph)
       }
     }
 
-    auto fuse_nodes = FindFuseCNodes(node);
+    auto fuse_nodes = FindFuseCNodes(node->cast<CNodePtr>(), depend_prior);
     if (fuse_nodes.size() <= 1) {
       continue;
     }
     changed = true;
 
-    FuseNodesToSubGraph(fuse_nodes, kernel_graph, "");
+    AnfNodePtr fused_new_node;
+    AnfNodePtrList old_outputs;
+    std::tie(fused_new_node, old_outputs) = FuseNodesToSubGraph(fuse_nodes, kernel_graph, "");
+    ReplaceNewFuseCNodeForDependPrior(&depend_prior, fused_new_node, old_outputs);
   }
   return changed;
 }

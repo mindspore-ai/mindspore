@@ -1417,5 +1417,46 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const A
   }
   return device_shape;
 }
+
+void AnfRuntimeAlgorithm::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *result,
+                                               std::set<AnfNodePtr> *visited) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(result);
+  MS_EXCEPTION_IF_NULL(visited);
+  if (visited->find(anf_node) != visited->end()) {
+    MS_LOG(INFO) << "Node:" << anf_node->fullname_with_scope() << " has alreday been visited";
+    return;
+  }
+  visited->insert(anf_node);
+  if (AnfAlgo::IsRealKernel(anf_node)) {
+    result->emplace_back(anf_node);
+    return;
+  }
+  if (!anf_node->isa<CNode>()) {
+    return;
+  }
+  auto cnode = anf_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->inputs().empty()) {
+    MS_LOG(EXCEPTION) << "Illegal null input of cnode(%s)" << anf_node->DebugString();
+  }
+  auto input0 = cnode->input(0);
+  if (IsPrimitive(input0, prim::kPrimMakeTuple)) {
+    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+      GetAllFatherRealNode(cnode->input(i), result, visited);
+    }
+  } else if (IsPrimitive(input0, prim::kPrimTupleGetItem)) {
+    if (cnode->inputs().size() != kTupleGetItemInputSize) {
+      MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+    }
+    GetAllFatherRealNode(cnode->input(kRealInputNodeIndexInTupleGetItem), result, visited);
+  } else if (IsPrimitive(input0, prim::kPrimDepend)) {
+    if (cnode->inputs().size() != kDependInputSize) {
+      MS_LOG(EXCEPTION) << "Depend node must have 2 inputs!";
+    }
+    GetAllFatherRealNode(cnode->input(kRealInputIndexInDepend), result, visited);
+    GetAllFatherRealNode(cnode->input(kDependAttachNodeIndex), result, visited);
+  }
+}
 }  // namespace session
 }  // namespace mindspore
