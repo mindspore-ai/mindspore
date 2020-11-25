@@ -114,7 +114,11 @@ Status::Status(const StatusCode code, int line_of_code, const char *file_name, c
     ss << "File         : " << file_name << "\n";
   }
   err_msg_ = ss.str();
-  MS_LOG(INFO) << err_msg_;
+  if (code == StatusCode::kUnexpectedError || code == StatusCode::kNetWorkError) {
+    MS_LOG(WARNING) << err_msg_;
+  } else {
+    MS_LOG(INFO) << err_msg_;
+  }
 }
 
 std::ostream &operator<<(std::ostream &os, const Status &s) {
