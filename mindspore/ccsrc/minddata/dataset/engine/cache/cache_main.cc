@@ -44,10 +44,6 @@ ds::Status StartServer(int argc, char **argv) {
     .SetSharedMemorySizeInGB(strtol(argv[4], nullptr, 10))
     .SetMemoryCapRatio(strtof(argv[7], nullptr));
 
-#ifdef USE_GLOG
-  FLAGS_minloglevel = strtol(argv[5], nullptr, 10);
-#endif
-
   auto daemonize_string = argv[6];
   bool daemonize = strcmp(daemonize_string, "true") == 0 || strcmp(daemonize_string, "TRUE") == 0 ||
                    strcmp(daemonize_string, "t") == 0 || strcmp(daemonize_string, "T") == 0;
@@ -63,7 +59,16 @@ ds::Status StartServer(int argc, char **argv) {
   ds::SharedMessage msg;
   if (daemonize) {
 #ifdef USE_GLOG
-    FLAGS_log_dir = "/tmp";
+    // temporary setting log level to WARNING to avoid logging when creating dir
+    FLAGS_minloglevel = google::WARNING;
+    FLAGS_log_dir = ds::DefaultLogDir();
+    // Create cache server default log dir
+    ds::Path log_dir = ds::Path(FLAGS_log_dir);
+    rc = log_dir.CreateDirectories();
+    if (rc.IsError()) {
+      return rc;
+    }
+    FLAGS_minloglevel = strtol(argv[5], nullptr, 10);
     google::InitGoogleLogging(argv[0]);
 #endif
     rc = msg.Create();
@@ -88,8 +93,12 @@ ds::Status StartServer(int argc, char **argv) {
       if (child_rc.IsError()) {
         return child_rc;
       }
-      std::cerr << "cache server daemon has been created as process id " << pid << " and listening on port " << port
-                << "\nCheck log file for any start up error" << std::endl;
+      std::cout << "Cache server startup completed successfully!\n";
+      std::cout << "The cache server daemon has been created as process id " << pid << " and listening on port " << port
+                << std::endl;
+      std::cout << "\nRecommendation:\nSince the server is detached into its own daemon process, monitor the server "
+                   "logs (under "
+                << ds::DefaultLogDir() << ") for any issues that may happen after startup\n";
       signal(SIGCHLD, SIG_IGN);  // ignore sig child signal.
       return ds::Status::OK();
     } else {
@@ -109,6 +118,7 @@ ds::Status StartServer(int argc, char **argv) {
   }
 
   // Dump the summary
+  MS_LOG(INFO) << "Logging services started with log level: " << argv[5];
   MS_LOG(INFO) << builder << std::endl;
   // Create the instance with some sanity checks built in
   rc = builder.Build();

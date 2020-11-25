@@ -25,6 +25,7 @@ CacheClientGreeter::CacheClientGreeter(const std::string &hostname, int32_t port
   // We need to bump up the message size to unlimited. The default receiving
   // message limit is 4MB which is not big enough.
   args.SetMaxReceiveMessageSize(-1);
+  MS_LOG(INFO) << "Hostname: " << hostname << ".";
 #if CACHE_LOCAL_CLIENT
   // Try connect locally to the unix_socket first as the first preference
   // Need to resolve hostname to ip address rather than to do a string compare

@@ -1041,7 +1041,8 @@ Status CacheServer::DestroySession(CacheRequest *rq) {
         "A destroy cache request has been completed but it had a stale session id " + std::to_string(drop_session_id);
       RETURN_STATUS_UNEXPECTED(errMsg);
     } else {
-      std::string errMsg = "Session id " + std::to_string(drop_session_id) + " not found.";
+      std::string errMsg =
+        "Session id " + std::to_string(drop_session_id) + " not found in server on port " + std::to_string(port_) + ".";
       return Status(StatusCode::kFileNotExist, errMsg);
     }
   }
@@ -1234,7 +1235,7 @@ Status CacheServer::Builder::SanityCheck() {
 }
 
 CacheServer::Builder::Builder()
-    : top_("/tmp"),
+    : top_(DefaultSpillDir()),
       num_workers_(std::thread::hardware_concurrency() / 2),
       port_(50052),
       shared_memory_sz_in_gb_(kDefaultSharedMemorySize),

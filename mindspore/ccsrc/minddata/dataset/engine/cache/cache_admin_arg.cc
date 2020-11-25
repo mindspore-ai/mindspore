@@ -39,7 +39,6 @@ const int32_t CacheAdminArgHandler::kDefaultNumWorkers = std::thread::hardware_c
                                                            ? std::thread::hardware_concurrency() / 2
                                                            : 1;
 const char CacheAdminArgHandler::kServerBinary[] = "cache_server";
-const char CacheAdminArgHandler::kDefaultSpillDir[] = "/tmp";
 
 CacheAdminArgHandler::CacheAdminArgHandler()
     : port_(kCfgDefaultCachePort),
@@ -49,7 +48,7 @@ CacheAdminArgHandler::CacheAdminArgHandler()
       log_level_(kDefaultLogLevel),
       memory_cap_ratio_(kMemoryCapRatio),
       hostname_(kCfgDefaultCacheHost),
-      spill_dir_(kDefaultSpillDir),
+      spill_dir_(DefaultSpillDir()),
       command_id_(CommandId::kCmdUnknown) {
   // Initialize the command mappings
   arg_map_["-h"] = ArgValue::kArgHost;
@@ -70,7 +69,7 @@ CacheAdminArgHandler::CacheAdminArgHandler()
   arg_map_["-m"] = ArgValue::kArgSharedMemorySize;
   arg_map_["--shared_memory_size"] = ArgValue::kArgSharedMemorySize;
   arg_map_["-l"] = ArgValue::kArgLogLevel;
-  arg_map_["--minloglevel"] = ArgValue::kArgLogLevel;
+  arg_map_["--loglevel"] = ArgValue::kArgLogLevel;
   arg_map_["-r"] = ArgValue::kArgMemoryCapRatio;
   arg_map_["--memory_cap_ratio"] = ArgValue::kArgMemoryCapRatio;
   arg_map_["--list_sessions"] = ArgValue::kArgListSessions;
@@ -306,6 +305,7 @@ Status CacheAdminArgHandler::Validate() {
   // run.
   if (command_id_ == CommandId::kCmdUnknown) {
     std::string err_msg = "No command provided";
+    err_msg += "\nPlease try `cache_admin --help` for more information";
     return Status(StatusCode::kSyntaxError, err_msg);
   }
 
@@ -353,12 +353,12 @@ Status CacheAdminArgHandler::RunCommand() {
       // the comm layer as soon as the request is received, and we need to wait
       // on the message queue instead.
       // The server will remove the queue and we will then wake up. But on the safe
-      // side, we will also set up an alarm and kill this proocess if we hang on
+      // side, we will also set up an alarm and kill this process if we hang on
       // the message queue.
       alarm(30);
       Status dummy_rc;
       (void)msg.ReceiveStatus(&dummy_rc);
-      std::cout << "Cache server has been stopped." << std::endl;
+      std::cout << "Cache server on port " << std::to_string(port_) << " has been stopped successfully." << std::endl;
       break;
     }
     case CommandId::kCmdGenerateSession: {
@@ -367,7 +367,8 @@ Status CacheAdminArgHandler::RunCommand() {
       auto rq = std::make_shared<GenerateSessionIdRequest>();
       RETURN_IF_NOT_OK(comm.HandleRequest(rq));
       RETURN_IF_NOT_OK(rq->Wait());
-      std::cout << "Session: " << rq->GetSessionId() << std::endl;
+      std::cout << "Session created for server on port " << std::to_string(port_) << ": " << rq->GetSessionId()
+                << std::endl;
       break;
     }
     case CommandId::kCmdDestroySession: {
@@ -378,7 +379,7 @@ Status CacheAdminArgHandler::RunCommand() {
       auto rq = std::make_shared<DropSessionRequest>(cinfo);
       RETURN_IF_NOT_OK(comm.HandleRequest(rq));
       RETURN_IF_NOT_OK(rq->Wait());
-      std::cout << "Drop session successful" << std::endl;
+      std::cout << "Drop session successfully for server on port " << std::to_string(port_) << std::endl;
       break;
     }
     case CommandId::kCmdListSessions: {
@@ -545,8 +546,8 @@ void CacheAdminArgHandler::Help() {
   std::cerr << "                     Possible values are in range [1...max(100, Number of CPU)].\n";
   std::cerr << "                     Default is " << kDefaultNumWorkers << ".\n";
   std::cerr << "               [ [-s | --spilldir] <spilling directory> ]\n";
-  std::cerr << "                     Default is " << kDefaultSpillDir << ".\n";
-  std::cerr << "               [ [-l | --minloglevel] <log level> ]\n";
+  std::cerr << "                     Default is " << DefaultSpillDir() << ".\n";
+  std::cerr << "               [ [-l | --loglevel] <log level> ]\n";
   std::cerr << "                     Possible values are 0, 1, 2 and 3.\n";
   std::cerr << "                     Default is 1 (info level).\n";
   std::cerr << "               [--list_sessions]\n";

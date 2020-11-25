@@ -48,6 +48,8 @@ constexpr static uint32_t kLocalClientSupport = 1;
 constexpr static uint32_t kDataIsInSharedMemory = 2;
 /// \brief Size of each message used in message queue.
 constexpr static int32_t kSharedMessageSize = 2048;
+/// \brief Prefix for default cache spilling path and log path
+const char kDefaultPathPrefix[] = "/tmp/mindspore/cache";
 
 /// \brief State of CacheService at the server.
 enum class CacheServiceState : int8_t {
@@ -70,7 +72,9 @@ inline void Status2CacheReply(const Status &rc, CacheReply *reply) {
 /// \brief Generate the unix socket file we use on both client/server side given a tcp/ip port number
 /// \param port
 /// \return unix socket url
-inline std::string PortToUnixSocketPath(int port) { return "/tmp/cache_server_p" + std::to_string(port); }
+inline std::string PortToUnixSocketPath(int port) {
+  return kDefaultPathPrefix + std::string("/cache_server_p") + std::to_string(port);
+}
 
 /// \brief Round up to the next 4k
 inline int64_t round_up_4K(int64_t sz) {
@@ -86,6 +90,12 @@ enum CachePoolPolicy : int8_t { kOnNode, kPreferred, kLocal, kInterleave, kNone 
 using worker_id_t = int32_t;
 using numa_id_t = int32_t;
 using cpu_id_t = int32_t;
+
+/// Return the default spill dir for cache
+inline std::string DefaultSpillDir() { return kDefaultPathPrefix; }
+
+/// Return the default log dir for cache
+inline std::string DefaultLogDir() { return kDefaultPathPrefix + std::string("/log"); }
 
 }  // namespace dataset
 }  // namespace mindspore
