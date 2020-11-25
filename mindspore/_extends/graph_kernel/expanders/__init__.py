@@ -31,3 +31,4 @@ from .dropout_grad import expand_dropoutgrad
 from .layernorm_grad import expand_layernormgrad
 from .logsoftmax import expand_logsoftmax
 from .logsoftmax_grad import expand_logsoftmaxgrad
+from .gkdropout import expand_gkdropout

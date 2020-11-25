@@ -25,6 +25,7 @@
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/substitute_dropout.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "mindspore/core/ir/graph_utils.h"
 #include "pipeline/jit/parse/python_adapter.h"
@@ -242,6 +243,10 @@ void GraphKernelExpander::ToPrimitive(const FuncGraphPtr &func_graph) const {
 bool GraphKernelExpander::Run(const FuncGraphPtr &func_graph) {
   expand_ops_ = GetExpandOps();
   MS_EXCEPTION_IF_NULL(func_graph);
+  if (expand_ops_.count(prim::kPrimGkDropout) > 0) {
+    std::shared_ptr<Pass> pass = std::make_shared<opt::SubstituteDropout>();
+    pass->Run(func_graph);
+  }
   auto mng = func_graph->manager();
   if (mng == nullptr) {
     mng = Manage(func_graph, true);

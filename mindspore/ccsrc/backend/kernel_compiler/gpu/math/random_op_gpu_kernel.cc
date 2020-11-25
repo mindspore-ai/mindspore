@@ -29,5 +29,7 @@ MS_REG_GPU_KERNEL_ONE(UniformInt,
                       RandomOpGpuKernel, int)
 MS_REG_GPU_KERNEL_ONE(UniformReal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
                       RandomOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(CudnnUniformReal, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+                      RandomOpGpuKernel, float)
 }  // namespace kernel
 }  // namespace mindspore

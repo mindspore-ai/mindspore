@@ -44,6 +44,7 @@ constexpr size_t kMulInputNum = 3;
 constexpr size_t kRsqrtInputNum = 2;
 constexpr size_t kSubInputNum = 3;
 constexpr size_t kAssignSubInputNum = 3;
+constexpr size_t kDropoutInputNum = 2;
 
 constexpr size_t kConvBn1OutputNum = 3;
 constexpr size_t kBn2ReluOutputNum = 4;
