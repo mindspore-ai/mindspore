@@ -146,6 +146,10 @@ class Profiler:
             >>> profiler.analyse()
         """
         if self._device_target and self._device_target == "GPU":
+            if context.get_auto_parallel_context('device_num') > 1 and self._dev_id != get_rank():
+                self._dev_id = get_rank()
+                logger.error('Please check the Profiler object initialized after set_auto_parallel_context() '
+                             'and init(). Profiler should be initialized after these code. ')
             self._gpu_profiler.stop()
             self._generate_timeline()
 
