@@ -58,16 +58,8 @@ typedef struct ConcatQuantArg {
 } ConcatQuantArg;
 
 typedef struct SqueezeQuantArg {
-  int *input_sizes_;
-  int output_size_;
-  int **input_shapes_;
-  int *output_shape_;
-  float alpha;
-  int axis_;
-  size_t input_num_;
-  size_t output_dim_;
   QuantArg *in_quant_args_;
-  QuantArg out_quant_args_;
+  QuantArg *out_quant_args_;
 } SqueezeQuantArg;
 
 typedef struct UnSqueezeQuantArg {
@@ -254,8 +246,8 @@ typedef struct LeakyReluQuantArg {
   PreluQuantArg quant_arg;
   float slope_;
   int64_t axis_;
-  const int *in_shape_;
-  const int *out_shape_;
+  int *in_shape_;
+  int *out_shape_;
   int input_dim_;
   int element_num;
 } LeakyReluQuantArg;

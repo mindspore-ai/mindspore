@@ -27,10 +27,15 @@ using mindspore::schema::PrimitiveType_SpaceToBatchND;
 namespace mindspore::kernel {
 int SpaceToBatchInt8CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
+  MS_ASSERT(input_tensor);
   auto output_tensor = out_tensors_.at(0);
+  MS_ASSERT(output_tensor);
   auto input_ptr = reinterpret_cast<const int8_t *>(input_tensor->MutableData());
+  MS_ASSERT(input_ptr);
   auto output_ptr = reinterpret_cast<int8_t *>(output_tensor->MutableData());
+  MS_ASSERT(output_ptr);
   SpaceToBatchParameter *param = reinterpret_cast<SpaceToBatchParameter *>(this->op_parameter_);
+  MS_ASSERT(param);
   if (output_tensor->quant_params().empty()) {
     MS_LOG(ERROR) << "SpaceToBatchInt8 need quantization parameters which is not found.";
     return RET_ERROR;

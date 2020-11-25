@@ -27,7 +27,7 @@ class SpaceToBatchInt8CPUKernel : public SpaceToBatchCPUKernel {
                             const mindspore::lite::PrimitiveC *primitive)
       : SpaceToBatchCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
 
-  ~SpaceToBatchInt8CPUKernel() {}
+  ~SpaceToBatchInt8CPUKernel() = default;
 
   int Run() override;
 };

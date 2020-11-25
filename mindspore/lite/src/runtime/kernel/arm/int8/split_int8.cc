@@ -69,6 +69,8 @@ int SplitInt8CPUKernel::Split(int task_id) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_n_stride_;
+  MS_ASSERT(input_ptr_);
+  MS_ASSERT(param);
   auto ret = Int8DoSplit(input_ptr_, output_ptr_.data(), in_tensors_.front()->shape().data(), thread_offset,
                          num_unit_thread, param);
   if (ret != RET_OK) {

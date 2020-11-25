@@ -65,10 +65,12 @@ int UnstackCPUKernel::ReSize() {
 
 int UnstackCPUKernel::Run() {
   float *input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  MS_ASSERT(input);
   size_t out_num = out_tensors_.size();
   for (size_t i = 0; i < out_num; i++) {
     output_addr_array_[i] = reinterpret_cast<float *>(out_tensors_.at(i)->MutableData());
   }
+  MS_ASSERT(output_addr_array_);
   Unistack(input, output_addr_array_, reinterpret_cast<UnstackParameter *>(op_parameter_));
   return RET_OK;
 }

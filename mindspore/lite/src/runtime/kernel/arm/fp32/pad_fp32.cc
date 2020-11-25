@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp32/pad_fp32.h"
 #include <string>
+#include <cmath>
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
@@ -111,10 +112,12 @@ int PadImpl(void *cdata, int task_id) {
 int PadCPUKernel::RunImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-
+  MS_ASSERT(input);
+  MS_ASSERT(output);
   auto input_data = reinterpret_cast<float *>(input->MutableData());
   auto output_data = reinterpret_cast<float *>(output->MutableData());
-
+  MS_ASSERT(input_data);
+  MS_ASSERT(output_data);
   Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
 
   return RET_OK;
@@ -241,7 +244,7 @@ int PadCPUKernel::Run() {
     auto output = out_tensors_.at(0);
     int output_size = output->ElementsNum();
     auto output_data = reinterpret_cast<float *>(output->MutableData());
-    if (pad_param_->constant_value_ - 0.0f < 1e-5) {
+    if (abs(pad_param_->constant_value_ - 0.0f) < 1e-5) {
       memset(output_data, 0, output_size * sizeof(float));
     } else {
       for (auto i = 0; i < output_size; ++i) {

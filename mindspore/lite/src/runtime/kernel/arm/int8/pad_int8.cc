@@ -115,6 +115,7 @@ int PadInt8CPUKernel::ReSize() {
 }
 
 int PadInt8CPUKernel::Init() {
+  MS_ASSERT(pad_param_);
   auto error_code = SetQuantParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SetQuantParam failed. errorcode: " << error_code;
@@ -127,6 +128,10 @@ int PadInt8CPUKernel::Init() {
 }
 
 int PadInt8CPUKernel::RunImpl(int task_id) {
+  MS_ASSERT(in_data_);
+  MS_ASSERT(out_data_);
+  MS_ASSERT(in_dims_);
+  MS_ASSERT(out_dims_);
   return PadConstant4D(in_data_, out_data_, in_dims_, out_dims_, pad_param_->paddings_, task_id, context_->thread_num_);
 }
 
@@ -183,9 +188,13 @@ int PadInt8CPUKernel::ExtendPaddings(int *paddings, int length, const int *ori_p
 
 int PadInt8CPUKernel::RunMirrorPadImpl(int task_id) {
   auto input = in_tensors_.at(0);
+  MS_ASSERT(input);
   auto output = out_tensors_.at(0);
+  MS_ASSERT(output);
   auto input_data = reinterpret_cast<int8_t *>(input->MutableData());
+  MS_ASSERT(input_data);
   auto output_data = reinterpret_cast<int8_t *>(output->MutableData());
+  MS_ASSERT(output_data);
 
   int unit = UP_DIV(output->ElementsNum(), context_->thread_num_);
   int begin = unit * task_id;

@@ -32,7 +32,7 @@ int ReverseSequenceCPUKernel::Init() {
 
 void ReverseSequenceCPUKernel::ConvertAxisToPositive(const std::vector<int> shape, int *axis) {
   if (axis != nullptr && *axis < 0) {
-    *axis += shape.size();
+    *axis += static_cast<int>(shape.size());
   }
 }
 
@@ -91,7 +91,11 @@ int ReverseSequenceCPUKernel::Run() {
   void *input1 = in_tensors_.at(1)->MutableData();
   float *output = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   ReverseSequenceParameter *param = reinterpret_cast<ReverseSequenceParameter *>(op_parameter_);
+  MS_ASSERT(param);
   param->is_seq_length_int32_ = in_tensors_.at(1)->data_type() == kNumberTypeInt32;
+  MS_ASSERT(input0);
+  MS_ASSERT(input1);
+  MS_ASSERT(output);
   ReverseSequence(input0, input1, output, param);
   return RET_OK;
 }

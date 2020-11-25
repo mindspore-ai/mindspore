@@ -28,7 +28,7 @@ class SubInt8CPUKernel : public LiteKernel {
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                             const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~SubInt8CPUKernel() override {}
+  ~SubInt8CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;

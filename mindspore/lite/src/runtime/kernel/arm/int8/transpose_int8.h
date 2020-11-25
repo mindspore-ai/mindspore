@@ -31,7 +31,7 @@ class TransposeInt8CPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     transpose_param_ = reinterpret_cast<TransposeParameter *>(op_parameter_);
   }
-  ~TransposeInt8CPUKernel() override;
+  ~TransposeInt8CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;

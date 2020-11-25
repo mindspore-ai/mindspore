@@ -47,6 +47,8 @@ int UnsqueezeCPUKernel::DoUnsqueeze(int task_id) {
     return RET_OK;
   }
   size_t offset = task_id * thread_sz_stride_ * sizeof(float);
+  MS_ASSERT(in_ptr_);
+  MS_ASSERT(out_ptr_);
   int ret = Unsqueeze(in_ptr_ + offset, out_ptr_ + offset, size * sizeof(float));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnsqueezeRun error task_id[" << task_id << "] error_code[" << ret << "]";

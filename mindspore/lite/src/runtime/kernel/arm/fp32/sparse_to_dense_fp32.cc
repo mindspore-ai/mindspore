@@ -33,7 +33,9 @@ using mindspore::schema::PrimitiveType_SparseToDense;
 namespace mindspore::kernel {
 int SparseToDenseCPUKernel::Init() {
   auto input2 = in_tensors_.at(2);
+  MS_ASSERT(input2);
   auto input3 = in_tensors_.at(3);
+  MS_ASSERT(input3);
   sparse_values = reinterpret_cast<float *>(input2->MutableData());
   default_value = reinterpret_cast<float *>(input3->MutableData())[0];
   if (input2->ElementsNum() == 1) {
@@ -68,6 +70,10 @@ int SparseToDenseCPUKernel::DoExcute(int task_id) {
   int index_start = task_id * count_unit_;
   int index_end = index_start + real_dst_count;
   int out_width = output_num / index_num;
+  MS_ASSERT(sparse_indices_vect);
+  MS_ASSERT(output_shape);
+  MS_ASSERT(sparse_values);
+  MS_ASSERT(output_data);
   SparseToDense(sparse_indices_vect, output_shape, sparse_values, default_value, output_data, isScalar, index_start,
                 index_end, out_width);
   return RET_OK;
@@ -172,15 +178,16 @@ int SparseToDenseCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  for (int i = 0; i < index_num; i++) {
-    if (sparse_indices_vect[i] != nullptr) {
-      delete sparse_indices_vect[i];
-    }
-  }
   if (sparse_indices_vect != nullptr) {
+    for (int i = 0; i < index_num; i++) {
+      if (sparse_indices_vect[i] != nullptr) {
+        delete sparse_indices_vect[i];
+      }
+    }
     ctx_->allocator->Free(sparse_indices_vect);
     sparse_indices_vect = nullptr;
   }
+
   return RET_OK;
 }
 

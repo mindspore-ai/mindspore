@@ -93,7 +93,9 @@ int SoftmaxLastAxisRun(void *cdata, int task_id) {
 
 int SoftmaxCPUKernel::Run() {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
+  MS_ASSERT(input_ptr);
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  MS_ASSERT(output_ptr);
   int ret = RET_OK;
   if (in_plane_size_ == 1) {
     ret = ParallelLaunch(this->context_->thread_pool_, SoftmaxLastAxisRun, this, context_->thread_num_);
@@ -101,7 +103,9 @@ int SoftmaxCPUKernel::Run() {
       MS_LOG(ERROR) << "SoftmaxCPUKernel ParallelLaunch failed, ret: " << ret;
     }
   } else {
+    MS_ASSERT(sum_data_);
     memset(sum_data_, 0, in_plane_size_ * out_plane_size_ * sizeof(float));
+    MS_ASSERT(softmax_param_);
     Softmax(input_ptr, output_ptr, sum_data_, softmax_param_);
   }
   return ret;

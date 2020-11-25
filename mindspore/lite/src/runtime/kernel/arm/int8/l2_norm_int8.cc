@@ -63,7 +63,10 @@ int L2NormInt8CPUKernel::DoExecute(int task_id) {
   int end = MSMIN(begin + stride, outer_size);
 
   int8_t *input_data = static_cast<int8_t *>(in_tensors().front()->MutableData());
+  MS_ASSERT(input_data);
   int8_t *output_data = static_cast<int8_t *>(out_tensors().front()->MutableData());
+  MS_ASSERT(output_data);
+  MS_ASSERT(l2_norm_param_);
   return L2NormalizationInt8(input_data, output_data, l2_norm_param_, &quant_param_, begin, end);
 }
 

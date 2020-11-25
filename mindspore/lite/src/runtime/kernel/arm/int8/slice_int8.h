@@ -28,7 +28,7 @@ class SliceInt8CPUKernel : public SliceCPUKernel {
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : SliceCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~SliceInt8CPUKernel() {}
+  ~SliceInt8CPUKernel() = default;
 
   int Init() override;
   int Run() override;

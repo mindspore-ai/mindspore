@@ -34,6 +34,11 @@ int WhereCPUKernel::Init() {
 }
 
 int WhereCPUKernel::DoExcute(int task_id) {
+  MS_ASSERT(input_data);
+  MS_ASSERT(input_data1);
+  MS_ASSERT(input_data2);
+  MS_ASSERT(output_data);
+  MS_ASSERT(where_param_);
   Where(input_data, input_data1, input_data2, output_data, where_param_, task_id);
   return RET_OK;
 }
@@ -49,8 +54,11 @@ int WhereRun(void *cdata, int task_id) {
 }
 int WhereCPUKernel::Run() {
   auto input = in_tensors_.at(0);
+  MS_ASSERT(input);
   auto input1 = in_tensors_.at(1);
+  MS_ASSERT(input1);
   auto input2 = in_tensors_.at(2);
+  MS_ASSERT(input2);
   int num = input->ElementsNum();
   int num1_ = input1->ElementsNum();
   int num2_ = input2->ElementsNum();

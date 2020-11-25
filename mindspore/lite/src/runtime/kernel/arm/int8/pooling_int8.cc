@@ -65,7 +65,10 @@ int PoolingInt8CPUKernel::ReSize() {
 
 int PoolingInt8CPUKernel::RunImpl(int task_id) {
   auto input_data = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->MutableData());
+  MS_ASSERT(input_data);
   auto output_data = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
+  MS_ASSERT(output_data);
+  MS_ASSERT(pooling_param_);
   if (pooling_param_->pool_mode_ == PoolMode_MaxPool) {
     if (pooling_param_->quantize_) {
       MaxPoolingWithQuantInt8(input_data, output_data, pooling_param_, task_id);

@@ -48,7 +48,7 @@ int ReshapeInt8CPUKernel::Init() {
   return RET_OK;
 }
 
-int ReshapeInt8CPUKernel::ReSize() { return 0; }
+int ReshapeInt8CPUKernel::ReSize() { return RET_OK; }
 
 int ReshapeInt8CPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
@@ -74,6 +74,8 @@ int ReshapeInt8CPUKernel::DoExecute(int task_id) {
   if (real_dst_count <= 0) {
     return lite::RET_OK;
   }
+  MS_ASSERT(input_data_);
+  MS_ASSERT(output_data_);
   int8_t *cur_input0_data = input_data_ + task_id * count_unit_;
   int8_t *cur_output_data = output_data_ + task_id * count_unit_;
 

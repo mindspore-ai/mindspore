@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/reduce_fp32.h"
+#include <cmath>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -144,9 +145,10 @@ int ReduceCPUKernel::Run() {
     }
     src_data_ = dst_data_;
   }
-  if (reduce_param_->reduce_to_end_ && reduce_param_->coeff - 1.0f > 1e-5) {
+  if (reduce_param_->reduce_to_end_ && abs(reduce_param_->coeff - 1.0f) > 1e-5) {
     ret = CalculateCoeffOutput();
     if (ret != RET_OK) {
+      FreeTmpBuffer();
       return ret;
     }
   }
@@ -213,7 +215,7 @@ int ReduceCPUKernel::MallocTmpBuffer() {
 }
 
 void ReduceCPUKernel::FreeTmpBuffer() {
-  for (auto buffer : data_buffers_) {
+  for (auto &buffer : data_buffers_) {
     if (buffer != nullptr) {
       context_->allocator->Free(buffer);
       buffer = nullptr;

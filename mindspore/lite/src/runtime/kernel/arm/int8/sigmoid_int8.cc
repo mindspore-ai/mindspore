@@ -67,7 +67,9 @@ int SigmoidInt8CPUKernel::ReSize() { return RET_OK; }
 
 int SigmoidInt8CPUKernel::DoActivation(int task_id) {
   auto input_addr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  MS_ASSERT(input_addr);
   auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
+  MS_ASSERT(output_addr);
   auto length = in_tensors_.at(0)->ElementsNum();
   int stride = UP_DIV(length, op_parameter_->thread_num_);
   int count = MSMIN(stride, length - stride * task_id);

@@ -28,7 +28,7 @@ class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
       : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~SoftmaxInt8CPUKernel() {}
+  ~SoftmaxInt8CPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
