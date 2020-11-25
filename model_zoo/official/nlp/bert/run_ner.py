@@ -155,7 +155,7 @@ def parse_args():
                         help="Use crf, default is false")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--epoch_num", type=int, default="1", help="Epoch number, default is 1.")
-    parser.add_argument("--num_class", type=int, default="2", help="The number of class, default is 2.")
+    parser.add_argument("--num_class", type=int, default="41", help="The number of class, default is 41.")
     parser.add_argument("--train_data_shuffle", type=str, default="true", choices=["true", "false"],
                         help="Enable train data shuffle, default is true")
     parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],

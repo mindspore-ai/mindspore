@@ -22,6 +22,7 @@ from mindspore.train.serialization import load_checkpoint, export
 
 from src.finetune_eval_model import BertCLSModel, BertSquadModel, BertNERModel
 from src.finetune_eval_config import optimizer_cfg, bert_net_cfg
+from src.bert_for_finetune import BertNER
 from src.utils import convert_labels_to_index
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -30,7 +31,7 @@ parser = argparse.ArgumentParser(description='Bert export')
 parser.add_argument('--use_crf', type=str, default="false", help='Use cfg, default is false.')
 parser.add_argument('--downstream_task', type=str, choices=["NER", "CLS", "SQUAD"], default="NER",
                     help='at present，support NER only')
-parser.add_argument('--num_class', type=int, default=2, help='The number of class, default is 2.')
+parser.add_argument('--num_class', type=int, default=41, help='The number of class, default is 41.')
 parser.add_argument('--label_file_path', type=str, default="", help='label file path, used in clue benchmark.')
 parser.add_argument('--ckpt_file', type=str, required=True, help='Bert ckpt file.')
 parser.add_argument('--output_file', type=str, default='Bert.air', help='bert output air name.')
@@ -55,7 +56,11 @@ else:
 
 if __name__ == '__main__':
     if args.downstream_task == "NER":
-        net = BertNERModel(bert_net_cfg, False, number_labels, use_crf=(args.use_crf.lower() == "true"))
+        if args.use_crf.lower() == "true":
+            net = BertNER(bert_net_cfg, optimizer_cfg.batch_size, False, num_labels=number_labels,
+                          use_crf=True, tag_to_index=tag_to_index)
+        else:
+            net = BertNERModel(bert_net_cfg, False, number_labels, use_crf=(args.use_crf.lower() == "true"))
     elif args.downstream_task == "CLS":
         net = BertCLSModel(bert_net_cfg, False, num_labels=number_labels)
     elif args.downstream_task == "SQUAD":
@@ -69,6 +74,10 @@ if __name__ == '__main__':
     input_ids = Tensor(np.zeros([optimizer_cfg.batch_size, bert_net_cfg.seq_length]), mstype.int32)
     input_mask = Tensor(np.zeros([optimizer_cfg.batch_size, bert_net_cfg.seq_length]), mstype.int32)
     token_type_id = Tensor(np.zeros([optimizer_cfg.batch_size, bert_net_cfg.seq_length]), mstype.int32)
+    label_ids = Tensor(np.zeros([optimizer_cfg.batch_size, bert_net_cfg.seq_length]), mstype.int32)
 
-    input_data = [input_ids, input_mask, token_type_id]
+    if args.downstream_task == "NER" and args.use_crf.lower() == "true":
+        input_data = [input_ids, input_mask, token_type_id, label_ids]
+    else:
+        input_data = [input_ids, input_mask, token_type_id]
     export(net, *input_data, file_name=args.output_file, file_format=args.file_format)
