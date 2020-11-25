@@ -1,14 +1,15 @@
 ![MindSpore Logo](docs/MindSpore-logo.png "MindSpore logo")
-============================================================
 
 [查看中文](./README_CN.md)
+
+<!-- TOC -->
 
 - [What Is MindSpore](#what-is-mindspore)
     - [Automatic Differentiation](#automatic-differentiation)
     - [Automatic Parallel](#automatic-parallel)
 - [Installation](#installation)
-    - [Binaries](#binaries)
-    - [From Source](#from-source)
+    - [Pip mode method installation](#pip-mode-method-installation)
+    - [Source code compilation installation](#source-code-compilation-installation)
     - [Docker Image](#docker-image)
 - [Quickstart](#quickstart)
 - [Docs](#docs)
@@ -16,8 +17,12 @@
     - [Governance](#governance)
     - [Communication](#communication)
 - [Contributing](#contributing)
+- [Maintenance phases](#maintenance-phases)
+- [Maintenance status](#maintenance-status)
 - [Release Notes](#release-notes)
 - [License](#license)
+
+<!-- /TOC -->
 
 ## What Is MindSpore
 
@@ -59,7 +64,7 @@ At present, MindSpore uses a fine-grained parallel strategy of splitting operato
 
 ## Installation
 
-### Binaries
+### Pip mode method installation
 
 MindSpore offers build options across multiple backends:
 
@@ -80,7 +85,7 @@ For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an ex
 
 1. Download whl from [MindSpore download page](https://www.mindspore.cn/versions/en), and install the package.
 
-    ```
+    ```bash
     pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.0/MindSpore/cpu/ubuntu_x86/mindspore-1.0.0-cp37-cp37m-linux_x86_64.whl
     ```
 
@@ -109,13 +114,24 @@ For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an ex
     mul = Mul()
     print(mul(x, y))
     ```
-    ```
+
+    ```text
     [ 4. 10. 18.]
     ```
 
-### From Source
+Use pip mode method to install MindSpore in different environments. Refer to the following documents.
 
-[Install MindSpore](https://www.mindspore.cn/install/en).
+- [Using pip mode method to install MindSpore in Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip_en.md)
+- [Using pip mode method to install MindSpore in GPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip_en.md)
+- [Using pip mode method to install MindSpore in CPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip_en.md)
+
+### Source code compilation installation
+
+Use the source code compilation method to install MindSpore in different environments. Refer to the following documents.
+
+- [Using the source code compilation method to install MindSpore in Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in GPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in CPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source_en.md)
 
 ### Docker Image
 
@@ -125,27 +141,29 @@ currently the containerized build options are supported as follows:
 | Hardware Platform | Docker Image Repository | Tag | Description |
 | :---------------- | :---------------------- | :-- | :---------- |
 | CPU | `mindspore/mindspore-cpu` | `x.y.z` | Production environment with pre-installed MindSpore `x.y.z` CPU release. |
-|  |  | `devel` | Development environment provided to build MindSpore (with `CPU` backend) from the source, refer to https://www.mindspore.cn/install/en for installation details. |
+|  |  | `devel` | Development environment provided to build MindSpore (with `CPU` backend) from the source, refer to <https://www.mindspore.cn/install/en> for installation details. |
 |  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `CPU` backend. |
 | GPU | `mindspore/mindspore-gpu` | `x.y.z` | Production environment with pre-installed MindSpore `x.y.z` GPU release. |
-|  |  | `devel` | Development environment provided to build MindSpore (with `GPU CUDA10.1` backend) from the source, refer to https://www.mindspore.cn/install/en for installation details. |
+|  |  | `devel` | Development environment provided to build MindSpore (with `GPU CUDA10.1` backend) from the source, refer to <https://www.mindspore.cn/install/en> for installation details. |
 |  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `GPU CUDA10.1` backend. |
 | Ascend | <center>&mdash;</center> | <center>&mdash;</center> | Coming soon. |
 
 > **NOTICE:** For GPU `devel` docker image, it's NOT suggested to directly install the whl package after building from the source, instead we strongly RECOMMEND you transfer and install the whl package inside GPU `runtime` docker image.
 
-* CPU
+- CPU
 
     For `CPU` backend, you can directly pull and run the latest stable image using the below command:
-    ```
+
+    ```bash
     docker pull mindspore/mindspore-cpu:1.0.0
     docker run -it mindspore/mindspore-cpu:1.0.0 /bin/bash
     ```
 
-* GPU
+- GPU
 
     For `GPU` backend, please make sure the `nvidia-container-toolkit` has been installed in advance, here are some install guidelines for `Ubuntu` users:
-    ```
+
+    ```bash
     DISTRIBUTION=$(. /etc/os-release; echo $ID$VERSION_ID)
     curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
     curl -s -L https://nvidia.github.io/nvidia-docker/$DISTRIBUTION/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list
@@ -153,8 +171,10 @@ currently the containerized build options are supported as follows:
     sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit nvidia-docker2
     sudo systemctl restart docker
     ```
+
     Then edit the file daemon.json:
-    ```
+
+    ```bash
     $ vim /etc/docker/daemon.json
     {
         "runtimes": {
@@ -165,18 +185,23 @@ currently the containerized build options are supported as follows:
         }
     }
     ```
+
     Restart docker again:
-    ```
+
+    ```bash
     sudo systemctl daemon-reload
     sudo systemctl restart docker
     ```
+
     Then you can pull and run the latest stable image using the below command:
-    ```
+
+    ```bash
     docker pull mindspore/mindspore-gpu:1.0.0
     docker run -it -v /dev/shm:/dev/shm --runtime=nvidia --privileged=true mindspore/mindspore-gpu:1.0.0 /bin/bash
     ```
 
     To test if the docker image works, please execute the python code below and check the output:
+
     ```python
     import numpy as np
     import mindspore.context as context
@@ -189,7 +214,8 @@ currently the containerized build options are supported as follows:
     y = Tensor(np.ones([1,3,3,4]).astype(np.float32))
     print(F.tensor_add(x, y))
     ```
-    ```
+
+    ```text
     [[[ 2.  2.  2.  2.],
     [ 2.  2.  2.  2.],
     [ 2.  2.  2.  2.]],
@@ -208,7 +234,7 @@ please check out [docker](docker/README.md) repo for the details.
 
 ## Quickstart
 
-See the [Quick Start](https://www.mindspore.cn/tutorial/training/en/master/quick_start/quick_start.html) 
+See the [Quick Start](https://www.mindspore.cn/tutorial/training/en/master/quick_start/quick_start.html)
 to implement the image classification.
 
 ## Docs
@@ -235,6 +261,7 @@ Welcome contributions. See our [Contributor Wiki](CONTRIBUTING.md) for
 more details.
 
 ## Maintenance phases
+
 Project stable branches will be in one of the following states:
 | **State**       | **Time frame**    | **Summary**                                          |
 |-------------|---------------|--------------------------------------------------|
@@ -245,6 +272,7 @@ Project stable branches will be in one of the following states:
 | End Of Life (EOL) |  N/A |  Branch no longer accepting changes.    |
 
 ## Maintenance status
+
 | **Branch** | **Status**       | **Initial Release Date** | **Next Phase**                        | **EOL Date**   |
 |--------|--------------|----------------------|-----------------------------------|------------|
 | **r1.1**   | Development  | 2020-12-31 estimated | Maintained <br> 2020-12-31 estimated   |            |
@@ -255,11 +283,6 @@ Project stable branches will be in one of the following states:
 | **r0.3**   | End Of Life  | 2020-05-31           |                                   | 2020-09-30 |
 | **r0.2**   | End Of Life  | 2020-04-30           |                                   | 2020-08-31 |
 | **r0.1**   | End Of Life  | 2020-03-28            |                                   | 2020-06-30 |
-
-
-
-
-
 
 ## Release Notes
 
