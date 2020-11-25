@@ -14,20 +14,13 @@
 # ============================================================================
 """Robustness."""
 
-from typing import Optional, Union
-
 import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor
 from mindspore import log
 from .metric import LabelSensitiveMetric
-from ...explanation._attribution import Attribution
 from ...explanation._attribution._perturbation.replacement import RandomPerturb
-
-_Array = np.ndarray
-_Label = Union[ms.Tensor, int]
 
 
 class Robustness(LabelSensitiveMetric):
@@ -39,12 +32,12 @@ class Robustness(LabelSensitiveMetric):
         num_labels (int): Number of classes in the dataset.
 
     Examples:
-    >>> from mindspore.explainer.benchmark import Robustness
-    >>> num_labels = 100
-    >>> robustness = Robustness(num_labels)
+        >>> from mindspore.explainer.benchmark import Robustness
+        >>> num_labels = 100
+        >>> robustness = Robustness(num_labels)
     """
 
-    def __init__(self, num_labels: int, activation_fn=nn.Softmax()):
+    def __init__(self, num_labels, activation_fn=nn.Softmax()):
         super().__init__(num_labels)
 
         self._perturb = RandomPerturb()
@@ -52,12 +45,7 @@ class Robustness(LabelSensitiveMetric):
         self._threshold = 0.1  # threshold to generate perturbation
         self._activation_fn = activation_fn
 
-    def evaluate(self,
-                 explainer: Attribution,
-                 inputs: Tensor,
-                 targets: _Label,
-                 saliency: Optional[Tensor] = None
-                 ) -> _Array:
+    def evaluate(self, explainer, inputs, targets, saliency=None):
         """
         Evaluate robustness on single sample.
 
