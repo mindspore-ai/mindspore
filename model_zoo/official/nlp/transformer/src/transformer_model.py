@@ -51,8 +51,6 @@ class TransformerConfig:
                                  model. Default: 128.
         initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
         label_smoothing (float): label smoothing setting. Default: 0.1
-        input_mask_from_dataset (bool): Specifies whether to use the input mask that loaded from
-                                 dataset. Default: True.
         beam_width (int): beam width setting. Default: 4
         max_decode_length (int): max decode length in evaluation. Default: 80
         length_penalty_weight (float): normalize scores of translations according to their length. Default: 1.0
@@ -73,7 +71,6 @@ class TransformerConfig:
                  max_position_embeddings=128,
                  initializer_range=0.02,
                  label_smoothing=0.1,
-                 input_mask_from_dataset=True,
                  beam_width=4,
                  max_decode_length=80,
                  length_penalty_weight=1.0,
@@ -92,7 +89,6 @@ class TransformerConfig:
         self.max_position_embeddings = max_position_embeddings
         self.initializer_range = initializer_range
         self.label_smoothing = label_smoothing
-        self.input_mask_from_dataset = input_mask_from_dataset
         self.beam_width = beam_width
         self.max_decode_length = max_decode_length
         self.length_penalty_weight = length_penalty_weight
@@ -1014,7 +1010,6 @@ class TransformerModel(nn.Cell):
             config.hidden_dropout_prob = 0.0
             config.attention_probs_dropout_prob = 0.0
 
-        self.input_mask_from_dataset = config.input_mask_from_dataset
         self.batch_size = config.batch_size
         self.hidden_size = config.hidden_size
         self.num_hidden_layers = config.num_hidden_layers

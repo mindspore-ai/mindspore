@@ -49,7 +49,6 @@ if cfg.transformer_network == 'large':
         max_position_embeddings=128,
         initializer_range=0.02,
         label_smoothing=0.1,
-        input_mask_from_dataset=True,
         dtype=mstype.float32,
         compute_type=mstype.float16)
     transformer_net_cfg_gpu = TransformerConfig(
@@ -66,7 +65,6 @@ if cfg.transformer_network == 'large':
         max_position_embeddings=128,
         initializer_range=0.02,
         label_smoothing=0.1,
-        input_mask_from_dataset=True,
         dtype=mstype.float32,
         compute_type=mstype.float16)
 if cfg.transformer_network == 'base':
@@ -84,6 +82,5 @@ if cfg.transformer_network == 'base':
         max_position_embeddings=128,
         initializer_range=0.02,
         label_smoothing=0.1,
-        input_mask_from_dataset=True,
         dtype=mstype.float32,
         compute_type=mstype.float16)
