@@ -35,16 +35,6 @@ int Equal::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
 PrimitiveC *EqualCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Equal>(primitive); }
 Registry EqualRegistry(schema::PrimitiveType_Equal, EqualCreator);
 #endif
-int Equal::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  auto input = inputs_.front();
-  MS_ASSERT(input != nullptr);
-  auto output = outputs_.front();
-  MS_ASSERT(output != nullptr);
-  output->set_shape(input->shape());
-  output->set_data_type(TypeId::kNumberTypeBool);
-  output->set_format(input->format());
-  return RET_OK;
-}
 
 }  // namespace lite
 }  // namespace mindspore

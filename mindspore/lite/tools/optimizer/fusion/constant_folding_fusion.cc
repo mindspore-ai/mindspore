@@ -231,15 +231,6 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
         output_tensors[m]->AddQuantParam(quant_arg);
       }
     }
-    // here, input_tensor's format need to be transposed nhwc according to fmkType,
-    // but for the time being, we only transpose the tensor with 0/1/2/3D.
-    // Others should be added in future.
-    for (auto &input_tensor : input_tensors) {
-      input_tensor->set_format(schema::Format::Format_NHWC);
-      if (input_tensor->shape().size() == 4) {
-        MS_LOG(INFO) << "init input_tensor format to nhwc";
-      }
-    }
     lite_primitive->InferShape(input_tensors, output_tensors);
     auto primitive = lite_primitive.get();
     MS_ASSERT(primitive != nullptr);

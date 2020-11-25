@@ -38,16 +38,6 @@ PrimitiveC *GreaterEqualCreator(const schema::Primitive *primitive) {
 Registry GreaterEqualRegistry(schema::PrimitiveType_GreaterEqual, GreaterEqualCreator);
 
 #endif
-int GreaterEqual::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  auto input = inputs_.front();
-  MS_ASSERT(input != nullptr);
-  auto output = outputs_.front();
-  MS_ASSERT(output != nullptr);
-  output->set_shape(input->shape());
-  output->set_data_type(TypeId::kNumberTypeBool);
-  output->set_format(input->format());
-  return RET_OK;
-}
 
 }  // namespace lite
 }  // namespace mindspore

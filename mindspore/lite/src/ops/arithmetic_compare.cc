@@ -14,29 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_LESS_H_
-#define LITE_MINDSPORE_LITE_C_OPS_LESS_H_
-
-#include <vector>
-#include <set>
-#include <cmath>
-
 #include "src/ops/arithmetic_compare.h"
 
 namespace mindspore {
 namespace lite {
-class Less : public ArithmeticCompare {
- public:
-  Less() = default;
-  ~Less() = default;
-#ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(Less, ArithmeticCompare);
-  explicit Less(schema::PrimitiveT *primitive) : ArithmeticCompare(primitive) {}
-#else
-  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
-#endif
-};
+
+int ArithmeticCompare::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
+  auto res = Arithmetic::InferShape(inputs_, outputs_);
+  if (res == RET_OK) {
+    auto output = outputs_.front();
+    output->set_data_type(TypeId::kNumberTypeBool);
+    return RET_OK;
+  } else {
+    return res;
+  }
+}
 }  // namespace lite
 }  // namespace mindspore
-
-#endif  // LITE_MINDSPORE_LITE_C_OPS_LESS_H_

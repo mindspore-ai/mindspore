@@ -112,9 +112,17 @@ int MatMul::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
     input0->set_shape(a_shape);
   }
 
-  if (a_shape.size() < 2 || b_shape.size() < 2) {
-    MS_LOG(ERROR) << "inputs shape is invalid";
-    return RET_INPUT_TENSOR_ERROR;
+  bool del_start = false;
+  bool del_end = false;
+  if (a_shape.size() == 1) {
+    a_shape.insert(a_shape.begin(), 1);
+    input0->set_shape(a_shape);
+    del_start = true;
+  }
+  if (b_shape.size() == 1) {
+    b_shape.push_back(1);
+    input1->set_shape(b_shape);
+    del_end = true;
   }
   for (size_t i = 0; i < (a_shape.size() - 2) && i < (b_shape.size() - 2); ++i) {
     if (a_shape[a_shape.size() - 3 - i] != b_shape[b_shape.size() - 3 - i]) {
@@ -131,6 +139,12 @@ int MatMul::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   }
   std::vector<int> c_shape(a_shape);
   c_shape[c_shape.size() - 1] = b_shape[b_shape.size() - 1];
+  if (del_start) {
+    c_shape.erase(c_shape.begin());
+  }
+  if (del_end) {
+    c_shape.pop_back();
+  }
   output->set_shape(c_shape);
   return RET_OK;
 }

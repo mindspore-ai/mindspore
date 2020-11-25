@@ -20,21 +20,20 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "src/ops/arithmetic.h"
+#include "src/ops/arithmetic_compare.h"
 
 namespace mindspore {
 namespace lite {
-class Equal : public Arithmetic {
+class Equal : public ArithmeticCompare {
  public:
   Equal() = default;
   ~Equal() = default;
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(Equal, PrimitiveC);
-  explicit Equal(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
+  MS_DECLARE_PARENT(Equal, ArithmeticCompare);
+  explicit Equal(schema::PrimitiveT *primitive) : ArithmeticCompare(primitive) {}
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore

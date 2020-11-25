@@ -175,6 +175,15 @@ int ArithmeticCPUKernel::ReSize() {
             break;
         }
         break;
+      case PrimitiveType_Equal:
+      case PrimitiveType_Less:
+      case PrimitiveType_Greater:
+      case PrimitiveType_NotEqual:
+      case PrimitiveType_LessEqual:
+      case PrimitiveType_GreaterEqual:
+        arithmetic_opt_run_ = nullptr;
+        arithmetic_opt_run_int_ = nullptr;
+        break;
       default:
         break;
     }
