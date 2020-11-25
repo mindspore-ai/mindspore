@@ -19,6 +19,7 @@
 #include <sstream>
 #include "ir/anf.h"
 #include "utils/ms_utils.h"
+#include "utils/trace_base.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_runtime.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
@@ -174,7 +175,7 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node) {
     operator_info << ") ";
   }
   operator_info << "is not support.";
-  MS_LOG(EXCEPTION) << operator_info.str();
+  MS_LOG(EXCEPTION) << operator_info.str() << " Trace: " << trace::DumpSourceLines(kernel_node);
 }
 }  // namespace
 

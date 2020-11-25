@@ -15,13 +15,11 @@
  */
 
 #include "runtime/device/cpu/kernel_select_cpu.h"
-
 #include <string>
 #include <memory>
 #include <algorithm>
-
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
-
+#include "utils/trace_base.h"
 namespace mindspore {
 namespace device {
 namespace cpu {
@@ -234,7 +232,7 @@ void KernelNotSupportException(const AnfNodePtr &kernel_node, const std::vector<
     operator_info << ") ";
   }
   operator_info << "is not support.";
-  MS_EXCEPTION(TypeError) << operator_info.str();
+  MS_EXCEPTION(TypeError) << operator_info.str() << " Trace: " << trace::DumpSourceLines(kernel_node);
 }
 }  // namespace
 bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
@@ -298,7 +296,8 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   auto kernel_attrs =
     kernel::CPUKernelFactory::GetInstance().GetSupportedKernelAttrList(AnfAlgo::GetCNodeName(kernel_node));
   if (kernel_attrs.empty()) {
-    MS_LOG(EXCEPTION) << "Operator[" << AnfAlgo::GetCNodeName(kernel_node) << "] is not support.";
+    MS_LOG(EXCEPTION) << "Operator[" << AnfAlgo::GetCNodeName(kernel_node)
+                      << "] is not support. Trace: " << trace::DumpSourceLines(kernel_node);
   }
   GetInputFormatsAndDtypes(kernel_node, &input_formats, &input_types, &input_not_cnode_indexes);
   GetOutputInferFormatsAndDtypes(kernel_node, &infer_output_formats, &infer_output_types);

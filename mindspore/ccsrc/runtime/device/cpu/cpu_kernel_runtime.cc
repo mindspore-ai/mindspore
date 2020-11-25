@@ -28,6 +28,7 @@
 #include "frontend/operator/ops.h"
 #include "utils/shape_utils.h"
 #include "utils/profile.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace device {
@@ -350,7 +351,7 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
     auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
     resource_manager_.DecreaseAddressRefCount(kernel);
     if (!ret) {
-      MS_LOG(EXCEPTION) << "Launch kernel failed.";
+      MS_LOG(EXCEPTION) << "Launch kernel failed. Trace:" << trace::DumpSourceLines(kernel);
     }
 #ifdef ENABLE_PROFILE
     double cost_time = GetTime() - start_time;
