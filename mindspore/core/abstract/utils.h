@@ -51,6 +51,9 @@ int64_t GetPositiveAxis(int64_t axis_value, size_t increment);
 
 ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy);
 
+size_t TypeIdSize(const TypeId data_type);
+size_t ShapeSize(const std::vector<size_t> &shape);
+
 // Get broadcasted shape for binary element-wise operation
 ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tensor_x, const AbstractTensorPtr &tensor_y);
 }  // namespace abstract

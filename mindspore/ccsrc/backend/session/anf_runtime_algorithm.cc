@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <stack>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "base/core_ops.h"
@@ -30,6 +31,7 @@
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "common/trans.h"
 #include "abstract/param_validator.h"
+#include "abstract/primitive_infer_map.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/trace_base.h"
 
@@ -820,6 +822,8 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableWorkspaceAddr(const AnfNodePtr &
 void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
                                                      const std::vector<std::vector<size_t>> &shapes, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
+  auto node_ptr = node->cast<AnfNodePtr>();
+  MS_EXCEPTION_IF_NULL(node_ptr);
   if (types.size() != shapes.size()) {
     MS_LOG(EXCEPTION) << "Types size " << types.size() << "should be same with shapes size " << shapes.size()
                       << " trace: " << trace::DumpSourceLines(node);
@@ -829,16 +833,23 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
   } else if (shapes.size() == 1) {
     // single output handle
     ShapeVector shape_int;
+    auto max_shape = GetOutputMaxShape(node_ptr, 0);
+    auto min_shape = GetOutputMinShape(node_ptr, 0);
     std::transform(shapes[0].begin(), shapes[0].end(), std::back_inserter(shape_int), SizeToLong);
-    auto abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shape_int);
+    auto abstract = std::make_shared<AbstractTensor>(
+      TypeIdToType(types[0]), std::make_shared<abstract::Shape>(shape_int, min_shape, max_shape));
     node->set_abstract(abstract);
   } else {
     // multiple output handle
     std::vector<AbstractBasePtr> abstract_list;
     for (size_t i = 0; i < types.size(); ++i) {
       ShapeVector shape_int;
+      auto max_shape = GetOutputMaxShape(node_ptr, i);
+      auto min_shape = GetOutputMinShape(node_ptr, i);
       std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToLong);
-      abstract_list.emplace_back(std::make_shared<AbstractTensor>(TypeIdToType(types[i]), shape_int));
+      auto abstract = std::make_shared<AbstractTensor>(
+        TypeIdToType(types[i]), std::make_shared<abstract::Shape>(shape_int, min_shape, max_shape));
+      abstract_list.emplace_back(abstract);
     }
     auto abstract_tuple = std::make_shared<AbstractTuple>(abstract_list);
     node->set_abstract(abstract_tuple);
@@ -1409,7 +1420,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputMinShape(const AnfNodePtr &an
   }
 }
 
-bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
+bool IsNodeOutputDynamicShape(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto base_shape = node->Shape();
   if (base_shape == nullptr) {
@@ -1434,6 +1445,66 @@ bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
     }
   }
   return false;
+}
+
+bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
+  MS_EXCEPTION_IF_NULL(anf_node_ptr);
+  auto input_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto input_with_index = AnfAlgo::GetPrevNodeOutput(anf_node_ptr, i);
+    auto input = input_with_index.first;
+    auto index = input_with_index.second;
+    MS_EXCEPTION_IF_NULL(input);
+
+    auto base_shape = input->Shape();
+    if (base_shape == nullptr) {
+      MS_LOG(INFO) << "Invalid shape ptr, node:" << input->fullname_with_scope();
+      continue;
+    }
+    if (base_shape->isa<abstract::Shape>()) {
+      if (IsShapeDynamic(base_shape->cast<abstract::ShapePtr>())) {
+        return true;
+      }
+    } else if (base_shape->isa<abstract::TupleShape>()) {
+      auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_shape);
+
+      if (index >= tuple_shape->size()) {
+        MS_LOG(INFO) << "Node:" << anf_node_ptr->fullname_with_scope() << "Invalid index:" << index
+                     << " and tuple_shape size:" << tuple_shape->size();
+        continue;
+      }
+
+      auto b_shp = (*tuple_shape)[index];
+      if (!b_shp->isa<abstract::Shape>()) {
+        continue;
+      }
+      if (IsShapeDynamic(b_shp->cast<abstract::ShapePtr>())) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(WARNING) << "Node is not a cnode";
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  auto in_dynamic = IsNodeInputDynamicShape(cnode);
+  auto out_dynamic = IsNodeOutputDynamicShape(cnode);
+  if (in_dynamic && !AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
+    AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cnode);
+    MS_LOG(INFO) << "Set Input Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+  }
+  if (out_dynamic && !AnfAlgo::HasNodeAttr(kAttrOutputIsDynamicShape, cnode)) {
+    AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cnode);
+    MS_LOG(INFO) << "Set Output Dynamic Shape Attr to Node:" << cnode->fullname_with_scope();
+  }
+  return in_dynamic || out_dynamic;
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const AnfNodePtr &anf_node, size_t index) {
@@ -1499,6 +1570,51 @@ void AnfRuntimeAlgorithm::GetAllFatherRealNode(const AnfNodePtr &anf_node, std::
     GetAllFatherRealNode(cnode->input(kRealInputIndexInDepend), result, visited);
     GetAllFatherRealNode(cnode->input(kDependAttachNodeIndex), result, visited);
   }
+}
+
+void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_LOG(INFO) << "InferShape start, node:" << node->DebugString();
+  auto inputs = node->inputs();
+  if (inputs.empty()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs";
+  }
+  AbstractBasePtrList args_spec_list;
+  auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
+  auto input_size = AnfAlgo::GetInputTensorNum(node);
+  for (size_t i = 0; i < input_size; ++i) {
+    auto input_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
+    auto real_input = input_with_index.first;
+    MS_EXCEPTION_IF_NULL(real_input);
+    auto cnode_input = node->input(i + 1);
+    MS_EXCEPTION_IF_NULL(cnode_input);
+    if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {
+      auto base_shape = real_input->Shape();
+      if (!base_shape->isa<abstract::TupleShape>()) {
+        MS_LOG(EXCEPTION) << "Node:" << node->DebugString()
+                          << " input is a tuple_get_item but real input node shape is not a TupleShape";
+      }
+      auto tuple_ptr = base_shape->cast<abstract::TupleShapePtr>();
+      MS_EXCEPTION_IF_NULL(tuple_ptr);
+      auto tuple_get_item_index = AnfAlgo::GetTupleGetItemOutIndex(cnode_input->cast<CNodePtr>());
+      auto real_shape = tuple_ptr->shape().at(tuple_get_item_index);
+      auto abstract_tensor = cnode_input->abstract()->cast<abstract::AbstractTensorPtr>();
+      MS_EXCEPTION_IF_NULL(abstract_tensor);
+      args_spec_list.emplace_back(std::make_shared<abstract::AbstractTensor>(abstract_tensor->element(), real_shape));
+    } else if (cnode_input->isa<CNode>() && AnfAlgo::GetCNodeName(cnode_input) == prim::kPrimReshape->name()) {
+      args_spec_list.emplace_back(cnode_input->abstract());
+    } else {
+      args_spec_list.emplace_back(real_input->abstract());
+    }
+  }
+  auto &prim_eval_implement_map = abstract::GetPrimitiveToEvalImplMap();
+  auto ret = prim_eval_implement_map.find(primitive);
+  if (ret == prim_eval_implement_map.end()) {
+    MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << primitive->name()
+                      << " primitive type:" << primitive->type_name();
+  }
+  auto eval_result = ret->second.impl_(nullptr, primitive, args_spec_list);
+  node->set_abstract(eval_result);
 }
 }  // namespace session
 }  // namespace mindspore

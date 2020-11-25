@@ -66,11 +66,15 @@ void AiCpuDynamicKernel::Initialize() {
   input_num_ = AnfAlgo::GetInputTensorNum(cnode_ptr_);
   output_num_ = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
 
+  UnknowShapeOpType shape_type = UnknowShapeOpType::DEPEND_IN_SHAPE;
+  if (AnfAlgo::GetCNodeName(cnode_ptr_) == "Unique") {
+    shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
+  }
   // Parse aicpu ext info
   if (is_dynamic_shape_) {
     MS_EXCEPTION_IF_NULL(cnode_ptr_);
     ext_info_handler_ =
-      std::make_shared<AicpuExtInfoHandler>(cnode_ptr_->fullname_with_scope(), input_num_, output_num_, DEPEND_COMPUTE);
+      std::make_shared<AicpuExtInfoHandler>(cnode_ptr_->fullname_with_scope(), input_num_, output_num_, shape_type);
     ext_info_handler_->Parse(ext_info_data_);
   }
 

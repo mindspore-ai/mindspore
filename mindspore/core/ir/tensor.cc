@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <typeinfo>
 
+#include "abstract/utils.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
@@ -581,8 +582,11 @@ void Tensor::data_sync(bool need_wait) const {
   if (device_sync_ == nullptr) {
     return;
   }
+  std::vector<size_t> shape_tmp;
+  (void)std::transform(shape().begin(), shape().end(), std::back_inserter(shape_tmp), IntToSize);
+  auto size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(data_type());
   auto address = device_sync_;
-  if (!address->SyncDeviceToHost(shape(), static_cast<size_t>(data().nbytes()), data_type(), data_c())) {
+  if (size != 0 && !address->SyncDeviceToHost(shape(), size, data_type(), data_c())) {
     MS_LOG(EXCEPTION) << "SyncDeviceToHost failed.";
   }
   sync_status_ = kNeedSyncHostToDevice;
