@@ -18,59 +18,52 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_FULLCONNECTION_INT8_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/fullconnection_base.h"
-#include "include/context.h"
+#include "src/lite_kernel.h"
+#include "include/errorcode.h"
 #include "nnacl/quantization/quantize.h"
+#include "nnacl/common_func.h"
 #include "nnacl/int8/common_func_int8.h"
-
-using mindspore::lite::InnerContext;
+#include "nnacl/int8/matmul_int8.h"
 
 namespace mindspore::kernel {
-class FullconnectionInt8CPUKernel : public FullconnectionBaseCPUKernel {
+class FullconnectionInt8CPUKernel : public LiteKernel {
  public:
   FullconnectionInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
+                              const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
                               const mindspore::lite::PrimitiveC *primitive)
-      : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~FullconnectionInt8CPUKernel() override { FreeTmpBuffer(); }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    fc_param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  }
+  ~FullconnectionInt8CPUKernel() override {
+    FreeTmpBuffer();
+    FreeQuantParam();
+  }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+
+ public:
   int RunImpl(int task_id);
 
  private:
-  void FreeTmpBuffer() {
-    if (a_r4x16_ptr_ != nullptr) {
-      ctx_->allocator->Free(a_r4x16_ptr_);
-      a_r4x16_ptr_ = nullptr;
-    }
-    if (b_c16x4_ptr_ != nullptr) {
-      ctx_->allocator->Free(b_c16x4_ptr_);
-      b_c16x4_ptr_ = nullptr;
-    }
-    if (input_sums_ != nullptr) {
-      ctx_->allocator->Free(input_sums_);
-      input_sums_ = nullptr;
-    }
-    if (weight_bias_sums_ != nullptr) {
-      ctx_->allocator->Free(weight_bias_sums_);
-      weight_bias_sums_ = nullptr;
-    }
-    if (bias_ptr_ != nullptr) {
-      ctx_->allocator->Free(weight_bias_sums_);
-      weight_bias_sums_ = nullptr;
-    }
-  }
-  MatmulQuantArg quant_params_;
-  int8_t *a_r4x16_ptr_ = nullptr;
-  int8_t *b_c16x4_ptr_ = nullptr;
+  void InitParam();
+  void FreeTmpBuffer();
+  void FreeQuantParam();
+  int MallocQuantParam();
+
+ private:
+  MatMulParameter *fc_param_ = nullptr;
+  MatmulQuantParameter quant_;
+  int thread_count_ = 1;
+  int thread_stride_ = 0;
+  int8_t *pack_a_ptr_ = nullptr;
+  int8_t *pack_b_ptr_ = nullptr;
+  int8_t *c_ptr_ = nullptr;
   int *input_sums_ = nullptr;
   int *weight_bias_sums_ = nullptr;
   int *bias_ptr_ = nullptr;
-  int r4_ = 0;
-  int c4_ = 0;
-  int d16_ = 0;
+  bool filter_per_channel_ = true;
 };
 }  // namespace mindspore::kernel
 

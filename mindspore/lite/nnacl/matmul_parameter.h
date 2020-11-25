@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_NNACL_MATMUL_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/quantization/quantize.h"
 
 typedef void (*MATMUL_OPT_R4_FUNC)(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
                                    const int *input_sum, const int *bias);
@@ -59,5 +60,17 @@ typedef struct MatMulParameter {
   bool b_init_shape_;
   ActType act_type_;
 } MatMulParameter;
+
+typedef struct MatmulQuantParameter {
+  QuantArg input_;
+  QuantArg output_;
+  int32_t out_act_min_;
+  int32_t out_act_max_;
+  float *filter_scale_;
+  int32_t *filter_zp_;
+  int32_t *left_shift_;
+  int32_t *right_shift_;
+  int32_t *quant_multiplier_;
+} MatmulQuantParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_MATMUL_H_

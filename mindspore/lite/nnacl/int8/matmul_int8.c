@@ -254,19 +254,22 @@ void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
 void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
                    const int *bias, int mini, int maxi, int out_zp, int32_t *multiplier, int32_t *left_shift,
                    int32_t *right_shift, size_t stride, size_t filter_peroc, int32_t *filter_zp) {
-  int col_tile = C4NUM;
-  /* support per-layer && weight per-channel */
-  /*  row4x16-major * row16x2-major => (int8)row-major*/
+  /*
+   * row4x16-major * row16x4-major => (int8)row-major
+   * support per-layer && weight per-channel
+   * a_sums is  perT  : input_row_sum * filter_zp
+   *            perOc : input_row_sum
+   * */
   for (int r = 0; r < row; r++) {
     for (int c = 0; c < col; c++) {
       int r4div = r / C4NUM, r4mod = r % C4NUM;
-      int c4div = c / col_tile, c4mod = c % col_tile;
+      int c4div = c / C4NUM, c4mod = c % C4NUM;
       size_t ci = r * stride + c;
       int32_t value = 0;
       for (int d = 0; d < deep16; d++) {
         int d16div = d / C16NUM, d16mod = d % C16NUM;
         size_t ai = r4div * deep16 * C4NUM + d16div * C4NUM * C16NUM + r4mod * C16NUM + d16mod;
-        size_t bi = c4div * deep16 * col_tile + d16div * col_tile * C16NUM + c4mod * C16NUM + d16mod;
+        size_t bi = c4div * deep16 * C4NUM + d16div * C4NUM * C16NUM + c4mod * C16NUM + d16mod;
         value = value + a[ai] * b[bi];
       }
       int32_t cur_input_sum = filter_peroc ? a_sums[r] * filter_zp[c] : a_sums[r];
@@ -568,8 +571,8 @@ void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst, Dat
 }
 
 // dst: bias + depth*input_zp*weight_zp - input_zp*weight_col_sums
-void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, int weight_zp, const int *bias, int *dst,
-                        DataOrder order) {
+void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, int *weight_zp_ptr, const int *bias, int *dst,
+                        DataOrder order, bool filter_per_channel) {
   for (int c = 0; c < col; ++c) {
     int sum = 0;
     for (int r = 0; r < row; ++r) {
@@ -579,6 +582,7 @@ void CalcWeightBiasSums(int8_t *weight, int row, int col, int input_zp, int weig
         sum += weight[c * row + r];
       }
     }
+    int weight_zp = filter_per_channel ? weight_zp_ptr[c] : weight_zp_ptr[0];
     dst[c] = row * input_zp * weight_zp - input_zp * sum;
     if (bias != NULL) {
       dst[c] += bias[c];
