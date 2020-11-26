@@ -43,7 +43,6 @@ class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
  private:
   void GetKernelName(std::string *kernel_name, ArithmeticSelfParameter *param);
   cl_int4 output_shape_ = {};
-  cl::Kernel kernel_;
 };
 
 }  // namespace mindspore::kernel

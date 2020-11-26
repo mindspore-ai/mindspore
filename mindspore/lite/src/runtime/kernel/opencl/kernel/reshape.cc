@@ -55,9 +55,9 @@ void ReshapeOpenCLKernel::SetConstArgs() {
 
 void ReshapeOpenCLKernel::SetGlobalLocal() {
   auto out = GpuTensorInfo(out_tensors_.front());
-  std::vector<size_t> local = {};
-  std::vector<size_t> global{out.width, out.height};
-  OpenCLKernel::AlignGlobalLocal(global, local);
+  local_size_ = {};
+  global_size_ = {out.width, out.height};
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int ReshapeOpenCLKernel::Prepare() {
@@ -81,7 +81,7 @@ int ReshapeOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

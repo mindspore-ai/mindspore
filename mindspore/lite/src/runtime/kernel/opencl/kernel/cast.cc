@@ -73,10 +73,10 @@ void CastOpenCLKernel::SetGlobalLocal() {
   uint32_t OC = UP_DIV(input_shape[3], C4NUM);
 
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
-  std::vector<size_t> local = {1, 1, 1};  // init local
-  std::vector<size_t> global = {OH, OW, OC};
-  CastGetWorkGroup(global, &local, max_global[0]);
-  OpenCLKernel::AlignGlobalLocal(global, local);
+  local_size_ = {1, 1, 1};  // init local
+  global_size_ = {OH, OW, OC};
+  CastGetWorkGroup(global_size_, &local_size_, max_global[0]);
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int CastOpenCLKernel::Prepare() {
@@ -100,7 +100,7 @@ int CastOpenCLKernel::Run() {
   int arg_cn = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());   // input tensor
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());  // out tensor
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

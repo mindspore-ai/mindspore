@@ -44,7 +44,6 @@ class StackOpenCLKernel : public OpenCLKernel {
 
   int InferOutTensorShapeTo4D(cl_int4 *output_shape);
 
-  cl::Kernel kernel_;
   int axis_{0};
   size_t N_{1};
   size_t H_{1};

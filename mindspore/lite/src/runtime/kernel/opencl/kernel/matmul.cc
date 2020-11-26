@@ -137,11 +137,11 @@ int MatMulOpenCLKernel::InitWeights() {
 
 void MatMulOpenCLKernel::SetGlobalLocal() {
   // local size should less than MAX_GROUP_SIZE
-  std::vector<size_t> local = {32, 4, 1};
-  std::vector<size_t> global = {UP_DIV(static_cast<size_t>(outShape[3]), C4NUM),
-                                4 * static_cast<size_t>(outShape[0]) * static_cast<size_t>(outShape[1]),
-                                static_cast<size_t>(outShape[2])};
-  AlignGlobalLocal(global, local);
+  local_size_ = {32, 4, 1};
+  global_size_ = {UP_DIV(static_cast<size_t>(outShape[3]), C4NUM),
+                  4 * static_cast<size_t>(outShape[0]) * static_cast<size_t>(outShape[1]),
+                  static_cast<size_t>(outShape[2])};
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 void MatMulOpenCLKernel::SetConstArgs() {
@@ -158,7 +158,7 @@ int MatMulOpenCLKernel::Run() {
   int arg_count = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }
 

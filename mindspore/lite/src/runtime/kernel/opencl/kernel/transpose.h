@@ -41,7 +41,6 @@ class TransposeOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
-  cl::Kernel kernel_;
   TransposeType type{TransposeType::AXIS0312};
 };
 }  // namespace mindspore::kernel

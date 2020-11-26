@@ -39,7 +39,6 @@ class OneHotOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
-  cl::Kernel kernel_;
   int depth_{0};
   float on_value_{1.0f};
   float off_value_{0.0f};

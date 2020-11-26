@@ -41,8 +41,6 @@ class CastOpenCLKernel : public OpenCLKernel {
 
  private:
   int GetKernelName(std::string *kernel_name, CastParameter *param);
-
-  cl::Kernel kernel_;
 };
 
 }  // namespace mindspore::kernel

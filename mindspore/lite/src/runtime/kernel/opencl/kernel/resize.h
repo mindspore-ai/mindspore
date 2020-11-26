@@ -40,7 +40,6 @@ class ResizeOpenCLKernel : public OpenCLKernel {
  private:
   float getResizeScaleFactor(int input_size, int output_size);
 
-  cl::Kernel kernel_;
   bool alignCorner{false};
   bool preserveAspectRatio{false};
 };

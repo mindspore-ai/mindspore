@@ -37,7 +37,6 @@ class PowerOpenCLKernel : public OpenCLKernel {
 
  private:
   int InferShapeTo4D();
-  cl::Kernel kernel_;
 
  private:
   size_t N_{1};

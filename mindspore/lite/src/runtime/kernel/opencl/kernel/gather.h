@@ -38,12 +38,12 @@ class GatherOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+  int Tune() override { return lite::RET_OK; }
 
  protected:
   int UpdateWeights();
 
  private:
-  cl::Kernel kernel_;
   int32_t *indices_data_{nullptr};
   int axis_ = {0};
 };

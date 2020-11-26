@@ -40,7 +40,6 @@ class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
-  cl::Kernel kernel_;
   void *padWeight_{nullptr};
   void *bias_{nullptr};
   bool enable_fp16_{false};

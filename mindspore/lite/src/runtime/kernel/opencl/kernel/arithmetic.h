@@ -39,7 +39,6 @@ class ArithmeticOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
-  cl::Kernel kernel_;
   bool element_flag_{true};
   float activation_min_{-FLT_MAX};
   float activation_max_{FLT_MAX};

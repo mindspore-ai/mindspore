@@ -38,7 +38,6 @@ class SpaceToDepthOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
-  cl::Kernel kernel_;
   GpuTensorInfo in_shape_ = GpuTensorInfo(nullptr);
   GpuTensorInfo out_shape_ = GpuTensorInfo(nullptr);
 };

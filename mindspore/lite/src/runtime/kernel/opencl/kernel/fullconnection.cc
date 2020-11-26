@@ -179,9 +179,9 @@ int FullConnectionOpenCLKernel::InitWeights() {
 }
 
 void FullConnectionOpenCLKernel::SetGlobalLocal() {
-  std::vector<size_t> local = {32, 4, 1};
-  std::vector<size_t> global = {UP_DIV(outShape.C, C4NUM), 4, outShape.N};
-  AlignGlobalLocal(global, local);
+  local_size_ = {32, 4, 1};
+  global_size_ = {UP_DIV(outShape.C, C4NUM), 4, outShape.N};
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 void FullConnectionOpenCLKernel::SetConstArgs() {
@@ -202,7 +202,7 @@ int FullConnectionOpenCLKernel::Run() {
   int arg_count = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

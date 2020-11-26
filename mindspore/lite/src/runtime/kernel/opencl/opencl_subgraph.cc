@@ -228,8 +228,17 @@ int OpenCLSubGraph::Init() {
     MS_LOG(ERROR) << "OpenCL prepare fail";
     return ret;
   }
-
-  MallocTensorWithReuse();
+  auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
+  ocl_runtime_->SetProfiling(true);
+  ret = opencl_exec->RunOrTune(in_tensors_, out_tensors_, nodes_, allocator_, nullptr, nullptr, true);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
+    return ret;
+  }
+  ocl_runtime_->SetProfiling(false);
+#ifdef Debug
+  ocl_runtime_->SetProfiling(true);
+#endif
   return RET_OK;
 }
 

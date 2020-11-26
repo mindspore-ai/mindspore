@@ -96,11 +96,13 @@ void TransposeOpenCLKernel::SetGlobalLocal() {
   size_t w = shapex[2];
   size_t c = shapex[3];
   size_t c4 = UP_DIV(c, 4);
+  local_size_ = {};
   if (type == TransposeType::AXIS0312) {  // NHWC -> NCHW
-    global_range_ = {UP_DIV(h, C4NUM), w, c4};
+    global_size_ = {UP_DIV(h, C4NUM), w, c4};
   } else if (type == TransposeType::AXIS0231) {  // NCHW -> NHWC
-    global_range_ = {h, UP_DIV(w, C4NUM), c4};
+    global_size_ = {h, UP_DIV(w, C4NUM), c4};
   }
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 int TransposeOpenCLKernel::Run() {
@@ -108,7 +110,7 @@ int TransposeOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }
 

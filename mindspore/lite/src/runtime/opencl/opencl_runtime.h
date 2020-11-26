@@ -32,6 +32,7 @@ j* you may not use this file except in compliance with the License.
 namespace mindspore::lite::opencl {
 
 enum GpuType { OTHER = 0, ADRENO = 1, MALI = 2, MALI_T = 3, MALI_G = 4 };
+enum TuningMode { DEFAULT = 0, FAST = 1, EXTREME = 2 };
 
 struct GpuInfo {
   GpuType type = OTHER;
@@ -117,7 +118,7 @@ class OpenCLRuntime {
   int RunKernel(const cl::Kernel &kernel, const std::vector<size_t> &global, const std::vector<size_t> &local,
                 cl::CommandQueue *command_queue = nullptr);  // !!!To be deleted
   int RunKernel(const cl::Kernel &kernel, const cl::NDRange &global, const cl::NDRange &local,
-                cl::CommandQueue *command_queue = nullptr);
+                cl::CommandQueue *command_queue = nullptr, cl::Event *event = nullptr);
   bool CopyDeviceMemToHost(void *dst, const void *src, size_t size, cl::CommandQueue *command_queue = nullptr,
                            bool sync = false) const;
   bool CopyHostMemToDevice(const void *dst, const void *src, size_t size, cl::CommandQueue *command_queue = nullptr,
@@ -139,10 +140,14 @@ class OpenCLRuntime {
    * @return max_work_group_size
    */
   int GetKernelMaxWorkGroupSize(cl_kernel kernel, cl_device_id device_id);
+  void SetTuningMode(TuningMode mode) { tuning_mode_ = mode; }
+  TuningMode GetTuningMode() const { return tuning_mode_; }
 
   void InitGpuCache();
   int LoadCache(const void *buf);
   void StoreCache();
+  bool isProfiling() const { return profiling_; }
+  void SetProfiling(bool profiling) { profiling_ = profiling; }
 
  private:
   static OpenCLRuntime *GetInstance();
@@ -158,6 +163,7 @@ class OpenCLRuntime {
   static size_t instance_count_;
   static OpenCLRuntime *ocl_runtime_instance_;
   cl::CommandQueue *default_command_queue_{nullptr};
+  cl::CommandQueue *profiling_command_queue_{nullptr};
   cl::Context *context_{nullptr};
   cl::Device *device_{nullptr};
   OpenCLAllocator *allocator_{nullptr};
@@ -181,6 +187,8 @@ class OpenCLRuntime {
   const std::string version_{"V0.1"};
   bool need_write_{false};
   bool enable_cache_{false};
+  TuningMode tuning_mode_{TuningMode::DEFAULT};
+  bool profiling_{false};
 };
 
 class OpenCLRuntimeWrapper {

@@ -136,11 +136,11 @@ void SparseToDenseOpenCLKernel::SetConstArgs() {
 }
 
 void SparseToDenseOpenCLKernel::SetGlobalLocal() {
-  std::vector<size_t> local = {1, 1};
+  local_size_ = {1, 1};
   size_t OH = n_ * h_;
   size_t OW = w_ * UP_DIV(c_, C4NUM);
-  std::vector<size_t> global = {OH, OW};
-  OpenCLKernel::AlignGlobalLocal(global, local);
+  global_size_ = {OH, OW};
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int SparseToDenseOpenCLKernel::Prepare() {
@@ -209,7 +209,7 @@ int SparseToDenseOpenCLKernel::Run() {
   } else {
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_scalar_);
   }
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

@@ -93,7 +93,7 @@ int Conv2DOpenCLKernel::Prepare() {
     std::string program_name = "winograd";
     ocl_runtime_->LoadSource(program_name, winograd_source);
     ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36");
-    ocl_runtime_->BuildKernel(kernel_conv_, program_name, "WinogradConvolution");
+    ocl_runtime_->BuildKernel(kernel_, program_name, "WinogradConvolution");
     ocl_runtime_->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4");
   } else {
     SetBlockSize();
@@ -101,7 +101,7 @@ int Conv2DOpenCLKernel::Prepare() {
     std::string kernel_name = "Conv2D_H" + std::to_string(block_size_.H) + "W" + std::to_string(block_size_.W) + "C" +
                               std::to_string(block_size_.C);
     ocl_runtime_->LoadSource(program_name, conv2d_source);
-    ocl_runtime_->BuildKernel(kernel_conv_, program_name, kernel_name);
+    ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
   }
 
   // allocate winograd memory
@@ -329,7 +329,9 @@ void Conv2DOpenCLKernel::SetGlobalLocal() {
       local_h = std::min(global_h, local_hw);
       local_w = std::min(local_hw / local_h, global_w);
     }
-    AlignGlobalLocal({global_h, global_w, global_c}, {local_h, local_w, local_c});
+    global_size_ = {global_h, global_w, global_c};
+    local_size_ = {local_h, local_w, local_c};
+    AlignGlobalLocal(global_size_, local_size_);
   }
 }
 
@@ -355,11 +357,11 @@ void Conv2DOpenCLKernel::SetConstArgs() {
     arg_cn = 0;
     cl_int4 conv_in_shape = {1, 36, TILES_XY_, CI_SLICES_};
     cl_int4 conv_out_shape = {1, 36, TILES_XY_, CO_SLICES_};
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem0_);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, winograd_mem1_);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, conv_in_shape);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn, conv_out_shape);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, winograd_mem0_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, winograd_mem1_);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, conv_in_shape);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn, conv_out_shape);
 
     arg_cn = 2;
     cl_int4 _36to4x4_in_shape = {1, 16, TILES_XY_, CO_SLICES_};
@@ -373,15 +375,22 @@ void Conv2DOpenCLKernel::SetConstArgs() {
     cl_int4 kernel_stride = {KH_, KW_, param->stride_h_, param->stride_w_};
     cl_int4 pad = {param->pad_u_, param->pad_d_, param->pad_l_, param->pad_r_};
     cl_int2 dilation = {param->dilation_h_, param->dilation_w_};
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, input_shape);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, output_shape);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, kernel_stride);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, pad);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn++, dilation);
-    ocl_runtime_->SetKernelArg(kernel_conv_, arg_cn, act_type);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, kernel_stride);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, pad);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, dilation);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn, act_type);
   }
+}
+
+int Conv2DOpenCLKernel::Tune() {
+  if (use_winograd_) {
+    return RET_OK;
+  }
+  return OpenCLKernel::Tune();
 }
 
 int Conv2DOpenCLKernel::Run() {
@@ -389,14 +398,14 @@ int Conv2DOpenCLKernel::Run() {
     ocl_runtime_->SetKernelArg(kernel_4x4to36_, 0, in_tensors_.front()->data_c());
     ocl_runtime_->RunKernel(kernel_4x4to36_, global_4x4to36_, local_4x4to36_);
 
-    ocl_runtime_->RunKernel(kernel_conv_, global_conv_, local_conv_);
+    ocl_runtime_->RunKernel(kernel_, global_conv_, local_conv_);
 
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, 1, out_tensors_.front()->data_c());
     ocl_runtime_->RunKernel(kernel_36to4x4_, global_36to4x4_, local_36to4x4_);
   } else {
-    ocl_runtime_->SetKernelArg(kernel_conv_, 0, in_tensors_.front()->data_c());
-    ocl_runtime_->SetKernelArg(kernel_conv_, 1, out_tensors_.front()->data_c());
-    ocl_runtime_->RunKernel(kernel_conv_, global_range_, local_range_);
+    ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c());
+    ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   }
   return RET_OK;
 }

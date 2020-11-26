@@ -42,7 +42,6 @@ class ActivationOpenCLKernel : public OpenCLKernel {
 
  private:
   static std::string GetActTypeString(int act_type);
-  cl::Kernel kernel_;
   int type_;
   float alpha_;
   GpuTensorInfo outShape = GpuTensorInfo(nullptr);

@@ -92,8 +92,9 @@ void ActivationOpenCLKernel::SetConstArgs() {
 }
 
 void ActivationOpenCLKernel::SetGlobalLocal() {
-  local_range_ = cl::NullRange;
-  global_range_ = {outShape.width, outShape.height};
+  local_size_ = {};
+  global_size_ = {outShape.width, outShape.height};
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 int ActivationOpenCLKernel::Run() {
@@ -101,7 +102,7 @@ int ActivationOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  auto ret = ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  auto ret = ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel:" << this->name() << " fail.";
     return RET_ERROR;

@@ -40,7 +40,6 @@ class BiasAddOpenCLKernel : public OpenCLKernel {
  private:
   cl_int4 GetGlobalshape();
 
-  cl::Kernel kernel_;
   void *BiasAdd_{nullptr};
   int in_size_{};
   int out_size_{};

@@ -230,17 +230,22 @@ int OpenCLRuntime::Init() {
   MS_LOG(INFO) << "Compute Unit: " << compute_units_;
   MS_LOG(INFO) << "Clock Frequency: " << max_freq_ << " MHz";
 
-#ifdef Debug
-  const cl_command_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
-#else
   const cl_command_queue_properties properties = 0;
-#endif
-
   default_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, properties, &ret);
   if (ret != CL_SUCCESS) {
     delete device_;
     delete context_;
     MS_LOG(ERROR) << "Command Queue create failed: " << CLErrorCode(ret);
+    return RET_ERROR;
+  }
+
+  const cl_command_queue_properties profiling_properties = CL_QUEUE_PROFILING_ENABLE;
+  profiling_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, profiling_properties, &ret);
+  if (ret != CL_SUCCESS) {
+    delete device_;
+    delete context_;
+    delete default_command_queue_;
+    MS_LOG(ERROR) << "Profiling command Queue create failed: " << CLErrorCode(ret);
     return RET_ERROR;
   }
 
@@ -473,15 +478,17 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const std::vector<size_t>
 }
 // Run Kernel with 1D, 2D, 3D group size, and local size can be empty.
 int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const cl::NDRange &global, const cl::NDRange &local,
-                             cl::CommandQueue *command_queue) {
+                             cl::CommandQueue *command_queue, cl::Event *event) {
   if (command_queue == nullptr) {
-    command_queue = default_command_queue_;
+    if (profiling_) {
+      command_queue = profiling_command_queue_;
+    } else {
+      command_queue = default_command_queue_;
+    }
   }
   MS_ASSERT(local.size() == 0 || local.size() == global.size());
-
-  cl::Event event;
   cl_int ret = CL_SUCCESS;
-  ret = command_queue->enqueueNDRangeKernel(kernel, cl::NullRange, global, local, nullptr, &event);
+  ret = command_queue->enqueueNDRangeKernel(kernel, cl::NullRange, global, local, nullptr, event);
   if (ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Kernel execute failed:" << CLErrorCode(ret);
     return RET_ERROR;
@@ -496,15 +503,9 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const cl::NDRange &global
   }
   cnt++;
   MS_LOG(DEBUG) << "RunKernel success!";
-#ifdef Debug
-  event.wait();
-  cl_ulong time_start;
-  cl_ulong time_end;
-  event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
-  event.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
-  double nanoSeconds = time_end - time_start;
-  MS_LOG(INFO) << "OpenCl Execution time is: " << nanoSeconds / 1000000.0 << "ms";
-#endif
+  if (profiling_) {
+    event->wait();
+  }
   return RET_OK;
 }
 // get gpu divce type

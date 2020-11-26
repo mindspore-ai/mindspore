@@ -37,7 +37,6 @@ class ScaleOpenCLKernel : public OpenCLKernel {
  private:
   void Image2dGetWorkGroupSize();
 
-  cl::Kernel kernel_;
   bool weight_vector_flag_{true};
   bool broadcast_flag_{false};
   bool broadcast_H_flag_{false};

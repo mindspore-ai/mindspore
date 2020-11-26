@@ -37,7 +37,6 @@ class PReluOpenCLKernel : public OpenCLKernel {
   int InitWeights() override;
 
  private:
-  cl::Kernel kernel_;
   bool enable_fp16_{false};
   int batch_size_{};
   int C_{};

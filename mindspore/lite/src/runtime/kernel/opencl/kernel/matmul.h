@@ -37,9 +37,9 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   int InitWeights() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+  int Tune() override { return lite::RET_OK; }
 
  private:
-  cl::Kernel kernel_;
   void *padWeight_{nullptr};
   bool enable_fp16_{false};
   bool transposeA{false};

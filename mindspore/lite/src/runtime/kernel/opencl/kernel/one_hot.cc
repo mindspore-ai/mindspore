@@ -85,14 +85,16 @@ void OneHotOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx, static_cast<int>(out_shape_.C));
 }
 void OneHotOpenCLKernel::SetGlobalLocal() {
-  global_range_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
+  local_size_ = {};
+  global_size_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 int OneHotOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }
 

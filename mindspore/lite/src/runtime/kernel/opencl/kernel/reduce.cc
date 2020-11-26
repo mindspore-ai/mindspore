@@ -148,15 +148,22 @@ void ReduceOpenCLKernel::SetGlobalLocal() {
   int h = shapex[1];
   int c = shapex[3];
   int c4 = UP_DIV(c, C4NUM);
-  std::vector<size_t> local = {};
+  local_size_ = {};
   if (use_local_) {
-    local = {1, LOCAL_CACHE_THREAD, LOCAL_CACHE_THREAD};
+    local_size_ = {1, LOCAL_CACHE_THREAD, LOCAL_CACHE_THREAD};
   }
-  std::vector<size_t> global = {static_cast<size_t>(c4), 1, 1};
+  global_size_ = {static_cast<size_t>(c4), 1, 1};
   if (wc_reduce_) {
-    global = {static_cast<size_t>(h), 1, 1};
+    global_size_ = {static_cast<size_t>(h), 1, 1};
   }
-  AlignGlobalLocal(global, local);
+  AlignGlobalLocal(global_size_, local_size_);
+}
+
+int ReduceOpenCLKernel::Tune() {
+  if (use_local_) {
+    return RET_OK;
+  }
+  return OpenCLKernel::Tune();
 }
 
 int ReduceOpenCLKernel::Run() {
@@ -164,7 +171,7 @@ int ReduceOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }
 

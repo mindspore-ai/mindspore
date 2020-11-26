@@ -132,17 +132,17 @@ void ConcatOpenCLKernel::SetGlobalLocal() {
   if (axis_ == 3 && !Align_) {
     OH = out_shape_.s[0] * out_shape_.s[1];
     OW = out_shape_.s[2];
-    global = {OH, OW, 1};
-    local = {1, 1, 1};
+    global_size_ = {OH, OW, 1};
+    local_size_ = {1, 1, 1};
   } else {
     OH = out_shape_.s[0] * out_shape_.s[1];
     OW = out_shape_.s[2];
     OC = out_shape_.s[3];
-    global = {OH, OW, OC};
-    local = {1, 1, 1};
+    global_size_ = {OH, OW, OC};
+    local_size_ = {1, 1, 1};
   }
-  ConcatGetWorkGroup(global, &local, max_global[0]);
-  OpenCLKernel::AlignGlobalLocal(global, local);
+  ConcatGetWorkGroup(global_size_, &local_size_, max_global[0]);
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int ConcatOpenCLKernel::Prepare() {
@@ -196,7 +196,7 @@ int ConcatOpenCLKernel::Run() {
     MS_LOG(ERROR) << "unsupported input size :" << in_tensors_.size();
     return RET_ERROR;
   }
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

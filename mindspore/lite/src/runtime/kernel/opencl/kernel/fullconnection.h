@@ -38,9 +38,9 @@ class FullConnectionOpenCLKernel : public OpenCLKernel {
   void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Init() override;
+  int Tune() override { return lite::RET_OK; }
 
  private:
-  cl::Kernel kernel_;
   void *padWeight_{nullptr};
   void *bias_{nullptr};
   bool enable_fp16_{false};
