@@ -309,7 +309,14 @@ Strategys PrepareAxisRelatedStrategy(const std::shared_ptr<Graph> &graph,
   }
 
   std::vector<int64_t> axis_list;
-  auto iter = ops[iter_ops]->attrs().find(AXIS);
+  string axis_name = AXIS;
+  int64_t default_axis = -1;
+  if (ops[iter_ops]->type() == LAYER_NORM) {
+    axis_name = "begin_norm_axis";
+    default_axis = 1;
+  }
+
+  auto iter = ops[iter_ops]->attrs().find(axis_name);
   if (iter != ops[iter_ops]->attrs().end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
     if (iter->second->isa<Int64Imm>()) {
@@ -326,8 +333,9 @@ Strategys PrepareAxisRelatedStrategy(const std::shared_ptr<Graph> &graph,
       MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": The value of axis is not int64_t or tuple int64_t.";
     }
   } else {
-    axis_list.push_back(-1);
+    axis_list.push_back(default_axis);
   }
+
   for (auto &axis : axis_list) {
     if (axis < 0) {
       int64_t input_dim = SizeToLong(ops[iter_ops]->inputs_tensor_info()[0].shape().size());
@@ -481,10 +489,10 @@ Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector
     return PrepareMatMul(graph, ops, iter_graph, iter_ops);
   } else if (type == ONEHOT) {
     return PrepareOneHot(graph, ops, iter_graph, iter_ops);
-  } else if (type == SOFTMAX) {
+  } else if ((type == SOFTMAX) || (type == LAYER_NORM)) {
     return PrepareAxisRelatedStrategy(graph, ops, iter_graph, iter_ops);
   } else if ((type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) || (type == "_VirtualDataset") ||
-             (type == "FusedBatchNormEx") || (type == "Dropout")) {
+             (type == "FusedBatchNormEx") || (type == "Dropout") || (type == BATCH_MATMUL)) {
     return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
   } else {
     return MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);

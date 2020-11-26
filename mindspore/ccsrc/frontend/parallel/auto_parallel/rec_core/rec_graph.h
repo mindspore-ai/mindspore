@@ -51,7 +51,8 @@ enum OperatorType {
   kRecReduce,
   kRecPReLU,
   kRecGatherV2,
-  kRecArgWithValue
+  kRecArgWithValue,
+  kRecUnsortedSegmentOp
 };
 
 enum InfoType { kApplication, kConstant };

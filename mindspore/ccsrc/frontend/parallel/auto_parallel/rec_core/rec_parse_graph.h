@@ -47,6 +47,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {BIAS_ADD, OperatorType::kRecBiasAdd},
   {BATCH_NORM, OperatorType::kRecBatchNorm},
   {FUSE_BATCH_NORM, OperatorType::kRecBatchNorm},
+  {LAYER_NORM, OperatorType::kRecBatchNorm},
   {SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits},
   {ONEHOT, OperatorType::kRecOneHot},
   {SQUEEZE, OperatorType::kRecSqueeze},
@@ -58,6 +59,9 @@ const std::map<std::string, OperatorType> DictOpType{
   {GATHERV2, OperatorType::kRecGatherV2},
   {ARGMAXWITHVALUE, OperatorType::kRecArgWithValue},
   {ARGMINWITHVALUE, OperatorType::kRecArgWithValue},
+  {UNSORTED_SEGMENT_SUM, OperatorType::kRecUnsortedSegmentOp},
+  {UNSORTED_SEGMENT_MAX, OperatorType::kRecUnsortedSegmentOp},
+  {UNSORTED_SEGMENT_MIN, OperatorType::kRecUnsortedSegmentOp},
   // Activation OP
   {ACTIVATION, OperatorType::kRecReLU},
   {RELU, OperatorType::kRecReLU},
@@ -139,7 +143,8 @@ const std::map<std::string, OperatorType> DictOpType{
   {ASSIGN, OperatorType::kRecElmWiseOp},
   {ASSIGN_ADD, OperatorType::kRecElmWiseOp},
   {ASSIGN_SUB, OperatorType::kRecElmWiseOp},
-  {"AssignAdd", OperatorType::kRecElmWiseOp}};
+  {"AssignAdd", OperatorType::kRecElmWiseOp},
+  {DROPOUT_DO_MASK, OperatorType::kRecElmWiseOp}};
 
 const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);
 
