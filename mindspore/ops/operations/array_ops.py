@@ -73,17 +73,13 @@ class _ScatterOp_Dynamic(PrimitiveWithCheck):
     """
     Defines Scatter operators with dynamic shape
     """
-    __mindspore_signature__ = (
-        sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
-        sig.make_sig('updates', dtype=sig.sig_dtype.T)
-    )
 
     def _check_scatter_shape(self, x_shape, indices_shape, updates_shape, prim_name):
-        if indices_shape != [-1] and updates_shape and updates_shape != indices_shape + x_shape[1:]:
-            raise ValueError(f"For '{prim_name}', "
-                             f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
-                             f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
+        if np.all(np.array(x_shape) != -1):
+            if indices_shape != [-1] and updates_shape and updates_shape != indices_shape + x_shape[1:]:
+                raise ValueError(f"For '{prim_name}', "
+                                 f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
+                                 f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
 
     @prim_attr_register
     def __init__(self, use_locking=False):
@@ -649,7 +645,7 @@ class Squeeze(PrimitiveWithInfer):
         return x_dtype
 
 
-class Transpose(PrimitiveWithCheck):
+class Transpose(PrimitiveWithInfer):
     """
     Permutes the dimensions of the input tensor according to input permutation.
 
@@ -685,14 +681,36 @@ class Transpose(PrimitiveWithCheck):
         """Initialize Transpose"""
         self.init_prim_io_names(inputs=['x', 'perm'], outputs=['output'])
 
-    def check_shape(self, x, perm):
-        validator.check_value_type("perm", perm, [tuple], self.name)
-        if len(x) != len(perm):
+    def __infer__(self, x, perm):
+        x_shape = x['shape']
+        p_value = perm['value']
+        x_type = x['dtype']
+        validator.check_value_type("p_value", p_value, [tuple], self.name)
+        validator.check_subclass("x_type", x_type, mstype.tensor, self.name)
+        if len(x_shape) != len(p_value):
             raise ValueError('The dimension of x and perm must be equal.')
-
-    def check_dtype(self, x, perm):
-        validator.check_subclass("x", x, mstype.tensor, self.name)
-
+        tmp = list(p_value)
+        for i, dim in enumerate(p_value):
+            validator.check_int(dim, 0, Rel.GE, f'perm[{i}]', self.name)
+            validator.check_int(dim, len(p_value), Rel.LT, f'perm[{i}]', self.name)
+            tmp.remove(dim)
+            if dim in tmp:
+                raise ValueError('The value of perm is wrong.')
+        out_shapes = []
+        for i in p_value:
+            out_shapes.append(x_shape[i])
+        out = {'shape': tuple(out_shapes),
+               'dtype': x['dtype'],
+               'value': None}
+        if 'min_shape' in x and 'max_shape' in x:
+            min_vec = []
+            max_vec = []
+            for i in p_value:
+                min_vec.append(x['min_shape'][i])
+                max_vec.append(x['max_shape'][i])
+            out['min_shape'] = tuple(min_vec)
+            out['max_shape'] = tuple(max_vec)
+        return out
 
 class Unique(Primitive):
     """
