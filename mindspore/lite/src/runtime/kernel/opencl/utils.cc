@@ -303,7 +303,7 @@ void PrintTensor(const lite::Tensor *tensor, MemType mem_type, int n, const std:
   printf("\n");
 
   if (!out_file.empty()) {
-    WriteToBin(out_file, data.data(), data.size());
+    (void)WriteToBin(out_file, data.data(), data.size());
   }
 }
 

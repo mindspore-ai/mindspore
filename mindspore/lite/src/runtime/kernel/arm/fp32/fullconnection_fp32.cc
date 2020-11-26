@@ -118,7 +118,7 @@ int FullconnectionCPUKernel::Init() {
   return ReSize();
 }
 
-void FullconnectionCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
+void FullconnectionCPUKernel::InitMatrixA(const float *src_ptr, float *dst_ptr) {
   if (is_vector_input_) {
     memcpy(dst_ptr, src_ptr, fc_param_->deep_ * sizeof(float));
     return;
@@ -131,7 +131,7 @@ void FullconnectionCPUKernel::InitMatrixA(float *src_ptr, float *dst_ptr) {
 #endif
 }
 
-void FullconnectionCPUKernel::InitMatrixB(float *src_ptr, float *dst_ptr) {
+void FullconnectionCPUKernel::InitMatrixB(const float *src_ptr, float *dst_ptr) {
   if (is_vector_input_) {
     memcpy(dst_ptr, src_ptr, fc_param_->col_ * fc_param_->deep_ * sizeof(float));
     return;

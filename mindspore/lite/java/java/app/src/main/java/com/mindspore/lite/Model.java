@@ -51,21 +51,21 @@ public class Model {
             ret = this.modelPtr != 0;
         } catch (IOException e) {
             this.modelPtr = 0;
-            Log.e("MS_LITE", "Load model failed: " + e.getMessage());
+            Log.e("MS_LITE", "Load model failed");
             ret = false;
         } finally {
             if (null != fis) {
                 try {
                     fis.close();
                 } catch (IOException e) {
-                    Log.e("MS_LITE", "Close file failed: " + e.getMessage());
+                    Log.e("MS_LITE", "Close file failed");
                 }
             }
             if (null != fileDescriptor) {
                 try {
                     fileDescriptor.close();
                 } catch (IOException e) {
-                    Log.e("MS_LITE", "Close fileDescriptor failed: " + e.getMessage());
+                    Log.e("MS_LITE", "Close fileDescriptor failed");
                 }
             }
         }

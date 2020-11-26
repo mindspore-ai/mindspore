@@ -55,6 +55,10 @@ int ScatterND::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
     return RET_ERROR;
   }
   auto output = outputs_.front();
+  if (output == nullptr) {
+    MS_LOG(ERROR) << "output null pointer dereferencing.";
+    return RET_ERROR;
+  }
   output->set_data_type(update->data_type());
   output->set_format(update->format());
   if (!infer_flag()) {

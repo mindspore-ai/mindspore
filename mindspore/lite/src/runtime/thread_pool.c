@@ -121,7 +121,7 @@ void FreeThread(ThreadList *thread_list, Thread *thread) {
   sem_post(&thread->sem);
   while (true) {
     if (thread != NULL && !thread->is_running) {
-      sem_destroy(&thread->sem);
+      (void)sem_destroy(&thread->sem);
       free(thread);
       thread = NULL;
       break;
@@ -403,6 +403,7 @@ int SortCpuProcessor() {
   int err_code = SetArch(freq_set, gCoreNum);
   if (err_code != RET_TP_OK) {
     LOG_ERROR("set arch failed.");
+    return RET_TP_ERROR;
   }
   // sort core id by frequency into descending order
   for (int i = 0; i < gCoreNum; ++i) {
@@ -470,7 +471,7 @@ int SetAffinity(pthread_t thread_id, cpu_set_t *cpuSet) {
 #else
   int ret = pthread_setaffinity_np(thread_id, sizeof(cpu_set_t), cpuSet);
   if (ret != RET_TP_OK) {
-    LOG_ERROR("set thread: %lu to cpu failed", thread_id);
+    LOG_ERROR("set thread: %d to cpu failed", thread_id);
     return RET_TP_SYSTEM_ERROR;
   }
 #endif  // __APPLE__
@@ -803,8 +804,12 @@ ThreadPool *CreateThreadPool(int thread_num, int mode) {
   }
 #ifdef BIND_CORE
   if (run_once) {
-    SortCpuProcessor();
+    int ret = SortCpuProcessor();
     run_once = false;
+    if (ret != RET_TP_OK) {
+      LOG_ERROR("SortCpuProcessor failed");
+      return NULL;
+    }
   }
 #endif
   ThreadPool *thread_pool = (struct ThreadPool *)(malloc(sizeof(ThreadPool)));

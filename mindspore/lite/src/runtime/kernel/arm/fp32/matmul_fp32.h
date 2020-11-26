@@ -40,8 +40,8 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   int MallocMatrixABuffer();
   int MallocMatrixBBuffer();
   int InitBias();
-  void InitMatrixA(float *src_ptr, float *dst_ptr);
-  void InitMatrixB(float *src_ptr, float *dst_ptr);
+  void InitMatrixA(const float *src_ptr, float *dst_ptr);
+  void InitMatrixB(const float *src_ptr, float *dst_ptr);
   void FreeTmpBuffer();
 
  private:
