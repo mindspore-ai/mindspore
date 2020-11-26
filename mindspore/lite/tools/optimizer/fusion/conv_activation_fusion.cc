@@ -29,17 +29,14 @@ constexpr size_t kActivationInputsLength = 2;
 }
 const BaseRef ConvActivationFusion::DefinePattern() const {
   auto conv_var = std::make_shared<CondVar>(IsConvNode);
-  auto prim = new schema::PrimitiveT();
-  prim->value.type = primitive_type;
-  auto prim_value = std::make_shared<lite::PrimitiveC>(prim);
-  return VectorRef({prim_value, conv_var});
+  auto act_var = std::make_shared<CondVar>(IsActivationNode);
+  return VectorRef({act_var, conv_var});
 }
 
 const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                const EquivPtr &) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
-  MS_LOG(DEBUG) << "conv activation pass process:" << schema::EnumNamesPrimitiveType()[primitive_type];
   if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;
@@ -53,7 +50,8 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
   MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Activation>>(primitivec));
   auto act_primitivec = utils::cast<std::shared_ptr<mindspore::lite::Activation>>(primitivec);
   MS_ASSERT(act_primitivec != nullptr);
-  if (act_primitivec->GetType() != activation_type) {
+  if (act_primitivec->GetType() != schema::ActivationType_RELU &&
+      act_primitivec->GetType() != schema::ActivationType_RELU6) {
     return nullptr;
   }
   AnfNodePtr pre_node = act_node->input(1);
@@ -73,7 +71,7 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
       auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c);
       MS_ASSERT(primc != nullptr);
       if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
-        primc->SetActivationType(activation_type);
+        primc->SetActivationType(act_primitivec->GetType());
         return pre_node;
       }
     } else if (node_type == schema::PrimitiveType_DepthwiseConv2D) {
@@ -81,7 +79,7 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
       auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c);
       MS_ASSERT(primc != nullptr);
       if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
-        primc->SetActivationType(activation_type);
+        primc->SetActivationType(act_primitivec->GetType());
         return pre_node;
       }
     } else {

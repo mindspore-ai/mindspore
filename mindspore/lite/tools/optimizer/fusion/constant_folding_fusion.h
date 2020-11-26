@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
 #define MINDSPORE_LITE_SRC_PASS_FUSION_CONSTANT_FOLDING_FUSION_H_
 
+#include <utility>
+#include <memory>
 #include "schema/inner/model_generated.h"
 #include "src/tensor.h"
 #include "src/lite_kernel.h"
@@ -27,15 +29,13 @@ namespace mindspore {
 namespace opt {
 class ConstFoldPass : public PatternProcessPass {
  public:
-  explicit ConstFoldPass(bool multigraph = true) : PatternProcessPass("constfold_pass", multigraph) {
-    this->context = new lite::InnerContext;
-    this->context->Init();
-  }
-  ~ConstFoldPass() override { delete (this->context); }
+  explicit ConstFoldPass(std::shared_ptr<lite::InnerContext> context_ptr = nullptr, bool multigraph = true)
+      : PatternProcessPass("constfold_pass", multigraph), context(std::move(context_ptr)) {}
+  ~ConstFoldPass() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  lite::InnerContext *context = nullptr;
+  std::shared_ptr<lite::InnerContext> context;
 };
 }  // namespace opt
 }  // namespace mindspore

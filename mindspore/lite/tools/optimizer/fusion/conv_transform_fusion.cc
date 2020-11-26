@@ -119,8 +119,8 @@ const AnfNodePtr ConvTransformFusion::Process(const FuncGraphPtr &func_graph, co
   return pre_node;
 }
 
-const void ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, int kernel_nums, float *trans_scale,
-                                              float *trans_bias) const {
+void ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, int kernel_nums, float *trans_scale,
+                                        float *trans_bias) const {
   if (trans_scale == nullptr) {
     MS_LOG(ERROR) << "new transScale failed";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -145,9 +145,8 @@ const void ConvTransformFusion::GenTransParam(const CNodePtr &transform_node, in
   InitTransParam(transform_node, kernel_nums, trans_scale, trans_bias);
 }
 
-const void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const CNodePtr &conv_node,
-                                                 int kernel_num, const float *trans_scale,
-                                                 const float *trans_bias) const {
+void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const CNodePtr &conv_node, int kernel_num,
+                                           const float *trans_scale, const float *trans_bias) const {
   MS_ASSERT(conv_node != nullptr);
   AnfNodePtr conv_weight_node = nullptr;
   AnfNodePtr conv_bias_node = nullptr;
@@ -203,8 +202,8 @@ const void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph,
     conv_node->add_input(bias_node);
   }
 }
-const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kernel_num, int kernel_size,
-                                                   const float *trans_scale) const {
+void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kernel_num, int kernel_size,
+                                             const float *trans_scale) const {
   MS_ASSERT(weight_data != nullptr);
   MS_ASSERT(trans_scale != nullptr);
   auto tmp_weight_data = new (std::nothrow) float[kernel_num * kernel_size];
@@ -237,8 +236,8 @@ const void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kerne
   delete[] tmp_weight_data;
 }
 
-const void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, bool bias_flag,
-                                                 const float *trans_scale, const float *trans_bias) {
+void ConvTransformFusion::CalNewBiasTensor(float *bias_data, int kernel_num, bool bias_flag, const float *trans_scale,
+                                           const float *trans_bias) const {
   MS_ASSERT(bias_data != nullptr);
   MS_ASSERT(trans_bias != nullptr);
   MS_ASSERT(trans_scale != nullptr);

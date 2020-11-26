@@ -27,11 +27,11 @@ class ConvTransformFusion : public PatternProcessPass {
       : PatternProcessPass(name, multigraph) {}
   ~ConvTransformFusion() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  const void GenTransParam(const CNodePtr &, int, float *, float *) const;
-  virtual const void InitTransParam(const CNodePtr &, int, float *, float *) const = 0;
-  const void GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
-  const void CalNewWeightTensor(float *, int, int, const float *) const;
-  static const void CalNewBiasTensor(float *, int, bool, const float *, const float *);
+  void GenTransParam(const CNodePtr &, int, float *, float *) const;
+  virtual void InitTransParam(const CNodePtr &, int, float *, float *) const = 0;
+  void GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
+  void CalNewWeightTensor(float *, int, int, const float *) const;
+  void CalNewBiasTensor(float *, int, bool, const float *, const float *) const;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV_TRANSFORM_FUSION_H_

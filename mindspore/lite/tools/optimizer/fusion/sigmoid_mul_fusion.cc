@@ -24,13 +24,6 @@
 
 namespace mindspore::opt {
 namespace {
-bool IsActivationNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Activation;
-  }
-  return false;
-}
 bool IsMulNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
     auto type = opt::GetCNodeType(n);

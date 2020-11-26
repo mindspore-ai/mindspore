@@ -25,7 +25,7 @@ class ConvBatchNormFusion : public ConvTransformFusion {
   explicit ConvBatchNormFusion(bool multigraph = true) : ConvTransformFusion(multigraph, "conv_batchnorm_fusion") {}
   ~ConvBatchNormFusion() override = default;
   const BaseRef DefinePattern() const override;
-  const void InitTransParam(const CNodePtr &, int, float *, float *) const override;
+  void InitTransParam(const CNodePtr &, int, float *, float *) const override;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV_BN_FUSION_H_

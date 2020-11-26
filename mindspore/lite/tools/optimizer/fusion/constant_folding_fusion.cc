@@ -252,7 +252,7 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
                     << schema::EnumNamePrimitiveType((schema::PrimitiveType)(lite_primitive->Type()));
       return nullptr;
     }
-    auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, parameter, context, lite_primitive.get());
+    auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, parameter, context.get(), lite_primitive.get());
     if (lite_kernel == nullptr) {
       MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
       FreeTensors(&input_tensors, &output_tensors);

@@ -26,26 +26,27 @@
 namespace mindspore::opt {
 namespace {
 constexpr size_t kActivationInputsLength = 2;
+bool IsTupleGetItemNode(const BaseRef &n) {
+  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
+    auto type = opt::GetCNodeType(n);
+    return type == schema::PrimitiveType_TupleGetItem;
+  }
+  return false;
 }
+}  // namespace
 const BaseRef ConvTupleActivationFusion::DefinePattern() const {
   auto conv_var = std::make_shared<CondVar>(IsConvNode);
+  auto tuple_getitem_var = std::make_shared<CondVar>(IsTupleGetItemNode);
   auto tuple_index = std::make_shared<Var>();
-  auto tuple_prim = new schema::PrimitiveT();
-  tuple_prim->value.type = schema::PrimitiveType_TupleGetItem;
-  auto tuple_value = std::make_shared<lite::PrimitiveC>(tuple_prim);
-  VectorRef tuple_get_item = VectorRef({tuple_value, conv_var, tuple_index});
-
-  auto act_prim = new schema::PrimitiveT();
-  act_prim->value.type = primitive_type;
-  auto act_value = std::make_shared<lite::PrimitiveC>(act_prim);
-  return VectorRef({act_value, tuple_get_item});
+  VectorRef tuple_get_item = VectorRef({tuple_getitem_var, conv_var, tuple_index});
+  auto act_var = std::make_shared<CondVar>(IsActivationNode);
+  return VectorRef({act_var, tuple_get_item});
 }
 
 const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                     const EquivPtr &) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
-  MS_LOG(DEBUG) << "conv tuple activation pass process:" << schema::EnumNamesPrimitiveType()[primitive_type];
   if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
     return nullptr;
   }
@@ -59,7 +60,8 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
   MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Activation>>(primitivec));
   auto act_primitivec = utils::cast<std::shared_ptr<mindspore::lite::Activation>>(primitivec);
   MS_ASSERT(act_primitivec != nullptr);
-  if (act_primitivec->GetType() != activation_type) {
+  if (act_primitivec->GetType() != schema::ActivationType_RELU &&
+      act_primitivec->GetType() != schema::ActivationType_RELU6) {
     return nullptr;
   }
   AnfNodePtr tuple_node = act_node->input(1);
@@ -82,7 +84,7 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
       auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c);
       MS_ASSERT(primc != nullptr);
       if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
-        primc->SetActivationType(activation_type);
+        primc->SetActivationType(act_primitivec->GetType());
         conv_node->set_abstract(act_node->abstract());
         return conv_node;
       }
@@ -91,7 +93,7 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
       auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c);
       MS_ASSERT(primc != nullptr);
       if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
-        primc->SetActivationType(activation_type);
+        primc->SetActivationType(act_primitivec->GetType());
         conv_node->set_abstract(act_node->abstract());
         return conv_node;
       }

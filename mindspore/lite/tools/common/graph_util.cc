@@ -736,7 +736,6 @@ STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNo
       MS_LOG(ERROR) << "node->primitive->value.AsCrop() is nullptr";
       return RET_NULL_PTR;
     }
-    node->primitive->value.AsCrop()->axis = axis_map[origin_axis];
     // nchw->nhwc,offsets need pad 0;
     if (axis_map[origin_axis] == 0) {
       offsets = {offsets[0], offsets[2], offsets[3], offsets[1]};
