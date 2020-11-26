@@ -298,14 +298,29 @@ class PynativeEliminater : public OptimizerCaller {
     return out;
   }
 
+  void OnlySaveAbstractInfo(const ValueNodePtr &value_node) {
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto &value = value_node->value();
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<tensor::Tensor>()) {
+      auto tensor = value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(tensor);
+      auto new_tensor = std::make_shared<tensor::Tensor>(tensor->Dtype()->type_id(), tensor->shape());
+      value_node->set_value(MakeValue(new_tensor));
+    }
+  }
+
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     MS_LOG(DEBUG) << "Start replace node " << node->DebugString(4);
-    PatternNode<AnfNodePtr> symbol_str_vnode, c_vnode, zeros_like_vnode, getitem_vnode, arg, arg1;
+    PatternNode<AnfNodePtr> symbol_str_vnode;
+    PatternNode<AnfNodePtr> c_vnode;
+    PatternNode<AnfNodePtr> zeros_like_vnode;
+    PatternNode<AnfNodePtr> arg;
     auto resolve = PPrimitive(prim::kPrimResolve, symbol_str_vnode, c_vnode);
     auto getattr = PPrimitive(prim::kPrimGetAttr, resolve, zeros_like_vnode);
     auto pattern = PCNode(getattr, arg);
-
+    // {{prim:getattr, {prim::resolve, SymbolStr, C}, zeros_like}, Xy} ->Tensor(0, shape(Xy))
     if ((pattern).TryCapture(node) &&
         (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "SymbolStr") &&
          CheckSymbolVNode(c_vnode.GetNode(node), "C") && CheckStrVNode(zeros_like_vnode.GetNode(node), "zeros_like"))) {
@@ -320,8 +335,8 @@ class PynativeEliminater : public OptimizerCaller {
         }
       }
     }
-
     MS_LOG(DEBUG) << "End replace 1 " << node->DebugString(4);
+    // {prim:getattr, {prim::resolve, SymbolStr, zeros_like}, Xy} ->Tensor(0, shape(Xy))
     auto resolve1 = PPrimitive(prim::kPrimResolve, symbol_str_vnode, zeros_like_vnode);
     auto pattern1 = PCNode(resolve1, arg);
 
@@ -338,7 +353,13 @@ class PynativeEliminater : public OptimizerCaller {
         }
       }
     }
-
+    // {prim:getattr, {prim::resolve, SymbolStr, binop_grad_common}, x, y, out, dout} -> {shape(x), shape(y), out, dout}
+    PatternNode<AnfNodePtr> binop_grad_common;
+    PatternNode<AnfNodePtr> getitem_vnode;
+    PatternNode<AnfNodePtr> arg1;
+    PatternNode<AnfNodePtr> arg2;
+    PatternNode<AnfNodePtr> arg3;
+    PatternNode<AnfNodePtr> arg4;
     // resolve(CommonOPS, getitem)((tensors), 3)
     auto resolve2 = PPrimitive(prim::kPrimResolve, symbol_str_vnode, getitem_vnode);
     auto pattern2 = PCNode(resolve2, arg, arg1);

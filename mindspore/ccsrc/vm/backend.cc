@@ -18,13 +18,13 @@
 #include <algorithm>
 #include <vector>
 
-#include "utils/log_adapter.h"
+#include "backend/session/session_factory.h"
 #include "ir/anf.h"
+#include "pybind_api/ir/base_ref_py.h"
 #include "utils/callbacks.h"
 #include "utils/convert_utils.h"
-#include "backend/session/session_factory.h"
+#include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "pybind_api/ir/base_ref_py.h"
 #ifdef ENABLE_GE
 #include "utils/callbacks_ge.h"
 #endif
@@ -83,10 +83,14 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
     MS_LOG(INFO) << "PrecompileOnly, stop run graph";
     return result;
   }
-  if (target != target_device_ && !target.empty()) {
-    other_sess_->BuildGraph(graph_id);
-  } else if (!is_multi_graph_sink_) {
-    target_sess_->BuildGraph(graph_id);
+  auto ms_context = MsContext::GetInstance();
+  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
+  if (!pynative_mode || target != "Ascend") {
+    if (target != target_device_ && !target.empty()) {
+      other_sess_->BuildGraph(graph_id);
+    } else if (!is_multi_graph_sink_) {
+      target_sess_->BuildGraph(graph_id);
+    }
   }
   result.run = std::make_shared<RunFunc>(
     [graph_id, target, this](const VectorRef &args) -> VectorRef { return MsRunGraph(graph_id, args, target); });
@@ -154,12 +158,19 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const s
     PushInputTensor(arg, &inputs);
   }
 
+  auto ms_context = MsContext::GetInstance();
+  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
+
   VectorRef outputs;
   // call ms rungraph (graphId, input ,output)
   if (target != target_device_ && !target.empty()) {
     other_sess_->RunGraphAsync(g, inputs, &outputs);
   } else {
-    target_sess_->RunGraphAsync(g, inputs, &outputs);
+    if (pynative_mode && target == "Ascend") {
+      target_sess_->RunOpsInGraph(g, inputs, &outputs);
+    } else {
+      target_sess_->RunGraphAsync(g, inputs, &outputs);
+    }
   }
 
   MS_LOG(DEBUG) << "RunGraph finished:" << outputs.size();

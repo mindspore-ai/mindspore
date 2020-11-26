@@ -16,8 +16,9 @@
 #include "backend/session/executor.h"
 #include <algorithm>
 #include <exception>
-#include "runtime/device/kernel_runtime_manager.h"
+
 #include "backend/session/executor_manager.h"
+#include "runtime/device/kernel_runtime_manager.h"
 #include "utils/comm_manager.h"
 #include "utils/scoped_long_running.h"
 
@@ -132,6 +133,11 @@ void BuildOpTask::Run() {
 void RunOpTask::Run() {
   MS_EXCEPTION_IF_NULL(session_);
   session_->RunOpImpl(*op_run_info_, graph_info_, input_tensors_, &outputs_);
+}
+
+void RunOpsInGraphTask::Run() {
+  MS_EXCEPTION_IF_NULL(session_);
+  session_->RunOpsInGraphImpl(graph_id_, input_tensors_, &outputs_);
 }
 
 void CreateCommGroupTask::Run() { result_ = CommManager::GetInstance().CreateGroupSync(group_name_, ranks_); }
@@ -357,6 +363,18 @@ void Executor::RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const Gr
       tensor->Wait();
     }
   }
+  SyncRunTask(task);
+  *outputs = task->outputs_;
+}
+
+void Executor::RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id,
+                             const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
+  MS_EXCEPTION_IF_NULL(session);
+  MS_EXCEPTION_IF_NULL(outputs);
+  auto task = std::make_shared<RunOpsInGraphTask>();
+  task->session_ = session;
+  task->graph_id_ = graph_id;
+  task->input_tensors_ = inputs;
   SyncRunTask(task);
   *outputs = task->outputs_;
 }

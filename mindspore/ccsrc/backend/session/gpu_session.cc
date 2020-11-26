@@ -198,13 +198,12 @@ void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
   runtime_instance->AssignMemory(kernel_graph);
 }
 
-void GPUSession::RunOpAllocateMemory(const ValuePtr &pre_output_value,
-                                     const std::vector<tensor::TensorPtr> &input_tensors,
+void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors,
                                      KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->RunOpAssignMemory(pre_output_value, input_tensors, kernel_graph);
+  runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
 }
 
 void GPUSession::RunOpClearMemory(KernelGraph *kernel_graph) const {
@@ -351,6 +350,8 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
                               VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
   MS_LOG(INFO) << "RunGraph graph_id: " << graph_id;
+  // In pynative mode, device addresses of tensors in value nodes change.
+  SyncValueNodeDeviceAddr(kernel_graph);
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
   PreIterationDbg(kernel_graph);
@@ -366,6 +367,8 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
     Execute(kernel_graph);
   }
   PostLoadTensor(kernel_graph);
+  // In pynative mode, device addresses of tensors in value nodes need be clean.
+  CleanValueNodeDeviceAddr(kernel_graph);
   // Summary
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -400,7 +403,7 @@ void GPUSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Remove NopOp from execution graph
   opt::RemoveNopNode(kernel_graph.get());
-  RunOpAllocateMemory(op_run_info.value, input_tensors, kernel_graph.get());
+  RunOpAllocateMemory(input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, input_tensors);
   Execute(kernel_graph);
@@ -470,6 +473,28 @@ void GPUSession::PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph
   DebugServices *debug_services = debugger_->debug_services();
   TensorLoader *tensor_loader = debug_services->tensor_loader();
   tensor_loader->EmptyPrevTensor();
+}
+
+void GPUSession::SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    return;
+  }
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->SyncValueNodeDeviceAddr(kernel_graph.get());
+}
+
+void GPUSession::CleanValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    return;
+  }
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  runtime_instance->CleanValueNodeDeviceAddr(kernel_graph.get());
 }
 }  // namespace gpu
 }  // namespace session

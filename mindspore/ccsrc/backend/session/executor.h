@@ -16,22 +16,23 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_H
 #define MINDSPORE_CCSRC_BACKEND_SESSION_EXECUTOR_H
 
-#include <vector>
-#include <string>
-#include <utility>
-#include <memory>
-#include <list>
-#include <queue>
-#include <map>
-#include <thread>
-#include <mutex>
 #include <condition_variable>
+#include <list>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
+
 #include "backend/session/session_basic.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "utils/any.h"
-#include "utils/contract.h"
 #include "utils/comm_manager.h"
+#include "utils/contract.h"
 
 namespace mindspore {
 namespace session {
@@ -45,7 +46,8 @@ enum TaskType {
   kRunGraph,
   kRunOp,
   kCreateCommGroup,
-  kDestroyCommGroup
+  kDestroyCommGroup,
+  kRunOpsInGraph
 };
 
 class Task {
@@ -96,6 +98,16 @@ class RunGraphTask : public Task {
   VectorRef outputs_;
   GraphId graph_id_{0};
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node_;
+};
+
+class RunOpsInGraphTask : public Task {
+ public:
+  RunOpsInGraphTask() { type_ = kRunOpsInGraph; }
+  ~RunOpsInGraphTask() override = default;
+  void Run() override;
+  std::vector<tensor::TensorPtr> input_tensors_;
+  VectorRef outputs_;
+  GraphId graph_id_{0};
 };
 
 class BuildOpTask : public Task {
@@ -162,6 +174,8 @@ class Executor {
                const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int64_t> &tensors_mask);
   void RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
              const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs);
+  void RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                     VectorRef *outputs);
   void OnRunGraphFinished();
   bool CreateCommGroup(const std::string &group_name, std::vector<uint32_t> ranks);
   bool DestroyCommGroup(const std::string &group_name);
