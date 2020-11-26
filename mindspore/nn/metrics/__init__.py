@@ -24,6 +24,7 @@ from .metric import Metric
 from .precision import Precision
 from .recall import Recall
 from .fbeta import Fbeta, F1
+from .dice import Dice
 from .topk import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5CategoricalAccuracy
 from .loss import Loss
 
@@ -36,6 +37,7 @@ __all__ = [
     "Recall",
     "Fbeta",
     "F1",
+    "Dice",
     "TopKCategoricalAccuracy",
     "Top1CategoricalAccuracy",
     "Top5CategoricalAccuracy",
@@ -48,6 +50,7 @@ __factory__ = {
     'precision': Precision,
     'recall': Recall,
     'F1': F1,
+    'dice': Dice,
     'topk': TopKCategoricalAccuracy,
     'top_1_accuracy': Top1CategoricalAccuracy,
     'top_5_accuracy': Top5CategoricalAccuracy,
