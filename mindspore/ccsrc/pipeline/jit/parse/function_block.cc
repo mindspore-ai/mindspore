@@ -76,9 +76,8 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
   // If have more than one predecessor blocks then build a phi node.
   auto debug_info = std::make_shared<NodeDebugInfo>();
   debug_info->set_name(var);
-  TraceManager::DebugTrace(std::make_shared<TracePhi>(debug_info));
+  TraceGuard guard(std::make_shared<TracePhi>(debug_info));
   ParameterPtr phi_param = std::make_shared<Parameter>(func_graph());
-  TraceManager::EndTrace();
   MS_LOG(DEBUG) << func_graph_->ToString() << " generate phi node " << phi_param->ToString() << " for " << var;
   func_graph()->add_parameter(phi_param);
   phi_nodes_[phi_param] = var;
@@ -264,16 +263,14 @@ void FunctionBlock::Mature() {
 
 // Force the conditIon node to bool using bool operation
 CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr &cond) {
-  TraceManager::DebugTrace(std::make_shared<TraceForceBool>(cond->debug_info()));
+  TraceGuard trace_guard(std::make_shared<TraceForceBool>(cond->debug_info()));
   CNodePtr op_apply_node = func_graph()->NewCNode({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
-  TraceManager::EndTrace();
   return op_apply_node;
 }
 
 CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
-  TraceManager::DebugTrace(std::make_shared<TraceForceWhileCond>(cond->debug_info()));
+  TraceGuard trace_guard(std::make_shared<TraceForceWhileCond>(cond->debug_info()));
   CNodePtr op_apply_node = func_graph()->NewCNode({MakeResolveOperation("while_cond"), cond});
-  TraceManager::EndTrace();
   return op_apply_node;
 }
 

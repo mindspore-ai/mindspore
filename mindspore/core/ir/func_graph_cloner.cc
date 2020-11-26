@@ -66,7 +66,7 @@ void Cloner::CloneNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
 void Cloner::CloneParameter(const AnfNodePtr &node, const FuncGraphPtr &target, bool is_add) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(target);
-  TraceManager::DebugTrace(node->debug_info(), relation_);
+  TraceGuard trace_guard(node->debug_info(), relation_);
   auto new_param = (is_add) ? target->add_parameter() : std::make_shared<Parameter>(target);
   auto old_param = node->cast<ParameterPtr>();
   new_param->set_abstract(old_param->abstract());
@@ -78,13 +78,12 @@ void Cloner::CloneParameter(const AnfNodePtr &node, const FuncGraphPtr &target, 
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_param->set_scope(scope);
   repl_node_[node] = new_param;
-  TraceManager::EndTrace();
 }
 
 void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(target);
-  TraceManager::DebugTrace(node->debug_info(), relation_);
+  TraceGuard trace_guard(node->debug_info(), relation_);
   CNodePtr new_node = std::make_shared<CNode>(AnfNodePtrList{}, target);
   auto old_node = node->cast<CNodePtr>();
   new_node->set_abstract(old_node->abstract());
@@ -95,32 +94,29 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   new_node->set_kernel_info(old_node->kernel_info_ptr());
   repl_node_[old_node] = new_node;
   nodes_.emplace_back(old_node, new_node);
-  TraceManager::EndTrace();
 }
 
 void Cloner::CloneValueNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  TraceManager::DebugTrace(node->debug_info(), relation_);
+  TraceGuard trace_guard(node->debug_info(), relation_);
   ValueNodePtr new_const = NewValueNode(GetValueNode(node));
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
   new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
   repl_node_[node] = new_const;
-  TraceManager::EndTrace();
 }
 
 void Cloner::CloneValueNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(target);
-  TraceManager::DebugTrace(node->debug_info(), relation_);
+  TraceGuard trace_guard(node->debug_info(), relation_);
   ValueNodePtr new_const = NewValueNode(target);
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_const->set_scope(scope);
   new_const->set_abstract(node->abstract());
   new_const->set_has_new_value(node->cast<ValueNodePtr>()->has_new_value());
   repl_node_[node] = new_const;
-  TraceManager::EndTrace();
 }
 
 void Cloner::CloneValueNodes(const FuncGraphPtr &func_graph) {
@@ -219,7 +215,7 @@ void Cloner::InlineCloneParameters(const FuncGraphPtr &func_graph, const AnfNode
 void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, FuncGraphPtr *const target_func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(target_func_graph);
-  TraceManager::DebugTrace(func_graph->debug_info(), target_relation_);
+  TraceGuard trace_guard(func_graph->debug_info(), target_relation_);
   *target_func_graph = std::make_shared<FuncGraph>();
   (*target_func_graph)->set_attrs(func_graph->attrs());
   (*target_func_graph)->joined_shapes_ = func_graph->joined_shapes_;
@@ -231,7 +227,6 @@ void Cloner::SetFuncGraphInfo(const FuncGraphPtr &func_graph, FuncGraphPtr *cons
   (*target_func_graph)->set_is_generate(func_graph->is_generated());
   (*target_func_graph)->set_stub(func_graph->stub());
   (*target_func_graph)->set_switch_layer_input(func_graph->switch_layer_input());
-  TraceManager::EndTrace();
 }
 
 void Cloner::CloneParameters(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) {
@@ -273,9 +268,8 @@ void Cloner::CloneParameter(const ParameterPtr &param, const AnfNodePtr &node) {
 }
 
 ParameterPtr Cloner::AddParameter(const FuncGraphPtr &func_graph, const AnfNodePtr &node, bool is_add) {
-  TraceManager::DebugTrace(std::make_shared<TraceCopy>(node->debug_info()));
+  TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));
   ParameterPtr param = std::make_shared<Parameter>(func_graph);
-  TraceManager::EndTrace();
   CloneParameter(param, node);
   if (is_add) {
     func_graph->add_parameter(param);
@@ -633,16 +627,14 @@ ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &r
 
 FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &relation) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  TraceManager::DebugTrace(func_graph->debug_info(), relation);
+  TraceGuard guard(func_graph->debug_info(), relation);
   auto new_func_graph = std::make_shared<FuncGraph>();
-  TraceManager::EndTrace();
 
   auto &parameters = func_graph->parameters();
   (void)std::for_each(parameters.begin(), parameters.end(), [&new_func_graph](const AnfNodePtr &param) -> void {
     MS_EXCEPTION_IF_NULL(param);
-    TraceManager::DebugTrace(std::make_shared<TraceCopy>(param->debug_info()));
+    TraceGuard trace_guard(std::make_shared<TraceCopy>(param->debug_info()));
     (void)new_func_graph->add_parameter();
-    TraceManager::EndTrace();
   });
 
   Cloner cloner = Cloner();

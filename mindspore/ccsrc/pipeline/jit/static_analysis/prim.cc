@@ -88,10 +88,9 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
 
   AnfNodePtr new_cnode = nullptr;
   if (bound_node() != nullptr) {
-    TraceManager::DebugTrace(std::make_shared<TraceDoSignature>(bound_node()->debug_info()));
+    TraceGuard trace_guard(std::make_shared<TraceDoSignature>(bound_node()->debug_info()));
     new_cnode = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), do_signature->function(), args_spec_list,
                                     args_inputs);
-    TraceManager::EndTrace();
   } else {
     new_cnode = prim::GenerateCNode(out_node->func_graph(), prim_->ToString(), do_signature->function(), args_spec_list,
                                     args_inputs);
@@ -936,9 +935,8 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
     }
     EvalResultPtr ret = nullptr;
     if (bound_node() != nullptr) {
-      TraceManager::DebugTrace(std::make_shared<TraceResolve>(bound_node()->debug_info()));
+      TraceGuard trace_guard(std::make_shared<TraceResolve>(bound_node()->debug_info()));
       ret = StaticGetter(engine, args_spec_list, in_conf0, out_conf);
-      TraceManager::EndTrace();
     } else {
       ret = StaticGetter(engine, args_spec_list, in_conf0, out_conf);
     }
@@ -962,9 +960,8 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
     }
     EvalResultPtr ret = nullptr;
     if (bound_node() != nullptr) {
-      TraceManager::DebugTrace(std::make_shared<TraceResolve>(bound_node()->debug_info()));
+      TraceGuard trace_guard(std::make_shared<TraceResolve>(bound_node()->debug_info()));
       ret = StaticGetter(engine, args_spec_list, in_conf0, out_conf);
-      TraceManager::EndTrace();
     } else {
       ret = StaticGetter(engine, args_spec_list, in_conf0, out_conf);
     }

@@ -659,9 +659,11 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 
   FuncGraphPtr ptr_graph = real_fn->func_graph();
   MS_EXCEPTION_IF_NULL(ptr_graph);
-  TraceManager::DebugTrace(std::make_shared<TraceGradOperation>(ptr_graph->debug_info()));
-  FuncGraphPtr df_builder = std::make_shared<FuncGraph>();
-  TraceManager::EndTrace();
+  FuncGraphPtr df_builder = nullptr;
+  {
+    TraceGuard g(std::make_shared<TraceGradOperation>(ptr_graph->debug_info()));
+    df_builder = std::make_shared<FuncGraph>();
+  }
   auto nparam = ptr_graph->parameters().size();
 
   std::ostringstream ss;
@@ -680,9 +682,11 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   inputs.push_back(param_graph);
   auto jf = df_builder->NewCNode(inputs);
   // df is checked in GetGrad
-  TraceManager::DebugTrace(std::make_shared<TraceGradOperation>(ptr_graph->debug_info()));
-  auto df = GetGrad(jf, weights, ptr_graph->parameters());
-  TraceManager::EndTrace();
+  FuncGraphPtr df = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceGradOperation>(ptr_graph->debug_info()));
+    df = GetGrad(jf, weights, ptr_graph->parameters());
+  }
   df_builder->set_output(NewValueNode(df));
 
   return df_builder;

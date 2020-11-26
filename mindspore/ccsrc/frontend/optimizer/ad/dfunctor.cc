@@ -41,8 +41,10 @@ FuncGraphSet DFunctor::scope_;
 
 DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBasePtr &resources)
     : primal_graph_(primal_graph), resources_(resources), need_cut_(false), is_top_(false) {
-  TraceManager::DebugTrace(std::make_shared<TraceGradFprop>(primal_graph->debug_info()));
-  k_graph_ = std::make_shared<FuncGraph>();
+  {
+    TraceGuard guard(std::make_shared<TraceGradFprop>(primal_graph->debug_info()));
+    k_graph_ = std::make_shared<FuncGraph>();
+  }
   if (primal_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
     std::string grad_op_name = GetValue<std::string>(primal_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
     k_graph_->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(grad_op_name));
@@ -50,17 +52,17 @@ DFunctor::DFunctor(const FuncGraphPtr &primal_graph, const pipeline::ResourceBas
   // To keep switch_layer's inputs from being inlined
   k_graph_->set_switch_layer_input(primal_graph->switch_layer_input());
   k_graph_->set_stage(primal_graph->stage());
-  TraceManager::EndTrace();
 
-  TraceManager::DebugTrace(std::make_shared<TraceGradBprop>(primal_graph->debug_info()));
-  tape_ = std::make_shared<FuncGraph>();
+  {
+    TraceGuard guard(std::make_shared<TraceGradBprop>(primal_graph->debug_info()));
+    tape_ = std::make_shared<FuncGraph>();
+  }
   tape_->set_stage(primal_graph->stage());
   // Add "_Grad" postfix
   if (primal_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
     std::string grad_op_name = GetValue<std::string>(primal_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) + "_Grad";
     tape_->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(grad_op_name));
   }
-  TraceManager::EndTrace();
 
   dout_ = tape_->add_parameter();
 }
@@ -232,9 +234,8 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     AdjointPtr node_adjoint = nullptr;
     AnfNodePtr k = nullptr;
     if (IsValueNode<Primitive>(node)) {
-      TraceManager::DebugTrace(std::make_shared<TraceEquiv>(cnode_morph->debug_info()));
+      TraceGuard trace_guard(std::make_shared<TraceEquiv>(cnode_morph->debug_info()));
       k = MapToK(node);
-      TraceManager::EndTrace();
       node_adjoint = std::make_shared<Adjoint>(node, k, tape_);
       anfnode_to_adjoin_[node] = node_adjoint;
     } else {
@@ -254,9 +255,11 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     inputs.push_back(k);
     param_adjoints.push_back(node_adjoint);
   }
-  TraceManager::DebugTrace(std::make_shared<TraceGradFpropApp>(cnode_morph->debug_info()));
-  auto k_app = k_graph_->NewCNode(inputs);
-  TraceManager::EndTrace();
+  CNodePtr k_app = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceGradFpropApp>(cnode_morph->debug_info()));
+    k_app = k_graph_->NewCNode(inputs);
+  }
   ReplaceEquivdout(k_app, cnode_morph);
   cnode_morph->set_forward(nullptr, "");
   for (size_t i = 0; i < param_adjoints.size(); ++i) {
@@ -624,9 +627,8 @@ AnfNodePtr DFunctor::MapToK(const AnfNodePtr &primal) {
   }
 
   if (primal->isa<Parameter>()) {
-    TraceManager::DebugTrace(std::make_shared<TraceGradFprop>(primal->debug_info()));
+    TraceGuard trace_guard(std::make_shared<TraceGradFprop>(primal->debug_info()));
     auto ret = k_graph_->add_parameter();
-    TraceManager::EndTrace();
     return ret;
   }
 
@@ -812,9 +814,8 @@ void DFunctor::EliminatePrimalGraph() {
     }
     cnode->set_input(0, k_vnode);  // Replace primal graph with k graph
     auto construct_wrapper = cnode->func_graph();
-    TraceManager::DebugTrace(std::make_shared<TraceGradFpropApp>(cnode->debug_info()));
+    TraceGuard trace_guard(std::make_shared<TraceGradFpropApp>(cnode->debug_info()));
     auto getitem0 = construct_wrapper->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode, idx0});
-    TraceManager::EndTrace();
     manager->Replace(cnode, getitem0);
   }
 }

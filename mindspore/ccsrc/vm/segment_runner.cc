@@ -115,10 +115,8 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
   if (lst.empty()) {
     MS_LOG(EXCEPTION) << "Input anf node list is empty";
   }
-  TraceManager::DebugTrace(
-    std::make_shared<TraceSegmentTransform>(lst[0]->cast<CNodePtr>()->func_graph()->debug_info()));
+  TraceGuard guard(std::make_shared<TraceSegmentTransform>(lst[0]->cast<CNodePtr>()->func_graph()->debug_info()));
   auto fg = std::make_shared<FuncGraph>();
-  TraceManager::EndTrace();
   AnfNodePtrList inputs;
   AnfNodePtrToAnfNodePtrMap eqv;
   // Merge CNodes into a AnfGraph that represents a linear instruction segment
@@ -152,9 +150,8 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
       (void)std::transform(std::begin(inps) + 1, std::end(inps), std::back_inserter(args),
                            [&fg, &inputs, &eqv](const AnfNodePtr &a) { return RefSubGraphNode(fg, a, &inputs, &eqv); });
     }
-    TraceManager::DebugTrace(std::make_shared<TraceGetEnv>(n->debug_info()));
+    TraceGuard tg(std::make_shared<TraceSegmentTransform>(n->debug_info()));
     eqv[n] = fg->NewCNode(args);
-    TraceManager::EndTrace();
     eqv[n]->set_abstract(n->abstract());
     eqv[n]->set_kernel_info(n->kernel_info_ptr());
   }

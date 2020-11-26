@@ -47,6 +47,7 @@
 #include "frontend/optimizer/py_pass_manager.h"
 #include "pybind_api/pybind_patch.h"
 #include "utils/shape_utils.h"
+#include "utils/info.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/common.h"
 #include "ps/util.h"

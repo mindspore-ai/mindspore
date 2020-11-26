@@ -173,11 +173,13 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg) {
   AnfNodePtr bout = BuildOutput(cloned_bprop_fg);
   cloned_bprop_fg->set_output(bout);
 
-  TraceManager::DebugTrace(std::make_shared<TraceGradFprop>(debug_info));
-  auto outer = std::make_shared<FuncGraph>();
-  (void)outer->transforms().emplace("primal", FuncGraphTransform(primal));
-  outer->set_output(NewValueNode(kNone));
-  TraceManager::EndTrace();
+  FuncGraphPtr outer = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceGradFprop>(debug_info));
+    outer = std::make_shared<FuncGraph>();
+    (void)outer->transforms().emplace("primal", FuncGraphTransform(primal));
+    outer->set_output(NewValueNode(kNone));
+  }
 
   auto mng = Manage({cloned_bprop_fg, outer}, false);
 
@@ -199,13 +201,12 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg) {
 
   (void)mng->Replace(out_param, out_value);
 
-  TraceManager::DebugTrace(std::make_shared<TraceGradSens>(out_param->debug_info()));
+  TraceGuard guard(std::make_shared<TraceGradSens>(out_param->debug_info()));
   auto new_dout = cloned_bprop_fg->add_parameter();
   (void)mng->Replace(dout, new_dout);
   // We remove all parameters except new_dout.
   std::vector<AnfNodePtr> newBpropParams = {new_dout};
   cloned_bprop_fg->set_parameters(newBpropParams);
-  TraceManager::EndTrace();
 
   outer->set_output(outer->NewCNode({NewValueNode(prim::kPrimMakeTuple), out_value, NewValueNode(cloned_bprop_fg)}));
   return BasicClone(outer);

@@ -517,12 +517,11 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   if (iter != python_paras->end()) {
     new_parameter = iter->second;
   } else {
-    TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
+    TraceGuard trace_guard(std::make_shared<TraceCopy>(anf->debug_info()));
     new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
     if (param_value != nullptr) {
       (*python_paras)[param_value] = new_parameter;
     }
-    TraceManager::EndTrace();
   }
   new_parameter->IncreaseUsedGraphCount();
   graph_inputs->push_back(new_parameter);
@@ -627,9 +626,8 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph,
   std::vector<AnfNodePtr> cnode_inputs;
   GetCNodeInfo(cnode, &cnode_inputs);
   GetNewCNodeInputs(cnode, graph, &cnode_inputs, other_graph_cnode);
-  TraceManager::DebugTrace(std::make_shared<TraceCopy>(cnode->debug_info()));
+  TraceGuard trace_guard(std::make_shared<TraceCopy>(cnode->debug_info()));
   auto new_cnode = graph->NewCNode(cnode_inputs);
-  TraceManager::EndTrace();
   return new_cnode;
 }
 
@@ -806,9 +804,8 @@ CNodePtr SessionBasic::CreateNewCNode(CNodePtr cnode, KernelGraph *graph) {
   // handle inputs of cnode except primitive
   CreateCNodeInputs(cnode, graph, &cnode_inputs);
 
-  TraceManager::DebugTrace(std::make_shared<TraceCopy>(cnode->debug_info()));
+  TraceGuard trace_guard(std::make_shared<TraceCopy>(cnode->debug_info()));
   auto new_cnode = graph->NewCNode(cnode_inputs);
-  TraceManager::EndTrace();
 
   // if the cnode is call switch, remove call
   if (new_cnode->inputs().size() > 1) {
@@ -865,12 +862,11 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
   if (iter != python_paras->end()) {
     new_parameter = iter->second;
   } else {
-    TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
+    TraceGuard trace_guard(std::make_shared<TraceCopy>(anf->debug_info()));
     new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
     if (param_value != nullptr) {
       (*python_paras)[param_value] = new_parameter;
     }
-    TraceManager::EndTrace();
   }
   new_parameter->IncreaseUsedGraphCount();
 

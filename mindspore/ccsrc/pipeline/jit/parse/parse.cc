@@ -238,10 +238,9 @@ void Parser::GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py
         continue;
       }
     }
-    TraceManager::DebugTrace(GetLocation(args[i]));
+    TraceGuard guard(GetLocation(args[i]));
     auto para_node = std::make_shared<Parameter>(block->func_graph());
     MS_EXCEPTION_IF_NULL(para_node);
-    TraceManager::EndTrace();
     para_node->set_name(arg_name);
     para_node->debug_info()->set_name(arg_name);
     block->func_graph()->add_parameter(para_node);
@@ -346,9 +345,8 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr fn_block, const py::ob
   MS_LOG(DEBUG) << "The nodes count is " << count;
   for (size_t i = 0; i < count; i++) {
     auto node = py::cast<py::list>(nodes)[i];
-    TraceManager::DebugTrace(GetLocation(node));
+    TraceGuard guard(GetLocation(node));
     fn_block = ParseStatement(fn_block, node);
-    TraceManager::EndTrace();
     // insert appropriate depended items for the function block if it has a return node
     if (fn_block->func_graph()->get_return() != nullptr) {
       fn_block->InsertDependItemsBeforeReturn();
@@ -372,9 +370,8 @@ FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py:
   std::string node_name = node_type->node_name();
   MS_LOG(DEBUG) << "Ast node is " << node_name;
   if (stmt_method_map_.count(node_name)) {
-    TraceManager::DebugTrace(GetLocation(node));
+    TraceGuard trace_guard(GetLocation(node));
     auto stmt_block = (this->*stmt_method_map_[node_name])(block, node);
-    TraceManager::EndTrace();
     return stmt_block;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
@@ -406,9 +403,8 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
   std::string node_name = node_type->node_name();
   MS_LOG(DEBUG) << "Ast node is " << node_name;
   if (expr_method_map_.count(node_name)) {
-    TraceManager::DebugTrace(GetLocation(node));
+    TraceGuard trace_guard(GetLocation(node));
     auto expr_node = (this->*expr_method_map_[node_name])(block, node);
-    TraceManager::EndTrace();
     return expr_node;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
@@ -756,9 +752,8 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   // process the node attr
   auto attr_str = python_adapter::GetPyObjAttr(node, "attr").cast<std::string>();
   MS_LOG(DEBUG) << "Attr = " << attr_str;
-  TraceManager::DebugTrace(GetLocation(python_adapter::GetPyObjAttr(node, "attr")));
+  TraceGuard guard(GetLocation(python_adapter::GetPyObjAttr(node, "attr")));
   AnfNodePtr attr_node = NewValueNode(attr_str);
-  TraceManager::EndTrace();
 
   // create the apply node
   return block->func_graph()->NewCNode({op_node, value_node, attr_node});
@@ -799,12 +794,16 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
       rest.append(value_list[i]);
     }
     MS_EXCEPTION_IF_NULL(block);
-    TraceManager::DebugTrace(std::make_shared<TraceIfExpTrueBranch>(block->func_graph()->debug_info()));
-    FunctionBlockPtr true_block = MakeFunctionBlock(*this);
-    TraceManager::EndTrace();
-    TraceManager::DebugTrace(std::make_shared<TraceIfExpFalseBranch>(block->func_graph()->debug_info()));
-    FunctionBlockPtr false_block = MakeFunctionBlock(*this);
-    TraceManager::EndTrace();
+    FunctionBlockPtr true_block = nullptr;
+    FunctionBlockPtr false_block = nullptr;
+    {
+      TraceGuard guard(std::make_shared<TraceIfExpTrueBranch>(block->func_graph()->debug_info()));
+      true_block = MakeFunctionBlock(*this);
+    }
+    {
+      TraceGuard guard(std::make_shared<TraceIfExpFalseBranch>(block->func_graph()->debug_info()));
+      false_block = MakeFunctionBlock(*this);
+    }
     MakeConditionBlocks(block, true_block, false_block);
     FunctionBlockPtr b1, b2;
 
@@ -874,9 +873,8 @@ AnfNodePtr Parser::ParseLambda(const FunctionBlockPtr &block, const py::object &
   py::list args = ast_->GetArgs(node);
   for (std::size_t i = 0; i < args.size(); i++) {
     std::string arg = py::cast<std::string>(args[i].attr("arg"));
-    TraceManager::DebugTrace(GetLocation(args[i]));
+    TraceGuard guard(GetLocation(args[i]));
     auto para_node = std::make_shared<Parameter>(func_block->func_graph());
-    TraceManager::EndTrace();
     para_node->debug_info()->set_name(arg);
     func_block->func_graph()->add_parameter(para_node);
     func_block->WriteVariable(arg, para_node);
@@ -1065,19 +1063,24 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   MS_EXCEPTION_IF_NULL(block);
   CNodePtr bool_node = block->ForceToBoolNode(condition_node);
 
-  TraceManager::DebugTrace(std::make_shared<TraceIfStmtTrueBranch>(block->func_graph()->debug_info()));
-  FunctionBlockPtr true_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
-
-  TraceManager::DebugTrace(std::make_shared<TraceIfStmtFalseBranch>(block->func_graph()->debug_info()));
-  FunctionBlockPtr false_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
+  FunctionBlockPtr true_block = nullptr;
+  FunctionBlockPtr false_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceIfStmtTrueBranch>(block->func_graph()->debug_info()));
+    true_block = MakeFunctionBlock(*this);
+  }
+  {
+    TraceGuard guard(std::make_shared<TraceIfStmtFalseBranch>(block->func_graph()->debug_info()));
+    false_block = MakeFunctionBlock(*this);
+  }
 
   MakeConditionBlocks(block, true_block, false_block);
 
-  TraceManager::DebugTrace(std::make_shared<TraceIfStmtAfterBranch>(block->func_graph()->debug_info()));
-  FunctionBlockPtr after_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
+  FunctionBlockPtr after_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceIfStmtAfterBranch>(block->func_graph()->debug_info()));
+    after_block = MakeFunctionBlock(*this);
+  }
 
   if (MsContext::GetInstance()->backend_policy() != "ge") {
     // for backends excludes 'ge', it can handle multi graph call, use this flag to
@@ -1112,17 +1115,21 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   MS_LOG(DEBUG) << "Process ast While";
   MS_EXCEPTION_IF_NULL(block);
   MS_LOG(INFO) << "Parse while statement";
-  TraceManager::DebugTrace(std::make_shared<TraceWhileHeader>(block->func_graph()->debug_info()));
-  FunctionBlockPtr header_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
-
-  TraceManager::DebugTrace(std::make_shared<TraceWhileBody>(block->func_graph()->debug_info()));
-  FunctionBlockPtr body_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
-
-  TraceManager::DebugTrace(std::make_shared<TraceWhileAfter>(block->func_graph()->debug_info()));
-  FunctionBlockPtr after_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
+  FunctionBlockPtr header_block = nullptr;
+  FunctionBlockPtr body_block = nullptr;
+  FunctionBlockPtr after_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceWhileHeader>(block->func_graph()->debug_info()));
+    header_block = MakeFunctionBlock(*this);
+  }
+  {
+    TraceGuard guard(std::make_shared<TraceWhileBody>(block->func_graph()->debug_info()));
+    body_block = MakeFunctionBlock(*this);
+  }
+  {
+    TraceGuard guard(std::make_shared<TraceWhileAfter>(block->func_graph()->debug_info()));
+    after_block = MakeFunctionBlock(*this);
+  }
 
   body_block->AddPrevBlock(header_block);
   after_block->AddPrevBlock(header_block);
@@ -1169,9 +1176,8 @@ CNodePtr Parser::GenerateCondInFor(const ParameterPtr &iter_param, const Functio
 }
 
 FunctionBlockPtr Parser::GenerateBlockInFor(const TraceInfoPtr &trace_info) {
-  TraceManager::DebugTrace(trace_info);
+  TraceGuard trace_guard(trace_info);
   FunctionBlockPtr body_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
   return body_block;
 }
 
@@ -1195,19 +1201,24 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
     block->func_graph()->NewCNode({NewValueNode(prim::kPrimScalarLt), len_iter, NewValueNode(MAX_FOR_LOOP_COUNT)});
 
   // create statement 'if len(xs) < prim::MAX_FOR_LOOP_COUNT then ParseForIter else ParseForLoop'
-  TraceManager::DebugTrace(std::make_shared<TraceIfStmtTrueBranch>(block->func_graph()->debug_info()));
-  FunctionBlockPtr true_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
-
-  TraceManager::DebugTrace(std::make_shared<TraceIfStmtFalseBranch>(block->func_graph()->debug_info()));
-  FunctionBlockPtr false_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
+  FunctionBlockPtr true_block = nullptr;
+  FunctionBlockPtr false_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceIfStmtTrueBranch>(block->func_graph()->debug_info()));
+    true_block = MakeFunctionBlock(*this);
+  }
+  {
+    TraceGuard guard(std::make_shared<TraceIfStmtFalseBranch>(block->func_graph()->debug_info()));
+    false_block = MakeFunctionBlock(*this);
+  }
 
   MakeConditionBlocks(block, true_block, false_block);
 
-  TraceManager::DebugTrace(std::make_shared<TraceIfStmtAfterBranch>(block->func_graph()->debug_info()));
-  FunctionBlockPtr after_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
+  FunctionBlockPtr after_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceIfStmtAfterBranch>(block->func_graph()->debug_info()));
+    after_block = MakeFunctionBlock(*this);
+  }
 
   FunctionBlockPtr true_end = ParseForIter(true_block, node);
   true_end->Jump(after_block, nullptr);
@@ -1263,10 +1274,12 @@ FunctionBlockPtr Parser::ParseForIter(const FunctionBlockPtr &block, const py::o
   iter2_app->debug_info()->set_trace_info(it_info);
   iter_apply->debug_info()->set_trace_info(it_info);
 
-  TraceManager::DebugTrace(std::make_shared<TraceForAfter>(block->func_graph()->debug_info()));
-  FunctionBlockPtr after_block = MakeFunctionBlock(*this);
+  FunctionBlockPtr after_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceForAfter>(block->func_graph()->debug_info()));
+    after_block = MakeFunctionBlock(*this);
+  }
   MS_EXCEPTION_IF_NULL(after_block);
-  TraceManager::EndTrace();
   after_block->AddPrevBlock(header_block);
 
   block->Jump(header_block, iter_apply);
@@ -1350,10 +1363,12 @@ FunctionBlockPtr Parser::ParseForLoop(const FunctionBlockPtr &block, const py::o
   loop_var->debug_info()->set_trace_info(it_info);
   len_iter->debug_info()->set_trace_info(it_info);
 
-  TraceManager::DebugTrace(std::make_shared<TraceForAfter>(block->func_graph()->debug_info()));
-  FunctionBlockPtr after_block = MakeFunctionBlock(*this);
+  FunctionBlockPtr after_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceForAfter>(block->func_graph()->debug_info()));
+    after_block = MakeFunctionBlock(*this);
+  }
   MS_EXCEPTION_IF_NULL(after_block);
-  TraceManager::EndTrace();
   after_block->AddPrevBlock(header_block);
 
   block->Jump(header_block, NewValueNode(static_cast<int64_t>(0)));
@@ -1389,13 +1404,16 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
   CNodePtr bool_node = block->ForceToBoolNode(condition_node);
 
-  TraceManager::DebugTrace(std::make_shared<TraceIfExpTrueBranch>(block->func_graph()->debug_info()));
-  FunctionBlockPtr true_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
-
-  TraceManager::DebugTrace(std::make_shared<TraceIfExpFalseBranch>(block->func_graph()->debug_info()));
-  FunctionBlockPtr false_block = MakeFunctionBlock(*this);
-  TraceManager::EndTrace();
+  FunctionBlockPtr true_block = nullptr;
+  FunctionBlockPtr false_block = nullptr;
+  {
+    TraceGuard guard(std::make_shared<TraceIfExpTrueBranch>(block->func_graph()->debug_info()));
+    true_block = MakeFunctionBlock(*this);
+  }
+  {
+    TraceGuard guard(std::make_shared<TraceIfExpFalseBranch>(block->func_graph()->debug_info()));
+    false_block = MakeFunctionBlock(*this);
+  }
 
   MakeConditionBlocks(block, true_block, false_block);
 
@@ -1581,9 +1599,8 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
   Loop &loop = loops_.top();
   if (loop.end == nullptr) {
     // Create end_block if it is not existed.
-    TraceManager::DebugTrace(std::make_shared<TraceLoopEnd>(block->func_graph()->debug_info()));
+    TraceGuard trace_guard(std::make_shared<TraceLoopEnd>(block->func_graph()->debug_info()));
     loop.end = MakeFunctionBlock(*this);
-    TraceManager::EndTrace();
   }
   // Jump to the end_block.
   block->Jump(loop.end, nullptr);
