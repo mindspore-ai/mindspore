@@ -135,17 +135,17 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
       std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
                    [onnx_conv_weight](const onnx::TensorProto &proto) { return proto.name() == onnx_conv_weight; });
     if (nodeIter == onnx_graph.initializer().end()) {
-      MS_LOG(ERROR) << "not find node: " << onnx_conv_weight;
-      return RET_ERROR;
+      MS_LOG(WARNING) << "not find node: " << onnx_conv_weight;
+    } else {
+      std::vector<int> weight_shape;
+      auto size = (*nodeIter).dims_size();
+      weight_shape.reserve(size);
+      for (int i = 0; i < size; ++i) {
+        weight_shape.emplace_back((*nodeIter).dims(i));
+      }
+      attr->channelOut = weight_shape[0];
+      attr->channelIn = weight_shape[1] * attr->group;
     }
-    std::vector<int> weight_shape;
-    auto size = (*nodeIter).dims_size();
-    weight_shape.reserve(size);
-    for (int i = 0; i < size; ++i) {
-      weight_shape.emplace_back((*nodeIter).dims(i));
-    }
-    attr->channelOut = weight_shape[0];
-    attr->channelIn = weight_shape[1] * attr->group;
   } else {
     auto nodeIter =
       std::find_if(onnx_graph.node().begin(), onnx_graph.node().end(),

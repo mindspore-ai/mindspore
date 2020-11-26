@@ -21,21 +21,20 @@
 #include <set>
 #include <cmath>
 
-#include "src/ops/arithmetic.h"
+#include "src/ops/arithmetic_compare.h"
 
 namespace mindspore {
 namespace lite {
-class LessEqual : public Arithmetic {
+class LessEqual : public ArithmeticCompare {
  public:
   LessEqual() = default;
   ~LessEqual() = default;
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(LessEqual, Arithmetic);
-  explicit LessEqual(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
+  MS_DECLARE_PARENT(LessEqual, ArithmeticCompare);
+  explicit LessEqual(schema::PrimitiveT *primitive) : ArithmeticCompare(primitive) {}
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore
