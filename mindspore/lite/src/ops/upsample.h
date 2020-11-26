@@ -42,6 +42,7 @@ class Upsample : public PrimitiveC {
 #endif
   std::string GetMode() const;
   std::vector<float> GetScales() const;
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore
