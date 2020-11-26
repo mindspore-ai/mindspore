@@ -103,6 +103,7 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const AnfNodePtr &conv_node,
                                                   const ParamValueLitePtr &param_value) const {
   MS_ASSERT(conv_cnode != nullptr);
   MS_ASSERT(param_value != nullptr);
+  auto weight_node = conv_node->cast<CNodePtr>()->input(kConvWeightIndex);
   auto op_type = GetCNodeType(conv_node);
   switch (this->quant_type) {
     case QuantType_AwareTraining: {
@@ -121,10 +122,8 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const AnfNodePtr &conv_node,
       if (op_type == schema::PrimitiveType_Conv2D) {
         param_value->set_format(schema::Format::Format_KCHW);
       } else if (op_type == schema::PrimitiveType_DepthwiseConv2D) {
-        // the format is initialized to NUM_OF_FORMAT, and set to NHWC in const folding.
-        if (param_value->format() == schema::Format::Format_NHWC) {
-          param_value->set_format(schema::Format::Format_KCHW);
-        } else {
+        // the format should be set to KCHW while the weight is output of constfolding .
+        if (weight_node->fullname_with_scope().find("constfold") == weight_node->fullname_with_scope().npos) {
           param_value->set_format(schema::Format::Format_CKHW);
         }
       } else if (op_type == schema::PrimitiveType_DeDepthwiseConv2D) {
