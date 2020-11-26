@@ -119,10 +119,12 @@ function Run_Converter() {
 
     # Convert Caffe PostTraining models:
     while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
+        posttraining_line_info=${line}
+        if [[ $posttraining_line_info == \#* ]]; then
           continue
         fi
+        model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_converter_log_file}"
         echo 'convert mode name: '${model_name}' begin.'
         echo './converter_lite  --fmk=TFLITE --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}_posttraining' --quantType=PostTraining --config_file='${models_path}'/'${model_name}'_posttraining.config' >> "${run_converter_log_file}"
@@ -363,15 +365,17 @@ function Run_x86() {
 
     # Run caffe post training quantization converted models:
     while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
+        posttraining_line_info=${line}
+        if [[ $posttraining_line_info == \#* ]]; then
           continue
         fi
+        model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86} >> "${run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/ml_face_mnet_calibration_data/20_Family_Group_Family_Group_20_1001.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=105 >> "${run_x86_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/ml_face_mnet_calibration_data/20_Family_Group_Family_Group_20_1001.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=105 >> "${run_x86_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -614,15 +618,17 @@ function Run_x86_sse() {
 
     # Run caffe post training quantization converted models:
     while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
+        posttraining_line_info=${line}
+        if [[ $posttraining_line_info == \#* ]]; then
           continue
         fi
+        model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_sse_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-runtime-x86-sse-'${process_unit_x86} >> "${run_x86_sse_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-runtime-x86-sse-${process_unit_x86} || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/ml_face_mnet_calibration_data/20_Family_Group_Family_Group_20_1001.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=105 >> "${run_x86_sse_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/quantTraining/ml_face_mnet_calibration_data/20_Family_Group_Family_Group_20_1001.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=105 >> "${run_x86_sse_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'_posttraining.ms.out'  --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_posttraining.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}_posttraining.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}_posttraining.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -899,16 +905,18 @@ function Run_arm64() {
         fi
     done < ${models_caffe_config}
 
-    # Run caffe posttraing models:
+    # Run caffe posttraining models:
     while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
+        posttraining_line_info=${line}
+        if [[ $posttraining_line_info == \#* ]]; then
           continue
         fi
+        model_name=`echo ${posttraining_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${posttraining_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_arm64_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=146 >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=146 >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_posttraining.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'_posttraining.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'_posttraining.ms.out' --accuracyThreshold=${accuracy_limit} >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
