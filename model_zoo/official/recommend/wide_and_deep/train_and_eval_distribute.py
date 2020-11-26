@@ -105,7 +105,7 @@ def train_and_eval(config):
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
                                  directory=config.ckpt_path + '/ckpt_' + str(get_rank()) + '/',
                                  config=ckptconfig)
-    out = model.eval(ds_eval)
+    out = model.eval(ds_eval, dataset_sink_mode=(not sparse))
     print("=====" * 5 + "model.eval() initialized: {}".format(out))
     callback_list = [TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback]
     if get_rank() == 0:

@@ -95,7 +95,7 @@ def test_train_eval(config):
     ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train', directory=config.ckpt_path, config=ckptconfig)
 
-    out = model.eval(ds_eval)
+    out = model.eval(ds_eval, dataset_sink_mode=(not sparse))
     print("=====" * 5 + "model.eval() initialized: {}".format(out))
     model.train(epochs, ds_train,
                 callbacks=[TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback, ckpoint_cb],
