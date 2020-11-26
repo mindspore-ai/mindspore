@@ -29,18 +29,17 @@
 #include "abstract/abstract_value.h"
 
 namespace mindspore::lite {
-class AnfImporterFromProtobuf : public AnfImporter {
+class AnfImporterFromMindir : public AnfImporter {
  public:
-  AnfImporterFromProtobuf(onnx::ModelProto *onnx_model, FuncGraphPtr func_graph)
-      : onnx_model_(onnx_model), func_graph_(std::move(func_graph)) {}
+  AnfImporterFromMindir() = default;
 
-  ~AnfImporterFromProtobuf() override = default;
+  ~AnfImporterFromMindir() override { delete onnx_model_; }
 
   static onnx::ModelProto *ReadOnnxFromBinary(const std::string &model_path);
 
   FuncGraphPtr GetResult() override;
 
-  int Import(const schema::QuantType &quantType = schema::QuantType_QUANT_NONE) override;
+  int Import(const converter::Flags *flag) override;
 
  private:
   int ConverterConstTensor() override { return RET_ERROR; };

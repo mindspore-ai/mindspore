@@ -203,6 +203,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/identity_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/infershape_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/mindir_adjust_pass.cc
             )
 endif()
 ### train

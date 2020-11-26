@@ -57,6 +57,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/identity_remove_pass.cc
         ../optimizer/graph/infershape_pass.cc
         ../optimizer/graph/slice_prepose_pass.cc
+        ../optimizer/graph/mindir_adjust_pass.cc
         )
 
 add_subdirectory(../anf_importer anf_importer)

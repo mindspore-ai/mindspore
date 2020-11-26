@@ -30,7 +30,7 @@
 #include "parser/onnx/onnx_converter.h"
 #include "parser/tf/tf_converter.h"
 #include "tools/anf_exporter/anf_exporter.h"
-#include "tools/anf_importer/import_from_protobuf.h"
+#include "tools/anf_importer/import_from_mindir.h"
 #include "proto/onnx.pb.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
@@ -54,9 +54,7 @@ Converter::~Converter() {
 
 class MindsporeImporter : public Converter {
  public:
-  MindsporeImporter(onnx::ModelProto *onnx_model, FuncGraphPtr func_graph) {
-    modelImporter = new AnfImporterFromProtobuf(onnx_model, std::move(func_graph));
-  }
+  MindsporeImporter() { modelImporter = new AnfImporterFromMindir(); }
 
   ~MindsporeImporter() override = default;
 };
@@ -66,7 +64,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   FuncGraphPtr graph = nullptr;
   if (flag->fmk == converter::FmkType_MS) {
     MS_ASSERT(nullptr != modelImporter);
-    int status = modelImporter->Import(flag->quantType);
+    int status = modelImporter->Import(flag);
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     graph = modelImporter->GetResult();
   } else {
@@ -127,15 +125,8 @@ int RunConverter(int argc, const char **argv) {
   MetaGraphT *fb_graph = nullptr;
   switch (flags->fmk) {
     case FmkType::FmkType_MS: {
-      auto graph = std::make_shared<FuncGraph>();
-      auto onnx_graph = AnfImporterFromProtobuf::ReadOnnxFromBinary(flags->modelFile);
-      if (onnx_graph == nullptr) {
-        MS_LOG(ERROR) << "Read MINDIR  from binary return nullptr";
-        break;
-      }
-      MindsporeImporter mindsporeImporter(onnx_graph, graph);
+      MindsporeImporter mindsporeImporter;
       fb_graph = mindsporeImporter.Convert(flags.get());
-      delete onnx_graph;
       break;
     }
     case FmkType::FmkType_CAFFE: {

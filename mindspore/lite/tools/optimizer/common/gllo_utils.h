@@ -34,6 +34,8 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::STATUS;
 namespace mindspore {
 namespace opt {
+bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type);
+
 bool IsRealCNodeKernel(const AnfNodePtr &node);
 
 bool IsGraphKernel(const AnfNodePtr &node);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/anf_importer/import_from_protobuf.h"
+#include "tools/anf_importer/import_from_mindir.h"
 #include <unistd.h>
 #include <map>
 #include <memory>
@@ -36,6 +36,7 @@
 #include "src/common/log_adapter.h"
 #include "tools/common/protobuf_utils.h"
 #include "tools/common/graph_util.h"
+#include "load_mindir/load_model.h"
 
 using string = std::string;
 using int32 = int32_t;
@@ -199,8 +200,8 @@ PARSE_ONNXATTR_IN_SCALAR_FORM(int32, bool)
 PARSE_ONNXATTR_IN_SCALAR_FORM(int64, int64)
 PARSE_ONNXATTR_IN_SCALAR_FORM(uint64, uint64)
 
-int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node,
-                                                        const onnx::ValueInfoProto &value_proto) {
+int AnfImporterFromMindir::BuildParameterForFuncGraph(const ParameterPtr &node,
+                                                      const onnx::ValueInfoProto &value_proto) {
   if (node == nullptr) {
     return RET_NULL_PTR;
   }
@@ -274,8 +275,8 @@ int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node
   return RET_OK;
 }
 
-int AnfImporterFromProtobuf::ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph,
-                                                      const onnx::GraphProto &importProto) {
+int AnfImporterFromMindir::ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph,
+                                                    const onnx::GraphProto &importProto) {
   if (outputFuncGraph == nullptr) {
     return RET_NULL_PTR;
   }
@@ -303,8 +304,8 @@ int AnfImporterFromProtobuf::ImportParametersForGraph(const FuncGraphPtr &output
   return status;
 }
 
-bool AnfImporterFromProtobuf::ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const std::string &attr_name,
-                                                        const onnx::TensorProto &attr_tensor) {
+bool AnfImporterFromMindir::ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim, const std::string &attr_name,
+                                                      const onnx::TensorProto &attr_tensor) {
   if (prim == nullptr) {
     return false;
   }
@@ -317,7 +318,7 @@ bool AnfImporterFromProtobuf::ObtainCNodeAttrInTypeForm(const PrimitivePtr &prim
   return true;
 }
 
-ValuePtr AnfImporterFromProtobuf::ObtainCNodeAttrInScalarForm(const onnx::TensorProto &attr_tensor) {
+ValuePtr AnfImporterFromMindir::ObtainCNodeAttrInScalarForm(const onnx::TensorProto &attr_tensor) {
   const int attr_tensor_type = attr_tensor.data_type();
   switch (attr_tensor_type) {
     case onnx::TensorProto_DataType_STRING: {
@@ -347,8 +348,8 @@ ValuePtr AnfImporterFromProtobuf::ObtainCNodeAttrInScalarForm(const onnx::Tensor
   }
 }
 
-bool AnfImporterFromProtobuf::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const std::string &attr_name,
-                                                          const onnx::TensorProto &attr_tensor) {
+bool AnfImporterFromMindir::ObtainCNodeAttrInTensorForm(const PrimitivePtr &prim, const std::string &attr_name,
+                                                        const onnx::TensorProto &attr_tensor) {
   if (prim == nullptr) {
     return false;
   }
@@ -405,7 +406,7 @@ bool AnfImporterFromProtobuf::ObtainCNodeAttrInTensorForm(const PrimitivePtr &pr
   return ret == EOK;
 }
 
-bool AnfImporterFromProtobuf::GetAttrValueForCNode(const PrimitivePtr &prim, const onnx::AttributeProto &attr_proto) {
+bool AnfImporterFromMindir::GetAttrValueForCNode(const PrimitivePtr &prim, const onnx::AttributeProto &attr_proto) {
   if (prim == nullptr) {
     return false;
   }
@@ -460,8 +461,8 @@ bool AnfImporterFromProtobuf::GetAttrValueForCNode(const PrimitivePtr &prim, con
   return true;
 }
 
-bool AnfImporterFromProtobuf::ObtainValueNodeInTensorForm(const std::string &value_node_name,
-                                                          const onnx::TensorProto &attr_tensor) {
+bool AnfImporterFromMindir::ObtainValueNodeInTensorForm(const std::string &value_node_name,
+                                                        const onnx::TensorProto &attr_tensor) {
   const int attr_tensor_type = attr_tensor.data_type();
   std::vector<int> shape;
   for (int i = 0; i < attr_tensor.dims_size(); ++i) {
@@ -501,8 +502,8 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInTensorForm(const std::string &val
   return true;
 }
 
-bool AnfImporterFromProtobuf::ObtainValueNodeInTypeForm(const std::string &value_node_name,
-                                                        const onnx::TensorProto &attr_tensor) {
+bool AnfImporterFromMindir::ObtainValueNodeInTypeForm(const std::string &value_node_name,
+                                                      const onnx::TensorProto &attr_tensor) {
   const int attr_tensor_type = attr_tensor.data_type();
   if (kDefaultValueSwitchMap.find(attr_tensor_type) == kDefaultValueSwitchMap.end()) {
     MS_LOG(ERROR) << "Obtain ValueNode attr in type-form has not support input type: " << attr_tensor_type;
@@ -515,8 +516,8 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInTypeForm(const std::string &value
   return true;
 }
 
-bool AnfImporterFromProtobuf::GetAttrValueForValueNode(const std::string &value_node_name,
-                                                       const onnx::AttributeProto &attr_proto) {
+bool AnfImporterFromMindir::GetAttrValueForValueNode(const std::string &value_node_name,
+                                                     const onnx::AttributeProto &attr_proto) {
   if (!attr_proto.has_ref_attr_name()) {
     MS_LOG(ERROR) << "CNode parse attr type has no ref_attr_name";
     return false;
@@ -572,7 +573,7 @@ bool AnfImporterFromProtobuf::GetAttrValueForValueNode(const std::string &value_
   return true;
 }
 
-bool AnfImporterFromProtobuf::BuildValueNodeForFuncGraph(const onnx::NodeProto &node_proto) {
+bool AnfImporterFromMindir::BuildValueNodeForFuncGraph(const onnx::NodeProto &node_proto) {
   const std::string &value_node_name = node_proto.output(0);
   const onnx::AttributeProto &attr_proto = node_proto.attribute(0);
   if (!attr_proto.has_ref_attr_name()) {
@@ -582,7 +583,7 @@ bool AnfImporterFromProtobuf::BuildValueNodeForFuncGraph(const onnx::NodeProto &
   return GetAttrValueForValueNode(value_node_name, attr_proto);
 }
 
-std::unordered_map<std::string, abstract::AbstractTensorPtr> AnfImporterFromProtobuf::GetAbstractForCNode(
+std::unordered_map<std::string, abstract::AbstractTensorPtr> AnfImporterFromMindir::GetAbstractForCNode(
   const onnx::AttributeProto &attr_proto) {
   std::unordered_map<std::string, abstract::AbstractTensorPtr> kv;
   for (int i = 0; i < attr_proto.tensors_size(); i++) {
@@ -601,9 +602,9 @@ std::unordered_map<std::string, abstract::AbstractTensorPtr> AnfImporterFromProt
   return kv;
 }
 
-CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph,
-                                                         const onnx::NodeProto &node_proto,
-                                                         const schema::QuantType &quantType) {
+CNodePtr AnfImporterFromMindir::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFuncGraph,
+                                                       const onnx::NodeProto &node_proto,
+                                                       const schema::QuantType &quantType) {
   static bool interrupt = false;
   if (outputFuncGraph == nullptr) {
     MS_LOG(ERROR) << "output funcgraph is nullptr";
@@ -685,8 +686,8 @@ CNodePtr AnfImporterFromProtobuf::BuildCNodeForFuncGraph(const FuncGraphPtr &out
   return cnode_ptr;
 }
 
-bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph,
-                                                      const onnx::GraphProto &importProto, const CNodePtr &cnode_ptr) {
+bool AnfImporterFromMindir::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGraph,
+                                                    const onnx::GraphProto &importProto, const CNodePtr &cnode_ptr) {
   if (outputFuncGraph == nullptr || cnode_ptr == nullptr) {
     MS_LOG(ERROR) << "output funcgraph or cnode is nullptr";
     return false;
@@ -765,9 +766,8 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
   return true;
 }
 
-int AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph,
-                                                 const onnx::GraphProto &importProto,
-                                                 const schema::QuantType &quantType) {
+int AnfImporterFromMindir::ImportNodesForGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
+                                               const schema::QuantType &quantType) {
   if (outputFuncGraph == nullptr) {
     MS_LOG(ERROR) << "funcgraph is nullptr";
     return RET_NULL_PTR;
@@ -809,8 +809,8 @@ int AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncG
   return status;
 }
 
-int AnfImporterFromProtobuf::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
-                                            const schema::QuantType &quantType) {
+int AnfImporterFromMindir::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const onnx::GraphProto &importProto,
+                                          const schema::QuantType &quantType) {
   if (outputFuncGraph == nullptr) {
     MS_LOG(ERROR) << "fundgraph is nullptr";
     return RET_NULL_PTR;
@@ -833,7 +833,7 @@ int AnfImporterFromProtobuf::BuildFuncGraph(const FuncGraphPtr &outputFuncGraph,
   return ImportNodesForGraph(outputFuncGraph, importProto, quantType);
 }
 
-int AnfImporterFromProtobuf::ParseModelConfigureInfo(const onnx::ModelProto &model_proto) {
+int AnfImporterFromMindir::ParseModelConfigureInfo(const onnx::ModelProto &model_proto) {
   if (!model_proto.has_producer_name()) {
     MS_LOG(ERROR) << "Parse model producer name from pb file failed!";
     return RET_GRAPH_FILE_ERR;
@@ -854,7 +854,17 @@ int AnfImporterFromProtobuf::ParseModelConfigureInfo(const onnx::ModelProto &mod
   return RET_OK;
 }
 
-int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
+int AnfImporterFromMindir::Import(const converter::Flags *flag) {
+  onnx_model_ = ReadOnnxFromBinary(flag->modelFile);
+  if (onnx_model_ == nullptr) {
+    MS_LOG(DEBUG) << "Parse model failed, which is not an old mindir model";
+    func_graph_ = LoadMindIR(flag->modelFile);
+    if (func_graph_ == nullptr) {
+      MS_LOG(ERROR) << "The mindir model cannot be parsed, which may not match proto file.";
+      return RET_GRAPH_FILE_ERR;
+    }
+    return RET_OK;
+  }
   FuncGraphPtr dstGraph = std::make_shared<mindspore::FuncGraph>();
   if (dstGraph == nullptr) {
     MS_LOG(ERROR) << "funcgraph is nullptr";
@@ -865,10 +875,7 @@ int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
     MS_LOG(ERROR) << "Parse configuration info for pb file failed!";
     return status;
   }
-  if (onnx_model_ == nullptr) {
-    MS_LOG(ERROR) << "onnx_model_ is nullptr";
-    return RET_NULL_PTR;
-  }
+  auto quantType = flag->quantType;
   const onnx::GraphProto &graphBuild = onnx_model_->graph();
   status = BuildFuncGraph(dstGraph, graphBuild, quantType);
   if (status != RET_OK) {
@@ -881,25 +888,22 @@ int AnfImporterFromProtobuf::Import(const schema::QuantType &quantType) {
   return RET_OK;
 }
 
-onnx::ModelProto *AnfImporterFromProtobuf::ReadOnnxFromBinary(const std::string &model_path) {
+onnx::ModelProto *AnfImporterFromMindir::ReadOnnxFromBinary(const std::string &model_path) {
   auto onnx_model = new (std::nothrow) onnx::ModelProto;
   if (onnx_model == nullptr) {
     MS_LOG(ERROR) << "New onnx ModelProto failed!";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
     return nullptr;
   }
   if (RET_OK != ValidateFileStr(model_path, ".mindir")) {
     MS_LOG(ERROR) << "INPUT ILLEGAL: modelFile must be *.mindir";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_INPUT_PARAM_INVALID);
     return nullptr;
   }
   if (ReadProtoFromBinaryFile((const char *)model_path.c_str(), onnx_model) != RET_OK) {
-    MS_LOG(ERROR) << "Read onnx model file failed, model path: " << model_path;
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_GRAPH_FILE_ERR);
+    MS_LOG(ERROR) << "Read onnx model file failed, which is not a matched onnx model";
     return nullptr;
   }
   return onnx_model;
 }
 
-FuncGraphPtr AnfImporterFromProtobuf::GetResult() { return this->func_graph_; }
+FuncGraphPtr AnfImporterFromMindir::GetResult() { return this->func_graph_; }
 }  // namespace mindspore::lite

@@ -26,22 +26,6 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr auto kAnfPrimitiveIndex = 0;
-bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type) {
-  if (node == nullptr) {
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return false;
-  }
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return false;
-  }
-  return IsPrimitive(cnode->input(kAnfPrimitiveIndex), primitive_type);
-}
-
 bool IsRealKernel(const AnfNodePtr &node) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
@@ -135,6 +119,22 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
   return CreateCNodeWithGraph(input_nodes, graph);
 }
 }  // namespace
+
+bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type) {
+  if (node == nullptr) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return false;
+  }
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return false;
+  }
+  return IsPrimitive(cnode->input(kAnfPrimitiveIndex), primitive_type);
+}
 
 bool AnfEqual(const BaseRef &a, const BaseRef &b) {
   if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
