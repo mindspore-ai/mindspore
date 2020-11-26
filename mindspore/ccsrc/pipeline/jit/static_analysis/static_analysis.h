@@ -187,6 +187,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   AnalysisEngine(const PrimEvaluatorMap &prim_evaluator_map, const FuncGraphManagerPtr &func_graph_manager)
       : cache_(AnalysisCache()), prim_constructors_(prim_evaluator_map), func_graph_manager_(func_graph_manager) {
     function_call_depth_ = 0;
+    forward_count_ = 0;
   }
   ~AnalysisEngine() = default;
 
@@ -226,7 +227,10 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
     (void)anfnode_config_map_.emplace(orig_conf, new_conf);
     MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->node()->DebugString()
                   << ", to new_conf: " << new_conf->node()->DebugString();
-    return GetEvaluatedValue(new_conf);
+    forward_count_++;
+    auto res = GetEvaluatedValue(new_conf);
+    forward_count_--;
+    return res;
   }
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
@@ -245,6 +249,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   }
 
   uint64_t function_call_depth() { return function_call_depth_; }
+
+  void CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf);
 
  private:
   void SetUndeterminedFlag(const EvaluatorPtr &evaluator);
@@ -274,6 +280,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
                                           const ConfigPtrList &args_conf_list);
   // record current depth of function call statck
   uint64_t function_call_depth_;
+
+  uint64_t forward_count_;
 
 #ifdef DEBUG
   std::vector<AnfNodePtr> compute_conf_stack_;
