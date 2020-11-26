@@ -17,6 +17,7 @@
 #include "backend/kernel_compiler/rts/memcpy_async.h"
 #include <memory>
 #include <string>
+#include "abstract/utils.h"
 #include "runtime/mem.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "common/trans.h"
@@ -89,7 +90,7 @@ void MemCpyAsyncKernel::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   if (input_size != 1) {
     MS_LOG(EXCEPTION) << "MemCpyAsync input size is not 1";
   }
-  size_t type_size = trans::TypeIdSize(input_type_id_);
+  size_t type_size = abstract::TypeIdSize(input_type_id_);
   std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, 0);
   size_t total_size = 1;
   for (size_t i = 0; i < shape_i.size(); i++) {
