@@ -59,6 +59,18 @@ class CacheErrorPass : public NodePass {
   /// \return Status The error code return
   Status PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified) override;
 
+  /// \brief Returns an error if TakeOp exists under a cache
+  /// \param[in] node The node being visited
+  /// \param[inout] modified Indicator if the node was changed at all
+  /// \return Status The error code return
+  Status PreRunOnNode(std::shared_ptr<TakeOp> node, bool *modified) override;
+
+  /// \brief Returns an error if SkipOp exists under a cache
+  /// \param[in] node The node being visited
+  /// \param[inout] modified Indicator if the node was changed at all
+  /// \return Status The error code return
+  Status PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified) override;
+
 #ifdef ENABLE_PYTHON
   /// \brief Returns an error if FilterOp exists under a cache
   /// \param[in] node The node being visited

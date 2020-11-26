@@ -130,6 +130,12 @@ Status SkipOp::Accept(NodePass *p, bool *modified) {
   return p->RunOnNode(shared_from_base<SkipOp>(), modified);
 }
 
+// Visitor pre-accept method for NodePass
+Status SkipOp::PreAccept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->PreRunOnNode(shared_from_base<SkipOp>(), modified);
+}
+
 // Get Dataset size
 Status SkipOp::GetDatasetSize(int64_t *dataset_size) {
   if (dataset_size_ > 0) {

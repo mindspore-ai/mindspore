@@ -271,7 +271,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
 
   /// \brief Getter function
   /// \return The number of repeats per epoch for the operator
-  int32_t op_num_repeats_per_epoch() { return op_num_repeats_per_epoch_; }
+  int32_t op_num_repeats_per_epoch() const { return op_num_repeats_per_epoch_; }
 
   /// \brief Register the internal worker connectors. No op unless it is a parallel op
   /// \return Status

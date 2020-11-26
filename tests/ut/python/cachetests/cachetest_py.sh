@@ -55,6 +55,9 @@ export SESSION_ID=$session_id
 PytestCmd "test_cache_map.py" "test_cache_map_failure" 1
 HandleRcExit $? 0 0
 
+PytestCmd "test_cache_map.py" "test_cache_map_split" 1
+HandleRcExit $? 0 0
+
 # DatasetCache parameter check
 PytestCmd "test_cache_map.py" "test_cache_map_parameter_check"
 HandleRcExit $? 0 0
