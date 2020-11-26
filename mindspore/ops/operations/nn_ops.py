@@ -2261,8 +2261,17 @@ class RNNTLoss(PrimitiveWithInfer):
         >>> labels = np.array([[1, 2]]).astype(np.int32)
         >>> input_length = np.array([T] * B).astype(np.int32)
         >>> label_length = np.array([len(l) for l in labels]).astype(np.int32)
-        >>> rnnt_loss = ops.RNNTLoss(blank_label=blank)
+        >>> rnnt_loss = ops.RNNTLoss(blank_label=0)
         >>> costs, grads = rnnt_loss(Tensor(acts), Tensor(labels), Tensor(input_length), Tensor(label_length))
+        >>> print(costs)
+        [-3.5036912]
+        >>> print(grads)
+        [[[[-0.35275543 -0.64724463 0.          0.          0.         ]
+           [-0.19174816 0.          -0.45549652 0.          0.         ]
+           [-0.45549664 0.          0.          0.          0.         ]]
+          [[0.          -0.35275543 0.          0.          0.         ]
+           [0.          0.          -0.5445037  0.          0.         ]
+           [-1.00000002 0.          0.          0.          0.         ]]]]
     """
 
     @prim_attr_register

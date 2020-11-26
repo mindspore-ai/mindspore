@@ -52,7 +52,7 @@ def test_net_assert():
     out_expect0 = np.array([0, 0, 0, 1, 1, 0]).reshape(3, 2)
     out_expect1 = np.array([0, 1, 1])
     out_expect2 = np.array([2, 2])
-    out_expect3 = np.array([-0.7443749, 0.18251707]).reshape(2, 1)
+    out_expect3 = np.array([-0.7443749, 0.18251707]).astype(np.float32).reshape(2, 1)
     assert np.array_equal(output[0].asnumpy(), out_expect0)
     assert np.array_equal(output[1].asnumpy(), out_expect1)
     assert np.array_equal(output[2].asnumpy(), out_expect2)

@@ -4154,8 +4154,8 @@ class Meshgrid(PrimitiveWithInfer):
 
     Args:
         indexing (str): Either 'xy' or 'ij'. Default: 'xy'.
-        When the indexing argument is set to 'xy' (the default),
-        the broadcasting instructions for the first two dimensions are swapped.
+          When the indexing argument is set to 'xy' (the default), the broadcasting
+          instructions for the first two dimensions are swapped.
 
     Inputs:
         - **input_x** (Union[tuple, list]) - A Tuple or list of N 1-D Tensor objects.
@@ -4170,7 +4170,8 @@ class Meshgrid(PrimitiveWithInfer):
         >>> z = np.array([8, 9, 0, 1, 2]).astype(np.int32)
         >>> inputs = (x, y, z)
         >>> meshgrid = ops.Meshgrid(indexing="xy")
-        >>> meshgrid(inputs)
+        >>> output = meshgrid(inputs)
+        >>> print(output)
         (Tensor(shape=[3, 4, 6], dtype=UInt32, value=
          [[[1, 1, 1, 1, 1],
           [2, 2, 2, 2, 2],
