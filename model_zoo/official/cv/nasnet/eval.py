@@ -14,7 +14,6 @@
 # ============================================================================
 """evaluate imagenet"""
 import argparse
-import os
 
 import mindspore.nn as nn
 from mindspore import context
@@ -34,9 +33,8 @@ if __name__ == '__main__':
     parser.add_argument('--platform', type=str, default='GPU', choices=('Ascend', 'GPU'), help='run platform')
     args_opt = parser.parse_args()
 
-    if args_opt.platform == 'Ascend':
-        device_id = int(os.getenv('DEVICE_ID'))
-        context.set_context(device_id=device_id)
+    if args_opt.platform != 'GPU':
+        raise ValueError("Only supported GPU training.")
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform)
     net = NASNetAMobile(num_classes=cfg.num_classes, is_training=False)

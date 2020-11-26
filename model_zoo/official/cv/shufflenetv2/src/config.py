@@ -34,7 +34,6 @@ config_gpu = edict({
 
     ### Loss Config
     'label_smooth_factor': 0.1,
-    'aux_factor': 0.4,
 
     ### Learning Rate Config
     'lr_init': 0.5,
@@ -42,8 +41,6 @@ config_gpu = edict({
     ### Optimization Config
     'weight_decay': 0.00004,
     'momentum': 0.9,
-    'opt_eps': 1.0,
-    'rmsprop_decay': 0.9,
     "loss_scale": 1,
 
 })
