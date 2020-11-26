@@ -583,6 +583,23 @@ void PackNHWCToC8HWN8Fp32(const void *src, void *dst, int batch, int plane, int 
   return;
 }
 
+void PackDepthwiseIndirectWeightC4Fp32(const void *src, void *dst, int height, int width, int channel) {
+  int c4 = UP_DIV(channel, C4NUM);
+  for (int c = 0; c < c4; c++) {
+    int dst_off_c = c * C4NUM * height * width;
+    for (int i = 0; i < C4NUM; i++) {
+      int src_off_c = (c * C4NUM + i) * height * width;
+      for (int kh = 0; kh < height; kh++) {
+        int src_off_kh = src_off_c + kh * width;
+        for (int kw = 0; kw < width; kw++) {
+          int dst_off = dst_off_c + kw * height * C4NUM + kh * C4NUM + i;
+          ((float *)dst)[dst_off] = ((float *)src)[src_off_kh + kw];
+        }
+      }
+    }
+  }
+}
+
 void PackNHWCToNHWC4Int8(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   int c4_channel = c4 * C4NUM;

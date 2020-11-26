@@ -577,7 +577,134 @@ void ConvDw3x3(float *output_data, float *buffer, const float *input_data, const
     }
   }
 }
-/*conv depthwise 3x3 fp32 end*/
+
+/*conv depthwise indirect buffer fp32 begin*/
+bool CheckConvDwUseIndirectBuffer(const ConvParameter *conv_param) {
+  bool use_indirect = (conv_param->kernel_h_ == 3 && conv_param->kernel_w_ == 3) ||
+                      (conv_param->kernel_h_ == 5 && conv_param->kernel_w_ == 5);
+  return use_indirect;
+}
+
+void ConvDwInitIndirection(float **indirect_buffer, float *src, float *zero_ptr, const ConvParameter *conv_param,
+                           int step_h, int step_w) {
+  int ic_4 = UP_DIV(conv_param->input_channel_, C4NUM) * C4NUM;
+  for (int b = 0; b < conv_param->output_batch_; b++) {
+    float **indirect = indirect_buffer + b * conv_param->output_h_ * step_h;
+    float *input = src + b * conv_param->input_h_ * conv_param->input_w_ * ic_4;
+    for (int oh = 0; oh < conv_param->output_h_; oh++) {
+      for (int kh = 0; kh < conv_param->kernel_h_; kh++) {
+        int ih = oh * conv_param->stride_h_ + kh * conv_param->dilation_h_ - conv_param->pad_u_;
+        if (ih < conv_param->input_h_ && ih >= 0) {
+          for (int ow = 0; ow < conv_param->output_w_; ow++) {
+            for (int kw = 0; kw < conv_param->kernel_w_; kw++) {
+              int iw = ow * conv_param->stride_w_ + kw * conv_param->dilation_w_ - conv_param->pad_l_;
+              int index = oh * step_h + ow * step_w * conv_param->kernel_h_ + kw * conv_param->kernel_h_ + kh;
+              if (iw < conv_param->input_w_ && iw >= 0) {
+                indirect[index] = input + (ih * conv_param->input_w_ + iw) * ic_4;
+              } else {
+                indirect[index] = zero_ptr;
+              }
+            }
+          }
+        } else {
+          for (int ow = 0; ow < conv_param->output_w_; ow++) {
+            for (int kw = 0; kw < conv_param->kernel_w_; kw++) {
+              int index = oh * step_h + ow * step_w * conv_param->kernel_h_ + kw * conv_param->kernel_h_ + kh;
+              indirect[index] = zero_ptr;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+#ifndef ENABLE_ARM64
+void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,
+                           int output_width, int input_stride, bool relu, bool relu6, int kernel) {
+  do {
+    float *in[kernel];
+    for (int k = 0; k < kernel; k++) {
+      in[k] = input[k];
+    }
+    input = input + input_stride;
+
+    size_t c = channels;
+    const float *w = weights;
+    float *out = output;
+    memcpy(out, bias, channels * sizeof(float));
+    for (; c >= C4NUM; c -= C4NUM) {
+      for (int i = 0; i < C4NUM; i++) {
+        for (int k = 0; k < kernel; k++) {
+          out[i] += in[k][i] * w[i + k * C4NUM];
+        }
+      }
+      w += kernel * C4NUM;
+      out += C4NUM;
+      for (int k = 0; k < kernel; k++) {
+        in[k] += C4NUM;
+      }
+    }
+    for (int i = 0; i < c; i++) {
+      for (int k = 0; k < kernel; k++) {
+        out[i] += in[k][i] * w[i + k * C4NUM];
+      }
+    }
+    if (relu) {
+      ReluFp32(output, output, channels);
+    }
+    if (relu6) {
+      Relu6Fp32(output, output, channels);
+    }
+    output += channels;
+  } while (--output_width != 0);
+}
+#endif
+
+#ifdef ENABLE_ARM64
+void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,
+                           int output_width, int input_stride, bool relu, bool relu6, int kernel) {
+  if (kernel == 9) {
+    ConvDwFp32Indirect3x3(output, input, weights, bias, channels, output_width, input_stride * sizeof(float *), relu,
+                          relu6);
+  } else if (kernel == 25) {
+    ConvDwFp32Indirect5x5(output, input, weights, bias, channels, output_width, input_stride * sizeof(float *), relu,
+                          relu6);
+  }
+}
+#endif
+
+void ConvDwIndirection(float *output_data, float **indirect_buffer, const float *weight_data, const float *bias_data,
+                       float *zero_ptr, const ConvParameter *conv_param, int task_id) {
+  int step_w = conv_param->dilation_w_ == 1 ? conv_param->stride_w_ : conv_param->kernel_w_;
+  int step_h =
+    (conv_param->kernel_h_ * conv_param->kernel_w_) + (conv_param->output_w_ - 1) * step_w * conv_param->kernel_h_;
+  int input_stride = conv_param->kernel_h_ * step_w;
+
+  bool relu = conv_param->act_type_ == ActType_Relu;
+  bool relu6 = conv_param->act_type_ == ActType_Relu6;
+
+  int h_step = UP_DIV(conv_param->output_h_, conv_param->thread_num_);
+  int h_start = h_step * task_id;
+  int h_end = MSMIN(h_start + h_step, conv_param->output_h_);
+
+  for (int b = 0; b < conv_param->output_batch_; b++) {
+    float **indirect_b = indirect_buffer + b * conv_param->output_h_ * step_h;
+    float *outout_b = output_data + b * conv_param->output_h_ * conv_param->output_w_ * conv_param->output_channel_;
+    for (int oh = h_start; oh < h_end; oh++) {
+      float **indirect = indirect_b + oh * step_h;
+      float *output_h = outout_b + oh * conv_param->output_w_ * conv_param->output_channel_;
+      if (conv_param->kernel_w_ == 3) {
+        ConvDwFp32IndirectRow(output_h, indirect, weight_data, bias_data, conv_param->output_channel_,
+                              conv_param->output_w_, input_stride, relu, relu6, 9);
+      } else if (conv_param->kernel_w_ == 5) {
+        ConvDwFp32IndirectRow(output_h, indirect, weight_data, bias_data, conv_param->output_channel_,
+                              conv_param->output_w_, input_stride, relu, relu6, 25);
+      }
+    }
+  }
+}
+/*conv depthwise indirect buffer fp32 end*/
 
 /*deconv depthwise fp32 begin*/
 void DeconvDwBorderPixel(float *dst, const float *src, const float *weight, int height, int width, int in_kh_step,
