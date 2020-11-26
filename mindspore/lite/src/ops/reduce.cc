@@ -84,10 +84,10 @@ int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
           for (size_t i = 0; i < valTuplPtr->size(); i++) {
             auto elem = (*valTuplPtr)[i];
             MS_ASSERT(elem != nullptr);
-            attr->axes.emplace_back(CastToInt(elem, false).front());
+            attr->axes.emplace_back(CastToInt(elem).front());
           }
         } else {
-          int axes_item = CastToInt(value, false).front();
+          int axes_item = CastToInt(value).front();
           attr->axes.push_back(axes_item);
         }
       }

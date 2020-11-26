@@ -59,7 +59,7 @@ int Gather::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     }
     if (inputs[2]->isa<ValueNode>()) {
       ValueNodePtr axis_tensor = inputs[2]->cast<ValueNodePtr>();
-      int axis = CastToInt(axis_tensor->value(), false).front();
+      int axis = CastToInt(axis_tensor->value()).front();
       gather_attr->axis = axis;
     } else {
       MS_LOG(ERROR) << "input axis is not value node.";

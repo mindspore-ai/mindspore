@@ -48,7 +48,7 @@ int UnsortedSegmentSum::UnPackAttr(const Primitive &prim, const std::vector<AnfN
     std::unique_ptr<schema::UnsortedSegmentSumT> attr = std::make_unique<schema::UnsortedSegmentSumT>();
     if (inputs[2]->isa<ValueNode>()) {
       ValuePtr value = inputs[2]->cast<ValueNodePtr>()->value();
-      attr->numSegments = CastToInt(value, false).front();
+      attr->numSegments = CastToInt(value).front();
       this->primitive_->value.value = attr.release();
     }
   }

@@ -92,7 +92,7 @@ int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    attr->group = CastToInt(prim.GetAttr("group"), false).front();
+    attr->group = CastToInt(prim.GetAttr("group")).front();
     if (attr->group > 1) {
       this->primitive_->value.type = schema::PrimitiveType_GroupConv2DGradInput;
     }
@@ -104,25 +104,25 @@ int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
     } else {
       attr->format = schema::Format_NUM_OF_FORMAT;
     }
-    auto pad_list = CastToInt(prim.GetAttr("pad_list"), true);
+    auto pad_list = CastToInt(prim.GetAttr("pad_list"));
     attr->padUp = pad_list[0];
     attr->padDown = pad_list[1];
     attr->padLeft = pad_list[2];
     attr->padRight = pad_list[3];
 
-    auto dilation = CastToInt(prim.GetAttr("dilation"), true);
+    auto dilation = CastToInt(prim.GetAttr("dilation"));
     attr->dilateH = dilation[0];
     attr->dilateW = dilation[1];
 
-    auto kernel_size = CastToInt(prim.GetAttr("kernel_size"), true);
+    auto kernel_size = CastToInt(prim.GetAttr("kernel_size"));
     attr->kernelH = kernel_size[0];
     attr->kernelW = kernel_size[1];
 
-    auto stride = CastToInt(prim.GetAttr("stride"), true);
+    auto stride = CastToInt(prim.GetAttr("stride"));
     attr->strideH = stride[0];
     attr->strideW = stride[1];
 
-    attr->channelOut = CastToInt(prim.GetAttr("out_channel"), false).front();
+    attr->channelOut = CastToInt(prim.GetAttr("out_channel")).front();
 
     auto pad_mode = GetValue<std::string>(prim.GetAttr("pad_mode"));
     if (pad_mode == "valid") {
@@ -156,7 +156,7 @@ int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
           for (size_t i = 0; i < valTuplPtr->size(); i++) {
             auto elem = (*valTuplPtr)[i];
             MS_ASSERT(elem != nullptr);
-            attr->input_shape[nchw2nhwc[i]] = CastToInt(elem, false).front();
+            attr->input_shape[nchw2nhwc[i]] = CastToInt(elem).front();
           }
         }
       }

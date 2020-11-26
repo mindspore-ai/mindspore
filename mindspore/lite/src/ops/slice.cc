@@ -73,7 +73,7 @@ int Slice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
           for (size_t i = 0; i < valTuplPtr->size(); i++) {
             auto elem = (*valTuplPtr)[i];
             MS_ASSERT(elem != nullptr);
-            attr->begin.emplace_back(CastToInt(elem, false).front());
+            attr->begin.emplace_back(CastToInt(elem).front());
           }
         }
       }
@@ -90,7 +90,7 @@ int Slice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
           for (size_t i = 0; i < valTuplPtr->size(); i++) {
             auto elem = (*valTuplPtr)[i];
             MS_ASSERT(elem != nullptr);
-            attr->size.emplace_back(CastToInt(elem, false).front());
+            attr->size.emplace_back(CastToInt(elem).front());
           }
         }
       }

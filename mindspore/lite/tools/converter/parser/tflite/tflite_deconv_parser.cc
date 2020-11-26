@@ -43,7 +43,11 @@ PrimitiveC *TfliteDeConvParser::ParseLitePrimitive(const std::unique_ptr<tflite:
   attr->padMode = GetPadMode(tflite_attr->padding);
   attr->format = schema::Format::Format_NHWC;
   attr->activationType = schema::ActivationType_NO_ACTIVATION;
-  attr->hasBias = true;
+  if (tflite_op->inputs.size() > 3) {
+    attr->hasBias = true;
+  } else {
+    attr->hasBias = false;
+  }
 
   // get the conv op weight tensor
   auto weight_index = tflite_op->inputs[1];
