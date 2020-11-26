@@ -329,7 +329,8 @@ def resnet50(num_classes):
 def test_export_resnet_air():
     net = resnet50(10)
     inputs = Tensor(np.ones([1, 3, 224, 224]).astype(np.float32) * 0.01)
-    file_name = "resnet.air"
+    file_name = "resnet"
     export(net, inputs, file_name=file_name, file_format='AIR')
+    file_name += ".air"
     assert os.path.exists(file_name)
     os.remove(file_name)

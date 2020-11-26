@@ -38,10 +38,6 @@ def is_enable_onnxruntime():
 run_on_onnxruntime = pytest.mark.skipif(not is_enable_onnxruntime(), reason="Only support running on onnxruntime")
 
 
-def setup_module():
-    pass
-
-
 def teardown_module():
     cur_dir = os.path.dirname(os.path.realpath(__file__))
     for filename in os.listdir(cur_dir):
@@ -52,7 +48,7 @@ def teardown_module():
 
 
 class BatchNormTester(nn.Cell):
-    "used to test exporting network in training mode in onnx format"
+    """used to test exporting network in training mode in onnx format"""
 
     def __init__(self, num_features):
         super(BatchNormTester, self).__init__()
@@ -63,21 +59,22 @@ class BatchNormTester(nn.Cell):
 
 
 def test_batchnorm_train_onnx_export():
-    "test onnx export interface does not modify trainable flag of a network"
+    """test onnx export interface does not modify trainable flag of a network"""
     input_ = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
     net = BatchNormTester(3)
     net.set_train()
     if not net.training:
         raise ValueError('netowrk is not in training mode')
-    onnx_file = 'batch_norm.onnx'
+    onnx_file = 'batch_norm'
     export(net, input_, file_name=onnx_file, file_format='ONNX')
 
     if not net.training:
         raise ValueError('netowrk is not in training mode')
-    # check existence of exported onnx file and delete it
-    assert os.path.exists(onnx_file)
-    os.chmod(onnx_file, stat.S_IWRITE)
-    os.remove(onnx_file)
+
+    file_name = "batch_norm.onnx"
+    assert os.path.exists(file_name)
+    os.chmod(file_name, stat.S_IWRITE)
+    os.remove(file_name)
 
 
 class LeNet5(nn.Cell):
@@ -127,8 +124,7 @@ class DefinedNet(nn.Cell):
 
 
 class DepthwiseConv2dAndReLU6(nn.Cell):
-    "Net for testing DepthwiseConv2d and ReLU6"
-
+    """Net for testing DepthwiseConv2d and ReLU6"""
     def __init__(self, input_channel, kernel_size):
         super(DepthwiseConv2dAndReLU6, self).__init__()
         weight_shape = [1, input_channel, kernel_size, kernel_size]
@@ -142,9 +138,9 @@ class DepthwiseConv2dAndReLU6(nn.Cell):
         x = self.relu6(x)
         return x
 
+
 class DeepFMOpNet(nn.Cell):
     """Net definition with Gatherv2 and Tile and Square."""
-
     def __init__(self):
         super(DeepFMOpNet, self).__init__()
         self.gather = P.GatherV2()
@@ -157,12 +153,11 @@ class DeepFMOpNet(nn.Cell):
         x = self.gather(x, y, 0)
         return x
 
-# generate mindspore Tensor by shape and numpy datatype
+
 def gen_tensor(shape, dtype=np.float32):
     return Tensor(np.ones(shape).astype(dtype))
 
 
-# ut configs in triple: (ut_name, network, network-input)
 net_cfgs = [
     ('lenet', LeNet5(), gen_tensor([1, 1, 32, 32])),
     ('maxpoolwithargmax', DefinedNet(), gen_tensor([1, 3, 224, 224])),
@@ -179,23 +174,21 @@ def get_id(cfg):
 # use `pytest test_onnx.py::test_onnx_export[name]` or `pytest test_onnx.py::test_onnx_export -k name` to run single ut
 @pytest.mark.parametrize('name, net, inp', net_cfgs, ids=get_id(net_cfgs))
 def test_onnx_export(name, net, inp):
-    onnx_file = name + ".onnx"
     if isinstance(inp, (tuple, list)):
-        export(net, *inp, file_name=onnx_file, file_format='ONNX')
+        export(net, *inp, file_name=name, file_format='ONNX')
     else:
-        export(net, inp, file_name=onnx_file, file_format='ONNX')
+        export(net, inp, file_name=name, file_format='ONNX')
 
-    # check existence of exported onnx file and delete it
-    assert os.path.exists(onnx_file)
-    os.chmod(onnx_file, stat.S_IWRITE)
-    os.remove(onnx_file)
+    file_file = name + ".onnx"
+    assert os.path.exists(file_file)
+    os.chmod(file_file, stat.S_IWRITE)
+    os.remove(file_file)
 
 
 @run_on_onnxruntime
 @pytest.mark.parametrize('name, net, inp', net_cfgs, ids=get_id(net_cfgs))
 def test_onnx_export_load_run(name, net, inp):
-    onnx_file = name + ".onnx"
-    export(net, inp, file_name=onnx_file, file_format='ONNX')
+    export(net, inp, file_name=name, file_format='ONNX')
 
     import onnx
     import onnxruntime as ort
@@ -222,7 +215,7 @@ def test_onnx_export_load_run(name, net, inp):
     outputs = ort_session.run(None, input_map)
     print(outputs[0])
 
-    # check existence of exported onnx file and delete it
-    assert os.path.exists(onnx_file)
-    os.chmod(onnx_file, stat.S_IWRITE)
-    os.remove(onnx_file)
+    file_name = name + ".onnx"
+    assert os.path.exists(file_name)
+    os.chmod(file_name, stat.S_IWRITE)
+    os.remove(file_name)
