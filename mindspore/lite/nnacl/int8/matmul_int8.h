@@ -62,7 +62,7 @@ void MatMulInt8_4x16_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row
                        size_t per_channel, int32_t *filter_zp);
 void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
                    const int *bias, int act_min, int act_max, int out_zp, int32_t *multiplier, int32_t *left_shift,
-                   int32_t *right_shift, int stride, int filter_peroc, int32_t *filter_zp);
+                   int32_t *right_shift, size_t stride, size_t filter_peroc, int32_t *filter_zp);
 
 #ifdef ENABLE_ARM64
 void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, int col4, int deep16, const int *a_sums,
@@ -71,18 +71,11 @@ void MatmulInt8Neon64(const int8_t *a, const int8_t *b, int8_t *dst, int row4, i
 
 void MatMulR4Int8Neon64(const int8_t *a, const int8_t *b, int32_t *dst, int row4, int col4, int deep16,
                         const int *input_sum, const int *bias);
-void MatmulInt8Neon64Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row4, int col4, int deep16,
-                         const int *a_sums, const int *bias, int act_min, int act_max, int out_zp, int32_t *multiplier,
-                         int32_t *left_shift, int32_t *right_shift, int row, int col, int stride, int filter_peroc,
-                         int32_t *filter_zp);
 #endif
 #ifdef ENABLE_ARM32
 void MatmulInt8Neon32(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16,
                       const int *input_sums, const int *weight_bias, int act_min, int act_max, int out_zp,
                       int *multiplier, int *left_shift, int *right_shift, int stride, int per_channel);
-void MatmulInt8Neon32Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
-                         const int *bias, int act_min, int act_max, int out_zp, int32_t *multiplier,
-                         int32_t *left_shift, int32_t *right_shift, int stride, int filter_peroc, int32_t *filter_zp);
 #endif
 #ifdef __cplusplus
 }

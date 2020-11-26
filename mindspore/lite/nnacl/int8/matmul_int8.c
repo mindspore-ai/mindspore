@@ -253,7 +253,7 @@ void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
 #ifndef ENABLE_ARM
 void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
                    const int *bias, int mini, int maxi, int out_zp, int32_t *multiplier, int32_t *left_shift,
-                   int32_t *right_shift, int stride, int filter_peroc, int32_t *filter_zp) {
+                   int32_t *right_shift, size_t stride, size_t filter_peroc, int32_t *filter_zp) {
   int col_tile = C4NUM;
   /* support per-layer && weight per-channel */
   /*  row4x16-major * row16x2-major => (int8)row-major*/
