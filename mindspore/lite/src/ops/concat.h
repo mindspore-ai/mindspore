@@ -33,13 +33,11 @@ class Concat : public PrimitiveC {
   explicit Concat(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
   void SetAxis(int axis);
-  void SetN(int n);
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   int GetAxis() const;
-  int GetN() const;
 };
 }  // namespace lite
 }  // namespace mindspore

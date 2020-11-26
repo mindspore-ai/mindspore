@@ -35,7 +35,6 @@ TEST_F(TestTfliteParserConcat, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsConcat(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsConcat();
   ASSERT_EQ(val->axis, 1);
-  ASSERT_EQ(val->n, 2);
 }
 
 }  // namespace mindspore

@@ -34,7 +34,6 @@ PrimitiveC *TfliteConcatParser::ParseLitePrimitive(const std::unique_ptr<tflite:
     return nullptr;
   }
   attr->axis = tfliteAttr->axis;
-  attr->n = tflite_op->inputs.size();
   primitive->value.type = schema::PrimitiveType_Concat;
   primitive->value.value = attr.release();
   return PrimitiveC::Create(primitive.release());
