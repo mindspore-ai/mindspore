@@ -199,6 +199,9 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
         attr->channelIn = dims[kAnfPopulaterInputNumOne];
       }
     }
+  } else if (input_node->isa<CNode>()) {
+    // The weight of convolution is the output from the other operators which could be folded by const folding pass.
+    attr->channelIn = -1;
   }
 
   primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
