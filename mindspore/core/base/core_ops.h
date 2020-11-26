@@ -101,6 +101,7 @@ inline const PrimitivePtr kPrimReshape = std::make_shared<Primitive>("Reshape");
 inline const PrimitivePtr kPrimMapCacheIdx = std::make_shared<Primitive>("MapCacheIdx");
 inline const PrimitivePtr kPrimUpdateCache = std::make_shared<Primitive>("UpdateCache");
 inline const PrimitivePtr kPrimCacheSwapTable = std::make_shared<Primitive>("CacheSwapTable");
+inline const PrimitivePtr kPrimSlice = std::make_shared<Primitive>("Slice");
 inline const PrimitivePtr kPrimTile = std::make_shared<Primitive>("Tile");
 inline const PrimitivePtr kPrimAddN = std::make_shared<Primitive>("AddN");
 inline const PrimitivePtr kPrimAccumulateNV2 = std::make_shared<Primitive>("AccumulateNV2");

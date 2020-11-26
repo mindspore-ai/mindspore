@@ -50,6 +50,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
     {prim::kPrimBroadcastShape, {InferImplBroadCastShape, true}},
     {prim::kPrimPack, {InferImplPack, true}},
+    {prim::kPrimPad, {InferImplPad, true}},
     {prim::kPrimUnique, {InferImplUnique, true}},
     {prim::kPrimUniqueGrad, {InferImplUniqueGrad, true}},
     {prim::kPrimGatherV2, {InferImplGatherV2, true}},

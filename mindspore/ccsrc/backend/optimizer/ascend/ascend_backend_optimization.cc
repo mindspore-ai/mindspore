@@ -31,6 +31,7 @@
 #include "backend/optimizer/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "backend/optimizer/ascend/ir_fission/layer_norm_grad_split.h"
 #include "backend/optimizer/ascend/ir_fission/unsorted_segment_sum_fission.h"
+#include "backend/optimizer/ascend/ir_fission/gather_v2_ds_fission.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/square_sum_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
@@ -181,6 +182,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
   ir_fusion_pm->AddPass(std::make_shared<ReduceMinFission>());
   ir_fusion_pm->AddPass(std::make_shared<UnsortSegmentSumFission>());
+  ir_fusion_pm->AddPass(std::make_shared<GatherV2DsFission>());
 }
 }  // namespace
 

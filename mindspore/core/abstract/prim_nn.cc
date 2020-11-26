@@ -470,5 +470,39 @@ AbstractBasePtr InferImplSGD(const AnalysisEnginePtr &, const PrimitivePtr &prim
   elements.push_back(args_spec_list[0]->Clone()->Broaden());
   return std::make_shared<AbstractTuple>(elements);
 }
+
+AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto arg = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto input_shp = arg->shape()->shape();
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto padding_attr = primitive->GetAttr("paddings");
+  MS_EXCEPTION_IF_NULL(padding_attr);
+  if (!padding_attr->isa<ValueTuple>()) {
+    MS_LOG(EXCEPTION) << "paddings is not a ValueTuple";
+  }
+  std::vector<ValuePtr> paddings = padding_attr->cast<ValueTuplePtr>()->value();
+  std::vector<std::vector<int64_t>> paddings_vec;
+  for (ValuePtr paddings_elements : paddings) {
+    std::vector<ValuePtr> paddings_elements_tuple = paddings_elements->cast<ValueTuplePtr>()->value();
+    std::vector<int64_t> paddings_vec_item;
+    (void)std::transform(std::begin(paddings_elements_tuple), std::end(paddings_elements_tuple),
+                         std::back_inserter(paddings_vec_item),
+                         [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+    paddings_vec.push_back(paddings_vec_item);
+  }
+
+  ShapeVector result_shp;
+  size_t length = paddings_vec.size();
+  for (size_t i = 0; i < length; ++i) {
+    if (paddings_vec[i].size() != 2) {
+      MS_LOG(EXCEPTION) << "paddings 's second dim size is not 2";
+    }
+    result_shp.push_back(input_shp[i] + paddings_vec[i][0] + paddings_vec[i][1]);
+  }
+  return std::make_shared<AbstractTensor>(arg->element(), std::make_shared<Shape>(result_shp));
+}
 }  // namespace abstract
 }  // namespace mindspore

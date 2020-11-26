@@ -148,6 +148,7 @@ std::string GetRealOpType(const std::string &op_type) {
     {"SparseApplyFtrl", "SparseApplyFtrlD"},
     {"SparseApplyProximalAdagrad", "SparseApplyProximalAdagradD"},
     {"SparseGatherV2", "GatherV2"},
+    {"Pad", "PadD"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {
