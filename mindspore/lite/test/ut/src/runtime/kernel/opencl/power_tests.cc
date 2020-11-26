@@ -18,7 +18,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "mindspore/lite/src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/power.h"
 
 // PrimitiveType_Power: src/ops/populate/power_populate.cc
@@ -88,9 +88,9 @@ void TEST_MAIN(const T *input_data1, const T *input_data2, const T *expect_data,
 
   MS_LOG(INFO) << " initialize sub_graph ";
   std::vector<kernel::LiteKernel *> kernels{power_kernel};
-  auto *sub_graph = new (std::nothrow) kernel::SubGraphOpenCLKernel(inputs, outputs, kernels, kernels, kernels);
+  auto *sub_graph = new (std::nothrow) kernel::OpenCLSubGraph(inputs, outputs, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
-    MS_LOG(INFO) << " new kernel::SubGraphOpenCLKernel failed ";
+    MS_LOG(INFO) << " new kernel::OpenCLSubGraph failed ";
     delete param;
     delete power_kernel;
     return;

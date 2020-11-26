@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SUBGRAPH_OPENCL_KENEL_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SUBGRAPH_OPENCL_KENEL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SUBGRAPH_OPENCL_KERNEL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SUBGRAPH_OPENCL_KERNEL_H_
 
 #include <set>
 #include <vector>
@@ -25,25 +25,19 @@
 #include "src/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
-struct SubGraphOpenCLParameter {
-  OpParameter op_parameter;
-  int input_size;
-  int output_size;
-};
-
-class SubGraphOpenCLKernel : public SubGraphKernel {
+class OpenCLSubGraph : public SubGraphKernel {
  public:
-  SubGraphOpenCLKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                       const std::vector<kernel::LiteKernel *> &inKernels,
-                       const std::vector<kernel::LiteKernel *> &outKernels,
-                       const std::vector<kernel::LiteKernel *> &nodes, const lite::InnerContext *ctx = nullptr)
+  OpenCLSubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                 const std::vector<kernel::LiteKernel *> &inKernels,
+                 const std::vector<kernel::LiteKernel *> &outKernels, const std::vector<kernel::LiteKernel *> &nodes,
+                 const lite::InnerContext *ctx = nullptr)
       : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
     subgraph_type_ = kGpuSubGraph;
     this->name_ = "GpuSubGraph";
     nodes_set_.insert(nodes.begin(), nodes.end());
   }
-  ~SubGraphOpenCLKernel() override;
+  ~OpenCLSubGraph() override;
 
   int PreProcess() override { return mindspore::lite::RET_OK; }
   int PostProcess() override { return mindspore::lite::RET_OK; }

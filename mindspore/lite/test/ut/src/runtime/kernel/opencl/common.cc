@@ -17,11 +17,11 @@
 #include <algorithm>
 #include "ut/src/runtime/kernel/opencl/common.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "nnacl/conv_parameter.h"
 
 using mindspore::kernel::LiteKernel;
-using mindspore::kernel::SubGraphOpenCLKernel;
+using mindspore::kernel::OpenCLSubGraph;
 using mindspore::lite::KernelRegistry;
 using mindspore::schema::Format::Format_NHWC;
 
@@ -99,12 +99,12 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> ConstructSubGraphs()
   MS_LOG(DEBUG) << "create SubGraph";
   std::vector<LiteKernel *> kernels{kernel};
-  auto sub_graph = new (std::nothrow) SubGraphOpenCLKernel(subgraph_inputs, {&output}, kernels, kernels, kernels);
+  auto sub_graph = new (std::nothrow) OpenCLSubGraph(subgraph_inputs, {&output}, kernels, kernels, kernels);
   if (sub_graph == nullptr) {
     return;
   }
 
-  // simulating benchmark:  session_->CompileGraph() -> PrepareKernels() -> SubGraphOpenCLKernel.Prepare()
+  // simulating benchmark:  session_->CompileGraph() -> PrepareKernels() -> OpenCLSubGraph.Prepare()
   MS_LOG(DEBUG) << "call sub_graph->Prepare()";
   EXPECT_TRUE(sub_graph->Prepare() == RET_OK);  // will set Tensor's allocator be OpenCLAllocator
 
@@ -128,7 +128,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
     memcpy(input->data_c(), subgraph_inputs_data[input], input->Size());
   }
 
-  // simulating benchmark:  MarkAccuracy() -> session_->RunGraph() -> executor_->Run() -> SubGraphOpenCLKernel->Run()
+  // simulating benchmark:  MarkAccuracy() -> session_->RunGraph() -> executor_->Run() -> OpenCLSubGraph->Run()
   MS_LOG(DEBUG) << "run SubGraph & compare result";
   EXPECT_TRUE(sub_graph->Run() == RET_OK);  // will call UnmapBuffer() for input
 

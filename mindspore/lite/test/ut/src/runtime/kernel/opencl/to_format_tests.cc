@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/runtime/kernel/opencl/subgraph_opencl_kernel.h"
+#include "mindspore/lite/src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/to_format.h"
 
 namespace mindspore::lite::opencl::test {
@@ -69,7 +69,7 @@ TEST_F(TestToFormatOpenCL, ToFormatNHWC2NCHW) {
   inputs[0]->MallocData(allocator);
 
   std::vector<kernel::LiteKernel *> kernels{arith_kernel};
-  auto pGraph_ptr = std::make_unique<kernel::SubGraphOpenCLKernel>(inputs, outputs, kernels, kernels, kernels);
+  auto pGraph_ptr = std::make_unique<kernel::OpenCLSubGraph>(inputs, outputs, kernels, kernels, kernels);
   auto pGraph = pGraph_ptr.get();
   if (pGraph == nullptr) {
     MS_LOG(ERROR) << "pGraph create error.";
