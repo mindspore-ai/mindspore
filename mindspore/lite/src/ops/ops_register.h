@@ -28,10 +28,10 @@ class OpsRegistry {
     return &registry;
   }
 
-  void insertPrimitiveCMap(schema::PrimitiveType type, PrimitiveCCreator creator) {
+  void InsertPrimitiveCMap(schema::PrimitiveType type, PrimitiveCCreator creator) {
     primitive_creators[type] = creator;
   }
-  PrimitiveCCreator getPrimitiveCreator(schema::PrimitiveType type) {
+  PrimitiveCCreator GetPrimitiveCreator(schema::PrimitiveType type) {
     if (primitive_creators.find(type) != primitive_creators.end()) {
       return primitive_creators[type];
     } else {
@@ -47,7 +47,7 @@ class OpsRegistry {
 class Registry {
  public:
   Registry(schema::PrimitiveType primitive_type, PrimitiveCCreator creator) {
-    OpsRegistry::GetInstance()->insertPrimitiveCMap(primitive_type, creator);
+    OpsRegistry::GetInstance()->InsertPrimitiveCMap(primitive_type, creator);
   }
 };
 

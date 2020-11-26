@@ -244,8 +244,14 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
     auto primitive = lite_primitive.get();
     MS_ASSERT(primitive != nullptr);
     MS_ASSERT(primitive->Type() != nullptr);
-    auto parameter =
-      lite::PopulateRegistry::GetInstance()->getParameterCreator(schema::PrimitiveType(primitive->Type()))(primitive);
+    auto func_pointer =
+      lite::PopulateRegistry::GetInstance()->GetParameterCreator(schema::PrimitiveType(primitive->Type()));
+    if (func_pointer == nullptr) {
+      MS_LOG(ERROR) << "ParameterCreator function pointer is nullptr, type: "
+                    << schema::EnumNamePrimitiveType((schema::PrimitiveType)primitive->Type());
+      return nullptr;
+    }
+    auto parameter = func_pointer(primitive);
 
     if (parameter == nullptr) {
       MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "

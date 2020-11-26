@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <queue>
 #include "src/tensor.h"
+#include "src/common/utils.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -196,7 +197,9 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vect
     if (outer_in_kernels.empty()) {
       for (auto &in_kernel_in_tensor : in_kernel_in_tensors) {
         if (!in_kernel_in_tensor->IsConst()) {
-          input_tensors.push_back(in_kernel_in_tensor);
+          if (!lite::IsContain(input_tensors, in_kernel_in_tensor)) {
+            input_tensors.push_back(in_kernel_in_tensor);
+          }
         }
       }
       continue;
@@ -211,7 +214,9 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vect
         auto outer_in_kernel_out_tensors_iter =
           std::find(outer_in_kernel_out_tensors.begin(), outer_in_kernel_out_tensors.end(), in_kernel_in_tensor);
         if (outer_in_kernel_out_tensors_iter != outer_in_kernel_out_tensors.end()) {
-          input_tensors.emplace_back(in_kernel_in_tensor);
+          if (!lite::IsContain(input_tensors, in_kernel_in_tensor)) {
+            input_tensors.emplace_back(in_kernel_in_tensor);
+          }
         }
       }
     }
@@ -226,7 +231,11 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
     auto &outer_out_kernels = output_kernel->out_kernels();
     auto &out_kernel_out_tensors = output_kernel->out_tensors();
     if (outer_out_kernels.empty()) {
-      output_tensors.insert(output_tensors.end(), out_kernel_out_tensors.begin(), out_kernel_out_tensors.end());
+      for (auto out_kernel_out_tensor : out_kernel_out_tensors) {
+        if (!lite::IsContain(output_tensors, out_kernel_out_tensor)) {
+          output_tensors.push_back(out_kernel_out_tensor);
+        }
+      }
       continue;
     }
     for (auto outer_out_kernel : outer_out_kernels) {
@@ -239,7 +248,9 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
         auto outer_out_kernel_in_tensors_iter =
           std::find(outer_out_kernel_in_tensors.begin(), outer_out_kernel_in_tensors.end(), out_kernel_out_tensor);
         if (outer_out_kernel_in_tensors_iter != outer_out_kernel_in_tensors.end()) {
-          output_tensors.emplace_back(out_kernel_out_tensor);
+          if (!lite::IsContain(output_tensors, out_kernel_out_tensor)) {
+            output_tensors.emplace_back(out_kernel_out_tensor);
+          }
         }
       }
     }

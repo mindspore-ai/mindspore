@@ -50,7 +50,14 @@ bool ConvertNodes(const T &meta_graph, Model *model, int schema_version = SCHEMA
     node->primitive_ = PrimitiveC::Create(const_cast<schema::Primitive *>(src_prim));
 #else
     auto primitive = const_cast<schema::Primitive *>(src_prim);
-    node->primitive_ = OpsRegistry::GetInstance()->getPrimitiveCreator(primitive->value_type())(primitive);
+    auto func_pointer = OpsRegistry::GetInstance()->GetPrimitiveCreator(primitive->value_type());
+    if (func_pointer == nullptr) {
+      MS_LOG(ERROR) << "PrimitiveCreator function pointer is nullptr, type: "
+                    << schema::EnumNamePrimitiveType(primitive->value_type());
+      delete node;
+      return false;
+    }
+    node->primitive_ = func_pointer(primitive);
 #endif
     if (node->primitive_ == nullptr) {
       MS_LOG(ERROR) << "unpack primitive == nullptr!";

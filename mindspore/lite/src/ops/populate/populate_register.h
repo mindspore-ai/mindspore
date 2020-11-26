@@ -18,6 +18,7 @@
 #define LITE_MINDSPORE_LITE_C_OPS_OP_POPULATE_REGISTER_H
 
 #include <map>
+#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
@@ -29,9 +30,9 @@ class PopulateRegistry {
     return &registry;
   }
 
-  void insertParameterMap(schema::PrimitiveType type, ParameterCreator creator) { parameter_creators[type] = creator; }
+  void InsertParameterMap(schema::PrimitiveType type, ParameterCreator creator) { parameter_creators[type] = creator; }
 
-  ParameterCreator getParameterCreator(schema::PrimitiveType type) {
+  ParameterCreator GetParameterCreator(schema::PrimitiveType type) {
     if (parameter_creators.find(type) != parameter_creators.end()) {
       return parameter_creators[type];
     } else {
@@ -47,7 +48,7 @@ class PopulateRegistry {
 class Registry {
  public:
   Registry(schema::PrimitiveType primitive_type, ParameterCreator creator) {
-    PopulateRegistry::GetInstance()->insertParameterMap(primitive_type, creator);
+    PopulateRegistry::GetInstance()->InsertParameterMap(primitive_type, creator);
   }
   ~Registry() = default;
 };
