@@ -106,6 +106,11 @@ inline Option<std::string> ToString(bool value) {
 // get the file name from a given path
 // for example: "/usr/bin", we will get "bin"
 inline std::string GetFileName(const std::string &path) {
+  if (path.empty()) {
+    MS_LOG(ERROR) << "string is empty";
+    return "";
+  }
+
   char delim = '/';
 
   size_t i = path.rfind(delim, path.length());
