@@ -31,6 +31,7 @@ __all__ = ['Softmax',
            'ReLU6',
            'Tanh',
            'GELU',
+           'FastGelu',
            'Sigmoid',
            'PReLU',
            'get_activation',
@@ -357,6 +358,39 @@ class GELU(Cell):
         return self.gelu(x)
 
 
+class FastGelu(Cell):
+    r"""
+    fast Gaussian error linear unit activation function.
+
+    Applies FastGelu function to each element of the input. The input is a Tensor with any valid shape.
+
+    FastGelu is defined as:
+    :math:`FastGelu(x_i) = \frac {x_i} {1 + \exp(-1.702 * \left| x_i \right|)} *
+                           \exp(0.851 * (x_i - \left| x_i \right|))`, where :math:`x_i` is the element of the input.
+
+    Inputs:
+        - **input_data** (Tensor) - The input of FastGelu with data type of float16 or float32.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_data`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> fast_gelu = nn.FastGelu()
+        >>> output = fast_gelu(input_x)
+        >>> print(output)
+        [[-1.5420423e-01  3.9955849e+00 -9.7664278e-06]
+         [ 1.9356585e+00 -1.0070159e-03  8.9999981e+00]]
+    """
+
+    def __init__(self):
+        super(FastGelu, self).__init__()
+        self.fast_gelu = _selected_ops.FastGelu()
+
+    def construct(self, x):
+        return self.fast_gelu(x)
+
+
 class Sigmoid(Cell):
     r"""
     Sigmoid activation function.
@@ -582,6 +616,7 @@ _activation = {
     'relu6': ReLU6,
     'tanh': Tanh,
     'gelu': GELU,
+    'fast_gelu': FastGelu,
     'elu': ELU,
     'sigmoid': Sigmoid,
     'prelu': PReLU,

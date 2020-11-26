@@ -58,6 +58,8 @@ from .confusion_mul_grad import _confusion_mul_grad_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
 from .gelu import _gelu_tbe
 from .gelu_grad import _gelu_grad_tbe
+from .fast_gelu import _fast_gelu_tbe
+from .fast_gelu_grad import _fast_gelu_grad_tbe
 from .max_pool import _max_pool_tbe
 from .max_pool_grad import _max_pool_grad_tbe
 from .max_pool_grad_with_argmax import _max_pool_grad_with_argmax_tbe

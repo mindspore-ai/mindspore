@@ -2948,6 +2948,45 @@ class Gelu(PrimitiveWithInfer):
         return input_x
 
 
+class FastGelu(PrimitiveWithInfer):
+    r"""
+    fast Gaussian Error Linear Units activation function.
+
+    FastGelu is defined as follows:
+
+    .. math::
+        \text{output} = \frac {x} {1 + \exp(-1.702 * \left| x \right|)} * \exp(0.851 * (x - \left| x \right|))`,
+
+    where :math:`x` is the element of the input.
+
+    Inputs:
+        - **input_x** (Tensor) - Input to compute the FastGelu with data type of float16 or float32.
+
+    Outputs:
+        Tensor, with the same type and shape as input.
+
+    Examples:
+        >>> tensor = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> fast_gelu = P.FastGelu()
+        >>> output = fast_gelu(tensor)
+        >>> print(output)
+        [[-1.5420423e-01  3.9955849e+00 -9.7664278e-06]
+         [ 1.9356585e+00 -1.0070159e-03  8.9999981e+00]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init FastGeLU"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, input_x):
+        return input_x
+
+    def infer_dtype(self, input_x):
+        validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
+        return input_x
+
+
 class GetNext(PrimitiveWithInfer):
     """
     Returns the next element in the dataset queue.
