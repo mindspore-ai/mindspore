@@ -1,2 +1,5 @@
+include ':imageObject'
+include ':styletransfer'
+include ':posenet'
 include ':app'
 rootProject.name = "HiMindSpore"

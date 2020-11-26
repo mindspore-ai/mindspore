@@ -7,11 +7,12 @@
     android:background="@color/colorPrimary"
     tools:context=".SplashActivity">
 
+
     <TextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="70dp"
+        android:layout_marginTop="68dp"
         android:drawableTop="@drawable/logo"
         android:drawablePadding="30dp"
         android:gravity="center_horizontal"
@@ -20,75 +21,163 @@
         android:textColor="@color/white"
         android:textSize="36sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <Button
         android:id="@+id/btn_image"
-        android:layout_width="320dp"
+        android:layout_width="0dp"
         android:layout_height="48dp"
-        android:layout_marginTop="60dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="30dp"
         android:background="@color/gray_btn"
         android:drawableStart="@drawable/btn_image"
-        android:drawablePadding="16dp"
+        android:drawablePadding="5dp"
         android:gravity="left|center_vertical"
-        android:paddingLeft="40dp"
+        android:onClick="onClickImage"
+        android:paddingLeft="4dp"
         android:text="@string/title_image"
         android:textAllCaps="false"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title" />
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        app:layout_constraintWidth_percent="0.43" />
+
+    <Button
+        android:id="@+id/btn_image_garbage"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginRight="20dp"
+        android:background="@color/gray_btn"
+        android:drawableStart="@drawable/btn_other"
+        android:drawablePadding="5dp"
+        android:gravity="left|center_vertical"
+        android:onClick="onClickGarbage"
+        android:paddingLeft="4dp"
+        android:text="@string/title_image_garbage"
+        android:textAllCaps="false"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_image"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.43" />
 
     <Button
         android:id="@+id/btn_object"
-        android:layout_width="320dp"
+        android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_marginTop="16dp"
         android:background="@color/gray_btn"
-        android:drawableStart="@drawable/btn_object"
-        android:drawablePadding="16dp"
+        android:drawableStart="@drawable/btn_text"
+        android:drawablePadding="5dp"
         android:gravity="left|center_vertical"
-        android:paddingLeft="40dp"
+        android:onClick="onClickPhotoDetection"
+        android:paddingLeft="4dp"
         android:text="@string/title_object"
         android:textAllCaps="false"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_image" />
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@+id/btn_image"
+        app:layout_constraintTop_toBottomOf="@+id/btn_image"
+        app:layout_constraintWidth_percent="0.43" />
 
     <Button
-        android:id="@+id/btn_contact"
-        android:layout_width="320dp"
+        android:id="@+id/btn_object_camera"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:background="@color/gray_btn"
+        android:drawableStart="@drawable/btn_object"
+        android:drawablePadding="5dp"
+        android:gravity="left|center_vertical"
+        android:onClick="onClickCameraDetection"
+        android:paddingLeft="4dp"
+        android:text="@string/title_object_camera"
+        android:textAllCaps="false"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_object"
+        app:layout_constraintEnd_toEndOf="@+id/btn_image_garbage"
+        app:layout_constraintWidth_percent="0.43" />
+
+
+    <Button
+        android:id="@+id/btn_posenet"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/gray_btn"
+        android:drawableStart="@drawable/btn_audio"
+        android:drawablePadding="5dp"
+        android:gravity="left|center_vertical"
+        android:onClick="onClickPoseNet"
+        android:paddingLeft="4dp"
+        android:text="@string/title_pose_net"
+        android:textAllCaps="false"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@+id/btn_object"
+        app:layout_constraintTop_toBottomOf="@+id/btn_object"
+        app:layout_constraintWidth_percent="0.43" />
+
+    <Button
+        android:id="@+id/btn_style_transfer"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:background="@color/gray_btn"
+        android:drawableStart="@drawable/btn_commend"
+        android:drawablePadding="5dp"
+        android:gravity="left|center_vertical"
+        android:onClick="onClickStyleTransfer"
+        android:paddingLeft="4dp"
+        android:text="@string/title_style_transfer"
+        android:textAllCaps="false"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_posenet"
+        app:layout_constraintEnd_toEndOf="@+id/btn_image_garbage"
+        app:layout_constraintWidth_percent="0.43" />
+
+    <Button
+        android:id="@+id/btn_source"
+        android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_marginTop="16dp"
         android:background="@color/gray_btn"
         android:drawableStart="@drawable/btn_code"
-        android:drawablePadding="16dp"
+        android:drawablePadding="5dp"
         android:gravity="left|center_vertical"
-        android:paddingLeft="40dp"
+        android:onClick="onClickSouceCode"
+        android:paddingLeft="4dp"
         android:text="@string/title_source"
         android:textAllCaps="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_object" />
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@+id/btn_posenet"
+        app:layout_constraintTop_toBottomOf="@+id/btn_posenet"
+        app:layout_constraintWidth_percent="0.43" />
 
     <Button
-        android:id="@+id/btn_advice"
-        android:layout_width="320dp"
+        android:id="@+id/btn_help"
+        android:layout_width="0dp"
         android:layout_height="48dp"
-        android:layout_marginTop="16dp"
         android:background="@color/gray_btn"
         android:drawableStart="@drawable/btn_help"
-        android:drawablePadding="16dp"
+        android:drawablePadding="5dp"
         android:gravity="left|center_vertical"
-        android:paddingLeft="40dp"
+        android:onClick="onClickHelp"
+        android:paddingLeft="4dp"
         android:text="@string/title_help"
         android:textAllCaps="false"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_source"
+        app:layout_constraintEnd_toEndOf="@+id/btn_image_garbage"
+        app:layout_constraintWidth_percent="0.43" />
+
+    <TextView
+        android:id="@+id/tv_vision"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_contact" />
-
+        tools:text="Version 1.0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
