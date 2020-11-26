@@ -125,7 +125,7 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
     - number = check_is_number(number, int, "bias", "bias_class")
     """
     prim_name = f'in \'{prim_name}\'' if prim_name else ''
-    arg_name = f'\'{prim_name}\'' if arg_name else 'Input value'
+    arg_name = f'\'{arg_name}\'' if arg_name else 'Input value'
     if isinstance(arg_value, arg_type) and not isinstance(arg_value, bool):
         if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
             raise ValueError(f'{arg_name} {prim_name} must be legal float, but got `{arg_value}`.')
