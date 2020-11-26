@@ -25,13 +25,22 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/random_op_impl.cuh"
+#include "include/curand.h"
 
 namespace mindspore {
 namespace kernel {
-enum RandomOptype { RANDOM_OP_NORMAL = 0, RANDOM_OP_UNIFORM_INT, RANDOM_OP_UNIFORM_REAL, RANDOM_OP_INVALID_TYPE = 255 };
+enum RandomOptype {
+  RANDOM_OP_NORMAL = 0,
+  RANDOM_OP_UNIFORM_INT,
+  RANDOM_OP_UNIFORM_REAL,
+  RANDOM_OP_CUDNN_UNIFORM_REAL,
+  RANDOM_OP_INVALID_TYPE = 255
+};
 
-const std::map<std::string, RandomOptype> kRandomOpTypeMap = {
-  {"StandardNormal", RANDOM_OP_NORMAL}, {"UniformInt", RANDOM_OP_UNIFORM_INT}, {"UniformReal", RANDOM_OP_UNIFORM_REAL}};
+const std::map<std::string, RandomOptype> kRandomOpTypeMap = {{"StandardNormal", RANDOM_OP_NORMAL},
+                                                              {"UniformInt", RANDOM_OP_UNIFORM_INT},
+                                                              {"UniformReal", RANDOM_OP_UNIFORM_REAL},
+                                                              {"CudnnUniformReal", RANDOM_OP_CUDNN_UNIFORM_REAL}};
 
 template <typename T>
 class RandomOpGpuKernel : public GpuKernel {
@@ -74,6 +83,23 @@ class RandomOpGpuKernel : public GpuKernel {
       case RANDOM_OP_UNIFORM_REAL: {
         UniformReal(seed_, seed2_, devStates, output_addr, outputs[0]->size / sizeof(T),
                     reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case RANDOM_OP_CUDNN_UNIFORM_REAL: {
+        float *mask_f = GetDeviceAddress<float>(outputs, 0);
+        if (!states_init_) {
+          CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
+                                       "Failed to create generator");
+          CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_),
+                                       "Failed to SetPseudoRandomGeneratorSeed");
+          MS_EXCEPTION_IF_NULL(mask_generator_);
+          states_init_ = true;
+        }
+        CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                     "Failed to set stream for generator");
+        // curandGen only support float or double for mask.
+        CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(mask_generator_, mask_f, outputs[0]->size / sizeof(float)),
+                                     "Failed to generate uniform");
         break;
       }
       default: {
@@ -148,6 +174,8 @@ class RandomOpGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  curandGenerator_t mask_generator_;
+  bool states_init_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

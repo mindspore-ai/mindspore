@@ -711,7 +711,8 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
     prim::kPrimTanhGrad,
     prim::kPrimReduceMean,
     prim::kPrimMaximumGrad,
-    prim::kPrimMinimumGrad
+    prim::kPrimMinimumGrad,
+    prim::kPrimGkDropout
 #endif
   };
   return expand_ops;

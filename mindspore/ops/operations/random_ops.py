@@ -118,7 +118,6 @@ class StandardLaplace(PrimitiveWithInfer):
         return out
 
 
-
 class Gamma(PrimitiveWithInfer):
     r"""
     Produces random positive floating-point values x, distributed according to probability density function:
@@ -531,6 +530,7 @@ class Multinomial(PrimitiveWithInfer):
             "dtype": mstype.int32,
             "value": None}
         return out
+
 
 class UniformCandidateSampler(PrimitiveWithInfer):
     r"""

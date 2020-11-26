@@ -26,11 +26,15 @@
 #include <vector>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ir/primitive.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include <nlohmann/json.hpp>
 
 namespace mindspore {
+namespace prim {
+inline const PrimitivePtr kPrimGkDropout = std::make_shared<Primitive>("GkDropout");
+}  // namespace prim
 namespace opt {
 using kernel::DumpOption;
 
