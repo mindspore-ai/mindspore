@@ -481,7 +481,7 @@ AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &prim
   auto padding_attr = primitive->GetAttr("paddings");
   MS_EXCEPTION_IF_NULL(padding_attr);
   if (!padding_attr->isa<ValueTuple>()) {
-    MS_LOG(EXCEPTION) << "paddings is not a ValueTuple";
+    MS_LOG(EXCEPTION) << "Paddings is not a ValueTuple";
   }
   std::vector<ValuePtr> paddings = padding_attr->cast<ValueTuplePtr>()->value();
   std::vector<std::vector<int64_t>> paddings_vec;
@@ -498,7 +498,7 @@ AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &prim
   size_t length = paddings_vec.size();
   for (size_t i = 0; i < length; ++i) {
     if (paddings_vec[i].size() != 2) {
-      MS_LOG(EXCEPTION) << "paddings 's second dim size is not 2";
+      MS_LOG(EXCEPTION) << "Paddings 's second dim size is not 2";
     }
     result_shp.push_back(input_shp[i] + paddings_vec[i][0] + paddings_vec[i][1]);
   }

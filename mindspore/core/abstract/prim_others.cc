@@ -500,19 +500,11 @@ AbstractBasePtr InferImplExpandDims(const AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
 
-  auto axis = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  MS_EXCEPTION_IF_NULL(axis);
-
   std::vector<int64_t> shape;
   std::vector<int64_t> x_shape = x->shape()->shape();
   shape.insert(shape.end(), x_shape.begin(), x_shape.end());
-
-  auto axis_value = axis->BuildValue();
-  if (!axis_value->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << axis_value << " axis_value should be tensor, but got " << axis_value->type_name();
-  }
-  auto axis_tensor = axis_value->cast<tensor::TensorPtr>();
-  int value = *(static_cast<int *>(axis_tensor->data_c()));
+  auto axis = primitive->GetAttr("axis");
+  auto value = GetValue<int64_t>(axis);
   if (value < -(SizeToInt(x_shape.size()) + 1) || value > SizeToInt(x_shape.size())) {
     MS_LOG(EXCEPTION) << " axis value shoud be in range [-intput_x.dim-1,input_x.dim], but axis value is" << value
                       << " and input_x.dim is" << x_shape.size();
