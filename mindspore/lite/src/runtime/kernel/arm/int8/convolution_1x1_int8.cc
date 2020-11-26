@@ -152,10 +152,11 @@ void Convolution1x1Int8CPUKernel::CheckSupportOptimize() {
   return;
 }
 
-int Convolution1x1Int8CPUKernel::InitBiasByzp(void *src_weight, int input_channel, int output_channel, int round_oc) {
+int Convolution1x1Int8CPUKernel::InitBiasByzp(const void *src_weight, int input_channel, int output_channel,
+                                              int round_oc) {
   /* bias = bias - v2 x zp1 + zp1 x zp2  */
   int32_t *bias_data = reinterpret_cast<int32_t *>(bias_data_);
-  int8_t *weight = reinterpret_cast<int8_t *>(src_weight);
+  auto *weight = static_cast<const int8_t *>(src_weight);
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
   for (int oc = 0; oc < output_channel; oc++) {
     int32_t weight_sum_value = 0;

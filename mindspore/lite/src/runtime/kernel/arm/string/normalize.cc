@@ -50,6 +50,9 @@ int NormalizeCPUKernel::Init() {
 int NormalizeCPUKernel::ReSize() { return RET_OK; }
 
 std::string NormalizeCPUKernel::Trim(const std::string &str, const std::string &whitespace /*= " \t\n\v\f\r"*/) {
+  if (str.empty()) {
+    return "";
+  }
   auto begin = str.find_first_not_of(whitespace);
   auto end = str.find_last_not_of(whitespace);
   const auto range = end - begin + 1;

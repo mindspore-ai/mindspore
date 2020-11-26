@@ -30,12 +30,12 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
                int col, size_t stride, int out_type);
 void MatVecMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int col);
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col);
-void RowMajor2Row4Major(float *src_ptr, float *dst_ptr, int row, int col);
-void RowMajor2Row8Major(float *src_ptr, float *dst_ptr, int row, int col);
-void RowMajor2Row12Major(float *src_ptr, float *dst_ptr, int row, int col);
-void RowMajor2Col4Major(float *src_ptr, float *dst_ptr, size_t row, size_t col);
-void RowMajor2Col8Major(float *src_ptr, float *dst_ptr, size_t row, size_t col);
-void RowMajor2Col12Major(float *src_ptr, float *dst_ptr, size_t row, size_t col);
+void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
+void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
+void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
 #ifdef ENABLE_ARM64
 void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                        int col, size_t stride, size_t writeNhwc, size_t WriteWino);

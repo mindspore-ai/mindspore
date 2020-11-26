@@ -43,8 +43,8 @@ class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
   void FreeBuf();
 
  private:
-  void InitMatrixA(float *src_ptr, float *dst_ptr);
-  void InitMatrixB(float *src_ptr, float *dst_ptr);
+  void InitMatrixA(const float *src_ptr, float *dst_ptr);
+  void InitMatrixB(const float *src_ptr, float *dst_ptr);
 
  private:
   float *a_pack_ptr_ = nullptr;
