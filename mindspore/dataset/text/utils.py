@@ -142,7 +142,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             character_coverage(float): Amount of characters covered by the model, good defaults are: 0.9995 for
                 languages. with rich character set like Japanese or Chinese and 1.0 for other languages with small
                 character set.
-            model_type(SentencePieceModel): Choose from unigram (default), bpe, char, or word. The input sentence
+            model_type(SentencePieceModel): Choose from UNIGRAM (default), BPE, CHAR, or WORD. The input sentence
                 must be pretokenized when using word type.
             params(dict): A dictionary with no incoming parameters.
 
