@@ -17,6 +17,7 @@
 #include "nnacl/fp16/arithmetic_fp16.h"
 #include <math.h>
 #include "nnacl/arithmetic_common.h"
+#include "nnacl/nnacl_utils.h"
 
 void TileOneDimensionFp16(float16_t *inData, float16_t *outData, int dim, size_t ndim, int *inShape, int *inStrides,
                           int *outStrides, int *multiple) {
@@ -544,6 +545,7 @@ int ElementDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
   }
 #endif
   for (; index < element_size; index++) {
+    NNACL_ASSERT(input1[index] != 0);
     output[index] = input0[index] / input1[index];
   }
   return NNACL_OK;
@@ -565,6 +567,7 @@ int ElementOptDivFp16(float16_t *input0, float16_t *input1, float16_t *output, i
     }
 #endif
     for (; index < element_size; index++) {
+      NNACL_ASSERT(input1[index] != 0);
       output[index] = input0[0] / input1[index];
     }
   } else {
@@ -601,6 +604,7 @@ int ElementDivReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
     if (input1[index] == 0) {
       return NNACL_ERRCODE_DIVISOR_ZERO;
     }
+    NNACL_ASSERT(input1[index] != 0);
     float16_t res = input0[index] / input1[index];
     output[index] = res > 0 ? res : 0;
   }
@@ -627,6 +631,7 @@ int ElementOptDivReluFp16(float16_t *input0, float16_t *input1, float16_t *outpu
       if (input1[index] == 0) {
         return NNACL_ERRCODE_DIVISOR_ZERO;
       }
+      NNACL_ASSERT(input1[index] != 0);
       output[index] = MSMAX(input0[0] / input1[index], 0);
     }
   } else {
@@ -724,10 +729,12 @@ int ElementOptFloorModFp16(float16_t *input0, float16_t *input1, float16_t *outp
                            ArithmeticParameter *param) {
   if (param->in_elements_num1_ == 1) {
     for (int i = 0; i < element_size; ++i) {
+      NNACL_ASSERT(input1[0] != 0);
       output[i] = input0[i] - floorf(input0[i] / input1[0]) * input1[0];
     }
   } else {
     for (int i = 0; i < element_size; ++i) {
+      NNACL_ASSERT(input1[i] != 0);
       output[i] = input0[i] - floorf(input0[i] / input1[i]) * input1[i];
     }
   }
@@ -736,6 +743,7 @@ int ElementOptFloorModFp16(float16_t *input0, float16_t *input1, float16_t *outp
 
 int ElementFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; ++i) {
+    NNACL_ASSERT(input1[i] != 0);
     output[i] = floorf(input0[i] / input1[i]);
   }
   return NNACL_OK;
@@ -744,10 +752,12 @@ int ElementOptFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *outp
                            ArithmeticParameter *param) {
   if (param->in_elements_num1_ == 1) {
     for (int i = 0; i < element_size; ++i) {
+      NNACL_ASSERT(input1[0] != 0);
       output[i] = floorf(input0[i] / input1[0]);
     }
   } else {
     for (int i = 0; i < element_size; ++i) {
+      NNACL_ASSERT(input1[i] != 0);
       output[i] = floorf(input0[i] / input1[i]);
     }
   }

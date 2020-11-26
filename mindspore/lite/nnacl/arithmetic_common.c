@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/arithmetic_common.h"
+#include "nnacl/nnacl_utils.h"
 
 void TileOneDimension(float *inData, float *outData, int dim, size_t ndim, int *inShape, int *inStrides,
                       int *outStrides, int *multiple) {
@@ -61,6 +62,8 @@ void ComputeStrides(const int *shape, int *strides, const int ndim) {
 }
 
 void CalcMultiplesAndStrides(ArithmeticParameter *param) {
+  NNACL_ASSERT(param->in_shape0_[i] != 0);
+  NNACL_ASSERT(param->in_shape1_[i] != 0);
   for (size_t i = 0; i < param->ndim_; i++) {
     param->multiples0_[i] = param->out_shape_[i] / param->in_shape0_[i];
     param->multiples1_[i] = param->out_shape_[i] / param->in_shape1_[i];

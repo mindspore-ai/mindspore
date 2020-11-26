@@ -33,11 +33,11 @@ int OneHot(const int *indices, float *output, const OneHotParameter *one_hot_par
     float *output_ptr = output + i * depth * inner_size;
     for (k = 0; k < inner_size; k++) {
       int index = indices[i * inner_size + k];
+      if (index >= depth) {
+        return NNACL_ERRCODE_INDEX_OUT_OF_RANGE;
+      }
       for (j = 0; j < depth; j++) {
         *output_ptr = off_value;
-        if (index >= depth) {
-          return NNACL_ERRCODE_INDEX_OUT_OF_RANGE;
-        }
         if (index == j) {
           *output_ptr = on_value;
         }
