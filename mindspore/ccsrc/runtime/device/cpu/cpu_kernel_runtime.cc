@@ -19,6 +19,7 @@
 #include <memory>
 #include <numeric>
 #include <utility>
+#include <algorithm>
 #include <functional>
 #include "backend/kernel_compiler/kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -130,9 +131,11 @@ DeviceAddressPtr CPUKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t 
   return std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
-tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *kernel_graph, const CNodePtr &node,
-                                                         size_t index) {
+tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
+  session::KernelGraph *kernel_graph, const CNodePtr &node, size_t index,
+  std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
   MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(tensor_to_node);
   size_t output_size = AnfAlgo::GetOutputTensorNum(node);
   if (index >= output_size) {
     MS_LOG(EXCEPTION) << "Invalid input index " << index;
@@ -167,13 +170,16 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *k
     }
     (void)bound_addresses_.insert(address);
   }
+  session::KernelWithIndex node_index(node, index);
   tensor->SetNeedWait(true);
   tensor->SetIsGraphOutput();
+  (*tensor_to_node)[tensor] = node_index;
   return tensor;
 }
 
 BaseRef CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *kernel_graph,
-                                               const session::KernelWithIndex &kernel_with_index) {
+                                               const session::KernelWithIndex &kernel_with_index,
+                                               std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
   auto &input_node = kernel_with_index.first;
   auto index = kernel_with_index.second;
   MS_EXCEPTION_IF_NULL(input_node);
@@ -184,12 +190,12 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *kernel_grap
       VectorRef ret;
       for (size_t i = 1; i < node->inputs().size(); i++) {
         auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node->input(i), 0);
-        auto out = CreatTensorForOutput(kernel_graph, item_with_index);
+        auto out = CreatTensorForOutput(kernel_graph, item_with_index, tensor_to_node);
         ret.push_back(out);
       }
       return ret;
     }
-    return CreatTensorForOutput(kernel_graph, node, index);
+    return CreatTensorForOutput(kernel_graph, node, index, tensor_to_node);
   } else if (input_node->isa<Parameter>()) {
     auto iter = input_param_tensor_map_.find(input_node);
     if (iter != input_param_tensor_map_.end()) {
@@ -204,9 +210,11 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(session::KernelGraph *kernel_grap
 }
 
 void CPUKernelRuntime::CreateOutputTensors(session::KernelGraph *kernel_graph,
-                                           const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
+                                           const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs,
+                                           std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(tensor_to_node);
   auto &input_nodes = kernel_graph->inputs();
   if (input_nodes.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Input size not equal to input node size!";
@@ -223,7 +231,7 @@ void CPUKernelRuntime::CreateOutputTensors(session::KernelGraph *kernel_graph,
   auto output_nodes = kernel_graph->outputs();
   for (const auto &item : output_nodes) {
     auto item_with_index = AnfAlgo::VisitKernelWithReturnType(item, 0, true);
-    auto out = CreatTensorForOutput(kernel_graph, item_with_index);
+    auto out = CreatTensorForOutput(kernel_graph, item_with_index, tensor_to_node);
     outputs->push_back(std::move(out));
   }
 }
@@ -258,6 +266,12 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
                                        tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Parameter node sync host to device failed!";
         }
+      }
+      if (item->cast<ParameterPtr>()->is_used_by_dynamic_kernel()) {
+        auto tensor_shape = tensor->shape();
+        std::vector<size_t> shape_tmp;
+        (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
+        AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(item, 0)}, {shape_tmp}, item.get());
       }
       address->ref_count_ = INIT_NODE_REF;
       tensor->set_device_address(address);
@@ -326,6 +340,9 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
 #ifdef ENABLE_PROFILE
     double start_time = GetTime();
 #endif
+    if (AnfAlgo::IsDynamicShape(kernel)) {
+      AnfAlgo::InferShape(kernel);
+    }
     std::vector<kernel::AddressPtr> kernel_inputs;
     std::vector<kernel::AddressPtr> kernel_workspaces;
     std::vector<kernel::AddressPtr> kernel_outputs;

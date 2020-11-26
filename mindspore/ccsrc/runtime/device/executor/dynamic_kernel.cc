@@ -51,17 +51,6 @@ void DynamicKernel::Initialize() {
 
 int DynamicKernel::GetKernelType() { return AnfAlgo::GetKernelType(cnode_ptr_); }
 
-bool IsTupleGetItem(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  if (!anf_node->isa<CNode>()) {
-    return false;
-  }
-  auto cnode = anf_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto input0 = cnode->input(0);
-  return IsPrimitive(input0, prim::kPrimTupleGetItem);
-}
-
 void DynamicKernel::RebuildDependTensor() {
   depend_tensor_map_.clear();
   for (auto depend : depend_list_) {
@@ -112,7 +101,7 @@ void DynamicKernel::InferShape() {
 
     auto cnode_input = cnode_ptr_->input(i + 1);
     MS_EXCEPTION_IF_NULL(cnode_input);
-    if (IsTupleGetItem(cnode_input)) {
+    if (AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimTupleGetItem)) {
       auto base_shape = real_input->Shape();
       if (!base_shape->isa<abstract::TupleShape>()) {
         MS_LOG(EXCEPTION) << "Node:" << cnode_ptr_->fullname_with_scope()

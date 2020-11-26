@@ -66,6 +66,8 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   MS_EXCEPTION_IF_NULL(graph);
+  UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+  graph->UpdateGraphDynamicAttr();
   MS_LOG(INFO) << "Set kernel info";
   SetKernelInfo(graph.get());
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
@@ -88,7 +90,7 @@ void CPUSession::CreateOutputTensors(const GraphId &graph_id, const std::vector<
                                      std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) {
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  runtime_.CreateOutputTensors(kernel_graph.get(), input_tensors, outputs);
+  runtime_.CreateOutputTensors(kernel_graph.get(), input_tensors, outputs, tensor_to_node);
 }
 
 void CPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,

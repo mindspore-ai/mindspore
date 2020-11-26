@@ -26,6 +26,12 @@
 
 namespace mindspore {
 namespace abstract {
+const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberTypeInt, 4},     {kNumberTypeInt8, 1},
+                                           {kNumberTypeInt16, 2},   {kNumberTypeInt32, 4},   {kNumberTypeInt64, 8},
+                                           {kNumberTypeUInt, 4},    {kNumberTypeUInt8, 1},   {kNumberTypeUInt16, 2},
+                                           {kNumberTypeUInt32, 4},  {kNumberTypeUInt64, 8},  {kNumberTypeFloat, 4},
+                                           {kNumberTypeFloat16, 2}, {kNumberTypeFloat32, 4}, {kNumberTypeFloat64, 8}};
+
 ValuePtr ValueJoin(const ValuePtr &value1, const ValuePtr &value2) {
   MS_EXCEPTION_IF_NULL(value1);
   MS_EXCEPTION_IF_NULL(value2);
@@ -290,6 +296,19 @@ ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tenso
   auto x_shape = tensor_x_shape->shape();
   auto y_shape = tensor_y_shape->shape();
   return std::make_shared<Shape>(RealBroadcast(op, x_shape, y_shape));
+}
+
+size_t TypeIdSize(const TypeId data_type) {
+  const size_t unsupported_type_error = 0;
+  auto iter = type_map.find(data_type);
+  if (iter != type_map.end()) {
+    return iter->second;
+  }
+  return unsupported_type_error;
+}
+
+size_t ShapeSize(const std::vector<size_t> &shape) {
+  return std::accumulate(shape.begin(), shape.end(), IntToSize(1), std::multiplies<size_t>());
 }
 }  // namespace abstract
 }  // namespace mindspore

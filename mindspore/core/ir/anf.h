@@ -322,9 +322,17 @@ class Parameter : public ANode {
     return shared_from_this() == other.shared_from_this();
   }
 
+  void set_used_by_real_kernel() { is_real_kernel_used_ = false; }
+  bool is_used_by_real_kernel() { return is_real_kernel_used_; }
+
+  void set_used_by_dynamic_kernel() { is_used_by_dynamic_kernel_ = true; }
+  bool is_used_by_dynamic_kernel() { return is_used_by_dynamic_kernel_; }
+
  private:
   std::string name_;
   bool has_default_;
+  bool is_real_kernel_used_ = true;
+  bool is_used_by_dynamic_kernel_ = false;
   ValuePtr default_param_;
   // The count of graphs using the parameter.
   int used_graph_count_;

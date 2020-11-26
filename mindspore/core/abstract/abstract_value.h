@@ -259,6 +259,13 @@ class AbstractUndetermined : public AbstractBase {
     }
     set_shape(std::make_shared<Shape>(shape));
   }
+  explicit AbstractUndetermined(const TypePtr &element_type, const BaseShapePtr &shape = std::make_shared<Shape>())
+      : AbstractBase(kAnyValue), element_(std::make_shared<AbstractScalar>(kAnyValue, element_type)) {
+    if (element_type == nullptr) {
+      MS_LOG(EXCEPTION) << "element_type is nullptr";
+    }
+    set_shape(shape);
+  }
   ~AbstractUndetermined() override = default;
   MS_DECLARE_PARENT(AbstractUndetermined, AbstractBase)
   TypePtr BuildType() const override { return std::make_shared<UndeterminedType>(); }
@@ -277,6 +284,8 @@ class AbstractTensor : public AbstractUndetermined {
       : AbstractUndetermined(element, shape) {}
   AbstractTensor(const TypePtr &element_type, const ShapeVector &shape) : AbstractUndetermined(element_type, shape) {}
   explicit AbstractTensor(const tensor::TensorPtr &tensor) : AbstractUndetermined(tensor->Dtype(), tensor->shape()) {}
+  explicit AbstractTensor(const TypePtr &element_type, const BaseShapePtr &shape = std::make_shared<Shape>())
+      : AbstractUndetermined(element_type, shape) {}
   ~AbstractTensor() override = default;
   MS_DECLARE_PARENT(AbstractTensor, AbstractUndetermined)
 

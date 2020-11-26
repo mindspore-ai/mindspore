@@ -289,14 +289,14 @@ bool CreateNodeDefBytes(const std::shared_ptr<AnfNode> &anf_node,
   return true;
 }
 
-uint64_t SetExtInfoShapeType(char *ext_info_buf, uint64_t ext_info_offset) {
+uint64_t SetExtInfoShapeType(char *ext_info_buf, uint64_t ext_info_offset, UnknowShapeOpType type) {
   // deal1: unknown shape type
   auto *info = reinterpret_cast<ExtInfo *>(ext_info_buf + ext_info_offset);
   info->infoType = FWK_ADPT_EXT_SHAPE_TYPE;
   info->infoLen = sizeof(int32_t);
   ext_info_offset += kExtInfoHeadSize;
   auto *shape_type = reinterpret_cast<int32_t *>(ext_info_buf + ext_info_offset);
-  *shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
+  *shape_type = type;
   ext_info_offset += info->infoLen;
   return ext_info_offset;
 }
@@ -401,7 +401,11 @@ bool CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
   ext_info.resize(ext_info_len, 0);
   char *ext_info_buf = ext_info.data();
 
-  ext_info_offset = SetExtInfoShapeType(ext_info_buf, ext_info_offset);
+  UnknowShapeOpType shape_type = UnknowShapeOpType::DEPEND_IN_SHAPE;
+  if (AnfAlgo::GetCNodeName(anf_node) == "Unique") {
+    shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
+  }
+  ext_info_offset = SetExtInfoShapeType(ext_info_buf, ext_info_offset, shape_type);
   ext_info_offset = SetExtInfoInputShapeType(ext_info_buf, ext_info_offset, anf_node, input_num);
   ext_info_offset = SetExtInfoOutputShapeType(ext_info_buf, ext_info_offset, anf_node, output_num);
 
