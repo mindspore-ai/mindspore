@@ -3946,15 +3946,19 @@ class Eps(PrimitiveWithInfer):
 
 class LinSpace(PrimitiveWithInfer):
     r"""
-    Generates values in an interval and returns the corresponding interpolation accroding to assist.
+    Generates values in an interval (inclusive of start and stop) and returns the corresponding
+    interpolated array with **num** number of ticks.
 
     Inputs:
-        - **start** (Tensor[float32]) - The start of interval, With shape of 0-D.
-        - **stop** (Tensor[float32]) - The end of interval, With shape of 0-D.
-        - **num** (int) - Ticks number in the interval, the ticks include start and stop value.
+        - **start** (Tensor[float32]) - Start value of interval, With shape of 0-D.
+        - **stop** (Tensor[float32]) - Last value of interval, With shape of 0-D.
+        - **num** (int) - Number of ticks in the interval, inclusive of start and stop.
 
     Outputs:
-        Tensor, has the same shape as `assist`.
+        Tensor, has the same shape as `start`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> linspace = P.LinSpace()

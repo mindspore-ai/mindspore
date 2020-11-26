@@ -167,5 +167,47 @@ AbstractBasePtr InferImplDivNoNan(const AnalysisEnginePtr &engine_ptr, const Pri
                                   const AbstractBasePtrList &args_spec_list) {
   return InferImplBinaryBase(engine_ptr, primitive, args_spec_list);
 }
+
+AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                  const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 3);
+  auto start = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(start);
+  MS_EXCEPTION_IF_NULL(start->shape());
+  auto stop = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(stop);
+  MS_EXCEPTION_IF_NULL(stop->shape());
+  (void)CheckTensorDType(start, {kFloat32}, "Input 0 (start) for LinSpace should be %s");
+  (void)CheckTensorDType(stop, {kFloat32}, "Input 1 (stop) for LinSpace should be %s");
+  ShapeVector shape;
+  ShapeVector max_shape;
+  ShapeVector min_shape;
+  int64_t num_val = 0;
+  // 3rd input is a Tensor when LinSpace is a dynamic shape operator
+  if (args_spec_list[2]->isa<AbstractTensor>()) {
+    auto num = args_spec_list[2]->cast<AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(num);
+    auto num_value_ptr = num->BuildValue();
+    MS_EXCEPTION_IF_NULL(num_value_ptr);
+    auto num_tensor = num_value_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(num_tensor);
+    num_val = *static_cast<int64_t *>(num_tensor->data_c());
+  } else if (args_spec_list[2]->isa<AbstractScalar>()) {
+    auto num = args_spec_list[2]->cast<AbstractScalarPtr>();
+    num_val = GetValue<int64_t>(num->BuildValue());
+  } else {
+    MS_LOG(EXCEPTION) << "Invalid abstract type:" << args_spec_list[2]->type_name();
+  }
+  shape.emplace_back(num_val);
+  if (shape[0] < 0) {
+    MS_LOG(EXCEPTION) << "num must be >= 0 in LinSpace";
+  }
+  max_shape.emplace_back(num_val);
+  min_shape.emplace_back(num_val);
+  AbstractTensorPtr ret =
+    std::make_shared<AbstractTensor>(start->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  return ret;
+}
 }  // namespace abstract
 }  // namespace mindspore
