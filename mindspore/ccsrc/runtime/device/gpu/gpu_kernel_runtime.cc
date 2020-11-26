@@ -379,9 +379,9 @@ bool GPUKernelRuntime::RunOneStep(const session::KernelGraph *graph) {
     // Normally run graph
     return LaunchKernelDynamic(graph);
   }
-  is_first_step_map_[graph_id] = false;
   // Mock run first step
   bool ret = LaunchKernelDynamic(graph, true, false);
+  is_first_step_map_[graph_id] = false;
   if (ret) {
     // Normally run graph
     return LaunchKernelDynamic(graph);
