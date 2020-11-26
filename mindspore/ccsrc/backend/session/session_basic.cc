@@ -837,7 +837,6 @@ ValueNodePtr SessionBasic::CreateValueNodeKernelGraph(const AnfNodePtr &anf, Ker
   new_value_node->set_abstract(value_node->abstract());
   // create new kernel_info of new value_node
   auto kernel_info = std::make_shared<device::KernelInfo>();
-  kernel_info->SetFeatureMapFlag(false);
   new_value_node->set_kernel_info(kernel_info);
   // create kernel_build_info for new value node
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();

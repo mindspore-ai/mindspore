@@ -187,7 +187,7 @@ class CNodeDecoder {
       if ((node.first)->isa<Parameter>()) {
         auto parameter = (node.first)->cast<ParameterPtr>();
         bool is_weight = AnfAlgo::IsParameterWeight(parameter);
-        kernel_info->SetFeatureMapFlag(!is_weight);
+        kernel_info->set_feature_map_flag(!is_weight);
         if (!is_weight) {
           feature_map_input_indexs.push_back(index - 1);
         }
@@ -200,7 +200,7 @@ class CNodeDecoder {
       AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode_);
     }
     if (inputs.size() == 1 || !feature_map_input_indexs.empty()) {
-      kernel_info->SetFeatureMapFlag(true);
+      kernel_info->set_feature_map_flag(true);
     }
     if (AnfAlgo::IsRealCNodeKernel(cnode_)) {
       AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode_);
