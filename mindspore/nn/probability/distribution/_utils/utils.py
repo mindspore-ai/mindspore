@@ -285,11 +285,11 @@ class CheckTuple(PrimitiveWithInfer):
         return out
 
     def __call__(self, x, name):
-        if context.get_context("mode") == 0:
-            return x["value"]
-        # Pynative mode
+        # The op is not used in a cell
         if isinstance(x, tuple):
             return x
+        if context.get_context("mode") == 0:
+            return x["value"]
         raise TypeError(f"For {name}, input type should be a tuple.")
 
 
