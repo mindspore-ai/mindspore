@@ -43,7 +43,7 @@ int SpaceToBatchCPUKernel::ReSize() {
   MS_ASSERT(input_tensor);
   auto output_tensor = out_tensors_.at(0);
   MS_ASSERT(output_tensor);
-  MS_ASSERT(param);
+  MS_ASSERT(param_);
   for (size_t i = 0; i < DIMENSION_4D; i++) {
     param_->input_shape_[i] = input_tensor->shape().at(i);
     param_->output_shape_[i] = output_tensor->shape().at(i);
