@@ -244,7 +244,11 @@ bool AkgKernelJsonGenerator::CreateOutputDescJson(const AnfNodePtr &anf_node, co
     output_json[kJsonKeyFormat] = this->GetOutputFormat(anf_node, i);
     output_json[kJsonKeyName] = output_name;
     output_json[kJsonKeyTensorName] = "output_" + std::to_string(i) + "_" + std::to_string(GetOutputTensorIdxInc());
-    output_json[kJsonKeyShape] = this->GetOutputShape(anf_node, i);
+    auto output_shape = this->GetOutputShape(anf_node, i);
+    if (output_shape.empty()) {
+      output_shape.push_back(1);
+    }
+    output_json[kJsonKeyShape] = output_shape;
     outputs_json->push_back(output_json);
   }
   return true;
@@ -680,7 +684,11 @@ nlohmann::json AkgKernelJsonGenerator::CreateInputsJson(const std::vector<AnfNod
       GetTensorName(node_json_map.at(tmp_input.first), kJsonKeyInputDesc, tmp_input.second);
     input_desc_json[kJsonKeyDataType] = dtype;
     input_desc_json[kJsonKeyFormat] = this->GetInputFormat(tmp_input.first, tmp_input.second.first);
-    input_desc_json[kJsonKeyShape] = this->GetInputShape(tmp_input.first, tmp_input.second.first);
+    auto input_shape = this->GetInputShape(tmp_input.first, tmp_input.second.first);
+    if (input_shape.empty()) {
+      input_shape.push_back(1);
+    }
+    input_desc_json[kJsonKeyShape] = input_shape;
     inputs_json.emplace_back(std::vector<nlohmann::json>{input_desc_json});
   }
   return inputs_json;

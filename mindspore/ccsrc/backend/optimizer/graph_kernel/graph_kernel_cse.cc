@@ -30,7 +30,9 @@ bool IsCNodePrimitveEqual(const CNodePtr &main, const CNodePtr &node) {
   auto main_primitive = AnfAlgo::GetCNodePrimitive(main);
   auto node_primitive = AnfAlgo::GetCNodePrimitive(node);
   if (main_primitive != nullptr && node_primitive != nullptr) {
-    if (main_primitive->name() != node_primitive->name()) {
+    // Some ops such as Reshape is not real op, cse these type will not get gain. And for ops fusion, keep these op
+    // alone can prevent some redundant output case (input -> reshape -> output).
+    if (main_primitive->name() != node_primitive->name() || IsPrimitiveCNode(node, prim::kPrimReshape)) {
       return false;
     }
 

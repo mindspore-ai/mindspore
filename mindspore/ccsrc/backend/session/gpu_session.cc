@@ -35,6 +35,7 @@
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "backend/optimizer/gpu/remove_redundant_format_transform.h"
 #include "backend/optimizer/gpu/reduce_precision_fusion.h"
+#include "backend/optimizer/graph_kernel/add_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
@@ -176,6 +177,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
+  pm->AddPass(std::make_shared<opt::AtomicCleanInsertter>());
   pm->AddPass(std::make_shared<opt::BindValueToGraph>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);

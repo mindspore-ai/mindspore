@@ -204,6 +204,16 @@ class CompositeGraph:
     def load(self, desc):
         """Load Graph from json"""
         def _attr_of(op, inputs, output):
+            def _get_axis_while_none(input_shape, output_shape):
+                red_axis = []
+                if len(output_shape) == len(input_shape):
+                    for s, i in enumerate(output_shape):
+                        if s == 1 and input_shape[i] > 1:
+                            red_axis.append(i)
+                else:
+                    red_axis = list(range(len(output_shape)))
+                return red_axis
+
             attr = {}
             if op['name'] not in ('ReduceSum', 'ReduceMax', 'ReduceMin'):
                 return attr
@@ -211,10 +221,7 @@ class CompositeGraph:
                 if a['name'] == 'axis':
                     red_axis, dim_size = [], len(inputs[0].shape)
                     if not a['value']:
-                        assert len(output.shape) == len(inputs[0].shape)
-                        for i in range(len(output.shape)):
-                            if output.shape[i] == 1 and inputs[0].shape[i] > 1:
-                                red_axis.append(i)
+                        red_axis = _get_axis_while_none(inputs[0].shape, output.shape)
                     else:
                         if isinstance(a['value'], int):
                             a['value'] = [a['value']]
