@@ -57,7 +57,6 @@ const AnfNodePtr InsertPlaceholderForDynamicRNN::Process(const FuncGraphPtr &fun
       auto value_node = NewValueNode(value);
       value_node->set_abstract(std::make_shared<abstract::AbstractNone>());
       auto new_node = kernel_graph->NewValueNode(value_node);
-      kernel_graph->AddValueNodeToGraph(new_node);
       new_inputs.push_back(new_node);
     }
     new_inputs.push_back(input_node);
