@@ -18,7 +18,7 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/gatherv2.cuh"
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T, typename S>
-__device__ void GatherV2Kernel(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
+__global__ void GatherV2Kernel(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
                                size_t output_dim2, size_t input_dim1) {
   int num = output_dim0 * output_dim1 * output_dim2;
   int i, j, k;
@@ -38,90 +38,17 @@ __device__ void GatherV2Kernel(T *input, S *indices, T *output, size_t output_di
 
   return;
 }
-
 template <typename T, typename S>
-__global__ void GatherV2StaticShapeWrapper(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1,
-                                           size_t output_dim2, size_t input_dim1) {
-  GatherV2Kernel(input, indices, output, output_dim0, output_dim1, output_dim2, input_dim1);
-}
-
-template <typename T, typename S>
-__global__ void GatherV2DynamicShape(T *input, S *indices, T *output, size_t *input_shape_wksp, size_t input_rank,
-                                     size_t *indices_shape_wksp, size_t indices_rank, int64_t *axis_wksp,
-                                     size_t *output_shape_wksp, const int max_output_size) {
-  int gt_id = blockIdx.x * blockDim.x + threadIdx.x;
-  size_t axis = (size_t)(*axis_wksp);
-
-  int output_shape_index = 0;
-  size_t output_dim0 = 1;
-  for (size_t i = 0; i < axis; i++) {
-    output_dim0 *= input_shape_wksp[i];
-
-    if (gt_id == 0) {
-      output_shape_wksp[output_shape_index] = input_shape_wksp[i];
-      output_shape_index++;
-    }
-  }
-
-  size_t output_dim1 = 1;
-  for (size_t i = 0; i < indices_rank; i++) {
-    output_dim1 *= indices_shape_wksp[i];
-
-    if (gt_id == 0) {
-      output_shape_wksp[output_shape_index] = indices_shape_wksp[i];
-      output_shape_index++;
-    }
-  }
-
-  size_t output_dim2 = 1;
-  for (size_t i = axis + 1; i < input_rank; i++) {
-    output_dim2 *= indices_shape_wksp[i];
-
-    if (gt_id == 0) {
-      output_shape_wksp[output_shape_index] = input_shape_wksp[i];
-      output_shape_index++;
-    }
-  }
-
-  size_t input_dim1 = (size_t)(input_shape_wksp[axis]);
-
-  GatherV2Kernel(input, indices, output, output_dim0, output_dim1, output_dim2, input_dim1);
-}
-
-// entry points from gpu kernel's .h file
-template <typename T, typename S>
-void CalGatherV2StaticShape(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
-                            size_t input_dim1, cudaStream_t stream) {
+void GatherV2(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
+              size_t input_dim1, cudaStream_t stream) {
   int size = output_dim0 * output_dim1 * output_dim2;
-  GatherV2StaticShapeWrapper<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0,
-                                                                           output_dim1, output_dim2, input_dim1);
+  GatherV2Kernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, indices, output, output_dim0, output_dim1,
+                                                               output_dim2, input_dim1);
   return;
 }
 
-template <typename T, typename S>
-void CalGatherV2DynamicShape(T *input, S *indices, T *output, size_t *input_shape_wksp, size_t input_rank,
-                             size_t *indices_shape_wksp, size_t indices_rank, int64_t *axis_wksp,
-                             size_t *output_shape_wksp, const int max_output_size, cudaStream_t stream) {
-  GatherV2DynamicShape<<<GET_BLOCKS(max_output_size), GET_THREADS, 0, stream>>>(
-    input, indices, output, input_shape_wksp, input_rank, indices_shape_wksp, indices_rank, axis_wksp,
-    output_shape_wksp, max_output_size);
-}
+template void GatherV2<float, int>(float *input, int *indices, float *output, size_t output_dim0, size_t output_dim1,
+                                   size_t output_dim2, size_t input_dim1, cudaStream_t stream);
 
-// template instantiations
-template void CalGatherV2StaticShape<float, int>(float *input, int *indices, float *output, size_t output_dim0,
-                                                 size_t output_dim1, size_t output_dim2, size_t input_dim1,
-                                                 cudaStream_t stream);
-
-template void CalGatherV2StaticShape<half, int>(half *input, int *indices, half *output, size_t output_dim0,
-                                                size_t output_dim1, size_t output_dim2, size_t input_dim1,
-                                                cudaStream_t stream);
-
-template void CalGatherV2DynamicShape<float, int>(float *input, int *indices, float *output, size_t *input_shape_wksp,
-                                                  size_t input_rank, size_t *indices_shape_wksp, size_t indices_rank,
-                                                  int64_t *axis_wksp, size_t *output_shape_wksp,
-                                                  const int max_output_size, cudaStream_t stream);
-
-template void CalGatherV2DynamicShape<half, int>(half *input, int *indices, half *output, size_t *input_shape_wksp,
-                                                 size_t input_rank, size_t *indices_shape_wksp, size_t indices_rank,
-                                                 int64_t *axis_wksp, size_t *output_shape_wksp,
-                                                 const int max_output_size, cudaStream_t stream);
+template void GatherV2<half, int>(half *input, int *indices, half *output, size_t output_dim0, size_t output_dim1,
+                                  size_t output_dim2, size_t input_dim1, cudaStream_t stream);

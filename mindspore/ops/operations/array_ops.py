@@ -749,7 +749,6 @@ class GatherV2(PrimitiveWithCheck):
          [ 4. 54.]
          [ 2. 55.]]
     """
-
     @prim_attr_register
     def __init__(self):
         """Initialize index_select"""
@@ -759,22 +758,7 @@ class GatherV2(PrimitiveWithCheck):
     def __check__(self, params, indices, axis):
         validator.check_subclass("params", params['dtype'], mstype.tensor, self.name)
         validator.check_tensor_dtype_valid("indices", indices['dtype'], mstype.int_type, self.name)
-        validator.check_subclass("axis", axis['dtype'], mstype.int_, self.name)
-        axis_v = axis['value']
-        params_shp = params['shape']
-        rank = len(params_shp)
-        validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
-
-        if axis_v < 0:
-            axis_v += rank
-        out_shape = params_shp[:axis_v] + indices['shape'] + params_shp[axis_v + 1:]
-        out = {'shape': out_shape,
-               'dtype': params['dtype'],
-               'value': None}
-        if 'min_shape' in indices and 'max_shape' in indices:
-            out['min_shape'] = params_shp[:axis_v] + indices['min_shape'] + params_shp[axis_v + 1:]
-            out['max_shape'] = params_shp[:axis_v] + indices['max_shape'] + params_shp[axis_v + 1:]
-        return out
+        validator.check_subclass("axis", axis['dtype'], [mstype.tensor, mstype.int_], self.name)
 
 
 class SparseGatherV2(GatherV2):
