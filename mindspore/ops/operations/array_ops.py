@@ -1129,14 +1129,14 @@ class Ones(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-        Only constant positive int is allowed.
+          Only constant positive int is allowed.
         - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
 
     Outputs:
         Tensor, has the same type and shape as input shape value.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import operations as ops
@@ -1182,14 +1182,14 @@ class Zeros(PrimitiveWithInfer):
 
     Inputs:
         - **shape** (Union[tuple[int], int]) - The specified shape of output tensor.
-        Only constant positive int is allowed.
+          Only constant positive int is allowed.
         - **type** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
 
     Outputs:
         Tensor, has the same type and shape as input shape value.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import operations as ops
@@ -1239,7 +1239,7 @@ class SequenceMask(PrimitiveWithInfer):
 
     Inputs:
         - **lengths** (Union[tuple[int], list[int]]) - Defines the first N elements that are retained.
-        Only constant value is allowed.
+          Only constant value is allowed.
         - **dtype** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
 
     Outputs:
@@ -1247,6 +1247,9 @@ class SequenceMask(PrimitiveWithInfer):
         If max_length is set, the shape of the output is (lengths.shape, max_length).
         If max_length is not set and the biggest value in lengths is x. Then, the shape of
         the output is (lengths.shape, x).
+
+    Supported Platforms:
+    ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import operations as P
