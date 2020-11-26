@@ -28,7 +28,9 @@ __global__ void GatherKernel(const T *input, const S *index, T *output, const si
     i = id / (dim_at_axis_output * dim_after_axis);
     k = id % dim_after_axis;
 
+    CUDA_KERNEL_ASSERT(index[id] >= 0);
     size_t j_read = static_cast<size_t>(index[id]);
+    CUDA_KERNEL_ASSERT(j_read < dim_at_axis_input);
     size_t read_id = i * dim_at_axis_input * dim_after_axis + j_read * dim_after_axis + k;
     output[id] = input[read_id];
   }

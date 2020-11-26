@@ -30,7 +30,9 @@ __global__ void GatherGradKernel(const size_t num, const T *index, const S *grad
     i = id / (dim_at_axis_index * dim_after_axis);
     k = id % dim_after_axis;
 
+    CUDA_KERNEL_ASSERT(index[id] >= 0);
     size_t j_read = static_cast<size_t>(index[id]);
+    CUDA_KERNEL_ASSERT(j_read < dim_at_axis_output);
     size_t read_id = i * dim_at_axis_output * dim_after_axis + j_read * dim_after_axis + k;
     MsAtomicAdd(output + read_id, grad[id]);
   }
@@ -84,3 +86,62 @@ template void GatherGrad<int64_t, half>(const int64_t *index, const half *grad, 
                                         const size_t dim_before_axis, const size_t dim_at_axis_index,
                                         const size_t dim_at_axis_output, const size_t dim_after_axis,
                                         cudaStream_t stream);
+template void GatherGrad<int, int>(const int *index, const int *grad, int *output,
+                                    const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                    const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                    cudaStream_t stream);
+template void GatherGrad<int64_t, int>(const int64_t *index, const int *grad, int *output,
+                                        const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                        const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                        cudaStream_t stream);
+template void GatherGrad<int, int8_t>(const int *index, const int8_t *grad, int8_t *output,
+                                    const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                    const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                    cudaStream_t stream);
+template void GatherGrad<int64_t, int8_t>(const int64_t *index, const int8_t *grad, int8_t *output,
+                                        const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                        const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                        cudaStream_t stream);
+template void GatherGrad<int, int16_t>(const int *index, const int16_t *grad, int16_t *output,
+                                    const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                    const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                    cudaStream_t stream);
+template void GatherGrad<int64_t, int16_t>(const int64_t *index, const int16_t *grad, int16_t *output,
+                                        const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                        const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                        cudaStream_t stream);
+template void GatherGrad<int, int64_t>(const int *index, const int64_t *grad, int64_t *output,
+                                    const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                    const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                    cudaStream_t stream);
+template void GatherGrad<int64_t, int64_t>(const int64_t *index, const int64_t *grad, int64_t *output,
+                                        const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                        const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                        cudaStream_t stream);
+template void GatherGrad<int, unsigned char>(const int *index, const unsigned char *grad, unsigned char *output,
+                                    const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                    const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                    cudaStream_t stream);
+template void GatherGrad<int64_t, unsigned char>(const int64_t *index, const unsigned char *grad, unsigned char *output,
+                                        const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                        const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                        cudaStream_t stream);
+template void GatherGrad<int, unsigned int>(const int *index, const unsigned int *grad, unsigned int *output,
+                                             const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                             const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                             cudaStream_t stream);
+template void GatherGrad<int64_t, unsigned int>(const int64_t *index, const unsigned int *grad, unsigned int *output,
+                                                 const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                                 const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                                 cudaStream_t stream);
+template void GatherGrad<int, bool>(const int *index, const bool *grad, bool *output,
+                                    const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                    const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                    cudaStream_t stream);
+template void GatherGrad<int64_t, bool>(const int64_t *index, const bool *grad, bool *output,
+                                        const size_t dim_before_axis, const size_t dim_at_axis_index,
+                                        const size_t dim_at_axis_output, const size_t dim_after_axis,
+                                        cudaStream_t stream);
+
+
+
