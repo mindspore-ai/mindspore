@@ -54,6 +54,10 @@ uint64_t GetTimeUs() {
 
 std::string RemoveSubStr(const std::string &from, const std::string &sub_str, RemoveSubStrMode mode) {
   std::string result = from;
+  if (from.empty()) {
+    MS_LOG(ERROR) << "string is empty";
+    return "";
+  }
   if (mode == PREFIX) {
     if (from.substr(0, sub_str.length()) == sub_str) {
       result = from.substr(sub_str.size());
@@ -73,6 +77,10 @@ std::string RemoveSubStr(const std::string &from, const std::string &sub_str, Re
 }
 
 std::vector<std::string> StrSplit(const std::string &str, const std::string &pattern) {
+  if (str.empty()) {
+    MS_LOG(ERROR) << "string is empty";
+    return {};
+  }
   std::string::size_type pos;
   std::vector<std::string> result;
   std::string tmpStr(str + pattern);
@@ -92,6 +100,11 @@ std::vector<std::string> StrSplit(const std::string &str, const std::string &pat
 std::vector<std::string> Tokenize(const std::string &src, const std::string &delimiters,
                                   const Option<size_t> &max_token_num) {
   if (max_token_num.IsSome() && max_token_num.Get() == 0) {
+    return {};
+  }
+
+  if (src.empty()) {
+    MS_LOG(ERROR) << "string is empty";
     return {};
   }
 

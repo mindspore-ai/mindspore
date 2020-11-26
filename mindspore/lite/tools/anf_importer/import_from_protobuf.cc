@@ -416,6 +416,10 @@ bool AnfImporterFromProtobuf::GetAttrValueForCNode(const PrimitivePtr &prim, con
     return false;
   }
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
+  if (ref_attr_name.empty()) {
+    MS_LOG(ERROR) << "ref_attr_name is empty";
+    return false;
+  }
   string type = "";
   std::size_t pos(0);
   if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {
@@ -520,6 +524,10 @@ bool AnfImporterFromProtobuf::GetAttrValueForValueNode(const std::string &value_
     return false;
   }
   const std::string &ref_attr_name = attr_proto.ref_attr_name();
+  if (ref_attr_name.empty()) {
+    MS_LOG(ERROR) << "ref_attr_name is empty";
+    return false;
+  }
   string type = "";
   std::size_t pos(0);
   if ((pos = ref_attr_name.find("scalar:")) != std::string::npos) {

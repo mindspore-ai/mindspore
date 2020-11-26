@@ -88,6 +88,7 @@ void DefaultAllocator::Free(void *buf) {
   }
   UnLock();
   free(buf);
+  buf = nullptr;
 }
 
 size_t DefaultAllocator::GetTotalSize() {

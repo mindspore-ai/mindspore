@@ -19,7 +19,7 @@
 #include "include/errorcode.h"
 
 namespace mindspore::lite {
-int Executor::CheckInputs(std::vector<Tensor *> &in_tensors) {
+int Executor::CheckInputs(const std::vector<Tensor *> &in_tensors) {
   for (auto &inTensor : in_tensors) {
     if (inTensor == nullptr) {
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
