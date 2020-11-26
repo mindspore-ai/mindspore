@@ -285,9 +285,9 @@ STATUS RemoveTensor(schema::MetaGraphT *graphT, std::vector<uint32_t> toDeleteTe
       }
     }
     // update nodes indexes
-    for (auto nodeIter = graphT->nodes.begin(); nodeIter != graphT->nodes.end(); nodeIter++) {
+    for (auto node_iter = graphT->nodes.begin(); node_iter != graphT->nodes.end(); node_iter++) {
       // update nodes input indexes
-      UpdateNodeIndex((*nodeIter).get(), deleteIdx);
+      UpdateNodeIndex((*node_iter).get(), deleteIdx);
     }
     // update deleteTensorIdx
     for (auto selfIt = toDeleteTensorIdxes.begin(); selfIt != toDeleteTensorIdxes.end(); selfIt++) {
@@ -374,10 +374,10 @@ NodeIter InsertNode(schema::MetaGraphT *graphT, uint32_t existNodeIdx, InsertPla
     MS_LOG(ERROR) << "nodeIdx out of range: " << existNodeIdx;
     return graphT->nodes.end();
   }
-  auto nodeIter = graphT->nodes.begin() + existNodeIdx;
-  MS_ASSERT(nodeIter != graphT->nodes.begin());
-  MS_ASSERT((*nodeIter) != nullptr);
-  return InsertNode(graphT, nodeIter, place, inoutIndex, std::move(toAddNode), errorCode);
+  auto node_iter = graphT->nodes.begin() + existNodeIdx;
+  MS_ASSERT(node_iter != graphT->nodes.begin());
+  MS_ASSERT((*node_iter) != nullptr);
+  return InsertNode(graphT, node_iter, place, inoutIndex, std::move(toAddNode), errorCode);
 }
 
 NodeIter InsertNode(schema::MetaGraphT *graphT, NodeIter existNodeIter, InsertPlace place, size_t inoutIndexIdx,
