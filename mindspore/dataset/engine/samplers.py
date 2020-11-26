@@ -312,6 +312,7 @@ class PKSampler(BuiltinSampler):
     Args:
         num_val (int): Number of elements to sample for each class.
         num_class (int, optional): Number of classes to sample (default=None, all classes).
+            The parameter does not supported to specify currently.
         shuffle (bool, optional): If True, the class IDs are shuffled (default=False).
         class_column (str, optional): Name of column with class labels for MindDataset (default='label').
         num_samples (int, optional): The number of samples to draw (default=None, all elements).
