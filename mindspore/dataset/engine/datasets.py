@@ -2726,6 +2726,8 @@ class TransferDataset(Dataset):
         """
         Send to device
         """
+        if Dataset._noop_mode():
+            return
         if self._to_device is not None:
             del self._to_device
         self._to_device = _ToDevice(self, num_epochs)
