@@ -32,32 +32,37 @@ class PowerTransform(Bijector):
 
     This Bijector is equivalent to the `Exp` bijector when `c=0`.
 
-    Raises:
-        ValueError: When the power is less than 0 or is not known statically.
-
     Args:
         power (float, list, numpy.ndarray, Tensor): The scale factor. Default: 0.
         name (str): The name of the bijector. Default: 'PowerTransform'.
 
+    Note:
+        The dtype of `power` must be float.
+
+    Raises:
+        ValueError: When `power` is less than 0 or is not known statically.
+        TypeError: When the dtype of `power` is not float.
+
     Examples:
-        >>> # To initialize a PowerTransform bijector of power 0.5.
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.bijector as msb
-        >>> n = msb.PowerTransform(0.5)
-        >>>
-        >>> # To use a PowerTransform bijector in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.p1 = msb.PowerTransform(0.5)
-        ...
-        ...     def construct(self, value):
-        ...         # Similar calls can be made to other functions
-        ...         # by replacing 'forward' by the name of the function.
-        ...         ans1 = self.s1.forward(value)
-        ...         ans2 = self.s1.inverse(value)
-        ...         ans3 = self.s1.forward_log_jacobian(value)
-        ...         ans4 = self.s1.inverse_log_jacobian(value)
-        ...
+        >>> from mindspore import Tensor
+        >>> # To initialize a PowerTransform bijector of power 0.5.
+        >>> powertransform = msb.PowerTransform(0.5)
+        >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
+        >>> ans1 = powertransform.forward(value)
+        >>> print(ans1)
+        [2.25 4.   6.25]
+        >>> ans2 = powertransform.inverse(value)
+        >>> print(ans2)
+        [0.         0.82842714 1.4641017 ]
+        >>> ans3 = powertransform.forward_log_jacobian(value)
+        >>> print(ans3)
+        [0.40546513 0.6931472  0.91629076]
+        >>> ans4 = powertransform.inverse_log_jacobian(value)
+        >>> print(ans4)
+        [-0.         -0.3465736  -0.54930615]
     """
 
     def __init__(self,

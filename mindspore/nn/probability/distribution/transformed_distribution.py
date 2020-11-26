@@ -49,24 +49,27 @@ class TransformedDistribution(Distribution):
         `reset_parameters` followed by `add_parameter`.
 
     Examples:
-        >>> # To initialize a transformed distribution, e.g. a lognormal distribution,
-        >>> # using a Normal distribution as the base distribution, and an Exp bijector as the bijector function.
+        >>> import mindspore
+        >>> import mindspore.context as context
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
         >>> import mindspore.nn.probability.bijector as msb
-        >>> ln = msd.TransformedDistribution(msb.Exp(),
-        ...                                  msd.Normal(0.0, 1.0, dtype=mstype.float32))
-        ...
-        >>> # To use a transformed distribution in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.ln = msd.TransformedDistribution(msb.Exp(),
-        ...                                               msd.Normal(0.0, 1.0, dtype=mstype.float32))
-        ...
-        ...     def construct(self, value):
-        ...         # Similar calls can be made to other functions
-        ...         # by replacing 'sample' by the name of the function.
-        ...         ans = self.ln.sample(shape=(2, 3))
+        >>> from mindspore import Tensor
+        >>> context.set_context(mode=1)
+        >>>
+        >>> # To initialize a transformed distribution
+        >>> # using a Normal distribution as the base distribution,
+        >>> # and an Exp bijector as the bijector function.
+        >>> trans_dist = msd.TransformedDistribution(msb.Exp(),
+        >>>                                          msd.Normal(0.0, 1.0))
+        >>>
+        >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
+        >>> prob = trans_dist.prob(value)
+        >>> print(prob)
+        [0.3989423  0.15687403 0.07272825]
+        >>> sample = trans_dist.sample(shape=(2, 3))
+        >>> print(sample.shape)
+        (2, 3)
     """
 
     def __init__(self,

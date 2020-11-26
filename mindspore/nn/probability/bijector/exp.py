@@ -28,24 +28,27 @@ class Exp(PowerTransform):
         name (str): The name of the Bijector. Default: 'Exp'.
 
     Examples:
-        >>> # To initialize an Exp bijector.
-        >>> import mindspore.nn.probability.bijector as msb
-        >>> n = msb.Exp()
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> import mindspore.context as context
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
         >>>
-        >>> # To use an Exp bijector in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.e1 = msb.Exp()
-        ...
-        ...     def construct(self, value):
-        ...         # Similar calls can be made to other functions
-        ...         # by replacing `forward` by the name of the function.
-        ...         ans1 = self.s1.forward(value)
-        ...         ans2 = self.s1.inverse(value)
-        ...         ans3 = self.s1.forward_log_jacobian(value)
-        ...         ans4 = self.s1.inverse_log_jacobian(value)
-        ...
+        >>> # To initialize an Exp bijector.
+        >>> exp_bijector = nn.probability.bijector.Exp()
+        >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
+        >>> ans1 = exp_bijector.forward(value)
+        [ 2.7182817  7.389056  20.085537 ]
+        >>> print(ans1)
+        >>> ans2 = exp_bijector.inverse(value)
+        [0.        0.6931472 1.0986123]
+        >>> print(ans2)
+        >>> ans3 = exp_bijector.forward_log_jacobian(value)
+        >>> print(ans3)
+        [1. 2. 3.]
+        >>> ans4 = exp_bijector.inverse_log_jacobian(value)
+        >>> print(ans4)
+        [-0.        -0.6931472 -1.0986123]
     """
 
     def __init__(self,

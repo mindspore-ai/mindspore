@@ -40,79 +40,93 @@ class Normal(Distribution):
         `dtype` must be a float type because Normal distributions are continuous.
 
     Examples:
-        >>> # To initialize a Normal distribution of the mean 3.0 and the standard deviation 4.0.
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
-        >>> n = msd.Normal(3.0, 4.0, dtype=mstype.float32)
-        >>>
-        >>> # The following creates two independent Normal distributions.
-        >>> n = msd.Normal([3.0, 3.0], [4.0, 4.0], dtype=mstype.float32)
-        >>>
+        >>> from mindspore import Tensor
+        >>> # To initialize a Normal distribution of the mean 3.0 and the standard deviation 4.0.
+        >>> n1 = msd.Normal(3.0, 4.0, dtype=mindspore.float32)
         >>> # A Normal distribution can be initialized without arguments.
         >>> # In this case, `mean` and `sd` must be passed in through arguments.
-        >>> n = msd.Normal(dtype=mstype.float32)
-        >>>
-        >>> # To use a Normal distribution in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.n1 = msd.Normal(0.0, 1.0, dtype=mstype.float32)
-        ...         self.n2 = msd.Normal(dtype=mstype.float32)
-        ...
-        ...     # The following calls are valid in construct.
-        ...     def construct(self, value, mean_b, sd_b, mean_a, sd_a):
-        ...
-        ...         # Private interfaces of probability functions corresponding to public interfaces, including
-        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
-        ...         # Args:
-        ...         #     value (Tensor): the value to be evaluated.
-        ...         #     mean (Tensor): the mean of the distribution. Default: self._mean_value.
-        ...         #     sd (Tensor): the standard deviation of the distribution. Default: self._sd_value.
-        ...
-        ...         # Examples of `prob`.
-        ...         # Similar calls can be made to other probability functions
-        ...         # by replacing 'prob' by the name of the function
-        ...         ans = self.n1.prob(value)
-        ...         # Evaluate with respect to the distribution b.
-        ...         ans = self.n1.prob(value, mean_b, sd_b)
-        ...         # `mean` and `sd` must be passed in during function calls
-        ...         ans = self.n2.prob(value, mean_a, sd_a)
-        ...
-        ...
-        ...         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
-        ...         # Args:
-        ...         #     mean (Tensor): the mean of the distribution. Default: self._mean_value.
-        ...         #     sd (Tensor): the standard deviation of the distribution. Default: self._sd_value.
-        ...
-        ...         # Example of `mean`. `sd`, `var`, and `entropy` are similar.
-        ...         ans = self.n1.mean() # return 0.0
-        ...         ans = self.n1.mean(mean_b, sd_b) # return mean_b
-        ...         # `mean` and `sd` must be passed in during function calls.
-        ...         ans = self.n2.mean(mean_a, sd_a)
-        ...
-        ...
-        ...         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
-        ...         # Args:
-        ...         #     dist (str): the type of the distributions. Only "Normal" is supported.
-        ...         #     mean_b (Tensor): the mean of distribution b.
-        ...         #     sd_b (Tensor): the standard deviation of distribution b.
-        ...         #     mean_a (Tensor): the mean of distribution a. Default: self._mean_value.
-        ...         #     sd_a (Tensor): the standard deviation of distribution a. Default: self._sd_value.
-        ...
-        ...         # Examples of `kl_loss`. `cross_entropy` is similar.
-        ...         ans = self.n1.kl_loss('Normal', mean_b, sd_b)
-        ...         ans = self.n1.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
-        ...         # Additional `mean` and `sd` must be passed in.
-        ...         ans = self.n2.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
-        ...
-        ...         # Examples of `sample`.
-        ...         # Args:
-        ...         #     shape (tuple): the shape of the sample. Default: ()
-        ...         #     mean (Tensor): the mean of the distribution. Default: self._mean_value.
-        ...         #     sd (Tensor): the standard deviation of the distribution. Default: self._sd_value.
-        ...         ans = self.n1.sample()
-        ...         ans = self.n1.sample((2,3))
-        ...         ans = self.n1.sample((2,3), mean_b, sd_b)
-        ...         ans = self.n2.sample((2,3), mean_a, sd_a)
+        >>> n2 = msd.Normal(dtype=mindspore.float32)
+
+        >>> # Here are some tensors used below for testing
+        >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
+        >>> mean_a = Tensor([2.0], dtype=mindspore.float32)
+        >>> sd_a = Tensor([2.0, 2.0, 2.0], dtype=mindspore.float32)
+        >>> mean_b = Tensor([1.0], dtype=mindspore.float32)
+        >>> sd_b = Tensor([1.0, 1.5, 2.0], dtype=mindspore.float32)
+
+        >>> # Private interfaces of probability functions corresponding to public interfaces, including
+        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
+        >>> # Args:
+        >>> #     value (Tensor): the value to be evaluated.
+        >>> #     mean (Tensor): the mean of the distribution. Default: self._mean_value.
+        >>> #     sd (Tensor): the standard deviation of the distribution. Default: self._sd_value.
+        >>> # Examples of `prob`.
+        >>> # Similar calls can be made to other probability functions
+        >>> # by replacing 'prob' by the name of the function
+        >>> ans = n1.prob(value)
+        >>> print(ans)
+        [0.08801632 0.09666702 0.09973556]
+        >>> # Evaluate with respect to the distribution b.
+        >>> ans = n1.prob(value, mean_b, sd_b)
+        >>> print(ans)
+        [0.3989423  0.21296532 0.12098535]
+        >>> # `mean` and `sd` must be passed in during function calls
+        >>> ans = n2.prob(value, mean_a, sd_a)
+        >>> print(ans)
+        [0.17603266 0.19947115 0.17603266]
+        >>> # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
+        >>> # Args:
+        >>> #     mean (Tensor): the mean of the distribution. Default: self._mean_value.
+        >>> #     sd (Tensor): the standard deviation of the distribution. Default: self._sd_value.
+        >>> # Example of `mean`. `sd`, `var`, and `entropy` are similar.
+        >>> ans = n1.mean() # return 0.0
+        >>> print(ans)
+        3.0
+        >>> ans = n1.mean(mean_b, sd_b) # return mean_b
+        >>> print(ans)
+        [1. 1. 1.]
+        >>> # `mean` and `sd` must be passed in during function calls.
+        >>> ans = n2.mean(mean_a, sd_a)
+        >>> print(ans)
+        [2. 2. 2.]
+        >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
+        >>> # Args:
+        >>> #     dist (str): the type of the distributions. Only "Normal" is supported.
+        >>> #     mean_b (Tensor): the mean of distribution b.
+        >>> #     sd_b (Tensor): the standard deviation of distribution b.
+        >>> #     mean_a (Tensor): the mean of distribution a. Default: self._mean_value.
+        >>> #     sd_a (Tensor): the standard deviation of distribution a. Default: self._sd_value.
+        >>> # Examples of `kl_loss`. `cross_entropy` is similar.
+        >>> ans = n1.kl_loss('Normal', mean_b, sd_b)
+        >>> print(ans)
+        [8.113706  2.963615  1.3068528]
+        >>> ans = n1.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
+        >>> print(ans)
+        [1.3068528  0.32342905 0.125     ]
+        >>> # Additional `mean` and `sd` must be passed in.
+        >>> ans = n2.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
+        >>> print(ans)
+        [1.3068528  0.32342905 0.125     ]
+        >>> # Examples of `sample`.
+        >>> # Args:
+        >>> #     shape (tuple): the shape of the sample. Default: ()
+        >>> #     mean (Tensor): the mean of the distribution. Default: self._mean_value.
+        >>> #     sd (Tensor): the standard deviation of the distribution. Default: self._sd_value.
+        >>> ans = n1.sample()
+        >>> print(ans.shape)
+        ()
+        >>> ans = n1.sample((2,3))
+        >>> print(ans.shape)
+        (2, 3)
+        >>> ans = n1.sample((2,3), mean_b, sd_b)
+        >>> print(ans.shape)
+        (2, 3, 3)
+        >>> ans = n2.sample((2,3), mean_a, sd_a)
+        >>> print(ans.shape)
+        (2, 3, 3)
     """
 
     def __init__(self,
