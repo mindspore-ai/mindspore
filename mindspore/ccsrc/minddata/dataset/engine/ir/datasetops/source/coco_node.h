@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace dataset {
 
-class CocoNode : public DatasetNode {
+class CocoNode : public MappableSourceNode {
  public:
   /// \brief Constructor
   CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
@@ -34,6 +34,18 @@ class CocoNode : public DatasetNode {
 
   /// \brief Destructor
   ~CocoNode() = default;
+
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kCocoNode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return shared pointer to the list of newly created DatasetOps

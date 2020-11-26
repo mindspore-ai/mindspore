@@ -427,7 +427,7 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
 Status PadEndNumericHelper(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> dst,
                            std::vector<dsize_t> cur_ind, size_t cur_dim) {
   if (cur_dim == src->Rank() - 1) {  // if this is the last dimension, copy the data
-    dst->CopyLastDimAt(src, cur_ind);
+    RETURN_IF_NOT_OK(dst->CopyLastDimAt(src, cur_ind));
   } else {  // not the last dimension, keep doing recursion
     dsize_t min_ind = std::min(dst->shape()[cur_dim], src->shape()[cur_dim]);
     for (dsize_t i = 0; i < min_ind; i++) {

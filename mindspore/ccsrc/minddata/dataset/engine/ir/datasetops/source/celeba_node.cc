@@ -31,12 +31,22 @@ namespace dataset {
 CelebANode::CelebANode(const std::string &dataset_dir, const std::string &usage,
                        const std::shared_ptr<SamplerObj> &sampler, const bool &decode,
                        const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache)
-    : DatasetNode(std::move(cache)),
+    : MappableSourceNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       usage_(usage),
       sampler_(sampler),
       decode_(decode),
       extensions_(extensions) {}
+
+std::shared_ptr<DatasetNode> CelebANode::Copy() {
+  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  auto node = std::make_shared<CelebANode>(dataset_dir_, usage_, sampler, decode_, extensions_, cache_);
+  return node;
+}
+
+void CelebANode::Print(std::ostream &out) const {
+  out << Name() + "(cache:" + ((cache_ != nullptr) ? "true" : "false") + ")";
+}
 
 Status CelebANode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("CelebANode", dataset_dir_));

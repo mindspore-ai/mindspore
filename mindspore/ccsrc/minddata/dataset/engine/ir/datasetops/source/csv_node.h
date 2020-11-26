@@ -47,7 +47,7 @@ class CsvRecord : public CsvBase {
   T value;
 };
 
-class CSVNode : public DatasetNode {
+class CSVNode : public NonMappableSourceNode {
  public:
   /// \brief Constructor
   CSVNode(const std::vector<std::string> &dataset_files, char field_delim,
@@ -57,6 +57,18 @@ class CSVNode : public DatasetNode {
 
   /// \brief Destructor
   ~CSVNode() = default;
+
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kCSVNode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return shared pointer to the list of newly created DatasetOps

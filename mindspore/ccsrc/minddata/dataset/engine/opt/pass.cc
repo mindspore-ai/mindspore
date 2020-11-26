@@ -22,10 +22,12 @@
 #endif
 #include "minddata/dataset/engine/ir/datasetops/build_vocab_node.h"
 #include "minddata/dataset/engine/ir/datasetops/concat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/filter_node.h"
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/ir/datasetops/project_node.h"
 #include "minddata/dataset/engine/ir/datasetops/rename_node.h"
 #include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/root_node.h"
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #ifdef ENABLE_PYTHON
@@ -34,34 +36,6 @@
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
 #include "minddata/dataset/engine/ir/datasetops/transfer_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/celeba_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/cifar100_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/cifar10_node.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/engine/ir/datasetops/source/clue_node.h"
-#endif
-#include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
-#endif
-#ifdef ENABLE_PYTHON
-#include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
-#endif
-#include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/engine/ir/datasetops/source/minddata_node.h"
-#endif
-#include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
-#endif
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
-#endif
-#include "minddata/dataset/engine/ir/datasetops/source/voc_node.h"
 
 //////////////////////////////////
 // This section of code will be removed once the migration of optimizer from DatasetOp to DatasetNode is done.
@@ -113,7 +87,12 @@ namespace mindspore {
 namespace dataset {
 
 // Driver method for TreePass
-Status TreePass::Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) { return Status::OK(); }
+Status TreePass::Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) {
+  if (root_ir == nullptr || modified == nullptr) {
+    return Status(StatusCode::kUnexpectedError, "Null pointer passed to TreePass");
+  }
+  return this->RunOnTree(root_ir, modified);
+}
 
 // Driver method for NodePass
 Status NodePass::Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) {
@@ -132,15 +111,23 @@ Status NodePass::Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) {
 
 // Helper function to perform DFS visit
 Status NodePass::DFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modified) {
-  RETURN_IF_NOT_OK(node_ir->Accept(this, modified));
+  bool m = false;
+
+  RETURN_IF_NOT_OK(node_ir->Accept(this, &m));
+  *modified |= m;
   for (const auto &c : node_ir->Children()) {
-    RETURN_IF_NOT_OK(this->DFSNodeVisit(c, modified));
+    RETURN_IF_NOT_OK(this->DFSNodeVisit(c, &m));
+    *modified |= m;
   }
-  return node_ir->AcceptAfter(this, modified);
+  RETURN_IF_NOT_OK(node_ir->AcceptAfter(this, &m));
+  *modified |= m;
+  return Status::OK();
 }
 
 // Helper function to perform BFS visit
 Status NodePass::BFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modified) {
+  bool m = false;
+
   // Initialize bfs queue with root
   std::queue<std::shared_ptr<DatasetNode>> bfsQueue;
   bfsQueue.push(node_ir);
@@ -152,7 +139,8 @@ Status NodePass::BFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modifi
     bfsQueue.pop();
 
     // Run node pass
-    RETURN_IF_NOT_OK(curNode->Accept(this, modified));
+    RETURN_IF_NOT_OK(curNode->Accept(this, &m));
+    *modified |= m;
 
     // Push children into bfs queue
     for (const auto &c : curNode->Children()) {
@@ -162,331 +150,119 @@ Status NodePass::BFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modifi
   return Status::OK();
 }
 
-// For datasetops IR
+// For non-leaf IR node
 Status NodePass::Visit(std::shared_ptr<BatchNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<BatchNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::Visit(std::shared_ptr<BucketBatchByLengthNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<BucketBatchByLengthNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
-#ifndef ENABLE_ANDROID
-Status NodePass::Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-#endif
-
 Status NodePass::Visit(std::shared_ptr<BuildVocabNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<BuildVocabNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::Visit(std::shared_ptr<ConcatNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<ConcatNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
+Status NodePass::Visit(std::shared_ptr<FilterNode> node, bool *modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status NodePass::VisitAfter(std::shared_ptr<FilterNode> node, bool *modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
 Status NodePass::Visit(std::shared_ptr<MapNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<MapNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::Visit(std::shared_ptr<ProjectNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<ProjectNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::Visit(std::shared_ptr<RenameNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<RenameNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::Visit(std::shared_ptr<RepeatNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<RepeatNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
+Status NodePass::Visit(std::shared_ptr<RootNode> node, bool *modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status NodePass::VisitAfter(std::shared_ptr<RootNode> node, bool *modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
 Status NodePass::Visit(std::shared_ptr<ShuffleNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<ShuffleNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::Visit(std::shared_ptr<SkipNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<SkipNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
+Status NodePass::Visit(std::shared_ptr<TakeNode> node, bool *modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status NodePass::VisitAfter(std::shared_ptr<TakeNode> node, bool *modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status NodePass::Visit(std::shared_ptr<TransferNode> node, bool *modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status NodePass::VisitAfter(std::shared_ptr<TransferNode> node, bool *modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status NodePass::Visit(std::shared_ptr<ZipNode> node, bool *modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status NodePass::VisitAfter(std::shared_ptr<ZipNode> node, bool *modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
 #ifdef ENABLE_PYTHON
 Status NodePass::Visit(std::shared_ptr<SyncWaitNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
 Status NodePass::VisitAfter(std::shared_ptr<SyncWaitNode> node, bool *modified) {
-  // Fallback to base class visitor by default
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
 #endif
-
-Status NodePass::Visit(std::shared_ptr<TakeNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<TakeNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::Visit(std::shared_ptr<TransferNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<TransferNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::Visit(std::shared_ptr<ZipNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<ZipNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-// For datasetops/source IR
-Status NodePass::Visit(std::shared_ptr<AlbumNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<AlbumNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::Visit(std::shared_ptr<CelebANode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<CelebANode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::Visit(std::shared_ptr<Cifar100Node> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<Cifar100Node> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::Visit(std::shared_ptr<Cifar10Node> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<Cifar10Node> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
 #ifndef ENABLE_ANDROID
-Status NodePass::Visit(std::shared_ptr<CLUENode> node, bool *modified) {
-  // Fallback to base class visitor by default
+Status NodePass::Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified) {
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
-Status NodePass::VisitAfter(std::shared_ptr<CLUENode> node, bool *modified) {
-  // Fallback to base class visitor by default
+Status NodePass::VisitAfter(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified) {
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
 #endif
 
-Status NodePass::Visit(std::shared_ptr<CocoNode> node, bool *modified) {
-  // Fallback to base class visitor by default
+// For leaf IR Node
+Status NodePass::Visit(std::shared_ptr<SourceNode> node, bool *modified) {
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-
-Status NodePass::VisitAfter(std::shared_ptr<CocoNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-#ifndef ENABLE_ANDROID
-Status NodePass::Visit(std::shared_ptr<CSVNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<CSVNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-#endif
-
-#ifdef ENABLE_PYTHON
-Status NodePass::Visit(std::shared_ptr<GeneratorNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<GeneratorNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-#endif
-
-Status NodePass::Visit(std::shared_ptr<ImageFolderNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<ImageFolderNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::Visit(std::shared_ptr<ManifestNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<ManifestNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-#ifndef ENABLE_ANDROID
-Status NodePass::Visit(std::shared_ptr<MindDataNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<MindDataNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-#endif
-
-Status NodePass::Visit(std::shared_ptr<MnistNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<MnistNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::Visit(std::shared_ptr<RandomNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<RandomNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-#ifndef ENABLE_ANDROID
-Status NodePass::Visit(std::shared_ptr<TextFileNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<TextFileNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-#endif
-
-#ifndef ENABLE_ANDROID
-Status NodePass::Visit(std::shared_ptr<TFRecordNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<TFRecordNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-#endif
-
-Status NodePass::Visit(std::shared_ptr<VOCNode> node, bool *modified) {
-  // Fallback to base class visitor by default
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-
-Status NodePass::VisitAfter(std::shared_ptr<VOCNode> node, bool *modified) {
-  // Fallback to base class visitor by default
+Status NodePass::VisitAfter(std::shared_ptr<SourceNode> node, bool *modified) {
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
 

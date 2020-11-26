@@ -30,12 +30,20 @@ namespace dataset {
 // Constructor for CocoNode
 CocoNode::CocoNode(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
                    const bool &decode, const std::shared_ptr<SamplerObj> &sampler, std::shared_ptr<DatasetCache> cache)
-    : DatasetNode(std::move(cache)),
+    : MappableSourceNode(std::move(cache)),
       dataset_dir_(dataset_dir),
       annotation_file_(annotation_file),
       task_(task),
       decode_(decode),
       sampler_(sampler) {}
+
+std::shared_ptr<DatasetNode> CocoNode::Copy() {
+  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  auto node = std::make_shared<CocoNode>(dataset_dir_, annotation_file_, task_, decode_, sampler, cache_);
+  return node;
+}
+
+void CocoNode::Print(std::ostream &out) const { out << Name(); }
 
 Status CocoNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("CocoNode", dataset_dir_));

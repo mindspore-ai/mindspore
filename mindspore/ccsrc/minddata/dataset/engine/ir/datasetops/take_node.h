@@ -34,6 +34,18 @@ class TakeNode : public DatasetNode {
   /// \brief Destructor
   ~TakeNode() = default;
 
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kTakeNode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
+
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return shared pointer to the list of newly created DatasetOps
   std::vector<std::shared_ptr<DatasetOp>> Build() override;

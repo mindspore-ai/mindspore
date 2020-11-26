@@ -30,8 +30,6 @@
 namespace mindspore {
 namespace dataset {
 
-TensorOperation::TensorOperation() {}
-
 /* ####################################### Validator Functions ############################################ */
 Status ValidateVectorFillvalue(const std::string &transform_name, const std::vector<uint8_t> &fill_value) {
   if (fill_value.empty() || (fill_value.size() != 1 && fill_value.size() != 3)) {
@@ -231,7 +229,7 @@ std::shared_ptr<TensorOp> PreBuiltOperation::Build() { return op_; }
 
 // RandomApplyOperation
 RandomApplyOperation::RandomApplyOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms, double prob)
-    : transforms_(transforms), prob_(prob) {}
+    : TensorOperation(true), transforms_(transforms), prob_(prob) {}
 
 Status RandomApplyOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorTransforms("RandomApply", transforms_));
@@ -248,7 +246,7 @@ std::shared_ptr<TensorOp> RandomApplyOperation::Build() {
 
 // RandomChoiceOperation
 RandomChoiceOperation::RandomChoiceOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms)
-    : transforms_(transforms) {}
+    : TensorOperation(true), transforms_(transforms) {}
 
 Status RandomChoiceOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorTransforms("RandomChoice", transforms_));

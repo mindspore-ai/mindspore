@@ -34,6 +34,18 @@ class ShuffleNode : public DatasetNode {
 
   ~ShuffleNode() = default;
 
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kShuffleNode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
+
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   Status ValidateParams() override;

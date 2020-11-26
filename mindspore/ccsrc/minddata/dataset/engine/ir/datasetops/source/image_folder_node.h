@@ -31,7 +31,7 @@ namespace dataset {
 
 /// \class ImageFolderNode
 /// \brief A Dataset derived class to represent ImageFolder dataset
-class ImageFolderNode : public DatasetNode {
+class ImageFolderNode : public MappableSourceNode {
  public:
   /// \brief Constructor
   ImageFolderNode(std::string dataset_dir, bool decode, std::shared_ptr<SamplerObj> sampler, bool recursive,
@@ -40,6 +40,18 @@ class ImageFolderNode : public DatasetNode {
 
   /// \brief Destructor
   ~ImageFolderNode() = default;
+
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kImageFolderNode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return The list of shared pointers to the newly created DatasetOps

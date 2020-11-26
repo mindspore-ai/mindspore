@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/build_sentence_piece_vocab_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -38,7 +39,18 @@ BuildSentenceVocabNode::BuildSentenceVocabNode(std::shared_ptr<DatasetNode> chil
       character_coverage_(character_coverage),
       model_type_(model_type),
       params_(params) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> BuildSentenceVocabNode::Copy() {
+  auto node = std::make_shared<BuildSentenceVocabNode>(nullptr, vocab_, col_names_, vocab_size_, character_coverage_,
+                                                       model_type_, params_);
+  return node;
+}
+
+void BuildSentenceVocabNode::Print(std::ostream &out) const {
+  out << Name() + "<vocab>," + "columns:" + PrintColumns(col_names_) + ",vocab_size:" + std::to_string(vocab_size_) +
+           ",...)";
 }
 
 // Function to build BuildSentenceVocabNode
@@ -81,5 +93,16 @@ Status BuildSentenceVocabNode::ValidateParams() {
   return Status::OK();
 }
 
+// Visitor accepting method for NodePass
+Status BuildSentenceVocabNode::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<BuildSentenceVocabNode>(), modified);
+}
+
+// Visitor accepting method for NodePass
+Status BuildSentenceVocabNode::AcceptAfter(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<BuildSentenceVocabNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

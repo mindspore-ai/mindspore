@@ -29,7 +29,16 @@ namespace dataset {
 // Constructor for SyncWaitNode
 SyncWaitNode::SyncWaitNode(std::shared_ptr<DatasetNode> child, const std::string &condition_name, py::function callback)
     : condition_name_(condition_name), callback_(callback) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> SyncWaitNode::Copy() {
+  auto node = std::make_shared<SyncWaitNode>(nullptr, condition_name_, callback_);
+  return node;
+}
+
+void SyncWaitNode::Print(std::ostream &out) const {
+  out << Name() + "(cond_name:" + condition_name_ + "<pyfunc>" + ")";
 }
 
 // Function to build the BarrierOp

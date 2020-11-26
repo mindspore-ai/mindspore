@@ -29,7 +29,17 @@ namespace dataset {
 // Constructor for ShuffleNode
 ShuffleNode::ShuffleNode(std::shared_ptr<DatasetNode> child, int32_t shuffle_size, bool reset_every_epoch)
     : shuffle_size_(shuffle_size), shuffle_seed_(GetSeed()), reset_every_epoch_(reset_every_epoch) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> ShuffleNode::Copy() {
+  auto node = std::make_shared<ShuffleNode>(nullptr, shuffle_size_, reset_every_epoch_);
+  return node;
+}
+
+void ShuffleNode::Print(std::ostream &out) const {
+  out << Name() + "(shuffle_size:" + std::to_string(shuffle_size_) +
+           ",reset_every_epoch:" + (reset_every_epoch_ ? "true" : "false") + ")";
 }
 
 // Function to build the ShuffleOp

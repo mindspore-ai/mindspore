@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/concat_op.h"
-
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
@@ -35,17 +35,25 @@ ConcatNode::ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets
     : sampler_(sampler),
       children_flag_and_nums_(children_flag_and_nums),
       children_start_end_index_(children_start_end_index) {
-  this->children = datasets;
+  for (auto const &child : datasets) AddChild(child);
 }
 
+std::shared_ptr<DatasetNode> ConcatNode::Copy() {
+  // create an empty vector to copy a concat
+  auto node = std::make_shared<ConcatNode>(std::vector<std::shared_ptr<DatasetNode>>());
+  return node;
+}
+
+void ConcatNode::Print(std::ostream &out) const { out << Name(); }
+
 Status ConcatNode::ValidateParams() {
-  if (children.size() < 2) {
+  if (children_.size() < 2) {
     std::string err_msg = "ConcatNode: concatenated datasets are not specified.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  if (find(children.begin(), children.end(), nullptr) != children.end()) {
+  if (find(children_.begin(), children_.end(), nullptr) != children_.end()) {
     std::string err_msg = "ConcatNode: concatenated datasets should not be null.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -73,5 +81,16 @@ std::vector<std::shared_ptr<DatasetOp>> ConcatNode::Build() {
   return node_ops;
 }
 
+// Visitor accepting method for NodePass
+Status ConcatNode::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<ConcatNode>(), modified);
+}
+
+// Visitor accepting method for NodePass
+Status ConcatNode::AcceptAfter(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<ConcatNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

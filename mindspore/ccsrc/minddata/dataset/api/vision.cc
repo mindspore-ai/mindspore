@@ -734,7 +734,9 @@ RandomAffineOperation::RandomAffineOperation(const std::vector<float_t> &degrees
       scale_range_(scale_range),
       shear_ranges_(shear_ranges),
       interpolation_(interpolation),
-      fill_value_(fill_value) {}
+      fill_value_(fill_value) {
+  random_op_ = true;
+}
 
 Status RandomAffineOperation::ValidateParams() {
   // Degrees
@@ -867,7 +869,7 @@ std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
 }
 
 // RandomColorOperation.
-RandomColorOperation::RandomColorOperation(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) {}
+RandomColorOperation::RandomColorOperation(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) { random_op_ = true; }
 
 Status RandomColorOperation::ValidateParams() {
   // Do some input validation.
@@ -891,7 +893,9 @@ Status RandomColorOperation::ValidateParams() {
 // RandomColorAdjustOperation.
 RandomColorAdjustOperation::RandomColorAdjustOperation(std::vector<float> brightness, std::vector<float> contrast,
                                                        std::vector<float> saturation, std::vector<float> hue)
-    : brightness_(brightness), contrast_(contrast), saturation_(saturation), hue_(hue) {}
+    : brightness_(brightness), contrast_(contrast), saturation_(saturation), hue_(hue) {
+  random_op_ = true;
+}
 
 Status RandomColorAdjustOperation::ValidateParams() {
   // brightness
@@ -1012,11 +1016,14 @@ std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
 // RandomCropOperation
 RandomCropOperation::RandomCropOperation(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
                                          std::vector<uint8_t> fill_value, BorderType padding_mode)
-    : size_(size),
+    : TensorOperation(true),
+      size_(size),
       padding_(padding),
       pad_if_needed_(pad_if_needed),
       fill_value_(fill_value),
-      padding_mode_(padding_mode) {}
+      padding_mode_(padding_mode) {
+  random_op_ = true;
+}
 
 Status RandomCropOperation::ValidateParams() {
   // size
@@ -1083,7 +1090,12 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
 RandomCropDecodeResizeOperation::RandomCropDecodeResizeOperation(std::vector<int32_t> size, std::vector<float> scale,
                                                                  std::vector<float> ratio,
                                                                  InterpolationMode interpolation, int32_t max_attempts)
-    : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
+    : TensorOperation(true),
+      size_(size),
+      scale_(scale),
+      ratio_(ratio),
+      interpolation_(interpolation),
+      max_attempts_(max_attempts) {}
 
 Status RandomCropDecodeResizeOperation::ValidateParams() {
   // size
@@ -1176,7 +1188,8 @@ std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
 RandomCropWithBBoxOperation::RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding,
                                                          bool pad_if_needed, std::vector<uint8_t> fill_value,
                                                          BorderType padding_mode)
-    : size_(size),
+    : TensorOperation(true),
+      size_(size),
       padding_(padding),
       pad_if_needed_(pad_if_needed),
       fill_value_(fill_value),
@@ -1245,7 +1258,8 @@ std::shared_ptr<TensorOp> RandomCropWithBBoxOperation::Build() {
 }
 
 // RandomHorizontalFlipOperation
-RandomHorizontalFlipOperation::RandomHorizontalFlipOperation(float probability) : probability_(probability) {}
+RandomHorizontalFlipOperation::RandomHorizontalFlipOperation(float probability)
+    : TensorOperation(true), probability_(probability) {}
 
 Status RandomHorizontalFlipOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateProbability("RandomHorizontalFlip", probability_));
@@ -1260,7 +1274,7 @@ std::shared_ptr<TensorOp> RandomHorizontalFlipOperation::Build() {
 
 // RandomHorizontalFlipWithBBoxOperation
 RandomHorizontalFlipWithBBoxOperation::RandomHorizontalFlipWithBBoxOperation(float probability)
-    : probability_(probability) {}
+    : TensorOperation(true), probability_(probability) {}
 
 Status RandomHorizontalFlipWithBBoxOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateProbability("RandomHorizontalFlipWithBBox", probability_));
@@ -1275,7 +1289,8 @@ std::shared_ptr<TensorOp> RandomHorizontalFlipWithBBoxOperation::Build() {
 }
 
 // RandomPosterizeOperation
-RandomPosterizeOperation::RandomPosterizeOperation(const std::vector<uint8_t> &bit_range) : bit_range_(bit_range) {}
+RandomPosterizeOperation::RandomPosterizeOperation(const std::vector<uint8_t> &bit_range)
+    : TensorOperation(true), bit_range_(bit_range) {}
 
 Status RandomPosterizeOperation::ValidateParams() {
   if (bit_range_.size() != 2) {
@@ -1309,7 +1324,7 @@ std::shared_ptr<TensorOp> RandomPosterizeOperation::Build() {
 }
 
 // RandomResizeOperation
-RandomResizeOperation::RandomResizeOperation(std::vector<int32_t> size) : size_(size) {}
+RandomResizeOperation::RandomResizeOperation(std::vector<int32_t> size) : TensorOperation(true), size_(size) {}
 
 Status RandomResizeOperation::ValidateParams() {
   // size
@@ -1343,7 +1358,8 @@ std::shared_ptr<TensorOp> RandomResizeOperation::Build() {
 }
 
 // RandomResizeWithBBoxOperation
-RandomResizeWithBBoxOperation::RandomResizeWithBBoxOperation(std::vector<int32_t> size) : size_(size) {}
+RandomResizeWithBBoxOperation::RandomResizeWithBBoxOperation(std::vector<int32_t> size)
+    : TensorOperation(true), size_(size) {}
 
 Status RandomResizeWithBBoxOperation::ValidateParams() {
   // size
@@ -1380,7 +1396,12 @@ std::shared_ptr<TensorOp> RandomResizeWithBBoxOperation::Build() {
 RandomResizedCropOperation::RandomResizedCropOperation(std::vector<int32_t> size, std::vector<float> scale,
                                                        std::vector<float> ratio, InterpolationMode interpolation,
                                                        int32_t max_attempts)
-    : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
+    : TensorOperation(true),
+      size_(size),
+      scale_(scale),
+      ratio_(ratio),
+      interpolation_(interpolation),
+      max_attempts_(max_attempts) {}
 
 Status RandomResizedCropOperation::ValidateParams() {
   // size
@@ -1536,7 +1557,8 @@ std::shared_ptr<TensorOp> RandomResizedCropWithBBoxOperation::Build() {
 RandomRotationOperation::RandomRotationOperation(std::vector<float> degrees, InterpolationMode interpolation_mode,
                                                  bool expand, std::vector<float> center,
                                                  std::vector<uint8_t> fill_value)
-    : degrees_(degrees),
+    : TensorOperation(true),
+      degrees_(degrees),
       interpolation_mode_(interpolation_mode),
       expand_(expand),
       center_(center),
@@ -1603,7 +1625,7 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
 // RandomSelectSubpolicyOperation.
 RandomSelectSubpolicyOperation::RandomSelectSubpolicyOperation(
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy)
-    : policy_(policy) {}
+    : TensorOperation(true), policy_(policy) {}
 
 Status RandomSelectSubpolicyOperation::ValidateParams() {
   if (policy_.empty()) {
@@ -1650,7 +1672,8 @@ std::shared_ptr<TensorOp> RandomSelectSubpolicyOperation::Build() {
 }
 
 // Function to create RandomSharpness.
-RandomSharpnessOperation::RandomSharpnessOperation(std::vector<float> degrees) : degrees_(degrees) {}
+RandomSharpnessOperation::RandomSharpnessOperation(std::vector<float> degrees)
+    : TensorOperation(true), degrees_(degrees) {}
 
 Status RandomSharpnessOperation::ValidateParams() {
   if (degrees_.size() != 2 || degrees_[0] < 0 || degrees_[1] < 0) {
@@ -1674,7 +1697,8 @@ std::shared_ptr<TensorOp> RandomSharpnessOperation::Build() {
 }
 
 // RandomSolarizeOperation.
-RandomSolarizeOperation::RandomSolarizeOperation(std::vector<uint8_t> threshold) : threshold_(threshold) {}
+RandomSolarizeOperation::RandomSolarizeOperation(std::vector<uint8_t> threshold)
+    : TensorOperation(true), threshold_(threshold) {}
 
 Status RandomSolarizeOperation::ValidateParams() {
   if (threshold_.size() != 2) {
@@ -1705,7 +1729,8 @@ std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
 }
 
 // RandomVerticalFlipOperation
-RandomVerticalFlipOperation::RandomVerticalFlipOperation(float probability) : probability_(probability) {}
+RandomVerticalFlipOperation::RandomVerticalFlipOperation(float probability)
+    : TensorOperation(true), probability_(probability) {}
 
 Status RandomVerticalFlipOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateProbability("RandomVerticalFlip", probability_));
@@ -1720,7 +1745,7 @@ std::shared_ptr<TensorOp> RandomVerticalFlipOperation::Build() {
 
 // RandomVerticalFlipWithBBoxOperation
 RandomVerticalFlipWithBBoxOperation::RandomVerticalFlipWithBBoxOperation(float probability)
-    : probability_(probability) {}
+    : TensorOperation(true), probability_(probability) {}
 
 Status RandomVerticalFlipWithBBoxOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateProbability("RandomVerticalFlipWithBBox", probability_));

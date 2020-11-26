@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_PROJECT_NODE_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_PROJECT_NODE_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_EPOCH_CTRL_NODE_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_EPOCH_CTRL_NODE_H_
 
 #include <memory>
 #include <string>
@@ -26,17 +26,17 @@
 namespace mindspore {
 namespace dataset {
 
-class ProjectNode : public DatasetNode {
+class EpochCtrlNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit ProjectNode(std::shared_ptr<DatasetNode> child, const std::vector<std::string> &columns);
+  explicit EpochCtrlNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs);
 
   /// \brief Destructor
-  ~ProjectNode() = default;
+  ~EpochCtrlNode() = default;
 
   /// \brief Node name getter
   /// \return Name of the current node
-  std::string Name() const override { return kProjectNode; }
+  std::string Name() const override { return kEpochCtrlNode; }
 
   /// \brief Print the description
   /// \param out - The output stream to write output to
@@ -47,7 +47,7 @@ class ProjectNode : public DatasetNode {
   std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return The list of shared pointers to the newly created DatasetOps
+  /// \return shared pointer to the list of newly created DatasetOps
   std::vector<std::shared_ptr<DatasetOp>> Build() override;
 
   /// \brief Parameters validation
@@ -55,9 +55,9 @@ class ProjectNode : public DatasetNode {
   Status ValidateParams() override;
 
  private:
-  std::vector<std::string> columns_;
+  int32_t num_epochs_;
 };
 
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_PROJECT_NODE_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_EPOCH_CTRL_NODE_H_

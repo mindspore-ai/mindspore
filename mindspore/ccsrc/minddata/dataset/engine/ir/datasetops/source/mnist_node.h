@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace dataset {
 
-class MnistNode : public DatasetNode {
+class MnistNode : public MappableSourceNode {
  public:
   /// \brief Constructor
   MnistNode(std::string dataset_dir, std::string usage, std::shared_ptr<SamplerObj> sampler,
@@ -34,6 +34,18 @@ class MnistNode : public DatasetNode {
 
   /// \brief Destructor
   ~MnistNode() = default;
+
+  /// \brief Node name getter
+  /// \return Name of the current node
+  std::string Name() const override { return kMnistNode; }
+
+  /// \brief Print the description
+  /// \param out - The output stream to write output to
+  void Print(std::ostream &out) const override;
+
+  /// \brief Copy the node to a new object
+  /// \return A shared pointer to the new copy
+  std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
   /// \return The list of shared pointers to the newly created DatasetOps

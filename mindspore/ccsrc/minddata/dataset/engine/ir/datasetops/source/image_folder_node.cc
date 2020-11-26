@@ -33,13 +33,24 @@ ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shar
                                  bool recursive, std::set<std::string> extensions,
                                  std::map<std::string, int32_t> class_indexing,
                                  std::shared_ptr<DatasetCache> cache = nullptr)
-    : dataset_dir_(dataset_dir),
+    : MappableSourceNode(std::move(cache)),
+      dataset_dir_(dataset_dir),
       decode_(decode),
       sampler_(sampler),
       recursive_(recursive),
       class_indexing_(class_indexing),
-      exts_(extensions),
-      DatasetNode(std::move(cache)) {}
+      exts_(extensions) {}
+
+std::shared_ptr<DatasetNode> ImageFolderNode::Copy() {
+  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  auto node =
+    std::make_shared<ImageFolderNode>(dataset_dir_, decode_, sampler, recursive_, exts_, class_indexing_, cache_);
+  return node;
+}
+
+void ImageFolderNode::Print(std::ostream &out) const {
+  out << Name() + "(path:" + dataset_dir_ + ",decode:" + (decode_ ? "true" : "false") + ",...)";
+}
 
 Status ImageFolderNode::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("ImageFolderNode", dataset_dir_));

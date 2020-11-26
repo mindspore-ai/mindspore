@@ -43,14 +43,29 @@ BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, boo
       batch_size_func_(batch_size_func),
       batch_map_func_(batch_map_func),
       pad_map_(pad_map) {
-  this->children.push_back(child);
+  this->AddChild(child);
 }
 #endif
 
 // constructor #2, called by C++ API
 BatchNode::BatchNode(std::shared_ptr<DatasetNode> child, int32_t batch_size, bool drop_remainder)
     : batch_size_(batch_size), drop_remainder_(drop_remainder), pad_(false) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> BatchNode::Copy() {
+#ifdef ENABLE_PYTHON
+  auto node = std::make_shared<BatchNode>(nullptr, batch_size_, drop_remainder_, pad_, in_col_names_, out_col_names_,
+                                          col_order_, batch_size_func_, batch_map_func_, pad_map_);
+#else
+  auto node = std::make_shared<BatchNode>(nullptr, batch_size_, drop_remainder_);
+#endif
+  return node;
+}
+
+void BatchNode::Print(std::ostream &out) const {
+  out << Name() + "(batch_size:" + std::to_string(batch_size_) +
+           " drop_remainder:" + (drop_remainder_ ? "true" : "false") + ")";
 }
 
 Status BatchNode::ValidateParams() {

@@ -21,14 +21,21 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
-
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
 
 RepeatNode::RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count) : repeat_count_(count) {
-  this->children.push_back(child);
+  this->AddChild(child);
 }
+
+std::shared_ptr<DatasetNode> RepeatNode::Copy() {
+  auto node = std::make_shared<RepeatNode>(nullptr, this->repeat_count_);
+  return node;
+}
+
+void RepeatNode::Print(std::ostream &out) const { out << Name() + "(count:" + std::to_string(repeat_count_) + ")"; }
 
 std::vector<std::shared_ptr<DatasetOp>> RepeatNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
@@ -49,5 +56,16 @@ Status RepeatNode::ValidateParams() {
   return Status::OK();
 }
 
+// Visitor accepting method for NodePass
+Status RepeatNode::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<RepeatNode>(), modified);
+}
+
+// Visitor accepting method for NodePass
+Status RepeatNode::AcceptAfter(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<RepeatNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

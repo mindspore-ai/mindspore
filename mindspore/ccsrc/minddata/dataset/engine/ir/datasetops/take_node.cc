@@ -27,9 +27,14 @@ namespace mindspore {
 namespace dataset {
 
 // Constructor for TakeNode
-TakeNode::TakeNode(std::shared_ptr<DatasetNode> child, int32_t count) : take_count_(count) {
-  this->children.push_back(child);
+TakeNode::TakeNode(std::shared_ptr<DatasetNode> child, int32_t count) : take_count_(count) { this->AddChild(child); }
+
+std::shared_ptr<DatasetNode> TakeNode::Copy() {
+  auto node = std::make_shared<TakeNode>(nullptr, take_count_);
+  return node;
 }
+
+void TakeNode::Print(std::ostream &out) const { out << Name() + "(num_rows:" + std::to_string(take_count_) + ")"; }
 
 // Function to build the TakeOp
 std::vector<std::shared_ptr<DatasetOp>> TakeNode::Build() {

@@ -27,9 +27,14 @@ namespace mindspore {
 namespace dataset {
 
 // Constructor for SkipNode
-SkipNode::SkipNode(std::shared_ptr<DatasetNode> child, int32_t count) : skip_count_(count) {
-  this->children.push_back(child);
+SkipNode::SkipNode(std::shared_ptr<DatasetNode> child, int32_t count) : skip_count_(count) { this->AddChild(child); }
+
+std::shared_ptr<DatasetNode> SkipNode::Copy() {
+  auto node = std::make_shared<SkipNode>(nullptr, skip_count_);
+  return node;
 }
+
+void SkipNode::Print(std::ostream &out) const { out << Name() + "(skip_count:" + std::to_string(skip_count_) + ")"; }
 
 // Function to build the SkipOp
 std::vector<std::shared_ptr<DatasetOp>> SkipNode::Build() {

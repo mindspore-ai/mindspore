@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 #include "utils/ms_context.h"
@@ -39,7 +40,19 @@ TransferNode::TransferNode(std::shared_ptr<DatasetNode> child, std::string queue
       total_batch_(total_batch),
       create_data_info_queue_(create_data_info_queue),
       device_id_(0) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> TransferNode::Copy() {
+  auto node = std::make_shared<TransferNode>(nullptr, queue_name_, device_type_, send_epoch_end_, total_batch_,
+                                             create_data_info_queue_);
+  return node;
+}
+
+void TransferNode::Print(std::ostream &out) const {
+  out << Name() + "(prefetch_size:" + std::to_string(prefetch_size_) +
+           ",send_epoch_end:" + (send_epoch_end_ ? "true" : "false") + ",total_batch:" + std::to_string(total_batch_) +
+           ")";
 }
 
 // Validator for TransferNode
@@ -94,5 +107,16 @@ std::vector<std::shared_ptr<DatasetOp>> TransferNode::Build() {
   return node_ops;
 }
 
+// Visitor accepting method for NodePass
+Status TransferNode::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<TransferNode>(), modified);
+}
+
+// Visitor accepting method for NodePass
+Status TransferNode::AcceptAfter(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<TransferNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

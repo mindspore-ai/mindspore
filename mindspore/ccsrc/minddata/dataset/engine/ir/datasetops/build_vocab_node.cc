@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/build_vocab_op.h"
-
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {
@@ -36,7 +36,17 @@ BuildVocabNode::BuildVocabNode(std::shared_ptr<DatasetNode> child, std::shared_p
       top_k_(top_k),
       special_tokens_(special_tokens),
       special_first_(special_first) {
-  this->children.push_back(child);
+  this->AddChild(child);
+}
+
+std::shared_ptr<DatasetNode> BuildVocabNode::Copy() {
+  auto node =
+    std::make_shared<BuildVocabNode>(nullptr, vocab_, columns_, freq_range_, top_k_, special_tokens_, special_first_);
+  return node;
+}
+
+void BuildVocabNode::Print(std::ostream &out) const {
+  out << Name() + "(<vocab>," + "columns:" + PrintColumns(columns_) + ",...)";
 }
 
 // Function to build BuildVocabNode
@@ -78,5 +88,16 @@ Status BuildVocabNode::ValidateParams() {
   return Status::OK();
 }
 
+// Visitor accepting method for NodePass
+Status BuildVocabNode::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<BuildVocabNode>(), modified);
+}
+
+// Visitor accepting method for NodePass
+Status BuildVocabNode::AcceptAfter(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<BuildVocabNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

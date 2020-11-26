@@ -17,6 +17,7 @@ SET(DE_UT_SRCS
         c_api_dataset_coco_test.cc
         c_api_dataset_config_test.cc
         c_api_dataset_csv_test.cc
+        c_api_dataset_ir_node_test.cc
         c_api_dataset_iterator_test.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc
