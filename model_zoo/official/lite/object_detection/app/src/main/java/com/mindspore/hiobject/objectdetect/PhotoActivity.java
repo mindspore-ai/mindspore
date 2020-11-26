@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.net.Uri;
@@ -46,6 +47,10 @@ public class PhotoActivity extends AppCompatActivity {
         if (originBitmap != null) {
             Bitmap bitmap = ImageDegreeHelper.rotaingImageView(degree, originBitmap.copy(Bitmap.Config.ARGB_8888, true));
             if (bitmap != null) {
+                Matrix matrix = new Matrix();
+                matrix.setScale(0.7f, 0.7f);
+                bitmap = Bitmap.createBitmap( bitmap, 0, 0,  bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+
                 imgPhoto.setImageBitmap(bitmap);
                 initMindspore(bitmap);
             }
