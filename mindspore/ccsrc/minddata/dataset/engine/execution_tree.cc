@@ -134,6 +134,20 @@ void ExecutionTree::PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp
 
 // Start the execution of the tree
 Status ExecutionTree::Launch() {
+  // opencv limit too many threads
+#ifndef ENABLE_ANDROID
+#if !defined(_WIN32) && !defined(_WIN64)
+  int32_t thread_num = get_nprocs();
+  if (thread_num == 0) {
+    std::string err_msg = "Invalid thread number.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  if (thread_num > 8)
+    cv::setNumThreads(8);
+  else
+    cv::setNumThreads(thread_num);
+#endif
+#endif
   // Tree must be built and prepared before it can be launched!
   if (tree_state_ != kDeTStateReady) {
     std::string err_msg =

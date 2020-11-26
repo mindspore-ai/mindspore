@@ -21,6 +21,12 @@
 #include <stack>
 #include <string>
 #include <vector>
+#ifndef ENABLE_ANDROID
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <sys/sysinfo.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#endif
+#endif
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/util/status.h"
 #include "mindspore/ccsrc/minddata/dataset/engine/perf/profiling.h"
