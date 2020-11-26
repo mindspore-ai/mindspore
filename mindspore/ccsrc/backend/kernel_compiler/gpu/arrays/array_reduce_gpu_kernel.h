@@ -54,7 +54,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
     const float alpha = 1;
     const float beta = 0;
     if (all_match_) {
-      MS_LOG(WARNING)
+      MS_LOG(DEBUG)
         << "The corresponding dimensions of the input and output tensors all match. No need to call cuDNN kernel.";
       CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
