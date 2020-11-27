@@ -1904,7 +1904,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         return out
 
 
-class UnsortedSegmentMin(PrimitiveWithInfer):
+class UnsortedSegmentMin(PrimitiveWithCheck):
     """
     Computes the minimum of a tensor along segments.
 
@@ -1941,26 +1941,19 @@ class UnsortedSegmentMin(PrimitiveWithInfer):
         """Initialize UnsortedSegmentMin"""
         self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
 
-    def __infer__(self, x, segment_ids, num_segments):
-        x_type = x['dtype']
-        x_shape = x['shape']
+    def __check__(self, x, segment_ids, num_segments):
         segment_ids_shape = segment_ids['shape']
         valid_type = [mstype.float16, mstype.float32, mstype.int32]
         validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
         validator.check_tensor_dtype_valid("segment_ids", segment_ids['dtype'], [mstype.int32], self.name)
         validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
-        validator.check(f'first shape of input_x', x_shape[0],
-                        'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
-        num_segments_v = num_segments['value']
-        validator.check_value_type('num_segments', num_segments_v, [int], self.name)
-        validator.check_positive_int(num_segments_v, "num_segments", self.name)
-        segment_ids_shape_len = len(segment_ids_shape)
-        out_shape = [num_segments_v]
-        out_shape += x_shape[segment_ids_shape_len:]
-        out = {'shape': out_shape,
-               'dtype': x_type,
-               'value': None}
-        return out
+        num_segments_type = num_segments['dtype']
+        validator.check_subclass("num_segments", num_segments_type, [mstype.tensor, mstype.number], self.name)
+        if isinstance(num_segments_type, type(mstype.tensor)):
+            validator.check_tensor_dtype_valid("num_segments", num_segments_type, [mstype.int64],
+                                               self.name)
+        else:
+            validator.check_value_type('num_segments', num_segments['value'], [int], self.name)
 
 
 class UnsortedSegmentMax(PrimitiveWithCheck):

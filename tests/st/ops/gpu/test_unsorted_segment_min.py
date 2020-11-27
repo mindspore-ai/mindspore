@@ -25,14 +25,14 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
 
-class UnsortedSegmentMaxNet(nn.Cell):
+class UnsortedSegmentMinNet(nn.Cell):
     def __init__(self, num_segments):
-        super(UnsortedSegmentMaxNet, self).__init__()
-        self.unsorted_segment_max = P.UnsortedSegmentMax()
+        super(UnsortedSegmentMinNet, self).__init__()
+        self.unsorted_segment_min = P.UnsortedSegmentMin()
         self.num_segments = num_segments
 
     def construct(self, data, ids):
-        return self.unsorted_segment_max(data, ids, self.num_segments)
+        return self.unsorted_segment_min(data, ids, self.num_segments)
 
 
 @pytest.mark.level0
@@ -43,10 +43,10 @@ def test_1d_int32():
     input_x = Tensor([1, 2, 3, 4], mstype.int32)
     segment_ids = Tensor([0, 0, 1, 2], mstype.int32)
     num_segments = 4
-    net = UnsortedSegmentMaxNet(num_segments)
-    output = net(input_x, segment_ids)
-    expect = [2, 3, 4, -2147483648]
-    assert (output.asnumpy() == expect).all()
+    net = UnsortedSegmentMinNet(num_segments)
+    output = net(input_x, segment_ids).asnumpy()
+    expect = np.array([1, 3, 4, 2147483647]).astype(np.int32)
+    np.testing.assert_array_almost_equal(output, expect)
 
 
 @pytest.mark.level0
@@ -59,13 +59,13 @@ def test_2d_int32():
                       [9, 10, 11, 12]], mstype.int32)
     segment_ids = Tensor([2, 1, 1], mstype.int32)
     num_segments = 4
-    net = UnsortedSegmentMaxNet(num_segments)
-    output = net(input_x, segment_ids)
-    expect = [[[-2147483648, -2147483648, -2147483648, -2147483648],
-               [9, 10, 11, 12],
-               [1, 2, 3, 4],
-               [-2147483648, -2147483648, -2147483648, -2147483648]]]
-    assert (output.asnumpy() == expect).all()
+    net = UnsortedSegmentMinNet(num_segments)
+    output = net(input_x, segment_ids).asnumpy()
+    expect = np.array([[2147483647, 2147483647, 2147483647, 2147483647],
+                       [5, 6, 7, 8],
+                       [1, 2, 3, 4],
+                       [2147483647, 2147483647, 2147483647, 2147483647]]).astype(np.int32)
+    np.testing.assert_array_almost_equal(output, expect)
 
 
 @pytest.mark.level0
@@ -77,33 +77,33 @@ def test_3d_float16():
         4 * 5 * 3, dtype=np.float16).reshape(4, 5, 3), dtype=mindspore.float16)
     segment_ids = Tensor([2, 1, 1, -1], mstype.int32)
     num_segments = 5
-    net = UnsortedSegmentMaxNet(num_segments)
+    net = UnsortedSegmentMinNet(num_segments)
     output = net(input_x, segment_ids).asnumpy()
-    expect = np.array([[[-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04]],
-                       [[3.00e+01, 3.10e+01, 3.20e+01],
-                        [3.30e+01, 3.40e+01, 3.50e+01],
-                        [3.60e+01, 3.70e+01, 3.80e+01],
-                        [3.90e+01, 4.00e+01, 4.10e+01],
-                        [4.20e+01, 4.30e+01, 4.40e+01]],
+    expect = np.array([[[6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04]],
+                       [[1.50e+01, 1.60e+01, 1.70e+01],
+                        [1.80e+01, 1.90e+01, 2.00e+01],
+                        [2.10e+01, 2.20e+01, 2.30e+01],
+                        [2.40e+01, 2.50e+01, 2.60e+01],
+                        [2.70e+01, 2.80e+01, 2.90e+01]],
                        [[0.00e+00, 1.00e+00, 2.00e+00],
                         [3.00e+00, 4.00e+00, 5.00e+00],
                         [6.00e+00, 7.00e+00, 8.00e+00],
                         [9.00e+00, 1.00e+01, 1.10e+01],
                         [1.20e+01, 1.30e+01, 1.40e+01]],
-                       [[-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04]],
-                       [[-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04],
-                        [-6.55e+04, -6.55e+04, -6.55e+04]]]).astype(np.float16)
+                       [[6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04]],
+                       [[6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04],
+                        [6.55e+04, 6.55e+04, 6.55e+04]]]).astype(np.float16)
     np.testing.assert_array_almost_equal(output, expect)
 
 
@@ -116,18 +116,18 @@ def test_3d_float32():
         4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3), dtype=mindspore.float32)
     segment_ids = Tensor([2, 1, 1, -1], mstype.int32)
     num_segments = 3
-    net = UnsortedSegmentMaxNet(num_segments)
+    net = UnsortedSegmentMinNet(num_segments)
     output = net(input_x, segment_ids).asnumpy()
-    expect = np.array([[[-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38]],
-                       [[3.0000000e+01, 3.1000000e+01, 3.2000000e+01],
-                        [3.3000000e+01, 3.4000000e+01, 3.5000000e+01],
-                        [3.6000000e+01, 3.7000000e+01, 3.8000000e+01],
-                        [3.9000000e+01, 4.0000000e+01, 4.1000000e+01],
-                        [4.2000000e+01, 4.3000000e+01, 4.4000000e+01]],
+    expect = np.array([[[3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38]],
+                       [[1.5000000e+01, 1.6000000e+01, 1.7000000e+01],
+                        [1.8000000e+01, 1.9000000e+01, 2.0000000e+01],
+                        [2.1000000e+01, 2.2000000e+01, 2.3000000e+01],
+                        [2.4000000e+01, 2.5000000e+01, 2.6000000e+01],
+                        [2.7000000e+01, 2.8000000e+01, 2.9000000e+01]],
                        [[0.0000000e+00, 1.0000000e+00, 2.0000000e+00],
                         [3.0000000e+00, 4.0000000e+00, 5.0000000e+00],
                         [6.0000000e+00, 7.0000000e+00, 8.0000000e+00],
@@ -144,7 +144,7 @@ def test_3d_single_init():
     input_x = Tensor(np.arange(
         4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3), dtype=mindspore.float32)
     segment_ids = Tensor([3, 0, 1, -1], mstype.int32)
-    net = P.UnsortedSegmentMax()
+    net = P.UnsortedSegmentMin()
 
     num_segments = 4
     output = net(input_x, segment_ids, num_segments).asnumpy()
@@ -158,11 +158,11 @@ def test_3d_single_init():
                         [3.6000000e+01, 3.7000000e+01, 3.8000000e+01],
                         [3.9000000e+01, 4.0000000e+01, 4.1000000e+01],
                         [4.2000000e+01, 4.3000000e+01, 4.4000000e+01]],
-                       [[-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38]],
+                       [[3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38]],
                        [[0.0000000e+00, 1.0000000e+00, 2.0000000e+00],
                         [3.0000000e+00, 4.0000000e+00, 5.0000000e+00],
                         [6.0000000e+00, 7.0000000e+00, 8.0000000e+00],
@@ -182,68 +182,64 @@ def test_3d_single_init():
                         [3.6000000e+01, 3.7000000e+01, 3.8000000e+01],
                         [3.9000000e+01, 4.0000000e+01, 4.1000000e+01],
                         [4.2000000e+01, 4.3000000e+01, 4.4000000e+01]],
-                       [[-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38]],
+                       [[3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38]],
                        [[0.0000000e+00, 1.0000000e+00, 2.0000000e+00],
                         [3.0000000e+00, 4.0000000e+00, 5.0000000e+00],
                         [6.0000000e+00, 7.0000000e+00, 8.0000000e+00],
                         [9.0000000e+00, 1.0000000e+01, 1.1000000e+01],
                         [1.2000000e+01, 1.3000000e+01, 1.4000000e+01]],
-                       [[-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38]],
-                       [[-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38]]]).astype(np.float32)
+                       [[3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38]],
+                       [[3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38]]]).astype(np.float32)
     np.testing.assert_array_almost_equal(output, expect)
 
+
 # For testing Dynamic Shape operation
-class UnsortedSegmentMaxDynNet(nn.Cell):
+class UnsortedSegmentMinDynNet(nn.Cell):
     def __init__(self, num_segments):
-        super(UnsortedSegmentMaxDynNet, self).__init__()
-        self.unsorted_segment_max = P.UnsortedSegmentMax()
+        super(UnsortedSegmentMinDynNet, self).__init__()
+        self.unsorted_segment_min = P.UnsortedSegmentMin()
         self.gpu_convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
         self.num_segments = num_segments
 
     def construct(self, data, ids):
         dyn_data = self.gpu_convert_to_dynamic_shape(data)
         dyn_ids = self.gpu_convert_to_dynamic_shape(ids)
-        return self.unsorted_segment_max(dyn_data, dyn_ids, self.num_segments)
+        return self.unsorted_segment_min(dyn_data, dyn_ids, self.num_segments)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_float32_dyn():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    num_segments = 4
-    net = UnsortedSegmentMaxDynNet(num_segments)
-
     input_x = Tensor(np.arange(
         4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3), dtype=mindspore.float32)
-    segment_ids = Tensor([3, 0, 1, -1], mstype.int32)
+    segment_ids = Tensor([2, 1, 1, -1], mstype.int32)
+    num_segments = 3
+    net = UnsortedSegmentMinDynNet(num_segments)
     output = net(input_x, segment_ids).asnumpy()
-    expect = np.array([[[1.5000000e+01, 1.6000000e+01, 1.7000000e+01],
+    expect = np.array([[[3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38]],
+                       [[1.5000000e+01, 1.6000000e+01, 1.7000000e+01],
                         [1.8000000e+01, 1.9000000e+01, 2.0000000e+01],
                         [2.1000000e+01, 2.2000000e+01, 2.3000000e+01],
                         [2.4000000e+01, 2.5000000e+01, 2.6000000e+01],
                         [2.7000000e+01, 2.8000000e+01, 2.9000000e+01]],
-                       [[3.0000000e+01, 3.1000000e+01, 3.2000000e+01],
-                        [3.3000000e+01, 3.4000000e+01, 3.5000000e+01],
-                        [3.6000000e+01, 3.7000000e+01, 3.8000000e+01],
-                        [3.9000000e+01, 4.0000000e+01, 4.1000000e+01],
-                        [4.2000000e+01, 4.3000000e+01, 4.4000000e+01]],
-                       [[-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38]],
                        [[0.0000000e+00, 1.0000000e+00, 2.0000000e+00],
                         [3.0000000e+00, 4.0000000e+00, 5.0000000e+00],
                         [6.0000000e+00, 7.0000000e+00, 8.0000000e+00],
@@ -251,16 +247,18 @@ def test_3d_float32_dyn():
                         [1.2000000e+01, 1.3000000e+01, 1.4000000e+01]]]).astype(np.float32)
     np.testing.assert_array_almost_equal(output, expect)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_3d_single_init_dyn():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    num_segments = 4
+    net = UnsortedSegmentMinDynNet(num_segments)
+
     input_x = Tensor(np.arange(
         4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3), dtype=mindspore.float32)
     segment_ids = Tensor([3, 0, 1, -1], mstype.int32)
-    num_segments = 4
-    net = UnsortedSegmentMaxDynNet(num_segments)
     output = net(input_x, segment_ids).asnumpy()
     expect = np.array([[[1.5000000e+01, 1.6000000e+01, 1.7000000e+01],
                         [1.8000000e+01, 1.9000000e+01, 2.0000000e+01],
@@ -272,11 +270,11 @@ def test_3d_single_init_dyn():
                         [3.6000000e+01, 3.7000000e+01, 3.8000000e+01],
                         [3.9000000e+01, 4.0000000e+01, 4.1000000e+01],
                         [4.2000000e+01, 4.3000000e+01, 4.4000000e+01]],
-                       [[-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38, -3.4028235e+38]],
+                       [[3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38]],
                        [[0.0000000e+00, 1.0000000e+00, 2.0000000e+00],
                         [3.0000000e+00, 4.0000000e+00, 5.0000000e+00],
                         [6.0000000e+00, 7.0000000e+00, 8.0000000e+00],
@@ -303,13 +301,13 @@ def test_3d_single_init_dyn():
                         [3.6000000e+01, 3.7000000e+01],
                         [3.8000000e+01, 3.9000000e+01],
                         [4.0000000e+01, 4.1000000e+01]],
-                       [[-3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38],
-                        [-3.4028235e+38, -3.4028235e+38]],
+                       [[3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38]],
                        [[0.0000000e+00, 1.0000000e+00],
                         [2.0000000e+00, 3.0000000e+00],
                         [4.0000000e+00, 5.0000000e+00],
