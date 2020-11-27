@@ -402,8 +402,7 @@ int SortCpuProcessor() {
   }
   int err_code = SetArch(freq_set, gCoreNum);
   if (err_code != RET_TP_OK) {
-    LOG_ERROR("set arch failed.");
-    return RET_TP_ERROR;
+    LOG_INFO("set arch failed, ignoring arch.");
   }
   // sort core id by frequency into descending order
   for (int i = 0; i < gCoreNum; ++i) {

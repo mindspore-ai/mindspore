@@ -104,6 +104,12 @@ int Cropper::GetModelOps() {
     }
     auto nodes = meta_graph->nodes();
     for (auto node : *nodes) {
+      if (node->primitive() == nullptr) {
+        delete[] graph_buf;
+        MS_LOG(ERROR) << "node primitive is nullptr!";
+        std::cerr << "node primitive is nullptr!" << std::endl;
+        return RET_ERROR;
+      }
       this->all_operators_.insert(node->primitive()->value_type());
       MS_LOG(DEBUG) << "PrimitiveType:" << schema::EnumNamePrimitiveType(node->primitive()->value_type())
                     << " QuantType:" << schema::EnumNameQuantType(node->quantType());

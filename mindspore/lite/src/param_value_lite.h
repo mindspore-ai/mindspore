@@ -47,6 +47,11 @@ class ParamValueLite : public Value {
   TypeId tensor_type() const { return type_id_; }
   void set_tensor_type(const TypeId type_id) { type_id_ = type_id; }
 
+  void SetTensorData(void *addr, const size_t size) {
+    this->tensor_addr_ = addr;
+    this->tensor_size_ = size;
+  }
+
   int tensor_shape_size() const {
     int size = 1;
     for (auto val : tensor_shape_) {

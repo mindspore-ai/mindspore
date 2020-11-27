@@ -344,8 +344,7 @@ STATUS TfliteModelParser::ConvertConstTensor(const tflite::TensorT *tensor, Para
       return RET_MEMORY_FAILED;
     }
     std::memcpy(tensor_data, data.data(), size);
-    param_value->set_tensor_addr(tensor_data);
-    param_value->set_tensor_size(size);
+    param_value->SetTensorData(tensor_data, size);
     parameter->set_default_param(param_value);
   }
   return RET_OK;

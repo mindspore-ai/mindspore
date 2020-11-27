@@ -1462,8 +1462,7 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
           delete[] tensor_data;
           return false;
         }
-        param_value->set_tensor_addr(tensor_data);
-        param_value->set_tensor_size(size);
+        param_value->SetTensorData(tensor_data, size);
         parameter->set_default_param(param_value);
         cnode->add_input(parameter);
         DoBiasQuant(parameter, primitive_c);

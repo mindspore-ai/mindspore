@@ -103,8 +103,7 @@ STATUS GetRightMatmulInputParamter(const CNodePtr &stack_node, const ParameterPt
   param_value->set_tensor_shape(rmatmul_input_shape);
   param_value->set_tensor_type(fc_weight_param->tensor_type());
   param_value->set_format(fc_weight_param->format());
-  param_value->set_tensor_addr(new_tensor_data);
-  param_value->set_tensor_size(joint_fullconnect_size * tensor_size);
+  param_value->SetTensorData(new_tensor_data, joint_fullconnect_size * tensor_size);
   rmatmul_input->set_default_param(param_value);
   return RET_OK;
 }

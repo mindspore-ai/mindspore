@@ -264,8 +264,7 @@ int AnfImporterFromProtobuf::BuildParameterForFuncGraph(const ParameterPtr &node
       delete tensor_info;
       return RET_NULL_PTR;
     }
-    param_value->set_tensor_addr(tensor_data_buf);
-    param_value->set_tensor_size(tensor_info->Size());
+    param_value->SetTensorData(tensor_data_buf, tensor_info->Size());
     param_value->set_tensor_type(tensor_info->data_type());
     param_value->set_tensor_shape(tensor_info->shape());
     node->set_default_param(param_value);
@@ -475,7 +474,7 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInTensorForm(const std::string &val
   param_value->set_tensor_shape(shape_vector);
   param_value->set_tensor_type(kDefaultValueSwitchMap[attr_tensor_type]);
   const std::string &tensor_buf = attr_tensor.raw_data();
-  auto tensor_data = new (std::nothrow) char[tensor_buf.size() + 1];
+  auto tensor_data = new (std::nothrow) char[tensor_buf.size()];
   if (tensor_data == nullptr) {
     MS_LOG(ERROR) << "Tensor_data is nullptr";
     return false;
@@ -486,8 +485,7 @@ bool AnfImporterFromProtobuf::ObtainValueNodeInTensorForm(const std::string &val
     MS_LOG(ERROR) << "Memcpy error: " << ret;
     return false;
   }
-  param_value->set_tensor_addr(tensor_data);
-  param_value->set_tensor_size(tensor_buf.size());
+  param_value->SetTensorData(tensor_data, tensor_buf.size());
   auto new_value_node = NewValueNode(MakeValue(param_value));
   if (new_value_node == nullptr) {
     MS_LOG(ERROR) << "Make valuenode fail";
