@@ -227,7 +227,9 @@ Status SaveToDisk::Save() {
     nlohmann::json row_raw_data;
     std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> row_bin_data;
     RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
-    if (row.empty()) break;
+    if (row.empty()) {
+      break;
+    }
     if (first_loop) {
       nlohmann::json mr_json;
       std::vector<std::string> index_fields;
@@ -249,7 +251,7 @@ Status SaveToDisk::Save() {
       raw_data.insert(
         std::pair<uint64_t, std::vector<nlohmann::json>>(mr_schema_id, std::vector<nlohmann::json>{row_raw_data}));
       std::vector<std::vector<uint8_t>> bin_data;
-      if (nullptr != output_bin_data) {
+      if (output_bin_data != nullptr) {
         bin_data.emplace_back(*output_bin_data);
       }
       mr_writer->WriteRawData(raw_data, bin_data);

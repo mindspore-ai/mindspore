@@ -30,7 +30,7 @@ PKSamplerRT::PKSamplerRT(int64_t num_samples, int64_t val, bool shuffle, int64_t
 Status PKSamplerRT::InitSampler() {
   labels_.reserve(label_to_ids_.size());
   for (const auto &pair : label_to_ids_) {
-    if (pair.second.empty() == false) {
+    if (!pair.second.empty()) {
       labels_.push_back(pair.first);
     }
   }
@@ -76,6 +76,7 @@ Status PKSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
     int64_t last_id = (samples_per_buffer_ + next_id_ > num_samples_) ? num_samples_ : samples_per_buffer_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, last_id - next_id_));
     auto id_ptr = sample_ids->begin<int64_t>();
+    CHECK_FAIL_RETURN_UNEXPECTED(samples_per_class_ != 0, "samples cannot be zero.");
     while (next_id_ < last_id && id_ptr != sample_ids->end<int64_t>()) {
       int64_t cls_id = next_id_++ / samples_per_class_;
       const std::vector<int64_t> &samples = label_to_ids_[labels_[cls_id]];

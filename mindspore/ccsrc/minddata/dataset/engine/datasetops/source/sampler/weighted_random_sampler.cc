@@ -42,9 +42,10 @@ Status WeightedRandomSamplerRT::InitSampler() {
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
     num_samples_ = num_rows_;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0 && num_samples_,
-                               "Invalid parameter, num_samples & num_rows must be greater than 0, but got num_rows: " +
-                                 std::to_string(num_rows_) + ", num_samples: " + std::to_string(num_samples_));
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_rows_ > 0 && num_samples_,
+    "Invalid parameter, num_samples and num_rows must be greater than 0, but got num_rows: " +
+      std::to_string(num_rows_) + ", num_samples: " + std::to_string(num_samples_));
   CHECK_FAIL_RETURN_UNEXPECTED(samples_per_buffer_ > 0,
                                "Invalid parameter, samples_per_buffer must be greater than 0, but got " +
                                  std::to_string(samples_per_buffer_) + ".\n");
@@ -57,7 +58,7 @@ Status WeightedRandomSamplerRT::InitSampler() {
   }
   if (!replacement_ && (weights_.size() < static_cast<size_t>(num_samples_))) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid parameter, without replacement, weights size must be greater than or equal to num_samples, "
+      "Invalid parameter, without replacement, weight size must be greater than or equal to num_samples, "
       "but got weight size: " +
       std::to_string(weights_.size()) + ", num_samples: " + std::to_string(num_samples_));
   }
@@ -122,7 +123,7 @@ Status WeightedRandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_b
 
   if (!replacement_ && (weights_.size() < static_cast<size_t>(num_samples_))) {
     RETURN_STATUS_UNEXPECTED(
-      "Invalid parameter, without replacement, weights size must be greater than or equal to num_samples, "
+      "Invalid parameter, without replacement, weight size must be greater than or equal to num_samples, "
       "but got weight size: " +
       std::to_string(weights_.size()) + ", num_samples: " + std::to_string(num_samples_));
   }

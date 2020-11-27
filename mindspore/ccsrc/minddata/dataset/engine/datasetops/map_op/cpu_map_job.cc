@@ -26,7 +26,7 @@ namespace dataset {
 CpuMapJob::CpuMapJob() = default;
 
 // Constructor
-CpuMapJob::CpuMapJob(std::vector<std::shared_ptr<TensorOp>> operations) : MapJob(operations) {}
+CpuMapJob::CpuMapJob(std::vector<std::shared_ptr<TensorOp>> operations) : MapJob(std::move(operations)) {}
 
 // Destructor
 CpuMapJob::~CpuMapJob() = default;

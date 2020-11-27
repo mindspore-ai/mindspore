@@ -55,7 +55,7 @@ Status DistributedSamplerRT::InitSampler() {
   if (offset_ != -1 || !even_dist_) {
     if (offset_ == -1) offset_ = 0;
     samples_per_buffer_ = (num_rows_ + offset_) / num_devices_;
-    int remainder = (num_rows_ + offset_) % num_devices_;
+    int64_t remainder = (num_rows_ + offset_) % num_devices_;
     if (device_id_ < remainder) samples_per_buffer_++;
     if (device_id_ < offset_) samples_per_buffer_--;
   } else {
@@ -63,7 +63,7 @@ Status DistributedSamplerRT::InitSampler() {
     samples_per_buffer_ = (num_rows_ + num_devices_ - 1) / num_devices_;  // equals to ceil(num_rows/num_devices)
   }
   samples_per_buffer_ = num_samples_ < samples_per_buffer_ ? num_samples_ : samples_per_buffer_;
-  if (shuffle_ == true) {
+  if (shuffle_) {
     shuffle_vec_.reserve(num_rows_);
     for (int64_t i = 0; i < num_rows_; i++) {
       shuffle_vec_.push_back(i);

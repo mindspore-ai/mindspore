@@ -60,7 +60,7 @@ class SamplerRT {
   // @param int64_t num_samples: the user-requested number of samples ids to generate. A value of 0
   //                indicates that the sampler should produce the complete set of ids.
   // @param int64_t samplesPerBuffer: Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit SamplerRT(int64_t num_samples, int64_t samples_per_buffer);
+  SamplerRT(int64_t num_samples, int64_t samples_per_buffer);
 
   SamplerRT(const SamplerRT &s) : SamplerRT(s.num_samples_, s.samples_per_buffer_) {}
 

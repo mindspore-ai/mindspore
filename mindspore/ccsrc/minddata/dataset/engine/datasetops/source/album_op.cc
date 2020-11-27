@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace dataset {
-AlbumOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr), builder_schema_file_("") {
+AlbumOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
@@ -62,9 +62,8 @@ Status AlbumOp::Builder::Build(std::shared_ptr<AlbumOp> *ptr) {
 Status AlbumOp::Builder::SanityCheck() {
   Path dir(builder_dir_);
   std::string err_msg;
-  err_msg += dir.IsDirectory() == false
-               ? "Invalid parameter, Album path is invalid or not set, path: " + builder_dir_ + ".\n"
-               : "";
+  err_msg +=
+    !dir.IsDirectory() ? "Invalid parameter, Album path is invalid or not set, path: " + builder_dir_ + ".\n" : "";
   err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
                                            std::to_string(builder_num_workers_) + ".\n"
                                        : "";
@@ -97,8 +96,8 @@ bool StrComp(const std::string &a, const std::string &b) {
   // returns 1 if string "a" represent a numeric value less than string "b"
   // the following will always return name, provided there is only one "." character in name
   // "." character is guaranteed to exist since the extension is checked befor this function call.
-  int64_t value_a = std::atoi(a.substr(1, a.find(".")).c_str());
-  int64_t value_b = std::atoi(b.substr(1, b.find(".")).c_str());
+  int64_t value_a = std::stoi(a.substr(1, a.find(".")).c_str());
+  int64_t value_b = std::stoi(b.substr(1, b.find(".")).c_str());
   return value_a < value_b;
 }
 
@@ -261,6 +260,7 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
     RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, row));
     return Status::OK();
   }
+  fs.close();
   // Hack logic to replace png images with empty tensor
   Path file(image_file_path);
   std::set<std::string> png_ext = {".png", ".PNG"};
@@ -387,7 +387,7 @@ Status AlbumOp::LoadIDTensor(const std::string &file, uint32_t col_num, TensorRo
     return Status::OK();
   }
   // hack to get the file name without extension, the 1 is to get rid of the backslash character
-  int64_t image_id = std::atoi(file.substr(1, file.find(".")).c_str());
+  int64_t image_id = std::stoi(file.substr(1, file.find(".")).c_str());
   TensorPtr id;
   RETURN_IF_NOT_OK(Tensor::CreateScalar<int64_t>(image_id, &id));
   MS_LOG(INFO) << "File ID " << image_id << ".";

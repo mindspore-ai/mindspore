@@ -81,7 +81,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// Constructor
   /// \param op_connector_size - The size for the output connector of this operator.
   /// \param sampler - The sampler for the op
-  explicit DatasetOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampler);
+  DatasetOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampler);
 
   /// Destructor
   virtual ~DatasetOp() { tree_ = nullptr; }

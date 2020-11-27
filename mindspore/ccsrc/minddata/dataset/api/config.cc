@@ -29,7 +29,7 @@ std::shared_ptr<ConfigManager> _config = GlobalContext::config_manager();
 
 // Function to set the seed to be used in any random generator
 bool set_seed(int32_t seed) {
-  if (seed < 0 || seed > UINT32_MAX) {
+  if (seed < 0 || seed > INT32_MAX) {
     MS_LOG(ERROR) << "Seed given is not within the required range: " << seed;
     return false;
   }
@@ -68,7 +68,7 @@ int32_t get_num_parallel_workers() { return _config->num_parallel_workers(); }
 
 // Function to set the default interval (in milliseconds) for monitor sampling
 bool set_monitor_sampling_interval(int32_t interval) {
-  if (interval <= 0 || interval > UINT32_MAX) {
+  if (interval <= 0 || interval > INT32_MAX) {
     MS_LOG(ERROR) << "Interval given is not within the required range: " << interval;
     return false;
   }
@@ -81,7 +81,7 @@ int32_t get_monitor_sampling_interval() { return _config->monitor_sampling_inter
 
 // Function to set the default timeout (in seconds) for DSWaitedCallback
 bool set_callback_timeback(int32_t timeout) {
-  if (timeout <= 0 || timeout > UINT32_MAX) {
+  if (timeout <= 0 || timeout > INT32_MAX) {
     MS_LOG(ERROR) << "Timeout given is not within the required range: " << timeout;
     return false;
   }

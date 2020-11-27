@@ -31,8 +31,8 @@ class RandomSamplerRT : public SamplerRT {
   // @param bool replacement - put he id back / or not after a sample
   // @param reshuffle_each_epoch - T/F to reshuffle after epoch
   // @param int64_t samples_per_buffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit RandomSamplerRT(int64_t num_samples, bool replacement, bool reshuffle_each_epoch,
-                           int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+  RandomSamplerRT(int64_t num_samples, bool replacement, bool reshuffle_each_epoch,
+                  int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.
   ~RandomSamplerRT() = default;
@@ -50,7 +50,7 @@ class RandomSamplerRT : public SamplerRT {
   // @return - The error code return
   Status ResetSampler() override;
 
-  virtual void Print(std::ostream &out, bool show_all) const;
+  void Print(std::ostream &out, bool show_all) const override;
 
  private:
   uint32_t seed_;

@@ -30,8 +30,8 @@ class SequentialSamplerRT : public SamplerRT {
   //                      full amount of ids from the dataset
   // @param start_index - The starting index value
   // @param int64_t samplesPerBuffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit SequentialSamplerRT(int64_t num_samples, int64_t start_index,
-                               int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+  SequentialSamplerRT(int64_t num_samples, int64_t start_index,
+                      int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.
   ~SequentialSamplerRT() = default;
