@@ -15,7 +15,6 @@
  */
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
-
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;
 
@@ -313,6 +312,143 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess7) {
   }
 
   EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess7 with padded sample.";
+
+  // Create pad sample for MindDataset
+  auto pad = nlohmann::json::object();
+  pad["file_name"] = "does_not_exist.jpg";
+  pad["label"] = 999;
+
+  // Create a MindData Dataset
+  // Pass a list of mindrecord file name, files in list will be read directly but not search for related files
+  std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
+  std::vector<std::string> file_list = {file_path1};
+  std::shared_ptr<Dataset> ds = MindData(file_list, {"file_name", "label"}, SequentialSampler(), pad, 4);
+  EXPECT_NE(ds, nullptr);
+
+  std::vector<DataType> types = ds->GetOutputTypes();
+  std::vector<TensorShape> shapes = ds->GetOutputShapes();
+  std::vector<std::string> column_names = {"file_name", "label"};
+  EXPECT_EQ(types.size(), 2);
+  EXPECT_EQ(types[0].ToString(), "string");
+  EXPECT_EQ(types[1].ToString(), "int64");
+  EXPECT_EQ(shapes.size(), 2);
+  EXPECT_EQ(shapes[0].ToString(), "<>");
+  EXPECT_EQ(shapes[1].ToString(), "<>");
+  EXPECT_EQ(ds->GetDatasetSize(), 9);
+  EXPECT_EQ(ds->GetRepeatCount(), 1);
+  EXPECT_EQ(ds->GetColumnNames(), column_names);
+
+  // Create a Skip operation on ds, skip original data in mindrecord and get padded samples
+  ds = ds->Skip(5);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+  EXPECT_EQ(ds->GetRepeatCount(), 2);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["file_name"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor file name: " << *image;
+    MS_LOG(INFO) << "Tensor label: " << *label;
+
+    std::shared_ptr<Tensor> expected_item;
+    Tensor::CreateScalar((int64_t)999, &expected_item);
+    EXPECT_EQ(*expected_item, *label);
+
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 8);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestMindDataSuccess9) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess7 with padded sample.";
+
+  // Create pad sample for MindDataset
+  auto pad = nlohmann::json::object();
+  pad["file_name"] = "does_not_exist.jpg";
+  pad["label"] = 999;
+
+  // Create a MindData Dataset
+  // Pass a list of mindrecord file name, files in list will be read directly but not search for related files
+  std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
+  std::vector<std::string> file_list = {file_path1};
+  std::shared_ptr<Dataset> ds1 = MindData(file_list, {"file_name", "label"}, SequentialSampler(), pad, 4);
+  EXPECT_NE(ds1, nullptr);
+  ds1 = ds1->Skip(5);
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Dataset> ds2 = MindData(file_list, {"file_name", "label"}, SequentialSampler(), pad, 4);
+  EXPECT_NE(ds2, nullptr);
+  ds2 = ds2->Skip(5);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds1 = ds1->Repeat(repeat_num);
+  EXPECT_NE(ds1, nullptr);
+  repeat_num = 3;
+  ds2 = ds2->Repeat(repeat_num);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Project operation on ds
+  std::vector<std::string> column_project = {"label"};
+  ds1 = ds1->Project(column_project);
+  EXPECT_NE(ds1, nullptr);
+  ds2 = ds2->Project(column_project);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Concat operation on the ds
+  ds1 = ds1->Concat({ds2});
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor label: " << *label;
+
+    std::shared_ptr<Tensor> expected_item;
+    Tensor::CreateScalar((int64_t)999, &expected_item);
+    EXPECT_EQ(*expected_item, *label);
+
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 20);
 
   // Manually terminate the pipeline
   iter->Stop();
