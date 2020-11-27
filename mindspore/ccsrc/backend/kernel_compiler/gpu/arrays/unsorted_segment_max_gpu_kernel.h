@@ -28,14 +28,7 @@ namespace kernel {
 template <typename T>
 class UnsortedSegmentMaxGpuKernel : public GpuKernel {
  public:
-  UnsortedSegmentMaxGpuKernel()
-      : num_segments_(1),
-        inner_size_(1),
-        outer_size_(1),
-        input_size_(1),
-        segment_ids_size_(1),
-        output_size_(1),
-        is_null_input_(false) {}
+  UnsortedSegmentMaxGpuKernel() { ResetResource(); }
   ~UnsortedSegmentMaxGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -60,18 +53,24 @@ class UnsortedSegmentMaxGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shapes);
     if (is_null_input_) {
       MS_LOG(WARNING) << "UnsortedSegmentMax input is null";
       InitSizeLists();
       return true;
     }
-    auto segment_ids_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);  // we get that from computation
+    auto segment_ids_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 1);
+    auto output_shapes = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num == 3) {
+      MS_LOG(INFO) << "UnsortedSegmentMax Kernel Input count is 3 - dynamic mode";
+    } else {
+      MS_LOG(INFO) << "UnsortedSegmentMax Kernel Input count is 2";
+    }
 
     num_segments_ = output_shapes[0];
-
     input_size_ = 1;
     for (size_t i = 0; i < input_shapes.size(); i++) {
       input_size_ *= input_shapes[i];
@@ -95,6 +94,19 @@ class UnsortedSegmentMaxGpuKernel : public GpuKernel {
 
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    num_segments_ = 1;
+    inner_size_ = 1;
+    outer_size_ = 1;
+    input_size_ = 1;
+    segment_ids_size_ = 1;
+    output_size_ = 1;
+    is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:
