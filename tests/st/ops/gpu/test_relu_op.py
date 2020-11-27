@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 
 class NetRelu(nn.Cell):
@@ -31,10 +32,21 @@ class NetRelu(nn.Cell):
         return self.relu(x)
 
 
+class NetReluDynamic(nn.Cell):
+    def __init__(self):
+        super(NetReluDynamic, self).__init__()
+        self.conv = inner.GpuConvertToDynamicShape()
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        x_conv = self.conv(x)
+        return self.relu(x_conv)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_relu():
+def test_relu_float32():
     x = Tensor(np.array([[[[-1, 1, 10],
                            [1, -1, 1],
                            [10, 1, -1]]]]).astype(np.float32))
@@ -50,4 +62,66 @@ def test_relu():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     relu = NetRelu()
     output = relu(x)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_relu_int32():
+    x = Tensor(np.array([[[[-1, 1, 10],
+                           [1, -1, 1],
+                           [10, 1, -1]]]]).astype(np.int32))
+    expect = np.array([[[[0, 1, 10,],
+                         [1, 0, 1,],
+                         [10, 1, 0.]]]]).astype(np.int32)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    relu = NetRelu()
+    output = relu(x)
+    assert (output.asnumpy() == expect).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    relu = NetRelu()
+    output = relu(x)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_relu_int64():
+    x = Tensor(np.array([[[[-1, 1, 10],
+                           [1, -1, 1],
+                           [10, 1, -1]]]]).astype(np.int64))
+    expect = np.array([[[[0, 1, 10,],
+                         [1, 0, 1,],
+                         [10, 1, 0.]]]]).astype(np.int64)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    relu = NetRelu()
+    output = relu(x)
+    print(output.asnumpy(), expect)
+    assert (output.asnumpy() == expect).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    relu = NetRelu()
+    output = relu(x)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_relu_int64_dynamic_shape():
+    x = Tensor(np.array([[[[-1, 1, 10],
+                           [1, -1, 1],
+                           [10, 1, -1]]]]).astype(np.int64))
+    expect = np.array([[[[0, 1, 10,],
+                         [1, 0, 1,],
+                         [10, 1, 0.]]]]).astype(np.int64)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    relu_dynamic = NetReluDynamic()
+    output = relu_dynamic(x)
     assert (output.asnumpy() == expect).all()

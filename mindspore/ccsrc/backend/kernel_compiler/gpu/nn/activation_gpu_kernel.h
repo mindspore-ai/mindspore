@@ -23,6 +23,7 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
+#include "backend/kernel_compiler/gpu/cuda_impl/relu_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -36,18 +37,23 @@ class ActivationGpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
 
-    const float alpha = 1;
-    const float beta = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, input,
-                                                       &beta, data_descriptor_, output),
-                                "cudnnActivationForward failed");
+    if (mode_ == CUDNN_ACTIVATION_RELU) {
+      const int size = input_size_ / sizeof(T);
+      CalReLU(size, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      const float alpha = 1;
+      const float beta = 0;
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_,
+                                                         input, &beta, data_descriptor_, output),
+                                  "cudnnActivationForward failed");
+    }
 
     return true;
   }

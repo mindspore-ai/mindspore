@@ -291,7 +291,7 @@ class Softsign(PrimitiveWithInfer):
         return input_x
 
 
-class ReLU(PrimitiveWithInfer):
+class ReLU(PrimitiveWithCheck):
     r"""
     Computes ReLU (Rectified Linear Unit) of input tensors element-wise.
 
@@ -320,12 +320,11 @@ class ReLU(PrimitiveWithInfer):
         """Initialize ReLU"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
-    def infer_shape(self, input_x):
-        return input_x
+    def check_shape(self, input_x):
+        pass
 
-    def infer_dtype(self, input_x):
+    def check_dtype(self, input_x):
         validator.check_tensor_dtype_valid('input_x', input_x, mstype.number_type, self.name)
-        return input_x
 
 
 class ReLU6(PrimitiveWithInfer):
