@@ -574,7 +574,7 @@ Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *
       std::make_unique<GetterPass>(static_cast<GetterPass::GetterType>(GetterPass::GetterType::kDatasetSize)));
     return pre;
   });
-  RETURN_IF_NOT_OK(tree_adapter->Compile(std::move(ir_node), 1));
+  RETURN_IF_NOT_OK(tree_adapter->Compile(ir_node, 1));
   TensorRow row;
   RETURN_IF_NOT_OK(GetRow(tree_adapter, &row));
   int64_t row_cnt = 0;

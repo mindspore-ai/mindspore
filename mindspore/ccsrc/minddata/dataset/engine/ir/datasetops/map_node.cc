@@ -42,14 +42,16 @@ MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr
 }
 
 std::shared_ptr<DatasetNode> MapNode::Copy() {
-  auto node = std::make_shared<MapNode>(nullptr, operations_, input_columns_, output_columns_, project_columns_, cache_,
+  std::vector<std::shared_ptr<TensorOperation>> operations = operations_;
+  auto node = std::make_shared<MapNode>(nullptr, operations, input_columns_, output_columns_, project_columns_, cache_,
                                         callbacks_);
   return node;
 }
 
 void MapNode::Print(std::ostream &out) const {
   out << Name() + "(<ops>" + ",input:" + PrintColumns(input_columns_) + ",output:" + PrintColumns(output_columns_) +
-           ",<project_cols>" + ",...)";
+           ",<project_cols>" + ",num_tensor_ops:"
+      << operations_.size() << ",...)";
 }
 
 Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
@@ -101,14 +103,14 @@ Status MapNode::ValidateParams() {
   return Status::OK();
 }
 
-// Visitor accepting method for NodePass
-Status MapNode::Accept(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status MapNode::Accept(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<MapNode>(), modified);
 }
 
-// Visitor accepting method for NodePass
-Status MapNode::AcceptAfter(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status MapNode::AcceptAfter(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<MapNode>(), modified);
 }

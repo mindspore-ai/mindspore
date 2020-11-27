@@ -242,9 +242,27 @@ DatasetNode::DatasetNode() : cache_(nullptr), parent_({}), children_({}) {
   worker_connector_size_ = cfg->worker_connector_size();
 }
 
+const bool DatasetNode::IsTree() const {
+  bool is_tree = true;
+  if (this->parent_.size() > 1) {
+    MS_LOG(WARNING) << Name() << " has more than one parent.";
+    return false;
+  }
+  for (const auto &child : children_) {
+    is_tree = child->IsTree();
+    if (!is_tree) {
+      MS_LOG(WARNING) << Name() << " has more than one parent.";
+      break;
+    }
+  }
+  return is_tree;
+}
+
 // this function will preform a deep copy of current node (and its descendants), the parent* pointer will not be copied
 std::shared_ptr<DatasetNode> DatasetNode::DeepCopy() {
   std::shared_ptr<DatasetNode> new_node = this->Copy();
+  // temporary fix to set the num_workers to the new node.
+  new_node->SetNumWorkers(this->num_workers_);
   for (const auto &child : children_) {
     new_node->AddChild(child->DeepCopy());
   }
@@ -298,10 +316,29 @@ void DatasetNode::AddChild(std::shared_ptr<DatasetNode> child) {
     children_.push_back(child);
     child->parent_.push_back(this);
   } else if (child != nullptr) {
-    MS_LOG(WARNING) << "DatasetNode::AddChild() failed: " + child->Name() + "'s parent isn't a nullptr.";
+    MS_LOG(WARNING) << "Adding " + child->Name() + " to " + Name() + " but it already has a parent";
     children_.push_back(child);
     child->parent_.push_back(this);
   }
+}
+
+// Insert a node as a child of this node. This node's children becomes the children of the inserted node.
+Status DatasetNode::InsertBelow(std::shared_ptr<DatasetNode> node) {
+  CHECK_FAIL_RETURN_UNEXPECTED(node != nullptr, "Inserted node must not be a null pointer.");
+  CHECK_FAIL_RETURN_UNEXPECTED(node->children_.empty(), "Inserted node must not have any children.");
+  CHECK_FAIL_RETURN_UNEXPECTED(node->parent_.empty(), "Inserted node must not have a parent.");
+
+  for (auto child : children_) {
+    node->children_.push_back(child);
+    child->parent_.clear();
+    child->parent_.push_back(node.get());
+  }
+  // Then establish the new parent-child relationship with the new parent.
+  children_.clear();
+  children_.push_back(node);
+  node->parent_.clear();
+  node->parent_.push_back(this);
+  return Status::OK();
 }
 
 // Remove this node from its parent. Add the child of this node to its parent.
@@ -325,14 +362,14 @@ Status DatasetNode::Remove() {
 }
 
 // In DFS tree traversal, each node is visited twice. Accept is called on the first visit.
-Status DatasetNode::Accept(NodePass *p, bool *modified) {
+Status DatasetNode::Accept(IRNodePass *p, bool *modified) {
   // This method will only be called if its derived class does not implement one.
   return p->Visit(shared_from_this(), modified);
 }
 
 // In DFS tree traversal, each node is visited twice. AcceptAfter is called on the second visit
 // after all child nodes are visited.
-Status DatasetNode::AcceptAfter(NodePass *p, bool *modified) {
+Status DatasetNode::AcceptAfter(IRNodePass *p, bool *modified) {
   // This method will only be called if its derived class does not implement one.
   return p->VisitAfter(shared_from_this(), modified);
 }
@@ -368,18 +405,6 @@ Status DatasetNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &siz
   } else {
     RETURN_STATUS_UNEXPECTED("Trying to get dataset size from leaf node, missing override");
   }
-}
-
-// Visitor accepting method for NodePass
-Status SourceNode::Accept(NodePass *p, bool *modified) {
-  // Downcast shared pointer then call visitor
-  return p->Visit(shared_from_base<SourceNode>(), modified);
-}
-
-// Visitor accepting method for NodePass
-Status SourceNode::AcceptAfter(NodePass *p, bool *modified) {
-  // Downcast shared pointer then call visitor
-  return p->VisitAfter(shared_from_base<SourceNode>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

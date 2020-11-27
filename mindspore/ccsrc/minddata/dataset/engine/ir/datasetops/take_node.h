@@ -64,6 +64,18 @@ class TakeNode : public DatasetNode {
   Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                         int64_t *dataset_size) override;
 
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status Accept(IRNodePass *p, bool *modified) override;
+
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status AcceptAfter(IRNodePass *p, bool *modified) override;
+
  private:
   int32_t take_count_;
 };

@@ -33,7 +33,7 @@ Cifar100Node::Cifar100Node(const std::string &dataset_dir, const std::string &us
     : MappableSourceNode(std::move(cache)), dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
 std::shared_ptr<DatasetNode> Cifar100Node::Copy() {
-  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
   auto node = std::make_shared<Cifar100Node>(dataset_dir_, usage_, sampler, cache_);
   return node;
 }

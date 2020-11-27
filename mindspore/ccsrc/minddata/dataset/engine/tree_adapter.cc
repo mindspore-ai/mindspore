@@ -17,34 +17,25 @@
 #include "minddata/dataset/engine/tree_adapter.h"
 
 #include "minddata/dataset/core/client.h"
-#include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
 #include "minddata/dataset/engine/opt/pass.h"
+#include "minddata/dataset/engine/opt/pre/cache_validation_pass.h"
+#include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
 #include "minddata/dataset/engine/opt/pre/input_validation_pass.h"
+#include "minddata/dataset/engine/opt/pre/node_removal_pass.h"
 
 namespace mindspore {
 namespace dataset {
 
 Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
-  // Vector of actions in validation pass
-  std::vector<std::unique_ptr<NodePass>> validations;
+  // Vector of actions in pre-pass phase
+  std::vector<std::unique_ptr<IRPass>> actions;
 
   MS_LOG(INFO) << "Running pre pass loops.";
-  validations.push_back(std::make_unique<InputValidationPass>());
-
-  // Vector of flags for each action
-  // Apply validation actions
-  for (auto i = 0; i < validations.size(); i++) {
-    auto modified = false;
-    // InputValidationPass does not change the IR tree. We don't need to capture the "modified" value.
-    RETURN_IF_NOT_OK(validations[i]->Run(ir, &modified));
-  }
-
-  // Vector of actions in pre-pass phase
-  std::vector<std::unique_ptr<Pass>> actions;
-
-  // We will gradually move CacheErrorPass, EpochInjectionPass, CacheTransformPass
-  // from ExecutionTree::PrepareTreePreAction to here.
+  actions.push_back(std::make_unique<InputValidationPass>());
+  actions.push_back(std::make_unique<CacheValidationPass>());
+  actions.push_back(std::make_unique<NodeRemovalPass>());
+  actions.push_back(std::make_unique<EpochCtrlPass>());
 
   // Vector of flags for each action
   std::vector<bool> modified(actions.size(), false);
@@ -60,7 +51,7 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
 
 Status TreeAdapter::Optimize(std::shared_ptr<DatasetNode> ir) {
   // Vector of optimizations
-  std::vector<std::unique_ptr<NodePass>> optimizations;
+  std::vector<std::unique_ptr<IRNodePass>> optimizations;
   MS_LOG(INFO) << "Running optimization pass loops";
 
   // We will gradually move TensorOpFusionPass from ExecutionTree::Optimize to here.
@@ -79,7 +70,7 @@ Status TreeAdapter::Optimize(std::shared_ptr<DatasetNode> ir) {
 
 Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
   // Vector of actions in post-pass phase
-  std::vector<std::unique_ptr<Pass>> actions;
+  std::vector<std::unique_ptr<IRPass>> actions;
   MS_LOG(INFO) << "Running post pass loops.";
 
   // We will gradually move RepeatPass from ExecutionTree::PrepareTreePostAction to here.
@@ -96,10 +87,6 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
 }
 
 Status TreeAdapter::BuildExecutionTree(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op) {
-  // Check if pipeline is valid or not
-  CHECK_FAIL_RETURN_UNEXPECTED(ir->Parent().size() <= 1,
-                               "The data pipeline is not a tree (i.e. one node has two consumers)");
-
   // Build the DatasetOp ExecutionTree from the optimized IR tree
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(ir->Build(&ops));
@@ -130,8 +117,12 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
   RETURN_UNEXPECTED_IF_NULL(input_ir);
   MS_LOG(INFO) << "Input plan:" << '\n' << *input_ir << '\n';
 
+  // We will first walk the input tree to sanity check this is not a graph
+  // Flag an error when it is not a tree
+  CHECK_FAIL_RETURN_UNEXPECTED(input_ir->IsTree(), "The data pipeline is not a tree (i.e. one node has two consumers)");
+
   // Copy the input IR tree and insert under the root node
-  // Create a root node to host the input IR tree, the deepcopied tree will be passed to optimization pass
+  // Create a root node to host the new copy of the input IR tree to pass to the optimizer
   auto root_ir = std::make_shared<RootNode>(input_ir->DeepCopy(), num_epochs);
   MS_LOG(INFO) << "Plan before PrePass:" << '\n' << *root_ir << '\n';
 
@@ -151,11 +142,9 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
   // This will evolve in the long run
   tree_ = std::make_unique<ExecutionTree>();
 
-  // Build the Execution tree from the child of the root node
+  // Build the Execution tree from the child of the IR root node, which represent the root of the input IR tree
   std::shared_ptr<DatasetOp> root_op;
-  // input_ir is the ir node before the deepcopy.
-  // We will replace input_ir with root_ir->Children()[0] once IR optimizer is in
-  RETURN_IF_NOT_OK(BuildExecutionTree(input_ir, &root_op));
+  RETURN_IF_NOT_OK(BuildExecutionTree(root_ir->Children()[0], &root_op));
   RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));
 
   if (pre_pass_override_) tree_->SetPrePassOverride(pre_pass_override_);
@@ -163,7 +152,7 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
   // Note: We will gradually move the pre pass, optimizer pass, and post pass
   //       on ExecutionTree to perform on IR tree.
   // Prepare the tree
-  RETURN_IF_NOT_OK(tree_->Prepare(num_epochs));
+  RETURN_IF_NOT_OK(tree_->Prepare(num_epochs, true));
 
   // After the tree is prepared, the col_name_id_map can safely be obtained
   column_name_map_ = tree_->root()->column_name_id_map();

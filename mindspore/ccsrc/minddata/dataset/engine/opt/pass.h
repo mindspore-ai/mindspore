@@ -113,26 +113,18 @@ class GeneratorOp;
 
 // The base class Pass is the basic unit of tree transformation.
 // The actual implementation of the passes will be derived from here.
-class Pass : public std::enable_shared_from_this<Pass> {
+class IRPass : public std::enable_shared_from_this<IRPass> {
  public:
   // Run the transformation pass against the IR tree.
   // @param root_ir - Pointer to the IR tree to be transformed.
   // @param modified - Pointer to the modified flag,
   virtual Status Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) = 0;
 
-  //////////////////////////////////
-  // This section of code will be removed once the migration of optimizer from DatasetOp to DatasetNode is done.
-  // Run the transformation pass against the execution tree.
-  // @param tree - Pointer to the execution tree to be transformed.
-  // @param modified - Pointer to the modified flag,
-  virtual Status Run(ExecutionTree *tree, bool *modified) = 0;
-  //////////////////////////////////
-
-  virtual ~Pass() = default;
+  virtual ~IRPass() = default;
 };
 
-// TreePass is a basic Pass class which performs transformation on ExecutionTree directly.
-class TreePass : public Pass {
+// IRTreePass is a basic Pass class which performs transformation on IR tree directly.
+class IRTreePass : public IRPass {
  public:
   /// \brief Run the transformation pass against the IR tree.
   /// \param[inout] root_ir Pointer to the IR tree to be transformed.
@@ -145,44 +137,29 @@ class TreePass : public Pass {
   /// \param[inout] Indicate if the tree was modified.
   /// \return Status The error code return
   virtual Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *modified) { return Status::OK(); }
-
-  //////////////////////////////////
-  // This section of code will be removed once the migration of optimizer from DatasetOp to DatasetNode is done.
-  /// \brief Run the transformation pass against the execution tree.
-  /// \param[inout] tree Pointer to the execution tree to be transformed.
-  /// \param[inout] modified Indicate if the tree was modified
-  Status Run(ExecutionTree *tree, bool *modified) final;
-
-  /// \brief Derived classes may implement the runOnTree function to implement tree transformation.
-  ///     "modified" flag needs to be set to true if tree is modified during the pass execution.
-  /// \param[inout] tree The tree to operate on.
-  /// \param[inout] Indicate of the tree was modified.
-  /// \return Status The error code return
-  virtual Status RunOnTree(ExecutionTree *tree, bool *modified) { return Status::OK(); }
-  //////////////////////////////////
 };
 
-// NodePass is a base Pass class which performs transformation on node visiting.
-// NodePass implements Visitor design pattern.
+// IRNodePass is a base Pass class which performs transformation on node visiting.
+// IRNodePass implements Visitor design pattern.
 // The visiting happens twice for each node in the DFS traversal, one on the way down of the traversal,
 // and the other when all the descending nodes are visited.
-// Actual transformation is done by implementing a new derived class of NodePass.
+// Actual transformation is done by implementing a new derived class of IRNodePass.
 // The derived class will implement the method Visit()/VisitAfter() passing specified node types
-// it wants to action on them, overriding the ones defined in NodePass.
+// it wants to action on them, overriding the ones defined in IRNodePass.
 // If the derived class wants to perform the same action on all node types,
 // it can simply implement the method Visit()/VisitAfter() passing the base class DatasetNode.
 // This is made possible by overloading the method Visit()/VisitAfter() on each node type to fall back
-// to call the Visit()/VisitAfter() in this parent NodePass class.
-class NodePass : public Pass {
+// to call the Visit()/VisitAfter() in this parent IRNodePass class.
+class IRNodePass : public IRPass {
  public:
   // Tree traversal order
   enum Order { DFS, BFS };
 
   // Constructor
   // Default DFS traversal
-  explicit NodePass(Order order = Order::DFS) { traversalOrder_ = order; }
+  explicit IRNodePass(Order order = Order::DFS) { traversalOrder_ = order; }
 
-  ~NodePass() = default;
+  ~IRNodePass() = default;
 
   /// \brief Run the transformation pass against the IR tree
   /// \param[inout] root_ir Pointer to the IR tree to be transformed
@@ -251,12 +228,70 @@ class NodePass : public Pass {
   virtual Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified);
   virtual Status VisitAfter(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified);
 #endif
-  // Leaf IR node
-  virtual Status Visit(std::shared_ptr<SourceNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<SourceNode> node, bool *modified);
 
-  //////////////////////////////////
-  // This section of code will be removed once the migration of optimizer from DatasetOp to DatasetNode is done.
+ private:
+  // Helper function to perform DFS visit
+  Status DFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modified);
+
+  // Helper function to perform BFS visit
+  Status BFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modified);
+
+  // Tree traversal order of the NodePass
+  Order traversalOrder_;
+};
+
+//////////////////////////////////
+// This section of code will be removed once the migration of optimizer from DatasetOp to DatasetNode is done.
+// The base class Pass is the basic unit of tree transformation.
+// The actual implementation of the passes will be derived from here.
+class Pass : public std::enable_shared_from_this<Pass> {
+ public:
+  // Run the transformation pass against the execution tree.
+  // @param tree - Pointer to the execution tree to be transformed.
+  // @param modified - Pointer to the modified flag,
+  virtual Status Run(ExecutionTree *tree, bool *modified) = 0;
+
+  virtual ~Pass() = default;
+};
+
+// TreePass is a basic Pass class which performs transformation on ExecutionTree directly.
+class TreePass : public Pass {
+ public:
+  /// \brief Run the transformation pass against the execution tree.
+  /// \param[inout] tree Pointer to the execution tree to be transformed.
+  /// \param[inout] modified Indicate if the tree was modified
+  Status Run(ExecutionTree *tree, bool *modified) final;
+
+  /// \brief Derived classes may implement the runOnTree function to implement tree transformation.
+  ///     "modified" flag needs to be set to true if tree is modified during the pass execution.
+  /// \param[inout] tree The tree to operate on.
+  /// \param[inout] Indicate of the tree was modified.
+  /// \return Status The error code return
+  virtual Status RunOnTree(ExecutionTree *tree, bool *modified) { return Status::OK(); }
+};
+
+// NodePass is a base Pass class which performs transformation on node visiting.
+// NodePass implements Visitor design pattern.
+// The visiting happens twice for each node in the DFS traversal, one on the way down of the traversal,
+// and the other when all the descending nodes are visited.
+// Actual transformation is done by implementing a new derived class of NodePass.
+// The derived class will implement the method Visit()/VisitAfter() passing specified node types
+// it wants to action on them, overriding the ones defined in NodePass.
+// If the derived class wants to perform the same action on all node types,
+// it can simply implement the method Visit()/VisitAfter() passing the base class DatasetNode.
+// This is made possible by overloading the method Visit()/VisitAfter() on each node type to fall back
+// to call the Visit()/VisitAfter() in this parent NodePass class.
+class NodePass : public Pass {
+ public:
+  // Tree traversal order
+  enum Order { DFS, BFS };
+
+  // Constructor
+  // Default DFS traversal
+  explicit NodePass(Order order = Order::DFS) { traversalOrder_ = order; }
+
+  ~NodePass() = default;
+
   /// \brief Run the transformation pass against the execution tree
   /// \param[inout] tree Pointer to the execution tree to be transformed
   /// \param[inout] modified Indicator if the tree was changed
@@ -326,27 +361,18 @@ class NodePass : public Pass {
   virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified);
   virtual Status PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
 #endif
-  //////////////////////////////////
 
  private:
-  // Helper function to perform DFS visit
-  Status DFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modified);
-
-  // Helper function to perform BFS visit
-  Status BFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modified);
-
-  //////////////////////////////////
-  // This section of code will be removed once the migration of optimizer from DatasetOp to DatasetNode is done.
   // Helper function to perform DFS visit
   Status DFSNodeVisit(std::shared_ptr<DatasetOp> node, bool *modified);
 
   // Helper function to perform BFS visit
   Status BFSNodeVisit(std::shared_ptr<DatasetOp> root, bool *modified);
-  //////////////////////////////////
 
   // Tree traversal order of the NodePass
   Order traversalOrder_;
 };
+//////////////////////////////////
 
 }  // namespace dataset
 }  // namespace mindspore

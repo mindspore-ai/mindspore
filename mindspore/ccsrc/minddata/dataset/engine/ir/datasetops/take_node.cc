@@ -22,6 +22,7 @@
 #include <algorithm>
 
 #include "minddata/dataset/engine/datasetops/take_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -68,5 +69,16 @@ Status TakeNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
   return Status::OK();
 }
 
+// Visitor accepting method for IRNodePass
+Status TakeNode::Accept(IRNodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<TakeNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status TakeNode::AcceptAfter(IRNodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<TakeNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

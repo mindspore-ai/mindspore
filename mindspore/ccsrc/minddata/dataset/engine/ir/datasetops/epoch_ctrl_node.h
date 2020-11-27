@@ -29,7 +29,10 @@ namespace dataset {
 class EpochCtrlNode : public DatasetNode {
  public:
   /// \brief Constructor
-  explicit EpochCtrlNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs);
+  explicit EpochCtrlNode(int32_t num_epochs) : num_epochs_(num_epochs) {}
+
+  /// \brief Constructor
+  EpochCtrlNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs);
 
   /// \brief Destructor
   ~EpochCtrlNode() = default;

@@ -169,7 +169,7 @@ class ExecutionTree {
   // The driver of the prepare phase of the execution tree.
   // Prepare phase consists of three sub phases
   //
-  // 1. PrepareTreePreAction()
+  // 1. PreAction()
   //    Compulsory transformation/action pre optimization.
   //    For example, CacheOp Insertion
   //
@@ -177,20 +177,20 @@ class ExecutionTree {
   //    Optimization transformation/action, optional
   //    For example, MapOp Fusion
   //
-  // 3. PrepareTreePostAction()
+  // 3. PostAction()
   //    Compulsory transformation/action post optimization.
   //    For example, repeatOp inlining
   //
   // @return Status - The error code return
-  Status Prepare(int num_epochs = -1);
+  Status Prepare(int num_epochs = -1, bool partial = false);
 
   // Compulsory transformation/action pre optimization.
   // @return Status - The error code return
-  Status PrepareTreePreAction();
+  Status PreAction();
 
   // Compulsory transformation/action post optimization.
   // @return Status - The error code return
-  Status PrepareTreePostAction();
+  Status PostAction();
 
   // Optimization transformation/action, optional.
   // @return Status - The error code return
@@ -281,6 +281,7 @@ class ExecutionTree {
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
   bool optimize_;                                        // Flag to enable optional optimizations
   std::function<OptPass(OptPass)> pre_pass_override_;    // function ptr that overrides pre pass, called in PrePrepare()
+  bool partially_prepare_;                               // Temp: during migration to IR, if true, run remaining passes.
 };
 }  // namespace dataset
 }  // namespace mindspore

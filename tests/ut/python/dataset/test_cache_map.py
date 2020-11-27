@@ -237,7 +237,7 @@ def test_cache_map_failure1():
         num_iter = 0
         for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
-    assert "Nested cache operations is not supported!" in str(e.value)
+    assert "Nested cache operations" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure1 Ended.\n')
@@ -279,7 +279,7 @@ def test_cache_map_failure2():
         num_iter = 0
         for _ in dsz.create_dict_iterator():
             num_iter += 1
-    assert "ZipOp is currently not supported as a descendant operator under a cache" in str(e.value)
+    assert "ZipNode is not supported as a descendant operator under a cache" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure2 Ended.\n')
@@ -319,7 +319,7 @@ def test_cache_map_failure3():
         num_iter = 0
         for _ in ds1.create_dict_iterator():
             num_iter += 1
-    assert "BatchOp is currently not supported as a descendant operator under a cache" in str(e.value)
+    assert "BatchNode is not supported as a descendant operator under a cache" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure3 Ended.\n')
@@ -361,7 +361,7 @@ def test_cache_map_failure4():
         num_iter = 0
         for _ in ds1.create_dict_iterator():
             num_iter += 1
-    assert "FilterOp is currently not supported as a descendant operator under a cache" in str(e.value)
+    assert "FilterNode is not supported as a descendant operator under a cache" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure4 Ended.\n')
@@ -402,7 +402,7 @@ def test_cache_map_failure5():
         num_iter = 0
         for _ in data.create_dict_iterator():
             num_iter += 1
-    assert "MapOp with non-deterministic TensorOps is currently not supported as a descendant of cache" in str(e.value)
+    assert "MapOp with non-deterministic TensorOps is currently not supported as a descendant" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure5 Ended.\n')
@@ -522,7 +522,7 @@ def test_cache_map_failure8():
         num_iter = 0
         for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1
-    assert "Repeat is not supported as a descendant operator under a mappable cache" in str(e.value)
+    assert "A cache over a RepeatNode of a mappable dataset is not supported" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure8 Ended.\n')
@@ -564,7 +564,7 @@ def test_cache_map_failure9():
         num_iter = 0
         for _ in ds1.create_dict_iterator():
             num_iter += 1
-    assert "TakeOp/SplitOp is currently not supported as a descendant operator under a cache" in str(e.value)
+    assert "TakeNode (possibly from Split) is not supported as a descendant operator under a cache" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure9 Ended.\n')
@@ -606,7 +606,7 @@ def test_cache_map_failure10():
         num_iter = 0
         for _ in ds1.create_dict_iterator():
             num_iter += 1
-    assert "SkipOp is currently not supported as a descendant operator under a cache" in str(e.value)
+    assert "SkipNode is not supported as a descendant operator under a cache" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure10 Ended.\n')
@@ -655,13 +655,13 @@ def test_cache_map_split1():
         num_iter = 0
         for _ in ds1.create_dict_iterator():
             num_iter += 1
-    assert "TakeOp/SplitOp is currently not supported as a descendant operator under a cache" in str(e.value)
+    assert "TakeNode (possibly from Split) is not supported as a descendant operator under a cache" in str(e.value)
 
     with pytest.raises(RuntimeError) as e:
         num_iter = 0
         for _ in ds2.create_dict_iterator():
             num_iter += 1
-    assert "TakeOp/SplitOp is currently not supported as a descendant operator under a cache" in str(e.value)
+    assert "TakeNode (possibly from Split) is not supported as a descendant operator under a cache" in str(e.value)
     logger.info('test_cache_split1 Ended.\n')
 
 

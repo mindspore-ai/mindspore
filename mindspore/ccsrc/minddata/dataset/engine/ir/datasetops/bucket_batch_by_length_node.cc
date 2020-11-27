@@ -46,12 +46,40 @@ BucketBatchByLengthNode::BucketBatchByLengthNode(
 
 std::shared_ptr<DatasetNode> BucketBatchByLengthNode::Copy() {
   auto node = std::make_shared<BucketBatchByLengthNode>(nullptr, column_names_, bucket_boundaries_, bucket_batch_sizes_,
-                                                        element_length_function_, pad_info_, pad_to_bucket_boundary_);
+                                                        element_length_function_, pad_info_, pad_to_bucket_boundary_,
+                                                        drop_remainder_);
   return node;
 }
 
 void BucketBatchByLengthNode::Print(std::ostream &out) const {
-  out << Name() + "(columns:" + PrintColumns(column_names_) + ",...)";
+  out << Name() + "(columns:" + PrintColumns(column_names_);
+  int i = 0;
+  for (auto it : bucket_boundaries_) {
+    if (i == 0) {
+      out << ",bucket_boundaries:{";
+    }
+    out << it;
+    if (i < bucket_boundaries_.size() - 1) {
+      out << ",";
+    } else {
+      out << "}";
+    }
+    i++;
+  }
+  i = 0;
+  for (auto it : bucket_batch_sizes_) {
+    if (i == 0) {
+      out << ",bucket_batch_sizes:{";
+    }
+    out << it;
+    if (i < bucket_batch_sizes_.size() - 1) {
+      out << ",";
+    } else {
+      out << "}";
+    }
+    i++;
+  }
+  out << ")";
 }
 
 Status BucketBatchByLengthNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {

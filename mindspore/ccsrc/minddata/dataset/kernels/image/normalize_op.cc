@@ -44,7 +44,7 @@ Status NormalizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
 }
 
 void NormalizeOp::Print(std::ostream &out) const {
-  out << "NormalizeOp, mean: " << mean_ << std::endl << "std: " << std_ << std::endl;
+  out << "NormalizeOp, mean: " << *(mean_.get()) << std::endl << "std: " << *(std_.get()) << std::endl;
 }
 }  // namespace dataset
 }  // namespace mindspore

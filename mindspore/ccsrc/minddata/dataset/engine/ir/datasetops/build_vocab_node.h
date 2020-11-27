@@ -58,17 +58,17 @@ class BuildVocabNode : public DatasetNode {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
-  /// \brief Base-class override for accepting NodePass visitor
+  /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status Accept(NodePass *p, bool *modified) override;
+  Status Accept(IRNodePass *p, bool *modified) override;
 
-  /// \brief Base-class override for accepting NodePass visitor
+  /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status AcceptAfter(NodePass *p, bool *modified) override;
+  Status AcceptAfter(IRNodePass *p, bool *modified) override;
 
  private:
   std::shared_ptr<Vocab> vocab_;

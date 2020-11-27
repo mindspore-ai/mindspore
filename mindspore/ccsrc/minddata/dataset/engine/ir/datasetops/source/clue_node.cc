@@ -208,7 +208,7 @@ Status CLUENode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 
   RETURN_IF_NOT_OK(clue_op->Init());
 
-  if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
+  if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal && !IsDescendantOfCache()) {
     // Inject ShuffleOp
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t num_rows = 0;

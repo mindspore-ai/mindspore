@@ -214,7 +214,7 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
 // The driver of the prepare phase of the execution tree.
 // Prepare phase consists of three sub phases
 //
-// 1. PrepareTreePreAction()
+// 1. PreAction()
 //    Compulsory transformation/action pre optimization.
 //    For example, CacheOp Insertion
 //
@@ -222,41 +222,44 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
 //    Optimization transformation/action, optional
 //    For example, MapOp Fusion
 //
-// 3. PrepareTreePostAction()
+// 3. PostAction()
 //    Compulsory transformation/action post optimization.
 //    For example, repeatOp inlining
 //
 // @return Status - The error code return
-Status ExecutionTree::Prepare(int32_t num_epochs) {
+Status ExecutionTree::Prepare(int32_t num_epochs, bool partial) {
   num_epochs_ = num_epochs;
+  partially_prepare_ = partial;
 
   // Pre optimization compulsory transformation
-  RETURN_IF_NOT_OK(this->PrepareTreePreAction());
+  RETURN_IF_NOT_OK(this->PreAction());
 
   // If optional optimizations are enabled
   if (optimize_) {
     RETURN_IF_NOT_OK(this->Optimize());
   }
   // Post optimization compulsory transformation
-  RETURN_IF_NOT_OK(this->PrepareTreePostAction());
+  RETURN_IF_NOT_OK(this->PostAction());
+
+  // The tree is ready to be prepared.
+  tree_state_ = kDeTStatePrepare;
 
   // Existing transformation implementation, will be removed later
   RETURN_IF_NOT_OK(this->PrepareDeprecated());
   return Status::OK();
 }
 
-Status ExecutionTree::PrepareTreePreAction() {
+Status ExecutionTree::PreAction() {
   bool modified = false;
   std::vector<std::unique_ptr<Pass>> pre_actions;
   // Construct pre actions
+  if (!partially_prepare_) {
 #ifndef ENABLE_ANDROID
-  pre_actions.push_back(std::make_unique<CacheErrorPass>());
+    pre_actions.push_back(std::make_unique<CacheErrorPass>());
 #endif
-  pre_actions.push_back(std::make_unique<EpochInjectionPass>());
-  pre_actions.push_back(std::make_unique<RemovalPass>());
-#ifndef ENABLE_ANDROID
-  pre_actions.push_back(std::make_unique<CacheTransformPass>());
-#endif
+    pre_actions.push_back(std::make_unique<EpochInjectionPass>());
+    pre_actions.push_back(std::make_unique<RemovalPass>());
+  }
 
   // this offers a way to override the preset optimization pass with customized ones
   // this is used when certain nodes are removed for tree getters
@@ -276,15 +279,17 @@ Status ExecutionTree::PrepareTreePreAction() {
   return Status::OK();
 }
 
-Status ExecutionTree::PrepareTreePostAction() {
-  // The tree is ready to be prepared.
-  tree_state_ = kDeTStatePrepare;
-
+Status ExecutionTree::PostAction() {
   bool modified = false;
   OptPass post_actions;
   // Construct pre actions
   MS_LOG(INFO) << "Running post pass loops.";
 #ifndef ENABLE_ANDROID
+  // Calling CacheErrorPass again. This is a temporary fix until the TensorOperation is properly done in Pybind.
+  // The IR version cannot detect an invalid case of a cache on Map with random tensor operation from Python API.
+  // This is because Python API binding to TensorOperation is still in progress.
+  post_actions.push_back(std::make_unique<CacheErrorPass>());
+  post_actions.push_back(std::make_unique<CacheTransformPass>());
   post_actions.push_back(std::make_unique<RepeatPass>());
 #endif
 
@@ -340,9 +345,6 @@ Status ExecutionTree::PrepareDeprecated() {
 // Recursive function used during prepare phase to visit a node and drive any pre- and post-
 // node actions during a tree walk.
 Status ExecutionTree::PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op) {
-  // execute PreAction
-  RETURN_IF_NOT_OK(dataset_op->PrepareNodePreAction());
-
   // Before going down into children, make any prepare flags updates based on this operator.
   uint32_t op_prep_flags = dataset_op->PrepareFlags();
   BitSet(&prepare_flags_, op_prep_flags);

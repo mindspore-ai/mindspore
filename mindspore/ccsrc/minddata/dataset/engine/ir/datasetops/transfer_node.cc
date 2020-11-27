@@ -104,14 +104,14 @@ Status TransferNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   return Status::OK();
 }
 
-// Visitor accepting method for NodePass
-Status TransferNode::Accept(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status TransferNode::Accept(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<TransferNode>(), modified);
 }
 
-// Visitor accepting method for NodePass
-Status TransferNode::AcceptAfter(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status TransferNode::AcceptAfter(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<TransferNode>(), modified);
 }

@@ -66,17 +66,17 @@ class ConcatNode : public DatasetNode {
   std::vector<std::pair<int, int>> children_flag_and_nums_;
   std::vector<std::pair<int, int>> children_start_end_index_;
 
-  /// \brief Base-class override for accepting NodePass visitor
+  /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status Accept(NodePass *p, bool *modified) override;
+  Status Accept(IRNodePass *p, bool *modified) override;
 
-  /// \brief Base-class override for accepting NodePass visitor
+  /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status AcceptAfter(NodePass *p, bool *modified) override;
+  Status AcceptAfter(IRNodePass *p, bool *modified) override;
 };
 
 }  // namespace dataset

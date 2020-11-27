@@ -60,14 +60,14 @@ Status FilterNode::ValidateParams() {
   return Status::OK();
 }
 
-// Visitor accepting method for NodePass
-Status FilterNode::Accept(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status FilterNode::Accept(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<FilterNode>(), modified);
 }
 
-// Visitor accepting method for NodePass
-Status FilterNode::AcceptAfter(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status FilterNode::AcceptAfter(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<FilterNode>(), modified);
 }

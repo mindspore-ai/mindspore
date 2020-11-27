@@ -32,8 +32,9 @@ EpochCtrlNode::EpochCtrlNode(std::shared_ptr<DatasetNode> child, int32_t num_epo
   // The root node's parent must set to null pointer.
   this->AddChild(child);
 }
+
 std::shared_ptr<DatasetNode> EpochCtrlNode::Copy() {
-  auto node = std::make_shared<EpochCtrlNode>(nullptr, this->num_epochs_);
+  auto node = std::make_shared<EpochCtrlNode>(num_epochs_);
   return node;
 }
 

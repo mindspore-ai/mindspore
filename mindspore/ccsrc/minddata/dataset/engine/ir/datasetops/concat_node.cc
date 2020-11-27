@@ -39,8 +39,10 @@ ConcatNode::ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets
 }
 
 std::shared_ptr<DatasetNode> ConcatNode::Copy() {
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
   // create an empty vector to copy a concat
-  auto node = std::make_shared<ConcatNode>(std::vector<std::shared_ptr<DatasetNode>>());
+  auto node = std::make_shared<ConcatNode>(std::vector<std::shared_ptr<DatasetNode>>(), sampler,
+                                           children_flag_and_nums_, children_start_end_index_);
   return node;
 }
 
@@ -80,14 +82,14 @@ Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   return Status::OK();
 }
 
-// Visitor accepting method for NodePass
-Status ConcatNode::Accept(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status ConcatNode::Accept(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<ConcatNode>(), modified);
 }
 
-// Visitor accepting method for NodePass
-Status ConcatNode::AcceptAfter(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status ConcatNode::AcceptAfter(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<ConcatNode>(), modified);
 }
