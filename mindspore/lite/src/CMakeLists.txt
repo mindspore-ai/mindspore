@@ -17,6 +17,7 @@ if (PLATFORM_ARM32 OR PLATFORM_ARM64)
 endif ()
 
 set(LITE_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc

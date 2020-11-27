@@ -17,12 +17,14 @@
 #include "src/runtime/opencl/opencl_runtime.h"
 #include <vector>
 #include <numeric>
+#include <utility>
 #ifdef SHARING_MEM_WITH_OPENGL
 #include <EGL/egl.h>
 #endif
 #include "include/errorcode.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/opencl/opencl_allocator.h"
+#include "src/common/file_utils.h"
 #ifdef PROGRAM_WITH_IL
 #include "src/backend/opencl/cl/program.inc"
 #endif
@@ -254,6 +256,9 @@ int OpenCLRuntime::Init() {
   std::string flag = "";
   binary_program_ = CreateProgramFromIL(g_program_binary, flag);
 #endif
+  if (enable_cache_) {
+    InitGpuCache();
+  }
   init_done_ = true;
   MS_LOG(INFO) << "OpenCLRuntime init done!";
 
@@ -261,6 +266,10 @@ int OpenCLRuntime::Init() {
 }
 
 int OpenCLRuntime::Uninit() {
+  if (enable_cache_) {
+    StoreCache();
+  }
+  binary_map_.clear();
   program_map_.clear();
   delete allocator_;
   delete default_command_queue_;
@@ -373,6 +382,12 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
     if (!status) {
       MS_LOG(ERROR) << program_name << " build failed!";
       return RET_ERROR;
+    }
+    if (enable_cache_) {
+      need_write_ = true;
+      auto bin = GetProgramBinaries(program);
+      MS_ASSERT(bin.size() >= 1);
+      binary_map_.emplace(build_program_key, bin[0]);
     }
     program_map_.emplace(build_program_key, program);
   }
@@ -673,9 +688,8 @@ cl::Program OpenCLRuntime::CreateProgramFromIL(const std::vector<char> &binary, 
 }
 
 // build program with binary
-cl::Program OpenCLRuntime::CreateProgramFromBinary(const std::vector<std::vector<unsigned char>> &binary,
-                                                   const std::string &flag) {
-  cl::Program program = cl::Program(*context_, {*device_}, binary);
+cl::Program OpenCLRuntime::CreateProgramFromBinary(const std::vector<unsigned char> &binary, const std::string &flag) {
+  cl::Program program = cl::Program(*context_, {*device_}, {binary});
   bool status = BuildProgram(default_build_opts_, program);
   if (!status) {
     MS_LOG(ERROR) << "Build program with binary failed!";
@@ -690,5 +704,76 @@ std::vector<std::vector<unsigned char>> OpenCLRuntime::GetProgramBinaries(const 
     MS_LOG(ERROR) << "Get program binary failed: " << CLErrorCode(ret);
   }
   return binary;
+}
+void OpenCLRuntime::InitGpuCache() {
+  size_t len;
+  char *buf = lite::ReadFile(cache_path_.c_str(), &len);
+  if (LoadCache(buf) != RET_OK) {
+    MS_LOG(ERROR) << "Load opencl cache fail";
+  }
+  delete buf;
+  MS_LOG(INFO) << "Init opencl cache success";
+}
+int OpenCLRuntime::LoadCache(const void *buf) {
+  if (buf == nullptr) {
+    return RET_ERROR;
+  }
+  auto gpu_cache = schema::GetGpuCache(buf);
+  if (gpu_cache == nullptr) {
+    return RET_ERROR;
+  }
+  auto *bins = gpu_cache->allBins();
+  if (bins == nullptr) {
+    return RET_ERROR;
+  }
+  auto n = bins->size();
+  for (auto i = 0; i < n; ++i) {
+    auto *kernel_bin = bins->template GetAs<schema::KernelBin>(i);
+    if (kernel_bin == nullptr) {
+      MS_LOG(ERROR) << "kernel_bin[" << i << "] null";
+      return RET_ERROR;
+    }
+    auto *pdata = kernel_bin->data();
+    MS_ASSERT(pdata);
+    if (pdata->size() == 0) {
+      continue;
+    }
+    std::vector<unsigned char> bin(pdata->begin(), pdata->end());
+    auto program = CreateProgramFromBinary(bin, kernel_bin->name()->str());
+    program_map_.emplace(kernel_bin->name()->str(), program);
+    binary_map_.emplace(kernel_bin->name()->str(), bin);
+    MS_LOG(INFO) << "LoadCache " << kernel_bin->name()->str() << " success, size=" << pdata->size();
+  }
+  return RET_OK;
+}
+void OpenCLRuntime::StoreCache() {
+  if (need_write_) {
+    auto fbb_ = new (std::nothrow) flatbuffers::FlatBufferBuilder;
+    if (fbb_ == nullptr) {
+      MS_LOG(ERROR) << "new opencl FlatBufferBuilder fail";
+      return;
+    }
+    std::vector<flatbuffers::Offset<schema::KernelBin>> vec_kernel_bin;
+    for (auto iv : binary_map_) {
+      auto name = fbb_->CreateString(iv.first);
+      auto data = fbb_->CreateVector<uint8_t>(iv.second);
+      std::vector<int32_t> shape;
+      auto tune = schema::CreateTuneParam(*fbb_, fbb_->CreateVector<int32_t>(shape), fbb_->CreateVector<int32_t>(shape),
+                                          fbb_->CreateVector<int32_t>(shape), fbb_->CreateVector<int32_t>(shape));
+      auto kbin = schema::CreateKernelBin(*fbb_, name, tune, data);
+      vec_kernel_bin.emplace_back(kbin);
+      MS_LOG(INFO) << "StoreCache " << iv.first << " success, size=" << iv.second.size();
+    }
+
+    auto data = fbb_->CreateVector<flatbuffers::Offset<schema::KernelBin>>(vec_kernel_bin);
+    auto name = fbb_->CreateString("OpenCLCache");
+    auto version = fbb_->CreateString(version_);
+    auto gpu_cache = schema::CreateGpuCache(*fbb_, name, version, data);
+    fbb_->Finish(gpu_cache);
+    uint8_t *buf = fbb_->GetBufferPointer();
+    lite::WriteToBin(cache_path_, reinterpret_cast<void *>(buf), fbb_->GetSize());
+    MS_LOG(INFO) << "store opencl cache ok, size=" << fbb_->GetSize();
+    delete fbb_;
+  }
 }
 }  // namespace mindspore::lite::opencl

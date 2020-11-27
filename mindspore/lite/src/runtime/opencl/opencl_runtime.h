@@ -27,6 +27,7 @@ j* you may not use this file except in compliance with the License.
 #include "src/common/log_adapter.h"
 #include "src/runtime/opencl/opencl_wrapper.h"
 #include "src/runtime/opencl/opencl_allocator.h"
+#include "schema/gpu_cache_generated.h"
 
 namespace mindspore::lite::opencl {
 
@@ -107,7 +108,7 @@ class OpenCLRuntime {
   }
 
   cl::Program CreateProgramFromIL(const std::vector<char> &binary, const std::string &flag);
-  cl::Program CreateProgramFromBinary(const std::vector<std::vector<unsigned char>> &binary, const std::string &flag);
+  cl::Program CreateProgramFromBinary(const std::vector<unsigned char> &binary, const std::string &flag);
   cl::Kernel GetKernelFromBinary(const std::string &kernel_name);
   std::vector<std::vector<unsigned char>> GetProgramBinaries(const cl::Program &program);
   bool LoadSource(const std::string &program_name, const std::string &source);
@@ -138,6 +139,10 @@ class OpenCLRuntime {
    * @return max_work_group_size
    */
   int GetKernelMaxWorkGroupSize(cl_kernel kernel, cl_device_id device_id);
+
+  void InitGpuCache();
+  int LoadCache(const void *buf);
+  void StoreCache();
 
  private:
   static OpenCLRuntime *GetInstance();
@@ -171,6 +176,11 @@ class OpenCLRuntime {
   cl_uint image_pitch_align_{0};
   std::vector<size_t> max_work_item_sizes_;
   void *handle_{nullptr};
+  std::map<std::string, std::vector<unsigned char>> binary_map_;
+  std::string cache_path_{"/data/local/tmp/opencl_cache"};
+  const std::string version_{"V0.1"};
+  bool need_write_{false};
+  bool enable_cache_{false};
 };
 
 class OpenCLRuntimeWrapper {
