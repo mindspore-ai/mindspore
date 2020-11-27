@@ -61,7 +61,7 @@ class Occlusion(PerturbationAttribution):
     Inputs:
         - **inputs** (Tensor) - The input data to be explained, a 4D tensor of shape :math:`(N, C, H, W)`.
         - **targets** (Tensor, int) - The label of interest. It should be a 1D or 0D tensor, or an integer.
-            If it is a 1D tensor, its length should be the same as `inputs`.
+          If it is a 1D tensor, its length should be the same as `inputs`.
 
     Outputs:
         Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.

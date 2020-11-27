@@ -151,8 +151,9 @@ class Dataset:
     def parse_tree(self):
         """
         Internal method to parse the API tree into an IR tree.
+
         Returns:
-                DatasetNode. The root of the IR tree.
+            DatasetNode, The root of the IR tree.
         """
         if len(self.parent) > 1:
             raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
@@ -823,7 +824,7 @@ class Dataset:
             ValueError: If sizes is list of float and not all floats are between 0 and 1, or if the
                 floats don’t sum to 1.
 
-        Returns
+        Returns:
             tuple(Dataset), a tuple of datasets that have been split.
 
         Examples:
@@ -1516,10 +1517,10 @@ class Dataset:
         """
         Get the class index.
 
-        Return:
+        Returns:
             Dict, A str-to-int mapping from label name to index.
             Dict, A str-to-list<int> mapping from label name to index for Coco ONLY. The second number
-                in the list is used to indicate the super category
+            in the list is used to indicate the super category
         """
         if self.children:
             return self.children[0].get_class_indexing()
@@ -1710,7 +1711,7 @@ class MappableDataset(SourceDataset):
             ValueError: If sizes is list of float and not all floats are between 0 and 1, or if the
                 floats don’t sum to 1.
 
-        Returns
+        Returns:
             tuple(Dataset), a tuple of datasets that have been split.
 
         Examples:
@@ -4064,7 +4065,7 @@ class ManifestDataset(MappableDataset):
         """
         Get the class index.
 
-        Return:
+        Returns:
             Dict, A str-to-int mapping from label name to index.
         """
         if self.class_indexing is None:
@@ -4720,7 +4721,7 @@ class VOCDataset(MappableDataset):
         """
         Get the class index.
 
-        Return:
+        Returns:
             Dict, A str-to-int mapping from label name to index.
         """
         if self.task != "Detection":
@@ -4911,7 +4912,7 @@ class CocoDataset(MappableDataset):
         """
         Get the class index.
 
-        Return:
+        Returns:
             Dict, A str-to-list<int> mapping from label name to index
         """
         if self.task not in {"Detection", "Panoptic"}:

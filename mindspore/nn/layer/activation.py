@@ -365,8 +365,12 @@ class FastGelu(Cell):
     Applies FastGelu function to each element of the input. The input is a Tensor with any valid shape.
 
     FastGelu is defined as:
-    :math:`FastGelu(x_i) = \frac {x_i} {1 + \exp(-1.702 * \left| x_i \right|)} *
-                           \exp(0.851 * (x_i - \left| x_i \right|))`, where :math:`x_i` is the element of the input.
+
+    .. math::
+        FastGelu(x_i) = \frac {x_i} {1 + \exp(-1.702 * \left| x_i \right|)} *
+                           \exp(0.851 * (x_i - \left| x_i \right|))
+
+    where :math:`x_i` is the element of the input.
 
     Inputs:
         - **input_data** (Tensor) - The input of FastGelu with data type of float16 or float32.

@@ -539,11 +539,10 @@ def set_context(**kwargs):
             - training_trace: collect iterative trajectory data, that is, the training task and software information of
               the AI software stack, to achieve performance analysis of the training task, focusing on data
               enhancement, forward and backward calculation, gradient aggregation update and other related data.
-
             - task_trace: collect task trajectory data, that is, the hardware information of the HWTS/AICore of
               the Ascend 910 processor, and analyze the information of beginning and ending of the task.
-
             - op_trace: collect single operator performance data.
+
             The profiling can choose the combination of `training_trace`, `task_trace`,
             `training_trace` and `task_trace` combination, and eparated by colons;
             a single operator can choose `op_trace`, `op_trace` cannot be combined with
