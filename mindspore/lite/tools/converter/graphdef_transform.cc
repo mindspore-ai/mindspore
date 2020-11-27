@@ -34,6 +34,7 @@
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
+#include "tools/converter/legacy_optimizer/graph/tensor_name_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/legacy_optimizer/graph/set_unused_quant_param_to_default_pass.h"
 
@@ -180,6 +181,17 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     status = topologicalOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run topologicalOptimizer graphPasses Failed";
+      return status;
+    }
+  }
+
+  // tensor name
+  {
+    Optimizer nameOptimizer;
+    nameOptimizer.AddPass(new (std::nothrow) TensorNamePass());
+    status = nameOptimizer.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run nameOptimizer graphPasses Failed";
       return status;
     }
   }

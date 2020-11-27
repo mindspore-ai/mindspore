@@ -54,6 +54,7 @@ table Tensor {
     data: [ubyte];
     quantParams: [QuantParam];
     quantClusters: [float];
+    name: string;
 }
 
 union PrimitiveType {
