@@ -456,6 +456,16 @@ def get_bprop_sparse_gather_v2(self):
     return bprop
 
 
+@bprop_getters.register(P.Identity)
+def get_bprop_identity(self):
+    """Generate bprop for Identity"""
+
+    def bprop(x, out, dout):
+        return (dout,)
+
+    return bprop
+
+
 @bprop_getters.register(inner.Range)
 def get_bprop_range(self):
     """Generate bprop for Range"""
