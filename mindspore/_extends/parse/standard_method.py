@@ -30,6 +30,27 @@ trans = P.Transpose()
 shape_ = P.Shape()
 reshape_ = P.Reshape()
 dtype_ = P.DType()
+abs_ = P.Abs()
+
+def mean(x, axis=(), keep_dims=False):
+    """
+    Reduce a dimension of a tensor by averaging all elements in the dimension.
+
+    Args:
+        axis (Union[None, int, tuple(int)]): Dimensions of reduction,
+            when axis is None or empty tuple, reduce all dimensions.
+            Default: (), reduce all dimensions.
+        keep_dims (bool): Whether to keep the reduced dimensions.
+            Default : False, don't keep these reduced dimensions.
+
+    Returns:
+        Tensor, has the same data type as x.
+    """
+    if axis is None:
+        axis = ()
+    reduce_mean = P.ReduceMean(keep_dims)
+    return reduce_mean(x, axis)
+
 
 def all_(x, axis=(), keep_dims=False):
     """
