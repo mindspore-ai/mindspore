@@ -36,11 +36,11 @@ def compose(transforms, *args):
     Compose a list of transforms and apply on the image.
 
     Args:
-        img (numpy.ndarray): An image in Numpy ndarray.
+        img (numpy.ndarray): An image in NumPy ndarray.
         transforms (list): A list of transform Class objects to be composed.
 
     Returns:
-        img (numpy.ndarray), An augmented image in Numpy ndarray.
+        img (numpy.ndarray), An augmented image in NumPy ndarray.
     """
     if all_numpy(args):
         for transform in transforms:
@@ -49,8 +49,8 @@ def compose(transforms, *args):
 
         if all_numpy(args):
             return args
-        raise TypeError('args should be Numpy ndarray. Got {}. Append ToTensor() to transforms.'.format(type(args)))
-    raise TypeError('args should be Numpy ndarray. Got {}.'.format(type(args)))
+        raise TypeError('args should be NumPy ndarray. Got {}. Append ToTensor() to transforms.'.format(type(args)))
+    raise TypeError('args should be NumPy ndarray. Got {}.'.format(type(args)))
 
 
 def one_hot_encoding(label, num_classes, epsilon):
