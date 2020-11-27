@@ -85,6 +85,12 @@ class Gelu:
 
 
 @op_selector
+class FastGelu:
+    def __call__(self, *args):
+        pass
+
+
+@op_selector
 class LayerNorm:
     def __call__(self, *args):
         pass

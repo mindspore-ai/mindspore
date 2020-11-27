@@ -563,6 +563,18 @@ def get_bprop_gelu(self):
     return bprop
 
 
+@bprop_getters.register(P.FastGelu)
+def get_bprop_fast_gelu(self):
+    """Grad definition for `FastGelu` operation."""
+    input_grad = G.FastGeluGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x)
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.FusedBatchNorm)
 def get_bprop_fused_batch_norm(self):
     """Grad definition for `FusedBatchNorm` operation."""

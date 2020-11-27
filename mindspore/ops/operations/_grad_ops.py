@@ -637,6 +637,24 @@ class GeluGrad(PrimitiveWithInfer):
         return x_dtype
 
 
+class FastGeluGrad(PrimitiveWithInfer):
+    """Gradients of FastGelu operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init FastGeluGrad"""
+
+    def infer_shape(self, y_backprop_shape, x_shape):
+        return x_shape
+
+    def infer_dtype(self, y_backprop_dtype, x_dtype):
+        tuple(map(partial(validator.check_tensor_dtype_valid,
+                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
+                  ("y_backprop", "x"),
+                  (y_backprop_dtype, x_dtype)))
+        return x_dtype
+
+
 class _PoolGrad(PrimitiveWithInfer):
     """Gradients of the max/avg pool operation."""
 
