@@ -15,11 +15,11 @@
  */
 
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
-#include <memory>
 #include <functional>
-#include "src/ops/primitive_c.h"
-#include "src/ops/conv2d.h"
+#include <memory>
 #include "schema/inner/model_generated.h"
+#include "src/ops/conv2d.h"
+#include "src/ops/primitive_c.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
@@ -128,6 +128,7 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
       for (int k = 0; k < cout0; k++) {
         auto up_weight_offset = k * window_size * cin0 + j;
         auto down_weight_offset = down_weight_base + k;
+
         auto new_weight_offset = new_weight_base + j;
         for (int m = 0; m < window_size; m++) {
           new_weight_data[new_weight_offset + cin0 * m] +=

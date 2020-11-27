@@ -24,9 +24,9 @@ namespace mindspore {
 namespace lite {
 namespace converter {
 Flags::Flags() {
-  AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TFLITE | CAFFE | MINDIR | ONNX", "");
+  AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX", "");
   AddFlag(&Flags::modelFile, "modelFile",
-          "Input model file. TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx", "");
+          "Input model file. TF: *.pb | TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx", "");
   AddFlag(&Flags::outputFile, "outputFile", "Output model file path. Will add .ms automatically", "");
   AddFlag(&Flags::weightFile, "weightFile", "Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel",
           "");

@@ -25,15 +25,11 @@ namespace mindspore {
 namespace opt {
 class ConvTupleActivationFusion : public PatternProcessPass {
  public:
-  ConvTupleActivationFusion(bool multigraph = true, const std::string &name = "conv_tuple_activation_fusion",
-                            schema::PrimitiveType primitive = schema::PrimitiveType_LeakyReLU,
-                            schema::ActivationType activation = schema::ActivationType_LEAKY_RELU)
-      : PatternProcessPass(name, multigraph), primitive_type(primitive), activation_type(activation) {}
+  explicit ConvTupleActivationFusion(bool multigraph = true, const std::string &name = "conv_tuple_activation_fusion")
+      : PatternProcessPass(name, multigraph) {}
   ~ConvTupleActivationFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-  schema::PrimitiveType primitive_type;
-  schema::ActivationType activation_type;
 };
 }  // namespace opt
 }  // namespace mindspore

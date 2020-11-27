@@ -25,7 +25,7 @@ class ConvScaleFusion : public ConvTransformFusion {
   explicit ConvScaleFusion(bool multigraph = true) : ConvTransformFusion(multigraph, "conv_scale_fusion") {}
   ~ConvScaleFusion() override = default;
   const BaseRef DefinePattern() const override;
-  const void InitTransParam(const CNodePtr &, int, float *, float *) const override;
+  void InitTransParam(const CNodePtr &, int, float *, float *) const override;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV_SCALE_FUSION_H_
