@@ -36,11 +36,11 @@ class ResizeCPUKernel : public ResizeBaseCPUKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int RunImpl(int task_id);
+  virtual int RunImpl(int task_id);
   int MallocTmpBuffer();
   void FreeTmpBuffer();
 
- private:
+ protected:
   int *y_tops_ = nullptr;
   int *y_bottoms_ = nullptr;
   int *x_lefts_ = nullptr;

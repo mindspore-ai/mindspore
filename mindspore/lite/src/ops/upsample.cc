@@ -62,5 +62,41 @@ PrimitiveC *UpsampleCreator(const schema::Primitive *primitive) {
 Registry UpsampleRegistry(schema::PrimitiveType_Upsample, UpsampleCreator);
 
 #endif
+int Upsample::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
+  auto input_tensor = inputs_.at(0);
+  MS_ASSERT(input_tensor);
+  auto input_shape = input_tensor->shape();
+  if (input_shape.size() != 4) {
+    MS_LOG(ERROR) << "Upsample InferShape input tensor rank should be 4";
+    return RET_INFER_ERR;
+  }
+  auto scale_tensor = inputs_.at(1);
+  MS_ASSERT(scale_tensor);
+  auto scale_shape = scale_tensor->shape();
+  if (scale_shape.size() != 1 && scale_shape[0] != 4) {
+    MS_LOG(ERROR) << "Upsample scale tensor shape should be 4";
+    return RET_INFER_ERR;
+  }
+  auto scale = reinterpret_cast<float *>(scale_tensor->data_c());
+  if (scale == nullptr) {
+    MS_LOG(ERROR) << "Upsample scale data nullptr";
+    return RET_INFER_INVALID;
+  }
+
+  std::vector<int> out_shape = input_shape;  // n, h, w, c; n, c not changed, h = floor(input_h * scale_h).
+  int new_height = static_cast<int>(floor(input_shape[1] * scale[1]));
+  MS_ASSERT(new_height > 0);
+  int new_width = static_cast<int>(floor(input_shape[2] * scale[2]));
+  MS_ASSERT(new_width > 0);
+  out_shape[1] = new_height;
+  out_shape[2] = new_width;
+
+  auto out_tensor = outputs_.at(0);
+  MS_ASSERT(out_tensor);
+  out_tensor->set_shape(out_shape);
+  out_tensor->set_data_type(input_tensor->data_type());
+  return RET_OK;
+}
+
 }  // namespace lite
 }  // namespace mindspore

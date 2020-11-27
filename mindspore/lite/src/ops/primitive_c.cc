@@ -575,7 +575,6 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Floor>(prim, inputs, quantType);
   } else if (op_type == "Minimum") {
     return NewPrimitiveC<Minimum>(prim, inputs, quantType);
-
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
     return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
