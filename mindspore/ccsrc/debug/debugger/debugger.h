@@ -43,7 +43,14 @@ using ProtoVector = google::protobuf::RepeatedPtrField<T>;
 namespace mindspore {
 // different types of command recieved by debugger
 // need to keep sync with client-side proto and server-side proto
-enum class DebuggerCommand { kExitCMD = 2, kRunCMD = 3, kSetCMD = 4, kViewCMD = 5, kUnknownCMD = -1 };
+enum class DebuggerCommand {
+  kExitCMD = 2,
+  kRunCMD = 3,
+  kSetCMD = 4,
+  kViewCMD = 5,
+  kVersionMatchedCMD = 6,
+  kUnknownCMD = -1
+};
 
 class Debugger : public std::enable_shared_from_this<Debugger> {
  public:
@@ -102,7 +109,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   void SetTrainingDone(bool training_done);
 
-  void SendMetadata();
+  // returns true if reply received and mindspore version matched with mindinsight version
+  // version_check should be true if you want the function to do backend compability check with Mindinsight
+  bool SendMetadata(bool version_check);
 
   void LoadParametersAndConst();
 
@@ -215,6 +224,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   static std::shared_ptr<Debugger> debugger_;
   uint32_t not_dataset_graph_sum_;
   std::list<uint32_t> rungraph_id_list_;
+  std::string version_;
 };
 
 using DebuggerPtr = std::shared_ptr<Debugger>;
@@ -238,6 +248,7 @@ WatchCondition GetWatchcondition(const EventReply &reply);
 int32_t GetWatchpointID(const EventReply &reply);
 bool GetWatchpointDelete(const EventReply &reply);
 ProtoVector<TensorProto> GetTensors(const EventReply &reply);
+bool GetMiVersionMatched(const EventReply &reply);
 
 // get the full name of a tensor, which is the name used in TensorLoader
 std::string GetTensorFullName(const TensorProto &tensor);

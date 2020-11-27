@@ -71,7 +71,8 @@ Debugger::Debugger()
       last_overflow_bin_(0),
       overflow_bin_path_(""),
       initial_suspend_(true),
-      not_dataset_graph_sum_(0) {
+      not_dataset_graph_sum_(0),
+      version_("") {
   if (CheckDebuggerEnabled()) {
     // configure partial memory reuse
     partial_memory_ = CheckDebuggerPartialMemoryEnabled();
@@ -100,6 +101,7 @@ void Debugger::Init(const uint32_t device_id, const std::string device_target) {
   device_id_ = device_id;
   MS_LOG(INFO) << "Debugger got device_target: " << device_target;
   device_target_ = device_target;
+  version_ = "1.1.0";
 }
 
 void Debugger::EnableDebugger() {
@@ -413,7 +415,7 @@ void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
       EnableDebugger();
       if (debugger_enabled_) {
         LoadParametersAndConst();
-        // get graph proto and send to mindinsight
+        // get graph proto and send to Mindinsight
         auto graph_proto = graph_proto_list_.front();
         SendGraphAndSuspend(graph_proto);
       }
@@ -449,17 +451,18 @@ GraphProto Debugger::GetGraphProto(const KernelGraphPtr &graph_ptr) const {
 }
 
 void Debugger::SendGraphAndSuspend(const GraphProto &graph_proto) {
-  SendMetadata();
-  // send graph to mindinght server
-  EventReply reply = grpc_client_->SendGraph(graph_proto);
-  if (reply.status() != reply.OK) {
-    MS_LOG(ERROR) << "Error: SendGraph failed";
+  if (SendMetadata(true)) {
+    // send graph to Mindinsight server
+    EventReply reply = grpc_client_->SendGraph(graph_proto);
+    if (reply.status() != reply.OK) {
+      MS_LOG(ERROR) << "Error: SendGraph failed";
+    }
+    // enter command loop, wait and process commands
+    CommandLoop();
   }
-  // enter command loop, wait and process commands
-  CommandLoop();
 }
 
-void Debugger::SendMetadata() {
+bool Debugger::SendMetadata(bool version_check) {
   // prepare metadata
   std::string device_name = std::to_string(device_id_) + ":" + std::to_string(graph_ptr_->graph_id());
   Metadata metadata;
@@ -468,17 +471,43 @@ void Debugger::SendMetadata() {
   metadata.set_backend(device_target_);
   metadata.set_cur_node(cur_name_);
   metadata.set_training_done(training_done_);
+  metadata.set_ms_version(version_);
   MS_LOG(INFO) << "Is training done?" << training_done_;
   // set graph munber to not_dataset_graph_sum_
   metadata.set_graph_num(not_dataset_graph_sum_);
   EventReply reply_metadata = grpc_client_->SendMetadata(metadata);
-  if (reply_metadata.status() != reply_metadata.OK) {
+  bool ret = false;
+  if (reply_metadata.status() == reply_metadata.OK) {
+    if (version_check) {
+      // get type of the command in meta data reply, it should be version matched
+      DebuggerCommand cmd = GetCommand(reply_metadata);
+      if (cmd != DebuggerCommand::kVersionMatchedCMD) {
+        MS_LOG(ERROR) << "MindInsight version is too old, Mindspore version is " << version_;
+        Exit();
+      } else {
+        if (GetMiVersionMatched(reply_metadata)) {
+          MS_LOG(INFO) << "MindSpore version is " << version_ << " matches MindInsight version.";
+          ret = true;
+        } else {
+          MS_LOG(ERROR) << "MindSpore version " << version_ << ", did not match MindInsight version.";
+          CommandLoop();
+        }
+      }
+    } else {
+      // version check is done before so we can just return true here
+      ret = true;
+    }
+  } else {
     MS_LOG(ERROR) << "Error: SendMetadata failed";
   }
+
+  return ret;
 }
 
 void Debugger::SendMultiGraphsAndSuspend(const std::list<GraphProto> &graph_proto_list, uint32_t graph_sum) {
-  SendMetadata();
+  if (!SendMetadata(true)) {
+    return;
+  }
   // send multiple graphs to mindinght server
   // split graph into chunks if one graph is larger than chunk size
   std::list<Chunk> chunked_graph_proto_list;
@@ -610,40 +639,44 @@ void Debugger::CommandLoop() {
           SetWatchpoint(GetWatchnodes(reply), GetWatchcondition(reply), GetWatchpointID(reply), GetParameters(reply));
         }
         break;
-      case DebuggerCommand::kViewCMD:
+      case DebuggerCommand::kViewCMD: {
         MS_LOG(INFO) << "ViewCMD";
-        {
-          // print view cmd content
-          ProtoVector<TensorProto> received_tensors = GetTensors(reply);
-          for (auto tensor : received_tensors) {
-            MS_LOG(INFO) << "tensor node name: " << tensor.node_name();
-            MS_LOG(INFO) << "tensor slot: " << tensor.slot();
-            MS_LOG(INFO) << "tensor finished: " << std::boolalpha << tensor.finished() << std::noboolalpha;
-            MS_LOG(INFO) << "tensor iter: " << tensor.iter();
-            MS_LOG(INFO) << "tensor truncate: " << std::boolalpha << tensor.truncate() << std::noboolalpha;
-          }
+        // print view cmd content
+        ProtoVector<TensorProto> received_tensors = GetTensors(reply);
+        for (auto received_tensor : received_tensors) {
+          MS_LOG(INFO) << "tensor node name: " << received_tensor.node_name();
+          MS_LOG(INFO) << "tensor slot: " << received_tensor.slot();
+          MS_LOG(INFO) << "tensor finished: " << std::boolalpha << received_tensor.finished() << std::noboolalpha;
+          MS_LOG(INFO) << "tensor iter: " << received_tensor.iter();
+          MS_LOG(INFO) << "tensor truncate: " << std::boolalpha << received_tensor.truncate() << std::noboolalpha;
         }
         MS_LOG(INFO) << "Sending tensors";
         std::list<TensorProto> tensors = LoadTensors(GetTensors(reply));
-        {
-          // print view cmd reply
-          for (auto tensor : tensors) {
-            MS_LOG(INFO) << "tensor node name: " << tensor.node_name();
-            MS_LOG(INFO) << "tensor slot: " << tensor.slot();
-            MS_LOG(INFO) << "tensor finished: " << std::boolalpha << tensor.finished() << std::noboolalpha;
-            MS_LOG(INFO) << "tensor iter: " << tensor.iter();
-            MS_LOG(INFO) << "tensor truncate: " << std::boolalpha << tensor.truncate() << std::noboolalpha;
-            MS_LOG(INFO) << "tensor dims: ";
-            for (auto dim : tensor.dims()) {
-              MS_LOG(INFO) << dim << ",";
-            }
-            MS_LOG(INFO) << "tensor dtype: " << tensor.data_type();
+        // print view cmd reply
+        for (auto tensor : tensors) {
+          MS_LOG(INFO) << "tensor node name: " << tensor.node_name();
+          MS_LOG(INFO) << "tensor slot: " << tensor.slot();
+          MS_LOG(INFO) << "tensor finished: " << std::boolalpha << tensor.finished() << std::noboolalpha;
+          MS_LOG(INFO) << "tensor iter: " << tensor.iter();
+          MS_LOG(INFO) << "tensor truncate: " << std::boolalpha << tensor.truncate() << std::noboolalpha;
+          MS_LOG(INFO) << "tensor dims: ";
+          for (auto dim : tensor.dims()) {
+            MS_LOG(INFO) << dim << ",";
           }
+          MS_LOG(INFO) << "tensor dtype: " << tensor.data_type();
         }
         EventReply send_tensors_reply = grpc_client_->SendTensors(tensors);
         if (send_tensors_reply.status() != send_tensors_reply.OK) {
           MS_LOG(ERROR) << "Error: SendTensors failed";
         }
+      } break;
+      case DebuggerCommand::kVersionMatchedCMD:
+        MS_LOG(ERROR) << "Received unexpected Version Matched CMD from Mindinsight.";
+        Exit();
+        break;
+      default:
+        MS_LOG(ERROR) << "Received unknown CMD from Mindinsight";
+        Exit();
         break;
     }
   }
@@ -825,6 +858,9 @@ DebuggerCommand GetCommand(const EventReply &reply) {
     case debugger::EventReply::CmdCase::kViewCmd:
       cmd = DebuggerCommand::kViewCMD;
       break;
+    case debugger::EventReply::CmdCase::kVersionMatched:
+      cmd = DebuggerCommand::kVersionMatchedCMD;
+      break;
     default:
       MS_LOG(DEBUG) << "Debug: UnknownCMD";
       break;
@@ -908,6 +944,8 @@ std::string GetTensorFullName(const TensorProto &tensor) {
   }
   return node_name + ":" + tensor.slot() + (tensor.iter() == "" ? "" : ":" + tensor.iter());
 }
+
+bool GetMiVersionMatched(const EventReply &reply) { return reply.version_matched(); }
 
 bool Debugger::partial_memory() { return partial_memory_; }
 
