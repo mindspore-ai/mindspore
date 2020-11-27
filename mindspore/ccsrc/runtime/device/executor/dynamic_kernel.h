@@ -48,6 +48,7 @@ class DynamicKernel {
   virtual void Initialize();
   std::string GetKernelName() { return cnode_ptr_->fullname_with_scope(); }
   int GetKernelType();
+  CNodePtr kernel_node() const { return cnode_ptr_; }
 
  protected:
   void RebuildDependTensor();

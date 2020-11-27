@@ -26,6 +26,7 @@
 #include "runtime/device/convert_tensor_utils.h"
 #include "ir/dtype/type.h"
 #include "ir/tensor.h"
+#include "abstract/utils.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include "backend/kernel_compiler/tbe/tbe_kernel_parallel_build.h"
 #include "utils/utils.h"
@@ -298,7 +299,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
     } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
       sync_ok = SyncDeviceToHostAndFloatToFloat64(host_ptr, size, ptr_, size_);
     } else {
-      auto shape_size = trans::ShapeSize(host_shape);
+      auto shape_size = abstract::ShapeSize(host_shape);
       auto host = std::vector<uint8_t>(size_);
       SyncMemory(host.data(), ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
       const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size_};
@@ -413,11 +414,11 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   auto host_size = size;
   if (type_id_ != type) {
-    auto device_dtype_size = trans::TypeIdSize(type_id_);
+    auto device_dtype_size = abstract::TypeIdSize(type_id_);
     if (device_dtype_size < 1) {
       MS_LOG(ERROR) << "Illegal dtype.";
     }
-    auto shape_size = trans::ShapeSize(host_shape);
+    auto shape_size = abstract::ShapeSize(host_shape);
     size = device_dtype_size * shape_size;
   }
   size = GetCommonAlignSize(size);
@@ -431,7 +432,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   } else {
     auto host = std::vector<uint8_t>(size);
     SyncMemory(host.data(), output_address->GetPtr(), size, RT_MEMCPY_DEVICE_TO_HOST);
-    auto shape_size = trans::ShapeSize(host_shape);
+    auto shape_size = abstract::ShapeSize(host_shape);
     const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, host_size};
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
@@ -500,7 +501,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
       MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
-    auto shape_size = trans::ShapeSize(host_shape);
+    auto shape_size = abstract::ShapeSize(host_shape);
     const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
@@ -537,7 +538,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
     } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
       sync_ok = Float64ToFloatAndSyncHostToDevice(ptr_, size_, host_ptr, size);
     } else {
-      auto shape_size = trans::ShapeSize(host_shape);
+      auto shape_size = abstract::ShapeSize(host_shape);
       const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id_, size};
       auto host_tmp = std::vector<uint8_t>(size_);
       sync_ok = trans::TransDataType(type_args, host_tmp.data());
@@ -581,7 +582,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   }
   if (type_id_ != type) {
-    auto shape_size = trans::ShapeSize(host_shape);
+    auto shape_size = abstract::ShapeSize(host_shape);
     const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id_, size};
     auto host_tmp = std::vector<uint8_t>(size_);
     sync_ok = trans::TransDataType(type_args, host_tmp.data());

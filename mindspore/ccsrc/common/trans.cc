@@ -18,6 +18,7 @@
 #include <numeric>
 #include <utility>
 #include "utils/ms_utils.h"
+#include "abstract/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "runtime/device/convert_tensor_utils.h"
@@ -28,12 +29,6 @@
 namespace mindspore {
 namespace trans {
 enum kAxis : int { kN = 0, kC, kH, kW, kNchwDims, kNdhwc };
-const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberTypeInt, 4},     {kNumberTypeInt8, 1},
-                                           {kNumberTypeInt16, 2},   {kNumberTypeInt32, 4},   {kNumberTypeInt64, 8},
-                                           {kNumberTypeUInt, 4},    {kNumberTypeUInt8, 1},   {kNumberTypeUInt16, 2},
-                                           {kNumberTypeUInt32, 4},  {kNumberTypeUInt64, 8},  {kNumberTypeFloat, 4},
-                                           {kNumberTypeFloat16, 2}, {kNumberTypeFloat32, 4}, {kNumberTypeFloat64, 8}};
-
 inline void SetData(size_t size, bool pad_zero, size_t src_idx, size_t dst_idx, const FormatArgs &args, void *result) {
   switch (size) {
     case 1:
@@ -117,8 +112,8 @@ const std::map<std::pair<TypeId, TypeId>, DataTypeTransMode> mode_map{
   {std::pair<TypeId, TypeId>(kNumberTypeBool, kNumberTypeFloat16), FROM_BOOL_TO_FLOAT16}};
 
 void CheckMemSize(const TypeIdArgs &args) {
-  auto src_type_size = TypeIdSize(args.host_data_type);
-  auto dst_type_size = TypeIdSize(args.device_data_type);
+  auto src_type_size = abstract::TypeIdSize(args.host_data_type);
+  auto dst_type_size = abstract::TypeIdSize(args.device_data_type);
   if (src_type_size < 1 || dst_type_size < 1) {
     MS_LOG(EXCEPTION) << "Invalid src or dst data type.";
   }
@@ -192,7 +187,7 @@ bool CastKernel(const TypeIdArgs &args, void *dst, const size_t data_size, const
 
 size_t CubeSizeByType(const TypeId data_type) {
   const size_t default_error = 0;
-  auto dt_size = TypeIdSize(data_type);
+  auto dt_size = abstract::TypeIdSize(data_type);
   if (dt_size < 1) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return default_error;
@@ -200,19 +195,6 @@ size_t CubeSizeByType(const TypeId data_type) {
     return kCubeSize * 2;
   }
   return kCubeSize;
-}
-
-size_t ShapeSize(const std::vector<size_t> &shape) {
-  return std::accumulate(shape.begin(), shape.end(), IntToSize(1), std::multiplies<size_t>());
-}
-
-size_t TypeIdSize(const TypeId data_type) {
-  const size_t unsupported_type_error = 0;
-  auto iter = type_map.find(data_type);
-  if (iter != type_map.end()) {
-    return iter->second;
-  }
-  return unsupported_type_error;
 }
 
 namespace {
@@ -477,12 +459,12 @@ bool CheckArgs(const FormatArgs &args, size_t *size, size_t *total_size) {
   }
   MS_EXCEPTION_IF_NULL(size);
   MS_EXCEPTION_IF_NULL(total_size);
-  *size = TypeIdSize(args.src_data_type);
+  *size = abstract::TypeIdSize(args.src_data_type);
   if (*size < 1) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return false;
   }
-  *total_size = ShapeSize(args.device_shape) * (*size);
+  *total_size = abstract::ShapeSize(args.device_shape) * (*size);
   if (*total_size != args.device_size) {
     MS_LOG(ERROR) << "Illegal total data size, total_size:" << *total_size << ", device_size:" << args.device_size;
     return false;
@@ -516,7 +498,7 @@ bool TransFormat(const FormatArgs &args, void *result) {
     {kOpFormat_NC1HWC0, NchwToNc1hwc0},        {kOpFormat_C1HWNCoC0, NchwToC1hwncoc0},
     {kOpFormat_FRACTAL_Z_C04, NchwToFracZc04}, {kOpFormat_NC1HWC0_C04, NchwToNc1hwc04}};
   MS_LOG(DEBUG) << "Start trans format.";
-  if (TypeIdSize(args.src_data_type) < 1) {
+  if (abstract::TypeIdSize(args.src_data_type) < 1) {
     MS_LOG(ERROR) << "Invalid datatype..";
     return false;
   }
@@ -538,7 +520,7 @@ bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result) {
                                                                {kOpFormat_C1HWNCoC0, C1hwncoc0ToNchw},
                                                                {kOpFormat_NC1HWC0_C04, Nc1hwc04ToNchw}};
   MS_LOG(DEBUG) << "Start trans format.";
-  if (TypeIdSize(args.src_data_type) < 1) {
+  if (abstract::TypeIdSize(args.src_data_type) < 1) {
     MS_LOG(ERROR) << "Invalid datatype..";
     return false;
   }
@@ -624,7 +606,7 @@ bool NchwToFracZ(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Invalid host shape, host shape dims:" << args.host_shape.size() << ", expect dims:" << kNchwDims;
     return false;
   }
-  auto size = TypeIdSize(args.src_data_type);
+  auto size = abstract::TypeIdSize(args.src_data_type);
   if (size < 1) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return false;
@@ -685,12 +667,12 @@ bool FracZToNchw(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Invalid host shape, host shape dims:" << args.host_shape.size() << ", expect dims:" << kNchwDims;
     return false;
   }
-  auto size = TypeIdSize(args.src_data_type);
+  auto size = abstract::TypeIdSize(args.src_data_type);
   if (size < 1) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return false;
   }
-  auto total_size = ShapeSize(args.device_shape) * size;
+  auto total_size = abstract::ShapeSize(args.device_shape) * size;
   if (total_size != args.device_size) {
     MS_LOG(ERROR) << "Illegal total data size, total_size:" << total_size << ", device_size:" << args.device_size;
     return false;
@@ -828,13 +810,13 @@ bool NchwToFracNz(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Invalid shape size.";
     return false;
   }
-  auto size = TypeIdSize(args.src_data_type);
+  auto size = abstract::TypeIdSize(args.src_data_type);
   if (size < 1) {
     MS_LOG(ERROR) << "Illegal dtype";
     return false;
   }
 
-  auto dst_size = ShapeSize(args.device_shape) * size;
+  auto dst_size = abstract::ShapeSize(args.device_shape) * size;
   if (dst_size != args.device_size) {
     MS_LOG(ERROR) << "Illegal total data size, total_size:" << dst_size << ", device_size:" << args.device_size;
     return false;
@@ -890,13 +872,13 @@ bool FracNzToNchw(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Invalid shape size.";
     return false;
   }
-  auto size = TypeIdSize(args.src_data_type);
+  auto size = abstract::TypeIdSize(args.src_data_type);
   if (size < 1) {
     MS_LOG(ERROR) << "Illegal dtype";
     return false;
   }
 
-  auto dst_size = ShapeSize(args.device_shape) * size;
+  auto dst_size = abstract::ShapeSize(args.device_shape) * size;
   if (dst_size != args.device_size) {
     MS_LOG(ERROR) << "Illegal total data size, total_size:" << dst_size << ", device_size:" << args.device_size;
     return false;
@@ -947,12 +929,12 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Invalid host shape, host shape dims:" << args.host_shape.size() << ", expect dims:" << kNchwDims;
     return false;
   }
-  auto size = TypeIdSize(args.src_data_type);
+  auto size = abstract::TypeIdSize(args.src_data_type);
   if (size < 1) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return false;
   }
-  auto total_size = ShapeSize(args.device_shape) * size;
+  auto total_size = abstract::ShapeSize(args.device_shape) * size;
   if (total_size != args.device_size) {
     MS_LOG(ERROR) << "Illegal total data size, total_size:" << total_size << ", device_size:" << args.device_size;
     return false;
@@ -1005,12 +987,12 @@ bool Nc1hwc0ToNchw(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Invalid host shape, host shape dims:" << args.host_shape.size() << ", expect dims:" << kNchwDims;
     return false;
   }
-  auto size = TypeIdSize(args.src_data_type);
+  auto size = abstract::TypeIdSize(args.src_data_type);
   if (size < 1) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return false;
   }
-  auto total_size = ShapeSize(args.device_shape) * size;
+  auto total_size = abstract::ShapeSize(args.device_shape) * size;
   if (total_size != args.device_size) {
     MS_LOG(ERROR) << "Illegal total data size, total_size:" << total_size << ", device_size:" << args.device_size;
     return false;

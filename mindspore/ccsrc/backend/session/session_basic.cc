@@ -20,6 +20,7 @@
 
 #include "c_ops/primitive_c.h"
 #include "ir/manager.h"
+#include "abstract/utils.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "base/core_ops.h"
 #include "common/trans.h"
@@ -1093,7 +1094,7 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
       (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
       AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
                                           input_node.get());
-      size = trans::ShapeSize(shape_tmp) * trans::TypeIdSize(tensor->data_type());
+      size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());
     }
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0) && TensorNeedSync(input_node, tensor)) {
       auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
