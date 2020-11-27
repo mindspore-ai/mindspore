@@ -40,65 +40,84 @@ class Categorical(Distribution):
         `probs` must have rank at least 1, values are proper probabilities and sum to 1.
 
     Examples:
-        >>> # To initialize a Categorical distribution of probs [0.5, 0.5]
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
-        >>> b = msd.Categorical(probs = [0.5, 0.5], dtype=mstype.int32)
-        >>>
-        >>> # To use a Categorical distribution in a network
-        >>> class net(Cell):
-        ...     def __init__(self, probs):
-        ...         super(net, self).__init__():
-        ...         self.ca = msd.Categorical(probs=[0.2, 0.8], dtype=mstype.int32)
-        ...         self.ca1 = msd.Categorical(dtype=mstype.int32)
-        ...
-        ...     # All the following calls in construct are valid
-        ...     def construct(self, value):
-        ...
-        ...         # Private interfaces of probability functions corresponding to public interfaces, including
-        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
-        ...         # Args:
-        ...         #     value (Tensor): the value to be evaluated.
-        ...         #     probs (Tensor): event probabilities. Default: self.probs.
-        ...
-        ...         # Examples of `prob`.
-        ...         # Similar calls can be made to other probability functions
-        ...         # by replacing `prob` by the name of the function.
-        ...         ans = self.ca.prob(value)
-        ...         # Evaluate `prob` with respect to distribution b.
-        ...         ans = self.ca.prob(value, probs_b)
-        ...         # `probs` must be passed in during function calls.
-        ...         ans = self.ca1.prob(value, probs_a)
-        ...
-        ...         # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
-        ...         # Args:
-        ...         #     probs (Tensor): event probabilities. Default: self.probs.
-        ...
-        ...         # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
-        ...         ans = self.ca.mean() # return 0.8
-        ...         ans = self.ca.mean(probs_b)
-        ...         # `probs` must be passed in during function calls.
-        ...         ans = self.ca1.mean(probs_a)
-        ...
-        ...         # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:
-        ...         # Args:
-        ...         #     dist (str): the name of the distribution. Only 'Categorical' is supported.
-        ...         #     probs_b (Tensor): event probabilities of distribution b.
-        ...         #     probs (Tensor): event probabilities of distribution a. Default: self.probs.
-        ...
-        ...         # Examples of kl_loss. `cross_entropy` is similar.
-        ...         ans = self.ca.kl_loss('Categorical', probs_b)
-        ...         ans = self.ca.kl_loss('Categorical', probs_b, probs_a)
-        ...         # An additional `probs` must be passed in.
-        ...         ans = self.ca1.kl_loss('Categorical', probs_b, probs_a)
-        ...
-        ...         # Examples of `sample`.
-        ...         # Args:
-        ...         #     shape (tuple): the shape of the sample. Default: ().
-        ...         #     probs (Tensor): event probabilities. Default: self.probs.
-        ...         ans = self.ca.sample()
-        ...         ans = self.ca.sample((2,3))
-        ...         ans = self.ca.sample((2,3), probs_b)
-        ...         ans = self.ca1.sample((2,3), probs_a)
+        >>> from mindspore import Tensor
+        >>> # To initialize a Categorical distribution of probs [0.5, 0.5]
+        >>> ca1 = msd.Categorical(probs=[0.2, 0.8], dtype=mindspore.int32)
+        >>> # A Categorical distribution can be initialized without arguments.
+        >>> # In this case, `probs` must be passed in through arguments during function calls.
+        >>> ca2 = msd.Categorical(dtype=mindspore.int32)
+        >>> # Here are some tensors used below for testing
+        >>> value = Tensor([1, 0], dtype=mindspore.int32)
+        >>> probs_a = Tensor([0.5, 0.5], dtype=mindspore.float32)
+        >>> probs_b = Tensor([0.35, 0.65], dtype=mindspore.float32)
+        >>> # Private interfaces of probability functions corresponding to public interfaces, including
+        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
+        >>> # Args:
+        >>> #     value (Tensor): the value to be evaluated.
+        >>> #     probs (Tensor): event probabilities. Default: self.probs.
+        >>> # Examples of `prob`.
+        >>> # Similar calls can be made to other probability functions
+        >>> # by replacing `prob` by the name of the function.
+        >>> ans = ca1.prob(value)
+        >>> print(ans)
+        [0.8 0.2]
+        >>> # Evaluate `prob` with respect to distribution b.
+        >>> ans = ca1.prob(value, probs_b)
+        >>> print(ans)
+        [0.65 0.35]
+        >>> # `probs` must be passed in during function calls.
+        >>> ans = ca2.prob(value, probs_a)
+        >>> print(ans)
+        [0.5 0.5]
+        >>> # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
+        >>> # Args:
+        >>> #     probs (Tensor): event probabilities. Default: self.probs.
+        >>> # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
+        >>> ans = ca1.mean() # return 0.8
+        >>> print(ans)
+        [0.8]
+        >>> ans = ca1.mean(probs_b)
+        >>> print(ans)
+        [0.65]
+        >>> # `probs` must be passed in during function calls.
+        >>> ans = ca2.mean(probs_a)
+        >>> print(ans)
+        [0.5]
+        >>> # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:
+        >>> # Args:
+        >>> #     dist (str): the name of the distribution. Only 'Categorical' is supported.
+        >>> #     probs_b (Tensor): event probabilities of distribution b.
+        >>> #     probs (Tensor): event probabilities of distribution a. Default: self.probs.
+        >>> # Examples of kl_loss. `cross_entropy` is similar.
+        >>> ans = ca1.kl_loss('Categorical', probs_b)
+        >>> print(ans)
+        0.05418826
+        >>> ans = ca1.kl_loss('Categorical', probs_b, probs_a)
+        >>> print(ans)
+        0.04715523
+        >>> # An additional `probs` must be passed in.
+        >>> ans = ca2.kl_loss('Categorical', probs_b, probs_a)
+        >>> print(ans)
+        0.04715523
+        >>> # Examples of `sample`.
+        >>> # Args:
+        >>> #     shape (tuple): the shape of the sample. Default: ().
+        >>> #     probs (Tensor): event probabilities. Default: self.probs.
+        >>> ans = ca1.sample()
+        >>> print(ans.shape)
+        ()
+        >>> ans = ca1.sample((2,3))
+        >>> print(ans.shape)
+        (2, 3)
+        >>> ans = ca1.sample((2,3), probs_b)
+        >>> print(ans.shape)
+        (2, 3)
+        >>> ans = ca2.sample((2,3), probs_a)
+        >>> print(ans.shape)
+        (2, 3)
     """
 
     def __init__(self,
@@ -108,7 +127,7 @@ class Categorical(Distribution):
                  name="Categorical"):
         param = dict(locals())
         param['param_dict'] = {'probs': probs}
-        valid_dtype = mstype.int_type + mstype.float_type
+        valid_dtype = mstype.uint_type + mstype.int_type + mstype.float_type
         Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
         super(Categorical, self).__init__(seed, dtype, name, param)
 
@@ -116,7 +135,7 @@ class Categorical(Distribution):
         if self.probs is not None:
             check_rank(self.probs)
             check_prob(self.probs)
-            check_sum_equal_one(self.probs)
+            check_sum_equal_one(probs)
 
             # update is_scalar_batch and broadcast_shape
             # drop one dimension
@@ -124,7 +143,7 @@ class Categorical(Distribution):
                 self._is_scalar_batch = True
             self._broadcast_shape = self._broadcast_shape[:-1]
 
-        self.argmax = P.Argmax()
+        self.argmax = P.ArgMaxWithValue(axis=-1)
         self.broadcast = broadcast_to
         self.cast = P.Cast()
         self.clip_by_value = C.clip_by_value
@@ -140,6 +159,7 @@ class Categorical(Distribution):
         self.log = log_generic
         self.log_softmax = P.LogSoftmax()
         self.logicor = P.LogicalOr()
+        self.logicand = P.LogicalAnd()
         self.multinomial = P.Multinomial(seed=self.seed)
         self.reshape = P.Reshape()
         self.reduce_sum = P.ReduceSum(keep_dims=True)
@@ -192,8 +212,9 @@ class Categorical(Distribution):
 
     def _mode(self, probs=None):
         probs = self._check_param_type(probs)
-        mode = self.cast(self.argmax(probs), self.dtype)
-        return self.squeeze(mode)
+        index, _ = self.argmax(probs)
+        mode = self.cast(index, self.dtype)
+        return mode
 
     def _var(self, probs=None):
         r"""
@@ -232,7 +253,7 @@ class Categorical(Distribution):
         probs_a = self._check_param_type(probs)
         logits_a = self.log(probs_a)
         logits_b = self.log(probs_b)
-        return self.squeeze(-self.reduce_sum(
+        return self.squeeze(self.reduce_sum(
             self.softmax(logits_a) * (self.log_softmax(logits_a) - (self.log_softmax(logits_b))), -1))
 
     def _cross_entropy(self, dist, probs_b, probs=None):
@@ -256,10 +277,13 @@ class Categorical(Distribution):
             probs (Tensor): Event probabilities. Default: self.probs.
         """
         value = self._check_value(value, 'value')
+        # cast value to int to find the right integer to compute index
         if self.issubclass(self.dtype, mstype.float_):
             value = self.cast(value, self.index_type)
         else:
             value = self.cast(value, self.dtype)
+        # cast int to float for the broadcasting below
+        value = self.cast(value, mstype.float32)
         probs = self._check_param_type(probs)
         logits = self.log(probs)
 
@@ -289,6 +313,9 @@ class Categorical(Distribution):
         value = self.reshape(value, (-1, 1))
         out_of_bound = self.squeeze_last_axis(self.logicor(\
                         self.less(value, 0.0), self.less(num_classes-1, value)))
+        # deal with the case the there is only one class.
+        zeros = self.fill(mstype.float32, self.shape(out_of_bound), 0.0)
+        out_of_bound = self.logicand(out_of_bound, self.less(zeros, num_classes-1))
         value_clipped = self.clip_by_value(value, 0.0, num_classes - 1)
         value_clipped = self.cast(value_clipped, self.index_type)
         # create index from 0 ... NumOfLabels

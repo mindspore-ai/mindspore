@@ -42,55 +42,49 @@ class Gumbel(TransformedDistribution):
         `kl_loss` and `cross_entropy` are not supported on GPU backend.
 
     Examples:
+        >>> import mindspore
+        >>> import mindspore.context as context
+        >>> import mindspore.nn as nn
+        >>> import mindspore.nn.probability.distribution as msd
+        >>> from mindspore import Tensor
+        >>> context.set_context(mode=1, device_target="GPU")
         >>> # To initialize a Gumbel distribution of `loc` 3.0 and `scale` 4.0.
-        >>> gum = msd.Gumbel(3.0, 4.0, dtype=mstype.float32)
-        >>>
-        >>> # The following creates two independent Gumbel distributions.
-        >>> gum = msd.Gumbel([3.0, 3.0], [4.0, 4.0], dtype=mstype.float32)
-        >>>
-        >>> # To use a Gumbel distribution in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.g1 = msd.Gumbel(0.0, 1.0, dtype=mstype.float32)
-        ...
-        ...     # The following calls are valid in construct.
-        ...     def construct(self, value, loc_b, scale_b):
-        ...
-        ...         # Private interfaces of probability functions corresponding to public interfaces, including
-        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same
-        ...         # arguments as follows.
-        ...         # Args:
-        ...         #     value (Tensor): the value to be evaluated.
-        ...
-        ...         # Examples of `prob`.
-        ...         # Similar calls can be made to other probability functions
-        ...         # by replacing 'prob' by the name of the function.
-        ...         ans = self.g1.prob(value)
-        ...
-        ...         # Functions `mean`, `mode`, sd`, `var`, and `entropy` do not take in any argument.
-        ...         ans = self.g1.mean()
-        ...         ans = self.g1.mode()
-        ...         ans = self.g1.sd()
-        ...         ans = self.g1.entropy()
-        ...         ans = self.g1.var()
-        ...
-        ...         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
-        ...         # Args:
-        ...         #     dist (str): the type of the distributions. Only "Gumbel" is supported.
-        ...         #     loc_b (Tensor): the loc of distribution b.
-        ...         #     scale_b (Tensor): the scale distribution b.
-        ...
-        ...         # Examples of `kl_loss`. `cross_entropy` is similar.
-        ...         ans = self.g1.kl_loss('Gumbel', loc_b, scale_b)
-        ...         ans = self.g1.cross_entropy('Gumbel', loc_b, scale_b)
-        ...
-        ...         # Examples of `sample`.
-        ...         # Args:
-        ...         #     shape (tuple): the shape of the sample. Default: ()
-        ...
-        ...         ans = self.g1.sample()
-        ...         ans = self.g1.sample((2,3))
+        >>> gumbel = msd.Gumbel(3.0, 4.0, dtype=mindspore.float32)
+        >>> # Private interfaces of probability functions corresponding to public interfaces, including
+        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same
+        >>> # arguments as follows.
+        >>> # Args:
+        >>> #     value (Tensor): the value to be evaluated.
+        >>> # Examples of `prob`.
+        >>> # Similar calls can be made to other probability functions
+        >>> # by replacing 'prob' by the name of the function.
+        >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
+        >>> ans = gumbel.prob(value)
+        >>> print(ans)
+        [0.07926048 0.08889321 0.09196986]
+        >>> # Functions `mean`, `mode`, sd`, `var`, and `entropy` do not take in any argument.
+        >>> ans = gumbel.mean()
+        >>> print(ans)
+        5.3088627
+        >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
+        >>> # Args:
+        >>> #     dist (str): the type of the distributions. Only "Gumbel" is supported.
+        >>> #     loc_b (Tensor): the loc of distribution b.
+        >>> #     scale_b (Tensor): the scale distribution b.
+        >>> # Examples of `kl_loss`. `cross_entropy` is similar.
+        >>> loc_b = Tensor([1.0], dtype=mindspore.float32)
+        >>> scale_b = Tensor([1.0, 1.5, 2.0], dtype=mindspore.float32)
+        >>> ans = gumbel.kl_loss('Gumbel', loc_b, scale_b)
+        >>> print(ans)
+        [ 2.5934026   0.03880269 -0.38017237]
+        >>> # Examples of `sample`.
+        >>> # Args:
+        >>> #     shape (tuple): the shape of the sample. Default: ()
+        >>> ans = gumbel.sample()
+        >>> print(ans.shape)
+        ()
+        >>> ans = gumbel.sample((2,3))
+        >>> print(ans.shape)
     """
 
     def __init__(self,
@@ -125,6 +119,7 @@ class Gumbel(TransformedDistribution):
         self.lgamma = nn.LGamma()
         self.log = log_generic
         self.shape = P.Shape()
+        self.squeeze = P.Squeeze(0)
         self.sqrt = P.Sqrt()
 
     @property
