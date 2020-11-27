@@ -100,8 +100,10 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ~Dataset() = default;
 
   /// \brief Gets the dataset size
+  /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
+  ///     dataset size at the expense of accuracy.
   /// \return dataset size. If failed, return -1
-  int64_t GetDatasetSize();
+  int64_t GetDatasetSize(bool estimate = false);
 
   /// \brief Gets the output type
   /// \return a vector of DataType. If failed, return an empty vector

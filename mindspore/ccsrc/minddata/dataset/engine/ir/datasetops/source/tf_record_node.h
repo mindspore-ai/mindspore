@@ -88,6 +88,20 @@ class TFRecordNode : public NonMappableSourceNode {
   /// \return Status Status::OK() if get shard id successfully
   Status GetShardId(int32_t *shard_id) override;
 
+  /// \brief Base-class override for GetDatasetSize
+  /// \param[in] size_getter Shared pointer to DatasetSizeGetter
+  /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
+  ///     dataset size at the expense of accuracy.
+  /// \param[out] dataset_size the size of the dataset
+  /// \return Status of the function
+  Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                        int64_t *dataset_size) override;
+
+  /// \brief Get the file list of the specific shard ID
+  /// \param[out] shard_filenames the list of filenames for that specific shard ID
+  /// \return Status of the function
+  Status GetShardFileList(std::vector<std::string> *shard_filenames);
+
  private:
   std::vector<std::string> dataset_files_;
   std::string schema_path_;  // schema_path_ path to schema file. It is set when type of schema parameter is string

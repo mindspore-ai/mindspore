@@ -219,11 +219,6 @@ class BatchOp : public ParallelOp {
   static Status PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
                            const std::unordered_map<std::string, int32_t> &column_name_id_map);
 
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
-
   int64_t GetTreeBatchSize() override;
 
  protected:

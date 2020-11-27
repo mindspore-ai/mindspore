@@ -152,7 +152,6 @@ std::vector<std::shared_ptr<DatasetOp>> MindDataNode::Build() {
   // A vector containing shared pointer to the Dataset Ops that this object will create
   std::vector<std::shared_ptr<DatasetOp>> node_ops;
 
-  std::vector<std::shared_ptr<ShardOperator>> operators_;
   build_status = BuildMindDatasetSamplerChain(sampler_, &operators_, num_padded_);
   RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
 
@@ -181,6 +180,29 @@ std::vector<std::shared_ptr<DatasetOp>> MindDataNode::Build() {
 Status MindDataNode::GetShardId(int32_t *shard_id) {
   *shard_id = sampler_->ShardId();
 
+  return Status::OK();
+}
+
+// Get Dataset size
+Status MindDataNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                    int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows;
+  std::vector<std::shared_ptr<ShardOperator>> operators;
+  RETURN_IF_NOT_OK(BuildMindDatasetSamplerChain(sampler_, &operators, num_padded_));
+
+  if (search_for_pattern_) {
+    dataset_files_ = {dataset_file_};
+  }
+
+  // The last operator is parent sampler
+  std::shared_ptr<ShardOperator> op = operators.back();
+  RETURN_IF_NOT_OK(MindRecordOp::CountTotalRows(dataset_files_, search_for_pattern_, op, &num_rows, num_padded_));
+  *dataset_size = num_rows;
+  dataset_size_ = *dataset_size;
   return Status::OK();
 }
 

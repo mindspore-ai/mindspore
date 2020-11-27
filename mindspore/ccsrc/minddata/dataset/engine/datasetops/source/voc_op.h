@@ -187,15 +187,15 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
-#ifdef ENABLE_PYTHON
   // @param const std::string &dir - VOC dir path
   // @param const std::string &task_type - task type of reading voc job
   // @param const std::string &task_mode - task mode of reading voc job
-  // @param const py::dict &dict - input dict of class index
+  // @param const std::map<std::string, int32_t> input_class_indexing - input map of class index
   // @param int64_t *count - output rows number of VOCDataset
   static Status CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                               const py::dict &dict, int64_t *count);
+                               const std::map<std::string, int32_t> &input_class_indexing, int64_t *count);
 
+#ifdef ENABLE_PYTHON
   // @param const std::string &dir - VOC dir path
   // @param const std::string &task_type - task type of reading voc job
   // @param const std::string &task_mode - task mode of reading voc job
@@ -215,11 +215,6 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "VOCOp"; }
-
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
 
   // /// \brief Gets the class indexing
   // /// \return Status - The status code return

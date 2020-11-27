@@ -136,20 +136,5 @@ Status SkipOp::PreAccept(NodePass *p, bool *modified) {
   return p->PreRunOnNode(shared_from_base<SkipOp>(), modified);
 }
 
-// Get Dataset size
-Status SkipOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0) {
-    *dataset_size = dataset_size_;
-    return Status::OK();
-  }
-  int64_t num_rows;
-  RETURN_IF_NOT_OK(child_[0]->GetDatasetSize(&num_rows));
-  *dataset_size = 0;
-  if (max_skips_ >= 0 && max_skips_ < num_rows) {
-    *dataset_size = num_rows - max_skips_;
-  }
-  dataset_size_ = *dataset_size;
-  return Status::OK();
-}
 }  // namespace dataset
 }  // namespace mindspore

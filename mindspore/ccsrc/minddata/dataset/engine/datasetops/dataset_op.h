@@ -180,10 +180,6 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Status - The error code return
   Status GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id = 0, int32_t child_index = 0);
 
-  /// \brief Gets the dataset size
-  /// \return Status - The status code return
-  virtual Status GetDatasetSize(int64_t *dataset_size);
-
   /// \brief Gets the batch size
   /// \return Status - The status code return
   virtual int64_t GetTreeBatchSize();

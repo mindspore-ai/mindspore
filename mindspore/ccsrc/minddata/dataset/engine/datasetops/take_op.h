@@ -94,11 +94,6 @@ class TakeOp : public PipelineOp {
   // @return Name of the current Op
   std::string Name() const override { return kTakeOp; }
 
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
-
  private:
   int32_t max_takes_;   // The number of takes that the user requested
   int32_t take_count_;  // A counter for the current number of executed takes

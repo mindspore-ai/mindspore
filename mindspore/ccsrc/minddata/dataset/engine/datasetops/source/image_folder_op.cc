@@ -465,24 +465,6 @@ Status ImageFolderOp::ComputeColMap() {
   return Status::OK();
 }
 
-// Get Dataset size
-Status ImageFolderOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0) {
-    *dataset_size = dataset_size_;
-    return Status::OK();
-  }
-  int64_t sample_size, num_rows;
-  num_rows = num_rows_;
-  if (num_rows_ <= 0) {
-    // GetDatasetSize will not be impacted by class_index_
-    RETURN_IF_NOT_OK(CountRowsAndClasses(folder_path_, extensions_, &num_rows, nullptr, {}));
-  }
-  sample_size = sampler_->CalculateNumSamples(num_rows);
-  *dataset_size = sample_size;
-  dataset_size_ = *dataset_size;
-  return Status::OK();
-}
-
 // Get number of classes
 Status ImageFolderOp::GetNumClasses(int64_t *num_classes) {
   if (num_classes_ > 0) {

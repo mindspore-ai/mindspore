@@ -474,22 +474,5 @@ Status MindRecordOp::ComputeColMap() {
   return Status::OK();
 }
 
-// Get Dataset size
-Status MindRecordOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0) {
-    *dataset_size = dataset_size_;
-    return Status::OK();
-  }
-  int64_t num_rows = num_rows_;
-  if (num_rows_ <= 0) {
-    // The last operator is parent sampler
-    std::shared_ptr<ShardOperator> op = operators_.back();
-    RETURN_IF_NOT_OK(CountTotalRows(dataset_file_, load_dataset_, op, &num_rows, num_padded_));
-  }
-  *dataset_size = num_rows;
-  dataset_size_ = *dataset_size;
-  return Status::OK();
-}
-
 }  // namespace dataset
 }  // namespace mindspore

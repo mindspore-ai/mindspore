@@ -168,11 +168,6 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // @return Name of the current Op
   std::string Name() const override { return "MnistOp"; }
 
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
-
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

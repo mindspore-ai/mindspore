@@ -169,5 +169,41 @@ Status TFRecordNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
+// Get Dataset size
+Status TFRecordNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                    int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows;
+  if (!shard_equal_rows_) {
+    // Data will be sharded by file
+    std::vector<std::string> shard_file_list;
+    RETURN_IF_NOT_OK(GetShardFileList(&shard_file_list));
+    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, shard_file_list, 8, estimate));
+  } else {
+    // Data will be sharded by row
+    RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, dataset_files_, 8, estimate));
+    num_rows = static_cast<int64_t>(ceil(num_rows / (num_shards_ * 1.0)));
+  }
+  *dataset_size = num_samples_ > 0 ? std::min(num_rows, num_samples_) : num_rows;
+  dataset_size_ = *dataset_size;
+  return Status::OK();
+}
+
+// Get the file list of the specific shard ID
+Status TFRecordNode::GetShardFileList(std::vector<std::string> *shard_filenames) {
+  if (!shard_filenames->empty()) {
+    RETURN_STATUS_UNEXPECTED("The initial file list must be empty.");
+  }
+  for (int index = 0; index < dataset_files_.size(); index++) {
+    if (index % num_shards_ == shard_id_) {
+      shard_filenames->push_back(dataset_files_.at(index));
+    }
+  }
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

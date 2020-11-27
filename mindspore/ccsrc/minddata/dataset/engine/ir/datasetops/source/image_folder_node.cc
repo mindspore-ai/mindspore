@@ -89,5 +89,20 @@ Status ImageFolderNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
+// Get Dataset size
+Status ImageFolderNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                       int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t sample_size, num_rows;
+  RETURN_IF_NOT_OK(ImageFolderOp::CountRowsAndClasses(dataset_dir_, exts_, &num_rows, nullptr, {}));
+  sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
+  *dataset_size = sample_size;
+  dataset_size_ = *dataset_size;
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

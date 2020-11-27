@@ -396,16 +396,9 @@ Status ManifestOp::CountDatasetInfo() {
   return Status::OK();
 }
 
-#ifdef ENABLE_PYTHON
-Status ManifestOp::CountTotalRows(const std::string &file, const py::dict &dict, const std::string &usage,
-                                  int64_t *count, int64_t *numClasses) {
+Status ManifestOp::CountTotalRows(const std::string &file, const std::map<std::string, int32_t> &map,
+                                  const std::string &usage, int64_t *count, int64_t *numClasses) {
   // the logic of counting the number of samples is copied from ParseManifestFile()
-  std::map<std::string, int32_t> map;
-  for (auto p : dict) {
-    (void)map.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),
-                                                     py::reinterpret_borrow<py::int_>(p.second)));
-  }
-
   std::shared_ptr<ManifestOp> op;
   *count = 0;
   RETURN_IF_NOT_OK(Builder().SetManifestFile(file).SetClassIndex(map).SetUsage(usage).Build(&op));
@@ -415,6 +408,7 @@ Status ManifestOp::CountTotalRows(const std::string &file, const py::dict &dict,
   return Status::OK();
 }
 
+#ifdef ENABLE_PYTHON
 Status ManifestOp::GetClassIndexing(const std::string &file, const py::dict &dict, const std::string &usage,
                                     std::map<std::string, int32_t> *output_class_indexing) {
   std::map<std::string, int32_t> input_class_indexing;
@@ -456,23 +450,6 @@ Status ManifestOp::ComputeColMap() {
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
-  return Status::OK();
-}
-
-// Get Dataset size
-Status ManifestOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0) {
-    *dataset_size = dataset_size_;
-    return Status::OK();
-  }
-  int64_t num_rows, sample_size;
-  std::shared_ptr<ManifestOp> op;
-  RETURN_IF_NOT_OK(Builder().SetManifestFile(file_).SetClassIndex(class_index_).SetUsage(usage_).Build(&op));
-  RETURN_IF_NOT_OK(op->ParseManifestFile());
-  num_rows = static_cast<int64_t>(op->image_labelname_.size());
-  sample_size = sampler_->CalculateNumSamples(num_rows);
-  *dataset_size = sample_size;
-  dataset_size_ = *dataset_size;
   return Status::OK();
 }
 

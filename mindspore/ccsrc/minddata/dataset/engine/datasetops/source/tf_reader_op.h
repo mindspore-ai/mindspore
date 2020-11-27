@@ -257,11 +257,6 @@ class TFReaderOp : public ParallelOp {
   // before providing their own implementations.
   Status PrepareNodePostAction() override;
 
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
-
   static bool ValidateFirstRowCrc(const std::string &filename);
 
  private:
@@ -399,11 +394,6 @@ class TFReaderOp : public ParallelOp {
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
-
-  // Private function for computing the file list of the specific shard ID. This is because in distributed scenario,
-  // data will be divided into shards by row when equal_rows_per_shard is true, but by file in the opposite case.
-  // @return - Status - the status code returned.
-  Status GetShardFileList(std::vector<std::string> *shard_filenames);
 
   int32_t device_id_;
   int32_t num_devices_;

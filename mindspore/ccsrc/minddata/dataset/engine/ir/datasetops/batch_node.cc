@@ -114,5 +114,33 @@ std::vector<std::shared_ptr<DatasetOp>> BatchNode::Build() {
   return node_ops;
 }
 
+// Get Dataset size
+Status BatchNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                 int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+#ifdef ENABLE_PYTHON
+  if (batch_size_func_) {
+    RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), dataset_size));
+    dataset_size_ = *dataset_size;
+    return Status::OK();
+  }
+#endif
+  int64_t num_rows;
+  RETURN_IF_NOT_OK(children_[0]->GetDatasetSize(size_getter, estimate, &num_rows));
+  if (num_rows > 0 && batch_size_ > 0) {
+    if (drop_remainder_) {
+      num_rows = static_cast<int64_t>(floor(num_rows / (1.0 * batch_size_)));
+    } else {
+      num_rows = static_cast<int64_t>(ceil(num_rows / (1.0 * batch_size_)));
+    }
+  }
+  *dataset_size = num_rows;
+  dataset_size_ = num_rows;
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

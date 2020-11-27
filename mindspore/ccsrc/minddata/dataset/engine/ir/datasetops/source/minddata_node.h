@@ -74,6 +74,15 @@ class MindDataNode : public MappableSourceNode {
   /// \note Pybind will use this function to set sample_bytes into MindDataNode
   void SetSampleBytes(std::map<std::string, std::string> *sample_bytes);
 
+  /// \brief Base-class override for GetDatasetSize
+  /// \param[in] size_getter Shared pointer to DatasetSizeGetter
+  /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
+  ///     dataset size at the expense of accuracy.
+  /// \param[out] dataset_size the size of the dataset
+  /// \return Status of the function
+  Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                        int64_t *dataset_size) override;
+
  private:
   std::string dataset_file_;                // search_for_pattern_ will be true in this mode
   std::vector<std::string> dataset_files_;  // search_for_pattern_ will be false in this mode
@@ -83,6 +92,7 @@ class MindDataNode : public MappableSourceNode {
   nlohmann::json padded_sample_;
   std::map<std::string, std::string> sample_bytes_;  // enable in python
   int64_t num_padded_;
+  std::vector<std::shared_ptr<ShardOperator>> operators_;
 };
 
 }  // namespace dataset

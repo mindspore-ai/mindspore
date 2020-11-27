@@ -258,13 +258,5 @@ Status FilterOp::PreAccept(NodePass *p, bool *modified) {
   return p->PreRunOnNode(shared_from_base<FilterOp>(), modified);
 }
 
-// Get Dataset size
-Status FilterOp::GetDatasetSize(int64_t *dataset_size) {
-  // We are returning -1 because we can't easily calculate GetDatasetSize. Returning -1 will make TreeGetters to
-  // iterate over the dataset and count the size
-  *dataset_size = dataset_size_;
-  return Status::OK();
-}
-
 }  // namespace dataset
 }  // namespace mindspore

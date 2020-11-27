@@ -112,11 +112,6 @@ class BucketBatchByLengthOp : public PipelineOp {
 
   std::string Name() const override { return kBucketBatchByLengthOp; }
 
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
-
   // << Stream output operator overload
   // @notes This allows you to write the debug print info using stream operators
   // @param out - reference to the output stream being overloaded

@@ -565,19 +565,5 @@ Status ClueOp::Accept(NodePass *p, bool *modified) {
   return p->RunOnNode(shared_from_base<ClueOp>(), modified);
 }
 
-// Get Dataset size
-Status ClueOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0) {
-    *dataset_size = dataset_size_;
-    return Status::OK();
-  }
-  int64_t num_rows, sample_size;
-  if (num_rows_per_shard_ <= 0) RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
-  sample_size = num_samples_;
-  num_rows = num_rows_per_shard_;
-  *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
-  dataset_size_ = *dataset_size;
-  return Status::OK();
-}
 }  // namespace dataset
 }  // namespace mindspore

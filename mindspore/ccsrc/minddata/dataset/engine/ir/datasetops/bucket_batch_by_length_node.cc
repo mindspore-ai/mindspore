@@ -127,6 +127,5 @@ Status BucketBatchByLengthNode::ValidateParams() {
 
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

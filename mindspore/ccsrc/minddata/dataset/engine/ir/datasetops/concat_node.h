@@ -58,6 +58,8 @@ class ConcatNode : public DatasetNode {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  bool IsSizeDefined() override { return false; }
+
  private:
   std::shared_ptr<SamplerObj> sampler_;
   std::vector<std::pair<int, int>> children_flag_and_nums_;

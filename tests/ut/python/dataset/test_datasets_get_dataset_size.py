@@ -54,22 +54,26 @@ def test_imagenet_tf_file_dataset_size():
     ds_total = ds.TFRecordDataset(IMAGENET_TFFILE_DIR)
     assert ds_total.get_dataset_size() == 12
 
-    ds_shard_1_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=1, shard_id=0)
+    ds_shard_1_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=1, shard_id=0, shard_equal_rows=True)
     assert ds_shard_1_0.get_dataset_size() == 12
 
-    ds_shard_2_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=2, shard_id=0)
+    ds_shard_2_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=2, shard_id=0, shard_equal_rows=True)
     assert ds_shard_2_0.get_dataset_size() == 6
 
-    # FIXME: dataset_size == 6 looks wrong but seem it aims to match the current code.
-    # Correct answer should be 12/3=4, the code issue should be addressed.
-    ds_shard_3_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=3, shard_id=0)
-    assert ds_shard_3_0.get_dataset_size() == 6
+    ds_shard_3_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=3, shard_id=0, shard_equal_rows=True)
+    assert ds_shard_3_0.get_dataset_size() == 4
 
     count = 0
     for _ in ds_shard_3_0.create_dict_iterator():
         count += 1
     assert ds_shard_3_0.get_dataset_size() == count
 
+    # shard_equal_rows is set to False therefore, get_dataset_size must return count
+    ds_shard_4_0 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, num_shards=4, shard_id=0)
+    count = 0
+    for _ in ds_shard_4_0.create_dict_iterator():
+        count += 1
+    assert ds_shard_4_0.get_dataset_size() == count
 
 def test_mnist_dataset_size():
     ds_total = ds.MnistDataset(MNIST_DATA_DIR)

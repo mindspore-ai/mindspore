@@ -162,11 +162,11 @@ Status DistributedSamplerRT::ResetSampler() {
 }
 
 int64_t DistributedSamplerRT::CalculateNumSamples(int64_t num_rows) {
-  int64_t childs = num_rows;
+  int64_t child_num_rows = num_rows;
   if (!child_.empty()) {
-    childs = child_[0]->CalculateNumSamples(num_rows);
+    child_num_rows = child_[0]->CalculateNumSamples(num_rows);
   }
-  int64_t num_samples = (num_samples_ > 0) ? std::min(childs, num_samples_) : childs;
+  int64_t num_samples = (num_samples_ > 0) ? std::min(child_num_rows, num_samples_) : child_num_rows;
   return std::ceil(num_samples * 1.0 / num_devices_);
 }
 

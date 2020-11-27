@@ -133,11 +133,6 @@ class RepeatOp : public PipelineOp {
   /// \@return Status - The error code return
   Status Reset() override;
 
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
-
   int64_t GetTreeRepeatCount() override;
 
   // \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes

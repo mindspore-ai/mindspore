@@ -136,8 +136,6 @@ class GeneratorOp : public PipelineOp {
 
   Status Init();
 
-  Status GetDatasetSize(int64_t *dataset_size) override;
-
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;

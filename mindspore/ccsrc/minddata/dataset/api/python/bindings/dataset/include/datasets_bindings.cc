@@ -184,7 +184,11 @@ PYBIND_REGISTER(GeneratorNode, 2, ([](const py::module *m) {
                       auto gen = std::make_shared<GeneratorNode>(generator_function, schema);
                       THROW_IF_ERROR(gen->ValidateParams());
                       return gen;
-                    }));
+                    }))
+                    .def("SetGeneratorDatasetSize", [](std::shared_ptr<GeneratorNode> self, int64_t sz) {
+                      self->SetGeneratorDatasetSize(sz);
+                      return self;
+                    });
                 }));
 
 PYBIND_REGISTER(ImageFolderNode, 2, ([](const py::module *m) {

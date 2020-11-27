@@ -248,24 +248,6 @@ Status ZipOp::Accept(NodePass *p, bool *modified) {
   return p->RunOnNode(shared_from_base<ZipOp>(), modified);
 }
 
-// Get Dataset size
-Status ZipOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0) {
-    *dataset_size = dataset_size_;
-    return Status::OK();
-  }
-  std::vector<int32_t> dataset_sizes;
-  int64_t child_dataset_size;
-  for (auto child : child_) {
-    RETURN_IF_NOT_OK(child->GetDatasetSize(&child_dataset_size));
-    dataset_sizes.push_back(child_dataset_size);
-  }
-
-  *dataset_size = *std::min_element(dataset_sizes.begin(), dataset_sizes.end());
-  dataset_size_ = *dataset_size;
-  return Status::OK();
-}
-
 Status ZipOp::ComputeColMap() {
   if (column_name_id_map_.empty()) {
     column_name_id_map_ = {};

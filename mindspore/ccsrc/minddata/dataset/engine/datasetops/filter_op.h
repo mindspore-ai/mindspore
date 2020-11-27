@@ -137,11 +137,6 @@ class FilterOp : public ParallelOp {
   // @return Name of the current Op
   std::string Name() const override { return kFilterOp; }
 
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
-
  private:
   // predicate_func python callable which returns a boolean value.
   std::shared_ptr<TensorOp> predicate_func_;

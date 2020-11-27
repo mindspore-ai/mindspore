@@ -447,16 +447,9 @@ Status VOCOp::ReadAnnotationToTensor(const std::string &path, TensorRow *row) {
   return Status::OK();
 }
 
-#ifdef ENABLE_PYTHON
 Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                             const py::dict &dict, int64_t *count) {
+                             const std::map<std::string, int32_t> &input_class_indexing, int64_t *count) {
   if (task_type == "Detection") {
-    std::map<std::string, int32_t> input_class_indexing;
-    for (auto p : dict) {
-      (void)input_class_indexing.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),
-                                                                        py::reinterpret_borrow<py::int_>(p.second)));
-    }
-
     std::shared_ptr<VOCOp> op;
     RETURN_IF_NOT_OK(
       Builder().SetDir(dir).SetTask(task_type).SetUsage(task_mode).SetClassIndex(input_class_indexing).Build(&op));
@@ -473,6 +466,7 @@ Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_typ
   return Status::OK();
 }
 
+#ifdef ENABLE_PYTHON
 Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
                                const py::dict &dict, std::map<std::string, int32_t> *output_class_indexing) {
   std::map<std::string, int32_t> input_class_indexing;
@@ -513,36 +507,6 @@ Status VOCOp::ComputeColMap() {
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
-  return Status::OK();
-}
-
-// Get Dataset size
-Status VOCOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0) {
-    *dataset_size = dataset_size_;
-    return Status::OK();
-  }
-  int64_t num_rows = 0, sample_size;
-  if (image_ids_.size() == 0) {
-    if (task_type_ == TaskType::Detection) {
-      std::shared_ptr<VOCOp> op;
-      RETURN_IF_NOT_OK(
-        Builder().SetDir(folder_path_).SetTask("Detection").SetUsage(usage_).SetClassIndex(class_index_).Build(&op));
-      RETURN_IF_NOT_OK(op->ParseImageIds());
-      RETURN_IF_NOT_OK(op->ParseAnnotationIds());
-      num_rows = static_cast<int64_t>(op->image_ids_.size());
-    } else if (task_type_ == TaskType::Segmentation) {
-      std::shared_ptr<VOCOp> op;
-      RETURN_IF_NOT_OK(Builder().SetDir(folder_path_).SetTask("Segmentation").SetUsage(usage_).Build(&op));
-      RETURN_IF_NOT_OK(op->ParseImageIds());
-      num_rows = static_cast<int64_t>(op->image_ids_.size());
-    }
-  } else {
-    num_rows = image_ids_.size();
-  }
-  sample_size = sampler_->CalculateNumSamples(num_rows);
-  *dataset_size = sample_size;
-  dataset_size_ = *dataset_size;
   return Status::OK();
 }
 

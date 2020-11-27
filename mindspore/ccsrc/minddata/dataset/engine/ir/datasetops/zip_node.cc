@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "minddata/dataset/engine/datasetops/zip_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
@@ -60,6 +61,25 @@ std::vector<std::shared_ptr<DatasetOp>> ZipNode::Build() {
 
   node_ops.push_back(std::make_shared<ZipOp>(rows_per_buffer_, connector_que_size_));
   return node_ops;
+}
+
+// Get Dataset size
+Status ZipNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                               int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  std::vector<int32_t> dataset_sizes;
+  int64_t child_dataset_size;
+  for (auto child : children_) {
+    RETURN_IF_NOT_OK(child->GetDatasetSize(size_getter, estimate, &child_dataset_size));
+    dataset_sizes.push_back(child_dataset_size);
+  }
+
+  *dataset_size = *std::min_element(dataset_sizes.begin(), dataset_sizes.end());
+  dataset_size_ = *dataset_size;
+  return Status::OK();
 }
 
 // Visitor accepting method for NodePass

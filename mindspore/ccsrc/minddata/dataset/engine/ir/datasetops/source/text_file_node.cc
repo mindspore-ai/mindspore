@@ -122,5 +122,20 @@ Status TextFileNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
+// Get Dataset size
+Status TextFileNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                    int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows, sample_size = num_samples_;
+  RETURN_IF_NOT_OK(TextFileOp::CountAllFileRows(dataset_files_, &num_rows));
+  num_rows = static_cast<int64_t>(ceil(num_rows / (1.0 * num_shards_)));
+  *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
+  dataset_size_ = *dataset_size;
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

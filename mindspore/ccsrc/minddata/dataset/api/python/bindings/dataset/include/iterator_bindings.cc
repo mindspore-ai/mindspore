@@ -93,12 +93,6 @@ PYBIND_REGISTER(TreeGetters, 1, ([](const py::module *m) {
                            THROW_IF_ERROR(self.GetClassIndexing(&output_class_indexing));
                            return output_class_indexing;
                          })
-                    .def("GetDatasetSize",
-                         [](PythonTreeGetters &self) {
-                           int64_t dataset_size;
-                           THROW_IF_ERROR(self.GetDatasetSize(&dataset_size));
-                           return dataset_size;
-                         })
                     .def("__deepcopy__", [](py::object &tree_getter, py::dict memo) { return tree_getter; });
                 }));
 
@@ -162,6 +156,19 @@ PYBIND_REGISTER(PythonSaveToDisk, 1, ([](const py::module *m) {
                     .def("Init",
                          [](PythonSaveToDisk &self, std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
                     .def("Save", [](PythonSaveToDisk &self) { THROW_IF_ERROR(self.Save()); });
+                }));
+
+PYBIND_REGISTER(PythonDatasetSizeGetter, 1, ([](const py::module *m) {
+                  (void)py::class_<PythonDatasetSizeGetter, TreeConsumer, std::shared_ptr<PythonDatasetSizeGetter>>(
+                    *m, "DatasetSizeGetters")
+                    .def(py::init<>())
+                    .def("Init", [](PythonDatasetSizeGetter &self,
+                                    std::shared_ptr<DatasetNode> d) { THROW_IF_ERROR(self.Init(d)); })
+                    .def("GetDatasetSize", [](PythonDatasetSizeGetter &self, bool estimate) {
+                      int64_t size;
+                      THROW_IF_ERROR(self.GetDatasetSize(&size, estimate));
+                      return size;
+                    });
                 }));
 
 }  // namespace dataset
