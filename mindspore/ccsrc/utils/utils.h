@@ -82,6 +82,7 @@ constexpr auto kUnsortedSegmentMinOpName = "UnsortedSegmentMin";
 constexpr auto kFlattenGradOpName = "FlattenGrad";
 constexpr auto kExpandDimsOpName = "ExpandDims";
 constexpr auto kReshapeOpName = "Reshape";
+constexpr auto kTransposeOpName = "Transpose";
 constexpr auto kSplitOpName = "Split";
 constexpr auto kSplitVOpName = "SplitV";
 constexpr auto kSparseApplyAdagradOpName = "SparseApplyAdagrad";

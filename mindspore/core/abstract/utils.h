@@ -56,6 +56,10 @@ size_t ShapeSize(const std::vector<size_t> &shape);
 
 // Get broadcasted shape for binary element-wise operation
 ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tensor_x, const AbstractTensorPtr &tensor_y);
+
+// Check dynamic shape routine
+void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);
+
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_UTILS_H_

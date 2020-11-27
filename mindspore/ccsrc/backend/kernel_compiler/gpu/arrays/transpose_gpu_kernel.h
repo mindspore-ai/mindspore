@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace kernel {
 template <typename T>
 class TransposeGpuFwdKernel : public GpuKernel {
  public:
-  TransposeGpuFwdKernel() : shape_size_(0), input_size_(0), output_size_(0), workspace_size_(0) {}
+  TransposeGpuFwdKernel() { ResetResource(); }
   ~TransposeGpuFwdKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -85,6 +85,18 @@ class TransposeGpuFwdKernel : public GpuKernel {
     }
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    shape_size_ = 0;
+    input_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+    input_shape_.clear();
+    input_axis_.clear();
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

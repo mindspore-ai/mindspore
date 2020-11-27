@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <set>
 #include <algorithm>
 #include <iterator>
 #include "abstract/infer_functions.h"
@@ -260,7 +259,11 @@ AbstractBasePtr InferImplScatterAdd(const AnalysisEnginePtr &, const PrimitivePt
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
-  return std::make_shared<AbstractTensor>(x->element(), x->shape());
+  ShapeVector shape = x->shape()->shape();
+  ShapeVector min_shape = x->shape()->min_shape();
+  ShapeVector max_shape = x->shape()->max_shape();
+  (void)CheckMinMaxShape(shape, &min_shape, &max_shape);
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
 }
 
 AbstractBasePtr InferImplScatterUpdate(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -270,7 +273,11 @@ AbstractBasePtr InferImplScatterUpdate(const AnalysisEnginePtr &, const Primitiv
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
-  return std::make_shared<AbstractTensor>(x->element(), x->shape());
+  ShapeVector shape = x->shape()->shape();
+  ShapeVector min_shape = x->shape()->min_shape();
+  ShapeVector max_shape = x->shape()->max_shape();
+  (void)CheckMinMaxShape(shape, &min_shape, &max_shape);
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
 }
 
 AbstractBasePtr InferImplMapCacheIdx(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -542,43 +549,28 @@ AbstractBasePtr InferImplZerosLike(const AnalysisEnginePtr &, const PrimitivePtr
 AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  auto perm = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
   auto input_shp = input->shape()->shape();
-  auto perm_val = perm->BuildValue();
-  if (perm_val->isa<AnyValue>()) {
-    MS_LOG(EXCEPTION) << "Perm can't be anything: " << args_spec_list[1]->ToString();
-  }
-  auto perm_val_data = perm_val->cast<ValueTuplePtr>()->value();
+  ValuePtr perm = primitive->GetAttr("perm");
+  auto perm_val = perm->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(perm_val);
+  auto perm_val_data = perm_val->value();
   ShapeVector perm_vec;
   (void)std::transform(std::begin(perm_val_data), std::end(perm_val_data), std::back_inserter(perm_vec),
                        [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
   ShapeVector result_shp;
-  std::set<size_t> indices;
-  for (size_t i = 0; i < perm_vec.size(); i++) {
-    size_t idx = static_cast<size_t>(perm_vec[i]);
-    if (indices.find(idx) != indices.end()) {
-      MS_LOG(EXCEPTION) << "Perm values must be unique";
-    }
-    if (idx >= perm_vec.size()) {
-      MS_LOG(EXCEPTION) << "One value in perm is " << idx << ", not in range [0, " << perm_vec.size() << ")";
-    }
-    result_shp.push_back(input_shp[idx]);
-    indices.insert(idx);
-  }
   ShapeVector max_shp;
   ShapeVector min_shp;
-  if (input->shape()->max_shape().size() == input_shp.size() &&
-      input->shape()->min_shape().size() == input_shp.size()) {
-    for (size_t i = 0; i < perm_vec.size(); i++) {
-      size_t idx = static_cast<size_t>(perm_vec[i]);
-      max_shp.push_back(input->shape()->max_shape()[idx]);
-      min_shp.push_back(input->shape()->min_shape()[idx]);
-    }
-    return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp, min_shp, max_shp));
+  ShapeVector x_max_shp = input->shape()->max_shape();
+  ShapeVector x_min_shp = input->shape()->min_shape();
+  (void)CheckMinMaxShape(input_shp, &x_min_shp, &x_max_shp);
+  for (size_t i = 0; i < perm_vec.size(); i++) {
+    size_t idx = static_cast<size_t>(perm_vec[i]);
+    result_shp.push_back(input_shp[idx]);
+    max_shp.push_back(x_max_shp[idx]);
+    min_shp.push_back(x_min_shp[idx]);
   }
-  return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp));
+  return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp, min_shp, max_shp));
 }
 
 AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
