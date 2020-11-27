@@ -173,7 +173,9 @@ class NetFactory:
     def part_cmp(self):
         part_ps = self.part_ps_impl()
         no_ps = self.no_ps_impl()
-        assert np.allclose(no_ps, part_ps, rtol=1.0e-5, atol=1.0e-5)
+        print(part_ps)
+        print(no_ps)
+        assert np.allclose(no_ps, part_ps, rtol=1.0e-4, atol=1.0e-4)
 
 
 if __name__ == "__main__":
