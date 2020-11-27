@@ -23,14 +23,13 @@
 #include <iostream>
 #include <memory>
 
+#include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/text/sentence_piece_vocab.h"
 
 namespace mindspore {
 namespace dataset {
-enum class SPieceTokenizerOutType { kString = 0, kInt = 1 };
-enum class SPieceTokenizerLoadType { kFile = 0, kModel = 1 };
 
 class SentencePieceTokenizerOp : public TensorOp {
  public:

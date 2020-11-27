@@ -15,9 +15,16 @@
  */
 
 #include <unistd.h>
+
 #include "minddata/dataset/include/text.h"
+#include "minddata/dataset/text/kernels/jieba_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/lookup_op.h"
+#include "minddata/dataset/text/kernels/ngram_op.h"
 #include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/sliding_window_op.h"
+#ifndef _WIN32
+#include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
+#endif
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {
@@ -29,9 +36,24 @@ namespace text {
 // FUNCTIONS TO CREATE TEXT OPERATIONS
 // (In alphabetical order)
 
+std::shared_ptr<JiebaTokenizerOperation> JiebaTokenizer(const std::string &hmm_path, const std::string &mp_path,
+                                                        const JiebaMode &mode, bool with_offsets) {
+  auto op = std::make_shared<JiebaTokenizerOperation>(hmm_path, mp_path, mode, with_offsets);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
 std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
                                         const DataType &data_type) {
   auto op = std::make_shared<LookupOperation>(vocab, unknown_token, data_type);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
+std::shared_ptr<NgramOperation> Ngram(const std::vector<int32_t> &ngrams,
+                                      const std::pair<std::string, int32_t> &left_pad,
+                                      const std::pair<std::string, int32_t> &right_pad, const std::string &separator) {
+  auto op = std::make_shared<NgramOperation>(ngrams, left_pad, right_pad, separator);
 
   return op->ValidateParams() ? op : nullptr;
 }
@@ -50,11 +72,78 @@ std::shared_ptr<SentencePieceTokenizerOperation> SentencePieceTokenizer(const st
   return op->ValidateParams() ? op : nullptr;
 }
 
+std::shared_ptr<SlidingWindowOperation> SlidingWindow(const int32_t width, const int32_t axis) {
+  auto op = std::make_shared<SlidingWindowOperation>(width, axis);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
+#ifndef _WIN32
+std::shared_ptr<WhitespaceTokenizerOperation> WhitespaceTokenizer(bool with_offsets) {
+  auto op = std::make_shared<WhitespaceTokenizerOperation>(with_offsets);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+#endif
+
 /* ####################################### Validator Functions ############################################ */
+
+// Helper function to validate tokenizer directory parameter
+Status ValidateTokenizerDirParam(const std::string &tokenizer_name, const std::string &tokenizer_file) {
+  if (tokenizer_file.empty()) {
+    std::string err_msg = tokenizer_name + ": tokenizer_file is not specified.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  Path file(tokenizer_file);
+  if (!file.Exists()) {
+    std::string err_msg = tokenizer_name + ": tokenizer_file: [" + tokenizer_file + "] is an invalid directory path.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (access(tokenizer_file.c_str(), R_OK) == -1) {
+    std::string err_msg = tokenizer_name + ": No access to specified tokenizer path: " + tokenizer_file;
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  return Status::OK();
+}
 
 /* ####################################### Derived TensorOperation classes ################################# */
 
 // (In alphabetical order)
+
+// JiebaTokenizerOperation
+JiebaTokenizerOperation::JiebaTokenizerOperation(const std::string &hmm_path, const std::string &mp_path,
+                                                 const JiebaMode &mode, bool with_offsets)
+    : hmm_path_(hmm_path), mp_path_(mp_path), mode_(mode), with_offsets_(with_offsets) {}
+
+Status JiebaTokenizerOperation::ValidateParams() {
+  if (hmm_path_.empty()) {
+    std::string err_msg = "JiebaTokenizer: The dict of HMMSegment in cppjieba is not provided.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (mp_path_.empty()) {
+    std::string err_msg = "JiebaTokenizer: The dict of MPSegment in cppjieba is not provided.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  RETURN_IF_NOT_OK(ValidateTokenizerDirParam("JiebaTokenizer", hmm_path_));
+  RETURN_IF_NOT_OK(ValidateTokenizerDirParam("JiebaTokenizer", mp_path_));
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> JiebaTokenizerOperation::Build() {
+  std::shared_ptr<JiebaTokenizerOp> tensor_op =
+    std::make_shared<JiebaTokenizerOp>(hmm_path_, mp_path_, mode_, with_offsets_);
+  return tensor_op;
+}
 
 // LookupOperation
 LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
@@ -80,6 +169,54 @@ Status LookupOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> LookupOperation::Build() {
   std::shared_ptr<LookupOp> tensor_op = std::make_shared<LookupOp>(vocab_, default_id_, data_type_);
+  return tensor_op;
+}
+
+// NgramOperation
+NgramOperation::NgramOperation(const std::vector<int32_t> &ngrams, const std::pair<std::string, int32_t> &left_pad,
+                               const std::pair<std::string, int32_t> &right_pad, const std::string &separator)
+    : ngrams_(ngrams), left_pad_(left_pad), right_pad_(right_pad), separator_(separator) {}
+
+Status NgramOperation::ValidateParams() {
+  if (ngrams_.size() == 0) {
+    std::string err_msg = "Ngram : Container cannot be empty.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  } else {
+    for (int32_t i = 0; i < ngrams_.size(); ++i) {
+      if (ngrams_[i] <= 0) {
+        std::string err_msg =
+          "Ngram : The value of ngrams vector must be greater than 0: " + std::to_string(ngrams_[i]);
+        MS_LOG(ERROR) << err_msg;
+        RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      }
+    }
+  }
+
+  if (left_pad_.second < 0) {
+    std::string err_msg =
+      "Ngram : The second parameter pad_width in left_pad vector must be greater than or equal to 0: " +
+      std::to_string(left_pad_.second);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (right_pad_.second < 0) {
+    std::string err_msg =
+      "Ngram : The second parameter pad_width in right_pad vector must be greater than or equal to 0: " +
+      std::to_string(right_pad_.second);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> NgramOperation::Build() {
+  int32_t l_len = left_pad_.second;
+  int32_t r_len = right_pad_.second;
+  std::string l_pad = left_pad_.first;
+  std::string r_pad = right_pad_.first;
+  std::shared_ptr<NgramOp> tensor_op = std::make_shared<NgramOp>(ngrams_, l_len, r_len, l_pad, r_pad, separator_);
   return tensor_op;
 }
 
@@ -127,6 +264,36 @@ std::shared_ptr<TensorOp> SentencePieceTokenizerOperation::Build() {
   }
   return tensor_op;
 }
+
+// SlidingWindowOperation
+SlidingWindowOperation::SlidingWindowOperation(const int32_t width, const int32_t axis) : width_(width), axis_(axis) {}
+
+Status SlidingWindowOperation::ValidateParams() {
+  if (width_ < 1) {
+    std::string err_msg =
+      "SlidingWindow : The parameter width must be greater than or equal to 1: " + std::to_string(width_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> SlidingWindowOperation::Build() {
+  std::shared_ptr<SlidingWindowOp> tensor_op = std::make_shared<SlidingWindowOp>(static_cast<uint32_t>(width_), axis_);
+  return tensor_op;
+}
+
+#ifndef _WIN32
+// WhitespaceTokenizerOperation
+WhitespaceTokenizerOperation::WhitespaceTokenizerOperation(bool with_offsets) : with_offsets_(with_offsets) {}
+
+Status WhitespaceTokenizerOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> WhitespaceTokenizerOperation::Build() {
+  std::shared_ptr<WhitespaceTokenizerOp> tensor_op = std::make_shared<WhitespaceTokenizerOp>(with_offsets_);
+  return tensor_op;
+}
+#endif
 
 }  // namespace text
 }  // namespace dataset

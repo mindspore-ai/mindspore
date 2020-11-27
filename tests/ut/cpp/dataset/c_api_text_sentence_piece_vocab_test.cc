@@ -18,6 +18,7 @@
 #include <string>
 
 #include "common/common.h"
+#include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/status.h"
 #include "minddata/dataset/include/transforms.h"
