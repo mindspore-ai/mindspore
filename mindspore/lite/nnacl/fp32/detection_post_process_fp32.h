@@ -37,8 +37,8 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DecodeBoxes(const int num_boxes, const float *input_boxes, const float *anchors,
-                DetectionPostProcessParameter *param);
+int DecodeBoxes(int num_boxes, const float *input_boxes, const float *anchors,
+                const DetectionPostProcessParameter *param);
 
 int NmsMultiClassesFastCore(const int num_boxes, const int num_classes_with_bg, const float *input_scores,
                             void (*)(const float *, int *, int, int), const DetectionPostProcessParameter *param,

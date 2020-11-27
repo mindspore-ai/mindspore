@@ -16,6 +16,6 @@
 #include "nnacl/flatten.h"
 #include <string.h>
 
-void Flatten(const void *input, void *output, FlattenParameter *flatten_param) {
+void Flatten(const void *input, void *output, const FlattenParameter *flatten_param) {
   memcpy(output, input, flatten_param->size);
 }

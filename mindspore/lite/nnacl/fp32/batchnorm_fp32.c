@@ -19,8 +19,8 @@
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/op_base.h"
 
-void BatchNormFp32(const void *input, const void *mean, const void *variance, BatchNormParameter *param, int task_id,
-                   void *output) {
+void BatchNormFp32(const void *input, const void *mean, const void *variance, const BatchNormParameter *param,
+                   int task_id, void *output) {
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
@@ -37,7 +37,7 @@ void BatchNormFp32(const void *input, const void *mean, const void *variance, Ba
 }
 
 void FusedBatchNormFp32(const void *input, const void *scale, const void *offset, const void *mean,
-                        const void *variance, BatchNormParameter *param, int task_id, void *output) {
+                        const void *variance, const BatchNormParameter *param, int task_id, void *output) {
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
@@ -53,7 +53,7 @@ void FusedBatchNormFp32(const void *input, const void *scale, const void *offset
   }
 }
 
-void FusedBatchNormFp32MeanVar(const float *input, float *run_mean, float *run_var, BatchNormParameter *param,
+void FusedBatchNormFp32MeanVar(const float *input, float *run_mean, float *run_var, const BatchNormParameter *param,
                                float *save_mean, float *save_var) {
   const float N = (float)param->unit_;
   const float VN = N;

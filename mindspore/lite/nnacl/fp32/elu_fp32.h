@@ -28,7 +28,7 @@ typedef struct EluParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Elu(const float *input_data, float *output_data, EluParameter *parameter, int task_id);
+int Elu(const float *input_data, float *output_data, const EluParameter *parameter, int task_id);
 #ifdef __cplusplus
 }
 #endif

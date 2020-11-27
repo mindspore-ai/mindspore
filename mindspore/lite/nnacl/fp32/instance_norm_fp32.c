@@ -18,9 +18,8 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-int InstanceNorm(const int outer_size, const int inner_size, const float *src_data, const float *scale_data,
-                 const float *bias_data, InstanceNormParameter *param, float *dst_data, const int task_id,
-                 const int thread_num) {
+int InstanceNorm(int outer_size, int inner_size, const float *src_data, const float *scale_data, const float *bias_data,
+                 const InstanceNormParameter *param, float *dst_data, int task_id, int thread_num) {
   if (src_data == NULL || dst_data == NULL || scale_data == NULL || bias_data == NULL) {
     return NNACL_NULL_PTR;
   }

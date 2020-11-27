@@ -43,7 +43,7 @@ int ArgCompareDescFp32(const void *a, const void *b) {
   return 0;
 }
 
-void ArgMaxDim0OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim0OutValue(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   for (int32_t i = 0; i < param->in_strides_[0]; ++i) {
     for (int j = 0; j < in_shape[0]; ++j) {
       size_t offset = param->in_strides_[0] * j + i;
@@ -58,7 +58,7 @@ void ArgMaxDim0OutValue(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMaxDim0OutIndex(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim0OutIndex(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   for (int32_t i = 0; i < param->in_strides_[0]; ++i) {
     for (int j = 0; j < in_shape[0]; ++j) {
       size_t offset = param->in_strides_[0] * j + i;
@@ -73,7 +73,7 @@ void ArgMaxDim0OutIndex(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinDim0OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim0OutValue(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   for (int32_t i = 0; i < param->in_strides_[0]; ++i) {
     for (int j = 0; j < in_shape[0]; ++j) {
       size_t offset = param->in_strides_[0] * j + i;
@@ -88,7 +88,7 @@ void ArgMinDim0OutValue(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinDim0OutIndex(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim0OutIndex(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   for (int32_t i = 0; i < param->in_strides_[0]; ++i) {
     for (int j = 0; j < in_shape[0]; ++j) {
       size_t offset = param->in_strides_[0] * j + i;
@@ -103,7 +103,7 @@ void ArgMinDim0OutIndex(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMaxDim1OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim1OutValue(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   for (int i = 0; i < in_shape[0]; ++i) {
     size_t in_dim0_offset = i * param->in_strides_[0];
@@ -123,7 +123,7 @@ void ArgMaxDim1OutValue(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMaxDim1OutIndex(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim1OutIndex(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   for (int i = 0; i < in_shape[0]; ++i) {
     size_t in_dim0_offset = i * param->in_strides_[0];
@@ -143,7 +143,7 @@ void ArgMaxDim1OutIndex(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinDim1OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim1OutValue(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   for (int i = 0; i < in_shape[0]; ++i) {
     size_t in_dim0_offset = i * param->in_strides_[0];
@@ -163,7 +163,7 @@ void ArgMinDim1OutValue(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinDim1OutIndex(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim1OutIndex(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   for (int i = 0; i < in_shape[0]; ++i) {
     size_t in_dim0_offset = i * param->in_strides_[0];
@@ -183,7 +183,7 @@ void ArgMinDim1OutIndex(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMaxDim2OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim2OutValue(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   for (int i = 0; i < in_shape[0]; ++i) {
@@ -208,7 +208,7 @@ void ArgMaxDim2OutValue(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMaxDim2OutIndex(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim2OutIndex(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   for (int i = 0; i < in_shape[0]; ++i) {
@@ -233,7 +233,7 @@ void ArgMaxDim2OutIndex(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinDim2OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim2OutValue(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   for (int i = 0; i < in_shape[0]; ++i) {
@@ -258,7 +258,7 @@ void ArgMinDim2OutValue(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinDim2OutIndex(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim2OutIndex(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   for (int i = 0; i < in_shape[0]; ++i) {
@@ -283,7 +283,7 @@ void ArgMinDim2OutIndex(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMaxDim3OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim3OutValue(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   int in_shape3 = in_shape[3];
@@ -311,7 +311,7 @@ void ArgMaxDim3OutValue(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMaxDim3OutIndex(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim3OutIndex(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   int in_shape3 = in_shape[3];
@@ -339,7 +339,7 @@ void ArgMaxDim3OutIndex(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinDim3OutValue(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim3OutValue(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   int in_shape3 = in_shape[3];
@@ -367,7 +367,7 @@ void ArgMinDim3OutValue(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinDim3OutIndex(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim3OutIndex(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   int in_shape3 = in_shape[3];
@@ -395,7 +395,7 @@ void ArgMinDim3OutIndex(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMaxDim0(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim0(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->out_value_) {
     ArgMaxDim0OutValue(input, output, in_shape, param);
   } else {
@@ -403,7 +403,7 @@ void ArgMaxDim0(const float *input, float *output, const int *in_shape, ArgMinMa
   }
 }
 
-void ArgMinDim0(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim0(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->out_value_) {
     ArgMinDim0OutValue(input, output, in_shape, param);
   } else {
@@ -411,7 +411,7 @@ void ArgMinDim0(const float *input, float *output, const int *in_shape, ArgMinMa
   }
 }
 
-void ArgMaxDim1(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim1(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->out_value_) {
     ArgMaxDim1OutValue(input, output, in_shape, param);
   } else {
@@ -419,7 +419,7 @@ void ArgMaxDim1(const float *input, float *output, const int *in_shape, ArgMinMa
   }
 }
 
-void ArgMinDim1(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim1(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->out_value_) {
     ArgMinDim1OutValue(input, output, in_shape, param);
   } else {
@@ -427,7 +427,7 @@ void ArgMinDim1(const float *input, float *output, const int *in_shape, ArgMinMa
   }
 }
 
-void ArgMaxDim2(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim2(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->out_value_) {
     ArgMaxDim2OutValue(input, output, in_shape, param);
   } else {
@@ -435,7 +435,7 @@ void ArgMaxDim2(const float *input, float *output, const int *in_shape, ArgMinMa
   }
 }
 
-void ArgMinDim2(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim2(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->out_value_) {
     ArgMinDim2OutValue(input, output, in_shape, param);
   } else {
@@ -443,7 +443,7 @@ void ArgMinDim2(const float *input, float *output, const int *in_shape, ArgMinMa
   }
 }
 
-void ArgMaxDim3(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMaxDim3(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->out_value_) {
     ArgMaxDim3OutValue(input, output, in_shape, param);
   } else {
@@ -451,7 +451,7 @@ void ArgMaxDim3(const float *input, float *output, const int *in_shape, ArgMinMa
   }
 }
 
-void ArgMinDim3(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinDim3(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->out_value_) {
     ArgMinDim3OutValue(input, output, in_shape, param);
   } else {
@@ -459,7 +459,7 @@ void ArgMinDim3(const float *input, float *output, const int *in_shape, ArgMinMa
   }
 }
 
-void ArgMax(const float *input, float *output, ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
+void ArgMax(const float *input, float *output, const ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
             int after_axis_count) {
   bool out_value = param->out_value_;
   for (int i = 0; i < pre_axis_count; ++i) {
@@ -480,7 +480,7 @@ void ArgMax(const float *input, float *output, ArgMinMaxParameter *param, int pr
   }
 }
 
-void ArgMin(const float *input, float *output, ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
+void ArgMin(const float *input, float *output, const ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
             int after_axis_count) {
   bool out_value = param->out_value_;
   for (int i = 0; i < pre_axis_count; ++i) {

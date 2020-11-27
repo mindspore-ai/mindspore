@@ -66,7 +66,7 @@ void ScaleAxis(const float *in_data, float *out_data, const float *scale, const 
 }
 
 void DoScale(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-             ScaleParameter *scale_param) {
+             const ScaleParameter *scale_param) {
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
   int outer_end = MSMIN(outer_start + outer_step, scale_param->outer_size_);
@@ -137,7 +137,7 @@ void ScaleAxisRelu(const float *in_data, float *out_data, const float *scale, co
 }
 
 void DoScaleRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-                 ScaleParameter *scale_param) {
+                 const ScaleParameter *scale_param) {
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
   int outer_end = MSMIN(outer_start + outer_step, scale_param->outer_size_);
@@ -210,7 +210,7 @@ void ScaleAxisRelu6(const float *in_data, float *out_data, const float *scale, c
 }
 
 void DoScaleRelu6(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-                  ScaleParameter *scale_param) {
+                  const ScaleParameter *scale_param) {
   int outer_step = UP_DIV(scale_param->outer_size_, scale_param->op_parameter_.thread_num_);
   int outer_start = task_id * outer_step;
   int outer_end = MSMIN(outer_start + outer_step, scale_param->outer_size_);

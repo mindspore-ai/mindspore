@@ -16,8 +16,8 @@
 
 #include "nnacl/fp32/deconv_winograd_fp32.h"
 
-int PackDeConvWgDataFp32(float *nhwc_weight, DeConvComputeUnit *unit, ConvParameter *conv_param,
-                         DeConvParam *deconv_param) {
+int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, const ConvParameter *conv_param,
+                         const DeConvParam *deconv_param) {
   int tmp_kernel_plane = unit->w_size_ * unit->h_size_;
   int size = conv_param->input_channel_ * conv_param->output_channel_ * tmp_kernel_plane;
   float *current_unit_weight = (float *)malloc(size * sizeof(float));
@@ -25,13 +25,14 @@ int PackDeConvWgDataFp32(float *nhwc_weight, DeConvComputeUnit *unit, ConvParame
     return NNACL_NULL_PTR;
   }
   for (int ic = 0; ic < conv_param->input_channel_; ic++) {
-    float *src_ic = nhwc_weight + deconv_param->kernel_plane_ * conv_param->output_channel_ * ic;
+    const float *src_ic = nhwc_weight + deconv_param->kernel_plane_ * conv_param->output_channel_ * ic;
     float *dst_ic = current_unit_weight + tmp_kernel_plane * conv_param->output_channel_ * ic;
     for (int uhi = 0; uhi < unit->h_size_; uhi++) {
       for (int uwi = 0; uwi < unit->w_size_; uwi++) {
         int src_h_offset = unit->h_start_ + uhi * conv_param->stride_h_;
         int src_w_offset = unit->w_start_ + uwi * conv_param->stride_w_;
-        float *src_hw = src_ic + (src_h_offset * conv_param->kernel_w_ + src_w_offset) * conv_param->output_channel_;
+        const float *src_hw =
+          src_ic + (src_h_offset * conv_param->kernel_w_ + src_w_offset) * conv_param->output_channel_;
         float *dst_hw = dst_ic + (uhi * unit->w_size_ + uwi) * conv_param->output_channel_;
         memcpy(dst_hw, src_hw, conv_param->output_channel_ * sizeof(float));
       }
@@ -132,10 +133,10 @@ int PackDeConvWgDataFp32(float *nhwc_weight, DeConvComputeUnit *unit, ConvParame
   return NNACL_OK;
 }
 
-void DeConvWgInputPack(float *src_ptr, float *dst_ptr, int channel, int stride) {
+void DeConvWgInputPack(const float *src_ptr, float *dst_ptr, int channel, int stride) {
   int ic4div = channel / C4NUM;
   int ic4mod = channel % C4NUM;
-  float *src = src_ptr;
+  const float *src = src_ptr;
   float *dst = dst_ptr;
 
   for (int ic = 0; ic < ic4div; ic++) {
@@ -340,9 +341,10 @@ void DeConvWgMerge(const float *src, float *dst, size_t src_stride, size_t dst_s
   return;
 }
 
-void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, float *weight_buf, float *tmp_buf, const float *at_buf,
-                       float *a_mid_buf, float *trans_a_buf, bool *transfered, const float *bt_buf, float *b_tmp_buf,
-                       int unit_size, int w_start, int h_start, ConvParameter *conv_param, DeConvParam *deconv_param) {
+void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, const float *weight_buf, float *tmp_buf,
+                       const float *at_buf, float *a_mid_buf, float *trans_a_buf, bool *transfered, const float *bt_buf,
+                       float *b_tmp_buf, int unit_size, int w_start, int h_start, const ConvParameter *conv_param,
+                       const DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;
   if (!transfered[unit_size]) {
     WinogradTransLeft(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
@@ -355,7 +357,7 @@ void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, float *weight_buf,
   for (int index = 0; index < winograd_plane; index++) {
     float *src = trans_a_buf + index * DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
     float *dst = tmp_buf + index * deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
-    float *weight = weight_buf + index * deconv_param->ic_up4_ * deconv_param->oc_up4_;
+    const float *weight = weight_buf + index * deconv_param->ic_up4_ * deconv_param->oc_up4_;
     TiledC4MatmulFp32(dst, src, weight, DECONV_WINOGRAD_DEFAULT_TILE * C4NUM, deconv_param->ic_div4_,
                       deconv_param->oc_div4_);
   }
@@ -380,15 +382,16 @@ void DeConvWgCalWgFp32(const float *tile_in, float *tile_out, float *weight_buf,
   return;
 }
 
-void DeConvWgCalCommFp32(float *tile_in, float *tile_out, const float *weight, float *tmp_buf, int h_start, int w_start,
-                         int h_size, int w_size, ConvParameter *conv_param, DeConvParam *deconv_param) {
+void DeConvWgCalCommFp32(const float *tile_in, float *tile_out, const float *weight, float *tmp_buf, int h_start,
+                         int w_start, int h_size, int w_size, const ConvParameter *conv_param,
+                         const DeConvParam *deconv_param) {
   int count = deconv_param->oc_div4_ * w_size * h_size;
   int in_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->ic_up4_;
   int out_stride = DECONV_WINOGRAD_DEFAULT_TILE * deconv_param->oc_up4_;
 
   for (int hi = 0; hi < DECONV_WINOGRAD_DEFAULT_UNIT; hi++) {
     for (int wi = 0; wi < DECONV_WINOGRAD_DEFAULT_UNIT; wi++) {
-      float *src_in = tile_in + (wi + hi * DECONV_WINOGRAD_DEFAULT_UNIT) * in_stride;
+      const float *src_in = tile_in + (wi + hi * DECONV_WINOGRAD_DEFAULT_UNIT) * in_stride;
       TiledC4MatmulFp32(tmp_buf, src_in, weight, DECONV_WINOGRAD_DEFAULT_TILE * 4, deconv_param->ic_div4_, count);
 
       for (int uhi = 0; uhi < h_size; uhi++) {
@@ -406,8 +409,8 @@ void DeConvWgCalCommFp32(float *tile_in, float *tile_out, const float *weight, f
   return;
 }
 
-void DeconvWg(float *nhwc_input_, float *tile_in, float *tile_out, int start_index, int calculate_count,
-              ConvParameter *conv_param, DeConvParam *deconv_param, int task_id) {
+void DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int start_index, int calculate_count,
+              const ConvParameter *conv_param, DeConvParam *deconv_param, int task_id) {
   /* pack tile input */
   int tile_in_unit_stride = deconv_param->ic_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
 #ifdef ENABLE_ARM
@@ -439,7 +442,7 @@ void DeconvWg(float *nhwc_input_, float *tile_in, float *tile_out, int start_ind
           continue;
         }
 
-        float *src = nhwc_input_ + (w_index + h_index * conv_param->input_w_) * conv_param->input_channel_;
+        const float *src = nhwc_input_ + (w_index + h_index * conv_param->input_w_) * conv_param->input_channel_;
         DeConvWgInputPack(src, dst, conv_param->input_channel_, DECONV_WINOGRAD_DEFAULT_TILE * C4NUM);
       }
     }
@@ -474,8 +477,8 @@ void DeconvWg(float *nhwc_input_, float *tile_in, float *tile_out, int start_ind
   return;
 }
 
-void DeconvWgPost(float *tile_out, float *nc4hw4_output, ConvParameter *conv_param, DeConvParam *deconv_param,
-                  int calculate_count, int tile_index) {
+void DeconvWgPost(const float *tile_out, float *nc4hw4_output, const ConvParameter *conv_param,
+                  const DeConvParam *deconv_param, int calculate_count, int tile_index) {
   /* merge */
   int src_unit_stride = deconv_param->oc_up4_ * DECONV_WINOGRAD_DEFAULT_TILE;
 
@@ -483,7 +486,7 @@ void DeconvWgPost(float *tile_out, float *nc4hw4_output, ConvParameter *conv_par
   int dst_stride = conv_param->output_w_ * conv_param->output_h_ * C4NUM;
 
   for (int index = 0; index < calculate_count; ++index) {
-    float *src_start = tile_out + index * C4NUM;
+    const float *src_start = tile_out + index * C4NUM;
 
     int plane_index = tile_index * DECONV_WINOGRAD_DEFAULT_TILE + index;
     int w_unit_index = plane_index % deconv_param->in_tile_w_count_;
@@ -499,7 +502,7 @@ void DeconvWgPost(float *tile_out, float *nc4hw4_output, ConvParameter *conv_par
 
     for (int hi = merge_h_start; hi < merge_h_end; hi++) {
       for (int wi = merge_w_start; wi < merge_w_end; wi++) {
-        float *src = src_start + (hi * deconv_param->out_tile_w_ + wi) * src_unit_stride;
+        const float *src = src_start + (hi * deconv_param->out_tile_w_ + wi) * src_unit_stride;
         float *dst = dst_start + (hi * conv_param->output_w_ + wi) * C4NUM;
         DeConvWgMerge(src, dst, src_stride, dst_stride, deconv_param->oc_div4_);
       }

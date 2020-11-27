@@ -23,11 +23,11 @@
 extern "C" {
 #endif
 void DoScale(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-             ScaleParameter *scale_param);
+             const ScaleParameter *scale_param);
 void DoScaleRelu(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-                 ScaleParameter *scale_param);
+                 const ScaleParameter *scale_param);
 void DoScaleRelu6(const float *in_data, float *out_data, const float *scale, const float *offset, int task_id,
-                  ScaleParameter *scale_param);
+                  const ScaleParameter *scale_param);
 #ifdef __cplusplus
 }
 #endif

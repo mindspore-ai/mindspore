@@ -20,7 +20,8 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-int ROIPooling(float *in_ptr, float *out_ptr, const float *roi, float *max_c, int tid, ROIPoolingParameter *param) {
+int ROIPooling(const float *in_ptr, float *out_ptr, const float *roi, float *max_c, int tid,
+               const ROIPoolingParameter *param) {
   int num_rois = param->output_n_;
   int units = UP_DIV(num_rois, param->thread_num_);
   int roi_st = tid * units;
@@ -52,7 +53,7 @@ int ROIPooling(float *in_ptr, float *out_ptr, const float *roi, float *max_c, in
 
     float bin_size_h = (float)roi_height / (float)pooled_height;
     float bin_size_w = (float)roi_width / (float)pooled_width;
-    float *batch_data = in_ptr + param->in_strides_[kNHWC_N] * roi_batch_ind;
+    const float *batch_data = in_ptr + param->in_strides_[kNHWC_N] * roi_batch_ind;
 
     for (int ph = 0; ph < pooled_height; ++ph) {
       for (int pw = 0; pw < pooled_width; ++pw) {

@@ -22,22 +22,22 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-               const int tid, const int thread_num);
-int ReduceSum(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-              const int tid, const int thread_num);
-int ReduceMax(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-              const int tid, const int thread_num);
-int ReduceMin(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-              const int tid, const int thread_num);
-int IntReduceMin(const int outer_size, const int inner_size, const int axis_size, const int *src_data, int *dst_data,
-                 const int tid, const int thread_num);
-int ReduceProd(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-               const int tid, const int thread_num);
-int IntReduceProd(const int outer_size, const int inner_size, const int axis_size, const int *src_data, int *dst_data,
-                  const int tid, const int thread_num);
-int ReduceSumSquare(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-                    float *dst_data, const int tid, const int thread_num);
+int ReduceMean(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+               int thread_num);
+int ReduceSum(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+              int thread_num);
+int ReduceMax(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+              int thread_num);
+int ReduceMin(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+              int thread_num);
+int IntReduceMin(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
+                 int thread_num);
+int ReduceProd(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+               int thread_num);
+int IntReduceProd(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
+                  int thread_num);
+int ReduceSumSquare(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+                    int thread_num);
 
 #ifdef ENABLE_NNACL_INFER_SHAPE
 int ReduceInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_format, int *out_format,

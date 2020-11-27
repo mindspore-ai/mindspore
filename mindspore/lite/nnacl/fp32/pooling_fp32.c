@@ -18,8 +18,8 @@
 #include <float.h>
 #include "nnacl/errorcode.h"
 
-int AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id, float minf,
-               float maxf) {
+int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param, int task_id,
+               float minf, float maxf) {
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;
@@ -144,8 +144,8 @@ int AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pool
   return NNACL_OK;
 }
 
-void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id, float minf,
-                float maxf) {
+void MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param, int task_id,
+                float minf, float maxf) {
   int win_w = pooling_param->window_w_;
   int win_h = pooling_param->window_h_;
   int channel = pooling_param->input_channel_;

@@ -46,7 +46,7 @@ void PadSliceParameterTo4D(SliceParameter *param) {
   param->param_length_ = DIMENSION_4D;
 }
 
-void DoSlice(const float *input, float *output, SliceParameter *param, int thread_id) {
+void DoSlice(const float *input, float *output, const SliceParameter *param, int thread_id) {
   int32_t out_dim1 = param->size_[1];
   int32_t out_dim2 = param->size_[2];
   int32_t out_dim3 = param->size_[3];
@@ -78,7 +78,7 @@ void DoSlice(const float *input, float *output, SliceParameter *param, int threa
   }
 }
 
-void DoSliceNoParallel(const float *input, float *output, SliceParameter *param) {
+void DoSliceNoParallel(const float *input, float *output, const SliceParameter *param) {
   size_t copy_size = param->size_[3] * sizeof(float);
   size_t in_stride2 = param->shape_[3];
   size_t in_stride1 = param->shape_[2] * in_stride2;

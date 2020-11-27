@@ -23,8 +23,8 @@
 #include "nnacl/reduce_parameter.h"
 #endif
 
-int ReduceMean(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-               const int tid, const int thread_num) {
+int ReduceMean(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+               int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -44,8 +44,8 @@ int ReduceMean(const int outer_size, const int inner_size, const int axis_size, 
   }
   return NNACL_OK;
 }
-int ReduceSum(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-              const int tid, const int thread_num) {
+int ReduceSum(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+              int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -81,8 +81,8 @@ int ReduceSum(const int outer_size, const int inner_size, const int axis_size, c
   }
   return NNACL_OK;
 }
-int ReduceMax(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-              const int tid, const int thread_num) {
+int ReduceMax(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+              int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -102,8 +102,8 @@ int ReduceMax(const int outer_size, const int inner_size, const int axis_size, c
   }
   return NNACL_OK;
 }
-int ReduceMin(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-              const int tid, const int thread_num) {
+int ReduceMin(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+              int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -123,8 +123,8 @@ int ReduceMin(const int outer_size, const int inner_size, const int axis_size, c
   }
   return NNACL_OK;
 }
-int IntReduceMin(const int outer_size, const int inner_size, const int axis_size, const int *src_data, int *dst_data,
-                 const int tid, const int thread_num) {
+int IntReduceMin(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
+                 int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -144,8 +144,8 @@ int IntReduceMin(const int outer_size, const int inner_size, const int axis_size
   }
   return NNACL_OK;
 }
-int ReduceProd(const int outer_size, const int inner_size, const int axis_size, const float *src_data, float *dst_data,
-               const int tid, const int thread_num) {
+int ReduceProd(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+               int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -166,8 +166,8 @@ int ReduceProd(const int outer_size, const int inner_size, const int axis_size, 
   return NNACL_OK;
 }
 
-int IntReduceProd(const int outer_size, const int inner_size, const int axis_size, const int *src_data, int *dst_data,
-                  const int tid, const int thread_num) {
+int IntReduceProd(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
+                  int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -190,8 +190,8 @@ int IntReduceProd(const int outer_size, const int inner_size, const int axis_siz
   }
   return NNACL_OK;
 }
-int ReduceSumSquare(const int outer_size, const int inner_size, const int axis_size, const float *src_data,
-                    float *dst_data, const int tid, const int thread_num) {
+int ReduceSumSquare(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
+                    int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }

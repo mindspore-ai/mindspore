@@ -615,8 +615,8 @@ int ElementMulRelu6Int(const int *input0, const int *input1, int *output, const 
   return NNACL_OK;
 }
 
-int BroadcastMul(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
-                 ArithmeticParameter *param) {
+int BroadcastMul(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
+                 int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementMul(tile_input0, tile_input1, output, element_size);
 }
@@ -690,21 +690,21 @@ int ElementAddInt(const int *input0, const int *input1, int *output, const int e
   return NNACL_OK;
 }
 
-int ElementAddInt8(int8_t *input0, int8_t *input1, int8_t *output, int element_size) {
+int ElementAddInt8(const int8_t *input0, const int8_t *input1, int8_t *output, int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = input0[i] + input1[i];
   }
   return NNACL_OK;
 }
 
-int BroadcastAdd(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
-                 ArithmeticParameter *param) {
+int BroadcastAdd(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
+                 int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementAdd(tile_input0, tile_input1, output, element_size);
 }
 
-int BroadcastAddInt8(int8_t *input0, int8_t *input1, int8_t *tile_input0, int8_t *tile_input1, int8_t *output,
-                     int element_size, ArithmeticParameter *param) {
+int BroadcastAddInt8(const int8_t *input0, const int8_t *input1, int8_t *tile_input0, int8_t *tile_input1,
+                     int8_t *output, int element_size, ArithmeticParameter *param) {
   TileDimensionsInt8(input0, input1, tile_input0, tile_input1, param);
   return ElementAddInt8(tile_input0, tile_input1, output, element_size);
 }
@@ -763,8 +763,8 @@ int ElementSubRelu6(const float *input0, const float *input1, float *output, con
   return NNACL_OK;
 }
 
-int BroadcastSub(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
-                 ArithmeticParameter *param) {
+int BroadcastSub(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
+                 int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementSub(tile_input0, tile_input1, output, element_size);
 }
@@ -791,8 +791,8 @@ int ElementDivRelu6(const float *input0, const float *input1, float *output, con
   return NNACL_OK;
 }
 
-int BroadcastDiv(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
-                 ArithmeticParameter *param) {
+int BroadcastDiv(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
+                 int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementDiv(tile_input0, tile_input1, output, element_size);
 }
@@ -811,7 +811,7 @@ int ElementFloorModInt(const int *input0, const int *input1, int *output, const 
   return NNACL_OK;
 }
 
-int BroadcastFloorMod(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastFloorMod(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementFloorMod(tile_input0, tile_input1, output, element_size);
@@ -831,7 +831,7 @@ int ElementFloorDivInt(const int *input0, const int *input1, int *output, const 
   return NNACL_OK;
 }
 
-int BroadcastFloorDiv(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastFloorDiv(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementFloorDiv(tile_input0, tile_input1, output, element_size);
@@ -862,13 +862,13 @@ int ElementSquaredDifference(const float *input0, const float *input1, float *ou
   return ElementMul(output, output, output, element_size);
 }
 
-int BroadcastSquaredDifference(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
-                               int element_size, ArithmeticParameter *param) {
+int BroadcastSquaredDifference(const float *input0, const float *input1, float *tile_input0, float *tile_input1,
+                               float *output, int element_size, ArithmeticParameter *param) {
   BroadcastSub(input0, input1, tile_input0, tile_input1, output, element_size, param);
   return ElementMul(output, output, output, element_size);
 }
 
-int BroadcastLogicalAnd(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastLogicalAnd(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                         int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementLogicalAnd(tile_input0, tile_input1, output, element_size);
@@ -894,7 +894,7 @@ int ElementLogicalOr(const float *input0, const float *input1, float *output, co
   return NNACL_OK;
 }
 
-int BroadcastLogicalOr(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastLogicalOr(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                        int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementLogicalOr(tile_input0, tile_input1, output, element_size);
@@ -916,7 +916,7 @@ int ElementMaximum(const float *input0, const float *input1, float *output, cons
   return NNACL_OK;
 }
 
-int BroadcastMaximum(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastMaximum(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                      int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementMaximum(tile_input0, tile_input1, output, element_size);
@@ -938,7 +938,7 @@ int ElementMinimum(const float *input0, const float *input1, float *output, cons
   return NNACL_OK;
 }
 
-int BroadcastMinimum(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastMinimum(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                      int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementMinimum(tile_input0, tile_input1, output, element_size);
@@ -970,7 +970,7 @@ int ElementNotEqual(const float *input0, const float *input1, float *output, con
   return NNACL_OK;
 }
 
-int BroadcastNotEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastNotEqual(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementNotEqual(tile_input0, tile_input1, output, element_size);
@@ -1002,7 +1002,7 @@ int ElementEqual(const float *input0, const float *input1, float *output, const 
   return NNACL_OK;
 }
 
-int BroadcastEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastEqual(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                    int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementEqual(tile_input0, tile_input1, output, element_size);
@@ -1026,8 +1026,8 @@ int ElementLess(const float *input0, const float *input1, float *output, const i
   return NNACL_OK;
 }
 
-int BroadcastLess(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output, int element_size,
-                  ArithmeticParameter *param) {
+int BroadcastLess(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
+                  int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementLess(tile_input0, tile_input1, output, element_size);
 }
@@ -1050,7 +1050,7 @@ int ElementLessEqual(const float *input0, const float *input1, float *output, co
   return NNACL_OK;
 }
 
-int BroadcastLessEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastLessEqual(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                        int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementLessEqual(tile_input0, tile_input1, output, element_size);
@@ -1074,7 +1074,7 @@ int ElementGreater(const float *input0, const float *input1, float *output, cons
   return NNACL_OK;
 }
 
-int BroadcastGreater(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
+int BroadcastGreater(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                      int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementGreater(tile_input0, tile_input1, output, element_size);
@@ -1098,8 +1098,8 @@ int ElementGreaterEqual(const float *input0, const float *input1, float *output,
   return NNACL_OK;
 }
 
-int BroadcastGreaterEqual(float *input0, float *input1, float *tile_input0, float *tile_input1, float *output,
-                          int element_size, ArithmeticParameter *param) {
+int BroadcastGreaterEqual(const float *input0, const float *input1, float *tile_input0, float *tile_input1,
+                          float *output, int element_size, ArithmeticParameter *param) {
   TileDimensions(input0, input1, tile_input0, tile_input1, param);
   return ElementGreaterEqual(tile_input0, tile_input1, output, element_size);
 }
@@ -1111,7 +1111,7 @@ int ArithmeticInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *
                          int *in_datatype, int *out_datatype, OpParameter *param) {
   *out_format = in_format[0];
   *out_datatype = in_datatype[0];
-  ArithmeticParameter *arithmetic_parameter = (ArithmeticParameter *)param;
+  const ArithmeticParameter *arithmetic_parameter = (const ArithmeticParameter *)param;
   int ndim0 = dim_size[0];
   int ndim1 = dim_size[1];
   int *in_shape0 = in_shape[0];

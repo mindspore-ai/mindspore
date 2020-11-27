@@ -16,7 +16,7 @@
 
 #include "nnacl/fp32/constant_of_shape_fp32.h"
 
-int ConstantOfShape(float *output, int tid, ConstantOfShapeParameter *param) {
+int ConstantOfShape(float *output, int tid, const ConstantOfShapeParameter *param) {
   int size = param->unit_;
   float data = param->value_;
   int ind_st = MSMIN(tid * size, param->element_sz_);
@@ -27,7 +27,7 @@ int ConstantOfShape(float *output, int tid, ConstantOfShapeParameter *param) {
   return NNACL_OK;
 }
 
-int ConstantOfShapeInt(int32_t *output, int tid, ConstantOfShapeParameter *param) {
+int ConstantOfShapeInt(int32_t *output, int tid, const ConstantOfShapeParameter *param) {
   int size = param->unit_;
   float data = param->value_;
   int ind_st = MSMIN(tid * size, param->element_sz_);

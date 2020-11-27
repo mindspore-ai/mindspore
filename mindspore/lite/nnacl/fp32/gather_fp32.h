@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Gather(float *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
+int Gather(const float *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
            float *output);
 int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, const int *indices,
                 int indices_element_size, int32_t *output);

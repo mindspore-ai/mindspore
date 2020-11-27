@@ -30,8 +30,8 @@ typedef struct LocalResponseNormParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr,
-                      LocalResponseNormParameter *param);
+int LocalResponseNorm(const float *input_ptr, int out_size, int channel, float *output_ptr,
+                      const LocalResponseNormParameter *param);
 #ifdef __cplusplus
 }
 #endif

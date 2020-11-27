@@ -46,8 +46,8 @@ int ConcatCPUKernel::ReSize() { return ConcatBaseCPUKernel::ReSize(); }
 
 int ConcatCPUKernel::DoConcat(int task_id) {
   auto input_num = in_tensors_.size();
-  std::vector<void *> inputs_addr(input_num, nullptr);
-  std::vector<int *> inputs_output_shape(input_num + 1, nullptr);
+  std::vector<const void *> inputs_addr(input_num, nullptr);
+  std::vector<const int *> inputs_output_shape(input_num + 1, nullptr);
 
   std::vector<std::vector<int>> shapes;
   for (size_t i = 0; i < input_num; ++i) {
@@ -59,8 +59,8 @@ int ConcatCPUKernel::DoConcat(int task_id) {
   inputs_output_shape[input_num] = output_shape.data();
   auto output_addr = out_tensors_.at(0)->MutableData();
 
-  Concat(reinterpret_cast<void **>(inputs_addr.data()), input_num, axis_, inputs_output_shape.data(),
-         output_shape.size(), output_addr, task_id, thread_count_);
+  Concat(inputs_addr.data(), input_num, axis_, inputs_output_shape.data(), output_shape.size(), output_addr, task_id,
+         thread_count_);
   return RET_OK;
 }
 

@@ -33,7 +33,7 @@ void GetCalcParameter(const int *shape, int dims_number, int axis, int *pre_axis
   }
 }
 
-void ArgMinMaxTopk1(const void *input, void *output, const int *shape, ArgMinMaxParameter *param) {
+void ArgMinMaxTopk1(const void *input, void *output, const int *shape, const ArgMinMaxParameter *param) {
   int pre_axis_count = 1;
   int axis_count = 1;
   int after_axis_count = 1;
@@ -48,7 +48,7 @@ void ArgMinMaxTopk1(const void *input, void *output, const int *shape, ArgMinMax
   }
 }
 
-void ArgMinMaxTopknFp32(const float *input, float *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinMaxTopknFp32(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->get_max_) {
     switch (param->axis_) {
       case 0:
@@ -82,7 +82,7 @@ void ArgMinMaxTopknFp32(const float *input, float *output, const int *in_shape, 
   }
 }
 
-void ArgMinMax(const void *input, void *output, const int *in_shape, ArgMinMaxParameter *param) {
+void ArgMinMax(const void *input, void *output, const int *in_shape, const ArgMinMaxParameter *param) {
   if (param->topk_ == 1) {
     ArgMinMaxTopk1(input, output, in_shape, param);
     return;

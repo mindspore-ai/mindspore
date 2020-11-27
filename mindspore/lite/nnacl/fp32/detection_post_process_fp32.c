@@ -36,8 +36,8 @@ float IntersectionOverUnion(const BboxCorner *a, const BboxCorner *b) {
   return inter / (area_a + area_b - inter);
 }
 
-int DecodeBoxes(const int num_boxes, const float *input_boxes, const float *anchors,
-                DetectionPostProcessParameter *param) {
+int DecodeBoxes(int num_boxes, const float *input_boxes, const float *anchors,
+                const DetectionPostProcessParameter *param) {
   if (input_boxes == NULL || anchors == NULL || param == NULL) {
     return NNACL_NULL_PTR;
   }
