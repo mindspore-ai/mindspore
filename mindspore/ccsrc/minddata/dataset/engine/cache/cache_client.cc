@@ -217,7 +217,7 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
   // That is allowed, however the crc better match!
   if (server_connection_id_) {
     if (cinfo_.crc() != tree_crc) {
-      RETURN_STATUS_UNEXPECTED("Attempt to re-use a cache for a different tree!");
+      RETURN_STATUS_UNEXPECTED("Cannot re-use a cache for a different tree!");
     }
     // Check the state of the server. For non-mappable case where there is a build phase and a fetch phase, we should
     // skip the build phase.

@@ -20,7 +20,7 @@ namespace dataset {
 CacheClientGreeter::~CacheClientGreeter() { (void)ServiceStop(); }
 
 CacheClientGreeter::CacheClientGreeter(const std::string &hostname, int32_t port, int32_t num_connections)
-    : num_connections_(num_connections), request_cnt_(0) {
+    : num_connections_(num_connections), request_cnt_(0), port_(port) {
   grpc::ChannelArguments args;
   // We need to bump up the message size to unlimited. The default receiving
   // message limit is 4MB which is not big enough.
@@ -119,8 +119,8 @@ Status CacheClientGreeter::WorkerEntry() {
           auto error_code = rq->rc_.error_code();
           std::string err_msg;
           if (error_code == grpc::StatusCode::UNAVAILABLE) {
-            err_msg =
-              "Cache server is unreachable. Make sure the server is running.  GRPC Code" + std::to_string(error_code);
+            err_msg = "Cache server with port " + std::to_string(port_) +
+                      " is unreachable. Make sure the server is running.  GRPC Code" + std::to_string(error_code);
           } else {
             err_msg = rq->rc_.error_message() + ". GRPC Code " + std::to_string(error_code);
           }
