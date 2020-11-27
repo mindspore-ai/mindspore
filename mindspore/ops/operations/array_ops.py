@@ -1906,7 +1906,9 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
 
         shp += x_shp[segment_ids_shp_len:]
         if 'max_shape' in x:
-            output_max_shape = x['max_shape']
+            output_incoming = x['max_shape']
+            output_max_shape = [num_segments_v]
+            output_max_shape += output_incoming[segment_ids_shp_len:]
         else:
             output_max_shape = x_shp
         out = {'shape': shp,

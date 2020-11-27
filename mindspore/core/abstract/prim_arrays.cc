@@ -204,24 +204,23 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
                                             const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 3);
-  // input x
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
-  auto x_shape = x->shape()->shape();
-  // segment_ids
   auto segment_ids = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
   MS_EXCEPTION_IF_NULL(segment_ids);
   MS_EXCEPTION_IF_NULL(segment_ids->shape());
   auto segment_ids_shape = segment_ids->shape()->shape();
-  // checks on Tensors 0 and 1 types
-  (void)CheckTensorDType(x, {kFloat32, kInt32}, "Input 0 (x) for SequenceMask should be %s");
-  (void)CheckTensorDType(segment_ids, {kInt32, kInt64}, "Input 1 (segment_ids) for SequenceMask should be %s");
+  (void)CheckTensorDType(x, {kFloat16, kFloat32, kInt32}, "Input 0 (x) for UnsortedSegmentSum should be %s");
+  (void)CheckTensorDType(segment_ids, {kInt32, kInt64}, "Input 1 (segment_ids) for UnsortedSegmentSum should be %s");
+  // check if dynamic shape
+  bool x_is_dyn = (!x->shape()->min_shape().empty() && !x->shape()->max_shape().empty());
+  bool ids_is_dyn = (!segment_ids->shape()->min_shape().empty() && !segment_ids->shape()->max_shape().empty());
+  bool op_is_dynamic = x_is_dyn && ids_is_dyn;
+  auto x_shape = x->shape()->shape();
   ShapeVector shape;
-  ShapeVector max_shape;
-  ShapeVector min_shape;
-  int64_t num_segments_value;
-  if (args_spec_list[2]->isa<AbstractTensor>()) {  // Num segments is Tensor
+  int64_t num_segments_value = 0;
+  if (args_spec_list[2]->isa<AbstractTensor>()) {  // num_segments is Tensor
     auto num_segments = args_spec_list[2]->cast<AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(num_segments);
     auto num_segments_value_ptr = num_segments->BuildValue();
@@ -229,26 +228,48 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
     auto num_segments_tensor = num_segments_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(num_segments_tensor);
     num_segments_value = *static_cast<int64_t *>(num_segments_tensor->data_c());
-    shape.emplace_back(num_segments_value);
-  } else if (args_spec_list[2]->isa<AbstractScalar>()) {  // Num segments is Scalar
+  } else if (args_spec_list[2]->isa<AbstractScalar>()) {  // num_segments is Scalar
     auto num_segments = CheckArg<AbstractScalar>(op_name, args_spec_list, 2);
     num_segments_value = GetValue<int64_t>(num_segments->BuildValue());
-    shape.emplace_back(num_segments_value);
   } else {
     MS_LOG(EXCEPTION) << "num_segments incorrect type in UnsortedSegmentSum";
   }
-  shape.insert(shape.end(), x_shape.begin() + segment_ids_shape.size(), x_shape.end());
-  // calc max shape
-  if (!x->shape()->max_shape().empty()) {  // copy max shape from x if present
-    std::copy(x->shape()->max_shape().begin(), x->shape()->max_shape().end(), std::back_inserter(max_shape));
-  } else {  // copy x shape directly if not present
-    std::copy(x->shape()->shape().begin(), x->shape()->shape().end(), std::back_inserter(max_shape));
+  if (num_segments_value <= 0) {
+    MS_LOG(EXCEPTION) << "num_segments must be > 0 in UnsortedSegmentSum";
   }
-  // calc min shape
-  min_shape.push_back(segment_ids_shape.size());
-  std::copy(x->shape()->shape().begin() + segment_ids_shape.size(), x->shape()->shape().end(),
-            back_inserter(min_shape));
-  // return shape, min shape, max shape
+  shape.emplace_back(num_segments_value);
+  shape.insert(shape.end(), x_shape.begin() + segment_ids_shape.size(), x_shape.end());
+  // dims check
+  if (!op_is_dynamic) {
+    for (size_t i = 0; i < segment_ids_shape.size(); i++) {
+      if (x_shape[i] != segment_ids_shape[i]) {
+        MS_LOG(EXCEPTION) << "Shape values of segments_ids must match with corresponding x shape values";
+      }
+    }
+    return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape));
+  }
+  // is dynamic
+  ShapeVector min_shape;
+  ShapeVector max_shape;
+  min_shape.emplace_back(num_segments_value);
+  max_shape.emplace_back(num_segments_value);
+  // only run validation if shape values are known
+  bool x_any_shape = std::any_of(x_shape.begin(), x_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+  bool ids_any_shape =
+    std::any_of(segment_ids_shape.begin(), segment_ids_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+  if (!x_any_shape && !ids_any_shape) {
+    for (size_t i = 0; i < segment_ids_shape.size(); i++) {
+      if (x_shape[i] != segment_ids_shape[i]) {
+        MS_LOG(EXCEPTION) << "Shape values of segments_ids must match with corresponding x shape values";
+      }
+    }
+  }
+  ShapeVector x_shape_min;
+  ShapeVector x_shape_max;
+  x_shape_min = (x_is_dyn) ? x->shape()->min_shape() : x->shape()->shape();
+  x_shape_max = (x_is_dyn) ? x->shape()->max_shape() : x->shape()->shape();
+  min_shape.insert(min_shape.end(), x_shape_min.begin() + segment_ids_shape.size(), x_shape_min.end());
+  max_shape.insert(max_shape.end(), x_shape_max.begin() + segment_ids_shape.size(), x_shape_max.end());
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
 }
 
