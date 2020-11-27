@@ -347,7 +347,8 @@ Status ImageFolderOp::RecursiveWalkFolder(Path *dir) {
         RETURN_IF_NOT_OK(folder_name_queue_->EmplaceBack(subdir.toString().substr(dirname_offset_)));
       }
       if (recursive_ == true) {
-        RETURN_IF_NOT_OK(RecursiveWalkFolder(&subdir));
+        MS_LOG(ERROR) << "RecursiveWalkFolder(&subdir) functionality is disabled permanently. No recursive walk of "
+                      << "directory will be performed.";
       }
     }
   }

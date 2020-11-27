@@ -193,7 +193,7 @@ PYBIND_REGISTER(ImageFolderNode, 2, ([](const py::module *m) {
                     .def(py::init([](std::string dataset_dir, bool decode, std::optional<py::handle> sampler,
                                      std::optional<py::list> extensions, std::optional<py::dict> class_indexing,
                                      std::optional<std::shared_ptr<CacheClient>> cc) {
-                      bool recursive = true;
+                      bool recursive = false;
                       auto imagefolder = std::make_shared<ImageFolderNode>(
                         dataset_dir, decode, toSamplerObj(sampler), recursive, toStringSet(extensions),
                         toStringMap(class_indexing), toDatasetCache(std::move(cc)));
