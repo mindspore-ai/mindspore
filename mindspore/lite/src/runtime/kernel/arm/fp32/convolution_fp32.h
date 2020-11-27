@@ -38,13 +38,13 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   }
 
   int Init() override;
+  virtual int InitWeightBias();
+  int InitTmpBuffer();
   int ReSize() override;
   int Run() override;
-  int RunImpl(int task_id);
-  int InitWeightBias();
-  int InitTmpBuffer();
+  virtual int RunImpl(int task_id);
 
- private:
+ protected:
   void FreeTmpBuffer() {
     if (packed_input_ != nullptr) {
       ctx_->allocator->Free(packed_input_);
@@ -55,8 +55,10 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
       col_major_input_ = nullptr;
     }
   }
-  float *packed_input_ = nullptr;
+
+ protected:
   float *packed_weight_ = nullptr;
+  float *packed_input_ = nullptr;
   float *col_major_input_ = nullptr;
 };
 }  // namespace mindspore::kernel

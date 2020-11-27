@@ -20,22 +20,62 @@
 #include <vector>
 #include <set>
 #include <cmath>
-#include "src/ops/primitive_c.h"
+#include <memory>
+#include "src/ops/conv2d.h"
 
 namespace mindspore {
 namespace lite {
-class Adder : public PrimitiveC {
+class Adder : public Conv2D {
  public:
   Adder() = default;
   ~Adder() = default;
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(Adder, PrimitiveC);
-  explicit Adder(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  MS_DECLARE_PARENT(Adder, Conv2D);
+  explicit Adder(schema::PrimitiveT *primitive) : Conv2D(primitive) {}
 
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+  void SetFormat(int format);
+  void SetGroup(int group);
+  void SetChannelIn(int channel_in);
+  void SetChannelOut(int channel_out);
+  void SetKernelW(int kernel_w);
+  void SetKernelH(int kernel_h);
+  void SetStrideW(int stride_w);
+  void SetStrideH(int stride_h);
+  void SetPadMode(int pad_mode);
+  void SetPadUp(int pad_up);
+  void SetPadDown(int pad_down);
+  void SetPadLeft(int pad_left);
+  void SetPadRight(int pad_right);
+  void SetDilateW(int dilate_w);
+  void SetDilateH(int dilate_h);
+  void SetHasBias(bool has_bias);
+  void SetActivationType(int activation_type);
+
+ private:
+  void PopulaterAdderSingleGroup(const Primitive &prim, schema::PrimitiveT *primitive, const int &group);
 #else
-  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb);
 #endif
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
+
+ public:
+  int GetFormat() const;
+  int GetGroup() const;
+  int GetChannelIn() const;
+  int GetChannelOut() const;
+  int GetKernelW() const;
+  int GetKernelH() const;
+  int GetStrideW() const;
+  int GetStrideH() const;
+  int GetPadMode() const;
+  int GetPadUp() const;
+  int GetPadDown() const;
+  int GetPadLeft() const;
+  int GetPadRight() const;
+  int GetDilateW() const;
+  int GetDilateH() const;
+  bool GetHasBias() const;
+  int GetActivationType() const;
 };
 }  // namespace lite
 }  // namespace mindspore

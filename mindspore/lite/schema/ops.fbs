@@ -207,6 +207,26 @@ table Conv2D {
     activationType: ActivationType = 0;
 }
 
+table Adder {
+    format: Format = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;
+    activationType: ActivationType = 0;
+}
+
 table Conv2DGradFilter {
     format: Format = 0;
     group: int;
@@ -1176,7 +1196,4 @@ table All {
 
 table Assert {
     summarize : int;
-}
-
-table Adder {
 }
