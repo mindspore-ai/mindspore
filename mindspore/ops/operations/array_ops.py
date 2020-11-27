@@ -876,18 +876,17 @@ class UniqueWithPad(PrimitiveWithInfer):
         return out
 
 
-class Split(PrimitiveWithInfer):
+class Split(PrimitiveWithCheck):
     """
     Splits the input tensor into output_num of tensors along the given axis and output numbers.
 
     Args:
         axis (int): Index of the split position. Default: 0.
-        output_num (int): The number of output tensors. Default: 1.
+        output_num (int): The number of output tensors. Must be postive int. Default: 1.
 
     Raises:
         ValueError: If `axis` is out of the range [-len(`input_x.shape`), len(`input_x.shape`)),
-            or if the `output_num` is less than or equal to 0, or if the
-            dimension which to split cannot be evenly divided by `output_num`.
+            or if the `output_num` is less than or equal to 0.
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -916,32 +915,15 @@ class Split(PrimitiveWithInfer):
         """Initialize Split"""
         validator.check_value_type("axis", axis, [int], self.name)
         validator.check_value_type("output_num", output_num, [int], self.name)
+        validator.check_positive_int(output_num, "output_num", self.name)
         self.axis = axis
         self.output_num = output_num
 
-    def __infer__(self, x):
+    def __check__(self, x):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
         x_shape = list(x['shape'])
         dim = len(x_shape)
         validator.check_int_range(self.axis, -dim, dim, Rel.INC_LEFT, 'axis value', self.name)
-        validator.check_positive_int(self.output_num, "output_num", self.name)
-        output_valid_check = x_shape[self.axis] % self.output_num
-        if output_valid_check != 0:
-            raise ValueError(f"x_shape[{self.axis}] {x_shape[self.axis]} must be divide exactly by"
-                             f" output_num {self.output_num}")
-
-        x_shape[self.axis] = int(x_shape[self.axis] / self.output_num)
-        out_shapes = []
-        out_dtypes = []
-        for _ in range(self.output_num):
-            out_shapes.append(tuple(x_shape))
-            out_dtypes.append(x['dtype'])
-        out_shapes = tuple(out_shapes)
-        out_dtypes = tuple(out_dtypes)
-        out = {'shape': out_shapes,
-               'dtype': out_dtypes,
-               'value': None}
-        return out
 
 
 class Rank(PrimitiveWithInfer):

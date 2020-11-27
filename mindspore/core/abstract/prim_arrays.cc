@@ -784,5 +784,48 @@ AbstractBasePtr InferImplExpandDims(const AnalysisEnginePtr &, const PrimitivePt
   auto ret = std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, shape_min, shape_max));
   return ret;
 }
+
+AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  ShapeVector x_shape = input_x->shape()->shape();
+  ShapeVector x_shape_min = input_x->shape()->min_shape();
+  if (x_shape_min.empty()) {
+    x_shape_min = x_shape;
+  }
+  ShapeVector x_shape_max = input_x->shape()->max_shape();
+  if (x_shape_max.empty()) {
+    x_shape_max = x_shape;
+  }
+  int64_t rank = SizeToLong(x_shape.size());
+
+  ValuePtr axis = primitive->GetAttr("axis");
+  int64_t axis_value = CheckAxis(op_name, axis, -(rank + 1), rank);
+  axis_value = GetPositiveAxis(axis_value, LongToSize(rank));
+  int64_t output_num_value = primitive->GetAttr("output_num")->cast<Int64ImmPtr>()->value();
+  if ((x_shape[axis_value] != Shape::SHP_ANY) && (x_shape[axis_value] % output_num_value != 0)) {
+    MS_LOG(EXCEPTION) << "x_shape[" << axis_value << "] = " << x_shape[axis_value]
+                      << " must be divisible by output_num = " << output_num_value;
+  }
+
+  ShapeVector output_shape = x_shape;
+  if (output_shape[axis_value] != Shape::SHP_ANY) {
+    output_shape[axis_value] = static_cast<int>(x_shape[axis_value] / output_num_value);
+  }
+  ShapeVector output_shape_min = x_shape_min;
+  output_shape_min[axis_value] = static_cast<int>(x_shape_min[axis_value] / output_num_value);
+  ShapeVector output_shape_max = x_shape_max;
+  output_shape_max[axis_value] = static_cast<int>(x_shape_max[axis_value] / output_num_value);
+
+  AbstractBasePtrList output_list;
+  for (int64_t i = 0; i < output_num_value; ++i) {
+    auto output = input_x->Broaden();
+    output->set_shape(std::make_shared<Shape>(output_shape, output_shape_min, output_shape_max));
+    output_list.push_back(output);
+  }
+  return std::make_shared<AbstractTuple>(output_list);
+}
 }  // namespace abstract
 }  // namespace mindspore
