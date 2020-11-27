@@ -20,6 +20,7 @@ import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 
 class NetEqual(Cell):
@@ -29,6 +30,17 @@ class NetEqual(Cell):
 
     def construct(self, x, y):
         return self.Equal(x, y)
+
+class NetEqualDynamic(Cell):
+    def __init__(self):
+        super(NetEqualDynamic, self).__init__()
+        self.conv = inner.GpuConvertToDynamicShape()
+        self.Equal = P.Equal()
+
+    def construct(self, x, y):
+        x_conv = self.conv(x)
+        y_conv = self.conv(y)
+        return self.Equal(x_conv, y_conv)
 
 class NetNotEqual(Cell):
     def __init__(self):
@@ -211,3 +223,20 @@ def test_greaterqual():
     output2 = gequal(x2, y2)
     assert np.all(output2.asnumpy() == expect2)
     assert output2.shape == expect2.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_equal_dynamic_shape():
+    x0_np = np.arange(24).reshape((4, 3, 2)).astype(np.float32)
+    x0 = Tensor(x0_np)
+    y0_np = np.arange(24).reshape((4, 3, 2)).astype(np.float32)
+    y0 = Tensor(y0_np)
+    expect0 = np.equal(x0_np, y0_np)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    equal = NetEqualDynamic()
+    output0 = equal(x0, y0)
+    assert np.all(output0.asnumpy() == expect0)
+    assert output0.shape == expect0.shape
