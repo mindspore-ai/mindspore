@@ -1,6 +1,7 @@
 include(GoogleTest)
 
 SET(DE_UT_SRCS
+        execute_test.cc
         album_op_test.cc
         arena_test.cc
         auto_contrast_op_test.cc
@@ -17,7 +18,6 @@ SET(DE_UT_SRCS
         c_api_dataset_coco_test.cc
         c_api_dataset_config_test.cc
         c_api_dataset_csv_test.cc
-        c_api_dataset_ir_node_test.cc
         c_api_dataset_iterator_test.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc
@@ -58,7 +58,6 @@ SET(DE_UT_SRCS
         distributed_sampler_test.cc
         epoch_ctrl_op_test.cc
         equalize_op_test.cc
-	execute_test.cc
         execution_tree_test.cc
         fill_op_test.cc
         global_context_test.cc
@@ -66,6 +65,7 @@ SET(DE_UT_SRCS
         image_folder_op_test.cc
         image_process_test.cc
         interrupt_test.cc
+        ir_node_test.cc
         jieba_tokenizer_op_test.cc
         main_test.cc
         map_op_test.cc

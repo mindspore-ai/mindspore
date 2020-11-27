@@ -59,8 +59,6 @@ class GetterPass : public TreePass {
     Status RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) override;
     Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) override;
     Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
-    // whether this is Run or PreRun does not matter here, however, Only Accept() is defined in ConcatOp
-    Status PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified) override;
 
 #ifdef ENABLE_PYTHON
     Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) override;

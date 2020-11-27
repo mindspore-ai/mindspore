@@ -127,7 +127,7 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
   MS_LOG(INFO) << "Input plan:" << '\n' << *input_ir << '\n';
 
   // Copy the input IR tree and insert under the root node
-  // Create a root node to host the input IR tree
+  // Create a root node to host the input IR tree, the deepcopied tree will be passed to optimization pass
   auto root_ir = std::make_shared<RootNode>(input_ir->DeepCopy(), num_epochs);
   MS_LOG(INFO) << "Plan before PrePass:" << '\n' << *root_ir << '\n';
 
@@ -149,6 +149,7 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
 
   // Build the Execution tree from the child of the root node
   std::shared_ptr<DatasetOp> root_op;
+  // input_ir is the ir node before the deepcopy.
   // We will replace input_ir with root_ir->Children()[0] once IR optimizer is in
   RETURN_IF_NOT_OK(BuildExecutionTree(input_ir, &root_op));
   RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));

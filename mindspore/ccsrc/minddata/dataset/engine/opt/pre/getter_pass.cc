@@ -44,11 +44,6 @@ Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<MapOp> node, bool *mod
   return Status::OK();
 }
 
-Status GetterPass::GetterNodes::PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified) {
-  if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);
-  return Status::OK();
-}
-
 #ifdef ENABLE_PYTHON
 Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
   if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);

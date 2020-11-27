@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <string>
-#include "minddata/dataset/core/client.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 
@@ -24,14 +23,10 @@
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::MsLogLevel::INFO;
 
 class MindDataTestIRNodes : public UT::DatasetOpTesting {
  public:
   MindDataTestIRNodes() = default;
-  void SetUp() override { GlobalInit(); }
-
   // compare the ptr of the nodes in two trees, used to test the deep copy of nodes, will return error code
   // if (ptr1 == ptr2) does not equal to flag or the two tree has different structures (or node names are not the same)
   Status CompareTwoTrees(std::shared_ptr<DatasetNode> root1, std::shared_ptr<DatasetNode> root2, bool flag) {
