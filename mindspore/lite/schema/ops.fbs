@@ -1152,6 +1152,8 @@ table Partial {
 }
 
 table TensorListFromTensor {
+   elementDType : int;
+   shapeType : int;
 }
 
 table TensorListStack {
@@ -1164,6 +1166,7 @@ table TensorListGetItem {
 }
 
 table TensorListSetItem {
+    elementDType : int;
 }
 
 table TensorListReserve {
