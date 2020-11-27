@@ -78,7 +78,6 @@ class UnsortedSegmentMinInfo : public UnsortedSegmentOpInfo {
  protected:
   Status ComputeReplaceGraph(const CNodePtr &cnode);
 };
-
 class UnsortedSegmentMaxInfo : public UnsortedSegmentOpInfo {
  public:
   UnsortedSegmentMaxInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
