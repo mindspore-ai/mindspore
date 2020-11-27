@@ -423,7 +423,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         data_format = 'NCHW'
         self.format = Validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
         self.is_gpu = context.get_context('device_target') == "GPU"
-        self.is_Ascend = context.get_context('device_target') == "Ascend"
+        self.is_ascend = context.get_context('device_target') == "Ascend"
         self.is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
         if context.get_context("enable_ge"):
             self.is_ge_backend = True
