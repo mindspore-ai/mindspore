@@ -159,7 +159,7 @@ class EmbeddingLookup(Cell):
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor. Values can be out of range of embedding_table,
           and the exceeding part will be filled with 0 in the output. Input_indices must only be a 2d tensor in
-          this interface.
+          this interface when run in semi auto parallel/auto parallel mode.
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
@@ -310,7 +310,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
           Specifies the weights of elements of the input_indices. The lookout vector will multiply with
           the input_values. Type is Float32.
         - **field_ids** (Tensor)  - The shape of tensor is :math:`(batch_size, seq_length)`.
-          Specifies the field id of elements of the input_indices. Type is Type is Int16, Int32.
+          Specifies the field id of elements of the input_indices. Type is Int16, Int32.
 
     Outputs:
         Tensor, the shape of tensor is :math:`(batch_size, field_size, embedding_size)`. Type is Float32.
