@@ -16,9 +16,14 @@
 
 #include "nnacl/fp32/range_fp32.h"
 
-void Range(float *output_ptr, int start, int limit, int delta) {
-  size_t index = 0;
-  for (size_t i = start; i < limit; i += delta) {
-    output_ptr[index++] = (float)(i);
+void Range(float *output_ptr, float start, float delta, int nums) {
+  for (int i = 0; i < nums; ++i, start += delta) {
+    output_ptr[i] = start;
+  }
+}
+
+void RangeInt(int *output_ptr, int start, int delta, int nums) {
+  for (int i = 0; i < nums; ++i, start += delta) {
+    output_ptr[i] = start;
   }
 }

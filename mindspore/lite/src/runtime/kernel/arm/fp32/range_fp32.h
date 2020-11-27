@@ -33,6 +33,9 @@ class RangeCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+
+ private:
+  LiteDataType data_type_ = kDataTypeFloat;
 };
 }  // namespace mindspore::kernel
 

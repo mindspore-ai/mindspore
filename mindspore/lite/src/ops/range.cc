@@ -64,7 +64,11 @@ int Range::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
 
-  output->set_data_type(mindspore::kNumberTypeFloat32);
+  if (inputs_.size() == 3) {
+    output->set_data_type(input->data_type());
+  } else {
+    output->set_data_type(mindspore::kNumberTypeInt32);
+  }
   output->set_format(input->format());
   if (!infer_flag()) {
     return RET_OK;
@@ -72,14 +76,36 @@ int Range::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
 
   int shape_size = 0;
   if (inputs_.size() == 3) {
-    shape_size = -1;
+    if ((inputs_.at(0)->data_c() == nullptr) || (inputs_.at(1)->data_c() == nullptr) ||
+        (inputs_.at(2)->data_c() == nullptr)) {
+      return RET_INFER_INVALID;
+    }
+    switch (inputs_.at(0)->data_type()) {
+      case kNumberTypeInt:
+      case kNumberTypeInt32: {
+        auto start = *reinterpret_cast<int *>(inputs_.at(0)->data_c());
+        auto limit = *reinterpret_cast<int *>(inputs_.at(1)->data_c());
+        auto delta = *reinterpret_cast<int *>(inputs_.at(2)->data_c());
+        shape_size = std::max(static_cast<int>(std::ceil(static_cast<float>(limit - start) / delta)), 0);
+      } break;
+      case kNumberTypeFloat32:
+      case kNumberTypeFloat: {
+        auto start = *reinterpret_cast<float *>(inputs_.at(0)->data_c());
+        auto limit = *reinterpret_cast<float *>(inputs_.at(1)->data_c());
+        auto delta = *reinterpret_cast<float *>(inputs_.at(2)->data_c());
+        shape_size = std::max(static_cast<int>(std::ceil(static_cast<float>(limit - start) / delta)), 0);
+      } break;
+      default: {
+        MS_LOG(ERROR) << "Range has unsupported dataType: " << inputs_.at(0)->data_type();
+        return RET_INFER_ERR;
+      }
+    }
   } else {
     shape_size = std::ceil(static_cast<float>(GetLimit() - GetStart()) / GetDelta());
   }
-  std::vector<int> in_shape;
-  in_shape.push_back(shape_size);
-  output->set_shape(in_shape);
 
+  std::vector<int> in_shape = {shape_size};
+  output->set_shape(in_shape);
   return RET_OK;
 }
 }  // namespace lite
