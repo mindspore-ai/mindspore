@@ -354,7 +354,7 @@ Status MapOp::ComputeColMap() {
     RETURN_IF_NOT_OK(InitPrivateVariable(&current_name_id_map));
     // Create the final column name to index mapping in the base class field
     CreateFinalColMap(&current_name_id_map);
-    MS_LOG(DEBUG) << "Column name map for map op set: " << this->ColumnNameMapAsString();
+    MS_LOG(DEBUG) << "Column name map for map op is: " << this->ColumnNameMapAsString();
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }

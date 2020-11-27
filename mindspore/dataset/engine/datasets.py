@@ -489,7 +489,6 @@ class Dataset:
             python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes. This
                 option could be beneficial if the Python operation is computational heavy (default=False).
             cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-                The cache feature is under development and is not recommended.
             callbacks: (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None).
 
 
@@ -2203,7 +2202,6 @@ class MapDataset(Dataset):
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy (default=False).
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
         callbacks: (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None)
 
         Raises:
@@ -2944,7 +2942,6 @@ class ImageFolderDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -3092,7 +3089,6 @@ class MnistDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -3782,7 +3778,7 @@ class TFRecordDataset(SourceDataset):
         shard_equal_rows (bool, optional): Get equal rows for all shards(default=False). If shard_equal_rows
             is false, number of rows of each shard may be not equal.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
+
     Examples:
         >>> import mindspore.dataset as ds
         >>> import mindspore.common.dtype as mstype
@@ -3972,7 +3968,6 @@ class ManifestDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4135,7 +4130,6 @@ class Cifar10Dataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4276,7 +4270,6 @@ class Cifar100Dataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4358,7 +4351,6 @@ class RandomDataset(SourceDataset):
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
             (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided
@@ -4596,7 +4588,6 @@ class VOCDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If xml of Annotations is an invalid format.
@@ -4791,7 +4782,6 @@ class CocoDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4944,7 +4934,6 @@ class CelebADataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -5057,7 +5046,6 @@ class CLUEDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -5291,7 +5279,6 @@ class CSVDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
 
     Examples:
@@ -5403,7 +5390,6 @@ class TextFileDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Tensor cache to use. (default=None which means no cache is used).
-            The cache feature is under development and is not recommended.
 
     Examples:
         >>> import mindspore.dataset as ds

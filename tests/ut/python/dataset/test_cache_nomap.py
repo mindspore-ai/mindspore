@@ -1748,7 +1748,7 @@ def test_cache_nomap_textfile1():
     # However, the sharding will be done by the sampler, not by the clue leaf node
     # In this case, it is a row-based sharding, not the file-based sharding that would happen if
     # there was not any cache.
-    ds1 = ds.CSVDataset(TEXT_FILE_DATA_DIR, num_shards=3, shard_id=1, cache=some_cache)
+    ds1 = ds.TextFileDataset(TEXT_FILE_DATA_DIR, num_shards=3, shard_id=1, cache=some_cache)
 
     num_epoch = 4
     iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)

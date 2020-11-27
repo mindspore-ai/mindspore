@@ -287,7 +287,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///     name as the input columns, i.e., the columns will be replaced
   /// \param[in] project_columns A list of column names to project
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-  ///     The cache feature is under development and is not recommended.
   /// \return Shared pointer to the current MapDataset
   std::shared_ptr<MapDataset> Map(std::vector<std::shared_ptr<TensorOperation>> operations,
                                   std::vector<std::string> input_columns = {},
@@ -553,7 +552,6 @@ class AlbumDataset : public Dataset {
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
                                     const std::vector<std::string> &column_names = {}, bool decode = false,
@@ -580,7 +578,6 @@ class CelebADataset : public Dataset {
 /// \param[in] decode Decode the images after reading (default=false).
 /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage = "all",
                                       const std::shared_ptr<SamplerObj> &sampler = RandomSampler(), bool decode = false,
@@ -602,7 +599,6 @@ class Cifar10Dataset : public Dataset {
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage = "all",
                                         const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
@@ -623,7 +619,6 @@ class Cifar100Dataset : public Dataset {
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage = "all",
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
@@ -655,7 +650,6 @@ class CLUEDataset : public Dataset {
 /// \param[in] shard_id The shard ID within num_shards. This argument should be
 ///     specified only when num_shards is also specified. (Default = 0)
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current CLUEDataset
 std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &dataset_files, const std::string &task = "AFQMC",
                                   const std::string &usage = "train", int64_t num_samples = 0,
@@ -686,7 +680,6 @@ class CocoDataset : public Dataset {
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                   const std::string &task = "Detection", const bool &decode = false,
@@ -723,7 +716,6 @@ class CSVDataset : public Dataset {
 /// \param[in] shard_id The shard ID within num_shards. This argument should be
 ///    specified only when num_shards is also specified. (Default = 0)
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, char field_delim = ',',
                                 const std::vector<std::shared_ptr<CsvBase>> &column_defaults = {},
@@ -752,7 +744,6 @@ class ImageFolderDataset : public Dataset {
 /// \param[in] extensions File extensions to be read
 /// \param[in] class_indexing a class name to label map
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current ImageFolderDataset
 std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, bool decode = false,
                                                 const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
@@ -779,7 +770,6 @@ class ManifestDataset : public Dataset {
 ///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
 /// \param[in] decode Decode the images after reading (default=false).
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current ManifestDataset
 std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage = "train",
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
@@ -842,7 +832,6 @@ class MnistDataset : public Dataset {
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current MnistDataset
 std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage = "all",
                                     const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
@@ -874,7 +863,6 @@ class RandomDataDataset : public Dataset {
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 template <typename T = std::shared_ptr<SchemaObj>>
 std::shared_ptr<RandomDataDataset> RandomData(const int32_t &total_rows = 0, const T &schema = nullptr,
@@ -913,7 +901,6 @@ class TextFileDataset : public Dataset {
 /// \param[in] shard_id The shard ID within num_shards. This argument should be
 ///     specified only when num_shards is also specified. (Default = 0)
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current TextFileDataset
 std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &dataset_files, int64_t num_samples = 0,
                                           ShuffleMode shuffle = ShuffleMode::kGlobal, int32_t num_shards = 1,
@@ -956,7 +943,6 @@ class TFRecordDataset : public Dataset {
 /// \param[in] shard_equal_rows Get equal rows for all shards. (Default = False, number of rows of
 ///     each shard may be not equal)
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current TFRecordDataset
 template <typename T = std::shared_ptr<SchemaObj>>
 std::shared_ptr<TFRecordDataset> TFRecord(const std::vector<std::string> &dataset_files, const T &schema = nullptr,
@@ -1006,7 +992,6 @@ class VOCDataset : public Dataset {
 /// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
-///     The cache feature is under development and is not recommended.
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
                                 const std::string &usage = "train",
@@ -1015,13 +1000,13 @@ std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::strin
                                 const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function the create a cache to be attached to a dataset
-/// \param id A user assigned session id for the current pipeline
-/// \param mem_sz Size of the memory set aside for the row caching. 0 for unlimited
-/// \param spill Spill to disk if out of memory
-/// \param hostname optional host name
-/// \param port optional port
-/// \param num_connections optional number of connections
-/// \param prefetch_sz optional prefetch size
+/// \param id A user assigned session id for the current pipeline.
+/// \param mem_sz Size of the memory set aside for the row caching (default=0 which means unlimited).
+/// \param spill Spill to disk if out of memory (default=False).
+/// \param hostname optional host name (default="127.0.0.1").
+/// \param port optional port (default=50052).
+/// \param num_connections optional number of connections (default=12).
+/// \param prefetch_sz optional prefetch size (default=20).
 /// \return Shared pointer to DatasetCache. If error, nullptr is returned.
 std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t mem_sz, bool spill,
                                                  std::optional<std::string> hostname = std::nullopt,

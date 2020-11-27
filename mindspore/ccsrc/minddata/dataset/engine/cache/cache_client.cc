@@ -377,7 +377,7 @@ CacheClient::CacheMissKeys::CacheMissKeys(const std::vector<row_id_type> &v) {
     gap_.insert(*it);
     ++it;
   }
-  MS_LOG(WARNING) << "# of cache miss keys between min(" << min_ << ") and max(" << max_ << ") is " << gap_.size();
+  MS_LOG(INFO) << "# of cache miss keys between min(" << min_ << ") and max(" << max_ << ") is " << gap_.size();
 }
 
 bool CacheClient::CacheMissKeys::KeyIsCacheMiss(row_id_type key) {

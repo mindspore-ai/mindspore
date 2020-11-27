@@ -24,9 +24,18 @@ from ..core.validator_helpers import type_check, check_uint32, check_uint64, che
 class DatasetCache:
     """
     A client to interface with tensor caching service
+
+    Args:
+        session_id (int): A user assigned session id for the current pipeline.
+        size (int, optional): Size of the memory set aside for the row caching (default=0 which means unlimited).
+        spilling (bool, optional): Whether or not spilling to disk if out of memory (default=False).
+        hostname (str, optional): Host name (default="127.0.0.1").
+        port (int, optional): Port to connect to server (default=50052).
+        num_connections (int, optional): Number of tcp/ip connections (default=12).
+        prefetch_size (int, optional): Prefetch size (default=20).
     """
 
-    def __init__(self, session_id=None, size=0, spilling=False, hostname=None, port=None, num_connections=None,
+    def __init__(self, session_id, size=0, spilling=False, hostname=None, port=None, num_connections=None,
                  prefetch_size=None):
         check_uint32(session_id, "session_id")
         type_check(size, (int,), "size")

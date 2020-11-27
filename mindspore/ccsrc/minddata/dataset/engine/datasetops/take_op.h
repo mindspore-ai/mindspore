@@ -84,6 +84,12 @@ class TakeOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  /// \brief Base-class override for NodePass pre-visit acceptor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status PreAccept(NodePass *p, bool *modified) override;
+
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return kTakeOp; }

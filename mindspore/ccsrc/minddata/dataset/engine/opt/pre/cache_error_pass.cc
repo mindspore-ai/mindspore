@@ -65,6 +65,24 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modifi
   return Status::OK();
 }
 
+// Returns an error if TakeOp exists under a cache
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<TakeOp> node, bool *modified) {
+  if (is_cached_) {
+    RETURN_STATUS_UNEXPECTED("TakeOp/SplitOp is currently not supported as a descendant operator under a cache.");
+  }
+
+  return Status::OK();
+}
+
+// Returns an error if SkipOp exists under a cache
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified) {
+  if (is_cached_) {
+    RETURN_STATUS_UNEXPECTED("SkipOp is currently not supported as a descendant operator under a cache.");
+  }
+
+  return Status::OK();
+}
+
 #ifdef ENABLE_PYTHON
 // Returns an error if FilterOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {

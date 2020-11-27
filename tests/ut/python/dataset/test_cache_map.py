@@ -529,6 +529,190 @@ def test_cache_map_failure8():
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_failure9():
+    """
+    Test take under cache (failure)
+
+               repeat
+                  |
+                Cache
+                  |
+             Map(decode)
+                  |
+                Take
+                  |
+             ImageFolder
+
+    """
+    logger.info("Test cache failure 9")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This DATA_DIR only has 2 images in it
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+    ds1 = ds1.take(2)
+
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.repeat(4)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in ds1.create_dict_iterator():
+            num_iter += 1
+    assert "TakeOp/SplitOp is currently not supported as a descendant operator under a cache" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_failure9 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_failure10():
+    """
+    Test skip under cache (failure)
+
+               repeat
+                  |
+                Cache
+                  |
+             Map(decode)
+                  |
+                Skip
+                  |
+             ImageFolder
+
+    """
+    logger.info("Test cache failure 10")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This DATA_DIR only has 2 images in it
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+    ds1 = ds1.skip(1)
+
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.repeat(4)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in ds1.create_dict_iterator():
+            num_iter += 1
+    assert "SkipOp is currently not supported as a descendant operator under a cache" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_failure10 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_split1():
+    """
+    Test split (after a non-source node) under cache (failure).
+    Split after a non-source node is implemented with TakeOp/SkipOp, hence the failure.
+
+               repeat
+                  |
+                Cache
+                  |
+             Map(resize)
+                  |
+                Split
+                  |
+             Map(decode)
+                  |
+             ImageFolder
+
+    """
+    logger.info("Test cache split 1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This DATA_DIR only has 2 images in it
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(input_columns=["image"], operations=decode_op)
+    ds1, ds2 = ds1.split([0.5, 0.5])
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+    ds2 = ds2.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+    ds1 = ds1.repeat(4)
+    ds2 = ds2.repeat(4)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in ds1.create_dict_iterator():
+            num_iter += 1
+    assert "TakeOp/SplitOp is currently not supported as a descendant operator under a cache" in str(e.value)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in ds2.create_dict_iterator():
+            num_iter += 1
+    assert "TakeOp/SplitOp is currently not supported as a descendant operator under a cache" in str(e.value)
+    logger.info('test_cache_split1 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_split2():
+    """
+    Test split (after a source node) under cache (ok).
+    Split after a source node is implemented with subset sampler, hence ok.
+
+               repeat
+                  |
+                Cache
+                  |
+             Map(resize)
+                  |
+                Split
+                  |
+             VOCDataset
+
+    """
+    logger.info("Test cache split 2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 9 records
+    ds1 = ds.VOCDataset(VOC_DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+
+    ds1, ds2 = ds1.split([0.3, 0.7])
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+    ds2 = ds2.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+    ds1 = ds1.repeat(4)
+    ds2 = ds2.repeat(4)
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator():
+        num_iter += 1
+    assert num_iter == 12
+
+    num_iter = 0
+    for _ in ds2.create_dict_iterator():
+        num_iter += 1
+    assert num_iter == 24
+    logger.info('test_cache_split2 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_parameter_check():
     """
     Test illegal parameters for DatasetCache

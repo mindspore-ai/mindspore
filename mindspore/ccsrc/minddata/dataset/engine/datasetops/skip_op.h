@@ -80,6 +80,12 @@ class SkipOp : public PipelineOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  /// \brief Base-class override for NodePass pre-visit acceptor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status PreAccept(NodePass *p, bool *modified) override;
+
   /// \brief Base-class override for GetDatasetSize
   /// \param[out] dataset_size the size of the dataset
   /// \return Status of the function

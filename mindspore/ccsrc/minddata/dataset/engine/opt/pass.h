@@ -303,6 +303,8 @@ class NodePass : public Pass {
   virtual Status PreRunOnNode(std::shared_ptr<ZipOp> node, bool *modified);
   virtual Status PreRunOnNode(std::shared_ptr<MapOp> node, bool *modified);
   virtual Status PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified);
+  virtual Status PreRunOnNode(std::shared_ptr<TakeOp> node, bool *modified);
+  virtual Status PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified);
 #ifndef ENABLE_ANDROID
   virtual Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified);
   virtual Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified);
