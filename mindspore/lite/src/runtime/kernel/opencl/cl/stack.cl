@@ -1,5 +1,6 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
 #define INT4 int4
+#define C4NUM 4
 __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 #define CHECK_IDX_FOR_STACK                                                                 \
   int X = get_global_id(0);                                                                 \
@@ -10,128 +11,95 @@ __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE |
   }                                                                                         \
   FLT4 result;
 
-__kernel void stack8inputaxis1(__read_only image2d_t input0, __read_only image2d_t input1, __read_only image2d_t input2,
-                               __read_only image2d_t input3, __read_only image2d_t input4, __read_only image2d_t input5,
-                               __read_only image2d_t input6, __read_only image2d_t input7,
-                               __write_only image2d_t output, int4 input_shape0, int4 input_shape1, int4 input_shape2,
-                               int4 input_shape3, int4 input_shape4, int4 input_shape5, int4 input_shape6,
-                               int4 input_shape7, int4 output_shape) {
-  CHECK_IDX_FOR_STACK;
-  if (X < input_shape0.y) {
-    result = READ_IMAGE(input0, smp_none, (int2)((Y)*input_shape0.w + Z, (X)));
-  } else if (X < (input_shape0.y + input_shape1.y)) {
-    result = READ_IMAGE(input1, smp_none, (int2)((Y)*input_shape1.w + Z, (X - input_shape0.y)));
-  } else if (X < (input_shape0.y + input_shape1.y + input_shape2.y)) {
-    result = READ_IMAGE(input2, smp_none, (int2)((Y)*input_shape2.w + Z, (X - input_shape0.y - input_shape1.y)));
-  } else if (X < (input_shape0.y + input_shape1.y + input_shape2.y + input_shape3.y)) {
-    result = READ_IMAGE(input3, smp_none,
-                        (int2)((Y)*input_shape3.w + Z, (X - input_shape0.y - input_shape1.y - input_shape2.y)));
-  } else if (X < (input_shape0.y + input_shape1.y + input_shape2.y + input_shape3.y + input_shape4.y)) {
-    result = READ_IMAGE(
-      input4, smp_none,
-      (int2)((Y)*input_shape4.w + Z, (X - input_shape0.y - input_shape1.y - input_shape2.y - input_shape3.y)));
-  } else if (X <
-             (input_shape0.y + input_shape1.y + input_shape2.y + input_shape3.y + input_shape4.y + input_shape5.y)) {
-    result = READ_IMAGE(input5, smp_none,
-                        (int2)((Y)*input_shape5.w + Z, (X - input_shape0.y - input_shape1.y - input_shape2.y -
-                                                        input_shape3.y - input_shape4.y)));
-  } else if (X < (input_shape0.y + input_shape1.y + input_shape2.y + input_shape3.y + input_shape4.y + input_shape5.y +
-                  input_shape6.y)) {
-    result = READ_IMAGE(input6, smp_none,
-                        (int2)((Y)*input_shape6.w + Z, (X - input_shape0.y - input_shape1.y - input_shape2.y -
-                                                        input_shape3.y - input_shape4.y - input_shape5.y)));
-  } else {
-    result =
-      READ_IMAGE(input7, smp_none,
-                 (int2)((Y)*input_shape7.w + Z, (X - input_shape0.y - input_shape1.y - input_shape2.y - input_shape3.y -
-                                                 input_shape4.y - input_shape5.y - input_shape6.y)));
+// input -1D
+__kernel void stack_2input_3axis_1inshape(__read_only image2d_t input0, __read_only image2d_t input1,
+                                          __write_only image2d_t output, int4 input_shape, int4 output_shape) {
+  int X = get_global_id(0);
+  int Y = get_global_id(1);
+  if (X >= output_shape.x * output_shape.y || Y >= output_shape.z) {
+    return;
   }
-  WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result);
+  int coordinate_x_out = output_shape.w;
+  FLT4 result1 = READ_IMAGE(input0, smp_none, (int2)(0, (X)));
+  FLT4 result2 = READ_IMAGE(input1, smp_none, (int2)(0, (X)));
+  FLT4 result = {result1.x, result2.x, 0, 0};
+  WRITE_IMAGE(output, (int2)(coordinate_x_out, (X)), result);
 }
 
-__kernel void stack8inputaxis2(__read_only image2d_t input0, __read_only image2d_t input1, __read_only image2d_t input2,
-                               __read_only image2d_t input3, __read_only image2d_t input4, __read_only image2d_t input5,
-                               __read_only image2d_t input6, __read_only image2d_t input7,
-                               __write_only image2d_t output, int4 input_shape0, int4 input_shape1, int4 input_shape2,
-                               int4 input_shape3, int4 input_shape4, int4 input_shape5, int4 input_shape6,
-                               int4 input_shape7, int4 output_shape) {
+// input -2D -axis = 1
+__kernel void stack_2input_1axis_2inshape(__read_only image2d_t input0, __read_only image2d_t input1,
+                                          __write_only image2d_t output, int4 input_shape, int4 output_shape) {
   CHECK_IDX_FOR_STACK;
-  if (Y < input_shape0.z) {
-    result = READ_IMAGE(input0, smp_none, (int2)((Y)*input_shape0.w + Z, (X)));
-  } else if (Y < (input_shape0.z + input_shape1.z)) {
-    result = READ_IMAGE(input1, smp_none, (int2)((Y - input_shape0.z) * input_shape1.w + Z, (X)));
-  } else if (Y < (input_shape0.z + input_shape1.z + input_shape2.z)) {
-    result = READ_IMAGE(input2, smp_none, (int2)((Y - input_shape0.z - input_shape1.z) * input_shape2.w + Z, (X)));
-  } else if (Y < (input_shape0.z + input_shape1.z + input_shape2.z + input_shape3.z)) {
-    result = READ_IMAGE(input3, smp_none,
-                        (int2)((Y - input_shape0.z - input_shape1.z - input_shape2.z) * input_shape3.w + Z, (X)));
-  } else if (Y < (input_shape0.z + input_shape1.z + input_shape2.z + input_shape3.z + input_shape4.z)) {
-    result = READ_IMAGE(
-      input4, smp_none,
-      (int2)((Y - input_shape0.z - input_shape1.z - input_shape2.z - input_shape3.z) * input_shape4.w + Z, (X)));
-  } else if (Y <
-             (input_shape0.z + input_shape1.z + input_shape2.z + input_shape3.z + input_shape4.z + input_shape5.z)) {
-    result = READ_IMAGE(
-      input5, smp_none,
-      (int2)(
-        (Y - input_shape0.z - input_shape1.z - input_shape2.z - input_shape3.z - input_shape4.z) * input_shape5.w + Z,
-        (X)));
-  } else if (Y < (input_shape0.z + input_shape1.z + input_shape2.z + input_shape3.z + input_shape4.z + input_shape5.z +
-                  input_shape6.z)) {
-    result = READ_IMAGE(
-      input6, smp_none,
-      (int2)((Y - input_shape0.z - input_shape1.z - input_shape2.z - input_shape3.z - input_shape4.z - input_shape5.z) *
-                 input_shape6.w +
-               Z,
-             (X)));
+  int IN = X / output_shape.y;
+  int IH = X % output_shape.y;
+  int boundary0 = input_shape.z;
+  if (Y < boundary0) {
+    int coordinate_x = Y * input_shape.w + Z;
+    int coordinate_y = IN * input_shape.y + IH;
+    result = READ_IMAGE(input0, smp_none, (int2)(coordinate_x, coordinate_y));
   } else {
-    result = READ_IMAGE(input7, smp_none,
-                        (int2)((Y - input_shape0.z - input_shape1.z - input_shape2.z - input_shape3.z - input_shape4.z -
-                                input_shape5.z - input_shape6.z) *
-                                   input_shape7.w +
-                                 Z,
-                               (X)));
+    int coordinate_x = (Y - boundary0) * input_shape.w + Z;
+    int coordinate_y = IN * input_shape.y + IH;
+    result = READ_IMAGE(input1, smp_none, (int2)(coordinate_x, coordinate_y));
   }
-  WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result);
+  WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (IN * output_shape.y + IH)), result);
 }
 
-__kernel void stack8inputaxis3(__read_only image2d_t input0, __read_only image2d_t input1, __read_only image2d_t input2,
-                               __read_only image2d_t input3, __read_only image2d_t input4, __read_only image2d_t input5,
-                               __read_only image2d_t input6, __read_only image2d_t input7,
-                               __write_only image2d_t output, int4 input_shape0, int4 input_shape1, int4 input_shape2,
-                               int4 input_shape3, int4 input_shape4, int4 input_shape5, int4 input_shape6,
-                               int4 input_shape7, int4 output_shape) {
+// input -3D -axis = 1
+__kernel void stack_2input_1axis_3inshape(__read_only image2d_t input0, __read_only image2d_t input1,
+                                          __write_only image2d_t output, int4 input_shape, int4 output_shape) {
   CHECK_IDX_FOR_STACK;
-  if (Z < input_shape0.w) {
-    result = READ_IMAGE(input0, smp_none, (int2)((Y)*input_shape0.w + Z, (X)));
-  } else if (Z < (input_shape0.w + input_shape1.w)) {
-    result = READ_IMAGE(input1, smp_none, (int2)((Y)*input_shape1.w + Z - input_shape0.w, (X)));
-  } else if (Z < (input_shape0.w + input_shape1.w + input_shape2.w)) {
-    result = READ_IMAGE(input2, smp_none, (int2)((Y)*input_shape2.w + Z - input_shape0.w - input_shape1.w, (X)));
-  } else if (Z < (input_shape0.w + input_shape1.w + input_shape2.w + input_shape3.w)) {
-    result = READ_IMAGE(input3, smp_none,
-                        (int2)((Y)*input_shape3.w + Z - input_shape0.w - input_shape1.w - input_shape2.w, (X)));
-  } else if (Z < (input_shape0.w + input_shape1.w + input_shape2.w + input_shape3.w + input_shape4.w)) {
-    result = READ_IMAGE(
-      input4, smp_none,
-      (int2)((Y)*input_shape4.w + Z - input_shape0.w - input_shape1.w - input_shape2.w - input_shape3.w, (X)));
-  } else if (Z <
-             (input_shape0.w + input_shape1.w + input_shape2.w + input_shape3.w + input_shape4.w + input_shape5.w)) {
-    result = READ_IMAGE(input5, smp_none,
-                        (int2)((Y)*input_shape5.w + Z - input_shape0.w - input_shape1.w - input_shape2.w -
-                                 input_shape3.w - input_shape4.w,
-                               (X)));
-  } else if (Z < (input_shape0.w + input_shape1.w + input_shape2.w + input_shape3.w + input_shape4.w + input_shape5.w +
-                  input_shape6.w)) {
-    result = READ_IMAGE(input6, smp_none,
-                        (int2)((Y)*input_shape6.w + Z - input_shape0.w - input_shape1.w - input_shape2.w -
-                                 input_shape3.w - input_shape4.w - input_shape5.w,
-                               (X)));
+  int IN = X / output_shape.y;
+  int IH = X % output_shape.y;
+  int boundary0 = input_shape.y;
+  if (IH < boundary0) {
+    int coordinate_x = Y * input_shape.w + Z;
+    int coordinate_y = IN * input_shape.y + IH;
+    result = READ_IMAGE(input0, smp_none, (int2)(coordinate_x, coordinate_y));
   } else {
-    result = READ_IMAGE(input7, smp_none,
-                        (int2)((Y)*input_shape7.w + Z - input_shape0.w - input_shape1.w - input_shape2.w -
-                                 input_shape3.w - input_shape4.w - input_shape5.w - input_shape6.w,
-                               (X)));
+    int coordinate_x = Y * input_shape.w + Z;
+    int coordinate_y = IN * input_shape.y + IH - boundary0;
+    result = READ_IMAGE(input1, smp_none, (int2)(coordinate_x, coordinate_y));
   }
-  WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result);
+  WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (IN * output_shape.y + IH)), result);
+}
+
+// input -3D -axis = 2
+__kernel void stack_2input_2axis_3inshape(__read_only image2d_t input0, __read_only image2d_t input1,
+                                          __write_only image2d_t output, int4 input_shape, int4 output_shape) {
+  CHECK_IDX_FOR_STACK;
+  int boundary0 = input_shape.y;
+  int IN = X / output_shape.y;
+  int IW = X % output_shape.y;
+  int IC = Z;
+  int coordinate_x = IW * input_shape.w + IC;
+  int coordinate_y = IN * input_shape.y;
+  if (Y < boundary0) {
+    result = READ_IMAGE(input0, smp_none, (int2)(coordinate_x, coordinate_y));
+  } else {
+    result = READ_IMAGE(input1, smp_none, (int2)(coordinate_x, coordinate_y));
+  }
+  WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, IN * output_shape.y + IW), result);
+}
+
+// input -3D -axis = 3  and input -2D -axis = 2  boundary stack
+__kernel void stack_2input_boundary(__global float *input0, __global float *input1, __global float *output,
+                                    int4 input_shape, int4 output_shape, int2 stride_w) {
+  int X = get_global_id(0);  // N
+  int Y = get_global_id(1);  // H
+  if (X >= output_shape.x || Y >= output_shape.y) {
+    return;
+  }
+  int IW = output_shape.z;
+  int Align_out = output_shape.w * C4NUM;
+  int Align_in = input_shape.w * C4NUM;
+  int index_out = X * output_shape.y * stride_w.x + Y * stride_w.x;
+  int index_in = X * input_shape.y * stride_w.y + Y * Align_in;
+  for (int iw = 0; iw < IW; iw++) {
+    int index_out_tmp = index_out + iw * Align_out;
+    int index_in_tmp = index_in + iw;
+    output[index_out_tmp] = input0[index_in_tmp];
+    index_out_tmp++;
+    output[index_out_tmp] = input1[index_in_tmp];
+  }
 }
