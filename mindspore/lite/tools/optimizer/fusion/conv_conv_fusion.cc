@@ -88,8 +88,7 @@ STATUS GenNewConvBias(const ParameterPtr &down_bias_node, const ParameterPtr &do
   param_value->set_tensor_shape({new_bias_size});
   param_value->set_tensor_type(up_bias_param->tensor_type());
   param_value->set_format(up_bias_param->format());
-  param_value->set_tensor_addr(new_bias_data);
-  param_value->set_tensor_size(sizeof(float) * new_bias_size);
+  param_value->SetTensorData(new_bias_data, sizeof(float) * new_bias_size);
   new_bias_node->set_name(down_bias_node->fullname_with_scope());
   new_bias_node->set_default_param(param_value);
   new_bias_node->set_abstract(down_bias_node->abstract());
@@ -142,8 +141,7 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
   param_value->set_tensor_shape(new_weight_shape);
   param_value->set_tensor_type(up_weight_param->tensor_type());
   param_value->set_format(up_weight_param->format());
-  param_value->set_tensor_addr(new_weight_data);
-  param_value->set_tensor_size(sizeof(float) * size);
+  param_value->SetTensorData(new_weight_data, sizeof(float) * size);
   new_weight_node->set_name(down_weight_node->fullname_with_scope());
   new_weight_node->set_default_param(param_value);
   new_weight_node->set_abstract(down_weight_node->abstract());

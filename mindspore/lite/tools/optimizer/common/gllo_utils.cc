@@ -361,8 +361,7 @@ ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, in
 
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
   MS_ASSERT(param_value != nullptr);
-  param_value->set_tensor_addr(bias_data);
-  param_value->set_tensor_size(kernel_num * sizeof(float) / sizeof(uint8_t));
+  param_value->SetTensorData(bias_data, kernel_num * sizeof(float) / sizeof(uint8_t));
   param_value->set_format(weight_tensor->format());
   param_value->set_tensor_type(weight_tensor->tensor_type());
   param_value->set_tensor_shape(shape);

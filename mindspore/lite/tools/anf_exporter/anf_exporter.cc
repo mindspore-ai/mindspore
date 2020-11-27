@@ -477,7 +477,12 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
     paramTensor->format = schema::Format(valueLite->format());
     paramTensor->dataType = valueLite->tensor_type();
     paramTensor->dims = valueLite->tensor_shape();
-    memcpy(paramTensor->data.data(), valueLite->tensor_addr(), valueLite->tensor_size());
+    auto ret = memcpy_s(paramTensor->data.data(), valueLite->tensor_size() * sizeof(uint8_t), valueLite->tensor_addr(),
+                        valueLite->tensor_size());
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "memcpy_s data into tensor failed.";
+      return RET_ERROR;
+    }
     node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
     output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
     meta_graphT->allTensors.emplace_back(std::move(paramTensor));

@@ -82,7 +82,10 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     MS_ASSERT(primitive != nullptr);
     primitive->value.type = schema::PrimitiveType_Activation;
     auto prim2 = new (std::nothrow) schema::ActivationT;
-    MS_ASSERT(prim2 != nullptr);
+    if (prim2 == nullptr) {
+      MS_LOG(ERROR) << "new ActivationT failed";
+      return false;
+    }
     if (min == 0 && max == 6) {
       prim2->type = schema::ActivationType_RELU6;
     } else {

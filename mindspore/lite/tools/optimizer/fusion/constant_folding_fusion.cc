@@ -106,8 +106,7 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return nullptr;
     }
-    param_value->set_tensor_addr(tensor_data);
-    param_value->set_tensor_size(size);
+    param_value->SetTensorData(tensor_data, size);
   }
   parameter->set_default_param(param_value);
   return parameter;

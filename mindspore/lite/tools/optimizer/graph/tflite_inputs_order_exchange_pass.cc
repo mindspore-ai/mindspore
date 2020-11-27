@@ -55,9 +55,10 @@ bool TfliteInputsOrderExchangePass::Run(const FuncGraphPtr &graph) {
         opt::GetCNodeType(node) == schema::PrimitiveType_SpaceToBatchND ||
         opt::GetCNodeType(node) == schema::PrimitiveType_BatchToSpaceND ||
         opt::GetCNodeType(node) == schema::PrimitiveType_SpaceToDepth ||
-        (opt::GetCNodeType(node) == schema::PrimitiveType_Pad &&
+        (opt::GetCNodeType(node) == schema::PrimitiveType_Pad && primitive_c->primitiveT()->value.AsPad() != nullptr &&
          primitive_c->primitiveT()->value.AsPad()->paddingMode == schema::PaddingMode_CONSTANT) ||
         (opt::GetCNodeType(node) == schema::PrimitiveType_Resize &&
+         primitive_c->primitiveT()->value.AsResize() != nullptr &&
          primitive_c->primitiveT()->value.AsResize()->newHeight != 0 &&
          primitive_c->primitiveT()->value.AsResize()->newWidth != 0)) {
       std::vector<AnfNodePtr> new_inputs;

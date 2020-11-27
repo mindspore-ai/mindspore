@@ -94,7 +94,7 @@ STATUS InferShapePass::SetParameterAbstract(const ParameterPtr &parameter) {
       delete[] tensor_data;
       return RET_ERROR;
     }
-    new_value->set_tensor_addr(tensor_data);
+    new_value->SetTensorData(tensor_data, new_value->tensor_size());
   }
   new_abstract->set_value(new_value);
   parameter->set_abstract(new_abstract);
