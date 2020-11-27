@@ -27,7 +27,7 @@ namespace kernel {
 template <typename S, typename T>
 class CastGpuKernel : public GpuKernel {
  public:
-  CastGpuKernel() : input_size_(1), output_size_(1) {}
+  CastGpuKernel() { ResetResource(); }
   ~CastGpuKernel() = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -42,6 +42,7 @@ class CastGpuKernel : public GpuKernel {
     Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     auto input_shapes = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shapes = AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -60,6 +61,14 @@ class CastGpuKernel : public GpuKernel {
     }
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    input_size_ = 1;
+    output_size_ = 1;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:
