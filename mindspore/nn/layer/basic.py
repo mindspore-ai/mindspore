@@ -599,14 +599,14 @@ class Interpolate(Cell):
 
     Inputs:
         - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape:
-          math:'(batch, channels, height, width)', with data type of float32 or float64.
+          math:`(batch, channels, height, width)`, with data type of float16 or float32.
 
     Outputs:
         Resized tensor.
-        If size is set, the result is 4-D tensor with shape:math:'(batch, channels, new_height, new_width)'
+        If size is set, the result is 4-D tensor with shape:math:`(batch, channels, new_height, new_width)`
         in float32.
-        If scale is set, the result is 4-D tensor with shape:math:'(batch, channels, scale_factor * height,
-        scale_factor * width)' in float32
+        If scale is set, the result is 4-D tensor with shape:math:`(batch, channels, scale_factor * height,
+        scale_factor * width)` in float32
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

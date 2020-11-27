@@ -292,6 +292,39 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
 
 
+    def view(self, *shape):
+        """
+        Reshape the tensor according to the input shape.
+
+        Args:
+            shape (Union(list(int), *int)): Dimension of the output tensor.
+
+        Returns:
+            Tensor, has the same dimension as the input shape.
+        """
+        if not shape:
+            raise ValueError("The shape variable should not be empty")
+        if isinstance(shape[0], tuple):
+            if len(shape) != 1:
+                raise ValueError(f"Only one tuple is needed, but got {shape}")
+            shape = shape[0]
+        return tensor_operator_registry.get('reshape')()(self, shape)
+
+
+    def expand_as(self, x):
+        """
+        Expand the dimension of target tensor to the dimension of input tensor.
+
+        Args:
+            shape (Tensor): The input tensor. The shape of input tensor must obey
+            the broadcasting rule.
+
+        Returns:
+            Tensor, has the same dimension as input tensor.
+        """
+        return tensor_operator_registry.get('broadcast_to')(x.shape)(self)
+
+
 class RowTensor:
     """
     A sparse representation of a set of tensor slices at given indices.

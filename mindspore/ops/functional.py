@@ -173,6 +173,8 @@ tensor_operator_registry.register('__pow__', tensor_pow)
 tensor_operator_registry.register('__floordiv__', tensor_floordiv)
 tensor_operator_registry.register('all', P.ReduceAll)
 tensor_operator_registry.register('any', P.ReduceAny)
+tensor_operator_registry.register('reshape', P.Reshape)
+tensor_operator_registry.register('broadcast_to', P.BroadcastTo)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
