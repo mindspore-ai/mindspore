@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
+template <typename T, typename S>
 class DynamicShapeGpuKernel : public GpuKernel {
  public:
   DynamicShapeGpuKernel() { ResetResource(); }
@@ -38,8 +38,8 @@ class DynamicShapeGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    int *output_device_address = GetDeviceAddress<int>(outputs, 0);
-    size_t prev_node_output_shape_size = prev_node_output_shape_.size() * sizeof(int);
+    S *output_device_address = GetDeviceAddress<S>(outputs, 0);
+    size_t prev_node_output_shape_size = prev_node_output_shape_.size() * sizeof(S);
     CHECK_CUDA_RET_WITH_EXCEPT(
       cudaMemcpyAsync(output_device_address, prev_node_output_shape_.data(), prev_node_output_shape_size,
                       cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -58,9 +58,10 @@ class DynamicShapeGpuKernel : public GpuKernel {
     input_size_ = 1;
     for (const size_t &e : prev_node_output_shape_tmp) {
       input_size_ *= e;
-      // shapes are Tensors with elements of type int32, but GetPrevNodeOutputInferShape returns vector of size_t,
-      // so we use an int* for allocated output memory and cast to an int here, otherwise the memcpy will fail with a
-      // silently.
+      // shapes are Tensors with elements of type S (int32, or int64) but
+      // GetPrevNodeOutputInferShape returns vector of size_t, so we use
+      // an S* for allocated output memory and cast to an integral type here,
+      // otherwise the memcpy will fail silently.
       prev_node_output_shape_.push_back(e);
     }
 
@@ -83,13 +84,13 @@ class DynamicShapeGpuKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(output_size_ * sizeof(int));
+    output_size_list_.push_back(output_size_ * sizeof(S));
   }
 
  private:
   size_t input_size_;
   size_t output_size_;
-  std::vector<int> prev_node_output_shape_;
+  std::vector<S> prev_node_output_shape_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
