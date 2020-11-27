@@ -102,12 +102,12 @@ int MatmulInt8CPUKernel::ReSize() {
       auto cur_sums = weight_bias_sums_batch_ + i * params_->col_4_;
       if (params_->b_transpose_) {
         RowMajor2Row16x4MajorInt8(cur_b, cur_b_pack, params_->col_, params_->deep_);
-        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
-                           bias_ptr_, cur_sums, ColMajor);
+        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, &quant_params_.weight.zp_,
+                           bias_ptr_, cur_sums, ColMajor, false);
       } else {
         RowMajor2Col16x4MajorInt8(cur_b, params_->deep_, params_->col_, cur_b_pack);
-        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
-                           bias_ptr_, cur_sums, RowMajor);
+        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, &quant_params_.weight.zp_,
+                           bias_ptr_, cur_sums, RowMajor, false);
       }
     }
   }
@@ -166,12 +166,12 @@ int MatmulInt8CPUKernel::Run() {
       auto cur_sums = weight_bias_sums_batch_ + i * params_->col_4_;
       if (params_->b_transpose_) {
         RowMajor2Row16x4MajorInt8(cur_b, cur_b_pack, params_->col_, params_->deep_);
-        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
-                           bias_ptr_, cur_sums, ColMajor);
+        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, &quant_params_.weight.zp_,
+                           bias_ptr_, cur_sums, ColMajor, false);
       } else {
         RowMajor2Col16x4MajorInt8(cur_b, params_->deep_, params_->col_, cur_b_pack);
-        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, quant_params_.weight.zp_,
-                           bias_ptr_, cur_sums, RowMajor);
+        CalcWeightBiasSums(cur_b, params_->deep_, params_->col_, quant_params_.input.zp_, &quant_params_.weight.zp_,
+                           bias_ptr_, cur_sums, RowMajor, false);
       }
     }
   }
