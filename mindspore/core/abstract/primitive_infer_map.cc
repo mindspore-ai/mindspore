@@ -56,6 +56,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSparseGatherV2, {InferImplGatherV2, true}},
     {prim::kPrimEmbeddingLookup, {InferImplEmbeddingLookup, true}},
     {prim::kPrimUnsortedSegmentSum, {InferImplUnsortedSegmentSum, true}},
+    {prim::kPrimUnsortedSegmentMax, {InferImplUnsortedSegmentMax, true}},
     {prim::kPrimScatterAdd, {InferImplScatterAdd, true}},
     {prim::kPrimScatterUpdate, {InferImplScatterUpdate, true}},
     {prim::kPrimMapCacheIdx, {InferImplMapCacheIdx, true}},

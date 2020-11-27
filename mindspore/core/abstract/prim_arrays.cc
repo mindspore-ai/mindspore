@@ -253,6 +253,74 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
 }
 
+AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 3);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  auto segment_ids = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(segment_ids);
+  MS_EXCEPTION_IF_NULL(segment_ids->shape());
+  auto segment_ids_shape = segment_ids->shape()->shape();
+  (void)CheckTensorDType(x, {kFloat16, kFloat32, kInt32}, "Input 0 (x) for UnsortedSegmentMax should be %s");
+  (void)CheckTensorDType(segment_ids, {kInt32}, "Input 1 (segment_ids) for UnsortedSegmentMax should be %s");
+  // check if dynamic shape
+  bool x_is_dyn = (!x->shape()->min_shape().empty() && !x->shape()->max_shape().empty());
+  bool ids_is_dyn = (!segment_ids->shape()->min_shape().empty() && !segment_ids->shape()->max_shape().empty());
+  bool op_is_dynamic = x_is_dyn && ids_is_dyn;
+  auto x_shape = x->shape()->shape();
+  ShapeVector shape;
+  int64_t num_segments_value = 0;
+  if (args_spec_list[2]->isa<AbstractTensor>()) {  // num_segments is Tensor
+    auto num_segments = args_spec_list[2]->cast<AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(num_segments);
+    auto num_segments_value_ptr = num_segments->BuildValue();
+    MS_EXCEPTION_IF_NULL(num_segments_value_ptr);
+    auto num_segments_tensor = num_segments_value_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(num_segments_tensor);
+    num_segments_value = *static_cast<int64_t *>(num_segments_tensor->data_c());
+  } else if (args_spec_list[2]->isa<AbstractScalar>()) {  // num_segments is Scalar
+    auto num_segments = CheckArg<AbstractScalar>(op_name, args_spec_list, 2);
+    num_segments_value = GetValue<int64_t>(num_segments->BuildValue());
+  } else {
+    MS_LOG(EXCEPTION) << "num_segments incorrect type in UnsortedSegmentMax";
+  }
+  if (num_segments_value <= 0) {
+    MS_LOG(EXCEPTION) << "num_segments must be > 0 in UnsortedSegmentMax";
+  }
+  shape.emplace_back(num_segments_value);
+  shape.insert(shape.end(), x_shape.begin() + segment_ids_shape.size(), x_shape.end());
+  if (!op_is_dynamic) {
+    if (x_shape[0] != segment_ids_shape[0]) {
+      MS_LOG(EXCEPTION) << "Length of segment_ids must match first value of x shape UnsortedSegmentMax";
+    }
+    return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape));
+  }
+  // is dynamic
+  ShapeVector min_shape;
+  ShapeVector max_shape;
+  min_shape.emplace_back(num_segments_value);
+  max_shape.emplace_back(num_segments_value);
+  // only run validation if shape values are known
+  bool x_any_shape = std::any_of(x_shape.begin(), x_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+  bool ids_any_shape =
+    std::any_of(segment_ids_shape.begin(), segment_ids_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+  if (!x_any_shape && !ids_any_shape) {
+    if (x_shape[0] != segment_ids_shape[0]) {
+      MS_LOG(EXCEPTION) << "Length of segment_ids must match first value of x shape UnsortedSegmentMax";
+    }
+  }
+  ShapeVector x_shape_min;
+  ShapeVector x_shape_max;
+  x_shape_min = (x_is_dyn) ? x->shape()->min_shape() : x->shape()->shape();
+  x_shape_max = (x_is_dyn) ? x->shape()->max_shape() : x->shape()->shape();
+  min_shape.insert(min_shape.end(), x_shape_min.begin() + segment_ids_shape.size(), x_shape_min.end());
+  max_shape.insert(max_shape.end(), x_shape_max.begin() + segment_ids_shape.size(), x_shape_max.end());
+  return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+}
+
 AbstractBasePtr InferImplScatterAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
