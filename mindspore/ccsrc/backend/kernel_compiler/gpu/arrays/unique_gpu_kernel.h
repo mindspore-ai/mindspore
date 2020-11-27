@@ -26,7 +26,7 @@ namespace kernel {
 template <typename T, typename S>
 class UniqueGpuKernel : public GpuKernel {
  public:
-  UniqueGpuKernel() : input_size_(0), output_size_(0), workspace_size_(0), num_elements_(1), post_output_size_(0) {}
+  UniqueGpuKernel() { ResetResource(); }
   ~UniqueGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -48,7 +48,7 @@ class UniqueGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    std::vector<size_t> shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     for (auto x : shape) {
       num_elements_ *= x;
     }
@@ -75,6 +75,19 @@ class UniqueGpuKernel : public GpuKernel {
       shapes.emplace_back(shape);
     }
     AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, kernel_node_.get());
+  }
+
+  void ResetResource() noexcept override {
+    input_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+    num_elements_ = 1;
+    post_output_size_ = 0;
+    stream_ptr_ = nullptr;
+    kernel_node_ = nullptr;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

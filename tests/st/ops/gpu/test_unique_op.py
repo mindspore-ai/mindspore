@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-
+from mindspore.ops.operations import _inner_ops as inner
 
 class NetUnique(nn.Cell):
     def __init__(self):
@@ -30,6 +30,20 @@ class NetUnique(nn.Cell):
     def construct(self, x):
         x_unique, x_idx = self.unique(x)
         return x_unique, x_idx
+
+
+class NetUniqueDynamic(nn.Cell):
+    def __init__(self):
+        super(NetUniqueDynamic, self).__init__()
+        self.convert = inner.GpuConvertToDynamicShape()
+        self.unique = P.Unique()
+        self.split = P.Split(0, 2)
+
+    def construct(self, x):
+        x_convert = self.convert(x)
+        x_unique, x_idx = self.unique(x_convert)
+        x_split = self.split(x_unique)
+        return x_unique, x_idx, x_split
 
 
 @pytest.mark.level0
@@ -224,3 +238,32 @@ def test_unique_large_int32():
     x_unique, x_idx = net(x)
     assert (x_unique.asnumpy() == exp_output).all()
     assert (x_idx.asnumpy() == exp_idx).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_unique_dynamic():
+    x = Tensor(np.array([4, 5, 1, 2, 3, 3, 4, 5, 6]).astype(np.float32))
+    expt_unique = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32)
+    expt_index = np.array([3, 4, 0, 1, 2, 2, 3, 4, 5]).astype(np.int32)
+    expt_split = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
+
+    x2 = Tensor(np.array([1, 1, 4, 4, 7, 8, 8]).astype(np.float32))
+    expt_unique2 = np.array([1, 4, 7, 8]).astype(np.float32)
+    expt_index2 = np.array([0, 0, 1, 1, 2, 3, 3]).astype(np.int32)
+    expt_split2 = np.array([[1, 4], [7, 8]]).astype(np.float32)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = NetUniqueDynamic()
+    x_unique, x_idx, x_split = net(x)
+    assert (x_unique.asnumpy() == expt_unique).all()
+    assert (x_idx.asnumpy() == expt_index).all()
+    for i, out in enumerate(x_split):
+        assert (out.asnumpy() == expt_split[i]).all()
+
+    x_unique2, x_idx2, x_split2 = net(x2)
+    assert (x_unique2.asnumpy() == expt_unique2).all()
+    assert (x_idx2.asnumpy() == expt_index2).all()
+    for i, out in enumerate(x_split2):
+        assert (out.asnumpy() == expt_split2[i]).all()

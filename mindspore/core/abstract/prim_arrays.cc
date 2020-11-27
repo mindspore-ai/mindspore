@@ -164,7 +164,10 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   }
   ShapeVector ids_shape = {Shape::SHP_ANY};
   ShapeVector min_shape = {1};
-  ShapeVector max_shape = shape->shape();
+  ShapeVector max_shape = shape->max_shape();
+  if (max_shape.empty()) {
+    max_shape = shape->shape();
+  }
   auto ids =
     std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(ids_shape, min_shape, max_shape));
   // Currently we choose the same data type as input for the idx.
@@ -174,7 +177,17 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   if (input->element()->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {
     ids_idx_type = kInt64;
   }
-  auto ids_idx = std::make_shared<AbstractTensor>(ids_idx_type, shape->shape());
+  ShapeVector idx_shape = shape->shape();
+  ShapeVector idx_min_shape = shape->min_shape();
+  if (idx_min_shape.empty()) {
+    idx_min_shape = shape->shape();
+  }
+  ShapeVector idx_max_shape = shape->max_shape();
+  if (idx_max_shape.empty()) {
+    idx_max_shape = shape->shape();
+  }
+  auto ids_idx = std::make_shared<AbstractTensor>(ids_idx_type, idx_shape);
+  ids_idx->set_shape(std::make_shared<Shape>(idx_shape, idx_min_shape, idx_max_shape));
   // outputs: ids, ids_idx
   AbstractBasePtrList elements = {ids, ids_idx};
   return std::make_shared<AbstractTuple>(elements);
