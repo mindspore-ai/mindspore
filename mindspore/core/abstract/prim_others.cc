@@ -492,32 +492,6 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
   return ret;
 }
 
-AbstractBasePtr InferImplExpandDims(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-
-  std::vector<int64_t> shape;
-  std::vector<int64_t> x_shape = x->shape()->shape();
-  shape.insert(shape.end(), x_shape.begin(), x_shape.end());
-  auto axis = primitive->GetAttr("axis");
-  auto value = GetValue<int64_t>(axis);
-  if (value < -(SizeToInt(x_shape.size()) + 1) || value > SizeToInt(x_shape.size())) {
-    MS_LOG(EXCEPTION) << " axis value shoud be in range [-intput_x.dim-1,input_x.dim], but axis value is" << value
-                      << " and input_x.dim is" << x_shape.size();
-  }
-  if (value < 0) {
-    value = value + SizeToInt(x_shape.size()) + 1;
-  }
-  shape.insert(shape.begin() + value, 1);
-
-  auto ret = std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape));
-  return ret;
-}
-
 AbstractBasePtr InferImplGpuConvertToDynamicShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();
