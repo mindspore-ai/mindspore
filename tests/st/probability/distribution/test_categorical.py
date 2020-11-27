@@ -219,7 +219,7 @@ def test_log_survival():
     Test log survival funciton.
     """
     expect_logsurvival = np.log([1., 0.3, 0.3, 0.3, 0.3])
-    x_ = Tensor(np.array([-0.1, 0, 0, 0.5, 0.5]).astype(np.float32), dtype=dtype.float32)
+    x_ = Tensor(np.array([-2, 0, 0, 0.5, 0.5]).astype(np.float32), dtype=dtype.float32)
     log_sf = LogSF()
     output = log_sf(x_)
     tol = 1e-6
