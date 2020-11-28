@@ -30,9 +30,9 @@ int Executor::CheckInputs(const std::vector<Tensor *> &in_tensors) {
       return RET_ERROR;
     }
     auto shape = inTensor->shape();
-    bool valid = all_of(shape.begin(), shape.end(), [](int i) { return i > 0; });
+    bool valid = all_of(shape.begin(), shape.end(), [](int i) { return i >= 0; });
     if (!valid) {
-      MS_LOG(ERROR) << "The shape of input tensor contains zero or negative dimension,"
+      MS_LOG(ERROR) << "The shape of input tensor contains negative dimension,"
                     << "check the model and assign the input shape with method Resize().";
       return RET_ERROR;
     }
