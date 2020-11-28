@@ -62,7 +62,8 @@ int QuantizedAddCPUKernel::Init() {
   para_.out_left_shift_ = -para_.out_left_shift_ > 0 ? -para_.out_left_shift_ : 0;
 
   auto act = arith_para_->activation_type_;
-  CalculateActivationRangeQuantized(act == ActType_Relu, act == ActType_Relu6, 0, 1, &para_.min_, &para_.max_);
+  CalculateActivationRangeQuantized(act == ActType_Relu, act == ActType_Relu6, para_.out_zp_,
+                                    static_cast<float>(out_scale), &para_.min_, &para_.max_);
 
   if (!InferShapeDone()) {
     return RET_OK;
