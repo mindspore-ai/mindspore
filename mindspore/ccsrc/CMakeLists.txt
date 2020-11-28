@@ -242,7 +242,7 @@ if (ENABLE_D)
     set_target_properties(ms_profile PROPERTIES LINKER_LANGUAGE CXX)
     target_link_libraries(ms_profile -Wl,--start-group ${PROFILING_SHARED} ${PROFILING} mindspore::protobuf -Wl,--end-group)
     target_link_libraries(mindspore ms_profile ge_runtime ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT} ${HCCL} ${DATATRANSFER}
-                                    ${REGISTER} -Wl,--no-as-needed ${OPTILING} -Wl,--as-needed)
+                                    ${REGISTER} -Wl,--no-as-needed ${OPTILING})
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
     # hccl_adpter
     find_library(HCCL_ADPTER hcom_graph_adaptor ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
