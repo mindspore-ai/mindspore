@@ -82,6 +82,70 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetBasic) {
   GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
 }
 
+TEST_F(MindDataTestPipeline, TestTextFileDatasetBasicWithPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileDatasetBasicWithPipeline.";
+  // Test TextFile Dataset with single text file and many default inputs
+
+  // Set configuration
+  uint32_t original_seed = GlobalContext::config_manager()->seed();
+  uint32_t original_num_parallel_workers = GlobalContext::config_manager()->num_parallel_workers();
+  MS_LOG(DEBUG) << "ORIGINAL seed: " << original_seed << ", num_parallel_workers: " << original_num_parallel_workers;
+  GlobalContext::config_manager()->set_seed(987);
+  GlobalContext::config_manager()->set_num_parallel_workers(4);
+
+  // Create two TextFile Dataset, with single text file
+  // Note: 1.txt has 3 rows
+  // Use 2 samples
+  // Use defaults for other input parameters
+  std::string tf_file1 = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds1 = TextFile({tf_file1}, 2);
+  std::shared_ptr<Dataset> ds2 = TextFile({tf_file1}, 2);
+  EXPECT_NE(ds1, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create two Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds1 = ds1->Repeat(repeat_num);
+  EXPECT_NE(ds1, nullptr);
+  repeat_num = 3;
+  ds2 = ds2->Repeat(repeat_num);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Concat operation on the ds
+  ds1 = ds1->Concat({ds2});
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset.
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  EXPECT_NE(row.find("text"), row.end());
+  std::vector<std::string> expected_result = {"Be happy every day.", "This is a text file."};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // Expect 10 samples
+  EXPECT_EQ(i, 10);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Restore configuration
+  GlobalContext::config_manager()->set_seed(original_seed);
+  GlobalContext::config_manager()->set_num_parallel_workers(original_num_parallel_workers);
+}
+
 TEST_F(MindDataTestPipeline, TestTextFileGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextFileGetters.";
   // Test TextFile Dataset with single text file and many default inputs
