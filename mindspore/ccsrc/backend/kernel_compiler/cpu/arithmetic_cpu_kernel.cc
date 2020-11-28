@@ -186,9 +186,17 @@ void ArithmeticCPUKernel::LaunchLess(const std::vector<AddressPtr> &inputs, cons
   size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
   MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
   std::vector<std::thread> threads;
+  if (thread_num < 1) {
+    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
+    return;
+  }
   threads.reserve(thread_num);
   size_t start = 0;
   size_t once_compute_size = (lens + thread_num - 1) / thread_num;
+  if (once_compute_size < 1) {
+    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
+    return;
+  }
   while (start < lens) {
     size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
     threads.emplace_back(std::thread(&ArithmeticCPUKernel::Less<T>, this, input1, input2, output, start, end));
@@ -214,11 +222,15 @@ void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
   MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
   std::vector<std::thread> threads;
+  if (thread_num < 1) {
+    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
+    return;
+  }
   threads.reserve(thread_num);
   size_t start = 0;
   size_t once_compute_size = (lens + thread_num - 1) / thread_num;
-  if (thread_num < 1 || once_compute_size < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num << "; once_compute_size " << once_compute_size;
+  if (once_compute_size < 1) {
+    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
     return;
   }
   while (start < lens) {
