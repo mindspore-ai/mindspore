@@ -20,7 +20,7 @@ set(OPENCV_DIR_RUN_X86 ${MAIN_DIR}-${RUN_X86_COMPONENT_NAME}/minddata/third_part
 set(PROTOBF_DIR_RUN_X86 ${MAIN_DIR}-${RUN_X86_COMPONENT_NAME}/third_party/protobuf)
 set(FLATBF_DIR_RUN_X86 ${MAIN_DIR}-${RUN_X86_COMPONENT_NAME}/third_party/flatbuffers)
 
-if (BUILD_MINDDATA STREQUAL "full")
+if (BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper")
     install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/ DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     if (PLATFORM_ARM64)
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR} COMPONENT ${COMPONENT_NAME})

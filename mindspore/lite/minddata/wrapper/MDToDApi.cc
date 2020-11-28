@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "MDToDApi.h"
+#include "MDToDApi.h"  //NOLINT
 
 #include <string>
 #include <fstream>
@@ -22,7 +22,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "minddata/dataset/include/datasets.h"
+
+#include "album_op_android.h"  //NOLINT
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/include/vision.h"
@@ -35,7 +36,7 @@
 using mindspore::dataset::Path;
 using mindspore::dataset::Tensor;
 
-using mindspore::dataset;
+using TensorOperation = mindspore::dataset::TensorOperation;
 
 using mindspore::LogStream;
 using mindspore::MsLogLevel::DEBUG;
@@ -48,22 +49,21 @@ using mindspore::dataset::Status;
 
 class MDToDApi {
  public:
-  std::shared_ptr<Dataset> _ds;
-  std::shared_ptr<Iterator> _iter;
+  std::shared_ptr<mindspore::dataset::AlbumOp> _iter;
   std::vector<std::shared_ptr<TensorOperation>> _augs;
   std::string _storage_folder;
   std::string _folder_path;
   bool _hasBatch;
   int64_t _file_id;
 
-  MDToDApi() : _ds(nullptr), _iter(nullptr), _augs({}), _storage_folder(""), _file_id(-1), _hasBatch(false) {
-    MS_LOG(WARNING) << "MDToDAPI Call constructor";
+ public:
+  MDToDApi() : _iter(nullptr), _augs({}), _storage_folder(""), _file_id(-1), _hasBatch(false) {
+    MS_LOG(WARNING) << "MDToDAPI Call constractor";
   }
   ~MDToDApi() {
-    MS_LOG(WARNING) << "MDToDAPI Call destructor";
+    MS_LOG(WARNING) << "MDToDAPI Call destractor";
+    // derefernce dataset and iterator
     _augs.clear();
-    _ds = nullptr;
-    _iter = nullptr;
   }
 };
 
@@ -79,7 +79,9 @@ std::vector<std::string> MDToDBuffToVector(MDToDBuff_t StrBuff) {
   return strVector;
 }
 
-extern "C" int MDToDApi_pathTest(const char *path) {
+extern "C"
+
+int MDToDApi_pathTest(const char* path) {
   Path f(path);
   MS_LOG(WARNING) << f.Exists() << f.IsDirectory() << f.ParentPath();
   // Print out the first few items in the directory
@@ -114,36 +116,31 @@ extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
 
     if ((MDConf.ResizeSizeWH[0] != 0) && (MDConf.ResizeSizeWH[1] != 0)) {
       std::vector<int> Resize(MDConf.ResizeSizeWH, MDConf.ResizeSizeWH + 2);
-      std::shared_ptr<TensorOperation> resize_op = vision::Resize(Resize);
+      std::shared_ptr<TensorOperation> resize_op = mindspore::dataset::vision::Resize(Resize);
       assert(resize_op != nullptr);
       MS_LOG(WARNING) << "Push back resize";
       mapOperations.push_back(resize_op);
+      // hasBatch = true;  Batch not currently supported inMInddata-Lite
     }
     if ((MDConf.CropSizeWH[0] != 0) && (MDConf.CropSizeWH[1] != 0)) {
       std::vector<int> Crop(MDConf.CropSizeWH, MDConf.CropSizeWH + 2);
-      std::shared_ptr<TensorOperation> center_crop_op = vision::CenterCrop(Crop);
+      std::shared_ptr<TensorOperation> center_crop_op = mindspore::dataset::vision::CenterCrop(Crop);
       assert(center_crop_op != nullptr);
       MS_LOG(WARNING) << "Push back crop";
       mapOperations.push_back(center_crop_op);
+      // hasBatch = true;  Batch not currently supported inMInddata-Lite
     }
   }
-  std::shared_ptr<Dataset> ds = nullptr;
-  MS_LOG(INFO) << "Read id =" << MDConf.fileid << " (-1) for all";
+
+  MS_LOG(INFO) << "Read id=" << MDConf.fileid << " (-1) for all";
+  std::shared_ptr<mindspore::dataset::AlbumOp> iter = nullptr;
+  const std::set<std::string> exts = {};
   if (MDConf.fileid > -1) {
-    // read specific image using SequentialSampler
-    ds = Album(folder_path, schema_file, column_names, true, SequentialSampler(MDConf.fileid, 1L));
+    // read specific image using SequentialSampler witn
+    iter = std::make_shared<mindspore::dataset::AlbumOp>(folder_path, true, schema_file, exts, MDConf.fileid);
   } else {
-    // Distributed sampler takes num_shards then shard_id
-    ds = Album(folder_path, schema_file, column_names, true, SequentialSampler());
+    iter = std::make_shared<mindspore::dataset::AlbumOp>(folder_path, true, schema_file, exts);
   }
-  ds = ds->SetNumWorkers(1);
-
-  assert(ds != nullptr);
-
-  // Create a Repeat operation on ds
-  int32_t repeat_num = 1;
-  ds = ds->Repeat(repeat_num);
-  assert(ds != nullptr);
 
   // Create objects for the tensor ops
   MS_LOG(INFO) << " Create pipline parameters";
@@ -154,16 +151,7 @@ extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
   }
   bool hasBatch = false;
 
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  if (nullptr == iter) {
-    MS_LOG(ERROR) << "Iterator creation failed";
-    return nullptr;
-  }
-  assert(iter != nullptr);
   MDToDApi *pMDToDApi = new MDToDApi;
-  pMDToDApi->_ds = ds;
   pMDToDApi->_iter = iter;
   pMDToDApi->_augs = mapOperations;
   pMDToDApi->_storage_folder = std::string(MDConf.pStoragePath);
@@ -173,11 +161,11 @@ extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
 }
 
 template <typename T>
-void MDBuffToVector(MDToDBuff_t MDBuff, std::vector<T> *vec) {
-  vec.clear();
+void MDBuffToVector(const MDToDBuff_t MDBuff, std::vector<T> *vec) {
+  vec->clear();
   if (MDBuff.DataSize > 0) {
     int nofElements = MDBuff.DataSize / sizeof(T);
-    *vec.assign(reinterpret_cast<T *>(MDBuff.Buff), reinterpret_cast<T *>(MDBuff.Buff) + nofElements);
+    vec->assign(reinterpret_cast<T *>(MDBuff.Buff), reinterpret_cast<T *>(MDBuff.Buff) + nofElements);
   }
 }
 
@@ -217,7 +205,7 @@ void GetTensorToBuff(std::unordered_map<std::string, std::shared_ptr<Tensor>> ro
       resBuff->TensorSize[0] = 1;
     }
     if (column->shape()[firstDim] > 0) {
-      if (DataType::DE_STRING == column->type()) {
+      if (mindspore::dataset::DataType::DE_STRING == column->type()) {
         std::string str;
         for (int ix = 0; ix < column->shape()[firstDim]; ix++) {
           std::string_view strView;
@@ -238,14 +226,14 @@ void GetTensorToBuff(std::unordered_map<std::string, std::shared_ptr<Tensor>> ro
           MS_LOG(ERROR) << "memcpy_s return: " << ret;
         }
       } else {
-        DataHelper dh;
+        mindspore::dataset::DataHelper dh;
         resBuff->DataSize =
           dh.DumpData(column->GetBuffer(), column->SizeInBytes(), resBuff->Buff, resBuff->MaxBuffSize);
       }
       MS_LOG(INFO) << columnName << " " << resBuff->DataSize
                    << " bytesCopyed to buff (MaxBuffSize: " << resBuff->MaxBuffSize << ") ";
       if (0 == resBuff->DataSize) {
-        MS_LOG(ERROR) << "Copy Failed!!!! " << columnName << " Too large"
+        MS_LOG(ERROR) << "COPY FAIL!!!! " << columnName << " Too large"
                       << ".";  // memcpy failed
       }
     } else {
@@ -259,7 +247,7 @@ void GetTensorToBuff(std::unordered_map<std::string, std::shared_ptr<Tensor>> ro
 extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
   MS_LOG(INFO) << "Start GetNext";
   if (pMDToDApi == nullptr) {
-    MS_LOG(ERROR) << "GetNext called with nullptr. Abort";
+    MS_LOG(ERROR) << "GetNext called with null ptr. abort";
     assert(pMDToDApi != nullptr);
   }
 
@@ -271,12 +259,13 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
   // get next row for dataset
   std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
   if (pMDToDApi->_iter == nullptr) {
-    MS_LOG(ERROR) << "GetNext called with no iterator. abort";
+    MS_LOG(ERROR) << "GetNext called with no iteratoe. abort";
     return -1;
   }
   // create Execute functions, this replaces Map in Pipeline
-  pMDToDApi->_iter->GetNextRow(&row);
-  if (row.size() != 0) {
+
+  bool ret = pMDToDApi->_iter->GetNextRow(&row);
+  if (row.size() != 0 && ret) {
     if ((pMDToDApi->_augs).size() > 0) {
       // String and Tensors
       GetTensorToBuff(row, "image_filename", pMDToDApi->_hasBatch, &results->fileNameBuff);
@@ -285,7 +274,7 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
       for (int i = 0; i < (pMDToDApi->_augs).size(); i++) {
         // each Execute call will invoke a memcpy, this cannot really be optimized further
         // for this use case, std move is added for fail save.
-        row["image"] = Execute((pMDToDApi->_augs)[i])(std::move(row["image"]));
+        row["image"] = mindspore::dataset::Execute((pMDToDApi->_augs)[i])(std::move(row["image"]));
         if (row["image"] == nullptr) {
           // nullptr means that the eager mode image processing failed, we fail in this case
           return -1;
@@ -316,20 +305,18 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
 
 extern "C" int MDToDApi_Stop(MDToDApi *pMDToDApi) {
   // Manually terminate the pipeline
-  pMDToDApi->_iter->Stop();
   MS_LOG(WARNING) << "pipline stoped";
   return 0;
 }
 
 extern "C" int MDToDApi_Destroy(MDToDApi *pMDToDApi) {
-  MS_LOG(WARNING) << "pipeline deleted start";
-  pMDToDApi->_iter->Stop();
+  MS_LOG(WARNING) << "pipline deleted start";
   delete pMDToDApi;
-  MS_LOG(WARNING) << "pipeline deleted end";
+  MS_LOG(WARNING) << "pipline deleted end";
   return 0;
 }
 
-int GetJsonFullFileName(MDToDApi *pMDToDApi, std::string *filePath) {
+int GetJsonFullFileName(const MDToDApi *pMDToDApi, std::string *filePath) {
   int64_t file_id = pMDToDApi->_file_id;
   if (file_id < 0) {
     MS_LOG(ERROR) << "Illigal file ID to update: " << file_id << ".";
@@ -343,12 +330,12 @@ int GetJsonFullFileName(MDToDApi *pMDToDApi, std::string *filePath) {
 extern "C" int MDToDApi_UpdateEmbeding(MDToDApi *pMDToDApi, const char *column, float *emmbeddings,
                                        size_t emmbeddingsSize) {
   auto columnName = std::string(column);
-  MS_LOG(INFO) << "Start update " << columnName;
+  MS_LOG(INFO) << "Start Update " << columnName;
 
   std::string converted = std::to_string(pMDToDApi->_file_id);
   std::string embedding_file_path = pMDToDApi->_storage_folder + "/" + converted + columnName + ".bin";
-  DataHelper dh;
-  MS_LOG(INFO) << "Try to save file " << embedding_file_path;
+  mindspore::dataset::DataHelper dh;
+  MS_LOG(INFO) << "Try to Save file " << embedding_file_path;
   std::vector<float> bin_content(emmbeddings, emmbeddings + emmbeddingsSize);
   Status rc = dh.template WriteBinFile<float>(embedding_file_path, bin_content);
   if (rc.IsError()) {
@@ -379,8 +366,8 @@ extern "C" int MDToDApi_UpdateStringArray(MDToDApi *pMDToDApi, const char *colum
     MS_LOG(ERROR) << "Failed to update " << columnName;
     return -1;
   }
-  MS_LOG(INFO) << "Start Update string array column: " << columnName << " in file " << file_path;
-  DataHelper dh;
+  MS_LOG(INFO) << "Start Update string Array column: " << columnName << " in file " << file_path;
+  mindspore::dataset::DataHelper dh;
   std::vector<std::string> strVec;
   if (MDbuff.DataSize > 0) {
     const char *p = reinterpret_cast<char *>(MDbuff.Buff);
@@ -405,7 +392,7 @@ extern "C" int MDToDApi_UpdateFloatArray(MDToDApi *pMDToDApi, const char *column
     return -1;
   }
   MS_LOG(INFO) << "Start Update float Array column: " << columnName << " in file " << file_path;
-  DataHelper dh;
+  mindspore::dataset::DataHelper dh;
   std::vector<float> vec;
   MDBuffToVector<float>(MDBuff, &vec);
   Status rc = dh.UpdateArray<float>(file_path, columnName, vec);
@@ -423,7 +410,7 @@ extern "C" int MDToDApi_UpdateIsForTrain(MDToDApi *pMDToDApi, int32_t isForTrain
   if (file_id < 0) return -1;
   std::string converted = std::to_string(pMDToDApi->_file_id);
   std::string file_path = pMDToDApi->_folder_path + "/" + converted + ".json";
-  DataHelper dh;
+  mindspore::dataset::DataHelper dh;
   MS_LOG(INFO) << "Updating file: " << file_path;
   Status rc = dh.UpdateValue<int32_t>(file_path, "_isForTrain", isForTrain, "");
   if (rc.IsError()) {
@@ -440,7 +427,7 @@ extern "C" int MDToDApi_UpdateNoOfFaces(MDToDApi *pMDToDApi, int32_t noOfFaces) 
   if (file_id < 0) return -1;
   std::string converted = std::to_string(pMDToDApi->_file_id);
   std::string file_path = pMDToDApi->_folder_path + "/" + converted + ".json";
-  DataHelper dh;
+  mindspore::dataset::DataHelper dh;
   MS_LOG(INFO) << "Updating file: " << file_path;
   Status rc = dh.UpdateValue<int32_t>(file_path, "_noOfFaces", noOfFaces, "");
   if (rc.IsError()) {

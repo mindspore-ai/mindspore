@@ -49,7 +49,7 @@ usage()
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
-  echo "    -n Compile minddata with mindspore lite, available: off, lite, full, lite_cv, full mode in lite train and lite_cv mode in lite predict"
+  echo "    -n Compile minddata with mindspore lite, available: off, lite, full, lite_cv, full mode in lite train and lite_cv, wrapper mode in lite predict"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
   echo "    -I Enable compiling mindspore lite for arm64, arm32 or x86_64, default disable mindspore lite compilation"
@@ -129,7 +129,7 @@ checkopts()
         DEBUG_MODE="on"
         ;;
       n)
-        if [[ "X$OPTARG" == "Xoff" || "X$OPTARG" == "Xlite" || "X$OPTARG" == "Xfull" || "X$OPTARG" == "Xlite_cv" ]]; then
+        if [[ "X$OPTARG" == "Xoff" || "X$OPTARG" == "Xlite" || "X$OPTARG" == "Xfull" || "X$OPTARG" == "Xlite_cv"  || "X$OPTARG" == "Xwrapper" ]]; then
           COMPILE_MINDDATA_LITE="$OPTARG"
         else
           echo "Invalid value ${OPTARG} for option -n"
@@ -678,7 +678,7 @@ build_lite()
         build_gtest
     fi
 
-    if [ "${COMPILE_MINDDATA_LITE}" == "lite" ] || [ "${COMPILE_MINDDATA_LITE}" == "full" ]; then
+    if [[ "${COMPILE_MINDDATA_LITE}" == "lite" || "${COMPILE_MINDDATA_LITE}" == "full" ||  "${COMPILE_MINDDATA_LITE}" == "wrapper" ]]; then
         build_minddata_lite_deps
     fi
 
