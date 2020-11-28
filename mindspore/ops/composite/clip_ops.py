@@ -110,7 +110,7 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
     Clips tensor values by the ratio of the sum of their norms.
 
     Note:
-        input 'x' should be a tuple or list of tensors. Otherwise, it will raise an error.
+        Input 'x' should be a tuple or list of tensors. Otherwise, it will raise an error.
 
     Args:
           x (Union(tuple[Tensor], list[Tensor])): Input data to clip.

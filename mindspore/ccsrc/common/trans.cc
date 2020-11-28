@@ -291,10 +291,7 @@ std::vector<size_t> Fracz3DDeviceShape(const std::vector<size_t> &shape) {
   std::vector<size_t> device_shape;
   const size_t C1 = (shape[1] + kCubeSize - 1) / kCubeSize;
   const size_t N1 = (shape[0] + kCubeSize - 1) / kCubeSize;
-  device_shape.push_back(shape[2]);
-  device_shape.push_back(C1);
-  device_shape.push_back(shape[3]);
-  device_shape.push_back(shape[4]);
+  device_shape.push_back(shape[2] * C1 * shape[3] * shape[4]);
   device_shape.push_back(N1);
   device_shape.push_back(kCubeSize);
   device_shape.push_back(kCubeSize);

@@ -14,8 +14,9 @@
 # ============================================================================
 
 """Operators for gradients."""
+import math
 from functools import partial
-
+from mindspore._checkparam import _check_3d_int_or_tuple
 from .. import signature as sig
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import Validator as validator, Rel
@@ -285,6 +286,140 @@ class ConcatOffset(PrimitiveWithInfer):
         out = {'shape': None,
                'dtype': None,
                'value': tuple(offset_values)}
+        return out
+
+
+class Conv3DBackpropFilter(PrimitiveWithInfer):
+    """
+    Computes the gradients of convolution 3D with respect to the filter.
+
+    Args:
+        out_channel (int): The dimension of the output.
+        kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
+        mode (int): Modes for different convolutions. Not currently used.
+        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four
+                    integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
+                    pad[3], pad[4] and pad[5] correspondingly.
+        stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
+        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
+        group (int): Splits input into groups. Default: 1.
+        data_format (str): The optional value for data format. Currently only support 'NCDHW'.
+
+    Inputs:
+        - **x** (Tensor) - The input of the convolution, then the shape is :math:`(C_{out}, C_{in}, D_{in}, K_1, K_2)`.
+        - **dout** (Tensor) - The gradients w.r.t the output of the convolution. The shape conforms to the default
+          data_format :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
+        - **w_size** (Tensor) - A tuple describes the shape of the weight which conforms to the format
+          :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor, the gradients w.r.t the weight of convolution 3D. It has the same shape as the weight.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x = Tensor(np.ones([16, 32, 13, 37, 33]), mindspore.float16)
+        >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mindspore.float16)
+        >>> w = Tensor(np.ones([32, 32, 4, 6, 2]), mindspore.float16)
+        >>> conv3d_backprop_input = P.Conv3DBackpropInput(out_channel=4, kernel_size=(4, 6, 2))
+        >>> output = conv3d_backprop_input(x, dout, F.shape(w))
+        >>> print(output.shape)
+        (32, 32, 4, 6, 2)
+    """
+
+
+    @prim_attr_register
+    def __init__(self,
+                 out_channel,
+                 kernel_size,
+                 pad_mode="valid",
+                 pad=0,
+                 mode=1,
+                 stride=(1, 1, 1, 1, 1),
+                 dilation=(1, 1, 1, 1, 1),
+                 group=1,
+                 data_format="NCDHW"):
+        """Initialize Convolution"""
+        self.init_prim_io_names(inputs=['x', 'out_backprop', 'filter_size'], outputs=['y'])
+        self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
+        self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=True, ret_five=True)
+        self.add_prim_attr('strides', self.stride)
+        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=True, ret_five=True)
+        self.add_prim_attr('dilations', self.dilation)
+        validator.check_value_type('pad', pad, (int, tuple), self.name)
+        if isinstance(pad, int):
+            pad = (pad,) * 6
+        validator.check_equal_int(len(pad), 6, 'pad size', self.name)
+        self.pad_list = pad
+        self.add_prim_attr('pads', self.pad_list)
+
+        self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
+        if self.pad_mode != 'pad' and self.pad_list != (0, 0, 0, 0, 0, 0):
+            raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
+        if self.pad_mode == 'pad':
+            for item in pad:
+                validator.check_non_negative_int(item, 'pad item', self.name)
+        self.add_prim_attr('pad_mode', self.pad_mode)
+
+        self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
+        self.group = validator.check_positive_int(group, 'group', self.name)
+        self.add_prim_attr('groups', self.group)
+        self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
+        self.add_prim_attr('data_format', self.format)
+        self.add_prim_attr('io_format', "NCDHW")
+
+    def __infer__(self, x, doutput, w_size):
+        w_size_v = w_size['value']
+        validator.check_value_type('w_size', w_size_v, [tuple], self.name)
+        for i, dim_len in enumerate(w_size_v):
+            validator.check_value_type("w_size[%d]" % i, dim_len, [int], self.name)
+        args = {"x": x['dtype'], "doutput": doutput['dtype']}
+        valid_dtypes = [mstype.float16, mstype.float32]
+        validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
+
+        validator.check("filter's batch", w_size_v[0], "dout's channel", doutput['shape'][1], Rel.EQ, self.name)
+        validator.check("filter's channel", w_size_v[1], "input_size's channel", x['shape'][1], Rel.EQ, self.name)
+        validator.check("input_size's batch", x['shape'][0], "dout's batch", doutput['shape'][0], Rel.EQ, self.name)
+
+        # infer shape
+        x_shape = x['shape']
+        dout_shape = doutput['shape']
+        kernel_d = self.kernel_size[0]
+        kernel_h = self.kernel_size[1]
+        kernel_w = self.kernel_size[2]
+        stride_d = self.stride[2]
+        stride_h = self.stride[3]
+        stride_w = self.stride[4]
+        dilation_d = self.dilation[2]
+        dilation_h = self.dilation[3]
+        dilation_w = self.dilation[4]
+        # The pad_mode is valid by default. If pad_mode is not valid or same, then pad.
+        if self.pad_mode == "valid":
+            self.pad_list = (0, 0, 0, 0, 0, 0)
+        if self.pad_mode == "same":
+            pad_needed_d = max(0, (dout_shape[2] - 1) * stride_d + dilation_d * (kernel_d - 1) + 1 - x_shape[2])
+            pad_head = math.floor(pad_needed_d / 2)
+            pad_tail = pad_needed_d - pad_head
+
+            pad_needed_h = max(0, (dout_shape[3] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_shape[3])
+            pad_top = math.floor(pad_needed_h / 2)
+            pad_bottom = pad_needed_h - pad_top
+
+            pad_needed_w = max(0, (dout_shape[4] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_shape[4])
+            pad_left = math.floor(pad_needed_w / 2)
+            pad_right = pad_needed_w - pad_left
+            self.pad_list = (pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right)
+
+        self.add_prim_attr('pads', self.pad_list)
+        out = {
+            'value': None,
+            'shape': w_size_v,
+            'dtype': mstype.float32,
+        }
         return out
 
 

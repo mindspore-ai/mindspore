@@ -31,6 +31,7 @@ namespace session {
 namespace {
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
+constexpr size_t k5dDims = 5;
 const std::set<std::string> kOpAssignKernelNameList = {prim::kPrimAssign->name(), prim::kPrimAssignAdd->name(),
                                                        prim::kPrimAssignSub->name()};
 void PushNoVisitedNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
@@ -383,7 +384,8 @@ void KernelGraph::ResetInFormat(const AnfNodePtr &node, const std::string &forma
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(node); i++) {
     auto in_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), i);
     MS_EXCEPTION_IF_NULL(in_node);
-    if (in_node->isa<Parameter>() || in_node->isa<ValueNode>()) {
+    if ((in_node->isa<Parameter>() || in_node->isa<ValueNode>()) &&
+        AnfAlgo::GetOutputInferShape(in_node, 0).size() == k5dDims) {
       ReSetParameterValueNodeFormatAndType(in_node, format);
     }
   }

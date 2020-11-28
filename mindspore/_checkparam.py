@@ -37,9 +37,9 @@ class Rel(Enum):
     GE = 6  # >=
     # scalar range check
     INC_NEITHER = 7  # (), include neither
-    INC_LEFT = 8     # [), include left
-    INC_RIGHT = 9    # (], include right
-    INC_BOTH = 10    # [], include both
+    INC_LEFT = 8  # [), include left
+    INC_RIGHT = 9  # (], include right
+    INC_BOTH = 10  # [], include both
     # collection in, not in
     IN = 11
     NOT_IN = 12
@@ -90,6 +90,41 @@ rel_strs = {
     Rel.IN: "in {}",
     Rel.NOT_IN: "not in {}",
 }
+
+
+def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False,
+                           ret_five=False, greater_zero=True):
+    """
+    Checks whether an argument is a positive int or tuple with 3 or 5(when allow_five is True) positive int elements.
+    """
+
+    def _raise_message():
+        raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of three "
+                         f"{'or five ' if allow_five else ''}positive int numbers, but got {arg_value}")
+
+    def _get_return_value():
+        if isinstance(arg_value, int):
+            ret = (1, 1, arg_value, arg_value, arg_value) if ret_five else (arg_value, arg_value, arg_value)
+        elif len(arg_value) == 3:
+            ret = (1, 1, arg_value[0], arg_value[1], arg_value[2]) if ret_five else arg_value
+        elif len(arg_value) == 5:
+            if not allow_five:
+                _raise_message()
+            ret = arg_value if ret_five else (arg_value[1], arg_value[2], arg_value[3])
+        else:
+            _raise_message()
+        return ret
+
+    Validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
+    ret_value = _get_return_value()
+    for item in ret_value:
+        if isinstance(item, int) and not isinstance(item, bool):
+            if greater_zero and item > 0:
+                continue
+            if not greater_zero and item >= 0:
+                continue
+        _raise_message()
+    return tuple(ret_value)
 
 
 def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=None):
@@ -428,6 +463,7 @@ class Validator:
     @staticmethod
     def check_types_same_and_valid(args, valid_values, prim_name):
         """Checks whether the types of inputs are the same and valid."""
+
         def _check_type_valid(arg):
             arg_key, arg_val = arg
             elem_type = arg_val
@@ -494,6 +530,7 @@ class Validator:
                 raise TypeError(f'For \'{prim_name}\' type of `{arg2_name}` should be same as `{arg1_name}`,'
                                 f' but `{arg1_name}` is {arg1_type} and `{arg2_name}` is {arg2_type}.')
             return arg1
+
         reduce(_check_types_same, map(_check_argument_type, args.items()))
 
     @staticmethod
@@ -625,6 +662,7 @@ def args_type_check(*type_args, **type_kwargs):
                     if value is not None and not isinstance(value, bound_types[name]):
                         raise TypeError('Argument {} must be {}'.format(name, bound_types[name]))
             return func(*args, **kwargs)
+
         return wrapper
 
     return type_check
