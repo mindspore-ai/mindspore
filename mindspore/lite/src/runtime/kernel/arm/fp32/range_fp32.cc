@@ -27,29 +27,44 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Range;
 
 namespace mindspore::kernel {
-int RangeCPUKernel::Init() { return RET_OK; }
+int RangeCPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
 
-int RangeCPUKernel::ReSize() { return RET_OK; }
+int RangeCPUKernel::ReSize() {
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat16 ||
+      in_tensors_[0]->data_type() == kNumberTypeFloat) {
+    data_type_ = kDataTypeFloat;
+  } else {
+    data_type_ = kDataTypeInt;
+  }
+  return RET_OK;
+}
 
 int RangeCPUKernel::Run() {
-  size_t start = (reinterpret_cast<RangeParameter *>(op_parameter_))->start_;
-  size_t limit = (reinterpret_cast<RangeParameter *>(op_parameter_))->limit_;
-  size_t delta = (reinterpret_cast<RangeParameter *>(op_parameter_))->delta_;
   if (in_tensors_.size() == 3) {
-    if ((in_tensors_.at(0)->data_type() == mindspore::kNumberTypeInt32) &&
-        (in_tensors_.at(1)->data_type() == mindspore::kNumberTypeInt32) &&
-        (in_tensors_.at(2)->data_type() == mindspore::kNumberTypeInt32)) {
-      start = *reinterpret_cast<int *>(in_tensors_.at(0)->data_c());
-      limit = *reinterpret_cast<int *>(in_tensors_.at(1)->data_c());
-      delta = *reinterpret_cast<int *>(in_tensors_.at(2)->data_c());
+    if (data_type_ == kDataTypeInt) {
+      RangeInt(reinterpret_cast<int *>(out_tensors_.at(0)->data_c()),
+               *reinterpret_cast<int *>(in_tensors_.at(0)->data_c()),
+               *reinterpret_cast<int *>(in_tensors_.at(2)->data_c()), out_tensors_.at(0)->shape()[0]);
+    } else {
+      Range(reinterpret_cast<float *>(out_tensors_.at(0)->data_c()),
+            *reinterpret_cast<float *>(in_tensors_.at(0)->data_c()),
+            *reinterpret_cast<float *>(in_tensors_.at(2)->data_c()), out_tensors_.at(0)->shape()[0]);
+    }
+  } else {
+    if (data_type_ == kDataTypeInt) {
+      RangeInt(reinterpret_cast<int *>(out_tensors_.at(0)->data_c()),
+               (reinterpret_cast<RangeParameter *>(op_parameter_))->start_,
+               (reinterpret_cast<RangeParameter *>(op_parameter_))->delta_, out_tensors_.at(0)->shape()[0]);
     } else {
       MS_LOG(ERROR) << "Unsupported parameter type : " << in_tensors_.at(0)->data_type() << ".";
       return RET_ERROR;
     }
   }
-  auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  MS_ASSERT(output_ptr);
-  Range(output_ptr, start, limit, delta);
   return RET_OK;
 }
 
@@ -77,5 +92,7 @@ kernel::LiteKernel *CpuRangeFp32KernelCreator(const std::vector<lite::Tensor *> 
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Range, CpuRangeFp32KernelCreator)
-
+REG_KERNEL(kCPU, kNumberTypeFloat, PrimitiveType_Range, CpuRangeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Range, CpuRangeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt, PrimitiveType_Range, CpuRangeFp32KernelCreator)
 }  // namespace mindspore::kernel

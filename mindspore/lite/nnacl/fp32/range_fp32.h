@@ -30,7 +30,8 @@ typedef struct RangeParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Range(float *output_ptr, int start, int limit, int delta);
+void Range(float *output_ptr, float start, float delta, int nums);
+void RangeInt(int *output_ptr, int start, int delta, int nums);
 #ifdef __cplusplus
 }
 #endif
