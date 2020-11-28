@@ -203,8 +203,8 @@ class LabelSensitiveMetric(AttributionMetric):
         output = explainer.model(inputs)
         check_value_type("output of explainer model", output, Tensor)
         output_dim = explainer.model(inputs).shape[1]
-        if output_dim > self._num_labels:
-            raise ValueError("The output dimension of of black-box model in explainer should not exceed the dimension "
-                             "of num_labels set in the __init__, please set num_labels larger.")
+        if output_dim != self._num_labels:
+            raise ValueError("The output dimension of of black-box model in explainer does not match the dimension "
+                             "of num_labels set in the __init__, please check explainer and num_labels again.")
         verify_targets(targets, self._num_labels)
         check_value_type('saliency', saliency, (Tensor, type(None)))
