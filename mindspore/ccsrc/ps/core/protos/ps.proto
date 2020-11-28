@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 syntax = "proto3";
 package mindspore.ps.core;
 option optimize_for = LITE_RUNTIME;
 
-message KVMessage {
-  repeated int32 keys = 1;
-  repeated float values = 2;
+enum PSCommand {
+  PUSH = 0;
+  PULL = 1;
 }
 
-message HeartBeatMessage {
-  // *.*.*.*:port
-  repeated string host_and_port = 1;
+message KVMessage {
+  PSCommand command = 1;
+  repeated int32 keys = 2;
+  repeated float values = 3;
 }

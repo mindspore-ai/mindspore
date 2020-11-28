@@ -18,10 +18,10 @@
 
 #include <arpa/inet.h>
 #include <event2/buffer.h>
+#include <event2/buffer_compat.h>
 #include <event2/bufferevent.h>
 #include <event2/event.h>
 #include <event2/listener.h>
-#include <event2/buffer_compat.h>
 #include <event2/util.h>
 #include <sys/socket.h>
 #include <csignal>
@@ -73,7 +73,8 @@ TcpServer::TcpServer(const std::string &address, std::uint16_t port)
       signal_event_(nullptr),
       listener_(nullptr),
       server_address_(std::move(address)),
-      server_port_(port) {}
+      server_port_(port),
+      is_stop_(true) {}
 
 TcpServer::~TcpServer() { Stop(); }
 
@@ -84,7 +85,14 @@ void TcpServer::SetServerCallback(const OnConnected &client_conn, const OnDiscon
   this->client_accept_ = client_accept;
 }
 
+void TcpServer::set_timer_callback(const OnTimer &timer) { on_timer_callback_ = timer; }
+
 void TcpServer::Init() {
+  int result = evthread_use_pthreads();
+  if (result != 0) {
+    MS_LOG(EXCEPTION) << "Use event pthread failed!";
+  }
+
   base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(base_);
   if (!CommUtil::CheckIp(server_address_)) {
@@ -128,6 +136,7 @@ void TcpServer::Start() {
   std::unique_lock<std::recursive_mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Start tcp server!";
   MS_EXCEPTION_IF_NULL(base_);
+  is_stop_ = false;
   int ret = event_base_dispatch(base_);
   MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base dispatch success!";
   MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType)
@@ -147,21 +156,42 @@ void TcpServer::StartWithNoBlock() {
   MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpect error code!";
 }
 
+void TcpServer::StartTimerOnlyOnce(const uint32_t &time) {
+  MS_EXCEPTION_IF_NULL(base_);
+  if (time == 0) {
+    MS_LOG(EXCEPTION) << "The time should not be 0!";
+  }
+  struct event *ev = nullptr;
+  struct timeval timeout {};
+  timeout.tv_sec = time;
+  timeout.tv_usec = 0;
+  ev = evtimer_new(base_, TimerCallback, this);
+  MS_EXCEPTION_IF_NULL(ev);
+  evtimer_add(ev, &timeout);
+}
+
 void TcpServer::Stop() {
   MS_LOG(INFO) << "Stop tcp server!";
-  if (signal_event_ != nullptr) {
-    event_free(signal_event_);
-    signal_event_ = nullptr;
-  }
+  if (!is_stop_.load()) {
+    int ret = event_base_loopbreak(base_);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "event base loop break failed!";
+    }
+    if (signal_event_ != nullptr) {
+      event_free(signal_event_);
+      signal_event_ = nullptr;
+    }
 
-  if (listener_ != nullptr) {
-    evconnlistener_free(listener_);
-    listener_ = nullptr;
-  }
+    if (listener_ != nullptr) {
+      evconnlistener_free(listener_);
+      listener_ = nullptr;
+    }
 
-  if (base_ != nullptr) {
-    event_base_free(base_);
-    base_ = nullptr;
+    if (base_ != nullptr) {
+      event_base_free(base_);
+      base_ = nullptr;
+    }
+    is_stop_ = true;
   }
 }
 
@@ -287,6 +317,14 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
   }
 }
 
+void TcpServer::TimerCallback(evutil_socket_t, int16_t, void *arg) {
+  MS_EXCEPTION_IF_NULL(arg);
+  auto tcp_server = reinterpret_cast<TcpServer *>(arg);
+  if (tcp_server->on_timer_callback_) {
+    tcp_server->on_timer_callback_(*tcp_server);
+  }
+}
+
 void TcpServer::SendMessage(const TcpConnection &conn, const CommMessage &message) { conn.SendMessage(message); }
 
 void TcpServer::SendMessage(const CommMessage &message) {
@@ -298,6 +336,10 @@ void TcpServer::SendMessage(const CommMessage &message) {
 }
 
 uint16_t TcpServer::BoundPort() const { return server_port_; }
+
+int TcpServer::ConnectionNum() const { return connections_.size(); }
+
+const std::map<evutil_socket_t, const TcpConnection *> &TcpServer::Connections() const { return connections_; }
 
 void TcpServer::SetMessageCallback(const OnServerReceiveMessage &cb) { message_callback_ = cb; }
 }  // namespace core

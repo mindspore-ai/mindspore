@@ -37,7 +37,7 @@ class TestTcpServer : public UT::Common {
         KVMessage kv_message;
         kv_message.ParseFromString(message.data());
         EXPECT_EQ(2, kv_message.keys_size());
-        server.SendMessage(conn, message);
+        const_cast<TcpServer&>(server).SendMessage(conn, message);
       });
       server_->Init();
       server_->Start();

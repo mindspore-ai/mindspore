@@ -21,10 +21,15 @@
 
 #include <event2/event.h>
 #include <event2/bufferevent.h>
+#include <event2/thread.h>
+
 #include <functional>
 #include <string>
 #include <memory>
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <atomic>
 
 #include "proto/comm.pb.h"
 #include "ps/core/cluster_config.h"
@@ -40,6 +45,7 @@ class TcpClient {
   using OnRead = std::function<void(const TcpClient &, const void *, size_t)>;
   using OnTimeout = std::function<void(const TcpClient &)>;
   using OnMessage = std::function<void(const TcpClient &, const CommMessage &)>;
+  using OnTimer = std::function<void(const TcpClient &)>;
 
   explicit TcpClient(const std::string &address, std::uint16_t port);
   virtual ~TcpClient();
@@ -50,11 +56,14 @@ class TcpClient {
   void Init();
   void StartWithDelay(int seconds);
   void Stop();
+  static void StopEventBase();
   void Start();
   void StartWithNoBlock();
   void SetMessageCallback(const OnMessage &cb);
   void SendMessage(const CommMessage &message) const;
-  void SendMessageWithTimer();
+  void StartTimer(const uint32_t &time);
+  void set_timer_callback(const OnTimer &timer);
+  const event_base &eventbase();
 
  protected:
   static void SetTcpNoDelay(const evutil_socket_t &fd);
@@ -62,7 +71,7 @@ class TcpClient {
   static void ReadCallback(struct bufferevent *bev, void *ctx);
   static void EventCallback(struct bufferevent *bev, std::int16_t events, void *ptr);
   virtual void OnReadHandler(const void *buf, size_t num);
-  static void SendHeartBeatCallback(evutil_socket_t fd, int16_t event, void *arg);
+  static void TimerCallback(evutil_socket_t fd, int16_t event, void *arg);
 
  private:
   OnMessage message_callback_;
@@ -72,13 +81,16 @@ class TcpClient {
   OnDisconnected disconnected_callback_;
   OnRead read_callback_;
   OnTimeout timeout_callback_;
+  OnTimer on_timer_callback_;
 
-  event_base *event_base_;
+  static event_base *event_base_;
+  std::mutex connection_mutex_;
   event *event_timeout_;
   bufferevent *buffer_event_;
 
   std::string server_address_;
   std::uint16_t server_port_;
+  std::atomic<bool> is_stop_;
 };
 
 }  // namespace core
