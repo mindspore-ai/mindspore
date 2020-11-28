@@ -52,8 +52,8 @@ int Split::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    attr->splitDim = GetValue<int32_t>(prim.GetAttr("axis"));
-    attr->numberSplit = GetValue<int32_t>(prim.GetAttr("output_num"));
+    attr->splitDim = CastToInt(prim.GetAttr("axis")).front();
+    attr->numberSplit = CastToInt(prim.GetAttr("output_num")).front();
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {
       MS_LOG(ERROR) << "primitive value is nullptr";

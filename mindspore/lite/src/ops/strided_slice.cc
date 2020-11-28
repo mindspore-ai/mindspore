@@ -177,6 +177,15 @@ constexpr size_t kStridedSliceInputNum = 1;
 constexpr size_t kStridedSliceMultiInputNumMin = 3;
 constexpr size_t kStridedSliceMultiInputNumMax = 5;
 }  // namespace
+bool StridedSlice::CheckInputs(std::vector<lite::Tensor *> inputs_) {
+  for (size_t i = 1; i < inputs_.size(); ++i) {
+    if (inputs_[i]->data_c() == nullptr) {
+      MS_LOG(DEBUG) << "strided_slice has input from other node, which only can be obtained when running.";
+      return false;
+    }
+  }
+  return true;
+}
 
 void StridedSlice::ApplyNewAxisMask() {
   for (size_t i = 0; i < new_axis_mask_.size(); i++) {
@@ -364,6 +373,10 @@ int StridedSlice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
       ends_.emplace_back((GetEnd())[i]);
       strides_.emplace_back((GetStride())[i]);
     }
+  }
+  if (!CheckInputs(inputs)) {
+    MS_LOG(DEBUG) << "Do infer shape in runtime.";
+    return RET_INFER_INVALID;
   }
   if (inputs.size() == 4) {
     // input order: input, begins, ends, strides.
