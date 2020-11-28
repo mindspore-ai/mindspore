@@ -33,12 +33,7 @@ class DeConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
   DeConvolutionWinogradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                  const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    deconv_param_ = new DeConvParam();
-    for (auto &wg : deconv_param_->a_buffer_) {
-      wg.buf_init_ = false;
-    }
-  }
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DeConvolutionWinogradCPUKernel() override;
   int Init() override;
   int Run() override;

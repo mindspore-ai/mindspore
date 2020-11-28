@@ -115,6 +115,9 @@ int GetStringCount(const void *data) { return *(static_cast<const int32_t *>(dat
 int GetStringCount(Tensor *tensor) { return GetStringCount(tensor->MutableData()); }
 
 int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *tensor) {
+  if (tensor == nullptr) {
+    return RET_PARAM_INVALID;
+  }
   std::vector<StringPack> all_pack;
   for (auto &input : inputs) {
     StringPack pack = {static_cast<int>(input.length()), input.data()};
@@ -124,6 +127,9 @@ int StringsToMSTensor(const std::vector<std::string> &inputs, tensor::MSTensor *
 }
 
 std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
+  if (tensor == nullptr) {
+    return {""};
+  }
   const void *ptr = static_cast<const Tensor *>(tensor)->data_c();
   std::vector<StringPack> all_pack = ParseStringBuffer(ptr);
   std::vector<std::string> result(all_pack.size());

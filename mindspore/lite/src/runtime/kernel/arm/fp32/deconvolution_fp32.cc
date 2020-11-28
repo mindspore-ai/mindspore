@@ -134,6 +134,11 @@ int DeConvolutionCPUKernel::DoDeconv(int task_id) {
 }
 
 int DeConvolutionCPUKernel::Init() {
+  matmul_param_ = new (std::nothrow) MatMulParameter();
+  if (matmul_param_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    return RET_ERROR;
+  }
   int error_code = InitWeightBias();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv InitWeightBias error!ret: " << error_code;
@@ -270,7 +275,6 @@ kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *>
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     if (dequant_flag) {
@@ -278,6 +282,7 @@ kernel::LiteKernel *CpuDeConvFp32KernelCreator(const std::vector<lite::Tensor *>
       weight_tensor->set_data(restore_data);
       weight_tensor->set_data_type(restore_type);
     }
+    delete kernel;
     return nullptr;
   }
 

@@ -47,8 +47,8 @@ int PoolingBaseCPUKernel::SetQuantParam() {
   if (pooling_quant_arg_[1] == nullptr) {
     MS_LOG(ERROR) << "malloc pooling_quant_arg[1] failed.";
     free(pooling_quant_arg_[0]);
-    free(pooling_quant_arg_);
     pooling_quant_arg_[0] = nullptr;
+    free(pooling_quant_arg_);
     pooling_quant_arg_ = nullptr;
     return RET_MEMORY_FAILED;
   }
@@ -127,9 +127,9 @@ kernel::LiteKernel *CpuPoolingFp32KernelCreator(const std::vector<lite::Tensor *
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    delete kernel;
     return nullptr;
   }
   return kernel;

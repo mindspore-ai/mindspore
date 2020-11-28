@@ -126,6 +126,11 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
 }
 
 int Convolution1x1CPUKernel::Init() {
+  matmul_param_ = new (std::nothrow) MatMulParameter;
+  if (matmul_param_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    return RET_ERROR;
+  }
   int error_code = InitConv1x1BiasWeight();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution base init failed.";

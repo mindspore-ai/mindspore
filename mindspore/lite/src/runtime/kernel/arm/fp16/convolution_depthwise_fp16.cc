@@ -174,7 +174,6 @@ kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *>
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     if (dequant_flag) {
@@ -182,6 +181,7 @@ kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *>
       weight_tensor->set_data(restore_data);
       weight_tensor->set_data_type(restore_type);
     }
+    delete kernel;
     return nullptr;
   }
   if (dequant_flag) {

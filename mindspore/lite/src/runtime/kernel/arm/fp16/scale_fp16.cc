@@ -119,6 +119,7 @@ int ScaleFp16CPUKernel::Run() {
   ret = ParallelLaunch(this->context_->thread_pool_, ScaleFp16Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
+    FreeTmpBuffer();
     return RET_ERROR;
   }
 

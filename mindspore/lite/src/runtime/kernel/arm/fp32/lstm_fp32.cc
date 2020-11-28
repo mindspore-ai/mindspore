@@ -195,9 +195,9 @@ kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::Tensor *> &inpu
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
                   << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
+    delete kernel;
     return nullptr;
   }
   return kernel;

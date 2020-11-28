@@ -73,9 +73,12 @@ int ResizeInt8CPUKernel::Init() {
     return ret;
   }
   quant_in_ = new (std::nothrow) QuantArg;
-  MS_ASSERT(quant_in_);
   quant_out_ = new (std::nothrow) QuantArg;
-  MS_ASSERT(quant_out_);
+  multiplier_ = new (std::nothrow) QuantMulArg;
+  if (quant_in_ == nullptr || quant_out_ == nullptr || multiplier_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    return RET_ERROR;
+  }
   auto input = in_tensors_.at(0);
   quant_in_->zp_ = input->quant_params().front().zeroPoint;
   quant_in_->scale_ = input->quant_params().front().scale;
@@ -83,8 +86,6 @@ int ResizeInt8CPUKernel::Init() {
   quant_out_->zp_ = output->quant_params().front().zeroPoint;
   quant_out_->scale_ = output->quant_params().front().scale;
 
-  multiplier_ = new (std::nothrow) QuantMulArg;
-  MS_ASSERT(multiplier_);
   QuantizeRoundParameter(quant_in_->scale_ / quant_out_->scale_, &multiplier_->multiplier_, &multiplier_->left_shift_,
                          &multiplier_->right_shift_);
   if (!InferShapeDone()) {
@@ -379,9 +380,9 @@ kernel::LiteKernel *CpuResizeInt8KernelCreator(const std::vector<lite::Tensor *>
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    delete kernel;
     return nullptr;
   }
 

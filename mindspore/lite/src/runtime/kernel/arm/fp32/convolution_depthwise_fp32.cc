@@ -169,7 +169,6 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
   }
   auto ret = kernel->Init();
   if (ret != RET_OK && ret != RET_INFER_INVALID) {
-    delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     if (weight_tensor->data_type() == kNumberTypeInt8 || weight_tensor->data_type() == kNumberTypeInt16) {
@@ -177,6 +176,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
       weight_tensor->set_data(restore_data);
       weight_tensor->set_data_type(restore_type);
     }
+    delete kernel;
     return nullptr;
   }
 
