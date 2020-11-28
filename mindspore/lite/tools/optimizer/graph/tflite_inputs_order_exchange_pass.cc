@@ -38,11 +38,24 @@ bool TfliteInputsOrderExchangePass::Run(const FuncGraphPtr &graph) {
       auto inputs = cnode->inputs();
       inputs.pop_back();
       cnode->set_inputs(inputs);
+
+      auto input_quant_params = primitive_c->input_quant_params();
+      input_quant_params[0] = input_quant_params.at(2);
+      input_quant_params.pop_back();
+      primitive_c->set_input_quant_params(input_quant_params);
       continue;
     }
 
     if (opt::GetCNodeType(node) == schema::PrimitiveType_Split && cnode->inputs().size() == split_inputs_size) {
       cnode->set_input(1, cnode->input(2));
+      auto inputs = cnode->inputs();
+      inputs.pop_back();
+      cnode->set_inputs(inputs);
+
+      auto input_quant_params = primitive_c->input_quant_params();
+      input_quant_params[0] = input_quant_params.at(1);
+      input_quant_params.pop_back();
+      primitive_c->set_input_quant_params(input_quant_params);
       continue;
     }
 
