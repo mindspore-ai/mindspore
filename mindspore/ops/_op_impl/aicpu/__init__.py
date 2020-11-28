@@ -18,6 +18,8 @@ from .init_data_set_queue import _init_data_set_queue_aicpu
 from .embedding_lookup import _embedding_lookup_aicpu
 from .padding import _padding_aicpu
 from .gather import _gather_aicpu
+from .gather_grad import _gather_grad_aicpu
+from .scatter import _scatter_aicpu
 from .identity import _identity_aicpu
 from .edit_distance import _edit_distance_aicpu
 from .unique_with_pad import _unique_with_pad_aicpu
@@ -30,6 +32,7 @@ from .reshape import _reshape_aicpu
 from .flatten import _flatten_aicpu
 from .squeeze import _squeeze_aicpu
 from .expand_dims import _expand_dims_aicpu
+from .randperm import _randperm_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu
 from .pack import _pack_aicpu
 from .ctcloss import _ctcloss_aicpu

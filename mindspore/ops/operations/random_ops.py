@@ -345,6 +345,46 @@ class UniformReal(PrimitiveWithInfer):
         return out
 
 
+class Randperm(PrimitiveWithInfer):
+    """
+    Generates random samples from 0 to n-1.
+
+    Args:
+        n (int): Number of items expected to get and the number must be greater than 0. Default: 1.
+        dtype (mindspore.dtype): The type of output. Default: mindspore.int32.
+
+    Outputs:
+        - **output** (Tensor) - The output Tensor with shape :math:`(n,)` and type: dtype.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> randperm = ops.Randperm(20)
+        >>> output = randperm()
+        >>> print(output)
+        [15 6 11 19 14 16 9 5 13 18 4 10 8 0 17 2 14 1 12 3 7]
+    """
+
+    @prim_attr_register
+    def __init__(self, n=1, dtype=mstype.int32):
+        """Initialize Randperm"""
+        Validator.check_value_type("n", n, [int], self.name)
+        self.dtype = dtype
+        self.n = n
+        self.init_prim_io_names(inputs=[], outputs=['output'])
+
+    def infer_shape(self):
+        Validator.check_int(self.n, 1, Rel.GE, "1", self.name)
+        return [self.n]
+
+    def infer_dtype(self):
+        valid_values = (mstype.int8, mstype.int16, mstype.int32, mstype.int64,
+                        mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64)
+        Validator.check_type_name("dtype", self.dtype, valid_values, self.name)
+        return self.dtype
+
+
 class RandomChoiceWithMask(PrimitiveWithInfer):
     """
     Generates a random sample as index tensor with a mask tensor from a given tensor.
