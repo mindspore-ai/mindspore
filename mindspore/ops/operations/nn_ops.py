@@ -2971,6 +2971,9 @@ class FastGelu(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as input.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> tensor = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> fast_gelu = P.FastGelu()

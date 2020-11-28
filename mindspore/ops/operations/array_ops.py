@@ -554,6 +554,8 @@ class DynamicShape(Primitive):
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
         >>> shape = ops.DynamicShape()
         >>> output = shape(input_tensor)
+        >>> print(output)
+        [3 2 1]
     """
 
     @prim_attr_register
@@ -709,7 +711,7 @@ class Unique(Primitive):
         containing indices of elements in the input coressponding to the output tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
@@ -779,7 +781,7 @@ class SparseGatherV2(GatherV2):
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
@@ -2240,7 +2242,7 @@ class Pack(PrimitiveWithInfer):
                     or if the shapes of elements in input_x are not the same.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
@@ -2295,7 +2297,7 @@ class Unpack(PrimitiveWithInfer):
         ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> unpack = ops.Unpack()

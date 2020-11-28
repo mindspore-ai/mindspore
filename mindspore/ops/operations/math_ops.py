@@ -1996,7 +1996,7 @@ class DivNoNan(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)

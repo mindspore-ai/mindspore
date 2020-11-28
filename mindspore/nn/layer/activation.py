@@ -374,6 +374,9 @@ class FastGelu(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> fast_gelu = nn.FastGelu()

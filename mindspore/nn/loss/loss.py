@@ -309,6 +309,9 @@ class SampledSoftmaxLoss(_Loss):
     Outputs:
         Tensor, a tensor of shape (N) with the per-example sampled softmax losses.
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> loss = nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, num_true=1)
         >>> weights = Tensor(np.random.randint(0, 9, [7, 10]), mindspore.float32)

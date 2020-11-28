@@ -560,6 +560,9 @@ class UniformCandidateSampler(PrimitiveWithInfer):
         - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
             each of sampled_candidates. Shape: (num_sampled, ).
 
+    Supported Platforms:
+        ``GPU``
+
     Examples:
         >>> sampler = ops.UniformCandidateSampler(1, 3, False, 4)
         >>> output1, output2, output3 = sampler(Tensor(np.array([[1],[3],[4],[6],[3]], dtype=np.int32)))
