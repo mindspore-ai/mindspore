@@ -149,7 +149,7 @@ Status DatasetOp::Remove() {
   // If we remove B, then first take our child A and update it's parent to be C
   // It's possible the parent is null if we are the root node being removed.
   if (!child_.empty()) {
-    // If we have a parent, then assign chlid's parent to point to our parent.
+    // If we have a parent, then assign child's parent to point to our parent.
     if (!parent_.empty()) {
       child_[0]->parent_[0] = parent_[0];
     } else {

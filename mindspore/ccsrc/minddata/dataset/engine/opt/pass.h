@@ -142,7 +142,7 @@ class TreePass : public Pass {
   /// \brief Derived classes may implement the runOnTree function to implement tree transformation.
   ///     "modified" flag needs to be set to true if tree is modified during the pass execution.
   /// \param[inout] tree The tree to operate on.
-  /// \param[inout] Indicate of the tree was modified.
+  /// \param[inout] Indicate if the tree was modified.
   /// \return Status The error code return
   virtual Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *modified) { return Status::OK(); }
 
