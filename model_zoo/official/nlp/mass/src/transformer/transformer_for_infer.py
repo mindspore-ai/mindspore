@@ -212,7 +212,6 @@ class TransformerInferModel(nn.Cell):
         config.hidden_dropout_prob = 0.0
         config.attention_dropout_prob = 0.0
 
-        self.input_mask_from_dataset = config.input_mask_from_dataset
         self.batch_size = config.batch_size
         self.seq_length = config.seq_length
         self.hidden_size = config.hidden_size

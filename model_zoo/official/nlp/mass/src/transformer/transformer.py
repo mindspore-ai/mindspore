@@ -59,7 +59,6 @@ class Transformer(nn.Cell):
             config.hidden_dropout_prob = 0.0
             config.attention_dropout_prob = 0.0
 
-        self.input_mask_from_dataset = config.input_mask_from_dataset
         self.batch_size = config.batch_size
         self.max_positions = config.seq_length
         self.attn_embed_dim = config.hidden_size

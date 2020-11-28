@@ -100,8 +100,6 @@ class TransformerConfig:
         beam_width (int): Beam width for beam search in inferring. Default: 4.
         length_penalty_weight (float): Penalty for sentence length. Default: 1.0.
         label_smoothing (float): Label smoothing setting. Default: 0.1.
-        input_mask_from_dataset (bool): Specifies whether to use the input mask that loaded from
-            dataset. Default: True.
         save_graphs (bool): Whether to save graphs, please set to True if mindinsight
             is wanted.
         dtype (mstype): Data type of the input. Default: mstype.float32.
@@ -148,7 +146,6 @@ class TransformerConfig:
                  beam_width=5,
                  length_penalty_weight=1.0,
                  label_smoothing=0.1,
-                 input_mask_from_dataset=True,
                  save_graphs=False,
                  dtype=mstype.float32,
                  max_decode_length=64):
@@ -190,7 +187,6 @@ class TransformerConfig:
         self.beam_width = beam_width
         self.length_penalty_weight = length_penalty_weight
         self.max_decode_length = max_decode_length
-        self.input_mask_from_dataset = input_mask_from_dataset
         self.compute_type = mstype.float16
         self.dtype = dtype
 

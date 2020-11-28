@@ -33,10 +33,7 @@ class CreateAttentionMaskFromInputMask(nn.Cell):
 
     def __init__(self, config):
         super(CreateAttentionMaskFromInputMask, self).__init__()
-        self.input_mask_from_dataset = config.input_mask_from_dataset
         self.input_mask = None
-
-        assert self.input_mask_from_dataset
 
         self.cast = P.Cast()
         self.shape = P.Shape()

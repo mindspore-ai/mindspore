@@ -111,7 +111,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         # Assign and sampler stage two
         self.bbox_assigner_sampler_for_rcnn = BboxAssignSampleForRcnn(config, self.train_batch_size,
                                                                       config.num_bboxes_stage2, True)
-        self.decode = P.BoundingBoxDecode(max_shape=(768, 1280), means=self.target_means, \
+        self.decode = P.BoundingBoxDecode(max_shape=(config.img_height, config.img_width), means=self.target_means, \
                                           stds=self.target_stds)
 
         # Roi
