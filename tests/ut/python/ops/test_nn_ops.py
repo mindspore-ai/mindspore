@@ -602,6 +602,11 @@ test_cases = [
         'block': nn.DiGamma(),
         'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
         'skip': ['backward']}),
+    ('LBeta', {
+        'block': nn.LBeta(),
+        'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32)),
+                        Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
+        'skip': ['backward']}),
     ('FlattenNet', {
         'block': FlattenNet(),
         'desc_inputs': [Tensor(np.ones([1, 2, 3, 4], np.float32))],
