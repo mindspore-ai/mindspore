@@ -547,7 +547,7 @@ class Model:
         Examples:
             >>> dataset = create_custom_dataset()
             >>> net = Net()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> loss_scale_manager = FixedLossScaleManager()
             >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
@@ -668,7 +668,7 @@ class Model:
         Examples:
             >>> dataset = create_custom_dataset()
             >>> net = Net()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
             >>> model.eval(dataset)
         """
