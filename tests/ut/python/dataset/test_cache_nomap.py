@@ -590,7 +590,7 @@ def test_cache_nomap_disallowed_share1():
 
     with pytest.raises(RuntimeError) as e:
         sum([1 for _ in ds2])
-    assert "Attempt to re-use a cache for a different tree!" in str(e.value)
+    assert "Cannot re-use a cache for a different tree!" in str(e.value)
 
     logger.info("test_cache_nomap_disallowed_share1 Ended.\n")
 
@@ -1182,7 +1182,8 @@ def test_cache_nomap_server_stop():
         num_iter = 0
         for _ in ds1.create_dict_iterator():
             num_iter += 1
-    assert "Network error. Cache server is unreachable. Make sure the server is running." in str(e.value)
+    assert "Network error. Cache server with port 50052 is unreachable. Make sure the server is running." in \
+           str(e.value)
 
     logger.info("test_cache_nomap_server_stop Ended.\n")
 
