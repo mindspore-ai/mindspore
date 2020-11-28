@@ -22,15 +22,14 @@ from ..._utils import calc_correlation
 
 
 class ClassSensitivity(LabelAgnosticMetric):
-    r"""
+    """
     Class sensitivity metric used to evaluate attribution-based explanations.
 
     Reasonable atrribution-based explainers are expected to generate distinct saliency maps for different labels,
-    especially for labels of highest confidence and low confidence. Class sensitivity evaluates the explainer through
+    especially for labels of highest confidence and low confidence. ClassSensitivity evaluates the explainer through
     computing the correlation between saliency maps of highest-confidence and lowest-confidence labels. Explainer with
     better class sensitivity will receive lower correlation score. To make the evaluation results intuitive, the
     returned score will take negative on correlation and normalize.
-
     """
 
     def evaluate(self, explainer, inputs):
@@ -46,12 +45,18 @@ class ClassSensitivity(LabelAgnosticMetric):
 
         Examples:
             >>> import mindspore as ms
+            >>> from mindspore.explainer.benchmark import ClassSensitivity
             >>> from mindspore.explainer.explanation import Gradient
-            >>> model = resnet(10)
-            >>> gradient = Gradient(model)
-            >>> x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
+            >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
+            >>> # prepare your network and load the trained checkpoint file, e.g., resnet50.
+            >>> network = resnet50(10)
+            >>> param_dict = load_checkpoint("resnet50.ckpt")
+            >>> load_param_into_net(network, param_dict)
+            >>> # prepare your explainer to be evaluated, e.g., Gradient.
+            >>> gradient = Gradient(network)
+            >>> input_x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
             >>> class_sensitivity = ClassSensitivity()
-            >>> res = class_sensitivity.evaluate(gradient, x)
+            >>> res = class_sensitivity.evaluate(gradient, input_x)
         """
         self._check_evaluate_param(explainer, inputs)
 
