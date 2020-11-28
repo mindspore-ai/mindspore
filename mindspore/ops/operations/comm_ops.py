@@ -689,13 +689,9 @@ class _VirtualDataset(PrimitiveWithInfer):
         """init"""
 
     def infer_shape(self, *args):
-        if len(args) == 1:
-            return args[0]
         return args
 
     def infer_dtype(self, *args):
-        if len(args) == 1:
-            return args[0]
         return args
 
 

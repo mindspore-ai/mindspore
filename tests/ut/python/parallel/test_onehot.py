@@ -21,7 +21,7 @@ from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.ops.operations.comm_ops import _VirtualDataset
+from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -32,7 +32,6 @@ grad_all = C.GradOperation(get_all=True)
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3, strategy4, axis):
         super(NetWithLoss, self).__init__()
-        self.virtual_dataset = _VirtualDataset()
         self.one_hot = P.OneHot(axis=axis).shard(strategy3)
         self.on_value = Tensor(2.0, ms.float32)
         self.off_value = Tensor(1.0, ms.float32)
@@ -40,9 +39,8 @@ class NetWithLoss(nn.Cell):
         self.network = network
 
     def construct(self, x, y, b):
-        b_virtual = self.virtual_dataset(b)
         predict = self.network(x, y)
-        label = self.one_hot(b_virtual, 64, self.on_value, self.off_value)
+        label = self.one_hot(b, 64, self.on_value, self.off_value)
         return self.loss(predict, label)[0]
 
 
@@ -68,7 +66,7 @@ class Net(nn.Cell):
 
 
 def compile_graph(strategy1, strategy2, strategy3, strategy4, auto=False, onthot_axis=-1):
-    net = GradWrap(NetWithLoss(Net(strategy1, strategy2), strategy3, strategy4, axis=onthot_axis))
+    net = GradWrap(_VirtualDatasetCell(NetWithLoss(Net(strategy1, strategy2), strategy3, strategy4, axis=onthot_axis)))
     net.set_auto_parallel()
     if auto:
         context.set_auto_parallel_context(parallel_mode="auto_parallel")
