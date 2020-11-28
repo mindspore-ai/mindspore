@@ -81,12 +81,12 @@ class Gamma(Distribution):
         ...         ans = self.g2.prob(value, concentration_a, rate_a)
         ...
         ...
-        ...         # Functions `concentration`, `rate`, `mean`, `sd`, `var`, and `entropy` have the same arguments.
+        ...         # Functions `mean`, `sd`, `mode`, `var`, and `entropy` have the same arguments.
         ...         # Args:
         ...         #     concentration (Tensor): the concentration of the distribution. Default: self._concentration.
         ...         #     rate (Tensor): the rate of the distribution. Default: self._rate.
         ...
-        ...         # Example of `concentration`, `rate`, `mean`. `sd`, `var`, and `entropy` are similar.
+        ...         # Example of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
         ...         ans = self.g1.concentration() # return 1.0
         ...         ans = self.g1.concentration(concentration_b, rate_b) # return concentration_b
         ...         # `concentration` and `rate` must be passed in during function calls.

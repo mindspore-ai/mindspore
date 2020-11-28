@@ -19,6 +19,7 @@ Distributions are the high-level components used to construct the probabilistic 
 from .distribution import Distribution
 from .transformed_distribution import TransformedDistribution
 from .bernoulli import Bernoulli
+from .beta import Beta
 from .categorical import Categorical
 from .cauchy import Cauchy
 from .exponential import Exponential
@@ -34,6 +35,7 @@ from .uniform import Uniform
 __all__ = ['Distribution',
            'TransformedDistribution',
            'Bernoulli',
+           'Beta',
            'Categorical',
            'Cauchy',
            'Exponential',
