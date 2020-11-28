@@ -157,7 +157,7 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
       MS_LOG(ERROR) << "CreateNewParamter failed, name: " << input_node->fullname_with_scope();
       return lite::RET_ERROR;
     }
-    new_parameter->set_name(input_node->fullname_with_scope());
+    new_parameter->set_name("constfold_" + input_node->fullname_with_scope());
     manager->Replace(input_node, new_parameter);
   }
   return lite::RET_OK;
