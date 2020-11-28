@@ -23,4 +23,4 @@ class ConfigGCN():
     hidden1 = 16
     dropout = 0.5
     weight_decay = 5e-4
-    early_stopping = 10
+    early_stopping = 50
