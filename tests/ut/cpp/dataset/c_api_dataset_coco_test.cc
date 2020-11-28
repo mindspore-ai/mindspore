@@ -61,6 +61,63 @@ TEST_F(MindDataTestPipeline, TestCocoDefault) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDefault.";
+  // Create two Coco Dataset
+  std::string folder_path = datasets_root_path_ + "/testCOCO/train";
+  std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
+
+  std::shared_ptr<Dataset> ds1 = Coco(folder_path, annotation_file);
+  std::shared_ptr<Dataset> ds2 = Coco(folder_path, annotation_file);
+  EXPECT_NE(ds1, nullptr);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create two Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds1 = ds1->Repeat(repeat_num);
+  EXPECT_NE(ds1, nullptr);
+  repeat_num = 3;
+  ds2 = ds2->Repeat(repeat_num);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create two Project operation on ds
+  std::vector<std::string> column_project = {"image", "bbox", "category_id"};
+  ds1 = ds1->Project(column_project);
+  EXPECT_NE(ds1, nullptr);
+  ds2 = ds2->Project(column_project);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Concat operation on the ds
+  ds1 = ds1->Concat({ds2});
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto image = row["image"];
+    auto bbox = row["bbox"];
+    auto category_id = row["category_id"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    MS_LOG(INFO) << "Tensor bbox shape: " << bbox->shape();
+    MS_LOG(INFO) << "Tensor category_id shape: " << category_id->shape();
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 30);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestCocoGetters) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoGetters.";
   // Create a Coco Dataset
