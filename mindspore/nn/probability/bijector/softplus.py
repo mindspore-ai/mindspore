@@ -33,23 +33,34 @@ class Softplus(Bijector):
         sharpness (float, list, numpy.ndarray, Tensor): The scale factor. Default: 1.0.
         name (str): The name of the Bijector. Default: 'Softplus'.
 
+    Note:
+        The dtype of `sharpness` must be float.
+
+    Raises:
+        TypeError: When the dtype of the sharpness is not float.
+
     Examples:
-        >>> # To initialize a Softplus bijector of sharpness 2.
-        >>> softplus = nn.probability.bijector.Softplus(2)
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import mindspore.nn.probability.bijector as msb
+        >>> from mindspore import Tensor
         >>>
-        >>> # To use ScalarAffine bijector in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.sp1 = nn.probability.bijector.Softplus(2.)
-        ...
-        ...     def construct(self, value):
-        ...         # Similar calls can be made to other functions
-        ...         # by replacing 'forward' by the name of the function.
-        ...         ans1 = self.sp1.forward(value)
-        ...         ans2 = self.sp1.inverse(value)
-        ...         ans3 = self.sp1.forward_log_jacobian(value)
-        ...         ans4 = self.sp1.inverse_log_jacobian(value)
+        >>> # To initialize a Softplus bijector of sharpness 2.0.
+        >>> softplus = msb.Softplus(2.0)
+        >>> # To use a ScalarAffine bijector in a network.
+        >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
+        >>> ans1 = softplus.forward(value)
+        >>> print(ans1)
+        [1.063464  2.009075  3.0012379]
+        >>> ans2 = softplus.inverse(value)
+        >>> print(ans2)
+        [0.9272933 1.9907573 2.998759 ]
+        >>> ans3 = softplus.forward_log_jacobian(value)
+        >>> print(ans3)
+        [-0.12692806 -0.01814996 -0.00247564]
+        >>> ans4 = softplus.inverse_log_jacobian(value)
+        >>> print(ans4)
+        [0.1454134  0.01848531 0.00248194]
     """
 
     def __init__(self,

@@ -26,23 +26,28 @@ class Invert(Bijector):
         name (str): The name of the Bijector. Default: Invert.
 
     Examples:
-        >>> # To initialize an Invert bijector.
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.bijector as msb
-        >>> n = msb.Invert(msb.Exp())
+        >>> from mindspore import Tensor
+        >>> import mindspore.context as context
+        >>> context.set_context(mode=1)
         >>>
-        >>> # To use an Invert bijector in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.inv = msb.Invert(msb.Exp())
-        ...
-        ...     def construct(self, value):
-        ...         # Similar calls can be made to other functions
-        ...         # by replacing `forward` by the name of the function.
-        ...         ans1 = self.inv.forward(value)
-        ...         ans2 = self.inv.inverse(value)
-        ...         ans3 = self.inv.forward_log_jacobian(value)
-        ...         ans4 = self.inv.inverse_log_jacobian(value)
+        >>> # To initialize an inverse Exp bijector.
+        >>> inv_exp = msb.Invert(msb.Exp())
+        >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
+        >>> ans1 = inv_exp.forward(value)
+        >>> print(ans1)
+        [0.        0.6931472 1.0986123]
+        >>> ans2 = inv_exp.inverse(value)
+        >>> print(ans2)
+        [ 2.7182817  7.389056  20.085537 ]
+        >>> ans3 = inv_exp.forward_log_jacobian(value)
+        >>> print(ans3)
+        [-0.        -0.6931472 -1.0986123]
+        >>> ans4 = inv_exp.inverse_log_jacobian(value)
+        >>> print(ans4)
+        [1. 2. 3.]
     """
 
     def __init__(self,

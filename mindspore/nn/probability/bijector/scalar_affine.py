@@ -33,26 +33,34 @@ class ScalarAffine(Bijector):
         name (str): The name of the bijector. Default: 'ScalarAffine'.
 
     Note:
+        The dtype of `shift` and `scale` must be float.
         If `shift`, `scale` are passed in as numpy.ndarray or tensor, they have to have
         the same dtype otherwise an error will be raised.
 
+    Raises:
+        TypeError: When the dtype of `shift` or `scale` is not float,
+                   and when the dtype of `shift` and `scale` is not same.
+
     Examples:
-        >>> # To initialize a ScalarAffine bijector of scale 1 and shift 2.
-        >>> scalaraffine = nn.probability.bijector.ScalarAffine(1, 2)
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
         >>>
-        >>> # To use a ScalarAffine bijector in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.s1 = nn.probability.bijector.ScalarAffine(1, 2)
-        ...
-        ...     def construct(self, value):
-        ...         # Similar calls can be made to other functions
-        ...         # by replacing 'forward' by the name of the function.
-        ...         ans1 = self.s1.forward(value)
-        ...         ans2 = self.s1.inverse(value)
-        ...         ans3 = self.s1.forward_log_jacobian(value)
-        ...         ans4 = self.s1.inverse_log_jacobian(value)
+        >>> # To initialize a ScalarAffine bijector of scale 1.0 and shift 2.
+        >>> scalaraffine = nn.probability.bijector.ScalarAffine(1.0, 2.0)
+        >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
+        >>> ans1 = scalaraffine.forward(value)
+        >>> print(ans1)
+        [3. 4. 5.]
+        >>> ans2 = scalaraffine.inverse(value)
+        >>> print(ans2)
+        [-1.  0.  1.]
+        >>> ans3 = scalaraffine.forward_log_jacobian(value)
+        >>> print(ans3)
+        0.0
+        >>> ans4 = scalaraffine.inverse_log_jacobian(value)
+        >>> print(ans4)
+        -0.0
         ...
     """
 

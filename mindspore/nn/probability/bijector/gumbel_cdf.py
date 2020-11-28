@@ -27,33 +27,44 @@ class GumbelCDF(Bijector):
     .. math::
         Y = \exp(-\exp(\frac{-(X - loc)}{scale}))
 
-    Note:
-        For `inverse` and `inverse_log_jacobian`, input should be in range of (0, 1).
-
     Args:
         loc (float, list, numpy.ndarray, Tensor): The location. Default: 0..
         scale (float, list, numpy.ndarray, Tensor): The scale. Default: 1.0.
         name (str): The name of the Bijector. Default: 'Gumbel_CDF'.
 
+    Note:
+        For `inverse` and `inverse_log_jacobian`, input should be in range of (0, 1).
+        The dtype of `loc` and `scale` must be float.
+        If `loc`, `scale` are passed in as numpy.ndarray or tensor, they have to have
+        the same dtype otherwise an error will be raised.
+
+    Raises:
+        TypeError: When the dtype of `loc` or `scale` is not float,
+                   and when the dtype of `loc` and `scale` is not same.
+
     Examples:
-        >>> # To initialize a GumbelCDF bijector of loc 0.0, and scale 1.0.
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.bijector as msb
-        >>> gum = msb.GumbelCDF(0.0, 1.0)
+        >>> from mindspore import Tensor
         >>>
-        >>> # To use GumbelCDF bijector in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.gum = msb.GumbelCDF(0.0, 1.0)
-        ...
-        ...     def construct(self, value):
-        ...         # Similar calls can be made to other functions
-        ...         # by replacing 'forward' by the name of the function.
-        ...         ans1 = self.gum.forward(value)
-        ...         ans2 = self.gum.inverse(value)
-        ...         ans3 = self.gum.forward_log_jacobian(value)
-        ...         ans4 = self.gum.inverse_log_jacobian(value)
-        ...
+        >>> # To initialize a GumbelCDF bijector of loc 1.0, and scale 2.0.
+        >>> gumbel_cdf = msb.GumbelCDF(1.0, 2.0)
+        >>> # To use a ScalarAffine bijector in a network.
+        >>> x = Tensor([1, 2, 3], dtype=mindspore.float32)
+        >>> y = Tensor([0.1, 0.2, 0.3], dtype=mindspore.float32)
+        >>> ans1 = gumbel_cdf.forward(x)
+        >>> print(ans1)
+        [0.36787945 0.54523915 0.6922006 ]
+        >>> ans2 = gumbel_cdf.inverse(y)
+        >>> print(ans2)
+        [-0.66806495  0.04822993  0.62874645]
+        >>> ans3 = gumbel_cdf.forward_log_jacobian(x)
+        >>> print(ans3)
+        [-1.6931472 -1.7996778 -2.0610266]
+        >>> ans4 = gumbel_cdf.inverse_log_jacobian(y)
+        >>> print(ans4)
+        [2.1616998 1.8267001 1.7114931]
     """
 
     def __init__(self,
