@@ -45,8 +45,8 @@ message Metadata {
 }
 
 message Chunk {
-    bytes buffer = 1;
-    bool finished = 2;
+  bytes buffer = 1;
+  bool finished = 2;
 }
 
 message EventReply {
@@ -111,6 +111,7 @@ message WatchCondition {
     tensor_change_too_large = 18;
     tensor_change_too_small = 19;
     tensor_not_changed = 20;
+    tensor_range = 21;
   }
   Condition condition = 1;
   float value = 2;
@@ -119,6 +120,7 @@ message WatchCondition {
     bool disabled = 2;
     double value = 3;
     bool hit = 4;  // Whether this parameter is hit when checking tensor.
+    double actual_value = 5;
   }
   repeated Parameter params = 4;
 }
@@ -132,4 +134,5 @@ message WatchpointHit {
   TensorProto tensor = 1;
   WatchCondition watch_condition = 2;
   int32 id = 3;
+  int32 error_code = 4;
 }
