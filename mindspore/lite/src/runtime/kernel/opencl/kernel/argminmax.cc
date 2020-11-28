@@ -115,9 +115,9 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
     default:  // 3
       break;
   }
-  std::vector<size_t> local = {1, 1, 1};
-  std::vector<size_t> global = {static_cast<size_t>(strides_.s[0]), static_cast<size_t>(src_size_.s[1]), 1};
-  OpenCLKernel::AlignGlobalLocal(global, local);
+  local_size_ = {1, 1, 1};
+  global_size_ = {static_cast<size_t>(strides_.s[0]), static_cast<size_t>(src_size_.s[1]), 1};
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int ArgMinMaxOpenCLKernel::InitWeights() {
@@ -153,7 +153,7 @@ int ArgMinMaxOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
   ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

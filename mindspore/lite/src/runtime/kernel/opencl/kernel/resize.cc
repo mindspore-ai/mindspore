@@ -100,9 +100,10 @@ void ResizeOpenCLKernel::SetConstArgs() {
 }
 
 void ResizeOpenCLKernel::SetGlobalLocal() {
-  local_range_ = {};
+  local_size_ = {};
   auto out_shape = GpuTensorInfo(out_tensors_[0]);
-  global_range_ = {out_shape.Slice, out_shape.W, out_shape.H};
+  global_size_ = {out_shape.Slice, out_shape.W, out_shape.H};
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 int ResizeOpenCLKernel::Run() {
@@ -110,7 +111,7 @@ int ResizeOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

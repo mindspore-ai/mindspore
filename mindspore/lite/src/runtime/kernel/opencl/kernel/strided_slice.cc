@@ -164,24 +164,24 @@ void StridedSliceOpenCLKernel::SetConstArgs() {
 
 void StridedSliceOpenCLKernel::SetGlobalLocal() {
   auto output_info = GpuTensorInfo(out_tensors_.front());
-  std::vector<size_t> global = {output_info.N * output_info.H, output_info.W, output_info.Slice};
+  global_size_ = {output_info.N * output_info.H, output_info.W, output_info.Slice};
 
   const int max_divider = 8;
   auto max_work_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
-  size_t local_c = GetMaxDivisorStrategy0(global[2], max_divider);
+  size_t local_c = GetMaxDivisorStrategy0(global_size_[2], max_divider);
   local_c = std::max<size_t>(local_c, 1);
   size_t local_hw = max_work_group_size / local_c;
-  size_t local_h = std::min(UP_DIV(global[0], 2), local_hw);
-  size_t local_w = std::min(local_hw / local_h, global[1]);
-  std::vector<size_t> local = {local_h, local_w, local_c};
-  AlignGlobalLocal(global, local);
+  size_t local_h = std::min(UP_DIV(global_size_[0], 2), local_hw);
+  size_t local_w = std::min(local_hw / local_h, global_size_[1]);
+  local_size_ = {local_h, local_w, local_c};
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 int StridedSliceOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

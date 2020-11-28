@@ -36,11 +36,11 @@ class ReduceOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+  int Tune() override;
 
  private:
   cl_float4 GenC4Mask();
   static std::string GetReduceTypeStr(int type);
-  cl::Kernel kernel_;
   GpuTensorInfo outShape = GpuTensorInfo(nullptr);
   bool use_local_{false};
   bool wc_reduce_{false};

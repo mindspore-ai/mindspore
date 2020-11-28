@@ -193,7 +193,7 @@ int Conv2dTransposeOpenCLKernel::Run() {
   int arg_cnt = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }
 

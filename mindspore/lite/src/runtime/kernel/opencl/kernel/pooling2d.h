@@ -39,7 +39,6 @@ class PoolingOpenCLKernel : public OpenCLKernel {
 
  private:
   PoolingParameter *parameter_;
-  cl::Kernel kernel_;
   std::vector<size_t> local_size_;
   std::vector<size_t> global_size_;
 };

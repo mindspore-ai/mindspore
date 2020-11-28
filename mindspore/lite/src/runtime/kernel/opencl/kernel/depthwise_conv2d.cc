@@ -175,24 +175,23 @@ void DepthwiseConv2dOpenCLKernel::SetConstArgs() {
 void DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
   // set global
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM * block_size_[2]);
-  std::vector<size_t> global_size = {CO4, (size_t)UP_DIV(out_tensors_[0]->Width(), block_size_[1]),
-                                     (size_t)UP_DIV(out_tensors_[0]->Height(), block_size_[0])};
+  global_size_ = {CO4, (size_t)UP_DIV(out_tensors_[0]->Width(), block_size_[1]),
+                  (size_t)UP_DIV(out_tensors_[0]->Height(), block_size_[0])};
   // set local
   const int max_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
-  int z = global_size[0];
-  int y = std::min(max_group_size / z, GetMaxDivisorStrategy0(global_size[2], 8));
-  int x = std::max(1, std::min(static_cast<int>(global_size[1]), max_group_size / (y * z)));
-  std::vector<size_t> local_size =
-    std::vector<size_t>({static_cast<size_t>(z), static_cast<size_t>(x), static_cast<size_t>(y)});
+  int z = global_size_[0];
+  int y = std::min(max_group_size / z, GetMaxDivisorStrategy0(global_size_[2], 8));
+  int x = std::max(1, std::min(static_cast<int>(global_size_[1]), max_group_size / (y * z)));
+  local_size_ = std::vector<size_t>({static_cast<size_t>(z), static_cast<size_t>(x), static_cast<size_t>(y)});
 
-  OpenCLKernel::AlignGlobalLocal(global_size, local_size);
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int DepthwiseConv2dOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }
 

@@ -38,6 +38,7 @@ class SoftmaxOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+  int Tune() override;
 
  private:
   int InitGlobalSize();
@@ -45,7 +46,6 @@ class SoftmaxOpenCLKernel : public OpenCLKernel {
   int SetWorkGroupSize();
   std::vector<float> GetMaskForLastChannel(int channels);
 
-  cl::Kernel kernel_;
   SoftmaxParameter *parameter_;
   bool onexone_flag_{false};
   std::vector<size_t> local_size_;

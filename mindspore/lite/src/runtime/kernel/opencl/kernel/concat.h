@@ -53,7 +53,6 @@ class ConcatOpenCLKernel : public OpenCLKernel {
 
  private:
   int RunAxis0();
-  cl::Kernel kernel_;
 };
 
 }  // namespace mindspore::kernel

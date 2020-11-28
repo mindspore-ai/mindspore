@@ -43,9 +43,6 @@ class FillOpenCLKernel : public OpenCLKernel {
  private:
   int RunFill();
   int RunShape();
-  cl::Kernel kernel_;
-
- private:
   float default_{0.0f};
 };
 

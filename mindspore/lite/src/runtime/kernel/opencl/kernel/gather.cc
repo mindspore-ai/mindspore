@@ -93,9 +93,9 @@ void GatherOpenCLKernel::SetConstArgs() {
 
 void GatherOpenCLKernel::SetGlobalLocal() {
   auto output = GpuTensorInfo(out_tensors_.front());
-  std::vector<size_t> local = {1, 1, 1};
-  std::vector<size_t> global = {output.W, output.N * output.H, output.Slice};
-  OpenCLKernel::AlignGlobalLocal(global, local);
+  local_size_ = {1, 1, 1};
+  global_size_ = {output.W, output.N * output.H, output.Slice};
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int GatherOpenCLKernel::Prepare() {
@@ -155,7 +155,7 @@ int GatherOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, 0, out_tensors_.front()->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, in_tensors_.front()->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 2, indices_data_, lite::opencl::MemType::BUF);
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

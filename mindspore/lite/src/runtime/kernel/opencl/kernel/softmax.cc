@@ -116,6 +116,13 @@ void SoftmaxOpenCLKernel::SetGlobalLocal() {
   AlignGlobalLocal(global_size_, local_size_);
 }
 
+int SoftmaxOpenCLKernel::Tune() {
+  if (onexone_flag_) {
+    return RET_OK;
+  }
+  return OpenCLKernel::Tune();
+}
+
 void SoftmaxOpenCLKernel::SetConstArgs() {
   int arg_idx = 2;
   int channel = out_shape.C;
@@ -133,8 +140,7 @@ int SoftmaxOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  // run opengl kernel
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return lite::RET_OK;
 }
 

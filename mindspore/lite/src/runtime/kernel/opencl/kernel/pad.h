@@ -41,7 +41,6 @@ class PadOpenCLKernel : public OpenCLKernel {
   int Run() override;
 
  private:
-  cl::Kernel kernel_;
   PadParameter *param_;
 };
 }  // namespace mindspore::kernel

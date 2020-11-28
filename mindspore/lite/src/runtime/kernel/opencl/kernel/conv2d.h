@@ -42,6 +42,7 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   void SetConstArgs() override;
 
   int Run() override;
+  int Tune() override;
 
  private:
   void SetBlockSize();
@@ -60,7 +61,6 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   }
 
   cl::Kernel kernel_4x4to36_;
-  cl::Kernel kernel_conv_;
   cl::Kernel kernel_36to4x4_;
   cl::NDRange global_4x4to36_, local_4x4to36_;
   cl::NDRange global_conv_, local_conv_;

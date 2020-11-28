@@ -38,9 +38,9 @@ class ArgMinMaxOpenCLKernel : public OpenCLKernel {
   void SetConstArgs() override;
   void SetGlobalLocal() override;
   int InitWeights() override;
+  int Tune() override { return lite::RET_OK; }
 
  private:
-  cl::Kernel kernel_;
   void *buff_{nullptr};
   void *ids_{nullptr};
   GpuTensorInfo im_in_{GpuTensorInfo(nullptr)};

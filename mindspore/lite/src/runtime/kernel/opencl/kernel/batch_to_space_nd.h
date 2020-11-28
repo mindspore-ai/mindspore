@@ -37,9 +37,9 @@ class BatchToSpaceNDOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+  int Tune() override { return lite::RET_OK; }
 
  private:
-  cl::Kernel kernel_;
 };
 }  // namespace mindspore::kernel
 #endif

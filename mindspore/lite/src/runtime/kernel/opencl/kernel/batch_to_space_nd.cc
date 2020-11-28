@@ -75,9 +75,9 @@ void BatchToSpaceNDOpenCLKernel::SetGlobalLocal() {
   size_t CO4 = UP_DIV(out_tensors_[0]->Channel(), C4NUM);
   std::vector<int> out_shape = out_tensors_[0]->shape();
   cl_int4 dst_size = {(cl_int)CO4, out_shape[2], out_shape[1], out_shape[0]};
-  std::vector<size_t> local = {1, 1, 1};
-  std::vector<size_t> global = {(size_t)dst_size.s[0], (size_t)dst_size.s[1], (size_t)dst_size.s[2]};
-  OpenCLKernel::AlignGlobalLocal(global, local);
+  local_size_ = {1, 1, 1};
+  global_size_ = {(size_t)dst_size.s[0], (size_t)dst_size.s[1], (size_t)dst_size.s[2]};
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int BatchToSpaceNDOpenCLKernel::Prepare() {
@@ -103,7 +103,7 @@ int BatchToSpaceNDOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
   ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
 
   return RET_OK;
 }

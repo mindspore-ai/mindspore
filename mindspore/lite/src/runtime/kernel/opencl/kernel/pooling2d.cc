@@ -86,8 +86,9 @@ void PoolingOpenCLKernel::SetGlobalLocal() {
   const size_t global_x = out_tensors_[0]->shape()[1];
   const size_t global_y = out_tensors_[0]->shape()[2];
   const size_t global_z = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
-  global_range_ = {global_z, global_y, global_x};
-  local_range_ = {};
+  global_size_ = {global_z, global_y, global_x};
+  local_size_ = {};
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 void PoolingOpenCLKernel::SetConstArgs() {
@@ -111,7 +112,7 @@ int PoolingOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }
 

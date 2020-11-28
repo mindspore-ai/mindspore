@@ -42,7 +42,6 @@ class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
  private:
   void *packed_weight_{nullptr};
   void *bias_data_{nullptr};
-  cl::Kernel kernel_;
   std::vector<int> block_size_{2, 2, 1};
 };
 }  // namespace mindspore::kernel

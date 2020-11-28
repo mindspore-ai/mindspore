@@ -43,7 +43,6 @@ class SparseToDenseOpenCLKernel : public OpenCLKernel {
   int InitOutputToDefault();
 
  private:
-  cl::Kernel kernel_;
   //  bool IndicesIsScalar{false};
   bool enable_fp16_{false};
   float default_{0.0f};

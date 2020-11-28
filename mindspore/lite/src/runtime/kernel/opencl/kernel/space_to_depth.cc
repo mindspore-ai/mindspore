@@ -69,7 +69,9 @@ void SpaceToDepthOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, ci_size);
 }
 void SpaceToDepthOpenCLKernel::SetGlobalLocal() {
-  global_range_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
+  local_size_ = {};
+  global_size_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 int SpaceToDepthOpenCLKernel::Run() {
@@ -77,7 +79,7 @@ int SpaceToDepthOpenCLKernel::Run() {
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }
 

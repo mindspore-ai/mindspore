@@ -124,23 +124,24 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
 
 void ArithmeticOpenCLKernel::SetGlobalLocal() {
   if (element_flag_) {
-    local_range_ = {};
+    local_size_ = {};
     auto out_shape = out_tensors_[0]->shape();
     if (out_shape.size() == 2) {
       size_t H = out_shape[0];
       size_t W = UP_DIV(out_shape[1], C4NUM);
-      global_range_ = {W, H};
+      global_size_ = {W, H};
     } else {
       size_t H = out_shape[0] * out_shape[1];
       size_t W = out_shape[2] * UP_DIV(out_shape[3], C4NUM);
-      global_range_ = {W, H};
+      global_size_ = {W, H};
     }
   } else {
-    local_range_ = {};
+    local_size_ = {};
     auto out_shape = GetNHWCShape(out_tensors_[0]->shape());
-    global_range_ = {static_cast<size_t>(UP_DIV(out_shape[3], C4NUM)), static_cast<size_t>(out_shape[2]),
-                     static_cast<size_t>(out_shape[1] * out_shape[0])};
+    global_size_ = {static_cast<size_t>(UP_DIV(out_shape[3], C4NUM)), static_cast<size_t>(out_shape[2]),
+                    static_cast<size_t>(out_shape[1] * out_shape[0])};
   }
+  AlignGlobalLocal(global_size_, local_size_);
 }
 
 int ArithmeticOpenCLKernel::InitWeights() {
@@ -269,7 +270,7 @@ int ArithmeticOpenCLKernel::Run() {
   auto input_1_ptr = inputs_weight_ptrs_[1] == nullptr ? in_tensors_[1]->data_c() : inputs_weight_ptrs_[1];
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_1_ptr);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

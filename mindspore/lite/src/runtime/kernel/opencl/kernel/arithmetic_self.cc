@@ -131,10 +131,10 @@ void ArithmeticSelfOpenCLKernel::SetGlobalLocal() {
     OC = UP_DIV(output_shape[1], C4NUM);
   }
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
-  std::vector<size_t> local = {1, 1, 1};  // init local
-  std::vector<size_t> global = {OH, OW, OC};
-  ArithmeticSelfGetWorkGroup(global, &local, max_global[0]);
-  OpenCLKernel::AlignGlobalLocal(global, local);
+  local_size_ = {1, 1, 1};  // init local
+  global_size_ = {OH, OW, OC};
+  ArithmeticSelfGetWorkGroup(global_size_, &local_size_, max_global[0]);
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int ArithmeticSelfOpenCLKernel::Prepare() {
@@ -159,7 +159,7 @@ int ArithmeticSelfOpenCLKernel::Run() {
   int arg_cn = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

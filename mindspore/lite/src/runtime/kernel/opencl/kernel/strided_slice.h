@@ -42,7 +42,6 @@ class StridedSliceOpenCLKernel : public OpenCLKernel {
  private:
   int InitConstArgs();
 
-  cl::Kernel kernel_;
   cl_int4 input_shape_{};
   cl_int4 output_shape_{};
   cl_int2 io_slices_{};

@@ -51,13 +51,13 @@ void ToFormatOpenCLKernel::SetConstArgs() {
 }
 
 void ToFormatOpenCLKernel::SetGlobalLocal() {
-  std::vector<size_t> global = {N_ * H_, W_, UP_DIV(C_, C4NUM)};
-  std::vector<size_t> local = {8, 16, 3};
+  global_size_ = {N_ * H_, W_, UP_DIV(C_, C4NUM)};
+  local_size_ = {8, 16, 3};
   size_t max_work_group_size = ocl_runtime_->DeviceMaxWorkGroupSize();
   if (max_work_group_size < 384) {
-    local[2] = 1;
+    local_size_[2] = 1;
   }
-  OpenCLKernel::AlignGlobalLocal(global, local);
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int ToFormatOpenCLKernel::Prepare() {
@@ -97,7 +97,7 @@ int ToFormatOpenCLKernel::Run() {
   auto dst_mem_type = out_mem_type_;
   ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c(), src_mem_type);
   ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c(), dst_mem_type);
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 
