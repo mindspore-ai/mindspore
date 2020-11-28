@@ -751,6 +751,18 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
     return GenAddrCleanLaunchArgs(cnode, kernel_inputs);
   }
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+    auto op_name = AnfAlgo::GetCNodeName(cnode);
+    constexpr auto none_placeholder_index = 3;
+    if (op_name == kDynamicRNNOpName && i == none_placeholder_index) {
+      continue;
+    }
+    if (op_name == kDynamicGRUV2OpName) {
+      auto none_index = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, "placeholder_index");
+      auto item = std::find(none_index.begin(), none_index.end(), i);
+      if (item != none_index.end()) {
+        continue;
+      }
+    }
     auto real_input = AnfAlgo::GetRealInputIndex(kernel, i);
     auto device_address = AnfAlgo::GetPrevNodeOutputAddr(kernel, real_input);
     MS_EXCEPTION_IF_NULL(device_address);
