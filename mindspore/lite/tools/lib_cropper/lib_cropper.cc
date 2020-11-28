@@ -98,7 +98,7 @@ int Cropper::GetModelOps() {
     auto meta_graph = schema::GetMetaGraph(graph_buf);
     if (meta_graph == nullptr) {
       delete[] graph_buf;
-      MS_LOG(ERROR) << "meta_graph is nullptr!";
+      MS_LOG(ERROR) << "meta_graph is nullptr.";
       std::cerr << "meta_graph is nullptr!" << std::endl;
       return RET_ERROR;
     }
@@ -106,8 +106,8 @@ int Cropper::GetModelOps() {
     for (auto node : *nodes) {
       if (node->primitive() == nullptr) {
         delete[] graph_buf;
-        MS_LOG(ERROR) << "node primitive is nullptr!";
-        std::cerr << "node primitive is nullptr!" << std::endl;
+        MS_LOG(ERROR) << "node primitive is nullptr.";
+        std::cerr << "node primitive is nullptr." << std::endl;
         return RET_ERROR;
       }
       this->all_operators_.insert(node->primitive()->value_type());
@@ -141,7 +141,7 @@ int Cropper::GetModelFiles() {
   }
   // get models from folder
   if (!this->flags_->model_folder_path_.empty()) {
-    String cmd = "ls " + this->flags_->model_folder_path_ + "/*.ms";
+    String cmd = "find " + this->flags_->model_folder_path_ + " -name '*.ms'";
     MS_LOG(DEBUG) << cmd;
 
     char buf[BUF_SIZE];
@@ -160,6 +160,10 @@ int Cropper::GetModelFiles() {
     }
     pclose(p_file);
   }
+  if (this->model_files_.empty()) {
+    MS_LOG(ERROR) << "model file does not exist.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -170,7 +174,8 @@ int Cropper::GetOpMatchFiles() {
     char buf[BUF_SIZE];
     while (!in_file.eof()) {
       in_file.getline(buf, BUF_SIZE);
-      auto mapping = StringSplit(buf, DELIM_COMMA);
+      std::string buf_str = buf;
+      auto mapping = StringSplit(buf_str, DELIM_COMMA);
       if (!mapping.empty()) {
         String primitive = mapping[0];
         String type = mapping[1];
@@ -233,8 +238,8 @@ int Cropper::CutPackage() {
   for (const auto &file : this->discard_files_) {
     ar_cmd.append(file).append(" ");
   }
-  String copy_to_output_cmd = "cp " + this->flags_->package_file_ + ".bak " + this->flags_->output_file_ + " && rm " +
-                              this->flags_->package_file_ + ".bak";
+  String copy_to_output_cmd = "cp " + this->flags_->package_file_ + ".bak " + this->flags_->output_file_;
+  String rm_bak_cmd = "rm " + this->flags_->package_file_ + ".bak";
   int status;
   status = system(copy_bak_cmd.c_str());
   if (status != 0) {
@@ -244,13 +249,31 @@ int Cropper::CutPackage() {
   status = system(ar_cmd.c_str());
   if (status != 0) {
     MS_LOG(ERROR) << ar_cmd << " executor failed.";
+    status = system(rm_bak_cmd.c_str());
+    // delete bak file.
+    if (status != 0) {
+      MS_LOG(ERROR) << rm_bak_cmd << " executor failed.";
+    }
     return RET_ERROR;
   }
   status = system(copy_to_output_cmd.c_str());
   if (status != 0) {
     MS_LOG(ERROR) << copy_to_output_cmd << " executor failed.";
+    // delete bak file.
+    status = system(rm_bak_cmd.c_str());
+    if (status != 0) {
+      MS_LOG(ERROR) << rm_bak_cmd << " executor failed.";
+    }
     return RET_ERROR;
   }
+  // delete bak file.
+  status = system(rm_bak_cmd.c_str());
+  if (status != 0) {
+    MS_LOG(ERROR) << rm_bak_cmd << " executor failed.";
+    return RET_ERROR;
+  }
+  MS_LOG(INFO) << "Save package file " << this->flags_->output_file_ << " success.";
+  std::cout << "Save package file" << this->flags_->output_file_ << " success." << std::endl;
   return RET_OK;
 }
 
@@ -262,8 +285,8 @@ int RunCropper(int argc, const char **argv) {
     return status;
   }
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Flags init Error : " << GetErrorInfo(status);
-    std::cerr << "Flags init Error : " << GetErrorInfo(status) << std::endl;
+    MS_LOG(ERROR) << "Flags init Error:" << status << " " << GetErrorInfo(status);
+    std::cerr << "Flags init Error:" << status << " " << GetErrorInfo(status) << std::endl;
     return status;
   }
   Cropper cropper(&flags);
@@ -274,7 +297,7 @@ int RunCropper(int argc, const char **argv) {
     std::cout << "CROPPER RESULT SUCCESS:" << status << std::endl;
   } else {
     MS_LOG(ERROR) << "CROPPER RESULT FAILED:" << status << " " << GetErrorInfo(status);
-    std::cout << "CROPPER RESULT FAILED:" << status << " " << GetErrorInfo(status) << std::endl;
+    std::cerr << "CROPPER RESULT FAILED:" << status << " " << GetErrorInfo(status) << std::endl;
   }
   return status;
 }
