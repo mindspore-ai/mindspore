@@ -73,7 +73,10 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
-  InitWeights();
+  auto ret = InitWeights();
+  if (ret != RET_OK) {
+    return ret;
+  }
   SetGlobalLocal();
   SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done! mem type=" << static_cast<int>(out_mem_type_);
@@ -81,6 +84,10 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
 }
 
 int DepthwiseConv2dOpenCLKernel::InitWeights() {
+  if (!in_tensors_.at(1)->IsConst()) {
+    MS_LOG(ERROR) << "DepthwiseConv2d don't support non-constant filter yet.";
+    return RET_ERROR;
+  }
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto allocator = ocl_runtime_->GetAllocator();
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
@@ -122,6 +129,10 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   allocator->UnmapBuffer(packed_weight_);
 
   if (in_tensors_.size() == kInputSize2) {
+    if (!in_tensors_.at(2)->IsConst()) {
+      MS_LOG(ERROR) << "DepthwiseConv2d don't support non-constant bias yet.";
+      return RET_ERROR;
+    }
     size_t dtype_size = sizeof(float);
     if (is_fp16 && in_tensors_.at(kBiasIndex)->data_type() == kNumberTypeFloat16) {
       dtype_size = sizeof(int16_t);

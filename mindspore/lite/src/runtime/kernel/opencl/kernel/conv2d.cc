@@ -120,7 +120,10 @@ int Conv2DOpenCLKernel::Prepare() {
     winograd_mem1_ = allocator->Malloc(size, {width, height, img_dtype});
   }
 
-  InitWeights();
+  auto ret = InitWeights();
+  if (ret != RET_OK) {
+    return ret;
+  }
   SetGlobalLocal();
   SetConstArgs();
   return RET_OK;
@@ -256,8 +259,16 @@ int Conv2DOpenCLKernel::InitBias() {
 }
 
 int Conv2DOpenCLKernel::InitWeights() {
+  if (!in_tensors_.at(1)->IsConst()) {
+    MS_LOG(ERROR) << "Conv2D don't support non-constant filter yet.";
+    return RET_ERROR;
+  }
   InitFilter();
   if (has_bias_) {
+    if (!in_tensors_.at(2)->IsConst()) {
+      MS_LOG(ERROR) << "Conv2D don't support non-constant bias yet.";
+      return RET_ERROR;
+    }
     InitBias();
   }
   return RET_OK;

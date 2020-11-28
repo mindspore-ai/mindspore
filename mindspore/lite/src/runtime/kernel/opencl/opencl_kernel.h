@@ -245,12 +245,12 @@ class OpenCLKernel : public LiteKernel {
       candidate_z = GenerateLocalByGlobal(global_size_[2]);
     }
     for (auto x : candidate_x) {
-      if (x < max_work_items[0]) {
+      if (x <= max_work_items[0]) {
         for (auto y : candidate_y) {
-          if (y < max_work_items[1]) {
+          if (y <= max_work_items[1]) {
             for (auto z : candidate_z) {
               auto group_size = x * y * z;
-              if (z < max_work_items[2] && group_size < max_workgroup_size && group_size > MIN_WORKGROUP_SIZE) {
+              if (z <= max_work_items[2] && group_size <= max_workgroup_size && group_size >= MIN_WORKGROUP_SIZE) {
                 BaseTuningParameter tuning_param = BaseTuningParameter();
                 tuning_param.local_size = {x, y, z};
                 tuning_params.push_back(tuning_param);
@@ -341,11 +341,11 @@ class OpenCLKernel : public LiteKernel {
   static std::set<size_t> GenerateLocalByGlobal(size_t global_i) {
     std::set<size_t> local_ = {};
     int index = 1;
-    while (index < global_i) {
+    while (index <= global_i) {
       local_.insert(index);
       index *= 2;
     }
-    for (size_t i = 1; i < 16; i++) {
+    for (size_t i = 1; i <= 16; i++) {
       if (global_i % i == 0) {
         local_.insert(i);
       }

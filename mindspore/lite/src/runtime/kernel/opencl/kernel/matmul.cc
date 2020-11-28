@@ -64,7 +64,10 @@ int MatMulOpenCLKernel::Prepare() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
-  InitWeights();
+  auto ret = InitWeights();
+  if (ret != RET_OK) {
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
@@ -73,6 +76,10 @@ int MatMulOpenCLKernel::Prepare() {
 
 int MatMulOpenCLKernel::InitWeights() {
   // ABMCI @ ABCICO = ABMCO
+  if (!in_tensors_.at(kWeightIndex)->IsConst()) {
+    MS_LOG(ERROR) << "Matmul don't support non-constant filter yet.";
+    return RET_ERROR;
+  }
   auto allocator = ocl_runtime_->GetAllocator();
   int ci = inShape[3];
   int ci4 = UP_DIV(ci, C4NUM);
