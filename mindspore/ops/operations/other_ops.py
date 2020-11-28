@@ -38,7 +38,7 @@ class Assign(PrimitiveWithCheck):
         Tensor, has the same type as original `variable`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -66,9 +66,10 @@ class Assign(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
 
     def check_dtype(self, variable, value):
+        types = mstype.number_type + (mstype.bool_,)
         if variable != mstype.type_refkey:
-            validator.check_tensor_dtype_valid("variable", variable, mstype.number_type, self.name)
-        validator.check_scalar_or_tensor_types_same({"value": value}, mstype.number_type, self.name)
+            validator.check_tensor_dtype_valid("variable", variable, types, self.name)
+        validator.check_scalar_or_tensor_types_same({"value": value}, types, self.name)
 
 
 class InplaceAssign(PrimitiveWithInfer):
