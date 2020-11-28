@@ -54,6 +54,9 @@ const AnfNodePtr RemoveInternalOutput::Process(const FuncGraphPtr &func_graph, c
                                                const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCast) && !AnfAlgo::GetBooleanAttr(node, kIsBackendCast)) {
+    return nullptr;
+  }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   if (kernel_graph == nullptr) {
     return nullptr;

@@ -106,12 +106,14 @@ void BuildGraphTask::Run() {
 void RunGraphTask::Run() {
   MS_EXCEPTION_IF_NULL(session_);
   try {
+    MS_LOG(INFO) << "Start run graph " << graph_id_;
     auto graph = session_->GetGraph(graph_id_);
     MS_EXCEPTION_IF_NULL(graph);
     graph->ResetGraphRunningStatus();
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
     graph->OnRunGraphFinished();
     UpdateOutputTensors(&outputs_, tensor_to_node_);
+    MS_LOG(INFO) << "End run graph " << graph_id_;
   } catch (const std::exception &e) {
     MsException::GetInstance().SetException();
   }

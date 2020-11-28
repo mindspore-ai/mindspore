@@ -76,6 +76,7 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
     MS_EXCEPTION_IF_NULL(pre_graph);
     pre_graph->AddPostGraph(graph);
     graph->AddPreGraph(pre_graph);
+    MS_LOG(INFO) << "Link graph " << pre_segment->graph_id_ << " to " << graph_id;
   }
 
   if (MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY)) {
