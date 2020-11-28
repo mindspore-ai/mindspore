@@ -48,7 +48,7 @@ class KernelInfo : public KernelInfoDevice {
   void set_select_kernel_build_info(const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
     select_kernel_build_info_ = select_kernel_build_info;
   }
-  void SetFeatureMapFlag(bool flag) { is_feature_map_ = flag; }
+  void set_feature_map_flag(bool flag) { is_feature_map_ = flag; }
   const DeviceAddress *GetOutputAddr(size_t index) const;
   DeviceAddressPtr GetMutableOutputAddr(size_t index) const;
   bool OutputAddrExist(size_t index) const;
