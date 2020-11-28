@@ -80,6 +80,7 @@ class GatherV2PInfo : public OperatorInfo {
   Group group_;
   bool manual_split_ = false;
   bool dynamic_shape_indices_ = false;
+  bool axis_split_forward_allreduce_ = false;  // when axis is split, use reducescatter as default in forward
   std::vector<int64_t> param_split_shapes_;
   std::vector<int64_t> index_offsets_;
 };
