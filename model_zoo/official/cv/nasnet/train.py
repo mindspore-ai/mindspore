@@ -45,16 +45,16 @@ if __name__ == '__main__':
     parser.add_argument('--platform', type=str, default='GPU', choices=('Ascend', 'GPU'), help='run platform')
     args_opt = parser.parse_args()
 
+    if args_opt.platform != "GPU":
+        raise ValueError("Only supported GPU training.")
+
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 
     # init distributed
     if args_opt.is_distributed:
-        if args_opt.platform == "Ascend":
-            init()
-        else:
-            init("nccl")
+        init("nccl")
         cfg.rank = get_rank()
         cfg.group_size = get_group_size()
         parallel_mode = ParallelMode.DATA_PARALLEL
