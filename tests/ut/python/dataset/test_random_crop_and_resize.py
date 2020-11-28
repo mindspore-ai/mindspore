@@ -255,7 +255,7 @@ def test_random_crop_and_resize_04_c():
         data = data.map(operations=random_crop_and_resize_op, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input is not within the required interval of (0 to 16777216)." in str(e)
+        assert "scale should be in (min,max) format. Got (max,min)." in str(e)
 
 
 def test_random_crop_and_resize_04_py():
@@ -278,7 +278,7 @@ def test_random_crop_and_resize_04_py():
         data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input is not within the required interval of (0 to 16777216)." in str(e)
+        assert "scale should be in (min,max) format. Got (max,min)." in str(e)
 
 
 def test_random_crop_and_resize_05_c():
@@ -298,7 +298,7 @@ def test_random_crop_and_resize_05_c():
         data = data.map(operations=random_crop_and_resize_op, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input is not within the required interval of (0 to 16777216)." in str(e)
+        assert "ratio should be in (min,max) format. Got (max,min)." in str(e)
 
 
 def test_random_crop_and_resize_05_py():
@@ -321,7 +321,7 @@ def test_random_crop_and_resize_05_py():
         data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input is not within the required interval of (0 to 16777216)." in str(e)
+        assert "ratio should be in (min,max) format. Got (max,min)." in str(e)
 
 
 def test_random_crop_and_resize_comp(plot=False):

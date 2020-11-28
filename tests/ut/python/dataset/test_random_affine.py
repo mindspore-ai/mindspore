@@ -234,14 +234,14 @@ def test_random_affine_exception_translation_range():
 
 def test_random_affine_exception_scale_value():
     """
-    Test RandomAffine: scale is not positive, expected to raise ValueError
+    Test RandomAffine: scale is not valid, expected to raise ValueError
     """
     logger.info("test_random_affine_exception_scale_value")
     try:
-        _ = py_vision.RandomAffine(degrees=15, scale=(0.0, 1.1))
+        _ = py_vision.RandomAffine(degrees=15, scale=(0.0, 0.0))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input scale[0] must be greater than 0."
+        assert str(e) == "Input scale[1] must be greater than 0."
 
     try:
         _ = py_vision.RandomAffine(degrees=15, scale=(2.0, 1.1))

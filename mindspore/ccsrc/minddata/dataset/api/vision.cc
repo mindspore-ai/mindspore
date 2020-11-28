@@ -805,12 +805,17 @@ Status RandomAffineOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  for (int32_t i = 0; i < scale_range_.size(); ++i) {
-    if (scale_range_[i] <= 0) {
-      std::string err_msg = "RandomAffine: scale must be greater than 0, got: " + std::to_string(fill_value_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
+  if (scale_range_[0] < 0) {
+    std::string err_msg =
+      "RandomAffine: min scale range must be greater than or equal to 0, got: " + std::to_string(scale_range_[0]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (scale_range_[1] <= 0) {
+    std::string err_msg =
+      "RandomAffine: max scale range must be greater than 0, got: " + std::to_string(scale_range_[1]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_range_[0] > scale_range_[1]) {
     std::string err_msg =
@@ -1111,18 +1116,17 @@ Status RandomCropDecodeResizeOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  for (int32_t i = 0; i < scale_.size(); ++i) {
-    if (scale_[i] < 0) {
-      std::string err_msg = "RandomCropDecodeResize: invalid scale, scale must be greater than or equal to 0, got: " +
-                            std::to_string(scale_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-    if (scale_[i] == INT_MAX) {
-      std::string err_msg = "RandomCropDecodeResize: invalid scale, scale too large, got: " + std::to_string(scale_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
+  if (scale_[0] < 0) {
+    std::string err_msg = "RandomCropDecodeResize: invalid scale, min scale must be greater than or equal to 0, got: " +
+                          std::to_string(scale_[0]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (scale_[1] <= 0) {
+    std::string err_msg =
+      "RandomCropDecodeResize: invalid scale, max scale must be greater than 0, got: " + std::to_string(scale_[1]);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_[0] > scale_[1]) {
     std::string err_msg = "RandomCropDecodeResize: scale should be in (min,max) format. Got (max,min).";
@@ -1136,14 +1140,9 @@ Status RandomCropDecodeResizeOperation::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (int32_t i = 0; i < ratio_.size(); ++i) {
-    if (ratio_[i] < 0) {
-      std::string err_msg = "RandomCropDecodeResize: invalid ratio, ratio must be greater than or equal to 0, got: " +
-                            std::to_string(ratio_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-    if (ratio_[i] == INT_MAX) {
-      std::string err_msg = "RandomCropDecodeResize: invalid ratio, ratio too large, got: " + std::to_string(ratio_[i]);
+    if (ratio_[i] <= 0) {
+      std::string err_msg =
+        "RandomCropDecodeResize: invalid ratio, ratio must be greater than 0, got: " + std::to_string(ratio_[i]);
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
@@ -1423,9 +1422,15 @@ Status RandomResizedCropOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (scale_[0] < 0 || scale_[1] < 0) {
-    std::string err_msg = "RandomResizedCrop: scale must be greater than or equal to 0.";
-    MS_LOG(ERROR) << "RandomResizedCrop: scale must be greater than or equal to 0, got: " << scale_;
+  if (scale_[0] < 0) {
+    std::string err_msg = "RandomResizedCrop: min scale must be greater than or equal to 0.";
+    MS_LOG(ERROR) << "RandomResizedCrop: min scale must be greater than or equal to 0, got: " +
+                       std::to_string(scale_[0]);
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (scale_[1] <= 0) {
+    std::string err_msg = "RandomResizedCrop: max scale must be greater than 0.";
+    MS_LOG(ERROR) << "RandomResizedCrop: max scale must be greater than 0, got: " + std::to_string(scale_[1]);
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_[1] < scale_[0]) {
@@ -1441,9 +1446,9 @@ Status RandomResizedCropOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (ratio_[0] < 0 || ratio_[1] < 0) {
-    std::string err_msg = "RandomResizedCrop: ratio must be greater than or equal to 0.";
-    MS_LOG(ERROR) << "RandomResizedCrop: ratio must be greater than or equal to 0, got: " << ratio_;
+  if (ratio_[0] <= 0 || ratio_[1] <= 0) {
+    std::string err_msg = "RandomResizedCrop: ratio must be greater than 0.";
+    MS_LOG(ERROR) << "RandomResizedCrop: ratio must be greater than 0, got: " << ratio_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (ratio_[1] < ratio_[0]) {
@@ -1502,9 +1507,15 @@ Status RandomResizedCropWithBBoxOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (scale_[0] < 0 || scale_[1] < 0) {
-    std::string err_msg = "RandomResizedCropWithBBox: scale must be greater than or equal to 0.";
-    MS_LOG(ERROR) << "RandomResizedCropWithBBox: scale must be greater than or equal to 0, got: " << scale_;
+  if (scale_[0] < 0) {
+    std::string err_msg = "RandomResizedCropWithBBox: min scale must be greater than or equal to 0.";
+    MS_LOG(ERROR) << "RandomResizedCropWithBBox: min scale must be greater than or equal to 0, got: " +
+                       std::to_string(scale_[0]);
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (scale_[1] <= 0) {
+    std::string err_msg = "RandomResizedCropWithBBox: max scale must be greater than 0.";
+    MS_LOG(ERROR) << "RandomResizedCropWithBBox: max scale must be greater than 0, got: " + std::to_string(scale_[1]);
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_[1] < scale_[0]) {
@@ -1520,9 +1531,9 @@ Status RandomResizedCropWithBBoxOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (ratio_[0] < 0 || ratio_[1] < 0) {
-    std::string err_msg = "RandomResizedCropWithBBox: ratio must be greater than or equal to 0.";
-    MS_LOG(ERROR) << "RandomResizedCropWithBBox: ratio must be greater than or equal to 0, got: " << ratio_;
+  if (ratio_[0] <= 0 || ratio_[1] <= 0) {
+    std::string err_msg = "RandomResizedCropWithBBox: ratio must be greater than 0.";
+    MS_LOG(ERROR) << "RandomResizedCropWithBBox: ratio must be greater than 0, got: " << ratio_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (ratio_[1] < ratio_[0]) {
@@ -1884,9 +1895,16 @@ Status SoftDvppDecodeRandomCropResizeJpegOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (scale_[0] < 0 || scale_[1] < 0) {
-    std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: scale must be greater than or equal to 0.";
-    MS_LOG(ERROR) << "SoftDvppDecodeRandomCropResizeJpeg: scale must be greater than or equal to 0, got: " << scale_;
+  if (scale_[0] < 0) {
+    std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: min scale must be greater than or equal to 0.";
+    MS_LOG(ERROR) << "SoftDvppDecodeRandomCropResizeJpeg: min scale must be greater than or equal to 0, got: " +
+                       std::to_string(scale_[0]);
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (scale_[1] <= 0) {
+    std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: max scale must be greater than 0.";
+    MS_LOG(ERROR) << "SoftDvppDecodeRandomCropResizeJpeg: max scale must be greater than 0, got: " +
+                       std::to_string(scale_[1]);
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_[1] < scale_[0]) {
@@ -1902,9 +1920,9 @@ Status SoftDvppDecodeRandomCropResizeJpegOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (ratio_[0] < 0 || ratio_[1] < 0) {
-    std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: ratio must be greater than or equal to 0.";
-    MS_LOG(ERROR) << "SoftDvppDecodeRandomCropResizeJpeg: ratio must be greater than or equal to 0, got: " << ratio_;
+  if (ratio_[0] <= 0 || ratio_[1] <= 0) {
+    std::string err_msg = "SoftDvppDecodeRandomCropResizeJpeg: ratio must be greater than 0.";
+    MS_LOG(ERROR) << "SoftDvppDecodeRandomCropResizeJpeg: ratio must be greater than 0, got: " << ratio_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (ratio_[1] < ratio_[0]) {
