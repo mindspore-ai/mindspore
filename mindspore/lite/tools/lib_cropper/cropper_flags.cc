@@ -72,7 +72,7 @@ int CropperFlags::Init(int argc, const char **argv) {
     std::cerr << "INPUT MISSING: modelFile or modelFolderPath is necessary" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   } else if (!this->model_file_.empty() && !this->model_folder_path_.empty()) {
-    std::cerr << "INPUT MISSING: modelFile and modelFolderPath must choose one" << std::endl;
+    std::cerr << "INPUT ILLEGAL: modelFile and modelFolderPath must choose one" << std::endl;
     return RET_INPUT_PARAM_INVALID;
   } else if (!this->model_folder_path_.empty()) {
     this->model_folder_path_ = RealPath(this->model_folder_path_.c_str());
@@ -93,10 +93,15 @@ int CropperFlags::Init(int argc, const char **argv) {
   if (this->output_file_.empty()) {
     this->output_file_ = this->package_file_;
   } else {
+    if (ValidFileSuffix(this->output_file_, "a") != RET_OK) {
+      MS_LOG(ERROR) << "INPUT ILLEGAL: packageFile need to pass package name, such as libmindspore-lite.a";
+      return RET_INPUT_PARAM_INVALID;
+    }
     std::string folder_name = this->output_file_.substr(0, this->output_file_.rfind('/'));
     folder_name = RealPath(folder_name.c_str());
+    // folder does not exist.
     if (folder_name.empty()) {
-      return RET_OK;
+      return RET_INPUT_PARAM_INVALID;
     }
   }
   if (this->output_file_.empty()) {
