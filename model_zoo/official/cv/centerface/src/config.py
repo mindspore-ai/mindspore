@@ -57,7 +57,6 @@ class ConfigCenterface():
     down_ratio = 4
     test_batch_size = 1
 
-    seed = 317
     master_batch_size = 8
     num_workers = 8
     not_rand_crop = False
