@@ -32,6 +32,8 @@ class MKLCPUKernel : public CPUKernel {
   ~MKLCPUKernel() override = default;
 
  protected:
+  bool BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
+                       std::vector<size_t> *dst_shape);
   void GetPadding(const CNodePtr &kernel_node, const std::string &pad_mode, const std::vector<size_t> &src_shape,
                   const std::vector<size_t> &kernel_size, int stride, std::vector<int> *padding_l,
                   std::vector<int> *padding_r);
