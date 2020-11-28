@@ -205,7 +205,8 @@ class GradOperation(GradOperation_):
         >>>
         >>> x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
-        >>> GradNetWrtX(Net())(x, y)
+        >>> output = GradNetWrtX(Net())(x, y)
+        >>> print(output)
         Tensor(shape=[2, 3], dtype=Float32,
         [[1.4100001 1.5999999 6.6      ]
          [1.4100001 1.5999999 6.6      ]])
@@ -221,7 +222,8 @@ class GradOperation(GradOperation_):
         >>>
         >>> x = Tensor([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.11, 3.3, 1.1], [1.1, 0.2, 1.4], [1.1, 2.2, 0.3]], dtype=mstype.float32)
-        >>> GradNetWrtXY(Net())(x, y)
+        >>> output = GradNetWrtXY(Net())(x, y)
+        >>> print(output)
         (Tensor(shape=[2, 3], dtype=Float32,
         [[4.5099998 2.7       3.6000001]
          [4.5099998 2.7       3.6000001]]), Tensor(shape=[3, 3], dtype=Float32,
@@ -241,7 +243,8 @@ class GradOperation(GradOperation_):
         >>>
         >>> x = Tensor([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.11, 3.3, 1.1], [1.1, 0.2, 1.4], [1.1, 2.2, 0.3]], dtype=mstype.float32)
-        >>> GradNetWrtXYWithSensParam(Net())(x, y)
+        >>> output = GradNetWrtXYWithSensParam(Net())(x, y)
+        >>> print(output)
         (Tensor(shape=[2, 3], dtype=Float32,
         [[2.211     0.51      1.4900001]
          [5.588     2.68      4.07     ]]), Tensor(shape=[3, 3], dtype=Float32,
@@ -261,7 +264,8 @@ class GradOperation(GradOperation_):
         >>>
         >>> x = Tensor([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.11, 3.3, 1.1], [1.1, 0.2, 1.4], [1.1, 2.2, 0.3]], dtype=mstype.float32)
-        >>> GradNetWithWrtParams(Net())(x, y)
+        >>> output = GradNetWithWrtParams(Net())(x, y)
+        >>> print(output)
         (Tensor(shape=[1], dtype=Float32, [21.536]),)
         >>>
         >>> class GradNetWrtInputsAndParams(nn.Cell):
@@ -276,7 +280,8 @@ class GradOperation(GradOperation_):
         >>>
         >>> x = Tensor([[0.1, 0.6, 1.2], [0.5, 1.3, 0.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.12, 2.3, 1.1], [1.3, 0.2, 2.4], [0.1, 2.2, 0.3]], dtype=mstype.float32)
-        >>> GradNetWrtInputsAndParams(Net())(x, y)
+        >>> output = GradNetWrtInputsAndParams(Net())(x, y)
+        >>> print(output)
         ((Tensor(shape=[2, 3], dtype=Float32,
         [[3.52 3.9  2.6 ]
          [3.52 3.9  2.6 ]]), Tensor(shape=[3, 3], dtype=Float32,
