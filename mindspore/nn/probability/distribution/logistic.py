@@ -40,63 +40,75 @@ class Logistic(Distribution):
         `dtype` must be a float type because Logistic distributions are continuous.
 
     Examples:
-        >>> # To initialize a Logistic distribution of loc 3.0 and scale 4.0.
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
-        >>> n = msd.Logistic(3.0, 4.0, dtype=mstype.float32)
-        >>>
-        >>> # The following creates two independent Logistic distributions.
-        >>> n = msd.Logistic([3.0, 3.0], [4.0, 4.0], dtype=mstype.float32)
-        >>>
+        >>> from mindspore import Tensor
+        >>> # To initialize a Logistic distribution of loc 3.0 and scale 4.0.
+        >>> l1 = msd.Logistic(3.0, 4.0, dtype=mindspore.float32)
         >>> # A Logistic distribution can be initialized without arguments.
         >>> # In this case, `loc` and `scale` must be passed in through arguments.
-        >>> n = msd.Logistic(dtype=mstype.float32)
+        >>> l2 = msd.Logistic(dtype=mindspore.float32)
         >>>
-        >>> # To use a Normal distribution in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.l1 = msd.Logistic(0.0, 1.0, dtype=mstype.float32)
-        ...         self.l2 = msd.Logistic(dtype=mstype.float32)
-        ...
-        ...     # The following calls are valid in construct.
-        ...     def construct(self, value, loc_b, scale_b, loc_a, scale_a):
-        ...
-        ...         # Private interfaces of probability functions corresponding to public interfaces, including
-        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
-        ...         # Args:
-        ...         #     value (Tensor): the value to be evaluated.
-        ...         #     loc (Tensor): the location of the distribution. Default: self.loc.
-        ...         #     scale (Tensor): the scale of the distribution. Default: self.scale.
-        ...
-        ...         # Examples of `prob`.
-        ...         # Similar calls can be made to other probability functions
-        ...         # by replacing 'prob' by the name of the function
-        ...         ans = self.l1.prob(value)
-        ...         # Evaluate with respect to distribution b.
-        ...         ans = self.l1.prob(value, loc_b, scale_b)
-        ...         # `loc` and `scale` must be passed in during function calls
-        ...         ans = self.l2.prob(value, loc_a, scale_a)
-        ...
-        ...         # Functions `mean`, `mode`, `sd`, `var`, and `entropy` have the same arguments.
-        ...         # Args:
-        ...         #     loc (Tensor): the location of the distribution. Default: self.loc.
-        ...         #     scale (Tensor): the scale of the distribution. Default: self.scale.
-        ...
-        ...         # Example of `mean`. `mode`, `sd`, `var`, and `entropy` are similar.
-        ...         ans = self.l1.mean() # return 0.0
-        ...         ans = self.l1.mean(loc_b, scale_b) # return loc_b
-        ...         # `loc` and `scale` must be passed in during function calls.
-        ...         ans = self.l2.mean(loc_a, scale_a)
-        ...
-        ...         # Examples of `sample`.
-        ...         # Args:
-        ...         #     shape (tuple): the shape of the sample. Default: ()
-        ...         #     loc (Tensor): the location of the distribution. Default: self.loc.
-        ...         #     scale (Tensor): the scale of the distribution. Default: self.scale.
-        ...         ans = self.l1.sample()
-        ...         ans = self.l1.sample((2,3))
-        ...         ans = self.l1.sample((2,3), loc_b, scale_b)
-        ...         ans = self.l2.sample((2,3), loc_a, scale_a)
+        >>> # Here are some tensors used below for testing
+        >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
+        >>> loc_a = Tensor([2.0], dtype=mindspore.float32)
+        >>> scale_a = Tensor([2.0, 2.0, 2.0], dtype=mindspore.float32)
+        >>> loc_b = Tensor([1.0], dtype=mindspore.float32)
+        >>> scale_b = Tensor([1.0, 1.5, 2.0], dtype=mindspore.float32)
+        >>>
+        >>> # Private interfaces of probability functions corresponding to public interfaces, including
+        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
+        >>> # Args:
+        >>> #     value (Tensor): the value to be evaluated.
+        >>> #     loc (Tensor): the location of the distribution. Default: self.loc.
+        >>> #     scale (Tensor): the scale of the distribution. Default: self.scale.
+        >>> # Examples of `prob`.
+        >>> # Similar calls can be made to other probability functions
+        >>> # by replacing 'prob' by the name of the function
+        >>> ans = l1.prob(value)
+        >>> print(ans)
+        [0.05875093 0.06153353 0.0625    ]
+        >>> # Evaluate with respect to distribution b.
+        >>> ans = l1.prob(value, loc_b, scale_b)
+        >>> print(ans)
+        [0.25       0.14943825 0.09830598]
+        >>> # `loc` and `scale` must be passed in during function calls
+        >>> ans = l1.prob(value, loc_a, scale_a)
+        >>> print(ans)
+        [0.11750185 0.125      0.11750185]
+        >>> # Functions `mean`, `mode`, `sd`, `var`, and `entropy` have the same arguments.
+        >>> # Args:
+        >>> #     loc (Tensor): the location of the distribution. Default: self.loc.
+        >>> #     scale (Tensor): the scale of the distribution. Default: self.scale.
+        >>> # Example of `mean`. `mode`, `sd`, `var`, and `entropy` are similar.
+        >>> ans = l1.mean()
+        >>> print(ans)
+        3.0
+        >>> ans = l1.mean(loc_b, scale_b)
+        >>> print(ans)
+        [1. 1. 1.]
+        >>> # `loc` and `scale` must be passed in during function calls.
+        >>> ans = l1.mean(loc_a, scale_a)
+        >>> print(ans)
+        [2. 2. 2.]
+        >>> # Examples of `sample`.
+        >>> # Args:
+        >>> #     shape (tuple): the shape of the sample. Default: ()
+        >>> #     loc (Tensor): the location of the distribution. Default: self.loc.
+        >>> #     scale (Tensor): the scale of the distribution. Default: self.scale.
+        >>> ans = l1.sample()
+        >>> print(ans.shape)
+        ()
+        >>> ans = l1.sample((2,3))
+        >>> print(ans.shape)
+        (2, 3)
+        >>> ans = l1.sample((2,3), loc_b, scale_b)
+        >>> print(ans.shape)
+        (2, 3, 3)
+        >>> ans = l1.sample((2,3), loc_a, scale_a)
+        >>> print(ans.shape)
+        (2, 3, 3)
     """
 
     def __init__(self,

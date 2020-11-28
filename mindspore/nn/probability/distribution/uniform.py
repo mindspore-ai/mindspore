@@ -200,7 +200,7 @@ class Uniform(Distribution):
             self.checktensor(high, 'high')
         else:
             high = self.high
-        return high, low
+        return low, high
 
     def _range(self, low=None, high=None):
         r"""

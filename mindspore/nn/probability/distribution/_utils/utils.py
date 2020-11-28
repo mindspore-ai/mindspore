@@ -168,9 +168,12 @@ def check_sum_equal_one(probs):
         if not isinstance(probs.data, Tensor):
             return
         probs = probs.data
-    prob_sum = np.sum(probs.asnumpy(), axis=-1)
-    comp = np.equal(np.ones(prob_sum.shape), prob_sum)
-    if not comp.all():
+    if isinstance(probs, Tensor):
+        probs = probs.asnumpy()
+    prob_sum = np.sum(probs, axis=-1)
+    # add a small tolerance here to increase numerical stability
+    comp = np.allclose(prob_sum, np.ones(prob_sum.shape), rtol=1e-14, atol=1e-14)
+    if not comp:
         raise ValueError('Probabilities for each category should sum to one for Categorical distribution.')
 
 def check_rank(probs):
