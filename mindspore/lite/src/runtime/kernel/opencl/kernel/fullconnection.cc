@@ -81,7 +81,10 @@ int FullConnectionOpenCLKernel::Prepare() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
-  InitWeights();
+  auto ret = InitWeights();
+  if (ret != RET_OK) {
+    return ret;
+  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
@@ -89,6 +92,10 @@ int FullConnectionOpenCLKernel::Prepare() {
 }
 
 int FullConnectionOpenCLKernel::InitWeights() {
+  if (!in_tensors_.at(kWeightIndex)->IsConst()) {
+    MS_LOG(ERROR) << "FullConnection don't support non-constant filter yet.";
+    return RET_ERROR;
+  }
   auto allocator = ocl_runtime_->GetAllocator();
   int ci = inShape.C;
   int ci4 = UP_DIV(ci, C4NUM);
@@ -96,7 +103,6 @@ int FullConnectionOpenCLKernel::InitWeights() {
   int co4 = UP_DIV(co, C4NUM);
   int h = inShape.H;
   int w = inShape.W;
-
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   padWeight_ = allocator->Malloc(h * w * ci4 * co4 * C4NUM * C4NUM * dtype_size);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
@@ -162,6 +168,10 @@ int FullConnectionOpenCLKernel::InitWeights() {
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, co4 * C4NUM * dtype_size);
   if (in_tensors_.size() >= 3) {
+    if (!in_tensors_.at(2)->IsConst()) {
+      MS_LOG(ERROR) << "FullConnection don't support non-constant bias yet.";
+      return RET_ERROR;
+    }
     if (in_tensors_[2]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < co; i++) {
         reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->data_c())[i];

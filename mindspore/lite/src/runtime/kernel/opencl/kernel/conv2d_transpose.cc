@@ -52,7 +52,10 @@ int Conv2dTransposeOpenCLKernel::Prepare() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
-  InitWeights();
+  auto ret = InitWeights();
+  if (ret != RET_OK) {
+    return ret;
+  }
   SetGlobalLocal();
   SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
@@ -102,6 +105,10 @@ void Conv2dTransposeOpenCLKernel::SetConstArgs() {
 }
 
 int Conv2dTransposeOpenCLKernel::InitWeights() {
+  if (!in_tensors_.at(1)->IsConst()) {
+    MS_LOG(ERROR) << "Conv2dTranspose don't support non-constant filter yet.";
+    return RET_ERROR;
+  }
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   int ci = in_tensors_[0]->shape()[3];
   int co = out_tensors_[0]->shape()[3];
@@ -171,6 +178,10 @@ int Conv2dTransposeOpenCLKernel::InitWeights() {
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, div_co * C4NUM * data_size);
   if (in_tensors_.size() >= 3) {
+    if (!in_tensors_.at(2)->IsConst()) {
+      MS_LOG(ERROR) << "Conv2dTranspose don't support non-constant bias yet.";
+      return RET_ERROR;
+    }
     auto bias_dtype = in_tensors_[2]->data_type();
     if (bias_dtype == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < co; i++) {

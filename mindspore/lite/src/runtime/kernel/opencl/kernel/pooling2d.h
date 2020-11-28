@@ -39,8 +39,6 @@ class PoolingOpenCLKernel : public OpenCLKernel {
 
  private:
   PoolingParameter *parameter_;
-  std::vector<size_t> local_size_;
-  std::vector<size_t> global_size_;
 };
 
 }  // namespace mindspore::kernel
