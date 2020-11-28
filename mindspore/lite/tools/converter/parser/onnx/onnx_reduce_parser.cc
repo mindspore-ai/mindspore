@@ -38,6 +38,7 @@ STATUS OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
     return RET_NULL_PTR;
   }
 
+  attr->keepDims = 1;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axes") {
@@ -58,6 +59,10 @@ STATUS OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
     attr->mode = schema::ReduceMode_ReduceMin;
   } else if (type == "ReduceSum") {
     attr->mode = schema::ReduceMode_ReduceSum;
+  } else if (type == "ReduceProd") {
+    attr->mode = schema::ReduceMode_ReduceProd;
+  } else if (type == "ReduceSumSquare") {
+    attr->mode = schema::ReduceMode_ReduceSumSquare;
   } else {
     MS_LOG(ERROR) << "unsupported type";
     return RET_ERROR;
