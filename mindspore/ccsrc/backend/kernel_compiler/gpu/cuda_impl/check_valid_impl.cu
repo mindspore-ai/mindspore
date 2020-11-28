@@ -40,8 +40,6 @@ template <typename S>
 __global__ void CheckValidKernel(const size_t size, const unsigned char *box,
                                  const unsigned char *img_metas, S *valid) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < size; i += gridDim.x * blockDim.x) {
-    const size_t left_x = i * 4;
-    const size_t left_y = i * 4 + 1;
     const size_t right_x = i * 4 + 2;
     const size_t right_y = i * 4 + 3;
 

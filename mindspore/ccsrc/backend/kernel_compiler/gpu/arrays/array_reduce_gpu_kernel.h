@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,6 +133,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
     input_size_ = 0;
     output_size_ = 0;
     workspace_size_ = 0;
+    axis_.clear();
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();

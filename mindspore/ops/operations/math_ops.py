@@ -320,7 +320,16 @@ class _Reduce(PrimitiveWithInfer):
                 value = np_reduce_func(value, axis_v, keepdims=self.keep_dims)
                 value = np.array(value)
                 value = Tensor(value)
+        if 'max_shape' and 'min_shape' in input_x:
+            output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
+            output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
+        else:
+            output_max_shape = input_shp
+            output_min_shape = input_shp
+
         return {'shape': input_shp,
+                'min_shape': output_min_shape,
+                'max_shape': output_max_shape,
                 'dtype': input_x['dtype'],
                 'value': value}
 
