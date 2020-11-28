@@ -170,6 +170,7 @@ class PrimLib:
         'FlattenGrad': Prim(RESHAPE),
         'Transpose': Prim(TRANSFORM),
         'Tile': Prim(BROADCAST),
+        'BroadcastTo': Prim(BROADCAST),
     }
 
     default_primtive = Prim(UNKNOWN)

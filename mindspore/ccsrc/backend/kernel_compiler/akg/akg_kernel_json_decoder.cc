@@ -248,6 +248,7 @@ class CNodeDecoder {
     {kReduceSumOpName, std::vector<std::string>{kAttrKeepDims}},
     {kReduceMaxOpName, std::vector<std::string>{kAttrKeepDims}},
     {kReduceMinOpName, std::vector<std::string>{kAttrKeepDims}},
+    {kBroadcastToOpName, std::vector<std::string>{kAttrShape}},
   };
 
   PrimitivePtr GetPrimitive(const std::string &op_name) {

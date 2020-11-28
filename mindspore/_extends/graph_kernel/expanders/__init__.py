@@ -32,3 +32,5 @@ from .layernorm_grad import expand_layernormgrad
 from .logsoftmax import expand_logsoftmax
 from .logsoftmax_grad import expand_logsoftmaxgrad
 from .gkdropout import expand_gkdropout
+from .tile import expand_tile
+from .sqrt_grad import expand_sqrtgrad

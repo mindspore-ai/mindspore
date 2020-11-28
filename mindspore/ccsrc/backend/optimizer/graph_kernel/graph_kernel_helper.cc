@@ -701,11 +701,14 @@ FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNo
 std::unordered_set<PrimitivePtr> GetExpandOps() {
   std::unordered_set<PrimitivePtr> expand_ops = {
     prim::kPrimSquare,
-#if ENABLE_GPU
+    prim::kPrimGeluGrad,
+#if ENABLE_D
+    prim::kPrimTile,
+    prim::kPrimSqrtGrad,
+#elif ENABLE_GPU
     prim::kPrimBiasAdd,
     prim::kPrimBiasAddGrad,
     prim::kPrimGelu,
-    prim::kPrimGeluGrad,
     prim::kPrimFusedAdam,
     prim::kPrimFusedAdamWeightDecay,
     prim::kPrimTanhGrad,
