@@ -589,17 +589,15 @@ class Interpolate(Cell):
     Samples the input tensor to the given size or scale_factor. Now, only support
     bilinear interpolation.
 
-    Args:
-        size (Union[tuple[int], list[int]]): A tuple or list of 2 int elements '(new_height, new_width)',
-            the new size of the tensor. Default: None.
-        scale_factor (int): The scale factor of new size of the tensor. The value should be positive integer.
-            Default: None.
-        align_corners (bool): If true, rescale input by '(new_height - 1) / (height - 1)', which exactly aligns
-            the 4 corners of images and resized images. If false, rescale by 'new_height / height'. Default: False.
-
     Inputs:
         - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape:
           math:`(batch, channels, height, width)`, with data type of float16 or float32.
+        - **size** (Union[tuple[int], list[int]]): A tuple or list of 2 int elements '(new_height, new_width)',
+          the new size of the tensor. One and only one of size and scale_factor can be set to None. Default: None.
+        - **scale_factor** (int): The scale factor of new size of the tensor. The value should be positive integer.
+          One and only one of size and scale_factor can be set to None. Default: None.
+        - **align_corners** (bool): If true, rescale input by '(new_height - 1) / (height - 1)', which exactly aligns
+          the 4 corners of images and resized images. If false, rescale by 'new_height / height'. Default: False.
 
     Outputs:
         Resized tensor.
@@ -609,14 +607,14 @@ class Interpolate(Cell):
         scale_factor * width)` in float32
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
-        >>> from mindspore.ops import operations as P
         >>> tensor = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
         >>> interpolate = nn.Interpolate()
         >>> result = interpolate(tensor, size=(5,5))
-        >>> assert result.shape == (1, 1, 5, 5)
+        >>> print(result.shape)
+        (1, 1, 5, 5)
     """
     def __init__(self):
         super(Interpolate, self).__init__()
