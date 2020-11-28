@@ -126,19 +126,19 @@ class LayerNormFactory(OpsFactory):
         return input_grad[0][0].asnumpy(), input_grad[1][1].asnumpy(), input_grad[1][0].asnumpy()
 
     def forward_cmp(self):
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        context.set_context(mode=context.GRAPH_MODE, device_target=context.get_context('device_target'))
         graph_out = self.forward_mindspore_impl()
 
-        context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+        context.set_context(mode=context.PYNATIVE_MODE, device_target=context.get_context('device_target'))
         pynative_out = self.forward_mindspore_impl()
 
         allclose_nparray(graph_out[0], pynative_out[0], self.loss, self.loss)
 
     def grad_cmp(self):
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        context.set_context(mode=context.GRAPH_MODE, device_target=context.get_context('device_target'))
         graph_grad1, graph_grad2, graph_grad3 = self.grad_mindspore_impl()
 
-        context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+        context.set_context(mode=context.PYNATIVE_MODE, device_target=context.get_context('device_target'))
         pynative_grad1, pynative_grad2, pynative_grad3 = self.grad_mindspore_impl()
 
         allclose_nparray(graph_grad1, pynative_grad1, self.loss, self.loss)
@@ -197,30 +197,52 @@ class ArgMaxWithValueFactory(OpsFactory):
         allclose_nparray(out_numpy[1], out_mindspore[1], self.loss, self.loss)
 
     def grad_cmp(self):
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        context.set_context(mode=context.GRAPH_MODE, device_target=context.get_context('device_target'))
         graph_grad = self.grad_mindspore_impl()
 
-        context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+        context.set_context(mode=context.PYNATIVE_MODE, device_target=context.get_context('device_target'))
         pynative_grad = self.grad_mindspore_impl()
 
         allclose_nparray(graph_grad, pynative_grad, self.loss, self.loss)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_layernorm_input():
+def layernorm_input():
     fact = LayerNormFactory(input_shape=(1, 128, 1024), norm_shape=(1024,), gamma_shape=(1024,), beta_shape=(1024,),
                             norm_axis=2, params_axis=2, dtype=np.float16)
     fact.forward_cmp()
     fact.loss = 5e-3
     fact.grad_cmp()
 
+def argmaxwithvalue_input():
+    fact = ArgMaxWithValueFactory(input_shape=[1024, 1024], axis=-1, keep_dims=False)
+    fact.forward_cmp()
+    fact.grad_cmp()
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_argmaxwithvalue_input():
-    fact = ArgMaxWithValueFactory(input_shape=[1024, 1024], axis=-1, keep_dims=False)
-    fact.forward_cmp()
-    fact.grad_cmp()
+def test_layernorm_input_ascend():
+    context.set_context(device_target="Ascend")
+    layernorm_input()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernorm_input_gpu():
+    context.set_context(device_target="GPU")
+    layernorm_input()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_argmaxwithvalue_input_ascend():
+    context.set_context(device_target="Ascend")
+    argmaxwithvalue_input()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argmaxwithvalue_input_gpu():
+    context.set_context(device_target="GPU")
+    argmaxwithvalue_input()

@@ -85,7 +85,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
     else:
         assert True
 
-def mixed_precision_multiple_cells_01():
+def mixed_precision_multiple_cells_temp_01():
     np.random.seed(1)
     x = np.random.randn(1, 3, 28, 28).astype(np.float32)
     net = ReluTanhSoftmax()
@@ -95,7 +95,7 @@ def mixed_precision_multiple_cells_01():
     out_me_relu_01, out_me_tanh_01, out_me_softmax_01 = net(Tensor(x))
     return out_me_relu_01, out_me_tanh_01, out_me_softmax_01
 
-def mixed_precision_multiple_cells_02():
+def mixed_precision_multiple_cells_temp_02():
     np.random.seed(1)
     x = np.random.randn(1, 3, 28, 28).astype(np.float32)
     net = ReluTanhSoftmax()
@@ -105,7 +105,7 @@ def mixed_precision_multiple_cells_02():
     out_me_relu_02, out_me_tanh_02, out_me_softmax_02 = net(Tensor(x))
     return out_me_relu_02, out_me_tanh_02, out_me_softmax_02
 
-def mixed_precision_multiple_cells_03():
+def mixed_precision_multiple_cells_temp_03():
     np.random.seed(1)
     x = np.random.randn(1, 3, 28, 28).astype(np.float32)
     net = ReluTanhAdd()
@@ -115,45 +115,78 @@ def mixed_precision_multiple_cells_03():
     out_me = net(Tensor(x))
     return out_me
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_mixed_precision_multiples_cell_01():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    graph_relu_01, graph_tanh_01, graph_softmax_01 = mixed_precision_multiple_cells_01()
+def mixed_precision_multiples_cell_01():
+    context.set_context(mode=context.GRAPH_MODE, device_target=context.get_context('device_target'))
+    graph_relu_01, graph_tanh_01, graph_softmax_01 = mixed_precision_multiple_cells_temp_01()
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    pynative_relu_01, pynative_tanh_01, pynative_softmax_01 = mixed_precision_multiple_cells_01()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target=context.get_context('device_target'))
+    pynative_relu_01, pynative_tanh_01, pynative_softmax_01 = mixed_precision_multiple_cells_temp_01()
 
     allclose_nparray(graph_relu_01.asnumpy(), pynative_relu_01.asnumpy(), 0.001, 0.001)
     allclose_nparray(graph_tanh_01.asnumpy(), pynative_tanh_01.asnumpy(), 0.001, 0.001)
     allclose_nparray(graph_softmax_01.asnumpy(), pynative_softmax_01.asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_mixed_precision_multiples_cell_02():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    graph_relu_02, graph_tanh_02, graph_softmax_02 = mixed_precision_multiple_cells_02()
+def mixed_precision_multiples_cell_02():
+    context.set_context(mode=context.GRAPH_MODE, device_target=context.get_context('device_target'))
+    graph_relu_02, graph_tanh_02, graph_softmax_02 = mixed_precision_multiple_cells_temp_02()
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    pynative_relu_02, pynative_tanh_02, pynative_softmax_02 = mixed_precision_multiple_cells_02()
+    context.set_context(mode=context.PYNATIVE_MODE, device_target=context.get_context('device_target'))
+    pynative_relu_02, pynative_tanh_02, pynative_softmax_02 = mixed_precision_multiple_cells_temp_02()
 
     allclose_nparray(graph_relu_02.asnumpy(), pynative_relu_02.asnumpy(), 0.001, 0.001)
     allclose_nparray(graph_tanh_02.asnumpy(), pynative_tanh_02.asnumpy(), 0.001, 0.001)
     allclose_nparray(graph_softmax_02.asnumpy(), pynative_softmax_02.asnumpy(), 0.001, 0.001)
 
+def mixed_precision_multiples_cell_03():
+    context.set_context(mode=context.GRAPH_MODE, device_target=context.get_context('device_target'))
+    graph_output_03 = mixed_precision_multiple_cells_temp_03()
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target=context.get_context('device_target'))
+    pynative_output_03 = mixed_precision_multiple_cells_temp_03()
+
+    allclose_nparray(graph_output_03.asnumpy(), pynative_output_03.asnumpy(), 0.001, 0.001)
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_mixed_precision_multiples_cell_03():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    graph_output_03 = mixed_precision_multiple_cells_03()
+def test_mixed_precision_multiples_cell_ascend_01():
+    context.set_context(device_target="Ascend")
+    mixed_precision_multiples_cell_01()
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    pynative_output_03 = mixed_precision_multiple_cells_03()
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_mixed_precision_multiples_cell_gpu_01():
+    context.set_context(device_target="GPU")
+    mixed_precision_multiples_cell_01()
 
-    allclose_nparray(graph_output_03.asnumpy(), pynative_output_03.asnumpy(), 0.001, 0.001)
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_mixed_precision_multiples_cell_ascend_02():
+    context.set_context(device_target="Ascend")
+    mixed_precision_multiples_cell_02()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_mixed_precision_multiples_cell_gpu_02():
+    context.set_context(device_target="GPU")
+    mixed_precision_multiples_cell_02()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_mixed_precision_multiples_cell_ascend_03():
+    context.set_context(device_target="Ascend")
+    mixed_precision_multiples_cell_03()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_mixed_precision_multiples_cell_gpu_03():
+    context.set_context(device_target="GPU")
+    mixed_precision_multiples_cell_03()
