@@ -2,7 +2,7 @@
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 __kernel void conv2d_transpose_NHWC4(__read_only image2d_t src_data, __write_only image2d_t dst_data,
                                      __global FLT16 *weight, __read_only image2d_t biases, int2 kernel_size,
-                                     int2 stride, int2 padding, int4 src_size, int4 dst_size) {
+                                     int2 stride, int2 padding, int4 src_size, int4 dst_size, int act_type) {
   int dst_h = get_global_id(0);
   int rem_h = dst_h % stride.x;
   int ceil_h = dst_h / stride.x;
@@ -70,6 +70,19 @@ __kernel void conv2d_transpose_NHWC4(__read_only image2d_t src_data, __write_onl
   r1 += bias_val;
   r2 += bias_val;
   r3 += bias_val;
+
+  if (act_type == ActivationType_RELU) {
+    r0 = max(r0, (FLT4)(0.0f));
+    r1 = max(r1, (FLT4)(0.0f));
+    r2 = max(r2, (FLT4)(0.0f));
+    r3 = max(r3, (FLT4)(0.0f));
+  } else if (act_type == ActivationType_RELU6) {
+    r0 = clamp(r0, (FLT4)(0.0f), (FLT4)(6.0f));
+    r1 = clamp(r1, (FLT4)(0.0f), (FLT4)(6.0f));
+    r2 = clamp(r2, (FLT4)(0.0f), (FLT4)(6.0f));
+    r3 = clamp(r3, (FLT4)(0.0f), (FLT4)(6.0f));
+  }
+
   WRITE_IMAGE(dst_data, (int2)(dst_w * dst_size.z + dst_c, dst_h), r0);
   if (dst_h + stride.x < dst_size.x && dst_w < dst_size.y) {
     WRITE_IMAGE(dst_data, (int2)(dst_w * dst_size.z + dst_c, dst_h + stride.x), r1);

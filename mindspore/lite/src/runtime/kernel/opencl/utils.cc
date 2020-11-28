@@ -25,6 +25,11 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::opencl::MemType;
+using mindspore::schema::ActivationType_LEAKY_RELU;
+using mindspore::schema::ActivationType_RELU;
+using mindspore::schema::ActivationType_RELU6;
+using mindspore::schema::ActivationType_SIGMOID;
+using mindspore::schema::ActivationType_TANH;
 
 namespace mindspore::lite {
 kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -39,6 +44,15 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
 }  // namespace mindspore::lite
 
 namespace mindspore::kernel {
+
+std::string GetActDefines() {
+  static std::string act_defines = "#define ActivationType_RELU " + std::to_string(ActivationType_RELU) +
+                                   "\n#define ActivationType_RELU6 " + std::to_string(ActivationType_RELU6) +
+                                   "\n#define ActivationType_LEAKY_RELU " + std::to_string(ActivationType_LEAKY_RELU) +
+                                   "\n#define ActivationType_TANH " + std::to_string(ActivationType_TANH) +
+                                   "\n#define ActivationType_SIGMOID " + std::to_string(ActivationType_SIGMOID) + "\n";
+  return act_defines;
+}
 
 int GetUpPow2(int n) {
   int i = 0;

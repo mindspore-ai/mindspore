@@ -35,6 +35,15 @@ using mindspore::schema::PrimitiveType_Scale;
 
 namespace mindspore::kernel {
 
+int ScaleOpenCLKernel::CheckSpecs() {
+  auto *param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
+  if (param->activation_type_ != ActType_No && param->activation_type_ != ActType_Relu &&
+      param->activation_type_ != ActType_Relu6) {
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 ScaleOpenCLKernel::~ScaleOpenCLKernel() {
   auto allocator = ocl_runtime_->GetAllocator();
   if (scale_ptr_ != nullptr) {
@@ -185,7 +194,7 @@ int ScaleOpenCLKernel::Init() {
     kernel_name += "_BUF";
   }
   std::string program_name = "Scale";
-  std::string source = scale_source;
+  std::string source = GetActDefines() + scale_source;
   ocl_runtime_->LoadSource(program_name, source);
   error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
@@ -202,13 +211,6 @@ int ScaleOpenCLKernel::Init() {
 int ScaleOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   auto *param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
-  cl_int act_type = 0;
-  if (param->activation_type_ == ActType_Relu) {
-    act_type = 1;
-  } else if (param->activation_type_ == ActType_Relu6) {
-    act_type = 3;
-  }
-
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
   if (weight_vector_flag_) {
@@ -242,7 +244,7 @@ int ScaleOpenCLKernel::Run() {
       ocl_runtime_->SetKernelArg(kernel_, arg_idx++, UP_DIV(in_tensors_[1]->shape()[0], C4NUM));
     }
   }
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, act_type);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, param->activation_type_);
   ocl_runtime_->RunKernel(kernel_, global_size_, local_size_);
   return RET_OK;
 }

@@ -22,11 +22,14 @@
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/conv2d_transpose.cl.inc"
 #endif
+#include "src/runtime/kernel/opencl/utils.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::ActivationType_RELU;
+using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::PrimitiveType_DeConv2D;
 
 namespace mindspore::kernel {
@@ -38,6 +41,10 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "only support kernel - stride == 2 * pad";
     return RET_ERROR;
   }
+  if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6) {
+    MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -47,7 +54,7 @@ int Conv2dTransposeOpenCLKernel::Prepare() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
-  std::string source = conv2d_transpose_source;
+  std::string source = GetActDefines() + conv2d_transpose_source;
   std::string program_name = "conv2d_transpose";
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
@@ -102,6 +109,7 @@ void Conv2dTransposeOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, padding);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, src_size);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, dst_size);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, static_cast<cl_int>(param->act_type_));
 }
 
 int Conv2dTransposeOpenCLKernel::InitWeights() {
