@@ -30,8 +30,10 @@ class StackOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
 
   ~StackOpenCLKernel() override{};
-
-  int Init() override;
+  int Prepare() override;
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
 
   int ReSize() override;
 
@@ -40,18 +42,17 @@ class StackOpenCLKernel : public OpenCLKernel {
  private:
   int RunAxis0();
 
-  int InferInTensorShapeTo4D(int *arg_cn);
-
-  int InferOutTensorShapeTo4D(cl_int4 *output_shape);
-
+  cl::Kernel kernel_;
   int axis_{0};
-  size_t N_{1};
-  size_t H_{1};
-  size_t W_{1};
-  size_t C_{1};
   size_t OH_{1};
   size_t OW_{1};
   size_t OC_{1};
+  bool buffer_button_{false};
+  bool enable_fp16_{false};
+  cl_int stride_w_in{1};
+  cl_int stride_w_out{1};
+  cl_int4 in_shape_ = {};
+  cl_int4 out_shape_ = {};
 };
 
 }  // namespace mindspore::kernel

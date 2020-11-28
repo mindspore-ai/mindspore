@@ -47,40 +47,6 @@ int StackOpenCLKernel::RunAxis0() {
   return RET_OK;
 }
 
-int StackOpenCLKernel::Init() {
-  if (in_tensors_[0]->shape().size() > 4 || in_tensors_[0]->shape().size() <= 0) {
-    MS_LOG(ERROR) << " only support dim <= 4 ";
-    return RET_ERROR;
-  }
-  auto param = reinterpret_cast<StackParameter *>(this->op_parameter_);
-  axis_ = param->axis_;
-  axis_ = axis_ < 0 ? axis_ + in_tensors_[0]->shape().size() + 1 : axis_;
-  if (in_tensors_[0]->shape().size() != 4) {
-    if (in_tensors_[0]->shape().size() == 2) {
-      axis_ = axis_ + 2;
-    }
-  }
-  if (param->axis_ < -3 || param->axis_ > 3) {
-    MS_LOG(ERROR) << " only support axis >= -3 and axis <= 3 ";
-    return RET_ERROR;
-  }
-
-  std::string kernel_name = "stack";
-  if (in_tensors_.size() == 8) {
-    kernel_name += "8inputaxis" + std::to_string(axis_);
-  } else {
-    MS_LOG(ERROR) << " input must be 8";
-    return RET_ERROR;
-  }
-  MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
-  std::string source = stack_source;
-  std::string program_name = "stack";
-  ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
-
-  return RET_OK;
-}
-
 int StackOpenCLKernel::ReSize() { return RET_OK; }
 
 void StackGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
@@ -97,75 +63,99 @@ void StackGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *l
   local->push_back(z);
 }
 
-int StackOpenCLKernel::InferInTensorShapeTo4D(int *arg_cn) {
-  if (in_tensors_.size() == 8) {
-    int size = in_tensors_[0]->shape().size();
-    switch (size) {
-      case 1:
-        for (int i = 0; i < in_tensors_.size(); ++i) {
-          ocl_runtime_->SetKernelArg(kernel_, (*arg_cn)++, in_tensors_[i]->data_c());
-        }
-        ocl_runtime_->SetKernelArg(kernel_, (*arg_cn)++, out_tensors_[0]->data_c());
-        for (int i = 0; i < in_tensors_.size(); ++i) {
-          cl_int4 temp = {in_tensors_[i]->shape()[0], 1, 1, 1};
-          ocl_runtime_->SetKernelArg(kernel_, (*arg_cn)++, temp);
-        }
-        break;
-      case 2:
-        for (int i = 0; i < in_tensors_.size(); ++i) {
-          ocl_runtime_->SetKernelArg(kernel_, (*arg_cn)++, in_tensors_[i]->data_c());
-        }
-        ocl_runtime_->SetKernelArg(kernel_, (*arg_cn)++, out_tensors_[0]->data_c());
-        for (int i = 0; i < in_tensors_.size(); ++i) {
-          cl_int4 temp = {in_tensors_[i]->shape()[0], 1, 1, UP_DIV(in_tensors_[i]->shape()[1], C4NUM)};
-          ocl_runtime_->SetKernelArg(kernel_, (*arg_cn)++, temp);
-        }
-        break;
-      case 3:
-        for (int i = 0; i < in_tensors_.size(); ++i) {
-          ocl_runtime_->SetKernelArg(kernel_, (*arg_cn)++, in_tensors_[i]->data_c());
-        }
-        ocl_runtime_->SetKernelArg(kernel_, (*arg_cn)++, out_tensors_[0]->data_c());
-        for (int i = 0; i < in_tensors_.size(); ++i) {
-          cl_int4 temp = {in_tensors_[i]->shape()[0], 1, in_tensors_[i]->shape()[1],
-                          UP_DIV(in_tensors_[i]->shape()[2], C4NUM)};
-          ocl_runtime_->SetKernelArg(kernel_, (*arg_cn)++, temp);
-        }
-        break;
-      default:
-        MS_LOG(ERROR) << "unsupported input size > 3 or size <= 0 :" << in_tensors_.size();
-        return RET_ERROR;
-    }
-  } else {
-    MS_LOG(ERROR) << "unsupported input size :" << in_tensors_.size();
+int StackOpenCLKernel::CheckSpecs() {
+  if (in_tensors_[0]->shape().size() > 2 && (axis_ != 0)) {
+    MS_LOG(ERROR) << " only support input size = 2 ";
+    return RET_ERROR;
+  }
+  if (in_tensors_[0]->shape().size() > 4 || in_tensors_[0]->shape().size() <= 0) {
+    MS_LOG(ERROR) << " only support dim <= 4 ";
+    return RET_ERROR;
+  }
+  auto param = reinterpret_cast<StackParameter *>(this->op_parameter_);
+  axis_ = param->axis_;
+  axis_ = axis_ < 0 ? axis_ + in_tensors_[0]->shape().size() : axis_;
+  if (axis_ > 3) {
+    MS_LOG(ERROR) << " only support  axis <= 3 ";
+    return RET_ERROR;
+  }
+  if (axis_ > in_tensors_[0]->shape().size()) {
+    MS_LOG(ERROR) << " stack  axis must been <= in_tensors_[0]->shape().size() ";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int StackOpenCLKernel::InferOutTensorShapeTo4D(cl_int4 *output_shape) {
-  std::vector<int> out_shape = out_tensors_[0]->shape();
-  if (out_shape.size() == 3) {
-    N_ = out_shape[0];
-    C_ = out_shape[1] * UP_DIV(out_shape[2], C4NUM);
-  } else if (out_shape.size() == 4) {
-    if (axis_ == 1) {
-      N_ = out_shape[0];
-      H_ = out_shape[1];
-      W_ = out_shape[2];
-      C_ = UP_DIV(out_shape[3], C4NUM);
-    } else {
-      MS_LOG(ERROR) << "Unsupported out_shape.size=: " << out_shape.size() << " axis=: " << axis_;
-      return RET_ERROR;
-    }
+void StackOpenCLKernel::SetConstArgs() {
+  int arg_cn = in_tensors_.size() + 1;
+  cl_int4 inshape_tmp = {}, outshape_tmp = {};
+  for (int i = 0; i < in_tensors_[0]->shape().size(); ++i) {
+    inshape_tmp.s[i] = in_tensors_[0]->shape()[i];
   }
-  OH_ = N_ * H_;
-  OW_ = W_;
-  OC_ = C_;
-  output_shape->s[0] = N_;
-  output_shape->s[1] = H_;
-  output_shape->s[2] = W_;
-  output_shape->s[3] = C_;
+  Broadcast2GpuShape(in_shape_.s, inshape_tmp.s, in_tensors_[0]->shape().size(), 1);
+  for (int i = 0; i < out_tensors_[0]->shape().size(); ++i) {
+    outshape_tmp.s[i] = out_tensors_[0]->shape()[i];
+  }
+  Broadcast2GpuShape(out_shape_.s, outshape_tmp.s, out_tensors_[0]->shape().size(), 1);
+  in_shape_.s[3] = UP_DIV(in_shape_.s[3], C4NUM);
+  out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
+  if (buffer_button_) {
+    GpuTensorInfo img_info_out(out_tensors_[0]);
+    GpuTensorInfo img_info_in(in_tensors_[0]);
+    size_t dtype = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
+    stride_w_out = img_info_out.RowPitch() / dtype;
+    stride_w_in = img_info_in.RowPitch() / dtype;
+    cl_int2 stride_w = {stride_w_out, stride_w_in};
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, stride_w);
+  }
+}
+
+void StackOpenCLKernel::SetGlobalLocal() {
+  if (((in_tensors_[0]->shape().size() == 2 || in_tensors_[0]->shape().size() == 3) && axis_ == 1) ||
+      (in_tensors_[0]->shape().size() == 3 && axis_ == 2)) {
+    OH_ = out_shape_.s[0] * out_shape_.s[1];
+    OW_ = out_shape_.s[2];
+    OC_ = out_shape_.s[3];
+  } else if (in_tensors_[0]->shape().size() == 1) {
+    OH_ = out_shape_.s[0] * out_shape_.s[1];
+    OW_ = out_shape_.s[2];
+  } else {
+    OH_ = out_shape_.s[0];
+    OW_ = out_shape_.s[1];
+  }
+  const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
+  std::vector<size_t> local = {1, 1, 1};
+  std::vector<size_t> global = {OH_, OW_, OC_};
+  StackGetWorkGroup(global, &local, max_global[0]);
+  OpenCLKernel::AlignGlobalLocal(global, local);
+}
+
+int StackOpenCLKernel::Prepare() {
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
+
+  if (in_tensors_[0]->shape().size() == 1 && axis_ == 1) {
+    axis_ += 2;
+  } else if (in_tensors_[0]->shape().size() == axis_) {
+    buffer_button_ = true;  // boundary stack judge
+  }
+  std::string kernel_name = "stack_";
+  if (!buffer_button_) {
+    kernel_name += std::to_string(in_tensors_.size()) + "input_" + std::to_string(axis_) + "axis_" +
+                   std::to_string(in_tensors_[0]->shape().size()) + "inshape";
+  } else {
+    kernel_name += std::to_string(in_tensors_.size()) + "input_" + "boundary";
+  }
+
+  MS_LOG(DEBUG) << "kernel_name=: " << kernel_name;
+  std::string source = stack_source;
+  std::string program_name = "stack";
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  SetConstArgs();
+  SetGlobalLocal();
+
   return RET_OK;
 }
 
@@ -174,37 +164,22 @@ int StackOpenCLKernel::Run() {
   if (axis_ == 0) {
     return RunAxis0();
   }
-  cl_int4 output_shape = {1, 1, 1, 1};
-  const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
-  std::vector<size_t> local = {1, 1, 1};
   int arg_cn = 0;
-  InferInTensorShapeTo4D(&arg_cn);
-  InferOutTensorShapeTo4D(&output_shape);
-  std::vector<size_t> global = {OH_, OW_, OC_};
-  StackGetWorkGroup(global, &local, max_global[0]);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape);
-  ocl_runtime_->RunKernel(kernel_, global, local);
+  if (buffer_button_) {
+    for (int i = 0; i < in_tensors_.size(); ++i) {
+      ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c(), lite::opencl::MemType::BUF);
+    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
+  } else {
+    for (int i = 0; i < in_tensors_.size(); ++i) {
+      ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c());
+    }
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
+  }
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Stack, OpenCLKernelCreator<StackOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Stack, OpenCLKernelCreator<StackOpenCLKernel>);
 
-kernel::LiteKernel *OpenCLStackKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                             const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) StackOpenCLKernel(opParameter, inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << " new StackOpenCLKernel failed ";
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << " Init kernel failed, name: Stack ";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Stack, OpenCLStackKernelCreator);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Stack, OpenCLStackKernelCreator);
 }  // namespace mindspore::kernel
