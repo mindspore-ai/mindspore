@@ -97,8 +97,6 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
     RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C> or <H,W>");
   }
-  // OpenCv lanuch too many threads.
-  cv::setNumThreads(8);
   cv::Mat in_image = input_cv->mat();
   // resize image too large or too small
   if (output_height == 0 || output_height > in_image.rows * 1000 || output_width == 0 ||
