@@ -214,7 +214,7 @@ void PackInputSum16x4Int8(const int8_t *input, int32_t *input_sum, int32_t *filt
   return;
 }
 
-void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, float *packed_input, int real_cal_num,
+void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param, float *packed_input, int real_cal_num,
                         int block_index) {
   // input format : nhwc
   int kernel_h = conv_param->kernel_h_;

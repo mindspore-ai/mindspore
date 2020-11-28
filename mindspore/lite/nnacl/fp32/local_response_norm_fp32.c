@@ -17,15 +17,15 @@
 #include "nnacl/fp32/local_response_norm_fp32.h"
 #include <math.h>
 
-int LocalResponseNorm(float *input_ptr, int out_size, int channel, float *output_ptr,
-                      LocalResponseNormParameter *param) {
+int LocalResponseNorm(const float *input_ptr, int out_size, int channel, float *output_ptr,
+                      const LocalResponseNormParameter *param) {
   int depth_radius = param->depth_radius_;
   float bias = param->bias_;
   float alpha = param->alpha_;
   float beta = param->beta_;
 
   for (int i = 0; i < out_size; i++) {
-    float *in_data = input_ptr + i * channel;
+    const float *in_data = input_ptr + i * channel;
     float *out_data = output_ptr + i * channel;
 
     for (int j = 0; j < channel; j++) {

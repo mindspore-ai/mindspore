@@ -47,18 +47,19 @@ typedef struct ArithmeticParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void TileOneDimension(float *inData, float *outData, int dim, size_t ndim, int *inShape, int *inStrides,
-                      int *outStrides, int *multiple);
+void TileOneDimension(const float *inData, float *outData, int dim, size_t ndim, const int *inShape,
+                      const int *inStrides, const int *outStrides, const int *multiple);
 void ComputeStrides(const int *shape, int *strides, const int ndim);
 
 void CalcMultiplesAndStrides(ArithmeticParameter *param);
 
-void TileOneDimensionUint8(uint8_t *inData, uint8_t *outData, int dim, size_t ndim, int *inShape, int *inStrides,
-                           int *outStrides, int *multiple);
-void TileDimensions(float *data0, float *data1, float *tile_data0, float *tile_data1, ArithmeticParameter *param);
-void TileDimensionsUint8(uint8_t *data0, uint8_t *data1, uint8_t *tile_data0, uint8_t *tile_data1,
+void TileOneDimensionUint8(const uint8_t *inData, uint8_t *outData, int dim, size_t ndim, const int *inShape,
+                           const int *inStrides, const int *outStrides, const int *multiple);
+void TileDimensions(const float *data0, const float *data1, float *tile_data0, float *tile_data1,
+                    ArithmeticParameter *param);
+void TileDimensionsUint8(const uint8_t *data0, const uint8_t *data1, uint8_t *tile_data0, uint8_t *tile_data1,
                          ArithmeticParameter *param);
-void TileDimensionsInt8(int8_t *data0, int8_t *data1, int8_t *tile_data0, int8_t *tile_data1,
+void TileDimensionsInt8(const int8_t *data0, const int8_t *data1, int8_t *tile_data0, int8_t *tile_data1,
                         ArithmeticParameter *param);
 #ifdef __cplusplus
 }

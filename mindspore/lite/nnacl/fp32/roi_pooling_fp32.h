@@ -40,7 +40,8 @@ typedef struct ROIPoolingParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ROIPooling(float *in_ptr, float *out_ptr, const float *roi, float *max_c, int tid, ROIPoolingParameter *param);
+int ROIPooling(const float *in_ptr, float *out_ptr, const float *roi, float *max_c, int tid,
+               const ROIPoolingParameter *param);
 #ifdef __cplusplus
 }
 #endif

@@ -19,7 +19,7 @@
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 
-void InitGate(float *gate_buffer, const float *bias, LstmParameter *lstm_parm) {
+void InitGate(float *gate_buffer, const float *bias, const LstmParameter *lstm_parm) {
   int gate_offest = 0;
   for (int l = 0; l < 4; l++) {
     int batch_offest = gate_offest;
@@ -94,7 +94,7 @@ void LstmStepUnit(float *output, const float *input, const float *input_input_we
                   const float *input_cell_weight, const float *input_output_weight, const float *state_input_weight,
                   const float *state_forget_weight, const float *state_cell_weight, const float *state_output_weight,
                   const float *bias, float *hidden_state, float *cell_state, float *gate_buffer,
-                  LstmParameter *lstm_parm) {
+                  const LstmParameter *lstm_parm) {
   InitGate(gate_buffer, bias, lstm_parm);
 
   float *input_gate = gate_buffer;
@@ -139,7 +139,7 @@ void LstmStepUnit(float *output, const float *input, const float *input_input_we
 }
 
 void Lstm(float *output, const float *input, const float *weight_i, const float *weight_h, const float *bias,
-          float *hidden_state, float *cell_state, float *gate_buffer, LstmParameter *lstm_parm) {
+          float *hidden_state, float *cell_state, float *gate_buffer, const LstmParameter *lstm_parm) {
   // forward
   const float *input_input_weight = weight_i;
   const float *input_forget_weight = weight_i + lstm_parm->input_size_ * lstm_parm->hidden_size_ * 2;

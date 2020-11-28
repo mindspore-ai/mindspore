@@ -17,8 +17,8 @@
 #include "nnacl/fp32/concat_fp32.h"
 #include <string.h>
 
-void Concat(void **input, int input_num, int axis, int **inputs_output_shape, size_t shape_size, void *output,
-            int task_id, int thread_num) {
+void Concat(const void **input, int input_num, int axis, const int **inputs_output_shape, size_t shape_size,
+            void *output, int task_id, int thread_num) {
   int before_axis_size = 1;
   for (int i = 0; i < axis; ++i) {
     before_axis_size *= inputs_output_shape[0][i];
@@ -32,12 +32,12 @@ void Concat(void **input, int input_num, int axis, int **inputs_output_shape, si
   uint8_t *dst_base = (output);
   size_t output_stride = after_axis_size * inputs_output_shape[input_num][axis];
   for (int i = 0; i < input_num; ++i) {
-    uint8_t *src_base = (input[i]);
+    const uint8_t *src_base = (input[i]);
     size_t input_stride = after_axis_size * inputs_output_shape[i][axis];
     int offset = UP_DIV(input_stride, thread_num);
     int count = MSMIN(offset, input_stride - offset * task_id);
     for (int j = 0; j < before_axis_size; j++) {
-      uint8_t *src = src_base + j * input_stride + task_id * offset;
+      const uint8_t *src = src_base + j * input_stride + task_id * offset;
       uint8_t *dst = dst_base + j * output_stride + axis_offset * after_axis_size + task_id * offset;
       memcpy(dst, src, count);
     }

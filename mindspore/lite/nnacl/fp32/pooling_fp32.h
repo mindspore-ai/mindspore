@@ -27,10 +27,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int AvgPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id, float minf,
-               float maxf);
-void MaxPooling(const float *input_ptr, float *output_ptr, PoolingParameter *pooling_param, int task_id, float minf,
-                float maxf);
+int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param, int task_id,
+               float minf, float maxf);
+void MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param, int task_id,
+                float minf, float maxf);
 #ifdef __cplusplus
 }
 #endif

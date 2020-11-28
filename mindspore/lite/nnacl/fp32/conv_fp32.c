@@ -22,7 +22,7 @@
 
 // fp32 conv common
 void ConvFp32(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
-              float *col_major_input, float *output_data, int task_id, ConvParameter *conv_param) {
+              float *col_major_input, float *output_data, int task_id, const ConvParameter *conv_param) {
   int out_channel = conv_param->output_channel_;
   int deep = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
   int output_count = conv_param->output_h_ * conv_param->output_w_;
@@ -61,8 +61,8 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
 
 // fp32 conv winograd
 void ConvWinogardFp32(const float *input_data, const float *trans_weight, const float *bias_data, float *output_data,
-                      TmpBufferAddress *buffer_list, int task_id, ConvParameter *conv_param, InputTransFunc in_func,
-                      OutputTransFunc out_func) {
+                      TmpBufferAddress *buffer_list, int task_id, const ConvParameter *conv_param,
+                      InputTransFunc in_func, OutputTransFunc out_func) {
   int in_channel = conv_param->input_channel_;
   int out_w_block = UP_DIV(conv_param->output_w_, conv_param->output_unit_);
   int out_h_block = UP_DIV(conv_param->output_h_, conv_param->output_unit_);

@@ -19,7 +19,7 @@
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int Exp(const float *input_data, float *output_data, ExpParameter *parameter, int task_id) {
+int Exp(const float *input_data, float *output_data, const ExpParameter *parameter, int task_id) {
   if (parameter->scale_ == 1) {
     for (size_t i = task_id; i < parameter->element_num_; i += parameter->thread_num_) {
       output_data[i] = expf(input_data[i]);

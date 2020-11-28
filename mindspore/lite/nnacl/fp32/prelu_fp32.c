@@ -18,7 +18,7 @@
 #include <arm_neon.h>
 #endif
 
-void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_id) {
+void PRelu(float *input, float *output, const PReluParameter *prelu_param_, int task_id) {
   float *negetive_slope_value = prelu_param_->slope_;
   int c4 = prelu_param_->channel_num_ / C4NUM;
   int channel_num = prelu_param_->channel_num_;
@@ -81,7 +81,7 @@ void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_i
         int c4_offset = tile_offset + k * C4NUM;
         int slope_offset = k * C4NUM;
         for (int l = 0; l < C4NUM; ++l) {
-          float in_data = input_ptr[c4_offset + l];
+          const float in_data = input_ptr[c4_offset + l];
           output_ptr[c4_offset + l] =
             (in_data < 0 ? in_data : 0) * negetive_slope_value[slope_offset + l] + (in_data > 0 ? in_data : 0);
         }
@@ -93,7 +93,7 @@ void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_i
       int offset = m * channel_num;
       for (int k = c_s; k < channel_num; ++k) {
         int c4_offset = offset + k;
-        float in_data = input_ptr[c4_offset];
+        const float in_data = input_ptr[c4_offset];
         if (in_data >= 0) {
           output_ptr[c4_offset] = in_data;
         } else {
@@ -104,7 +104,7 @@ void PRelu(float *input, float *output, PReluParameter *prelu_param_, int task_i
   }
 }
 
-void PReluShareChannel(float *input, float *output, PReluParameter *prelu_param_, int task_id) {
+void PReluShareChannel(float *input, float *output, const PReluParameter *prelu_param_, int task_id) {
   for (int j = task_id; j < prelu_param_->tile_block_; j += prelu_param_->op_parameter_.thread_num_) {
     int cal_index;
 #ifdef ENABLE_NEON

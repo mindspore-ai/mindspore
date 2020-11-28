@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 void Pad(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-         const int *paddings, const int tid, const int thread_num);
+         const int *paddings, int tid, int thread_num);
 void MirrorPad(const float *input_data, float *output_data, const int *input_shape, const PadParameter *pad_param,
                int begin, int end);
 

@@ -22,7 +22,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, SoftmaxParameter *parameter);
+void Softmax(const float *input_ptr, float *output_ptr, float *sum_data, const SoftmaxParameter *parameter);
 void SoftmaxLastAxis(const float *src, float *dst, int batch, int channel);
 #ifdef __cplusplus
 }

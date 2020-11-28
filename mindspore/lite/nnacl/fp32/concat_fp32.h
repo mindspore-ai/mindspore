@@ -22,8 +22,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Concat(void **input, int input_num, int axis, int **inputs_output_shape, size_t shape_size, void *output,
-            int task_id, int thread_num);
+void Concat(const void **input, int input_num, int axis, const int **inputs_output_shape, size_t shape_size,
+            void *output, int task_id, int thread_num);
 #ifdef __cplusplus
 }
 #endif

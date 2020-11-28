@@ -27,7 +27,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Im2ColPackUnitFp32(const float *input_data, ConvParameter *conv_param, float *packed_input, int real_cal_num,
+void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param, float *packed_input, int real_cal_num,
                         int block_index);
 
 void PackHWCToWHC(const float *src, float *dst, int height, int width, int channel);

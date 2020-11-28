@@ -18,9 +18,8 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 
-int LayerNorm(const int outer_size, const int inner_size, const float *src_data, const float *gamma_data,
-              const float *beta_data, const bool affine, const float epsilon, float *dst_data, const int tid,
-              const int thread_num) {
+int LayerNorm(int outer_size, int inner_size, const float *src_data, const float *gamma_data, const float *beta_data,
+              bool affine, float epsilon, float *dst_data, int tid, int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }

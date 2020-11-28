@@ -26,10 +26,10 @@ inline int Stride(const int *shape, int rank, int index) {
   return stride;
 }
 
-int Gather(float *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
+int Gather(const float *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
            float *output) {
   for (int m = 0; m < outer_size; ++m) {
-    float *inputm = input + inner_size * m * limit;
+    const float *inputm = input + inner_size * m * limit;
     float *outputm = output + inner_size * m * indices_element_size;
     for (int i = 0; i < indices_element_size; ++i) {
       if (indices[i] < 0 || indices[i] > limit) {

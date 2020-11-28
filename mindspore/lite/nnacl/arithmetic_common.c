@@ -17,8 +17,8 @@
 #include "nnacl/arithmetic_common.h"
 #include "nnacl/nnacl_utils.h"
 
-void TileOneDimension(float *inData, float *outData, int dim, size_t ndim, int *inShape, int *inStrides,
-                      int *outStrides, int *multiple) {
+void TileOneDimension(const float *inData, float *outData, int dim, size_t ndim, const int *inShape,
+                      const int *inStrides, const int *outStrides, const int *multiple) {
   int srcDimSize = inShape[dim];
   if (dim == ndim - 1) {
     for (int i = 0; i < multiple[dim]; i++) {
@@ -35,8 +35,8 @@ void TileOneDimension(float *inData, float *outData, int dim, size_t ndim, int *
   }
 }
 
-void TileOneDimensionUint8(uint8_t *inData, uint8_t *outData, int dim, size_t ndim, int *inShape, int *inStrides,
-                           int *outStrides, int *multiple) {
+void TileOneDimensionUint8(const uint8_t *inData, uint8_t *outData, int dim, size_t ndim, const int *inShape,
+                           const int *inStrides, const int *outStrides, const int *multiple) {
   int srcDimSize = inShape[dim];
   if (dim == ndim - 1) {
     for (int i = 0; i < multiple[dim]; i++) {
@@ -74,7 +74,8 @@ void CalcMultiplesAndStrides(ArithmeticParameter *param) {
   ComputeStrides(param->out_shape_, param->out_strides_, param->ndim_);
 }
 
-void TileDimensions(float *data0, float *data1, float *tile_data0, float *tile_data1, ArithmeticParameter *param) {
+void TileDimensions(const float *data0, const float *data1, float *tile_data0, float *tile_data1,
+                    ArithmeticParameter *param) {
   CalcMultiplesAndStrides(param);
   TileOneDimension(data0, tile_data0, 0, param->ndim_, param->in_shape0_, param->in_strides0_, param->out_strides_,
                    param->multiples0_);
@@ -82,7 +83,7 @@ void TileDimensions(float *data0, float *data1, float *tile_data0, float *tile_d
                    param->multiples1_);
 }
 
-void TileDimensionsUint8(uint8_t *data0, uint8_t *data1, uint8_t *tile_data0, uint8_t *tile_data1,
+void TileDimensionsUint8(const uint8_t *data0, const uint8_t *data1, uint8_t *tile_data0, uint8_t *tile_data1,
                          ArithmeticParameter *param) {
   CalcMultiplesAndStrides(param);
   TileOneDimensionUint8(data0, tile_data0, 0, param->ndim_, param->in_shape0_, param->in_strides0_, param->out_strides_,
@@ -91,7 +92,7 @@ void TileDimensionsUint8(uint8_t *data0, uint8_t *data1, uint8_t *tile_data0, ui
                         param->multiples1_);
 }
 
-void TileDimensionsInt8(int8_t *data0, int8_t *data1, int8_t *tile_data0, int8_t *tile_data1,
+void TileDimensionsInt8(const int8_t *data0, const int8_t *data1, int8_t *tile_data0, int8_t *tile_data1,
                         ArithmeticParameter *param) {
   CalcMultiplesAndStrides(param);
   TileOneDimensionUint8((uint8_t *)(data0), (uint8_t *)(tile_data0), 0, param->ndim_, param->in_shape0_,

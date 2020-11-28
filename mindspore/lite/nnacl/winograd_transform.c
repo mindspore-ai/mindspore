@@ -18,7 +18,8 @@
 
 // fp32 conv winograd
 void WinogradInputTransform(const float *input_data, float *trans_input, float *tmp_data, int cal_num,
-                            int out_tile_index, int out_w_block_num, ConvParameter *conv_param, InputTransFunc func) {
+                            int out_tile_index, int out_w_block_num, const ConvParameter *conv_param,
+                            InputTransFunc func) {
   int input_unit = conv_param->input_unit_;
   int output_unit = conv_param->output_unit_;
   int in_channel = conv_param->input_channel_;
@@ -96,7 +97,8 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
 }
 
 void WinogradOutputTransform(const float *gemm_out, float *out_data, const float *bias_data, int cal_num,
-                             int out_tile_index, int output_unit_num, ConvParameter *conv_param, OutputTransFunc func) {
+                             int out_tile_index, int output_unit_num, const ConvParameter *conv_param,
+                             OutputTransFunc func) {
   int output_unit = conv_param->output_unit_;
   int output_w = conv_param->output_w_;
   int output_h = conv_param->output_h_;

@@ -23,12 +23,12 @@
 extern "C" {
 #endif
 
-void BatchNormFp32(const void *input, const void *mean, const void *variance, BatchNormParameter *param, int task_id,
-                   void *output);
+void BatchNormFp32(const void *input, const void *mean, const void *variance, const BatchNormParameter *param,
+                   int task_id, void *output);
 void FusedBatchNormFp32(const void *input, const void *scale, const void *offset, const void *mean,
-                        const void *variance, BatchNormParameter *param, int task_id, void *output);
+                        const void *variance, const BatchNormParameter *param, int task_id, void *output);
 
-void FusedBatchNormFp32MeanVar(const float *input, float *run_mean, float *run_var, BatchNormParameter *param,
+void FusedBatchNormFp32MeanVar(const float *input, float *run_mean, float *run_var, const BatchNormParameter *param,
                                float *save_mean, float *save_var);
 #ifdef __cplusplus
 }

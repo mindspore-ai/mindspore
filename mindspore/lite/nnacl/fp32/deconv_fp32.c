@@ -34,7 +34,7 @@ void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, in
 }
 
 void DeConvPostFp32C8(const float *src, float *tmp, const float *bias, float *dst, int output_channel,
-                      ConvParameter *conv_param) {
+                      const ConvParameter *conv_param) {
   /* arm64 row12x8-major(ih*iw x oc*kh*kw)  ->  row8-major(oh*ow x oc) */
   /* arm32 row4x8-major(ih*iw x oc*kh*kw)   ->  row8-major(oh*ow x oc) */
   size_t input_plane = conv_param->input_w_ * conv_param->input_h_;

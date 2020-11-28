@@ -28,12 +28,12 @@
 extern "C" {
 #endif
 
-int PackDeConvWgDataFp32(float *nhwc_weight, DeConvComputeUnit *unit, ConvParameter *conv_param,
-                         DeConvParam *deconv_param);
-void DeconvWg(float *nhwc_input_, float *tile_in, float *tile_out, int start_index, int calculate_count,
-              ConvParameter *conv_param, DeConvParam *deconv_param, int task_id);
-void DeconvWgPost(float *tile_out, float *nc4hw4_output, ConvParameter *conv_param, DeConvParam *deconv_param,
-                  int calculate_count, int tile_index);
+int PackDeConvWgDataFp32(const float *nhwc_weight, DeConvComputeUnit *unit, const ConvParameter *conv_param,
+                         const DeConvParam *deconv_param);
+void DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int start_index, int calculate_count,
+              const ConvParameter *conv_param, DeConvParam *deconv_param, int task_id);
+void DeconvWgPost(const float *tile_out, float *nc4hw4_output, const ConvParameter *conv_param,
+                  const DeConvParam *deconv_param, int calculate_count, int tile_index);
 void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t ic4, size_t cal_num, size_t oc4);
 
 #ifdef __cplusplus

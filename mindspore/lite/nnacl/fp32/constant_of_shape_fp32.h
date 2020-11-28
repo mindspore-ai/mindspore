@@ -33,8 +33,8 @@ typedef struct ConstantOfShapeParameter {
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ConstantOfShape(float *output, int tid, ConstantOfShapeParameter *param);
-int ConstantOfShapeInt(int32_t *output, int tid, ConstantOfShapeParameter *param);
+int ConstantOfShape(float *output, int tid, const ConstantOfShapeParameter *param);
+int ConstantOfShapeInt(int32_t *output, int tid, const ConstantOfShapeParameter *param);
 #ifdef __cplusplus
 }
 #endif

@@ -30,7 +30,7 @@ extern "C" {
 #endif
 void PackDeConvWeightFp32(const float *weight, float *dst, int input_channel, int output_channel, int plane);
 void DeConvPostFp32C8(const float *src, float *tmp_out, const float *bias, float *dst, int output_channel,
-                      ConvParameter *conv_param);
+                      const ConvParameter *conv_param);
 #ifdef __cplusplus
 }
 #endif
