@@ -133,18 +133,18 @@ STATUS OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
   }
 
   const auto &onnx_conv_weight = onnx_node.input(1);
-  auto nodeIter =
+  auto node_iter =
     std::find_if(onnx_graph.initializer().begin(), onnx_graph.initializer().end(),
                  [onnx_conv_weight](const onnx::TensorProto &proto) { return proto.name() == onnx_conv_weight; });
-  if (nodeIter == onnx_graph.initializer().end()) {
+  if (node_iter == onnx_graph.initializer().end()) {
     MS_LOG(ERROR) << "not find node: " << onnx_conv_weight.c_str();
     return RET_ERROR;
   }
   std::vector<int> weight_shape;
-  auto size = (*nodeIter).dims_size();
+  auto size = (*node_iter).dims_size();
   weight_shape.reserve(size);
   for (int i = 0; i < size; ++i) {
-    weight_shape.emplace_back((*nodeIter).dims(i));
+    weight_shape.emplace_back((*node_iter).dims(i));
   }
   if (weight_shape.size() != 4) {
     MS_LOG(ERROR) << "weight_shape.size() should be 4, but is " << weight_shape.size();

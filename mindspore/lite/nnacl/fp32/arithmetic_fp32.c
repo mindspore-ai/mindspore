@@ -725,6 +725,22 @@ int ElementSub(const float *input0, const float *input1, float *output, const in
   return NNACL_OK;
 }
 
+int ElementSubInt(const int *input0, const int *input1, int *output, const int element_size) {
+  int index = 0;
+#ifdef ENABLE_NEON
+  for (; index <= element_size - 4; index += C4NUM) {
+    int32x4_t vin0 = vld1q_s32(input0 + index);
+    int32x4_t vin1 = vld1q_s32(input1 + index);
+    int32x4_t vout = vsubq_s32(vin0, vin1);
+    vst1q_s32(output + index, vout);
+  }
+#endif
+  for (; index < element_size; index++) {
+    output[index] = input0[index] - input1[index];
+  }
+  return NNACL_OK;
+}
+
 int ElementSubRelu(const float *input0, const float *input1, float *output, const int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON

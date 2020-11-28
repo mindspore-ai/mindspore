@@ -77,6 +77,7 @@ int BroadcastAddInt8(const int8_t *input0, const int8_t *input1, int8_t *tile_in
                      int8_t *output, int element_size, ArithmeticParameter *param);
 
 int ElementSub(const float *input0, const float *input1, float *output, const int element_size);
+int ElementSubInt(const int *input0, const int *input1, int *output, const int element_size);
 int ElementSubRelu(const float *input0, const float *input1, float *output, const int element_size);
 int ElementSubRelu6(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastSub(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
