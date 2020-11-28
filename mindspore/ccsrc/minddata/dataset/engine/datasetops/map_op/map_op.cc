@@ -18,9 +18,9 @@
 #include <cstring>
 #include <memory>
 #include <vector>
-#include "minddata/dataset/core/config_manager.h"
 
 #include "minddata/dataset/callback/callback_param.h"
+#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_buffer.h"
@@ -44,7 +44,7 @@ MapOp::Builder::Builder() {
 Status MapOp::Builder::sanityCheck() const {
   if (build_tensor_funcs_.empty()) {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
-                  "Building a MapOp that has not provided any function/operation to apply");
+                  "Building a MapOp without providing any function/operation to apply");
   }
   return Status::OK();
 }
@@ -121,26 +121,13 @@ Status MapOp::GenerateWorkerJob(const std::unique_ptr<MapWorkerJob> *worker_job)
     // In the future, we will have heuristic or control from user to select target device
     MapTargetDevice target_device = MapTargetDevice::kCpu;
 
-    switch (target_device) {
-      case MapTargetDevice::kCpu:
-        // If there is no existing map_job, we will create one.
-        // map_job could be nullptr when we are at the first tensor op or when the target device of the prev op
-        // is different with that of the current op.
-        if (map_job == nullptr) {
-          map_job = std::make_shared<CpuMapJob>();
-        }
-        map_job->AddOperation(tfuncs_[i]);
-        break;
-
-      case MapTargetDevice::kGpu:
-        break;
-
-      case MapTargetDevice::kDvpp:
-        break;
-
-      default:
-        break;
+    // If there is no existing map_job, we will create one.
+    // map_job could be nullptr when we are at the first tensor op or when the target device of the prev op
+    // is different with that of the current op.
+    if (map_job == nullptr) {
+      map_job = std::make_shared<CpuMapJob>();
     }
+    map_job->AddOperation(tfuncs_[i]);
 
     // Push map_job into worker_job if one of the two conditions is true:
     // 1) It is the last tensor operation in tfuncs_
@@ -364,7 +351,7 @@ Status MapOp::ComputeColMap() {
 // Validating if each of the input_columns exists in the DataBuffer.
 Status MapOp::ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map) {
   for (const auto &inCol : in_columns_) {
-    bool found = col_name_id_map.find(inCol) != col_name_id_map.end() ? true : false;
+    bool found = col_name_id_map.find(inCol) != col_name_id_map.end();
     if (!found) {
       std::string err_msg = "input column name: " + inCol + " doesn't exist in the dataset columns.";
       RETURN_STATUS_UNEXPECTED(err_msg);

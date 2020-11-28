@@ -20,7 +20,6 @@
 #include <random>
 #include <string>
 
-#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/util/random.h"
 

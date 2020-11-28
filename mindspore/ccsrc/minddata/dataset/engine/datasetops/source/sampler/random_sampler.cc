@@ -28,8 +28,8 @@ RandomSamplerRT::RandomSamplerRT(int64_t num_samples, bool replacement, bool res
       seed_(GetSeed()),
       replacement_(replacement),
       next_id_(0),
-      reshuffle_each_epoch_(reshuffle_each_epoch),
-      dist(nullptr) {}
+      dist(nullptr),
+      reshuffle_each_epoch_(reshuffle_each_epoch) {}
 
 Status RandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (next_id_ > num_samples_) {
@@ -81,7 +81,7 @@ Status RandomSamplerRT::InitSampler() {
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
   rnd_.seed(seed_);
 
-  if (replacement_ == false) {
+  if (!replacement_) {
     shuffled_ids_.reserve(num_rows_);
     for (int64_t i = 0; i < num_rows_; i++) {
       shuffled_ids_.push_back(i);
@@ -104,7 +104,7 @@ Status RandomSamplerRT::ResetSampler() {
 
   rnd_.seed(seed_);
 
-  if (replacement_ == false && reshuffle_each_epoch_) {
+  if (!replacement_ && reshuffle_each_epoch_) {
     std::shuffle(shuffled_ids_.begin(), shuffled_ids_.end(), rnd_);
   }
 

@@ -16,16 +16,16 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_ALBUM_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_ALBUM_OP_H_
 
+#include <algorithm>
 #include <deque>
+#include <map>
 #include <memory>
 #include <queue>
-#include <string>
-#include <algorithm>
-#include <map>
 #include <set>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unordered_map>
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"

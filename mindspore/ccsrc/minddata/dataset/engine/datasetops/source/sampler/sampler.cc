@@ -27,7 +27,7 @@ Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
   // Here, it is just a getter method to return the value.  However, it is invalid if there is
   // not a value set for this count, so generate a failure if that is the case.
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("RandomAccessOp has not computed it's num rows yet.");
+    RETURN_STATUS_UNEXPECTED("RandomAccessOp has not computed its num rows yet.");
   }
   (*num) = num_rows_;
   return Status::OK();

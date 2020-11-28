@@ -32,8 +32,8 @@ class PKSamplerRT : public SamplerRT {  // NOT YET FINISHED
   // @param int64_t val
   // @param bool shuffle - shuffle all classIds or not, if true, classes may be 5,1,4,3,2
   // @param int64_t samplesPerBuffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit PKSamplerRT(int64_t num_samples, int64_t val, bool shuffle,
-                       int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+  PKSamplerRT(int64_t num_samples, int64_t val, bool shuffle,
+              int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // default destructor
   ~PKSamplerRT() = default;

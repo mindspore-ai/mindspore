@@ -18,8 +18,8 @@
 
 #include <memory>
 
-#include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore::dataset {
 

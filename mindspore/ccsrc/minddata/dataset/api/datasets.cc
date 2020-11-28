@@ -539,7 +539,7 @@ ZipDataset::ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets) {
 }
 #endif
 int64_t Dataset::GetBatchSize() {
-  int64_t batch_size;
+  int64_t batch_size = -1;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
   RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), -1);
@@ -548,7 +548,7 @@ int64_t Dataset::GetBatchSize() {
 }
 
 int64_t Dataset::GetRepeatCount() {
-  int64_t repeat_count;
+  int64_t repeat_count = 0;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
   RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), 0);
