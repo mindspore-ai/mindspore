@@ -16,7 +16,7 @@
 
 if [ $# != 1 ]
 then 
-    echo "Usage: sh run_standalone_train.sh [PRETRAINED_PATH]"
+    echo "Usage: bash run_standalone_train.sh [PRETRAINED_PATH]"
 exit 1
 fi
 

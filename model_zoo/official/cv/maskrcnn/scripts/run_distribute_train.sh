@@ -16,7 +16,7 @@
 
 if [ $# != 2 ]
 then 
-    echo "Usage: sh run_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH]"
+    echo "Usage: bash run_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH]"
 exit 1
 fi
 
