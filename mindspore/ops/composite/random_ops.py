@@ -128,13 +128,13 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         The dtype is designated as the input `dtype`.
 
     Examples:
-        >>> For discrete uniform distribution, only one number is allowed for both minval and maxval:
+        >>> # For discrete uniform distribution, only one number is allowed for both minval and maxval:
         >>> shape = (4, 2)
         >>> minval = Tensor(1, mstype.int32)
         >>> maxval = Tensor(2, mstype.int32)
         >>> output = C.uniform(shape, minval, maxval, seed=5, dtype=mstype.int32)
         >>>
-        >>> For continuous uniform distribution, minval and maxval can be multi-dimentional:
+        >>> # For continuous uniform distribution, minval and maxval can be multi-dimentional:
         >>> shape = (4, 2)
         >>> minval = Tensor([1.0, 2.0], mstype.float32)
         >>> maxval = Tensor([4.0, 5.0], mstype.float32)

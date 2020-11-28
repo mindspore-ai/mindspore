@@ -1376,8 +1376,8 @@ class Rsqrt(PrimitiveWithInfer):
         >>> rsqrt = ops.Rsqrt()
         >>> output = rsqrt(input_tensor)
         >>> print(output)
-        [[0.5      0.5     ]
-         [0.333334 0.333334]]
+        [[0.5        0.5       ]
+         [0.33333334 0.33333334]]
     """
 
     @prim_attr_register
@@ -1677,7 +1677,7 @@ class Log(PrimitiveWithInfer):
         >>> log = ops.Log()
         >>> output = log(input_x)
         >>> print(output)
-        [0.        0.6931472 1.38629444]
+        [0.        0.6931472 1.3862944]
     """
 
     @prim_attr_register

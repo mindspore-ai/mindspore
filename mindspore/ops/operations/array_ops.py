@@ -1151,8 +1151,8 @@ class Ones(PrimitiveWithInfer):
         >>> ones = ops.Ones()
         >>> output = ones((2, 2), mindspore.float32)
         >>> print(output)
-        [[1.0, 1.0],
-         [1.0, 1.0]]
+        [[1. 1.]
+         [1. 1.]]
     """
 
     @prim_attr_register
@@ -1204,8 +1204,8 @@ class Zeros(PrimitiveWithInfer):
         >>> zeros = ops.Zeros()
         >>> output = zeros((2, 2), mindspore.float32)
         >>> print(output)
-        [[0.0, 0.0],
-         [0.0, 0.0]]
+        [[0. 0.]
+         [0. 0.]]
 
     """
 
@@ -3347,7 +3347,8 @@ class ScatterSub(_ScatterOp):
         >>> scatter_sub = ops.ScatterSub()
         >>> output = scatter_sub(input_x, indices, updates)
         >>> print(output)
-        [[-1.0, -1.0, -1.0], [-1.0, -1.0, -1.0]]
+        [[-1. -1. -1.]
+         [-1. -1. -1.]]
     """
 
 
