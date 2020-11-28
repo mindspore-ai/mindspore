@@ -114,7 +114,9 @@ Status::Status(const StatusCode code, int line_of_code, const char *file_name, c
     ss << "File         : " << file_name << "\n";
   }
   err_msg_ = ss.str();
-  if (code == StatusCode::kUnexpectedError || code == StatusCode::kNetWorkError) {
+  if (code == StatusCode::kUnexpectedError) {
+    MS_LOG(ERROR) << err_msg_;
+  } else if (code == StatusCode::kNetWorkError) {
     MS_LOG(WARNING) << err_msg_;
   } else {
     MS_LOG(INFO) << err_msg_;
