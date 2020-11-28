@@ -50,8 +50,15 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
     }
 
     auto data_node = depthwise_cnode->input(kConvInputIndex)->abstract();
+    if (data_node == nullptr) {
+      MS_LOG(ERROR) << "the node input is invalid.";
+      return false;
+    }
     auto data_shape = utils::cast<abstract::ShapePtr>(data_node->GetShapeTrack())->shape();
-
+    if (data_shape.empty()) {
+      MS_LOG(DEBUG) << "the tensor's shape is dynamic.";
+      return true;
+    }
     auto conv_attr = std::make_unique<schema::Conv2DT>();
     if (conv_attr == nullptr) {
       MS_LOG(ERROR) << "conv_attr is null";

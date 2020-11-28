@@ -89,7 +89,7 @@ STATUS InferShapePass::SetParameterAbstract(const ParameterPtr &parameter) {
       return RET_ERROR;
     }
     auto ret = memcpy_s(tensor_data, new_value->tensor_size(), param_value->tensor_addr(), param_value->tensor_size());
-    if (ret != EOK) {
+    if (new_value->tensor_size() != 0 && ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       delete[] tensor_data;
       return RET_ERROR;
@@ -163,7 +163,7 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
           return RET_ERROR;
         }
         ret = memcpy_s(tensor->MutableData(), tensor->Size(), param_value->tensor_addr(), param_value->tensor_size());
-        if (ret != EOK) {
+        if (tensor->Size() != 0 && ret != EOK) {
           MS_LOG(ERROR) << "memcpy error: " << ret;
           return RET_ERROR;
         }
