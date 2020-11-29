@@ -39,62 +39,70 @@ class Poisson(Distribution):
         `dist_spec_args` is `rate`.
 
     Examples:
-        >>> # To initialize an Poisson distribution of the rate 0.5.
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
-        >>> p = msd.Poisson(0.5, dtype=mstype.float32)
-        >>>
-        >>> # The following creates two independent Poisson distributions.
-        >>> p = msd.Poisson([0.5, 0.5], dtype=mstype.float32)
-        >>>
+        >>> from mindspore import Tensor
+        >>> # To initialize an Poisson distribution of the rate 0.5.
+        >>> p1 = msd.Poisson(0.5, dtype=mindspore.float32)
         >>> # An Poisson distribution can be initilized without arguments.
         >>> # In this case, `rate` must be passed in through `args` during function calls.
-        >>> p = msd.Poisson(dtype=mstype.float32)
+        >>> p2 = msd.Poisson(dtype=mindspore.float32)
         >>>
-        >>> # To use an Poisson distribution in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.p1 = msd.Poisson(0.5, dtype=mstype.float32)
-        ...         self.p2 = msd.Poisson(dtype=mstype.float32)
-        ...
-        ...     # All the following calls in construct are valid.
-        ...     def construct(self, value, rate_b, rate_a):
-        ...
-        ...         # Private interfaces of probability functions corresponding to public interfaces, including
-        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
-        ...         # Args:
-        ...         #     value (Tensor): the value to be evaluated.
-        ...         #     rate (Tensor): the rate of the distribution. Default: self.rate.
-        ...
-        ...         # Examples of `prob`.
-        ...         # Similar calls can be made to other probability functions
-        ...         # by replacing `prob` by the name of the function.
-        ...         ans = self.p1.prob(value)
-        ...         # Evaluate with respect to distribution b.
-        ...         ans = self.p1.prob(value, rate_b)
-        ...         # `rate` must be passed in during function calls.
-        ...         ans = self.p2.prob(value, rate_a)
-        ...
-        ...
-        ...         # Functions `mean`, `mode`, `sd`, and 'var' have the same arguments as follows.
-        ...         # Args:
-        ...         #     rate (Tensor): the rate of the distribution. Default: self.rate.
-        ...
-        ...         # Examples of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
-        ...         ans = self.p1.mean() # return 2
-        ...         ans = self.p1.mean(rate_b) # return 1 / rate_b
-        ...         # `rate` must be passed in during function calls.
-        ...         ans = self.p2.mean(rate_a)
-        ...
-        ...
-        ...         # Examples of `sample`.
-        ...         # Args:
-        ...         #     shape (tuple): the shape of the sample. Default: ()
-        ...         #     probs1 (Tensor): the rate of the distribution. Default: self.rate.
-        ...         ans = self.p1.sample()
-        ...         ans = self.p1.sample((2,3))
-        ...         ans = self.p1.sample((2,3), rate_b)
-        ...         ans = self.p2.sample((2,3), rate_a)
+        >>> # Here are some tensors used below for testing
+        >>> value = Tensor([1, 2, 3], dtype=mindspore.int32)
+        >>> rate_a = Tensor([0.6], dtype=mindspore.float32)
+        >>> rate_b = Tensor([0.2, 0.5, 0.4], dtype=mindspore.float32)
+        >>>
+        >>> # Private interfaces of probability functions corresponding to public interfaces, including
+        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
+        >>> # Args:
+        >>> #     value (Tensor): the value to be evaluated.
+        >>> #     rate (Tensor): the rate of the distribution. Default: self.rate.
+        >>> # Examples of `prob`.
+        >>> # Similar calls can be made to other probability functions
+        >>> # by replacing `prob` by the name of the function.
+        >>> ans = p1.prob(value)
+        >>> print(ans)
+        [0.3032652  0.0758163  0.01263604]
+        >>> # Evaluate with respect to distribution b.
+        >>> ans = p1.prob(value, rate_b)
+        >>> print(ans)
+        [0.16374607 0.0758163  0.00715008]
+        >>> # `rate` must be passed in during function calls.
+        >>> ans = p2.prob(value, rate_a)
+        >>> print(ans)
+        [0.32928684 0.09878606 0.01975721]
+        >>> # Functions `mean`, `mode`, `sd`, and 'var' have the same arguments as follows.
+        >>> # Args:
+        >>> #     rate (Tensor): the rate of the distribution. Default: self.rate.
+        >>> # Examples of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
+        >>> ans = p1.mean() # return 2
+        >>> print(ans)
+        0.5
+        >>> ans = p1.mean(rate_b) # return 1 / rate_b
+        >>> print(ans)
+        [0.2 0.5 0.4]
+        >>> # `rate` must be passed in during function calls.
+        >>> ans = p2.mean(rate_a)
+        >>> print(ans)
+        [0.6]
+        >>> # Examples of `sample`.
+        >>> # Args:
+        >>> #     shape (tuple): the shape of the sample. Default: ()
+        >>> #     probs1 (Tensor): the rate of the distribution. Default: self.rate.
+        >>> ans = p1.sample()
+        >>> print(ans.shape)
+        ()
+        >>> ans = p1.sample((2,3))
+        >>> print(ans.shape)
+        (2, 3)
+        >>> ans = p1.sample((2,3), rate_b)
+        >>> print(ans.shape)
+        (2, 3, 3)
+        >>> ans = p2.sample((2,3), rate_a)
+        >>> print(ans.shape)
+        (2, 3, 1)
     """
 
     def __init__(self,

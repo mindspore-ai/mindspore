@@ -44,9 +44,9 @@ class Geometric(Distribution):
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
         >>> from mindspore import Tensor
-        >>> # To initialize a Bernoulli distribution of the probability 0.5.
+        >>> # To initialize a Geometric distribution of the probability 0.5.
         >>> g1 = msd.Geometric(0.5, dtype=mindspore.int32)
-        >>> # A Bernoulli distribution can be initialized without arguments.
+        >>> # A Geometric distribution can be initialized without arguments.
         >>> # In this case, `probs` must be passed in through arguments during function calls.
         >>> g2 = msd.Geometric(dtype=mindspore.int32)
         >>>

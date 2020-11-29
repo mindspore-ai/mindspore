@@ -43,84 +43,95 @@ class Beta(Distribution):
         `dtype` must be a float type because Beta distributions are continuous.
 
     Examples:
-        >>> # To initialize a Beta distribution of the concentration1 3.0 and the concentration0 4.0.
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
-        >>> b = msd.Beta(3.0, 4.0, dtype=mstype.float32)
-        >>>
-        >>> # The following creates two independent Beta distributions.
-        >>> b = msd.Beta([3.0, 3.0], [4.0, 4.0], dtype=mstype.float32)
-        >>>
+        >>> from mindspore import Tensor
+        >>> # To initialize a Beta distribution of the concentration1 3.0 and the concentration0 4.0.
+        >>> b1 = msd.Beta([3.0], [4.0], dtype=mindspore.float32)
         >>> # A Beta distribution can be initilized without arguments.
         >>> # In this case, `concentration1` and `concentration0` must be passed in through arguments.
-        >>> b = msd.Beta(dtype=mstype.float32)
-        >>>
-        >>> # To use a Beta distribution in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.b1 = msd.Beta(1.0, 1.0, dtype=mstype.float32)
-        ...         self.b2 = msd.Beta(dtype=mstype.float32)
-        ...
-        ...     # The following calls are valid in construct.
-        ...     def construct(self, value, concentration1_b, concentration0_b, concentration1_a, concentration0_a):
-        ...
-        ...         # Private interfaces of probability functions corresponding to public interfaces, including
-        ...         # `prob` and `log_prob`, have the same arguments as follows.
-        ...         # Args:
-        ...         #     value (Tensor): the value to be evaluated.
-        ...         #     concentration1 (Tensor): the concentration1 of the distribution. Default: self._concentration1.
-        ...         #     concentration0 (Tensor): the concentration0 of the distribution. Default: self._concentration0.
-        ...
-        ...         # Examples of `prob`.
-        ...         # Similar calls can be made to other probability functions
-        ...         # by replacing 'prob' by the name of the function
-        ...         ans = self.b1.prob(value)
-        ...         # Evaluate with respect to the distribution b.
-        ...         ans = self.b1.prob(value, concentration1_b, concentration0_b)
-        ...         # `concentration1` and `concentration0` must be passed in during function calls
-        ...         ans = self.b2.prob(value, concentration1_a, concentration0_a)
-        ...
-        ...
-        ...         # Functions `mean`, `sd`, `mode`, `var`, and `entropy` have the same arguments.
-        ...         # Args:
-        ...         #     concentration1 (Tensor): the concentration1 of the distribution. Default: self._concentration1.
-        ...         #     concentration0 (Tensor): the concentration0 of the distribution. Default: self._concentration0.
-        ...
-        ...         # Example of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
-        ...         ans = self.b1.concentration1() # return 1.0
-        ...         ans = self.b1.concentration1(concentration1_b, concentration0_b) # return concentration1_b
-        ...         # `concentration1` and `concentration0` must be passed in during function calls.
-        ...         ans = self.b2.concentration1(concentration1_a, concentration0_a)
-        ...
-        ...
-        ...         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
-        ...         # Args:
-        ...         #     dist (str): the type of the distributions. Only "Beta" is supported.
-        ...         #     concentration1_b (Tensor): the concentration1 of distribution b.
-        ...         #     concentration0_b (Tensor): the concentration0 of distribution b.
-        ...         #     concentration1_a (Tensor): the concentration1 of distribution a.
-        ...         #       Default: self._concentration1.
-        ...         #     concentration0_a (Tensor): the concentration0 of distribution a.
-        ...         #       Default: self._concentration0.
-        ...
-        ...         # Examples of `kl_loss`. `cross_entropy` is similar.
-        ...         ans = self.b1.kl_loss('Beta', concentration1_b, concentration0_b)
-        ...         ans = self.b1.kl_loss('Beta', concentration1_b, concentration0_b,
-        ...                               concentration1_a, concentration0_a)
-        ...         # Additional `concentration1` and `concentration0` must be passed in.
-        ...         ans = self.b2.kl_loss('Beta', concentration1_b, concentration0_b,
-        ...                               concentration1_a, concentration0_a)
-        ...
-        ...
-        ...         # Examples of `sample`.
-        ...         # Args:
-        ...         #     shape (tuple): the shape of the sample. Default: ()
-        ...         #     concentration1 (Tensor): the concentration1 of the distribution. Default: self._concentration1.
-        ...         #     concentration0 (Tensor): the concentration0 of the distribution. Default: self._concentration0.
-        ...         ans = self.b1.sample()
-        ...         ans = self.b1.sample((2,3))
-        ...         ans = self.b1.sample((2,3), concentration1_b, concentration0_b)
-        ...         ans = self.b2.sample((2,3), concentration1_a, concentration0_a)
+        >>> b2 = msd.Beta(dtype=mindspore.float32)
+        >>> # Here are some tensors used below for testing
+        >>> value = Tensor([0.1, 0.5, 1.5], dtype=mindspore.float32)
+        >>> concentration1_a = Tensor([2.0], dtype=mindspore.float32)
+        >>> concentration0_a = Tensor([2.0, 2.0, 2.0], dtype=mindspore.float32)
+        >>> concentration1_b = Tensor([1.0], dtype=mindspore.float32)
+        >>> concentration0_b = Tensor([1.0, 1.5, 2.0], dtype=mindspore.float32)
+        >>> # Private interfaces of probability functions corresponding to public interfaces, including
+        >>> # `prob` and `log_prob`, have the same arguments as follows.
+        >>> # Args:
+        >>> #     value (Tensor): the value to be evaluated.
+        >>> #     concentration1 (Tensor): the concentration1 of the distribution. Default: self._concentration1.
+        >>> #     concentration0 (Tensor): the concentration0 of the distribution. Default: self._concentration0.
+        >>> # Examples of `prob`.
+        >>> # Similar calls can be made to other probability functions
+        >>> # by replacing 'prob' by the name of the function
+        >>> ans = b1.prob(value)
+        >>> print(ans)
+        [0.43740022 1.8750011         nan]
+        >>> # Evaluate with respect to the distribution b.
+        >>> ans = b1.prob(value, concentration1_b, concentration0_b)
+        >>> print(ans)
+        [0.99999964 1.0606599         nan]
+        >>> # `concentration1` and `concentration0` must be passed in during function calls
+        >>> ans = b2.prob(value, concentration1_a, concentration0_a)
+        >>> print(ans)
+        [0.5400001 1.5000001       nan]
+        >>> # Functions `mean`, `sd`, `mode`, `var`, and `entropy` have the same arguments.
+        >>> # Args:
+        >>> #     concentration1 (Tensor): the concentration1 of the distribution. Default: self._concentration1.
+        >>> #     concentration0 (Tensor): the concentration0 of the distribution. Default: self._concentration0.
+        >>> # Example of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
+        >>> ans = b1.mean()
+        >>> print(ans)
+        [0.42857143]
+        >>> ans = b1.mean(concentration1_b, concentration0_b)
+        >>> print(ans)
+        [0.5        0.4        0.33333334]
+        >>> # `concentration1` and `concentration0` must be passed in during function calls.
+        >>> ans = b2.mean(concentration1_a, concentration0_a)
+        >>> print(ans)
+        [0.5 0.5 0.5]
+        >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
+        >>> # Args:
+        >>> #     dist (str): the type of the distributions. Only "Beta" is supported.
+        >>> #     concentration1_b (Tensor): the concentration1 of distribution b.
+        >>> #     concentration0_b (Tensor): the concentration0 of distribution b.
+        >>> #     concentration1_a (Tensor): the concentration1 of distribution a.
+        >>> #       Default: self._concentration1.
+        >>> #     concentration0_a (Tensor): the concentration0 of distribution a.
+        >>> #       Default: self._concentration0.
+        >>> # Examples of `kl_loss`. `cross_entropy` is similar.
+        >>> ans = b1.kl_loss('Beta', concentration1_b, concentration0_b)
+        >>> print(ans)
+        [0.34434414 0.24721336 0.26786423]
+        >>> ans = b1.kl_loss('Beta', concentration1_b, concentration0_b,
+        >>>                       concentration1_a, concentration0_a)
+        >>> print(ans)
+        [0.12509346 0.13629508 0.26527953]
+        >>> # Additional `concentration1` and `concentration0` must be passed in.
+        >>> ans = b2.kl_loss('Beta', concentration1_b, concentration0_b,
+        >>>                       concentration1_a, concentration0_a)
+        >>> print(ans)
+        [0.12509346 0.13629508 0.26527953]
+        >>> # Examples of `sample`.
+        >>> # Args:
+        >>> #     shape (tuple): the shape of the sample. Default: ()
+        >>> #     concentration1 (Tensor): the concentration1 of the distribution. Default: self._concentration1.
+        >>> #     concentration0 (Tensor): the concentration0 of the distribution. Default: self._concentration0.
+        >>> ans = b1.sample()
+        >>> print(ans.shape)
+        (1,)
+        >>> ans = b1.sample((2,3))
+        >>> print(ans.shape)
+        (2, 3, 1)
+        >>> ans = b1.sample((2,3), concentration1_b, concentration0_b)
+        >>> print(ans.shape)
+        (2, 3, 3)
+        >>> ans = b2.sample((2,3), concentration1_a, concentration0_a)
+        >>> print(ans.shape)
+        (2, 3, 3)
     """
 
     def __init__(self,

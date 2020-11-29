@@ -43,80 +43,86 @@ class Gamma(Distribution):
         `dtype` must be a float type because Gamma distributions are continuous.
 
     Examples:
-        >>> # To initialize a Gamma distribution of the concentration 3.0 and the rate 4.0.
+        >>> import mindspore
+        >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
-        >>> g = msd.Gamma(3.0, 4.0, dtype=mstype.float32)
-        >>>
-        >>> # The following creates two independent Gamma distributions.
-        >>> g = msd.Gamma([3.0, 3.0], [4.0, 4.0], dtype=mstype.float32)
-        >>>
+        >>> from mindspore import Tensor
+        >>> # To initialize a Gamma distribution of the concentration 3.0 and the rate 4.0.
+        >>> g1 = msd.Gamma([3.0], [4.0], dtype=mindspore.float32)
         >>> # A Gamma distribution can be initilized without arguments.
         >>> # In this case, `concentration` and `rate` must be passed in through arguments.
-        >>> g = msd.Gamma(dtype=mstype.float32)
+        >>> g2 = msd.Gamma(dtype=mindspore.float32)
+        >>> # Here are some tensors used below for testing
+        >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
+        >>> concentration_a = Tensor([2.0], dtype=mindspore.float32)
+        >>> rate_a = Tensor([2.0, 2.0, 2.0], dtype=mindspore.float32)
+        >>> concentration_b = Tensor([1.0], dtype=mindspore.float32)
+        >>> rate_b = Tensor([1.0, 1.5, 2.0], dtype=mindspore.float32)
         >>>
-        >>> # To use a Gamma distribution in a network.
-        >>> class net(Cell):
-        ...     def __init__(self):
-        ...         super(net, self).__init__():
-        ...         self.g1 = msd.Gamma(1.0, 1.0, dtype=mstype.float32)
-        ...         self.g2 = msd.Gamma(dtype=mstype.float32)
-        ...
-        ...     # The following calls are valid in construct.
-        ...     def construct(self, value, concentration_b, rate_b, concentration_a, rate_a):
-        ...
-        ...         # Private interfaces of probability functions corresponding to public interfaces, including
-        ...         # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
-        ...         # Args:
-        ...         #     value (Tensor): the value to be evaluated.
-        ...         #     concentration (Tensor): the concentration of the distribution. Default: self._concentration.
-        ...         #     rate (Tensor): the rate of the distribution. Default: self._rate.
-        ...
-        ...         # Examples of `prob`.
-        ...         # Similar calls can be made to other probability functions
-        ...         # by replacing 'prob' by the name of the function
-        ...         ans = self.g1.prob(value)
-        ...         # Evaluate with respect to the distribution b.
-        ...         ans = self.g1.prob(value, concentration_b, rate_b)
-        ...         # `concentration` and `rate` must be passed in during function calls
-        ...         ans = self.g2.prob(value, concentration_a, rate_a)
-        ...
-        ...
-        ...         # Functions `mean`, `sd`, `mode`, `var`, and `entropy` have the same arguments.
-        ...         # Args:
-        ...         #     concentration (Tensor): the concentration of the distribution. Default: self._concentration.
-        ...         #     rate (Tensor): the rate of the distribution. Default: self._rate.
-        ...
-        ...         # Example of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
-        ...         ans = self.g1.concentration() # return 1.0
-        ...         ans = self.g1.concentration(concentration_b, rate_b) # return concentration_b
-        ...         # `concentration` and `rate` must be passed in during function calls.
-        ...         ans = self.g2.concentration(concentration_a, rate_a)
-        ...
-        ...
-        ...         # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
-        ...         # Args:
-        ...         #     dist (str): the type of the distributions. Only "Gamma" is supported.
-        ...         #     concentration_b (Tensor): the concentration of distribution b.
-        ...         #     rate_b (Tensor): the rate of distribution b.
-        ...         #     concentration_a (Tensor): the concentration of distribution a. Default: self._concentration.
-        ...         #     rate_a (Tensor): the rate of distribution a. Default: self._rate.
-        ...
-        ...         # Examples of `kl_loss`. `cross_entropy` is similar.
-        ...         ans = self.g1.kl_loss('Gamma', concentration_b, rate_b)
-        ...         ans = self.g1.kl_loss('Gamma', concentration_b, rate_b, concentration_a, rate_a)
-        ...         # Additional `concentration` and `rate` must be passed in.
-        ...         ans = self.g2.kl_loss('Gamma', concentration_b, rate_b, concentration_a, rate_a)
-        ...
-        ...
-        ...         # Examples of `sample`.
-        ...         # Args:
-        ...         #     shape (tuple): the shape of the sample. Default: ()
-        ...         #     concentration (Tensor): the concentration of the distribution. Default: self._concentration.
-        ...         #     rate (Tensor): the rate of the distribution. Default: self._rate.
-        ...         ans = self.g1.sample()
-        ...         ans = self.g1.sample((2,3))
-        ...         ans = self.g1.sample((2,3), concentration_b, rate_b)
-        ...         ans = self.g2.sample((2,3), concentration_a, rate_a)
+        >>> # Private interfaces of probability functions corresponding to public interfaces, including
+        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same arguments as follows.
+        >>> # Args:
+        >>> #     value (Tensor): the value to be evaluated.
+        >>> #     concentration (Tensor): the concentration of the distribution. Default: self._concentration.
+        >>> #     rate (Tensor): the rate of the distribution. Default: self._rate.
+        >>> # Examples of `prob`.
+        >>> # Similar calls can be made to other probability functions
+        >>> # by replacing 'prob' by the name of the function
+        >>> # ans = g1.prob(value)
+        >>> # # Evaluate with respect to the distribution b.
+        >>> # ans = g1.prob(value, concentration_b, rate_b)
+        >>> # # `concentration` and `rate` must be passed in during function calls
+        >>> # ans = g2.prob(value, concentration_a, rate_a)
+        >>> # Functions `mean`, `sd`, `mode`, `var`, and `entropy` have the same arguments.
+        >>> # Args:
+        >>> #     concentration (Tensor): the concentration of the distribution. Default: self._concentration.
+        >>> #     rate (Tensor): the rate of the distribution. Default: self._rate.
+        >>> # Example of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
+        >>> ans = g1.mean()
+        >>> print(ans)
+        [0.75]
+        >>> ans = g1.mean(concentration_b, rate_b)
+        >>> print(ans)
+        [1.        0.6666667 0.5      ]
+        >>> # `concentration` and `rate` must be passed in during function calls.
+        >>> ans = g2.mean(concentration_a, rate_a)
+        >>> print(ans)
+        [1. 1. 1.]
+        >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
+        >>> # Args:
+        >>> #     dist (str): the type of the distributions. Only "Gamma" is supported.
+        >>> #     concentration_b (Tensor): the concentration of distribution b.
+        >>> #     rate_b (Tensor): the rate of distribution b.
+        >>> #     concentration_a (Tensor): the concentration of distribution a. Default: self._concentration.
+        >>> #     rate_a (Tensor): the rate of distribution a. Default: self._rate.
+        >>> # Examples of `kl_loss`. `cross_entropy` is similar.
+        >>> ans = g1.kl_loss('Gamma', concentration_b, rate_b)
+        >>> print(ans)
+        [0.28871584 0.2582507  0.34556866]
+        >>> ans = g1.kl_loss('Gamma', concentration_b, rate_b, concentration_a, rate_a)
+        >>> print(ans)
+        [0.11593175 0.21046662 0.42278457]
+        >>> # Additional `concentration` and `rate` must be passed in.
+        >>> ans = g2.kl_loss('Gamma', concentration_b, rate_b, concentration_a, rate_a)
+        >>> print(ans)
+        [0.11593175 0.21046662 0.42278457]
+        >>> # Examples of `sample`.
+        >>> # Args:
+        >>> #     shape (tuple): the shape of the sample. Default: ()
+        >>> #     concentration (Tensor): the concentration of the distribution. Default: self._concentration.
+        >>> #     rate (Tensor): the rate of the distribution. Default: self._rate.
+        >>> ans = g1.sample()
+        >>> print(ans.shape)
+        (1,)
+        >>> ans = g1.sample((2,3))
+        >>> print(ans.shape)
+        (2, 3, 1)
+        >>> ans = g1.sample((2,3), concentration_b, rate_b)
+        >>> print(ans.shape)
+        (2, 3, 3)
+        >>> ans = g2.sample((2,3), concentration_a, rate_a)
+        >>> print(ans.shape)
+        (2, 3, 3)
     """
 
     def __init__(self,

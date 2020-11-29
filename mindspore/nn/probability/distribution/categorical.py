@@ -154,6 +154,7 @@ class Categorical(Distribution):
         self.expand_dim = P.ExpandDims()
         self.fill = P.Fill()
         self.gather = P.GatherNd()
+        self.greater = P.Greater()
         self.issubclass = P.IsSubClass()
         self.less = P.Less()
         self.log = log_generic
@@ -277,15 +278,20 @@ class Categorical(Distribution):
             probs (Tensor): Event probabilities. Default: self.probs.
         """
         value = self._check_value(value, 'value')
-        # cast value to int to find the right integer to compute index
-        if self.issubclass(self.dtype, mstype.float_):
-            value = self.cast(value, self.index_type)
-        else:
-            value = self.cast(value, self.dtype)
-        # cast int to float for the broadcasting below
-        value = self.cast(value, mstype.float32)
+
         probs = self._check_param_type(probs)
         logits = self.log(probs)
+
+        # find the right integer to compute index
+        # here we simulate casting to int but still keeping float dtype
+        value = self.cast(value, self.dtypeop(probs))
+
+        zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
+        between_zero_neone = self.logicand(self.less(value, 0,),
+                                           self.greater(value, -1.))
+        value = self.select(between_zero_neone,
+                            zeros,
+                            P.Floor()(value))
 
         # handle the case when value is of shape () and probs is a scalar batch
         drop_dim = False
@@ -314,8 +320,6 @@ class Categorical(Distribution):
         out_of_bound = self.squeeze_last_axis(self.logicor(\
                         self.less(value, 0.0), self.less(num_classes-1, value)))
         # deal with the case the there is only one class.
-        zeros = self.fill(mstype.float32, self.shape(out_of_bound), 0.0)
-        out_of_bound = self.logicand(out_of_bound, self.less(zeros, num_classes-1))
         value_clipped = self.clip_by_value(value, 0.0, num_classes - 1)
         value_clipped = self.cast(value_clipped, self.index_type)
         # create index from 0 ... NumOfLabels
@@ -341,11 +345,18 @@ class Categorical(Distribution):
             probs (Tensor): Event probabilities. Default: self.probs.
         """
         value = self._check_value(value, 'value')
-        if self.issubclass(self.dtype, mstype.float_):
-            value = self.cast(value, self.index_type)
-        else:
-            value = self.cast(value, self.dtype)
         probs = self._check_param_type(probs)
+
+        # find the right integer to compute index
+        # here we simulate casting to int but still keeping float dtype
+        value = self.cast(value, self.dtypeop(probs))
+
+        zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
+        between_zero_neone = self.logicand(self.less(value, 0,),
+                                           self.greater(value, -1.))
+        value = self.select(between_zero_neone,
+                            zeros,
+                            P.Floor()(value))
 
         # handle the case when value is of shape () and probs is a scalar batch
         drop_dim = False

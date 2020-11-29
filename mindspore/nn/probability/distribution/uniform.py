@@ -44,7 +44,7 @@ class Uniform(Distribution):
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
         >>> from mindspore import Tensor
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+        >>> context.set_context(mode=context.GRAPH_MODE)
         >>> # To initialize a Uniform distribution of the lower bound 0.0 and the higher bound 1.0.
         >>> u1 = msd.Uniform(0.0, 1.0, dtype=mindspore.float32)
         >>> # A Uniform distribution can be initialized without arguments.
