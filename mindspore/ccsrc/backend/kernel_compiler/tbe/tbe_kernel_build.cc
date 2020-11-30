@@ -27,6 +27,7 @@
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -228,7 +229,8 @@ bool TbeKernelJsonCreator::GenInputList(const std::shared_ptr<AnfNode> &anf_node
         input_list->emplace_back(input_desc_json);
         continue;
       }
-      MS_LOG(ERROR) << "Input num: " << *real_input_index << " is not match op inputs";
+      MS_LOG(ERROR) << "Input num: " << *real_input_index << " is not match op inputs."
+                    << "\n trace:" << trace::DumpSourceLines(anf_node);
       return false;
     }
     if (op_name == "BatchNorm") {
