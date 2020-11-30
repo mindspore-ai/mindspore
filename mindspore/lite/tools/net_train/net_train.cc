@@ -34,8 +34,8 @@ static const char *DELIM_SLASH = "/";
 
 void SaveFile(std::string path, void *buf, size_t size) {
   std::ofstream ofs(path);
-  assert(true == ofs.good());
-  assert(true == ofs.is_open());
+  MS_ASSERT(ofs.good() == true);
+  MS_ASSERT(ofs.is_open() == true);
 
   ofs.seekp(0, std::ios::beg);
   ofs.write((const char *)buf, size);
@@ -521,7 +521,7 @@ int NetTrain::RunNetTrain() {
 }
 
 void NetTrainFlags::InitInputDataList() {
-  char *saveptr1;
+  char *saveptr1 = nullptr;
   char *input_list = new char[this->in_data_file_.length() + 1];
   snprintf(input_list, this->in_data_file_.length() + 1, "%s", this->in_data_file_.c_str());
   char *cur_input;
