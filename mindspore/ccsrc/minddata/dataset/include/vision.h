@@ -19,6 +19,7 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 #include "minddata/dataset/core/constants.h"
@@ -30,6 +31,48 @@ namespace dataset {
 
 // Transform operations for performing computer vision.
 namespace vision {
+
+// Char arrays storing name of corresponding classes (in alphabetical order)
+constexpr char kAutoContrastOperation[] = "AutoContrast";
+constexpr char kBoundingBoxAugmentOperation[] = "BoundingBoxAugment";
+constexpr char kCenterCropOperation[] = "CenterCrop";
+constexpr char kCutMixBatchOperation[] = "CutMixBatch";
+constexpr char kCutOutOperation[] = "CutOut";
+constexpr char kCropOperation[] = "Crop";
+constexpr char kDecodeOperation[] = "Decode";
+constexpr char kEqualizeOperation[] = "Equalize";
+constexpr char kHwcToChwOperation[] = "HwcToChw";
+constexpr char kInvertOperation[] = "Invert";
+constexpr char kMixUpBatchOperation[] = "MixUpBatch";
+constexpr char kNormalizeOperation[] = "Normalize";
+constexpr char kPadOperation[] = "Pad";
+constexpr char kRandomAffineOperation[] = "RandomAffine";
+constexpr char kRandomColorAdjustOperation[] = "RandomColorAdjust";
+constexpr char kRandomColorOperation[] = "RandomColor";
+constexpr char kRandomCropDecodeResizeOperation[] = "RandomCropDecodeResize";
+constexpr char kRandomCropOperation[] = "RandomCrop";
+constexpr char kRandomCropWithBBoxOperation[] = "RandomCropWithBBox";
+constexpr char kRandomHorizontalFlipWithBBoxOperation[] = "RandomHorizontalFlipWithBBox";
+constexpr char kRandomHorizontalFlipOperation[] = "RandomHorizontalFlip";
+constexpr char kRandomPosterizeOperation[] = "RandomPosterize";
+constexpr char kRandomResizedCropOperation[] = "RandomResizedCrop";
+constexpr char kRandomResizedCropWithBBoxOperation[] = "RandomResizedCropWithBBox";
+constexpr char kRandomResizeOperation[] = "RandomResize";
+constexpr char kRandomResizeWithBBoxOperation[] = "RandomResizeWithBBox";
+constexpr char kRandomRotationOperation[] = "RandomRotation";
+constexpr char kRandomSolarizeOperation[] = "RandomSolarize";
+constexpr char kRandomSharpnessOperation[] = "RandomSharpness";
+constexpr char kRandomVerticalFlipOperation[] = "RandomVerticalFlip";
+constexpr char kRandomVerticalFlipWithBBoxOperation[] = "RandomVerticalFlipWithBBox";
+constexpr char kRescaleOperation[] = "Rescale";
+constexpr char kResizeOperation[] = "Resize";
+constexpr char kResizeWithBBoxOperation[] = "ResizeWithBBox";
+constexpr char kRgbaToBgrOperation[] = "RgbaToBgr";
+constexpr char kRgbaToRgbOperation[] = "RgbaToRgb";
+constexpr char kSoftDvppDecodeRandomCropResizeJpegOperation[] = "SoftDvppDecodeRandomCropResizeJpeg";
+constexpr char kSoftDvppDecodeResizeJpegOperation[] = "SoftDvppDecodeResizeJpeg";
+constexpr char kSwapRedBlueOperation[] = "SwapRedBlue";
+constexpr char kUniformAugOperation[] = "UniformAug";
 
 // Transform Op classes (in alphabetical order)
 #ifndef ENABLE_ANDROID
@@ -501,6 +544,8 @@ class AutoContrastOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kAutoContrastOperation; }
+
  private:
   float cutoff_;
   std::vector<uint32_t> ignore_;
@@ -515,6 +560,8 @@ class BoundingBoxAugmentOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kBoundingBoxAugmentOperation; }
 
  private:
   std::shared_ptr<TensorOperation> transform_;
@@ -533,6 +580,8 @@ class CenterCropOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kCenterCropOperation; }
+
  private:
   std::vector<int32_t> size_;
 };
@@ -546,6 +595,8 @@ class CropOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kCropOperation; }
 
  private:
   std::vector<int32_t> coordinates_;
@@ -562,6 +613,8 @@ class CutMixBatchOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kCutMixBatchOperation; }
+
  private:
   float alpha_;
   float prob_;
@@ -577,6 +630,8 @@ class CutOutOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kCutOutOperation; }
 
  private:
   int32_t length_;
@@ -595,6 +650,8 @@ class DecodeOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kDecodeOperation; }
+
  private:
   bool rgb_;
 };
@@ -607,6 +664,8 @@ class EqualizeOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kEqualizeOperation; }
 };
 
 class HwcToChwOperation : public TensorOperation {
@@ -616,6 +675,8 @@ class HwcToChwOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kHwcToChwOperation; }
 };
 
 class InvertOperation : public TensorOperation {
@@ -625,6 +686,8 @@ class InvertOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kInvertOperation; }
 };
 
 class MixUpBatchOperation : public TensorOperation {
@@ -636,6 +699,8 @@ class MixUpBatchOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kMixUpBatchOperation; }
 
  private:
   float alpha_;
@@ -651,6 +716,8 @@ class NormalizeOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kNormalizeOperation; }
 
  private:
   std::vector<float> mean_;
@@ -668,6 +735,8 @@ class PadOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kPadOperation; }
 
  private:
   std::vector<int32_t> padding_;
@@ -689,6 +758,8 @@ class RandomAffineOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomAffineOperation; }
+
  private:
   std::vector<float_t> degrees_;          // min_degree, max_degree
   std::vector<float_t> translate_range_;  // maximum x translation percentage, maximum y translation percentage
@@ -708,6 +779,8 @@ class RandomColorOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomColorOperation; }
+
  private:
   float t_lb_;
   float t_ub_;
@@ -723,6 +796,8 @@ class RandomColorAdjustOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRandomColorAdjustOperation; }
 
  private:
   std::vector<float> brightness_;
@@ -743,6 +818,8 @@ class RandomCropOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomCropOperation; }
+
  private:
   std::vector<int32_t> size_;
   std::vector<int32_t> padding_;
@@ -761,6 +838,8 @@ class RandomCropDecodeResizeOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRandomCropDecodeResizeOperation; }
 
  private:
   std::vector<int32_t> size_;
@@ -782,6 +861,8 @@ class RandomCropWithBBoxOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomCropWithBBoxOperation; }
+
  private:
   std::vector<int32_t> size_;
   std::vector<int32_t> padding_;
@@ -800,6 +881,8 @@ class RandomHorizontalFlipOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomHorizontalFlipOperation; }
+
  private:
   float probability_;
 };
@@ -813,6 +896,8 @@ class RandomHorizontalFlipWithBBoxOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRandomHorizontalFlipWithBBoxOperation; }
 
  private:
   float probability_;
@@ -828,6 +913,8 @@ class RandomPosterizeOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomPosterizeOperation; }
+
  private:
   std::vector<uint8_t> bit_range_;
 };
@@ -842,6 +929,8 @@ class RandomResizeOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomResizeOperation; }
+
  private:
   std::vector<int32_t> size_;
 };
@@ -855,6 +944,8 @@ class RandomResizeWithBBoxOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRandomResizeWithBBoxOperation; }
 
  private:
   std::vector<int32_t> size_;
@@ -872,6 +963,8 @@ class RandomResizedCropOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRandomResizedCropOperation; }
 
  private:
   std::vector<int32_t> size_;
@@ -894,6 +987,8 @@ class RandomResizedCropWithBBoxOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomResizedCropWithBBoxOperation; }
+
  private:
   std::vector<int32_t> size_;
   std::vector<float> scale_;
@@ -912,6 +1007,8 @@ class RandomRotationOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRandomRotationOperation; }
 
  private:
   std::vector<float> degrees_;
@@ -932,6 +1029,8 @@ class RandomSelectSubpolicyOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomSelectSubpolicyOperation; }
+
  private:
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy_;
 };
@@ -945,6 +1044,8 @@ class RandomSharpnessOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRandomSharpnessOperation; }
 
  private:
   std::vector<float> degrees_;
@@ -960,6 +1061,8 @@ class RandomSolarizeOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomSolarizeOperation; }
+
  private:
   std::vector<uint8_t> threshold_;
 };
@@ -973,6 +1076,8 @@ class RandomVerticalFlipOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRandomVerticalFlipOperation; }
 
  private:
   float probability_;
@@ -988,6 +1093,8 @@ class RandomVerticalFlipWithBBoxOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kRandomVerticalFlipWithBBoxOperation; }
+
  private:
   float probability_;
 };
@@ -1001,6 +1108,8 @@ class RescaleOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRescaleOperation; }
 
  private:
   float rescale_;
@@ -1019,6 +1128,8 @@ class ResizeOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kResizeOperation; }
+
  private:
   std::vector<int32_t> size_;
   InterpolationMode interpolation_;
@@ -1036,6 +1147,8 @@ class ResizeWithBBoxOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kResizeWithBBoxOperation; }
+
  private:
   std::vector<int32_t> size_;
   InterpolationMode interpolation_;
@@ -1050,6 +1163,8 @@ class RgbaToBgrOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRgbaToBgrOperation; }
 };
 
 class RgbaToRgbOperation : public TensorOperation {
@@ -1061,6 +1176,8 @@ class RgbaToRgbOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kRgbaToRgbOperation; }
 };
 
 class SoftDvppDecodeRandomCropResizeJpegOperation : public TensorOperation {
@@ -1073,6 +1190,8 @@ class SoftDvppDecodeRandomCropResizeJpegOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kSoftDvppDecodeRandomCropResizeJpegOperation; }
 
  private:
   std::vector<int32_t> size_;
@@ -1091,6 +1210,8 @@ class SoftDvppDecodeResizeJpegOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kSoftDvppDecodeResizeJpegOperation; }
+
  private:
   std::vector<int32_t> size_;
 };
@@ -1104,6 +1225,8 @@ class SwapRedBlueOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kSwapRedBlueOperation; }
 };
 
 class UniformAugOperation : public TensorOperation {
@@ -1115,6 +1238,8 @@ class UniformAugOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kUniformAugOperation; }
 
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;

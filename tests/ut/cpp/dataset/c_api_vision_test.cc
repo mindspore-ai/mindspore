@@ -3018,3 +3018,19 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+TEST_F(MindDataTestPipeline, TestVisionOperationName) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVisionOperationName.";
+
+  std::string correct_name;
+
+  // Create object for the tensor op, and check the name
+  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlip(0.5);
+  correct_name = "RandomVerticalFlip";
+  EXPECT_EQ(correct_name, random_vertical_flip_op->Name());
+
+  // Create object for the tensor op, and check the name
+  std::shared_ptr<TensorOperation> softDvpp_decode_resize_jpeg_op = vision::SoftDvppDecodeResizeJpeg({1, 1});
+  correct_name = "SoftDvppDecodeResizeJpeg";
+  EXPECT_EQ(correct_name, softDvpp_decode_resize_jpeg_op->Name());
+}

@@ -461,6 +461,17 @@ TEST_F(MindDataTestPipeline, TestNgramFail) {
   EXPECT_EQ(ngram_op4, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestTextOperationName) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextOperationName.";
+
+  // Create object for the tensor op, and check the name
+  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
+  std::shared_ptr<TensorOperation> sentence_piece_tokenizer_op =
+    text::SentencePieceTokenizer(data_file, SPieceTokenizerOutType::kString);
+  std::string correct_name = "SentencepieceTokenizer";
+  EXPECT_EQ(correct_name, sentence_piece_tokenizer_op->Name());
+}
+
 TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess) {
   // Testing the parameter of WhitespaceTokenizer interface when the with_offsets is default.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestWhitespaceTokenizerSuccess.";

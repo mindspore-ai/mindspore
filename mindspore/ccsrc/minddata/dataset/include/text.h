@@ -37,6 +37,14 @@ namespace dataset {
 // Transform operations for text
 namespace text {
 
+// Char arrays storing name of corresponding classes (in alphabetical order)
+constexpr char kJiebaTokenizerOperation[] = "JiebaTokenizer";
+constexpr char kLookupOperation[] = "Lookup";
+constexpr char kNgramOperation[] = "Ngram";
+constexpr char kSentencepieceTokenizerOperation[] = "SentencepieceTokenizer";
+constexpr char kSlidingWindowOperation[] = "SlidingWindow";
+constexpr char kWhitespaceTokenizerOperation[] = "WhitespaceTokenizer";
+
 // Text Op classes (in alphabetical order)
 class JiebaTokenizerOperation;
 class LookupOperation;
@@ -128,6 +136,8 @@ class JiebaTokenizerOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kJiebaTokenizerOperation; }
+
  private:
   std::string hmm_path_;
   std::string mp_path_;
@@ -146,6 +156,8 @@ class LookupOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kLookupOperation; }
+
  private:
   std::shared_ptr<Vocab> vocab_;
   std::string unknown_token_;
@@ -163,6 +175,8 @@ class NgramOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kNgramOperation; }
 
  private:
   std::vector<int32_t> ngrams_;
@@ -183,6 +197,8 @@ class SentencePieceTokenizerOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kSentencepieceTokenizerOperation; }
+
  private:
   std::shared_ptr<SentencePieceVocab> vocab_;
   std::string vocab_path_;
@@ -200,6 +216,8 @@ class SlidingWindowOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
+  std::string Name() const override { return kSlidingWindowOperation; }
+
  private:
   int32_t width_;
   int32_t axis_;
@@ -215,6 +233,8 @@ class WhitespaceTokenizerOperation : public TensorOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   Status ValidateParams() override;
+
+  std::string Name() const override { return kWhitespaceTokenizerOperation; }
 
  private:
   bool with_offsets_;

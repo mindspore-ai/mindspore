@@ -379,6 +379,15 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail) {
   EXPECT_EQ(random_choice3, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestTransformOperationName) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTransformOperationName.";
+
+  // Create object for the tensor op, and check the name
+  std::shared_ptr<TensorOperation> duplicate_op = transforms::Duplicate();
+  std::string correct_name = "Duplicate";
+  EXPECT_EQ(correct_name, duplicate_op->Name());
+}
+
 TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastSuccess.";
 
