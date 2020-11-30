@@ -161,7 +161,7 @@ def test_random_resized_crop_with_bbox_op_invalid_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input is not within the required interval of (0 to 16777216)." in str(err)
+        assert "scale should be in (min,max) format. Got (max,min)." in str(err)
 
 
 def test_random_resized_crop_with_bbox_op_invalid2_c():
@@ -186,7 +186,7 @@ def test_random_resized_crop_with_bbox_op_invalid2_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input is not within the required interval of (0 to 16777216)." in str(err)
+        assert "ratio should be in (min,max) format. Got (max,min)." in str(err)
 
 
 def test_random_resized_crop_with_bbox_op_bad_c():

@@ -221,13 +221,15 @@ def check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
     if scale is not None:
         type_check(scale, (tuple,), "scale")
         type_check_list(scale, (float, int), "scale")
-        check_range(scale, [0, FLOAT_MAX_INTEGER])
         if scale[0] > scale[1]:
             raise ValueError("scale should be in (min,max) format. Got (max,min).")
+        check_range(scale, [0, FLOAT_MAX_INTEGER])
+        check_positive(scale[1], "scale[1]")
     if ratio is not None:
         type_check(ratio, (tuple,), "ratio")
         type_check_list(ratio, (float, int), "ratio")
-        check_range(ratio, [0, FLOAT_MAX_INTEGER])
+        check_positive(ratio[0], "ratio[0]")
+        check_positive(ratio[1], "ratio[1]")
         if ratio[0] > ratio[1]:
             raise ValueError("ratio should be in (min,max) format. Got (max,min).")
     if max_attempts is not None:
@@ -434,8 +436,14 @@ def check_random_erasing(method):
         [prob, scale, ratio, value, inplace, max_attempts], _ = parse_user_args(method, *args, **kwargs)
 
         check_value(prob, [0., 1.], "prob")
+        if scale[0] > scale[1]:
+            raise ValueError("scale should be in (min,max) format. Got (max,min).")
         check_range(scale, [0, FLOAT_MAX_INTEGER])
-        check_range(ratio, [0, FLOAT_MAX_INTEGER])
+        check_positive(scale[1], "scale[1]")
+        check_positive(ratio[0], "ratio[0]")
+        check_positive(ratio[1], "ratio[1]")
+        if ratio[0] > ratio[1]:
+            raise ValueError("ratio should be in (min,max) format. Got (max,min).")
         check_erasing_value(value)
         type_check(inplace, (bool,), "inplace")
         check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
@@ -501,10 +509,10 @@ def check_random_affine(method):
             type_check(scale, (tuple, list), "scale")
             type_check_list(scale, (int, float), "scale")
             if len(scale) == 2:
-                for i, s in enumerate(scale):
-                    check_positive(s, "scale[{}]".format(i))
                 if scale[0] > scale[1]:
                     raise ValueError("Input scale[1] must be equal to or greater than scale[0].")
+                check_range(scale, [0, FLOAT_MAX_INTEGER])
+                check_positive(scale[1], "scale[1]")
             else:
                 raise TypeError("scale should be a list or tuple of length 2.")
 

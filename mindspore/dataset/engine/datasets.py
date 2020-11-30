@@ -246,7 +246,7 @@ class Dataset:
             >>> # Create a dataset where every 100 rows is combined into a batch
             >>> # and drops the last incomplete batch if there is one.
             >>> column_names = ["col1", "col2"]
-            >>> buket_boundaries = [5, 10]
+            >>> bucket_boundaries = [5, 10]
             >>> bucket_batch_sizes = [5, 1, 1]
             >>> element_length_function = (lambda col1, col2: max(len(col1), len(col2)))
             >>>
