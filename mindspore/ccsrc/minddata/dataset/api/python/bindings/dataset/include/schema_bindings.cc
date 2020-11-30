@@ -42,6 +42,8 @@ PYBIND_REGISTER(
            [](SchemaObj &self, std::string name, TypeId de_type) { THROW_IF_ERROR(self.add_column(name, de_type)); })
       .def("add_column", [](SchemaObj &self, std::string name,
                             std::string de_type) { THROW_IF_ERROR(self.add_column(name, de_type)); })
+      .def("parse_columns",
+           [](SchemaObj &self, std::string json_string) { THROW_IF_ERROR(self.ParseColumnString(json_string)); })
       .def("to_json", &SchemaObj::to_json)
       .def("to_string", &SchemaObj::to_string)
       .def("from_string",

@@ -782,12 +782,23 @@ Status SchemaObj::from_json(nlohmann::json json_obj) {
 
   return Status::OK();
 }
+
 Status SchemaObj::FromJSONString(const std::string &json_string) {
   try {
     nlohmann::json js = nlohmann::json::parse(json_string);
     CHECK_FAIL_RETURN_UNEXPECTED(js.find("columns") != js.end(),
                                  "\"columns\" node is required in the schema json JSON.");
     RETURN_IF_NOT_OK(from_json(js));
+  } catch (const std::exception &err) {
+    RETURN_STATUS_SYNTAX_ERROR("JSON string is failed to parse");
+  }
+  return Status::OK();
+}
+
+Status SchemaObj::ParseColumnString(const std::string &json_string) {
+  try {
+    nlohmann::json js = nlohmann::json::parse(json_string);
+    RETURN_IF_NOT_OK(parse_column(js));
   } catch (const std::exception &err) {
     RETURN_STATUS_SYNTAX_ERROR("JSON string is failed to parse");
   }
