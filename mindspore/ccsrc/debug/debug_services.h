@@ -80,6 +80,8 @@ class DebugServices {
       if (std::isnan(actualValue)) return;
 
       actual_value = actualValue;
+      // if cannot extract inequality type from watchpoint
+      // try extract from parameter name
       if (inequality_type.empty()) {
         auto pos = name.find_last_of('_');
         if (pos != std::string::npos) {
