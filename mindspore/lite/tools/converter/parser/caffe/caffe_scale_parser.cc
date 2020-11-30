@@ -49,7 +49,6 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::
   }
 
   const caffe::ScaleParameter &scaleParam = weight.scale_param();
-  int axis = 1;
   if (scaleParam.has_axis()) {
     uint32_t axis_index = 1;
     if (GetAxisIndex(scaleParam.axis(), &axis_index)) {
@@ -57,7 +56,7 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::
       return RET_ERROR;
     }
   }
-  attr->axis = axis;
+  attr->axis = 1;
 
   // parse scale
   if (weight.blobs().size() == 1) {

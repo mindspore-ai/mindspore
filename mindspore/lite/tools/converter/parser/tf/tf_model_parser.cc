@@ -81,6 +81,7 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::AttrValue &attr_value
       auto ret = ::memcpy_s(tensor_data, shape_size * sizeof(float), addr, shape_size * sizeof(float));
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy_s failed";
+        delete[] tensor_data;
         return RET_ERROR;
       }
     }
@@ -99,6 +100,7 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::AttrValue &attr_value
       auto ret = ::memcpy_s(tensor_data, shape_size * sizeof(int32_t), addr, shape_size * sizeof(int32_t));
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy_s failed";
+        delete[] tensor_data;
         return RET_ERROR;
       }
     }
