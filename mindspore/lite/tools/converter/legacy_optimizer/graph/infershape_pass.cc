@@ -72,9 +72,8 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
       convert_succ = false;
       break;
     }
-    ret = memcpy_s(lite_tensor->MutableData(), lite_tensor->Size(), tensorT->data.data(), lite_tensor_size);
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy error: " << ret;
+    if (memcpy_s(lite_tensor->MutableData(), lite_tensor->Size(), tensorT->data.data(), lite_tensor_size) != EOK) {
+      MS_LOG(ERROR) << "memcpy_s failed";
       convert_succ = false;
       break;
     }

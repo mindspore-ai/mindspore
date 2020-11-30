@@ -23,7 +23,7 @@ namespace mindspore {
 namespace lite {
 
 OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive) {
-  SplitParameter *split_param = reinterpret_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
+  auto *split_param = reinterpret_cast<SplitParameter *>(malloc(sizeof(SplitParameter)));
   if (split_param == nullptr) {
     MS_LOG(ERROR) << "malloc SplitParameter failed.";
     return nullptr;
@@ -35,14 +35,15 @@ OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive
   int *split_sizes = reinterpret_cast<int *>(malloc(split_param->num_split_ * sizeof(int)));
   if (split_sizes == nullptr) {
     MS_LOG(ERROR) << "malloc split size of SplitParameter failed.";
+    free(split_param);
     return nullptr;
   }
   memset(split_sizes, 0, split_param->num_split_ * sizeof(int));
   split_param->split_sizes_ = split_sizes;
   auto split_sizes_vector_ = param->GetSizeSplits();
   int i = 0;
-  for (auto iter = split_sizes_vector_.begin(); iter != split_sizes_vector_.end(); iter++) {
-    split_param->split_sizes_[i++] = *iter;
+  for (int &iter : split_sizes_vector_) {
+    split_param->split_sizes_[i++] = iter;
   }
   split_param->split_dim_ = param->GetSplitDim();
   return reinterpret_cast<OpParameter *>(split_param);
