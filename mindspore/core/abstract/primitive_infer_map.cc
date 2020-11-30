@@ -72,6 +72,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimTranspose, {InferImplTranspose, true}},
     {prim::kPrimReshape, {InferImplReshape, true}},
     {prim::kPrimSplit, {InferImplSplit, true}},
+    {prim::kPrimSequenceMask, {InferImplSequenceMask, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
     {prim::kPrimMakeList, {InferImplMakeList, true}},

@@ -1216,68 +1216,6 @@ class Zeros(PrimitiveWithInfer):
         return out
 
 
-class SequenceMask(PrimitiveWithInfer):
-    r"""
-    Generates sequence mask according to input lengths.
-
-    Creates a mask tensor which retains the first N elements in tensor by setting the values
-    to be True or one. The rest values in mask are set to False or zero.
-
-    Args:
-        max_length (int): Nonnegative integer, size of the last dimension in mask. Default: None.
-
-    Inputs:
-        - **lengths** (Union[tuple[int], list[int]]) - Defines the first N elements that are retained.
-          Only constant value is allowed.
-        - **dtype** (mindspore.dtype) - The specified type of output tensor. Only constant value is allowed.
-
-    Outputs:
-        Tensor.
-        If max_length is set, the shape of the output is (lengths.shape, max_length).
-        If max_length is not set and the biggest value in lengths is x. Then, the shape of
-        the output is (lengths.shape, x).
-
-    Supported Platforms:
-    ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> from mindspore.ops import operations as P
-        >>> sequence_mask = P.SequenceMask()
-        >>> mask = sequence_mask([2, 2, 4], mindspore.int32)
-        >>> print(mask)
-        [[1, 1, 0, 0],
-         [1, 1, 0, 0],
-         [1, 1, 1, 1]]
-
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize SequenceMask"""
-
-    def __infer__(self, lengths, dtype, max_length=None):
-        validator.check_value_type("shape", lengths['value'], [tuple, list], self.name)
-        valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                       mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
-                       mstype.float16, mstype.float32, mstype.float64]
-        validator.check_subclass("dtype", dtype['value'], valid_types, self.name)
-        nptype = mstype.dtype_to_nptype(dtype['value'])
-        if max_length is None:
-            max_length = np.max(lengths['value'])
-        else:
-            validator.check_non_negative_int(max_length['value'])
-            max_length = max_length['value']
-        row_vector = np.arange(0, max_length)
-        col_matrix = np.expand_dims(lengths['value'], -1)
-        result = (row_vector < col_matrix).astype(nptype)
-        out = {
-            'value': Tensor(result),
-            'shape': result.shape,
-            'dtype': dtype['value']
-        }
-        return out
-
-
 class OnesLike(PrimitiveWithInfer):
     """
     Creates a new tensor. The values of all elements are 1.
@@ -4648,3 +4586,47 @@ class Identity(PrimitiveWithInfer):
                'dtype': x['dtype'],
                'value': None}
         return out
+
+
+class SequenceMask(PrimitiveWithCheck):
+    """
+    Returns a mask tensor representing the first N positions of each cell.
+
+    If lengths has shape [d_1, d_2, ..., d_n], then the resulting tensor mask has type dtype and shape
+    [d_1, d_2, ..., d_n, maxlen], with mask[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])
+
+    Inputs:
+        - **lengths** (Tensor) - Tensor to calculate the mask for. All values in this tensor must be
+          less than `maxlen`. Must be type int32 or int64.
+
+        - **maxlen** (int) - size of the last dimension of returned tensor. Must be positive and same
+          tyupe as elements in `lengths`.
+
+    Outputs:
+        One mask tensor of shape lengths.shape + (maxlen,).
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 3], [2, 0]])
+        >>> sequence_mask = P.SequenceMask()
+        >>> output = sequence_mask(x, 3)
+        >>> print(output)
+        [[[True, False, False],
+          [True, True, True]],
+         [[True, True, False],
+          [False, False, False]]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=["lengths", "maxlen"], outputs=["mask"])
+
+    def check_shape(self, lengths_shape, maxlen_shape):
+        validator.check("lengths_shape", len(lengths_shape), "", 0, Rel.GT, self.name)
+        validator.check("maxlen_shape", len(maxlen_shape), "", 0, Rel.EQ, self.name)
+
+    def check_dtype(self, lengths_dtype, maxlen_dtype):
+        validator.check_subclass("lengths_dtype", lengths_dtype, mstype.tensor, self.name)
+        validator.check_subclass("maxlen", maxlen_dtype, mstype.number, self.name)

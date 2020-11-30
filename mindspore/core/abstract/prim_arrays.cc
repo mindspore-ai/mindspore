@@ -839,5 +839,56 @@ AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &pr
   }
   return std::make_shared<AbstractTuple>(output_list);
 }
+
+AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  const std::string &op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+
+  AbstractTensorPtr lengths = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  (void)CheckTensorDType(lengths, {kInt32, kInt64}, "Input 1 (lengths) for SequenceMask should be one of: %s");
+
+  int64_t maxlen_value = 0;
+
+  if (args_spec_list[1]->isa<AbstractScalar>()) {
+    AbstractScalarPtr maxlen = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+    (void)CheckScalarType(maxlen, {kInt32, kInt64}, "Input 0 (maxlen) for SequenceMask should be one of: %s");
+
+    TypePtr maxlen_type = nullptr;
+    maxlen_type = maxlen->GetTypeTrack();
+    MS_EXCEPTION_IF_NULL(maxlen_type);
+
+    if (maxlen_type->type_id() == TypeId::kNumberTypeInt32) {
+      maxlen_value = static_cast<int64_t>(GetValue<int32_t>(maxlen->BuildValue()));
+    } else if (maxlen_type->type_id() == TypeId::kNumberTypeInt64) {
+      maxlen_value = GetValue<int64_t>(maxlen->BuildValue());
+    }
+  } else if (args_spec_list[1]->isa<AbstractTensor>()) {
+    auto maxlen_tensor_ptr = args_spec_list[1]->cast<AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(maxlen_tensor_ptr);
+    auto maxlen_value_ptr = maxlen_tensor_ptr->BuildValue();
+    MS_EXCEPTION_IF_NULL(maxlen_value_ptr);
+    auto maxlen_tensor = maxlen_value_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(maxlen_tensor);
+    maxlen_value = *static_cast<int64_t *>(maxlen_tensor->data_c());
+  }
+
+  ShapeVector lengths_shape = lengths->shape()->shape();
+  ShapeVector lengths_shape_min = lengths->shape()->min_shape();
+  if (lengths_shape_min.empty()) {
+    lengths_shape_min = lengths_shape;
+  }
+  ShapeVector lengths_shape_max = lengths->shape()->max_shape();
+  if (lengths_shape_max.empty()) {
+    lengths_shape_max = lengths_shape;
+  }
+
+  lengths_shape.push_back(maxlen_value);
+  lengths_shape_min.push_back(maxlen_value);
+  lengths_shape_max.push_back(maxlen_value);
+
+  ShapePtr output_shape = std::make_shared<Shape>(lengths_shape, lengths_shape_min, lengths_shape_max);
+  return std::make_shared<AbstractTensor>(kBool, output_shape);
+}
 }  // namespace abstract
 }  // namespace mindspore
