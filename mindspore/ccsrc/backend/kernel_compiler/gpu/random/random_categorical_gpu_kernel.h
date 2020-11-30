@@ -47,8 +47,9 @@ class RandomCategoricalGpuKernel : public GpuKernel {
       host_cdf[i] = GetDeviceAddress<double>(workspaces, i);
     }
     double **dev_cdf = GetDeviceAddress<double *>(workspaces, batch_size_);
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_cdf, host_cdf.get(), sizeof(double *) * batch_size_,
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_cdf,  // NOLINT
+                                               host_cdf.get(), sizeof(double *) * batch_size_, cudaMemcpyHostToDevice,
+                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Random_categorica cudaMemcpyAsync dev_cdf failed");
 
     std::unique_ptr<double *[]> host_rand;
@@ -59,19 +60,22 @@ class RandomCategoricalGpuKernel : public GpuKernel {
 
     double **dev_rand = GetDeviceAddress<double *>(workspaces, batch_size_ * 2 + 1);
     for (int i = 0; i < batch_size_; i++) {
-      double *host_1d_rand = new double[num_samples_];
+      std::unique_ptr<double[]> host_1d_rand;
+      host_1d_rand = std::make_unique<double[]>(num_samples_);
+
       std::default_random_engine rng(seed_);
       std::uniform_real_distribution<> dist(0, 1);
       for (int j = 0; j < num_samples_; j++) {
         host_1d_rand[j] = dist(rng);
       }
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(host_rand[i], host_1d_rand, sizeof(double) * num_samples_,
+      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(host_rand[i],  // NOLINT
+                                                 host_1d_rand.get(), sizeof(double) * num_samples_,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "Random_categorica cudaMemcpyAsync host_1d_rand failed");
-      delete[] host_1d_rand;
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_rand, host_rand.get(), sizeof(double *) * batch_size_,
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_rand,  // NOLINT
+                                               host_rand.get(), sizeof(double *) * batch_size_, cudaMemcpyHostToDevice,
+                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Random_categorica cudaMemcpyAsync dev_rand failed");
 
     GetCdfKernel(logits_addr, dev_cdf, batch_size_, num_classes_, reinterpret_cast<cudaStream_t>(stream_ptr));

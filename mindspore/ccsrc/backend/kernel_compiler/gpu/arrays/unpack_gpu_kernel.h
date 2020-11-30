@@ -41,8 +41,9 @@ class UnpackGpuFwdKernel : public GpuKernel {
     for (size_t i = 0; i < outputs.size(); i++) {
       outputs_host_[i] = GetDeviceAddress<T>(outputs, i);
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(outputs_array, outputs_host_.get(), sizeof(T *) * output_num_,
-                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(outputs_array,  // NOLINT
+                                               outputs_host_.get(), sizeof(T *) * output_num_, cudaMemcpyHostToDevice,
+                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Unpack opt cudaMemcpyAsync outputs failed");
     UnpackKernel(SizeToInt(input_size_), output_num_, dims_after_axis_, outputs_array, input,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
