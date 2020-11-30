@@ -28,6 +28,7 @@
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_utils.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -77,11 +78,13 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     std::string build_result;
     auto ret = build_manger->WaitOne(&task_id, &task_result, &build_result);
     if (!ret) {
-      MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id;
+      MS_EXCEPTION(ArgumentError) << "Build Failed. wait one ret:" << ret << ", task id:" << task_id
+                                  << " trace: " << trace::DumpSourceLines(build_manger->GetAnfNodeByTaskID(task_id));
     }
 
     if (task_result != "Success") {
-      MS_EXCEPTION(ArgumentError) << "task compile Failed, task id:" << task_id << ", cause:" << task_result;
+      MS_EXCEPTION(ArgumentError) << "task compile Failed, task id:" << task_id << ", cause:" << task_result
+                                  << " trace: " << trace::DumpSourceLines(build_manger->GetAnfNodeByTaskID(task_id));
     }
     (void)build_manger->TaskFinishProcess(task_id, build_result);
   }
@@ -246,6 +249,14 @@ void ParallelBuildManager::ResetTaskInfo() {
   task_map_.clear();
   same_op_list_.clear();
   AscendKernelBuildClient::Instance().TbeReset();
+}
+
+AnfNodePtr ParallelBuildManager::GetAnfNodeByTaskID(int32_t task_id) {
+  auto find_iter = task_map_.find(task_id);
+  if (find_iter != task_map_.end()) {
+    return find_iter->second.node;
+  }
+  return nullptr;
 }
 
 std::string ParallelBuildManager::ProcessBuildRetStr(const std::string &build_result) {
