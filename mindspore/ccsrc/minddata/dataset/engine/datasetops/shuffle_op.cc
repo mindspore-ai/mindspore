@@ -283,7 +283,7 @@ Status ShuffleOp::InitShuffleBuffer() {
     shuffle_buffer_state_ = kShuffleStateDrain;
   }
 
-  MS_LOG(DEBUG) << "Shuffle operator finished intializing the shuffle buffer.";
+  MS_LOG(DEBUG) << "Shuffle operator finished initializing the shuffle buffer.";
   return Status::OK();
 }
 

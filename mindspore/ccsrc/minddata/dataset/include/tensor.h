@@ -751,7 +751,6 @@ inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::strin
     num_bytes -= str.length() + 1;
   }
   // store one more offset value so we can get the length of the last string
-  // length[last_element] = offset_arr[last_element + 1] - offset_arr[last_element]
   offset_arr[i] = offset;
 
   (*out)->data_end_ = (*out)->data_ + offset_arr[i];
