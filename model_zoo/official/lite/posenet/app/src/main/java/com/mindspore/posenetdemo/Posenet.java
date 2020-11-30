@@ -172,7 +172,7 @@ public class Posenet {
      * returns:
      * person: a Person object containing data about keypoint locations and confidence scores
      */
-    Person estimateSinglePose(Bitmap bitmap) {
+    public Person estimateSinglePose(Bitmap bitmap) {
         long estimationStartTimeNanos = SystemClock.elapsedRealtimeNanos();
         ByteBuffer inputArray = this.initInputArray(bitmap);
         List<MSTensor> inputs = session.getInputs();

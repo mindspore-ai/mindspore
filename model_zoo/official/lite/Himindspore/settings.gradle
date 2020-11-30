@@ -1,3 +1,4 @@
+include ':mindsporelibrary'
 include ':imageObject'
 include ':styletransfer'
 include ':posenet'
