@@ -42,28 +42,6 @@ def test_expand_dims():
     assert output.asnumpy().shape == (1, 2, 2)
 
 
-def test_sequence_mask():
-    list_ = [2, 2, 4]
-    sequence_mask = P.SequenceMask()
-    mask1 = sequence_mask(list_, mstype.int32)
-    mask2 = sequence_mask(list_, mstype.int32, 5)
-    assert mask1.shape == (3, 4)
-    assert mask1.dtype == mstype.int32
-    assert mask2.shape == (3, 5)
-    assert mask2.dtype == mstype.int32
-
-
-def test_sequence_mask_1():
-    list_ = [[2, 2, 4], [3, 4, 4]]
-    sequence_mask = P.SequenceMask()
-    mask1 = sequence_mask(list_, mstype.bool_)
-    mask2 = sequence_mask(list_, mstype.bool_, 5)
-    assert mask1.shape == (2, 3, 4)
-    assert mask1.dtype == mstype.bool_
-    assert mask2.shape == (2, 3, 5)
-    assert mask2.dtype == mstype.bool_
-
-
 def test_cast():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_x = Tensor(input_np)

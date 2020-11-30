@@ -22,7 +22,7 @@ A collection of operators to build neural networks or to compute functions.
 from .image_ops import (CropAndResize)
 from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
-                        Fill, Ones, Zeros, SequenceMask, GatherNd, GatherV2, SparseGatherV2, InvertPermutation,
+                        Fill, Ones, Zeros, GatherNd, GatherV2, SparseGatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
                         Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue, Meshgrid,
                         SameTypeShape, ScatterAdd, ScatterSub, ScatterMul, ScatterDiv, ScatterMax, ScatterMin,
@@ -33,7 +33,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin, UnsortedSegmentMax,
                         UnsortedSegmentProd, UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
                         SpaceToBatchND, BatchToSpaceND, BroadcastTo, InplaceUpdate, ReverseSequence, EmbeddingLookup,
-                        Unique, GatherD, Identity)
+                        Unique, GatherD, Identity, SequenceMask)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, AllSwap, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice, Send, Receive,
@@ -394,6 +394,7 @@ __all__ = [
     "Pull",
     "ReLUV2",
     "SparseToDense",
+    "SequenceMask",
 ]
 
 __all__.sort()

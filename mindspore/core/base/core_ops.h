@@ -119,6 +119,7 @@ inline const PrimitivePtr kPrimDynamicGRUV2Grad = std::make_shared<Primitive>("D
 inline const PrimitivePtr kPrimScatterAdd = std::make_shared<Primitive>("ScatterAdd");
 inline const PrimitivePtr kPrimScatterUpdate = std::make_shared<Primitive>("ScatterUpdate");
 inline const PrimitivePtr kPrimSplit = std::make_shared<Primitive>("Split");
+inline const PrimitivePtr kPrimSequenceMask = std::make_shared<Primitive>("SequenceMask");
 
 // NN
 inline const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
