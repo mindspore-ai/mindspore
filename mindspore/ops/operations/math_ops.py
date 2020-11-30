@@ -568,7 +568,7 @@ class ReduceMin(_Reduce):
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))

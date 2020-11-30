@@ -42,11 +42,14 @@ class ReduceCPUKernel : public CPUKernel {
   size_t left_dims_ = 1;
   size_t stride_ = 1;
 };
+
 MS_REG_CPU_KERNEL(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ReduceCPUKernel);
 MS_REG_CPU_KERNEL(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ReduceCPUKernel);
 MS_REG_CPU_KERNEL(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  ReduceCPUKernel);
+MS_REG_CPU_KERNEL(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   ReduceCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
