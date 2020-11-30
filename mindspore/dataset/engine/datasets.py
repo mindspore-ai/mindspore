@@ -1940,7 +1940,7 @@ class BlockReleasePair:
 
     Args:
         init_release_rows (int): Number of lines to allow through the pipeline.
-        callback (function): The callback function that will be called when release is called.
+        callback (function): The callback function that will be called when release is called (default=None).
     """
 
     def __init__(self, init_release_rows, callback=None):
@@ -2015,7 +2015,7 @@ class SyncWaitDataset(Dataset):
         input_dataset (Dataset): Input dataset to apply flow control.
         num_batch (int): Number of batches without blocking at the start of each epoch.
         condition_name (str): Condition name that is used to toggle sending next row.
-        callback (function): Callback function that will be invoked when sync_update is called.
+        callback (function): Callback function that will be invoked when sync_update is called (default=None).
 
     Raises:
         RuntimeError: If condition name already exists.
