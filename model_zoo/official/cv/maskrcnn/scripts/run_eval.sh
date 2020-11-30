@@ -16,7 +16,7 @@
 
 if [ $# != 2 ]
 then 
-    echo "Usage: sh run_eval.sh [ANN_FILE] [CHECKPOINT_PATH]"
+    echo "Usage: bash run_eval.sh [ANN_FILE] [CHECKPOINT_PATH]"
 exit 1
 fi
 

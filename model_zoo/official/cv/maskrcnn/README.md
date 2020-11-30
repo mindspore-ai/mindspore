@@ -25,11 +25,13 @@
 - [ModelZoo Homepage](#modelzoo-homepage)
 
 # [MaskRCNN Description](#contents)
+
 MaskRCNN is a conceptually simple, flexible, and general framework for object instance segmentation. The approach efficiently detects objects in an image while simultaneously generating a high-quality segmentation mask for each instance. The method, called Mask R-CNN, extends Faster R-CNN by adding a branch for predicting an object mask in
 parallel with the existing branch for bounding box recognition. Mask R-CNN is simple to train and adds only a small overhead to Faster R-CNN, running at 5 fps. Moreover, Mask R-CNN is easy to generalize to other tasks, e.g., allowing to estimate human poses in the same framework.
-It shows top results in all three tracks of the COCO suite of challenges, including instance segmentation, boundingbox object detection, and person keypoint detection. Without bells and whistles, Mask R-CNN outperforms all existing, single-model entries on every task, including the COCO 2016 challenge winners. 
+It shows top results in all three tracks of the COCO suite of challenges, including instance segmentation, boundingbox object detection, and person keypoint detection. Without bells and whistles, Mask R-CNN outperforms all existing, single-model entries on every task, including the COCO 2016 challenge winners.
 
 # [Model Architecture](#contents)
+
 MaskRCNN is a two-stage target detection network. It extends FasterRCNN by adding a branch for predicting an object mask in parallel with the existing branch for bounding box recognition.This network uses a region proposal network (RPN), which can share the convolution features of the whole image with the detection network, so that the calculation of region proposal is almost cost free. The whole network further combines RPN and mask branch into a network by sharing the convolution features.
 
 [Paper](http://cn.arxiv.org/pdf/1703.06870v3): Kaiming He, Georgia Gkioxari, Piotr Dollar and Ross Girshick. "MaskRCNN"
@@ -38,26 +40,25 @@ MaskRCNN is a two-stage target detection network. It extends FasterRCNN by addin
 
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
-- [COCO2017](https://cocodataset.org/) is a popular dataset with bounding-box and pixel-level stuff annotations. These annotations can be used for scene understanding tasks like semantic segmentation, object detection and image captioning. There are 118K/5K images for train/val. 
+- [COCO2017](https://cocodataset.org/) is a popular dataset with bounding-box and pixel-level stuff annotations. These annotations can be used for scene understanding tasks like semantic segmentation, object detection and image captioning. There are 118K/5K images for train/val.
 
 - Dataset size: 19G
-  - Train: 18G, 118000 images
-  - Val: 1G, 5000 images
-  - Annotations: 241M, instances, captions, person_keypoints, etc.
- 
-- Data format: image and json files
-  - Note: Data will be processed in dataset.py
+    - Train: 18G, 118000 images
+    - Val: 1G, 5000 images
+    - Annotations: 241M, instances, captions, person_keypoints, etc.
+
+- Data format: image and json files (Note: Data will be processed in dataset.py)
 
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  - [MindSpore](https://gitee.com/mindspore/mindspore)
+    - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below:
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
- 
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+
 - third-party libraries
 
 ```bash
@@ -65,13 +66,13 @@ pip install Cython
 pip install pycocotools
 pip install mmcv=0.2.14
 ```
-  
-  
+
 # [Quick Start](#contents)
 
 1. Download the dataset COCO2017.
 
 2. Change the COCO_ROOT and other settings you need in `config.py`. The directory structure should look like the follows:
+
     ```
     .
     └─cocodataset
@@ -81,37 +82,42 @@ pip install mmcv=0.2.14
       ├─val2017
       └─train2017
     ```
+
      If you use your own dataset to train the network, **Select dataset to other when run script.**
     Create a txt file to store dataset information organized in the way as shown as following:
+
     ```
     train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
     ```
-    Each row is an image annotation split by spaces. The first column is a relative path of image, followed by columns containing box and class information in the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), which can be set in `config.py`. 
 
-3. Execute train script. 
+    Each row is an image annotation split by spaces. The first column is a relative path of image, followed by columns containing box and class information in the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), which can be set in `config.py`.
+
+3. Execute train script.
     After dataset preparation, you can start training as follows:
+
     ```
     # distributed training
-    sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
-     
+    bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
+
     # standalone training
-    sh run_standalone_train.sh [PRETRAINED_CKPT]
+    bash run_standalone_train.sh [PRETRAINED_CKPT]
     ```
+
     Note:
     1. To speed up data preprocessing, MindSpore provide a data format named MindRecord, hence the first step is to generate MindRecord files based on COCO2017 dataset before training. The process of converting raw COCO2017 dataset to MindRecord format may take about 4 hours.
     2. For distributed training, a [hccl configuration file](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) with JSON format needs to be created in advance.
     3. PRETRAINED_CKPT is a resnet50 checkpoint that trained over ImageNet2012.
     4. For large models like MaskRCNN, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
 
-
 4. Execute eval script.
    After training, you can start evaluation as follows:
-   
-   ```bash
+
+   ```shell
    # Evaluation
-   sh run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+   bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
    ```
-   Note: 
+
+   Note:
    1. VALIDATION_JSON_FILE is a label json file for evaluation.
 
 # [Script Description](#contents)
@@ -120,8 +126,8 @@ pip install mmcv=0.2.14
 
 ```shell
 .
-└─MaskRcnn      
-  ├─README.md                             # README 
+└─MaskRcnn
+  ├─README.md                             # README
   ├─scripts                               # shell script
     ├─run_standalone_train.sh             # training in standalone mode(1pcs)
     ├─run_distribute_train.sh             # training in parallel mode(8 pcs)
@@ -129,7 +135,7 @@ pip install mmcv=0.2.14
   ├─src
     ├─maskrcnn
       ├─__init__.py
-      ├─anchor_generator.py               # generate base bounding box anchors 
+      ├─anchor_generator.py               # generate base bounding box anchors
       ├─bbox_assign_sample.py             # filter positive and negative bbox for the first stage learning
       ├─bbox_assign_sample_stage2.py      # filter positive and negative bbox for the second stage learning
       ├─mask_rcnn_r50.py                  # main network architecture of maskrcnn
@@ -143,7 +149,7 @@ pip install mmcv=0.2.14
     ├─config.py                           # network configuration
     ├─dataset.py                          # dataset utils
     ├─lr_schedule.py                      # leanring rate geneatore
-    ├─network_define.py                   # network define for maskrcnn   
+    ├─network_define.py                   # network define for maskrcnn
     └─util.py                             # routine operation
   ├─mindspore_hub_conf.py                 # mindspore hub interface
   ├─eval.py                               # evaluation scripts
@@ -153,23 +159,24 @@ pip install mmcv=0.2.14
 ## [Script Parameters](#contents)
 
 ### [Training Script Parameters](#contents)
-```
+
+```shell
 # distributed training
-Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
- 
+Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+
 # standalone training
-Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
+Usage: bash run_standalone_train.sh [PRETRAINED_MODEL]
 ```
 
 ### [Parameters Configuration](#contents)
-```
+
+```txt
 "img_width": 1280,          # width of the input images
 "img_height": 768,          # height of the input images
 
 # random threshold in data augmentation
-"keep_ratio": True,         
+"keep_ratio": True,
 "flip_ratio": 0.5,
-"photo_ratio": 0.5,
 "expand_ratio": 1.0,
 
 "max_instance_count": 128, # max number of bbox for each image
@@ -193,18 +200,18 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "fpn_num_outs": 5,                                                       # out feature map size
 
 # rpn
-"rpn_in_channels": 256,                                                  # in channel size                     
+"rpn_in_channels": 256,                                                  # in channel size
 "rpn_feat_channels": 256,                                                # feature out channel size
 "rpn_loss_cls_weight": 1.0,                                              # weight of bbox classification in rpn loss
 "rpn_loss_reg_weight": 1.0,                                              # weight of bbox regression in rpn loss
-"rpn_cls_out_channels": 1,                                               # classification out channel size 
+"rpn_cls_out_channels": 1,                                               # classification out channel size
 "rpn_target_means": [0., 0., 0., 0.],                                    # bounding box decode/encode means
 "rpn_target_stds": [1.0, 1.0, 1.0, 1.0],                                 # bounding box decode/encode stds
 
 # bbox_assign_sampler
 "neg_iou_thr": 0.3,                                                      # negative sample threshold after IOU
 "pos_iou_thr": 0.7,                                                      # positive sample threshold after IOU
-"min_pos_iou": 0.3,                                                      # minimal positive sample threshold after IOU 
+"min_pos_iou": 0.3,                                                      # minimal positive sample threshold after IOU
 "num_bboxes": 245520,                                                    # total bbox numner
 "num_gts": 128,                                                          # total ground truth number
 "num_expected_neg": 256,                                                 # negative sample number
@@ -217,7 +224,7 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 # roi_alignj
 "roi_layer": dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2), # ROIAlign parameters
 "roi_align_out_channels": 256,                                                  # ROIAlign out channels size
-"roi_align_featmap_strides": [4, 8, 16, 32],                                    # stride size for differnt level of ROIAling feature map 
+"roi_align_featmap_strides": [4, 8, 16, 32],                                    # stride size for differnt level of ROIAling feature map
 "roi_align_finest_scale": 56,                                                   # finest scale ofr ROIAlign
 "roi_sample_num": 640,                                                          # sample number in ROIAling layer
 
@@ -231,8 +238,8 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "num_expected_total_stage2": 512,
 
 # rcnn                                                                          # rcnn parameter for the second stage, parameter meaning is similar with fpn
-"rcnn_num_layers": 2,                                                           
-"rcnn_in_channels": 256,                                                        
+"rcnn_num_layers": 2,
+"rcnn_in_channels": 256,
 "rcnn_fc_out_channels": 1024,
 "rcnn_mask_out_channels": 256,
 "rcnn_loss_cls_weight": 1,
@@ -242,7 +249,7 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "rcnn_target_stds": [0.1, 0.1, 0.2, 0.2],
 
 # train proposal
-"rpn_proposal_nms_across_levels": False,                                      
+"rpn_proposal_nms_across_levels": False,
 "rpn_proposal_nms_pre": 2000,                                                  # proposal number before nms in rpn
 "rpn_proposal_nms_post": 2000,                                                 # proposal number after nms in rpn
 "rpn_proposal_max_num": 2000,                                                  # max proposal number in rpn
@@ -251,7 +258,7 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 
 # test proposal                                                                # part of parameters are similar with train proposal
 "rpn_nms_across_levels": False,
-"rpn_nms_pre": 1000,                                                          
+"rpn_nms_pre": 1000,
 "rpn_nms_post": 1000,
 "rpn_max_num": 1000,
 "rpn_nms_thr": 0.7,
@@ -261,7 +268,6 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "test_max_per_img": 100,                                                       # max number of instance
 "test_batch_size": 2,                                                          # batch size
 
-"rpn_head_loss_type": "CrossEntropyLoss",                                      # loss type in rpn
 "rpn_head_use_sigmoid": True,                                                  # whether use sigmoid or not in rpn
 "rpn_head_weight": 1.0,                                                        # rpn head weight in loss
 "mask_thr_binary": 0.5,                                                        # mask threshold for in rcnn
@@ -271,7 +277,6 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "base_step": 58633,                                                            # bsae step in lr generator
 "total_epoch": 13,                                                             # total epoch in lr generator
 "warmup_step": 500,                                                            # warmp up step in lr generator
-"warmup_mode": "linear",                                                       # warmp up mode
 "warmup_ratio": 1/3.0,                                                         # warpm up ratio
 "sgd_momentum": 0.9,                                                           # momentum in optimizer
 
@@ -310,26 +315,27 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "num_classes": 81
 ```
 
-
 ## [Training Process](#contents)
 
 - Set options in `config.py`, including loss_scale, learning rate and network hyperparameters. Click [here](https://www.mindspore.cn/tutorial/training/zh-CN/master/use/data_preparation.html) for more information about dataset.
 
 ### [Training](#content)
+
 - Run `run_standalone_train.sh` for non-distributed training of MaskRCNN model.
 
-``` 
+```bash
 # standalone training
-sh run_standalone_train.sh [PRETRAINED_MODEL]
+bash run_standalone_train.sh [PRETRAINED_MODEL]
 ```
 
 ### [Distributed Training](#content)
 
 - Run `run_distribute_train.sh` for distributed training of Mask model.
+
+```bash
+bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
-sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
-```
- 
+
 > hccl.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 > As for PRETRAINED_MODEL, if not set, the model will be trained from the very beginning. Ready-made pretrained_models are not available now. Stay tuned.
 > This is processor cores binding operation regarding the `device_num` and total processor numbers. If you are not expect to do it, remove the operations `taskset` in `scripts/run_distribute_train.sh`
@@ -338,8 +344,7 @@ sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the followings in loss_rankid.log.
 
- 
-```
+```bash
 # distribute training result(8p)
 epoch: 1 step: 7393 ,rpn_loss: 0.05716, rcnn_loss: 0.81152, rpn_cls_loss: 0.04828, rpn_reg_loss: 0.00889, rcnn_cls_loss: 0.28784, rcnn_reg_loss: 0.17590, rcnn_mask_loss: 0.34790, total_loss: 0.86868
 epoch: 2 step: 7393 ,rpn_loss: 0.00434, rcnn_loss: 0.36572, rpn_cls_loss: 0.00339, rpn_reg_loss: 0.00095, rcnn_cls_loss: 0.08240, rcnn_reg_loss: 0.05554, rcnn_mask_loss: 0.22778, total_loss: 0.37006
@@ -355,18 +360,20 @@ epoch: 12 step: 7393 ,rpn_loss: 0.00547, rcnn_loss: 0.39258, rpn_cls_loss: 0.002
 ### [Evaluation](#content)
 
 - Run `run_eval.sh` for evaluation.
-```
+
+```bash
 # infer
-sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
+bash run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 ```
+
 > As for the COCO2017 dataset, VALIDATION_ANN_FILE_JSON is refer to the annotations/instances_val2017.json in the dataset directory.  
 > checkpoint can be produced and saved in training process, whose folder name begins with "train/checkpoint" or "train_parallel*/checkpoint".
 
 ### [Evaluation result](#content)
- 
+
 Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
- 
-```
+
+```bash
 Evaluate annotation type *bbox*
 Accumulating evaluation results...
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.378
@@ -399,6 +406,7 @@ Accumulating evaluation results...
 ```
 
 # Model Description
+
 ## Performance
 
 ### Evaluation Performance
@@ -422,7 +430,6 @@ Accumulating evaluation results...
 | Model for inference        | 571M(.air file)                                             |
 | Scripts                    | [maskrcnn script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/maskrcnn) |
 
-
 ### Inference Performance
 
 | Parameters          | Ascend                      |
@@ -437,9 +444,10 @@ Accumulating evaluation results...
 | Accuracy            | IoU=0.50:0.95 (BoundingBox 37.0%, Mask 33.5) |
 | Model for inference | 170M (.ckpt file)           |
 
-
 # [Description of Random Situation](#contents)
+
 In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py for weight initialization.
 
 # [ModelZoo Homepage](#contents)
+
 Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
