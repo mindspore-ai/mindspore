@@ -131,8 +131,8 @@ int PowerOpenCLKernel::Run() {
     cl_float4 parameter = {power_, shift_, scale_, 1};
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter);
   }
-
-  ocl_runtime_->RunKernel(kernel_, global, local);
+  AlignGlobalLocal(global, local);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

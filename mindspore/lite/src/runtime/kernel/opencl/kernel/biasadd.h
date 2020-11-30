@@ -33,13 +33,15 @@ class BiasAddOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~BiasAddOpenCLKernel() override = default;
 
-  int Init() override;
-  int Run() override;
+  int Prepare() override;
+
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
   int InitWeights() override;
+  int Run() override;
 
  private:
-  cl_int4 GetGlobalshape();
-
   void *BiasAdd_{nullptr};
   int in_size_{};
   int out_size_{};
