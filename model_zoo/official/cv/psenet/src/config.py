@@ -51,5 +51,5 @@ config = ed({
     "TEST_DROP_REMAINDER": False,
 
     # air config
-    "air_filename": "psenet_bs_1.air",
+    "air_filename": "psenet_bs_1",
 })
