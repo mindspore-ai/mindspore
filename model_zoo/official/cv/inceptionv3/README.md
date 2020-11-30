@@ -30,34 +30,33 @@ The overall network architecture of InceptionV3 is show below:
 
 [Link](https://arxiv.org/pdf/1512.00567.pdf)
 
-
 # [Dataset](#contents)
 
 Dataset used can refer to paper.
 
 - Dataset size: 125G, 1250k colorful images in 1000 classes
-	- Train: 120G, 1200k images
-	- Test: 5G, 50k images
+    - Train: 120G, 1200k images
+    - Test: 5G, 50k images
 - Data format: RGB images.
-	- Note: Data will be processed in src/dataset.py 
+    - Note: Data will be processed in src/dataset.py
 
 # [Features](#contents)
 
 ## [Mixed Precision(Ascend)](#contents)
 
-The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware. 
+The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend/GPU）
-  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+- Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Script description](#contents)
 
@@ -65,14 +64,14 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 ```shell
 .
-└─Inception-v3      
+└─Inception-v3
   ├─README.md
-  ├─scripts      
-	├─run_standalone_train.sh         		  # launch standalone training with ascend platform(1p)
+  ├─scripts
+    ├─run_standalone_train.sh                 # launch standalone training with ascend platform(1p)
     ├─run_standalone_train_gpu.sh             # launch standalone training with gpu platform(1p)
-	├─run_distribute_train.sh         		  # launch distributed training with ascend platform(8p)
+    ├─run_distribute_train.sh                 # launch distributed training with ascend platform(8p)
     ├─run_distribute_train_gpu.sh             # launch distributed training with gpu platform(8p)
-	├─run_eval.sh                     		  # launch evaluating with ascend platform
+    ├─run_eval.sh                             # launch evaluating with ascend platform
     └─run_eval_gpu.sh                         # launch evaluating with gpu platform
   ├─src
     ├─config.py                       # parameter configuration
@@ -83,12 +82,13 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   ├─eval.py                           # eval net
   ├─export.py                         # convert checkpoint
   └─train.py                          # train net
-  
+
 ```
+
 ## [Script Parameters](#contents)
 
 ```python
-Major parameters in train.py and config.py are:   
+Major parameters in train.py and config.py are:
 'random_seed'                # fix random seed
 'rank'                       # local rank of distributed
 'group_size'                 # world size of distributed
@@ -111,8 +111,8 @@ Major parameters in train.py and config.py are:
 'ckpt_path'                  # save checkpoint path
 'is_save_on_master'          # save checkpoint on rank0, distributed parameters
 'dropout_keep_prob'          # the keep rate, between 0 and 1, e.g. keep_prob = 0.9, means dropping out 10% of input units
-'has_bias'                   # specifies whether the layer uses a bias vector. 
-'amp_level'                  # option for argument `level` in `mindspore.amp.build_train_network`, level for mixed 
+'has_bias'                   # specifies whether the layer uses a bias vector.
+'amp_level'                  # option for argument `level` in `mindspore.amp.build_train_network`, level for mixed
                              # precision training. Supports [O0, O2, O3].
 
 ```
@@ -121,33 +121,33 @@ Major parameters in train.py and config.py are:
 
 ### Usage
 
-
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- Ascend: 
-```
+- Ascend:
+
+```shell
 # distribute training example(8p)
 sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 # standalone training
 sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
-> Notes: 
-    RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html)  , and the device_ip can be got as [Link]https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
-	For large models like InceptionV3, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
 
+> Notes: RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html), and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools). For large models like InceptionV3, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
+>
 > This is processor cores binding operation regarding the `device_num` and total processor numbers. If you are not expect to do it, remove the operations `taskset` in `scripts/run_distribute_train.sh`
 
 - GPU:
-```
+
+```python
 # distribute training example(8p)
-sh scripts/run_distribute_train_gpu.sh DATA_DIR 
+sh scripts/run_distribute_train_gpu.sh DATA_DIR
 # standalone training
 sh scripts/run_standalone_train_gpu.sh DEVICE_ID DATA_DIR
 ```
 
 ### Launch
 
-``` 
+```python
 # training example
   python:
       Ascend: python train.py --dataset_path /dataset/train --platform Ascend
@@ -159,23 +159,24 @@ sh scripts/run_standalone_train_gpu.sh DEVICE_ID DATA_DIR
       sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
       # standalone training
       sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
-	  GPU:
+      GPU:
       # distributed training example(8p)
-	  sh scripts/run_distribute_train_gpu.sh /dataset/train
-	  # standalone training example
+      sh scripts/run_distribute_train_gpu.sh /dataset/train
+      # standalone training example
       sh scripts/run_standalone_train_gpu.sh 0 /dataset/train
 ```
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./log.txt` like followings. 
+Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./log.txt` like followings.
 
-``` 
+```python
 epoch: 0 step: 1251, loss is 5.7787247
-Epoch time: 360760.985, per step time: 288.378
+epoch time: 360760.985 ms, per step time: 288.378 ms
 epoch: 1 step: 1251, loss is 4.392868
-Epoch time: 160917.911, per step time: 128.631
+epoch time: 160917.911 ms, per step time: 128.631 ms
 ```
+
 ## [Eval process](#contents)
 
 ### Usage
@@ -183,17 +184,20 @@ Epoch time: 160917.911, per step time: 128.631
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
 - Ascend:
+
+```python
+    sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
-	sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
-```
+
 - GPU:
-```
-	sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+
+```python
+    sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
 ### Launch
 
-``` 
+```python
 # eval example
   python:
       Ascend: python eval.py --dataset_path DATA_DIR --checkpoint PATH_CHECKPOINT --platform Ascend
@@ -204,13 +208,13 @@ You can start training using python or shell scripts. The usage of shell scripts
       GPU: sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
-> checkpoint can be produced in training process. 
+> checkpoint can be produced in training process.
 
 ### Result
 
-Evaluation result will be stored in the example path, you can find result like the followings in `eval.log`. 
+Evaluation result will be stored in the example path, you can find result like the followings in `eval.log`.
 
-``` 
+```python
 metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 ```
 
@@ -239,12 +243,11 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 | Checkpoint for Fine tuning | 313M                                           | 312M                      |
 | Scripts                    | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) |
 
-
 #### Inference Performance
 
 | Parameters          | Ascend                 |
 | ------------------- | --------------------------- |
-| Model Version       | InceptionV3 				|
+| Model Version       | InceptionV3                 |
 | Resource            | Ascend 910, cpu:2.60GHz 192cores, memory:755G                  |
 | Uploaded Date       | 08/22/2020                  |
 | MindSpore Version   | 0.6.0-beta                  |
@@ -260,5 +263,5 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py.
 
 # [ModelZoo Homepage](#contents)
- 
-Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo). 
+
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).

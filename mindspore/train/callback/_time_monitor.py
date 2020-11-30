@@ -49,4 +49,4 @@ class TimeMonitor(Callback):
             return
 
         step_seconds = epoch_seconds / step_size
-        print("Epoch time: {:5.3f}, per step time: {:5.3f}".format(epoch_seconds, step_seconds), flush=True)
+        print("epoch time: {:5.3f} ms, per step time: {:5.3f} ms".format(epoch_seconds, step_seconds), flush=True)
