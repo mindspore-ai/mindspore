@@ -76,7 +76,8 @@ double GetWeights(const Graph::NodeType &node) {
 
     return cost_ptr->GetMinCostIn();
   } else if (op.op_type == OperatorType::kRecBatchNorm || op.op_type == OperatorType::kRecOneHot ||
-             op.op_type == OperatorType::kRecPReLU || op.op_type == OperatorType::kRecSoftmax ||
+             op.op_type == OperatorType::kRecPReLU || op.op_type == OperatorType::kRecUnsortedSegmentOp ||
+             op.op_type == OperatorType::kRecSoftmax ||
              op.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
              op.op_type == OperatorType::kRecSoftmaxCrossEntropyWithLogits) {
     // For BatchParallel op
@@ -172,7 +173,8 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
     return cost_ptr->GetOptimalStr(node, node_name_to_strategy, *graph);
   } else if (node.apply.op_type == OperatorType::kRecBatchNorm || node.apply.op_type == OperatorType::kRecOneHot ||
              node.apply.op_type == OperatorType::kRecPReLU || node.apply.op_type == kRecSoftmax ||
-             node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits) {
+             node.apply.op_type == OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits ||
+             node.apply.op_type == kRecUnsortedSegmentOp) {
     // For BatchParallel type
     auto cost_ptr = std::make_shared<CostBatchParallel>();
     return cost_ptr->GetOptimalStr(node);

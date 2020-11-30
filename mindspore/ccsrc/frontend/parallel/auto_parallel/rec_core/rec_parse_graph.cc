@@ -61,6 +61,10 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
     NewOp.tensor_parm = MakeTensor(
       ops[iter_ops]->outputs_tensor_info()[0].shape()[0], ops[iter_ops]->outputs_tensor_info()[0].shape()[1],
       ops[iter_ops]->outputs_tensor_info()[0].shape()[2], ops[iter_ops]->outputs_tensor_info()[0].shape()[3]);
+  } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 3) {
+    NewOp.tensor_parm = MakeTensor(1, ops[iter_ops]->outputs_tensor_info()[0].shape()[0],
+                                   ops[iter_ops]->outputs_tensor_info()[0].shape()[1],
+                                   ops[iter_ops]->outputs_tensor_info()[0].shape()[2]);
   } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 2) {
     NewOp.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[0],
                                    ops[iter_ops]->outputs_tensor_info()[0].shape()[1]);
@@ -69,7 +73,7 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
   } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 0) {
     NewOp.tensor_parm = MakeTensor(1, 1, 1, 1);
   } else {
-    MS_LOG(ERROR) << "Tensor's shape is unknown.";
+    MS_LOG(ERROR) << ops[iter_ops]->name() << ": output tensor shape is unexpected.";
   }
 
   NewOp.apply = CompleteOperatorInputs(ops, iter_ops, NewOp);
@@ -90,6 +94,11 @@ OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInf
                    ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape()[1],
                    ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape()[2],
                    ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape()[3]);
+    } else if (ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape().size() == 3) {
+      NewTensor.apply.arguments[iter_input_tensors] =
+        MakeTensor(1, ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape()[0],
+                   ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape()[1],
+                   ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape()[2]);
     } else if (ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape().size() == 2) {
       NewTensor.apply.arguments[iter_input_tensors] = Complete2DInputs(ops, iter_ops, iter_input_tensors, NewTensor);
     } else if (ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape().size() == 1) {
@@ -98,7 +107,7 @@ OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInf
     } else if (ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape().size() == 0) {
       NewTensor.apply.arguments[iter_input_tensors] = MakeTensor(1, 1, 1, 1);
     } else {
-      MS_LOG(ERROR) << "Tensor's shape is unknown.";
+      MS_LOG(ERROR) << ops[iter_ops]->name() << ": input tensor shape is unexpected.";
     }
   }
   return NewTensor.apply;
