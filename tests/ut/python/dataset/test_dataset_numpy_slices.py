@@ -239,6 +239,13 @@ def test_numpy_slices_invalid_empty_data_column():
     assert "Argument data cannot be empty" in str(err.value)
 
 
+def test_numpy_slice_empty_output_shape():
+    logger.info("running test_numpy_slice_empty_output_shape")
+    dataset = de.NumpySlicesDataset([[[1, 2], [3, 4]]], column_names=["col1"])
+    dataset = dataset.batch(batch_size=3, drop_remainder=True)
+    assert dataset.output_shapes() == []
+
+
 if __name__ == "__main__":
     test_numpy_slices_list_1()
     test_numpy_slices_list_2()
@@ -259,3 +266,4 @@ if __name__ == "__main__":
     test_numpy_slices_invalid_column_names_string()
     test_numpy_slices_invalid_empty_column_names()
     test_numpy_slices_invalid_empty_data_column()
+    test_numpy_slice_empty_output_shape()
