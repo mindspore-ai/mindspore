@@ -16,13 +16,11 @@ The following section describes how to build and execute an on-device object det
 
 ### Building and Running
 
-1. Load the sample source code to Android Studio and install the corresponding SDK. (After the SDK version is specified, Android Studio automatically installs the SDK.) 
+1. Load the sample source code to Android Studio and install the corresponding SDK. (After the SDK version is specified, Android Studio automatically installs the SDK.)
 
    ![start_home](images/home.png)
 
-   Start Android Studio, click `File > Settings > System Settings > Android SDK`, and select the corresponding SDK. As shown in the following figure, select an SDK and click `OK`. Android Studio automatically installs the SDK.
-
-   ![start_sdk](images/sdk_management.png)
+    If you have any Android Studio configuration problem when trying this demo, please refer to item 5 to resolve it.
 
 2. Connect to an Android device and runs the object detection application.
 
@@ -36,6 +34,16 @@ The following section describes how to build and execute an on-device object det
 
    ![result](images/object_detection.png)
 
+4. The solutions of Android Studio configuration problems:
+
+    |      | Warning                                                         | Solution                                                     |
+    | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+    | 1    | Gradle sync failed: NDK not configured.                      | Specify the installed ndk directory in local.properties：ndk.dir={ndk的安装目录} |
+    | 2    | Requested NDK version did not match the version requested by ndk.dir | Manually download corresponding [NDK Version](https://developer.android.com/ndk/downloads)，and specify the sdk directory in Project Structure - Android NDK location.（You can refer to the figure below.） |
+    | 3    | This version of Android Studio cannot open this project, please retry with Android Studio or newer. | Update Android Studio Version in Tools - help - Checkout for Updates.                 |
+    | 4    | SSL peer shut down incorrectly                               | Run this demo again.                                                     |
+
+    ![project_structure](images/project_structure.png)
 
 ## Detailed Description of the Sample Program  
 
@@ -51,7 +59,7 @@ Note: if the automatic download fails, please manually download the relevant lib
 
 mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz [Download link](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/android_aarch64/mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz)
 
-```
+```text
 android{
     defaultConfig{
         externalNativeBuild{
@@ -60,7 +68,7 @@ android{
             }
         }
 
-        ndk{ 
+        ndk{
             abiFilters 'arm64-v8a'
         }
     }
@@ -69,7 +77,7 @@ android{
 
 Create a link to the `.so` library file in the `app/CMakeLists.txt` file:
 
-```
+```text
 # Set MindSpore Lite Dependencies.
 set(MINDSPORELITE_VERSION  mindspore-lite-1.0.1-runtime-arm64-cpu)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION})
@@ -80,7 +88,7 @@ set_target_properties(mindspore-lite PROPERTIES IMPORTED_LOCATION
 set_target_properties(minddata-lite PROPERTIES IMPORTED_LOCATION
         ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libminddata-lite.so)
 
-# Link target library.       
+# Link target library.
 target_link_libraries(
     ...
     mindspore-lite
@@ -91,23 +99,21 @@ target_link_libraries(
 
 ### Downloading and Deploying a Model File
 
-In this example, the  download.gradle File configuration auto download `ssd.ms `and placed in the 'app / libs / arm64-v8a' directory.
+In this example, the  download.gradle File configuration auto download `ssd.ms`and placed in the 'app / libs / arm64-v8a' directory.
 
 Note: if the automatic download fails, please manually download the relevant library files and put them in the corresponding location.
 
 ssd.ms [ssd.ms]( https://download.mindspore.cn/model_zoo/official/lite/ssd_mobilenetv2_lite/ssd.ms)
 
-
-
 ### Compiling On-Device Inference Code
 
 Call MindSpore Lite C++ APIs at the JNI layer to implement on-device inference.
 
-The inference code process is as follows. For details about the complete code, see `src/cpp/MindSporeNetnative.cpp`. 
+The inference code process is as follows. For details about the complete code, see `src/cpp/MindSporeNetnative.cpp`.
 
 1. Load the MindSpore Lite model file and build the context, session, and computational graph for inference.  
 
-   - Load a model file. Create and configure the context for model inference.
+    - Load a model file. Create and configure the context for model inference.
 
      ```cpp
      // Buffer is the model data passed in by the Java layer
@@ -115,26 +121,26 @@ The inference code process is as follows. For details about the complete code, s
      char *modelBuffer = CreateLocalModelBuffer(env, buffer);  
      ```
 
-   - Create a session.
+    - Create a session.
 
      ```cpp
      void **labelEnv = new void *;
      MSNetWork *labelNet = new MSNetWork;
      *labelEnv = labelNet;
-     
+
      // Create context.
      lite::Context *context = new lite::Context;
-     
+
      context->device_ctx_.type = lite::DT_CPU;
      context->thread_num_ = numThread;  //Specify the number of threads to run inference
-     
+
      // Create the mindspore session.
      labelNet->CreateSessionMS(modelBuffer, bufferLen, "device label", context);
      delete(context);
-     
+
      ```
 
-   - Load the model file and build a computational graph for inference.
+    - Load the model file and build a computational graph for inference.
 
      ```cpp
      void MSNetWork::CreateSessionMS(char* modelBuffer, size_t bufferLen, std::string name, mindspore::lite::Context* ctx)
@@ -146,12 +152,12 @@ The inference code process is as follows. For details about the complete code, s
      }
      ```
 
-2. Pre-Process the imagedata and  convert the input image into the Tensor format of the MindSpore model. 
+2. Pre-Process the imagedata and  convert the input image into the Tensor format of the MindSpore model.
 
    ```cpp
    // Convert the Bitmap image passed in from the JAVA layer to Mat for OpenCV processing
        LiteMat lite_mat_bgr,lite_norm_mat_cut;
-   
+
        if (!BitmapToLiteMat(env, srcBitmap, lite_mat_bgr)){
            MS_PRINT("BitmapToLiteMat error");
            return NULL;
@@ -166,7 +172,7 @@ The inference code process is as follows. For details about the complete code, s
        inputDims.channel =lite_norm_mat_cut.channel_;
        inputDims.width = lite_norm_mat_cut.width_;
        inputDims.height = lite_norm_mat_cut.height_;
-   
+
        // Get the mindsore inference environment which created in loadModel().
        void **labelEnv = reinterpret_cast<void **>(netEnv);
        if (labelEnv == nullptr) {
@@ -174,17 +180,17 @@ The inference code process is as follows. For details about the complete code, s
            return NULL;
        }
        MSNetWork *labelNet = static_cast<MSNetWork *>(*labelEnv);
-   
+
        auto mSession = labelNet->session;
        if (mSession == nullptr) {
            MS_PRINT("MindSpore error, Session is a nullptr.");
            return NULL;
        }
        MS_PRINT("MindSpore get session.");
-   
+
        auto msInputs = mSession->GetInputs();
        auto inTensor = msInputs.front();
-   
+
        float *dataHWC = reinterpret_cast<float *>(lite_norm_mat_cut.data_ptr_);
        // copy input Tensor
        memcpy(inTensor->MutableData(), dataHWC,
@@ -219,7 +225,7 @@ The inference code process is as follows. For details about the complete code, s
 
    ```
 
-4. Perform inference on the input tensor based on the model, obtain the output tensor, and perform post-processing.    
+4. Perform inference on the input tensor based on the model, obtain the output tensor, and perform post-processing.
 
    Perform graph execution and on-device inference.
 
@@ -243,14 +249,14 @@ The inference code process is as follows. For details about the complete code, s
    std::string retStr = ProcessRunnetResult(msOutputs, ret);
    ```
 
-   The model output the object category scores (1:1917:81) and the object detection location offset (1:1917:4).  The location offset can be calcalation the object location in getDefaultBoxes function . 
+   The model output the object category scores (1:1917:81) and the object detection location offset (1:1917:4).  The location offset can be calcalation the object location in getDefaultBoxes function .
 
    ```cpp
    void SSDModelUtil::getDefaultBoxes() {
        float fk[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
        std::vector<struct WHBox> all_sizes;
        struct Product mProductData[19 * 19] = {0};
-   
+
        for (int i = 0; i < 6; i++) {
            fk[i] = config.model_input_height / config.steps[i];
        }
@@ -260,36 +266,36 @@ The inference code process is as follows. For details about the complete code, s
        for (int i = 0; i < sizeof(config.num_default) / sizeof(int); i++) {
            scales[i] = config.min_scale + scale_rate * i;
        }
-   
+
        for (int idex = 0; idex < sizeof(config.feature_size) / sizeof(int); idex++) {
            float sk1 = scales[idex];
            float sk2 = scales[idex + 1];
            float sk3 = sqrt(sk1 * sk2);
            struct WHBox tempWHBox;
-   
+
            all_sizes.clear();
-   
+
            if (idex == 0) {
                float w = sk1 * sqrt(2);
                float h = sk1 / sqrt(2);
-   
+
                tempWHBox.boxw = 0.1;
                tempWHBox.boxh = 0.1;
                all_sizes.push_back(tempWHBox);
-   
+
                tempWHBox.boxw = w;
                tempWHBox.boxh = h;
                all_sizes.push_back(tempWHBox);
-   
+
                tempWHBox.boxw = h;
                tempWHBox.boxh = w;
                all_sizes.push_back(tempWHBox);
-   
-           } else { 
+
+           } else {
                tempWHBox.boxw = sk1;
                tempWHBox.boxh = sk1;
                all_sizes.push_back(tempWHBox);
-   
+
                for (int j = 0; j < sizeof(config.aspect_ratios[idex]) / sizeof(int); j++) {
                    float w = sk1 * sqrt(config.aspect_ratios[idex][j]);
                    float h = sk1 / sqrt(config.aspect_ratios[idex][j]);
@@ -300,21 +306,21 @@ The inference code process is as follows. For details about the complete code, s
                    tempWHBox.boxh = w;
                    all_sizes.push_back(tempWHBox);
                }
-   
+
                tempWHBox.boxw = sk3;
                tempWHBox.boxh = sk3;
                all_sizes.push_back(tempWHBox);
            }
-   
+
            for (int i = 0; i < config.feature_size[idex]; i++) {
                for (int j = 0; j < config.feature_size[idex]; j++) {
                    mProductData[i * config.feature_size[idex] + j].x = i;
                    mProductData[i * config.feature_size[idex] + j].y = j;
                }
            }
-   
+
            int productLen = config.feature_size[idex] * config.feature_size[idex];
-   
+
            for (int i = 0; i < productLen; i++) {
                for (int j = 0; j < all_sizes.size(); j++) {
                    struct NormalBox tempBox;
@@ -546,4 +552,3 @@ The inference code process is as follows. For details about the complete code, s
         return result;
     }
     ```
-

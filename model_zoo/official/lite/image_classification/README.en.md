@@ -1,13 +1,12 @@
-# Demo of Image Classification
+## Demo of Image Classification
 
 The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) and MindSpore Lite image classification models to perform on-device inference, classify the content captured by a device camera, and display the most possible classification result on the application's image preview screen.
-
 
 ### Running Dependencies
 
 - Android Studio 3.2 or later (Android 4.0 or later is recommended.)
 - Native development kit (NDK) 21.3
-- CMake 3.10.2 [CMake](https://cmake.org/download) 
+- CMake 3.10.2 [CMake](https://cmake.org/download)
 - Android software development kit (SDK) 26 or later
 - JDK 1.8 or later
 
@@ -21,9 +20,7 @@ The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) an
 
     ![start_sdk](images/sdk_management.png)
 
-    (Optional) If an NDK version issue occurs during the installation, manually download the corresponding [NDK version](https://developer.android.com/ndk/downloads) (the version used in the sample code is 21.3). Specify the SDK location in `Android NDK location` of `Project Structure`.
-
-    ![project_structure](images/project_structure.png)
+    If you have any Android Studio configuration problem when trying this demo, please refer to item 5 to resolve it.
 
 2. Connect to an Android device and runs the image classification application.
 
@@ -39,13 +36,24 @@ The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) an
 
     ![result](images/app_result.jpg)
 
+4. The solutions of Android Studio configuration problems:
+
+    |      | Warning                                                         | Solution                                                     |
+    | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+    | 1    | Gradle sync failed: NDK not configured.                      | Specify the installed ndk directory in local.properties：ndk.dir={ndk的安装目录} |
+    | 2    | Requested NDK version did not match the version requested by ndk.dir | Manually download corresponding [NDK Version](https://developer.android.com/ndk/downloads)，and specify the sdk directory in Project Structure - Android NDK location.（You can refer to the figure below.） |
+    | 3    | This version of Android Studio cannot open this project, please retry with Android Studio or newer. | Update Android Studio Version in Tools - help - Checkout for Updates.                 |
+    | 4    | SSL peer shut down incorrectly                               | Run this demo again.                                                     |
+
+    ![project_structure](images/project_structure.png)
+
 ## Detailed Description of the Sample Program  
 
 This image classification sample program on the Android device includes a Java layer and a JNI layer. At the Java layer, the Android Camera 2 API is used to enable a camera to obtain image frames and process images. At the JNI layer, the model inference process is completed in [Runtime](https://www.mindspore.cn/tutorial/lite/en/master/use/runtime.html).
 
 ### Sample Program Structure
 
-```
+```text
 app
 │
 ├── src/main
@@ -58,12 +66,12 @@ app
 │   |   └── MindSporeNetnative.h # header file
 │   |
 │   ├── java # application code at the Java layer
-│   │   └── com.mindspore.himindsporedemo 
+│   │   └── com.mindspore.himindsporedemo
 │   │       ├── gallery.classify # implementation related to image processing and MindSpore JNI calling
 │   │       │   └── ...
 │   │       └── widget # implementation related to camera enabling and drawing
 │   │           └── ...
-│   │   
+│   │
 │   ├── res # resource files related to Android
 │   └── AndroidManifest.xml # Android configuration file
 │
@@ -84,7 +92,7 @@ Note: if the automatic download fails, please manually download the relevant lib
 
 mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz [Download link](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/android_aarch64/mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz)
 
-```
+```text
 android{
     defaultConfig{
         externalNativeBuild{
@@ -93,7 +101,7 @@ android{
             }
         }
 
-        ndk{ 
+        ndk{
             abiFilters'armeabi-v7a', 'arm64-v8a'  
         }
     }
@@ -102,7 +110,7 @@ android{
 
 Create a link to the `.so` library file in the `app/CMakeLists.txt` file:
 
-```
+```text
 # ============== Set MindSpore Dependencies. =============
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/third_party/flatbuffers/include)
@@ -120,7 +128,7 @@ set_target_properties(minddata-lite PROPERTIES IMPORTED_LOCATION
         ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libminddata-lite.so)
 # --------------- MindSpore Lite set End. --------------------
 
-# Link target library.       
+# Link target library.
 target_link_libraries(
     ...
      # --- mindspore ---
@@ -132,7 +140,7 @@ target_link_libraries(
 
 ### Downloading and Deploying a Model File
 
-In this example, the  download.gradle File configuration auto download `mobilenetv2.ms `and placed in the 'app/libs/arm64-v8a' directory.
+In this example, the  download.gradle File configuration auto download `mobilenetv2.ms`and placed in the 'app/libs/arm64-v8a' directory.
 
 Note: if the automatic download fails, please manually download the relevant library files and put them in the corresponding location.
 
@@ -142,11 +150,11 @@ mobilenetv2.ms [mobilenetv2.ms]( https://download.mindspore.cn/model_zoo/officia
 
 Call MindSpore Lite C++ APIs at the JNI layer to implement on-device inference.
 
-The inference code process is as follows. For details about the complete code, see `src/cpp/MindSporeNetnative.cpp`. 
+The inference code process is as follows. For details about the complete code, see `src/cpp/MindSporeNetnative.cpp`.
 
 1. Load the MindSpore Lite model file and build the context, session, and computational graph for inference.  
 
-   - Load a model file. Create and configure the context for model inference.
+    - Load a model file. Create and configure the context for model inference.
 
      ```cpp
      // Buffer is the model data passed in by the Java layer
@@ -154,24 +162,24 @@ The inference code process is as follows. For details about the complete code, s
      char *modelBuffer = CreateLocalModelBuffer(env, buffer);  
      ```
 
-   - Create a session.
+    - Create a session.
 
      ```cpp
      void **labelEnv = new void *;
      MSNetWork *labelNet = new MSNetWork;
      *labelEnv = labelNet;
-     
+
      // Create context.
      mindspore::lite::Context *context = new mindspore::lite::Context;
      context->thread_num_ = num_thread;
-     
+
      // Create the mindspore session.
      labelNet->CreateSessionMS(modelBuffer, bufferLen, "device label", context);
      delete(context);
-     
+
      ```
 
-   - Load the model file and build a computational graph for inference.
+    - Load the model file and build a computational graph for inference.
 
      ```cpp
      void MSNetWork::CreateSessionMS(char* modelBuffer, size_t bufferLen, std::string name, mindspore::lite::Context* ctx)
@@ -183,7 +191,7 @@ The inference code process is as follows. For details about the complete code, s
      }
      ```
 
-2. Convert the input image into the Tensor format of the MindSpore model. 
+2. Convert the input image into the Tensor format of the MindSpore model.
 
    Convert the image data to be detected into the Tensor format of the MindSpore model.
 
@@ -230,9 +238,9 @@ The inference code process is as follows. For details about the complete code, s
          inputDims.channel * inputDims.width * inputDims.height * sizeof(float));
     ```
 
-3. Perform inference on the input tensor based on the model, obtain the output tensor, and perform post-processing.    
+3. Perform inference on the input tensor based on the model, obtain the output tensor, and perform post-processing.
 
-   - Perform graph execution and on-device inference.
+    - Perform graph execution and on-device inference.
 
      ```cpp
      // After the model and image tensor data is loaded, run inference.
@@ -305,5 +313,5 @@ The inference code process is as follows. For details about the complete code, s
       }
         return categoryScore;
      }
-     
+
      ```
