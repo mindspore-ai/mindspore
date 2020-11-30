@@ -26,8 +26,7 @@
     "label_smoothing": 0.1,
     "beam_width": 4,
     "length_penalty_weight": 1.0,
-    "max_decode_length": 64,
-    "input_mask_from_dataset": true
+    "max_decode_length": 64
   },
   "loss_scale_config": {
     "loss_scale_mode": "dynamic",

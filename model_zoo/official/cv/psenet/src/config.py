@@ -17,17 +17,17 @@
 from easydict import EasyDict as ed
 
 config = ed({
-    'INFER_LONG_SIZE': 1920,
-    'KERNEL_NUM': 7,
-    'INFERENCE': True,  # INFER MODE\TRAIN MODE
+    "INFER_LONG_SIZE": 1920,
+    "KERNEL_NUM": 7,
+    "INFERENCE": True,  # INFER MODE\TRAIN MODE
 
     # backbone
-    'BACKBONE_LAYER_NUMS': [3, 4, 6, 3],
-    'BACKBONE_IN_CHANNELS': [64, 256, 512, 1024],
-    'BACKBONE_OUT_CHANNELS': [256, 512, 1024, 2048],
+    "BACKBONE_LAYER_NUMS": [3, 4, 6, 3],
+    "BACKBONE_IN_CHANNELS": [64, 256, 512, 1024],
+    "BACKBONE_OUT_CHANNELS": [256, 512, 1024, 2048],
 
     # neck
-    'NECK_OUT_CHANNEL': 256,
+    "NECK_OUT_CHANNEL": 256,
 
     # lr
     "BASE_LR": 2e-3,
@@ -36,20 +36,20 @@ config = ed({
     "WARMUP_RATIO": 1/3,
 
     # dataset for train
-    "TRAIN_ROOT_DIR": 'psenet/ic15/',
+    "TRAIN_ROOT_DIR": "psenet/ic15/",
     "TRAIN_IS_TRANSFORM": True,
     "TRAIN_LONG_SIZE": 640,
     "TRAIN_MIN_SCALE": 0.4,
     "TRAIN_BATCH_SIZE": 4,
     "TRAIN_REPEAT_NUM": 1800,
     "TRAIN_DROP_REMAINDER": True,
-    "TRAIN_MODEL_SAVE_PATH": './checkpoints/',
+    "TRAIN_MODEL_SAVE_PATH": "./checkpoints/",
 
     # dataset for test
-    "TEST_ROOT_DIR": 'psenet/ic15/',
+    "TEST_ROOT_DIR": "psenet/ic15/",
     "TEST_BUFFER_SIZE": 4,
     "TEST_DROP_REMAINDER": False,
 
     # air config
-    'air_filename': 'psenet_bs_1.air',
+    "air_filename": "psenet_bs_1.air",
 })
