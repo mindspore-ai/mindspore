@@ -91,7 +91,8 @@ def test_export_lenet_grad_mindir():
     predict = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.zeros([32, 10]).astype(np.float32))
     net = TrainOneStepCell(WithLossCell(network))
-    file_name = "lenet_grad.mindir"
+    file_name = "lenet_grad"
     export(net, predict, label, file_name=file_name, file_format='MINDIR')
-    assert os.path.exists(file_name)
-    os.remove(file_name)
+    verify_name = file_name + ".mindir"
+    assert os.path.exists(verify_name)
+    os.remove(verify_name)

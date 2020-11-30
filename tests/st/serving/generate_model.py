@@ -54,7 +54,7 @@ def export_bert_model():
     input_mask = np.zeros((2, 32), dtype=np.int32)
     net = BertModel(bert_net_cfg, False)
     export(net, Tensor(input_ids), Tensor(segment_ids), Tensor(input_mask),
-           file_name='bert.mindir', file_format='MINDIR')
+           file_name='bert', file_format='MINDIR')
 
 if __name__ == '__main__':
     export_bert_model()

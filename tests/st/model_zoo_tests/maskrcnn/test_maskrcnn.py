@@ -45,12 +45,11 @@ def test_maskrcnn_export():
     gt_mask = Tensor(np.zeros([bs, 128], np.bool))
 
     input_data = [img, img_metas, gt_bboxes, gt_labels, gt_num, gt_mask]
+    export(net, *input_data, file_name="maskrcnn", file_format="AIR")
     file_name = "maskrcnn.air"
-
-    export(net, *input_data, file_name=file_name, file_format="AIR")
-
     assert os.path.exists(file_name)
     os.remove(file_name)
+
 
 if __name__ == '__main__':
     test_maskrcnn_export()
