@@ -189,10 +189,14 @@ class TreeGetters : public TreeConsumer {
   virtual Status GetRow(TensorRow *r);
 
  private:
+  Status GetFirstRowShapeAndType();
+
   std::shared_ptr<DatasetNode> root_;
   int64_t dataset_size_;
-  TensorRow first_row_;
-  bool init_flag_;  // indicate whether the tree has initialized
+  std::vector<DataType> first_row_type_;
+  std::vector<TensorShape> first_row_shape_;
+  bool first_row_obtained_;  // whether first row (which could be empty) is obtained by TreeGetter
+  bool init_flag_;           // indicate whether the tree has initialized
 
   Status InternalInit(int8_t type);
   Status InternalInit();

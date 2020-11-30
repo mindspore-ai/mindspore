@@ -56,7 +56,12 @@ Status GetterPass::RunOnTree(ExecutionTree *tree, bool *modified) {
 
   // nested private class variables can be directly accessed by its outer class
   for (auto node : pass_.nodes_to_remove_) {
-    RETURN_IF_NOT_OK(node->Remove());
+    DatasetOp *parent;
+    node->Parent(&parent, 0);
+    // only remove node whose is a single child of its parent
+    if (parent != nullptr && parent->Children().size() == 1) {
+      RETURN_IF_NOT_OK(node->Remove());
+    }
   }
 
   // clear the callback for selected ops (map when its GetOutputType/Shape)

@@ -151,6 +151,8 @@ Status DatasetOp::Remove() {
   if (!child_.empty()) {
     // If we have a parent, then assign child's parent to point to our parent.
     if (!parent_.empty()) {
+      CHECK_FAIL_RETURN_UNEXPECTED(parent_[0]->Children().size() == 1,
+                                   "Removing a node whose parent has more than 1 child is not supported.");
       child_[0]->parent_[0] = parent_[0];
     } else {
       // We don't have a parent, so we are the root node being removed.

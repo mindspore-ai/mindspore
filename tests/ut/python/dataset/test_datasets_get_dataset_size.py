@@ -238,6 +238,10 @@ def test_pipeline_get_dataset_size():
     dataset = dataset.repeat(count=2)
     assert dataset.get_dataset_size() == 8
 
+    tf1 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, shuffle=True)
+    tf2 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, shuffle=True)
+    assert tf2.concat(tf1).get_dataset_size() == 24
+
 
 if __name__ == '__main__':
     test_imagenet_rawdata_dataset_size()
