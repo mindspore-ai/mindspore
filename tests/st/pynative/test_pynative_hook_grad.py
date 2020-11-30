@@ -23,9 +23,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
 
-def setup_module():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-
 class MetaFactory:
     def __init__(self):
         self.device_target = context.get_context('device_target')
@@ -228,11 +225,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
     else:
         assert True
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_hook_diff_hook():
+def pynative_hook_diff_hook():
     input_np = np.ones([1, 1, 224, 224]).astype(np.float32)
     ms_net = FinalNet()
     ms_net.set_grad()
@@ -244,11 +237,7 @@ def test_pynative_hook_diff_hook():
     grad_net.set_train()
     grad_net(input_ms, Tensor(1), out_ms)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_hook_outermost_cell_not_change_grad():
+def pynative_hook_outermost_cell_not_change_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsOneInputNet()
@@ -269,11 +258,7 @@ def test_pynative_hook_outermost_cell_not_change_grad():
     allclose_nparray(torch_net_grad_output, ms_net.grad_input_list[0].asnumpy(), 0.001, 0.001)
     allclose_nparray(torch_net_grad_input, ms_net.grad_output_list[0].asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_hook_all_cell_record_grad():
+def pynative_hook_all_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsOneInputNet()
@@ -301,11 +286,7 @@ def test_pynative_hook_all_cell_record_grad():
     allclose_nparray(torch_net_grad_input3, ms_net.grad_output_list[2].asnumpy(), 0.001, 0.001)
     allclose_nparray(torch_net_grad_output2, ms_net.grad_input_list[2].asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_hook_mul_change_input_grad():
+def pynative_hook_mul_change_input_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsOneInputNet()
@@ -321,11 +302,7 @@ def test_pynative_hook_mul_change_input_grad():
     input_torch_grad = np.array([[40, 40], [40, 40]])
     allclose_nparray(input_torch_grad, input_ms_grad[0].asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_hook_mul2_change_input_grad():
+def pynative_hook_mul2_change_input_grad():
     input1_np = np.array([2.0, 3.0, 4.0]).astype(np.float32)
     input2_np = np.array([2.0, 3.0, 4.0]).astype(np.float32)
 
@@ -345,11 +322,7 @@ def test_pynative_hook_mul2_change_input_grad():
     allclose_nparray(input1_torch_grad, input_ms_grad[0].asnumpy(), 0.001, 0.001)
     allclose_nparray(input2_torch_grad, input_ms_grad[1].asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_hook_outermost_cell_change_grad():
+def pynative_hook_outermost_cell_change_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsNetWithCellinCell()
@@ -367,11 +340,7 @@ def test_pynative_hook_outermost_cell_change_grad():
     allclose_nparray(out_torch, out_ms.asnumpy(), 0.001, 0.001)
     allclose_nparray(input_torch_grad, input_ms_grad[0].asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_hook_outermost_cell_record_grad():
+def pynative_hook_outermost_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsSingleOpNetWithBprop()
@@ -393,11 +362,7 @@ def test_pynative_hook_outermost_cell_record_grad():
     allclose_nparray(out_torch, out_ms.asnumpy(), 0.001, 0.001)
     allclose_nparray(input_torch_grad, input_ms_grad[0].asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_hook_bprop_outermost_cell_record_grad():
+def pynative_hook_bprop_outermost_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsNetHasBpropInChild()
@@ -424,11 +389,7 @@ def test_pynative_hook_bprop_outermost_cell_record_grad():
     allclose_nparray(torch_net_grad_output, ms_net.grad_input_list[0].asnumpy(), 0.001, 0.001)
     allclose_nparray(torch_net_grad_input, ms_net.grad_output_list[0].asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_pynative_hook_child_cell_record_grad():
+def pynative_hook_child_cell_record_grad():
     input_np = np.ones([2, 2]).astype(np.float32)
 
     ms_net = MsMultiOpNetWithBprop()
@@ -444,3 +405,138 @@ def test_pynative_hook_child_cell_record_grad():
 
     if ms_net.grad_output_list or ms_net.grad_input_list:
         assert False
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_hook_diff_hook_ascend():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    pynative_hook_diff_hook()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_hook_diff_hook_gpu():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    pynative_hook_diff_hook()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_hook_outermost_cell_not_change_grad_ascend():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    pynative_hook_outermost_cell_not_change_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_hook_outermost_cell_not_change_grad_gpu():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    pynative_hook_outermost_cell_not_change_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_hook_all_cell_record_grad_ascend():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    pynative_hook_all_cell_record_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_hook_all_cell_record_grad_gpu():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    pynative_hook_all_cell_record_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_hook_mul_change_input_grad_ascend():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    pynative_hook_mul_change_input_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_hook_mul_change_input_grad_gpu():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    pynative_hook_mul_change_input_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_hook_mul2_change_input_grad_ascend():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    pynative_hook_mul2_change_input_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_hook_mul2_change_input_grad_gpu():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    pynative_hook_mul2_change_input_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_hook_outermost_cell_change_grad_ascend():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    pynative_hook_outermost_cell_change_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_hook_outermost_cell_change_grad_gpu():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    pynative_hook_outermost_cell_change_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_hook_outermost_cell_record_grad_ascend():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    pynative_hook_outermost_cell_record_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_hook_outermost_cell_record_grad_gpu():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    pynative_hook_outermost_cell_record_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_hook_bprop_outermost_cell_record_grad_ascend():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    pynative_hook_bprop_outermost_cell_record_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_hook_bprop_outermost_cell_record_grad_gpu():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    pynative_hook_bprop_outermost_cell_record_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_pynative_hook_child_cell_record_grad_ascend():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    pynative_hook_child_cell_record_grad()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_hook_child_cell_record_grad_gpu():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    pynative_hook_child_cell_record_grad()
