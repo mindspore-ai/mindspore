@@ -64,7 +64,7 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePt
 }
 
 FuncGraphPtr Kprim(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources) {
-  auto fg = g_k_prims.KPrimitive(value_node, resources);
+  auto fg = g_k_prims.KPrimitive(nullptr, value_node, resources);
   if (fg == nullptr) {
     return nullptr;
   }
