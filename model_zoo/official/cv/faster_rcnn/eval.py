@@ -41,8 +41,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=a
 
 def FasterRcnn_eval(dataset_path, ckpt_path, ann_file):
     """FasterRcnn evaluation."""
-    ds = create_fasterrcnn_dataset(dataset_path, batch_size=config.test_batch_size,
-                                   repeat_num=1, is_training=False)
+    ds = create_fasterrcnn_dataset(dataset_path, batch_size=config.test_batch_size, is_training=False)
     net = Faster_Rcnn_Resnet50(config)
     param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(net, param_dict)
