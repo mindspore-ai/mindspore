@@ -93,7 +93,7 @@ int ResizeBilinearWithFloatScaleInt8(const int8_t *input_ptr, int8_t *output_ptr
       int input_rt_index = (y_upper_value * in_w + x_upper_value) * channel;
       int c = 0;
 #ifdef ENABLE_ARM
-      for (; c < channel; c += 4) {
+      for (; c <= channel - 4; c += 4) {
         float32x4_t in_lb;
         in_lb[0] = (float)in_b_ptr[input_lb_index];
         in_lb[1] = (float)in_b_ptr[input_lb_index + 1];

@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#ifndef LITE_MINDSPORE_LITE_C_OPS_OP_STRIDED_SLICE_POPULATE_H
+#define LITE_MINDSPORE_LITE_C_OPS_OP_STRIDED_SLICE_POPULATE_H
+
 #include "src/ops/arithmetic.h"
 
 namespace mindspore {
@@ -23,3 +26,4 @@ OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *pr
 
 }  // namespace lite
 }  // namespace mindspore
+#endif
