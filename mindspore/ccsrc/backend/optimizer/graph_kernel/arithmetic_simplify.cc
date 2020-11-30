@@ -32,7 +32,9 @@ namespace opt {
 AnfNodePtr NewCNodeWithInfo(const AnfNodePtrList &inputs, const AnfNodePtr &ori_node) {
   auto func_graph = ori_node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
+  TraceManager::DebugTrace(std::make_shared<TraceOpt>(ori_node->debug_info()));
   auto new_cnode = func_graph->NewCNode(inputs);
+  TraceManager::EndTrace();
   new_cnode->set_abstract(ori_node->abstract());
   new_cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {
@@ -687,6 +689,7 @@ void InlineSubgraph(const CNodePtr &kernel_node, const FuncGraphPtr &sub_graph, 
 
 CNodePtr AddIdentityToEmptyPath(const AnfNodePtr &node, const FuncGraphPtr &sub_graph) {
   if (node->isa<Parameter>() || node->isa<ValueNode>()) {
+    TraceGuard guard(std::make_shared<TraceOpt>(node->debug_info()));
     auto identity_node = sub_graph->NewCNode({NewValueNode(prim::kPrimIdentity), node});
     identity_node->set_abstract(node->abstract());
     sub_graph->AddNode(identity_node);

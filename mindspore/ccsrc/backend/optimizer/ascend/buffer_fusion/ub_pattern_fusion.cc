@@ -399,6 +399,7 @@ bool UbPatternFusion::ReplaceFusionOp(std::unordered_map<int64_t, BufferFusionIn
                                       session::KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
   auto buffer_fusion_info = (*buffer_fusion_infos)[fusion_id];
+  TraceGuard guard(std::make_shared<TraceOpt>(buffer_fusion_info.anf_nodes[0]->debug_info()));
   auto buffer_fusion = CreateFusionOp(buffer_fusion_info.inputs_list, buffer_fusion_info.outputs_list,
                                       buffer_fusion_info.anf_nodes, kernel_graph);
   AnfAlgo::SetSelectKernelBuildInfo(buffer_fusion_info.kernel_build_info, buffer_fusion.get());

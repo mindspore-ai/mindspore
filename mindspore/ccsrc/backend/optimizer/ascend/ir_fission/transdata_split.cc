@@ -35,6 +35,7 @@ bool TransDataSplit::Run(const FuncGraphPtr &func_graph) {
     if (node != nullptr && node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kTransDataOpName) {
       CheckCNodeInputSize(node->cast<CNodePtr>(), kBackendTransDataInputNum);
       if (IsFormatInvaild(node)) {
+        TraceGuard guard(std::make_shared<TraceOpt>(node->debug_info()));
         changed = DoSplit(func_graph, node);
       }
     }

@@ -104,6 +104,7 @@ bool CombineMomentumFusion::Run(const FuncGraphPtr &graph) {
         inputs.push_back(AnfAlgo::GetInputNode(utils::cast<CNodePtr>(mom), i));
       }
     }
+    TraceGuard guard(std::make_shared<TraceOpt>(momentums[0]->debug_info()));
     auto combine_mom = graph->NewCNode(inputs);
     auto kernel_info = std::make_shared<device::KernelInfo>();
     MS_EXCEPTION_IF_NULL(kernel_info);

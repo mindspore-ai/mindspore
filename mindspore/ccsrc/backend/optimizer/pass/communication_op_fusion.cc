@@ -278,6 +278,7 @@ bool CommunicationOpFusion::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto first_node = it.second.communication_op_nodes[0];
+    TraceGuard guard(std::make_shared<TraceOpt>(first_node->debug_info()));
     if (AnfAlgo::HasNodeAttr(kAttrIndex, first_node) && AnfAlgo::GetNodeAttr<int64_t>(first_node, kAttrIndex) > 0) {
       std::stable_sort(it.second.communication_op_nodes.begin(), it.second.communication_op_nodes.end(),
                        [](const CNodePtr &a, const CNodePtr &b) {

@@ -36,6 +36,7 @@
 #include "utils/utils.h"
 #include "debug/anf_ir_dump.h"
 #include "mindspore/core/base/base_ref_utils.h"
+#include "utils/trace_base.h"
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/worker.h"
@@ -992,8 +993,9 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
     }
     // Create cnode
     if (!CreateCNodeOfKernelGraph(node, graph.get())) {
-      DumpIR("contruct_kernel_graph_fail.ir", func_graph);
-      MS_LOG_EXCEPTION << "construct func graph " << func_graph->ToString() << "fail!";
+      DumpIR("construct_kernel_graph_fail.ir", func_graph);
+      MS_LOG(EXCEPTION) << "Construct func graph " << func_graph->ToString() << " failed."
+                        << trace::DumpSourceLines(node);
     }
   }
 

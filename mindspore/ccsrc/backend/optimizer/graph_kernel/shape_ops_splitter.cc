@@ -46,6 +46,7 @@ AnfNodePtr CloneCNode(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  TraceGuard guard(std::make_shared<TraceOpt>(cnode->debug_info()));
   CNodePtr node = kernel_graph->NewCNode(cnode->inputs());
   node->set_abstract(cnode->abstract());
   node->set_forward(cnode->forward().first, cnode->forward().second);
