@@ -144,6 +144,29 @@ int IntReduceMin(int outer_size, int inner_size, int axis_size, const int *src_d
   }
   return NNACL_OK;
 }
+
+int ReduceAll(int outer_size, int inner_size, int axis_size, const bool *src_data, bool *dst_data, int tid,
+              int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  int i, j, k;
+  for (j = tid; j < outer_size; j += thread_num) {
+    const bool *outer_src = src_data + j * axis_size * inner_size;
+    bool *outer_dst = dst_data + j * inner_size;
+    for (k = 0; k < inner_size; k++) {
+      const bool *inner_src = outer_src + k;
+      bool *inner_dst = outer_dst + k;
+      bool tmp = true;
+      for (i = 0; i < axis_size; i++) {
+        tmp = tmp && inner_src[i * inner_size];
+      }
+      *inner_dst = tmp;
+    }
+  }
+  return NNACL_OK;
+}
+
 int ReduceProd(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
                int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
