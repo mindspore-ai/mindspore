@@ -1,11 +1,11 @@
 # Contents
 
-- [Music Auto Tagging Description](#fcn-4-description)
+- [FCN-4 Description](#fcn-4-description)
 - [Model Architecture](#model-architecture)
 - [Features](#features)
     - [Mixed Precision](#mixed-precision)
 - [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)    
+- [Quick Start](#quick-start)
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
@@ -18,41 +18,36 @@
         - [Evaluation Performance](#evaluation-performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
+## [FCN-4 Description](#contents)
 
-# [Music Auto Tagging Description](#contents)
-
-This repository provides a script and recipe to train the Music Auto Tagging model to achieve state-of-the-art accuracy.
+This repository provides a script and recipe to train the FCN-4 model to achieve state-of-the-art accuracy.
 
 [Paper](https://arxiv.org/abs/1606.00298):  `"Keunwoo Choi, George Fazekas, and Mark Sandler, “Automatic tagging using deep convolutional neural networks,” in International Society of Music Information Retrieval Conference. ISMIR, 2016."
 
+## [Model Architecture](#contents)
 
-# [Model Architecture](#contents)
+FCN-4 is a convolutional neural network architecture, its name FCN-4 comes from the fact that it has 4 layers. Its layers consists of Convolutional layers, Max Pooling layers, Activation layers, Fully connected layers.
 
-Music Auto Tagging is a convolutional neural network architecture, its name Music Auto Tagging comes from the fact that it has 4 layers. Its layers consists of Convolutional layers, Max Pooling layers, Activation layers, Fully connected layers.
+## [Features](#contents)
 
-# [Features](#contents)
+### Mixed Precision
 
-## Mixed Precision
-
-The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware. 
+The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
-
-# [Environment Requirements](#contents)
+## [Environment Requirements](#contents)
 
 - Hardware（Ascend
-  - If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+    - If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
-  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
+    - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
 
+## [Quick Start](#contents)
 
-
-# [Quick Start](#contents)
-
-After installing MindSpore via the official website, you can start training and evaluation as follows: 
+After installing MindSpore via the official website, you can start training and evaluation as follows:
 
 ### 1. Download and preprocess the dataset
 
@@ -66,11 +61,13 @@ After installing MindSpore via the official website, you can start training and 
 ### 3. Train
 
 after having your dataset, first convert the audio clip into mindrecord dataset by using the following codes
+
 ```shell
 python pre_process_data.py --device_id 0
 ```
 
 Then, you can start training the model by using the following codes
+
 ```shell
 SLOG_PRINT_TO_STDOUT=1 python train.py --device_id 0
 ```
@@ -78,20 +75,21 @@ SLOG_PRINT_TO_STDOUT=1 python train.py --device_id 0
 ### 4. Test
 
 Then you can test your model
+
 ```shell
 SLOG_PRINT_TO_STDOUT=1 python eval.py --device_id 0
 ```
 
-# [Script Description](#contents)
+## [Script Description](#contents)
 
-## [Script and Sample Code](#contents)
+### [Script and Sample Code](#contents)
 
-```
+```shell
 ├── model_zoo
     ├── README.md                          // descriptions about all the models
-    ├── music_auto_tagging        
+    ├── music_auto_tagging
         ├── README.md                    // descriptions about googlenet
-        ├── scripts 
+        ├── scripts
         │   ├──run_train.sh             // shell script for distributed on Ascend
         │   ├──run_eval.sh              // shell script for evaluation on Ascend
         │   ├──run_process_data.sh      // shell script for convert audio clips to mindrecord
@@ -102,19 +100,19 @@ SLOG_PRINT_TO_STDOUT=1 python eval.py --device_id 0
         │   ├──config.py                      // parameter configuration
         │   ├──loss.py                        // loss function
         │   ├──tag.txt                        // tag for each number
-        ├── train.py               // training script 
-        ├── eval.py                //  evaluation script 
-        ├── export.py              //  export model in air format 
+        ├── train.py               // training script
+        ├── eval.py                //  evaluation script
+        ├── export.py              //  export model in air format
 ```
 
-## [Script Parameters](#contents)
+### [Script Parameters](#contents)
 
 Parameters for both training and evaluation can be set in config.py
 
-- config for Music Auto tagging
+- config for FCN-4
 
   ```python
-  
+
   'num_classes': 50                      # number of tagging classes
   'num_consumer': 4                      # file number for mindrecord
   'get_npy': 1 # mode for converting to npy, default 1 in this case
@@ -127,7 +125,7 @@ Parameters for both training and evaluation can be set in config.py
   'device_id': 0                         # device ID used to train or evaluate the dataset. Ignore it when you use run_train.sh for distributed training
   'mr_path': '/dev/data/Music_Tagger_Data/fea/' # path to mindrecord
   'mr_name': ['train', 'val']            # mindrecord name
-  
+
   'pre_trained': False                   # whether training based on the pre-trained model
   'lr': 0.0005                           # learning rate
   'batch_size': 32                       # training batch size
@@ -135,8 +133,8 @@ Parameters for both training and evaluation can be set in config.py
   'loss_scale': 1024.0                   # loss scale
   'num_consumer': 4                      # file number for mindrecord
   'mixed_precision': False               # if use mix precision calculation
-  'train_filename': 'train.mindrecord0'  # file name of the train mindrecord data 
-  'val_filename': 'val.mindrecord0'      # file name of the evaluation mindrecord data 
+  'train_filename': 'train.mindrecord0'  # file name of the train mindrecord data
+  'val_filename': 'val.mindrecord0'      # file name of the evaluation mindrecord data
   'data_dir': '/dev/data/Music_Tagger_Data/fea/' # directory of mindrecord data
   'device_target': 'Ascend'              # device running the program
   'device_id': 0,                        # device ID used to train or evaluate the dataset. Ignore it when you use run_train.sh for distributed training
@@ -147,39 +145,38 @@ Parameters for both training and evaluation can be set in config.py
   'model_name': 'MusicTagger_3-50_543.ckpt', # checkpoint name
   ```
 
+### [Training Process](#contents)
 
-## [Training Process](#contents)
-
-### Training 
+#### Training
 
 - running on Ascend
 
+  ```shell
+  python train.py > train.log 2>&1 &
   ```
-  python train.py > train.log 2>&1 & 
-  ```
-  
+
   The python command above will run in the background, you can view the results through the file `train.log`.
-  
+
   After training, you'll get some checkpoint files under the script folder by default. The loss value will be achieved as follows:
-  
-  ```
+
+  ```shell
   # grep "loss is " train.log
   epoch: 1 step: 100, loss is 0.23264095
   epoch: 1 step: 200, loss is 0.2013525
   ...
   ```
-  
-  The model checkpoint will be saved in the set directory. 
 
-## [Evaluation Process](#contents)
+  The model checkpoint will be saved in the set directory.
 
-### Evaluation
+### [Evaluation Process](#contents)
 
+#### Evaluation
 
-# [Model Description](#contents)
-## [Performance](#contents)
+## [Model Description](#contents)
 
-### Evaluation Performance 
+### [Performance](#contents)
+
+#### Evaluation Performance
 
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
@@ -195,9 +192,8 @@ Parameters for both training and evaluation can be set in config.py
 | Speed                      | 1pc: 160 samples/sec;                                       |
 | Total time                 | 1pc: 20 mins;                                               |
 | Checkpoint for Fine tuning | 198.73M(.ckpt file)                                         |
-| Scripts                    | [music_auto_tagging script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/audio/music_auto_tagging) |
+| Scripts                    | [music_auto_tagging script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/audio/fcn-4) |
 
+## [ModelZoo Homepage](#contents)  
 
-
-# [ModelZoo Homepage](#contents)  
  Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).  
