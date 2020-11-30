@@ -159,7 +159,6 @@ std::shared_ptr<SamplerObj> toSamplerObj(std::optional<py::handle> py_sampler, b
 std::shared_ptr<DatasetCache> toDatasetCache(std::optional<std::shared_ptr<CacheClient>> cc) {
   if (cc) {
     std::shared_ptr<DatasetCache> built_cache;
-    // Common Sampler
     built_cache = std::make_shared<PreBuiltDatasetCache>(std::move(cc.value()));
     return built_cache;
   } else {

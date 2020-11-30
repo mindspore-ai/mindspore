@@ -23,6 +23,10 @@ namespace dataset {
 /// Method to initialize the DatasetCache by creating an instance of a CacheClient
 /// \return Status Error code
 Status DatasetCacheImpl::Build() {
+  // The same DatasetCache instance can be re-used for multiple pipelines for cache sharing,
+  // in this case, cache_client_ object might have been created.
+  if (cache_client_) return Status::OK();
+
   CacheClient::Builder builder;
   builder.SetSessionId(session_id_).SetCacheMemSz(cache_mem_sz_).SetSpill(spill_);
   if (hostname_) builder.SetHostname(hostname_.value());
