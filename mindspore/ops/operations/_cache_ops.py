@@ -56,6 +56,51 @@ class UpdateCache(PrimitiveWithCheck):
         return input_x_dtype
 
 
+class SubAndFilter(PrimitiveWithCheck):
+    """
+    Dynamic kernel, sub an offset and
+    return the elements which in range [0, max_num).
+
+    Inputs:
+        - **input_x** (Tensor) - Input tensor.
+        - **max_num** (Int) - The max value of element that after sub `offset`.
+        - **offset** (int) - Specifies the offset value of this `input_x`.
+
+    Outputs:
+        tuple(Tensor), tuple of 2 tensors, filter_res and filter_idx.
+        - **filter_res** (Tensor) - The result that `input_x` minus `offset`,
+          and return which in the range [0, max_num).
+        - **filter_idx** (Tensor) - A tensor containing indices of elements in the input
+          coressponding to the output tensor.
+
+    Supported Platforms:
+        `CPU`
+
+    Examples:
+        >>> x = Tensor(np.array([1, 3, 5, 8, 9, 16]), mindspore.int32)
+        >>> max_num = 10
+        >>> offset = 5
+        >>> output = ops.SubAndFilter()(x, max_num, offset)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Int32, value= [0, 3, 4]),
+         Tensor(shape=[3], dtype=Int32, value= [2, 3, 4]))
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init SubAndFilter"""
+
+        self.init_prim_io_names(inputs=['input_x', 'max_num', 'offset'],
+                                outputs=['sub_res', 'sub_idx'])
+
+    def check_shape(self, input_x_shape, max_num_shape, offset_shape):
+        return (-1, -1)
+
+    def check_dtype(self, input_x_dtype, max_num_dtype, offset_dtype):
+        validator.check_tensor_dtype_valid(
+            "input_x", input_x_dtype, mstype.int_type, self.name)
+        return input_x_dtype
+
+
 class SearchCacheIdx(PrimitiveWithInfer):
     """
     Search the keys of a hashmap, and return the values.
@@ -254,7 +299,8 @@ class MapCacheIdx(PrimitiveWithCheck):
         hashmap_dtype = hashmap['dtype']
         indices_dtype = indices['dtype']
         args = {"hashmap": hashmap_dtype, "indices": indices_dtype}
-        validator.check_tensor_type_same(args, mstype.int_type, self.name)
+        validator.check_tensors_dtypes_same_and_valid(
+            args, mstype.int_type, self.name)
         out_dtype = (hashmap_dtype, hashmap_dtype,
                      hashmap_dtype, hashmap_dtype)
 
