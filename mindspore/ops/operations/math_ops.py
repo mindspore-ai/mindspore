@@ -844,7 +844,7 @@ class CumSum(PrimitiveWithInfer):
         Tensor, the shape of the output tensor is consistent with the input tensor's.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([[3, 4, 6, 10],[1, 6, 7, 9],[4, 3, 8, 7],[1, 3, 7, 9]]).astype(np.float32))
