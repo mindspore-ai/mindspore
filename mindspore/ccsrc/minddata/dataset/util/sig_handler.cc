@@ -35,6 +35,7 @@ void RegisterHandlers() {
   (void)sigemptyset(&new_int_action.sa_mask);
   new_int_action.sa_flags = SA_RESTART | SA_SIGINFO;
   (void)sigaction(SIGINT, &new_int_action, nullptr);
+  (void)sigaction(SIGTERM, &new_int_action, nullptr);
 }
 
 extern void IntHandler(int sig_num,          // The signal that was raised
