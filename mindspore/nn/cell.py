@@ -55,13 +55,13 @@ class Cell(Cell_):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> class MyCell(Cell):
-        >>>    def __init__(self):
-        >>>        super(MyCell, self).__init__()
-        >>>        self.relu = P.ReLU()
-        >>>
-        >>>    def construct(self, x):
-        >>>        return self.relu(x)
+        >>> class MyCell(nn.Cell):
+        ...    def __init__(self):
+        ...        super(MyCell, self).__init__()
+        ...        self.relu = P.ReLU()
+        ...
+        ...    def construct(self, x):
+        ...        return self.relu(x)
     """
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
                    '_construct_inputs_num', '_create_time', '_mindspore_flags', '_parallel_inputs_run',
@@ -776,8 +776,9 @@ class Cell(Cell_):
 
         Examples:
             >>> net = Net()
+            >>> parameters = []
             >>> for item in net.get_parameters():
-            >>>     print(item)
+            ...     parameters.append(item)
         """
         for _, param in self.parameters_and_names(expand=expand):
             yield param
@@ -805,8 +806,8 @@ class Cell(Cell_):
             >>> n = Net()
             >>> names = []
             >>> for m in n.parameters_and_names():
-            >>>     if m[0]:
-            >>>         names.append(m[0])
+            ...     if m[0]:
+            ...         names.append(m[0])
         """
         cells = []
         if expand:
@@ -842,8 +843,8 @@ class Cell(Cell_):
             >>> n = Net()
             >>> names = []
             >>> for m in n.cells_and_names():
-            >>>     if m[0]:
-            >>>         names.append(m[0])
+            ...     if m[0]:
+            ...         names.append(m[0])
         """
         t_cells = cells if cells else set()
         if self in t_cells:
@@ -1016,7 +1017,7 @@ class Cell(Cell_):
             fn must be defined as the following code. `cell_name` is the name of registered cell.
             `grad_input` is gradient passed to the cell. `grad_output` is the gradient computed and passed to the
             next cell or primitve, which may be modified and returned.
-            >>> hook_fn(cell_name, grad_input, grad_output) -> Tensor or None
+            hook_fn(cell_name, grad_input, grad_output) -> Tensor or None.
 
         Args:
             fn (function): Specifies the hook function with grad as input.
@@ -1051,13 +1052,13 @@ class GraphKernel(Cell):
     enable_graph_kernel in context is set to True.
 
     Examples:
-        >>> class Relu(GraphKernel):
-        >>>    def __init__(self):
-        >>>        super(Relu, self).__init__()
-        >>>        self.max = P.Maximum()
-        >>>
-        >>>    def construct(self, x):
-        >>>        return self.max(P.Fill()(P.DType()(x), P.Shape()(x), 0.0), x)
+        >>> class Relu(nn.GraphKernel):
+        ...    def __init__(self):
+        ...        super(Relu, self).__init__()
+        ...        self.max = P.Maximum()
+        ...
+        ...    def construct(self, x):
+        ...        return self.max(P.Fill()(P.DType()(x), P.Shape()(x), 0.0), x)
     """
 
     def __init__(self, auto_prefix=True, pips=None):
