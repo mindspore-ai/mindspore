@@ -110,10 +110,10 @@ class Localization(LabelSensitiveMetric):
             numpy.ndarray, 1D array of shape :math:`(N,)`, result of localization evaluated on `explainer`.
 
         Examples:
-            >>> # init an explainer, the network should contain the output activation function.
+            >>> # init an explainer with a trained network
             >>> gradient = Gradient(network)
             >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
-            >>> masks = np.zeros(1, 1, 224, 224)
+            >>> masks = np.zeros([1, 1, 224, 224])
             >>> masks[:, :, 65: 100, 65: 100] = 1
             >>> targets = 5
             >>> # usage 1: input the explainer and the data to be explained,
