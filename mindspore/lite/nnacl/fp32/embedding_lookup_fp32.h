@@ -21,8 +21,11 @@
 
 typedef struct EmbeddingLookupParameter {
   OpParameter op_parameter_;
-  bool *is_regulated_;
+  // primitive parameter
   float max_norm_;
+
+  // shape correlative
+  bool *is_regulated_;
   int ids_size_;
   int layer_size_;
   int layer_num_;

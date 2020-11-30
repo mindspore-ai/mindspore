@@ -83,6 +83,7 @@ kernel::LiteKernel *CpuDepthToSpaceInt8KernelCreator(const std::vector<lite::Ten
   auto *kernel = new (std::nothrow) DepthToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchToSpaceInt8CPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
 

@@ -166,6 +166,5 @@ bool IsSupportFloat16() {
 #endif
   return status;
 }
-
 }  // namespace lite
 }  // namespace mindspore

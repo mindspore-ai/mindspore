@@ -70,7 +70,7 @@ void SumAndDiv(const float *src, float *dst, int batch, int channel) {
     }
     int k = 0;
 #ifdef ENABLE_NEON
-    float div = 1.0f / sum;
+    const float div = 1.0f / sum;
     for (; k < channel - C4NUM; k += C4NUM) {
       vst1q_f32(dst + cur_batch_offset + k, vmulq_n_f32(vld1q_f32(src + cur_batch_offset + k), div));
     }

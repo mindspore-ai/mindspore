@@ -68,7 +68,7 @@ void ExpFp32(const float *src, float *dst, int num) {
     float decimal = input - integer * param[0];
     int int_exp = (integer + 127) << 23;
     memcpy(dst + i, &int_exp, sizeof(float));
-    float decimal_exp =
+    const float decimal_exp =
       1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
     dst[i] *= decimal_exp;
   }

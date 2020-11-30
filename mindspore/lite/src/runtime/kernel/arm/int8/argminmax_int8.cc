@@ -80,6 +80,9 @@ int ArgMinMaxInt8CPUKernel::Run() {
     case 3:
       Int8ArgMinMaxDim3(input_data, output_data, in_shape.data(), param, &in_quant_arg_, &out_quant_arg_);
       break;
+    default:
+      MS_LOG(ERROR) << "axis is invalid";
+      return RET_ERROR;
   }
   return RET_OK;
 }
@@ -88,13 +91,10 @@ kernel::LiteKernel *CpuArgMinMaxInt8KernelCreator(const std::vector<lite::Tensor
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                   const mindspore::lite::PrimitiveC *primitive) {
-  if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
-    return nullptr;
-  }
   auto kernel = new (std::nothrow) ArgMinMaxInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArgMinMaxInt8CPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
 

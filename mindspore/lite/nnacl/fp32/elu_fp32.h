@@ -21,7 +21,10 @@
 
 typedef struct EluParameter {
   OpParameter op_parameter_;
+  // primitive parameter
   float alpha_;
+
+  // shape correlative
   int in_size_;
 } EluParameter;
 

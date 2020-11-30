@@ -97,7 +97,7 @@ int ConvolutionGradInputCPUKernel::Execute(int task_id) {
     for (j = 0; j < groups; ++j) {
       GemmCb gcb;
       for (int ci = 0; ci < m; ci += chunk) {
-        float *mat_b;
+        float *mat_b = nullptr;
         if (ci == 0) {
           mat_b = w_addr + j * nweights / groups;
           gcb.ca = 0;
