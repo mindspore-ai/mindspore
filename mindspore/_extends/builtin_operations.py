@@ -157,6 +157,8 @@ def tuple_to_array(x):
 
 def stop_gradient(x):
     """Implement `stop_gradient`."""
+    if isinstance(x, Tensor):
+        return Tensor(x.asnumpy())
     return x
 
 
