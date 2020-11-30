@@ -48,7 +48,7 @@ AlbumOp::AlbumOp(const std::string &file_dir, bool do_decode, const std::string 
       current_cnt_(0),
       dirname_offset_(0),
       sampler_(true),
-      sampler_index_(0) {
+      sampler_index_(index) {
   PrescanEntry();
 }
 
