@@ -65,7 +65,11 @@ class UnsortedSegmentMinGpuKernel : public GpuKernel {
     } else {
       MS_LOG(INFO) << "UnsortedSegmentMin Kernel Input count is 2";
     }
-
+    auto value_count = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, 0);
+    if (value_count.size() != 1) {
+      MS_LOG(ERROR) << "For UnsortedSegmentMin, output shape incorrect rank. Expect Rank: 1, got Rank: "
+                    << value_count.size() << ".";
+    }
     num_segments_ = output_shapes[0];
     input_size_ = 1;
     for (size_t i = 0; i < input_shapes.size(); i++) {
@@ -113,7 +117,7 @@ class UnsortedSegmentMinGpuKernel : public GpuKernel {
   }
 
  private:
-  int num_segments_;
+  int64_t num_segments_;
   size_t inner_size_;
   size_t outer_size_;
   size_t input_size_;

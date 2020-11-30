@@ -17,19 +17,19 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/unsorted_segment_min.cuh"
 #include <limits>
 
-template<typename T>
+template <typename T>
 __device__ __forceinline__ void max_val_init(T *init_val) {
   *init_val = std::numeric_limits<T>::max();
 }
 // Handle fp16 differently for assignment
-template<>
+template <>
 __device__ __forceinline__ void max_val_init(half *init_val) {
   *init_val = __int2half_rd(65504);  // Max value for Half
 }
 
 template <typename T>
-__global__ void UnsortedSegmentMin(const T *input, const int *segment_ids, const int num_segments, size_t outer_size,
-                                   size_t inner_size, T init_K, T *output) {
+__global__ void UnsortedSegmentMin(const T *input, const int *segment_ids, const int64_t num_segments,
+                                   size_t outer_size, size_t inner_size, T init_K, T *output) {
   max_val_init(&init_K);
   for (int t_idx = blockIdx.x * blockDim.x + threadIdx.x; t_idx < KWARPSIZE * num_segments * inner_size;
        t_idx += blockDim.x * gridDim.x) {
@@ -62,18 +62,18 @@ __global__ void UnsortedSegmentMin(const T *input, const int *segment_ids, const
 }
 
 template <typename T>
-void CalUnsortedSegmentMin(const T *input, const int *segment_ids, const int num_segments, size_t outer_size,
+void CalUnsortedSegmentMin(const T *input, const int *segment_ids, const int64_t num_segments, size_t outer_size,
                            size_t inner_size, T *output, cudaStream_t stream) {
   int size = (inner_size * KWARPSIZE * num_segments);
-  T init_K  = std::numeric_limits<T>::lowest();  // only init here - overwritten later
+  T init_K = std::numeric_limits<T>::lowest();  // only init here - overwritten later
   UnsortedSegmentMin<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(input, segment_ids, num_segments, outer_size,
                                                                    inner_size, init_K, output);
   return;
 }
 
-template void CalUnsortedSegmentMin<float>(const float *input, const int *segment_ids, const int num_segments,
+template void CalUnsortedSegmentMin<float>(const float *input, const int *segment_ids, const int64_t num_segments,
                                            size_t outer_size, size_t inner_size, float *output, cudaStream_t stream);
-template void CalUnsortedSegmentMin<half>(const half *input, const int *segment_ids, const int num_segments,
+template void CalUnsortedSegmentMin<half>(const half *input, const int *segment_ids, const int64_t num_segments,
                                           size_t outer_size, size_t inner_size, half *output, cudaStream_t stream);
-template void CalUnsortedSegmentMin<int>(const int *input, const int *segment_ids, const int num_segments,
+template void CalUnsortedSegmentMin<int>(const int *input, const int *segment_ids, const int64_t num_segments,
                                          size_t outer_size, size_t inner_size, int *output, cudaStream_t stream);

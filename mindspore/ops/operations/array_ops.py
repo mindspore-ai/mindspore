@@ -1893,8 +1893,10 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         validator.check_positive_int(segment_ids_shp_len, "rank of segment_ids", self.name)
         validator.check(f'rank of input_x', len(x_shp),
                         'rank of segments_id', len(segment_ids_shp), Rel.GE, self.name)
-        for i, value in enumerate(segment_ids_shp):
-            validator.check("ids[%d]" % i, value, 'input[%d]' % i, x_shp[i], Rel.EQ, self.name)
+        if (not -1 in x_shp and not -1 in segment_ids_shp):
+            # only validate when both shapes fully known
+            for i, value in enumerate(segment_ids_shp):
+                validator.check("ids[%d]" % i, value, 'input[%d]' % i, x_shp[i], Rel.EQ, self.name)
         num_segments_v = num_segments['value']
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.tensor, mstype.number], self.name)
@@ -1968,7 +1970,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.tensor, mstype.number], self.name)
         if isinstance(num_segments_type, type(mstype.tensor)):
-            validator.check_tensor_dtype_valid("num_segments", num_segments_type, [mstype.int64],
+            validator.check_tensor_dtype_valid("num_segments", num_segments_type, [mstype.int32, mstype.int64],
                                                self.name)
         else:
             validator.check_value_type('num_segments', num_segments['value'], [int], self.name)
@@ -2021,7 +2023,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.tensor, mstype.number], self.name)
         if isinstance(num_segments_type, type(mstype.tensor)):
-            validator.check_tensor_dtype_valid("num_segments", num_segments_type, [mstype.int64],
+            validator.check_tensor_dtype_valid("num_segments", num_segments_type, [mstype.int32, mstype.int64],
                                                self.name)
         else:
             validator.check_value_type('num_segments', num_segments['value'], [int], self.name)

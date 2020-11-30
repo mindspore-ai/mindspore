@@ -29,7 +29,7 @@ namespace kernel {
 template <typename T>
 class PadGpuFwdKernel : public GpuKernel {
  public:
-  PadGpuFwdKernel() : shape_size_(0), temp(0), input_size_(0), output_size_(0), workspace_size_(0) {}
+  PadGpuFwdKernel() : shape_size_(0), temp(0), input_size_(1), output_size_(1), workspace_size_(0) {}
   ~PadGpuFwdKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -53,13 +53,11 @@ class PadGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    // check number of inputs -> should be 1
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but Pad needs 1 input.";
       return false;
     }
-    // check number of output -> should be 1
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(ERROR) << "Output number is " << output_num << ", but Pad needs 1 output.";
@@ -67,8 +65,7 @@ class PadGpuFwdKernel : public GpuKernel {
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     shape_size_ = input_shape.size();
-    // shape adjustement -> from 2d/3d to 4d to standardize
-    if (shape_size_ == 4) {
+    if (shape_size_ == 4) {  // shape adjustement from 2d/3d to 4d
     } else if (shape_size_ == 3) {
       auto it = input_shape.begin();
       input_shape.insert(it, 1);  // batch padding
@@ -87,8 +84,7 @@ class PadGpuFwdKernel : public GpuKernel {
                                                 [](const int64_t &value) { return static_cast<int>(value); });
                            return shape;
                          });
-    // shape adjustement -> from 2d/3d to 4d to standardize
-    if (paddings.size() == 4) {
+    if (paddings.size() == 4) {  // shape adjustement from 2d/3d to 4d
     } else if (paddings.size() == 3) {
       auto it = paddings.begin();
       paddings.insert(it, 1, {0, 0});  // batch padding
@@ -96,13 +92,11 @@ class PadGpuFwdKernel : public GpuKernel {
       auto it = paddings.begin();
       paddings.insert(it, 2, {0, 0});  // channel padding
     }
-    input_size_ = 1;
     for (size_t i = 0; i < shape_size_; i++) {
       input_size_ *= input_shape[i];
       input_shape_.push_back(input_shape[i]);
     }
     input_size_ *= sizeof(T);
-    output_size_ = 1;
     for (size_t i = 0; i < shape_size_; i++) {
       temp = input_shape[i] + (paddings[i][0] + paddings[i][1]);  // compute new dim size
       output_size_ *= temp;
