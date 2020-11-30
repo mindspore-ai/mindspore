@@ -94,9 +94,9 @@ class FusedLayerNorm(Cell):
         self.begin_norm_axis = begin_norm_axis
         self.begin_params_axis = begin_params_axis
         self.gamma = Parameter(initializer(
-            gamma_init, normalized_shape), name="gamma")
+            gamma_init, normalized_shape))
         self.beta = Parameter(initializer(
-            beta_init, normalized_shape), name="beta")
+            beta_init, normalized_shape))
         self.layer_norm = P.LayerNorm(begin_norm_axis=self.begin_norm_axis, begin_params_axis=self.begin_params_axis)
 
         self.batch_norm = P.BatchNorm(is_training=True, epsilon=1e-5)

@@ -49,10 +49,10 @@ class DynamicRNNCell(nn.Cell):
         # w
         dynamicRNN_w = np.random.uniform(-initializer_range, initializer_range,
                                          size=[self.input_size + self.hidden_size, 4 * self.hidden_size])
-        self.dynamicRNN_w = Parameter(Tensor(dynamicRNN_w, mstype.float32), name='weight')
+        self.dynamicRNN_w = Parameter(Tensor(dynamicRNN_w, mstype.float32))
         # b
         dynamicRNN_b = np.random.uniform(-initializer_range, initializer_range, size=[4 * self.hidden_size])
-        self.dynamicRNN_b = Parameter(Tensor(dynamicRNN_b, mstype.float32), name='bias')
+        self.dynamicRNN_b = Parameter(Tensor(dynamicRNN_b, mstype.float32))
 
         self.dynamicRNN_h = Tensor(np.zeros((1, self.batch_size, self.hidden_size)), mstype.float32)
         self.dynamicRNN_c = Tensor(np.zeros((1, self.batch_size, self.hidden_size)), mstype.float32)

@@ -48,8 +48,7 @@ class EmbeddingLookup(nn.Cell):
         self.use_one_hot_embeddings = use_one_hot_embeddings
 
         init_weight = np.random.normal(-initializer_range, initializer_range, size=[vocab_size, embed_dim])
-        self.embedding_table = Parameter(Tensor(init_weight, mstype.float32),
-                                         name='embedding_table')
+        self.embedding_table = Parameter(Tensor(init_weight, mstype.float32))
         self.expand = P.ExpandDims()
         self.gather = P.GatherV2()
         self.one_hot = P.OneHot()

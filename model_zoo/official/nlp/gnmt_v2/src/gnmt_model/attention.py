@@ -57,11 +57,10 @@ class BahdanauAttention(nn.Cell):
         self.normalize = normalize
         self.num_units = num_units
         self.linear_att = Parameter(Tensor(np.random.uniform(-initializer_range, initializer_range, size=[num_units]),
-                                           dtype=mstype.float32), name='linear_att')
+                                           dtype=mstype.float32))
         if self.normalize:
-            self.normalize_scalar = Parameter(Tensor(np.array([1.0 / num_units]), dtype=mstype.float32),
-                                              name='normalize_scalar')
-            self.normalize_bias = Parameter(Tensor(np.zeros(num_units), dtype=mstype.float32), name='normalize_bias')
+            self.normalize_scalar = Parameter(Tensor(np.array([1.0 / num_units]), dtype=mstype.float32))
+            self.normalize_bias = Parameter(Tensor(np.zeros(num_units), dtype=mstype.float32))
         self.transpose = P.Transpose()
         self.transpose_orders = (1, 0, 2)
         self.shape_op = P.Shape()

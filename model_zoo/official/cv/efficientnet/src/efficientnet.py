@@ -469,12 +469,12 @@ class DepthWiseConv(nn.Cell):
             self.depthwise_conv = P.Conv2D(out_channel=in_planes * 1, kernel_size=kernel_size,
                                            stride=stride, pad_mode="same", group=in_planes)
             self.weight = Parameter(initializer(
-                weight_init, [in_planes * 1, 1, kernel_size, kernel_size]), name='depthwise_weight')
+                weight_init, [in_planes * 1, 1, kernel_size, kernel_size]))
         else:
             self.depthwise_conv = P.DepthwiseConv2dNative(
                 channel_multiplier=1, kernel_size=kernel_size, stride=stride, pad_mode='same',)
             self.weight = Parameter(initializer(
-                weight_init, [1, in_planes, kernel_size, kernel_size]), name='depthwise_weight')
+                weight_init, [1, in_planes, kernel_size, kernel_size]))
 
     def construct(self, x):
         x = self.depthwise_conv(x, self.weight)

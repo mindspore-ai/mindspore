@@ -217,8 +217,8 @@ class Adam(Optimizer):
 
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)
-        self.beta1_power = Parameter(initializer(1, [1], mstype.float32), name="beta1_power")
-        self.beta2_power = Parameter(initializer(1, [1], mstype.float32), name="beta2_power")
+        self.beta1_power = Parameter(initializer(1, [1], mstype.float32))
+        self.beta2_power = Parameter(initializer(1, [1], mstype.float32))
         self.eps = eps
 
         self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
@@ -377,7 +377,7 @@ class AdamWeightDecayDynamicLR(Optimizer):
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, power, self.cls_name)
         # turn them to scalar when me support scalar/tensor mix operations
-        self.global_step = Parameter(initializer(0, [1]), name="global_step")
+        self.global_step = Parameter(initializer(0, [1]))
         self.warmup_steps = Tensor(np.array([warmup_steps]).astype(np.float32))
         self.warmup_flag = False
         if warmup_steps > 0:

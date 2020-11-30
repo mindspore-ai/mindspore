@@ -20,6 +20,7 @@ import os
 from collections import OrderedDict
 import numpy
 from mindspore import log as logger
+from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from .. import context
 from ..common import dtype as mstype
 from ..common.api import _executor, _pynative_exec
@@ -619,6 +620,8 @@ class Cell(Cell_):
             raise KeyError("Duplicated parameter name '{}'.".format(param_name))
         if not isinstance(param, Parameter) and param is not None:
             raise TypeError("The type of parameter should be 'Parameter' if not None.")
+        if isinstance(param, Parameter) and param.name == PARAMETER_NAME_DEFAULT:
+            param.name = param_name
         self._params[param_name] = param
 
     def cast_param(self, param):

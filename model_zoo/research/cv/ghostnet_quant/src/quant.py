@@ -35,10 +35,10 @@ class QuanConv(nn.Conv2d):
         self.x_upper_bound = Tensor(2 ** 8 - 1, ms.float32)
         self.w_lower_bound = Tensor(-2 ** 7 - 1, ms.float32)
         self.w_upper_bound = Tensor(2 ** 7, ms.float32)
-        self.scale_a = Parameter(initializer('ones', [1]), name='scale_a')
+        self.scale_a = Parameter(initializer('ones', [1]))
         self.scale_w = Parameter(initializer(
-            'ones', [out_channels]), name='scale_w')
-        self.zp_a = Parameter(initializer('ones', [1]), name='zp_a')
+            'ones', [out_channels]))
+        self.zp_a = Parameter(initializer('ones', [1]))
 
     def construct(self, in_data):
         r"""construct of QuantConv"""

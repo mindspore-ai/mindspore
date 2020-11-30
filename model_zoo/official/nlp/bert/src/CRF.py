@@ -52,7 +52,7 @@ class CRF(nn.Cell):
         transitions = np.random.normal(size=(self.target_size, self.target_size)).astype(np.float32)
         transitions[tag_to_index[self.START_TAG], :] = -10000
         transitions[:, tag_to_index[self.STOP_TAG]] = -10000
-        self.transitions = Parameter(Tensor(transitions), name="transition_matrix")
+        self.transitions = Parameter(Tensor(transitions))
         self.cat = P.Concat(axis=-1)
         self.argmax = P.ArgMaxWithValue(axis=-1)
         self.log = P.Log()

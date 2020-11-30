@@ -33,13 +33,12 @@ class CTCLoss(_Loss):
 
     def __init__(self, max_sequence_length, max_label_length, batch_size):
         super(CTCLoss, self).__init__()
-        self.sequence_length = Parameter(Tensor(np.array([max_sequence_length] * batch_size), mstype.int32),
-                                         name="sequence_length")
+        self.sequence_length = Parameter(Tensor(np.array([max_sequence_length] * batch_size), mstype.int32))
         labels_indices = []
         for i in range(batch_size):
             for j in range(max_label_length):
                 labels_indices.append([i, j])
-        self.labels_indices = Parameter(Tensor(np.array(labels_indices), mstype.int64), name="labels_indices")
+        self.labels_indices = Parameter(Tensor(np.array(labels_indices), mstype.int64))
         self.reshape = P.Reshape()
         self.ctc_loss = P.CTCLoss(ctc_merge_repeated=True)
 

@@ -119,12 +119,12 @@ class DepthwiseConv(nn.Cell):
         self.bias_add = P.BiasAdd()
         weight_shape = [channel_multiplier, in_planes, *self.kernel_size]
         self.weight = Parameter(initializer(
-            'ones', weight_shape), name='weight')
+            'ones', weight_shape))
 
         if has_bias:
             bias_shape = [channel_multiplier * in_planes]
             self.bias = Parameter(initializer(
-                'zeros', bias_shape), name='bias')
+                'zeros', bias_shape))
         else:
             self.bias = None
 

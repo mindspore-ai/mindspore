@@ -45,12 +45,10 @@ class StackedRNN(nn.Cell):
         self.rnn1 = P.DynamicRNN(forget_bias=0.0)
         self.rnn2 = P.DynamicRNN(forget_bias=0.0)
 
-        self.w1 = Parameter(np.random.uniform(-k, k, (input_size + hidden_size, 4 * hidden_size)).astype(np.float16),
-                            name="w1")
-        self.w2 = Parameter(np.random.uniform(-k, k, (hidden_size + hidden_size, 4 * hidden_size)).astype(np.float16),
-                            name="w2")
-        self.b1 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float16), name="b1")
-        self.b2 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float16), name="b2")
+        self.w1 = Parameter(np.random.uniform(-k, k, (input_size + hidden_size, 4 * hidden_size)).astype(np.float16))
+        self.w2 = Parameter(np.random.uniform(-k, k, (hidden_size + hidden_size, 4 * hidden_size)).astype(np.float16))
+        self.b1 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float16))
+        self.b2 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float16))
 
         self.h1 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
         self.h2 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
@@ -98,7 +96,7 @@ class StackedRNNForGPU(nn.Cell):
         self.cast = P.Cast()
         k = (1 / hidden_size) ** 0.5
         weight_shape = 4 * hidden_size * (input_size + 3 * hidden_size + 4)
-        self.weight = Parameter(np.random.uniform(-k, k, (weight_shape, 1, 1)).astype(np.float32), name='weight')
+        self.weight = Parameter(np.random.uniform(-k, k, (weight_shape, 1, 1)).astype(np.float32))
         self.h = Tensor(np.zeros(shape=(num_layer, batch_size, hidden_size)).astype(np.float32))
         self.c = Tensor(np.zeros(shape=(num_layer, batch_size, hidden_size)).astype(np.float32))
 

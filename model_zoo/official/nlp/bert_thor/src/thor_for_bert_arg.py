@@ -54,7 +54,7 @@ class THOR(Optimizer):
         super(THOR, self).__init__(learning_rate, params, weight_decay, loss_scale)
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
-        self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
+        self.momentum = Parameter(Tensor(momentum, mstype.float32))
         self.params = self.parameters
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.hyper_map = C.HyperMap()
@@ -82,7 +82,7 @@ class THOR(Optimizer):
         self.batch_size = batch_size
         self.damping = damping
         self.one = Tensor(1, mstype.int32)
-        self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
+        self.cov_step = Parameter(initializer(0, [1], mstype.int32), requires_grad=False)
         mean = _get_gradients_mean()
         degree = _get_device_num()
         self.grad_reducer_g = DistributedGradReducerThor(self.parameters, 3, mean, degree)

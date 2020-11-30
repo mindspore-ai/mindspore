@@ -90,8 +90,7 @@ class BertFinetuneCell(nn.Cell):
         self.loss_scale = None
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
-            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
-                                        name="loss_scale")
+            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
 
     def construct(self,
                   input_ids,
@@ -185,8 +184,8 @@ class BertSquadCell(nn.Cell):
         self.loss_scale = None
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
-            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
-                                        name="loss_scale")
+            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
+
     def construct(self,
                   input_ids,
                   input_mask,
@@ -306,9 +305,9 @@ class BertSquad(nn.Cell):
         self.num_labels = num_labels
         self.seq_length = config.seq_length
         self.is_training = is_training
-        self.total_num = Parameter(Tensor([0], mstype.float32), name='total_num')
-        self.start_num = Parameter(Tensor([0], mstype.float32), name='start_num')
-        self.end_num = Parameter(Tensor([0], mstype.float32), name='end_num')
+        self.total_num = Parameter(Tensor([0], mstype.float32))
+        self.start_num = Parameter(Tensor([0], mstype.float32))
+        self.end_num = Parameter(Tensor([0], mstype.float32))
         self.sum = P.ReduceSum()
         self.equal = P.Equal()
         self.argmax = P.ArgMaxWithValue(axis=1)
