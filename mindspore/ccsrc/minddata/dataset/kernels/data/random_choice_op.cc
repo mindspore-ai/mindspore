@@ -89,7 +89,8 @@ RandomChoiceOp::RandomChoiceOp(const std::vector<std::shared_ptr<TensorOp>> &ops
     : ops_(ops), gen_(GetSeed()), rand_int_(0, ops.size() - 1) {
   if (ops_.empty()) {
     MS_LOG(ERROR) << "op_list in RandomChoiceOp is empty.";
-  } else if (ops_.size() == 1) {
+  }
+  if (ops_.size() == 1) {
     MS_LOG(WARNING) << "op_list has only 1 op, this op would be picked every time.";
   }
   is_deterministic_ = false;

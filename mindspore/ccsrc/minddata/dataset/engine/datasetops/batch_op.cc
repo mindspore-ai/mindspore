@@ -546,9 +546,9 @@ Status BatchOp::GetDatasetSize(int64_t *dataset_size) {
   RETURN_IF_NOT_OK(child_[0]->GetDatasetSize(&num_rows));
   if (num_rows > 0 && start_batch_size_ > 0) {
     if (drop_) {
-      num_rows = floor(num_rows / (1.0 * start_batch_size_));
+      num_rows = static_cast<int64_t>(floor(num_rows / (1.0 * start_batch_size_)));
     } else {
-      num_rows = ceil(num_rows / (1.0 * start_batch_size_));
+      num_rows = static_cast<int64_t>(ceil(num_rows / (1.0 * start_batch_size_)));
     }
   }
   *dataset_size = num_rows;

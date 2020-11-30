@@ -343,8 +343,8 @@ class Dataset:
         Add a blocking condition to the input Dataset.
 
         Args:
-            num_batch (int): the number of batches without blocking at the start of each epoch.
             condition_name (str): The condition name that is used to toggle sending next row.
+            num_batch (int): the number of batches without blocking at the start of each epoch.
             callback (function): The callback funciton that will be invoked when sync_update is called.
 
         Raises:
@@ -1452,9 +1452,10 @@ class Dataset:
             num_batch (Union[int, None]): The number of batches (rows) that are released.
                 When num_batch is None, it will default to the number specified by the
                 sync_wait operator (default=None).
-            data (Union[dict, None]): The data passed to the callback (default=None).
+            data (Any): The data passed to the callback, user defined (default=None).
         """
-        if isinstance(num_batch, int) and num_batch <= 0:
+        if (not isinstance(num_batch, int) and num_batch is not None) or \
+            (isinstance(num_batch, int) and num_batch <= 0):
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
             raise RuntimeError("Sync_update batch size can only be positive, got : {}.".format(num_batch))

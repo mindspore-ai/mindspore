@@ -111,7 +111,9 @@ Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *ou
     *output = out;
     return Status::OK();
   } catch (const std::exception &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in OneHotOp");
+    std::string err_msg = "Unexpected error in OneHotOp: ";
+    err_msg += e.what();
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
 }
 
