@@ -23,7 +23,7 @@ class DataConfig:
     test_num_of_parts = 3
     batch_size = 16000
     data_field_size = 39
-    data_format = 2
+    data_format = 1
 
 class ModelConfig:
     """model config"""
