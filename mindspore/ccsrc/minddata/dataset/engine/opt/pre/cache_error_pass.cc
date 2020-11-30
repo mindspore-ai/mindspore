@@ -36,7 +36,8 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modifie
 // Returns an error if ZipOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ZipOp> node, bool *modified) {
   if (is_cached_) {
-    RETURN_STATUS_UNEXPECTED("ZipOp is currently not supported as a descendant operator under a cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "ZipOp is currently not supported as a descendant operator under a cache.");
   }
 
   return Status::OK();
@@ -48,8 +49,8 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<MapOp> node, bool *modified)
     auto tfuncs = node->TFuncs();
     for (size_t i = 0; i < tfuncs.size(); i++) {
       if (!tfuncs[i]->Deterministic()) {
-        RETURN_STATUS_UNEXPECTED(
-          "MapOp with non-deterministic TensorOps is currently not supported as a descendant of cache.");
+        return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                      "MapOp with non-deterministic TensorOps is currently not supported as a descendant of cache.");
       }
     }
   }
@@ -59,7 +60,8 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<MapOp> node, bool *modified)
 // Returns an error if ConcatOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified) {
   if (is_cached_) {
-    RETURN_STATUS_UNEXPECTED("ConcatOp is currently not supported as a descendant operator under a cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "ConcatOp is currently not supported as a descendant operator under a cache.");
   }
 
   return Status::OK();
@@ -68,7 +70,8 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modifi
 // Returns an error if TakeOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<TakeOp> node, bool *modified) {
   if (is_cached_) {
-    RETURN_STATUS_UNEXPECTED("TakeOp/SplitOp is currently not supported as a descendant operator under a cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "TakeOp/SplitOp is currently not supported as a descendant operator under a cache.");
   }
 
   return Status::OK();
@@ -77,7 +80,8 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<TakeOp> node, bool *modified
 // Returns an error if SkipOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified) {
   if (is_cached_) {
-    RETURN_STATUS_UNEXPECTED("SkipOp is currently not supported as a descendant operator under a cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "SkipOp is currently not supported as a descendant operator under a cache.");
   }
 
   return Status::OK();
@@ -87,7 +91,8 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified
 // Returns an error if FilterOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
   if (is_cached_) {
-    RETURN_STATUS_UNEXPECTED("FilterOp is currently not supported as a descendant operator under a cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "FilterOp is currently not supported as a descendant operator under a cache.");
   }
 
   return Status::OK();

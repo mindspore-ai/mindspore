@@ -34,7 +34,7 @@ class CacheClientGreeter : public Service {
 
   void *SharedMemoryBaseAddr() { return nullptr; }
   Status HandleRequest(std::shared_ptr<BaseRequest> rq) { RETURN_STATUS_UNEXPECTED("Not supported"); }
-  Status AttachToSharedMemory(int32_t port, bool *local_bypass) { RETURN_STATUS_UNEXPECTED("Not supported"); }
+  Status AttachToSharedMemory(bool *local_bypass) { RETURN_STATUS_UNEXPECTED("Not supported"); }
 
  protected:
  private:

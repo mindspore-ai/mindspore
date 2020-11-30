@@ -61,13 +61,11 @@ CacheClient::CacheClient(session_id_type session_id, uint64_t cache_mem_sz, bool
       spill_(spill),
       client_id_(-1),
       local_bypass_(false),
-      hostname_(std::move(hostname)),
-      port_(port),
       num_connections_(num_connections),
       prefetch_size_(prefetch_size),
       fetch_all_keys_(true) {
   cinfo_.set_session_id(session_id);
-  comm_ = std::make_shared<CacheClientGreeter>(hostname_, port_, num_connections_);
+  comm_ = std::make_shared<CacheClientGreeter>(hostname, port, num_connections_);
 }
 
 CacheClient::~CacheClient() {
@@ -99,8 +97,7 @@ CacheClient::~CacheClient() {
 void CacheClient::Print(std::ostream &out) const {
   out << "  Session id: " << session_id() << "\n  Cache crc: " << cinfo_.crc()
       << "\n  Server cache id: " << server_connection_id_ << "\n  Cache mem size: " << GetCacheMemSz()
-      << "\n  Spilling: " << std::boolalpha << isSpill() << "\n  Hostname: " << GetHostname()
-      << "\n  Port: " << GetPort() << "\n  Number of rpc workers: " << GetNumConnections()
+      << "\n  Spilling: " << std::boolalpha << isSpill() << "\n  Number of rpc workers: " << GetNumConnections()
       << "\n  Prefetch size: " << GetPrefetchSize() << "\n  Local client support: " << std::boolalpha
       << SupportLocalClient();
 }
@@ -251,7 +248,7 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
     }
     if (success) {
       // Attach to shared memory for local client
-      RETURN_IF_NOT_OK(comm_->AttachToSharedMemory(port_, &local_bypass_));
+      RETURN_IF_NOT_OK(comm_->AttachToSharedMemory(&local_bypass_));
       if (local_bypass_) {
         async_buffer_stream_ = std::make_shared<AsyncBufferStream>();
         RETURN_IF_NOT_OK(async_buffer_stream_->Init(this));

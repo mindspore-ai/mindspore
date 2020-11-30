@@ -234,8 +234,6 @@ class CacheClient {
   session_id_type session_id() const { return cinfo_.session_id(); }
   uint64_t GetCacheMemSz() const { return cache_mem_sz_; }
   bool isSpill() const { return spill_; }
-  const std::string &GetHostname() const { return hostname_; }
-  int32_t GetPort() const { return port_; }
   int32_t GetNumConnections() const { return num_connections_; }
   int32_t GetPrefetchSize() const { return prefetch_size_; }
   int32_t GetClientId() const { return client_id_; }
@@ -288,8 +286,6 @@ class CacheClient {
   std::vector<int32_t> cpu_list_;
   // Comm layer
   bool local_bypass_;
-  std::string hostname_;
-  int32_t port_;
   int32_t num_connections_;
   int32_t prefetch_size_;
   mutable std::shared_ptr<CacheClientGreeter> comm_;

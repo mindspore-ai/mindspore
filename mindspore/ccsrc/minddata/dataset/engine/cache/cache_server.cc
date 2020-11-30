@@ -167,6 +167,7 @@ Status CacheServer::DoServiceStop() {
   // Finally wake up cache_admin if it is waiting
   for (int32_t qID : shutdown_qIDs_) {
     SharedMessage msg(qID);
+    msg.SendStatus(Status::OK());
     msg.RemoveResourcesOnExit();
     // Let msg goes out of scope which will destroy the queue.
   }
