@@ -59,6 +59,8 @@ std::vector<std::pair<int, int>> toPairVector(const py::list list);
 
 std::vector<std::shared_ptr<TensorOperation>> toTensorOperations(std::optional<py::list> operations);
 
+std::shared_ptr<TensorOperation> toTensorOperation(py::handle operation);
+
 std::vector<std::shared_ptr<DatasetNode>> toDatasetNode(std::shared_ptr<DatasetNode> self, py::list datasets);
 
 std::shared_ptr<SamplerObj> toSamplerObj(std::optional<py::handle> py_sampler, bool isMindDataset = false);

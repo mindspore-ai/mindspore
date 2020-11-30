@@ -2218,7 +2218,7 @@ class MapDataset(Dataset):
                 # wraps adjacent Python operations in a Compose to allow mixing of Python and C++ operations
                 new_ops, start_ind, end_ind = [], 0, 0
                 for i, op in enumerate(operations):
-                    if not callable(op):
+                    if str(op).find("c_transform") >= 0:
                         # reset counts
                         if start_ind != end_ind:
                             new_ops.append(py_transforms.Compose(operations[start_ind:end_ind]))

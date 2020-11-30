@@ -44,6 +44,8 @@ Examples:
     >>> data1 = data1.map(operations=onehot_op, input_columns="label")
 """
 import numbers
+import numpy as np
+from PIL import Image
 import mindspore._c_dataengine as cde
 
 from .utils import Inter, Border, ImageBatchFormat
@@ -279,6 +281,22 @@ class Normalize(cde.NormalizeOp):
         self.mean = mean
         self.std = std
         super().__init__(*mean, *std)
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (NumPy or PIL image): Image array to be normalized.
+
+        Returns:
+            img (NumPy), Normalized Image array.
+        """
+        if not isinstance(img, (np.ndarray, Image.Image)):
+            raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
+        normalize = cde.Execute(cde.NormalizeOp(*self.mean, *self.std))
+        img = normalize(cde.Tensor(np.asarray(img)))
+        return img.as_array()
 
 
 class RandomAffine(cde.RandomAffineOp):
@@ -676,12 +694,28 @@ class Resize(cde.ResizeOp):
 
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.LINEAR):
+        if isinstance(size, int):
+            size = (size, 0)
         self.size = size
         self.interpolation = interpolation
         interpoltn = DE_C_INTER_MODE[interpolation]
-        if isinstance(size, int):
-            size = (size, 0)
         super().__init__(*size, interpoltn)
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (NumPy or PIL image): Image to be resized.
+
+        Returns:
+            img (NumPy), Resized image.
+        """
+        if not isinstance(img, (np.ndarray, Image.Image)):
+            raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
+        resize = cde.Execute(cde.ResizeOp(*self.size, DE_C_INTER_MODE[self.interpolation]))
+        img = resize(cde.Tensor(np.asarray(img)))
+        return img.as_array()
 
 
 class ResizeWithBBox(cde.ResizeWithBBoxOp):
@@ -995,6 +1029,22 @@ class Rescale(cde.RescaleOp):
         self.shift = shift
         super().__init__(rescale, shift)
 
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (NumPy or PIL image): Image to be rescaled.
+
+        Returns:
+            img (NumPy), Rescaled image.
+        """
+        if not isinstance(img, (np.ndarray, Image.Image)):
+            raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
+        rescale = cde.Execute(cde.RescaleOp(self.rescale, self.shift))
+        img = rescale(cde.Tensor(np.asarray(img)))
+        return img.as_array()
+
 
 class RandomResize(cde.RandomResizeOp):
     """
@@ -1066,6 +1116,22 @@ class HWC2CHW(cde.ChannelSwapOp):
         >>>     c_vision.HWC2CHW()]
         >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
     """
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (NumPy or PIL image): Image array, of shape (H, W, C), to have channels swapped.
+
+        Returns:
+            img (NumPy), Image array, of shape (C, H, W), with channels swapped.
+        """
+        if not isinstance(img, (np.ndarray, Image.Image)):
+            raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
+        hwc2chw = cde.Execute(cde.ChannelSwapOp())
+        img = hwc2chw(cde.Tensor(np.asarray(img)))
+        return img.as_array()
 
 
 class RandomCropDecodeResize(cde.RandomCropDecodeResizeOp):
@@ -1156,12 +1222,27 @@ class Pad(cde.PadOp):
         padding = parse_padding(padding)
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
-        padding_mode = DE_C_BORDER_TYPE[padding_mode]
-
         self.padding = padding
         self.fill_value = fill_value
         self.padding_mode = padding_mode
+        padding_mode = DE_C_BORDER_TYPE[padding_mode]
         super().__init__(*padding, padding_mode, *fill_value)
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (NumPy or PIL image): Image to be padded.
+
+        Returns:
+            img (NumPy), Padded image.
+        """
+        if not isinstance(img, (np.ndarray, Image.Image)):
+            raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
+        pad = cde.Execute(cde.PadOp(*self.padding, DE_C_BORDER_TYPE[self.padding_mode], *self.fill_value))
+        img = pad(cde.Tensor(np.asarray(img)))
+        return img.as_array()
 
 
 class UniformAugment(cde.UniformAugOp):

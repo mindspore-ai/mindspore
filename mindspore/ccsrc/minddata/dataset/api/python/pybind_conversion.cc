@@ -104,6 +104,18 @@ std::vector<std::shared_ptr<TensorOperation>> toTensorOperations(std::optional<p
   return vector;
 }
 
+std::shared_ptr<TensorOperation> toTensorOperation(py::handle operation) {
+  std::shared_ptr<TensorOperation> op;
+  std::shared_ptr<TensorOp> tensor_op;
+  if (py::isinstance<TensorOp>(operation)) {
+    tensor_op = operation.cast<std::shared_ptr<TensorOp>>();
+  } else {
+    THROW_IF_ERROR([]() { RETURN_STATUS_UNEXPECTED("Error: input operation is not a tensor_op."); }());
+  }
+  op = std::make_shared<transforms::PreBuiltOperation>(tensor_op);
+  return op;
+}
+
 std::vector<std::shared_ptr<DatasetNode>> toDatasetNode(std::shared_ptr<DatasetNode> self, py::list datasets) {
   std::vector<std::shared_ptr<DatasetNode>> vector;
   vector.push_back(self);

@@ -6,6 +6,7 @@ if (ENABLE_PYTHON)
             python/pybind_conversion.cc
             python/bindings/dataset/include/datasets_bindings.cc
             python/bindings/dataset/include/iterator_bindings.cc
+            python/bindings/dataset/include/execute_binding.cc
             python/bindings/dataset/include/schema_bindings.cc
             python/bindings/dataset/engine/cache/bindings.cc
             python/bindings/dataset/core/bindings.cc
