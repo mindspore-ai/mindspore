@@ -89,7 +89,7 @@ class Gradient(Attribution):
             Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
 
         Examples:
-            >>> inputs = ms.Tensor(np.random.rand([1, 3, 224, 224]), ms.float32)
+            >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
             >>> label = 5
             >>> # gradient is a Gradient object, parse data and the target label to be explained and get the attribution
             >>> saliency = gradient(inputs, label)

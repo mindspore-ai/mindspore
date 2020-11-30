@@ -76,7 +76,7 @@ class Occlusion(PerturbationAttribution):
         >>> param_dict = load_checkpoint("resnet50.ckpt")
         >>> load_param_into_net(network, param_dict)
         >>> occlusion = Occlusion(network)
-        >>> x = Tensor(np.random.rand([1, 3, 224, 224]), ms.float32)
+        >>> x = Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
         >>> label = 1
         >>> saliency = occlusion(x, label)
     """

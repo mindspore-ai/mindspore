@@ -424,7 +424,7 @@ class Faithfulness(LabelSensitiveMetric):
             >>> res = faithfulness.evaluate(gradient, inputs, targets)
             >>> # usage 2: input the generated saliency map
             >>> saliency = gradient(inputs, targets)
-            >>> res = faithfulenss.evaluate(gradient, inputs, targets, saliency)
+            >>> res = faithfulness.evaluate(gradient, inputs, targets, saliency)
         """
 
         self._check_evaluate_param(explainer, inputs, targets, saliency)

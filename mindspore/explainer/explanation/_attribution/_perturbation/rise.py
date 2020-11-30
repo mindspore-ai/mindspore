@@ -114,14 +114,13 @@ class RISE(PerturbationAttribution):
 
         Examples:
             >>> # given an instance of RISE, saliency map can be generate
-            >>> inputs = ms.Tensor(np.random.rand([2, 3, 224, 224]), ms.float32)
+            >>> inputs = ms.Tensor(np.random.rand(2, 3, 224, 224), ms.float32)
             >>> # when `targets` is an integer
             >>> targets = 5
             >>> saliency = rise(inputs, targets)
             >>> # `targets` can also be a tensor
             >>> targets = ms.Tensor([[5], [1]])
             >>> saliency = rise(inputs, targets)
-            >>>
         """
         self._verify_data(inputs, targets)
         height, width = inputs.shape[2], inputs.shape[3]

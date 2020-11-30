@@ -45,7 +45,7 @@ class ModifiedReLU(Gradient):
             Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
 
         Examples:
-            >>> inputs = ms.Tensor(np.random.rand([1, 3, 224, 224]), ms.float32)
+            >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
             >>> label = 5
             >>> # explainer is a "Deconvolution" or "GuidedBackprop" object, parse data and the target label to be
             >>> # explained and get the attribution
@@ -104,7 +104,7 @@ class Deconvolution(ModifiedReLU):
         >>> # init Gradient with a trained network.
         >>> deconvolution = Deconvolution(net)
         >>> # parse data and the target label to be explained and get the saliency map
-        >>> inputs = ms.Tensor(np.random.rand([1, 3, 224, 224]), ms.float32)
+        >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
         >>> label = 5
         >>> saliency = deconvolution(inputs, label)
     """
