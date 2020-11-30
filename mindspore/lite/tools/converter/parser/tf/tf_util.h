@@ -21,13 +21,17 @@
 #include "proto/node_def.pb.h"
 #include "ir/dtype/type_id.h"
 #include "include/errorcode.h"
+#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace lite {
 class TensorFlowUtils {
  public:
-  static bool FindAttrValue(const tensorflow::NodeDef &nodeDef, const std::string &attr_name,
+  static TypeId GetTFDataType(const tensorflow::DataType &tf_data_type);
+  static bool FindAttrValue(const tensorflow::NodeDef &node_def, const std::string &attr_name,
                             tensorflow::AttrValue *attr_value);
+  static TypeId ParseAttrDataType(const tensorflow::NodeDef &node_def, const std::string &attr_name);
+  static schema::Format ParseNodeFormat(const tensorflow::NodeDef &node_def);
 };
 }  // namespace lite
 }  // namespace mindspore

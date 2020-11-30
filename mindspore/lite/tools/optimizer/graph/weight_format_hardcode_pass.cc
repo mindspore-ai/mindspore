@@ -20,6 +20,7 @@
 using mindspore::lite::converter::FmkType_CAFFE;
 using mindspore::lite::converter::FmkType_MS;
 using mindspore::lite::converter::FmkType_ONNX;
+using mindspore::lite::converter::FmkType_TF;
 using mindspore::lite::converter::FmkType_TFLITE;
 using mindspore::schema::QuantType_AwareTraining;
 using mindspore::schema::QuantType_PostTraining;
@@ -182,6 +183,22 @@ lite::STATUS WeightFormatHardCodePass::HardCodeTFLITE(const AnfNodePtr &conv_nod
   return lite::RET_OK;
 }
 
+lite::STATUS WeightFormatHardCodePass::HardCodeTF(const AnfNodePtr &conv_node,
+                                                  const ParamValueLitePtr &param_value) const {
+  MS_ASSERT(conv_cnode != nullptr);
+  MS_ASSERT(param_value != nullptr);
+  auto op_type = GetCNodeType(conv_node);
+
+  if (op_type == schema::PrimitiveType_Conv2D) {
+    param_value->set_format(schema::Format::Format_HWCK);
+  } else {
+    MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(op_type)
+                  << ", node: " << conv_node->fullname_with_scope();
+    return lite::RET_ERROR;
+  }
+  return lite::RET_OK;
+}
+
 bool WeightFormatHardCodePass::Run(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto node_list = TopoSort(graph->get_return());
@@ -214,6 +231,9 @@ bool WeightFormatHardCodePass::Run(const FuncGraphPtr &graph) {
         break;
       case FmkType_TFLITE:
         status = HardCodeTFLITE(node, param_value);
+        break;
+      case FmkType_TF:
+        status = HardCodeTF(node, param_value);
         break;
       case FmkType_ONNX:
         status = HardCodeONNX(node, param_value);
