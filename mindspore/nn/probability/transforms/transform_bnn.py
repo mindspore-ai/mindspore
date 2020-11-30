@@ -36,21 +36,21 @@ class TransformToBNN:
 
     Examples:
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal')
-        >>>         self.bn = nn.BatchNorm2d(64)
-        >>>         self.relu = nn.ReLU()
-        >>>         self.flatten = nn.Flatten()
-        >>>         self.fc = nn.Dense(64*224*224, 12) # padding=0
-        >>>
-        >>>     def construct(self, x):
-        >>>         x = self.conv(x)
-        >>>         x = self.bn(x)
-        >>>         x = self.relu(x)
-        >>>         x = self.flatten(x)
-        >>>         out = self.fc(x)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal')
+        ...         self.bn = nn.BatchNorm2d(64)
+        ...         self.relu = nn.ReLU()
+        ...         self.flatten = nn.Flatten()
+        ...         self.fc = nn.Dense(64*224*224, 12) # padding=0
+        ...
+        ...     def construct(self, x):
+        ...         x = self.conv(x)
+        ...         x = self.bn(x)
+        ...         x = self.relu(x)
+        ...         x = self.flatten(x)
+        ...         out = self.fc(x)
+        ...         return out
         >>>
         >>> net = Net()
         >>> criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)

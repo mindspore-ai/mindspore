@@ -47,7 +47,6 @@ class UncertaintyEvaluation:
                       Default: None.
         epochs (int): Total number of iterations on the data. Default: 1.
         epi_uncer_model_path (str): The save or read path of the epistemic uncertainty model. Default: None.
-                        If the epi_uncer_model_path is 'Untrain', the epistemic model need not to be trained.
         ale_uncer_model_path (str): The save or read path of the aleatoric uncertainty model. Default: None.
         save_model (bool): Whether to save the uncertainty model or not, if true, the epi_uncer_model_path
                         and ale_uncer_model_path must not be None. If false, the model to evaluate will be loaded from
@@ -82,7 +81,7 @@ class UncertaintyEvaluation:
         self.epi_model = model
         self.ale_model = deepcopy(model)
         self.epi_train_dataset = train_dataset
-        self.ale_train_dataset = deepcopy(train_dataset)
+        self.ale_train_dataset = train_dataset
         self.task_type = task_type
         self.epochs = Validator.check_positive_int(epochs)
         self.epi_uncer_model_path = epi_uncer_model_path
@@ -112,7 +111,7 @@ class UncertaintyEvaluation:
         """
         if self.epi_uncer_model is None:
             self.epi_uncer_model = EpistemicUncertaintyModel(self.epi_model)
-            if self.epi_uncer_model.drop_count == 0 and self.epi_uncer_model_path != 'Untrain':
+            if self.epi_uncer_model.drop_count == 0 and self.epi_train_dataset is not None:
                 if self.task_type == 'classification':
                     net_loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
                     net_opt = Adam(self.epi_uncer_model.trainable_params())
@@ -156,6 +155,8 @@ class UncertaintyEvaluation:
         """
         Get the model which can obtain the aleatoric uncertainty.
         """
+        if self.ale_train_dataset is None:
+            raise ValueError('The train dataset should not be None when evaluating aleatoric uncertainty.')
         if self.ale_uncer_model is None:
             self.ale_uncer_model = AleatoricUncertaintyModel(self.ale_model, self.num_classes, self.task_type)
             net_loss = AleatoricLoss(self.task_type)
@@ -239,17 +240,17 @@ class EpistemicUncertaintyModel(Cell):
         The dropout rate is set to 0.5 by default.
         """
         for (name, layer) in epi_model.name_cells().items():
-            if isinstance(layer, Dropout):
-                self.drop_count += 1
-                return epi_model
-        for (name, layer) in epi_model.name_cells().items():
-            if isinstance(layer, (Conv2d, Dense)):
+            if isinstance(layer, (Conv2d, Dense, Dropout)):
+                if isinstance(layer, Dropout):
+                    self.drop_count += 1
+                    return epi_model
                 uncertainty_layer = layer
                 uncertainty_name = name
                 drop = Dropout(keep_prob=dropout_rate)
                 bnn_drop = SequentialCell([uncertainty_layer, drop])
                 setattr(epi_model, uncertainty_name, bnn_drop)
                 return epi_model
+            self._make_epistemic(layer)
         raise ValueError("The model has not Dense Layer or Convolution Layer, "
                          "it can not evaluate epistemic uncertainty so far.")
 
