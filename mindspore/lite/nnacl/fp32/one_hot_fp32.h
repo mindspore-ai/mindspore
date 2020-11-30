@@ -30,6 +30,7 @@ typedef struct OneHotParameter {
   float off_value_;
   int outer_size_;
   int inner_size_;
+  bool support_neg_index_;  // if true, support neg index in indices tensor; if false, set off_value on neg index.
 } OneHotParameter;
 
 #ifdef __cplusplus
