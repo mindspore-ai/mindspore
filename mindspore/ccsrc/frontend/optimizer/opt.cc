@@ -133,6 +133,7 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
     // apply transform on this node
     bool change = false;
     if (is_match) {
+      TraceGuard trace_guard(std::make_shared<TraceOpt>(node->debug_info()));
       auto ret = (*transform)(optimizer, node);
       if (ret != nullptr && ret != node) {
         change = true;

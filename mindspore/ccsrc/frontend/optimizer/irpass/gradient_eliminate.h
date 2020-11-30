@@ -42,9 +42,8 @@ class ExpandJPrim : public AnfVisitor {
     x_ = nullptr;
     AnfVisitor::Match(prim::kPrimJ, {IsVNode})(node);
     if (x_ != nullptr) {
-      TraceManager::DebugTrace(std::make_shared<TraceExpandJ>(node->debug_info()));
+      TraceGuard guard(std::make_shared<TraceExpandJ>(node->debug_info()));
       auto j_node = internal::ExpandJ(x_, optimizer->resource());
-      TraceManager::EndTrace();
       return j_node;
     }
     return nullptr;

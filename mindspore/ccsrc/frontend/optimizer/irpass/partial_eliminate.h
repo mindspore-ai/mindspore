@@ -49,9 +49,8 @@ class PartialEliminater : public AnfVisitor {
     std::vector<AnfNodePtr> args{};
     (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args));
     (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args));
-    TraceManager::DebugTrace(std::make_shared<TracePartialTransform>(node->debug_info()));
+    TraceGuard guard(std::make_shared<TracePartialTransform>(node->debug_info()));
     auto new_node = node->func_graph()->NewCNode(args);
-    TraceManager::EndTrace();
     return new_node;
   }
 

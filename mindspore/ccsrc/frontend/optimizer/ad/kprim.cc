@@ -181,9 +181,8 @@ void KPrim::TransformArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bp
     auto p = bprop_fg->parameters()[i];
     MS_EXCEPTION_IF_NULL(p);
 
-    TraceManager::DebugTrace(std::make_shared<TraceGradFprop>(p->debug_info()));
+    TraceGuard trace_guard(std::make_shared<TraceGradFprop>(p->debug_info()));
     auto transf_p = outer->add_parameter();
-    TraceManager::EndTrace();
 
     (void)mng->Replace(p, transf_p);
     transf_args->push_back(transf_p);

@@ -208,9 +208,8 @@ FuncGraphPtr FuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const Ab
   if (iter == func_graph_cache_.end()) {
     auto fg = func_graph();
     MS_EXCEPTION_IF_NULL(fg);
-    TraceManager::DebugTrace(std::make_shared<TraceEvaluatorGenGraph>(fg->debug_info()));
+    TraceGuard guard(std::make_shared<TraceEvaluatorGenGraph>(fg->debug_info()));
     FuncGraphPtr generated_graph = fg->GenerateGraph(args_spec_list);
-    TraceManager::EndTrace();
     func_graph_cache_[args_spec_list] = generated_graph;
     MS_EXCEPTION_IF_NULL(engine);
     engine->func_graph_manager()->AddFuncGraph(generated_graph);
@@ -237,9 +236,8 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   MS_EXCEPTION_IF_NULL(meta_func_graph_);
   FuncGraphPtr generated_func_graph = nullptr;
   if (this->bound_node() != nullptr) {
-    TraceManager::DebugTrace(std::make_shared<TraceGenMetaFuncGraph>(bound_node()->debug_info()));
+    TraceGuard trace_guard(std::make_shared<TraceGenMetaFuncGraph>(bound_node()->debug_info()));
     generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_spec_list);
-    TraceManager::EndTrace();
   } else {
     generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_spec_list);
   }

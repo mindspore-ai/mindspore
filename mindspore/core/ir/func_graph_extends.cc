@@ -89,7 +89,7 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph,
                                   int pos_args_input_count) {
   // if there is variable argument, pass the input arguments that does not match positional args to it as a tuple
   if (specialized_graph->has_vararg()) {
-    TraceManager::DebugTrace(
+    TraceGuard trace_guard(
       std::make_shared<TraceGenerateVarArg>(specialized_graph->GetVariableArgParameter()->debug_info()));
     std::vector<AnfNodePtr> var_param_tuple_nodes;
     var_param_tuple_nodes.push_back(NewValueNode(prim::kPrimMakeTuple));
@@ -112,7 +112,6 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph,
     }
     auto var_tuple_param = specialized_graph->NewCNode(var_param_tuple_nodes);
     (void)repl_nodes->emplace(specialized_graph->GetVariableArgParameter(), var_tuple_param);
-    TraceManager::EndTrace();
   } else if (variable_args_count > 0) {
     MS_LOG(EXCEPTION) << "Function:" << this->ToString() << " takes " << this->GetPositionalArgsCount()
                       << " positional arguments, but " << pos_args_input_count << " were given.";
@@ -181,7 +180,7 @@ void FuncGraph::GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
                                       const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes) {
   if (has_kwarg()) {
     MS_EXCEPTION_IF_NULL(specialized_graph);
-    TraceManager::DebugTrace(
+    TraceGuard guard(
       std::make_shared<TraceGenerateKwArg>(specialized_graph->GetVariableKwargParameter()->debug_info()));
     auto make_tuple_keys = specialized_graph->NewCNode(kwarg_keys_tuple_nodes);
     auto make_tuple_values = specialized_graph->NewCNode(kwarg_values_tuple_nodes);
@@ -189,7 +188,6 @@ void FuncGraph::GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
       specialized_graph->NewCNode({NewValueNode(prim::kPrimMakeDict), make_tuple_keys, make_tuple_values});
     MS_EXCEPTION_IF_NULL(repl_nodes);
     (void)repl_nodes->emplace(specialized_graph->GetVariableKwargParameter(), make_dict_node);
-    TraceManager::EndTrace();
   }
 }
 

@@ -221,7 +221,7 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
                                         const AnfNodePtr &node) {
   ScopeGuard scope_guard(node->scope());
   AnfNodePtr resolved_node = nullptr;
-  TraceManager::DebugTrace(std::make_shared<TraceResolve>(node->debug_info()));
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   bool success = ResolveObjectToNode(node->func_graph(), obj, &resolved_node);
   if (!success) {
     MS_LOG(EXCEPTION) << "Parse Resolve covert failed NodeInfo: " << trace::GetDebugInfo(node->debug_info());
@@ -236,8 +236,6 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
     (void)TransformVectorFuncValueNode(manager, node->func_graph(), resolved_node->cast<ValueNodePtr>(),
                                        &resolved_node);
   }
-
-  TraceManager::EndTrace();
   return resolved_node;
 }
 }  // namespace

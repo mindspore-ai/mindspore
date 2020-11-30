@@ -111,7 +111,7 @@ std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix, So
   return oss.str();
 }
 
-std::string DumpSourceLines(const AnfNodePtr node) { return DumpSourceLines(node.get()); }
+std::string DumpSourceLines(const AnfNodePtr &node) { return DumpSourceLines(node.get()); }
 
 std::string DumpSourceLines(AnfNode *node) {
   if (node == nullptr) {
@@ -120,6 +120,9 @@ std::string DumpSourceLines(AnfNode *node) {
   }
   auto info_vec = GetSourceCodeDebugInfoVec(node->debug_info());
   std::ostringstream oss;
+  if (!info_vec.empty()) {
+    oss << "\n";
+  }
   for (auto info : info_vec) {
     MS_EXCEPTION_IF_NULL(info);
     auto loc = info->location();
@@ -134,7 +137,7 @@ std::string DumpSourceLines(AnfNode *node) {
   return oss.str();
 }
 
-std::vector<std::string> GetSourceLineList(const AnfNodePtr node) {
+std::vector<std::string> GetSourceLineList(const AnfNodePtr &node) {
   std::vector<std::string> result;
   if (node == nullptr) {
     MS_LOG(WARNING) << "Node is null";
@@ -155,7 +158,7 @@ std::vector<std::string> GetSourceLineList(const AnfNodePtr node) {
   return result;
 }
 
-std::vector<LocationPtr> GetSourceLocationList(const AnfNodePtr node) {
+std::vector<LocationPtr> GetSourceLocationList(const AnfNodePtr &node) {
   std::vector<LocationPtr> result;
   if (node == nullptr) {
     MS_LOG(WARNING) << "Node is null";
@@ -171,7 +174,7 @@ std::vector<LocationPtr> GetSourceLocationList(const AnfNodePtr node) {
   return result;
 }
 
-std::string GetDebugTraceInfo(const AnfNodePtr node, bool is_debug) {
+std::string GetDebugTraceInfo(const AnfNodePtr &node, bool is_debug) {
   if (node == nullptr) {
     MS_LOG(WARNING) << "Node is null";
     return "";

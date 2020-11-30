@@ -172,9 +172,8 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
     }
     auto &cloned_nodes = *cloner->cloned_node();
     for (auto &fv : fg->paramter_obj_nodes()) {
-      TraceManager::DebugTrace(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
+      TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
       auto param = base_graph->add_parameter();
-      TraceManager::EndTrace();
       auto &node_users = res->manager()->node_users()[fv];
       for (auto &n : node_users) {
         // If the user is not in this graph, no need to change.
