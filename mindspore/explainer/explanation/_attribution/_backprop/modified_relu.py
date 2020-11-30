@@ -97,11 +97,14 @@ class Deconvolution(ModifiedReLU):
         network (Cell): The black-box model to be explained.
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
         >>> from mindspore.explainer.explanation import Deconvolution
-        >>> net = resnet50(10)
+        >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
+        >>> net = resnet50(10)  # please refer to model_zoo
         >>> param_dict = load_checkpoint("resnet50.ckpt")
         >>> load_param_into_net(net, param_dict)
-        >>> # init Gradient with a trained network.
+        >>> # init Deconvolution with a trained network.
         >>> deconvolution = Deconvolution(net)
         >>> # parse data and the target label to be explained and get the saliency map
         >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
@@ -132,14 +135,17 @@ class GuidedBackprop(ModifiedReLU):
         network (Cell): The black-box model to be explained.
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
         >>> from mindspore.explainer.explanation import GuidedBackprop
-        >>> net = resnet50(10)
+        >>> net = resnet50(10)  # please refer to model_zoo
         >>> param_dict = load_checkpoint("resnet50.ckpt")
         >>> load_param_into_net(net, param_dict)
-        >>> # init Gradient with a trained network.
+        >>> # init GuidedBackprop with a trained network.
         >>> gbp = GuidedBackprop(net)
         >>> # parse data and the target label to be explained and get the saliency map
-        >>> inputs = ms.Tensor(np.random.rand([1, 3, 224, 224]), ms.float32)
+        >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
         >>> label = 5
         >>> saliency = gbp(inputs, label)
     """

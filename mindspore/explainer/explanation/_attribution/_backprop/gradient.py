@@ -61,7 +61,9 @@ class Gradient(Attribution):
 
     Examples:
         >>> from mindspore.explainer.explanation import Gradient
-        >>> net = resnet50(10)
+        >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
+        >>> # init Gradient with a trained network
+        >>> net = resnet50(10)  # please refer to model_zoo
         >>> param_dict = load_checkpoint("resnet50.ckpt")
         >>> load_param_into_net(net, param_dict)
         >>> gradient = Gradient(net)
@@ -89,6 +91,8 @@ class Gradient(Attribution):
             Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
 
         Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
             >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
             >>> label = 5
             >>> # gradient is a Gradient object, parse data and the target label to be explained and get the attribution
