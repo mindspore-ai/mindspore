@@ -40,6 +40,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     (void)seen_node.insert(node);
+    TraceGuard guard(std::make_shared<TraceOpt>(node->debug_info()));
     AnfNodePtr new_node = Run(func_graph, node);
     bool change = (new_node != nullptr);
     if (new_node != nullptr && new_node != node) {
