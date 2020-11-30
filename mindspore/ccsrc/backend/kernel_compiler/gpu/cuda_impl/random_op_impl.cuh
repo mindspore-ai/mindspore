@@ -25,7 +25,7 @@ template <typename T>
 void StandardNormal(int seed, int seed2, curandState *globalState,
                     T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
-void UniformInt(int seed, int seed2, curandState *globalState,
+bool UniformInt(int seed, int seed2, curandState *globalState,
                 T *input1, size_t input_size_1, T *input2, size_t input_size_2,
                 T *output, size_t count, cudaStream_t cuda_stream);
 template <typename T>
