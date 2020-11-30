@@ -30,14 +30,7 @@ class DeConvWinogradFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   DeConvWinogradFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                               const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    deconv_param_ = new DeConvParam();
-    for (auto &wg : deconv_param_->a_buffer_) {
-      wg.buf_init_ = false;
-      wg.dest_buffer_ = nullptr;
-      wg.middle_buffer_ = nullptr;
-    }
-  }
+      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DeConvWinogradFp16CPUKernel() override;
   int Init() override;
   int Run() override;

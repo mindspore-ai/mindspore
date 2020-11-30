@@ -143,9 +143,9 @@ kernel::LiteKernel *CpuFusedBatchnormKernelCreator(const std::vector<lite::Tenso
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
+    delete kernel;
     return nullptr;
   }
   return kernel;

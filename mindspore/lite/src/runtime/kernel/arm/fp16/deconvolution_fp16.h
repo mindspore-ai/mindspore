@@ -29,12 +29,7 @@ class DeConvolutionFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   DeConvolutionFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                              const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    matmul_param_ = new (std::nothrow) MatMulParameter();
-    if (matmul_param_ == nullptr) {
-      MS_LOG(ERROR) << "new MatMulParameter fail!";
-    }
-  }
+      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DeConvolutionFp16CPUKernel() override;
   int Init() override;
   int Run() override;

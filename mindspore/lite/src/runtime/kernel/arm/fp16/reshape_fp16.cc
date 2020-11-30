@@ -86,9 +86,9 @@ kernel::LiteKernel *CpuReshapeFp16KernelCreator(const std::vector<lite::Tensor *
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    delete kernel;
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    delete kernel;
     return nullptr;
   }
   return kernel;

@@ -301,6 +301,14 @@ int DeConvolutionWinogradCPUKernel::ReSize() {
 }
 
 int DeConvolutionWinogradCPUKernel::Init() {
+  deconv_param_ = new (std::nothrow) DeConvParam();
+  if (deconv_param_ == nullptr) {
+    MS_LOG(ERROR) << "Memory allocation failed";
+    return RET_ERROR;
+  }
+  for (auto &wg : deconv_param_->a_buffer_) {
+    wg.buf_init_ = false;
+  }
   int error_code = InitComputeParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "InitComputeParam error! ret: " << error_code;
