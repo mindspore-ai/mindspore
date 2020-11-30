@@ -32,6 +32,7 @@
 #include <atomic>
 
 #include "proto/comm.pb.h"
+#include "proto/ps.pb.h"
 #include "ps/core/cluster_config.h"
 
 namespace mindspore {

@@ -41,11 +41,13 @@
 #include <cstdlib>
 #include <cstring>
 #include <functional>
-#include <string>
-#include <utility>
 #include <random>
 #include <sstream>
+#include <string>
+#include <utility>
 
+#include "proto/comm.pb.h"
+#include "proto/ps.pb.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -63,7 +65,9 @@ class CommUtil {
   static bool CheckIp(const std::string &ip);
   static void GetAvailableInterfaceAndIP(std::string *interface, std::string *ip);
   static std::string GenerateUUID();
+  static std::string NodeRoleToString(const NodeRole &role);
 
+ private:
   static std::random_device rd;
   static std::mt19937_64 gen;
   static std::uniform_int_distribution<> dis;
