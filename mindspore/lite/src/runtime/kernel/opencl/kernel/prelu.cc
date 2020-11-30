@@ -132,7 +132,8 @@ int PReluOpenCLKernel::Run() {
 
   std::vector<size_t> local = {4, 4, 1};
   std::vector<size_t> global = {static_cast<size_t>(H_), static_cast<size_t>(W_), static_cast<size_t>(CO_SLICES_)};
-  auto ret = ocl_runtime_->RunKernel(kernel_, global, local);
+  AlignGlobalLocal(global, local);
+  auto ret = ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
     return mindspore::lite::RET_ERROR;

@@ -195,7 +195,6 @@ class OpenCLKernel : public LiteKernel {
     return RET_OK;
   }
 
-  int Init() override { return RET_ERROR; }  // !!!To be deleted
   int Prepare() override { return RET_OK; }
   int PreProcess() override { return RET_ERROR; }
   int ReSize() override { return RET_ERROR; }
@@ -235,7 +234,7 @@ class OpenCLKernel : public LiteKernel {
     tuning_params.push_back(default_tuning_param);
     std::vector<size_t> max_work_items = ocl_runtime_->GetWorkItemSize();
     size_t max_workgroup_size = ocl_runtime_->GetMaxWorkGroupSize(kernel_);
-    size_t MIN_WORKGROUP_SIZE = 8;
+    const size_t MIN_WORKGROUP_SIZE = 8;
     std::set<size_t> candidate_x = GenerateLocalByGlobal(global_size_[0]);
     std::set<size_t> candidate_y = {1};
     std::set<size_t> candidate_z = {1};

@@ -60,6 +60,7 @@ void ScaleOpenCLKernel::Image2dGetWorkGroupSize() {
   local_size_ = {16, 16};
   auto image2d_info = GpuTensorInfo(out_tensors_[0]);
   global_size_ = {image2d_info.width, image2d_info.height};
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
 int ScaleOpenCLKernel::InitWeights() {
@@ -245,7 +246,7 @@ int ScaleOpenCLKernel::Run() {
     }
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, param->activation_type_);
-  ocl_runtime_->RunKernel(kernel_, global_size_, local_size_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 

@@ -35,6 +35,35 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
 
+int BiasAddOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() == 0) {
+    MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << in_tensors_.size();
+    return RET_ERROR;
+  }
+  if (in_tensors_[0]->shape()[0] > 1) {
+    MS_LOG(ERROR) << "Input data size unsupported multi-batch.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+void BiasAddOpenCLKernel::SetConstArgs() {
+  int arg_idx = 2;
+  std::map<schema::Format, int> data_type{
+    {schema::Format::Format_NC4, 1}, {schema::Format::Format_NHWC4, 2}, {schema::Format::Format_NC4HW4, 3}};
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, BiasAdd_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, data_type[schema::Format::Format_NHWC4]);
+}
+
+void BiasAddOpenCLKernel::SetGlobalLocal() {
+  cl_int4 global_size = input_shape_;
+  global_size.s[2] = UP_DIV(global_size.s[3], C4NUM) * global_size.s[2];
+  std::vector<size_t> local = {1, 1};
+  std::vector<size_t> global = {static_cast<size_t>(global_size.s[1]), static_cast<size_t>(global_size.s[2])};
+  OpenCLKernel::AlignGlobalLocal(global, local);
+}
+
 int BiasAddOpenCLKernel::InitWeights() {
   int C = in_tensors_[1]->shape()[0];
   int div_ci = UP_DIV(C, C4NUM);
@@ -52,7 +81,7 @@ int BiasAddOpenCLKernel::InitWeights() {
   return RET_OK;
 }
 
-int BiasAddOpenCLKernel::Init() {
+int BiasAddOpenCLKernel::Prepare() {
   in_size_ = in_tensors_[0]->shape().size();
   out_size_ = out_tensors_[0]->shape().size();
   for (int i = 0; i < in_size_; ++i) {
@@ -77,67 +106,27 @@ int BiasAddOpenCLKernel::Init() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 
+  auto ret = InitWeights();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  SetGlobalLocal();
+  SetConstArgs();
   MS_LOG(DEBUG) << program_name << " Init Done!";
   return mindspore::lite::RET_OK;
 }
 
 int BiasAddOpenCLKernel::Run() {
-  cl_int4 global_size = GetGlobalshape();
-  MS_LOG(DEBUG) << op_parameter_->name_ << " Running!";
-  int arg_idx = 0;
-  std::map<schema::Format, int> data_type{
-    {schema::Format::Format_NC4, 1}, {schema::Format::Format_NHWC4, 2}, {schema::Format::Format_NC4HW4, 3}};
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_shape_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, BiasAdd_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, data_type[schema::Format::Format_NHWC4]);
-  std::vector<size_t> local = {1, 1};
-  std::vector<size_t> global = {static_cast<size_t>(global_size.s[1]), static_cast<size_t>(global_size.s[2])};
-  auto ret = ocl_runtime_->RunKernel(kernel_, global, local);
-  if (ret != mindspore::lite::RET_OK) {
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
+  auto ret = ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run kernel " << op_parameter_->name_ << " error.";
-    return mindspore::lite::RET_ERROR;
+    return RET_ERROR;
   }
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
-cl_int4 BiasAddOpenCLKernel::GetGlobalshape() {
-  cl_int4 global_shape = input_shape_;
-  global_shape.s[2] = UP_DIV(global_shape.s[3], C4NUM) * global_shape.s[2];
-  return global_shape;
-}
-
-kernel::LiteKernel *OpenCLBiasAddKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                               const lite::PrimitiveC *primitive) {
-  if (inputs.size() == 0) {
-    MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << inputs.size();
-    free(opParameter);
-    return nullptr;
-  }
-  if (inputs[0]->shape()[0] > 1) {
-    MS_LOG(ERROR) << "Input data size unsupported multi-batch.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow) BiasAddOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Kernel " << opParameter->name_ << "is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-
-  auto ret = kernel->Init();
-  if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Init BiasAdd kernel failed!";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BiasAdd, OpenCLBiasAddKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_BiasAdd, OpenCLBiasAddKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BiasAdd, OpenCLKernelCreator<BiasAddOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_BiasAdd, OpenCLKernelCreator<BiasAddOpenCLKernel>)
 }  // namespace mindspore::kernel

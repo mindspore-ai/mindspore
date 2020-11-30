@@ -229,16 +229,11 @@ int OpenCLSubGraph::Init() {
     return ret;
   }
   auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
-  ocl_runtime_->SetProfiling(true);
   ret = opencl_exec->RunOrTune(in_tensors_, out_tensors_, nodes_, allocator_, nullptr, nullptr, true);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
     return ret;
   }
-  ocl_runtime_->SetProfiling(false);
-#ifdef Debug
-  ocl_runtime_->SetProfiling(true);
-#endif
   return RET_OK;
 }
 
@@ -260,50 +255,6 @@ void OpenCLSubGraph::UpdateTensorDataType() {
       }
     }
   }
-}
-
-int OpenCLSubGraph::MallocTensorWithReuse() {
-  int ret;
-  kernel::LiteKernelUtil::InitTensorRefCount(nodes_);
-  for (auto *kernel : nodes_) {
-    MS_ASSERT(kernel);
-    auto *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
-    auto outputs = kernel->out_tensors();
-    for (auto i = 0; i < outputs.size(); ++i) {
-      auto *output = outputs.at(i);
-      MS_ASSERT(output);
-      if (op_kernel->GetMemType() == MemType::IMG) {
-        std::vector<size_t> img_size;
-        ret = op_kernel->GetImageSize(i, &img_size);
-        if (ret != RET_OK) {
-          MS_LOG(WARNING) << "GetImageSize failed";
-        }
-        auto data_ptr = allocator_->Malloc(output->Size(), img_size);
-        output->set_data(data_ptr);
-      } else {
-        ret = output->MallocData(allocator_);
-        if (ret != RET_OK) {
-          MS_LOG(WARNING) << "MallocData failed";
-        }
-      }
-      output->set_allocator(allocator_);
-    }
-    for (auto input_kernel : kernel->in_kernels()) {
-      MS_ASSERT(input_kernel);
-      ret = input_kernel->DecOutTensorRefCount();
-      if (ret != RET_OK) {
-        MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
-      }
-    }
-  }
-  for (auto kernel : out_kernels_) {
-    MS_ASSERT(kernel);
-    ret = kernel->DecOutTensorRefCount();
-    if (ret != RET_OK) {
-      MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
-    }
-  }
-  return RET_OK;
 }
 
 void OpenCLSubGraph::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
@@ -379,8 +330,6 @@ void OpenCLSubGraph::UnInit() {
   delete this->executor_;
 }
 
-int OpenCLSubGraph::InferShape() { return RET_OK; }
-
 int OpenCLSubGraph::ReSize() { return RET_OK; }
 
 int OpenCLSubGraph::Run() {
@@ -395,7 +344,6 @@ int OpenCLSubGraph::Run() {
       MS_LOG(ERROR) << "OpenCL subgraph input tensor data is null";
       return RET_ERROR;
     }
-    allocator_->UnmapBuffer(tensor->data_c());
     ret = allocator_->UnmapBuffer(tensor->data_c());
     if (ret != RET_OK) {
       return ret;
