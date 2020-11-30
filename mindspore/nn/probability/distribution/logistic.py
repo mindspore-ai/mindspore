@@ -134,6 +134,7 @@ class Logistic(Distribution):
         # ops needed for the class
         self.cast = P.Cast()
         self.const = P.ScalarToArray()
+        self.consttensor = P.ScalarToTensor()
         self.dtypeop = P.DType()
         self.exp = exp_generic
         self.expm1 = P.Expm1()
@@ -154,6 +155,7 @@ class Logistic(Distribution):
 
         self.threshold = np.log(np.finfo(np.float32).eps) + 1.
         self.tiny = np.finfo(np.float).tiny
+        self.sd_const = np.pi/np.sqrt(3)
 
     def _softplus(self, x):
         too_small = self.less(x, self.threshold)
@@ -219,8 +221,8 @@ class Logistic(Distribution):
         """
         The standard deviation of the distribution.
         """
-        loc, scale = self._check_param_type(loc, scale)
-        return scale * self.const(np.pi) / self.sqrt(self.const(3.0))
+        _, scale = self._check_param_type(loc, scale)
+        return scale * self.consttensor(self.sd_const, self.dtypeop(scale))
 
     def _entropy(self, loc=None, scale=None):
         r"""

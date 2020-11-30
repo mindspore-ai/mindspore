@@ -47,7 +47,7 @@ class Gumbel(TransformedDistribution):
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
         >>> from mindspore import Tensor
-        >>> context.set_context(mode=1, device_target="GPU")
+        >>> context.set_context(mode=1)
         >>> # To initialize a Gumbel distribution of `loc` 3.0 and `scale` 4.0.
         >>> gumbel = msd.Gumbel(3.0, 4.0, dtype=mindspore.float32)
         >>> # Private interfaces of probability functions corresponding to public interfaces, including
@@ -236,8 +236,8 @@ class Gumbel(TransformedDistribution):
         scale_b = self._check_value(scale_b, 'scale_b')
         loc_b = self.cast(loc_b, self.parameter_type)
         scale_b = self.cast(scale_b, self.parameter_type)
-        return self.log(scale_b) - self.log(self.scale) +\
-               np.euler_gamma * (self.scale / scale_b - 1.) +\
+        return self.log(scale_b / self.scale) +\
+               np.euler_gamma * (self.scale / scale_b - 1.) + (self.loc - loc_b) / scale_b +\
                self.expm1((loc_b - self.loc) / scale_b + self.lgamma(self.scale / scale_b + 1.))
 
     def _sample(self, shape=()):

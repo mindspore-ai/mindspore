@@ -40,12 +40,10 @@ class Exponential(Distribution):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.context as context
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
         >>> from mindspore import Tensor
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-        >>> # To initialize a Bernoulli distribution of the probability 0.5.
+        >>> # To initialize a Exponential distribution of the probability 0.5.
         >>> e1 = msd.Exponential(0.5, dtype=mindspore.float32)
         >>> # An Exponential distribution can be initialized without arguments.
         >>> # In this case, `rate` must be passed in through `args` during function calls.
