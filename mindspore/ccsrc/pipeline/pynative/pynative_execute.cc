@@ -1687,6 +1687,7 @@ FuncGraphPtr PynativeExecutor::MakeGradGraph(const py::object &cell, const py::a
     need_replace_param = true;
     size_t par_number = py::tuple(parse::python_adapter::CallPyObjMethod(cell, "get_parameters")).size();
     if (par_number > 0) {
+      ClearRes();
       MS_LOG(EXCEPTION) << "When user defines the net bprop, there are " << par_number
                         << " parameters that is not supported in the net.";
     }
