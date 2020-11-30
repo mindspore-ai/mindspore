@@ -59,6 +59,15 @@ enum class SPieceTokenizerOutType { kString = 0, kInt = 1 };
 // Possible values for SPieceTokenizerLoadType
 enum class SPieceTokenizerLoadType { kFile = 0, kModel = 1 };
 
+// Possible values for NormalizeForm
+enum class NormalizeForm {
+  kNone = 0,
+  kNfc,
+  kNfkc,
+  kNfd,
+  kNfkd,
+};
+
 // convenience functions for 32bit int bitmask
 inline bool BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
 

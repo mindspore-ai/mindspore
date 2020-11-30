@@ -17,12 +17,20 @@
 #include <unistd.h>
 
 #include "minddata/dataset/include/text.h"
+#ifndef _WIN32
+#include "minddata/dataset/text/kernels/case_fold_op.h"
+#endif
 #include "minddata/dataset/text/kernels/jieba_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/lookup_op.h"
 #include "minddata/dataset/text/kernels/ngram_op.h"
+#ifndef _WIN32
+#include "minddata/dataset/text/kernels/normalize_utf8_op.h"
+#endif
 #include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/sliding_window_op.h"
+#include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
 #ifndef _WIN32
+#include "minddata/dataset/text/kernels/unicode_script_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
 #endif
 #include "minddata/dataset/util/path.h"
@@ -35,6 +43,14 @@ namespace text {
 
 // FUNCTIONS TO CREATE TEXT OPERATIONS
 // (In alphabetical order)
+
+#ifndef _WIN32
+std::shared_ptr<CaseFoldOperation> CaseFold() {
+  auto op = std::make_shared<CaseFoldOperation>();
+
+  return op->ValidateParams() ? op : nullptr;
+}
+#endif
 
 std::shared_ptr<JiebaTokenizerOperation> JiebaTokenizer(const std::string &hmm_path, const std::string &mp_path,
                                                         const JiebaMode &mode, bool with_offsets) {
@@ -58,6 +74,14 @@ std::shared_ptr<NgramOperation> Ngram(const std::vector<int32_t> &ngrams,
   return op->ValidateParams() ? op : nullptr;
 }
 
+#ifndef _WIN32
+std::shared_ptr<NormalizeUTF8Operation> NormalizeUTF8(NormalizeForm normalize_form) {
+  auto op = std::make_shared<NormalizeUTF8Operation>(normalize_form);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+#endif
+
 std::shared_ptr<SentencePieceTokenizerOperation> SentencePieceTokenizer(
   const std::shared_ptr<SentencePieceVocab> &vocab, SPieceTokenizerOutType out_type) {
   auto op = std::make_shared<SentencePieceTokenizerOperation>(vocab, out_type);
@@ -78,7 +102,19 @@ std::shared_ptr<SlidingWindowOperation> SlidingWindow(const int32_t width, const
   return op->ValidateParams() ? op : nullptr;
 }
 
+std::shared_ptr<UnicodeCharTokenizerOperation> UnicodeCharTokenizer(bool with_offsets) {
+  auto op = std::make_shared<UnicodeCharTokenizerOperation>(with_offsets);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
 #ifndef _WIN32
+std::shared_ptr<UnicodeScriptTokenizerOperation> UnicodeScriptTokenizer(bool keep_whitespace, bool with_offsets) {
+  auto op = std::make_shared<UnicodeScriptTokenizerOperation>(keep_whitespace, with_offsets);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
 std::shared_ptr<WhitespaceTokenizerOperation> WhitespaceTokenizer(bool with_offsets) {
   auto op = std::make_shared<WhitespaceTokenizerOperation>(with_offsets);
 
@@ -115,6 +151,16 @@ Status ValidateTokenizerDirParam(const std::string &tokenizer_name, const std::s
 /* ####################################### Derived TensorOperation classes ################################# */
 
 // (In alphabetical order)
+
+#ifndef _WIN32
+// CaseFoldOperation
+Status CaseFoldOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> CaseFoldOperation::Build() {
+  std::shared_ptr<CaseFoldOp> tensor_op = std::make_shared<CaseFoldOp>();
+  return tensor_op;
+}
+#endif
 
 // JiebaTokenizerOperation
 JiebaTokenizerOperation::JiebaTokenizerOperation(const std::string &hmm_path, const std::string &mp_path,
@@ -220,6 +266,18 @@ std::shared_ptr<TensorOp> NgramOperation::Build() {
   return tensor_op;
 }
 
+#ifndef _WIN32
+// NormalizeUTF8Operation
+NormalizeUTF8Operation::NormalizeUTF8Operation(NormalizeForm normalize_form) : normalize_form_(normalize_form) {}
+
+Status NormalizeUTF8Operation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> NormalizeUTF8Operation::Build() {
+  std::shared_ptr<NormalizeUTF8Op> tensor_op = std::make_shared<NormalizeUTF8Op>(normalize_form_);
+  return tensor_op;
+}
+#endif
+
 // SentencePieceTokenizerOperation
 SentencePieceTokenizerOperation::SentencePieceTokenizerOperation(const std::shared_ptr<SentencePieceVocab> &vocab,
                                                                  SPieceTokenizerOutType out_type)
@@ -283,7 +341,29 @@ std::shared_ptr<TensorOp> SlidingWindowOperation::Build() {
   return tensor_op;
 }
 
+// UnicodeCharTokenizerOperation
+UnicodeCharTokenizerOperation::UnicodeCharTokenizerOperation(bool with_offsets) : with_offsets_(with_offsets) {}
+
+Status UnicodeCharTokenizerOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> UnicodeCharTokenizerOperation::Build() {
+  std::shared_ptr<UnicodeCharTokenizerOp> tensor_op = std::make_shared<UnicodeCharTokenizerOp>(with_offsets_);
+  return tensor_op;
+}
+
 #ifndef _WIN32
+// UnicodeScriptTokenizerOperation
+UnicodeScriptTokenizerOperation::UnicodeScriptTokenizerOperation(bool keep_whitespace, bool with_offsets)
+    : keep_whitespace_(keep_whitespace), with_offsets_(with_offsets) {}
+
+Status UnicodeScriptTokenizerOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> UnicodeScriptTokenizerOperation::Build() {
+  std::shared_ptr<UnicodeScriptTokenizerOp> tensor_op =
+    std::make_shared<UnicodeScriptTokenizerOp>(keep_whitespace_, with_offsets_);
+  return tensor_op;
+}
+
 // WhitespaceTokenizerOperation
 WhitespaceTokenizerOperation::WhitespaceTokenizerOperation(bool with_offsets) : with_offsets_(with_offsets) {}
 
