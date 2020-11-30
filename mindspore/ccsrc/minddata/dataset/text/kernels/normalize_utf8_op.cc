@@ -29,6 +29,8 @@ namespace dataset {
 const NormalizeForm NormalizeUTF8Op::kDefNormalizeForm = NormalizeForm::kNfkc;
 Status NormalizeUTF8Op::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "Input tensor not of type string");
+
   icu::ErrorCode error;
   const icu::Normalizer2 *normalize = nullptr;
   switch (normalize_form_) {
