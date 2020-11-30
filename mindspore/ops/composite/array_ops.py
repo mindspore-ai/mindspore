@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""math Operations."""
+"""array Operations."""
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
@@ -69,7 +69,7 @@ def repeat_elements(x, rep, axis=0):
 
     Examples:
         >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
-        >>> output = C.RepeatElements(x, rep = 2, axis = 0)
+        >>> output = C.repeat_elements(x, rep = 2, axis = 0)
         >>> print(output)
         [[0, 1, 2],
          [0, 1, 2],

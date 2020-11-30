@@ -290,8 +290,8 @@ class SampledSoftmaxLoss(_Loss):
         num_classes (int): The number of possible classes.
         num_true (int): The number of target classes per training example.
         sampled_values (Tuple):  Tuple of (`sampled_candidates`, `true_expected_count`,
-            `sampled_expected_count`) returned by a `*_candidate_sampler` function.
-            Default to None, `log_uniform_candidate_sampler` is applied.
+            `sampled_expected_count`) returned by a `*CandidateSampler` function.
+            Default to None, `UniformCandidateSampler` is applied.
         remove_accidental_hits (bool): Whether to remove "accidental hits"
             where a sampled class equals one of the target classes.  Default is True.
         seed (int): Random seed for candidate sampling. Default: 0
@@ -301,7 +301,7 @@ class SampledSoftmaxLoss(_Loss):
     Inputs:
         - **weights** (Tensor) - Tensor of shape (C, dim).
         - **bias** (Tensor) - Tensor of shape (C).  The class biases.
-        - **labels** (Tensor) - Tensor of shape (N, num_true), type `int64`. The
+        - **labels** (Tensor) - Tensor of shape (N, num_true), type `int64, int32`. The
             target classes.
         - **inputs** (Tensor) - Tensor of shape (N, dim).  The forward activations of
             the input network.
@@ -414,7 +414,7 @@ class SampledSoftmaxLoss(_Loss):
                 activations of the input network.
             num_true (int): The number of target classes per training example.
             sampled_values: a tuple of (`sampled_candidates`, `true_expected_count`,
-                `sampled_expected_count`) returned by a `UniformSampler` function.
+                `sampled_expected_count`) returned by a `UniformCandidateSampler` function.
             subtract_log_q: A `bool`.  whether to subtract the log expected count of
                 the labels in the sample to get the logits of the true labels.
                 Default is True.
