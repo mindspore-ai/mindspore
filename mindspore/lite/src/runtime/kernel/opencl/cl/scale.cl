@@ -1,10 +1,6 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
 __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 
-#define ActType_No 0
-#define ActType_Relu 1
-#define ActType_Sigmod 2
-#define ActType_Relu6 3
 #define C4NUM 4
 
 __kernel void Scale_IMG(__read_only image2d_t input, __read_only image2d_t scale, __read_only image2d_t offset,
@@ -19,9 +15,9 @@ __kernel void Scale_IMG(__read_only image2d_t input, __read_only image2d_t scale
   FLT4 s = READ_IMAGE(scale, smp_none, (int2)(X, Y));
   FLT4 o = READ_IMAGE(offset, smp_none, (int2)(X, Y));
   FLT4 out = in * s + o;
-  if (act_type == ActType_Relu) {
+  if (act_type == ActivationType_RELU) {
     out = max(out, (FLT4)(0.0f));
-  } else if (act_type == ActType_Relu6) {
+  } else if (act_type == ActivationType_RELU6) {
     out = clamp(out, (FLT4)(0.0f), (FLT4)(6.0f));
   }
   WRITE_IMAGE(output, (int2)(X, Y), out);
@@ -37,9 +33,9 @@ __kernel void BoardcastScale_IMG(__read_only image2d_t input, float scale, float
 
   FLT4 in = READ_IMAGE(input, smp_none, (int2)(X, Y));
   FLT4 out = in * (FLT)scale + (FLT)offset;
-  if (act_type == ActType_Relu) {
+  if (act_type == ActivationType_RELU) {
     out = max(out, (FLT4)(0.0f));
-  } else if (act_type == ActType_Relu6) {
+  } else if (act_type == ActivationType_RELU6) {
     out = clamp(out, (FLT4)(0.0f), (FLT4)(6.0f));
   }
   WRITE_IMAGE(output, (int2)(X, Y), out);
@@ -57,9 +53,9 @@ __kernel void Scale_C_IMG(__read_only image2d_t input, __read_only image2d_t sca
   FLT4 s = READ_IMAGE(scale, smp_none, (int2)(X % C, 0));
   FLT4 o = READ_IMAGE(offset, smp_none, (int2)(X % C, 0));
   FLT4 out = in * s + o;
-  if (act_type == ActType_Relu) {
+  if (act_type == ActivationType_RELU) {
     out = max(out, (FLT4)(0.0f));
-  } else if (act_type == ActType_Relu6) {
+  } else if (act_type == ActivationType_RELU6) {
     out = clamp(out, (FLT4)(0.0f), (FLT4)(6.0f));
   }
   WRITE_IMAGE(output, (int2)(X, Y), out);
@@ -94,9 +90,9 @@ __kernel void Scale_H_IMG(__read_only image2d_t input, __read_only image2d_t sca
     o_real = o.w;
   }
   FLT4 out = in * s_real + o_real;
-  if (act_type == ActType_Relu) {
+  if (act_type == ActivationType_RELU) {
     out = max(out, (FLT4)(0.0f));
-  } else if (act_type == ActType_Relu6) {
+  } else if (act_type == ActivationType_RELU6) {
     out = clamp(out, (FLT4)(0.0f), (FLT4)(6.0f));
   }
   WRITE_IMAGE(output, (int2)(X, Y), out);

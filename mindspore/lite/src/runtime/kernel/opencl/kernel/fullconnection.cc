@@ -29,48 +29,38 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::ActivationType_RELU;
+using mindspore::schema::ActivationType_RELU6;
+using mindspore::schema::ActivationType_TANH;
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
 
-int FullConnectionOpenCLKernel::Init() {
-  // deleted soon
-  return CheckSpecs();
-}
-
 int FullConnectionOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
-  transposeA = param->a_transpose_;
-  if (transposeA) {
+  if (param->a_transpose_) {
     MS_LOG(ERROR) << "fullconnection only support a_transpose_=false yet.";
     return RET_ERROR;
   }
-  transposeB = param->b_transpose_;
-  enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if ((in_tensors_[0]->shape().size() != 4 && in_tensors_[0]->shape().size() != 2) ||
       (out_tensors_[0]->shape().size() != 4 && out_tensors_[0]->shape().size() != 2)) {
     MS_LOG(ERROR) << "fullconnection only support input output shape size = 2 or 4";
     return RET_ERROR;
   }
-  switch (param->act_type_) {
-    case ActType_No:
-      break;
-    case ActType_Relu:
-      activation_min_ = 0.f;
-      break;
-    case ActType_Relu6:
-      activation_min_ = 0.f;
-      activation_max_ = 6.f;
-      break;
-    default:
-      MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
-      return RET_ERROR;
+  if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6) {
+    MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
+    return RET_ERROR;
   }
   return RET_OK;
 }
 
 int FullConnectionOpenCLKernel::Prepare() {
-  std::string kernel_name = "FullConnection_NHWC4";
+  auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  transposeA = param->a_transpose_;
+  transposeB = param->b_transpose_;
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
+
+  std::string kernel_name = "FullConnection";
   inShape = GpuTensorInfo(in_tensors_[0]);
   outShape = GpuTensorInfo(out_tensors_[0]);
 #ifdef PROGRAM_WITH_IL
@@ -78,7 +68,7 @@ int FullConnectionOpenCLKernel::Prepare() {
 #else
   std::string source = fullconnection_source;
   std::string program_name = "FullConnection";
-  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->LoadSource(program_name, GetActDefines() + source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
   auto ret = InitWeights();
@@ -200,11 +190,11 @@ void FullConnectionOpenCLKernel::SetConstArgs() {
                       static_cast<int>(inShape.C)};
   cl_int2 out_shape = {static_cast<int>(outShape.N), static_cast<int>(outShape.C)};
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
+  auto *param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, activation_min_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, activation_max_);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count, static_cast<cl_int>(param->act_type_));
 }
 
 int FullConnectionOpenCLKernel::Run() {

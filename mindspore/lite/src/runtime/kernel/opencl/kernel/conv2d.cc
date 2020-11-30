@@ -23,6 +23,7 @@
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "schema/ops_generated.h"
 #include "src/runtime/kernel/opencl/cl/conv2d.cl.inc"
 #include "src/runtime/kernel/opencl/cl/winograd.cl.inc"
 
@@ -30,6 +31,11 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::ActivationType_LEAKY_RELU;
+using mindspore::schema::ActivationType_RELU;
+using mindspore::schema::ActivationType_RELU6;
+using mindspore::schema::ActivationType_SIGMOID;
+using mindspore::schema::ActivationType_TANH;
 using mindspore::schema::PrimitiveType_Conv2D;
 using mindspore::schema::PrimitiveType_FullConnection;
 
@@ -59,6 +65,10 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Conv2D only supports 4D output Tensor but get " << out_tensors_.front()->shape().size() << "D.";
     return RET_ERROR;
   }
+  if (param_->act_type_ != ActType_No && param_->act_type_ != ActType_Relu && param_->act_type_ != ActType_Relu6) {
+    MS_LOG(ERROR) << "Unsupported activation type " << param_->act_type_;
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -72,9 +82,16 @@ int Conv2DOpenCLKernel::Prepare() {
   IH_ = input_shape[1];
   IW_ = input_shape[2];
   CI_ = input_shape[3];
-  OH_ = output_shape[1];
-  OW_ = output_shape[2];
-  CO_ = output_shape[3];
+  // for fusion Conv2D and Reshape(N11C->NC)
+  if (output_shape.size() == 2) {
+    OH_ = 1;
+    OW_ = 1;
+    CO_ = output_shape[1];
+  } else {  // output_shape.size()==4
+    OH_ = output_shape[1];
+    OW_ = output_shape[2];
+    CO_ = output_shape[3];
+  }
   CI_SLICES_ = UP_DIV(CI_, C4NUM);
   CO_SLICES_ = UP_DIV(CO_, C4NUM);
   KH_ = param_->kernel_h_;
@@ -91,7 +108,7 @@ int Conv2DOpenCLKernel::Prepare() {
   if (use_winograd_) {
     MS_LOG(DEBUG) << "use winograd";
     std::string program_name = "winograd";
-    ocl_runtime_->LoadSource(program_name, winograd_source);
+    ocl_runtime_->LoadSource(program_name, GetActDefines() + winograd_source);
     ocl_runtime_->BuildKernel(kernel_4x4to36_, program_name, "Winograd4x4To36");
     ocl_runtime_->BuildKernel(kernel_, program_name, "WinogradConvolution");
     ocl_runtime_->BuildKernel(kernel_36to4x4_, program_name, "Winograd36To4x4");
@@ -100,7 +117,7 @@ int Conv2DOpenCLKernel::Prepare() {
     std::string program_name = "conv2d";
     std::string kernel_name = "Conv2D_H" + std::to_string(block_size_.H) + "W" + std::to_string(block_size_.W) + "C" +
                               std::to_string(block_size_.C);
-    ocl_runtime_->LoadSource(program_name, conv2d_source);
+    ocl_runtime_->LoadSource(program_name, GetActDefines() + conv2d_source);
     ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
   }
 
@@ -347,13 +364,6 @@ void Conv2DOpenCLKernel::SetGlobalLocal() {
 }
 
 void Conv2DOpenCLKernel::SetConstArgs() {
-  auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
-  cl_int act_type = 0;
-  if (param->act_type_ == ActType_Relu) {
-    act_type = 1;
-  } else if (param->act_type_ == ActType_Relu6) {
-    act_type = 3;
-  }
   cl_int4 input_shape = {batch_size_, IH_, IW_, CI_SLICES_};
   cl_int4 output_shape = {batch_size_, OH_, OW_, CO_SLICES_};
 
@@ -380,12 +390,13 @@ void Conv2DOpenCLKernel::SetConstArgs() {
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, _36to4x4_in_shape);
     ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, output_shape);
-    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn, act_type);
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn++, static_cast<cl_int>(param_->act_type_));
+    ocl_runtime_->SetKernelArg(kernel_36to4x4_, arg_cn, static_cast<cl_float>(alpha_));
   } else {
     arg_cn = 2;
-    cl_int4 kernel_stride = {KH_, KW_, param->stride_h_, param->stride_w_};
-    cl_int4 pad = {param->pad_u_, param->pad_d_, param->pad_l_, param->pad_r_};
-    cl_int2 dilation = {param->dilation_h_, param->dilation_w_};
+    cl_int4 kernel_stride = {KH_, KW_, param_->stride_h_, param_->stride_w_};
+    cl_int4 pad = {param_->pad_u_, param_->pad_d_, param_->pad_l_, param_->pad_r_};
+    cl_int2 dilation = {param_->dilation_h_, param_->dilation_w_};
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_weight_, lite::opencl::MemType::BUF);
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, packed_bias_, lite::opencl::MemType::BUF);
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_shape);
@@ -393,7 +404,8 @@ void Conv2DOpenCLKernel::SetConstArgs() {
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, kernel_stride);
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, pad);
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, dilation);
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn, act_type);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, static_cast<cl_int>(param_->act_type_));
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn, static_cast<cl_float>(alpha_));
   }
 }
 

@@ -78,6 +78,9 @@ class OpenCLSubGraph : public SubGraphKernel {
   std::set<LiteKernel *> nodes_set_;
   lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
   lite::opencl::OpenCLRuntime *ocl_runtime_{nullptr};
+
+ private:
+  void Fusion();
 };
 }  // namespace mindspore::kernel
 

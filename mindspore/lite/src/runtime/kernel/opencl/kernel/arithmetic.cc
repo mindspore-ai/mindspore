@@ -31,93 +31,46 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
+using mindspore::schema::ActivationType_NO_ACTIVATION;
+using mindspore::schema::ActivationType_RELU;
+using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 
+std::set<schema::PrimitiveType> SupportedOpenCLArithmetics = {PrimitiveType_Mul,
+                                                              PrimitiveType_Add,
+                                                              PrimitiveType_Sub,
+                                                              PrimitiveType_Div,
+                                                              PrimitiveType_LogicalAnd,
+                                                              PrimitiveType_LogicalOr,
+                                                              PrimitiveType_Maximum,
+                                                              PrimitiveType_Minimum,
+                                                              PrimitiveType_FloorDiv,
+                                                              PrimitiveType_FloorMod,
+                                                              PrimitiveType_SquaredDifference,
+                                                              PrimitiveType_Equal,
+                                                              PrimitiveType_NotEqual,
+                                                              PrimitiveType_Less,
+                                                              PrimitiveType_LessEqual,
+                                                              PrimitiveType_Greater,
+                                                              PrimitiveType_GreaterEqual,
+                                                              PrimitiveType_Eltwise};
+
 int ArithmeticOpenCLKernel::CheckSpecs() {
-  auto *arithmetic_parameter = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (arithmetic_parameter->broadcasting_) {
-    element_flag_ = false;
-    kernel_name_ = "BroadcastNHWC4";
-    if (out_tensors_[0]->shape()[0] > 1) {
-      MS_LOG(ERROR) << "Broadcasting don't support  N > 1";
-      return RET_ERROR;
-    }
-  } else {
-    kernel_name_ = "Element";
+  auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
+  if (param->broadcasting_ && out_tensors_[0]->shape()[0] > 1) {
+    MS_LOG(ERROR) << "Broadcasting don't support  N > 1";
+    return RET_ERROR;
   }
-
-  switch (op_parameter_->type_) {
-    case PrimitiveType_Mul:
-      kernel_name_ += "Mul";
-      break;
-    case PrimitiveType_Add:
-      kernel_name_ += "Add";
-      break;
-    case PrimitiveType_Sub:
-      kernel_name_ += "Sub";
-      break;
-    case PrimitiveType_Div:
-      kernel_name_ += "Div";
-      break;
-    case PrimitiveType_LogicalAnd:
-      kernel_name_ += "And";
-      break;
-    case PrimitiveType_LogicalOr:
-      kernel_name_ += "Or";
-      break;
-    case PrimitiveType_Maximum:
-      kernel_name_ += "Max";
-      break;
-    case PrimitiveType_Minimum:
-      kernel_name_ += "Min";
-      break;
-    case PrimitiveType_FloorDiv:
-      kernel_name_ += "FloorDiv";
-      break;
-    case PrimitiveType_FloorMod:
-      kernel_name_ += "FloorMod";
-      break;
-    case PrimitiveType_SquaredDifference:
-      kernel_name_ += "SquaredDifference";
-      break;
-    case PrimitiveType_Equal:
-      kernel_name_ += "Equal";
-      break;
-    case PrimitiveType_NotEqual:
-      kernel_name_ += "NotEqual";
-      break;
-    case PrimitiveType_Less:
-      kernel_name_ += "Less";
-      break;
-    case PrimitiveType_LessEqual:
-      kernel_name_ += "LessEqual";
-      break;
-    case PrimitiveType_Greater:
-      kernel_name_ += "Greater";
-      break;
-    case PrimitiveType_GreaterEqual:
-      kernel_name_ += "GreaterEqual";
-      break;
-    default:
-      MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
-      return RET_ERROR;
+  if (SupportedOpenCLArithmetics.count(static_cast<schema::PrimitiveType>(op_parameter_->type_)) == 0) {
+    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamesPrimitiveType()[op_parameter_->type_];
+    return RET_ERROR;
   }
-
-  switch (arithmetic_parameter->activation_type_) {
-    case schema::ActivationType_NO_ACTIVATION:
-      break;
-    case schema::ActivationType_RELU:
-      activation_min_ = 0.f;
-      break;
-    case schema::ActivationType_RELU6:
-      activation_min_ = 0.f;
-      activation_max_ = 6.f;
-      break;
-    default:
-      MS_LOG(ERROR) << "Unsupported activation type " << arithmetic_parameter->activation_type_;
-      return RET_ERROR;
+  if (!(param->activation_type_ == ActivationType_NO_ACTIVATION || param->activation_type_ == ActivationType_RELU ||
+        param->activation_type_ == ActivationType_RELU6)) {
+    MS_LOG(ERROR) << "Unsupported activation type " << param->activation_type_;
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -240,11 +193,18 @@ int ArithmeticOpenCLKernel::Prepare() {
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name_);
 #else
-  if (out_mem_type_ == MemType::IMG) {
-    kernel_name_ += "_IMG";
-  } else {
-    kernel_name_ += "_BUF";
+
+  auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
+  element_flag_ = !param->broadcasting_;
+  kernel_name_ = param->broadcasting_ ? "BroadcastNHWC4" : "Element";
+  kernel_name_ += schema::EnumNamesPrimitiveType()[op_parameter_->type_];
+  if (param->activation_type_ == ActivationType_RELU) {
+    activation_min_ = 0.f;
+  } else if (param->activation_type_ == ActivationType_RELU6) {
+    activation_min_ = 0.f;
+    activation_max_ = 6.f;
   }
+
   std::string program_name = "Arithmetic";
   std::string source = arithmetic_source;
   ocl_runtime_->LoadSource(program_name, source);

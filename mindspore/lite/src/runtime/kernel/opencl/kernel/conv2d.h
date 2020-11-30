@@ -44,6 +44,9 @@ class Conv2DOpenCLKernel : public OpenCLKernel {
   int Run() override;
   int Tune() override;
 
+  // for opencl fusion: Conv2D + PReLU(weight is scalar) -> param_.act_type=ActivationType_LEAKY_RELU
+  float alpha_{0.0f};
+
  private:
   void SetBlockSize();
   int InitFilter();

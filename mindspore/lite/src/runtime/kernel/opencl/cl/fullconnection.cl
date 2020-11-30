@@ -2,9 +2,9 @@
 #define C4NUM 4
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
-__kernel void FullConnection_NHWC4(__read_only image2d_t input, __write_only image2d_t output, __global FLT16 *weight,
-                                   __read_only image2d_t bias, int4 in_shape, int2 out_shape, float act_min,
-                                   float act_max) {
+
+__kernel void FullConnection(__read_only image2d_t input, __write_only image2d_t output, __global FLT16 *weight,
+                             __read_only image2d_t bias, int4 in_shape, int2 out_shape, int act_type) {
   int gidx = get_global_id(0);  // CO4
   int gidz = get_global_id(2);  // N
   int lidx = get_local_id(0);
@@ -34,7 +34,15 @@ __kernel void FullConnection_NHWC4(__read_only image2d_t input, __write_only ima
     result += temp[lidx][2];
     result += temp[lidx][3];
     result += READ_IMAGE(bias, smp_zero, (int2)(gidx, 0));
-    result = clamp(result, (FLT)(act_min), (FLT)(act_max));
+    if (act_type == ActivationType_RELU) {
+      result = max(result, (FLT4)(0.0f));
+    } else if (act_type == ActivationType_RELU6) {
+      result = clamp(result, (FLT4)(0.0f), (FLT4)(6.0f));
+    } else if (act_type == ActivationType_TANH) {
+      FLT4 exp0 = exp(result);
+      FLT4 exp1 = exp(-result);
+      result = (exp0 - exp1) / (exp0 + exp1);
+    }
     WRITE_IMAGE(output, (int2)(gidx, gidz), result);
   }
 }

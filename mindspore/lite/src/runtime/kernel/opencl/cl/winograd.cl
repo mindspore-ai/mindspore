@@ -4,9 +4,6 @@ __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP 
 
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
 
-#define ActType_Relu 1
-#define ActType_Relu6 3
-
 constant FLT Bt[36] = {
   1.0000000000f, 0.0000000000f,  -2.5000004768f, -0.0000001192f, 1.0000001192f,  0.0000000000f,
   0.0000000000f, 0.9428091049f,  1.3333333731f,  -0.4714044929f, -0.6666667461f, 0.0000000000f,
@@ -17,8 +14,8 @@ constant FLT Bt[36] = {
 };
 
 __kernel void Winograd4x4To36(__read_only image2d_t input, __write_only image2d_t output,
-                              const int4 input_shape,     // N H W CI_SLICES
-                              const int4 output_shape) {  // N 36 H/4*W/4 CI_SLICES
+                              int4 input_shape,     // N H W CI_SLICES
+                              int4 output_shape) {  // N 36 H/4*W/4 CI_SLICES
 #define PAD 1
   int tile_xy = get_global_id(0);
   int row = get_global_id(1);
@@ -63,8 +60,8 @@ __kernel void Winograd4x4To36(__read_only image2d_t input, __write_only image2d_
 }
 
 __kernel void WinogradConvolution(__read_only image2d_t input, __write_only image2d_t output, __global FLT16 *weight,
-                                  const int4 input_shape,     // N 36 H/4*W/4 CI_SLICES
-                                  const int4 output_shape) {  // N 36 H/4*W/4 CO_SLICES
+                                  int4 input_shape,     // N 36 H/4*W/4 CI_SLICES
+                                  int4 output_shape) {  // N 36 H/4*W/4 CO_SLICES
 #define H 36
   int w = get_global_id(0) * 2;
   int h = get_global_id(1);
@@ -134,9 +131,9 @@ constant FLT At[24] = {1.0000000000f, 1.0000000000f, 1.0000000000f,  1.000000000
                        0.0000000000f, 0.3535533845f, -0.3535533845f, 2.8284270763f, -2.8284270763f, 1.0000000000f};
 
 __kernel void Winograd36To4x4(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *bias,
-                              const int4 input_shape,   // N 36 H/4*W/4 CO_SLICES
-                              const int4 output_shape,  // N H W CO_SLICES
-                              const int act_type) {
+                              int4 input_shape,   // N 36 H/4*W/4 CO_SLICES
+                              int4 output_shape,  // N H W CO_SLICES
+                              int act_type, float alpha) {
   int tile_xy = get_global_id(0);
   int row = get_global_id(1);
   int slice = get_global_id(2);
@@ -175,10 +172,21 @@ __kernel void Winograd36To4x4(__read_only image2d_t input, __write_only image2d_
       acc += bias[slice];
     }
 
-    if (act_type == ActType_Relu) {
+    if (act_type == ActivationType_RELU) {
       acc = max(acc, (FLT4)(0.0f));
-    } else if (act_type == ActType_Relu6) {
+    } else if (act_type == ActivationType_RELU6) {
       acc = clamp(acc, (FLT4)(0.0f), (FLT4)(6.0f));
+    } else if (act_type == ActivationType_TANH) {
+      FLT4 exp0 = exp(acc);
+      FLT4 exp1 = exp(-acc);
+      acc = (exp0 - exp1) / (exp0 + exp1);
+    } else if (act_type == ActivationType_LEAKY_RELU) {
+      if (acc.x < 0) acc.x *= alpha;
+      if (acc.y < 0) acc.y *= alpha;
+      if (acc.z < 0) acc.z *= alpha;
+      if (acc.w < 0) acc.w *= alpha;
+    } else if (act_type == ActivationType_SIGMOID) {
+      acc = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-acc));
     }
 
     WRITE_IMAGE(output, (int2)(x_idx, oh), acc);

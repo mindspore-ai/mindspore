@@ -352,7 +352,7 @@ int OpenCLSubGraph::Prepare() {
     MS_LOG(ERROR) << "Create OpenCLExecutor fail";
     return RET_ERROR;
   }
-
+  Fusion();
   auto ret = Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "OpenCL subgraph init fail";

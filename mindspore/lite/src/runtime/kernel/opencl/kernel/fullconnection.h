@@ -37,7 +37,6 @@ class FullConnectionOpenCLKernel : public OpenCLKernel {
   int InitWeights() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
-  int Init() override;
   int Tune() override { return lite::RET_OK; }
 
  private:
@@ -46,8 +45,6 @@ class FullConnectionOpenCLKernel : public OpenCLKernel {
   bool enable_fp16_{false};
   bool transposeA{false};
   bool transposeB{true};
-  float activation_min_{-FLT_MAX};
-  float activation_max_{FLT_MAX};
   GpuTensorInfo inShape = GpuTensorInfo(nullptr);
   GpuTensorInfo outShape = GpuTensorInfo(nullptr);
 };
