@@ -60,7 +60,7 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
 }
 
 TEST_F(MindDataTestPipeline, TestCifar10DatasetWithPipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10Dataset.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetWithPipeline.";
 
   // Create two Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";

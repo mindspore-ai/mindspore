@@ -318,7 +318,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess7) {
 }
 
 TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess7 with padded sample.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess8 with padded sample.";
 
   // Create pad sample for MindDataset
   auto pad = nlohmann::json::object();
@@ -386,7 +386,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
 }
 
 TEST_F(MindDataTestPipeline, TestMindDataSuccess9) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess7 with padded sample.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMindDataSuccess9 with padded sample.";
 
   // Create pad sample for MindDataset
   auto pad = nlohmann::json::object();

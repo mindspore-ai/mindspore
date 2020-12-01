@@ -62,7 +62,7 @@ TEST_F(MindDataTestPipeline, TestCocoDefault) {
 }
 
 TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDefault.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCocoDefaultWithPipeline.";
   // Create two Coco Dataset
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";

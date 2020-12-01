@@ -57,7 +57,7 @@ TEST_F(MindDataTestPipeline, TestAlbumBasic) {
 }
 
 TEST_F(MindDataTestPipeline, TestAlbumBasicWithPipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumBasic.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAlbumBasicWithPipeline.";
 
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
