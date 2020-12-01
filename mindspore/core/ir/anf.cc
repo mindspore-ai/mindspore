@@ -235,14 +235,6 @@ std::string GetMaketupleNodeTarget(const CNodePtr &cnode) {
   std::string default_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   return default_target;
 }
-
-std::string GetTupleGetItemTarget(const CNodePtr &cnode, const PrimitivePtr &primitive) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto input_target = GetCNodeTarget(cnode->input(1));
-  primitive->set_attr("primitive_target", MakeValue(input_target));
-  return input_target;
-}
 }  // namespace
 
 std::string GetCNodeTarget(const AnfNodePtr &node) {
@@ -297,7 +289,7 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
   } else if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     return GetMaketupleNodeTarget(cnode);
   } else if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-    return GetTupleGetItemTarget(cnode, primitive);
+    return GetCNodeTarget(cnode->input(1));
   }
   return default_target;
 }
