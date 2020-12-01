@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UTIL_H_
 
 #include <cuda_fp16.h>
+#include "runtime/device/gpu/cuda_common.h"
 
 __device__ static inline double MsAtomicAdd(double *address, const double val) {
     unsigned long long int* address_as_ull = (unsigned long long int*)address; // NOLINT
@@ -37,6 +38,44 @@ __device__ static inline int MsAtomicAdd(int *address, int val) { return atomicA
 
 __device__ static inline unsigned int MsAtomicAdd(unsigned int *address, unsigned int val) {
   return atomicAdd(address, val);
+}
+
+__device__ static inline int8_t MsAtomicAdd(int8_t *address, int8_t val) {
+  size_t offset = (size_t)address & 3;
+  uint32_t * address_as_ui = (uint32_t *)((char *)address - offset); // NOLINT
+  uint32_t old = *address_as_ui;
+  uint32_t shift = offset * 8;
+  uint32_t old_byte;
+  uint32_t newval;
+  uint32_t assumed;
+
+  do {
+    assumed = old;
+    old_byte = (old >> shift) & 0xff;
+    newval = static_cast<uint8_t>(val + old_byte);
+    newval = (old & ~(0x000000ff << shift)) | (newval << shift);
+    old = atomicCAS(address_as_ui, assumed, newval);
+  } while (assumed != old);
+  return __byte_perm(old, 0, offset);
+}
+
+__device__ static inline int64_t MsAtomicAdd(int64_t *address, int64_t val) {
+  unsigned long long * address_as_ui = (unsigned long long *) (address); // NOLINT
+  unsigned long long old = *address_as_ui; // NOLINT
+  unsigned long long newval; // NOLINT
+  unsigned long long assumed; // NOLINT
+
+  do {
+    assumed = old;
+    newval = val +  (int64_t)old;
+    old = atomicCAS(address_as_ui, assumed, newval);
+  } while (assumed != old);
+  return (int64_t)old;
+}
+
+__device__ static inline bool MsAtomicAdd(bool *address, bool val) {
+    *address = address && val;
+    return address[0];
 }
 
 __device__ static inline unsigned char MsAtomicAdd(short *address, short val) {  // NOLINT

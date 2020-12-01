@@ -4550,6 +4550,12 @@ class GatherD(PrimitiveWithInfer):
         dim_v = dim['value']
         validator.check("dim value", dim_v, "expected", -x_rank, Rel.GE, self.name)
         validator.check("dim value", dim_v, "expected", x_rank, Rel.LT, self.name)
+        if dim_v < 0:
+            dim['value'] = dim_v + x_rank
+        for i in range(x_rank):
+            if i == dim_v:
+                continue
+            validator.check("x_shp[{0}], idx_shp[{0}]".format(i), x_shp[i], "expected", idx_shp[i], Rel.EQ, self.name)
 
         out = {'shape': index['shape'],
                'dtype': x['dtype'],

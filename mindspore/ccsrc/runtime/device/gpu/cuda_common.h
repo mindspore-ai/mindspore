@@ -20,6 +20,10 @@
 #include <algorithm>
 #include "runtime/device/gpu/gpu_device_manager.h"
 
+#define CUDA_KERNEL_ASSERT(cond)                                                       \
+  if (!(cond)) {                                                                       \
+    __assert_fail(#cond, __FILE__, static_cast<unsigned int>(__LINE__), __FUNCTION__); \
+  }
 namespace mindspore {
 namespace device {
 namespace gpu {
