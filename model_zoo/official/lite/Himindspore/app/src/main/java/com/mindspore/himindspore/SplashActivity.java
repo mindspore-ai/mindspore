@@ -24,6 +24,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -32,6 +33,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
@@ -48,9 +50,12 @@ import java.io.File;
 public class SplashActivity extends BaseActivity<MainPresenter> implements MainContract.View {
 
     private static final String TAG = "SplashActivity";
+
+    private static final String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_PHONE_STATE, Manifest.permission.CAMERA};
     private static final int REQUEST_PERMISSION = 1;
 
-    private boolean isHasPermssion;
+    private boolean isAllGranted;
     private int now_version;
 
     private ProgressDialog progressDialog;
@@ -83,13 +88,27 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-
     }
 
     private void requestPermissions() {
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        Manifest.permission.READ_PHONE_STATE, Manifest.permission.CAMERA}, REQUEST_PERMISSION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            isAllGranted = checkPermissionAllGranted(PERMISSIONS);
+            if (!isAllGranted) {
+                ActivityCompat.requestPermissions(this, PERMISSIONS, REQUEST_PERMISSION);
+            }
+        } else {
+            isAllGranted = true;
+        }
+    }
+
+
+    private boolean checkPermissionAllGranted(String[] permissions) {
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -98,8 +117,38 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (REQUEST_PERMISSION == requestCode) {
-            isHasPermssion = true;
+            isAllGranted = true;
+
+            for (int grant : grantResults) {
+                if (grant != PackageManager.PERMISSION_GRANTED) {
+                    isAllGranted = false;
+                    break;
+                }
+            }
+            if (!isAllGranted) {
+                openAppDetails();
+            }
         }
+    }
+
+    private void openAppDetails() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("HiMindSpore需要访问 “相机” 和 “外部存储器”，请到 “应用信息 -> 权限” 中授予！");
+        builder.setPositiveButton("去手动授权", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent();
+                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                startActivity(intent);
+            }
+        });
+        builder.setNegativeButton("取消", null);
+        builder.show();
     }
 
     private void getUpdateInfo() {
@@ -108,7 +157,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
 
 
     public void onClickImage(View view) {
-        if (isHasPermssion) {
+        if (isAllGranted) {
             ARouter.getInstance().build("/imageobject/ImageCameraActivity")
                     .withInt("OPEN_TYPE", 1).navigation();
         } else {
@@ -117,7 +166,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     }
 
     public void onClickGarbage(View view) {
-        if (isHasPermssion) {
+        if (isAllGranted) {
             ARouter.getInstance().build("/imageobject/ImageCameraActivity")
                     .withInt("OPEN_TYPE", 2).navigation();
         } else {
@@ -126,7 +175,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     }
 
     public void onClickPhotoDetection(View view) {
-        if (isHasPermssion) {
+        if (isAllGranted) {
             ARouter.getInstance().build("/imageobject/ObjectPhotoActivity").navigation();
         } else {
             requestPermissions();
@@ -134,7 +183,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     }
 
     public void onClickCameraDetection(View view) {
-        if (isHasPermssion) {
+        if (isAllGranted) {
             ARouter.getInstance().build("/imageobject/ObjectCameraActivity").navigation();
         } else {
             requestPermissions();
@@ -142,7 +191,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     }
 
     public void onClickPoseNet(View view) {
-        if (isHasPermssion) {
+        if (isAllGranted) {
             ARouter.getInstance().build("/posenet/PosenetMainActivity").navigation(this);
         } else {
             requestPermissions();
@@ -150,7 +199,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     }
 
     public void onClickStyleTransfer(View view) {
-        if (isHasPermssion) {
+        if (isAllGranted) {
             ARouter.getInstance().build("/styletransfer/StyleMainActivity").navigation(this);
         } else {
             requestPermissions();
@@ -219,7 +268,6 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
 
 
     public void showUpdate(final UpdateInfoBean updateInfo) {
-
         if (now_version == updateInfo.getVersionCode()) {
             Toast.makeText(this, "已经是最新版本", Toast.LENGTH_SHORT).show();
             Log.d(TAG + "版本号是", "onResponse: " + now_version);

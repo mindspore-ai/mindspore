@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.mindspore.himindspore">
 
     <uses-permission android:name="android.permission.CAMERA" />
@@ -21,10 +22,11 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        tools:replace="android:label"
         android:theme="@style/AppTheme">
         <meta-data
             android:name="com.google.android.actions"
-            android:resource="@xml/file_paths" />
+            android:resource="@xml/style_file_paths" />
 
         <activity
             android:name=".SplashActivity"
@@ -41,10 +43,12 @@
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.mindspore.himindspore.fileprovider"
             android:exported="false"
+            tools:replace="android:authorities"
             android:grantUriPermissions="true">
             <meta-data
+                tools:replace="android:resource"
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
+                android:resource="@xml/style_file_paths" />
         </provider>
     </application>
 

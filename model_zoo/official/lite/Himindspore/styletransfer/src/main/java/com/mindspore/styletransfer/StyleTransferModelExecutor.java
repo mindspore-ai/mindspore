@@ -113,8 +113,6 @@ public class StyleTransferModelExecutor {
 
 
     /**
-     * float 数组转 byte数组.
-     *
      * @param floats the floats
      * @return the byte [ ]
      */
@@ -127,22 +125,14 @@ public class StyleTransferModelExecutor {
     }
 
     @SuppressLint("LongLogTag")
-//    public ModelExecutionResult execute(String contentImagePath, String styleImageName) {
     public ModelExecutionResult execute(Bitmap contentImage, Bitmap styleBitmap) {
         Log.i(TAG, "running models");
 
         fullExecutionTime = SystemClock.uptimeMillis();
         preProcessTime = SystemClock.uptimeMillis();
-
-//        Bitmap contentImage = ImageUtils.decodeBitmap(new File(contentImagePath));
         ByteBuffer contentArray =
                 ImageUtils.bitmapToByteBuffer(contentImage, CONTENT_IMAGE_SIZE, CONTENT_IMAGE_SIZE, 0, 255);
-
-
-//        Bitmap styleBitmap =
-//                ImageUtils.loadBitmapFromResources(context, "thumbnails/" + styleImageName);
         ByteBuffer input = ImageUtils.bitmapToByteBuffer(styleBitmap, STYLE_IMAGE_SIZE, STYLE_IMAGE_SIZE, 0, 255);
-
 
         List<MSTensor> Predict_inputs = Predict_session.getInputs();
         if (Predict_inputs.size() != 1) {
@@ -153,7 +143,6 @@ public class StyleTransferModelExecutor {
 
         preProcessTime = SystemClock.uptimeMillis() - preProcessTime;
         stylePredictTime = SystemClock.uptimeMillis();
-
 
         if (!Predict_session.runGraph()) {
             Log.e("MS_LITE", "Run Predict_graph failed");
@@ -186,8 +175,6 @@ public class StyleTransferModelExecutor {
 
         MSTensor Transform_inputs_inTensor1 = Transform_inputs.get(1);
         Transform_inputs_inTensor1.setData(contentArray);
-
-
         styleTransferTime = SystemClock.uptimeMillis();
 
         if (!Transform_session.runGraph()) {
@@ -197,7 +184,6 @@ public class StyleTransferModelExecutor {
 
         styleTransferTime = SystemClock.uptimeMillis() - styleTransferTime;
         Log.d(TAG, "Style apply Time to run: " + styleTransferTime);
-
         postProcessTime = SystemClock.uptimeMillis();
 
         // Get output tensor values.
@@ -231,7 +217,6 @@ public class StyleTransferModelExecutor {
             }
             outputImage[x] = arrayThree;
         }
-
 
         Bitmap styledImage =
                 ImageUtils.convertArrayToBitmap(outputImage, CONTENT_IMAGE_SIZE, CONTENT_IMAGE_SIZE);

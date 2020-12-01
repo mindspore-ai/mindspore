@@ -87,7 +87,7 @@ public class PosenetMainActivity extends AppCompatActivity implements CameraData
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.posenet_activity_main);
         addCameraFragment();
     }
 
@@ -178,7 +178,7 @@ public class PosenetMainActivity extends AppCompatActivity implements CameraData
      * Set the paint color and size.
      */
     private void setPaint() {
-        paint.setColor(getResources().getColor(R.color.text_blue));
+        paint.setColor(getResources().getColor(R.color.posenet_text_blue));
         paint.setTextSize(80.0f);
         paint.setStrokeWidth(8.0f);
     }
