@@ -81,12 +81,12 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   void BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app, const AdjointPtr &node_adjoint);
   AnfNodePtr AttachFvDoutToTape(const AnfNodePtr &grad_fv);
   AnfNodePtr AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv);
-  // Map AnfNode object from D category to K category.
-  AnfNodePtr MapToK(const AnfNodePtr &primal);
-  // Map CNode object from D category to K category.
-  AnfNodePtr MapToK(const CNodePtr &primal_user, size_t index);
-  // Map FuncGraph object from D category to K category.
-  AnfNodePtr MapToK(const FuncGraphPtr &primal);
+  // Map CNode/Index of Primitive to K.
+  AnfNodePtr MapPrimitiveToK(const CNodePtr &primitive_user, size_t index);
+  // Map ValueNode of FuncGraph to K.
+  AnfNodePtr MapFuncGraphToK(const AnfNodePtr &primal);
+  // Map ValueNode of Parameter to K.
+  AnfNodePtr MapParameterToK(const AnfNodePtr &primal);
   // MapObject impls.
   void MapFvObject();
   void MapValueObject();
