@@ -92,6 +92,11 @@ def create_classification_dataset(batch_size=1, repeat_count=1, assessment_metho
     return ds
 
 
+def generator_squad(data_features):
+    for feature in data_features:
+        yield (feature.input_ids, feature.input_mask, feature.segment_ids, feature.unique_id)
+
+
 def create_squad_dataset(batch_size=1, repeat_count=1, data_file_path=None, schema_file_path=None,
                          is_training=True, do_shuffle=True):
     """create finetune or evaluation dataset"""
@@ -104,11 +109,12 @@ def create_squad_dataset(batch_size=1, repeat_count=1, data_file_path=None, sche
         ds = ds.map(operations=type_cast_op, input_columns="start_positions")
         ds = ds.map(operations=type_cast_op, input_columns="end_positions")
     else:
-        ds = de.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
-                                columns_list=["input_ids", "input_mask", "segment_ids", "unique_ids"])
+        ds = de.GeneratorDataset(generator_squad(data_file_path), shuffle=do_shuffle,
+                                 column_names=["input_ids", "input_mask", "segment_ids", "unique_ids"])
     ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
     ds = ds.map(operations=type_cast_op, input_columns="input_mask")
     ds = ds.map(operations=type_cast_op, input_columns="input_ids")
+    ds = ds.map(operations=type_cast_op, input_columns="unique_ids")
     ds = ds.repeat(repeat_count)
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)

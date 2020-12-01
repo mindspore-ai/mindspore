@@ -325,6 +325,8 @@ class BertSquad(nn.Cell):
             total_loss = (start_loss + end_loss) / 2.0
         else:
             start_logits = self.squeeze(logits[:, :, 0:1])
+            start_logits = start_logits + 100 * input_mask
             end_logits = self.squeeze(logits[:, :, 1:2])
+            end_logits = end_logits + 100 * input_mask
             total_loss = (unique_id, start_logits, end_logits)
         return total_loss

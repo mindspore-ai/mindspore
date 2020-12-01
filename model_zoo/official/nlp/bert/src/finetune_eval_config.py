@@ -22,7 +22,6 @@ import mindspore.common.dtype as mstype
 from .bert_model import BertConfig
 
 optimizer_cfg = edict({
-    'batch_size': 16,
     'optimizer': 'Lamb',
     'AdamWeightDecay': edict({
         'learning_rate': 2e-5,
