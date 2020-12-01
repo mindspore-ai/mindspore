@@ -161,7 +161,7 @@ class ExplainRunner:
         Examples:
             >>> from mindspore.explainer import ExplainRunner
             >>> from mindspore.explainer.explanation import GuidedBackprop, Gradient
-            >>> from mindspore.nn import Sigmoid
+            >>> from mindspore.nn import Softmax
             >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
             >>> # Prepare the dataset for explaining and evaluation, e.g., Cifar10
             >>> dataset = get_dataset('/path/to/Cifar10_dataset')
@@ -172,9 +172,9 @@ class ExplainRunner:
             >>> load_param_into_net(net, param_dict)
             >>> gbp = GuidedBackprop(net)
             >>> gradient = Gradient(net)
-            >>> runner = ExplainRunner("./")
             >>> explainers = [gbp, gradient]
-            >>> runner.run((dataset, classes), explainers, activation_fn=Sigmoid())
+            >>> # runner is an ExplainRunner object
+            >>> runner.run((dataset, classes), explainers, activation_fn=Softmax())
         """
 
         check_value_type("dataset", dataset, tuple)

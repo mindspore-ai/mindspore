@@ -414,8 +414,10 @@ class Faithfulness(LabelSensitiveMetric):
             numpy.ndarray, 1D array of shape :math:`(N,)`, result of faithfulness evaluated on `explainer`.
 
         Examples:
-            >>> # init an explainer, the network should contain the output activation function.
-            >>> network = resnet50(20)
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore.explainer.explanation import Gradient
+            >>> # init an explainer with a trained network, e.g., resnet50
             >>> gradient = Gradient(network)
             >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
             >>> targets = 5

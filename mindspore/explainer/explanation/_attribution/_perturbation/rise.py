@@ -52,11 +52,14 @@ class RISE(PerturbationAttribution):
 
     Examples:
         >>> from mindspore.explainer.explanation import RISE
-        >>> net = resnet50(10)
+        >>> from mindspore.nn import Sigmoid
+        >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
+        >>> # init RISE with a trained network
+        >>> net = resnet50(10)  # please refer to model_zoo
         >>> param_dict = load_checkpoint("resnet50.ckpt")
         >>> load_param_into_net(net, param_dict)
         >>> # init RISE with specified activation function
-        >>> rise = RISE(net, activation_fn=nn.layer.Sigmoid())
+        >>> rise = RISE(net, activation_fn=Sigmoid())
     """
 
     def __init__(self,
@@ -113,6 +116,8 @@ class RISE(PerturbationAttribution):
             Tensor, a 4D tensor of shape :math:`(N, ?, H, W)` or :math:`(N, 1, H, W)`.
 
         Examples:
+            >>> import mindspore as ms
+            >>> import numpy as np
             >>> # given an instance of RISE, saliency map can be generate
             >>> inputs = ms.Tensor(np.random.rand(2, 3, 224, 224), ms.float32)
             >>> # when `targets` is an integer
