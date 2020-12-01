@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Provide ExplainRunner High-level API."""
+"""Provides explanation runner high-level APIs."""
 
-from ._runner import ExplainRunner
+from ._image_classification_runner import ImageClassificationRunner
 
-__all__ = ['ExplainRunner']
+__all__ = ['ImageClassificationRunner']

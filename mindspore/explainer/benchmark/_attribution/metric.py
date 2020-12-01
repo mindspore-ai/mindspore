@@ -128,6 +128,10 @@ class LabelSensitiveMetric(AttributionMetric):
         self._num_labels = num_labels
         self._global_results = {i: [] for i in range(num_labels)}
 
+    @property
+    def num_labels(self):
+        return self._num_labels
+
     @staticmethod
     def _verify_params(num_labels):
         check_value_type("num_labels", num_labels, int)
