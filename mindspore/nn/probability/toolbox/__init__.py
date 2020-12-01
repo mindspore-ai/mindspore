@@ -17,5 +17,6 @@ Uncertainty toolbox.
 """
 
 from .uncertainty_evaluation import UncertaintyEvaluation
+from .anomaly_detection import VAEAnomalyDetection
 
-__all__ = ['UncertaintyEvaluation']
+__all__ = ['UncertaintyEvaluation', 'VAEAnomalyDetection']
