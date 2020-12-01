@@ -41,6 +41,9 @@ class ELBO(Cell):
 
     Outputs:
         Tensor, loss float tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
 
     def __init__(self, latent_prior='Normal', output_prior='Normal'):

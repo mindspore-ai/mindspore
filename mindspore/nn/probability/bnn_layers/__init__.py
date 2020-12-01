@@ -18,7 +18,7 @@
 """
 from . import conv_variational, dense_variational, layer_distribution, bnn_cell_wrapper
 from .conv_variational import ConvReparam
-from .dense_variational import DenseReparam
+from .dense_variational import DenseReparam, DenseLocalReparam
 from .layer_distribution import NormalPrior, NormalPosterior
 from .bnn_cell_wrapper import WithBNNLossCell
 

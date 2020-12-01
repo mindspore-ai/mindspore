@@ -34,6 +34,9 @@ class SVI:
         net_with_loss(Cell): Cell with loss function.
         optimizer (Cell): Optimizer for updating the weights.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     """
 
     def __init__(self, net_with_loss, optimizer):

@@ -34,6 +34,9 @@ class TransformToBNN:
         dnn_factor ((int, float): The coefficient of backbone's loss, which is computed by loss function. Default: 1.
         bnn_factor (int, float): The coefficient of KL loss, which is KL divergence of Bayesian layer. Default: 1.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -57,7 +60,7 @@ class TransformToBNN:
         >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> net_with_loss = WithLossCell(network, criterion)
         >>> train_network = TrainOneStepCell(net_with_loss, optim)
-        >>> bnn_transformer = TransformToBNN(train_network, 60000, 0.1)
+        >>> bnn_transformer = TransformToBNN(train_network, 60000, 0.0001)
     """
 
     def __init__(self, trainable_dnn, dnn_factor=1, bnn_factor=1):
@@ -105,6 +108,9 @@ class TransformToBNN:
         Returns:
             Cell, a trainable BNN model wrapped by TrainOneStepCell.
 
+        Supported Platforms:
+        ``Ascend`` ``GPU``
+
         Examples:
             >>> net = Net()
             >>> criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
@@ -146,6 +152,9 @@ class TransformToBNN:
         Returns:
             Cell, a trainable model wrapped by TrainOneStepCell, whose specific type of layer is transformed to the
             corresponding bayesian layer.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU``
 
         Examples:
             >>> net = Net()

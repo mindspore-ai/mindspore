@@ -37,6 +37,9 @@ class WithBNNLossCell(Cell):
     Outputs:
         Tensor, a scalar tensor with shape :math:`()`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> net = Net()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=False)

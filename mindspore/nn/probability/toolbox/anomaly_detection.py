@@ -34,6 +34,9 @@ class VAEAnomalyDetection:
         hidden_size(int): The size of encoder's output tensor.
         latent_size(int): The size of the latent space.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     """
 
     def __init__(self, encoder, decoder, hidden_size=400, latent_size=20):
