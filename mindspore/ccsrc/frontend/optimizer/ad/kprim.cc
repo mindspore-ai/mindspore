@@ -102,7 +102,8 @@ MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
   MS_LOG(EXCEPTION) << "Fail to find bprop function for " << prim->name() << ".";
 }
 
-FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources) {
+FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_node,
+                               const pipeline::ResourceBasePtr &resources) {
   if (!IsValueNode<Primitive>(value_node)) {
     MS_LOG(EXCEPTION) << "Primitive node is not valid.";
   }
@@ -141,7 +142,7 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
     }
   }
 
-  auto expanded_fg = BpropToK(prim, bprop_fg);
+  auto expanded_fg = BpropToK(prim, bprop_fg, cnode);
   if (expanded_fg == nullptr) {
     MS_LOG(EXCEPTION) << "Failed convert " << prim->name()
                       << " prim bprop function to J expanded func graph. NodeInfo: "
@@ -220,7 +221,7 @@ void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check
 FuncGraphPtr KPrim::KUserDefinedCellBprop(const FuncGraphPtr bprop_fg) {
   MS_EXCEPTION_IF_NULL(bprop_fg);
   auto fprop_fg = bprop_fg->transforms().find("primal")->second.func_graph();
-  auto expanded_fg = BpropToK(fprop_fg, bprop_fg);
+  auto expanded_fg = BpropToK(fprop_fg, bprop_fg, nullptr);
   if (expanded_fg == nullptr) {
     MS_LOG(EXCEPTION) << "Failed convert " << fprop_fg->ToString()
                       << " Cell bprop function to K expanded func graph. NodeInfo: "

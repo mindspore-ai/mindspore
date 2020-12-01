@@ -234,8 +234,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     AdjointPtr node_adjoint = nullptr;
     AnfNodePtr k = nullptr;
     if (IsValueNode<Primitive>(node)) {
-      TraceGuard trace_guard(std::make_shared<TraceEquiv>(cnode_morph->debug_info()));
-      k = MapToK(node);
+      k = MapToK(cnode_morph, i);
       node_adjoint = std::make_shared<Adjoint>(node, k, tape_);
       anfnode_to_adjoin_[node] = node_adjoint;
     } else {
@@ -561,6 +560,31 @@ AnfNodePtr DFunctor::MapToK(const FuncGraphPtr &primal) {
   return NewValueNode(functor->k_graph_);
 }
 
+// Construct representation graph for primitive CNode.
+AnfNodePtr DFunctor::MapToK(const CNodePtr &primal_user, size_t index) {
+  auto primal = primal_user->input(index);
+  ScopeGuard scope_guard(primal->scope());
+  // Map primitive to K
+  if (IsValueNode<Primitive>(primal)) {
+    auto value_node = primal->cast<ValueNodePtr>();
+    auto prim = GetValueNode<PrimitivePtr>(value_node);
+    if (prim->Hash() == prim::kPrimStopGradient->Hash() && prim->name() == prim::kPrimStopGradient->name()) {
+      MS_LOG(DEBUG) << "Meet a kPrimStopGradient " << prim->ToString() << ".";
+      need_cut_ = true;
+    }
+    auto k_prim = g_k_prims.KPrimitive(primal_user, value_node, resources_);
+    if (k_prim != nullptr) {
+      return NewValueNode(k_prim);
+    }
+    // When failed to find k_prim, try k_meta.
+    auto k_meta = g_k_prims.KMetaFuncGraph(prim);
+    if (k_meta != nullptr) {
+      return NewValueNode(k_meta);
+    }
+  }
+  return MapToK(primal);
+}
+
 // Construct representation graph for given node.
 AnfNodePtr DFunctor::MapToK(const AnfNodePtr &primal) {
   ScopeGuard scope_guard(primal->scope());
@@ -572,7 +596,7 @@ AnfNodePtr DFunctor::MapToK(const AnfNodePtr &primal) {
       MS_LOG(DEBUG) << "Meet a kPrimStopGradient " << prim->ToString() << ".";
       need_cut_ = true;
     }
-    auto k_prim = g_k_prims.KPrimitive(value_node, resources_);
+    auto k_prim = g_k_prims.KPrimitive(nullptr, value_node, resources_);
     if (k_prim != nullptr) {
       return NewValueNode(k_prim);
     }
