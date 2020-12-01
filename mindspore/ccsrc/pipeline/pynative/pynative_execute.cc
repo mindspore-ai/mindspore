@@ -686,6 +686,7 @@ OpExecInfoPtr PynativeExecutor::GenerateOpExecInfo(const py::args &args) {
   }
   op_exec_info->prim_id = GetId(prim->GetPyObj());
   op_exec_info->py_primitive = prim;
+  op_exec_info->op_attrs = py::getattr(args[PY_PRIM], "attrs");
   op_exec_info->op_inputs = args[PY_INPUTS];
   return op_exec_info;
 }
