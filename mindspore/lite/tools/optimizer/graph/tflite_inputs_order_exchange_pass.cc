@@ -60,7 +60,6 @@ bool TfliteInputsOrderExchangePass::Run(const FuncGraphPtr &graph) {
     }
 
     if (opt::GetCNodeType(node) == schema::PrimitiveType_Reduce ||
-        opt::GetCNodeType(node) == schema::PrimitiveType_StridedSlice ||
         opt::GetCNodeType(node) == schema::PrimitiveType_ArgMin ||
         opt::GetCNodeType(node) == schema::PrimitiveType_ArgMax ||
         opt::GetCNodeType(node) == schema::PrimitiveType_SpaceToBatch ||
