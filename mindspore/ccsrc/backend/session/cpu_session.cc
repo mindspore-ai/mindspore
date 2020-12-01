@@ -93,10 +93,20 @@ void CPUSession::CreateOutputTensors(const GraphId &graph_id, const std::vector<
   runtime_.CreateOutputTensors(kernel_graph.get(), input_tensors, outputs, tensor_to_node);
 }
 
+void CPUSession::SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    return;
+  }
+  runtime_.SyncValueNodeDeviceAddr(kernel_graph.get());
+}
+
 void CPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                               VectorRef *outputs) {
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  SyncValueNodeDeviceAddr(kernel_graph);
   MS_LOG(INFO) << "Bind input output address";
   runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs);
 
@@ -128,6 +138,65 @@ void CPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
   }
 
   MS_LOG(INFO) << "Run graph end";
+}
+
+void CPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                             const std::vector<tensor::TensorPtr> &input_tensors,
+                             const std::vector<int64_t> &tensors_mask) {
+  // Check if the graph cache exists.
+  if (run_op_graphs_.find(graph_info) != run_op_graphs_.end()) {
+    return;
+  }
+  // Prepare the graph
+  auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  SetKernelInfo(kernel_graph.get());
+  BuildKernel(kernel_graph.get());
+  run_op_graphs_[graph_info] = kernel_graph;
+}
+
+void CPUSession::SetOutputFlags(const VectorRef &base_ref, std::vector<tensor::TensorPtr> *outputs_tensors) {
+  for (size_t i = 0; i < base_ref.size(); ++i) {
+    if (utils::isa<VectorRef>(base_ref[i])) {
+      auto ref_iter = utils::cast<VectorRef>(base_ref[i]);
+      SetOutputFlags(ref_iter, outputs_tensors);
+    } else if (utils::isa<tensor::TensorPtr>(base_ref[i])) {
+      auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref[i]);
+      tensor_ptr->SetNeedWait(false);
+      outputs_tensors->push_back(tensor_ptr);
+    }
+  }
+}
+
+void CPUSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                           std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                           const std::vector<int64_t> &tensors_mask) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
+  EraseValueNodeTensor(tensors_mask, input_tensors);
+
+  auto kernel_graph = run_op_graphs_[graph_info];
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+
+  runtime_.AssignKernelAddress(kernel_graph.get());
+  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
+  runtime_.CreateOutputTensors(kernel_graph.get(), *input_tensors, outputs, &tensor_to_node);
+  runtime_.BindInputOutput(kernel_graph.get(), *input_tensors, outputs);
+
+  MS_LOG(INFO) << "Run Op start";
+  auto execution_order = kernel_graph->execution_order();
+  Reorder(&execution_order);
+
+  kernel_graph->set_execution_order(execution_order);
+
+  bool ret = runtime_.Run(kernel_graph.get(), false);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Run Op failed";
+  }
+
+  std::vector<tensor::TensorPtr> output_tensors;
+  SetOutputFlags(*outputs, &output_tensors);
+  MS_LOG(INFO) << "Run Op end";
 }
 
 void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) {

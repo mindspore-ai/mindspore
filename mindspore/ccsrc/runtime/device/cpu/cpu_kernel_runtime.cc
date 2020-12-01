@@ -56,6 +56,11 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
       }
       auto tensor = node_value->cast<TensorPtr>();
       MS_EXCEPTION_IF_NULL(tensor);
+      if (tensor->device_address() != nullptr) {
+        AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), 0,
+                               item_node.get());
+        continue;
+      }
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item_node, 0);
       if (output_type_id == kTypeUnknown) {
         output_type_id = AnfAlgo::GetOutputInferDataType(item_node, 0);
