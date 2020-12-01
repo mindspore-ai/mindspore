@@ -72,3 +72,6 @@ class Attribution:
             if len(targets.shape) > 1 or (len(targets.shape) == 1 and len(targets) != len(inputs)):
                 raise ValueError('Argument targets must be a 1D or 0D Tensor. If it is a 1D Tensor, '
                                  'it should have the same length as inputs.')
+        elif inputs.shape[0] != 1:
+            raise ValueError('If targets have type of int, batch_size of inputs should equals 1. Receive batch_size {}'
+                             .format(inputs.shape[0]))

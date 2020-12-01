@@ -32,6 +32,7 @@ class Robustness(LabelSensitiveMetric):
         num_labels (int): Number of classes in the dataset.
 
     Examples:
+        >>> # Initialize a Robustness benchmarker passing num_labels of the dataset.
         >>> from mindspore.explainer.benchmark import Robustness
         >>> num_labels = 100
         >>> robustness = Robustness(num_labels)
@@ -41,7 +42,7 @@ class Robustness(LabelSensitiveMetric):
         super().__init__(num_labels)
 
         self._perturb = RandomPerturb()
-        self._num_perturbations = 100  # number of perturbations used in evaluation
+        self._num_perturbations = 10  # number of perturbations used in evaluation
         self._threshold = 0.1  # threshold to generate perturbation
         self._activation_fn = activation_fn
 
@@ -68,12 +69,17 @@ class Robustness(LabelSensitiveMetric):
             ValueError: If batch_size is larger than 1.
 
         Examples:
-            >>> # init an explainer, the network should contain the output activation function.
             >>> from mindspore.explainer.explanation import Gradient
             >>> from mindspore.explainer.benchmark import Robustness
+            >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
+            >>> # prepare your network and load the trained checkpoint file, e.g., resnet50.
+            >>> network = resnet50(10)
+            >>> param_dict = load_checkpoint("resnet50.ckpt")
+            >>> load_param_into_net(network, param_dict)
+            >>> # prepare your explainer to be evaluated, e.g., Gradient.
             >>> gradient = Gradient(network)
             >>> input_x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
-            >>> target_label = 5
+            >>> target_label = ms.Tensor([0], ms.int32)
             >>> robustness = Robustness(num_labels=10)
             >>> res = robustness.evaluate(gradient, input_x, target_label)
         """
@@ -84,39 +90,48 @@ class Robustness(LabelSensitiveMetric):
 
         inputs_np = inputs.asnumpy()
         if isinstance(targets, int):
-            targets = ms.Tensor(targets, ms.int32)
+            targets = ms.Tensor([targets], ms.int32)
         if saliency is None:
             saliency = explainer(inputs, targets)
         saliency_np = saliency.asnumpy()
+
         norm = np.sqrt(np.sum(np.square(saliency_np), axis=tuple(range(1, len(saliency_np.shape)))))
-        if norm == 0:
+        if (norm == 0).any():
             log.warning('Get saliency norm equals 0, robustness return NaN for zero-norm saliency currently.')
-            return np.array([np.nan])
+            norm[norm == 0] = np.nan
 
-        perturbations = []
-        for sample in inputs_np:
-            sample = np.expand_dims(sample, axis=0)
-            perturbations_per_input = []
-            for _ in range(self._num_perturbations):
-                perturbation = self._perturb(sample)
-                perturbations_per_input.append(perturbation)
-            perturbations_per_input = np.vstack(perturbations_per_input)
-            perturbations.append(perturbations_per_input)
-        perturbations = np.stack(perturbations, axis=0)
-
-        perturbations = np.reshape(perturbations, (-1,) + inputs_np.shape[1:])
-        perturbations = ms.Tensor(perturbations, ms.float32)
-
-        repeated_targets = np.repeat(targets.asnumpy(), repeats=self._num_perturbations, axis=0)
-        repeated_targets = ms.Tensor(repeated_targets, ms.int32)
-        saliency_of_perturbations = explainer(perturbations, repeated_targets)
-        perturbations_saliency = saliency_of_perturbations.asnumpy()
-
-        repeated_saliency = np.repeat(saliency_np, repeats=self._num_perturbations, axis=0)
-
-        sensitivities = np.sum((repeated_saliency - perturbations_saliency) ** 2,
-                               axis=tuple(range(1, len(repeated_saliency.shape))))
-
-        max_sensitivity = np.max(sensitivities.reshape((norm.shape[0], -1)), axis=1) / norm
+        model = nn.SequentialCell([explainer.model, self._activation_fn])
+        original_outputs = model(inputs).asnumpy()
+        sensitivities = []
+        for _ in range(self._num_perturbations):
+            perturbations = []
+            for j, sample in enumerate(inputs_np):
+                perturbation_on_single_sample = self._perturb_with_threshold(model,
+                                                                             np.expand_dims(sample, axis=0),
+                                                                             original_outputs[j])
+                perturbations.append(perturbation_on_single_sample)
+            perturbations = np.vstack(perturbations)
+            perturbations_saliency = explainer(ms.Tensor(perturbations, ms.float32), targets).asnumpy()
+            sensitivity = np.sum((perturbations_saliency - saliency_np) ** 2,
+                                 axis=tuple(range(1, len(saliency_np.shape))))
+            sensitivities.append(sensitivity)
+        sensitivities = np.stack(sensitivities, axis=-1)
+        max_sensitivity = np.max(sensitivities, axis=1) / norm
         robustness_res = 1 / np.exp(max_sensitivity)
         return robustness_res
+
+    def _perturb_with_threshold(self, model: nn.Cell, sample: np.ndarray, original_output: np.ndarray) -> np.ndarray:
+        """
+        Generate the perturbation until the L2-distance between original_output and perturbation_output is lower than
+        the given self._threshold or until the attempt reaches the max_attempt_time.
+        """
+        # the maximum time attempt to get a perturbation with perturb_error low than self._threshold
+        max_attempt_time = 3
+        perturbation = None
+        for _ in range(max_attempt_time):
+            perturbation = self._perturb(sample)
+            perturbation_output = self._activation_fn(model(ms.Tensor(sample, ms.float32))).asnumpy()
+            perturb_error = np.linalg.norm(original_output - perturbation_output)
+            if perturb_error <= self._threshold:
+                return perturbation
+        return perturbation
