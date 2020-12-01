@@ -241,7 +241,7 @@ class Lamb(Optimizer):
     Examples:
         >>> net = Net()
         >>> #1) All parameters use the same learning rate and weight decay
-        >>> optim = nn.Lamb(params=net.trainable_params(learning_rate=0.1))
+        >>> optim = nn.Lamb(params=net.trainable_params(), learning_rate=0.1)
         >>>
         >>> #2) Use parameter groups and set different values
         >>> poly_decay_lr = learning_rate_schedule.PolynomialDecayLR()
