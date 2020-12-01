@@ -18,6 +18,7 @@
 
 /* HCCL基础数据类型声明 */
 #include "hccl/hcom.h"
+#include "hccl/hccl.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -117,6 +118,43 @@ HcclResult hcom_set_split_strategy_by_index(const char *group, u32 segmentNum, c
 HcclResult hcom_set_split_strategy_by_size(const char *group, u32 segmentNum, const float *sizeList) {
   return HCCL_SUCCESS;
 }
+
+HcclResult HcclCommInitClusterInfo(const char *clusterInfo, uint32_t rank, HcclComm *comm) {
+  return HCCL_SUCCESS;
+}
+
+HcclResult HcclGetRootInfo(HcclRootInfo *rootInfo) {
+  return HCCL_SUCCESS;
+}
+
+HcclResult HcclCommInitRootInfo(uint32_t nRanks, const HcclRootInfo *rootInfo, uint32_t rank, HcclComm *comm) {
+  return HCCL_SUCCESS;
+}
+
+HcclResult HcclAllReduce(void *sendBuf, void *recvBuf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
+                                HcclComm comm, aclrtStream stream) {
+  return HCCL_SUCCESS;
+}
+
+HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, HcclComm comm,
+                                aclrtStream stream) {
+  return HCCL_SUCCESS;
+}
+
+HcclResult HcclReduceScatter(void *sendBuf, void *recvBuf, uint64_t recvCount, HcclDataType dataType,
+                                    HcclReduceOp op, HcclComm comm, aclrtStream stream) {
+  return HCCL_SUCCESS;
+}
+
+HcclResult HcclAllGather(void *sendBuf, void *recvBuf, uint64_t sendCount, HcclDataType dataType, HcclComm comm,
+                                aclrtStream stream) {
+  return HCCL_SUCCESS;
+}
+
+HcclResult HcclCommDestroy(HcclComm comm) {
+  return HCCL_SUCCESS;
+}
+
 #ifdef __cplusplus
 }
 #endif

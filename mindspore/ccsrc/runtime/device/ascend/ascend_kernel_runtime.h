@@ -70,6 +70,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool HcclInit();
   bool NeedDestroyHccl();
   bool DestroyHccl();
+  bool DestroySingleOpHccl();
   void InnerSetContext();
 
   void ClearGraphModelMap();
