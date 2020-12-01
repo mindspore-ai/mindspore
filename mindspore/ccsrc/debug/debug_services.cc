@@ -157,7 +157,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
         }
         default:
           MS_LOG(INFO) << "Unsupported tensor type";
-          break;
+          continue;
       }
       base_summary_ptr->SummarizeTensor(watchpoints_to_check);
     }
@@ -168,7 +168,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
       std::vector<parameter_t> parameter_list = {};
       if (wp.condition.type == IS_OVERFLOW) {
         is_hit = (std::find(op_overflows.begin(), op_overflows.end(), tensor_name_no_slot) != op_overflows.end());
-      } else {
+      } else if (base_summary_ptr != nullptr) {
         auto item = base_summary_ptr->IsWatchpointHit(wp);
         is_hit = std::get<0>(item);
         error_code = std::get<1>(item);

@@ -135,8 +135,9 @@ std::tuple<bool, int, std::vector<DebugServices::parameter_t>> TensorSummary<T>:
   bool hit = false;
   std::bitset<32> error_code;
   CONDITION_TYPE type = wp.condition.type;
-
+  // bit 0 denotes presence of nan
   error_code.set(0, nan_count > 0);
+  // bit 1 denotes presence of inf
   error_code.set(1, inf_count > 0);
 
   if (type == CONDITION_TYPE::HAS_NAN) {
@@ -150,20 +151,28 @@ std::tuple<bool, int, std::vector<DebugServices::parameter_t>> TensorSummary<T>:
     hit = (nan_count + inf_count) > 0;
   } else if (type == CONDITION_TYPE::NOT_CHANGED && prev_tensor_ptr && error_code.none()) {
     hit = all_close[wp.id]->IsAllClose();
+  } else if ((type == CONDITION_TYPE::NOT_CHANGED || type == CONDITION_TYPE::CHANGE_TOO_LARGE ||
+              type == CONDITION_TYPE::CHANGE_TOO_SMALL) &&
+             !prev_tensor_ptr) {
+    // bit 2 denotes absence of previous tensor
+    error_code.set(2, true);
   }
 
-  for (auto &parameter : parameter_list) {
-    if (parameter.disabled || error_code.any()) {
-      continue;
+  if (error_code.none()) {
+    for (auto &parameter : parameter_list) {
+      if (parameter.disabled || error_code.any()) {
+        continue;
+      }
+      // extract inequality type from watchpoint for backward compatibility
+      std::string inequality_type;
+      if (wp.is_gt_wp()) {
+        inequality_type = "gt";
+      } else if (wp.is_lt_wp()) {
+        inequality_type = "lt";
+      }
+      parameter.Evaluate(StatLookup(parameter.name, wp), inequality_type);
+      hit |= parameter.hit;
     }
-    std::string inequality_type;
-    if (wp.is_gt_wp()) {
-      inequality_type = "gt";
-    } else if (wp.is_lt_wp()) {
-      inequality_type = "lt";
-    }
-    parameter.Evaluate(StatLookup(parameter.name, wp), inequality_type);
-    hit |= parameter.hit;
   }
   return std::make_tuple(hit, static_cast<int32_t>(error_code.to_ulong()), parameter_list);
 }
@@ -188,11 +197,17 @@ double_t TensorSummary<T>::StatLookup(const std::string &parameter_name, const D
   } else if (param_type == "sd") {
     return current_mean_variance.GetStandardDeviation();
   } else if (param_type == "abs_mean") {
-    return means["abs_current_mean"]->GetMean();
-  } else if (param_type == "abs_mean_update_ratio") {
-    return means["curr_prev_diff_mean"]->GetMean() / (means["abs_prev_mean"]->GetMean() + epsilon);
+    if (means.find("abs_current_mean") != means.end()) {
+      return means["abs_current_mean"]->GetMean();
+    }
+  } else if (param_type == "abs_mean_update_ratio" && prev_tensor_ptr) {
+    if (means.find("curr_prev_diff_mean") != means.end() && means.find("abs_prev_mean") != means.end()) {
+      return means["curr_prev_diff_mean"]->GetMean() / (means["abs_prev_mean"]->GetMean() + epsilon);
+    }
   } else if (param_type == "range_percentage") {
-    return range_counts[wp.id]->GetPercentInRange();
+    if (range_counts.find(wp.id) != range_counts.end()) {
+      return range_counts[wp.id]->GetPercentInRange();
+    }
   } else if (param_type == "zero_percentage") {
     return GetZeroValPercent();
   }
