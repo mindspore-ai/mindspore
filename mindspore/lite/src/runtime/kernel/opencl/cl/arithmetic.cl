@@ -147,7 +147,7 @@ __kernel void ElementFloorMod(__read_only image2d_t input_a, __read_only image2d
 
   FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
   FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, Y));
-  FLT4 result = floor(divide_no_check(a, b)) * b;
+  FLT4 result = a - floor(divide_no_check(a, b)) * b;
   result = clamp(result, (FLT)(act_min), (FLT)(act_max));
   WRITE_IMAGE(output, (int2)(X, Y), result);
 }
@@ -445,33 +445,39 @@ __kernel void BroadcastFloorDiv(__read_only image2d_t input_a, float b, __write_
   result = clamp(result, (FLT)(act_min), (FLT)(act_max));
   WRITE_IMAGE(output, (int2)(X, Y), result);
 }
-
-__kernel void BroadcastFloorMod(__read_only image2d_t input_a, float b, __write_only image2d_t output,
-                                const int2 output_shape, float act_min, float act_max) {
-  int X = get_global_id(0);
-  int Y = get_global_id(1);
-  if (X >= output_shape.x || Y >= output_shape.y) {
+__kernel void BroadcastNHWC4FloorMod(__read_only image2d_t input_a, __read_only image2d_t input_b,
+                                     __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
+                                     const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
+  int X = get_global_id(0);  // C4
+  int Y = get_global_id(1);  // W
+  int Z = get_global_id(2);  // H
+  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y) {
     return;
   }
 
-  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  FLT4 result = floor(divide_no_check(a, (FLT4)b)) * (FLT)b;
+  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(Y * a_shape.w + X, Z));
+  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, 0));
+  FLT4 result = a - floor(divide_no_check(a, b)) * b;
   result = clamp(result, (FLT)(act_min), (FLT)(act_max));
-  WRITE_IMAGE(output, (int2)(X, Y), result);
+  WRITE_IMAGE(output, (int2)(Y * output_shape.w + X, Z), result);
 }
 
-__kernel void BroadcastSquaredDifference(__read_only image2d_t input_a, float b, __write_only image2d_t output,
-                                         const int2 output_shape, float act_min, float act_max) {
-  int X = get_global_id(0);
-  int Y = get_global_id(1);
-  if (X >= output_shape.x || Y >= output_shape.y) {
+__kernel void BroadcastNHWC4SquaredDifference(__read_only image2d_t input_a, __read_only image2d_t input_b,
+                                         __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
+                                         const int4 output_shape, const int broadcastC_flag, float act_min,
+                                         float act_max) {
+  int X = get_global_id(0);  // C4
+  int Y = get_global_id(1);  // w
+  int Z = get_global_id(2);  // H
+  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y) {
     return;
   }
 
-  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(X, Y));
-  FLT4 result = pown((a - (FLT4)b), (int4)2);
+  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(Y * a_shape.w + X, Z));
+  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(X, 0));
+  FLT4 result = pown((a - b), (int4)2);
   result = clamp(result, (FLT)(act_min), (FLT)(act_max));
-  WRITE_IMAGE(output, (int2)(X, Y), result);
+  WRITE_IMAGE(output, (int2)(Y * output_shape.w + X, Z), result);
 }
 
 __kernel void BroadcastEqual(__read_only image2d_t input_a, float b, __write_only image2d_t output,
