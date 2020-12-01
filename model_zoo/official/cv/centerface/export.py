@@ -20,14 +20,14 @@ import mindspore
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
-from src.centerface import CenterfaceMobilev2
+from src.centerface import CenterfaceMobilev2, CenterFaceWithNms
 from src.config import ConfigCenterface
 
 parser = argparse.ArgumentParser(description='centerface export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
-parser.add_argument("--file_name", type=str, default="centerface.air", help="output file name.")
+parser.add_argument("--file_name", type=str, default="centerface", help="output file name.")
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
 args = parser.parse_args()
 
@@ -48,6 +48,7 @@ if __name__ == '__main__':
             param_dict_new[key] = values
 
     load_param_into_net(net, param_dict_new)
+    net = CenterFaceWithNms(net)
     net.set_train(False)
 
     input_data = Tensor(np.zeros([args.batch_size, 3, config.input_h, config.input_w]), mindspore.float32)
