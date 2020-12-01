@@ -71,16 +71,6 @@ def get_bprop_zeros(self):
     return bprop
 
 
-@bprop_getters.register(P.SequenceMask)
-def get_bprop_sequence_mask(self):
-    """Generate bprop for SequenceMask"""
-
-    def bprop(lengths, dtype, max_length, out, dout):
-        return zeros_like(dims), zeros_like(max_length)
-
-    return bprop
-
-
 @bprop_getters.register(P.DType)
 def get_bprop_dtype(self):
     """Generate bprop for DType"""

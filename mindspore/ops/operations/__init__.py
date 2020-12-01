@@ -184,7 +184,6 @@ __all__ = [
     'Fill',
     'Ones',
     'Zeros',
-    'SequenceMask',
     'OnesLike',
     'ZerosLike',
     'Select',
