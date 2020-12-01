@@ -67,6 +67,11 @@ int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
       attr->mode = schema::ReduceMode_ReduceProd;
     } else if (prim.name() == "ReduceSumSquare") {
       attr->mode = schema::ReduceMode_ReduceSumSquare;
+    } else if (prim.name() == "ReduceAll") {
+      attr->mode = schema::ReduceMode_ReduceAll;
+    } else {
+      MS_LOG(ERROR) << "Not supported reduce mode: " << prim.name();
+      return RET_ERROR;
     }
 
     attr->keepDims = GetValue<bool>(prim.GetAttr("keep_dims"));

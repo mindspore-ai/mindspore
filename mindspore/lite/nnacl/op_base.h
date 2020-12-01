@@ -63,6 +63,7 @@ typedef enum LiteDataType {
   kDataTypeFloat,
   kDataTypeInt,
   kDataTypeInt8,
+  KDataTypeBool,
 } LiteDataType;
 
 typedef enum DataOrder {

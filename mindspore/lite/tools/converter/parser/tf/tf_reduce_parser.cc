@@ -52,6 +52,8 @@ STATUS TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
     attr->mode = schema::ReduceMode_ReduceMean;
   } else if (tf_op.op() == "Prod") {
     attr->mode = schema::ReduceMode_ReduceProd;
+  } else if (tf_op.op() == "All") {
+    attr->mode = schema::ReduceMode_ReduceAll;
   } else {
     MS_LOG(ERROR) << "unsupported reduce mode: " << tf_op.op();
     return RET_ERROR;
@@ -106,5 +108,6 @@ TFNodeRegistrar g_tfMaxParser("Max", new TFReduceParser());
 TFNodeRegistrar g_tfMinParser("Min", new TFReduceParser());
 TFNodeRegistrar g_tfMeanParser("Mean", new TFReduceParser());
 TFNodeRegistrar g_tfProdParser("Prod", new TFReduceParser());
+TFNodeRegistrar g_tfAllParser("All", new TFReduceParser());
 }  // namespace lite
 }  // namespace mindspore

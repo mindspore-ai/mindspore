@@ -765,7 +765,8 @@ enum ReduceMode : byte {
     ReduceProd = 3,
     ReduceSum = 4,
     ReduceSumSquare = 5,
-    ReduceASum = 6
+    ReduceASum = 6,
+    ReduceAll = 7
 }
 
 table Reduce {
