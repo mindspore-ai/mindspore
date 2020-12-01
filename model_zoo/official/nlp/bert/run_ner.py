@@ -97,14 +97,12 @@ def eval_result_print(assessment_method="accuracy", callback=None):
     else:
         raise ValueError("Assessment method not supported, support: [accuracy, f1, mcc, spearman_correlation]")
 
-def do_eval(dataset=None, network=None, use_crf="", num_class=2, assessment_method="accuracy", data_file="",
-            load_checkpoint_path="", vocab_file="", label_file="", tag_to_index=None):
+def do_eval(dataset=None, network=None, use_crf="", num_class=41, assessment_method="accuracy", data_file="",
+            load_checkpoint_path="", vocab_file="", label_file="", tag_to_index=None, batch_size=1):
     """ do eval """
     if load_checkpoint_path == "":
         raise ValueError("Finetune model missed, evaluation task must load finetune model!")
-    if assessment_method == "clue_benchmark":
-        optimizer_cfg.batch_size = 1
-    net_for_pretraining = network(bert_net_cfg, optimizer_cfg.batch_size, False, num_class,
+    net_for_pretraining = network(bert_net_cfg, batch_size, False, num_class,
                                   use_crf=(use_crf.lower() == "true"), tag_to_index=tag_to_index)
     net_for_pretraining.set_train(False)
     param_dict = load_checkpoint(load_checkpoint_path)
@@ -142,7 +140,7 @@ def do_eval(dataset=None, network=None, use_crf="", num_class=2, assessment_meth
 
 def parse_args():
     """set and check parameters."""
-    parser = argparse.ArgumentParser(description="run classifier")
+    parser = argparse.ArgumentParser(description="run ner")
     parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
                         help="Device type, default is Ascend")
     parser.add_argument("--assessment_method", type=str, default="F1", choices=["F1", "clue_benchmark"],
@@ -154,12 +152,14 @@ def parse_args():
     parser.add_argument("--use_crf", type=str, default="false", choices=["true", "false"],
                         help="Use crf, default is false")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--epoch_num", type=int, default="1", help="Epoch number, default is 1.")
-    parser.add_argument("--num_class", type=int, default="41", help="The number of class, default is 41.")
+    parser.add_argument("--epoch_num", type=int, default=5, help="Epoch number, default is 5.")
+    parser.add_argument("--num_class", type=int, default=41, help="The number of class, default is 41.")
     parser.add_argument("--train_data_shuffle", type=str, default="true", choices=["true", "false"],
                         help="Enable train data shuffle, default is true")
     parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],
                         help="Enable eval data shuffle, default is false")
+    parser.add_argument("--train_batch_size", type=int, default=32, help="Train batch size, default is 32")
+    parser.add_argument("--eval_batch_size", type=int, default=1, help="Eval batch size, default is 1")
     parser.add_argument("--vocab_file_path", type=str, default="", help="Vocab file path, used in clue benchmark")
     parser.add_argument("--label_file_path", type=str, default="", help="label file path, used in clue benchmark")
     parser.add_argument("--save_finetune_checkpoint_path", type=str, default="", help="Save checkpoint path")
@@ -184,6 +184,8 @@ def parse_args():
         raise ValueError("'label_file_path' must be set to use crf")
     if args_opt.assessment_method.lower() == "clue_benchmark" and args_opt.label_file_path == "":
         raise ValueError("'label_file_path' must be set to do clue benchmark")
+    if args_opt.assessment_method.lower() == "clue_benchmark":
+        args_opt.eval_batch_size = 1
     return args_opt
 
 
@@ -217,11 +219,11 @@ def run_ner():
         number_labels = len(tag_to_index)
     else:
         number_labels = args_opt.num_class
-    netwithloss = BertNER(bert_net_cfg, optimizer_cfg.batch_size, True, num_labels=number_labels,
-                          use_crf=(args_opt.use_crf.lower() == "true"),
-                          tag_to_index=tag_to_index, dropout_prob=0.1)
     if args_opt.do_train.lower() == "true":
-        ds = create_ner_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
+        netwithloss = BertNER(bert_net_cfg, args_opt.train_batch_size, True, num_labels=number_labels,
+                              use_crf=(args_opt.use_crf.lower() == "true"),
+                              tag_to_index=tag_to_index, dropout_prob=0.1)
+        ds = create_ner_dataset(batch_size=args_opt.train_batch_size, repeat_count=1,
                                 assessment_method=assessment_method, data_file_path=args_opt.train_data_file_path,
                                 schema_file_path=args_opt.schema_file_path,
                                 do_shuffle=(args_opt.train_data_shuffle.lower() == "true"))
@@ -236,12 +238,13 @@ def run_ner():
                                                            ds.get_dataset_size(), epoch_num, "ner")
 
     if args_opt.do_eval.lower() == "true":
-        ds = create_ner_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
+        ds = create_ner_dataset(batch_size=args_opt.eval_batch_size, repeat_count=1,
                                 assessment_method=assessment_method, data_file_path=args_opt.eval_data_file_path,
                                 schema_file_path=args_opt.schema_file_path,
                                 do_shuffle=(args_opt.eval_data_shuffle.lower() == "true"))
-        do_eval(ds, BertNER, args_opt.use_crf, number_labels, assessment_method, args_opt.eval_data_file_path,
-                load_finetune_checkpoint_path, args_opt.vocab_file_path, args_opt.label_file_path, tag_to_index)
+        do_eval(ds, BertNER, args_opt.use_crf, number_labels, assessment_method,
+                args_opt.eval_data_file_path, load_finetune_checkpoint_path, args_opt.vocab_file_path,
+                args_opt.label_file_path, tag_to_index, args_opt.eval_batch_size)
 
 if __name__ == "__main__":
     run_ner()

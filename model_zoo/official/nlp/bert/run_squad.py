@@ -22,9 +22,6 @@ import collections
 from src.bert_for_finetune import BertSquadCell, BertSquad
 from src.finetune_eval_config import optimizer_cfg, bert_net_cfg
 from src.dataset import create_squad_dataset
-from src import tokenization
-from src.create_squad_data import read_squad_examples, convert_examples_to_features
-from src.run_squad import write_predictions
 from src.utils import make_directory, LossCallBack, LoadNewestCkpt, BertLearningRate
 import mindspore.common.dtype as mstype
 from mindspore import context
@@ -85,22 +82,10 @@ def do_train(dataset=None, network=None, load_checkpoint_path="", save_checkpoin
     model.train(epoch_num, dataset, callbacks=callbacks)
 
 
-def do_eval(dataset=None, vocab_file="", eval_json="", load_checkpoint_path="", seq_length=384):
+def do_eval(dataset=None, load_checkpoint_path="", eval_batch_size=1):
     """ do eval """
     if load_checkpoint_path == "":
         raise ValueError("Finetune model missed, evaluation task must load finetune model!")
-    tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=True)
-    eval_examples = read_squad_examples(eval_json, False)
-    eval_features = convert_examples_to_features(
-        examples=eval_examples,
-        tokenizer=tokenizer,
-        max_seq_length=seq_length,
-        doc_stride=128,
-        max_query_length=64,
-        is_training=False,
-        output_fn=None,
-        verbose_logging=False)
-
     net = BertSquad(bert_net_cfg, False, 2)
     net.set_train(False)
     param_dict = load_checkpoint(load_checkpoint_path)
@@ -123,7 +108,7 @@ def do_eval(dataset=None, vocab_file="", eval_json="", load_checkpoint_path="", 
         start = logits[1].asnumpy()
         end = logits[2].asnumpy()
 
-        for i in range(optimizer_cfg.batch_size):
+        for i in range(eval_batch_size):
             unique_id = int(ids[i])
             start_logits = [float(x) for x in start[i].flat]
             end_logits = [float(x) for x in end[i].flat]
@@ -131,11 +116,11 @@ def do_eval(dataset=None, vocab_file="", eval_json="", load_checkpoint_path="", 
                 unique_id=unique_id,
                 start_logits=start_logits,
                 end_logits=end_logits))
-    write_predictions(eval_examples, eval_features, output, 20, 30, True, "./predictions.json", None, None)
+    return output
 
 def run_squad():
     """run squad task"""
-    parser = argparse.ArgumentParser(description="run classifier")
+    parser = argparse.ArgumentParser(description="run squad")
     parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
                         help="Device type, default is Ascend")
     parser.add_argument("--do_train", type=str, default="false", choices=["true", "false"],
@@ -143,20 +128,20 @@ def run_squad():
     parser.add_argument("--do_eval", type=str, default="false", choices=["true", "false"],
                         help="Eable eval, default is false")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--epoch_num", type=int, default="1", help="Epoch number, default is 1.")
-    parser.add_argument("--num_class", type=int, default="2", help="The number of class, default is 2.")
+    parser.add_argument("--epoch_num", type=int, default=3, help="Epoch number, default is 1.")
+    parser.add_argument("--num_class", type=int, default=2, help="The number of class, default is 2.")
     parser.add_argument("--train_data_shuffle", type=str, default="true", choices=["true", "false"],
                         help="Enable train data shuffle, default is true")
     parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],
                         help="Enable eval data shuffle, default is false")
+    parser.add_argument("--train_batch_size", type=int, default=32, help="Train batch size, default is 32")
+    parser.add_argument("--eval_batch_size", type=int, default=1, help="Eval batch size, default is 1")
     parser.add_argument("--vocab_file_path", type=str, default="", help="Vocab file path")
     parser.add_argument("--eval_json_path", type=str, default="", help="Evaluation json file path, can be eval.json")
     parser.add_argument("--save_finetune_checkpoint_path", type=str, default="", help="Save checkpoint path")
     parser.add_argument("--load_pretrain_checkpoint_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--load_finetune_checkpoint_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--train_data_file_path", type=str, default="",
-                        help="Data path, it is better to use absolute path")
-    parser.add_argument("--eval_data_file_path", type=str, default="",
                         help="Data path, it is better to use absolute path")
     parser.add_argument("--schema_file_path", type=str, default="",
                         help="Schema path, it is better to use absolute path")
@@ -171,8 +156,6 @@ def run_squad():
     if args_opt.do_train.lower() == "true" and args_opt.train_data_file_path == "":
         raise ValueError("'train_data_file_path' must be set when do finetune task")
     if args_opt.do_eval.lower() == "true":
-        if args_opt.eval_data_file_path == "":
-            raise ValueError("'eval_data_file_path' must be set when do evaluation task")
         if args_opt.vocab_file_path == "":
             raise ValueError("'vocab_file_path' must be set when do evaluation task")
         if args_opt.eval_json_path == "":
@@ -193,7 +176,7 @@ def run_squad():
     netwithloss = BertSquad(bert_net_cfg, True, 2, dropout_prob=0.1)
 
     if args_opt.do_train.lower() == "true":
-        ds = create_squad_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
+        ds = create_squad_dataset(batch_size=args_opt.train_batch_size, repeat_count=1,
                                   data_file_path=args_opt.train_data_file_path,
                                   schema_file_path=args_opt.schema_file_path,
                                   do_shuffle=(args_opt.train_data_shuffle.lower() == "true"))
@@ -207,12 +190,29 @@ def run_squad():
                                                            ds.get_dataset_size(), epoch_num, "squad")
 
     if args_opt.do_eval.lower() == "true":
-        ds = create_squad_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
-                                  data_file_path=args_opt.eval_data_file_path,
+        from src import tokenization
+        from src.create_squad_data import read_squad_examples, convert_examples_to_features
+        from src.squad_get_predictions import write_predictions
+        from src.squad_postprocess import SQuad_postprocess
+        tokenizer = tokenization.FullTokenizer(vocab_file=args_opt.vocab_file_path, do_lower_case=True)
+        eval_examples = read_squad_examples(args_opt.eval_json_path, False)
+        eval_features = convert_examples_to_features(
+            examples=eval_examples,
+            tokenizer=tokenizer,
+            max_seq_length=bert_net_cfg.seq_length,
+            doc_stride=128,
+            max_query_length=64,
+            is_training=False,
+            output_fn=None,
+            vocab_file=args_opt.vocab_file_path)
+        ds = create_squad_dataset(batch_size=args_opt.eval_batch_size, repeat_count=1,
+                                  data_file_path=eval_features,
                                   schema_file_path=args_opt.schema_file_path, is_training=False,
                                   do_shuffle=(args_opt.eval_data_shuffle.lower() == "true"))
-        do_eval(ds, args_opt.vocab_file_path, args_opt.eval_json_path,
-                load_finetune_checkpoint_path, bert_net_cfg.seq_length)
+        outputs = do_eval(ds, load_finetune_checkpoint_path, args_opt.eval_batch_size)
+        all_predictions = write_predictions(eval_examples, eval_features, outputs, 20, 30, True)
+        SQuad_postprocess(args_opt.eval_json_path, all_predictions, output_metrics="output.json")
+
 
 if __name__ == "__main__":
     run_squad()

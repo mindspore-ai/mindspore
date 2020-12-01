@@ -144,12 +144,14 @@ def run_classifier():
     parser.add_argument("--do_eval", type=str, default="false", choices=["true", "false"],
                         help="Enable eval, default is false")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
-    parser.add_argument("--epoch_num", type=int, default="1", help="Epoch number, default is 1.")
-    parser.add_argument("--num_class", type=int, default="2", help="The number of class, default is 2.")
+    parser.add_argument("--epoch_num", type=int, default=3, help="Epoch number, default is 3.")
+    parser.add_argument("--num_class", type=int, default=2, help="The number of class, default is 2.")
     parser.add_argument("--train_data_shuffle", type=str, default="true", choices=["true", "false"],
                         help="Enable train data shuffle, default is true")
     parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],
                         help="Enable eval data shuffle, default is false")
+    parser.add_argument("--train_batch_size", type=int, default=32, help="Train batch size, default is 32")
+    parser.add_argument("--eval_batch_size", type=int, default=1, help="Eval batch size, default is 1")
     parser.add_argument("--save_finetune_checkpoint_path", type=str, default="", help="Save checkpoint path")
     parser.add_argument("--load_pretrain_checkpoint_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--load_finetune_checkpoint_path", type=str, default="", help="Load checkpoint file path")
@@ -188,7 +190,7 @@ def run_classifier():
                           assessment_method=assessment_method)
 
     if args_opt.do_train.lower() == "true":
-        ds = create_classification_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
+        ds = create_classification_dataset(batch_size=args_opt.train_batch_size, repeat_count=1,
                                            assessment_method=assessment_method,
                                            data_file_path=args_opt.train_data_file_path,
                                            schema_file_path=args_opt.schema_file_path,
@@ -204,7 +206,7 @@ def run_classifier():
                                                            ds.get_dataset_size(), epoch_num, "classifier")
 
     if args_opt.do_eval.lower() == "true":
-        ds = create_classification_dataset(batch_size=optimizer_cfg.batch_size, repeat_count=1,
+        ds = create_classification_dataset(batch_size=args_opt.eval_batch_size, repeat_count=1,
                                            assessment_method=assessment_method,
                                            data_file_path=args_opt.eval_data_file_path,
                                            schema_file_path=args_opt.schema_file_path,

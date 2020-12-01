@@ -33,10 +33,12 @@ python ${PROJECT_DIR}/../run_ner.py  \
     --assessment_method="F1" \
     --use_crf="false" \
     --device_id=0 \
-    --epoch_num=1 \
-    --num_class=2 \
+    --epoch_num=5 \
+    --num_class=41 \
     --train_data_shuffle="true" \
     --eval_data_shuffle="false" \
+    --train_batch_size=32 \
+    --eval_batch_size=1 \
     --vocab_file_path="" \
     --label_file_path="" \
     --save_finetune_checkpoint_path="" \
