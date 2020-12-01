@@ -88,25 +88,29 @@ class Model:
 
     Examples:
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal')
-        >>>         self.bn = nn.BatchNorm2d(64)
-        >>>         self.relu = nn.ReLU()
-        >>>         self.flatten = nn.Flatten()
-        >>>         self.fc = nn.Dense(64*224*224, 12) # padding=0
-        >>>
-        >>>     def construct(self, x):
-        >>>         x = self.conv(x)
-        >>>         x = self.bn(x)
-        >>>         x = self.relu(x)
-        >>>         x = self.flatten(x)
-        >>>         out = self.fc(x)
-        >>>         return out
+        ...     def __init__(self, num_class=10, num_channel=1):
+        ...         super(Net, self).__init__()
+        ...         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
+        ...         self.conv2 = nn.Conv2d(6, 16, 5, pad_mode='valid')
+        ...         self.fc1 = nn.Dense(16*5*5, 120, weight_init='ones')
+        ...         self.fc2 = nn.Dense(120, 84, weight_init='ones')
+        ...         self.fc3 = nn.Dense(84, num_class, weight_init='ones')
+        ...         self.relu = nn.ReLU()
+        ...         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        ...         self.flatten = nn.Flatten()
+        ...
+        ...     def construct(self, x):
+        ...         x = self.max_pool2d(self.relu(self.conv1(x)))
+        ...         x = self.max_pool2d(self.relu(self.conv2(x)))
+        ...         x = self.flatten(x)
+        ...         x = self.relu(self.fc1(x))
+        ...         x = self.relu(self.fc2(x))
+        ...         x = self.fc3(x)
+        ...         return x
         >>>
         >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
-        >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
         >>> # For details about how to build the dataset, please refer to the tutorial document on the official website.
         >>> dataset = create_custom_dataset()
@@ -545,9 +549,10 @@ class Model:
                              If dataset_sink_mode is False, set sink_size as invalid. Default: -1.
 
         Examples:
+            >>> from mindspore.train.loss_scale_manager import FixedLossScaleManager
             >>> dataset = create_custom_dataset()
             >>> net = Net()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = FixedLossScaleManager()
             >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
@@ -667,9 +672,9 @@ class Model:
         Examples:
             >>> dataset = create_custom_dataset()
             >>> net = Net()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
-            >>> model.eval(dataset)
+            >>> acc = model.eval(dataset, dataset_sink_mode=False)
         """
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         _device_number_check(self._parallel_mode, self._device_number)
@@ -713,9 +718,9 @@ class Model:
             Tensor, array(s) of predictions.
 
         Examples:
-            >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
+            >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), mindspore.float32)
             >>> model = Model(Net())
-            >>> model.predict(input_data)
+            >>> result = model.predict(input_data)
         """
         self._predict_network.set_train(False)
         check_input_data(*predict_data, data_class=Tensor)
