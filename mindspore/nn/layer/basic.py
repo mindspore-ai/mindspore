@@ -14,9 +14,10 @@
 # ============================================================================
 
 """basic"""
-
+import math
 import numpy as np
 import mindspore.common.dtype as mstype
+from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import initializer
@@ -33,10 +34,59 @@ from mindspore import context
 from ..cell import Cell
 from .activation import get_activation
 
-
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
-           'Tril', 'Triu', 'Interpolate', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag']
+           'Tril', 'Triu', 'Interpolate', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer']
 
+
+class L1Regularizer(Cell):
+    """
+    Apply l1 regularization to weights
+
+    l1 regularization makes weights sparsity
+
+    Note:
+        scale(regularization factor) should be a number which greater than 0
+
+    Args:
+        scale (int, float)： l1 regularization factor which greater than 0.
+
+    Raises:
+        ValueError: If `scale(regularization factor)` is not greater than 0.
+                    If `scale(regularization factor)` is math.inf or math.nan.
+
+    Inputs:
+        - **weights** (Tensor) - The input tensor
+
+    Outputs:
+        Tensor, which dtype is Float and shape is ()
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> scale = 0.5
+        >>> net = nn.L1Regularizer(scale)
+        >>> weights = Tensor(np.array([[1.0, -2.0], [-3.0, 4.0]]).astype(np.float32))
+        >>> output = net(weights)
+        >>> print(output.asnumpy())
+        5.0
+    """
+
+    def __init__(self, scale):
+        super(L1Regularizer, self).__init__()
+        Validator.check_value_type("scale", scale, [int, float], self.cls_name)
+        if scale <= 0:
+            raise ValueError("scale should be a number which greater than 0")
+        if math.isinf(scale) or math.isnan(scale):
+            raise ValueError("scale is INF or NAN")
+        self.abs = P.Abs()
+        self.reduce_sum = P.ReduceSum()
+        self.scale = Tensor(scale, dtype=mstype.float32)
+
+    def construct(self, weights):
+        const_utils.check_valid_type(weights.dtype, mstype.number_type, 'weights')
+        l1_regularization = self.scale * self.reduce_sum(self.abs(weights))
+        return l1_regularization
 
 class Dropout(Cell):
     r"""
