@@ -95,9 +95,9 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestOutputShapeAndTypePass) {
   //        +- ( 4) <RandomDataOp>: [workers: 4] [total rows: 44]
   //
 
-  // verify that Shuffle and RepeatOp are removed, but Batch and ProjectOp are not
-  EXPECT_EQ(ss_str.find("ShuffleOp"), ss_str.npos);
-  EXPECT_EQ(ss_str.find("RepeatOp"), ss_str.npos);
+  // verify that no ops are removed, but Batch and ProjectOp are not
+  EXPECT_NE(ss_str.find("ShuffleOp"), ss_str.npos);
+  EXPECT_NE(ss_str.find("RepeatOp"), ss_str.npos);
   EXPECT_NE(ss_str.find("ProjectOp"), ss_str.npos);
   EXPECT_NE(ss_str.find("BatchOp"), ss_str.npos);
 }
@@ -129,8 +129,8 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestDatasetSizePass) {
   exe_tree->Print(ss);
   std::string ss_str = ss.str();
 
-  // verify that Shuffle and RepeatOp are removed, but Batch and ProjectOp are not
-  EXPECT_EQ(ss_str.find("ShuffleOp"), ss_str.npos);
+  // verify that no ops are removed, but Batch and ProjectOp are not
+  EXPECT_NE(ss_str.find("ShuffleOp"), ss_str.npos);
   EXPECT_NE(ss_str.find("RepeatOp"), ss_str.npos);
   EXPECT_NE(ss_str.find("ProjectOp"), ss_str.npos);
   EXPECT_NE(ss_str.find("BatchOp"), ss_str.npos);

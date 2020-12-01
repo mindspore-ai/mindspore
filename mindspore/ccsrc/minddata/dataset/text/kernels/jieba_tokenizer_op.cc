@@ -33,11 +33,11 @@ JiebaTokenizerOp::JiebaTokenizerOp(const std::string &hmm_path, const std::strin
 
 Status JiebaTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor.");
   RETURN_UNEXPECTED_IF_NULL(jieba_parser_);
 
   if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("the input tensor should be scalar string tensor");
+    RETURN_STATUS_UNEXPECTED("the input tensor should be scalar string tensor.");
   }
 
   std::string_view sentence_v;

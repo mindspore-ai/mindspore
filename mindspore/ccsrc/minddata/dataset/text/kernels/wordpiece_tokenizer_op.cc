@@ -117,7 +117,7 @@ Status WordpieceTokenizerOp::GetTokens(const std::string &input_token, const uin
 Status WordpieceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   if (input[0]->Rank() > 1 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("The input tensor should be scalar or 1-D string tensor");
+    RETURN_STATUS_UNEXPECTED("The input tensor should be scalar or 1-D string tensor.");
   }
   dsize_t count = 0;
   std::vector<std::string> out_tokens;

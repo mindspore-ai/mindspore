@@ -323,6 +323,7 @@ Status DatasetOp::GetNumClasses(int64_t *num_classes) {
     return child_[child_.size() - 1]->GetNumClasses(num_classes);
   } else {
     // when num classes isn't found, the default behavior is to return -1
+    MS_LOG(WARNING) << "Num classes not defined for : " << Name();
     *num_classes = -1;
     return Status::OK();
   }
