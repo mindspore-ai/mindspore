@@ -39,6 +39,7 @@ class GatherOpenCLKernel : public OpenCLKernel {
   void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Tune() override { return lite::RET_OK; }
+  int ConvertTensorToweight();
 
  protected:
   int UpdateWeights();
@@ -46,6 +47,9 @@ class GatherOpenCLKernel : public OpenCLKernel {
  private:
   int32_t *indices_data_{nullptr};
   int axis_ = {0};
+  bool intensor1_is_tensor{false};
+  bool enable_fp16_{false};
+  cl_int stride_w{1};
 };
 }  // namespace mindspore::kernel
 #endif

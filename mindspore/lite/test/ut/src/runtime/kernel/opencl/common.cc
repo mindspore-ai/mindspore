@@ -68,7 +68,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
         memcpy(tensor->MutableData(), input_data, tensor->Size());
       }
     } else {
-      EXPECT_TRUE(tensor->data_type() == kNumberTypeFloat32);
+      EXPECT_TRUE(tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32);
       subgraph_inputs.push_back(tensor);
       subgraph_inputs_data[tensor] = reinterpret_cast<float *>(input_data);
     }

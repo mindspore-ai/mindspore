@@ -34,7 +34,7 @@ namespace mindspore::kernel {
 
 int ToFormatOpenCLKernel::CheckSpecs() {
   auto data_type = in_tensors_.front()->data_type();
-  if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16) {
+  if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16 && data_type != kNumberTypeInt32) {
     MS_LOG(ERROR) << "Unsupported data type " << data_type;
     return RET_ERROR;
   }
@@ -61,7 +61,8 @@ void ToFormatOpenCLKernel::SetGlobalLocal() {
 }
 
 int ToFormatOpenCLKernel::Prepare() {
-  std::map<TypeId, std::string> dtype_str{{kNumberTypeFloat32, "float"}, {kNumberTypeFloat16, "half"}};
+  std::map<TypeId, std::string> dtype_str{
+    {kNumberTypeFloat32, "float"}, {kNumberTypeFloat16, "half"}, {kNumberTypeInt32, "float"}};
   std::string kernel_name;
   if (out_mem_type_ == MemType::IMG) {
     kernel_name = "to_format_NHWC_to_NHWC4_IMG_" + dtype_str[in_tensors_.front()->data_type()];
