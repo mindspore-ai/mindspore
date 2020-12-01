@@ -425,8 +425,7 @@ If you need to use the trained model to perform inference on multiple hardware p
   net = GoogleNet(num_classes=cfg.num_classes)
   opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01,
                  cfg.momentum, weight_decay=cfg.weight_decay)
-  loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', 
-                                          is_grad=False)
+  loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
   model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
   
   # Load pre-trained model
@@ -452,8 +451,7 @@ If you need to use the trained model to perform inference on multiple hardware p
   net = GoogleNet(num_classes=cfg.num_classes)
   opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01,
                  cfg.momentum, weight_decay=cfg.weight_decay)
-  loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', 
-                                          is_grad=False)
+  loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
   model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
   
   # Load pre-trained model
@@ -486,7 +484,7 @@ If you need to use the trained model to perform inference on multiple hardware p
                 steps_per_epoch=batch_num)
   opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 
                  Tensor(lr), cfg.momentum, weight_decay=cfg.weight_decay)
-  loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
+  loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
   model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
                 amp_level="O2", keep_batchnorm_fp32=False, loss_scale_manager=None)
   
@@ -520,7 +518,7 @@ If you need to use the trained model to perform inference on multiple hardware p
                 steps_per_epoch=batch_num)
   opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 
                  Tensor(lr), cfg.momentum, weight_decay=cfg.weight_decay)
-  loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
+  loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
   model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'},
                 amp_level="O2", keep_batchnorm_fp32=False, loss_scale_manager=None)
   
