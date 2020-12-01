@@ -1,5 +1,4 @@
-#!/bin/bash
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-LOCAL_HIAI=/usr/local/Ascend
-export TBE_IMPL_PATH=${LOCAL_HIAI}/runtime/ops/op_impl/built-in/ai_core/tbe/impl/:${TBE_IMPL_PATH}
-export LD_LIBRARY_PATH=${LOCAL_HIAI}/runtime/lib64/:${LOCAL_HIAI}/add-ons/:${LD_LIBRARY_PATH}
-export PATH=${LOCAL_HIAI}/runtime/ccec_compiler/bin/:${PATH}
-export PYTHONPATH=${LOCAL_HIAI}/runtime/ops/op_impl/built-in/ai_core/tbe/:${PYTHONPATH}
-export DEVICE_MEMORY_CAPACITY=1073741824000
-export NOT_FULLY_USE_DEVICES=off
+import os
+import pytest
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_parallel_strategy_search():
+    sh_path = os.path.split(os.path.realpath(__file__))[0]
+    ret = os.system(f"sh {sh_path}/run_parallel_strategy_search.sh")
+    os.system(f"grep -E 'ERROR|error' {sh_path}/parallel_strategy_search*/parallel_strategy_search*log -C 3")
+    assert ret == 0
