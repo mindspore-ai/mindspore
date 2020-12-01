@@ -94,7 +94,7 @@ def restrict_int_index(data_shape, tuple_indexes):
     for i, index in enumerate(tuple_indexes):
         if isinstance(index, mstype.Int):
             if index < -data_shape[i] or index >= data_shape[i]:
-                const_utils.raise_index_error("The index is out of the data's special dimension range.")
+                raise_index_error("The index is out of the data's special dimension range.")
             elif index < 0:
                 tuple_indexes_new += (tuple_indexes[i]+data_shape[i],)
             else:

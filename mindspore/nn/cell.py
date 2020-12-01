@@ -30,7 +30,7 @@ from ..ops.primitive import Primitive
 from ..ops.operations import HookBackward
 from ..ops.functional import cast
 from ..parallel._tensor import _load_tensor_by_layout
-from ..common.tensor import Tensor
+from ..common.tensor import Tensor, MetaTensor
 
 
 class Cell(Cell_):
@@ -104,6 +104,7 @@ class Cell(Cell_):
         self._already_run = False
         self.cell_type = None
         self._auto_parallel_compile_and_run = False
+        self._support_non_tensor_inputs = False
 
     @property
     def already_run(self):
@@ -118,6 +119,23 @@ class Cell(Cell_):
         Cell_.__setstate__(self, base)
         self.__dict__ = dict_
         self._attr_synced = False
+
+    @property
+    def support_non_tensor_inputs(self):
+        """
+        Whether support non tensor inputs in cell `construct` method.
+        This property only used in forward net, is not supported in grad net.
+        """
+        return self._support_non_tensor_inputs
+
+    @support_non_tensor_inputs.setter
+    def support_non_tensor_inputs(self, value):
+        """
+        Set attr 'support_non_tensor_inputs'.
+        """
+        if not isinstance(value, bool):
+            raise ValueError("When set 'support_non_tensor_inputs' for cell, the value should be bool.")
+        self._support_non_tensor_inputs = value
 
     @property
     def _cell_tag(self):
@@ -553,14 +571,19 @@ class Cell(Cell_):
         self._auto_parallel_compile_and_run = True
         self.compile(*inputs)
 
+        new_inputs = []
+        for i in inputs:
+            if isinstance(i, (Tensor, MetaTensor)):
+                new_inputs.append(i)
+
         if self._auto_parallel_mode:
-            if inputs and isinstance(inputs[0], Tensor) and inputs[0].virtual_flag:
+            if new_inputs and isinstance(new_inputs[0], Tensor) and inputs[0].virtual_flag:
                 # get parallel inputs in sink mode, parallel inputs set in _executor.compile
                 parallel_inputs_run = self._parallel_inputs_run
             else:
-                parallel_inputs_run = inputs
+                parallel_inputs_run = new_inputs
             return _executor(self, *parallel_inputs_run, phase=self.phase)
-        return _executor(self, *inputs, phase=self.phase)
+        return _executor(self, *new_inputs, phase=self.phase)
 
     def auto_parallel_compile_and_run(self):
         return self._auto_parallel_compile_and_run

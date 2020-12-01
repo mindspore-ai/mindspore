@@ -115,7 +115,8 @@ py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::str
     if (!parse::ConvertData(arg.second, &converted)) {
       MS_LOG(EXCEPTION) << "GenerateKey convert arg failed";
     }
-    args_spec.push_back(abstract::FromValue(converted, true));
+    bool broaden = converted->isa<Tensor>() || converted->isa<MetaTensor>();
+    args_spec.push_back(abstract::FromValue(converted, broaden));
   }
   if (g_args_cache.count(args_spec) == 0) {
     static int64_t key = 0;
