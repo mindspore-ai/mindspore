@@ -135,13 +135,17 @@ class SummaryCollector(Callback):
 
     Examples:
         >>> # Simple usage:
+        >>> from mindspore.train import Model
         >>> summary_collector = SummaryCollector(summary_dir='./summary_dir')
-        >>> model.train(epoch, dataset, callbacks=summary_collector)
+        >>> dataset = get_dataset('/path/to/MNIST')
+        >>> network = LeNet5()
+        >>> model = Model(network)
+        >>> model.train(epoch=1, dataset=dataset, callbacks=summary_collector)
         >>>
         >>> # Do not collect metric and collect the first layer parameter, others are collected by default
         >>> specified={'collect_metric': False, 'histogram_regular': '^conv1.*'}
         >>> summary_collector = SummaryCollector(summary_dir='./summary_dir', collect_specified_data=specified)
-        >>> model.train(epoch, dataset, callbacks=summary_collector)
+        >>> model.train(epoch=1, dataset=dataset, callbacks=summary_collector)
         >>>
         >>> # Only collect metric, custom lineage data and record data that collected by the summary operator,
         >>> # others are not collected
@@ -151,7 +155,7 @@ class SummaryCollector(Callback):
         >>>                                      keep_default_action=False,
         >>>                                      custom_lineage_data={'version': 'resnet50_v1'}
         >>>                                      )
-        >>> model.train(epoch, dataset, callbacks=summary_collector)
+        >>> model.train(epoch=1, dataset=dataset, callbacks=summary_collector)
     """
 
     _DEFAULT_SPECIFIED_DATA = {
