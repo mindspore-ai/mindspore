@@ -25,6 +25,7 @@
 #include "backend/kernel_compiler/akg/akg_kernel_metadata.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 namespace kernel {
@@ -94,7 +95,7 @@ void KernelQueryAll(const CNodePtr &kernel_node,
     MS_EXCEPTION(NotExistsError)
       << "Failed to obtain operator info, Please check whether the operator info is registered, Op full name:"
       << kernel_node->fullname_with_scope() << "Node Type: " << op_name
-      << ", Node DebugString: " << kernel_node->DebugString();
+      << ", Node DebugString: " << kernel_node->DebugString() << "\n trace: " << trace::DumpSourceLines(kernel_node);
   }
 }
 
