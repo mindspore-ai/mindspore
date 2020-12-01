@@ -41,15 +41,15 @@ Status CacheClient::Builder::Build(std::shared_ptr<CacheClient> *out) {
 }
 
 Status CacheClient::Builder::SanityCheck() {
-  CHECK_FAIL_RETURN_UNEXPECTED(session_id_ > 0, "session id must be positive");
-  CHECK_FAIL_RETURN_UNEXPECTED(cache_mem_sz_ >= 0, "cache memory size must not be negative. (0 implies unlimited");
-  CHECK_FAIL_RETURN_UNEXPECTED(num_connections_ > 0, "rpc connections must be positive");
-  CHECK_FAIL_RETURN_UNEXPECTED(prefetch_size_ > 0, "prefetch size must be positive");
-  CHECK_FAIL_RETURN_UNEXPECTED(!hostname_.empty(), "hostname must not be empty");
-  CHECK_FAIL_RETURN_UNEXPECTED(port_ > 1024, "Port must be in range (1025..65535)");
-  CHECK_FAIL_RETURN_UNEXPECTED(port_ <= 65535, "Port must be in range (1025..65535)");
-  CHECK_FAIL_RETURN_UNEXPECTED(hostname_ == "127.0.0.1",
-                               "now cache client has to be on the same host with cache server");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(session_id_ > 0, "session id must be positive");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(cache_mem_sz_ >= 0, "cache memory size must not be negative. (0 implies unlimited");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(num_connections_ > 0, "rpc connections must be positive");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(prefetch_size_ > 0, "prefetch size must be positive");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(!hostname_.empty(), "hostname must not be empty");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(port_ > 1024, "Port must be in range (1025..65535)");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(port_ <= 65535, "Port must be in range (1025..65535)");
+  CHECK_FAIL_RETURN_SYNTAX_ERROR(hostname_ == "127.0.0.1",
+                                 "now cache client has to be on the same host with cache server");
   return Status::OK();
 }
 

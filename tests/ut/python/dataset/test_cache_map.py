@@ -319,7 +319,7 @@ def test_cache_map_failure3():
         num_iter = 0
         for _ in ds1.create_dict_iterator():
             num_iter += 1
-    assert "Unexpected error. Expect positive row id: -1" in str(e.value)
+    assert "BatchOp is currently not supported as a descendant operator under a cache" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure3 Ended.\n')
@@ -754,11 +754,11 @@ def test_cache_map_parameter_check():
 
     with pytest.raises(RuntimeError) as err:
         ds.DatasetCache(session_id=1, size=0, spilling=True, hostname="illegal")
-    assert "Unexpected error. now cache client has to be on the same host with cache server" in str(err.value)
+    assert "now cache client has to be on the same host with cache server" in str(err.value)
 
     with pytest.raises(RuntimeError) as err:
         ds.DatasetCache(session_id=1, size=0, spilling=True, hostname="127.0.0.2")
-    assert "Unexpected error. now cache client has to be on the same host with cache server" in str(err.value)
+    assert "now cache client has to be on the same host with cache server" in str(err.value)
 
     with pytest.raises(TypeError) as info:
         ds.DatasetCache(session_id=1, size=0, spilling=True, port="illegal")

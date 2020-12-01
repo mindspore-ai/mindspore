@@ -476,6 +476,12 @@ Status BatchOp::Accept(NodePass *p, bool *modified) {
   return p->RunOnNode(shared_from_base<BatchOp>(), modified);
 }
 
+// Visitor pre-accept method for NodePass
+Status BatchOp::PreAccept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->PreRunOnNode(shared_from_base<BatchOp>(), modified);
+}
+
 Status BatchOp::ComputeColMap() {
   CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 1,
                                "Batch has " + std::to_string(child_.size()) + " child/children, expects only 1 child.");

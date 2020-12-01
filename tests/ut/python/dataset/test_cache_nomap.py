@@ -1846,6 +1846,44 @@ def test_cache_nomap_nested_repeat():
     logger.info('test_cache_nomap_nested_repeat Ended.\n')
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_get_repeat_count():
+    """
+    Test get_repeat_count() for a pipeline with cache and nested repeat ops
+
+        Cache
+          |
+      Map(decode)
+          |
+        Repeat
+          |
+      TFRecord
+    """
+
+    logger.info("Test cache nomap get_repeat_count")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This dataset has 3 records in it only
+    ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    ds1 = ds1.repeat(4)
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
+
+    repeat_count = ds1.get_repeat_count()
+    logger.info("repeat_count: {}".format(repeat_count))
+    assert repeat_count == 4
+
+    num_iter = 0
+    for _ in ds1.create_dict_iterator(num_epochs=1):
+        logger.info("get data from dataset")
+        num_iter += 1
+    assert num_iter == 12
+
 if __name__ == '__main__':
     test_cache_nomap_basic1()
     test_cache_nomap_basic2()

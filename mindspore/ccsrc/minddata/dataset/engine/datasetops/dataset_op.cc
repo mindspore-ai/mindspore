@@ -470,9 +470,15 @@ uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   ss_str = std::regex_replace(ss_str, std::regex("device_id.*\n"), "");
 
   // Filter out the operator id field
-  ss_str = std::regex_replace(ss_str, std::regex("Parent.*\n"), "");
-  ss_str = std::regex_replace(ss_str, std::regex("Child.*\n"), "");
+  ss_str = std::regex_replace(ss_str, std::regex(".*Parent.*\n"), "");
+  ss_str = std::regex_replace(ss_str, std::regex(".*Child.*\n"), "");
   ss_str = std::regex_replace(ss_str, std::regex(R"(\(\s*\d+?\))"), "");
+
+  // Doesn't matter whether there is any parent node above CacheOp or not.
+  ss_str = std::regex_replace(ss_str, std::regex("Number of parents.*\n"), "");
+
+  // Filter out shuffle seed from ShuffleOp
+  ss_str = std::regex_replace(ss_str, std::regex("Shuffle seed.*\n"), "");
 
   // Filter out the total repeats and number repeats per epoch field
   ss_str = std::regex_replace(ss_str, std::regex("Total repeats.*\n"), "");
