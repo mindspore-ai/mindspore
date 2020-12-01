@@ -20,13 +20,16 @@
 #include "nnacl/quantization/quantize.h"
 
 typedef struct L2NormParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
-  int *axis_;
-  size_t axis_num_;
   float epsilon_;
+  int *axis_;
+  // shape correlative
+  size_t axis_num_;
   int data_num_;
   int *shape_;
   size_t shape_num_;
+  // other parameter
   ActType act_type_;
 } L2NormParameter;
 

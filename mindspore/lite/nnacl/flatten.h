@@ -18,7 +18,9 @@
 #include "nnacl/op_base.h"
 
 typedef struct FlattenParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
+  // other parameter
   int size;
 } FlattenParameter;
 

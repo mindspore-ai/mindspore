@@ -18,7 +18,9 @@
 
 #include "nnacl/op_base.h"
 typedef struct {
+  // Primitive parameter
   OpParameter op_parameter_;
+  // other parameter
   int output_num;
   float weight_threshold;
 } PredictParameter;

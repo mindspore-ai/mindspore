@@ -23,15 +23,18 @@
 #define DEFAULT_PAD_NDIMS 4
 
 typedef struct PadParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
-  PadQuantArg pad_quant_arg_;
   int paddings_[MAX_PAD_SIZE];
-  int padding_length;
   int pad_mode_;
   float constant_value_;
-  int mirror_offset_;
+  // shape correlative
+  int padding_length;
+  // other parameter
   int in_strides[DEFAULT_PAD_NDIMS];
   int out_strides[DEFAULT_PAD_NDIMS];
+  int mirror_offset_;
+  PadQuantArg pad_quant_arg_;
 } PadParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_PAD_PARAMETER_H_

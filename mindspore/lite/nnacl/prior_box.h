@@ -24,6 +24,7 @@
 #define PRIOR_BOX_MAX_NUM 8
 #define PRIOR_BOX_VAR_NUM 4
 typedef struct PriorBoxParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
   int32_t min_sizes_size;
   int32_t min_sizes[PRIOR_BOX_MAX_NUM];

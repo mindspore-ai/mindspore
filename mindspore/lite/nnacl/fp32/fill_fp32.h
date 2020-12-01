@@ -25,6 +25,7 @@
 #define FILL_DIMS_MAX_SIZE 4
 
 typedef struct FillParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
   int dims_[FILL_DIMS_MAX_SIZE];
   int num_dims_;

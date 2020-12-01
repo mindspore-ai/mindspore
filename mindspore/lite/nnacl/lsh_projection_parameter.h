@@ -20,9 +20,12 @@
 #include "nnacl/op_base.h"
 
 typedef struct LshProjectionParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
-  int lsh_type_;
+  // shape correlative
   int hash_shape_[2];
+  // other parameter
+  int lsh_type_;
   int feature_num_;
   char **hash_buffs_;
   size_t hash_buff_size_;

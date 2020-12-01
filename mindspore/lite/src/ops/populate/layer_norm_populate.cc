@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/layer_norm_parameter.h"
+#include <cstdint>
 #include "src/ops/layer_norm.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
@@ -32,11 +33,15 @@ OpParameter *PopulateLayerNormParameter(const mindspore::lite::PrimitiveC *primi
   auto param = reinterpret_cast<mindspore::lite::LayerNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto normalized_shape = param->GetNormalizedShape();
   layer_norm_parameter->normalized_dims_ = normalized_shape.size();
+  if (normalized_shape.size() > SIZE_MAX / sizeof(int)) {
+    MS_LOG(ERROR) << "normalized_shape size too big";
+    free(layer_norm_parameter);
+    return nullptr;
+  }
   layer_norm_parameter->normalized_shape_ = reinterpret_cast<int *>(malloc(normalized_shape.size() * sizeof(int)));
   if (layer_norm_parameter->normalized_shape_ == nullptr) {
     MS_LOG(ERROR) << "malloc layer_norm_parameter->normalized_shape_ failed.";
     free(layer_norm_parameter);
-    layer_norm_parameter = nullptr;
     return nullptr;
   }
   for (size_t i = 0; i < normalized_shape.size(); i++) {
