@@ -41,4 +41,5 @@ AbstractBasePtr ReshapeInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(Reshape, prim::kPrimReshape, ReshapeInfer);
+REGISTER_PRIMITIVE_C(Reshape);
 }  // namespace mindspore

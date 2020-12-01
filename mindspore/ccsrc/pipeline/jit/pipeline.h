@@ -82,6 +82,7 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   ResourcePtr GetResource(const std::string &phase);
   FuncGraphPtr GetFuncGraph(const std::string &phase);
   py::bytes GetFuncGraphProto(const std::string &phase, const std::string &type);
+  py::bytes ConvertFuncGraphToMindIR(const FuncGraphPtr &fg_ptr);
   compile::VmEvalFuncPtr GetVmEvalFunc(const std::string &phase);
   bool HasCompiled(const std::string &phase) const;
 
@@ -138,6 +139,7 @@ void ClearResAtexit();
 void ReleaseGeTsd();
 
 void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase);
+FuncGraphPtr LoadMindIR(const std::string &file_name);
 
 // init and exec dataset sub graph
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,

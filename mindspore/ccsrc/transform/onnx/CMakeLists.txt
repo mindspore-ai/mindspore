@@ -1,3 +1,0 @@
-file(GLOB_RECURSE _ONNX_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
-set_property(SOURCE ${_ONNX_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ONNX)
-add_library(_mindspore_transform_onnx_obj OBJECT ${_ONNX_SRC_FILES})

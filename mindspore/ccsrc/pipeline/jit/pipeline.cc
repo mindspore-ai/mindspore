@@ -45,6 +45,7 @@
 #include "debug/draw.h"
 #include "pipeline/pynative/pynative_execute.h"
 #include "frontend/optimizer/py_pass_manager.h"
+#include "load_mindir/load_model.h"
 #include "pybind_api/pybind_patch.h"
 #include "utils/shape_utils.h"
 #include "utils/info.h"
@@ -102,6 +103,16 @@ void CheckArgIsTensor(const ValuePtr &arg, std::size_t idx) {
   }
 }
 }  // namespace
+
+py::bytes ExecutorPy::ConvertFuncGraphToMindIR(const FuncGraphPtr &fg_ptr) {
+  std::string proto_str = GetBinaryProtoString(fg_ptr);
+  if (proto_str.empty()) {
+    MS_LOG(EXCEPTION) << "Graph proto is empty.";
+  }
+  return proto_str;
+}
+
+FuncGraphPtr LoadMindIR(const std::string &file_name) { return mindspore::RunLoadMindIR(file_name); }
 
 py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults) {
   MS_LOG(DEBUG) << "GenerateKey args size:" << defaults.size();

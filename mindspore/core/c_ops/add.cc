@@ -50,4 +50,5 @@ AbstractBasePtr TensorAddInfer(const abstract::AnalysisEnginePtr &, const Primit
                                                     InferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(TensorAdd, prim::kPrimTensorAdd, TensorAddInfer);
+REGISTER_PRIMITIVE_C(TensorAdd);
 }  // namespace mindspore

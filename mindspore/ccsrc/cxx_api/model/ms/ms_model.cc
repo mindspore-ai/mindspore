@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <fstream>
 
-#include "utils/load_onnx/anf_converter.h"
+#include "load_mindir/load_model.h"
 #include "backend/session/session_basic.h"
 #include "backend/session/session_factory.h"
 #include "backend/session/executor_manager.h"
@@ -117,9 +117,9 @@ Status MsModel::LoadModel(const Buffer &model_data, ModelType type, const std::m
     return FAILED;
   }
   std::shared_ptr<FuncGraph> anf_graph;
+  Py_Initialize();
   try {
-    anf_graph =
-      lite::AnfConverter::RunAnfConverter(static_cast<const char *>(model_data.Data()), model_data.DataSize());
+    anf_graph = ConvertStreamToFuncGraph(static_cast<const char *>(model_data.Data()), model_data.DataSize());
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "Inference LoadModel failed";
     return FAILED;
@@ -290,9 +290,10 @@ Status MsModel::FinalizeEnv() {
 }
 
 std::shared_ptr<FuncGraph> MsModel::LoadModel(const char *model_buf, size_t size, const std::string &device) {
+  Py_Initialize();
   MS_EXCEPTION_IF_NULL(model_buf);
   try {
-    auto anf_graph = lite::AnfConverter::RunAnfConverter(model_buf, size);
+    auto anf_graph = ConvertStreamToFuncGraph(model_buf, size);
     return anf_graph;
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "Inference LoadModel failed: " << e.what();

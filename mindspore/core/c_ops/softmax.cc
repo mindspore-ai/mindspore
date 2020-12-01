@@ -75,4 +75,5 @@ AbstractBasePtr SoftmaxInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(Softmax, prim::kPrimSoftmax, SoftmaxInfer);
+REGISTER_PRIMITIVE_C(Softmax);
 }  // namespace mindspore
