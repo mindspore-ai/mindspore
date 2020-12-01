@@ -98,6 +98,13 @@ inline uint64_t LongToUlong(int64_t u) {
   return static_cast<uint64_t>(u);
 }
 
+inline int32_t LongToInt(int64_t u) {
+  if (u > static_cast<int64_t>((std::numeric_limits<int32_t>::max)())) {
+    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int.";
+  }
+  return static_cast<int32_t>(u);
+}
+
 inline int64_t UlongToLong(uint64_t u) {
   if (u > static_cast<uint64_t>((std::numeric_limits<int64_t>::max)())) {
     MS_LOG(EXCEPTION) << "The uint64_t value(" << u << ") exceeds the maximum value of int64_t.";

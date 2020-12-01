@@ -35,7 +35,7 @@ class StandardNormal(PrimitiveWithInfer):
         Tensor. The shape is the same as the input `shape`. The dtype is float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = (4, 16)
