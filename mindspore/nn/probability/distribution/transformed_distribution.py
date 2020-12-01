@@ -37,6 +37,9 @@ class TransformedDistribution(Distribution):
           will use this seed; elsewise, the underlying distribution's seed will be used.
         name (str): The name of the transformed distribution. Default: 'transformed_distribution'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Note:
         The arguments used to initialize the original distribution cannot be None.
         For example, mynormal = nn.Normal(dtype=dtyple.float32) cannot be used to initialized a

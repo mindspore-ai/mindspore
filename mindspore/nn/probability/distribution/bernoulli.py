@@ -32,6 +32,9 @@ class Bernoulli(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
         name (str): The name of the distribution. Default: 'Bernoulli'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Note:
         `probs` must be a proper probability (0 < p < 1).
         `dist_spec_args` is `probs`.

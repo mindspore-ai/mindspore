@@ -25,6 +25,9 @@ class Invert(Bijector):
         bijector (Bijector): Base Bijector.
         name (str): The name of the Bijector. Default: Invert.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn

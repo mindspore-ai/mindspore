@@ -34,6 +34,9 @@ class Poisson(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Poisson'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Note:
         `rate` must be strictly greater than 0.
         `dist_spec_args` is `rate`.

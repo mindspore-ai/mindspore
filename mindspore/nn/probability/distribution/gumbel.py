@@ -35,6 +35,9 @@ class Gumbel(TransformedDistribution):
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): the name of the distribution. Default: 'Gumbel'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Note:
         `scale` must be greater than zero.
         `dist_spec_args` are `loc` and `scale`.

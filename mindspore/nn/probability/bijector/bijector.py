@@ -35,6 +35,9 @@ class Bijector(Cell):
         dtype (mindspore.dtype): The type of the distributions that the Bijector can operate on. Default: None.
         param (dict): The parameters used to initialize the Bijector. Default: None.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Note:
         `dtype` of bijector represents the type of the distributions that the bijector could operate on.
         When `dtype` is None, there is no enforcement on the type of input value except that the input value
