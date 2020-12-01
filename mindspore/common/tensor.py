@@ -325,6 +325,35 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('broadcast_to')(x.shape)(self)
 
 
+    def abs(self):
+        """
+        Return absolute value element-wisely.
+
+        Returns:
+            Tensor, has the same data type as x.
+        """
+        return tensor_operator_registry.get('abs')()(self)
+
+
+    def mean(self, axis=(), keep_dims=False):
+        """
+        Reduce a dimension of a tensor by averaging all elements in the dimension.
+
+        Args:
+            axis (Union[None, int, tuple(int)]): Dimensions of reduction,
+                when axis is None or empty tuple, reduce all dimensions.
+                Default: (), reduce all dimensions.
+            keep_dims (bool): Whether to keep the reduced dimensions.
+                Default : False, don't keep these reduced dimensions.
+
+        Returns:
+            Tensor, has the same data type as x.
+        """
+        if axis is None:
+            axis = ()
+        return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
+
+
 class RowTensor:
     """
     A sparse representation of a set of tensor slices at given indices.
