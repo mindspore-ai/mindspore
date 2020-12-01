@@ -18,8 +18,8 @@
 #include <limits>
 
 template <typename T>
-__global__ void UnsortedSegmentMax(const T *input, const int *segment_ids, const int num_segments, size_t outer_size,
-                                   size_t inner_size, bool fp16_flag, T init_K, T *output) {
+__global__ void UnsortedSegmentMax(const T *input, const int *segment_ids, const int64_t num_segments,
+                                   size_t outer_size, size_t inner_size, bool fp16_flag, T init_K, T *output) {
   if (fp16_flag) {
     init_K = __int2half_rd(-65504);  // min value representable by float16
   }
@@ -57,7 +57,7 @@ __global__ void UnsortedSegmentMax(const T *input, const int *segment_ids, const
 }
 
 template <typename T>
-void CalUnsortedSegmentMax(const T *input, const int *segment_ids, const int num_segments, size_t outer_size,
+void CalUnsortedSegmentMax(const T *input, const int *segment_ids, const int64_t num_segments, size_t outer_size,
                            size_t inner_size, T *output, cudaStream_t stream) {
   int size = (inner_size * KWARPSIZE * num_segments);
   bool fp16_flag = false;
@@ -71,9 +71,9 @@ void CalUnsortedSegmentMax(const T *input, const int *segment_ids, const int num
   return;
 }
 
-template void CalUnsortedSegmentMax<float>(const float *input, const int *segment_ids, const int num_segments,
+template void CalUnsortedSegmentMax<float>(const float *input, const int *segment_ids, const int64_t num_segments,
                                            size_t outer_size, size_t inner_size, float *output, cudaStream_t stream);
-template void CalUnsortedSegmentMax<half>(const half *input, const int *segment_ids, const int num_segments,
+template void CalUnsortedSegmentMax<half>(const half *input, const int *segment_ids, const int64_t num_segments,
                                           size_t outer_size, size_t inner_size, half *output, cudaStream_t stream);
-template void CalUnsortedSegmentMax<int>(const int *input, const int *segment_ids, const int num_segments,
+template void CalUnsortedSegmentMax<int>(const int *input, const int *segment_ids, const int64_t num_segments,
                                          size_t outer_size, size_t inner_size, int *output, cudaStream_t stream);

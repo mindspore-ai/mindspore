@@ -30,7 +30,14 @@ MS_REG_GPU_KERNEL_ONE(
   UnsortedSegmentMax,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   UnsortedSegmentMaxGpuKernel, int)
-// Dynamic Mode
+// Dynamic Mode - registered for int32/int64 3rd input
+MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UnsortedSegmentMaxGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
@@ -42,9 +49,23 @@ MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      UnsortedSegmentMaxGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat16),
                       UnsortedSegmentMaxGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      UnsortedSegmentMaxGpuKernel, int)
 MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
