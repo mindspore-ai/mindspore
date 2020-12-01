@@ -29,7 +29,7 @@ class NetTensorDot(nn.Cell):
         self.axes = axes
 
     def construct(self, x, y):
-        return C.TensorDot(x, y, self.axes)
+        return C.tensor_dot(x, y, self.axes)
 
 
 class GradNetwork(nn.Cell):

@@ -723,8 +723,10 @@ class Unique(Primitive):
         - **x** (Tensor) - The input tensor.
 
     Outputs:
-        Tuple, containing Tensor objects `(y, idx)`, `y` is a tensor has the same type as `x`, `idx` is a tensor
-        containing indices of elements in the input coressponding to the output tensor.
+        Tuple, containing Tensor objects `(y, idx)., `y` is a tensor with the
+        same type as `x`, and contains the unique elements in `x`, sorted in
+        ascending order. `idx` is a tensor containing indices of elements in
+        the input corresponding to the output tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -732,6 +734,23 @@ class Unique(Primitive):
     Examples:
         >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
         >>> output = ops.Unique()(x)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 1]))
+        >>>
+        >>> # note that for GPU, this operator must be wrapped inside a model, and executed in graph mode.
+        >>> class UniqueNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(UniqueNet, self).__init__()
+        >>>         self.unique_op = P.Unique()
+        >>>
+        >>>     def construct(self, x):
+        >>>         output, indices = self.unique_op(x)
+        >>>         return output, indices
+        >>>
+        >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+        >>> net = UniqueNet()
+        >>> output = net(x)
         >>> print(output)
         (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int32, value= [0, 1, 2, 1]))
     """
