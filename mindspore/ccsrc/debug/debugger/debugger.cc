@@ -125,79 +125,76 @@ void Debugger::EnableDebugger() {
     return;
   }
 
-  // configure grpc host
-  const char *env_host_str = std::getenv("MS_DEBUGGER_HOST");
-  std::string host;
-  if (env_host_str != nullptr) {
-    std::regex reg_ip(
-      "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])"
-      "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
-      "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
-      "[.](25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])");
-    std::smatch smat;
-    std::string host_str = std::string(env_host_str);
-    if (std::regex_match(host_str, smat, reg_ip)) {
-      MS_LOG(INFO) << "Getenv MS_DEBUGGER_HOST: " << env_host_str;
-      host = std::string(env_host_str);
-    } else {
-      MS_LOG(ERROR) << "Environment variable MS_DEBUGGER_HOST isn't a valid IP address. "
-                       "Please set environment variable MS_DEBUGGER_HOST=x.x.x.x to a valid IP";
-      debugger_enabled_ = false;
-    }
-  } else {
-    MS_LOG(INFO) << "Environment variable MS_DEBUGGER_HOST doesn't exist. Using default debugger host: localhost";
-    host = "localhost";
-  }
-  // configure grpc port
-  const char *env_port_str = std::getenv("MS_DEBUGGER_PORT");
-  std::string port;
-  if (env_port_str != nullptr) {
-    if (CheckPort(env_port_str)) {
-      MS_LOG(INFO) << "Getenv MS_DEBUGGER_PORT: " << env_port_str;
-      port = std::string(env_port_str);
-    } else {
-      MS_LOG(ERROR) << "Environment variable MS_DEBUGGER_PORT is not valid. Custom port ranging from 1 to 65535";
-      debugger_enabled_ = false;
-    }
-  } else {
-    MS_LOG(INFO) << "Environment variable MS_DEBUGGER_PORT doesn't exist. Using default debugger port: 50051";
-    port = "50051";
-  }
-#ifdef ENABLE_D
-  // set operation overflow info
-  overflow_bin_path_ = DumpJsonParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id(), device_id_);
-  // new overflow dump files will have a timestamp greater than last_overflow_bin_
-  last_overflow_bin_ = 0;
-  DIR *d;
-  d = opendir(overflow_bin_path_.c_str());
-  if (d != nullptr) {
-    struct dirent *dir;
-    while ((dir = readdir(d)) != NULL) {
-      if (dir->d_type == DT_REG) {
-        std::string file_path = overflow_bin_path_;
-        file_path.append(dir->d_name);
-        std::size_t found = file_path.find_last_of(".");
-        if (found == std::string::npos) {
-          continue;
-        }
-        std::string overflow_time = file_path.substr(found + 1);
-        if (stod(overflow_time) <= last_overflow_bin_) {
-          MS_LOG(INFO) << "Old op overflow bin folder" << file_path;
-          continue;
-        }
-        last_overflow_bin_ = stod(overflow_time);
+  if (debugger_enabled_) {
+    // configure grpc host
+    const char *env_host_str = std::getenv("MS_DEBUGGER_HOST");
+    std::string host;
+    if (env_host_str != nullptr) {
+      if (CheckIp(env_host_str)) {
+        MS_LOG(INFO) << "Getenv MS_DEBUGGER_HOST: " << env_host_str;
+        host = std::string(env_host_str);
+      } else {
+        debugger_enabled_ = false;
+        MS_EXCEPTION(ValueError) << "Environment variable MS_DEBUGGER_HOST isn't a valid IP address. "
+                                    "Please set environment variable MS_DEBUGGER_HOST=x.x.x.x to a valid IP";
       }
+    } else {
+      MS_LOG(INFO) << "Environment variable MS_DEBUGGER_HOST doesn't exist. Using default debugger host: localhost";
+      host = "localhost";
     }
-    MS_LOG(INFO) << "last op overflow bin folder" << last_overflow_bin_;
-    closedir(d);
-  }
+    // configure grpc port
+    const char *env_port_str = std::getenv("MS_DEBUGGER_PORT");
+    std::string port;
+    if (env_port_str != nullptr) {
+      if (CheckPort(env_port_str)) {
+        MS_LOG(INFO) << "Getenv MS_DEBUGGER_PORT: " << env_port_str;
+        port = std::string(env_port_str);
+      } else {
+        debugger_enabled_ = false;
+        MS_EXCEPTION(ValueError) << "Environment variable MS_DEBUGGER_PORT is not valid. Custom port ranging from 1 to "
+                                    "65535";
+      }
+    } else {
+      port = "50051";
+      if (!CheckPort(port.c_str())) {
+        MS_EXCEPTION(ValueError) << "Default MS_DEBUGGER_PORT is not valid. Custom port ranging from 1 to 65535";
+      }
+      MS_LOG(INFO) << "Environment variable MS_DEBUGGER_PORT doesn't exist. Using default debugger port: 50051";
+    }
+
+#ifdef ENABLE_D
+    // set operation overflow info
+    overflow_bin_path_ = DumpJsonParser::GetInstance().GetOpOverflowBinPath(graph_ptr_->graph_id(), device_id_);
+    // new overflow dump files will have a timestamp greater than last_overflow_bin_
+    last_overflow_bin_ = 0;
+    DIR *d;
+    d = opendir(overflow_bin_path_.c_str());
+    if (d != nullptr) {
+      struct dirent *dir;
+      while ((dir = readdir(d)) != NULL) {
+        if (dir->d_type == DT_REG) {
+          std::string file_path = overflow_bin_path_;
+          file_path.append(dir->d_name);
+          std::size_t found = file_path.find_last_of(".");
+          if (found == std::string::npos) {
+            continue;
+          }
+          std::string overflow_time = file_path.substr(found + 1);
+          if (stod(overflow_time) <= last_overflow_bin_) {
+            MS_LOG(INFO) << "Old op overflow bin folder" << file_path;
+            continue;
+          }
+          last_overflow_bin_ = stod(overflow_time);
+        }
+      }
+      MS_LOG(INFO) << "last op overflow bin folder" << last_overflow_bin_;
+      closedir(d);
+    }
 #endif
 
-  // initialize grpc client
-  if (debugger_enabled_) {
+    // initialize grpc client
     grpc_client_ = std::make_unique<GrpcClient>(host, port);
   }
-
   debug_services_ = std::make_unique<DebugServices>();
 }
 
@@ -1054,6 +1051,17 @@ bool Debugger::CheckPort(const char *port) {
     p++;
   }
   return true;
+}
+
+bool Debugger::CheckIp(const char *host) {
+  std::regex reg_ip(
+    "(25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])"
+    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+    "[.](25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
+    "[.](25[0-4]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[1-9])");
+  std::smatch smat;
+  std::string host_str = std::string(host);
+  return std::regex_match(host_str, smat, reg_ip);
 }
 
 uint32_t Debugger::GetFirstRunGraphId() { return rungraph_id_list_.front(); }
