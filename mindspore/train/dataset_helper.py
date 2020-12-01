@@ -106,6 +106,9 @@ def connect_network_with_dataset(network, dataset_helper):
         if hasattr(dataset, '__network_manage__') and key in dataset.__network_manage__:
             network = dataset.__network_manage__[key]
         else:
+            if _need_to_full():
+                device_num = _get_device_num()
+                dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
             network = _DataWrapper(network, dataset_types, dataset_shapes, dataset.__transfer_dataset__.queue_name)
             dataset.__network_manage__ = dataset.__network_manage__ if hasattr(
                 dataset, '__network_manage__') else dict()
