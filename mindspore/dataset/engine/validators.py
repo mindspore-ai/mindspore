@@ -538,7 +538,7 @@ def check_batch(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns, output_columns,
-         column_order, pad_info], param_dict = parse_user_args(method, *args, **kwargs)
+         column_order, pad_info, python_multiprocessing], param_dict = parse_user_args(method, *args, **kwargs)
 
         if not (isinstance(batch_size, int) or (callable(batch_size))):
             raise TypeError("batch_size should either be an int or a callable.")
@@ -576,6 +576,9 @@ def check_batch(method):
 
         if column_order is not None:
             check_columns(column_order, "column_order")
+
+        if python_multiprocessing is not None:
+            type_check(python_multiprocessing, (bool,), "python_multiprocessing")
 
         return method(self, *args, **kwargs)
 
