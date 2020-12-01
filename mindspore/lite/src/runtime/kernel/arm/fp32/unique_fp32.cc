@@ -39,7 +39,7 @@ int UniqueCPUKernel::Run() {
   Unique(input, in_tensors_.at(0)->ElementsNum(), output0, &output0_len, output1);
 
   std::vector<int> out_shape = out_tensors_.at(0)->shape();
-  out_shape[out_shape.size() - 1] = output0_len;
+  out_shape.at(out_shape.size() - 1) = output0_len;
   out_tensors_.at(0)->set_shape(out_shape);
   return RET_OK;
 }

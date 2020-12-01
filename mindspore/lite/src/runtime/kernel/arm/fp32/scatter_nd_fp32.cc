@@ -73,13 +73,13 @@ int ScatterNDCPUKernel::ReSize() {
   // check update shape
   auto update_shape = update->shape();
   for (size_t i = 0; i < indices_shape.size() - 1; i++) {
-    if (update_shape[i] != indices_shape[i]) {
+    if (update_shape.at(i) != indices_shape.at(i)) {
       MS_LOG(ERROR) << "Value of " << i << " th dimension of indices is not equal to that of update.";
       return RET_ERROR;
     }
   }
   for (size_t i = 0; i < shape->ElementsNum() - (indices_shape.size() - 1); i++) {
-    if (update_shape[i + indices_shape.size() - 1] != shape_data[i + indices_shape.size() - 1]) {
+    if (update_shape.at(i + indices_shape.size() - 1) != shape_data[i + indices_shape.size() - 1]) {
       MS_LOG(ERROR) << "Value of " << i + indices_shape.size() - 1
                     << " th dimension of indices is not equal to the corresbonding dimension of shape.";
       return RET_ERROR;
@@ -90,7 +90,7 @@ int ScatterNDCPUKernel::ReSize() {
   // calculate unit_size_
   unit_size_ = 1;
   for (int i = indices_shape.size() - 1; i < update_rank; i++) {
-    unit_size_ *= update_shape[i];
+    unit_size_ *= update_shape.at(i);
   }
 
   // calculate offsets
@@ -102,9 +102,9 @@ int ScatterNDCPUKernel::ReSize() {
   }
 
   num_unit_ = 1;
-  num_unit_ *= update_shape[indices_shape.size() - 2];
+  num_unit_ *= update_shape.at(indices_shape.size() - 2);
   for (int i = indices_shape.size() - 3; i >= 0; i--) {
-    num_unit_ *= update_shape[i];
+    num_unit_ *= update_shape.at(i);
   }
 
   int *indices_ptr = reinterpret_cast<int *>(indices->MutableData());
@@ -112,7 +112,7 @@ int ScatterNDCPUKernel::ReSize() {
   for (int i = 0; i < num_unit_; i++) {
     int tmp_stride = 0;
     for (int j = 0; j < indice_unit_rank; j++) {
-      tmp_stride += indices_ptr[i * indice_unit_rank + j] * out_strides_[j] * unit_size_;
+      tmp_stride += indices_ptr[i * indice_unit_rank + j] * out_strides_.at(j) * unit_size_;
     }
     output_unit_offsets_.push_back(tmp_stride);
   }

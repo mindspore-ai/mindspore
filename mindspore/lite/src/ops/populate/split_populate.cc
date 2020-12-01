@@ -32,6 +32,10 @@ OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive
   auto param = reinterpret_cast<mindspore::lite::Split *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   split_param->op_parameter_.type_ = primitive->Type();
   split_param->num_split_ = param->GetNumberSplit();
+  if (split_param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
+    MS_LOG(ERROR) << "The value of split_param->num_split_ is too big";
+    return nullptr;
+  }
   int *split_sizes = reinterpret_cast<int *>(malloc(split_param->num_split_ * sizeof(int)));
   if (split_sizes == nullptr) {
     MS_LOG(ERROR) << "malloc split size of SplitParameter failed.";

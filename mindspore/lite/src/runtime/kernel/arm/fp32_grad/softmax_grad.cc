@@ -35,8 +35,8 @@ int SoftmaxGradCPUKernel::Init() {
   int ele_size = 1;
   param->n_dim_ = in_dims;
   for (size_t i = 0; i < in_dims; i++) {
-    param->input_shape_[i] = in_shape[i];
-    ele_size *= in_shape[i];
+    param->input_shape_[i] = in_shape.at(i);
+    ele_size *= in_shape.at(i);
   }
   param->element_size_ = ele_size;
 
@@ -50,9 +50,9 @@ int SoftmaxGradCPUKernel::Init() {
 
   inner_size_ = 1;
   for (size_t i = axis + 1; i < in_dims; i++) {
-    inner_size_ *= in_shape[i];
+    inner_size_ *= in_shape.at(i);
   }
-  set_workspace_size(inner_size_ * (1 + in_shape[axis]) * sizeof(float));
+  set_workspace_size(inner_size_ * (1 + in_shape.at(axis)) * sizeof(float));
   return RET_OK;
 }
 

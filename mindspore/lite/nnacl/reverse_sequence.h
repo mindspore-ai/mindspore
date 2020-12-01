@@ -20,14 +20,19 @@
 #include "nnacl/op_base.h"
 
 typedef struct ReverseSequenceParameter {
+  // primitive parameter
   OpParameter op_parameter_;
-  int ndim_;
+  int seq_axis_;
+  int batch_axis_;
+
+  // shape correlative
   int input_shape0_[5];
   int output_shape_[5];
   int input_stride_[5];
   int output_stride_[5];
-  int seq_axis_;
-  int batch_axis_;
+
+  // other parameter
+  int ndim_;
   int outer_count_;
   int outer_stride_;
   int inner_count_;

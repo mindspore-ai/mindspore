@@ -40,22 +40,22 @@ int StackFp16CPUKernel::Init() {
 void StackFp16CPUKernel::InitMallocFlags() {
   malloc_buffers_.resize(in_tensors_.size());
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
-    malloc_buffers_[i] = in_tensors_[i]->data_type() == kNumberTypeFloat32;
+    malloc_buffers_.at(i) = in_tensors_.at(i)->data_type() == kNumberTypeFloat32;
   }
-  malloc_out = out_tensors_[0]->data_type() == kNumberTypeFloat32;
+  malloc_out = out_tensors_.at(0)->data_type() == kNumberTypeFloat32;
 }
 
 int StackFp16CPUKernel::MallocAssignBuffer() {
   buffers_.resize(in_tensors_.size(), nullptr);
   for (size_t i = 0; i < in_tensors_.size(); ++i) {
-    buffers_[i] = ConvertInputFp32toFp16(in_tensors_[i], context_);
-    if (buffers_[i] == nullptr) {
+    buffers_.at(i) = ConvertInputFp32toFp16(in_tensors_.at(i), context_);
+    if (buffers_.at(i) == nullptr) {
       return RET_ERROR;
     }
   }
 
   out_buffer_ = nullptr;
-  out_buffer_ = MallocOutputFp16(out_tensors_[0], context_);
+  out_buffer_ = MallocOutputFp16(out_tensors_.at(0), context_);
   if (out_buffer_ == nullptr) {
     return RET_ERROR;
   }
@@ -64,9 +64,9 @@ int StackFp16CPUKernel::MallocAssignBuffer() {
 
 void StackFp16CPUKernel::FreeBuffer() {
   for (size_t i = 0; i < buffers_.size(); ++i) {
-    if (malloc_buffers_[i] && buffers_[i] != nullptr) {
-      context_->allocator->Free(buffers_[i]);
-      buffers_[i] = nullptr;
+    if (malloc_buffers_.at(i) && buffers_.at(i) != nullptr) {
+      context_->allocator->Free(buffers_.at(i));
+      buffers_.at(i) = nullptr;
     }
   }
   if (malloc_out && out_buffer_ != nullptr) {
@@ -77,9 +77,9 @@ void StackFp16CPUKernel::FreeBuffer() {
 
 int StackFp16CPUKernel::Run() {
   size_t inputs_num = in_tensors_.size();
-  auto input0 = in_tensors_[0];
+  auto input0 = in_tensors_.at(0);
   if (inputs_num == 1) {
-    memcpy(out_tensors_[0]->MutableData(), input0->MutableData(), input0->Size());
+    memcpy(out_tensors_.at(0)->MutableData(), input0->MutableData(), input0->Size());
     return RET_OK;
   }
   InitMallocFlags();

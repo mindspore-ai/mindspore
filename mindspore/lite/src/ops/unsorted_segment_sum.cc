@@ -46,8 +46,8 @@ int UnsortedSegmentSum::UnPackAttr(const Primitive &prim, const std::vector<AnfN
   }
   if (this->primitive_->value.value == nullptr) {
     std::unique_ptr<schema::UnsortedSegmentSumT> attr = std::make_unique<schema::UnsortedSegmentSumT>();
-    if (inputs[2]->isa<ValueNode>()) {
-      ValuePtr value = inputs[2]->cast<ValueNodePtr>()->value();
+    if (inputs.at(2)->isa<ValueNode>()) {
+      ValuePtr value = inputs.at(2)->cast<ValueNodePtr>()->value();
       attr->numSegments = CastToInt(value).front();
       this->primitive_->value.value = attr.release();
     }
@@ -92,14 +92,14 @@ int UnsortedSegmentSum::InferShape(std::vector<Tensor *> inputs_, std::vector<Te
   }
   Tensor *out = outputs_.front();
   Tensor *x = inputs_.front();
-  Tensor *segment_id = inputs_[1];
+  Tensor *segment_id = inputs_.at(1);
   std::vector<int> x_shape = x->shape();
   std::vector<int> segment_id_shape = segment_id->shape();
   int num_segments = GetNumSegments();
   std::vector<int> output_shape;
   output_shape.push_back(num_segments);
   for (int index = segment_id_shape.size(); index < static_cast<int>(x_shape.size()); index++) {
-    output_shape.push_back(x_shape[index]);
+    output_shape.push_back(x_shape.at(index));
   }
   out->set_shape(output_shape);
   out->set_format(x->format());

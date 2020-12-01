@@ -51,7 +51,7 @@ int ResizeCPUKernel::ReSize() {
 
     auto input = in_tensors_.at(0);
     auto input_shape = input->shape();
-    ret = PrepareResizeBilinear(input_shape.data(), out_tensors_[0]->shape().data(), align_corners_, y_bottoms_,
+    ret = PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), align_corners_, y_bottoms_,
                                 y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
     if (ret != RET_OK) {
       FreeTmpBuffer();
@@ -164,15 +164,15 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
       int n_h_begin, n_h_end;
-      int n = out_tensors_.at(0)->shape()[0];
+      int n = out_tensors_.at(0)->shape().at(0);
       int h = new_height_;
       int unit = UP_DIV(n * h, context_->thread_num_);
       n_h_begin = unit * task_id;
       n_h_end = std::min(n_h_begin + unit, n * h);
-      int c = in_tensors_.at(0)->shape()[3];
+      int c = in_tensors_.at(0)->shape().at(3);
       float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
       float *line1 = line0 + new_width_ * c;
-      ret = ResizeBilinear2(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(), y_bottoms_,
+      ret = ResizeBilinear2(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(), y_bottoms_,
                             y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, n_h_begin,
                             n_h_end);
 
@@ -186,8 +186,8 @@ int ResizeCPUKernel::RunImpl(int task_id) {
           MS_LOG(ERROR) << "The out shape data is nullptr.";
           return RET_NULL_PTR;
         } else {
-          out_tensors_[0]->shape()[1] = static_cast<int64_t>(data[0]);
-          out_tensors_[0]->shape()[2] = static_cast<int64_t>(data[1]);
+          out_tensors_.at(0)->shape().at(1) = static_cast<int64_t>(data[0]);
+          out_tensors_.at(0)->shape().at(2) = static_cast<int64_t>(data[1]);
         }
       }
       ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),

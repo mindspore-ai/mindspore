@@ -35,7 +35,7 @@ TEST_F(TestSoftmaxFp32, 001) {
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
-  SoftmaxParameter parameter = {{}, -1, 10, 4, {2, 1, 1, 5}};
+  SoftmaxParameter parameter = {{}, -1, {2, 1, 1, 5}, 10, 4};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SoftMax};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);

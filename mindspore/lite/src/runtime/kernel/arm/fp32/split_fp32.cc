@@ -77,7 +77,7 @@ int SplitCPUKernel::Run() {
   auto in_tensor = in_tensors_.front();
   input_ptr_ = reinterpret_cast<float *>(in_tensor->MutableData());
   for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_[i] = reinterpret_cast<float *>(out_tensors_.at(i)->MutableData());
+    output_ptr_.at(i) = reinterpret_cast<float *>(out_tensors_.at(i)->MutableData());
   }
   auto ret = ParallelLaunch(this->context_->thread_pool_, SplitRun, this, thread_n_num_);
   if (ret != RET_OK) {

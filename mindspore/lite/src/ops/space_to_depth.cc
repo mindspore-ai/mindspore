@@ -71,8 +71,8 @@ int SpaceToDepth::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return 1;
   }
-  outputs[0]->set_format(input->format());
-  outputs[0]->set_data_type(input->data_type());
+  outputs.at(0)->set_format(input->format());
+  outputs.at(0)->set_data_type(input->data_type());
   if (!infer_flag()) {
     return RET_OK;
   }
@@ -83,17 +83,21 @@ int SpaceToDepth::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   }
 
   int32_t block_size = GetBlockSize();
-  if (input_shape[NHWC_H] % block_size != 0 || input_shape[NHWC_H] == 0 || input_shape[NHWC_W] % block_size != 0 ||
-      input_shape[NHWC_W] == 0) {
+  if (input_shape.at(NHWC_H) % block_size != 0 || input_shape.at(NHWC_H) == 0 ||
+      input_shape.at(NHWC_W) % block_size != 0 || input_shape.at(NHWC_W) == 0) {
     MS_LOG(ERROR) << "input dimension h or w size error!";
     return 1;
   }
   std::vector<int32_t> output_shape(input_shape.size());
-  output_shape[NHWC_N] = input_shape[NHWC_N];
-  output_shape[NHWC_H] = input_shape[NHWC_H] / block_size;
-  output_shape[NHWC_W] = input_shape[NHWC_W] / block_size;
-  output_shape[NHWC_C] = input_shape[NHWC_C] * (block_size * block_size);
-  outputs[0]->set_shape(output_shape);
+  output_shape.at(NHWC_N) = input_shape.at(NHWC_N);
+  output_shape.at(NHWC_H) = input_shape.at(NHWC_H) / block_size;
+  output_shape.at(NHWC_W) = input_shape.at(NHWC_W) / block_size;
+  if (block_size * block_size > std::numeric_limits<int32_t>::max() / input_shape.at(NHWC_C)) {
+    MS_LOG(ERROR) << "The value of block_size * block_size is too big";
+    return RET_ERROR;
+  }
+  output_shape.at(NHWC_C) = input_shape.at(NHWC_C) * (block_size * block_size);
+  outputs.at(0)->set_shape(output_shape);
   return RET_OK;
 }
 }  // namespace lite

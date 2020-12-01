@@ -96,32 +96,32 @@ int ResizeInt8CPUKernel::Init() {
 
 int ResizeInt8CPUKernel::InitResizeQuantArg() {
   auto out_shape = out_tensors_.front()->shape();
-  resize_quant_arg_.x_axis_index_ = reinterpret_cast<int32_t *>(malloc(out_shape[2] * sizeof(int32_t)));
+  resize_quant_arg_.x_axis_index_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(2) * sizeof(int32_t)));
   if (resize_quant_arg_.x_axis_index_ == nullptr) {
     MS_LOG(ERROR) << "malloc x axis index array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.x_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape[2] * sizeof(int32_t)));
+  resize_quant_arg_.x_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(2) * sizeof(int32_t)));
   if (resize_quant_arg_.x_axis_lower_ == nullptr) {
     MS_LOG(ERROR) << "malloc x_axis_lower_ array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.x_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape[2] * sizeof(int32_t)));
+  resize_quant_arg_.x_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(2) * sizeof(int32_t)));
   if (resize_quant_arg_.x_axis_upper_ == nullptr) {
     MS_LOG(ERROR) << "malloc x_axis_upper_ array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.y_axis_index_ = reinterpret_cast<int32_t *>(malloc(out_shape[1] * sizeof(int32_t)));
+  resize_quant_arg_.y_axis_index_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(1) * sizeof(int32_t)));
   if (resize_quant_arg_.y_axis_index_ == nullptr) {
     MS_LOG(ERROR) << "malloc y_axis_index_ array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.y_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape[1] * sizeof(int32_t)));
+  resize_quant_arg_.y_axis_lower_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(1) * sizeof(int32_t)));
   if (resize_quant_arg_.y_axis_lower_ == nullptr) {
     MS_LOG(ERROR) << "malloc y_axis_lower_ array failed.";
     return RET_ERROR;
   }
-  resize_quant_arg_.y_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape[1] * sizeof(int32_t)));
+  resize_quant_arg_.y_axis_upper_ = reinterpret_cast<int32_t *>(malloc(out_shape.at(1) * sizeof(int32_t)));
   if (resize_quant_arg_.y_axis_upper_ == nullptr) {
     MS_LOG(ERROR) << "malloc y_axis_upper_ array failed.";
     return RET_ERROR;

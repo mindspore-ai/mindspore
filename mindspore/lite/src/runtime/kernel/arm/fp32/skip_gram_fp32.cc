@@ -68,7 +68,7 @@ int SkipGramCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  StringPack sentence = mindspore::lite::ParseTensorBuffer(in_tensors_[0]).at(0);
+  StringPack sentence = mindspore::lite::ParseTensorBuffer(in_tensors_.at(0)).at(0);
   std::vector<StringPack> words;
   ParseSentenceToWords(sentence, &words);
 
@@ -78,12 +78,12 @@ int SkipGramCPUKernel::Run() {
   int index = 1;
   int size = words.size();
   while (index >= 0) {
-    if (index < skip_gram_parameter_->ngram_size && stack[index] + 1 < size &&
-        (index == 0 || stack[index] - stack[index - 1] <= skip_gram_parameter_->max_skip_size)) {
-      stack[index]++;
+    if (index < skip_gram_parameter_->ngram_size && stack.at(index) + 1 < size &&
+        (index == 0 || stack.at(index) - stack.at(index - 1) <= skip_gram_parameter_->max_skip_size)) {
+      stack.at(index)++;
       index++;
       if (index < skip_gram_parameter_->ngram_size) {
-        stack[index] = stack[index - 1];
+        stack.at(index) = stack.at(index - 1);
       }
     } else {
       if (index > 0 && ((skip_gram_parameter_->include_all_ngrams && index <= skip_gram_parameter_->ngram_size) ||
@@ -92,16 +92,16 @@ int SkipGramCPUKernel::Run() {
         char blank[1] = {' '};
         StringPack blank_str = {1, blank};
         for (int i = 0; i < 2 * index - 2; i += 2) {
-          gram[i] = words[stack[i / 2]];
-          gram[i + 1] = blank_str;
+          gram.at(i) = words.at(stack.at(i / 2));
+          gram.at(i + 1) = blank_str;
         }
-        gram[2 * index - 2] = words[stack[index - 1]];
+        gram.at(2 * index - 2) = words.at(stack.at(index - 1));
         result.push_back(gram);
       }
       index--;
     }
   }
-  auto ret = mindspore::lite::WriteSeperatedStringsToTensor(out_tensors_[0], result);
+  auto ret = mindspore::lite::WriteSeperatedStringsToTensor(out_tensors_.at(0), result);
   return ret;
 }
 

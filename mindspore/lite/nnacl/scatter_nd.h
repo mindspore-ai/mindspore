@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct ScatterNDParameter {
+  // primitive parameter
   OpParameter op_parameter_;
 } ScatterNDParameter;
 

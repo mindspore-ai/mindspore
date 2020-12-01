@@ -44,8 +44,8 @@ int UpsampleCPUKernel::ReSize() {
     MS_LOG(ERROR) << "Upsample out tensor dim should be 4";
     return RET_ERROR;
   }
-  new_height_ = out_shape[1];
-  new_width_ = out_shape[2];
+  new_height_ = out_shape.at(1);
+  new_width_ = out_shape.at(2);
 
   if (param_->method_ == 0) {  // bilinear
     FreeTmpBuffer();
@@ -96,12 +96,12 @@ int UpsampleCPUKernel::RunImpl(int task_id) {
   switch (param_->method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
       int n_h_begin, n_h_end;
-      int n = out_tensor->shape()[0];
+      int n = out_tensor->shape().at(0);
       int h = new_height_;
       int unit = UP_DIV(n * h, context_->thread_num_);
       n_h_begin = unit * task_id;
       n_h_end = std::min(n_h_begin + unit, n * h);
-      int c = in_tensors_.at(0)->shape()[3];
+      int c = in_tensors_.at(0)->shape().at(3);
       float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
       float *line1 = line0 + new_width_ * c;
       ret =

@@ -23,12 +23,17 @@
 #endif
 
 typedef struct TransposeParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   int perm_[8];
   bool conjugate_;
-  int num_axes_;
+
+  // shape correlative
   int strides_[8];
   int out_strides_[8];
+
+  // other parameter
+  int num_axes_;
   int data_size_;
 } TransposeParameter;
 

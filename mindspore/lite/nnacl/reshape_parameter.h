@@ -21,7 +21,10 @@
 #include "nnacl/quantization/quantize.h"
 
 typedef struct ReshapeParameter {
+  // primitive parameter
   OpParameter op_parameter_;
+
+  // other parameter
   ReshapeQuantArg quant_para_;
   int thread_count_;
 } ReshapeParameter;

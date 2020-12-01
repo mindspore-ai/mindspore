@@ -45,12 +45,12 @@ int SpaceToDepthCPUKernel::Init() {
 }
 
 int SpaceToDepthCPUKernel::ReSize() {
-  if (in_tensors_[0]->format() != schema::Format::Format_NHWC) {
+  if (in_tensors_.at(0)->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
     return RET_FORMAT_ERR;
   }
 
-  num_unit_ = static_cast<int>(out_tensors_[0]->shape().at(kNHWC_H));
+  num_unit_ = static_cast<int>(out_tensors_.at(0)->shape().at(kNHWC_H));
   thread_h_num_ = MSMIN(op_parameter_->thread_num_, num_unit_);
   thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   return RET_OK;
@@ -62,8 +62,8 @@ int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
     return RET_OK;
   }
   int thread_offset = task_id * thread_h_stride_;
-  auto in_shape = in_tensors_[0]->shape();
-  auto out_shape = out_tensors_[0]->shape();
+  auto in_shape = in_tensors_.at(0)->shape();
+  auto out_shape = out_tensors_.at(0)->shape();
   SpaceToDepthParameter *param = reinterpret_cast<SpaceToDepthParameter *>(op_parameter_);
   MS_ASSERT(param);
   MS_ASSERT(input_ptr_);
@@ -88,9 +88,9 @@ int SpaceToDepthRun(void *cdata, int task_id) {
 }
 
 int SpaceToDepthCPUKernel::Run() {
-  input_ptr_ = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
-  if (in_tensors_[0]->format() == schema::Format::Format_NHWC) {
+  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  if (in_tensors_.at(0)->format() == schema::Format::Format_NHWC) {
     auto ret = ParallelLaunch(this->context_->thread_pool_, SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SpaceToDepth error error_code[" << ret << "]";

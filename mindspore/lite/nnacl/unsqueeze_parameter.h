@@ -22,17 +22,22 @@
 #define UNSQUEEZE_OFFSET_MAX_SIZE 4
 
 typedef struct UnSqueezeParameter {
+  // primitive parameter
   OpParameter op_parameter_;
+  int64_t axis_;
+
+  // shape correlative
+  const int *in_shape_;
+  const int *out_shape_;
+  int input_dim_;
+  int64_t offset_[UNSQUEEZE_OFFSET_MAX_SIZE];
+  int64_t in_offset_[UNSQUEEZE_OFFSET_MAX_SIZE];
+
+  // other parameter
   UnSqueezeQuantArg quant_arg;
   int thread_count_;
   int thread_id_;
   int offset_size_;
-  int64_t offset_[UNSQUEEZE_OFFSET_MAX_SIZE];
-  int64_t in_offset_[UNSQUEEZE_OFFSET_MAX_SIZE];
-  int64_t axis_;
-  const int *in_shape_;
-  const int *out_shape_;
-  int input_dim_;
 } UnSqueezeParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_UNSQUEEZE_PARAMETER_H_

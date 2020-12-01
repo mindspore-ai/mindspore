@@ -90,8 +90,8 @@ int TransposeInt8CPUKernel::ReSize() {
   transpose_param_->strides_[transpose_param_->num_axes_ - 1] = 1;
   transpose_param_->out_strides_[transpose_param_->num_axes_ - 1] = 1;
   for (int i = transpose_param_->num_axes_ - 2; i >= 0; i--) {
-    transpose_param_->strides_[i] = in_shape[i + 1] * transpose_param_->strides_[i + 1];
-    transpose_param_->out_strides_[i] = out_shape[i + 1] * transpose_param_->out_strides_[i + 1];
+    transpose_param_->strides_[i] = in_shape.at(i + 1) * transpose_param_->strides_[i + 1];
+    transpose_param_->out_strides_[i] = out_shape.at(i + 1) * transpose_param_->out_strides_[i + 1];
   }
 
   extra_dims_ = out_shape.size() > MAX_TRANSPOSE_DIM_SIZE;

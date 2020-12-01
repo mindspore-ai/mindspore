@@ -33,13 +33,13 @@ namespace mindspore::kernel {
 int SgdCPUKernel::ReSize() { return RET_OK; }
 
 int SgdCPUKernel::Execute(int task_id) {
-  auto weight = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  auto accumulate = reinterpret_cast<float *>(in_tensors_[3]->MutableData());
-  float learning_rate = reinterpret_cast<float *>(in_tensors_[2]->MutableData())[0];
-  auto gradient = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
-  float moment = reinterpret_cast<float *>(in_tensors_[4]->MutableData())[0];
-  size_t elem_num = in_tensors_[0]->ElementsNum();
-  auto stat = reinterpret_cast<float *>(in_tensors_[5]->MutableData());
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
+  float learning_rate = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData())[0];
+  auto gradient = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+  size_t elem_num = in_tensors_.at(0)->ElementsNum();
+  auto stat = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
 
   if (stat[0] > 0) {
     stat[0] = 0;
@@ -96,8 +96,8 @@ int SgdCPUKernel::Run() {
 
 int SgdCPUKernel::Init() {
   // Only for test with uninitialized Data
-  size_t elem_num = in_tensors_[0]->ElementsNum();
-  auto accumulate = reinterpret_cast<float *>(in_tensors_[3]->MutableData());
+  size_t elem_num = in_tensors_.at(0)->ElementsNum();
+  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
   for (size_t i = 0; i < elem_num; i++) {
     accumulate[i] = 0.0;
   }

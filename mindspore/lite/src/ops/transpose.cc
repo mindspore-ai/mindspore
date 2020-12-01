@@ -62,7 +62,7 @@ int Transpose::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &
         auto tuple = val->cast<ValueTuplePtr>();
         MS_ASSERT(tuple != nullptr);
         for (size_t i = 0; i < tuple->size(); i++) {
-          auto elem = tuple->value()[i];
+          auto elem = tuple->value().at(i);
           MS_ASSERT(elem != nullptr);
           attr->perm.emplace_back(CastToInt(elem).front());
         }
@@ -134,13 +134,13 @@ int Transpose::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
   }
   std::vector<int> perm;
   for (size_t i = 0; i < GetPerm().size(); i++) {
-    perm.push_back(GetPerm()[i]);
+    perm.push_back(GetPerm().at(i));
   }
   std::vector<int> in_shape = input->shape();
   std::vector<int> out_shape;
   out_shape.resize(perm.size());
   for (size_t i = 0; i < perm.size(); ++i) {
-    out_shape[i] = in_shape[perm[i]];
+    out_shape.at(i) = in_shape.at(perm.at(i));
   }
   output->set_shape(out_shape);
   return RET_OK;

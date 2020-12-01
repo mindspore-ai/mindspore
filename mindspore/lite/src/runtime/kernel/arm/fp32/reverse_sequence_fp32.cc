@@ -39,14 +39,14 @@ void ReverseSequenceCPUKernel::ConvertAxisToPositive(const std::vector<int> shap
 int ReverseSequenceCPUKernel::CalcCountPreAxis(const std::vector<int> shape, int axis) {
   int count = 1;
   for (int i = 0; i < axis; ++i) {
-    count *= shape[i];
+    count *= shape.at(i);
   }
   return count;
 }
 int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, int axis) {
   int count = 1;
   for (size_t i = axis + 1; i < shape.size(); ++i) {
-    count *= shape[i];
+    count *= shape.at(i);
   }
   return count;
 }

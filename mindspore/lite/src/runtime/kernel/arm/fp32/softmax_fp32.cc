@@ -51,11 +51,11 @@ int SoftmaxCPUKernel::ReSize() {
   auto in_shape = in_tensors_.front()->shape();
   int out_plane_size = 1;
   for (int i = 0; i < axis; ++i) {
-    out_plane_size *= in_shape[i];
+    out_plane_size *= in_shape.at(i);
   }
   int in_plane_size = 1;
   for (int i = axis + 1; i < n_dim; i++) {
-    in_plane_size *= in_shape[i];
+    in_plane_size *= in_shape.at(i);
   }
   in_plane_size_ = in_plane_size;
   out_plane_size_ = out_plane_size;

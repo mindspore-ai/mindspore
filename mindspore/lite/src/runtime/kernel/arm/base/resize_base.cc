@@ -57,7 +57,7 @@ int ResizeBaseCPUKernel::CheckParameters() {
       return RET_INVALID_OP_ATTR;
     }
   } else if (this->in_tensors_.size() == lite::kDoubleNum) {
-    auto out_shape = this->in_tensors_[1]->data_c();
+    auto out_shape = this->in_tensors_.at(1)->data_c();
     if (out_shape == nullptr) {
       MS_LOG(INFO) << "Out shape is not assigned";
       const_shape_ = false;

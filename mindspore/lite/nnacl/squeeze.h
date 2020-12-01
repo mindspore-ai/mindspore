@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct SqueezeParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   int axes_[8];
 } SqueezeParameter;

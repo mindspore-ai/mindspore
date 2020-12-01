@@ -41,7 +41,7 @@ bool TensorListFromTensorCPUKernel::IsCompatibleShape() {
   }
   int *elements_shape = reinterpret_cast<int *>(input1_->data_c());  // element shape in tensor data
   for (int i = 0; i < in1_ele_num; ++i) {
-    const int dim0 = tensor_shape[i + 1];
+    const int dim0 = tensor_shape.at(i + 1);
     const int dim1 = *(elements_shape + i);
     if (dim0 >= 0 && dim1 >= 0 && dim0 != dim1) {
       MS_LOG(ERROR) << "input0_->shape()[" << i + 1 << "]:" << dim0 << " is not equal input1_->data_c()[" << i
@@ -53,17 +53,17 @@ bool TensorListFromTensorCPUKernel::IsCompatibleShape() {
 }
 
 int TensorListFromTensorCPUKernel::Init() {
-  input0_ = in_tensors_[0];  // row tensor
-  input1_ = in_tensors_[1];  // element_shape tensor
-  output0_ = out_tensors_[0];
-  output1_ = out_tensors_[1];
+  input0_ = in_tensors_.at(0);  // row tensor
+  input1_ = in_tensors_.at(1);  // element_shape tensor
+  output0_ = out_tensors_.at(0);
+  output1_ = out_tensors_.at(1);
   return IsCompatibleShape();
 }
 
 int TensorListFromTensorCPUKernel::ReSize() { return RET_OK; }
 
 int TensorListFromTensorCPUKernel::Run() {
-  int dim0 = input0_->shape()[0];
+  int dim0 = input0_->shape().at(0);
   size_t devision_dim0 = input0_->ElementsNum() / dim0;
   auto out0_ptr = reinterpret_cast<int *>(output0_->MutableData());
   *out0_ptr = dim0;
@@ -81,7 +81,7 @@ int TensorListFromTensorCPUKernel::Run() {
   auto in_ptr = reinterpret_cast<float *>(input0_);
   size_t index = 0;
   for (int i = 0; i < dim0; ++i) {
-    auto out_ptr = reinterpret_cast<float *>(out_tensors_[i + 2]->MutableData());
+    auto out_ptr = reinterpret_cast<float *>(out_tensors_.at(i + 2)->MutableData());
     memcpy(out_ptr, in_ptr + index, devision_dim0 * sizeof(float));
     index += devision_dim0;
   }

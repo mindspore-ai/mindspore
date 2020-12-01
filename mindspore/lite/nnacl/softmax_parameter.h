@@ -20,11 +20,16 @@
 #include "nnacl/op_base.h"
 
 typedef struct SoftmaxParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   int32_t axis_;
+
+  // shape correlative
+  int input_shape_[5];
+
+  // other parameter
   int element_size_;
   int n_dim_;
-  int input_shape_[5];
 } SoftmaxParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_SOFTMAX_PARAMETER_H_

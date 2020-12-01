@@ -72,9 +72,9 @@ int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
     return RET_OK;
   }
   auto out_shape = input->shape();
-  out_shape[out_shape.size() - 1] = GetK();
+  out_shape.at(out_shape.size() - 1) = GetK();
   if (inputs_.size() == kDoubleNum && inputs_.at(1)->data_c() != nullptr) {
-    out_shape[out_shape.size() - 1] = reinterpret_cast<int *>(inputs_.at(1)->data_c())[0];
+    out_shape.at(out_shape.size() - 1) = reinterpret_cast<int *>(inputs_.at(1)->data_c())[0];
   }
   output0->set_shape(out_shape);
   output1->set_shape(out_shape);

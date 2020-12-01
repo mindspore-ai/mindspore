@@ -141,10 +141,10 @@ int ScaleInt8CPUKernel::InitParameter() {
     second_in_shape_.resize(len);
     size_t i = 0;
     for (; i < input1_size; ++i) {
-      second_in_shape_[i] = input1_shape[i];
+      second_in_shape_.at(i) = input1_shape.at(i);
     }
     for (; i < len; ++i) {
-      second_in_shape_[i] = 1;
+      second_in_shape_.at(i) = 1;
     }
     input1_size = len;
   }
@@ -164,7 +164,7 @@ int ScaleInt8CPUKernel::InitParameter() {
       if (i < fill_dim_num) {
         tile_para->in_shape1_[i] = 1;
       } else {
-        tile_para->in_shape1_[i] = second_in_shape_[j++];
+        tile_para->in_shape1_[i] = second_in_shape_.at(j++);
       }
       tile_para->out_shape_[i] = out_tensors_.at(0)->DimensionSize(i);
     }

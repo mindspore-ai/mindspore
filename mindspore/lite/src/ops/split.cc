@@ -119,8 +119,8 @@ int Split::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
     return RET_ERROR;
   }
   for (int i = 0; i < number_split; ++i) {
-    outputs_[i]->set_data_type(input->data_type());
-    outputs_[i]->set_format(input->format());
+    outputs_.at(i)->set_data_type(input->data_type());
+    outputs_.at(i)->set_format(input->format());
   }
   if (!infer_flag()) {
     return RET_OK;
@@ -129,26 +129,26 @@ int Split::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   std::vector<int> input_shape = input->shape();
   std::vector<int> size_split;
   for (size_t i = 0; i < GetSizeSplits().size(); ++i) {
-    size_split.push_back(GetSizeSplits()[i]);
+    size_split.push_back(GetSizeSplits().at(i));
   }
   for (int i = 0; i < number_split; ++i) {
     std::vector<int> output_shape;
     output_shape.insert(output_shape.begin(), input_shape.begin(), input_shape.end());
-    int split_dim_i = input_shape[split_dim];
+    int split_dim_i = input_shape.at(split_dim);
     // support split size is -1 in the end.
     if (size_split.empty()) {
-      split_dim_i = input_shape[split_dim] / number_split;
-    } else if (i == number_split - 1 && size_split[i] == -1) {
+      split_dim_i = input_shape.at(split_dim) / number_split;
+    } else if (i == number_split - 1 && size_split.at(i) == -1) {
       for (size_t j = 0; j < size_split.size() - 1; ++j) {
-        split_dim_i -= size_split[j];
+        split_dim_i -= size_split.at(j);
       }
     } else {
-      split_dim_i = size_split[i];
+      split_dim_i = size_split.at(i);
     }
-    output_shape[split_dim] = split_dim_i;
-    outputs_[i]->set_shape(output_shape);
-    outputs_[i]->set_data_type(input->data_type());
-    outputs_[i]->set_format(input->format());
+    output_shape.at(split_dim) = split_dim_i;
+    outputs_.at(i)->set_shape(output_shape);
+    outputs_.at(i)->set_data_type(input->data_type());
+    outputs_.at(i)->set_format(input->format());
   }
   return RET_OK;
 }

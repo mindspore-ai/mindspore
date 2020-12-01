@@ -76,7 +76,7 @@ int Reduce::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
 
     attr->keepDims = GetValue<bool>(prim.GetAttr("keep_dims"));
     if (inputs.size() == kAnfPopulaterInputNumTwo) {
-      auto inputNode = inputs[kAnfPopulaterInputNumOne];
+      auto inputNode = inputs.at(kAnfPopulaterInputNumOne);
       MS_ASSERT(inputNode != nullptr);
       if (inputNode->isa<ValueNode>()) {
         auto valueNode = inputNode->cast<ValueNodePtr>();
@@ -178,7 +178,7 @@ int Reduce::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
     }
 
     int begin_axis;
-    begin_axis = axes[0] < 0 ? axes[0] + rank : axes[0];
+    begin_axis = axes.at(0) < 0 ? axes.at(0) + rank : axes.at(0);
     for (auto i = begin_axis + 1; i < rank; ++i) {
       actual_axes.emplace_back(i);
     }
@@ -200,7 +200,8 @@ int Reduce::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   for (size_t i = 0; i < in_shape.size(); i++) {
     bool reduce_axis = false;
     for (size_t idx = 0; idx < num_axes; ++idx) {
-      if (static_cast<size_t>(actual_axes[idx]) == i || static_cast<size_t>(actual_axes[idx] + in_shape.size()) == i) {
+      if (static_cast<size_t>(actual_axes.at(idx)) == i ||
+          static_cast<size_t>(actual_axes.at(idx) + in_shape.size()) == i) {
         reduce_axis = true;
         break;
       }
@@ -210,7 +211,7 @@ int Reduce::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
         out_shape.push_back(1);
       }
     } else {
-      out_shape.push_back(in_shape[i]);
+      out_shape.push_back(in_shape.at(i));
     }
   }
   output->set_shape(out_shape);

@@ -18,6 +18,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct SpaceToDepthParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   int32_t block_size_;
 } SpaceToDepthParameter;
