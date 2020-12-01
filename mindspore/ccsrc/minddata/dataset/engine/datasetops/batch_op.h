@@ -199,6 +199,12 @@ class BatchOp : public ParallelOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status PreAccept(NodePass *p, bool *modified) override;
+
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return kBatchOp; }

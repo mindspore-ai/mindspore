@@ -454,6 +454,11 @@ Status NodePass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified) {
   return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
 }
 
+Status NodePass::PreRunOnNode(std::shared_ptr<BatchOp> node, bool *modified) {
+  // Fallback to base class visitor by default
+  return PreRunOnNode(std::static_pointer_cast<DatasetOp>(node), modified);
+}
+
 #ifndef ENABLE_ANDROID
 Status NodePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
   // Fallback to base class visitor by default

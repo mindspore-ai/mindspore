@@ -51,6 +51,13 @@ namespace dataset {
     }                                                                      \
   } while (false)
 
+#define CHECK_FAIL_RETURN_SYNTAX_ERROR(_condition, _e)                 \
+  do {                                                                 \
+    if (!(_condition)) {                                               \
+      return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, _e); \
+    }                                                                  \
+  } while (false)
+
 #define RETURN_UNEXPECTED_IF_NULL(_ptr)                                         \
   do {                                                                          \
     if ((_ptr) == nullptr) {                                                    \

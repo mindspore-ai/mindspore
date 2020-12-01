@@ -58,7 +58,7 @@ Status CacheTransformPass::CachePass::PreRunOnNode(std::shared_ptr<CacheOp> node
   *modified = false;
   MS_LOG(INFO) << "Cache transform pass: CacheOp found, identified descendant tree.";
   if (is_caching_) {
-    RETURN_STATUS_UNEXPECTED("Nested cache operations is not supported!");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Nested cache operations is not supported!");
   }
   is_caching_ = true;
   return Status::OK();
@@ -102,7 +102,8 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CacheOp> node, b
 Status CacheTransformPass::CachePass::MappableCacheLeafSetup(std::shared_ptr<DatasetOp> leaf_op) {
   // If a leaf has already been assigned, then we have more than one leaf inside this cache descendant tree.
   if (is_caching_ && leaf_op_) {
-    RETURN_STATUS_UNEXPECTED("There is currently no support for multiple leaf nodes under cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "There is currently no support for multiple leaf nodes under cache.");
   }
 
   // If we are a leaf in the caching path, then save this leaf.
@@ -117,7 +118,8 @@ Status CacheTransformPass::CachePass::MappableCacheLeafSetup(std::shared_ptr<Dat
 Status CacheTransformPass::CachePass::NonMappableCacheLeafSetup(std::shared_ptr<DatasetOp> leaf_op) {
   // If a leaf has already been assigned, then we have more than one leaf inside this cache descendant tree.
   if (is_caching_ && leaf_op_) {
-    RETURN_STATUS_UNEXPECTED("There is currently no support for multiple leaf nodes under cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "There is currently no support for multiple leaf nodes under cache.");
   }
 
   // Sampler for non mappable dataset only works if there is a downstream cache. Remove it from the leaf
@@ -215,7 +217,8 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CelebAOp> node, 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
   if (is_caching_) {
-    RETURN_STATUS_UNEXPECTED("There is currently no support for MindRecordOp under cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "There is currently no support for MindRecordOp under cache.");
   }
   return Status::OK();
 }
@@ -225,7 +228,8 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> no
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
   if (is_caching_) {
-    RETURN_STATUS_UNEXPECTED("There is currently no support for GeneratorOp under cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "There is currently no support for GeneratorOp under cache.");
   }
   return Status::OK();
 }

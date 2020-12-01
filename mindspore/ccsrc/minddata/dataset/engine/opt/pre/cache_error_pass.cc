@@ -87,6 +87,16 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified
   return Status::OK();
 }
 
+// Returns an error if SkipOp exists under a cache
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<BatchOp> node, bool *modified) {
+  if (is_cached_) {
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "BatchOp is currently not supported as a descendant operator under a cache.");
+  }
+
+  return Status::OK();
+}
+
 #ifdef ENABLE_PYTHON
 // Returns an error if FilterOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
@@ -169,7 +179,8 @@ Status CacheErrorPass::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) 
 // Because there is no operator in the cache hit stream to consume eoes, caching above repeat causes problem.
 Status CacheErrorPass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
   if (is_cached_ && is_mappable_) {
-    RETURN_STATUS_UNEXPECTED("Repeat is not supported as a descendant operator under a mappable cache.");
+    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+                  "Repeat is not supported as a descendant operator under a mappable cache.");
   }
 
   return Status::OK();
