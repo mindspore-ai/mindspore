@@ -205,10 +205,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
-
-  // warm up loop
   for (int i = 0; i < 3; i++) {
-    kernel->Run();
   }
 
   // runtime part
@@ -631,6 +628,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
+
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
 
   // warm up loop

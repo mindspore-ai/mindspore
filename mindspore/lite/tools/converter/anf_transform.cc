@@ -109,9 +109,11 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     fusion_pm->AddPass(remove_unused_transpose_pass);
   }
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
-  auto inne_context_ptr = std::make_shared<lite::InnerContext>();
-  inne_context_ptr->Init();
-  const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(inne_context_ptr));
+  if (!config->trainModel) {
+    auto inne_context_ptr = std::make_shared<lite::InnerContext>();
+    inne_context_ptr->Init();
+    const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(inne_context_ptr));
+  }
   const_fold_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
   fusion_pm->AddPass(std::make_shared<opt::ConvConvFusion>());
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());

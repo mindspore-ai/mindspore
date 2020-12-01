@@ -38,7 +38,7 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
   ~SparseSoftmaxCrossEntropyWithLogitsCPUKernel() override {}
 
   int ForwardPostExecute(const int *labels, const float *losses, float *output) const;
-  int GradPostExecute(const int *labels, const float *losses, float *grads, float *output) const;
+  int GradPostExecute(const int *labels, const float *losses, float *grads) const;
 
   int Init() override;
   int ReSize() override;

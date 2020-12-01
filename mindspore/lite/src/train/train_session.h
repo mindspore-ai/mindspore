@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include "src/ops/primitive_c.h"
 #include "include/train_session.h"
-#include "include/train_model.h"
+#include "src/train/train_model.h"
 #include "src/lite_session.h"
 
 /*
@@ -52,7 +52,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
   int CompileGraph(lite::Model *model) override;
-  int CompileTrainGraph(lite::TrainModel *model) override;
+  virtual int CompileTrainGraph(lite::TrainModel *model);
 
   void *ExportToBuf(char *buf, size_t *len) const override;
   int SaveToFile(const std::string &filename) const override;
@@ -80,24 +80,34 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
     return lite::LiteSession::Resize(inputs, dims);
   }
 
-  void UpdateOutputMapByInKernel(const kernel::LiteKernel *kernel);
-  void UpdateOutputMapByLossKernel(const kernel::LiteKernel *kernel);
-
  protected:
   void AllocWorkSpace();
   bool IsLossKernel(const kernel::LiteKernel *kernel) const;
   bool IsOptimizer(kernel::LiteKernel *kernel) const;
-  virtual void MarkOptimizedKernels();
+  bool IsMaskOutput(kernel::LiteKernel *kernel) const;
   virtual std::vector<CreatorOp> ReplaceOps();
   virtual void RestoreOps(const std::vector<CreatorOp> &restore);
-  virtual void BuildInferenceKernelsMap();
-  virtual void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
   virtual void CompileTrainKernels();
+  virtual void CompileInferenceKernels();
+  virtual void CompileOptimizedKernels();
+  virtual void CompileTrainOutputs();
+  virtual void CompileEvalOutputs();
+
   TrainModel *model_ = nullptr;
-  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_map_;
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> orig_output_node_map_;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> orig_output_tensor_map_;
+
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> eval_output_node_map_;
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *> eval_output_tensor_map_;
+
+  std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> train_output_node_map_;
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *> train_output_tensor_map_;
+
   std::vector<kernel::LiteKernel *> inference_kernels_;
   std::vector<kernel::LiteKernel *> train_kernels_;
+
+ private:
+  void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
 };
 }  // namespace lite
 }  // namespace mindspore

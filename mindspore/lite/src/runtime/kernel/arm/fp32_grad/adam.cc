@@ -45,22 +45,28 @@ int AdamCPUKernel::Execute(int task_id) {
   auto eps = reinterpret_cast<float *>(in_tensors_[8]->MutableData())[0];
   auto gradient = reinterpret_cast<float *>(in_tensors_[9]->MutableData());
   size_t elem_num = in_tensors_[0]->ElementsNum();
-  if (fabs(1 - beta1_power) <= 0.0f) {
-    MS_LOG(ERROR) << "divisor cannot be 0";
+
+  if ((1.f - beta1_power) <= 0.0f) {
+    MS_LOG(ERROR) << "divisor cannot be 0 or below";
     return RET_ERROR;
   }
-  auto update_lr = learning_rate * std::sqrt(1 - beta2_power) / (1 - beta1_power);
+  if ((1.f - beta2_power) < 0.0f) {
+    MS_LOG(ERROR) << "sqrt cannot be negative";
+    return RET_ERROR;
+  }
+
+  auto update_lr = learning_rate * std::sqrt(1.f - beta2_power) / (1.f - beta1_power);
 
   if (adam_param_->use_nesterov_) {  // Nadam
     for (size_t i = 0; i < elem_num; ++i) {
-      m[i] += (gradient[i] - m[i]) * (1 - beta1);
-      v[i] += (gradient[i] * gradient[i] - v[i]) * (1 - beta2);
-      weight[i] -= update_lr * (m[i] * beta1 + (1 - beta1) * gradient[i]) / (std::sqrt(v[i]) + eps);
+      m[i] += (gradient[i] - m[i]) * (1.f - beta1);
+      v[i] += (gradient[i] * gradient[i] - v[i]) * (1.f - beta2);
+      weight[i] -= update_lr * (m[i] * beta1 + (1.f - beta1) * gradient[i]) / (std::sqrt(v[i]) + eps);
     }
   } else {
     for (size_t i = 0; i < elem_num; ++i) {
-      m[i] += (gradient[i] - m[i]) * (1 - beta1);
-      v[i] += (gradient[i] * gradient[i] - v[i]) * (1 - beta2);
+      m[i] += (gradient[i] - m[i]) * (1.f - beta1);
+      v[i] += (gradient[i] * gradient[i] - v[i]) * (1.f - beta2);
       weight[i] -= update_lr * m[i] / (std::sqrt(v[i]) + eps);
     }
   }

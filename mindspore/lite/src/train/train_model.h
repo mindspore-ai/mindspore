@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_INCLUDE_TRAIN_MODEL_H_
-#define MINDSPORE_LITE_INCLUDE_TRAIN_MODEL_H_
+#ifndef MINDSPORE_LITE_SRC_TRAIN_TRAIN_MODEL_H_
+#define MINDSPORE_LITE_SRC_TRAIN_TRAIN_MODEL_H_
 #include <vector>
 #include "include/model.h"
 
@@ -50,4 +50,4 @@ struct TrainModel : public lite::Model {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_INCLUDE_TRAIN_MODEL_H_
+#endif  // MINDSPORE_LITE_SRC_TRAIN_TRAIN_MODEL_H_

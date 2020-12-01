@@ -55,9 +55,9 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
 
   std::vector<lite::Tensor *> inputs = {&y_tensor, &l_tensor};
 
-  auto loss = new float[1];
+  auto loss = new float[6];
   ASSERT_NE(loss, nullptr);
-  std::vector<int> dim_dw({1});
+  std::vector<int> dim_dw({6, 1});
   lite::Tensor loss_tensor(TypeId::kNumberTypeFloat32, dim_dw);
   loss_tensor.set_data(loss);
   auto grad = new float[24];

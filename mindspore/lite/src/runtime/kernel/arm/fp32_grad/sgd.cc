@@ -39,16 +39,37 @@ int SgdCPUKernel::Execute(int task_id) {
   auto gradient = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   float moment = reinterpret_cast<float *>(in_tensors_[4]->MutableData())[0];
   size_t elem_num = in_tensors_[0]->ElementsNum();
+  auto stat = reinterpret_cast<float *>(in_tensors_[5]->MutableData());
 
-  if (sgd_param_->use_nesterov_) {
-    for (size_t i = 0; i < elem_num; ++i) {
-      accumulate[i] = accumulate[i] * moment + gradient[i];
-      weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
+  if (stat[0] > 0) {
+    stat[0] = 0;
+    memcpy(accumulate, gradient, elem_num * sizeof(float));
+    if (sgd_param_->use_nesterov_) {
+      for (size_t i = 0; i < elem_num; ++i) {
+        weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
+      }
+    } else {
+      for (size_t i = 0; i < elem_num; ++i) {
+        weight[i] -= accumulate[i] * learning_rate;
+      }
     }
   } else {
-    for (size_t i = 0; i < elem_num; ++i) {
-      accumulate[i] = accumulate[i] * moment + gradient[i] * (1.f - sgd_param_->dampening_);
-      weight[i] -= accumulate[i] * learning_rate;
+    if (moment > 0.f) {
+      if (sgd_param_->use_nesterov_) {
+        for (size_t i = 0; i < elem_num; ++i) {
+          accumulate[i] = accumulate[i] * moment + gradient[i] * (1.f - sgd_param_->dampening_);
+          weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
+        }
+      } else {
+        for (size_t i = 0; i < elem_num; ++i) {
+          accumulate[i] = accumulate[i] * moment + gradient[i] * (1.f - sgd_param_->dampening_);
+          weight[i] -= accumulate[i] * learning_rate;
+        }
+      }
+    } else {
+      for (size_t i = 0; i < elem_num; ++i) {
+        weight[i] -= gradient[i] * learning_rate;
+      }
     }
   }
   return RET_OK;

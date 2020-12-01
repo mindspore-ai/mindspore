@@ -140,6 +140,21 @@ int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
 
   std::vector<int> out_shape;
   std::vector<int> multiples = GetMultiples();
+
+#ifdef SUPPORT_TRAIN
+  const size_t in_dims = input->shape().size();
+  const size_t delta_dims = in_dims - multiples.size();
+
+  size_t i = 0;
+  for (; i < delta_dims; ++i) {
+    int tmp = input->shape().at(i);
+    out_shape.push_back(tmp);
+  }
+  for (; i < in_dims; ++i) {
+    int tmp = input->shape().at(i) * (multiples[i - delta_dims]);
+    out_shape.push_back(tmp);
+  }
+#else
   std::vector<int> dims = GetDims();
   const size_t in_dims = input->shape().size();
 
@@ -150,7 +165,7 @@ int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   for (size_t i = 0; i < dims.size(); ++i) {
     out_shape[dims[i]] = input->shape()[dims[i]] * (multiples[i]);
   }
-
+#endif
   output->set_shape(out_shape);
   return RET_OK;
 }

@@ -20,7 +20,6 @@
 #include <tuple>
 #include <unordered_map>
 #include "include/lite_session.h"
-#include "include/train_model.h"
 
 namespace mindspore {
 namespace session {
@@ -33,19 +32,23 @@ class TrainSession : public session::LiteSession {
 
   /// \brief Static method to create a TrainSession object
   ///
+  /// \param[in] model_buf A buffer that was read from a MS model file
+  /// \param[in] size Length of the buffer
   /// \param[in] context Defines the context of the session to be created
+  /// \param[in] train_mode training mode to initialize Session with
   ///
   /// \return Pointer of MindSpore Lite TrainSession
-  static TrainSession *CreateSession(lite::Context *context);
+  static TrainSession *CreateSession(const char *model_buf, size_t size, lite::Context *context,
+                                     bool train_mode = false);
 
-  /// \brief Compile MindSpore Lite train model
+  /// \brief Static method to create a TrainSession object
   ///
-  /// \note CompileTrainGraph should be called before RunGraph
+  /// \param[in] filename Filename to read flatbuffer from
+  /// \param[in] context Defines the context of the session to be created
+  /// \param[in] train_mode training mode to initialize Session with
   ///
-  /// \param[in] model Define the model to be compiled
-  ///
-  /// \return STATUS as an error code of compiling graph, STATUS is defined in errorcode.h
-  virtual int CompileTrainGraph(lite::TrainModel *model) = 0;
+  /// \return Pointer of MindSpore Lite TrainSession
+  static TrainSession *CreateSession(const std::string &filename, lite::Context *context, bool train_mode = false);
 
   /// \brief Export the trained model into a buffer
   ///

@@ -111,8 +111,8 @@ int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
     attr->padRight = pad_list[3];
 
     auto dilation = CastToInt(prim.GetAttr("dilation"));
-    attr->dilateH = dilation[0];
-    attr->dilateW = dilation[1];
+    attr->dilateH = dilation[2];
+    attr->dilateW = dilation[3];
 
     auto kernel_size = CastToInt(prim.GetAttr("kernel_size"));
     attr->kernelH = kernel_size[0];

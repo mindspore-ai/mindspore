@@ -253,6 +253,7 @@ union PrimitiveType {
     All,
     Assert,
     Adder,
+    SparseSoftmaxCrossEntropy
 }
 
 enum QuantType: int {

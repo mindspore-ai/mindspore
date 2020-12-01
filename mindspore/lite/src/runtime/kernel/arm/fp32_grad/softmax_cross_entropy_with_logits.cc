@@ -34,27 +34,29 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
 void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *labels, const float *logits, float *grads,
                                                                 float *output2) const {
   float eps = 1e-6;
-  float total_loss = 0.0;
   if (grads != nullptr) {
     for (int i = 0; i < param_->batch_size_; ++i) {
+      float loss = 0.f;
       for (size_t j = 0; j < param_->number_of_classes_; ++j) {
         float logit =
           -logf(logits[i * param_->number_of_classes_ + j] <= 0.0 ? eps : logits[i * param_->number_of_classes_ + j]);
         grads[i * param_->number_of_classes_ + j] =
           (logits[i * param_->number_of_classes_ + j] - labels[i * param_->number_of_classes_ + j]);
-        total_loss += labels[i * param_->number_of_classes_ + j] * logit;
+        loss += labels[i * param_->number_of_classes_ + j] * logit;
       }
+      output2[i] = loss;
     }
   } else {
     for (int i = 0; i < param_->batch_size_; ++i) {
+      float loss = 0.f;
       for (size_t j = 0; j < param_->number_of_classes_; ++j) {
         float logit =
           -logf(logits[i * param_->number_of_classes_ + j] <= 0.0 ? eps : logits[i * param_->number_of_classes_ + j]);
-        total_loss += labels[i * param_->number_of_classes_ + j] * logit;
+        loss += labels[i * param_->number_of_classes_ + j] * logit;
       }
+      output2[i] = loss;
     }
   }
-  output2[0] = total_loss / param_->batch_size_;
 }
 
 int SoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {

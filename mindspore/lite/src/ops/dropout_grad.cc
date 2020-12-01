@@ -92,9 +92,7 @@ int DropoutGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
   output->set_shape(input->shape());
   output->set_data_type(input->data_type());
   output->set_format(input->format());
-
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore

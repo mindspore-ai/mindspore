@@ -19,6 +19,7 @@
 #include "src/ops/pooling_grad.h"
 #include "nnacl/pooling_parameter.h"
 #include "src/ops/softmax_cross_entropy.h"
+#include "src/ops/sparse_softmax_cross_entropy.h"
 #include "nnacl/fp32_grad/softmax_grad.h"
 #include "src/ops/activation_grad.h"
 #include "nnacl/fp32/activation_fp32.h"
@@ -146,6 +147,26 @@ OpParameter *PopulateSgdParameter(const mindspore::lite::PrimitiveC *primitive) 
   return reinterpret_cast<OpParameter *>(p);
 }
 
+OpParameter *PopulateSparseSoftmaxCrossEntropyParameter(const mindspore::lite::PrimitiveC *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    return nullptr;
+  }
+  SoftmaxCrossEntropyParameter *sce_param =
+    reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
+  if (sce_param == nullptr) {
+    MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
+    return nullptr;
+  }
+  auto sce_primitive = reinterpret_cast<mindspore::lite::SparseSoftmaxCrossEntropy *>(
+    const_cast<mindspore::lite::PrimitiveC *>(primitive));
+
+  sce_param->is_grad = sce_primitive->GetIsGrad();
+
+  sce_param->op_parameter_.type_ = primitive->Type();
+  return reinterpret_cast<OpParameter *>(sce_param);
+}
+
 OpParameter *PopulateSoftmaxCrossEntropyParameter(const mindspore::lite::PrimitiveC *primitive) {
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
@@ -157,6 +178,7 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const mindspore::lite::Primiti
     MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
     return nullptr;
   }
+  sce_param->is_grad = 0;
   sce_param->op_parameter_.type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(sce_param);
 }
@@ -468,6 +490,8 @@ void PopulateTrainParameters() {
   lite::Registry BiasGradParameterRegistry(schema::PrimitiveType_BiasGrad, PopulateBiasGradParameter);
   lite::Registry SoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SoftmaxCrossEntropy,
                                                       PopulateSoftmaxCrossEntropyParameter);
+  lite::Registry SparseSoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SparseSoftmaxCrossEntropy,
+                                                            PopulateSparseSoftmaxCrossEntropyParameter);
   lite::Registry ActivationParameterRegistry(schema::PrimitiveType_ActivationGrad, PopulateActivationGradParameter);
   lite::Registry TupleGetItemParameterRegistry(schema::PrimitiveType_TupleGetItem, DefaultPopulateParameter);
   lite::Registry DependParameterRegistry(schema::PrimitiveType_Depend, DefaultPopulateParameter);
