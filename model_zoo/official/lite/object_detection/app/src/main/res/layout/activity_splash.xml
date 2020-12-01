@@ -7,46 +7,76 @@
     android:background="@color/colorPrimary"
     tools:context=".SplashActivity">
 
-    <ImageView
+    <TextView
         android:id="@+id/img_logo"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:src="@mipmap/logo"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="68dp"
+        android:drawableTop="@drawable/logo"
+        android:drawablePadding="10dp"
+        android:gravity="center_horizontal"
+        android:maxLines="1"
+        android:text="@string/app_name_title"
+        android:textColor="@color/white"
+        android:textSize="36sp"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+
     <Button
-        android:id="@+id/btn_photo"
+        android:id="@+id/btn_image"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="40dp"
+        android:background="@color/gray_btn"
+        android:drawableStart="@drawable/btn_image"
+        android:drawablePadding="15dp"
+        android:gravity="left|center_vertical"
+        android:onClick="onClickPhoto"
+        android:paddingLeft="15dp"
+        android:text="PHOTO"
+        android:textAllCaps="false"
+        android:textSize="12sp"
+        app:layout_constraintWidth_percent="0.6"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/img_logo"
+        />
+
+   <Button
+        android:id="@+id/btn_camera"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="30dp"
+        android:background="@color/gray_btn"
+        android:drawableStart="@drawable/btn_object"
+        android:drawablePadding="15dp"
+        android:gravity="left|center_vertical"
+        android:onClick="onClickCamera"
+        android:paddingLeft="15dp"
+        android:text="CAMERA"
+        android:textAllCaps="false"
+        android:textSize="12sp"
+        app:layout_constraintWidth_percent="0.6"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_image"
+        />
+
+
+    <TextView
+        android:id="@+id/tv_vision"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="52dp"
+        android:layout_marginBottom="30dp"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:text="PHOTO"
-        app:layout_constraintTop_toBottomOf="@+id/img_logo"
-       />
-
-    <Button
-        android:id="@+id/btn_camera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="CAMERA"
-        app:layout_constraintTop_toBottomOf="@+id/btn_photo"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:visibility="gone"
-        android:id="@+id/btn_deal"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="DEALDATA"
-        app:layout_constraintTop_toBottomOf="@+id/btn_camera"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
+        tools:text="Version 1.0.0" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,21 +1,26 @@
 package com.mindspore.hiobject.objectdetect;
 
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
+import android.util.Pair;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.mindspore.hiobject.R;
-import com.mindspore.hiobject.help.ImageDegreeHelper;
+import com.mindspore.hiobject.help.BitmapUtils;
+import com.mindspore.hiobject.help.DisplayUtil;
 import com.mindspore.hiobject.help.RecognitionObjectBean;
 import com.mindspore.hiobject.help.TrackingMobile;
 
@@ -27,33 +32,62 @@ import static com.mindspore.hiobject.help.RecognitionObjectBean.getRecognitionLi
 public class PhotoActivity extends AppCompatActivity {
 
     private static final String TAG = "PhotoActivity";
-    private static final int[] COLORS ={Color.RED, Color.WHITE, Color.YELLOW, Color.GREEN, Color.LTGRAY, Color.MAGENTA, Color.BLACK, Color.BLUE, Color.CYAN};
+    private static final int[] COLORS = {R.color.white, R.color.text_blue, R.color.text_yellow, R.color.text_orange, R.color.text_green};
 
-    private ImageView imgPhoto;
+    private static final int RC_CHOOSE_PHOTO = 1;
+
+    private ImageView preview;
     private TrackingMobile trackingMobile;
     private List<RecognitionObjectBean> recognitionObjectBeanList;
+
+
+    private Integer maxWidthOfImage;
+    private Integer maxHeightOfImage;
+    boolean isLandScape;
+    private Bitmap originBitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo);
+        preview = findViewById(R.id.img_photo);
+        this.isLandScape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+        openGallay();
 
-        imgPhoto = findViewById(R.id.img_photo);
+    }
 
-        Uri uri  = getIntent().getData();
-        String imgPath = ImageDegreeHelper.getPath(this,uri);
-        int degree = ImageDegreeHelper.readPictureDegree(imgPath);
-        Bitmap originBitmap = BitmapFactory.decodeFile(imgPath);
-        if (originBitmap != null) {
-            Bitmap bitmap = ImageDegreeHelper.rotaingImageView(degree, originBitmap.copy(Bitmap.Config.ARGB_8888, true));
-            if (bitmap != null) {
-                Matrix matrix = new Matrix();
-                matrix.setScale(0.7f, 0.7f);
-                bitmap = Bitmap.createBitmap( bitmap, 0, 0,  bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+    private void openGallay() {
+        Intent intentToPickPic = new Intent(Intent.ACTION_PICK, null);
+        intentToPickPic.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+        startActivityForResult(intentToPickPic, RC_CHOOSE_PHOTO);
+    }
 
-                imgPhoto.setImageBitmap(bitmap);
-                initMindspore(bitmap);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (RC_CHOOSE_PHOTO == requestCode && null != data && null != data.getData()) {
+            if (data != null) {
+                showOriginImage(data.getData());
             }
+        } else {
+            Toast.makeText(this, R.string.image_invalid, Toast.LENGTH_LONG).show();
+            finish();
+        }
+    }
+
+    private void showOriginImage(Uri imageUri) {
+        Pair<Integer, Integer> targetedSize = this.getTargetSize();
+        int targetWidth = targetedSize.first;
+        int maxHeight = targetedSize.second;
+        originBitmap = BitmapUtils.loadFromPath(this, imageUri, targetWidth, maxHeight);
+        // Determine how much to scale down the image.
+        Log.i(TAG, "resized image size width:" + originBitmap.getWidth() + ",height: " + originBitmap.getHeight());
+        if (originBitmap != null) {
+            initMindspore(originBitmap);
+            preview.setImageBitmap(originBitmap);
+        } else {
+            Toast.makeText(this, R.string.image_invalid, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -64,9 +98,7 @@ public class PhotoActivity extends AppCompatActivity {
             Log.e(TAG, Log.getStackTraceString(e));
             e.printStackTrace();
         }
-        // 加载模型
         boolean ret = trackingMobile.loadModelFromBuf(getAssets());
-
         if (!ret) {
             Log.e(TAG, "Load model error.");
             return;
@@ -76,46 +108,83 @@ public class PhotoActivity extends AppCompatActivity {
         String result = trackingMobile.MindSpore_runnet(bitmap);
         long endTime = System.currentTimeMillis();
 
-        Log.d(TAG, "RUNNET CONSUMING："+(endTime-startTime)+"ms");
-        Log.d(TAG, "result："+ result);
+        Log.d(TAG, "RUNNET CONSUMING：" + (endTime - startTime) + "ms");
+        Log.d(TAG, "result：" + result);
 
         recognitionObjectBeanList = getRecognitionList(result);
 
         if (recognitionObjectBeanList != null && recognitionObjectBeanList.size() > 0) {
             drawRect(bitmap);
+        } else {
+            Toast.makeText(this, R.string.train_invalid, Toast.LENGTH_LONG).show();
         }
     }
 
     private void drawRect(Bitmap bitmap) {
         Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setTextSize(dip2px(15));
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(3);
+        Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaint.setTextSize(DisplayUtil.sp2px(this, 16));
+        //Draw only outline (stroke)
+        mPaint.setStyle(Paint.Style.STROKE);
+        mPaint.setStrokeWidth(DisplayUtil.dip2px(this, 2));
 
         for (int i = 0; i < recognitionObjectBeanList.size(); i++) {
             RecognitionObjectBean objectBean = recognitionObjectBeanList.get(i);
             StringBuilder sb = new StringBuilder();
             sb.append(objectBean.getRectID()).append("_").append(objectBean.getObjectName()).append("_").append(String.format("%.2f", (100 * objectBean.getScore())) + "%");
 
-            int paintColor = COLORS[i % COLORS.length];
-            paint.setColor(paintColor);
+            int paintColor = getResources().getColor(COLORS[i % COLORS.length]);
+            mPaint.setColor(paintColor);
 
             RectF rectF = new RectF(objectBean.getLeft(), objectBean.getTop(), objectBean.getRight(), objectBean.getBottom());
-            canvas.drawRect(rectF, paint);
-            canvas.drawText(sb.toString(),objectBean.getLeft(), objectBean.getTop()-10,paint);
+            canvas.drawRect(rectF, mPaint);
+            canvas.drawText(sb.toString(), objectBean.getLeft(), objectBean.getTop() - 10, mPaint);
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        trackingMobile.unloadModel();
+        if (trackingMobile != null) {
+            trackingMobile.unloadModel();
+        }
+        BitmapUtils.recycleBitmap(originBitmap);
     }
 
-    public  int dip2px(float dipValue){
-        float scale = getResources().getDisplayMetrics().density;
-        return (int) (dipValue*scale+0.5f);
 
+    // Returns max width of image.
+    private Integer getMaxWidthOfImage() {
+        if (this.maxWidthOfImage == null) {
+            if (this.isLandScape) {
+                this.maxWidthOfImage = ((View) this.preview.getParent()).getHeight();
+            } else {
+                this.maxWidthOfImage = ((View) this.preview.getParent()).getWidth();
+            }
+        }
+        return this.maxWidthOfImage;
+    }
+
+    // Returns max height of image.
+    private Integer getMaxHeightOfImage() {
+        if (this.maxHeightOfImage == null) {
+            if (this.isLandScape) {
+                this.maxHeightOfImage = ((View) this.preview.getParent()).getWidth();
+            } else {
+                this.maxHeightOfImage = ((View) this.preview.getParent()).getHeight();
+            }
+        }
+        return this.maxHeightOfImage;
+    }
+
+    // Gets the targeted size(width / height).
+    private Pair<Integer, Integer> getTargetSize() {
+        Integer targetWidth;
+        Integer targetHeight;
+        Integer maxWidth = this.getMaxWidthOfImage();
+        Integer maxHeight = this.getMaxHeightOfImage();
+        targetWidth = this.isLandScape ? maxHeight : maxWidth;
+        targetHeight = this.isLandScape ? maxWidth : maxHeight;
+        Log.i(TAG, "height:" + targetHeight + ",width:" + targetWidth);
+        return new Pair<>(targetWidth, targetHeight);
     }
 }
