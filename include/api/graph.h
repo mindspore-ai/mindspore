@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_INCLUDE_API_SERIALIZATION_H
-#define MINDSPORE_INCLUDE_API_SERIALIZATION_H
+#ifndef MINDSPORE_INCLUDE_API_GRAPH_H
+#define MINDSPORE_INCLUDE_API_GRAPH_H
 
 #include <string>
 #include <vector>
@@ -22,19 +22,22 @@
 #include <memory>
 #include "include/api/status.h"
 #include "include/api/types.h"
-#include "include/api/model.h"
-#include "include/api/graph.h"
 
 namespace mindspore {
 namespace api {
-class MS_API Serialization {
+class MS_API Graph {
  public:
-  static Graph LoadModel(const std::string &file, ModelType model_type);
-  static Status LoadCheckPoint(const std::string &ckpt_file, std::map<std::string, Buffer> *parameters);
-  static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);
-  static Status ExportModel(const Model &model, ModelType model_type, Buffer *model_data);
-  static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file);
+  class GraphData;
+  explicit Graph(const std::shared_ptr<GraphData> &graph_data);
+  explicit Graph(std::shared_ptr<GraphData> &&graph_data);
+
+  enum ModelType ModelType() const;
+
+ private:
+  friend class GraphCell;
+  friend class ModelImpl;
+  std::shared_ptr<GraphData> graph_data_;
 };
 }  // namespace api
 }  // namespace mindspore
-#endif  // MINDSPORE_INCLUDE_API_SERIALIZATION_H
+#endif  // MINDSPORE_INCLUDE_API_GRAPH_H

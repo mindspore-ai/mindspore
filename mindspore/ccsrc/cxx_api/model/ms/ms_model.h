@@ -36,49 +36,23 @@ namespace mindspore {
 namespace api {
 class MsModel : public ModelImpl {
  public:
-  explicit MsModel(uint32_t device_id);
-  ~MsModel();
+  MsModel() {}
+  ~MsModel() = default;
 
-  Status LoadModel(const Buffer &model_data, ModelType type,
-                   const std::map<std::string, std::string> &options) override;
-  Status LoadModel(const std::string &file_name, ModelType type,
-                   const std::map<std::string, std::string> &options) override;
-  Status UnloadModel() override;
+  Status Build(const std::map<std::string, std::string> &options_map) override;
 
   Status Train(const DataSet &dataset, std::map<std::string, Buffer> *outputs) override;
   Status Eval(const DataSet &dataset, std::map<std::string, Buffer> *outputs) override;
-  Status Predict(const std::map<std::string, Buffer> &inputs, std::map<std::string, Buffer> *outputs) override;
+  Status Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) override;
 
-  Status GetInputsInfo(std::vector<Tensor> *tensor_list) const override;
-  Status GetOutputsInfo(std::vector<Tensor> *tensor_list) const override;
-
-  Status InitEnv(const std::unordered_map<std::string, std::string> &other_options);
-  Status FinalizeEnv();
+  Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const override;
+  Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                        std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const override;
 
  private:
-  std::shared_ptr<session::SessionBasic> session_impl_ = nullptr;
-  uint32_t graph_id_;
-  std::string device_type_;
-  int32_t device_id_ = 0;
-#ifdef ENABLE_D
-  rtContext_t context_ = nullptr;
-#endif
-  std::vector<tensor::TensorPtr> inputs_;
-  std::vector<tensor::TensorPtr> outputs_;
-  std::vector<std::string> input_names_;
-  std::vector<std::string> output_names_;
-  bool load_flag_ = false;
-
-  std::shared_ptr<FuncGraph> LoadModel(const char *model_buf, size_t size, const std::string &device);
-  Buffer ReadFile(const std::string &file);
-  static void RegAllOp();
-  Status CompileGraph(std::shared_ptr<FuncGraph> funcGraphPtr);
-  Status CheckModelInputs(uint32_t graph_id, const std::vector<tensor::TensorPtr> &inputs) const;
-  std::vector<tensor::TensorPtr> RunGraph(const std::vector<tensor::TensorPtr> &inputs);
-  Status ExecuteModel(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs);
+  std::shared_ptr<GraphCell> graph_cell_;
 };
-
-API_REG_MODEL(AscendMS, MsModel);
 }  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H

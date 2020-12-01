@@ -6,22 +6,35 @@ set(LOAD_MINDIR_SRC
 file(GLOB_RECURSE API_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR} "ops/*.cc")
 
 if (ENABLE_ACL)
-    file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR} "model/acl/*.cc" "model/model_converter_utils/*.cc")
-elseif (ENABLE_D)
-    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "model/ms/*.cc")
+    add_compile_definitions(ENABLE_ACL)
+    include_directories(${CMAKE_SOURCE_DIR}/graphengine/src/ge)
+    include_directories(${CMAKE_BINARY_DIR}/proto/ge)
+    file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
+            "model/acl/*.cc"
+            "model/model_converter_utils/*.cc"
+            "graph/acl/*.cc"
+            )
+
+endif ()
+if (ENABLE_D)
+    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "model/ms/*.cc" "graph/ms/*.cc")
 endif ()
 
 set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
-        ${API_MS_INFER_SRC}
-        ${API_ACL_SRC}
-        ${API_OPS_SRC}
-        ${LOAD_MINDIR_SRC})
+              ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/python_utils.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
+              ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
+              ${API_MS_INFER_SRC}
+              ${API_ACL_SRC}
+              ${API_OPS_SRC}
+              ${LOAD_MINDIR_SRC})
 
 add_library(mindspore_shared_lib SHARED ${MSLIB_SRC})
-set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore PUBLIC_HEADER "${API_INCLUDE}")
+set_target_properties(mindspore_shared_lib PROPERTIES OUTPUT_NAME mindspore)
 
 target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
         -Wl,--whole-archive mindspore -Wl,--no-whole-archive proto_input mindspore_gvar mindspore::protobuf)
@@ -69,5 +82,6 @@ endif ()
 if (ENABLE_D)
     find_library(adump_server libadump_server.a ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     target_link_libraries(mindspore_shared_lib PRIVATE ${adump_server})
+    target_link_libraries(mindspore_shared_lib PRIVATE mindspore_core hccl_adapter)
 endif ()
 

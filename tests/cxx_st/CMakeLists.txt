@@ -1,0 +1,11 @@
+include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${MS_CCSRC_PATH})
+include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/stub/runtime/)
+include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CUDA_INCLUDE_DIRS})
+
+file(GLOB_RECURSE CXX_ST_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cc)
+add_executable(st_tests ${CXX_ST_SRC})
+target_link_libraries(st_tests PRIVATE mindspore_shared_lib mindspore::gtest)

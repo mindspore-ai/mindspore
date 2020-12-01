@@ -32,21 +32,17 @@ class ModelConverter {
  public:
   ModelConverter() : options_(nullptr) {}
 
-  Buffer LoadMindIR(const Buffer &model_data);
+  Buffer LoadMindIR(const FuncGraphPtr &func_graph);
   Buffer LoadAscendIR(const Buffer &model_data);
 
   void set_options(AclModelOptions *options) { options_ = options; }
 
-  static Buffer ReadFile(const std::string &file);
-  static void RegAllOp();
-
  private:
-  std::shared_ptr<FuncGraph> ConvertMindIrToFuncGraph(const Buffer &model_data);
   transform::DfGraphPtr ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph);
   Buffer BuildAirModel(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &acl_options);
   AclModelOptions *options_;
 
-  Buffer LoadMindIRInner(const Buffer &model_data);
+  Buffer LoadMindIRInner(const FuncGraphPtr &func_graph);
   Buffer LoadAscendIRInner(const Buffer &model_data);
 };
 }  // namespace mindspore::api

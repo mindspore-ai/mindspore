@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cxx_api/model/acl/model_process.h"
+#include "cxx_api/graph/acl/model_process.h"
 #include <algorithm>
 #include <map>
 #include "utils/utils.h"
@@ -35,17 +35,33 @@ static DataType TransToApiType(aclDataType data_type) {
   }
 }
 
-static void ConstructTensorDesc(const std::vector<AclTensorInfo> &acl_tensor_list, std::vector<Tensor> *tensor_list) {
-  MS_EXCEPTION_IF_NULL(tensor_list);
-  tensor_list->clear();
+template <class T>
+inline static void ClearIfNotNull(T *vec) {
+  if (vec != nullptr) {
+    vec->clear();
+  }
+}
 
+template <class T, class U = std::vector<T>>
+inline static void PushbackIfNotNull(U *vec, T &&item) {
+  if (vec != nullptr) {
+    vec->emplace_back(item);
+  }
+}
+
+static void ConstructTensorDesc(const std::vector<AclTensorInfo> &acl_tensor_list, std::vector<std::string> *names,
+                                std::vector<std::vector<int64_t>> *shapes, std::vector<DataType> *data_types,
+                                std::vector<size_t> *mem_sizes) {
+  ClearIfNotNull(names);
+  ClearIfNotNull(shapes);
+  ClearIfNotNull(data_types);
+  ClearIfNotNull(mem_sizes);
   for (size_t i = 0; i < acl_tensor_list.size(); ++i) {
     const auto &info = acl_tensor_list[i];
-    Tensor tensor_desc;
-    tensor_desc.SetName(info.name);
-    tensor_desc.SetDataType(TransToApiType(info.data_type));
-    tensor_desc.SetShape(info.dims);
-    tensor_list->push_back(tensor_desc);
+    PushbackIfNotNull(names, info.name);
+    PushbackIfNotNull(shapes, info.dims);
+    PushbackIfNotNull(data_types, TransToApiType(info.data_type));
+    PushbackIfNotNull(mem_sizes, info.buffer_size);
   }
 }
 
@@ -272,7 +288,7 @@ Status ModelProcess::UnLoad() {
   return SUCCESS;
 }
 
-Status ModelProcess::CheckAndInitInput(const std::map<std::string, Buffer> &inputs) {
+Status ModelProcess::CheckAndInitInput(const std::vector<Buffer> &inputs) {
   aclError ret;
   inputs_ = aclmdlCreateDataset();
   // check inputs
@@ -282,29 +298,16 @@ Status ModelProcess::CheckAndInitInput(const std::map<std::string, Buffer> &inpu
     return INVALID_INPUTS;
   }
   for (size_t i = 0; i < input_infos_.size(); ++i) {
-    const std::string &input_name = input_infos_[i].name;
-    auto iter = inputs.find(input_name);
-    if (iter == inputs.end()) {
-      MS_LOG(ERROR) << "Model missing input " << input_name;
-      return INVALID_INPUTS;
-    }
-
-    if (iter->second.DataSize() != input_infos_[i].buffer_size) {
+    if (inputs[i].DataSize() != input_infos_[i].buffer_size) {
       MS_LOG(ERROR) << "input " << i << " data size not match, required size " << input_infos_[i].buffer_size
-                    << ", given count " << iter->second.DataSize();
+                    << ", given count " << inputs[i].DataSize();
       return INVALID_INPUTS;
     }
   }
   // copy inputs
   for (size_t i = 0; i < input_infos_.size(); ++i) {
     const auto &info = input_infos_[i];
-    auto iter = inputs.find(info.name);
-    if (iter == inputs.end()) {
-      MS_LOG(ERROR) << "Model missing input " << info.name;
-      return INVALID_INPUTS;
-    }
-
-    const auto &input = iter->second;
+    const auto &input = inputs[i];
     const void *data = input.Data();
 
     void *input_buffer = nullptr;
@@ -333,42 +336,7 @@ Status ModelProcess::CheckAndInitInput(const std::map<std::string, Buffer> &inpu
   return SUCCESS;
 }
 
-Status ModelProcess::CheckAndInitDvppInput(const void *dvpp_outputs_buffer_dev, size_t dvpp_outputs_buffer_size,
-                                           size_t input_index) {
-  aclError ret;
-  inputs_ = aclmdlCreateDataset();
-  // check inputs
-  if (input_index >= input_infos_.size()) {
-    MS_LOG(ERROR) << "inputs count not match, required count " << input_infos_.size() << ", given index "
-                  << input_index;
-    return INVALID_INPUTS;
-  }
-  if (dvpp_outputs_buffer_dev == nullptr) {
-    MS_LOG(ERROR) << "input " << 0 << " cannot be null";
-    return FAILED;
-  }
-  if (dvpp_outputs_buffer_size != input_infos_[input_index].buffer_size) {
-    MS_LOG(ERROR) << "input " << 0 << " data size not match, required size " << input_infos_[input_index].buffer_size
-                  << ", given count " << dvpp_outputs_buffer_size;
-    return INVALID_INPUTS;
-  }
-  // copy inputs
-  auto &info = input_infos_[input_index];
-  auto data_buffer = aclCreateDataBuffer(const_cast<void *>(dvpp_outputs_buffer_dev), info.buffer_size);
-  if (data_buffer == nullptr) {
-    MS_LOG(ERROR) << "Create Data Buffer failed";
-    return FAILED;
-  }
-  ret = aclmdlAddDatasetBuffer(inputs_, data_buffer);
-  if (ret != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "add data buffer failed";
-    aclDestroyDataBuffer(data_buffer);
-    return FAILED;
-  }
-  return SUCCESS;
-}
-
-Status ModelProcess::Predict(const std::map<std::string, Buffer> &inputs, std::map<std::string, Buffer> *outputs) {
+Status ModelProcess::PredictFromHost(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   aclError acl_ret;
   Status ret = CheckAndInitInput(inputs);
@@ -392,18 +360,7 @@ Status ModelProcess::Predict(const std::map<std::string, Buffer> &inputs, std::m
   return SUCCESS;
 }
 
-size_t ModelProcess::GetBatchSize() const {
-  if (input_infos_.empty()) {
-    MS_LOG(ERROR) << "Model is not loaded";
-    return 0;
-  }
-  if (input_infos_[0].dims.empty()) {
-    return 1;
-  }
-  return static_cast<size_t>(input_infos_[0].dims[0]);
-}
-
-Status ModelProcess::BuildOutputs(std::map<std::string, Buffer> *outputs) {
+Status ModelProcess::BuildOutputs(std::vector<Buffer> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   aclError ret;
   // copy outputs
@@ -411,14 +368,13 @@ Status ModelProcess::BuildOutputs(std::map<std::string, Buffer> *outputs) {
   aclrtMemcpyKind kind = is_run_on_device_ ? ACL_MEMCPY_HOST_TO_HOST : ACL_MEMCPY_DEVICE_TO_HOST;
   for (size_t i = 0; i < output_infos_.size(); ++i) {
     const auto &info = output_infos_[i];
-    // todo
-    outputs->emplace(info.name, Buffer());
-    auto output = outputs->rbegin()->second;
-    if (!output.ResizeData(info.buffer_size)) {
+    outputs->emplace_back(Buffer());
+    auto output = outputs->rbegin();
+    if (!output->ResizeData(info.buffer_size)) {
       MS_LOG(ERROR) << "new output data buffer failed, data size " << info.buffer_size;
       return FAILED;
     }
-    ret = aclrtMemcpy(output.MutableData(), output.DataSize(), info.device_data, info.buffer_size, kind);
+    ret = aclrtMemcpy(output->MutableData(), output->DataSize(), info.device_data, info.buffer_size, kind);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Memcpy output " << i << " from " << (is_run_on_device_ ? "host" : "device")
                     << " to host failed, memory size " << info.buffer_size;
@@ -428,13 +384,15 @@ Status ModelProcess::BuildOutputs(std::map<std::string, Buffer> *outputs) {
   return SUCCESS;
 }
 
-Status ModelProcess::GetInputsInfo(std::vector<Tensor> *tensor_list) const {
-  ConstructTensorDesc(input_infos_, tensor_list);
+Status ModelProcess::GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                                   std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const {
+  ConstructTensorDesc(input_infos_, names, shapes, data_types, mem_sizes);
   return SUCCESS;
 }
 
-Status ModelProcess::GetOutputsInfo(std::vector<Tensor> *tensor_list) const {
-  ConstructTensorDesc(output_infos_, tensor_list);
+Status ModelProcess::GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                                    std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const {
+  ConstructTensorDesc(output_infos_, names, shapes, data_types, mem_sizes);
   return SUCCESS;
 }
 }  // namespace mindspore::api

@@ -23,7 +23,7 @@ usage()
 {
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
-  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu|acl] \\"
+  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu|ascend310] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
   echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|off] \\"
@@ -45,7 +45,7 @@ usage()
   echo "    -i Enable increment building, default off"
   echo "    -L Enable load ANF-IR as input of 'infer', default off"
   echo "    -j[n] Set the threads when building (Default: -j8)"
-  echo "    -e Use cpu, gpu, ascend or acl"
+  echo "    -e Use cpu, gpu, ascend or ascend310"
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
@@ -224,7 +224,7 @@ checkopts()
           ENABLE_D="on"
           ENABLE_CPU="on"
           ENABLE_SERVING="on"
-        elif [[ "X$OPTARG" == "Xacl" ]]; then
+        elif [[ "X$OPTARG" == "Xascend310" ]]; then
           ENABLE_SERVING="on"
           ENABLE_ACL="on"
         elif [[ "X$OPTARG" == "Xcpu" ]]; then

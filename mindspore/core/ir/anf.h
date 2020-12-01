@@ -422,7 +422,6 @@ inline ValuePtr MakeValue(S v) {
 template <typename S, typename U = typename ImmTraits<S>::type>
 static S GetValue(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-
   U imm = value->cast<U>();
   if (imm == nullptr) {
     MS_LOG(EXCEPTION) << "Cast failed, original value: " << value->ToString() << ", type: " << value->type_name();

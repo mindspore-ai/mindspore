@@ -22,42 +22,39 @@
 #include <memory>
 #include "include/api/status.h"
 #include "include/api/types.h"
+#include "include/api/graph.h"
+#include "include/api/cell.h"
 
 namespace mindspore {
 namespace api {
 class ModelImpl;
 // todo: minddata c++ interface
 class DataSet {};
-class NetWork {};
 
 class MS_API Model {
  public:
-  Model(const std::string &device_type, uint32_t device_id);
-  Model(NetWork network, const std::string &device_type, uint32_t device_id);
+  explicit Model(const std::vector<Output> &network);
+  explicit Model(const GraphCell &graph);
   ~Model();
   Model(const Model &) = delete;
   void operator=(const Model &) = delete;
 
-  Status LoadModel(const Buffer &model_data, ModelType type, const std::map<std::string, std::string> &options);
-  Status LoadModel(const std::string &file_name, ModelType type, const std::map<std::string, std::string> &options);
-  Status UnloadModel();
+  Status Build(const std::map<std::string, std::string> &options);
 
-  Status Train(const DataSet &dataset, std::map<std::string, Buffer> *outputs);
-  Status Eval(const DataSet &dataset, std::map<std::string, Buffer> *outputs);
-  Status Predict(const std::map<std::string, Buffer> &inputs, std::map<std::string, Buffer> *outputs);
-  Status Predict(const std::vector<Buffer> &inputs, std::map<std::string, Buffer> *outputs);
+  Status Train(const DataSet &dataset, bool data_sink, std::map<std::string, Buffer> *outputs);
+  Status Eval(const DataSet &dataset, bool data_sink, std::map<std::string, Buffer> *outputs);
+  Status Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs);
 
-  Status GetInputsInfo(std::vector<Tensor> *tensor_list) const;
-  Status GetOutputsInfo(std::vector<Tensor> *tensor_list) const;
+  Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const;
+  Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                        std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const;
 
-  static bool CheckModelSupport(const std::string& device_type, ModelType model_type);
+  static bool CheckModelSupport(const std::string &device_type, ModelType model_type);
 
  private:
   std::shared_ptr<ModelImpl> impl_;
 };
-
-extern MS_API const char* kDeviceTypeAscendCL;
-extern MS_API const char* kDeviceTypeAscendMS;
 }  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H
