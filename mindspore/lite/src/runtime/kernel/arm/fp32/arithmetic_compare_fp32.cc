@@ -80,6 +80,9 @@ int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
     stride = UP_DIV(outside_, thread_count_);
     int out_count = MSMIN(stride, outside_ - stride * task_id);
     int out_thread_stride = stride * task_id;
+    if (out_count <= 0) {
+      return RET_OK;
+    }
     if (data_type_ == kDataTypeFloat) {
       error_code = BroadcastRun(
         reinterpret_cast<float *>(in_tensors_[0]->data_c()), reinterpret_cast<float *>(in_tensors_[1]->data_c()),

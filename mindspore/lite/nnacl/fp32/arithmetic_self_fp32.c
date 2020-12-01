@@ -91,6 +91,14 @@ int ElementLogicalNot(const float *input, float *output, const int element_size)
   return NNACL_OK;
 }
 
+// logical_not:
+int ElementLogicalNotBool(const bool *input, bool *output, const int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    output[i] = !input[i];
+  }
+  return NNACL_OK;
+}
+
 // round:
 int ElementRound(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {

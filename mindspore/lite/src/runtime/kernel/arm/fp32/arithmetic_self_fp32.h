@@ -34,6 +34,7 @@ using mindspore::schema::PrimitiveType_Square;
 
 namespace mindspore::kernel {
 typedef int (*ArithmeticSelfFunc)(const float *input, float *output, const int element_size);
+typedef int (*ArithmeticSelfBoolFunc)(const bool *input, bool *output, const int element_size);
 class ArithmeticSelfCPUKernel : public LiteKernel {
  public:
   explicit ArithmeticSelfCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -41,6 +42,7 @@ class ArithmeticSelfCPUKernel : public LiteKernel {
                                    const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     func_ = GetArithmeticSelfFun(parameter->type_);
+    func_bool_ = GetArithmeticSelfBoolFun(parameter->type_);
   }
   ~ArithmeticSelfCPUKernel() override = default;
 
@@ -51,7 +53,9 @@ class ArithmeticSelfCPUKernel : public LiteKernel {
 
  private:
   ArithmeticSelfFunc GetArithmeticSelfFun(int primitive_type);
+  ArithmeticSelfBoolFunc GetArithmeticSelfBoolFun(int primitive_type);
   ArithmeticSelfFunc func_;
+  ArithmeticSelfBoolFunc func_bool_;
 };
 int ArithmeticSelfRun(void *cdata, int task_id);
 }  // namespace mindspore::kernel

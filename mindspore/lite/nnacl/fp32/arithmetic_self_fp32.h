@@ -42,6 +42,8 @@ int ElementSin(const float *input, float *output, const int element_size);
 
 int ElementLogicalNot(const float *input, float *output, const int element_size);
 
+int ElementLogicalNotBool(const bool *input, bool *output, const int element_size);
+
 int ElementRound(const float *input, float *output, const int element_size);
 
 int ElementFloor(const float *input, float *output, const int element_size);

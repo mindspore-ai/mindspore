@@ -82,27 +82,12 @@ int ArithmeticCPUKernel::ReSize() {
   arithmeticParameter_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
   arithmeticParameter_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
   arithmeticParameter_->out_elements_num_ = out_tensors_[0]->ElementsNum();
-  for (size_t i = 0; i < in_tensors_[0]->shape().size(); i++) {
-    if (arithmeticParameter_->in_shape0_[i] == -1) {
-      memcpy(arithmeticParameter_->in_shape0_, static_cast<void *>(in_tensors_[0]->shape().data()),
-             in_tensors_[0]->shape().size() * sizeof(int));
-      break;
-    }
-  }
-  for (size_t i = 0; i < in_tensors_[1]->shape().size(); i++) {
-    if (arithmeticParameter_->in_shape1_[i] == -1) {
-      memcpy(arithmeticParameter_->in_shape1_, static_cast<void *>(in_tensors_[1]->shape().data()),
-             in_tensors_[1]->shape().size() * sizeof(int));
-      break;
-    }
-  }
-  for (size_t i = 0; i < out_tensors_[0]->shape().size(); i++) {
-    if (arithmeticParameter_->out_shape_[i] == -1) {
-      memcpy(arithmeticParameter_->out_shape_, static_cast<void *>(out_tensors_[0]->shape().data()),
-             out_tensors_[0]->shape().size() * sizeof(int));
-      break;
-    }
-  }
+  memcpy(arithmeticParameter_->in_shape0_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().data(),
+         reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().size() * sizeof(int));
+  memcpy(arithmeticParameter_->in_shape1_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().data(),
+         reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().size() * sizeof(int));
+  memcpy(arithmeticParameter_->out_shape_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().data(),
+         reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().size() * sizeof(int));
 
   if (arithmeticParameter_->in_elements_num0_ == 1 || arithmeticParameter_->in_elements_num1_ == 1) {
     switch (arithmeticParameter_->op_parameter_.type_) {
@@ -244,6 +229,9 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   if (arithmeticParameter_->broadcasting_) {  // need broadcast
     stride = UP_DIV(outside_, thread_count_);
     int out_count = MSMIN(stride, outside_ - stride * task_id);
+    if (out_count <= 0) {
+      return RET_OK;
+    }
     int out_thread_stride = stride * task_id;
     if (data_type_ == kDataTypeFloat) {
       error_code = BroadcastRun(reinterpret_cast<float *>(in_tensors_[0]->data_c()),
