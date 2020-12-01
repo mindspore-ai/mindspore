@@ -80,9 +80,9 @@ int ResizeBilinearWithFloatScaleInt8(const int8_t *input_ptr, int8_t *output_ptr
       int32_t y_lower_value = quant_arg.y_axis_lower_[ori_out_h];
       int32_t y_upper_value = quant_arg.y_axis_upper_[ori_out_h];
       float weight_x = quant_arg.x_axis_index_[ori_out_w] - x_lower_value;
-      float one_minus_weight_x = 1 - weight_x;
+      const float one_minus_weight_x = 1 - weight_x;
       float weight_y = quant_arg.y_axis_index_[ori_out_h] - y_lower_value;
-      float one_minus_weight_y = 1 - weight_y;
+      const float one_minus_weight_y = 1 - weight_y;
       float left_bottom_coef = one_minus_weight_x * one_minus_weight_y;
       float left_top_coef = weight_y * one_minus_weight_x;
       float right_bottom_coef = weight_x * one_minus_weight_y;

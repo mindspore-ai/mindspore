@@ -284,8 +284,9 @@ kernel::LiteKernel *CpuFullConnectionInt8KernelCreator(const std::vector<lite::T
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_FullConnection);
   auto kernel = new (std::nothrow) FullconnectionInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (!kernel) {
+  if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();

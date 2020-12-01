@@ -115,6 +115,10 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   bool filter_peroc = conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL;
   if (filter_peroc) {
     filter_zp_ptr_ = reinterpret_cast<int32_t *>(malloc(output_channel * sizeof(int32_t)));
+    if (filter_zp_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "Memory allocation failed";
+      return RET_ERROR;
+    }
   }
   for (int oc = 0; oc < output_channel; oc++) {
     int32_t filter_zp = conv_param_->conv_quant_arg_.filter_quant_args_[0].zp_;

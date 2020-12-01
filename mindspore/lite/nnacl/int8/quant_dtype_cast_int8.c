@@ -34,7 +34,7 @@ int DoQuantizeFp32ToInt8(const float *real_values, int8_t *quant_values, float s
     return NNACL_PARAM_INVALID;
   }
 
-  float inverse_scale = 1.0f / scale;
+  const float inverse_scale = 1.0f / scale;
   for (int i = 0; i < size; ++i) {
     int temp = round(real_values[i] * inverse_scale + zp);
     temp = temp < 127 ? temp : 127;

@@ -87,13 +87,10 @@ kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::Ten
                                                      OpParameter *op_parameter, const lite::InnerContext *ctx,
                                                      const kernel::KernelKey &desc,
                                                      const mindspore::lite::PrimitiveC *primitive) {
-  if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
-    return nullptr;
-  }
   auto *kernel = new (std::nothrow) BatchToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BatchToSpaceInt8CPUKernel fail!";
+    free(op_parameter);
     return nullptr;
   }
 

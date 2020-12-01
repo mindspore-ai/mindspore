@@ -92,14 +92,10 @@ kernel::LiteKernel *CpuCropInt8KernelCreator(const std::vector<lite::Tensor *> &
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                              const InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
   auto *kernel = new (std::nothrow) CropInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new CropCPUKernel fail!";
+    free(opParameter);
     return nullptr;
   }
   auto ret = kernel->Init();
