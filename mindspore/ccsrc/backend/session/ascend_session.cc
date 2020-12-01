@@ -700,20 +700,21 @@ void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &g
   MS_LOG(INFO) << "Build op " << op_run_info.op_name << " finish !";
 }
 
-void AscendSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                               std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                               const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
-  BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
-
+  // Run op
   auto graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "Run op " << op_run_info.op_name << " start!";
+  MS_LOG(INFO) << "Run op " << op_run_info->op_name << " start!";
   // malloc mem
   RunOpMemoryAlloc(*input_tensors, graph.get());
   // Build dynamic kernel
-  if (op_run_info.is_dynamic_shape) {
+  if (op_run_info->is_dynamic_shape) {
     BuildDynamicKernel(graph);
   }
   // load input data to device
@@ -722,8 +723,12 @@ void AscendSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &gra
   Execute(graph, false);
   // get output
   UpdateOutputs(graph, outputs, *input_tensors);
+  // update output abstract of dynamic op to op_run_info
+  if (op_run_info->is_dynamic_shape) {
+    UpdateOutputAbstract(graph, op_run_info);
+  }
   RunOpMemoryClear(graph.get());
-  MS_LOG(INFO) << "Run op " << op_run_info.op_name << " finish!";
+  MS_LOG(INFO) << "Run op " << op_run_info->op_name << " finish!";
 }
 
 void AscendSession::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
@@ -750,7 +755,7 @@ void AscendSession::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector
 
     // Build and run current single op
     VectorRef op_outputs;
-    RunOpImpl(run_info, graph_info, &input_tensor_info.input_tensors, &op_outputs,
+    RunOpImpl(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
               input_tensor_info.input_tensors_mask);
 
     // Handle inputs and outputs of current op

@@ -59,9 +59,8 @@ class AscendSession : public SessionBasic {
   void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                    const std::vector<tensor::TensorPtr> &input_tensors,
                    const std::vector<int64_t> &tensors_mask) override;
-  void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                 std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                 const std::vector<int64_t> &tensors_mask) override;
+  void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info, std::vector<tensor::TensorPtr> *input_tensors,
+                 VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
   void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                          VectorRef *outputs) override;
 

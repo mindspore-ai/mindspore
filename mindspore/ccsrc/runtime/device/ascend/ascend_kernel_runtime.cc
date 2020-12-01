@@ -577,6 +577,7 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *grap
 }
 
 bool AscendKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
+  MS_EXCEPTION_IF_NULL(graph);
   bool ret = false;
 #if defined(_WIN32) || defined(_WIN64)
   auto start_time = std::chrono::steady_clock::now();
