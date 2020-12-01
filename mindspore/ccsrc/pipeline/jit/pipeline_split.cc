@@ -24,9 +24,6 @@
 
 namespace mindspore {
 namespace pipeline {
-
-static int64_t GetRank();
-static int64_t InferStage(const int64_t &rank_id, const int64_t &stage_num, const int64_t &device_num);
 static int64_t GetRank() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -40,7 +37,7 @@ static int64_t GetRank() {
     MS_LOG(EXCEPTION) << "Invalid backend: " << backend;
   }
   int64_t global_rank = parallel::ParallelContext::GetInstance()->global_rank();
-  uint32_t rank_id;
+  uint32_t rank_id = 0;
   if (!parallel::ParallelContext::GetInstance()->global_rank_is_set()) {
     if (!CommManager::GetInstance().GetRankID(world_group, &rank_id)) {
       MS_LOG(EXCEPTION) << "Get rank id failed.";
@@ -50,7 +47,7 @@ static int64_t GetRank() {
   return global_rank;
 }
 
-static int64_t InferStage(const int64_t &rank_id, const int64_t &stage_num, const int64_t &device_num) {
+static int64_t InferStage(int64_t rank_id, int64_t stage_num, int64_t device_num) {
   if (device_num % stage_num != 0) {
     MS_LOG(EXCEPTION) << "Device_num must be divisible by the stage_num, got device_num: " << device_num
                       << "stage_num: " << stage_num;
@@ -75,6 +72,12 @@ bool PipelineSplit(const ResourcePtr &res) {
   auto root = res->func_graph();
   auto global_rank = GetRank();
   auto device_num = parallel::ParallelContext::GetInstance()->device_num();
+  if (device_num < 1) {
+    MS_LOG(EXCEPTION) << "Invalid device num: " << device_num;
+  }
+  if (global_rank < 0) {
+    MS_LOG(EXCEPTION) << "Invalid global rank: " << global_rank;
+  }
   auto stage = InferStage(global_rank, stage_num, device_num);
   auto per_stage_rank_num = device_num / stage_num;
   auto transformer =
