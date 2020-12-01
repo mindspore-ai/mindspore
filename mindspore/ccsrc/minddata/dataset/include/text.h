@@ -38,21 +38,39 @@ namespace dataset {
 namespace text {
 
 // Char arrays storing name of corresponding classes (in alphabetical order)
+constexpr char kCaseFoldOperation[] = "CaseFold";
 constexpr char kJiebaTokenizerOperation[] = "JiebaTokenizer";
 constexpr char kLookupOperation[] = "Lookup";
 constexpr char kNgramOperation[] = "Ngram";
+constexpr char kNormalizeUTF8Operation[] = "NormalizeUTF8";
 constexpr char kSentencepieceTokenizerOperation[] = "SentencepieceTokenizer";
 constexpr char kSlidingWindowOperation[] = "SlidingWindow";
+constexpr char kUnicodeCharTokenizerOperation[] = "UnicodeCharTokenizer";
+constexpr char kUnicodeScriptTokenizerOperation[] = "UnicodeScriptTokenizer";
 constexpr char kWhitespaceTokenizerOperation[] = "WhitespaceTokenizer";
 
 // Text Op classes (in alphabetical order)
+#ifndef _WIN32
+class CaseFoldOperation;
+#endif
 class JiebaTokenizerOperation;
 class LookupOperation;
 class NgramOperation;
+#ifndef _WIN32
+class NormalizeUTF8Operation;
+#endif
 class SentencePieceTokenizerOperation;
 class SlidingWindowOperation;
+class UnicodeCharTokenizerOperation;
 #ifndef _WIN32
+class UnicodeScriptTokenizerOperation;
 class WhitespaceTokenizerOperation;
+#endif
+
+#ifndef _WIN32
+/// \brief Apply case fold operation on UTF-8 string tensor.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<CaseFoldOperation> CaseFold();
 #endif
 
 /// \brief Tokenize Chinese string into words based on dictionary.
@@ -94,6 +112,21 @@ std::shared_ptr<NgramOperation> Ngram(const std::vector<int32_t> &ngrams,
                                       const std::pair<std::string, int32_t> &right_pad = {"", 0},
                                       const std::string &separator = " ");
 
+#ifndef _WIN32
+/// \brief Apply normalize operation on UTF-8 string tensor.
+/// \param[in] normalize_form Valid values can be any of [NormalizeForm::kNone,NormalizeForm::kNfc,
+///   NormalizeForm::kNfkc,
+///   NormalizeForm::kNfd, NormalizeForm::kNfkd](default=NormalizeForm::kNfkc).
+///   See http://unicode.org/reports/tr15/ for details.
+///   - NormalizeForm.NONE, do nothing for input string tensor.
+///   - NormalizeForm.NFC, normalize with Normalization Form C.
+///   - NormalizeForm.NFKC, normalize with Normalization Form KC.
+///   - NormalizeForm.NFD, normalize with Normalization Form D.
+///   - NormalizeForm.NFKD, normalize with Normalization Form KD.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<NormalizeUTF8Operation> NormalizeUTF8(NormalizeForm normalize_form = NormalizeForm::kNfkc);
+#endif
+
 /// \brief Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
 /// \param[in] vocab a SentencePieceVocab object.
 /// \param[in] out_type The type of output.
@@ -116,14 +149,41 @@ std::shared_ptr<SentencePieceTokenizerOperation> SentencePieceTokenizer(
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<SlidingWindowOperation> SlidingWindow(const int32_t width, const int32_t axis = 0);
 
+/// \brief Tokenize a scalar tensor of UTF-8 string to Unicode characters.
+/// \param[in] with_offsets If or not output offsets of tokens (default=false).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<UnicodeCharTokenizerOperation> UnicodeCharTokenizer(bool with_offsets = false);
+
 #ifndef _WIN32
-/// \brief Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces
+/// \brief Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.
+/// \param[in] keep_whitespace If or not emit whitespace tokens (default=false).
+/// \param[in] with_offsets If or not output offsets of tokens (default=false).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<UnicodeScriptTokenizerOperation> UnicodeScriptTokenizer(bool keep_whitespace = false,
+                                                                        bool with_offsets = false);
+
+/// \brief Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces.
 /// \param[in] with_offsets If or not output offsets of tokens (default=false).
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<WhitespaceTokenizerOperation> WhitespaceTokenizer(bool with_offsets = false);
 #endif
 
 /* ####################################### Derived TensorOperation classes ################################# */
+
+#ifndef _WIN32
+class CaseFoldOperation : public TensorOperation {
+ public:
+  CaseFoldOperation() = default;
+
+  ~CaseFoldOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kCaseFoldOperation; }
+};
+#endif
 
 class JiebaTokenizerOperation : public TensorOperation {
  public:
@@ -185,6 +245,24 @@ class NgramOperation : public TensorOperation {
   std::string separator_;
 };
 
+#ifndef _WIN32
+class NormalizeUTF8Operation : public TensorOperation {
+ public:
+  explicit NormalizeUTF8Operation(NormalizeForm normalize_form);
+
+  ~NormalizeUTF8Operation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kNormalizeUTF8Operation; }
+
+ private:
+  NormalizeForm normalize_form_;
+};
+#endif
+
 class SentencePieceTokenizerOperation : public TensorOperation {
  public:
   SentencePieceTokenizerOperation(const std::shared_ptr<SentencePieceVocab> &vocab, SPieceTokenizerOutType out_type);
@@ -223,7 +301,40 @@ class SlidingWindowOperation : public TensorOperation {
   int32_t axis_;
 };
 
+class UnicodeCharTokenizerOperation : public TensorOperation {
+ public:
+  explicit UnicodeCharTokenizerOperation(bool with_offsets);
+
+  ~UnicodeCharTokenizerOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kUnicodeCharTokenizerOperation; }
+
+ private:
+  bool with_offsets_;
+};
+
 #ifndef _WIN32
+class UnicodeScriptTokenizerOperation : public TensorOperation {
+ public:
+  explicit UnicodeScriptTokenizerOperation(bool keep_whitespace, bool with_offsets);
+
+  ~UnicodeScriptTokenizerOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kUnicodeScriptTokenizerOperation; }
+
+ private:
+  bool keep_whitespace_;
+  bool with_offsets_;
+};
+
 class WhitespaceTokenizerOperation : public TensorOperation {
  public:
   explicit WhitespaceTokenizerOperation(bool with_offsets);

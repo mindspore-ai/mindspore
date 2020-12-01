@@ -24,13 +24,6 @@
 
 namespace mindspore {
 namespace dataset {
-enum class NormalizeForm {
-  kNone = 0,
-  kNfc,
-  kNfkc,
-  kNfd,
-  kNfkd,
-};
 
 class NormalizeUTF8Op : public TensorOp {
  public:
