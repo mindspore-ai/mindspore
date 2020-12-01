@@ -213,7 +213,7 @@ def _tensor_getitem_by_tuple(data, tuple_index):
 
     Inputs:
         data (Tensor): A tensor.
-        tuple_index (tuple): Index in tuple.
+        tuple_index (tuple): Index in tuple which include ellipsis, slice, int, Tensor, None, list, tuple.
 
     Outputs:
         Tensor, element type is the same as the element type of data.

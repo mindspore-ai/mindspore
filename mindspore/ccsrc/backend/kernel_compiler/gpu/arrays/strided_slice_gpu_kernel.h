@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int MAX_DIMS = 7;
+constexpr int MAX_DIMS = 8;
 template <typename T>
 class StridedSliceGpuKernel : public GpuKernel {
  public:
@@ -51,7 +51,8 @@ class StridedSliceGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     if (input_shape_.size() > MAX_DIMS) {
-      MS_LOG(ERROR) << "StridedSlice support support dims less than " << input_shape_.size();
+      MS_LOG(ERROR) << "StridedSlice support dims no more than " << MAX_DIMS << ", but the input shape is "
+                    << input_shape_.size();
       return false;
     }
 

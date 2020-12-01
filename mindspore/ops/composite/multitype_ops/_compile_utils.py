@@ -255,28 +255,38 @@ def tensor_index_by_tensor(data, tensor_index):
                                          "the index tensor data type only support mstype.int32.")
 
 
-def _tensor_index_by_tuple_slice(data, t):
+def _tensor_index_by_tuple_slice(data, tuple_index):
     """Tensor getitem by a tuple of slice"""
     shape = F.shape(data)
-    if len(t) > len(shape):
+    if len(tuple_index) > len(shape):
         const_utils.raise_index_error("When tensor is indexed by a tuple, "
                                       "the length of the tuple cannot be greater than the dimension of the tensor.")
     begin_strides, end_strides, step_strides, shrink_axis_mask = \
-        const_utils.get_stride_info_from_tuple(shape, t)
+        const_utils.get_stride_info_from_tuple(shape, tuple_index)
     return P.StridedSlice(0, 0, 0, 0, shrink_axis_mask)(data, begin_strides, end_strides, step_strides)
 
 
+def tensor_expand_dims(data, tuple_index):
+    """Expand tensor dims by tuple contains None and replace the None by slice in tuple_index """
+    none_positions, tuple_index_without_none = const_utils.split_tuple_index_for_none(tuple_index)
+    for position in none_positions:
+        data = F.expand_dims(data, position)
+    return data, tuple_index_without_none
+
+
 def tensor_index_by_tuple(data, tuple_index):
-    """Tensor getitem by tuple of various types"""
+    """Tensor getitem by tuple of various types with None"""
+    # data, tuple_index_without_none = tensor_expand_dims(data, tuple_index)
+    tuple_index_without_none = tuple_index
     if len(tuple_index) == 1:
-        return data[tuple_index[0]]
-    indexes_types = hyper_map(F.typeof, tuple_index)
-    index_elements_type = const_utils.tuple_index_tensor_cnt(indexes_types, const_utils.TENSOR_GETITEM)
-    if index_elements_type == const_utils.NO_TENSOR:
-        return _tensor_index_by_tuple_slice(data, tuple_index)
-    if index_elements_type == const_utils.ALL_TENSOR:
-        return _tensor_getitem_by_tuple_of_tensor(data, tuple_index)
-    return _tensor_getitem_by_tuple_of_mixed_tensors(data, tuple_index)
+        return data[tuple_index_without_none[0]]
+    indexes_types = hyper_map(F.typeof, tuple_index_without_none)
+    tensor_cnt = const_utils.tuple_index_tensor_cnt(indexes_types, const_utils.TENSOR_GETITEM)
+    if tensor_cnt == const_utils.NO_TENSOR:
+        return _tensor_index_by_tuple_slice(data, tuple_index_without_none)
+    if tensor_cnt == const_utils.ALL_TENSOR:
+        return _tensor_getitem_by_tuple_of_tensor(data, tuple_index_without_none)
+    return _tensor_getitem_by_tuple_of_mixed_tensors(data, tuple_index_without_none)
 
 
 def _tensor_setitem(self, index, value):
