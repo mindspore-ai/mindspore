@@ -115,7 +115,7 @@ def test_variable_memory_max_size():
     with pytest.raises(ValueError):
         context.set_context(variable_memory_max_size="1G")
     with pytest.raises(ValueError):
-        context.set_context(variable_memory_max_size="31GB")
+        context.set_context(variable_memory_max_size="32GB")
     context.set_context(variable_memory_max_size="3GB")
 
 
