@@ -424,6 +424,8 @@ class SchemaObj {
 
   Status FromJSONString(const std::string &json_string);
 
+  Status ParseColumnString(const std::string &json_string);
+
  private:
   /// \brief Parse the columns and add it to columns
   /// \param[in] columns dataset attribution information, decoded from schema file.

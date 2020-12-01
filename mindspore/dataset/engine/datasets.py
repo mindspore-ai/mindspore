@@ -96,6 +96,9 @@ def zip(datasets):
     if len(datasets) <= 1:
         raise ValueError(
             "Can't zip empty or just one dataset!")
+    for dataset in datasets:
+        if not isinstance(dataset, Dataset):
+            raise TypeError("Invalid dataset, expected Dataset object, but got %s!" % type(dataset))
     return ZipDataset(datasets)
 
 
@@ -2452,9 +2455,6 @@ class ZipDataset(Dataset):
 
     def __init__(self, datasets):
         super().__init__(children=datasets)
-        for dataset in datasets:
-            if not isinstance(dataset, Dataset):
-                raise TypeError("Invalid dataset, expected Dataset object, but got %s!" % type(dataset))
         self.datasets = datasets
 
     def parse(self, children=None):
@@ -4479,6 +4479,33 @@ class Schema:
             self.cpp_schema.add_column(name, col_type)
         else:
             self.cpp_schema.add_column(name, col_type, shape)
+
+    def parse_columns(self, columns):
+        """
+        Parse the columns and add it to self.
+
+        Args:
+            columns (Union[dict, list[dict]]): Dataset attribute information, decoded from schema file.
+
+                - list[dict], 'name' and 'type' must be in keys, 'shape' optional.
+
+                - dict, columns.keys() as name, columns.values() is dict, and 'type' inside, 'shape' optional.
+
+        Raises:
+            RuntimeError: If failed to parse columns.
+            RuntimeError: If unknown items in columns.
+            RuntimeError: If column's name field is missing.
+            RuntimeError: If column's type field is missing.
+
+        Example:
+            >>> schema = Schema()
+            >>> columns1 = [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
+            >>>             {'name': 'label', 'type': 'int8', 'shape': [1]}]
+            >>> schema.parse_columns(columns1)
+            >>> columns2 = {'image': {'shape': [3, 3], 'type': 'int8'}, 'label': {'shape': [1], 'type': 'int8'}}
+            >>> schema.parse_columns(columns2)
+        """
+        self.cpp_schema.parse_columns(json.dumps(columns, indent=2))
 
     def to_json(self):
         """

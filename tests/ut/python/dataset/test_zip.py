@@ -250,16 +250,46 @@ def test_zip_exception_06():
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 
+def test_zip_exception_07():
+    """
+    Test zip: zip with string as parameter
+    """
+    logger.info("test_zip_exception_07")
+
+    try:
+        dataz = ds.zip(('dataset1', 'dataset2'))
+
+        num_iter = 0
+        for _ in dataz.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+        assert False
+
+    except Exception as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+
+    try:
+        data = ds.TFRecordDataset(DATA_DIR_1, SCHEMA_DIR_1)
+        dataz = data.zip(('dataset1',))
+
+        num_iter = 0
+        for _ in dataz.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+        assert False
+
+    except Exception as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+
 if __name__ == '__main__':
     test_zip_01()
-    #test_zip_02()
-    #test_zip_03()
-    #test_zip_04()
-    #test_zip_05()
-    #test_zip_06()
-    #test_zip_exception_01()
-    #test_zip_exception_02()
-    #test_zip_exception_03()
-    #test_zip_exception_04()
-    #test_zip_exception_05()
-    #test_zip_exception_06()
+    test_zip_02()
+    test_zip_03()
+    test_zip_04()
+    test_zip_05()
+    test_zip_06()
+    test_zip_exception_01()
+    test_zip_exception_02()
+    test_zip_exception_03()
+    test_zip_exception_04()
+    test_zip_exception_05()
+    test_zip_exception_06()
+    test_zip_exception_07()

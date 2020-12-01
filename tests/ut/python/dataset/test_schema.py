@@ -50,6 +50,12 @@ def test_schema_exception():
         ds.Schema(1)
     assert "Argument schema_file with value 1 is not of type (<class 'str'>,)" in str(info.value)
 
+    with pytest.raises(RuntimeError) as info:
+        schema = ds.Schema(SCHEMA_FILE)
+        columns = [{'type': 'int8', 'shape': [3, 3]}]
+        schema.parse_columns(columns)
+    assert "Column's name is missing" in str(info.value)
+
 
 if __name__ == '__main__':
     test_schema_simple()
