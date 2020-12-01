@@ -196,10 +196,10 @@ class ShardWriter:
         def int_to_bytes(x: int) -> bytes:
             return x.to_bytes(8, 'big')
         merged = bytes()
-        for _, v in blob_data.items():
+        for field, v in blob_data.items():
             # convert ndarray to bytes
             if isinstance(v, np.ndarray):
-                v = v.tobytes()
+                v = v.astype(self._header.schema[field]["type"]).tobytes()
             merged += int_to_bytes(len(v))
             merged += v
         return merged
