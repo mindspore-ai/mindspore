@@ -867,6 +867,9 @@ STATUS PostTrainingQuantizer::QuantNode() {
           }
         }
         if (input_node->isa<mindspore::CNode>()) {
+          if (op_type == PrimitiveType_Gather) {
+            continue;
+          }
           auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
           auto input_cnode_primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
           if (input_cnode_primitive_c == nullptr) {
@@ -932,7 +935,8 @@ STATUS PostTrainingQuantizer::QuantNode() {
       // do weight quant
       auto weight = cnode->input(2);
       bool perchannel = false;
-      if (op_type == PrimitiveType_Conv2D || op_type == PrimitiveType_DepthwiseConv2D) {
+      if (op_type == PrimitiveType_Conv2D || op_type == PrimitiveType_DepthwiseConv2D ||
+          op_type == PrimitiveType_FullConnection) {
         perchannel = true;
       }
       DoWeightQuant(weight, primitive_c, perchannel);

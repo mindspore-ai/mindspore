@@ -47,7 +47,10 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
     } else {
       curnode_quant_type = primitive_c->quant_type();
     }
-
+    auto op_type = (schema::PrimitiveType)primitive_c->Type();
+    if (op_type == schema::PrimitiveType_Gather) {
+      continue;
+    }
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
       auto input_node = cnode->input(i);
       auto is_graph_input = false;
