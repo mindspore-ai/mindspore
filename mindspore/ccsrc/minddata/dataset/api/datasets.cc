@@ -260,7 +260,7 @@ std::vector<std::pair<std::string, std::vector<int32_t>>> Dataset::GetClassIndex
 std::shared_ptr<SchemaObj> Schema(const std::string &schema_file) {
   auto schema = std::make_shared<SchemaObj>(schema_file);
 
-  return schema->init() ? schema : nullptr;
+  return schema->Init() ? schema : nullptr;
 }
 
 // FUNCTIONS TO CREATE DATASETS FOR LEAF CLASSES
@@ -456,7 +456,7 @@ ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datase
 }
 
 FilterDataset::FilterDataset(std::shared_ptr<Dataset> input, std::function<TensorRow(TensorRow)> predicate,
-                             std::vector<std::string> input_columns) {
+                             const std::vector<std::string> &input_columns) {
   std::shared_ptr<TensorOp> c_func = nullptr;
   if (predicate) c_func = std::make_shared<CFuncOp>(predicate);
   auto ds = std::make_shared<FilterNode>(input->IRNode(), c_func, input_columns);
@@ -466,7 +466,7 @@ FilterDataset::FilterDataset(std::shared_ptr<Dataset> input, std::function<Tenso
 #endif
 
 MapDataset::MapDataset(std::shared_ptr<Dataset> input, std::vector<std::shared_ptr<TensorOperation>> operations,
-                       std::vector<std::string> input_columns, std::vector<std::string> output_columns,
+                       const std::vector<std::string> &input_columns, const std::vector<std::string> &output_columns,
                        const std::vector<std::string> &project_columns, const std::shared_ptr<DatasetCache> &cache,
                        std::vector<std::shared_ptr<DSCallback>> callbacks) {
   auto ds = std::make_shared<MapNode>(input->IRNode(), operations, input_columns, output_columns, project_columns,
@@ -636,8 +636,8 @@ std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remai
 
 SchemaObj::SchemaObj(const std::string &schema_file) : schema_file_(schema_file), num_rows_(0), dataset_type_("") {}
 
-// SchemaObj init function
-Status SchemaObj::init() {
+// SchemaObj Init function
+Status SchemaObj::Init() {
   if (!schema_file_.empty()) {
     Path schema_file(schema_file_);
     CHECK_FAIL_RETURN_UNEXPECTED(schema_file.Exists(),
@@ -650,7 +650,9 @@ Status SchemaObj::init() {
       CHECK_FAIL_RETURN_UNEXPECTED(js.find("columns") != js.end(),
                                    "\"columns\" node is required in the schema json file.");
     } catch (const std::exception &err) {
-      RETURN_STATUS_SYNTAX_ERROR("Schema file failed to load");
+      std::string err_msg = "Schema file failed to load: ";
+      err_msg += err.what();
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     return from_json(js);
   }
@@ -658,13 +660,13 @@ Status SchemaObj::init() {
 }
 
 // Function to add a column to schema with a mstype de_type and known shape
-Status SchemaObj::add_column(std::string name, TypeId de_type, std::vector<int32_t> shape) {
+Status SchemaObj::add_column(const std::string &name, TypeId de_type, const std::vector<int32_t> &shape) {
   DataType data_type = dataset::MSTypeToDEType(de_type);
   return add_column(name, data_type.ToString(), shape);
 }
 
 // Function to add a column to schema with a string de_type and known shape
-Status SchemaObj::add_column(std::string name, std::string de_type, std::vector<int32_t> shape) {
+Status SchemaObj::add_column(const std::string &name, const std::string &de_type, const std::vector<int32_t> &shape) {
   DataType data_type(de_type);
   CHECK_FAIL_RETURN_UNEXPECTED(data_type != DataType::DE_UNKNOWN, "Type is unknown.");
 
@@ -679,13 +681,13 @@ Status SchemaObj::add_column(std::string name, std::string de_type, std::vector<
 }
 
 // Function to add a column to schema with a mstype de_type and without shape
-Status SchemaObj::add_column(std::string name, TypeId de_type) {
+Status SchemaObj::add_column(const std::string &name, TypeId de_type) {
   DataType data_type = dataset::MSTypeToDEType(de_type);
   return add_column(name, data_type.ToString());
 }
 
 // Function to add a column to schema with a string de_type and without shape
-Status SchemaObj::add_column(std::string name, std::string de_type) {
+Status SchemaObj::add_column(const std::string &name, const std::string &de_type) {
   DataType data_type(de_type);
   CHECK_FAIL_RETURN_UNEXPECTED(data_type != DataType::DE_UNKNOWN, "Type is unknown.");
 
@@ -791,7 +793,9 @@ Status SchemaObj::FromJSONString(const std::string &json_string) {
                                  "\"columns\" node is required in the schema json JSON.");
     RETURN_IF_NOT_OK(from_json(js));
   } catch (const std::exception &err) {
-    RETURN_STATUS_SYNTAX_ERROR("JSON string is failed to parse");
+    std::string err_msg = "FromJSONString: JSON string failed to parse: ";
+    err_msg += err.what();
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }
@@ -801,7 +805,9 @@ Status SchemaObj::ParseColumnString(const std::string &json_string) {
     nlohmann::json js = nlohmann::json::parse(json_string);
     RETURN_IF_NOT_OK(parse_column(js));
   } catch (const std::exception &err) {
-    RETURN_STATUS_SYNTAX_ERROR("JSON string is failed to parse");
+    std::string err_msg = "ParseColumnString: JSON string failed to parse: ";
+    err_msg += err.what();
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   return Status::OK();
 }

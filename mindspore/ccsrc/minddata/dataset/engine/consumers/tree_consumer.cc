@@ -519,15 +519,17 @@ Status TreeGetters::InternalInit(int8_t type) {
     return pre;
   });
   Status s = tree_adapter_->Compile(std::move(root_), 1);
-  if (!s.IsError()) init_flag_ = true;
+  if (s.IsOk()) init_flag_ = true;
   return s;
 }
+
 Status TreeGetters::InternalInit() {
   if (init_flag_) return Status::OK();
   Status s = tree_adapter_->Compile(std::move(root_), 1);
-  if (!s.IsError()) init_flag_ = true;
+  if (s.IsOk()) init_flag_ = true;
   return s;
 }
+
 Status TreeGetters::GetFirstRowShapeAndType() {
   RETURN_OK_IF_TRUE(first_row_obtained_);
   RETURN_IF_NOT_OK(InternalInit(static_cast<int8_t>(GetterPass::kOutputShapeAndType)));
@@ -540,6 +542,7 @@ Status TreeGetters::GetFirstRowShapeAndType() {
   first_row_obtained_ = true;
   return Status::OK();
 }
+
 Status BuildVocabConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d), 1); }
 
 Status BuildVocabConsumer::Start() {
