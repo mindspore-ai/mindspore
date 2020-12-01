@@ -441,5 +441,154 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
   return Status::OK();
 }
 
+static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                                       const uint64_t orientation) {
+  try {
+    int height = 0;
+    int width = 0;
+    double M[6] = {};
+
+    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                         GetLiteCVDataType(input->type()));
+    LiteMat lite_mat_affine;
+
+    if (orientation == 3) {
+      height = lite_mat_rgb.height_;
+      width = lite_mat_rgb.width_;
+      M[0] = -1.0f;
+      M[1] = 0.0f;
+      M[2] = lite_mat_rgb.width_ - 1;
+      M[3] = 0.0f;
+      M[4] = -1.0f;
+      M[5] = lite_mat_rgb.height_ - 1;
+    } else if (orientation == 6) {
+      height = lite_mat_rgb.width_;
+      width = lite_mat_rgb.height_;
+      M[0] = 0.0f;
+      M[1] = -1.0f;
+      M[2] = lite_mat_rgb.height_ - 1;
+      M[3] = 1.0f;
+      M[4] = 0.0f;
+      M[5] = 0.0f;
+    } else if (orientation == 8) {
+      height = lite_mat_rgb.width_;
+      width = lite_mat_rgb.height_;
+      M[0] = 0.0f;
+      M[1] = 1.0f;
+      M[2] = 0.0f;
+      M[3] = -1.0f;
+      M[4] = 0.0f;
+      M[5] = lite_mat_rgb.width_ - 1.0f;
+    } else {
+    }
+
+    std::vector<size_t> dsize;
+    dsize.push_back(width);
+    dsize.push_back(height);
+    bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(0, 0, 0));
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate failed in lite cv");
+
+    // new shape for output tensor
+    TensorShape new_shape = TensorShape({lite_mat_affine.height_, lite_mat_affine.width_, input->shape()[2]});
+    std::shared_ptr<Tensor> output_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(new_shape, input->type(), static_cast<uchar *>(lite_mat_affine.data_ptr_),
+                                              &output_tensor));
+    *output = output_tensor;
+  } catch (std::runtime_error &e) {
+    RETURN_STATUS_UNEXPECTED("Error in image Rotate.");
+  }
+  return Status::OK();
+}
+
+static Status RotateAngleWithMirror(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                                    const uint64_t orientation) {
+  try {
+    int height = 0;
+    int width = 0;
+    double M[6] = {};
+
+    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                         GetLiteCVDataType(input->type()));
+    LiteMat lite_mat_affine;
+    if (orientation == 2) {
+      height = lite_mat_rgb.height_;
+      width = lite_mat_rgb.width_;
+      M[0] = -1.0f;
+      M[1] = 0.0f;
+      M[2] = lite_mat_rgb.width_ - 1;
+      M[3] = 0.0f;
+      M[4] = 1.0f;
+      M[5] = 0.0f;
+    } else if (orientation == 5) {
+      height = lite_mat_rgb.width_;
+      width = lite_mat_rgb.height_;
+      M[0] = 0.0f;
+      M[1] = 1.0f;
+      M[2] = 0.0f;
+      M[3] = 1.0f;
+      M[4] = 0.0f;
+      M[5] = 0.0f;
+    } else if (orientation == 7) {
+      height = lite_mat_rgb.width_;
+      width = lite_mat_rgb.height_;
+      M[0] = 0.0f;
+      M[1] = -1.0f;
+      M[2] = lite_mat_rgb.height_ - 1;
+      M[3] = -1.0f;
+      M[4] = 0.0f;
+      M[5] = lite_mat_rgb.width_ - 1;
+    } else if (orientation == 4) {
+      height = lite_mat_rgb.height_;
+      width = lite_mat_rgb.width_;
+      M[0] = 1.0f;
+      M[1] = 0.0f;
+      M[2] = 0.0f;
+      M[3] = 0.0f;
+      M[4] = -1.0f;
+      M[5] = lite_mat_rgb.height_ - 1;
+    } else {
+    }
+    std::vector<size_t> dsize;
+    dsize.push_back(width);
+    dsize.push_back(height);
+    bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(0, 0, 0));
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate failed in lite cv");
+
+    // new shape for output tensor
+    TensorShape new_shape = TensorShape({lite_mat_affine.height_, lite_mat_affine.width_, input->shape()[2]});
+    std::shared_ptr<Tensor> output_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(new_shape, input->type(), static_cast<uchar *>(lite_mat_affine.data_ptr_),
+                                              &output_tensor));
+    *output = output_tensor;
+  } catch (std::runtime_error &e) {
+    RETURN_STATUS_UNEXPECTED("Error in image Rotate.");
+  }
+  return Status::OK();
+}
+
+static bool IsMirror(int orientation) {
+  if (orientation == 2 || orientation == 4 || orientation == 5 || orientation == 7) {
+    return true;
+  }
+  return false;
+}
+// rotate the image by EXIF orientation
+Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const uint64_t orientation) {
+  if (input->Rank() != 3) {
+    RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C>");
+  }
+
+  if (input->type() != DataType::DE_FLOAT32 && input->type() != DataType::DE_UINT8) {
+    RETURN_STATUS_UNEXPECTED("Only float32, uint8 support in Pad");
+  }
+
+  if (!IsMirror(orientation)) {
+    return RotateAngleWithOutMirror(input, output, orientation);
+  } else {
+    return RotateAngleWithMirror(input, output, orientation);
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

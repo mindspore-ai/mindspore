@@ -30,7 +30,6 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/util/path.h"
-#include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -50,6 +49,7 @@ class AlbumOp {
   /// \param[in] do_decode - decode image files
   /// \param[in] schema_file - schema file
   /// \param[in] exts - set of file extensions to read, if empty, read everything under the dir
+  /// \param[in] rotate - rotate image exif orientation
   AlbumOp(const std::string &file_dir, bool do_decode, const std::string &schema_file,
           const std::set<std::string> &exts);
 
@@ -59,6 +59,7 @@ class AlbumOp {
   /// \param[in] schema_file - schema file
   /// \param[in] exts - set of file extensions to read, if empty, read everything under the dir
   /// \param[in] index - the specific file index
+  /// \param[in] rotate - rotate image exif orientation
   AlbumOp(const std::string &file_dir, bool do_decode, const std::string &schema_file,
           const std::set<std::string> &exts, uint32_t index);
 
@@ -81,6 +82,10 @@ class AlbumOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const { return "AlbumOp"; }
+
+  // Op name DisableRotate
+  // @return
+  void DisableRotate() { this->rotate_ = false; }
 
  private:
   /// \brief Load image to tensor
@@ -153,6 +158,10 @@ class AlbumOp {
   Status LoadTensorRow(row_id_type row_id, const std::string &file,
                        std::unordered_map<std::string, std::shared_ptr<Tensor>> *map_row);
 
+  /// \brief get image exif orientation
+  /// \param[in] file file path
+  int GetOrientation(const std::string &file);
+
   std::string folder_path_;  // directory of image folder
   bool decode_;
   std::vector<std::string> columns_to_load_;
@@ -167,6 +176,7 @@ class AlbumOp {
   int64_t sampler_index_;
   std::vector<std::string> image_rows_;
   std::unordered_map<std::string, int32_t> column_name_id_map_;
+  bool rotate_;
 };
 }  // namespace dataset
 }  // namespace mindspore

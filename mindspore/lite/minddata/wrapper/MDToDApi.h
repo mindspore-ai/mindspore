@@ -17,6 +17,8 @@
 #define DATASET_MDTODAPI_H_
 
 #include <stdint.h>
+#include <sys/types.h>
+
 class MDToDApi;
 
 typedef struct MDToDBuff {

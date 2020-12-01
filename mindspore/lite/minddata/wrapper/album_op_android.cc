@@ -18,6 +18,7 @@
 #include <iomanip>
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
+#include "minddata/dataset/kernels/image/exif_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -33,7 +34,8 @@ AlbumOp::AlbumOp(const std::string &file_dir, bool do_decode, const std::string 
       current_cnt_(0),
       dirname_offset_(0),
       sampler_(false),
-      sampler_index_(0) {
+      sampler_index_(0),
+      rotate_(true) {
   PrescanEntry();
 }
 
@@ -48,7 +50,8 @@ AlbumOp::AlbumOp(const std::string &file_dir, bool do_decode, const std::string 
       current_cnt_(0),
       dirname_offset_(0),
       sampler_(true),
-      sampler_index_(index) {
+      sampler_index_(index),
+      rotate_(true) {
   PrescanEntry();
 }
 
@@ -168,6 +171,7 @@ bool AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
 
 Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col_num, TensorPtr *tensor) {
   TensorPtr image;
+  TensorPtr rotate_tensor;
   std::ifstream fs;
   fs.open(image_file_path, std::ios::binary | std::ios::in);
   if (fs.fail()) {
@@ -204,21 +208,66 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
   }
   // if it is a jpeg image, load and try to decode
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_file_path, &image));
+  Status rc;
   if (decode_ && valid) {
-    Status rc = Decode(image, tensor);
-    if (rc.IsError()) {
-      RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, tensor));
-      return Status::OK();
+    int orientation = GetOrientation(image_file_path);
+    if (orientation > 1 && this->rotate_) {
+      rc = Decode(image, &rotate_tensor);
+      if (rc.IsError()) {
+        RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, tensor));
+        return Status::OK();
+      }
+
+      rc = Rotate(rotate_tensor, tensor, orientation);
+      if (rc.IsError()) {
+        RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, tensor));
+        return Status::OK();
+      }
+    } else {
+      rc = Decode(image, tensor);
+      if (rc.IsError()) {
+        RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, tensor));
+        return Status::OK();
+      }
     }
   }
-  //  row->push_back(std::move(image));
   return Status::OK();
+}
+
+// get orientation from EXIF file
+int AlbumOp::GetOrientation(const std::string &folder_path) {
+  FILE *fp = fopen(folder_path.c_str(), "rb");
+  if (!fp) {
+    MS_LOG(WARNING) << "Can't read file for EXIF:  file = " << folder_path;
+    return 0;
+  }
+  fseek(fp, 0, SEEK_END);
+  int64_t fsize = ftell(fp);
+  rewind(fp);
+  unsigned char *buf = new unsigned char[fsize];
+  if (fread(buf, 1, fsize, fp) != fsize) {
+    MS_LOG(WARNING) << "read file size error for EXIF:  file = " << folder_path;
+    delete[] buf;
+    fclose(fp);
+    return 0;
+  }
+  fclose(fp);
+
+  // Parse EXIF
+  mindspore::dataset::ExifInfo result;
+  int code = result.parseOrientation(buf, fsize);
+  delete[] buf;
+  if (code == 0) {
+    MS_LOG(WARNING) << "Error parsing EXIF, use default code = " << code << ".";
+  }
+
+  return code;
 }
 
 Status AlbumOp::LoadStringArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorPtr *tensor) {
   std::vector<std::string> data = json_obj.get<std::vector<std::string>>();
 
-  MS_LOG(WARNING) << "String array label found: " << data << ".";
+  MS_LOG(INFO) << "String array label found: " << data << ".";
   //  TensorPtr label;
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, tensor));
   //  row->push_back(std::move(label));

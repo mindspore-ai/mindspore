@@ -15,8 +15,8 @@
  */
 #include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
 
+#include <limits.h>
 #include <algorithm>
-#include <limits>
 #include <cmath>
 #ifdef ENABLE_ANDROID
 #if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
@@ -252,6 +252,9 @@ void LiteMat::Release() {
 
 void *LiteMat::AlignMalloc(unsigned int size) {
   unsigned int length = sizeof(void *) + ALIGN - 1;
+  if (size > INT_MAX - length) {
+    return nullptr;
+  }
   void *p_raw = reinterpret_cast<void *>(malloc(size + length));
   if (p_raw) {
     void **p_algin = reinterpret_cast<void **>(((size_t)(p_raw) + length) & ~(ALIGN - 1));

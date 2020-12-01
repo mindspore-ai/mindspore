@@ -16,7 +16,12 @@
 #include "minddata/dataset/util/status.h"
 #include <sstream>
 #include "utils/ms_utils.h"
+
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/util/task_manager.h"
+#else
+#include "minddata/dataset/util/log_adapter.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -104,11 +109,14 @@ Status::Status(const StatusCode code, const std::string &msg) : code_(code), err
 Status::Status(const StatusCode code, int line_of_code, const char *file_name, const std::string &extra) {
   code_ = code;
   std::ostringstream ss;
+#ifndef ENABLE_ANDROID
   ss << "Thread ID " << this_thread::get_id() << " " << CodeAsString(code) << ". ";
   if (!extra.empty()) {
     ss << extra;
   }
   ss << "\n";
+#endif
+
   ss << "Line of code : " << line_of_code << "\n";
   if (file_name != nullptr) {
     ss << "File         : " << file_name << "\n";
