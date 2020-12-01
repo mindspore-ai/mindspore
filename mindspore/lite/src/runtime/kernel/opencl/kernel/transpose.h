@@ -25,7 +25,7 @@
 
 namespace mindspore::kernel {
 
-enum class TransposeType { AXIS0312, AXIS0231 };
+enum class TransposeType { AXIS0312, AXIS0231, GENERAL };
 
 class TransposeOpenCLKernel : public OpenCLKernel {
  public:
@@ -41,7 +41,9 @@ class TransposeOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
-  TransposeType type{TransposeType::AXIS0312};
+  TransposeType type_{TransposeType::AXIS0312};
+  GpuTensorInfo tensor_size_{GpuTensorInfo(nullptr)};
+  int perm_4d_[4];
 };
 }  // namespace mindspore::kernel
 

@@ -189,3 +189,37 @@ __kernel void transpose_0231_NC4HW4(__read_only image2d_t src_data, __write_only
     WRITE_IMAGE(dst_data, (int2)(4 * Y + 3, Z * shape.y + X), dst3);
   }
 }
+
+typedef union FLT4_array {
+  FLT c_array[4];
+  FLT4 vector;
+} FLT4_array;
+
+__kernel void transpose_general_NHWC4(__read_only image2d_t src_data, __write_only image2d_t dst_data, int4 out_shape,
+                                      int4 de_perm, int4 in_shape) {
+  int X = get_global_id(0);  // N*H
+  int Y = get_global_id(1);
+  int Z = get_global_id(2);
+  if (X >= out_shape.y * out_shape.x || Y >= out_shape.z || 4 * Z >= out_shape.w) {
+    return;
+  }
+  int N = X / out_shape.y;
+  int H = X % out_shape.y;
+  int CI4_SIZE = UP_DIV(in_shape.w, 4);
+  FLT4_array result_tmp;
+  result_tmp.vector = (FLT4)(0.f);
+  FLT *result_ptr = result_tmp.c_array;
+  for (int i = 0; i < 4; i++) {
+    if (Z * 4 + i < out_shape.w) {
+      int out_index[4] = {N, H, Y, Z * 4 + i};
+      FLT4 src = READ_IMAGE(src_data, smp_zero,
+                            (int2)(out_index[de_perm.z] * CI4_SIZE + out_index[de_perm.w] / 4,
+                                   out_index[de_perm.x] * in_shape.y + out_index[de_perm.y]));
+      FLT4_array src_tmp;
+      src_tmp.vector = src;
+      result_tmp.c_array[i] = src_tmp.c_array[out_index[de_perm.w] % 4];
+    }
+  }
+  int CO4_SIZE = UP_DIV(in_shape.w, 4);
+  WRITE_IMAGE(dst_data, (int2)(Y * CO4_SIZE + Z, X), result_tmp.vector);
+}
