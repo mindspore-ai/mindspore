@@ -66,4 +66,53 @@ TEST_F(TestOpenCL_Transpose, NCHW2NHWC) {
   }
 }
 
+TEST_F(TestOpenCL_Transpose, NHWC2NWHC) {
+  std::vector<int> input_shape = {1, 2, 3, 4};
+  std::vector<int> perm = {0, 2, 1, 3};
+  std::vector<int> output_shape;
+  for (int axis : perm) {
+    output_shape.push_back(input_shape[axis]);
+  }
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
+  float output_data[] = {0, 1, 2, 3, 12, 13, 14, 15, 4, 5, 6, 7, 16, 17, 18, 19, 8, 9, 10, 11, 20, 21, 22, 23};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(perm);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_Transpose, NWC2CWN) {
+  std::vector<int> input_shape = {1, 2, 3};
+  std::vector<int> perm = {2, 1, 0};
+  std::vector<int> output_shape;
+  for (int axis : perm) {
+    output_shape.push_back(input_shape[axis]);
+  }
+  float input_data[] = {0, 1, 2, 3, 4, 5};
+  float output_data[] = {0, 3, 1, 4, 2, 5};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(perm);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_Transpose, NWC2WNC) {
+  std::vector<int> input_shape = {2, 3, 5};
+  std::vector<int> perm = {1, 0, 2};
+  std::vector<int> output_shape;
+  for (int axis : perm) {
+    output_shape.push_back(input_shape[axis]);
+  }
+  float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
+                        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
+  float output_data[] = {0,  1,  2,  3,  4,  15, 16, 17, 18, 19, 5,  6,  7,  8,  9,
+                         20, 21, 22, 23, 24, 10, 11, 12, 13, 14, 25, 26, 27, 28, 29};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(perm);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
 }  // namespace mindspore::lite::opencl::test

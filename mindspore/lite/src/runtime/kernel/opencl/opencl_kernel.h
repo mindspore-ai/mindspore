@@ -113,8 +113,8 @@ struct GpuTensorInfo {
   }
 
   int AlignAxis(int oriAxis) const {
-    if (NDim == 0) {
-      return 0;
+    if (NDim == 0 || NDim == 1) {
+      return 3;
     }
     int no_neg_axis = static_cast<int>((oriAxis + NDim) % NDim);
     if (no_neg_axis == 0) {
@@ -231,6 +231,7 @@ class OpenCLKernel : public LiteKernel {
       return tuning_params;
     }
     BaseTuningParameter default_tuning_param = BaseTuningParameter();
+    default_tuning_param.local_size = local_size_;
     tuning_params.push_back(default_tuning_param);
     std::vector<size_t> max_work_items = ocl_runtime_->GetWorkItemSize();
     size_t max_workgroup_size = ocl_runtime_->GetMaxWorkGroupSize(kernel_);
@@ -263,7 +264,7 @@ class OpenCLKernel : public LiteKernel {
     return tuning_params;
   }
 
-  virtual int AssignTuningParam(const BaseTuningParameter param) {
+  virtual int AssignTuningParam(const BaseTuningParameter &param) {
     std::vector<size_t> local_size_tmp = param.local_size;
     if (local_size_tmp.size() > global_size_.size()) {
       local_size_tmp = std::vector<size_t>(local_size_tmp.begin(), local_size_tmp.begin() + global_size_.size());
