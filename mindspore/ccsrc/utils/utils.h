@@ -386,11 +386,23 @@ constexpr auto kOpFormat_C1HWNCoC0 = "C1HWNCoC0";
 constexpr auto kOpFormat_NC1HWC0_C04 = "NC1HWC0_C04";
 constexpr auto kOpFormat_FRACTAL_Z_C04 = "FRACTAL_Z_C04";
 constexpr auto kOpFormat_NDHWC = "NDHWC";
+constexpr auto kOpFormat_NCDHW = "NCDHW";
+constexpr auto kOpFormat_DHWNC = "DHWNC";
+constexpr auto kOpFormat_DHWCN = "DHWCN";
+constexpr auto kOpFormat_NDC1HWC0 = "NDC1HWC0";
+constexpr auto kOpFormat_FRACTAL_Z_3D = "FRACTAL_Z_3D";
 constexpr auto kOpFormat_FRACTAL_ZN_LSTM = "FRACTAL_ZN_LSTM";
-const std::set<std::string> kOpFormatList = {
-  kOpFormat_DEFAULT,     kOpFormat_NC1KHKWHWC0,   kOpFormat_ND,     kOpFormat_NCHW,           kOpFormat_NHWC,
-  kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z, kOpFormat_C1HWNCoC0,      kOpFormat_FRAC_NZ,
-  kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDHWC,  kOpFormat_FRACTAL_ZN_LSTM};
+
+const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT,      kOpFormat_NC1KHKWHWC0,
+                                             kOpFormat_ND,           kOpFormat_NCHW,
+                                             kOpFormat_NHWC,         kOpFormat_HWCN,
+                                             kOpFormat_NC1HWC0,      kOpFormat_FRAC_Z,
+                                             kOpFormat_C1HWNCoC0,    kOpFormat_FRAC_NZ,
+                                             kOpFormat_NC1HWC0_C04,  kOpFormat_FRACTAL_Z_C04,
+                                             kOpFormat_NDHWC,        kOpFormat_FRACTAL_ZN_LSTM,
+                                             kOpFormat_NDC1HWC0,     kOpFormat_NCDHW,
+                                             kOpFormat_FRACTAL_Z_3D, kOpFormat_DHWNC,
+                                             kOpFormat_DHWCN};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
 const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kApplyMomentumOpName,
@@ -427,8 +439,8 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kSparseApplyProximalAdagradOpName};
 
 const std::set<std::string> kHWSpecialFormatSet = {
-  kOpFormat_FRAC_Z,    kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,       kOpFormat_FRAC_NZ,
-  kOpFormat_C1HWNCoC0, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_FRACTAL_ZN_LSTM};
+  kOpFormat_FRACTAL_Z_3D, kOpFormat_NC1KHKWHWC0,   kOpFormat_NC1HWC0,         kOpFormat_FRAC_NZ,  kOpFormat_C1HWNCoC0,
+  kOpFormat_NC1HWC0_C04,  kOpFormat_FRACTAL_Z_C04, kOpFormat_FRACTAL_ZN_LSTM, kOpFormat_NDC1HWC0, kOpFormat_FRAC_Z};
 
 const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 

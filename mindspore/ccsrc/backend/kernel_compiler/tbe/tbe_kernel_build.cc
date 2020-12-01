@@ -95,6 +95,16 @@ constexpr auto kJSocVersion = "socVersion";
 constexpr auto kSOC_VERSION = "SOC_VERSION";
 constexpr auto kJIsDynamicShape = "is_dynamic_shape";
 
+bool IsNeedChangeDefaultFormat(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_LOG(INFO) << "Check if need change default format";
+  if (AnfAlgo::HasNodeAttr("io_format", cnode->cast<CNodePtr>())) {
+    auto attr = AnfAlgo::GetNodeAttr<std::string>(cnode, "io_format");
+    return attr == kOpFormat_NCDHW;
+  }
+  return false;
+}
+
 bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspore::AnfNode> &anf_node,
                                                   nlohmann::json *kernel_json) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -161,10 +171,14 @@ void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> 
                                                  bool value, const std::shared_ptr<OpIOInfo> &input_ptr,
                                                  const string &op_input_name, size_t input_i,
                                                  std::vector<nlohmann::json> *input_list) {
+  auto def_format = kOpFormat_NCHW;
   auto dtype = GetDeviceInputType(anf_node, real_input_index);
   auto format = GetDeviceInputFormat(anf_node, real_input_index);
   auto shape = GetDeviceInputShape(anf_node, real_input_index);
   auto ori_shape = AnfAlgo::GetPrevNodeOutputInferShape(anf_node, real_input_index);
+  if (anf_node->isa<CNode>() && IsNeedChangeDefaultFormat(anf_node->cast<CNodePtr>())) {
+    def_format = kOpFormat_NCDHW;
+  }
   if (ori_shape.empty()) {
     ori_shape.emplace_back(1);
   }
@@ -172,7 +186,7 @@ void TbeKernelJsonCreator::GenValidInputDescJson(const std::shared_ptr<AnfNode> 
   input_desc_json[kJDtype] = dtype;
   input_desc_json[kJName] = op_input_name + std::to_string(input_i);
   input_desc_json[kJOriShape] = ori_shape;
-  input_desc_json[kJOriFormat] = kOpFormat_NCHW;
+  input_desc_json[kJOriFormat] = def_format;
   input_desc_json[kJShape] = shape;
   input_desc_json[kJFormat] = format;
   input_desc_json[kJValid] = value;
@@ -379,6 +393,10 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
                                          std::vector<nlohmann::json> *output_list) {
   MS_EXCEPTION_IF_NULL(output_idx);
   MS_EXCEPTION_IF_NULL(output_list);
+  auto def_format = kOpFormat_NCHW;
+  if (anf_node->isa<CNode>() && IsNeedChangeDefaultFormat(anf_node->cast<CNodePtr>())) {
+    def_format = kOpFormat_NCDHW;
+  }
   for (size_t i = 0; i < output_obj_num; i++) {
     auto dtype = GetDeviceOutputType(anf_node, *output_idx);
     auto format = GetDeviceOutputFormat(anf_node, *output_idx);
@@ -397,7 +415,7 @@ void TbeKernelJsonCreator::GenOutputList(const std::shared_ptr<AnfNode> &anf_nod
     output_obj[kJShape] = shape;
     output_obj[kJFormat] = format;
     output_obj[kJOriShape] = ori_shape;
-    output_obj[kJOriFormat] = kOpFormat_NCHW;
+    output_obj[kJOriFormat] = def_format;
     output_obj[kJName] = output_ptr->name();
     output_obj[kJValid] = true;
     output_obj[kJParamType] = output_ptr->param_type();
@@ -580,6 +598,9 @@ std::string TbeKernelJsonCreator::GetDeviceInputFormat(const AnfNodePtr &anf_nod
       format = kOpFormat_NCHW;
     }
   }
+  if (anf_node->isa<CNode>() && IsNeedChangeDefaultFormat(anf_node->cast<CNodePtr>())) {
+    format = kOpFormat_NCDHW;
+  }
   return format;
 }
 
@@ -618,6 +639,9 @@ std::string TbeKernelJsonCreator::GetDeviceOutputFormat(const AnfNodePtr &anf_no
     } else if (format == kOpFormat_DEFAULT) {
       format = kOpFormat_NCHW;
     }
+  }
+  if (anf_node->isa<CNode>() && IsNeedChangeDefaultFormat(anf_node->cast<CNodePtr>())) {
+    format = kOpFormat_NCDHW;
   }
   return format;
 }
@@ -818,6 +842,10 @@ void TbeKernelBuild::GenSuffixDescJson(nlohmann::json *output_desc) {
 void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t node_out_idx,
                                  size_t desc_output_idx, nlohmann::json *output_desc, FusionDataType fusion_data_type) {
   GenPreDescJson(output_desc);
+  auto def_format = kOpFormat_NCHW;
+  if (anf_node->isa<CNode>() && IsNeedChangeDefaultFormat(anf_node->cast<CNodePtr>())) {
+    def_format = kOpFormat_NCDHW;
+  }
   // data_type
   auto type_id = AnfAlgo::GetOutputDeviceDataType(anf_node, node_out_idx);
   (*output_desc)[kJDataType] = tbe::TypeIdToString(type_id);
@@ -828,7 +856,7 @@ void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_
   }
   (*output_desc)[kJName] = output_desc_name;
   // ori_format
-  (*output_desc)[kJOriFormat] = kOpFormat_NCHW;
+  (*output_desc)[kJOriFormat] = def_format;
   // ori_shape
   auto ori_shape = AnfAlgo::GetOutputInferShape(anf_node, node_out_idx);
   if (ori_shape.empty()) {

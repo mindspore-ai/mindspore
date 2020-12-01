@@ -369,6 +369,26 @@ void KernelGraph::CheckLoop() {
   }
 }
 
+void ReSetParameterValueNodeFormatAndType(const AnfNodePtr &node, const std::string &format) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
+  kernel_build_info_builder->SetOutputsFormat({format});
+  kernel_build_info_builder->SetOutputsDeviceType({AnfAlgo::GetOutputInferDataType(node, 0)});
+  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), node.get());
+}
+
+void KernelGraph::ResetInFormat(const AnfNodePtr &node, const std::string &format) const {
+  MS_EXCEPTION_IF_NULL(node);
+  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(node); i++) {
+    auto in_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), i);
+    MS_EXCEPTION_IF_NULL(in_node);
+    if (in_node->isa<Parameter>() || in_node->isa<ValueNode>()) {
+      ReSetParameterValueNodeFormatAndType(in_node, format);
+    }
+  }
+}
+
 CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   auto cnode = FuncGraph::NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
@@ -378,6 +398,12 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
     AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode);
   }
   SetKernelInfoForNode(cnode);
+  if (AnfAlgo::HasNodeAttr("io_format", cnode)) {
+    auto attr = AnfAlgo::GetNodeAttr<std::string>(cnode, "io_format");
+    if (attr == kOpFormat_NCDHW) {
+      ResetInFormat(cnode, kOpFormat_NCDHW);
+    }
+  }
   AnfAlgo::SetGraphId(graph_id_, cnode.get());
   return cnode;
 }

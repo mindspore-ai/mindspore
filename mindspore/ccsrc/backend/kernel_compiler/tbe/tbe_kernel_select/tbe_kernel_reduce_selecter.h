@@ -39,6 +39,7 @@ class TbeKernelReduceSelecter {
   void GetReduceAttrKeepDim();
   void AssignSupportFormat(const std::string &support_format_str, SupportFormat *support_format) const;
   bool Is4DShape(const std::vector<size_t> &shape) const;
+  bool Is5DShape(const std::vector<size_t> &shape) const;
   void PadScalarShape(std::vector<size_t> *shape) const;
   CNodePtr cnode_ptr_;
   std::vector<size_t> input_shape_{};
