@@ -98,7 +98,7 @@ class DeviceManager {
   std::map<std::string, std::string> group_to_rank_;  // the key is hash name, value is rank list
 
   int64_t global_rank_ = 0;          // the real rank in all devices
-  int64_t stage_num_ = 0;            // the stage num
+  int64_t stage_num_ = 1;            // the stage num
   int64_t stage_id_ = 0;             // the stage id of the global_rank_
   int64_t rank_index_in_stage_ = 0;  // the index of this rank in it's stage
   int64_t stage_device_num_ = 0;     // the device num of one stage

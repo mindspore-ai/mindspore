@@ -21,6 +21,7 @@
 #include "utils/comm_manager.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
+#include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -59,7 +60,7 @@ static int64_t InferStage(int64_t rank_id, int64_t stage_num, int64_t device_num
 // Only auto_parallel and semi_auto_parallel support PipelineSplit
 bool PipelineSplit(const ResourcePtr &res) {
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  if (parallel_mode != parallel::SEMI_AUTO_PARALLEL || parallel_mode != parallel::AUTO_PARALLEL) {
+  if (parallel_mode != parallel::SEMI_AUTO_PARALLEL && parallel_mode != parallel::AUTO_PARALLEL) {
     MS_LOG(INFO) << "Only auto_parallel and semi_auto_parallel support pipeline split.";
     return true;
   }
@@ -80,6 +81,9 @@ bool PipelineSplit(const ResourcePtr &res) {
   }
   auto stage = InferStage(global_rank, stage_num, device_num);
   auto per_stage_rank_num = device_num / stage_num;
+  if (parallel::ParallelInit() != parallel::SUCCESS) {
+    MS_LOG(EXCEPTION) << "parallel init failed.";
+  }
   auto transformer =
     std::make_shared<parallel::PipelineTransformer>(manager, stage, root, global_rank, per_stage_rank_num);
   // step1: Do color graph
