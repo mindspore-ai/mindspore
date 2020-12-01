@@ -132,7 +132,7 @@ def _exec_save(ckpt_file_name, data_list):
                         param_tensor = param_value.tensor
                         param_tensor.dims.extend(value[0])
                         param_tensor.tensor_type = value[1]
-                        param_tensor.tensor_content = param_slice.tostring()
+                        param_tensor.tensor_content = param_slice.tobytes()
 
                         f.write(checkpoint_list.SerializeToString())
 
