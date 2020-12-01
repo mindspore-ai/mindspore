@@ -47,6 +47,19 @@ AbstractBasePtr InferImplSqrt(const AnalysisEnginePtr &, const PrimitivePtr &pri
   return inp->Clone()->Broaden();
 }
 
+AbstractBasePtr InferImplSqrtGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                  const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two tensors.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  auto out = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto dout = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  (void)CheckDtypeSame(op_name, out, dout);
+  (void)CheckShapeSame(op_name, out, dout);
+
+  return out->Broaden();
+}
+
 AbstractBasePtr InferImplTensorAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors.
