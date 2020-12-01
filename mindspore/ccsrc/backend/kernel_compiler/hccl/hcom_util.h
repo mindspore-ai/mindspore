@@ -34,6 +34,8 @@ using std::vector;
 constexpr auto kAllGather = "AllGather";
 constexpr auto kAllReduce = "AllReduce";
 constexpr auto kBroadcast = "Broadcast";
+constexpr auto kHcomSend = "Send";
+constexpr auto kReceive = "Receive";
 constexpr auto kReduceScatter = "ReduceScatter";
 
 /* Correspondence between data_type and hcom data type in Ascend */
@@ -64,6 +66,7 @@ class HcomUtil {
   static bool GetHcomOperationType(const AnfNodePtr &anf_node, HcclReduceOp *op_type);
   static bool GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id);
   static void GetHcomGroup(NotNull<const AnfNodePtr &> anf_node, NotNull<std::string *> group);
+  static bool GetHcomReceiveType(const AnfNodePtr &anf_node, int64_t *receive_type);
 };
 }  // namespace mindspore
 

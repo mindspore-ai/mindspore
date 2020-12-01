@@ -32,6 +32,8 @@ static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
   {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
   {mindspore::kAllGatherOpName, mindspore::kHcomOpTypeAllGather},
   {mindspore::kBroadcastOpName, mindspore::kHcomOpTypeBroadcast},
+  {mindspore::kHcomSendOpName, mindspore::kHcomOpTypeSend},
+  {mindspore::kReceiveOpName, mindspore::kHcomOpTypeReceive},
   {mindspore::kReduceScatterOpName, mindspore::kHcomOpTypeReduceScatter}};
 std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
   auto iter = kMsOpNameToHcomHcclType.find(ms_op_type);
@@ -80,7 +82,12 @@ HcclKernel::~HcclKernel() {
 bool HcclKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   op_name_ = AnfAlgo::GetCNodeName(anf_node);
-
+  if (op_name_ == kReceive) {
+    if (!HcomUtil::GetHcomReceiveType(anf_node, &receive_type_)) {
+      MS_LOG(ERROR) << "GetHcomReceiveType fail!";
+      return false;
+    }
+  }
   if (!HcomUtil::GetKernelInputShape(anf_node, &hccl_kernel_input_shape_list_)) {
     MS_LOG(ERROR) << "GetKernelInputShape fail!";
     return false;
@@ -89,13 +96,27 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
     MS_LOG(ERROR) << "GetKernelOutputShape fail!";
     return false;
   }
-  if (!HcomUtil::GetHcomDataType(anf_node, &hccl_data_type_list_)) {
+  if (op_name_ == kReceive) {
+    auto iter = CONST_OP_HCOM_DATA_TYPE_MAP.find(receive_type_);
+    if (iter == CONST_OP_HCOM_DATA_TYPE_MAP.end()) {
+      MS_LOG(ERROR) << "HcomDataType cann't support Current Ascend Data Type : " << receive_type_;
+      return false;
+    }
+    hccl_data_type_list_.emplace_back(iter->second);
+  } else if (!HcomUtil::GetHcomDataType(anf_node, &hccl_data_type_list_)) {
     MS_LOG(ERROR) << "GetHcomDataType fail!";
     return false;
   }
-  if (!HcomUtil::GetHcomCount(anf_node, hccl_data_type_list_, hccl_kernel_input_shape_list_, &hccl_count_)) {
-    MS_LOG(ERROR) << "GetHcomCount fail!";
-    return false;
+  if (op_name_ == kReceive) {
+    if (!HcomUtil::GetHcomCount(anf_node, hccl_data_type_list_, hccl_kernel_output_shape_list_, &hccl_count_)) {
+      MS_LOG(ERROR) << "GetHcomCount fail!";
+      return false;
+    }
+  } else {
+    if (!HcomUtil::GetHcomCount(anf_node, hccl_data_type_list_, hccl_kernel_input_shape_list_, &hccl_count_)) {
+      MS_LOG(ERROR) << "GetHcomCount fail!";
+      return false;
+    }
   }
   if (op_name_ == kAllReduce || op_name_ == kReduceScatter) {
     if (!HcomUtil::GetHcomOperationType(anf_node, &op_type_)) {
@@ -146,17 +167,24 @@ const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const { return wor
 
 std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                              const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
-  if (inputs.empty() || outputs.empty()) {
+  std::string hccl_type = AnfAlgo::GetCNodeName(anf_node_);
+  if (hccl_type == kReceive) {
+    if (outputs.empty()) {
+      MS_LOG(EXCEPTION) << "Outputs is empty";
+    }
+  } else if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Inputs or outputs is empty";
   }
   stream_id_ = stream_id;
-  MS_EXCEPTION_IF_NULL(inputs.at(0));
-  auto input_data_addr = inputs.at(0)->addr;
+  void *input_data_addr = nullptr;
+  if (hccl_type != kReceive) {
+    MS_EXCEPTION_IF_NULL(inputs.at(0));
+    input_data_addr = inputs.at(0)->addr;
+  }
   MS_EXCEPTION_IF_NULL(outputs.at(0));
   auto output_data_addr = outputs.at(0)->addr;
   std::vector<uint8_t> private_def;
   HcclDataType data_type = hccl_data_type_list_[0];
-
   std::vector<hccl::HcclTaskInfo> task_info;
   bool ret = hccl::GenTask(anf_node_, data_type, &task_info);
   if (!ret) {

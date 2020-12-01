@@ -51,6 +51,7 @@ class HcclKernel : public AscendKernelMod {
   uint64_t hccl_count_;
   HcclReduceOp op_type_;
   uint32_t root_id_;
+  int64_t receive_type_;
   mutable std::vector<size_t> input_size_list_;
   mutable std::vector<size_t> output_size_list_;
   mutable std::vector<size_t> workspace_size_list_;

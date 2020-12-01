@@ -18,6 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_REGULAR(Recv, KernelAttr(), RecvGpuKernel)
+MS_REG_GPU_KERNEL_REGULAR(StreamRecv, KernelAttr(), RecvGpuKernel)
 }  // namespace kernel
 }  // namespace mindspore

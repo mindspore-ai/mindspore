@@ -37,7 +37,7 @@ class SendKernel : public RtKernel {
   uint32_t event_id_;
 };
 
-MS_REG_RTKERNEL(send, SendKernel);
+MS_REG_RTKERNEL(streamsend, SendKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

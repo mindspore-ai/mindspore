@@ -29,7 +29,7 @@ MemReuseChecker &MemReuseChecker::GetInstance() {
 
 void MemReuseChecker::CheckSignalOps(const CNodePtr &c_node) {
   std::string node_name = AnfAlgo::GetCNodeName(c_node);
-  if (node_name == kSend || node_name == kRecv) {
+  if (node_name == kSendOpName || node_name == kRecvOpName) {
     MS_LOG(INFO) << "MemReuseChecker check op_name of  Send or Send";
     // get op's info && check
     MS_LOG(INFO) << "op: " << node_name << " in_num: " << AnfAlgo::GetInputTensorNum(c_node)
