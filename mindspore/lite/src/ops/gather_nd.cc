@@ -72,17 +72,17 @@ int GatherNd::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> ou
   int in_rank = in_shape.size();
   auto indices_shape = indices->shape();
   int indices_rank = indices_shape.size();
-  if (indices_shape[indices_rank - 1] > in_rank) {
+  if (indices_shape.at(indices_rank - 1) > in_rank) {
     MS_LOG(ERROR) << "Input of indices data is error!";
     return RET_ERROR;
   }
   std::vector<int> out_shape;
   int i = 0;
   for (i = 0; i < indices_rank - 1; ++i) {
-    out_shape.emplace_back(indices_shape[i]);
+    out_shape.emplace_back(indices_shape.at(i));
   }
-  for (i = indices_shape[indices_rank - 1]; i < in_rank; ++i) {
-    out_shape.emplace_back(in_shape[i]);
+  for (i = indices_shape.at(indices_rank - 1); i < in_rank; ++i) {
+    out_shape.emplace_back(in_shape.at(i));
   }
   output->set_shape(out_shape);
   return RET_OK;

@@ -59,13 +59,13 @@ int Lstm::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   }
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
-  auto weight_i = inputs_[1];
-  MS_ASSERT(input != nullptr);
+  auto weight_i = inputs_.at(1);
+  MS_ASSERT(weight_i != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   for (int i = 0; i < kLstmOutputNum; i++) {
-    outputs_[i]->set_data_type(input->data_type());
-    outputs_[i]->set_format(input->format());
+    outputs_.at(i)->set_data_type(input->data_type());
+    outputs_.at(i)->set_format(input->format());
   }
   if (!infer_flag()) {
     return RET_OK;

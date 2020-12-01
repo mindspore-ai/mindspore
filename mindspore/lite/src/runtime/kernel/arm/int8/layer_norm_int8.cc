@@ -89,9 +89,9 @@ int LayerNormInt8CPUKernel::ReSize() {
   inner_size_ = 1;
   for (size_t i = 0; i < shape.size(); ++i) {
     if (i + param_->normalized_dims_ < shape.size()) {
-      outer_size_ *= shape[i];
+      outer_size_ *= shape.at(i);
     } else {
-      inner_size_ *= shape[i];
+      inner_size_ *= shape.at(i);
     }
   }
 

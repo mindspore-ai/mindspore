@@ -110,7 +110,7 @@ int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs)
   MS_ASSERT(input->shape().size() <= 4);
   for (size_t i = 0; i < input_shape.size(); i++) {
     auto paddings_index = i;
-    auto shape = input_shape[i] + paddings[2 * paddings_index] + paddings[2 * paddings_index + 1];
+    auto shape = input_shape.at(i) + paddings.at(2 * paddings_index) + paddings.at(2 * paddings_index + 1);
     output_shape.push_back(shape);
   }
 

@@ -55,14 +55,14 @@ int GatherCPUKernel::DoGather(int task_id) {
   int indices_element_size = indices_tensor->ElementsNum();
   auto axis = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
 
-  const int limit = in_shape[axis];
+  const int limit = in_shape.at(axis);
 
   int outer_size = 1, inner_size = 1;
   for (int i = 0; i < axis; ++i) {
-    outer_size *= in_shape[i];
+    outer_size *= in_shape.at(i);
   }
   for (int i = axis + 1; i < in_rank; ++i) {
-    inner_size *= in_shape[i];
+    inner_size *= in_shape.at(i);
   }
   int stride = UP_DIV(outer_size, op_parameter_->thread_num_);
   int count = MSMIN(stride, outer_size - stride * task_id);

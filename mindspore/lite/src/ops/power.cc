@@ -103,14 +103,14 @@ Registry PowerRegistry(schema::PrimitiveType_Power, PowerCreator);
 
 int Power::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
-  auto x_tensor = inputs[0];
+  auto x_tensor = inputs.at(0);
   MS_ASSERT(x_tensor != nullptr);
   Tensor *exp_tensor = nullptr;
   if (inputs.size() == 2) {
-    exp_tensor = inputs[1];
+    exp_tensor = inputs.at(1);
     MS_ASSERT(exp_tensor != nullptr);
   }
-  auto output_tensor = outputs[0];
+  auto output_tensor = outputs.at(0);
   MS_ASSERT(output_tensor != nullptr);
   output_tensor->set_data_type(x_tensor->data_type());
   output_tensor->set_format(x_tensor->format());
@@ -119,7 +119,7 @@ int Power::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> output
   }
   if (exp_tensor != nullptr) {
     if ((exp_tensor->shape().size() > 1 && exp_tensor->shape() != x_tensor->shape()) ||
-        (exp_tensor->shape().size() == 1 && exp_tensor->shape()[0] != 1) ||
+        (exp_tensor->shape().size() == 1 && exp_tensor->shape().at(0) != 1) ||
         exp_tensor->data_type() != x_tensor->data_type()) {
       MS_LOG(ERROR) << "Power inputs shape or type is not equal!";
       return RET_INPUT_TENSOR_ERROR;

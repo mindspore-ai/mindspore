@@ -28,8 +28,8 @@ int Nchw2NhwcCPUKernel::Init() { return RET_OK; }
 int Nchw2NhwcCPUKernel::ReSize() { return RET_OK; }
 
 int Nchw2NhwcCPUKernel::Run() {
-  auto input = in_tensors_[0];
-  auto output = out_tensors_[0];
+  auto input = in_tensors_.at(0);
+  auto output = out_tensors_.at(0);
 
   if (input->shape().size() == 4) {
     if (input->data_type() == kNumberTypeFloat32) {

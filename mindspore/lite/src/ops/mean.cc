@@ -103,7 +103,7 @@ int Mean::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   for (size_t i = 0; i < in_shape.size(); i++) {
     bool reduce_axis = false;
     for (size_t idx = 0; idx < num_axes; ++idx) {
-      if (static_cast<size_t>(axes[idx]) == i) {
+      if (static_cast<size_t>(axes.at(idx)) == i) {
         reduce_axis = true;
         break;
       }
@@ -113,7 +113,7 @@ int Mean::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
         out_shape.push_back(1);
       }
     } else {
-      out_shape.push_back(in_shape[i]);
+      out_shape.push_back(in_shape.at(i));
     }
   }
   output->set_shape(out_shape);

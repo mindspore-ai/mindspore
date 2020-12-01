@@ -51,8 +51,8 @@ int ExpandDims::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> 
       return RET_ERROR;
     }
     // use axis instead of dim
-    if (inputs[1]->isa<ValueNode>()) {
-      auto axis_tensor = inputs[1]->cast<ValueNodePtr>();
+    if (inputs.at(1)->isa<ValueNode>()) {
+      auto axis_tensor = inputs.at(1)->cast<ValueNodePtr>();
       int axis = CastToInt(axis_tensor->value()).front();
       attr->dim = axis;
     } else {

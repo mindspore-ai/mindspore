@@ -39,12 +39,14 @@ int MatmulInt8CPUKernel::Init() {
 int MatmulInt8CPUKernel::ReSize() {
   FreeTmpBuffer();
   int batch = 1;
-  auto x_shape = in_tensors_[0]->shape();
-  auto o_shape = out_tensors_[0]->shape();
+  auto x_shape = in_tensors_.at(0)->shape();
+  auto o_shape = out_tensors_.at(0)->shape();
+  MS_ASSERT(x_shape.size() >= 2);
   for (size_t i = 0; i < x_shape.size() - 2; ++i) {
     batch *= x_shape[i];
   }
   params_->batch = batch;
+  MS_ASSERT(o_shape.size() >= 2);
   params_->row_ = o_shape[o_shape.size() - 2];
   params_->col_ = o_shape[o_shape.size() - 1];
   params_->deep_ = params_->a_transpose_ ? x_shape[x_shape.size() - 2] : x_shape[x_shape.size() - 1];
@@ -77,25 +79,25 @@ int MatmulInt8CPUKernel::ReSize() {
   thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_4_, 4));
   thread_stride_ = UP_DIV(UP_DIV(params_->col_4_, 4), thread_count_);
 
-  auto input_tensor = in_tensors_[0];
+  auto input_tensor = in_tensors_.at(0);
   auto params = input_tensor->quant_params();
   MS_ASSERT(params.size() == 1);
   quant_params_.input.zp_ = params.front().zeroPoint;
   quant_params_.input.scale_ = params.front().scale;
-  auto weight_tensor = in_tensors_[1];
+  auto weight_tensor = in_tensors_.at(1);
   params = weight_tensor->quant_params();
   MS_ASSERT(params.size() == 1);
   quant_params_.weight.zp_ = params.front().zeroPoint;
   quant_params_.weight.scale_ = params.front().scale;
-  auto output_tensor = out_tensors_[0];
+  auto output_tensor = out_tensors_.at(0);
   params = output_tensor->quant_params();
   MS_ASSERT(params.size() == 1);
   quant_params_.output.zp_ = params.front().zeroPoint;
   quant_params_.output.scale_ = params.front().scale;
 
-  params_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
+  params_->b_const_ = (in_tensors_.at(1)->data_c() != nullptr);
   if (params_->b_const_) {
-    auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_[1]->data_c());
+    auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
     for (int i = 0; i < params_->batch; ++i) {
       auto cur_b = b_ptr + i * params_->deep_ * params_->col_;
       auto cur_b_pack = b_c16x4_batch_ + i * params_->col_4_ * params_->deep_16_;
@@ -152,14 +154,14 @@ int MatmulInt8Run(void *cdata, int task_id) {
 }
 
 int MatmulInt8CPUKernel::Run() {
-  auto a_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
-  auto c_ptr = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+  auto a_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
+  auto c_ptr = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
   auto a_stride = params_->row_ * params_->deep_;
   auto b_stride = params_->deep_ * params_->col_;
   auto c_stride = params_->row_ * params_->col_;
 
   if (!params_->b_const_) {
-    auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_[1]->data_c());
+    auto b_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
     for (int i = 0; i < params_->batch; ++i) {
       auto cur_b = b_ptr + i * b_stride;
       auto cur_b_pack = b_c16x4_batch_ + i * params_->col_4_ * params_->deep_16_;

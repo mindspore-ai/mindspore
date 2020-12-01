@@ -77,11 +77,11 @@ int GatherNdInt8CPUKernel::ReSize() {
 
   auto in_shape = in_tensors_.front()->shape();
   int in_rank = in_shape.size();
-  int idx_lastshape = indices_shape[indices_rank - 1];
+  int idx_lastshape = indices_shape.at(indices_rank - 1);
   auto indices_ptr = reinterpret_cast<int8_t *>(indices_tensor->MutableData());
   area_ = 1;
   for (int i = idx_lastshape; i < in_rank; ++i) {
-    area_ *= in_shape[i];
+    area_ *= in_shape.at(i);
   }
   std::vector<int> in_stride(in_rank);
   in_stride[in_rank - 1] = 1;

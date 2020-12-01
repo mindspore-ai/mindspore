@@ -44,10 +44,10 @@ int FlattenGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
 
   auto input_shape = input->shape();
   std::vector<int> output_shape(2);
-  output_shape[0] = input_shape[0];
-  output_shape[1] = 1;
+  output_shape.at(0) = input_shape.at(0);
+  output_shape.at(1) = 1;
   for (size_t i = 1; i < input_shape.size(); i++) {
-    output_shape[1] *= input_shape[i];
+    output_shape.at(1) *= input_shape.at(i);
   }
   output->set_shape(output_shape);
   return RET_OK;

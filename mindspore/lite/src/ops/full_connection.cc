@@ -65,7 +65,7 @@ int FullConnection::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
   MS_ASSERT(this->primitive_ != nullptr);
   auto input0 = inputs_.front();
   MS_ASSERT(input0 != nullptr);
-  auto input1 = inputs_[1];
+  auto input1 = inputs_.at(1);
   MS_ASSERT(input1 != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
@@ -83,34 +83,34 @@ int FullConnection::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<
   int new_k = 1;
   if (GetUseAxis()) {
     for (size_t i = GetAxis(); i < input0->shape().size(); ++i) {
-      new_k *= input0->shape()[i];
+      new_k *= input0->shape().at(i);
     }
-    if (new_k != input1->shape()[1]) {
+    if (new_k != input1->shape().at(1)) {
       MS_LOG(ERROR) << "Input1 size invalid";
       return RET_INPUT_TENSOR_ERROR;
     }
   } else {
-    new_k = input1->shape()[1];
+    new_k = input1->shape().at(1);
   }
   if (GetHasBias()) {
-    if (inputs_[2]->shape()[0] != input1->shape()[0]) {
+    if (inputs_.at(2)->shape().at(0) != input1->shape().at(0)) {
       MS_LOG(ERROR) << "bias size invalid";
       return RET_INPUT_TENSOR_ERROR;
     }
   }
-  std::vector<int> out_shape{inputs_[0]->shape()};
+  std::vector<int> out_shape{inputs_.at(0)->shape()};
   if (GetUseAxis()) {
     out_shape.resize(GetAxis() + 1);
-    out_shape[GetAxis()] = input1->shape()[0];
+    out_shape.at(GetAxis()) = input1->shape().at(0);
   } else {
     int total = 1;
     for (size_t i = 0; i < input0->shape().size(); ++i) {
-      total *= input0->shape()[i];
+      total *= input0->shape().at(i);
     }
     out_shape.resize(2);
     auto batch_size = total / new_k;
-    out_shape[0] = batch_size;
-    out_shape[1] = input1->shape()[0];
+    out_shape.at(0) = batch_size;
+    out_shape.at(1) = input1->shape().at(0);
   }
   output->set_shape(out_shape);
   output->set_data_type(input0->data_type());

@@ -61,7 +61,7 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
   int in_rank = in_shape.size();
   int indices_element_size = indices_tensor->ElementsNum();
 
-  const int limit = in_shape[axis_];
+  const int limit = in_shape.at(axis_);
   for (int i = 0; i < indices_element_size; ++i) {
     if (indices_ptr[i] >= limit) {
       MS_LOG(ERROR) << " indice data: " << indices_ptr[i] << " is not in [ 0, " << limit - 1 << " ]";
@@ -71,12 +71,12 @@ int GatherInt8CPUKernel::DoGather(int task_id) {
 
   int outer_size = 1;
   for (int i = 0; i < axis_; ++i) {
-    outer_size *= in_shape[i];
+    outer_size *= in_shape.at(i);
   }
 
   int inner_size = 1;
   for (int i = axis_ + 1; i < in_rank; ++i) {
-    inner_size *= in_shape[i];
+    inner_size *= in_shape.at(i);
   }
 
   int stride = UP_DIV(outer_size, thread_count_);

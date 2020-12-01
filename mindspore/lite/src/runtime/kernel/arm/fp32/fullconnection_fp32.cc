@@ -44,12 +44,12 @@ void FullconnectionCPUKernel::FreeBuf() {
 int FullconnectionCPUKernel::ReSize() {
   FreeBuf();
   int row = 1;
-  for (size_t i = 0; i < out_tensors_[0]->shape().size() - 1; ++i) {
-    row *= (out_tensors_[0]->shape())[i];
+  for (size_t i = 0; i < out_tensors_.at(0)->shape().size() - 1; ++i) {
+    row *= (out_tensors_.at(0)->shape())[i];
   }
   fc_param_->row_ = row;
-  fc_param_->col_ = out_tensors_[0]->shape().back();
-  fc_param_->deep_ = (in_tensors_[1]->shape())[1];
+  fc_param_->col_ = out_tensors_.at(0)->shape().back();
+  fc_param_->deep_ = (in_tensors_.at(1)->shape()).at(1);
 
   fc_param_->row_12_ = UP_ROUND(fc_param_->row_, C12NUM);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, C8NUM);
@@ -98,14 +98,14 @@ int FullconnectionCPUKernel::ReSize() {
   }
   memset(b_pack_ptr_, 0, col_tmp * fc_param_->deep_ * sizeof(float));
 
-  fc_param_->a_const_ = (in_tensors_[0]->data_c() != nullptr);
-  fc_param_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
+  fc_param_->a_const_ = (in_tensors_.at(0)->data_c() != nullptr);
+  fc_param_->b_const_ = (in_tensors_.at(1)->data_c() != nullptr);
   if (fc_param_->a_const_) {
-    InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->MutableData()), a_pack_ptr_);
+    InitMatrixA(reinterpret_cast<float *>(in_tensors_.at(0)->MutableData()), a_pack_ptr_);
     a_ptr_ = a_pack_ptr_;
   }
   if (fc_param_->b_const_) {
-    InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), b_pack_ptr_);
+    InitMatrixB(reinterpret_cast<float *>(in_tensors_.at(1)->MutableData()), b_pack_ptr_);
     b_ptr_ = b_pack_ptr_;
   }
   return RET_OK;

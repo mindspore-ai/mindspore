@@ -28,7 +28,7 @@ using mindspore::schema::PrimitiveType_Conv2D;
 namespace mindspore::kernel {
 int GroupConvolutionFP16CPUKernel::Init() {
   for (int i = 0; i < group_num_; ++i) {
-    auto ret = group_convs_[i]->Init();
+    auto ret = group_convs_.at(i)->Init();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Sub kernel init failed.";
       return ret;
@@ -40,7 +40,7 @@ int GroupConvolutionFP16CPUKernel::Init() {
 
 int GroupConvolutionFP16CPUKernel::ReSize() {
   for (int i = 0; i < group_num_; ++i) {
-    auto ret = group_convs_[i]->ReSize();
+    auto ret = group_convs_.at(i)->ReSize();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Sub kernel resize failed.";
       return RET_ERROR;
@@ -94,7 +94,7 @@ int GroupConvolutionFP16CPUKernel::PreProcess() {
       int in_w = conv_param_->input_w_;
       int in_c = conv_param_->input_channel_;
       in_shape = {in_batch, in_h, in_w, in_c};
-      auto sub_kernel_in_tensor = group_convs_[i]->in_tensors().front();
+      auto sub_kernel_in_tensor = group_convs_.at(i)->in_tensors().front();
       sub_kernel_in_tensor->set_shape(in_shape);
       ret = sub_kernel_in_tensor->MallocData();
       if (ret != RET_OK) {
@@ -141,9 +141,9 @@ int GroupConvolutionFP16CPUKernel::SeparateInput(int group_id) {
   int in_plane = in_h * in_w;
   int sub_in_channel = conv_param_->input_channel_;
   int ori_in_channel = sub_in_channel * group_num_;
-  auto sub_in_data = group_convs_[group_id]->in_tensors().front()->data_c();
+  auto sub_in_data = group_convs_.at(group_id)->in_tensors().front()->data_c();
   auto in_data_type = in_tensors_.front()->data_type();
-  auto sub_in_data_type = group_convs_[group_id]->in_tensors().front()->data_type();
+  auto sub_in_data_type = group_convs_.at(group_id)->in_tensors().front()->data_type();
   if (in_data_type != sub_in_data_type) {
     MS_LOG(ERROR) << "data type of sub conv kernel input should be the same as origin input's.";
     return RET_ERROR;
@@ -183,7 +183,7 @@ void GroupConvolutionFP16CPUKernel::PostConcat(int group_id) {
   int out_plane = out_h * out_w;
   int sub_out_channel = conv_param_->output_channel_;
   int ori_out_channel = sub_out_channel * group_num_;
-  auto sub_out_data = reinterpret_cast<float16_t *>(group_convs_[group_id]->out_tensors().front()->data_c());
+  auto sub_out_data = reinterpret_cast<float16_t *>(group_convs_.at(group_id)->out_tensors().front()->data_c());
   MS_ASSERT(sub_out_data);
   float16_t *src_ptr = sub_out_data;
   float16_t *dst_ptr = ori_out_data_ + group_id * sub_out_channel;
@@ -206,7 +206,7 @@ int GroupConvolutionFP16CPUKernel::Run() {
       return ret;
     }
     // sun kernels run
-    ret = group_convs_[i]->Run();
+    ret = group_convs_.at(i)->Run();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "sub kernel " << i << " execute failed.";
       return ret;

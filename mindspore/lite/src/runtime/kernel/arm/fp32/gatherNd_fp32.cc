@@ -84,7 +84,7 @@ int GatherNdCPUKernel::ReSize() {
   int idx_stride = idx_lastshape;
   for (int j = 0; j < count_; ++j) {
     for (int k = 0; k < idx_lastshape; ++k) {
-      in_offset_[j] += indices_ptr[j * idx_stride + k] * in_stride[k];
+      in_offset_[j] += indices_ptr[j * idx_stride + k] * in_stride.at(k);
     }
   }
 

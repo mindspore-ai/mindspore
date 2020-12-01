@@ -50,14 +50,14 @@ int LstmCPUKernel::InitParam() {
   auto input = in_tensors_.front();
   MS_ASSERT(input != nullptr);
   std::vector<int> in_shape = input->shape();
-  lstm_parm_->seq_len_ = in_shape[0];
-  lstm_parm_->batch_ = in_shape[1];
-  lstm_parm_->input_size_ = in_shape[2];
+  lstm_parm_->seq_len_ = in_shape.at(0);
+  lstm_parm_->batch_ = in_shape.at(1);
+  lstm_parm_->input_size_ = in_shape.at(2);
 
-  auto weight_i = in_tensors_[1];
+  auto weight_i = in_tensors_.at(1);
   MS_ASSERT(weight_i != nullptr);
   std::vector<int> w_shape = weight_i->shape();
-  lstm_parm_->hidden_size_ = w_shape[1] / 4;
+  lstm_parm_->hidden_size_ = w_shape.at(1) / 4;
 
   lstm_parm_->input_step_ = lstm_parm_->batch_ * lstm_parm_->input_size_;
   lstm_parm_->output_step_ = lstm_parm_->bidirectional_ ? 2 * lstm_parm_->batch_ * lstm_parm_->hidden_size_

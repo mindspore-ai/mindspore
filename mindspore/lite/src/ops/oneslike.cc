@@ -72,8 +72,8 @@ PrimitiveC *OnesLikeCreator(const schema::Primitive *primitive) {
 Registry OnesLikeRegistry(schema::PrimitiveType_OnesLike, OnesLikeCreator);
 #endif
 int OnesLike::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  Tensor *x = inputs_[0];
-  Tensor *out = outputs_[0];
+  Tensor *x = inputs_.at(0);
+  Tensor *out = outputs_.at(0);
   std::vector<int> x_shape = x->shape();
   std::vector<int> output_shape(x_shape.size());
   output_shape.assign(x_shape.begin(), x_shape.end());

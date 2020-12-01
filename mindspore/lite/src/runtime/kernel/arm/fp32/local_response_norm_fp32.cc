@@ -42,10 +42,10 @@ int LocalResponseNormCPUKernel::DoLocalResponseNorm(int task_id) {
   auto in_shape = input_tensor->shape();
   MS_ASSERT(in_shape.size() == 4);
 
-  int batch = in_shape[0];
-  int height = in_shape[1];
-  int width = in_shape[2];
-  int channel = in_shape[3];
+  int batch = in_shape.at(0);
+  int height = in_shape.at(1);
+  int width = in_shape.at(2);
+  int channel = in_shape.at(3);
 
   int outer_size = batch * width * height;
   int stride = UP_DIV(outer_size, thread_count_);

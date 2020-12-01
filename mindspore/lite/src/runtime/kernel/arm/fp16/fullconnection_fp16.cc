@@ -54,10 +54,10 @@ void FullconnectionFP16CPUKernel::FreeTmpBuffer() {
 int FullconnectionFP16CPUKernel::ReSize() {
   FreeTmpBuffer();
   int row = 1;
-  for (size_t i = 0; i < out_tensors_[0]->shape().size() - 1; ++i) row *= (out_tensors_[0]->shape())[i];
+  for (size_t i = 0; i < out_tensors_.at(0)->shape().size() - 1; ++i) row *= (out_tensors_.at(0)->shape())[i];
   fc_param_->row_ = row;
-  fc_param_->col_ = out_tensors_[0]->shape().back();
-  fc_param_->deep_ = (in_tensors_[1]->shape())[1];
+  fc_param_->col_ = out_tensors_.at(0)->shape().back();
+  fc_param_->deep_ = (in_tensors_.at(1)->shape()).at(1);
   fc_param_->row_16_ = UP_ROUND(fc_param_->row_, C16NUM);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, C8NUM);
   thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_, C8NUM));
@@ -89,21 +89,21 @@ int FullconnectionFP16CPUKernel::ReSize() {
   }
   memset(b_pack_ptr_, 0, b_pack_col * fc_param_->deep_ * sizeof(float16_t));
 
-  fc_param_->b_const_ = (in_tensors_[1]->data_c() != nullptr);
+  fc_param_->b_const_ = (in_tensors_.at(1)->data_c() != nullptr);
   if (fc_param_->b_const_) {
-    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
+    if (in_tensors_.at(1)->data_type() == kNumberTypeFloat32) {
       if (is_vector_input_) {
-        Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_,
+        Float32ToFloat16(reinterpret_cast<float *>(in_tensors_.at(1)->data_c()), b_pack_ptr_,
                          fc_param_->col_ * fc_param_->deep_);
       } else {
-        InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+        InitMatrixB(reinterpret_cast<float *>(in_tensors_.at(1)->data_c()), b_pack_ptr_);
       }
     } else {
       if (is_vector_input_) {
-        memcpy(b_pack_ptr_, reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()),
+        memcpy(b_pack_ptr_, reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c()),
                fc_param_->col_ * fc_param_->deep_ * sizeof(float16_t));
       } else {
-        InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+        InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c()), b_pack_ptr_);
       }
     }
     b_ptr_ = b_pack_ptr_;
@@ -116,10 +116,10 @@ int FullconnectionFP16CPUKernel::ReSize() {
       return RET_MEMORY_FAILED;
     }
     memset(bias_ptr_, 0, b_pack_col * sizeof(float16_t));
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->data_c()), bias_ptr_, fc_param_->col_);
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_.at(2)->data_c()), bias_ptr_, fc_param_->col_);
   }
 
-  if (out_tensors_[0]->data_type() == kNumberTypeFloat32) {
+  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
     output_fp16_ =
       reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(fc_param_->row_ * fc_param_->col_ * sizeof(float16_t)));
     if (output_fp16_ == nullptr) {
@@ -183,43 +183,43 @@ int FcFP16Run(void *cdata, int task_id) {
 }
 
 int FullconnectionFP16CPUKernel::Run() {
-  auto out_tensor = out_tensors_[0];
+  auto out_tensor = out_tensors_.at(0);
   if (out_tensor->data_type() == kNumberTypeFloat32) {
     output_ptr_ = output_fp16_;
   } else {
     output_ptr_ = reinterpret_cast<float16_t *>(out_tensor->data_c());
   }
 
-  if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+  if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
     if (is_vector_input_) {
-      Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_, fc_param_->deep_);
+      Float32ToFloat16(reinterpret_cast<float *>(in_tensors_.at(0)->data_c()), a_pack_ptr_, fc_param_->deep_);
     } else {
-      InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
+      InitMatrixA(reinterpret_cast<float *>(in_tensors_.at(0)->data_c()), a_pack_ptr_);
     }
     a_ptr_ = a_pack_ptr_;
   } else {
     if (is_vector_input_) {
-      a_ptr_ = reinterpret_cast<float16_t *>(in_tensors_[0]->data_c());
+      a_ptr_ = reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c());
     } else {
-      InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->data_c()), a_pack_ptr_);
+      InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c()), a_pack_ptr_);
       a_ptr_ = a_pack_ptr_;
     }
   }
 
   if (!fc_param_->b_const_) {
-    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
+    if (in_tensors_.at(1)->data_type() == kNumberTypeFloat32) {
       if (is_vector_input_) {
-        Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_,
+        Float32ToFloat16(reinterpret_cast<float *>(in_tensors_.at(1)->data_c()), b_pack_ptr_,
                          fc_param_->col_ * fc_param_->deep_);
       } else {
-        InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+        InitMatrixB(reinterpret_cast<float *>(in_tensors_.at(1)->data_c()), b_pack_ptr_);
       }
       b_ptr_ = b_pack_ptr_;
     } else {
       if (is_vector_input_) {
-        b_ptr_ = reinterpret_cast<float16_t *>(in_tensors_[1]->data_c());
+        b_ptr_ = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c());
       } else {
-        InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+        InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c()), b_pack_ptr_);
         b_ptr_ = b_pack_ptr_;
       }
     }

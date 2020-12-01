@@ -35,17 +35,17 @@ int FlattenCPUKernel::Init() {
 }
 
 int FlattenCPUKernel::ReSize() {
-  auto output_shape = out_tensors_[0]->shape();
+  auto output_shape = out_tensors_.at(0)->shape();
   flatten_param_->size = sizeof(float);
   for (size_t i = 0; i < output_shape.size(); i++) {
-    flatten_param_->size *= output_shape[i];
+    flatten_param_->size *= output_shape.at(i);
   }
   return RET_OK;
 }
 
 int FlattenCPUKernel::Run() {
-  auto input = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  auto output = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
+  auto input = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto output = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   Flatten(input, output, flatten_param_);
   return RET_OK;
 }

@@ -97,7 +97,7 @@ int LayerNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite:
   }
   size_t first_index = input_shape.size() - normalized_shape.size();
   for (size_t i = first_index; i < input_shape.size(); ++i) {
-    if (input_shape[i] != normalized_shape[i - first_index]) {
+    if (input_shape.at(i) != normalized_shape.at(i - first_index)) {
       MS_LOG(INFO) << "normalized_shape attr invalid";
       return RET_PARAM_INVALID;
     }
