@@ -197,8 +197,8 @@ static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node) {
   return std::make_pair(shape_list, dtype);
 }
 
-SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter,
-                                         const int &user_node_stage, const int &node_stage) {
+SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, int user_node_stage,
+                                         int node_stage) {
   Attr attr_tag = std::make_pair("sr_tag", MakeValue(send_tag));
   send_tag += 1;
   auto dest_rank = global_rank_ + (user_node_stage - node_stage) * per_stage_rank_num_;
@@ -221,7 +221,7 @@ SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNod
 }
 
 void PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node,
-                                        const int &index, const int &user_node_stage, const int &node_stage) {
+                                        int index, int user_node_stage, int node_stage) {
   Attr attr_tag = std::make_pair("sr_tag", MakeValue(recv_tag));
   recv_tag += 1;
   auto src_rank = global_rank_ + (user_node_stage - node_stage) * per_stage_rank_num_;
@@ -369,9 +369,9 @@ void PipelineTransformer::ElimGraphStage() {
 }
 
 bool PipelineTransformer::IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
-  ValueNodePtr anf_node = cnode->input(0)->cast<ValueNodePtr>();
+  auto anf_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(anf_node);
-  PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();
+  auto prim = anf_node->value()->cast<PrimitivePtr>();
   return (prim->name() == name);
 }
 

@@ -34,13 +34,14 @@ typedef struct {
 
 class PipelineTransformer {
  public:
-  PipelineTransformer(const FuncGraphManagerPtr &manager, const int &stage, const FuncGraphPtr &root,
-                      const int64_t &global_rank, const int64_t &per_stage_rank_num)
+  PipelineTransformer(const FuncGraphManagerPtr &manager, int stage, const FuncGraphPtr &root, int64_t global_rank,
+                      int64_t per_stage_rank_num)
       : manager_(manager),
         stage_(stage),
         root_(root),
         global_rank_(global_rank),
         per_stage_rank_num_(per_stage_rank_num) {}
+  virtual ~PipelineTransformer() = default;
   void Coloring();
   void BroadCastColoring();
   void HandleSharedParameter();
@@ -54,10 +55,9 @@ class PipelineTransformer {
   std::pair<bool, int> IsSharedNode(const AnfNodePtr &node, const AnfNodeIndexSet &node_users);
   bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name);
   void DoBroadCast(const FuncGraphPtr &func);
-  SendAttr InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, const int &user_node_stage,
-                      const int &node_stage);
-  void InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, const int &index,
-                     const int &user_node_stage, const int &node_stage);
+  SendAttr InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, int user_node_stage, int node_stage);
+  void InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
+                     int user_node_stage, int node_stage);
   void CutBorder(const FuncGraphPtr &graph);
   void ElimRootParameter();
   bool IsStageNode(const CNodePtr &node);
