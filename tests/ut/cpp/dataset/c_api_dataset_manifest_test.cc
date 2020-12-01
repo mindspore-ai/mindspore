@@ -55,7 +55,7 @@ TEST_F(MindDataTestPipeline, TestManifestBasic) {
 }
 
 TEST_F(MindDataTestPipeline, TestManifestBasicWithPipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestBasic.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestManifestBasicWithPipeline.";
 
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
   // Create two Manifest Dataset

@@ -148,7 +148,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetBasic) {
 }
 
 TEST_F(MindDataTestPipeline, TestCLUEDatasetBasicWithPipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetBasic.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCLUEDatasetBasicWithPipeline.";
 
   // Create two CLUEFile Dataset, with single CLUE file
   std::string clue_file = datasets_root_path_ + "/testCLUE/afqmc/train.json";

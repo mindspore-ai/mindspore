@@ -70,7 +70,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasic1.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetBasicWithPipeline.";
 
   // Create two RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
