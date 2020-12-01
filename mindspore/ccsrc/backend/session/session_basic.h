@@ -22,6 +22,7 @@
 #include <utility>
 #include <memory>
 #include <map>
+#include <set>
 #include "backend/session/session_context.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -49,7 +50,6 @@ struct OpRunInfo {
   std::string op_name;
   PrimitivePtr primitive;
   AbstractBasePtr abstract;
-  ValuePtr value = nullptr;
   bool is_dynamic_shape = false;
   bool is_auto_mixed_precision = false;
   std::string next_op_name = "";
@@ -79,6 +79,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void BuildOp(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
                const std::vector<int64_t> &tensors_mask);
   void RunOp(OpRunInfo *, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs);
+  void RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
@@ -138,6 +139,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   friend class RunGraphTask;
   friend class BuildOpTask;
   friend class RunOpTask;
+  friend class RunOpsInGraphTask;
   virtual bool IsSupportSummary() { return true; }
   virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
                                    VectorRef *outputs,
@@ -155,6 +157,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                            const std::vector<int64_t> &tensors_mask) {}
   virtual void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                          const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {}
+  virtual void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                                 VectorRef *outputs) {}
   void RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs);
 
   virtual void SetSummaryNodes(KernelGraph *graph);

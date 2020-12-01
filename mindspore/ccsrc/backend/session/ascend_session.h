@@ -35,6 +35,11 @@
 namespace mindspore {
 namespace session {
 enum GraphType : int { COMMON_GRAPH = 0, CONDITION_GRAPH = 1, BRANCH_START = 2, BRANCH_END = 3 };
+struct InputTensorInfo {
+  std::vector<tensor::TensorPtr> input_tensors;
+  std::vector<int64_t> input_tensors_mask;
+  std::set<KernelWithIndex> input_kernel;
+};
 
 class AscendSession : public SessionBasic {
  public:
@@ -56,6 +61,8 @@ class AscendSession : public SessionBasic {
                    const std::vector<int64_t> &tensors_mask) override;
   void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                  const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) override;
+  void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                         VectorRef *outputs) override;
 
  private:
   // compile child graph when session have multiple child graphs
@@ -72,8 +79,7 @@ class AscendSession : public SessionBasic {
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
-  void RunOpMemoryAlloc(const ValuePtr &pre_output_value, const std::vector<tensor::TensorPtr> &input_tensors,
-                        KernelGraph *kernel_graph) const;
+  void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
   void RunOpMemoryClear(const KernelGraph *kernel_graph) const;
   void Load(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bool is_task) const;

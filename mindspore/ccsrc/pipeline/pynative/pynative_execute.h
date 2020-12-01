@@ -83,13 +83,12 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
 
   py::tuple RunOpInner(const OpExecInfoPtr &op_exec_info);
+  OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
   void NewGraph(const py::object &cell, const py::args &args);
   py::object Run(const py::tuple &args, const py::object &phase);
   py::object CheckGraph(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights, const py::args &args);
-  void SaveOpForwardValue(const std::string &id, const ValuePtr &value,
-                          std::map<std::string, tensor::TensorPtr> *t_map);
 
   // Call by python
   void Clear(const std::string &flag = "");
@@ -134,9 +133,11 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   // replace for grad graph
   ValuePtr CleanTupleAddr(const ValueTuplePtr &tuple);
-  ValuePtr GetForwardValue(const OpExecInfoPtr &op_exec_info);
   void GenTupleMap(const ValueTuplePtr &tuple, std::map<std::string, tensor::TensorPtr> *t_map);
-  void SaveAllResult(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const py::tuple &out);
+  void SaveAllResult(const OpExecInfoPtr &op_exec_info, const AnfNodePtr &node, const py::object &out_real);
+  // Update the abstract and device address info of value node and tensors in bprop graph
+  void UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
+  void SaveTensorsInValueNode(const ResourcePtr &resource);
 
   // construct grad graph
   void PushCurrentGraphToStack();
@@ -175,7 +176,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static int64_t graph_id_;
   bool grad_flag_{false};
   bool dynamic_cell_{false};
-  bool first_grad_step_{false};
   bool grad_is_running{false};
 
   // Used for construct grad graph
@@ -199,9 +199,10 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   std::unordered_map<std::string, std::pair<FuncGraphPtr, FuncGraphPtr>> df_builder_map_;
 
   // used for runop and replace forward result of grad graph
-  std::unordered_map<std::string, ValuePtr> op_forward_map_;
-  std::unordered_map<std::string, size_t> op_id_map_;
+  std::unordered_map<std::string, size_t> op_index_map_;
   std::unordered_map<std::string, std::string> obj_to_forward_id_;
+  std::unordered_map<std::string, std::vector<std::string>> op_index_with_tensor_id_;
+  std::unordered_map<std::string, std::vector<tensor::TensorPtr>> tensor_id_with_tensor_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
   std::unordered_map<std::string, AbstractListMap> prim_abs_list_;
   const inline static std::string kOpsFunctionModelName = "mindspore.ops.functional";

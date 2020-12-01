@@ -51,21 +51,19 @@ enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 struct OpExecInfo {
   std::string op_name;
+  std::string op_index;
   std::string prim_id;
   PrimitivePyPtr py_primitive;
   AbstractBasePtr abstract;
-  bool is_dynamic_shape = false;
 
-  ValuePtr value = nullptr;
   py::list op_inputs;
-  py::dict op_attrs;
   std::vector<bool> inputs_mask;
+  bool is_dynamic_shape = false;
   std::string next_op_name = "";
   bool is_mixed_precision_cast = false;
   size_t next_input_index = 0;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
-OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
 const std::set<std::string> ignore_infer_prim = {"make_ref", "mixed_precision_cast"};
 const std::set<std::string> force_infer_prim = {"TopK", "DropoutGenMask"};

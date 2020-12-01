@@ -65,7 +65,7 @@ OpExecInfoPtr ConstructOpExecInfo() {
   py::none py_none;
   py::args args = py::make_tuple(conv_obj, op_name, op_inputs);
   py::list args_input = args[PY_INPUTS];
-  return GenerateOpExecInfo(args);
+  return PynativeExecutor::GetInstance()->GenerateOpExecInfo(args);
 }
 
 TEST_F(TestPynativeExecute, TestCreateContext) {

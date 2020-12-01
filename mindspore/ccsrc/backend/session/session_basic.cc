@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 #include "backend/session/session_basic.h"
-#include <utility>
+
 #include <algorithm>
+#include <set>
 #include <unordered_map>
+#include <utility>
 
 #include "c_ops/primitive_c.h"
 #include "ir/manager.h"
@@ -1602,6 +1604,12 @@ void SessionBasic::RunOp(OpRunInfo *op_run_info, const GraphInfo &graph_info,
                          const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
   executor_->RunOp(shared_from_this(), op_run_info, graph_info, input_tensors, outputs);
+}
+
+void SessionBasic::RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
+                                 VectorRef *outputs) {
+  MS_EXCEPTION_IF_NULL(executor_);
+  executor_->RunOpsInGraph(shared_from_this(), graph_id, inputs, outputs);
 }
 
 void SessionBasic::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {

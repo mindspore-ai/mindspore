@@ -134,10 +134,22 @@ class MulAdd(nn.Cell):
         assert dout.asnumpy() == 1.0
         return dout, y
 
-
 class Ms_Cell(nn.Cell):
     def __init__(self):
         super(Ms_Cell, self).__init__()
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        return self.relu(x)
+
+    def bprop(self, x, out, dout):
+        dout = Tensor(np.float32(0.0))
+        assert dout.shape == ()
+        return dout
+
+class Ms_Cell_Change_Shape(nn.Cell):
+    def __init__(self):
+        super(Ms_Cell_Change_Shape, self).__init__()
         self.relu = P.ReLU()
 
     def construct(self, x):
@@ -190,9 +202,22 @@ def test_pynative_custom_bprop_and_Cell_MulAdd():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_pynative_custom_bprop_and_Cell_Ms_Cell_Change_Shape():
+    custom_cell = test_custom_cell_base()
+    ms_Cell = custom_cell.test_custom_cell_function(Ms_Cell_Change_Shape())
+    ms_Cell.bprop_debug = True
+    with pytest.raises(RuntimeError) as ex:
+        grad_all(ms_Cell)(Tensor(1, mstype.float32))
+    assert "Shapes of input and parameter are different, input index" in str(ex.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_pynative_custom_bprop_and_Cell_Ms_Cell():
     custom_cell = test_custom_cell_base()
     ms_Cell = custom_cell.test_custom_cell_function(Ms_Cell())
     ms_Cell.bprop_debug = True
-    assert grad_all(ms_Cell)(Tensor(1, mstype.float32)) == (Tensor(1.0, mstype.float32),)
+    assert grad_all(ms_Cell)(Tensor(1, mstype.float32)) == (Tensor(0.0, mstype.float32),)
     
