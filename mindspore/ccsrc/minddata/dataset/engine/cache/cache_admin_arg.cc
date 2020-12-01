@@ -352,7 +352,7 @@ Status CacheAdminArgHandler::RunCommand() {
       // have to wait for its complete shutdown because the server will shutdown
       // the comm layer as soon as the request is received, and we need to wait
       // on the message queue instead.
-      // The server will remove the queue and we will then wake up. But on the safe
+      // The server will send a message back and remove the queue and we will then wake up. But on the safe
       // side, we will also set up an alarm and kill this process if we hang on
       // the message queue.
       alarm(30);
@@ -487,8 +487,7 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
     if (WIFEXITED(status)) {
       auto exit_status = WEXITSTATUS(status);
       if (exit_status) {
-        std::string errMsg = msg + "\nChild exit status " + std::to_string(exit_status);
-        return Status(StatusCode::kUnexpectedError, errMsg);
+        return Status(StatusCode::kUnexpectedError, msg);
       } else {
         // Not an error, some info message goes to stdout
         std::cout << msg << std::endl;

@@ -255,7 +255,7 @@ Status CreateCacheRequest::PostReply() {
     if (err == -1) {
       RETURN_STATUS_UNEXPECTED("Unable to set affinity. Errno = " + std::to_string(errno));
     }
-    MS_LOG(WARNING) << "Changing cpu affinity to the following list of cpu id: " + c_list;
+    MS_LOG(INFO) << "Changing cpu affinity to the following list of cpu id: " + c_list;
   }
 #endif
 

@@ -80,7 +80,7 @@ class CacheClientGreeter : public Service {
   /// \brief Attach to shared memory for local client
   /// \note Called after we have established a connection.
   /// \return Status object.
-  Status AttachToSharedMemory(int32_t port, bool *local_bypass);
+  Status AttachToSharedMemory(bool *local_bypass);
 
   /// \brief This returns where we attach to the shared memory.
   /// \return Base address of the shared memory.
@@ -97,6 +97,7 @@ class CacheClientGreeter : public Service {
   std::map<int64_t, std::unique_ptr<CacheClientRequestTag>> req_;
   SharedMemory mem_;
   int32_t port_;
+  std::string hostname_;
 };
 }  // namespace dataset
 }  // namespace mindspore
