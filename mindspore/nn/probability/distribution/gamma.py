@@ -37,6 +37,9 @@ class Gamma(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Gamma'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Note:
         `concentration` and `rate` must be greater than zero.
         `dist_spec_args` are `concentration` and `rate`.
@@ -69,10 +72,16 @@ class Gamma(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing 'prob' by the name of the function
         >>> # ans = g1.prob(value)
-        >>> # # Evaluate with respect to the distribution b.
-        >>> # ans = g1.prob(value, concentration_b, rate_b)
-        >>> # # `concentration` and `rate` must be passed in during function calls
-        >>> # ans = g2.prob(value, concentration_a, rate_a)
+        >>> print(ans)
+        [0.58610016 0.0429392  0.00176953]
+        >>> # Evaluate with respect to the distribution b.
+        >>> ans = g1.prob(value, concentration_b, rate_b)
+        >>> print(ans)
+        [0.3678793  0.07468057 0.0049575 ]
+        >>> # `concentration` and `rate` must be passed in during function calls for g2.
+        >>> ans = g2.prob(value, concentration_a, rate_a)
+        >>> print(ans)
+        [0.54134095 0.14652506 0.02974501]
         >>> # Functions `mean`, `sd`, `mode`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     concentration (Tensor): the concentration of the distribution. Default: self._concentration.

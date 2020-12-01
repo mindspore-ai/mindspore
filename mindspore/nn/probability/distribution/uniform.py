@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Uniform Distribution"""
+import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore._checkparam import Validator
@@ -32,6 +33,9 @@ class Uniform(Distribution):
         seed (int): The seed uses in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Uniform'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Note:
         `low` must be stricly less than `high`.
@@ -296,7 +300,8 @@ class Uniform(Distribution):
         kl = self.log(high_b - low_b) - self.log(high_a - low_a)
         comp = self.logicaland(self.lessequal(
             low_b, low_a), self.lessequal(high_a, high_b))
-        return self.select(comp, kl, self.log(self.zeroslike(kl)))
+        inf = self.fill(self.dtypeop(kl), self.shape(kl), np.inf)
+        return self.select(comp, kl, inf)
 
     def _cdf(self, value, low=None, high=None):
         r"""

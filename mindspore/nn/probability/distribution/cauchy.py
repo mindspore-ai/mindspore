@@ -34,6 +34,9 @@ class Cauchy(Distribution):
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Cauchy'.
 
+    Supported Platforms:
+        ``Ascend``
+
     Note:
         `scale` must be greater than zero.
         `dist_spec_args` are `loc` and `scale`.

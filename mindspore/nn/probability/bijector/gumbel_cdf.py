@@ -32,6 +32,9 @@ class GumbelCDF(Bijector):
         scale (float, list, numpy.ndarray, Tensor): The scale. Default: 1.0.
         name (str): The name of the Bijector. Default: 'Gumbel_CDF'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Note:
         For `inverse` and `inverse_log_jacobian`, input should be in range of (0, 1).
         The dtype of `loc` and `scale` must be float.

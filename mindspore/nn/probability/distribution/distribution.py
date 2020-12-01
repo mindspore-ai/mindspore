@@ -33,6 +33,9 @@ class Distribution(Cell):
         name (str): The name of the distribution.
         param (dict): The parameters used to initialize the distribution.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Note:
         Derived class must override operations such as `_mean`, `_prob`,
         and `_log_prob`. Required arguments, such as `value` for `_prob`,
@@ -711,7 +714,8 @@ class Distribution(Cell):
         Note:
             Names of supported functions include:
             'prob', 'log_prob', 'cdf', 'log_cdf', 'survival_function', 'log_survival',
-            'var', 'sd', 'mode', 'mean', 'entropy', 'kl_loss', 'cross_entropy', and 'sample'.
+            'var', 'sd', 'mode', 'mean', 'entropy', 'kl_loss', 'cross_entropy', 'sample',
+            'get_dist_args', and 'get_dist_type'.
 
         Args:
             name (str): The name of the function.

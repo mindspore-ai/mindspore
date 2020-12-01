@@ -27,6 +27,9 @@ class Exp(PowerTransform):
     Args:
         name (str): The name of the Bijector. Default: 'Exp'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn

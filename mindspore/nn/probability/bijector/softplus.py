@@ -33,6 +33,9 @@ class Softplus(Bijector):
         sharpness (float, list, numpy.ndarray, Tensor): The scale factor. Default: 1.0.
         name (str): The name of the Bijector. Default: 'Softplus'.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Note:
         The dtype of `sharpness` must be float.
 
