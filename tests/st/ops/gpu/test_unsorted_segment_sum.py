@@ -83,25 +83,21 @@ def test_3D():
                [0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.]],
-
               [[45., 47., 49.],
                [51., 53., 55.],
                [57., 59., 61.],
                [63., 65., 67.],
                [69., 71., 73.]],
-
               [[0., 1., 2.],
                [3., 4., 5.],
                [6., 7., 8.],
                [9., 10., 11.],
                [12., 13., 14.]],
-
               [[0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.]],
-
               [[0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.],
@@ -112,32 +108,39 @@ def test_3D():
 
 # Testing Dynamic Shape
 class UnsortedSegmentSumDynNet(nn.Cell):
-    def __init__(self, num_segments):
+    def __init__(self, num_segments, dyn_a=True, dyn_b=True):
         super(UnsortedSegmentSumDynNet, self).__init__()
         self.unsorted_segment_sum = P.UnsortedSegmentSum()
-        self.to_dyn_op = inner.GpuConvertToDynamicShape()
+        self.gpu_convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
         self.num_segments = num_segments
-
+        self.to_dyn_1 = dyn_a
+        self.to_dyn_2 = dyn_b
     def construct(self, data, ids):
-        data_dyn = self.to_dyn_op(data)
-        ids_dyn = self.to_dyn_op(ids)
-        return self.unsorted_segment_sum(data_dyn, ids_dyn, self.num_segments)
+        # testing selective inputs being dynamic
+        if self.to_dyn_1:
+            data = self.gpu_convert_to_dynamic_shape(data)
+        if self.to_dyn_2:
+            ids = self.gpu_convert_to_dynamic_shape(ids)
+        return self.unsorted_segment_sum(data, ids, self.num_segments)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dyn():
+def test_dyn_ab():
+    """
+    Tests for Dynamic shape with both inputs dynamic
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     num_segments = 4
     net = UnsortedSegmentSumDynNet(num_segments)
-
+    # test 1
     input_x = Tensor([1, 2, 3, 4], mstype.float32)
     segment_ids = Tensor([0, 0, 1, 2], mstype.int32)
     output = net(input_x, segment_ids)
     expect = [3, 3, 4, 0]
     assert (output.asnumpy() == expect).all()
-
+    # test 2
     input_x = Tensor([[1, 2, 3, 4],
                       [5, 6, 7, 8],
                       [9, 10, 11, 12]], mstype.float32)
@@ -148,7 +151,7 @@ def test_dyn():
               [1, 2, 3, 4],
               [0, 0, 0, 0]]
     assert (output.asnumpy() == expect).all()
-
+    # test 3
     input_x = Tensor(np.arange(4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3))
     segment_ids = Tensor([2, 1, 1, -1], mstype.int32)
     output = net(input_x, segment_ids)
@@ -157,19 +160,16 @@ def test_dyn():
                [0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.]],
-
               [[45., 47., 49.],
                [51., 53., 55.],
                [57., 59., 61.],
                [63., 65., 67.],
                [69., 71., 73.]],
-
               [[0., 1., 2.],
                [3., 4., 5.],
                [6., 7., 8.],
                [9., 10., 11.],
                [12., 13., 14.]],
-
               [[0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.],
@@ -181,17 +181,20 @@ def test_dyn():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dyn_1():
+def test_dyn_a():
+    """
+    Tests for Dynamic shape with first input dynamic
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     num_segments = 6
-    net = UnsortedSegmentSumDynNet(num_segments)
-
+    net = UnsortedSegmentSumDynNet(num_segments, True, False)
+    # test 1
     input_x = Tensor([1, 2, 3, 4], mstype.float32)
     segment_ids = Tensor([0, 0, 1, 2], mstype.int32)
     output = net(input_x, segment_ids)
     expect = [3, 3, 4, 0, 0, 0]
     assert (output.asnumpy() == expect).all()
-
+    # test 2
     input_x = Tensor([[1, 2, 3, 4],
                       [5, 6, 7, 8],
                       [9, 10, 11, 12]], mstype.float32)
@@ -204,7 +207,7 @@ def test_dyn_1():
               [0, 0, 0, 0],
               [0, 0, 0, 0]]
     assert (output.asnumpy() == expect).all()
-
+    # test 3
     input_x = Tensor(np.arange(4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3))
     segment_ids = Tensor([2, 1, 1, -1], mstype.int32)
     output = net(input_x, segment_ids)
@@ -213,31 +216,92 @@ def test_dyn_1():
                [0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.]],
-
               [[45., 47., 49.],
                [51., 53., 55.],
                [57., 59., 61.],
                [63., 65., 67.],
                [69., 71., 73.]],
-
               [[0., 1., 2.],
                [3., 4., 5.],
                [6., 7., 8.],
                [9., 10., 11.],
                [12., 13., 14.]],
-
               [[0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.]],
-
               [[0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.]],
+              [[0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]]]
+    assert (output.asnumpy() == expect).all()
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dyn_b():
+    """
+    Tests for Dynamic shape with second input dynamic
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    num_segments = 6
+    net = UnsortedSegmentSumDynNet(num_segments, False, True)
+    # test 1
+    input_x = Tensor([1, 2, 3, 4], mstype.float32)
+    segment_ids = Tensor([0, 0, 1, 2], mstype.int32)
+    output = net(input_x, segment_ids)
+    expect = [3, 3, 4, 0, 0, 0]
+    assert (output.asnumpy() == expect).all()
+    # test 2
+    input_x = Tensor([[1, 2, 3, 4],
+                      [5, 6, 7, 8],
+                      [9, 10, 11, 12]], mstype.float32)
+    segment_ids = Tensor([2, 1, 1], mstype.int32)
+    output = net(input_x, segment_ids)
+    expect = [[0, 0, 0, 0],
+              [14, 16, 18, 20],
+              [1, 2, 3, 4],
+              [0, 0, 0, 0],
+              [0, 0, 0, 0],
+              [0, 0, 0, 0]]
+    assert (output.asnumpy() == expect).all()
+    # test 3
+    input_x = Tensor(np.arange(4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3))
+    segment_ids = Tensor([2, 1, 1, -1], mstype.int32)
+    output = net(input_x, segment_ids)
+    expect = [[[0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]],
+              [[45., 47., 49.],
+               [51., 53., 55.],
+               [57., 59., 61.],
+               [63., 65., 67.],
+               [69., 71., 73.]],
+              [[0., 1., 2.],
+               [3., 4., 5.],
+               [6., 7., 8.],
+               [9., 10., 11.],
+               [12., 13., 14.]],
+              [[0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]],
+              [[0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]],
               [[0., 0., 0.],
                [0., 0., 0.],
                [0., 0., 0.],

@@ -1917,6 +1917,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
     def __init__(self):
         """Initialize UnsortedSegmentMin"""
         self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
+        self.add_prim_attr("dynamic_shape_depends", [2])
 
     def __check__(self, x, segment_ids, num_segments):
         segment_ids_shape = segment_ids['shape']
