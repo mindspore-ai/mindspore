@@ -26,7 +26,6 @@ config = ed({
     "eta_min": 0,
     "T_max": 150,
     "max_epoch": 150,
-    "backbone": 'resnext50',
     "warmup_epochs": 1,
 
     "weight_decay": 0.0001,

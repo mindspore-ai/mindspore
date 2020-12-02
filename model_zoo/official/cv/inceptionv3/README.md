@@ -90,8 +90,6 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 ```python
 Major parameters in train.py and config.py are:
 'random_seed'                # fix random seed
-'rank'                       # local rank of distributed
-'group_size'                 # world size of distributed
 'work_nums'                  # number of workers to read the data
 'decay_method'               # learning rate scheduler mode
 "loss_scale"                 # loss scale

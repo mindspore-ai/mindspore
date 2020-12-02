@@ -33,7 +33,6 @@ def parse_args():
     args, _ = parser.parse_known_args()
     args.image_size = config.image_size
     args.num_classes = config.num_classes
-    args.backbone = config.backbone
 
     args.image_size = list(map(int, config.image_size.split(',')))
     args.image_height = args.image_size[0]
@@ -46,7 +45,7 @@ if __name__ == '__main__':
     args_export = parse_args()
     context.set_context(mode=context.GRAPH_MODE, device_target=args_export.platform)
 
-    net = get_network(args_export.backbone, num_classes=args_export.num_classes, platform=args_export.platform)
+    net = get_network(num_classes=args_export.num_classes, platform=args_export.platform)
 
     param_dict = load_checkpoint(args_export.pretrained)
     load_param_into_net(net, param_dict)

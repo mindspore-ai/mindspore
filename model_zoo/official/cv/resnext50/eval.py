@@ -74,7 +74,6 @@ def parse_args(cloud_args=None):
     args = merge_args(args, cloud_args)
     args.image_size = config.image_size
     args.num_classes = config.num_classes
-    args.backbone = config.backbone
     args.rank = config.rank
     args.group_size = config.group_size
 
@@ -201,9 +200,7 @@ def test(cloud_args=None):
                                             max_epoch=1, rank=args.rank, group_size=args.group_size,
                                             mode='eval')
         eval_dataloader = de_dataset.create_tuple_iterator(output_numpy=True, num_epochs=1)
-        network = get_network(args.backbone, num_classes=args.num_classes, platform=args.platform)
-        if network is None:
-            raise NotImplementedError('not implement {}'.format(args.backbone))
+        network = get_network(num_classes=args.num_classes, platform=args.platform)
 
         load_pretrain_model(model, network, args)
 
