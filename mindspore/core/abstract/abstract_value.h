@@ -28,6 +28,7 @@
 #include "utils/log_adapter.h"
 #include "utils/hashing.h"
 #include "utils/any.h"
+#include "utils/flags.h"
 #include "base/base.h"
 #include "ir/dtype.h"
 #include "ir/value.h"
@@ -289,6 +290,13 @@ class AbstractTensor : public AbstractUndetermined {
   ~AbstractTensor() override = default;
   MS_DECLARE_PARENT(AbstractTensor, AbstractUndetermined)
 
+  void set_value_range(const ValuePtr &min_value, const ValuePtr &max_value) {
+    min_value_ = min_value;
+    max_value_ = max_value;
+  }
+  const ValuePtr &get_min_value() const { return min_value_; }
+  const ValuePtr &get_max_value() const { return max_value_; }
+
   TypePtr BuildType() const override;
   BaseShapePtr BuildShape() const override;
   AbstractBasePtr Clone() const override;
@@ -312,6 +320,8 @@ class AbstractTensor : public AbstractUndetermined {
 
  protected:
   bool equal_to(const AbstractTensor &other) const;
+  ValuePtr min_value_ = nullptr;
+  ValuePtr max_value_ = nullptr;
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;

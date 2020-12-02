@@ -315,8 +315,70 @@ py::object VectorRefToPyData(const VectorRef &value_list) {
   return ret;
 }
 
+void SetValueRange(const AbstractBasePtr &tensor, const py::object &output) {
+  if (output.is_none()) {
+    return;
+  }
+  py::object obj_min =
+    output.contains(py::str(ATTR_MIN_VALUE)) ? (py::object)output[ATTR_MIN_VALUE] : (py::object)py::none();
+  py::object obj_max =
+    output.contains(py::str(ATTR_MAX_VALUE)) ? (py::object)output[ATTR_MAX_VALUE] : (py::object)py::none();
+
+  if (!obj_min.is_none() && !obj_max.is_none()) {
+    bool converted = true;
+    ValuePtr min_value = nullptr;
+    ValuePtr max_value = nullptr;
+    converted = parse::ConvertData(obj_min, &min_value);
+    if (!converted) {
+      MS_LOG(EXCEPTION) << "Convert shape min value data failed";
+    }
+    converted = parse::ConvertData(obj_max, &max_value);
+    if (!converted) {
+      MS_LOG(EXCEPTION) << "Convert shape max value data failed";
+    }
+    auto abs_tensor = dyn_cast<abstract::AbstractTensor>(tensor);
+    abs_tensor->set_value_range(min_value, max_value);
+  }
+}
+
+AbstractBasePtr PyList2DynamicShapeTensor(const py::object &shape_obj, const py::object &type_obj,
+                                          const py::object &output) {
+  AbstractBasePtr tensor = nullptr;
+  auto ret_vec = shape_obj.cast<ShapeVector>();
+  auto ret_dtype = type_obj.cast<TypePtr>();
+  ShapeVector min_shape_vec;
+  ShapeVector max_shape_vec;
+
+  if (!output.is_none()) {
+    py::object min_shape =
+      output.contains(py::str(ATTR_MIN_SHAPE)) ? (py::object)output[ATTR_MIN_SHAPE] : (py::object)py::none();
+    py::object max_shape =
+      output.contains(py::str(ATTR_MAX_SHAPE)) ? (py::object)output[ATTR_MAX_SHAPE] : (py::object)py::none();
+    if (!min_shape.is_none()) {
+      min_shape_vec = min_shape.cast<ShapeVector>();
+    }
+    if (!max_shape.is_none()) {
+      max_shape_vec = max_shape.cast<ShapeVector>();
+    }
+  }
+
+  auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
+  if (ret_dtype->isa<TensorType>()) {
+    auto tensor_type = type_obj.cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, tensor_type->element());
+    tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
+  } else {
+    auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, ret_dtype);
+    tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
+  }
+
+  SetValueRange(tensor, output);
+  return tensor;
+}
+
 AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
-                                           const py::object &min_shape, const py::object &max_shape) {
+                                           const py::object &output) {
   if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
     auto ret_vec = shape_obj.cast<ShapeVector>();
     auto ret_dtype = type_obj.cast<TypePtr>();
@@ -326,26 +388,7 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
       abstract::AbstractScalarPtr abs_scalar = std::make_shared<abstract::AbstractScalar>(kAnyValue, ret_dtype);
       return abs_scalar;
     }
-    AbstractBasePtr tensor = nullptr;
-    ShapeVector min_shape_vec;
-    ShapeVector max_shape_vec;
-    if (!min_shape.is_none()) {
-      min_shape_vec = min_shape.cast<ShapeVector>();
-    }
-    if (!max_shape.is_none()) {
-      max_shape_vec = max_shape.cast<ShapeVector>();
-    }
-    auto ret_shape = std::make_shared<abstract::Shape>(ret_vec, min_shape_vec, max_shape_vec);
-    if (ret_dtype->isa<TensorType>()) {
-      auto tensor_type = type_obj.cast<TensorTypePtr>();
-      MS_EXCEPTION_IF_NULL(tensor_type);
-      auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, tensor_type->element());
-      tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
-    } else {
-      auto element = std::make_shared<abstract::AbstractScalar>(kAnyValue, ret_dtype);
-      tensor = std::make_shared<abstract::AbstractTensor>(element, ret_shape);
-    }
-    return tensor;
+    return PyList2DynamicShapeTensor(shape_obj, type_obj, output);
   } else if (py::isinstance<py::tuple>(shape_obj) && py::isinstance<py::tuple>(type_obj)) {
     py::tuple shape_tuple = shape_obj.cast<py::tuple>();
     py::tuple typeid_tuple = type_obj.cast<py::tuple>();

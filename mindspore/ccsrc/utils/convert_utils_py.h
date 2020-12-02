@@ -37,8 +37,8 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple
                                        const std::shared_ptr<py::object> &ret_val);
 
 AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
-                                           const py::object &min_shape = py::none(),
-                                           const py::object &max_shape = py::none());
+                                           const py::object &output = py::none());
+void SetValueRange(const AbstractBasePtr &tensor, const py::object &output);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_CONVERT_UTILS_PY_H_

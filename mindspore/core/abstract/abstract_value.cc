@@ -508,6 +508,7 @@ AbstractBasePtr AbstractTensor::Clone() const {
   ShapePtr shp = shape();
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
+  clone->set_value_range(get_min_value(), get_max_value());
   return clone;
 }
 

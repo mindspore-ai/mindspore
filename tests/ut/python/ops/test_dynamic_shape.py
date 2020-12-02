@@ -98,16 +98,38 @@ def test_gatherv2():
             super(Net, self).__init__()
             self.unq = P.Unique()
             self.gather = P.GatherV2()
+            self.yy = Tensor(np.ones([8], dtype=np.int32))
 
         def construct(self, x, y):
+            shp = P.Shape()(self.yy)
+            y = P.Reshape()(y, shp)
             u, _ = self.unq(y)
+            u_shp = P.DynamicShape()(u)
             z = self.gather(x, u, 0)
-            return z
+            return z, u_shp
 
     x = Tensor(np.ones([20, 12], dtype=np.float32))
-    y = Tensor(np.ones([8], dtype=np.int32))
+    y = Tensor(np.ones([2, 4], dtype=np.int32))
     net = Net()
     net(x, y)
+
+
+def test_segmentsum():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.unq = P.Unique()
+            self.segment_ids = Tensor([0, 0, 1, 2, 1, 1, 1, 1], mstype.int32)
+            self.sum = P.UnsortedSegmentSum()
+        def construct(self, x):
+            u, _ = self.unq(x)
+            shp = P.DynamicShape()(u)
+            z = self.sum(x, self.segment_ids, shp[0])
+            return z, shp[0]
+
+    x = Tensor(np.ones([8], dtype=np.int32))
+    net = Net()
+    net(x)
 
 
 def test_addn():
