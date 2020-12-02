@@ -21,6 +21,9 @@
 
 int ResizeBilinearInt8(const int8_t *input_ptr, int8_t *output_ptr, int batch, int in_h, int in_w, int out_h, int out_w,
                        int channel, int index, int count, ResizeQuantArg quant_arg) {
+  if (out_w == 0) {
+    return NNACL_ERRCODE_DIVISOR_ZERO;
+  }
   int in_plane = in_h * in_w;
   int out_plane = out_h * out_w;
   for (int n = 0; n < batch; n++) {
@@ -67,6 +70,9 @@ int ResizeBilinearInt8(const int8_t *input_ptr, int8_t *output_ptr, int batch, i
 int ResizeBilinearWithFloatScaleInt8(const int8_t *input_ptr, int8_t *output_ptr, int batch, int in_h, int in_w,
                                      int out_h, int out_w, int channel, int index, int count,
                                      ResizeFloatScaleQuantArg quant_arg) {
+  if (out_w == 0) {
+    return NNACL_ERRCODE_DIVISOR_ZERO;
+  }
   int in_plane = in_h * in_w;
   int out_plane = out_h * out_w;
   for (int n = 0; n < batch; n++) {

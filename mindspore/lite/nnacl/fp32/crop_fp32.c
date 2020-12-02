@@ -18,9 +18,9 @@
 #include "nnacl/op_base.h"
 #include "nnacl/crop_parameter.h"
 
-void Pad4DOffset(const CropParameter *crop_param, int64_t *offset) {
+void Pad4DOffset(const CropParameter *crop_param, int64_t *offset, int length) {
   int axis = crop_param->axis_;
-  for (int i = DIMENSION_4D - 1; i >= 0; --i) {
+  for (int i = length - 1; i >= 0; --i) {
     int offset_index = i - axis;
     if (offset_index >= 0) {
       offset[i] = crop_param->offset_[offset_index];
@@ -33,7 +33,7 @@ void Pad4DOffset(const CropParameter *crop_param, int64_t *offset) {
 void Crop4D(const float *input, float *output, const int *in_shape, const int *out_shape,
             const CropParameter *crop_param, int thread_id) {
   int64_t offset_pad[DIMENSION_4D];
-  Pad4DOffset(crop_param, offset_pad);
+  Pad4DOffset(crop_param, offset_pad, DIMENSION_4D);
   int out_shape1 = out_shape[1];
   int out_shape2 = out_shape[2];
   int out_shape3 = out_shape[3];
@@ -68,7 +68,7 @@ void Crop4D(const float *input, float *output, const int *in_shape, const int *o
 void Crop4DNoParallel(const float *input, float *output, const int *in_shape, const int *out_shape,
                       const CropParameter *crop_param) {
   int64_t offset_pad[DIMENSION_4D];
-  Pad4DOffset(crop_param, offset_pad);
+  Pad4DOffset(crop_param, offset_pad, DIMENSION_4D);
   size_t in_dim2_stride = in_shape[3];
   size_t in_dim1_stride = in_shape[2] * in_dim2_stride;
   size_t in_dim0_stride = in_dim1_stride * in_shape[1];
