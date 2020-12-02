@@ -1490,7 +1490,7 @@ bool IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
 bool AnfRuntimeAlgorithm::IsNodeDynamicShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
-    MS_LOG(WARNING) << "Node is not a cnode";
+    MS_LOG(DEBUG) << "Node is not a cnode";
     return false;
   }
   auto cnode = node->cast<CNodePtr>();
