@@ -182,7 +182,7 @@ class MaxPool1d(_PoolNd):
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4]), mindspore.float32)
         >>> output = max_pool(x)
         >>> result = output.shape
-        >>> printI(result)
+        >>> print(result)
         (1, 2, 2)
     """
 

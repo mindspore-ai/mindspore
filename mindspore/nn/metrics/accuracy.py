@@ -42,7 +42,7 @@ class Accuracy(EvaluationBase):
         >>> metric.update(x, y)
         >>> accuracy = metric.eval()
         >>> print(accuracy)
-        0.66666666
+        0.6666666666666666
     """
     def __init__(self, eval_type='classification'):
         super(Accuracy, self).__init__(eval_type)

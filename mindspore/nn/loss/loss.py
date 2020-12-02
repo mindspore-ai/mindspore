@@ -599,7 +599,7 @@ class CosineEmbeddingLoss(_Loss):
         >>> cosine_embedding_loss = nn.CosineEmbeddingLoss()
         >>> output = cosine_embedding_loss(x1, x2, y)
         >>> print(output)
-        [0.0003426075]
+        0.0003426075
     """
     def __init__(self, margin=0.0, reduction="mean"):
         super(CosineEmbeddingLoss, self).__init__(reduction)

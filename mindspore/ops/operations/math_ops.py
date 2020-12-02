@@ -613,7 +613,7 @@ class ReduceProd(_Reduce):
         >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = ops.ReduceProd(keep_dims=True)
         >>> output = op(input_x, 1)
-        >>> reuslt = output.shape
+        >>> result = output.shape
         >>> print(result)
         (3, 1, 5, 6)
     """
@@ -2513,8 +2513,9 @@ class Equal(_LogicBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
         >>> equal = ops.Equal()
-        >>> equal(input_x, 2.0)
-        [False, True, False]
+        >>> output = equal(input_x, 2.0)
+        >>> print(output)
+        Tensor(shape=[3], dtype=Bool, value= [False, True, False])
         >>>
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 2, 4]), mindspore.int32)

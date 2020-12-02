@@ -366,7 +366,8 @@ class ReLU(GraphKernel):
         >>> relu = ReLU()
         >>> result = relu(input_x)
         >>> print(result)
-        [[0, 4.0, 0.0], [2.0, 0.0, 9.0]]
+        [[0. 4. 0.]
+         [2. 0. 9.]]
     """
     def __init__(self):
         super(ReLU, self).__init__()
@@ -685,7 +686,7 @@ class LogSoftmax(GraphKernel):
         >>> log_softmax = LogSoftmax()
         >>> result = log_softmax(input_x)
         >>> print(result)
-        [-4.4519143, -3.4519143, -2.4519143, -1.4519144, -0.4519144]
+        [-4.4519143 -3.4519143 -2.4519143 -1.4519144 -0.4519144]
     """
 
     def __init__(self, axis=-1):
@@ -743,7 +744,7 @@ class Tanh(GraphKernel):
         >>> tanh = Tanh()
         >>> result = tanh(input_x)
         >>> print(result)
-        [0.7615941, 0.9640276, 0.9950548, 0.9993293, 0.99990916]
+        [0.7615941  0.9640276  0.9950548  0.9993293  0.99990916]
     """
     def __init__(self):
         super(Tanh, self).__init__()

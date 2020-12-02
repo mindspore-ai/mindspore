@@ -6124,7 +6124,7 @@ class CTCGreedyDecoder(PrimitiveWithInfer):
           containing sequence log-probability, has the same type as `inputs`.
 
     Examples:
-        >>>class CTCGreedyDecoderNet(nn.Cell):
+        >>> class CTCGreedyDecoderNet(nn.Cell):
         ...    def __init__(self):
         ...        super(CTCGreedyDecoderNet, self).__init__()
         ...        self.ctc_greedy_decoder = P.CTCGreedyDecoder()

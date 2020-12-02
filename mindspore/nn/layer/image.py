@@ -398,7 +398,7 @@ class PSNR(Cell):
         >>> img2 = Tensor(np.random.random((1,3,16,16)))
         >>> output = net(img1, img2)
         >>> print(output)
-        [7.7229595]
+        [7.915369]
     """
     def __init__(self, max_val=1.0):
         super(PSNR, self).__init__()

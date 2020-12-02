@@ -148,7 +148,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
         >>> natural_exp_decay_lr = NaturalExpDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> result = natural_exp_decay_lr(global_step)
         >>> print(result)
-        0.016529894
+        0.1
     """
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
         super(NaturalExpDecayLR, self).__init__()
