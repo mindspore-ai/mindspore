@@ -225,8 +225,8 @@ class _Context:
         """set values of variable_memory_max_size and graph_memory_max_size"""
         if not Validator.check_str_by_regular(variable_memory_max_size, _re_pattern):
             raise ValueError("Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
-        if int(variable_memory_max_size[:-2]) >= _DEVICE_APP_MEMORY_SIZE:
-            raise ValueError("Context param variable_memory_max_size should be less than 31GB.")
+        if int(variable_memory_max_size[:-2]) > _DEVICE_APP_MEMORY_SIZE:
+            raise ValueError("Context param variable_memory_max_size should be not greater than 31GB.")
         variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
         graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - int(variable_memory_max_size[:-2])
         graph_memory_max_size_ = str(graph_memory_max_size) + " * 1024 * 1024 * 1024"
