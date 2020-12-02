@@ -78,8 +78,7 @@ class GPUEnvChecker(EnvChecker):
         if Path(self.cuda_bin).is_dir():
             os.environ['PATH'] = self.cuda_bin + ":" + os.environ['PATH']
         else:
-            raise EnvironmentError(
-                f"No such directory: {self.cuda_bin}, please check if cuda is installed correctly.")
+            logger.warning(f"No such directory: {self.cuda_bin}, please check if cuda is installed correctly.")
 
     def check_version(self):
         if not Path(self.cuda_version).is_file():
@@ -92,8 +91,8 @@ class GPUEnvChecker(EnvChecker):
         v = version.parse(v)
         v_str = str(v.major) + "." + str(v.minor)
         if v_str not in self.version:
-            raise EnvironmentError(f"MindSpore version {__version__} and cuda version {v_str} does not match, "
-                                   "reference to the match info on: https://www.mindspore.cn/install")
+            logger.warning(f"MindSpore version {__version__} and cuda version {v_str} does not match, "
+                           "reference to the match info on: https://www.mindspore.cn/install")
 
     def _check_env(self):
         """gpu cuda path check"""
@@ -185,7 +184,7 @@ class AscendEnvChecker(EnvChecker):
 
         v = self._read_version(self.fwk_version)
         if v not in self.version:
-            raise EnvironmentError(
+            logger.warning(
                 f"MindSpore version {__version__} and Ascend 910 AI software package version {v} does not "
                 "match, reference to the match info on: https://www.mindspore.cn/install")
 
@@ -201,21 +200,21 @@ class AscendEnvChecker(EnvChecker):
             if Path(self.tbe_path).is_dir():
                 os.environ['LD_LIBRARY_PATH'] = self.tbe_path
             else:
-                raise EnvironmentError(
+                logger.warning(
                     f"No such directory: {self.tbe_path}, Please check if Ascend 910 AI software package is "
                     "installed correctly.")
 
         if Path(self.op_impl_path).is_dir():
             sys.path.append(self.op_impl_path)
         else:
-            raise EnvironmentError(
+            logger.warning(
                 f"No such directory: {self.op_impl_path}, Please check if Ascend 910 AI software package is "
                 "installed correctly.")
 
         if Path(self.cce_path).is_dir():
             os.environ['PATH'] = self.cce_path + ":" + os.environ['PATH']
         else:
-            raise EnvironmentError(
+            logger.warning(
                 f"No such directory: {self.cce_path}, Please check if Ascend 910 AI software package is "
                 "installed correctly.")
 
@@ -224,7 +223,7 @@ class AscendEnvChecker(EnvChecker):
         elif Path(self.op_path).is_dir():
             os.environ['ASCEND_OPP_PATH'] = self.op_path
         else:
-            raise EnvironmentError(
+            logger.warning(
                 f"No such directory: {self.op_path}, Please check if Ascend 910 AI software package is "
                 "installed correctly.")
 
@@ -261,6 +260,7 @@ class AscendEnvChecker(EnvChecker):
                     return self.v
         return self.v
 
+
 def check_version_and_env_config():
     """check version and env config"""
     if __package_name__.lower() == "mindspore-ascend":
@@ -280,5 +280,6 @@ def check_version_and_env_config():
         env_checker.set_env()
     except ImportError as e:
         env_checker.check_env(e)
+
 
 check_version_and_env_config()
