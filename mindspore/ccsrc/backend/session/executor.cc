@@ -349,6 +349,7 @@ void Executor::RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const Gr
       tensor->Wait();
     }
   }
+  mindspore::ScopedLongRunning long_running;
   SyncRunTask(task);
   *outputs = task->outputs_;
 }
