@@ -22,16 +22,7 @@
 
 namespace mindspore {
 namespace lite {
-#ifdef PRIMITIVE_WRITEABLE
-bool SparseToDense::GetValidateIndices() const { return this->primitive_->value.AsSparseToDense()->validateIndices; }
-
-void SparseToDense::SetValidateIndices(bool validate_indices) {
-  this->primitive_->value.AsSparseToDense()->validateIndices = validate_indices;
-}
-
-#else
-
-bool SparseToDense::GetValidateIndices() const { return this->primitive_->value_as_SparseToDense()->validateIndices(); }
+#ifndef PRIMITIVE_WRITEABLE
 int SparseToDense::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
@@ -40,7 +31,7 @@ int SparseToDense::UnPackToFlatBuilder(const schema::Primitive *primitive, flatb
     MS_LOG(ERROR) << "value_as_SparseToDense return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateSparseToDense(*fbb, attr->validateIndices());
+  auto val_offset = schema::CreateSparseToDense(*fbb);
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_SparseToDense, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
