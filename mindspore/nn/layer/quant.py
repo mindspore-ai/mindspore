@@ -502,12 +502,12 @@ class Conv2dBnFoldQuantOneConv(Cell):
     def extend_repr(self):
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
             'pad_mode={}, padding={}, dilation={}, group={}, ' \
-            'fake={}, freeze_bn={}, momentum={}, quant_delay={}'.format(self.in_channels, self.out_channels,
-                                                                        self.kernel_size, self.stride,
-                                                                        self.pad_mode, self.padding, self.dilation,
-                                                                        self.group,
-                                                                        self.fake, self.freeze_bn, self.momentum,
-                                                                        self.fake_quant_weight.quant_delay)
+            'fake={}, momentum={}, quant_delay={}'.format(self.in_channels, self.out_channels,
+                                                          self.kernel_size, self.stride,
+                                                          self.pad_mode, self.padding, self.dilation,
+                                                          self.group,
+                                                          self.fake, self.momentum,
+                                                          self.fake_quant_weight.quant_delay)
         return s
 
     def construct(self, x):
