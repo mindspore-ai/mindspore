@@ -29,7 +29,13 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_OneHot;
 
 namespace mindspore::kernel {
-int OneHotOpenCLKernel::CheckSpecs() { return RET_OK; }
+int OneHotOpenCLKernel::CheckSpecs() {
+  if ((in_tensors_.size() < 2 || in_tensors_.size() > 4) || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 
 int OneHotOpenCLKernel::Prepare() {
   std::string kernel_name = "OneHot";
@@ -59,9 +65,6 @@ int OneHotOpenCLKernel::Prepare() {
 }
 
 int OneHotOpenCLKernel::InitWeights() {
-  if (in_tensors_.size() <= 1) {
-    return RET_ERROR;
-  }
   depth_ = static_cast<int32_t *>(in_tensors_[1]->data_c())[0];
   if (in_tensors_.size() > 2) {
     on_value_ = static_cast<float *>(in_tensors_[2]->data_c())[0];

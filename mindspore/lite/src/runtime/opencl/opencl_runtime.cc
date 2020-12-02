@@ -271,7 +271,7 @@ int OpenCLRuntime::Init() {
 }
 
 int OpenCLRuntime::Uninit() {
-  if (enable_cache_) {
+  if (enable_cache_ && !binary_map_.empty()) {
     StoreCache();
   }
   binary_map_.clear();

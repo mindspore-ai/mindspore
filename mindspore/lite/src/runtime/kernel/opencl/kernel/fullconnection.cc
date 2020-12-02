@@ -37,6 +37,10 @@ using mindspore::schema::PrimitiveType_FullConnection;
 namespace mindspore::kernel {
 
 int FullConnectionOpenCLKernel::CheckSpecs() {
+  if ((in_tensors_.size() != 2 && in_tensors_.size() != 3) || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   if (param->a_transpose_) {
     MS_LOG(ERROR) << "fullconnection only support a_transpose_=false yet.";

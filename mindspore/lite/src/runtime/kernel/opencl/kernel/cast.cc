@@ -43,7 +43,13 @@ int CastOpenCLKernel::GetKernelName(std::string *kernel_name, CastParameter *par
   return RET_OK;
 }
 
-int CastOpenCLKernel::CheckSpecs() { return RET_OK; }
+int CastOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
 
 void CastOpenCLKernel::SetConstArgs() {
   auto input_shape = in_tensors_[0]->shape();

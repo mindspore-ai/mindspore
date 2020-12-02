@@ -36,6 +36,10 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 namespace mindspore::kernel {
 
 int BiasAddOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "Reshape in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   if (in_tensors_.size() == 0) {
     MS_LOG(ERROR) << "Input data size must be greater than 0, but your size is " << in_tensors_.size();
     return RET_ERROR;

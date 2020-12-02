@@ -64,6 +64,10 @@ void ConcatGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *
 }
 
 int ConcatOpenCLKernel::CheckSpecs() {
+  if ((in_tensors_.size() < 2 || in_tensors_.size() > 6) || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   auto param = reinterpret_cast<ConcatParameter *>(this->op_parameter_);
   MS_LOG(DEBUG) << " concat at axis=:  " << param->axis_;
   if (out_tensors_[0]->shape().size() > 4) {

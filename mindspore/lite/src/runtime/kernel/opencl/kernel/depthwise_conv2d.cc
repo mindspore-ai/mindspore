@@ -43,6 +43,10 @@ using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 namespace mindspore::kernel {
 
 int DepthwiseConv2dOpenCLKernel::CheckSpecs() {
+  if ((in_tensors_.size() != 2 && in_tensors_.size() != 3) || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) {
     MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[0]->data_type();
     return RET_ERROR;

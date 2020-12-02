@@ -37,6 +37,10 @@ namespace mindspore {
 namespace kernel {
 
 int PoolingOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   if (parameter_->pool_mode_ != PoolMode_MaxPool && parameter_->pool_mode_ != PoolMode_AvgPool) {
     MS_LOG(ERROR) << "Init `Pooling2d` kernel failed, unsupported pool mode!";
     return RET_ERROR;
