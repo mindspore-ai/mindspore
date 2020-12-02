@@ -121,7 +121,7 @@ config = ed({
     "base_lr": 0.02,
     "base_step": 58633,
     "total_epoch": 13,
-    "warmup_mode": "linear",
+    "warmup_step": 500,
     "warmup_ratio": 1/3.0,
     "sgd_momentum": 0.9,
 
