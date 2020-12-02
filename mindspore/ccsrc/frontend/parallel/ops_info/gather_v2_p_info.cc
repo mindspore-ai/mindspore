@@ -500,6 +500,10 @@ Status GatherV2PInfo::InferBias() {
   // params_size=1, axis=0
   if ((input_shape.size() == 1) && (axis_ == 0)) {
     slice_size_ = input_shape.at(0) / params_strategy.at(0);
+    // if repeated calculation, because the repeated num in the right of dev-matrix, so rank need to div repeated num
+    if (repeated_calc_num_ > 1) {
+      rank = rank / repeated_calc_num_;
+    }
     bias_ = rank * slice_size_;
     return SUCCESS;
   }

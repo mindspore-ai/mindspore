@@ -60,7 +60,6 @@ void PipelineTransformer::Coloring() {
       }
     }
   }
-  return;
 }
 
 void PipelineTransformer::BroadCastColoring() {
