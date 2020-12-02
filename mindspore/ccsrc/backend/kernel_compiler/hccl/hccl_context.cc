@@ -60,6 +60,8 @@ bool HcclContext::Finalize() {
     MS_LOG(ERROR) << "HcclComm destroy failed, ret:" << hccl_result;
     return false;
   }
+  MS_LOG(INFO) << "HcclComm destroy success";
+  hccl_comm_ = nullptr;
   return true;
 }
 }  // namespace kernel

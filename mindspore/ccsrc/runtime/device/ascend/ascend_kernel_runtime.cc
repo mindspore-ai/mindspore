@@ -292,6 +292,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     mem_manager_->FreeDeviceMemory();
   }
 
+  (void)DestroySingleOpHccl();
   (void)DestroyHccl();
   (void)ResetDevice();
   (void)ProfilingManager::GetInstance().StopProfiling();
@@ -802,11 +803,6 @@ bool AscendKernelRuntime::ResetDevice() {
     stream_ = nullptr;
   }
 
-  if (!DestroySingleOpHccl()) {
-    MS_LOG(ERROR) << "Destroy hccl failed";
-    return false;
-  }
-
   if (rt_context_ != nullptr) {
     auto ret = rtCtxDestroy(rt_context_);
     if (ret != RT_ERROR_NONE) {
@@ -861,21 +857,10 @@ bool AscendKernelRuntime::HcclInit() {
 }
 
 bool AscendKernelRuntime::DestroySingleOpHccl() {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    return true;
-  }
-  if (!NeedDestroyHccl()) {
-    MS_LOG(INFO) << "Hccl is not enable, no need to close.";
-    return true;
-  }
   if (!kernel::HcclContext::GetInstance().Finalize()) {
     MS_LOG(ERROR) << "Hccl finalize failed";
     return false;
   }
-  MS_LOG(INFO) << "Hccl destroy successful.";
-  context_ptr->set_param<bool>(MS_CTX_ENABLE_HCCL, false);
   return true;
 }
 
