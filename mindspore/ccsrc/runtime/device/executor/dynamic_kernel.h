@@ -52,6 +52,8 @@ class DynamicKernel {
 
  protected:
   void RebuildDependTensor();
+  void InferShapeRecursive();
+  void InferShapeForNopNode(AnfNodePtr *input_node);
 
   void *stream_;
   const CNodePtr cnode_ptr_;
