@@ -145,7 +145,9 @@ class EmbeddingLookup(Cell):
     Args:
         vocab_size (int): Size of the dictionary of embeddings.
         embedding_size (int): The size of each embedding vector.
-        param_init (str): The initialize way of embedding table. Default: 'normal'.
+        param_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
+            Refer to class `initializer` for the values of string when a string
+            is specified. Default: 'normal'.
         target (str): Specifies the target where the op is executed. The value must in
             ['DEVICE', 'CPU']. Default: 'CPU'.
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
@@ -291,7 +293,9 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         vocab_size (int): The size of the dictionary of embeddings.
         embedding_size (int): The size of each embedding vector.
         field_size (int): The field size of the final outputs.
-        param_init (str): The initialize way of embedding table. Default: 'normal'.
+        param_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
+            Refer to class `initializer` for the values of string when a string
+            is specified. Default: 'normal'.
         target (str): Specifies the target where the op is executed. The value must in
             ['DEVICE', 'CPU']. Default: 'CPU'.
         slice_mode (str): The slicing way in semi_auto_parallel/auto_parallel. The value must get through
