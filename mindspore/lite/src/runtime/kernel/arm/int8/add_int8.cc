@@ -35,8 +35,8 @@ int QuantizedAddCPUKernel::Init() {
   auto *input1 = in_tensors_.at(1);
   auto *output = out_tensors_.at(0);
 
-  para_.in0_zp_ = input0->quant_params().front().zeroPoint * -1;
-  para_.in1_zp_ = input1->quant_params().front().zeroPoint * -1;
+  para_.in0_args_.zp_ = input0->quant_params().front().zeroPoint * -1;
+  para_.in1_args_.zp_ = input1->quant_params().front().zeroPoint * -1;
   para_.out_zp_ = output->quant_params().front().zeroPoint;
 
   const double in0_scale = input0->quant_params().front().scale;
@@ -49,16 +49,16 @@ int QuantizedAddCPUKernel::Init() {
   const double in1_multiplier = in1_scale / twice_max_input_scale;
   const double out_multiplier = twice_max_input_scale / ((1 << para_.left_shift_) * out_scale);
 
-  QuantizeMultiplierSmallerThanOne(in0_multiplier, &para_.in0_multiplier_, &para_.in0_left_shift_);
-  QuantizeMultiplierSmallerThanOne(in1_multiplier, &para_.in1_multiplier_, &para_.in1_left_shift_);
+  QuantizeMultiplierSmallerThanOne(in0_multiplier, &para_.in0_args_.multiplier_, &para_.in0_args_.left_shift_);
+  QuantizeMultiplierSmallerThanOne(in1_multiplier, &para_.in1_args_.multiplier_, &para_.in1_args_.left_shift_);
   QuantizeMultiplierSmallerThanOne(out_multiplier, &para_.out_multiplier_, &para_.out_left_shift_);
 
-  para_.in0_right_shift_ = -para_.in0_left_shift_ > 0 ? 0 : para_.in0_left_shift_;
-  para_.in1_right_shift_ = -para_.in1_left_shift_ > 0 ? 0 : para_.in1_left_shift_;
+  para_.in0_args_.right_shift_ = -para_.in0_args_.left_shift_ > 0 ? 0 : para_.in0_args_.left_shift_;
+  para_.in1_args_.right_shift_ = -para_.in1_args_.left_shift_ > 0 ? 0 : para_.in1_args_.left_shift_;
   para_.out_right_shift_ = -para_.out_left_shift_ > 0 ? 0 : para_.out_left_shift_;
 
-  para_.in0_left_shift_ = -para_.in0_left_shift_ > 0 ? -para_.in0_left_shift_ : 0;
-  para_.in1_left_shift_ = -para_.in1_left_shift_ > 0 ? -para_.in1_left_shift_ : 0;
+  para_.in0_args_.left_shift_ = -para_.in0_args_.left_shift_ > 0 ? -para_.in0_args_.left_shift_ : 0;
+  para_.in1_args_.left_shift_ = -para_.in1_args_.left_shift_ > 0 ? -para_.in1_args_.left_shift_ : 0;
   para_.out_left_shift_ = -para_.out_left_shift_ > 0 ? -para_.out_left_shift_ : 0;
 
   auto act = arith_para_->activation_type_;
@@ -87,9 +87,24 @@ int QuantizedAddCPUKernel::ReSize() {
   arith_para_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
   arith_para_->out_elements_num_ = out_tensors_[0]->ElementsNum();
 
-  memcpy(arith_para_->in_shape0_, input0->shape().data(), input0->shape().size() * sizeof(int));
-  memcpy(arith_para_->in_shape1_, input1->shape().data(), input1->shape().size() * sizeof(int));
-  memcpy(arith_para_->out_shape_, output->shape().data(), output->shape().size() * sizeof(int));
+  for (size_t i = 0; i < in_tensors_[0]->shape().size(); i++) {
+    if (arith_para_->in_shape0_[i] == -1) {
+      memcpy(arith_para_->in_shape0_, input0->shape().data(), input0->shape().size() * sizeof(int));
+      break;
+    }
+  }
+  for (size_t i = 0; i < in_tensors_[1]->shape().size(); i++) {
+    if (arith_para_->in_shape1_[i] == -1) {
+      memcpy(arith_para_->in_shape1_, input1->shape().data(), input1->shape().size() * sizeof(int));
+      break;
+    }
+  }
+  for (size_t i = 0; i < out_tensors_[0]->shape().size(); i++) {
+    if (arith_para_->out_shape_[i] == -1) {
+      memcpy(arith_para_->out_shape_, output->shape().data(), output->shape().size() * sizeof(int));
+      break;
+    }
+  }
 
   if (arith_para_->broadcasting_) {
     size_t break_pos_ = 0;
@@ -128,14 +143,18 @@ void QuantizedAddCPUKernel::BroadcastRun(int task_id) {
   if (real_out_count <= 0) {
     return;
   }
-
-  int8_t *const_in = arith_para_->in_elements_num0_ == arith_para_->out_elements_num_ ? input1_data_ : input0_data_;
-  int8_t *offset_in = arith_para_->in_elements_num0_ == arith_para_->out_elements_num_ ? input0_data_ : input1_data_;
-  offset_in += task_id * stride * in_size_;
-  int8_t *cur_out = output_data_ + task_id * stride * in_size_;
-
+  int8_t *cur_in0, *cur_in1, *cur_out;
   for (int i = 0; i < real_out_count; i++) {
-    AddInt8(offset_in + i * in_size_, const_in, cur_out + i * in_size_, in_size_, &para_);
+    if (arith_para_->in_elements_num0_ == arith_para_->out_elements_num_) {
+      cur_in0 = input0_data_ + task_id * stride * in_size_ + i * in_size_;
+      cur_in1 = input1_data_;
+      cur_out = output_data_ + task_id * stride * in_size_ + i * in_size_;
+    } else {
+      cur_in0 = input0_data_;
+      cur_in1 = input1_data_ + task_id * stride * in_size_ + i * in_size_;
+      cur_out = output_data_ + task_id * stride * in_size_ + i * in_size_;
+    }
+    AddInt8(cur_in0, cur_in1, cur_out, in_size_, &para_);
   }
   return;
 }
@@ -160,7 +179,9 @@ int QuantizedAddCPUKernel::DoExecute(int task_id) {
   if (support_opt_add_) {
     int8_t *ptr_in = arith_para_->in_elements_num0_ == 1 ? cur_in1 : cur_in0;
     int8_t element_in = arith_para_->in_elements_num0_ == 1 ? input0_data_[0] : input1_data_[0];
-    AddOptInt8(ptr_in, element_in, cur_out, rest_count, &para_);
+    AddQuantQrgs *ptr_args = arith_para_->in_elements_num0_ == 1 ? &para_.in1_args_ : &para_.in0_args_;
+    AddQuantQrgs *ele_args = arith_para_->in_elements_num0_ == 1 ? &para_.in0_args_ : &para_.in1_args_;
+    AddOptInt8(ptr_in, element_in, cur_out, rest_count, &para_, ptr_args, ele_args);
   } else {
     AddInt8(cur_in0, cur_in1, cur_out, rest_count, &para_);
   }

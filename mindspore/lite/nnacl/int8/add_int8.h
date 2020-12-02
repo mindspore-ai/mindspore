@@ -19,23 +19,22 @@
 
 #include "nnacl/op_base.h"
 
+typedef struct AddQuantQrgs {
+  int32_t zp_;
+  int32_t left_shift_;
+  int32_t right_shift_;
+  int32_t multiplier_;
+} AddQuantQrgs;
+
 typedef struct AddQuantParameter {
   int left_shift_;
   int32_t min_;
   int32_t max_;
 
-  int32_t in0_zp_;
-  int32_t in1_zp_;
+  AddQuantQrgs in0_args_;
+  AddQuantQrgs in1_args_;
+
   int32_t out_zp_;
-
-  int32_t in0_left_shift_;
-  int32_t in0_right_shift_;
-  int32_t in0_multiplier_;
-
-  int32_t in1_left_shift_;
-  int32_t in1_right_shift_;
-  int32_t in1_multiplier_;
-
   int32_t out_left_shift_;
   int32_t out_right_shift_;
   int32_t out_multiplier_;
@@ -46,7 +45,8 @@ extern "C" {
 #endif
 
 void AddInt8(const int8_t *input0, const int8_t *input1, int8_t *output, int size, AddQuantParameter *params);
-void AddOptInt8(const int8_t *ptr_in, const int8_t element_in, int8_t *output, int size, AddQuantParameter *params);
+void AddOptInt8(const int8_t *ptr_in, const int8_t element_in, int8_t *output, int size, AddQuantParameter *params,
+                AddQuantQrgs *ptr_args, AddQuantQrgs *ele_args);
 
 #ifdef __cplusplus
 }
