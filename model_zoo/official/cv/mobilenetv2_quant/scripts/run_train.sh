@@ -133,7 +133,7 @@ run_ascend(){
 }
 
 run_gpu(){
-    if [ $# -gt 3 ] || [ $# -lt 2 ]
+    if [ $# -gt 4 ] || [ $# -lt 3 ]
     then
         echo "Usage:  bash run_train.sh  [GPU] [DEVICE_ID_LIST] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)\n "
         exit 1
@@ -182,7 +182,7 @@ run_gpu(){
     if [ $# == 4 ]
     then
         mpirun --allow-run-as-root -n ${RANK_SIZE} --output-filename log_output --merge-stderr-to-stdout \
-        python train.py --device_traget=$1  --dataset_path=$PATH1 --pre_trained=$PATH2 &> train.log &
+        python train.py --device_target=$1  --dataset_path=$PATH1 --pre_trained=$PATH2 &> train.log &
     fi
 
     cd ..
