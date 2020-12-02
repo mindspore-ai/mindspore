@@ -747,6 +747,9 @@ std::vector<std::vector<float>> GetDefaultBoxes(BoxesConfig config) {
   for (int i = 0; i < config.steps.size(); i++) {
     fk.push_back(num / config.steps[i]);
   }
+  if (config.num_default.size() < 2) {
+    return {};
+  }
   float scale_rate = (config.max_scale - config.min_scale) / (config.num_default.size() - 1);
   std::vector<float> scales(config.num_default.size());
   for (int i = 0; i < scales.size(); i++) {
