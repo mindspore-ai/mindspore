@@ -994,6 +994,8 @@ void PynativeExecutor::UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_ex
     });
     return;
   }
+  auto ms_context = MsContext::GetInstance();
+  auto target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   const auto &tensor_id_list = op_index_with_tensor_id_[op_index];
   for (size_t i = 0; i < tensor_id_list.size(); ++i) {
     auto tensor_id = tensor_id_list[i];
@@ -1003,7 +1005,20 @@ void PynativeExecutor::UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_ex
       std::for_each(tensors_in_value_node.begin(), tensors_in_value_node.end(), [&](tensor::TensorPtr &tensor) {
         tensor->set_shape(new_tensor->shape());
         tensor->set_data_type(new_tensor->data_type());
-        tensor->set_device_address(new_tensor->device_address());
+        if (target != kCPUDevice) {
+          tensor->set_device_address(new_tensor->device_address());
+        } else {
+          auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+          auto new_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
+          auto old_ptr = old_device_address->GetMutablePtr();
+          auto new_ptr = new_device_address->GetPtr();
+          MS_EXCEPTION_IF_NULL(old_ptr);
+          MS_EXCEPTION_IF_NULL(new_ptr);
+          auto ret = memcpy_s(old_ptr, old_device_address->GetSize(), new_ptr, new_device_address->GetSize());
+          if (ret != EOK) {
+            MS_LOG(EXCEPTION) << "Memory copy failed. ret: " << ret;
+          }
+        }
       });
     }
   }
@@ -1264,12 +1279,9 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
   MS_LOG(INFO) << "Start run op [" << op_exec_info->op_name << "] with backend policy ms";
   auto ms_context = MsContext::GetInstance();
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
-  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (device_target != kAscendDevice && device_target != kGPUDevice) {
-    MS_EXCEPTION(ArgumentError) << "Device target [" << device_target << "] is not supported in Pynative mode";
-  }
 
   if (session == nullptr) {
+    std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     session = session::SessionFactory::Get().Create(device_target);
     MS_EXCEPTION_IF_NULL(session);
     session->Init(ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID));

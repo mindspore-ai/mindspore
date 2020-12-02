@@ -38,10 +38,18 @@ class CPUSession : public SessionBasic {
   void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, KernelGraph *graph) override;
   void Optimize(const std::shared_ptr<KernelGraph> &kernel_graph);
+  void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                   const std::vector<tensor::TensorPtr> &input_tensors,
+                   const std::vector<int64_t> &tensors_mask) override;
+  void RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                 std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                 const std::vector<int64_t> &tensors_mask) override;
 
  private:
   void SetKernelInfo(const KernelGraph *kernel_graph);
   void BuildKernel(const KernelGraph *kernel_graph);
+  void SetOutputFlags(const VectorRef &base_ref, std::vector<tensor::TensorPtr> *outputs_tensors);
+  void SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph);
   device::cpu::CPUKernelRuntime runtime_;
 };
 MS_REG_SESSION(kCPUDevice, CPUSession);
