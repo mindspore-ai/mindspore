@@ -139,9 +139,11 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
     }
     auto fn = inps[0];
     std::vector<AnfNodePtr> args{fn};
-    if (IsPrimitive(fn, prim::kPrimDepend) && inps.size() == 3 && eqv.find(inps[kDependAttachNodeIndex]) == eqv.end()) {
+    if (IsPrimitive(fn, prim::kPrimDepend) && inps.size() >= 3 && eqv.find(inps[kDependAttachNodeIndex]) == eqv.end()) {
       args.emplace_back(RefSubGraphNode(fg, inps[kRealInputIndexInDepend], &inputs, &eqv));
-      args.emplace_back(NewValueNode(MakeValue(0)));
+      for (size_t i = 2; i < inps.size(); ++i) {
+        args.emplace_back(NewValueNode(MakeValue(0)));
+      }
     } else if (IsPrimitive(fn, prim::kPrimControlDepend) && inps.size() == 3) {
       for (size_t i = 1; i < inps.size(); ++i) {
         if (inps[i]->isa<CNode>() && std::find(lst.begin(), lst.end(), inps[i]) == lst.end()) {
