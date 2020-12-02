@@ -34,7 +34,7 @@ parser.add_argument('--downstream_task', type=str, choices=["NER", "CLS", "SQUAD
 parser.add_argument('--num_class', type=int, default=41, help='The number of class, default is 41.')
 parser.add_argument('--label_file_path', type=str, default="", help='label file path, used in clue benchmark.')
 parser.add_argument('--ckpt_file', type=str, required=True, help='Bert ckpt file.')
-parser.add_argument('--output_file', type=str, default='Bert.air', help='bert output air name.')
+parser.add_argument('--output_file', type=str, default='Bert', help='bert output air name.')
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
 args = parser.parse_args()
 

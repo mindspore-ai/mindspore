@@ -34,5 +34,5 @@ config_gpu = ed({
     "keep_checkpoint_max": 500,
     "save_checkpoint_path": "./checkpoint",
     "export_format": "MINDIR",
-    "export_file": "mobilenetv3.mindir"
+    "export_file": "mobilenetv3"
 })

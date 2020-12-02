@@ -33,8 +33,8 @@ cifar_cfg = edict({
     'device_id': 0,
     'keep_checkpoint_max': 10,
     'checkpoint_path': './train_googlenet_cifar10-125_390.ckpt',
-    'onnx_filename': 'googlenet.onnx',
-    'air_filename': 'googlenet.air'
+    'onnx_filename': 'googlenet',
+    'air_filename': 'googlenet'
 })
 
 imagenet_cfg = edict({
@@ -54,8 +54,8 @@ imagenet_cfg = edict({
     'device_id': 0,
     'keep_checkpoint_max': 10,
     'checkpoint_path': None,
-    'onnx_filename': 'googlenet.onnx',
-    'air_filename': 'googlenet.air',
+    'onnx_filename': 'googlenet',
+    'air_filename': 'googlenet',
 
     # optimizer and lr related
     'lr_scheduler': 'exponential',

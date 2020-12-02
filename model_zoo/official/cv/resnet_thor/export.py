@@ -41,4 +41,4 @@ if __name__ == '__main__':
     load_param_into_net(net, param_dict)
 
     inputs = np.random.uniform(0.0, 1.0, size=[1, 3, 224, 224]).astype(np.float32)
-    export(net, Tensor(inputs), file_name='resnet-42_5004.air', file_format='AIR')
+    export(net, Tensor(inputs), file_name='resnet-42_5004', file_format='AIR')

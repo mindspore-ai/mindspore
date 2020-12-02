@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 parser = argparse.ArgumentParser(description='VGG16 export')
 parser.add_argument('--dataset', type=str, choices=["cifar10", "imagenet2012"], default="cifar10", help='ckpt file')
 parser.add_argument('--ckpt_file', type=str, required=True, help='vgg16 ckpt file.')
-parser.add_argument('--output_file', type=str, default='vgg16.air', help='vgg16 output air name.')
+parser.add_argument('--output_file', type=str, default='vgg16', help='vgg16 output air name.')
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
 args = parser.parse_args()
 

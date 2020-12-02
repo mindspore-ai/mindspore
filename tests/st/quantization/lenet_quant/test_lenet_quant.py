@@ -147,7 +147,7 @@ def export_lenet():
 
     # export network
     inputs = Tensor(np.ones([1, 1, cfg.image_height, cfg.image_width]), mstype.float32)
-    export(network, inputs, file_name="lenet_quant.mindir", file_format='MINDIR', quant_mode='AUTO')
+    export(network, inputs, file_name="lenet_quant", file_format='MINDIR', quant_mode='AUTO')
 
 
 @pytest.mark.level0

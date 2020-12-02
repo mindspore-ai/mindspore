@@ -29,5 +29,5 @@ mnist_cfg = edict({
     'image_width': 32,
     'save_checkpoint_steps': 1875,
     'keep_checkpoint_max': 10,
-    'air_name': "lenet.air",
+    'air_name': "lenet",
 })

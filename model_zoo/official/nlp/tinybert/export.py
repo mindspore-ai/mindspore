@@ -26,7 +26,7 @@ from src.tinybert_model import BertModelCLS
 
 parser = argparse.ArgumentParser(description='tinybert task distill')
 parser.add_argument('--ckpt_file', type=str, required=True, help='tinybert ckpt file.')
-parser.add_argument('--output_file', type=str, default='tinybert.air', help='tinybert output air name.')
+parser.add_argument('--output_file', type=str, default='tinybert', help='tinybert output air name.')
 parser.add_argument('--task_name', type=str, default='SST-2', choices=['SST-2', 'QNLI', 'MNLI'], help='task name')
 args = parser.parse_args()
 

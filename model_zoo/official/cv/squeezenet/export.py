@@ -39,8 +39,8 @@ if __name__ == '__main__':
     else:
         num_classes = 1000
 
-    onnx_filename = args_opt.net + '_' + args_opt.dataset + '.onnx'
-    air_filename = args_opt.net + '_' + args_opt.dataset + '.air'
+    onnx_filename = args_opt.net + '_' + args_opt.dataset
+    air_filename = args_opt.net + '_' + args_opt.dataset
 
     net = squeezenet(num_classes=num_classes)
 
