@@ -66,6 +66,8 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result);
 bool NchwToFracZc04(const FormatArgs &args, void *result);
 bool NchwToNc1hwc04(const FormatArgs &args, void *result);
 bool NchwToC1hwncoc0(const FormatArgs &args, void *result);
+bool NcdhwToNdc1hwc0(const FormatArgs &args, void *result);
+
 // device to host
 bool ToNchw(const FormatArgs &args, void *result);
 bool FracZToNchw(const FormatArgs &args, void *result);
@@ -73,6 +75,7 @@ bool FracNzToNchw(const FormatArgs &args, void *result);
 bool Nc1hwc0ToNchw(const FormatArgs &args, void *result);
 bool Nc1hwc04ToNchw(const FormatArgs &args, void *result);
 bool C1hwncoc0ToNchw(const FormatArgs &args, void *result);
+bool Ndc1hwc0ToNcdhw(const FormatArgs &args, void *result);
 }  // namespace trans
 }  // namespace mindspore
 

@@ -32,7 +32,7 @@ namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
-const std::set<std::string> kCommonFormatSet = {kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW};
+const std::set<std::string> kCommonFormatSet = {kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NCDHW};
 AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
                              const KernelSelectPtr &kernel_select, const std::vector<size_t> &dst_shape) {
   std::vector<AnfNodePtr> trans_inputs;
@@ -70,9 +70,17 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
   CNodePtr trans_data = nullptr;
   MS_EXCEPTION_IF_NULL(node);
   // Init
+  std::string default_format = kOpFormat_DEFAULT;
+
+  if (node->isa<CNode>() && AnfAlgo::HasNodeAttr("io_format", node->cast<CNodePtr>())) {
+    auto attr = AnfAlgo::GetNodeAttr<std::string>(node, "io_format");
+    if (attr == kOpFormat_NCDHW) {
+      default_format = kOpFormat_NCDHW;
+    }
+  }
   AnfNodePtr input_node = is_insert_input ? AnfAlgo::GetInputNode(node->cast<CNodePtr>(), insert_index) : node;
-  std::string input_format = is_insert_input ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(node, insert_index);
-  std::string dst_format = is_insert_input ? AnfAlgo::GetInputFormat(node, insert_index) : kOpFormat_DEFAULT;
+  std::string input_format = is_insert_input ? default_format : AnfAlgo::GetOutputFormat(node, insert_index);
+  std::string dst_format = is_insert_input ? AnfAlgo::GetInputFormat(node, insert_index) : default_format;
   std::vector<Axis> padding_axis = is_insert_input ? AnfAlgo::GetInputReshapeType(node, insert_index)
                                                    : AnfAlgo::GetOutputReshapeType(node, insert_index);
   auto input_node_out_shape = is_insert_input ? AnfAlgo::GetPrevNodeOutputInferShape(node, insert_index)

@@ -72,8 +72,18 @@ bool TbeKernelReduceSelecter::IsReduceSupport5HD(SupportFormat *support_format) 
 
 bool TbeKernelReduceSelecter::IsReduceSupportNDC1HWC0(SupportFormat *support_format) const {
   MS_EXCEPTION_IF_NULL(support_format);
-  // like to 5HD
-  return false;
+  if (!Is5DShape(input_shape_)) {
+    return false;
+  }
+  if (!keep_dims_ || axis_.empty()) {
+    return false;
+  }
+  auto reduce_c_axis = std::any_of(axis_.begin(), axis_.end(), [](const size_t &elem) { return (elem == kChannelC); });
+  if (reduce_c_axis) {
+    return false;
+  }
+  AssignSupportFormat(kOpFormat_NDC1HWC0, support_format);
+  return true;
 }
 
 bool TbeKernelReduceSelecter::IsReduceSupportFracZ(SupportFormat *support_format) const {
@@ -141,6 +151,8 @@ void TbeKernelReduceSelecter::AssignSupportFormat(const std::string &support_for
 }
 
 bool TbeKernelReduceSelecter::Is4DShape(const std::vector<size_t> &shape) const { return shape.size() == kShape4dDims; }
+
+bool TbeKernelReduceSelecter::Is5DShape(const std::vector<size_t> &shape) const { return shape.size() == kShape5dDims; }
 
 void TbeKernelReduceSelecter::PadScalarShape(std::vector<size_t> *shape) const {
   MS_EXCEPTION_IF_NULL(shape);

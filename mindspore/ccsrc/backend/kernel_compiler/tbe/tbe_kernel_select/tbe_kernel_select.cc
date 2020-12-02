@@ -187,6 +187,9 @@ void TbeKernelSelect::GetBroadcastPatternKernelInfo(const OpInfo &op_info) {
   if (!broadcast_selecter.IsBroadCastSupportFracNZ(&support_format)) {
     MS_LOG(INFO) << "Node(" << node_name_ << ") does not support FracNZ.";
   }
+  if (!broadcast_selecter.IsBroadCastSupportNDC1HWC0(&support_format)) {
+    MS_LOG(INFO) << "Node(" << node_name_ << ") does not support NDC1HWC0.";
+  }
   PrintSupportedFormat(support_format);
   OpInfo op_info_new;
   CreateNewOpInfo(op_info, support_format, &op_info_new);
@@ -281,10 +284,8 @@ bool TbeKernelSelect::IsShapeMatchFormat(const std::vector<size_t> &shape, const
     return true;
   }
   // not support format:
-  // 1 NDHWC with shape size != 5
-  // 3 !NDHWC with shape size > 4
-  if ((format == kOpFormat_NDHWC && shape.size() != kShape5dDims) ||
-      (format != kOpFormat_NDHWC && shape.size() > kShape4dDims)) {
+  // 1 NCDHW with shape size != 5
+  if (format == kOpFormat_NCDHW && shape.size() != kShape5dDims) {
     MS_LOG(INFO) << "Warning: Shape format check failed, format: " << format << ", size: " << shape.size();
     return false;
   }

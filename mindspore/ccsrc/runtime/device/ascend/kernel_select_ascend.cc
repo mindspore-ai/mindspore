@@ -81,6 +81,7 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
   string priority_matched_format = kOpFormat_NC1HWC0;
   bool is_init = false;
   bool need_change_nd = false;
+  bool is_5d_input = false;
   for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(cnode); ++index) {
     auto pre_output_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
     if (AnfAlgo::IsFeatureMapInput(cnode, index) &&
@@ -93,14 +94,21 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
       priority_matched_format = kOpFormat_DEFAULT;
     }
     auto input_shape_size = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index).size();
+    if (input_shape_size == 5) {
+      is_5d_input = true;
+    }
     need_change_nd = (need_change_nd || (input_shape_size != 4 && input_shape_size > 1));
   }
   if (need_change_nd && priority_matched_format != kOpFormat_FRAC_NZ) {
     priority_matched_format = kOpFormat_DEFAULT;
   }
+  if (is_5d_input && priority_matched_format != kOpFormat_FRAC_NZ) {
+    priority_matched_format = kOpFormat_NDC1HWC0;
+  }
   AnfAlgo::SetNodeAttr(kPriChoosenFormat, MakeValue(priority_matched_format), cnode);
   return priority_matched_format;
 }
+
 /**
  * Compare two vector by priority, select a better vector, like compare two num, first compare highest num location,
  * if equal then next num location
@@ -157,7 +165,8 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
     if (kernel_build_info.GetInputFormat(input_index) == pri_match_format) {
       (*cur_kernelinfo_match_counts)[MATCH_SPECIAL_FORMAT_COUNT] += base_score;
     }
-    if (kernel_build_info.GetInputFormat(input_index) == kOpFormat_DEFAULT) {
+    if (kernel_build_info.GetInputFormat(input_index) == kOpFormat_DEFAULT ||
+        kernel_build_info.GetInputFormat(input_index) == kOpFormat_NCDHW) {
       (*cur_kernelinfo_match_counts)[MATCH_DEFAULT_FORMAT_COUNT] += base_score;
     }
   }
@@ -376,7 +385,9 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
     std::vector<std::string> output_format = {AnfAlgo::GetOutputFormat(real_input_node, 0)};
     if (IsValueNode<tensor::Tensor>(input_kernel_node) &&
         AnfAlgo::GetOutputDeviceDataType(input_kernel_node, 0) == kTypeUnknown) {
-      if (selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_ZN_LSTM) {
+      if (selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_ZN_LSTM ||
+          selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_Z_3D ||
+          selected_kernel_info->GetInputFormat(input_index) != kOpFormat_NDC1HWC0) {
         output_format = {selected_kernel_info->GetInputFormat(input_index)};
       }
       builder->SetOutputsFormat(output_format);
@@ -386,7 +397,9 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
       continue;
     }
     if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
-      if (selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_ZN_LSTM) {
+      if (selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_ZN_LSTM ||
+          selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_Z_3D ||
+          selected_kernel_info->GetInputFormat(input_index) != kOpFormat_NDC1HWC0) {
         output_format = {selected_kernel_info->GetInputFormat(input_index)};
       }
       builder->SetOutputsFormat(output_format);

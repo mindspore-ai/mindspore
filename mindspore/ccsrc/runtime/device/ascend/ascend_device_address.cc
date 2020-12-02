@@ -292,7 +292,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
-  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NDHWC) {
+  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NCDHW) {
     if (type_id_ == type) {
       SyncMemory(host_ptr, ptr_, size, RT_MEMCPY_DEVICE_TO_HOST);
       sync_ok = true;
@@ -454,7 +454,7 @@ std::vector<size_t> AscendDeviceAddress::GetWorkspaceSizeList(const nlohmann::js
 
 std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *host_shape) const {
   std::vector<size_t> device_shape;
-  if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NDHWC) {
+  if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW) {
     device_shape = trans::TransShapeToDevice(*host_shape, format_);
   } else {
     if (host_shape_.empty()) {
@@ -531,7 +531,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
-  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NDHWC) {
+  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NCDHW) {
     if (type_id_ == type) {
       SyncMemory(ptr_, host_ptr, size, RT_MEMCPY_HOST_TO_DEVICE);
       sync_ok = true;
@@ -575,7 +575,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
     host_shape.emplace_back(1);
   }
   std::vector<size_t> device_shape;
-  if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NDHWC) {
+  if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
     host_shape = trans::PaddingShapeTo4d(host_shape);

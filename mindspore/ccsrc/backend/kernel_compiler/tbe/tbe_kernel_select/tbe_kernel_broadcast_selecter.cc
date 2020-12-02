@@ -248,11 +248,55 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracNZ(SupportFormat *support
 
 bool TbeKernelBroadCastSelecter::IsBroadCastSupportNDC1HWC0(SupportFormat *support_format) const {
   MS_EXCEPTION_IF_NULL(support_format);
-  return false;
+  if (IsSameShape()) {
+    if (!HasScalarInput()) {
+      AssignSupportFormat(kOpFormat_NDC1HWC0, support_format);
+      return true;
+    }
+    return false;
+  }
+  SupportFormatItem input_support_format;
+  SupportFormatItem output_support_format;
+  if (HasScalarInput()) {
+    for (const auto &shape : input_shapes_) {
+      if (IsScalarShape(shape)) {
+        input_support_format.emplace_back(kOpFormat_NCDHW);
+      } else if (!Is5DShape(shape)) {
+        return false;
+      } else if (shape[kChannelC] % kAlignmented16 != 0) {
+        return false;
+      } else {
+        input_support_format.emplace_back(kOpFormat_NDC1HWC0);
+      }
+    }
+  } else {
+    for (const auto &shape : input_shapes_) {
+      if (!Is5DShape(shape)) {
+        return false;
+      }
+    }
+    auto shape_tmp = input_shapes_[0];
+    auto broadcast_c_axis = std::any_of(
+      input_shapes_.begin(), input_shapes_.end(),
+      [&shape_tmp](const std::vector<size_t> &elem) { return shape_tmp.at(kChannelC) != elem.at(kChannelC); });
+    if (broadcast_c_axis) {
+      MS_LOG(INFO) << "This node broadcast c channel.";
+      return false;
+    }
+    input_support_format.assign(input_num_, kOpFormat_NDC1HWC0);
+  }
+  GenOutputSupportFormat(kOpFormat_NDC1HWC0, &output_support_format);
+  support_format->input_format.emplace_back(input_support_format);
+  support_format->output_format.emplace_back(output_support_format);
+  return true;
 }
 
 bool TbeKernelBroadCastSelecter::Is4DShape(const std::vector<size_t> &shape) const {
   return shape.size() == kShape4dDims;
+}
+
+bool TbeKernelBroadCastSelecter::Is5DShape(const std::vector<size_t> &shape) const {
+  return shape.size() == kShape5dDims;
 }
 
 bool TbeKernelBroadCastSelecter::IsSameShape() const {

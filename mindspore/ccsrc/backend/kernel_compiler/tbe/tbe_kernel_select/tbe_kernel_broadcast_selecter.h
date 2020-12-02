@@ -40,6 +40,7 @@ class TbeKernelBroadCastSelecter {
   bool IsSameShape() const;
   void PadScalarShape(std::vector<size_t> *shape) const;
   bool Is4DShape(const std::vector<size_t> &shape) const;
+  bool Is5DShape(const std::vector<size_t> &shape) const;
   bool IsScalarShape(const std::vector<size_t> &shape) const;
   bool HasScalarInput() const;
   void GenOutputSupportFormat(const std::string &support_format, SupportFormatItem *output_support_item) const;
