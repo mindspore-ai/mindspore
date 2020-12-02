@@ -530,7 +530,7 @@ class Pad(Cell):
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.pad = nn.Pad(paddings=((1,1),(2,2)), mode="CONSTANT")
+        ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="CONSTANT")
         ...     def construct(self, x):
         ...         return self.pad(x)
         >>> x = np.random.random(size=(2, 3)).astype(np.float32)
