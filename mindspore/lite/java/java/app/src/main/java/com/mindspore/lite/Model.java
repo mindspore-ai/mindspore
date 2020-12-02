@@ -59,6 +59,7 @@ public class Model {
                     fis.close();
                 } catch (IOException e) {
                     Log.e("MS_LITE", "Close file failed");
+                    ret = false;
                 }
             }
             if (null != fileDescriptor) {
@@ -66,6 +67,7 @@ public class Model {
                     fileDescriptor.close();
                 } catch (IOException e) {
                     Log.e("MS_LITE", "Close fileDescriptor failed");
+                    ret = false;
                 }
             }
         }
