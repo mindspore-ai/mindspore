@@ -451,29 +451,6 @@ Status TreeGetters::Init(std::shared_ptr<DatasetNode> d) {
 
 Status TreeGetters::GetRow(TensorRow *row) { return tree_adapter_->GetNext(row); }
 
-Status TreeGetters::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ == -1) {
-    RETURN_IF_NOT_OK(InternalInit(static_cast<int8_t>(GetterPass::kDatasetSize)));
-    std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
-    RETURN_UNEXPECTED_IF_NULL(root);
-    RETURN_IF_NOT_OK(root->GetDatasetSize(dataset_size));
-    if (*dataset_size == -1) {  // run through the tree and get everything
-      TensorRow row;
-      RETURN_IF_NOT_OK(GetRow(&row));
-      int64_t row_cnt = 0;
-      while (!row.empty()) {
-        ++row_cnt;
-        RETURN_IF_NOT_OK(GetRow(&row));
-      }
-      *dataset_size = row_cnt;
-    }
-    dataset_size_ = *dataset_size;  // save the previous result
-  }
-
-  *dataset_size = dataset_size_;
-  return Status::OK();
-}
-
 Status TreeGetters::GetOutputTypes(std::vector<DataType> *types) {
   RETURN_IF_NOT_OK(GetFirstRowShapeAndType());
   *types = first_row_type_;
@@ -571,6 +548,47 @@ Status BuildVocabConsumer::Start() {
   RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
   // The returned row would EOE which is an empty row
   CHECK_FAIL_RETURN_UNEXPECTED(row.empty(), "The fetched row from BuildVocab should be an EOE.");
+  return Status::OK();
+}
+Status DatasetSizeGetter::GetDatasetSize(int64_t *size, bool estimate) {
+  if (dataset_size_ == -1) {
+    RETURN_IF_NOT_OK(root_->GetDatasetSize(shared_from_this(), estimate, size));
+    dataset_size_ = *size;  // save the previous result
+  }
+
+  *size = dataset_size_;
+  return Status::OK();
+}
+Status DatasetSizeGetter::Init(std::shared_ptr<DatasetNode> d) {
+  root_ = std::move(d);
+  return Status::OK();
+}
+Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *dataset_size) {
+  std::shared_ptr<TreeAdapter> tree_adapter = std::make_shared<TreeAdapter>();
+  tree_adapters_.push_back(tree_adapter);
+  tree_adapter->SetPrePassOverride([](OptPass pre) {
+    pre.push_back(
+      std::make_unique<GetterPass>(static_cast<GetterPass::GetterType>(GetterPass::GetterType::kDatasetSize)));
+    return pre;
+  });
+  RETURN_IF_NOT_OK(tree_adapter->Compile(std::move(ir_node), 1));
+  TensorRow row;
+  RETURN_IF_NOT_OK(GetRow(tree_adapter, &row));
+  int64_t row_cnt = 0;
+  while (!row.empty()) {
+    ++row_cnt;
+    RETURN_IF_NOT_OK(GetRow(tree_adapter, &row));
+  }
+  *dataset_size = row_cnt;
+  return Status::OK();
+}
+Status DatasetSizeGetter::GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *row) {
+  return tree_adapter->GetNext(row);
+}
+Status DatasetSizeGetter::Terminate() {
+  for (const auto &tree : tree_adapters_) {
+    RETURN_IF_NOT_OK(tree->AllTasks()->ServiceStop());
+  }
   return Status::OK();
 }
 }  // namespace dataset

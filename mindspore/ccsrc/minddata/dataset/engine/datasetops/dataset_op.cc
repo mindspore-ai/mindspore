@@ -294,24 +294,6 @@ Status DatasetOp::GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
   return Status::OK();
 }
 
-// Gets the dataset size
-Status DatasetOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0) {
-    *dataset_size = dataset_size_;
-    return Status::OK();
-  }
-  if (child_.size() == 1) {
-    return child_[0]->GetDatasetSize(dataset_size);
-  } else if (child_.size() > 1) {
-    // It is okay for dataset to have more than 1 child, GetDatasetSize shouldn't fail in this case.
-    // This is done mostly for cache, which injects cache lookup/merge operators. Cache path will
-    // always be in front of the child_ structure, so we get the dataset size from the last child.
-    return child_[child_.size() - 1]->GetDatasetSize(dataset_size);
-  } else {
-    RETURN_STATUS_UNEXPECTED("Trying to get dataset size from leaf node, missing override");
-  }
-}
-
 // Gets the number of classes
 Status DatasetOp::GetNumClasses(int64_t *num_classes) {
   if (child_.size() == 1) {

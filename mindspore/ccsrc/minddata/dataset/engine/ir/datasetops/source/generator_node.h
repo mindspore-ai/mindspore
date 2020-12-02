@@ -64,6 +64,13 @@ class GeneratorNode : public MappableSourceNode {
   /// \return Status Status::OK() if get shard id successfully
   Status GetShardId(int32_t *shard_id) override;
 
+  /// \brief Setter for DatasetSize in GeneratorNode
+  /// \param[in] sz dataset size to set
+  /// \return void
+  void SetGeneratorDatasetSize(int64_t sz) { dataset_size_ = sz; }
+
+  bool IsSizeDefined() override { return false; }
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;

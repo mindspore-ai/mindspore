@@ -60,6 +60,8 @@ class BucketBatchByLengthNode : public DatasetNode {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  bool IsSizeDefined() override { return false; };
+
  private:
   std::vector<std::string> column_names_;
   std::vector<int32_t> bucket_boundaries_;

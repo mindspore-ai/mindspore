@@ -139,17 +139,5 @@ Status TakeOp::PreAccept(NodePass *p, bool *modified) {
   return p->PreRunOnNode(shared_from_base<TakeOp>(), modified);
 }
 
-// Get Dataset size
-Status TakeOp::GetDatasetSize(int64_t *dataset_size) {
-  if (dataset_size_ > 0) {
-    *dataset_size = dataset_size_;
-    return Status::OK();
-  }
-  int64_t num_rows;
-  RETURN_IF_NOT_OK(child_[0]->GetDatasetSize(&num_rows));
-  *dataset_size = std::min(static_cast<int64_t>(max_takes_), num_rows);
-  dataset_size_ = *dataset_size;
-  return Status::OK();
-}
 }  // namespace dataset
 }  // namespace mindspore

@@ -274,11 +274,5 @@ Status GeneratorOp::ComputeColMap() {
   }
   return Status::OK();
 }
-Status GeneratorOp::GetDatasetSize(int64_t *dataset_size) {  // Get Dataset size
-  // We are returning -1 because we can't easily calculate GetDatasetSize. Returning -1 will make TreeGetters to
-  // iterate over the dataset and count the size
-  *dataset_size = dataset_size_;
-  return Status::OK();
-}
 }  // namespace dataset
 }  // namespace mindspore

@@ -177,7 +177,6 @@ class TreeGetters : public TreeConsumer {
   ~TreeGetters() = default;
   Status Init(std::shared_ptr<DatasetNode> d) override;
 
-  Status GetDatasetSize(int64_t *size);
   Status GetOutputTypes(std::vector<DataType> *types);
   Status GetOutputShapes(std::vector<TensorShape> *shapes);
   Status GetBatchSize(int64_t *batch_size);
@@ -186,7 +185,7 @@ class TreeGetters : public TreeConsumer {
   Status GetColumnNames(std::vector<std::string> *output);
   Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
   std::string Name() override { return "TreeGetters"; }
-  virtual Status GetRow(TensorRow *r);
+  virtual Status GetRow(TensorRow *row);
 
  private:
   Status GetFirstRowShapeAndType();
@@ -200,6 +199,35 @@ class TreeGetters : public TreeConsumer {
 
   Status InternalInit(int8_t type);
   Status InternalInit();
+};
+
+/// Consumer that is used to get some pipeline information
+class DatasetSizeGetter : public TreeConsumer, public std::enable_shared_from_this<DatasetSizeGetter> {
+ public:
+  DatasetSizeGetter() : dataset_size_(-1) {}
+  ~DatasetSizeGetter() = default;
+  Status Init(std::shared_ptr<DatasetNode> d) override;
+  Status Terminate() override;
+
+  /// \brief Function to get the dataset size
+  /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
+  ///     dataset size at the expense of accuracy.
+  /// \param[out] dataset_size the size of the dataset
+  /// \return Status of the function
+  Status GetDatasetSize(int64_t *size, bool estimate = false);
+
+  virtual Status GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *row);
+  std::string Name() override { return "DatasetSizeGetter"; }
+
+  /// \brief Gets the dataset size by iterating over the entire dataset on a sub tree starting from ir_node
+  /// param[in] ir_node The node that marks the top most of the sub tree on which we want to iterate
+  /// \return Status - The status code return
+  Status DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *dataset_size);
+
+ private:
+  std::shared_ptr<DatasetNode> root_;
+  std::vector<std::shared_ptr<TreeAdapter>> tree_adapters_;
+  int64_t dataset_size_;
 };
 
 class BuildVocabConsumer : public TreeConsumer {

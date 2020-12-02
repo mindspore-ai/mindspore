@@ -65,4 +65,8 @@ Status PythonTreeGetters::GetRow(TensorRow *r) {
   py::gil_scoped_release gil_release;
   return TreeGetters::GetRow(r);
 }
+Status PythonDatasetSizeGetter::GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *r) {
+  py::gil_scoped_release gil_release;
+  return DatasetSizeGetter::GetRow(tree_adapter, r);
+}
 }  // namespace mindspore::dataset

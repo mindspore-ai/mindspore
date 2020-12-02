@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #include "minddata/dataset/util/status.h"
@@ -84,6 +85,67 @@ std::vector<std::shared_ptr<DatasetOp>> CelebANode::Build() {
 Status CelebANode::GetShardId(int32_t *shard_id) {
   *shard_id = sampler_->ShardId();
 
+  return Status::OK();
+}
+
+// Get Dataset size
+Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                  int64_t *dataset_size) {
+  int64_t num_rows, sample_size;
+  std::ifstream partition_file;
+  std::string line;
+  Path folder_path(dataset_dir_);
+  std::ifstream attr_file((folder_path / "list_attr_celeba.txt").toString());
+  if (!attr_file.is_open()) {
+    std::string attr_file_name = (folder_path / "list_attr_celeba.txt").toString();
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open Celeba attr file: " + attr_file_name);
+  }
+
+  std::string rows_num;
+  (void)getline(attr_file, rows_num);
+  try {
+    num_rows = static_cast<int64_t>(std::stoul(rows_num));  // First line is rows number in attr file
+  } catch (std::invalid_argument &e) {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid data, failed to convert rows_num from attr_file to unsigned long, invalid argument: " + rows_num);
+  } catch (std::out_of_range &e) {
+    RETURN_STATUS_UNEXPECTED(
+      "Invalid data, failed to convert rows_num from attr_file to unsigned long, out of range: " + rows_num);
+  }
+  if (usage_ != "all") {
+    int64_t partition_num = 0;
+    char usage_type;
+    if (usage_ == "train") {
+      usage_type = '0';
+    } else {
+      if (usage_ == "valid") {
+        usage_type = '1';
+      } else {
+        if (usage_ == "test")
+          usage_type = '2';
+        else
+          RETURN_STATUS_UNEXPECTED("Invalid usage.");
+      }
+    }
+    if (!partition_file.is_open()) {
+      partition_file.open((folder_path / "list_eval_partition.txt").toString());
+    }
+    if (partition_file.is_open()) {
+      while (getline(partition_file, line)) {
+        int start = line.find(' ');
+        if (line.at(start + 1) == usage_type) {
+          partition_num++;
+        }
+      }
+    } else {
+      std::string partition_file_name = "list_eval_partition.txt";
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open CelebA partition file: " + partition_file_name);
+    }
+    num_rows = std::min(num_rows, partition_num);
+  }
+
+  sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
+  *dataset_size = sample_size;
   return Status::OK();
 }
 

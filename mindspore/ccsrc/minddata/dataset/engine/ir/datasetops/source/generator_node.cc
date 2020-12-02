@@ -93,6 +93,5 @@ Status GeneratorNode::GetShardId(int32_t *shard_id) {
   *shard_id = 0;
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

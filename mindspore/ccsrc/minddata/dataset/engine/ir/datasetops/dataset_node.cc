@@ -342,6 +342,31 @@ Status DatasetNode::GetShardId(int32_t *shard_id) {
     RETURN_STATUS_SYNTAX_ERROR("Get Shard Id failed at source node: " + Name() + "\n");
   }
 }
+
+// Gets the dataset size
+Status DatasetNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                   int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  if (!IsSizeDefined()) {
+    RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), dataset_size));
+    dataset_size_ = *dataset_size;
+    return Status::OK();
+  }
+  if (children_.size() == 1) {
+    return children_[0]->GetDatasetSize(size_getter, estimate, dataset_size);
+  } else if (children_.size() > 1) {
+    // It is okay for dataset to have more than 1 child, GetDatasetSize shouldn't fail in this case.
+    // This is done mostly for cache, which injects cache lookup/merge operators. Cache path will
+    // always be in front of the child_ structure, so we get the dataset size from the last child.
+    return children_[children_.size() - 1]->GetDatasetSize(size_getter, estimate, dataset_size);
+  } else {
+    RETURN_STATUS_UNEXPECTED("Trying to get dataset size from leaf node, missing override");
+  }
+}
+
 // Visitor accepting method for NodePass
 Status SourceNode::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor

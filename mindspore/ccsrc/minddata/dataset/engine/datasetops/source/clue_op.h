@@ -197,11 +197,6 @@ class ClueOp : public ParallelOp {
   // @return - Status of the node visit.
   Status Accept(NodePass *p, bool *modified) override;
 
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
-
  private:
   // The entry point for when workers are launched.
   // @param worker_id - the id of the worker that is executing this function.

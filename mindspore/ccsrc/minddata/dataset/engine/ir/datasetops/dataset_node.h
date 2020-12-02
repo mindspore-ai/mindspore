@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/consumers/tree_consumer.h"
 
 namespace mindspore {
 namespace dataset {
@@ -32,6 +33,7 @@ namespace dataset {
 class Dataset;
 class SamplerObj;
 class NodePass;
+class DatasetSizeGetter;
 
 #define RETURN_EMPTY_IF_ERROR(_s) \
   do {                            \
@@ -169,6 +171,14 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return Status Status::OK() if get shard id successfully
   virtual Status GetShardId(int32_t *shard_id);
 
+  /// \brief Gets the dataset size
+  /// \param[in] size_getter Shared pointer to DatasetSizeGetter
+  /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting
+  ///     dataset size at the expense of accuracy.
+  /// \return Status - The status code return
+  virtual Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                int64_t *dataset_size);
+
   /// \brief Getter function for child nodes
   /// \return Child nodes
   const std::vector<std::shared_ptr<DatasetNode>> Children() const { return children_; }
@@ -219,10 +229,13 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \notes Remove me after changing return val of Build()
   Status BuildStatus() { return build_status; }
 
+  virtual bool IsSizeDefined() { return true; }
+
  protected:
   std::vector<std::shared_ptr<DatasetNode>> children_;
   DatasetNode *parent_;
   std::shared_ptr<DatasetCache> cache_;
+  int64_t dataset_size_ = -1;
   int32_t num_workers_;
   int32_t rows_per_buffer_;
   int32_t connector_que_size_;

@@ -199,12 +199,13 @@ bool Dataset::Save(std::string dataset_path, int32_t num_files, std::string data
 // Constructor
 Dataset::Dataset() { tree_getters_ = std::make_shared<TreeGetters>(); }
 
-int64_t Dataset::GetDatasetSize() {
+int64_t Dataset::GetDatasetSize(bool estimate) {
   int64_t dataset_size;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), -1);
-  RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), -1);
-  RETURN_SECOND_IF_ERROR(tree_getters_->GetDatasetSize(&dataset_size), -1);
+  std::shared_ptr<DatasetSizeGetter> size_getter = std::make_shared<DatasetSizeGetter>();
+  RETURN_SECOND_IF_ERROR(size_getter->Init(this->IRNode()), -1);
+  RETURN_SECOND_IF_ERROR(size_getter->GetDatasetSize(&dataset_size, estimate), -1);
   return dataset_size;
 }
 

@@ -60,5 +60,9 @@ class PythonTreeGetters : public TreeGetters {
  public:
   Status GetRow(TensorRow *r) override;
 };
+class PythonDatasetSizeGetter : public DatasetSizeGetter {
+ public:
+  Status GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *r) override;
+};
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CONSUMERS_PYTHON_TREE_CONSUMER_H_

@@ -153,5 +153,21 @@ Status CSVNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
+// Get Dataset size
+Status CSVNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                               int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows, sample_size;
+  RETURN_IF_NOT_OK(CsvOp::CountAllFileRows(dataset_files_, column_names_.empty(), &num_rows));
+  sample_size = num_samples_;
+  num_rows = static_cast<int64_t>(ceil(num_rows / (1.0 * num_shards_)));
+  *dataset_size = sample_size > 0 ? std::min(num_rows, sample_size) : num_rows;
+  dataset_size_ = *dataset_size;
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

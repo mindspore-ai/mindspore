@@ -55,6 +55,8 @@ class FilterNode : public DatasetNode {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  bool IsSizeDefined() override { return false; };
+
   /// \brief Base-class override for accepting NodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified

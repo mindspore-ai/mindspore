@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "minddata/dataset/engine/datasetops/take_op.h"
 #include "minddata/dataset/util/status.h"
@@ -53,6 +54,20 @@ Status TakeNode::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+  return Status::OK();
+}
+
+// Get Dataset size
+Status TakeNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows;
+  RETURN_IF_NOT_OK(children_[0]->GetDatasetSize(size_getter, estimate, &num_rows));
+  *dataset_size = std::min(static_cast<int64_t>(take_count_), num_rows);
+  dataset_size_ = *dataset_size;
   return Status::OK();
 }
 

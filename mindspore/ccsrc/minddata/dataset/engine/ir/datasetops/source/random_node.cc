@@ -86,17 +86,16 @@ std::vector<std::shared_ptr<DatasetOp>> RandomNode::Build() {
     schema_file_path = schema_path_;
   }
 
-  std::unique_ptr<DataSchema> data_schema;
   std::vector<std::string> columns_to_load;
   if (columns_list_.size() > 0) {
     columns_to_load = columns_list_;
   }
   if (!schema_file_path.empty() || !schema_json_string.empty()) {
-    data_schema = std::make_unique<DataSchema>();
+    data_schema_ = std::make_unique<DataSchema>();
     if (!schema_file_path.empty()) {
-      data_schema->LoadSchemaFile(schema_file_path, columns_to_load);
+      data_schema_->LoadSchemaFile(schema_file_path, columns_to_load);
     } else if (!schema_json_string.empty()) {
-      data_schema->LoadSchemaString(schema_json_string, columns_to_load);
+      data_schema_->LoadSchemaString(schema_json_string, columns_to_load);
     }
   }
 
@@ -109,7 +108,7 @@ std::vector<std::shared_ptr<DatasetOp>> RandomNode::Build() {
 
   std::shared_ptr<RandomDataOp> op;
   op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, rows_per_buffer_, total_rows_,
-                                      std::move(data_schema), std::move(sampler_->Build()));
+                                      std::move(data_schema_), std::move(sampler_->Build()));
   build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
   RETURN_EMPTY_IF_ERROR(build_status);
 
@@ -125,5 +124,24 @@ Status RandomNode::GetShardId(int32_t *shard_id) {
   return Status::OK();
 }
 
+// Get Dataset size
+Status RandomNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                  int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows;
+  num_rows = total_rows_ != 0 ? total_rows_ : data_schema_->num_rows();
+  if (sampler_ != nullptr) {
+    int64_t sample_size;
+    sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
+    *dataset_size = sample_size;
+  } else {
+    *dataset_size = num_rows;
+  }
+  dataset_size_ = *dataset_size;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

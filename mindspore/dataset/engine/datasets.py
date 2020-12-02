@@ -1370,6 +1370,19 @@ class Dataset:
         runtime_context.AssignConsumer(getter)
         return getter, runtime_context, api_tree
 
+    def _init_size_getter(self):
+        """
+        Get pipeline information.
+        """
+        ir_tree, api_tree = self.create_ir_tree()
+
+        runtime_context = cde.PythonRuntimeContext()
+        runtime_context.Init()
+        getter = cde.DatasetSizeGetters()
+        getter.Init(ir_tree)
+        runtime_context.AssignConsumer(getter)
+        return getter, runtime_context, api_tree
+
     def get_col_names(self):
         """
         Get names of the columns in the dataset
@@ -1413,8 +1426,8 @@ class Dataset:
             Number, number of batches.
         """
         if self.dataset_size is None:
-            runtime_getter = self._init_tree_getters()
-            self.dataset_size = runtime_getter[0].GetDatasetSize()
+            runtime_getter = self._init_size_getter()
+            self.dataset_size = runtime_getter[0].GetDatasetSize(False)
         return self.dataset_size
 
     def num_classes(self):
@@ -2783,8 +2796,8 @@ class TransferDataset(Dataset):
         new_op.num_parallel_workers = self.num_parallel_workers
         new_op.queue_name = self.queue_name
         new_op.device_type = self.device_type
-        new_op._send_epoch_end = self._send_epoch_end                 # pylint: disable=W0212
-        new_op._create_data_info_queue = self._create_data_info_queue # pylint: disable=W0212
+        new_op._send_epoch_end = self._send_epoch_end  # pylint: disable=W0212
+        new_op._create_data_info_queue = self._create_data_info_queue  # pylint: disable=W0212
 
         return new_op
 
@@ -3737,13 +3750,25 @@ class GeneratorDataset(MappableDataset):
         return self.sampler.is_sharded()
 
     def parse(self, children=None):
+        dataset_size = -1
+        if hasattr(self.source, "__len__"):
+            if not self.num_shards:
+                dataset_size = len(self.source)
+            else:
+                dataset_size = math.ceil(len(self.source) / self.num_shards)
+
+            rows_from_sampler = self._get_sampler_dataset_size()
+            if rows_from_sampler is not None and rows_from_sampler < dataset_size:
+                dataset_size = rows_from_sampler
         if self.schema is None:
-            return cde.GeneratorNode(self.source, self.column_names, self.column_types) \
+            return cde.GeneratorNode(self.source, self.column_names, self.column_types).SetGeneratorDatasetSize(
+                dataset_size) \
                 .SetNumWorkers(self.num_parallel_workers)
         schema = self.schema
         if isinstance(schema, Schema):
             schema = self.schema.cpp_schema
-        return cde.GeneratorNode(self.source, schema).SetNumWorkers(self.num_parallel_workers)
+        return cde.GeneratorNode(self.source, schema).SetGeneratorDatasetSize(dataset_size).SetNumWorkers(
+            self.num_parallel_workers)
 
 
 class TFRecordDataset(SourceDataset):

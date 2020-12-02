@@ -164,10 +164,17 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
-#ifdef ENABLE_PYTHON
-  static Status CountTotalRows(const std::string &file, const py::dict &dict, const std::string &usage, int64_t *count,
-                               int64_t *numClasses);
+  /// \brief Counts the total number of rows in Manifest
+  /// \param[in] file Dataset file path
+  /// \param[in] input_class_indexing Input map of class index
+  /// \param[in] usage Dataset usage
+  /// \param[out] count Number of rows counted
+  /// \param[out] numClasses Number of classes counted
+  /// \return Status of the function
+  static Status CountTotalRows(const std::string &file, const std::map<std::string, int32_t> &map,
+                               const std::string &usage, int64_t *count, int64_t *numClasses);
 
+#ifdef ENABLE_PYTHON
   // Get str-to-int mapping from label name to index
   static Status GetClassIndexing(const std::string &file, const py::dict &dict, const std::string &usage,
                                  std::map<std::string, int32_t> *output_class_indexing);
@@ -182,11 +189,6 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "ManifestOp"; }
-
-  /// \brief Base-class override for GetDatasetSize
-  /// \param[out] dataset_size the size of the dataset
-  /// \return Status of the function
-  Status GetDatasetSize(int64_t *dataset_size) override;
 
   /// \brief Base-class override for GetNumClasses
   /// \param[out] num_classes the number of classes

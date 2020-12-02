@@ -56,6 +56,23 @@ Status RepeatNode::ValidateParams() {
   return Status::OK();
 }
 
+// Get Dataset size
+Status RepeatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                  int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  int64_t num_rows;
+  RETURN_IF_NOT_OK(children_[0]->GetDatasetSize(size_getter, estimate, &num_rows));
+  if (num_rows > 0 && repeat_count_ > 0) {
+    num_rows = num_rows * repeat_count_;
+  }
+  *dataset_size = num_rows;
+  dataset_size_ = num_rows;
+  return Status::OK();
+}
+
 // Visitor accepting method for NodePass
 Status RepeatNode::Accept(NodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
