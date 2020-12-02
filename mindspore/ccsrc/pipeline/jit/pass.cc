@@ -37,6 +37,7 @@
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
+#include "frontend/optimizer/recompute.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
 
@@ -383,6 +384,12 @@ bool AddControlDependPass(const ResourcePtr &res) {
   return true;
 }
 
+bool AddRecomputationPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  opt::InsertRecomputedNodes(res->func_graph());
+  return true;
+}
+
 bool MergeDupGraphPass(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -474,7 +481,8 @@ std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"tuple_transform", OptPassTransformGraphGroup},
                                    {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
                                    {"opt_graph_kernel_b", OptPassGraphKernelGroupB},
-                                   {"add_control_depend", AddControlDependPass}};
+                                   {"add_control_depend", AddControlDependPass},
+                                   {"add_recomputation", AddRecomputationPass}};
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
                                    {"opt_a", OptPassAGroup},
