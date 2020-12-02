@@ -122,13 +122,13 @@ int NonMaxSuppressionCPUKernel::Run() {
     return RET_ERROR;
   }
   constexpr size_t kBatchIndex = 0;
-  if (score_dims[kBatchIndex] != box_dims[kBatchIndex]) {
+  if (score_dims.at(kBatchIndex) != box_dims.at(kBatchIndex)) {
     MS_LOG(ERROR) << "Boxes tensor batch num should be equal to scores tensor's batch num.";
     return RET_ERROR;
   }
   constexpr size_t kScoreDimsBoxNumIndex = 2;
   constexpr size_t kBoxDimsBoxNumIndex = 1;
-  if (score_dims[kScoreDimsBoxNumIndex] != box_dims[kBoxDimsBoxNumIndex]) {
+  if (score_dims.at(kScoreDimsBoxNumIndex) != box_dims.at(kBoxDimsBoxNumIndex)) {
     MS_LOG(ERROR) << "Boxes tensor spatial dimension should be equal to scores tensor's spatial dimension.";
     return RET_ERROR;
   }
@@ -138,10 +138,10 @@ int NonMaxSuppressionCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  int batch_num = score_dims[kBatchIndex];
+  int batch_num = score_dims.at(kBatchIndex);
   constexpr size_t kClassIndex = 1;
-  int class_num = score_dims[kClassIndex];
-  int box_num = score_dims[kScoreDimsBoxNumIndex];
+  int class_num = score_dims.at(kClassIndex);
+  int box_num = score_dims.at(kScoreDimsBoxNumIndex);
   float *scores_data = reinterpret_cast<float *>(score_tensor->data_c());
   if (scores_data == nullptr) {
     MS_LOG(ERROR) << "score tensor data nullptr";

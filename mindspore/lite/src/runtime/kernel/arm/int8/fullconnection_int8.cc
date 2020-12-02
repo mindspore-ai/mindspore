@@ -74,7 +74,7 @@ void FullconnectionInt8CPUKernel::FreeTmpBuffer() {
 }
 
 int FullconnectionInt8CPUKernel::MallocQuantParam() {
-  auto weight_tensor = in_tensors_[1];
+  auto weight_tensor = in_tensors_.at(1);
   auto weight_quant_params = weight_tensor->quant_params();
   int col = weight_tensor->shape().front();
   filter_per_channel_ = (weight_quant_params.size() > 1);
@@ -111,15 +111,15 @@ int FullconnectionInt8CPUKernel::Init() {
     return ret;
   }
 
-  auto in_quant_params = in_tensors_[0]->quant_params();
+  auto in_quant_params = in_tensors_.at(0)->quant_params();
   quant_.input_.zp_ = in_quant_params.front().zeroPoint;
   quant_.input_.scale_ = in_quant_params.front().scale;
 
-  auto out_quant_params = out_tensors_[0]->quant_params();
+  auto out_quant_params = out_tensors_.at(0)->quant_params();
   quant_.output_.zp_ = out_quant_params.front().zeroPoint;
   quant_.output_.scale_ = out_quant_params.front().scale;
 
-  auto weight_tensor = in_tensors_[1];
+  auto weight_tensor = in_tensors_.at(1);
   fc_param_->b_const_ = (weight_tensor->data_c() != nullptr);
   int weight_quant_num = filter_per_channel_ ? weight_tensor->shape().front() : 1;
   auto weight_quant_params = weight_tensor->quant_params();
@@ -148,12 +148,12 @@ int FullconnectionInt8CPUKernel::Init() {
 
 void FullconnectionInt8CPUKernel::InitParam() {
   int row = 1;
-  for (size_t i = 0; i < out_tensors_[0]->shape().size() - 1; ++i) {
-    row *= (out_tensors_[0]->shape())[i];
+  for (size_t i = 0; i < out_tensors_.at(0)->shape().size() - 1; ++i) {
+    row *= (out_tensors_.at(0)->shape()).at(i);
   }
   fc_param_->row_ = row;
-  fc_param_->col_ = out_tensors_[0]->shape().back();
-  fc_param_->deep_ = (in_tensors_[1]->shape())[1];
+  fc_param_->col_ = out_tensors_.at(0)->shape().back();
+  fc_param_->deep_ = (in_tensors_.at(1)->shape()).at(1);
 
   fc_param_->row_4_ = UP_ROUND(fc_param_->row_, C4NUM);
   fc_param_->row_8_ = UP_ROUND(fc_param_->row_, C8NUM);
@@ -207,13 +207,13 @@ int FullconnectionInt8CPUKernel::ReSize() {
       FreeTmpBuffer();
       return RET_MEMORY_FAILED;
     }
-    memcpy(bias_ptr_, in_tensors_[2]->data_c(), fc_param_->col_ * sizeof(int));
+    memcpy(bias_ptr_, in_tensors_.at(2)->data_c(), fc_param_->col_ * sizeof(int));
   } else {
     bias_ptr_ = nullptr;
   }
 
   if (fc_param_->b_const_) {
-    auto weight_data = reinterpret_cast<int8_t *>(in_tensors_[1]->data_c());
+    auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
     RowMajor2Row16x4MajorInt8(weight_data, pack_b_ptr_, fc_param_->col_, fc_param_->deep_);
     CalcWeightBiasSums(weight_data, fc_param_->deep_, fc_param_->col_, quant_.input_.zp_, quant_.filter_zp_, bias_ptr_,
                        weight_bias_sums_, ColMajor, filter_per_channel_);
@@ -254,20 +254,20 @@ int FcInt8Run(void *cdata, int task_id) {
 }
 
 int FullconnectionInt8CPUKernel::Run() {
-  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_[0]->data_c());
+  auto input_ptr = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
   RowMajor2Row16x4MajorInt8(input_ptr, pack_a_ptr_, fc_param_->row_, fc_param_->deep_);
 
   int32_t tmp_weight_zp = filter_per_channel_ ? 1 : quant_.filter_zp_[0];
   CalcInputSums(input_ptr, fc_param_->row_, fc_param_->deep_, tmp_weight_zp, input_sums_, RowMajor);
 
   if (!fc_param_->b_const_) {
-    auto weight_data = reinterpret_cast<int8_t *>(in_tensors_[1]->data_c());
+    auto weight_data = reinterpret_cast<int8_t *>(in_tensors_.at(1)->data_c());
     RowMajor2Row16x4MajorInt8(weight_data, pack_b_ptr_, fc_param_->col_, fc_param_->deep_);
     CalcWeightBiasSums(weight_data, fc_param_->deep_, fc_param_->col_, quant_.input_.zp_, quant_.filter_zp_, bias_ptr_,
                        weight_bias_sums_, ColMajor, filter_per_channel_);
   }
 
-  c_ptr_ = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
+  c_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
   auto ret = ParallelLaunch(this->context_->thread_pool_, FcInt8Run, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch failed";

@@ -58,11 +58,11 @@ int PriorBoxCPUKernel::Init() {
 int PriorBoxCPUKernel::ReSize() { return GeneratePriorBox(); }
 
 int PriorBoxCPUKernel::GeneratePriorBox() {
-  const int fmap_w = in_tensors_[0]->Width();
-  const int fmap_h = in_tensors_[0]->Height();
+  const int fmap_w = in_tensors_.at(0)->Width();
+  const int fmap_h = in_tensors_.at(0)->Height();
 
-  const int image_w = prior_box_param_->image_size_w > 0 ? prior_box_param_->image_size_w : in_tensors_[1]->Width();
-  const int image_h = prior_box_param_->image_size_h > 0 ? prior_box_param_->image_size_h : in_tensors_[1]->Height();
+  const int image_w = prior_box_param_->image_size_w > 0 ? prior_box_param_->image_size_w : in_tensors_.at(1)->Width();
+  const int image_h = prior_box_param_->image_size_h > 0 ? prior_box_param_->image_size_h : in_tensors_.at(1)->Height();
 
   const float step_w =
     prior_box_param_->step_w > 0.0f ? prior_box_param_->step_w : static_cast<float>(image_w) / fmap_w;

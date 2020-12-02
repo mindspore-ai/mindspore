@@ -76,7 +76,7 @@ int Fill::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
 
   std::vector<int> output_shape;
   for (size_t i = 0; i < GetDims().size(); i++) {
-    output_shape.push_back(GetDims()[i]);
+    output_shape.push_back(GetDims().at(i));
   }
   output->set_shape(output_shape);
   return RET_OK;

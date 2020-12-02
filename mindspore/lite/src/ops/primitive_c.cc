@@ -331,7 +331,7 @@ void PrimitiveC::GetAttrDataFromInput(const AnfNodePtr &inputNode, std::vector<i
       auto tuple = val->cast<ValueTuplePtr>();
       MS_ASSERT(tuple != nullptr);
       for (size_t i = 0; i < tuple->size(); i++) {
-        auto elem = tuple->value()[i];
+        auto elem = tuple->value().at(i);
         MS_ASSERT(elem != nullptr);
         data->emplace_back(CastToInt(elem).front());
       }
@@ -349,7 +349,7 @@ void PrimitiveC::set_input_quant_params(const std::vector<std::vector<schema::Qu
 
 void PrimitiveC::set_input_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &input_quant_param) {
   MS_ASSERT(index < this->input_quant_param_.size());
-  this->input_quant_param_[index] = input_quant_param;
+  this->input_quant_param_.at(index) = input_quant_param;
 }
 
 void PrimitiveC::set_output_quant_params(const std::vector<std::vector<schema::QuantParamT>> &output_quant_param) {
@@ -359,7 +359,7 @@ void PrimitiveC::set_output_quant_params(const std::vector<std::vector<schema::Q
 void PrimitiveC::set_output_quant_param(const size_t &index,
                                         const std::vector<schema::QuantParamT> &output_quant_param) {
   MS_ASSERT(index < this->output_quant_param_.size());
-  this->output_quant_param_[index] = output_quant_param;
+  this->output_quant_param_.at(index) = output_quant_param;
 }
 
 bool PrimitiveC::IsInputQuantParamsInited() {

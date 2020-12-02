@@ -57,8 +57,8 @@ int Gather::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
       gather_attr = nullptr;
       return RET_ERROR;
     }
-    if (inputs[2]->isa<ValueNode>()) {
-      ValueNodePtr axis_tensor = inputs[2]->cast<ValueNodePtr>();
+    if (inputs.at(2)->isa<ValueNode>()) {
+      ValueNodePtr axis_tensor = inputs.at(2)->cast<ValueNodePtr>();
       int axis = CastToInt(axis_tensor->value()).front();
       gather_attr->axis = axis;
     } else {
@@ -137,7 +137,7 @@ int Gather::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   std::vector<int> out_shape{in_shape};
   out_shape.erase(out_shape.begin() + axis);
   for (int i = indices_rank - 1; i >= 0; --i) {
-    out_shape.insert(out_shape.begin() + axis, indices_shape[i]);
+    out_shape.insert(out_shape.begin() + axis, indices_shape.at(i));
   }
   output->set_shape(out_shape);
   return RET_OK;

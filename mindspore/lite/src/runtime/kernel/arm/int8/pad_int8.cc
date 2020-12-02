@@ -87,8 +87,8 @@ int PadInt8CPUKernel::SetQuantParam() {
 }
 
 int PadInt8CPUKernel::InitPadParam() {
-  auto in_dims = in_tensors_[0]->shape();
-  auto out_dims = out_tensors_[0]->shape();
+  auto in_dims = in_tensors_.at(0)->shape();
+  auto out_dims = out_tensors_.at(0)->shape();
   int ndims = in_dims.size();
 
   int in[] = {1, 1, 1, 1};
@@ -265,8 +265,8 @@ int PadInt8CPUKernel::CopyPaddingFromInput() {
 }
 
 int PadInt8CPUKernel::Run() {
-  in_data_ = reinterpret_cast<int8_t *>(in_tensors_[0]->MutableData());
-  out_data_ = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
+  in_data_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
+  out_data_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
 
   int error_code;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {

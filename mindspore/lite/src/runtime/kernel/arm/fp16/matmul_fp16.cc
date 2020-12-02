@@ -262,7 +262,7 @@ int MatmulFP16Run(void *cdata, int task_id) {
 }
 
 int MatmulFP16CPUKernel::Run() {
-  auto out_tensor = out_tensors_[0];
+  auto out_tensor = out_tensors_.at(0);
   auto ret = MallocFp16Output();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Matmul MallocFp16Output failed";
@@ -280,10 +280,10 @@ int MatmulFP16CPUKernel::Run() {
       MS_LOG(ERROR) << "Matmul fp16 malloc matrix A buffer failed";
       return RET_ERROR;
     }
-    if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-      InitMatrixA(reinterpret_cast<float *>(in_tensors_[0]->data_c()), a_pack_ptr_);
+    if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
+      InitMatrixA(reinterpret_cast<float *>(in_tensors_.at(0)->data_c()), a_pack_ptr_);
     } else {
-      InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_[0]->data_c()), a_pack_ptr_);
+      InitMatrixA(reinterpret_cast<float16_t *>(in_tensors_.at(0)->data_c()), a_pack_ptr_);
     }
   }
   if (!params_->b_const_) {
@@ -292,10 +292,10 @@ int MatmulFP16CPUKernel::Run() {
       MS_LOG(ERROR) << "Matmul fp16 malloc matrix B buffer failed";
       return RET_ERROR;
     }
-    if (in_tensors_[1]->data_type() == kNumberTypeFloat32) {
-      InitMatrixB(reinterpret_cast<float *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+    if (in_tensors_.at(1)->data_type() == kNumberTypeFloat32) {
+      InitMatrixB(reinterpret_cast<float *>(in_tensors_.at(1)->data_c()), b_pack_ptr_);
     } else {
-      InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_[1]->data_c()), b_pack_ptr_);
+      InitMatrixB(reinterpret_cast<float16_t *>(in_tensors_.at(1)->data_c()), b_pack_ptr_);
     }
   }
   for (int i = 0; i < params_->batch; ++i) {

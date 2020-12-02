@@ -36,12 +36,12 @@ int InstanceNormCPUKernel::Init() {
 int InstanceNormCPUKernel::ReSize() {
   auto input_shapes = in_tensors_.front()->shape();
   auto n_dim = input_shapes.size();
-  outer_size_ = input_shapes[0] * input_shapes[n_dim - 1];
+  outer_size_ = input_shapes.at(0) * input_shapes.at(n_dim - 1);
   inner_size_ = 1;
   for (size_t i = 0; i < n_dim - 1; ++i) {
-    inner_size_ *= input_shapes[i];
+    inner_size_ *= input_shapes.at(i);
   }
-  param_->channel_ = input_shapes[n_dim - 1];
+  param_->channel_ = input_shapes.at(n_dim - 1);
   return RET_OK;
 }
 

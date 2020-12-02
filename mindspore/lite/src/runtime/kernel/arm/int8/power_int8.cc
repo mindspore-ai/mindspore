@@ -66,7 +66,7 @@ int PowerInt8CPUKernel::DoPower(int task_id) {
   int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
   MS_ASSERT(output_data);
 
-  auto size = in_tensors_[0]->ElementsNum();
+  auto size = in_tensors_.at(0)->ElementsNum();
   int stride = UP_DIV(size, op_parameter_->thread_num_);
   int count = MSMIN(stride, size - stride * task_id);
   int8_t *exp_ptr = nullptr;

@@ -111,12 +111,12 @@ int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
     }
 
     auto kernel_size = CastToInt(prim.GetAttr("ksize"));
-    attr->windowH = kernel_size[2];
-    attr->windowW = kernel_size[3];
+    attr->windowH = kernel_size.at(2);
+    attr->windowW = kernel_size.at(3);
 
     auto stride = CastToInt(prim.GetAttr("strides"));
-    attr->strideH = stride[2];
-    attr->strideW = stride[3];
+    attr->strideH = stride.at(2);
+    attr->strideW = stride.at(3);
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {
       MS_LOG(ERROR) << "primitive value is nullptr";

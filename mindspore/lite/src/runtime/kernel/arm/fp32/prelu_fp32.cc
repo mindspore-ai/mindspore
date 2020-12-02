@@ -52,13 +52,13 @@ int PReluCPUKernel::DoExcute(int task_id) {
 
 int PReluCPUKernel::ProcessInput() {
   // input tensor
-  auto input_tensor = in_tensors_[0];
+  auto input_tensor = in_tensors_.at(0);
   auto in_shape = input_tensor->shape();
   auto n_dim = in_shape.size();
   auto channel_num = in_shape.at(n_dim - 1);
   int input_plane = 1;
   for (size_t i = 0; i < n_dim - 1; ++i) {
-    input_plane *= in_shape[i];
+    input_plane *= in_shape.at(i);
   }
   int tile_block = UP_DIV(input_plane, TILE_NUM);
   prelu_param_->input_num_ = input_tensor->ElementsNum();
@@ -76,7 +76,7 @@ int PReluCPUKernel::ProcessInput() {
 
 int PReluCPUKernel::ProcessShareChannelInput() {
   // input tensor
-  auto input_tensor = in_tensors_[0];
+  auto input_tensor = in_tensors_.at(0);
   prelu_param_->input_num_ = input_tensor->ElementsNum();
 #ifdef ENABLE_ARM64
   prelu_param_->tile_block_ = UP_DIV(prelu_param_->input_num_, 64);
