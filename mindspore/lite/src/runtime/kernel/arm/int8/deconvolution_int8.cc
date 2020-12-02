@@ -132,7 +132,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
   }
   memset(bias_data_, 0, size);
   if (in_tensors_.size() == 3) {
-    memcpy(bias_data_, in_tensors_[0]->MutableData(), conv_param_->output_channel_ * sizeof(int32_t));
+    memcpy(bias_data_, in_tensors_.at(0)->MutableData(), conv_param_->output_channel_ * sizeof(int32_t));
   }
 
   size = UP_ROUND(conv_param_->output_channel_, C4NUM) * UP_ROUND(conv_param_->input_channel_, C16NUM) *
@@ -143,7 +143,7 @@ int DeConvInt8CPUKernel::InitBiasWeight() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, size);
-  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(in_tensors_[1]->MutableData()), weight_ptr_,
+  DeConvWeightTransInt8(reinterpret_cast<int8_t *>(in_tensors_.at(1)->MutableData()), weight_ptr_,
                         conv_param_->input_channel_, conv_param_->output_channel_,
                         conv_param_->kernel_h_ * conv_param_->kernel_w_, support_optimize_);
 

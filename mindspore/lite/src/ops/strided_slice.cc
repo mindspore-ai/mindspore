@@ -304,7 +304,7 @@ int StridedSlice::HandleAxesInputExist(const std::vector<lite::Tensor *> &inputs
   std::vector<int> axes;
   if (axes_data == nullptr) {
     for (int i = 0; i < begin_ndim; ++i) {
-      axes[i] = i;
+      axes.push_back(i);
     }
   } else {
     axes.assign(axes_data, axes_data + begin_ndim);

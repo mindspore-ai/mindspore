@@ -48,7 +48,7 @@ void BatchnormCPUKernel::FreeMeanAndVariance() {
 }
 
 void BatchnormCPUKernel::FillParam() {
-  auto input_shapes = in_tensors_[0]->shape();
+  auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
   auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
   param->channel_ = input_shapes[n_dim - 1];
@@ -59,15 +59,15 @@ void BatchnormCPUKernel::FillParam() {
 }
 
 int BatchnormCPUKernel::InitConstTensor() {
-  mean_ = malloc(in_tensors_[1]->Size());
-  variance_ = malloc(in_tensors_[2]->Size());
+  mean_ = malloc(in_tensors_.at(1)->Size());
+  variance_ = malloc(in_tensors_.at(2)->Size());
   if (mean_ == nullptr || variance_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     FreeMeanAndVariance();
     return RET_ERROR;
   }
-  memcpy(mean_, in_tensors_[1]->MutableData(), in_tensors_[1]->Size());
-  memcpy(variance_, in_tensors_[2]->MutableData(), in_tensors_[2]->Size());
+  memcpy(mean_, in_tensors_.at(1)->MutableData(), in_tensors_.at(1)->Size());
+  memcpy(variance_, in_tensors_.at(2)->MutableData(), in_tensors_.at(2)->Size());
   return RET_OK;
 }
 

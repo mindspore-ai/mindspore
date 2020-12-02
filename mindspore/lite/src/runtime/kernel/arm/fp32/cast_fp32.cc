@@ -49,7 +49,7 @@ int CastCPUKernel::Init() {
 }
 
 int CastCPUKernel::ReSize() {
-  data_num_ = in_tensors_[0]->ElementsNum();
+  data_num_ = in_tensors_.at(0)->ElementsNum();
   if (data_num_ == 0) {
     return RET_OK;
   }

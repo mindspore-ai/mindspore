@@ -77,7 +77,7 @@ int DeconvolutionDepthwiseFp16CPUKernel::InitPackedInputOutput() {
 
 int DeconvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
-  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();

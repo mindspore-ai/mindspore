@@ -44,7 +44,7 @@ ArithmeticSelfFp16Func ArithmeticSelfFp16CPUKernel::GetArithmeticSelfFp16Fun(int
                                       {mindspore::schema::PrimitiveType_Ceil, ElementCeilFp16},
                                       {mindspore::schema::PrimitiveType_Round, ElementRoundFp16},
                                       {mindspore::schema::PrimitiveType_Neg, ElementNegativeFp16}};
-  for (size_t i = 0; i < sizeof(type_func_table); i++) {
+  for (size_t i = 0; i < sizeof(type_func_table) / sizeof(TYPE_FUNC_INFO); i++) {
     if (type_func_table[i].primitive_type_ == primitive_type) {
       return type_func_table[i].func_;
     }

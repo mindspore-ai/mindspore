@@ -113,6 +113,10 @@ int GatherCPUKernel::Run() {
 
 int GatherCPUKernel::AssignIndicesData(bool isIndicesInt32, int indices_num, lite::Tensor *indices_tensor) {
   if (!isIndicesInt32) {
+    if (indices_num >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
+      MS_LOG(ERROR) << "Input indices_num is invalid, indices_num: " << indices_num;
+      return RET_ERROR;
+    }
     indices_data_ = reinterpret_cast<int32_t *>(context_->allocator->Malloc(sizeof(int32_t) * indices_num));
     if (indices_data_ == nullptr) {
       MS_LOG(ERROR) << "Memory allocation failed";

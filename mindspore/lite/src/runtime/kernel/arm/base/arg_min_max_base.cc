@@ -59,7 +59,7 @@ int ArgMinMaxBaseCPUKernel::ReSize() {
     MS_LOG(ERROR) << "Invalid topk " << param->topk_;
     return RET_PARAM_INVALID;
   }
-  param->topk_ = MSMIN(param->topk_, in_shape[axis]);
+  param->topk_ = MSMIN(param->topk_, in_shape.at(axis));
   ComputeStrides(in_shape.data(), param->in_strides_, in_shape.size());
   auto out_shape = out_tensors_.at(0)->shape();
   ComputeStrides(out_shape.data(), param->out_strides_, out_shape.size());

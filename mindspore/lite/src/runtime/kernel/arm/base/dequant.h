@@ -44,8 +44,8 @@ class DequantUtil {
       return nullptr;
     }
     if (input_tensor->shape().size() == kPerBatch &&
-        input_tensor->quant_params().size() == static_cast<size_t>(input_tensor->shape()[0])) {  // per batch matmul
-      auto per_batch_size = input_tensor->shape()[0];
+        input_tensor->quant_params().size() == static_cast<size_t>(input_tensor->shape().at(0))) {  // per batch matmul
+      auto per_batch_size = input_tensor->shape().at(0);
       auto quant_param = input_tensor->quant_params();
       for (int i = 0; i < per_batch_size; i++) {
         auto param = quant_param.at(i);

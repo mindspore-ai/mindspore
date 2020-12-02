@@ -239,7 +239,7 @@ int DeConvWgPostFp16Run(void *cdata, int task_id) {
 }
 
 int DeConvWinogradFp16CPUKernel::InitComputeParam() {
-  auto weight_tensor = in_tensors_[1];
+  auto weight_tensor = in_tensors_.at(1);
 
   conv_param_->input_channel_ = weight_tensor->Batch();
   conv_param_->output_channel_ = weight_tensor->Channel();

@@ -64,7 +64,7 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, UP_ROUND(output_channel, C4NUM) * sizeof(float16_t));
   if (in_tensors_.size() == 3) {
-    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_[2]->MutableData()),
+    Float32ToFloat16(reinterpret_cast<float *>(in_tensors_.at(2)->MutableData()),
                      reinterpret_cast<float16_t *>(bias_data_), output_channel);
   }
 
@@ -75,7 +75,7 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(execute_weight_, 0, weight_pack_size);
-  PackNHWCFp32ToC8HWN8Fp16(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), execute_weight_, input_channel,
+  PackNHWCFp32ToC8HWN8Fp16(reinterpret_cast<float *>(in_tensors_.at(1)->MutableData()), execute_weight_, input_channel,
                            kernel_w * kernel_h, output_channel);
   return RET_OK;
 }

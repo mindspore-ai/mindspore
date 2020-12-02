@@ -102,7 +102,7 @@ int ConcatFp16CPUKernel::Run() {
 
   std::vector<std::vector<int>> shapes;
   for (size_t i = 0; i < input_num; ++i) {
-    const auto in_tensor = in_tensors_[i];
+    const auto in_tensor = in_tensors_.at(i);
     if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
       auto in_tensor_data = reinterpret_cast<float *>(in_tensor->MutableData());
       Float32ToFloat16(in_tensor_data, fp16_inputs_[i], in_tensor->ElementsNum());

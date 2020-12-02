@@ -87,19 +87,19 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
     attr->format = schema::Format::Format_NUM_OF_FORMAT;
   }
   auto pad_list = CastToInt(prim.GetAttr("pads"));
-  attr->padUp = pad_list[0];
-  attr->padDown = pad_list[1];
-  attr->padLeft = pad_list[2];
-  attr->padRight = pad_list[3];
+  attr->padUp = pad_list.at(0);
+  attr->padDown = pad_list.at(1);
+  attr->padLeft = pad_list.at(2);
+  attr->padRight = pad_list.at(3);
 
   auto dilation = CastToInt(prim.GetAttr("dilation"));
-  attr->dilateH = dilation[0];
-  attr->dilateW = dilation[1];
+  attr->dilateH = dilation.at(0);
+  attr->dilateW = dilation.at(1);
 
   if (utils::isa<ValueSequeue>(prim.GetAttr("kernel_size"))) {
     auto kernel_size = CastToInt(prim.GetAttr("kernel_size"));
-    attr->kernelH = kernel_size[0];
-    attr->kernelW = kernel_size[1];
+    attr->kernelH = kernel_size.at(0);
+    attr->kernelW = kernel_size.at(1);
   } else {
     auto kernel_size = CastToInt(prim.GetAttr("kernel_size")).front();
     attr->kernelH = kernel_size;
@@ -107,8 +107,8 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
   }
 
   auto stride = CastToInt(prim.GetAttr("stride"));
-  attr->strideH = stride[2];
-  attr->strideW = stride[3];
+  attr->strideH = stride.at(2);
+  attr->strideW = stride.at(3);
 
   auto pad_mode = GetValue<std::string>(prim.GetAttr("pad_mode"));
   if (pad_mode == "valid") {
@@ -252,11 +252,11 @@ int DepthwiseConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
   std::vector<int> out_shape{input->shape()};
   out_shape.at(1) = output_h;
   out_shape.at(2) = output_w;
-  if (GetChannelMultiplier() * input_channel != weight->shape()[0]) {
+  if (GetChannelMultiplier() * input_channel != weight->shape().at(0)) {
     MS_LOG(ERROR) << "Conv depthwise only support group equals output channel.";
     return 1;
   }
-  out_shape.at(3) = weight->shape()[0] * weight->shape()[3];  // in_channel * out_channel
+  out_shape.at(3) = weight->shape().at(0) * weight->shape().at(3);  // in_channel * out_channel
 
   output->set_shape(out_shape);
   return 0;

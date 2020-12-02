@@ -56,7 +56,10 @@ int GatherNdCPUKernel::ReSize() {
   for (int i = 0; i < indices_rank - 1; ++i) {
     count_ *= indices_shape[i];
   }
-
+  if (count_ >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
+    MS_LOG(ERROR) << "count_ is invalid, count_: " << count_;
+    return RET_ERROR;
+  }
   in_offset_ = reinterpret_cast<int *>(malloc(count_ * sizeof(int)));
   if (in_offset_ == nullptr) {
     MS_LOG(ERROR) << "GatherNd Malloc in_offset_ error!";

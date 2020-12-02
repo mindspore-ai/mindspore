@@ -40,11 +40,14 @@ ConvolutionDepthwiseCPUKernel::~ConvolutionDepthwiseCPUKernel() {
 
 int ConvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: k, h, w, c; k == group == output_channel, c == 1
-  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
   int pack_weight_size = weight_tensor->Batch() * weight_tensor->Height() * weight_tensor->Width();
-
+  if (pack_weight_size >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(float))) {
+    MS_LOG(ERROR) << "pack_weight_size is invalid, pack_weight_size: " << pack_weight_size;
+    return RET_ERROR;
+  }
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";

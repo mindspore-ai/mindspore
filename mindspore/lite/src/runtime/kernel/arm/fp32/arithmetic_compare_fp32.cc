@@ -28,7 +28,6 @@ using mindspore::schema::PrimitiveType_LessEqual;
 using mindspore::schema::PrimitiveType_NotEqual;
 
 namespace mindspore::kernel {
-
 int ArithmeticCompareCPUKernel::BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count,
                                              int out_thread_stride) {
   if (dim > break_pos_) {

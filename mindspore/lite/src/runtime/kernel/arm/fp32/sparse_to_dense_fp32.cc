@@ -91,14 +91,18 @@ int SparseToDenseRun(void *cdata, int task_id) {
 
 int SparseToDenseCPUKernel::GenerateIndices() {
   auto input0 = in_tensors_.at(0);
-  index_dim = input0->shape().size();
   index_num = input0->shape()[0];
-  int *sparse_indices = reinterpret_cast<int *>(input0->MutableData());
+  if (index_num >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(int *))) {
+    MS_LOG(ERROR) << "Input dim is invalid, dim: " << index_num;
+    return RET_ERROR;
+  }
   sparse_indices_vect = reinterpret_cast<int **>(ctx_->allocator->Malloc(sizeof(int *) * index_num));
   if (sparse_indices_vect == nullptr) {
     MS_LOG(ERROR) << "Null pointer reference: sparse_indices_vect.";
     return RET_ERROR;
   }
+  index_dim = input0->shape().size();
+  int *sparse_indices = reinterpret_cast<int *>(input0->MutableData());
   switch (index_dim) {
     case 0:
     case 1: {

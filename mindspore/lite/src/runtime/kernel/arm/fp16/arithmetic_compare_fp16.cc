@@ -74,9 +74,9 @@ int ArithmeticCompareFP16CPUKernel::Init() {
 }
 
 int ArithmeticCompareFP16CPUKernel::ReSize() {
-  param_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
-  param_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
-  param_->out_elements_num_ = out_tensors_[0]->ElementsNum();
+  param_->in_elements_num0_ = in_tensors_.at(0)->ElementsNum();
+  param_->in_elements_num1_ = in_tensors_.at(1)->ElementsNum();
+  param_->out_elements_num_ = out_tensors_.at(0)->ElementsNum();
 
   if (param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) {
     param_->broadcasting_ = false;
