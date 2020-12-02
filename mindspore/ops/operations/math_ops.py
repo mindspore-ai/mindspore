@@ -2961,7 +2961,7 @@ class IsNan(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        return mstype.bool_
+        return mstype.tensor_type(mstype.bool_)
 
 
 class IsInf(PrimitiveWithInfer):
@@ -2992,7 +2992,7 @@ class IsInf(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        return mstype.bool_
+        return mstype.tensor_type(mstype.bool_)
 
 
 class IsFinite(PrimitiveWithInfer):
@@ -3026,7 +3026,7 @@ class IsFinite(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type + (mstype.bool_,), self.name)
-        return mstype.bool_
+        return mstype.tensor_type(mstype.bool_)
 
 
 class FloatStatus(PrimitiveWithInfer):

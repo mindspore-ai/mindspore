@@ -40,3 +40,6 @@ template void CalSelect<int>(const size_t size, const bool* cond, const int* inp
                              cudaStream_t cuda_stream);
 template void CalSelect<half>(const size_t size, const bool* cond, const half* input_X, const half* input_y,
                               half* output, cudaStream_t cuda_stream);
+template void CalSelect<int64_t>(const size_t size, const bool* cond, const int64_t* input_X, const int64_t* input_y,
+                              int64_t* output, cudaStream_t cuda_stream);
+
