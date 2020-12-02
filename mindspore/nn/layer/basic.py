@@ -570,14 +570,20 @@ class Pad(Cell):
 
 
 @constexpr
-def interpolate(shape, size, scale):
+def interpolate(shape, size, scale, align_corners):
     """Check input and calculate shape"""
+    if not isinstance(align_corners, bool):
+        raise TypeError("align_corners should be type boolean")
     if size is None and scale is None:
         raise ValueError("size and scale both none")
     if size is not None and scale is not None:
         raise ValueError("size and scale both not none")
     if size is not None:
+        if not isinstance(size, (tuple, list)):
+            raise ValueError("size must be tuple or list")
         Validator.check_int(len(size), 2, Rel.EQ, "size", "interpolate")
+        Validator.check_int(size[0], 1, Rel.GE, "size[0]", "interpolate")
+        Validator.check_int(size[1], 1, Rel.GE, "size[1]", "interpolate")
         return size
     Validator.check_int(scale, 1, Rel.GE, "scale factor", "interpolate")
     ret = (scale * shape[2], scale * shape[3])
@@ -620,7 +626,7 @@ class Interpolate(Cell):
         super(Interpolate, self).__init__()
 
     def construct(self, x, size=None, scale_factor=None, align_corners=False):
-        shape = interpolate(x.shape, size, scale_factor)
+        shape = interpolate(x.shape, size, scale_factor, align_corners)
         resize_bilinear = P.ResizeBilinear(shape, align_corners)
         return resize_bilinear(x)
 
@@ -715,10 +721,12 @@ class Tril(Cell):
         super(Tril, self).__init__()
         self.dtype = P.DType()
         self.mul = P.Mul()
+        self.cast = P.Cast()
 
     def construct(self, x, k=0):
         assist = tril(x.shape, self.dtype(x), k)
-        return self.mul(x, assist)
+        result = self.mul(self.cast(x, mstype.int32), self.cast(assist, mstype.int32))
+        return self.cast(result, self.dtype(x))
 
 
 @constexpr
@@ -755,10 +763,12 @@ class Triu(Cell):
         super(Triu, self).__init__()
         self.dtype = P.DType()
         self.mul = P.Mul()
+        self.cast = P.Cast()
 
     def construct(self, x, k=0):
         assist = triu(x.shape, self.dtype(x), k)
-        return self.mul(x, assist)
+        result = self.mul(self.cast(x, mstype.int32), self.cast(assist, mstype.int32))
+        return self.cast(result, self.dtype(x))
 
 
 @constexpr

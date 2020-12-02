@@ -811,6 +811,9 @@ class PConstant : public PBase<PConstant<T> > {
   template <typename TM>
   void CalcByOperator(void *in_data_1, int in_data_1_size, void *in_data_2, int in_data_2_size, void **out_data,
                       int out_data_size, BinOperator bin_operator) const {
+    if (out_data_size <= 0) {
+      MS_EXCEPTION(ValueError) << "out_data_size should be greater than zeros";
+    }
     TM *data_1 = reinterpret_cast<TM *>(in_data_1);
     TM *data_2 = reinterpret_cast<TM *>(in_data_2);
     TM *data_out = new TM[out_data_size];
