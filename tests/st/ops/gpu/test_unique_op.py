@@ -267,3 +267,65 @@ def test_unique_dynamic():
     assert (x_idx2.asnumpy() == expt_index2).all()
     for i, out in enumerate(x_split2):
         assert (out.asnumpy() == expt_split2[i]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_unique_1d_int64():
+    x = Tensor(np.array([4, 5, 1, 2, 3, 3, 4, 5]).astype(np.int64))
+    exp_output = np.array([1, 2, 3, 4, 5]).astype(np.int64)
+    exp_idx = np.array([3, 4, 0, 1, 2, 2, 3, 4]).astype(np.int64)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = NetUnique()
+    x_unique, x_idx = net(x)
+    print(x_unique)
+    print(x_idx)
+    assert (x_unique.asnumpy() == exp_output).all()
+    assert (x_idx.asnumpy() == exp_idx).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_unique_1d_sorted_int64():
+    x = Tensor(np.array([1, 1, 2, 4, 4, 4, 7, 8, 8]).astype(np.int64))
+    exp_output = np.array([1, 2, 4, 7, 8]).astype(np.int64)
+    exp_idx = np.array([0, 0, 1, 2, 2, 2, 3, 4, 4]).astype(np.int64)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = NetUnique()
+    x_unique, x_idx = net(x)
+    assert (x_unique.asnumpy() == exp_output).all()
+    assert (x_idx.asnumpy() == exp_idx).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_unique_zeros_int64():
+    x = Tensor(np.zeros(1000).astype(np.int64))
+    exp_output = np.zeros(1).astype(np.int64)
+    exp_idx = np.zeros(1000).astype(np.int64)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = NetUnique()
+    x_unique, x_idx = net(x)
+    assert (x_unique.asnumpy() == exp_output).all()
+    assert (x_idx.asnumpy() == exp_idx).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_unique_large_int64():
+    x_np1 = np.arange(100)
+    x_np2 = np.arange(100, 200)
+    x_np3 = np.arange(200, 300)
+    x_np = np.concatenate((x_np1, x_np2, x_np3, x_np1, x_np2, x_np3, x_np1, x_np2, x_np3))
+    x = Tensor(x_np.astype(np.int64))
+    exp_output = np.arange(300).astype(np.int64)
+    exp_idx = np.concatenate((x_np1, x_np2, x_np3, x_np1, x_np2, x_np3, x_np1, x_np2, x_np3)).astype(np.int64)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = NetUnique()
+    x_unique, x_idx = net(x)
+    assert (x_unique.asnumpy() == exp_output).all()
+    assert (x_idx.asnumpy() == exp_idx).all()

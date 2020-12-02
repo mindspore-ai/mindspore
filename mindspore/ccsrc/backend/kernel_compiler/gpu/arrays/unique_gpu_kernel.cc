@@ -29,5 +29,8 @@ MS_REG_GPU_KERNEL_TWO(
 MS_REG_GPU_KERNEL_TWO(
   Unique, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   UniqueGpuKernel, int, int)
+MS_REG_GPU_KERNEL_TWO(
+  Unique, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  UniqueGpuKernel, int64_t, int64_t)
 }  // namespace kernel
 }  // namespace mindspore
