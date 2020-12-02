@@ -4511,7 +4511,7 @@ class Schema:
         Parse the columns and add it to self.
 
         Args:
-            columns (Union[dict, list[dict]]): Dataset attribute information, decoded from schema file.
+            columns (Union[dict, list[dict], tuple[dict]]): Dataset attribute information, decoded from schema file.
 
                 - list[dict], 'name' and 'type' must be in keys, 'shape' optional.
 
@@ -4519,7 +4519,6 @@ class Schema:
 
         Raises:
             RuntimeError: If failed to parse columns.
-            RuntimeError: If unknown items in columns.
             RuntimeError: If column's name field is missing.
             RuntimeError: If column's type field is missing.
 

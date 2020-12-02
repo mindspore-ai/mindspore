@@ -52,7 +52,7 @@ Status RootNode::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (parent_ != nullptr) {
+  if (parent_.size() != 0) {
     std::string err_msg = "Internal error: root node should not have a parent";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
