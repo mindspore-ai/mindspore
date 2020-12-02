@@ -133,8 +133,22 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
   if (!output_size_list_.empty()) {
     return output_size_list_;
   }
-  for (ulong i = 0; i < hccl_data_type_list_.size(); ++i) {
-    if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[i], hccl_kernel_output_shape_list_[i], &size)) {
+  auto cnode = anf_node_->cast<CNodePtr>();
+  auto op_name = AnfAlgo::GetCNodeName(cnode);
+  int64_t rank_size = 1;
+  if (AnfAlgo::HasNodeAttr(kAttrRankSize, cnode)) {
+    rank_size = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrRankSize);
+  }
+  int64_t fusion = 0;
+  if (AnfAlgo::HasNodeAttr(kAttrFusion, cnode)) {
+    fusion = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFusion);
+  }
+  ulong loop_size = hccl_data_type_list_.size();
+  if (op_name == kAllGatherOpName && fusion >= 1) {
+    loop_size *= rank_size;
+  }
+  for (ulong i = 0; i < loop_size; ++i) {
+    if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[0], hccl_kernel_output_shape_list_[i], &size)) {
       MS_LOG(ERROR) << "GetHcclOpOutputSize failed";
     }
     output_size_list_.push_back(size);
