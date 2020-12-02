@@ -21,10 +21,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.mindspore.hiobject.objectdetect.DealDataActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.NoActionBar"/>
-        <activity
             android:name="com.mindspore.hiobject.objectdetect.PhotoActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
         <activity

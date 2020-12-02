@@ -20,4 +20,6 @@
 
     <string name="title_time">Inference Time</string>
 
+    <string name="image_invalid">The image path you selected is not valid. Please choose again</string>
+    <string name="train_invalid">Sorry, there is no object identified in this picture. Try another picture</string>
 </resources>

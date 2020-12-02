@@ -28,6 +28,7 @@ import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -92,6 +93,7 @@ public class ObjectPhotoActivity extends AppCompatActivity {
                 showOriginImage();
             }
         } else {
+            Toast.makeText(this, R.string.image_invalid, Toast.LENGTH_LONG).show();
             finish();
         }
     }
@@ -107,9 +109,10 @@ public class ObjectPhotoActivity extends AppCompatActivity {
         if (originBitmap != null) {
             initMindspore(originBitmap);
             preview.setImageBitmap(originBitmap);
+        } else {
+            Toast.makeText(this, R.string.image_invalid, Toast.LENGTH_LONG).show();
         }
     }
-
 
     private void initMindspore(Bitmap bitmap) {
         try {
@@ -118,9 +121,7 @@ public class ObjectPhotoActivity extends AppCompatActivity {
             Log.e(TAG, Log.getStackTraceString(e));
             e.printStackTrace();
         }
-        // 加载模型
         boolean ret = trackingMobile.loadModelFromBuf(getAssets());
-
         if (!ret) {
             Log.e(TAG, "Load model error.");
             return;
@@ -137,6 +138,8 @@ public class ObjectPhotoActivity extends AppCompatActivity {
 
         if (recognitionObjectBeanList != null && recognitionObjectBeanList.size() > 0) {
             drawRect(bitmap);
+        } else {
+            Toast.makeText(this, R.string.train_invalid, Toast.LENGTH_LONG).show();
         }
     }
 
