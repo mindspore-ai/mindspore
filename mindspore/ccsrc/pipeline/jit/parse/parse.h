@@ -143,6 +143,8 @@ class Parser {
   AnfNodePtr ParseNum(const FunctionBlockPtr &block, const py::object &node);
   // process a string variable
   AnfNodePtr ParseStr(const FunctionBlockPtr &block, const py::object &node);
+  // process a Constant
+  AnfNodePtr ParseConstant(const FunctionBlockPtr &block, const py::object &node);
   // process a name
   AnfNodePtr ParseNameConstant(const FunctionBlockPtr &block, const py::object &node);
   // process a function call

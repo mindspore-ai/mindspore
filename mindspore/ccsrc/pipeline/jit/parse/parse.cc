@@ -109,6 +109,7 @@ void Parser::BuildMethodMap() {
   expr_method_map_["Name"] = &Parser::ParseName;
   expr_method_map_["Num"] = &Parser::ParseNum;
   expr_method_map_["Str"] = &Parser::ParseStr;
+  expr_method_map_["Constant"] = &Parser::ParseConstant;
   expr_method_map_["NameConstant"] = &Parser::ParseNameConstant;
   expr_method_map_["Call"] = &Parser::ParseCall;
   expr_method_map_["IfExp"] = &Parser::ParseIfExp;
@@ -555,6 +556,36 @@ AnfNodePtr Parser::ParseStr(const FunctionBlockPtr &, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Str";
   auto str_s = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "s"));
   return NewValueNode(str_s);
+}
+
+AnfNodePtr Parser::ParseConstant(const FunctionBlockPtr &, const py::object &node) {
+  MS_LOG(DEBUG) << "Process ast Constant";
+  py::object obj = python_adapter::GetPyObjAttr(node, "value");
+  TraceGuard trace_guard(GetLocation(node));
+  if (py::isinstance<py::bool_>(obj)) {
+    MS_LOG(INFO) << "The Constant is bool:" << (std::string)py::str(obj);
+    auto data = py::cast<bool>(obj);
+    return NewValueNode(data);
+  } else if (py::isinstance<py::int_>(obj)) {
+    MS_LOG(INFO) << "The Constant is int64_t:" << (std::string)py::str(obj);
+    auto data = py::cast<int64_t>(obj);
+    return NewValueNode(data);
+  } else if (py::isinstance<py::float_>(obj)) {
+    MS_LOG(INFO) << "The Constant is float:" << (std::string)py::str(obj);
+    auto data = py::cast<float>(obj);
+    return NewValueNode(data);
+  } else if (py::isinstance<py::str>(obj)) {
+    MS_LOG(INFO) << "The Constant is string:" << (std::string)py::str(obj);
+    auto data = py::cast<std::string>(obj);
+    return NewValueNode(data);
+  } else if (py::isinstance<py::none>(obj)) {
+    MS_LOG(INFO) << "The Constant is none:" << (std::string)py::str(obj);
+    return NewValueNode(kNone);
+  } else {
+    // no else actually
+    MS_EXCEPTION(TypeError) << "Unsupported Constant type : " << (std::string)py::str(obj)
+                            << GetLocation(node)->ToString();
+  }
 }
 
 AnfNodePtr Parser::ParseNameConstant(const FunctionBlockPtr &, const py::object &node) {
