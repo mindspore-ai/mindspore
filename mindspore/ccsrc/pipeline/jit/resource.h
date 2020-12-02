@@ -80,7 +80,9 @@ class Resource : public ResourceBase {
   }
   bool gpu_loopsink_flag() { return gpu_loopsink_flag_; }
   int64_t gpu_loopsink_size() { return gpu_loopsink_size_; }
-
+  static void RecordPrimitivePy(PrimitivePy *prim);
+  static void ErasePrimitivePy(PrimitivePy *prim);
+  static void ClearPrimitivePyPythonObj();
   // Reclaim resource and clear the cache.
   // ExecutorPy::Compile() can be called multiple times, so cache
   // should be cleared.
@@ -94,6 +96,7 @@ class Resource : public ResourceBase {
   bool is_cleaned_;
   bool gpu_loopsink_flag_{false};
   int64_t gpu_loopsink_size_{1};
+  static std::unordered_map<PrimitivePy *, bool> py_objs_;
 };
 
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;
