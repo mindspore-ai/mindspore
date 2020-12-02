@@ -752,8 +752,11 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   // process the node attr
   auto attr_str = python_adapter::GetPyObjAttr(node, "attr").cast<std::string>();
   MS_LOG(DEBUG) << "Attr = " << attr_str;
-  TraceGuard guard(GetLocation(python_adapter::GetPyObjAttr(node, "attr")));
-  AnfNodePtr attr_node = NewValueNode(attr_str);
+  AnfNodePtr attr_node = nullptr;
+  {
+    TraceGuard guard(GetLocation(python_adapter::GetPyObjAttr(node, "attr")));
+    attr_node = NewValueNode(attr_str);
+  }
 
   // create the apply node
   return block->func_graph()->NewCNode({op_node, value_node, attr_node});
