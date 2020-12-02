@@ -16,6 +16,7 @@
 
 #include "runtime/device/executor/dynamic_kernel.h"
 #include <vector>
+#include <stack>
 #include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/optimizer/common/helper.h"

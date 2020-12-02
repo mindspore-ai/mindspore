@@ -22,8 +22,6 @@
 #include <exception>
 #include <algorithm>
 #include <thread>
-#include <stack>
-#include "abstract/primitive_infer_map.h"
 #include "debug/data_dump/e2e_dump_util.h"
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "runtime/device/cpu/mpi/mpi_interface.h"
