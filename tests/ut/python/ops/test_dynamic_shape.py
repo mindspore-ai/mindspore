@@ -108,3 +108,21 @@ def test_gatherv2():
     y = Tensor(np.ones([8], dtype=np.int32))
     net = Net()
     net(x, y)
+
+
+def test_addn():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.unq = P.Unique()
+            self.addn = P.AddN()
+
+        def construct(self, x):
+            u, _ = self.unq(x)
+            u = self.addn((u, u, u))
+            z = self.addn([u, u])
+            return z
+
+    y = Tensor(np.ones([8], dtype=np.int32))
+    net = Net()
+    net(y)
