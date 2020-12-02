@@ -86,4 +86,4 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/../)
 add_library(_ut_serving_obj OBJECT ${SERVING_SRC_TEST})
-
+add_compile_definitions(ENABLE_DVPP_INTERFACE)
