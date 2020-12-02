@@ -48,10 +48,10 @@ class ReduceLogSumExp(Cell):
             Default : False.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type.
+        - **x** (Tensor) - The input tensor. With float16 or float32 data type.
 
     Outputs:
-        Tensor, has the same dtype as the `input_x`.
+        Tensor, has the same dtype as the `x`.
 
         - If axis is (), and keep_dims is False,
           the output is a 0-D tensor representing the sum of all elements in the input tensor.
@@ -80,8 +80,8 @@ class ReduceLogSumExp(Cell):
         self.sum = P.ReduceSum(keep_dims)
         self.log = P.Log()
 
-    def construct(self, input_x):
-        exp = self.exp(input_x)
+    def construct(self, x):
+        exp = self.exp(x)
         sumexp = self.sum(exp, self.axis)
         logsumexp = self.log(sumexp)
         return logsumexp
@@ -231,10 +231,10 @@ class LGamma(Cell):
         ``Ascend`` ``GPU``
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. Only float16, float32 are supported.
+        - **x** (Tensor) - The input tensor. Only float16, float32 are supported.
 
     Outputs:
-        Tensor, has the same shape and dtype as the `input_x`.
+        Tensor, has the same shape and dtype as the `x`.
 
     Supported Platforms:
         ``Ascend``
@@ -287,14 +287,14 @@ class LGamma(Cell):
         self.sin = P.Sin()
         self.isfinite = P.IsFinite()
 
-    def construct(self, input_x):
-        input_dtype = self.dtype(input_x)
+    def construct(self, x):
+        input_dtype = self.dtype(x)
         _check_input_dtype("input", input_dtype, [mstype.float16, mstype.float32], self.cls_name)
-        infinity = self.fill(input_dtype, self.shape(input_x), self.inf)
+        infinity = self.fill(input_dtype, self.shape(x), self.inf)
 
-        need_to_reflect = self.less(input_x, 0.5)
-        neg_input = -input_x
-        z = self.select(need_to_reflect, neg_input, input_x - 1)
+        need_to_reflect = self.less(x, 0.5)
+        neg_input = -x
+        z = self.select(need_to_reflect, neg_input, x - 1)
 
         @constexpr
         def _calculate_x(z, k_base_lanczos_coeff, k_lanczos_coefficients):
@@ -310,12 +310,9 @@ class LGamma(Cell):
 
         log_y = self.log(x) + (z + self.one_half - t / log_t) * log_t + self.log_sqrt_two_pi
 
-        abs_input = self.abs(input_x)
+        abs_input = self.abs(x)
         abs_frac_input = abs_input - self.floor(abs_input)
-        input_x = self.select(self.lessequal(input_x, 0.0),
-                              self.select(self.equal(abs_frac_input, 0.0),
-                                          infinity, input_x),
-                              input_x)
+        x = self.select(self.lessequal(x, 0.0), self.select(self.equal(abs_frac_input, 0.0), infinity, x), x)
         reduced_frac_input = self.select(self.greater(abs_frac_input, 0.5),
                                          1 - abs_frac_input, abs_frac_input)
         reflection_denom = self.log(self.sin(self.pi * reduced_frac_input))
@@ -326,7 +323,7 @@ class LGamma(Cell):
 
         result = self.select(need_to_reflect, reflection, log_y)
 
-        return self.select(self.isfinite(input_x), result, infinity)
+        return self.select(self.isfinite(x), result, infinity)
 
 
 class DiGamma(Cell):
@@ -353,10 +350,10 @@ class DiGamma(Cell):
         ``Ascend`` ``GPU``
 
     Inputs:
-        - **input_x** (Tensor[Number]) - The input tensor. Only float16, float32 are supported.
+        - **x** (Tensor[Number]) - The input tensor. Only float16, float32 are supported.
 
     Outputs:
-        Tensor, has the same shape and dtype as the `input_x`.
+        Tensor, has the same shape and dtype as the `x`.
 
     Examples:
         >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
@@ -397,12 +394,12 @@ class DiGamma(Cell):
         self.cos = P.Cos()
         self.logicaland = P.LogicalAnd()
 
-    def construct(self, input_x):
-        input_dtype = self.dtype(input_x)
-        _check_input_dtype("input x", input_dtype, [mstype.float16, mstype.float32], self.cls_name)
-        need_to_reflect = self.less(input_x, 0.5)
-        neg_input = -input_x
-        z = self.select(need_to_reflect, neg_input, input_x - 1)
+    def construct(self, x):
+        input_dtype = self.dtype(x)
+        _check_input_dtype("input_x", input_dtype, [mstype.float16, mstype.float32], self.cls_name)
+        need_to_reflect = self.less(x, 0.5)
+        neg_input = -x
+        z = self.select(need_to_reflect, neg_input, x - 1)
 
         @constexpr
         def _calculate_num_denom(z, k_base_lanczos_coeff, k_lanczos_coefficients):
@@ -419,12 +416,12 @@ class DiGamma(Cell):
 
         y = log_t + num / denom - self.k_lanczos_gamma / t
 
-        reduced_input = input_x + self.abs(self.floor(input_x + 0.5))
+        reduced_input = x + self.abs(self.floor(x + 0.5))
         reflection = y - self.pi * self.cos(self.pi * reduced_input) / self.sin(self.pi * reduced_input)
         real_result = self.select(need_to_reflect, reflection, y)
-        nan = self.fill(self.dtype(input_x), self.shape(input_x), np.nan)
+        nan = self.fill(self.dtype(x), self.shape(x), np.nan)
 
-        return self.select(self.logicaland(self.less(input_x, 0), self.equal(input_x, self.floor(input_x))),
+        return self.select(self.logicaland(self.less(x, 0), self.equal(x, self.floor(x))),
                            nan, real_result)
 
 
