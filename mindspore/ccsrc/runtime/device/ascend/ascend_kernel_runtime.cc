@@ -824,10 +824,6 @@ bool AscendKernelRuntime::ResetDevice() {
 bool AscendKernelRuntime::HcclInit() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    MS_LOG(INFO) << "PyNative hccl init";
-    return kernel::HcclContext::GetInstance().InitHccl();
-  }
   if (!context::IsTsdOpened(context_ptr)) {
     MS_LOG(EXCEPTION) << "Hccl dependent tsd is not open";
   }
@@ -856,6 +852,10 @@ bool AscendKernelRuntime::HcclInit() {
   if (!ret) {
     MS_LOG(ERROR) << "Hcom init failed.";
     return false;
+  }
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    MS_LOG(INFO) << "PyNative hccl init";
+    return kernel::HcclContext::GetInstance().InitHccl();
   }
   return true;
 }
