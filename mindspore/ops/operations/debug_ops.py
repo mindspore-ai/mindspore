@@ -347,6 +347,10 @@ class Print(PrimitiveWithInfer):
         ...         self.print('Print Tensor x and Tensor y:', x, y)
         ...         return x
         ...
+        >>> x = Tensor(np.ones([2, 1]).astype(np.int32))
+        >>> y = Tensor(np.ones([2, 2]).astype(np.int32))
+        >>> net = PrintDemo()
+        >>> output = net(x, y)
     """
 
     @prim_attr_register
