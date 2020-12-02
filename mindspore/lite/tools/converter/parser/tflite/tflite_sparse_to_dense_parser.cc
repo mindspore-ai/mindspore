@@ -35,7 +35,6 @@ PrimitiveC *TfliteSparseToDenseParser::ParseLitePrimitive(const std::unique_ptr<
     return nullptr;
   }
 
-  attr->validateIndices = false;
   primitive->value.type = schema::PrimitiveType_SparseToDense;
   primitive->value.value = attr.release();
   return PrimitiveC::Create(primitive.release());

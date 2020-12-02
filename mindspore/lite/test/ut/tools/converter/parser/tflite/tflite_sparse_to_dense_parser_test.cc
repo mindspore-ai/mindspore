@@ -31,10 +31,4 @@ TEST_F(TestTfliteParserSparseToDense, OpType) {
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_SparseToDense) << "wrong Op Type";
 }
-
-TEST_F(TestTfliteParserSparseToDense, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSparseToDense(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsSparseToDense();
-  ASSERT_EQ(val->validateIndices, false);
-}
 }  // namespace mindspore
