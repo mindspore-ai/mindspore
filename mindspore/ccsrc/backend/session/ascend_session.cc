@@ -396,8 +396,11 @@ GraphInfo GetSingleOpGraphInfo(const PrimitivePtr &prim, const std::vector<tenso
     }
   }
   // get attr info
-  const auto &attr_map = prim->evaluate_added_attrs();
+  const auto &attr_map = prim->attrs();
   (void)std::for_each(attr_map.begin(), attr_map.end(),
+                      [&](const auto &element) { (void)graph_info.append(element.second->ToString() + "_"); });
+  const auto &added_attr_map = prim->evaluate_added_attrs();
+  (void)std::for_each(added_attr_map.begin(), added_attr_map.end(),
                       [&](const auto &element) { (void)graph_info.append(element.second->ToString() + "_"); });
   graph_info.append(prim->id());
   return graph_info;
@@ -739,7 +742,6 @@ void AscendSession::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector
     GraphInfo graph_info = GetSingleOpGraphInfo(run_info.primitive, input_tensor_info.input_tensors);
 
     // Build and run current single op
-    BuildOpImpl(run_info, graph_info, input_tensor_info.input_tensors, input_tensor_info.input_tensors_mask);
     VectorRef op_outputs;
     RunOpImpl(run_info, graph_info, &input_tensor_info.input_tensors, &op_outputs,
               input_tensor_info.input_tensors_mask);
