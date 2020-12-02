@@ -40,10 +40,10 @@ class ScatterUpdateKernel : public GpuKernel {
     int *indices = GetDeviceAddress<int>(inputs, 1);
     T *updates = GetDeviceAddress<T>(inputs, 2);
     T *output = GetDeviceAddress<T>(outputs, 0);
+    CalScatterUpdate(inner_size_, indices_size_, indices, updates, input, reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync output failed");
-    CalScatterUpdate(inner_size_, indices_size_, indices, updates, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 

@@ -19,26 +19,26 @@
 
 template <typename T>
 __global__ void ScatterAdd(const int inner_size, const int updates_size, const int *indices, const T *updates,
-                           T *output) {
+                           T *input) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / inner_size;
     const size_t offset = pos % inner_size;
     const size_t current_pos = indices[index] * inner_size + offset;
-    MsAtomicAdd(&output[current_pos], updates[pos]);
+    MsAtomicAdd(&input[current_pos], updates[pos]);
   }
 }
 
 template <typename T>
-void CalScatterAdd(const int &inner_size, const int &indices_size, const int *indices, const T *updates, T *output,
+void CalScatterAdd(const int &inner_size, const int &indices_size, const int *indices, const T *updates, T *input,
                    cudaStream_t cuda_stream) {
   const int updates_size = inner_size * indices_size;
   ScatterAdd<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(inner_size, updates_size, indices, updates,
-                                                                        output);
+                                                                        input);
 }
 
 template void CalScatterAdd<float>(const int &inner_size, const int &indices_size, const int *indices,
-                                   const float *updates, float *output, cudaStream_t cuda_stream);
+                                   const float *updates, float *input, cudaStream_t cuda_stream);
 template void CalScatterAdd<half>(const int &inner_size, const int &indices_size, const int *indices,
-                                  const half *updates, half *output, cudaStream_t cuda_stream);
+                                  const half *updates, half *input, cudaStream_t cuda_stream);
 template void CalScatterAdd<int>(const int &inner_size, const int &indices_size, const int *indices, const int *updates,
-                                 int *output, cudaStream_t cuda_stream);
+                                 int *input, cudaStream_t cuda_stream);
