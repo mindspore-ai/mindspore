@@ -31,11 +31,11 @@ class DepthWiseConv(nn.Cell):
         self.bias_add = P.BiasAdd()
 
         weight_shape = [channel_multiplier, in_planes, kernel_size[0], kernel_size[1]]
-        self.weight = Parameter(initializer('ones', weight_shape), name='weight')
+        self.weight = Parameter(initializer('ones', weight_shape))
 
         if has_bias:
             bias_shape = [channel_multiplier * in_planes]
-            self.bias = Parameter(initializer('zeros', bias_shape), name='bias')
+            self.bias = Parameter(initializer('zeros', bias_shape))
         else:
             self.bias = None
 

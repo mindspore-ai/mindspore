@@ -41,7 +41,6 @@ class Embedding_Thor(Cell):
                  embedding_shape,
                  use_one_hot_embeddings=False,
                  initializer_range=0.02,
-                 name='embedding_table',
                  batch_size=12,
                  damping=0.03,
                  loss_scale=1,
@@ -52,8 +51,7 @@ class Embedding_Thor(Cell):
         self.use_one_hot_embeddings = use_one_hot_embeddings
         self.embedding_table = Parameter(initializer
                                          (TruncatedNormal(initializer_range),
-                                          [vocab_size, embedding_size]),
-                                         name=name)
+                                          [vocab_size, embedding_size]))
         self.thor = True
         self.expand = P.ExpandDims()
         self.shape_flat = (-1,)
@@ -67,14 +65,13 @@ class Embedding_Thor(Cell):
         self.shape = P.Shape()
         self.loss_scale = Tensor(1 / loss_scale, mstype.float16)
 
-        self.matrix_A_inv = Parameter(Tensor(np.zeros([vocab_size]).astype(np.float16)),
-                                      name='matrix_A_inv', requires_grad=False)
+        self.matrix_A_inv = Parameter(Tensor(np.zeros([vocab_size]).astype(np.float16)), requires_grad=False)
         self.matrix_G_inv = Parameter(Tensor(np.zeros([embedding_size, embedding_size]).astype(np.float16)),
-                                      name="matrix_G_inv", requires_grad=False)
+                                      requires_grad=False)
         self.fake_G = Tensor(np.zeros([embedding_size, embedding_size]).astype(np.float16))
         self.dampingA = Tensor(np.ones([vocab_size]).astype(np.float32))
         self.dampingG = Tensor(np.identity(embedding_size), mstype.float32)
-        self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
+        self.cov_step = Parameter(initializer(0, [1], mstype.int32), requires_grad=False)
         self.freq = Tensor(frequency, mstype.int32)
         self.axis = 0
         self.damping = damping
@@ -169,14 +166,14 @@ class Dense_Thor(Cell):
                     weight_init.shape()[1] != in_channels:
                 raise ValueError("weight_init shape error")
 
-        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
+        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]))
 
         if self.has_bias:
             if isinstance(bias_init, Tensor):
                 if bias_init.dim() != 1 or bias_init.shape()[0] != out_channels:
                     raise ValueError("bias_init shape error")
 
-            self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
+            self.bias = Parameter(initializer(bias_init, [out_channels]))
 
         self.matmul = P.MatMul(transpose_b=True)
         self.bias_add = P.BiasAdd()
@@ -184,9 +181,9 @@ class Dense_Thor(Cell):
         self.activation = get_activation(activation)
         self.activation_flag = self.activation is not None
         self.matrix_A_inv = Parameter(Tensor(np.zeros([in_channels, in_channels]).astype(np.float16)),
-                                      name='matrix_A_inv', requires_grad=False)
+                                      requires_grad=False)
         self.matrix_G_inv = Parameter(Tensor(np.zeros([out_channels, out_channels]).astype(np.float16)),
-                                      name="matrix_G_inv", requires_grad=False)
+                                      requires_grad=False)
         self.fake_G = Tensor(np.zeros([out_channels, out_channels]).astype(np.float16))
 
         self.matmul = P.MatMul(transpose_b=True)
@@ -196,7 +193,7 @@ class Dense_Thor(Cell):
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
-        self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
+        self.cov_step = Parameter(initializer(0, [1], mstype.int32), requires_grad=False)
         self.mul = P.Mul()
         self.cast = P.Cast()
         self.damping = damping

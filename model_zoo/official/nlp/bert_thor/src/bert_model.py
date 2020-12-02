@@ -136,8 +136,7 @@ class EmbeddingLookup(nn.Cell):
         self.use_one_hot_embeddings = use_one_hot_embeddings
         self.embedding_table = Parameter(initializer
                                          (TruncatedNormal(initializer_range),
-                                          [vocab_size, embedding_size]),
-                                         name='embedding_table')
+                                          [vocab_size, embedding_size]))
         self.expand = P.ExpandDims()
         self.shape_flat = (-1,)
         self.gather = P.GatherV2()
@@ -200,7 +199,6 @@ class EmbeddingPostprocessor(nn.Cell):
             embedding_shape=embedding_shape,
             use_one_hot_embeddings=use_one_hot_embeddings,
             initializer_range=initializer_range,
-            name='embedding_table',
             batch_size=batch_size,
             damping=damping,
             loss_scale=loss_scale,
@@ -224,7 +222,6 @@ class EmbeddingPostprocessor(nn.Cell):
             embedding_shape=position_embedding_shape,
             use_one_hot_embeddings=use_one_hot_embeddings,
             initializer_range=initializer_range,
-            name='full_position_embeddings',
             batch_size=batch_size,
             damping=damping,
             loss_scale=loss_scale,
@@ -363,8 +360,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
 
         self.embeddings_table = Parameter(
             initializer(TruncatedNormal(initializer_range),
-                        [self.vocab_size, self.depth]),
-            name='embeddings_for_position')
+                        [self.vocab_size, self.depth]))
 
         self.relative_positions_matrix = RelaPosMatrixGenerator(length=length,
                                                                 max_relative_position=max_relative_position)
@@ -944,7 +940,6 @@ class BertModel(nn.Cell):
             embedding_shape=output_embedding_shape,
             use_one_hot_embeddings=use_one_hot_embeddings,
             initializer_range=config.initializer_range,
-            name='embedding_table',
             batch_size=batch_size,
             damping=damping,
             loss_scale=loss_scale,

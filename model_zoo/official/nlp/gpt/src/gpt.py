@@ -41,8 +41,8 @@ class LayerNorm(nn.Cell):
     """
     def __init__(self, normalized_shape, eps=1e-5):
         super(LayerNorm, self).__init__()
-        self.gamma = Parameter(initializer('ones', normalized_shape), name="gamma")
-        self.beta = Parameter(initializer('zeros', normalized_shape), name="beta")
+        self.gamma = Parameter(initializer('ones', normalized_shape))
+        self.beta = Parameter(initializer('zeros', normalized_shape))
         self.mean = P.ReduceMean(keep_dims=True)
         self.eps = eps
 
@@ -100,8 +100,8 @@ class Mapping(nn.Cell):
         super(Mapping, self).__init__()
         self.output_size = output_size
         self.input_size = input_size
-        self.weight = Parameter(initializer(Normal(sigma=0.02*scale), [input_size, output_size]), name="mapping_weight")
-        self.bias = Parameter(initializer("zeros", [output_size,]), name="mapping_bias")
+        self.weight = Parameter(initializer(Normal(sigma=0.02*scale), [input_size, output_size]))
+        self.bias = Parameter(initializer("zeros", [output_size,]))
         self.dtype = dtype
         self.cast = P.Cast()
 
@@ -194,8 +194,7 @@ class EmbeddingLookup(nn.Cell):
         super(EmbeddingLookup, self).__init__()
         self.vocab_size = config.vocab_size
         self.embedding_size = config.embedding_size
-        self.embedding_table = Parameter(initializer(TruncatedNormal(0.02), [self.vocab_size, self.embedding_size]),
-                                         name="embedding_table")
+        self.embedding_table = Parameter(initializer(TruncatedNormal(0.02), [self.vocab_size, self.embedding_size]))
         self.gather = P.GatherV2()
         self.shape = (-1, config.seq_length, config.embedding_size)
     def construct(self, input_ids):

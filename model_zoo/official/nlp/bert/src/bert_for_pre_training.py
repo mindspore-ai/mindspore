@@ -84,8 +84,7 @@ class GetMaskedLMOutput(nn.Cell):
         self.output_bias = Parameter(
             initializer(
                 'zero',
-                config.vocab_size),
-            name='output_bias')
+                config.vocab_size))
         self.matmul = P.MatMul(transpose_b=True)
         self.log_softmax = nn.LogSoftmax(axis=-1)
         self.shape_flat_offsets = (-1, 1)
@@ -359,8 +358,7 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         self.loss_scale = None
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
-            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
-                                        name="loss_scale")
+            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
 
     @C.add_flags(has_effect=True)
     def construct(self,
@@ -465,10 +463,10 @@ class BertTrainAccumulateStepsWithLossScaleCell(nn.Cell):
         self.enable_global_norm = enable_global_norm
         self.one = Tensor(np.array([1]).astype(np.int32))
         self.zero = Tensor(np.array([0]).astype(np.int32))
-        self.local_step = Parameter(initializer(0, [1], mstype.int32), name="local_step")
+        self.local_step = Parameter(initializer(0, [1], mstype.int32))
         self.accu_grads = self.weights.clone(prefix="accu_grads", init='zeros')
-        self.accu_overflow = Parameter(initializer(0, [1], mstype.int32), name="accu_overflow")
-        self.loss = Parameter(initializer(0, [1], mstype.float32), name="accu_loss")
+        self.accu_overflow = Parameter(initializer(0, [1], mstype.int32))
+        self.accu_loss = Parameter(initializer(0, [1], mstype.float32))
 
         self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.reducer_flag = False
@@ -499,8 +497,7 @@ class BertTrainAccumulateStepsWithLossScaleCell(nn.Cell):
         self.loss_scale = None
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
-            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
-                                        name="loss_scale")
+            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
 
     @C.add_flags(has_effect=True)
     def construct(self,
@@ -529,8 +526,8 @@ class BertTrainAccumulateStepsWithLossScaleCell(nn.Cell):
         # update accumulation parameters
         is_accu_step = self.not_equal(self.local_step, self.accumulation_steps)
         self.local_step = self.select(is_accu_step, self.local_step + self.one, self.one)
-        self.loss = self.select(is_accu_step, self.loss + loss, loss)
-        mean_loss = self.loss / self.local_step
+        self.accu_loss = self.select(is_accu_step, self.accu_loss + loss, loss)
+        mean_loss = self.accu_loss / self.local_step
         is_accu_step = self.not_equal(self.local_step, self.accumulation_steps)
 
         # alloc status and clear should be right before gradoperation

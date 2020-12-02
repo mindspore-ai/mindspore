@@ -115,8 +115,7 @@ class EmbeddingLookup(nn.Cell):
         self.vocab_size = vocab_size
         self.embedding_size = embedding_size
         self.use_one_hot_embeddings = use_one_hot_embeddings
-        self.embedding_table = Parameter(normal_weight([vocab_size, embedding_size], embedding_size),
-                                         name='embedding_table')
+        self.embedding_table = Parameter(normal_weight([vocab_size, embedding_size], embedding_size))
         self.expand = P.ExpandDims()
         self.shape_flat = (-1,)
         self.gather = P.GatherV2()

@@ -47,14 +47,14 @@ class DenseLayer(nn.Cell):
                     weight_init.shape()[1] != in_channels:
                 raise ValueError("weight_init shape error")
 
-        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
+        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]))
 
         if self.has_bias:
             if isinstance(bias_init, Tensor):
                 if bias_init.dim() != 1 or bias_init.shape()[0] != out_channels:
                     raise ValueError("bias_init shape error")
 
-            self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
+            self.bias = Parameter(initializer(bias_init, [out_channels]))
 
         self.matmul = P.MatMul(transpose_b=True)
         self.bias_add = P.BiasAdd()

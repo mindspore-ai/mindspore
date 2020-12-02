@@ -44,8 +44,7 @@ class EmbeddingLookup(nn.Cell):
         init_weight = np.random.normal(0, embed_dim ** -0.5, size=[vocab_size, embed_dim]).astype(np.float32)
         # 0 is Padding index, thus init it as 0.
         init_weight[0, :] = 0
-        self.embedding_table = Parameter(Tensor(init_weight),
-                                         name='embedding_table')
+        self.embedding_table = Parameter(Tensor(init_weight))
         self.expand = P.ExpandDims()
         self.gather = P.GatherV2()
         self.one_hot = P.OneHot()

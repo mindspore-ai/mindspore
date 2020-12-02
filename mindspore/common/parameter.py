@@ -30,6 +30,7 @@ __all__ = ['Parameter', 'ParameterTuple']
 PARAMETER_NAME_DEFAULT = "Parameter"
 PARAMETER_NAME_PREFIX_MAX_LEN = 1024
 
+
 def _is_in_parallel_mode():
     """Get parallel mode."""
     return auto_parallel_context().get_parallel_mode() in ["semi_auto_parallel", "auto_parallel"]
@@ -51,10 +52,12 @@ class Parameter(MetaTensor_):
         A Parameter has to belong to a Cell.
         If there is an operator in the network that requires part of the inputs to be Parameter,
         then the Parameters as this part of the inputs are not allowed to be cast.
+        It is recommended to use the default value of `name` when initialize a parameter as one attribute of a cell,
+        otherwise, the parameter name may be different than expected.
 
     Args:
         default_input (Union[Tensor, MetaTensor, Number]): Parameter data, to be set initialized.
-        name (str): Name of the child parameter.
+        name (str): Name of the child parameter. Default: None.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in parallel mode,
             broadcast and gradients communication would not be applied to parameters. Default: False.
@@ -72,7 +75,7 @@ class Parameter(MetaTensor_):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
         >>>         self.matmul = P.MatMul()
-        >>>         self.weight = Parameter(Tensor(np.ones((1,2))), name="w", requires_grad=True)
+        >>>         self.weight = Parameter(Tensor(np.ones((1,2))), requires_grad=True)
         >>>
         >>>     def construct(self, x):
         >>>         out = self.matmul(self.weight, x)
@@ -88,7 +91,7 @@ class Parameter(MetaTensor_):
     """
     __base_type__ = {}
 
-    def __new__(cls, default_input, name, *args, **kwargs):
+    def __new__(cls, default_input, *args, **kwargs):
         input_class, *class_init_args = Parameter._get_parameter_new_args(default_input)
         new_type = Parameter._get_base_class(input_class)
         obj = input_class.__new__(new_type)
@@ -112,7 +115,7 @@ class Parameter(MetaTensor_):
         return (
             Parameter, (data, self.name, self.requires_grad, self.layerwise_parallel))
 
-    def __init__(self, default_input, name, requires_grad=True, layerwise_parallel=False):
+    def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False):
         self._param_info = ParamInfo()
         self.name = name
         self.requires_grad = requires_grad
@@ -276,24 +279,20 @@ class Parameter(MetaTensor_):
         """
         self._is_init = is_init_
 
-    def clone(self, prefix, init='same'):
+    def clone(self, init='same'):
         """
         Clone the parameter.
 
         Args:
-            prefix (str): Namespace of parameter. The cloned Parameter name is
-                combined of prefix and current name: `f"{perfix}.{self.name}"`.
             init (Union[Tensor, str, MetaTensor, numbers.Number]): Initialize the shape of the parameter.
                 Default: 'same'.
 
         Returns:
             Parameter, a new parameter.
         """
-        Validator.check_str_by_regular(prefix)
         x = copy(self)
         # pylint: disable=protected-access
         x._param_info = self._param_info.clone()
-        x._param_info.name = prefix + '.' + self._param_info.name
         x.is_init = False
         x.is_param_ps = self.is_param_ps
         x.init_in_server = self.init_in_server
@@ -464,10 +463,25 @@ class ParameterTuple(tuple):
     def __new__(cls, iterable):
         """Create instance object of ParameterTuple."""
         data = tuple(iterable)
+        ids = set()
+        orders = {}
         for x in data:
             if not isinstance(x, Parameter):
                 raise TypeError(f"ParameterTuple input should be `Parameter` collection."
                                 f"But got a {type(iterable)}, {iterable}")
+            if id(x) not in ids:
+                ids.add(id(x))
+                if x.name not in orders.keys():
+                    orders[x.name] = [0, x]
+                else:
+                    if isinstance(orders[x.name], list):
+                        name = x.name
+                        orders[name][1].name = name + "_" + str(0)
+                        x.name = x.name + "_" + str(1)
+                        orders[name] = 1
+                    else:
+                        orders[x.name] += 1
+                        x.name = x.name + "_" + str(orders[x.name])
         return tuple.__new__(ParameterTuple, tuple(data))
 
     def clone(self, prefix, init='same'):
@@ -484,7 +498,8 @@ class ParameterTuple(tuple):
         Validator.check_str_by_regular(prefix)
         new = []
         for x in self:
-            x1 = x.clone(prefix, init)
+            x1 = x.clone(init)
+            x1.name = prefix + "." + x1.name
             new.append(x1)
         return ParameterTuple(new)
 

@@ -39,7 +39,6 @@ class MeanConv(nn.Cell):
     """
 
     def __init__(self,
-                 name,
                  feature_in_dim,
                  feature_out_dim,
                  activation,
@@ -47,8 +46,7 @@ class MeanConv(nn.Cell):
         super(MeanConv, self).__init__()
 
         self.out_weight = Parameter(
-            initializer("XavierUniform", [feature_in_dim * 2, feature_out_dim], dtype=mstype.float32),
-            name=name + 'out_weight')
+            initializer("XavierUniform", [feature_in_dim * 2, feature_out_dim], dtype=mstype.float32))
 
         if activation == "tanh":
             self.act = P.Tanh()
@@ -90,15 +88,13 @@ class AttenConv(nn.Cell):
     """
 
     def __init__(self,
-                 name,
                  feature_in_dim,
                  feature_out_dim,
                  dropout=0.2):
         super(AttenConv, self).__init__()
 
         self.out_weight = Parameter(
-            initializer("XavierUniform", [feature_in_dim * 2, feature_out_dim], dtype=mstype.float32),
-            name=name + 'out_weight')
+            initializer("XavierUniform", [feature_in_dim * 2, feature_out_dim], dtype=mstype.float32))
         self.cast = P.Cast()
         self.squeeze = P.Squeeze(1)
         self.concat = P.Concat(axis=1)
@@ -147,10 +143,8 @@ class BGCF(nn.Cell):
                  input_dim):
         super(BGCF, self).__init__()
 
-        self.user_embeddings = Parameter(initializer("XavierUniform", [num_user, input_dim], dtype=mstype.float32),
-                                         name='user_embed')
-        self.item_embeddings = Parameter(initializer("XavierUniform", [num_item, input_dim], dtype=mstype.float32),
-                                         name='item_embed')
+        self.user_embed = Parameter(initializer("XavierUniform", [num_user, input_dim], dtype=mstype.float32))
+        self.item_embed = Parameter(initializer("XavierUniform", [num_item, input_dim], dtype=mstype.float32))
         self.cast = P.Cast()
         self.tanh = P.Tanh()
         self.shape = P.Shape()
@@ -163,30 +157,27 @@ class BGCF(nn.Cell):
         (self.input_dim, self.num_user, self.num_item) = dataset_argv
         self.layer_dim = architect_argv
 
-        self.gnew_agg_mean = MeanConv('gnew_agg_mean', self.input_dim, self.layer_dim,
+        self.gnew_agg_mean = MeanConv(self.input_dim, self.layer_dim,
                                       activation=activation, dropout=neigh_drop_rate[1])
         self.gnew_agg_mean.to_float(mstype.float16)
 
-        self.gnew_agg_user = AttenConv('gnew_agg_att_user', self.input_dim,
-                                       self.layer_dim, dropout=neigh_drop_rate[2])
+        self.gnew_agg_user = AttenConv(self.input_dim, self.layer_dim, dropout=neigh_drop_rate[2])
         self.gnew_agg_user.to_float(mstype.float16)
 
-        self.gnew_agg_item = AttenConv('gnew_agg_att_item', self.input_dim,
-                                       self.layer_dim, dropout=neigh_drop_rate[2])
+        self.gnew_agg_item = AttenConv(self.input_dim, self.layer_dim, dropout=neigh_drop_rate[2])
         self.gnew_agg_item.to_float(mstype.float16)
 
         self.user_feature_dim = self.input_dim
         self.item_feature_dim = self.input_dim
 
         self.final_weight = Parameter(
-            initializer("XavierUniform", [self.input_dim * 3, self.input_dim * 3], dtype=mstype.float32),
-            name='final_weight')
+            initializer("XavierUniform", [self.input_dim * 3, self.input_dim * 3], dtype=mstype.float32))
 
-        self.raw_agg_funcs_user = MeanConv('raw_agg_user', self.input_dim, self.layer_dim,
+        self.raw_agg_funcs_user = MeanConv(self.input_dim, self.layer_dim,
                                            activation=activation, dropout=neigh_drop_rate[0])
         self.raw_agg_funcs_user.to_float(mstype.float16)
 
-        self.raw_agg_funcs_item = MeanConv('raw_agg_item', self.input_dim, self.layer_dim,
+        self.raw_agg_funcs_item = MeanConv(self.input_dim, self.layer_dim,
                                            activation=activation, dropout=neigh_drop_rate[0])
         self.raw_agg_funcs_item.to_float(mstype.float16)
 
@@ -207,14 +198,14 @@ class BGCF(nn.Cell):
                   neg_gnew_neighs,
                   neg_item_num):
         """Aggregate user and item embeddings"""
-        all_user_embed = self.gather(self.user_embeddings, self.concat_0((u_id, pos_users)), 0)
+        all_user_embed = self.gather(self.user_embed, self.concat_0((u_id, pos_users)), 0)
 
-        u_self_matrix_at_layers = self.gather(self.user_embeddings, u_group_nodes, 0)
-        u_neigh_matrix_at_layers = self.gather(self.item_embeddings, u_neighs, 0)
+        u_self_matrix_at_layers = self.gather(self.user_embed, u_group_nodes, 0)
+        u_neigh_matrix_at_layers = self.gather(self.item_embed, u_neighs, 0)
 
         u_output_mean = self.raw_agg_funcs_user(u_self_matrix_at_layers, u_neigh_matrix_at_layers)
 
-        u_gnew_neighs_matrix = self.gather(self.item_embeddings, u_gnew_neighs, 0)
+        u_gnew_neighs_matrix = self.gather(self.item_embed, u_gnew_neighs, 0)
         u_output_from_gnew_mean = self.gnew_agg_mean(u_self_matrix_at_layers, u_gnew_neighs_matrix)
 
         u_output_from_gnew_att = self.gnew_agg_user(u_self_matrix_at_layers,
@@ -223,14 +214,14 @@ class BGCF(nn.Cell):
         u_output = self.concat_1((u_output_mean, u_output_from_gnew_mean, u_output_from_gnew_att))
         all_user_rep = self.tanh(u_output)
 
-        all_pos_item_embed = self.gather(self.item_embeddings, self.concat_0((pos_item_id, pos_items)), 0)
+        all_pos_item_embed = self.gather(self.item_embed, self.concat_0((pos_item_id, pos_items)), 0)
 
-        i_self_matrix_at_layers = self.gather(self.item_embeddings, i_group_nodes, 0)
-        i_neigh_matrix_at_layers = self.gather(self.user_embeddings, i_neighs, 0)
+        i_self_matrix_at_layers = self.gather(self.item_embed, i_group_nodes, 0)
+        i_neigh_matrix_at_layers = self.gather(self.user_embed, i_neighs, 0)
 
         i_output_mean = self.raw_agg_funcs_item(i_self_matrix_at_layers, i_neigh_matrix_at_layers)
 
-        i_gnew_neighs_matrix = self.gather(self.user_embeddings, i_gnew_neighs, 0)
+        i_gnew_neighs_matrix = self.gather(self.user_embed, i_gnew_neighs, 0)
         i_output_from_gnew_mean = self.gnew_agg_mean(i_self_matrix_at_layers, i_gnew_neighs_matrix)
 
         i_output_from_gnew_att = self.gnew_agg_item(i_self_matrix_at_layers,
@@ -239,14 +230,14 @@ class BGCF(nn.Cell):
         i_output = self.concat_1((i_output_mean, i_output_from_gnew_mean, i_output_from_gnew_att))
         all_pos_item_rep = self.tanh(i_output)
 
-        neg_item_embed = self.gather(self.item_embeddings, neg_item_id, 0)
+        neg_item_embed = self.gather(self.item_embed, neg_item_id, 0)
 
-        neg_self_matrix_at_layers = self.gather(self.item_embeddings, neg_group_nodes, 0)
-        neg_neigh_matrix_at_layers = self.gather(self.user_embeddings, neg_neighs, 0)
+        neg_self_matrix_at_layers = self.gather(self.item_embed, neg_group_nodes, 0)
+        neg_neigh_matrix_at_layers = self.gather(self.user_embed, neg_neighs, 0)
 
         neg_output_mean = self.raw_agg_funcs_item(neg_self_matrix_at_layers, neg_neigh_matrix_at_layers)
 
-        neg_gnew_neighs_matrix = self.gather(self.user_embeddings, neg_gnew_neighs, 0)
+        neg_gnew_neighs_matrix = self.gather(self.user_embed, neg_gnew_neighs, 0)
         neg_output_from_gnew_mean = self.gnew_agg_mean(neg_self_matrix_at_layers, neg_gnew_neighs_matrix)
 
         neg_output_from_gnew_att = self.gnew_agg_item(neg_self_matrix_at_layers,

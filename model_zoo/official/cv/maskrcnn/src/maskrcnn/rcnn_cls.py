@@ -26,9 +26,8 @@ class DenseNoTranpose(nn.Cell):
     """Dense method"""
     def __init__(self, input_channels, output_channels, weight_init):
         super(DenseNoTranpose, self).__init__()
-        self.weight = Parameter(initializer(weight_init, [input_channels, output_channels], mstype.float16),
-                                name="weight")
-        self.bias = Parameter(initializer("zeros", [output_channels], mstype.float16).to_tensor(), name="bias")
+        self.weight = Parameter(initializer(weight_init, [input_channels, output_channels], mstype.float16))
+        self.bias = Parameter(initializer("zeros", [output_channels], mstype.float16).to_tensor())
         self.matmul = P.MatMul(transpose_b=False)
         self.bias_add = P.BiasAdd()
 

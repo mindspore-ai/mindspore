@@ -98,8 +98,7 @@ class GetMaskedLMOutput(nn.Cell):
         self.output_bias = Parameter(
             initializer(
                 'zero',
-                config.vocab_size),
-            name='output_bias')
+                config.vocab_size))
         self.matmul = P.MatMul(transpose_b=True)
         self.log_softmax = nn.LogSoftmax(axis=-1)
         self.shape_flat_offsets = (-1, 1)
@@ -379,8 +378,7 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         self.loss_scale = None
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
-            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
-                                        name="loss_scale")
+            self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
 
     @C.add_flags(has_effect=True)
     def construct(self,

@@ -110,8 +110,7 @@ class EmbeddingLookup(nn.Cell):
         self.use_one_hot_embeddings = use_one_hot_embeddings
         self.embedding_table = Parameter(initializer
                                          (TruncatedNormal(initializer_range),
-                                          [vocab_size, embedding_size]),
-                                         name='embedding_table')
+                                          [vocab_size, embedding_size]))
         self.expand = P.ExpandDims()
         self.shape_flat = (-1,)
         self.gather = P.GatherV2()
@@ -170,8 +169,7 @@ class EmbeddingPostprocessor(nn.Cell):
         self.embedding_table = Parameter(initializer
                                          (TruncatedNormal(initializer_range),
                                           [token_type_vocab_size,
-                                           embedding_size]),
-                                         name='embedding_table')
+                                           embedding_size]))
 
         self.shape_flat = (-1,)
         self.one_hot = P.OneHot()
@@ -188,8 +186,7 @@ class EmbeddingPostprocessor(nn.Cell):
         self.full_position_embeddings = Parameter(initializer
                                                   (TruncatedNormal(initializer_range),
                                                    [max_position_embeddings,
-                                                    embedding_size]),
-                                                  name='full_position_embeddings')
+                                                    embedding_size]))
 
     def construct(self, token_type_ids, word_embeddings):
         """Postprocessors apply positional and token type embeddings to word embeddings."""
@@ -314,8 +311,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
 
         self.embeddings_table = Parameter(
             initializer(TruncatedNormal(initializer_range),
-                        [self.vocab_size, self.depth]),
-            name='embeddings_for_position')
+                        [self.vocab_size, self.depth]))
 
         self.relative_positions_matrix = RelaPosMatrixGenerator(length=length,
                                                                 max_relative_position=max_relative_position)

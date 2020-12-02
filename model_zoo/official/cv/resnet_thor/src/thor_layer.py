@@ -109,11 +109,10 @@ class _Conv(Cell):
                              'attr \'group\' of \'Conv2D\' Op.')
 
         self.weight = Parameter(initializer(
-            weight_init, [out_channels, in_channels // group, *kernel_size]), name='weight')
+            weight_init, [out_channels, in_channels // group, *kernel_size]))
 
         if Validator.check_bool(has_bias):
-            self.bias = Parameter(_initializer(
-                bias_init, [out_channels]), name='bias')
+            self.bias = Parameter(initializer(bias_init, [out_channels]))
         else:
             if bias_init != 'zeros':
                 logger.warning("Value of 'has_bias' is False, value of 'bias_init' will be ignored.")
@@ -174,12 +173,10 @@ class Conv2d_Thor_GPU(_Conv):
 
         split_dim = 128
         matrix_A_shape, matrix_G_shape = caculate_matmul_shape(self.matrix_A_dim, self.matrix_G_dim, split_dim)
-        self.matrix_A_inv = Parameter(np.zeros(matrix_A_shape).astype(np.float32),
-                                      name='matrix_A_inv', requires_grad=False)
-        self.matrix_G_inv = Parameter(np.zeros(matrix_G_shape).astype(np.float32),
-                                      name='matrix_A_inv', requires_grad=False)
+        self.matrix_A_inv = Parameter(np.zeros(matrix_A_shape).astype(np.float32), requires_grad=False)
+        self.matrix_G_inv = Parameter(np.zeros(matrix_G_shape).astype(np.float32), requires_grad=False)
         self.broadcast_to = P.BroadcastTo(matrix_A_shape)
-        self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
+        self.cov_step = Parameter(initializer(0, [1], mstype.int32), requires_grad=False)
         self.img2col = P.Im2Col(kernel_size=kernel_size, stride=stride, pad_mode="same")
         self.matmul = P.MatMul(transpose_b=True)
         self.shape = P.Shape()
@@ -195,7 +192,7 @@ class Conv2d_Thor_GPU(_Conv):
         self.axis = 0
         self.sqrt = P.Sqrt()
         self.reduce_mean = P.ReduceMean(keep_dims=False)
-        self.damping = Parameter(Tensor(damping), name="damping_value", requires_grad=False)
+        self.damping = Parameter(Tensor(damping), requires_grad=False)
         self.dampingA = Tensor(np.identity(self.matrix_A_dim), mstype.float32)
         self.dampingG = Tensor(np.identity(self.matrix_G_dim), mstype.float32)
         self.cholesky = P.CholeskyTrsm(split_dim=split_dim)
@@ -301,14 +298,14 @@ class Dense_Thor_GPU(Cell):
                     weight_init.shape[1] != in_channels:
                 raise ValueError("weight_init shape error")
 
-        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
+        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]))
 
         if self.has_bias:
             if isinstance(bias_init, Tensor):
                 if bias_init.dim() != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError("bias_init shape error")
 
-            self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
+            self.bias = Parameter(initializer(bias_init, [out_channels]))
 
         self.matmul = P.MatMul(transpose_b=True)
         self.bias_add = P.BiasAdd()
@@ -317,12 +314,10 @@ class Dense_Thor_GPU(Cell):
         self.activation_flag = self.activation is not None
         split_dim = 128
         matrix_A_shape, matrix_G_shape = caculate_matmul_shape(self.in_channels, self.out_channels, split_dim)
-        self.matrix_A_inv = Parameter(Tensor(np.zeros(matrix_A_shape).astype(np.float32)),
-                                      name='matrix_A_inv', requires_grad=False)
-        self.matrix_G_inv = Parameter(Tensor(np.zeros(matrix_G_shape).astype(np.float32)),
-                                      name="matrix_G_inv", requires_grad=False)
+        self.matrix_A_inv = Parameter(Tensor(np.zeros(matrix_A_shape).astype(np.float32)), requires_grad=False)
+        self.matrix_G_inv = Parameter(Tensor(np.zeros(matrix_G_shape).astype(np.float32)), requires_grad=False)
         self.broadcast_to = P.BroadcastTo(matrix_A_shape)
-        self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
+        self.cov_step = Parameter(initializer(0, [1], mstype.int32), requires_grad=False)
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
@@ -331,7 +326,7 @@ class Dense_Thor_GPU(Cell):
         self.loss_scale = Tensor(1 / loss_scale, mstype.float16)
         self.batch_size = Tensor(batch_size, mstype.float16)
         self.getG = P.InsertGradientOf(self.save_gradient)
-        self.damping = Parameter(Tensor(damping), name="damping_value", requires_grad=False)
+        self.damping = Parameter(Tensor(damping), requires_grad=False)
         self.dampingA = Tensor(np.identity(in_channels), mstype.float32)
         self.dampingG = Tensor(np.identity(out_channels), mstype.float32)
         self.cast = P.Cast()
@@ -467,20 +462,20 @@ class Conv2d_Thor(_Conv):
             self.matrix_G_device_shape[3])
         self.matrix_A_inv = Parameter(
             Tensor(np.reshape(np.identity(self.matrix_A_device_dim).astype(np.float16), self.matrix_A_device_shape)),
-            name='matrix_A_inv', requires_grad=False)
-        self.A_inv_max = Parameter(initializer(0, [1], mstype.float32), name="A_inv_max", requires_grad=False)
+            requires_grad=False)
+        self.A_inv_max = Parameter(initializer(0, [1], mstype.float32), requires_grad=False)
         self.matrix_G_inv = Parameter(
             Tensor(np.reshape(np.identity(self.matrix_G_device_dim).astype(np.float16), self.matrix_G_device_shape)),
-            name="matrix_G_inv", requires_grad=False)
+            requires_grad=False)
 
-        self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), name="G_inv_max", requires_grad=False)
+        self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), requires_grad=False)
         self.fake_G = Tensor(
             np.reshape(np.identity(self.matrix_G_device_dim).astype(np.float16), self.matrix_G_device_shape))
 
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
-        self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
+        self.cov_step = Parameter(initializer(0, [1], mstype.int32), requires_grad=False)
         self.mul = P.Mul()
         self.cast = P.Cast()
         self.damping = Tensor(damping)
@@ -648,14 +643,14 @@ class Dense_Thor(Cell):
                     weight_init.shape[1] != in_channels:
                 raise ValueError("weight_init shape error")
 
-        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
+        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]))
 
         if self.has_bias:
             if isinstance(bias_init, Tensor):
                 if bias_init.dim() != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError("bias_init shape error")
 
-            self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
+            self.bias = Parameter(initializer(bias_init, [out_channels]))
 
         self.matmul = P.MatMul(transpose_b=True)
         self.bias_add = P.BiasAdd()
@@ -663,10 +658,8 @@ class Dense_Thor(Cell):
         self.activation = get_activation(activation)
         self.activation_flag = self.activation is not None
 
-        self.matrix_A_inv = Parameter(Tensor(np.zeros([128, 128, 16, 16]).astype(np.float16)), name='matrix_A_inv',
-                                      requires_grad=False)
-        self.matrix_G_inv = Parameter(Tensor(np.zeros([63, 63, 16, 16]).astype(np.float16)), name="matrix_G_inv",
-                                      requires_grad=False)
+        self.matrix_A_inv = Parameter(Tensor(np.zeros([128, 128, 16, 16]).astype(np.float16)), requires_grad=False)
+        self.matrix_G_inv = Parameter(Tensor(np.zeros([63, 63, 16, 16]).astype(np.float16)), requires_grad=False)
         self.fake_G = Tensor(np.zeros([63, 63, 16, 16]).astype(np.float16))
 
         self.matmul = P.MatMul(transpose_b=True)
@@ -676,7 +669,7 @@ class Dense_Thor(Cell):
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
-        self.cov_step = Parameter(initializer(0, [1], mstype.int32), name="cov_step", requires_grad=False)
+        self.cov_step = Parameter(initializer(0, [1], mstype.int32), requires_grad=False)
         self.mul = P.Mul()
         self.cast = P.Cast()
         self.damping = Tensor(damping)
@@ -689,8 +682,8 @@ class Dense_Thor(Cell):
         self.assignadd = P.AssignAdd()
         self.freq = Tensor(frequency, mstype.int32)
         self.axis = 0
-        self.A_inv_max = Parameter(initializer(0, [1], mstype.float32), name="A_inv_max", requires_grad=False)
-        self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), name="G_inv_max", requires_grad=False)
+        self.A_inv_max = Parameter(initializer(0, [1], mstype.float32), requires_grad=False)
+        self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), requires_grad=False)
         self.fused_abs_max1 = P.CusFusedAbsMax1([1001, 1001])
         self.fused_abs_max2 = P.CusFusedAbsMax1()
         self.log = P.Log()
