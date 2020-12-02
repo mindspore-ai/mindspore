@@ -51,6 +51,9 @@ dnnl::eltwise_forward::desc EltWiseCPUKernel::GetForwardEltwiseDesc(const CNodeP
 void EltWiseCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  if (src_shape.size() == 0) {
+    src_shape.insert(src_shape.begin(), 1);
+  }
   dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
 
   auto desc = GetForwardEltwiseDesc(kernel_node, src_desc);
