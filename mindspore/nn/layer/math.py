@@ -236,9 +236,6 @@ class LGamma(Cell):
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
 
-    Supported Platforms:
-        ``Ascend``
-
     Examples:
         >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
         >>> op = nn.LGamma()
