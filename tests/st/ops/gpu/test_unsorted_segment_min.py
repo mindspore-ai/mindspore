@@ -207,22 +207,29 @@ def test_3d_single_init():
 
 # For testing Dynamic Shape operation
 class UnsortedSegmentMinDynNet(nn.Cell):
-    def __init__(self, num_segments):
+    def __init__(self, num_segments, dyn_a=True, dyn_b=True):
         super(UnsortedSegmentMinDynNet, self).__init__()
         self.unsorted_segment_min = P.UnsortedSegmentMin()
         self.gpu_convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
         self.num_segments = num_segments
-
+        self.to_dyn_1 = dyn_a
+        self.to_dyn_2 = dyn_b
     def construct(self, data, ids):
-        dyn_data = self.gpu_convert_to_dynamic_shape(data)
-        dyn_ids = self.gpu_convert_to_dynamic_shape(ids)
-        return self.unsorted_segment_min(dyn_data, dyn_ids, self.num_segments)
+        # testing selective inputs being dynamic
+        if self.to_dyn_1:
+            data = self.gpu_convert_to_dynamic_shape(data)
+        if self.to_dyn_2:
+            ids = self.gpu_convert_to_dynamic_shape(ids)
+        return self.unsorted_segment_min(data, ids, self.num_segments)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_3d_float32_dyn():
+def test_3d_float32_ab_dyn():
+    """
+    Test for Dynamic shape with both inputs dynamic
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor(np.arange(
         4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3), dtype=mindspore.float32)
@@ -251,11 +258,14 @@ def test_3d_float32_dyn():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_3d_single_init_dyn():
+def test_3d_float32_a_dyn():
+    """
+    Tests for Dynamic shape with only first input dynamic
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     num_segments = 4
-    net = UnsortedSegmentMinDynNet(num_segments)
-
+    net = UnsortedSegmentMinDynNet(num_segments, True, False)
+    # test 1
     input_x = Tensor(np.arange(
         4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3), dtype=mindspore.float32)
     segment_ids = Tensor([3, 0, 1, -1], mstype.int32)
@@ -281,8 +291,79 @@ def test_3d_single_init_dyn():
                         [9.0000000e+00, 1.0000000e+01, 1.1000000e+01],
                         [1.2000000e+01, 1.3000000e+01, 1.4000000e+01]]]).astype(np.float32)
     np.testing.assert_array_almost_equal(output, expect)
+    # test 2
+    input_x = Tensor(np.arange(
+        4 * 7 * 2, dtype=np.float32).reshape(4, 7, 2), dtype=mindspore.float32)
+    segment_ids = Tensor([3, 0, 1, -1], mstype.int32)
+    output = net(input_x, segment_ids).asnumpy()
+    expect = np.array([[[1.4000000e+01, 1.5000000e+01],
+                        [1.6000000e+01, 1.7000000e+01],
+                        [1.8000000e+01, 1.9000000e+01],
+                        [2.0000000e+01, 2.1000000e+01],
+                        [2.2000000e+01, 2.3000000e+01],
+                        [2.4000000e+01, 2.5000000e+01],
+                        [2.6000000e+01, 2.7000000e+01]],
+                       [[2.8000000e+01, 2.9000000e+01],
+                        [3.0000000e+01, 3.1000000e+01],
+                        [3.2000000e+01, 3.3000000e+01],
+                        [3.4000000e+01, 3.5000000e+01],
+                        [3.6000000e+01, 3.7000000e+01],
+                        [3.8000000e+01, 3.9000000e+01],
+                        [4.0000000e+01, 4.1000000e+01]],
+                       [[3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38]],
+                       [[0.0000000e+00, 1.0000000e+00],
+                        [2.0000000e+00, 3.0000000e+00],
+                        [4.0000000e+00, 5.0000000e+00],
+                        [6.0000000e+00, 7.0000000e+00],
+                        [8.0000000e+00, 9.0000000e+00],
+                        [1.0000000e+01, 1.1000000e+01],
+                        [1.2000000e+01, 1.3000000e+01]]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output, expect)
 
-    # changing the input shape here for same net
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_3d_float32_b_dyn():
+    """
+    Tests for Dynamic shape with only second input dynamic
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    num_segments = 4
+    net = UnsortedSegmentMinDynNet(num_segments, False, True)
+    # test 1
+    input_x = Tensor(np.arange(
+        4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3), dtype=mindspore.float32)
+    segment_ids = Tensor([3, 0, 1, -1], mstype.int32)
+    output = net(input_x, segment_ids).asnumpy()
+    expect = np.array([[[1.5000000e+01, 1.6000000e+01, 1.7000000e+01],
+                        [1.8000000e+01, 1.9000000e+01, 2.0000000e+01],
+                        [2.1000000e+01, 2.2000000e+01, 2.3000000e+01],
+                        [2.4000000e+01, 2.5000000e+01, 2.6000000e+01],
+                        [2.7000000e+01, 2.8000000e+01, 2.9000000e+01]],
+                       [[3.0000000e+01, 3.1000000e+01, 3.2000000e+01],
+                        [3.3000000e+01, 3.4000000e+01, 3.5000000e+01],
+                        [3.6000000e+01, 3.7000000e+01, 3.8000000e+01],
+                        [3.9000000e+01, 4.0000000e+01, 4.1000000e+01],
+                        [4.2000000e+01, 4.3000000e+01, 4.4000000e+01]],
+                       [[3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38],
+                        [3.4028235e+38, 3.4028235e+38, 3.4028235e+38]],
+                       [[0.0000000e+00, 1.0000000e+00, 2.0000000e+00],
+                        [3.0000000e+00, 4.0000000e+00, 5.0000000e+00],
+                        [6.0000000e+00, 7.0000000e+00, 8.0000000e+00],
+                        [9.0000000e+00, 1.0000000e+01, 1.1000000e+01],
+                        [1.2000000e+01, 1.3000000e+01, 1.4000000e+01]]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(output, expect)
+    # test 2
     input_x = Tensor(np.arange(
         4 * 7 * 2, dtype=np.float32).reshape(4, 7, 2), dtype=mindspore.float32)
     segment_ids = Tensor([3, 0, 1, -1], mstype.int32)

@@ -216,7 +216,7 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
   // check if dynamic shape
   bool x_is_dyn = (!x->shape()->min_shape().empty() && !x->shape()->max_shape().empty());
   bool ids_is_dyn = (!segment_ids->shape()->min_shape().empty() && !segment_ids->shape()->max_shape().empty());
-  bool op_is_dynamic = x_is_dyn && ids_is_dyn;
+  bool op_is_dynamic = x_is_dyn || ids_is_dyn;
   auto x_shape = x->shape()->shape();
   ShapeVector shape;
   int64_t num_segments_value = 0;
@@ -297,7 +297,7 @@ AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const Pri
   // check if dynamic shape
   bool x_is_dyn = (!x->shape()->min_shape().empty() && !x->shape()->max_shape().empty());
   bool ids_is_dyn = (!segment_ids->shape()->min_shape().empty() && !segment_ids->shape()->max_shape().empty());
-  bool op_is_dynamic = x_is_dyn && ids_is_dyn;
+  bool op_is_dynamic = x_is_dyn || ids_is_dyn;
   auto x_shape = x->shape()->shape();
   ShapeVector shape;
   int64_t num_segments_value = 0;
@@ -374,7 +374,7 @@ AbstractBasePtr InferImplUnsortedSegmentMin(const AnalysisEnginePtr &, const Pri
   // check if dynamic shape
   bool x_is_dyn = (!x->shape()->min_shape().empty() && !x->shape()->max_shape().empty());
   bool ids_is_dyn = (!segment_ids->shape()->min_shape().empty() && !segment_ids->shape()->max_shape().empty());
-  bool op_is_dynamic = x_is_dyn && ids_is_dyn;
+  bool op_is_dynamic = x_is_dyn || ids_is_dyn;
   auto x_shape = x->shape()->shape();
   ShapeVector shape;
   int64_t num_segments_value = 0;
