@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace api {
-
 namespace {
 uint64_t kSharedMemorySize = 100ull << 20;  // 100 MB
 }
@@ -63,7 +62,6 @@ Status MultiProcess::MainProcess(ProcessFuncCall parent_process, ProcessFuncCall
   }
   shmat_data_addr_ = shmat_addr_ + sizeof(MessageFlag) * 2;
   shmat_data_max_size_ = memory_size_ - (shmat_data_addr_ - shmat_addr_);
-
   MS_LOG_INFO << "Shm addr " << (uint64_t)shmat_addr_;
   if (pid == 0) {
     ChildProcess(child_process);

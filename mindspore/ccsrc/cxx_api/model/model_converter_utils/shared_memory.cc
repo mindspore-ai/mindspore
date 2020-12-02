@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace api {
-
 Status SharedMemory::Create(uint64_t memory_size) {
   auto access_mode = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP;
   shm_id_ = shmget(IPC_PRIVATE, memory_size, IPC_CREAT | IPC_EXCL | access_mode);
@@ -64,6 +63,5 @@ void SharedMemory::Destroy() {
     MS_LOG_ERROR << errMsg;
   }
 }
-
 }  // namespace api
 }  // namespace mindspore

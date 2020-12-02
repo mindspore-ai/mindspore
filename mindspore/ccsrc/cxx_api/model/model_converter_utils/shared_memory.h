@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace api {
-
 class SharedMemory {
  public:
   Status Create(uint64_t memory_size);
@@ -34,7 +33,6 @@ class SharedMemory {
   int shm_id_ = -1;
   uint8_t *shmat_addr_ = nullptr;
 };
-
 }  // namespace api
 }  // namespace mindspore
 

@@ -58,7 +58,6 @@ class MS_API Model {
 
 extern MS_API const char* kDeviceTypeAscendCL;
 extern MS_API const char* kDeviceTypeAscendMS;
-
 }  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H
