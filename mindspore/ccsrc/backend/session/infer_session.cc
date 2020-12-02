@@ -60,7 +60,7 @@ MSInferSession::~MSInferSession() = default;
 
 Status MSInferSession::LoadModelFromFile(const std::string &file_name, uint32_t &model_id) {
   Py_Initialize();
-  auto graph = RunLoadMindIR(file_name);
+  auto graph = mindspore::LoadMindIR(file_name);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Load graph model failed, file name is " << file_name.c_str();
     return FAILED;

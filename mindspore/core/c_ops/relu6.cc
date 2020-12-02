@@ -49,5 +49,5 @@ AbstractBasePtr Relu6Infer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                                                     Relu6InferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Relu6, prim::kPrimRelu6, Relu6Infer);
-REGISTER_PRIMITIVE_C(Relu6);
+REGISTER_PRIMITIVE_C(kNameRelu6, Relu6);
 }  // namespace mindspore

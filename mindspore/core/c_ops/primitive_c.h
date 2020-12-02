@@ -41,7 +41,7 @@ class OpPrimCRegister {
   ~OpPrimCRegister() {}
   static OpPrimCRegister &GetInstance();
   std::map<std::string, OpPrimCDefineFunc> GetPrimCMap();
-  void SetPrimCMap(const std::string &name, const OpPrimCDefineFunc &fn);
+  void SetPrimCMap(const std::string &kname, const OpPrimCDefineFunc &fn);
 
  private:
   OpPrimCRegister() {}
@@ -50,17 +50,17 @@ class OpPrimCRegister {
 
 class OpPrimCRegisterHelper {
  public:
-  OpPrimCRegisterHelper(const std::string &name, const OpPrimCDefineFunc &fn) {
-    OpPrimCRegister::GetInstance().SetPrimCMap(name, fn);
+  OpPrimCRegisterHelper(const std::string &kname, const OpPrimCDefineFunc &fn) {
+    OpPrimCRegister::GetInstance().SetPrimCMap(kname, fn);
   }
   ~OpPrimCRegisterHelper() = default;
 };
 
-#define REGISTER_PRIMITIVE_C(name)                      \
-  std::shared_ptr<PrimitiveC> GetDefaultPrimC##name() { \
-    auto out = std::make_shared<name>();                \
-    return out;                                         \
-  }                                                     \
-  OpPrimCRegisterHelper primc_gen_##name(#name, GetDefaultPrimC##name);
+#define REGISTER_PRIMITIVE_C(kname, primc)               \
+  std::shared_ptr<PrimitiveC> GetDefaultPrimC##primc() { \
+    auto out = std::make_shared<primc>();                \
+    return out;                                          \
+  }                                                      \
+  OpPrimCRegisterHelper primc_gen_##kname(kname, GetDefaultPrimC##primc);
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
