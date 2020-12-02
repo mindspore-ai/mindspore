@@ -29,7 +29,7 @@ namespace dataset {
 const NormalizeForm NormalizeUTF8Op::kDefNormalizeForm = NormalizeForm::kNfkc;
 Status NormalizeUTF8Op::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "Input tensor not of type string");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "Input tensor not of type string.");
 
   icu::ErrorCode error;
   const icu::Normalizer2 *normalize = nullptr;
@@ -40,26 +40,26 @@ Status NormalizeUTF8Op::Compute(const std::shared_ptr<Tensor> &input, std::share
     }
     case NormalizeForm::kNfc: {
       normalize = icu::Normalizer2::getNFCInstance(error);
-      CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "getNFCInstance failed");
+      CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "getNFCInstance failed.");
       break;
     }
     case NormalizeForm::kNfkc: {
       normalize = icu::Normalizer2::getNFKCInstance(error);
-      CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "getNFKCInstance failed");
+      CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "getNFKCInstance failed.");
       break;
     }
     case NormalizeForm::kNfd: {
       normalize = icu::Normalizer2::getNFDInstance(error);
-      CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "getNFDInstance failed");
+      CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "getNFDInstance failed.");
       break;
     }
     case NormalizeForm::kNfkd: {
       normalize = icu::Normalizer2::getNFKDInstance(error);
-      CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "getNFKDInstance failed");
+      CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "getNFKDInstance failed.");
       break;
     }
     default: {
-      RETURN_STATUS_UNEXPECTED("unexpected normalize form");
+      RETURN_STATUS_UNEXPECTED("Unexpected normalize form.");
       break;
     }
   }
@@ -68,7 +68,7 @@ Status NormalizeUTF8Op::Compute(const std::shared_ptr<Tensor> &input, std::share
   for (auto iter = input->begin<std::string_view>(); iter != input->end<std::string_view>(); iter++) {
     icu::StringByteSink<std::string> sink(&strs[i++]);
     normalize->normalizeUTF8(0, icu::StringPiece((*iter).data(), (*iter).size()), sink, nullptr, error);
-    CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "normalizeUTF8 failed.");
+    CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "NormalizeUTF8 failed.");
   }
   return Tensor::CreateFromVector(strs, input->shape(), output);
 }

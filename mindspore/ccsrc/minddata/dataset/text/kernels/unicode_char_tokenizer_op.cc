@@ -31,9 +31,9 @@ const bool UnicodeCharTokenizerOp::kDefWithOffsets = false;
 
 Status UnicodeCharTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor.");
   if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor");
+    RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor.");
   }
   std::string_view str;
   RETURN_IF_NOT_OK(input[0]->GetItemAt(&str, {}));

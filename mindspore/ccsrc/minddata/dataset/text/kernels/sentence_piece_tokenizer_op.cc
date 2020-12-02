@@ -56,7 +56,7 @@ Status SentencePieceTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, s
   }
 
   if (input->Rank() != 0 || input->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("the input tensor should be scalar string tensor");
+    RETURN_STATUS_UNEXPECTED("Input tensor should be scalar string tensor.");
   }
 
   std::string_view sentence_v;
@@ -67,14 +67,14 @@ Status SentencePieceTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, s
     std::vector<std::string> pieces;
     auto status = processor_.Encode(sentence, &pieces);
     if (!status.ok()) {
-      RETURN_STATUS_UNEXPECTED("sentence piece tokenizer error");
+      RETURN_STATUS_UNEXPECTED("Sentence piece tokenizer error.");
     }
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(pieces, output));
   } else {
     std::vector<int> ids;
     auto status = processor_.Encode(sentence, &ids);
     if (!status.ok()) {
-      RETURN_STATUS_UNEXPECTED("sentence piece tokenizer error");
+      RETURN_STATUS_UNEXPECTED("Sentence piece tokenizer error.");
     }
     RETURN_IF_NOT_OK(Tensor::CreateFromVector(ids, output));
   }
@@ -84,15 +84,15 @@ Status SentencePieceTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, s
 Status SentencePieceTokenizerOp::GetModelRealPath(const std::string &model_path, const std::string &filename) {
   char real_path[PATH_MAX] = {0};
   if (file_path_.size() >= PATH_MAX) {
-    RETURN_STATUS_UNEXPECTED("sentence piece model path is invalid.");
+    RETURN_STATUS_UNEXPECTED("Sentence piece model path is invalid.");
   }
 #if defined(_WIN32) || defined(_WIN64)
   if (_fullpath(real_path, common::SafeCStr(model_path), PATH_MAX) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("sentence piece model path is invalid.");
+    RETURN_STATUS_UNEXPECTED("Sentence piece model path is invalid.");
   }
 #else
   if (realpath(common::SafeCStr(model_path), real_path) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("sentence piece model path  is invalid.");
+    RETURN_STATUS_UNEXPECTED("Sentence piece model path  is invalid.");
   }
 #endif
   std::string abs_path = real_path;

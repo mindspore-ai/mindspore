@@ -35,7 +35,7 @@ NgramOp::NgramOp(const std::vector<int32_t> &ngrams, int32_t l_len, int32_t r_le
 
 Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING && input->Rank() == 1, "Not a 1-D str Tensor");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING && input->Rank() == 1, "Not a 1-D str Tensor.");
   std::vector<int32_t> offsets;                 // offsets for each str
   std::vector<std::string> res;                 // holds the result of ngrams
   std::string str_buffer;                       // concat all pad tokens with string interleaved with separators
@@ -60,7 +60,7 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     if (end_ind - start_ind <= n) {
       res.emplace_back(std::string());  // push back empty string
     } else {
-      CHECK_FAIL_RETURN_UNEXPECTED(end_ind - n >= 0, "Incorrect loop condition");
+      CHECK_FAIL_RETURN_UNEXPECTED(end_ind - n >= 0, "Incorrect loop condition.");
 
       for (int i = start_ind; i < end_ind - n; i++) {
         res.emplace_back(str_buffer.substr(offsets[i], offsets[i + n] - offsets[i] - separator_.size()));

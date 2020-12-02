@@ -54,15 +54,7 @@ Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<FilterOp> node, bool *
 Status GetterPass::RunOnTree(ExecutionTree *tree, bool *modified) {
   RETURN_IF_NOT_OK(pass_.Run(tree, modified));
 
-  // nested private class variables can be directly accessed by its outer class
-  for (auto node : pass_.nodes_to_remove_) {
-    DatasetOp *parent;
-    node->Parent(&parent, 0);
-    // only remove node whose is a single child of its parent
-    if (parent != nullptr && parent->Children().size() == 1) {
-      RETURN_IF_NOT_OK(node->Remove());
-    }
-  }
+  // currently the getter pass only disables call_back from the execution tree
 
   // clear the callback for selected ops (map when its GetOutputType/Shape)
   for (auto node : pass_.nodes_to_clear_callback_) node->ClearCallbacks();
