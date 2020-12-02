@@ -49,6 +49,9 @@ class ConditionalVAE(Cell):
 
     Outputs:
         - **output** (tuple) - (recon_x(Tensor), x(Tensor), mu(Tensor), std(Tensor)).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
 
     def __init__(self, encoder, decoder, hidden_size, latent_size, num_classes):

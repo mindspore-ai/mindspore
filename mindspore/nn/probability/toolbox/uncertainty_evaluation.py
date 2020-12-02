@@ -53,6 +53,9 @@ class UncertaintyEvaluation:
                         the the path of the uncertainty model; if the path is not given , it will not save or load the
                         uncertainty model. Default: False.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> network = LeNet()
         >>> param_dict = load_checkpoint('checkpoint_lenet.ckpt')

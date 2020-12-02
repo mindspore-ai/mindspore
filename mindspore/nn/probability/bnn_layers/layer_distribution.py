@@ -36,6 +36,9 @@ class NormalPrior(Cell):
 
     Returns:
         Cell, a normal distribution.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
     def __init__(self, dtype=mstype.float32, mean=0, std=0.1):
         super(NormalPrior, self).__init__()
@@ -62,6 +65,9 @@ class NormalPosterior(Cell):
 
     Returns:
         Cell, a normal distribution.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
     """
     def __init__(self,
                  name,
