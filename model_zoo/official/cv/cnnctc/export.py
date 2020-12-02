@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 parser = argparse.ArgumentParser(description='CNNCTC_export')
 parser.add_argument('--ckpt_file', type=str, default='./ckpts/cnn_ctc.ckpt', help='CNN&CTC ckpt file.')
-parser.add_argument('--output_file', type=str, default='cnn_ctc.air', help='CNN&CTC output air name.')
+parser.add_argument('--output_file', type=str, default='cnn_ctc', help='CNN&CTC output air name.')
 args_opt = parser.parse_args()
 
 if __name__ == '__main__':

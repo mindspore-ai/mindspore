@@ -39,4 +39,4 @@ if __name__ == '__main__':
     # load the parameter into net
     load_param_into_net(network, param_dict)
     input_data = np.random.uniform(0.0, 1.0, size=[32, 3, 513, 513]).astype(np.float32)
-    export(network, Tensor(input_data), file_name=args.model+'-300_11.air', file_format='AIR')
+    export(network, Tensor(input_data), file_name=args.model+'-300_11', file_format='AIR')

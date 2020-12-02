@@ -26,7 +26,7 @@ from src.inception_v3 import InceptionV3
 
 parser = argparse.ArgumentParser(description='inceptionv3 export')
 parser.add_argument('--ckpt_file', type=str, required=True, help='inceptionv3 ckpt file.')
-parser.add_argument('--output_file', type=str, default='inceptionv3.air', help='inceptionv3 output air name.')
+parser.add_argument('--output_file', type=str, default='inceptionv3', help='inceptionv3 output air name.')
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
 parser.add_argument('--width', type=int, default=299, help='input width')
 parser.add_argument('--height', type=int, default=299, help='input height')

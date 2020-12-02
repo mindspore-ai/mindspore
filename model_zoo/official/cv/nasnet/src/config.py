@@ -51,6 +51,6 @@ nasnet_a_mobile_config_gpu = edict({
     "loss_scale": 1,
 
     ### onnx&air Config
-    'onnx_filename': 'nasnet_a_mobile.onnx',
-    'air_filename': 'nasnet_a_mobile.air'
+    'onnx_filename': 'nasnet_a_mobile',
+    'air_filename': 'nasnet_a_mobile'
 })

@@ -54,4 +54,4 @@ if __name__ == "__main__":
 
     # export network
     inputs = Tensor(np.ones([1, 1, cfg.image_height, cfg.image_width]), mindspore.float32)
-    export(network, inputs, file_name="lenet_quant.mindir", file_format='MINDIR', quant_mode='AUTO')
+    export(network, inputs, file_name="lenet_quant", file_format='MINDIR', quant_mode='AUTO')

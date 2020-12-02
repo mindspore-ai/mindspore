@@ -56,5 +56,5 @@ if __name__ == '__main__':
     ids = Tensor(np.ones([widedeep_config.eval_batch_size, widedeep_config.field_size]).astype(np.int32))
     wts = Tensor(np.ones([widedeep_config.eval_batch_size, widedeep_config.field_size]).astype(np.float32))
     input_tensor_list = [ids, wts]
-    export(net, *input_tensor_list, file_name='wide_and_deep.onnx', file_format="ONNX")
-    export(net, *input_tensor_list, file_name='wide_and_deep.air', file_format="AIR")
+    export(net, *input_tensor_list, file_name='wide_and_deep', file_format="ONNX")
+    export(net, *input_tensor_list, file_name='wide_and_deep', file_format="AIR")

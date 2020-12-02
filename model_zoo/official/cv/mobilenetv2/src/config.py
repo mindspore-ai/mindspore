@@ -42,7 +42,7 @@ def set_config(args):
         "platform": args.platform,
         "activation": "Softmax",
         "export_format": "MINDIR",
-        "export_file": "mobilenetv2.mindir"
+        "export_file": "mobilenetv2"
     })
     config_gpu = ed({
         "num_classes": 1000,
@@ -66,7 +66,7 @@ def set_config(args):
         "run_distribute": args.run_distribute,
         "activation": "Softmax",
         "export_format": "MINDIR",
-        "export_file": "mobilenetv2.mindir"
+        "export_file": "mobilenetv2"
     })
     config_ascend = ed({
         "num_classes": 1000,
@@ -93,7 +93,7 @@ def set_config(args):
         "run_distribute": int(os.getenv('RANK_SIZE', '1')) > 1.,
         "activation": "Softmax",
         "export_format": "MINDIR",
-        "export_file": "mobilenetv2.mindir"
+        "export_file": "mobilenetv2"
     })
     config = ed({"CPU": config_cpu,
                  "GPU": config_gpu,

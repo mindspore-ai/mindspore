@@ -23,7 +23,7 @@ from src.unet.unet_model import UNet
 parser = argparse.ArgumentParser(description='Export ckpt to air')
 parser.add_argument('--ckpt_file', type=str, default="ckpt_unet_medical_adam-1_600.ckpt",
                     help='The path of input ckpt file')
-parser.add_argument('--air_file', type=str, default="unet_medical_adam-1_600.air", help='The path of output air file')
+parser.add_argument('--air_file', type=str, default="unet_medical_adam-1_600", help='The path of output air file')
 args = parser.parse_args()
 
 net = UNet(n_channels=1, n_classes=2)
