@@ -570,8 +570,8 @@ def set_context(**kwargs):
         >>> context.set_context(reserve_class_name_in_scope=True)
         >>> context.set_context(variable_memory_max_size="6GB")
         >>> context.set_context(mode=context.GRAPH_MODE,
-        >>>                     device_target="Ascend",device_id=0, save_graphs=True,
-        >>>                     save_graphs_path="/mindspore")
+        ...                     device_target="Ascend",device_id=0, save_graphs=True,
+        ...                     save_graphs_path="/mindspore")
         >>> context.set_context(enable_profiling=True, profiling_options="training_trace")
         >>> context.set_context(max_device_memory="3.5GB")
         >>> context.set_context(print_file_path="print.pb")
