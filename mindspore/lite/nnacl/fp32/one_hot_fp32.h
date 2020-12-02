@@ -23,8 +23,10 @@
 #include "nnacl/op_base.h"
 
 typedef struct OneHotParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
   int axis_;
+  // other parameter
   int depth_;
   float on_value_;
   float off_value_;

@@ -20,11 +20,14 @@
 #include "nnacl/quantization/quantize.h"
 
 typedef struct LayerNormParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
-  int *normalized_shape_;
-  int normalized_dims_;
   float epsilon_;
   bool elementwise_affine_;
+  // shape correlative
+  int *normalized_shape_;
+  int normalized_dims_;
+  // other parameter
   int thread_count_;
   int thread_outsize_;
 } LayerNormParameter;

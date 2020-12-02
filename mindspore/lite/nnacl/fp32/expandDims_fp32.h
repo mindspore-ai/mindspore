@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct ExpandDimsParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
   int dim_;
 } ExpandDimsParameter;

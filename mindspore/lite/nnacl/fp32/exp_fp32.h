@@ -20,11 +20,13 @@
 #include "nnacl/op_base.h"
 
 typedef struct ExpParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
-  int thread_num_;
   float base_;
   float scale_;
   float shift_;
+  // other parameter
+  int thread_num_;
   float in_scale_;
   float out_scale_;
   int element_num_;

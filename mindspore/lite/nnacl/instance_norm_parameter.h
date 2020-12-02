@@ -20,9 +20,11 @@
 #include "nnacl/op_base.h"
 
 typedef struct InstanceNormParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
   float epsilon_;
   float momentum_;
+  // shape correlative
   int channel_;
 } InstanceNormParameter;
 

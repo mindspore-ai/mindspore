@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct NMSParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
   int center_point_box_;
 } NMSParameter;

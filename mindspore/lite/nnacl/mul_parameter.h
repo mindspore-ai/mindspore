@@ -21,7 +21,9 @@
 #include "nnacl/quantization/quantize.h"
 
 typedef struct MulParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
+  // other parameter
   int thread_count_;
   MulQuantArg mul_quant_arg_;
 } MulParameter;

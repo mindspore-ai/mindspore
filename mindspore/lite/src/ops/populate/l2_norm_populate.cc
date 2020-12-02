@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/l2_norm.h"
+#include <cstdint>
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/l2_norm_parameter.h"
@@ -31,8 +32,14 @@ OpParameter *PopulateL2NormParameter(const mindspore::lite::PrimitiveC *primitiv
   memset(l2_norm_parameter, 0, sizeof(L2NormParameter));
   l2_norm_parameter->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::L2Norm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  MS_ASSERT(param);
   auto axis_vec = param->GetAxis();
   l2_norm_parameter->axis_num_ = axis_vec.size();
+  if (axis_vec.size() > SIZE_MAX / sizeof(int)) {
+    MS_LOG(ERROR) << "axis_vec size too big";
+    free(l2_norm_parameter);
+    return nullptr;
+  }
   l2_norm_parameter->axis_ = reinterpret_cast<int *>(malloc(axis_vec.size() * sizeof(int)));
   if (l2_norm_parameter->axis_ == nullptr) {
     MS_LOG(ERROR) << "malloc axis_ data failed";

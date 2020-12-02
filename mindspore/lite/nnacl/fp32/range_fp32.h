@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct RangeParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
   int dType_;
   int start_;

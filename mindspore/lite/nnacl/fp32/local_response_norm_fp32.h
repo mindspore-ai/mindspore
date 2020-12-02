@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct LocalResponseNormParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
   int depth_radius_;
   float bias_;

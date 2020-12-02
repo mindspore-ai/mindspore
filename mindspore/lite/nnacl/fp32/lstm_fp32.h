@@ -20,11 +20,14 @@
 #include "nnacl/op_base.h"
 
 typedef struct LstmParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
+  // shape correlative
   int input_size_;
   int hidden_size_;  // output_size
   int seq_len_;
   int batch_;
+  // other parameter
   int input_step_;
   int output_step_;
   bool bidirectional_;

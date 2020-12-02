@@ -33,6 +33,11 @@ OpParameter *PopulateGatherParameter(const mindspore::lite::PrimitiveC *primitiv
   }
   memset(gather_param, 0, sizeof(GatherParameter));
   gather_param->op_parameter_.type_ = primitive->Type();
+  if (gather_attr->GetAxis() < 0) {
+    MS_LOG(ERROR) << "axis should be >= 0.";
+    free(gather_param);
+    return nullptr;
+  }
   gather_param->axis_ = gather_attr->GetAxis();
   gather_param->batchDims_ = gather_attr->GetBatchDims();
   return reinterpret_cast<OpParameter *>(gather_param);

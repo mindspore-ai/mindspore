@@ -36,7 +36,9 @@ typedef void (*MATMUL_OPT_DP_FUNC)(const int8_t *a, const int8_t *b, int8_t *dst
 typedef enum OutType { OutType_C8 = 0, OutType_Nhwc = 1, OutType_TileC8 = 2 } OutType;
 
 typedef struct MatMulParameter {
+  // Primitive parameter
   OpParameter op_parameter_;
+  // other parameter
   int row_;
   int col_;
   int row_4_;
