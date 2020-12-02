@@ -24,13 +24,20 @@ __global__ void NormalKernel(int seed, curandState *globalState, T *output, size
   return;
 }
 
+__device__ bool dev_error_res = false;
+
 template <typename T>
 __global__ void UniformIntKernel(int seed, curandState *globalState, T *input1, size_t input_size_1,
                                  T *input2, size_t input_size_2, T *output, size_t count) {
+  if (!(input1[0] < input2[0])) {
+    dev_error_res = false;
+    return;
+  }
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     curand_init(seed, i, 0, &globalState[i]);
     output[i] = (T)(curand_uniform(&globalState[i]) * (input2[0] - input1[0])) + input1[0];
   }
+  dev_error_res = true;
   return;
 }
 
@@ -59,7 +66,7 @@ void StandardNormal(int seed, int seed2, curandState *globalState, T *output, si
 }
 
 template <typename T>
-void UniformInt(int seed, int seed2, curandState *globalState, T *input1, size_t input_size_1,
+bool UniformInt(int seed, int seed2, curandState *globalState, T *input1, size_t input_size_1,
                 T *input2, size_t input_size_2, T *output, size_t count, cudaStream_t cuda_stream) {
   int RNG_seed = 0;
   std::random_device rd;
@@ -70,9 +77,11 @@ void UniformInt(int seed, int seed2, curandState *globalState, T *input1, size_t
   } else {
     RNG_seed = static_cast<int>(rd());
   }
+  bool host_error_res = false;
   UniformIntKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>
                (RNG_seed, globalState, input1, input_size_1, input2, input_size_2, output, count);
-  return;
+  cudaMemcpyFromSymbol(&host_error_res, dev_error_res, sizeof(bool));
+  return host_error_res;
 }
 
 template <typename T>
@@ -94,10 +103,10 @@ template void StandardNormal<float>(int seed, int seed2, curandState *globalStat
                                     float *output, size_t count, cudaStream_t cuda_stream);
 template void StandardNormal<int>(int seed, int seed2, curandState *globalState,
                                   int *output, size_t count, cudaStream_t cuda_stream);
-template void UniformInt<float>(int seed, int seed2, curandState *globalState, float *input1, size_t input_size_1,
+template bool UniformInt<float>(int seed, int seed2, curandState *globalState, float *input1, size_t input_size_1,
                                 float *input2, size_t input_size_2, float *output, size_t count,
                               cudaStream_t cuda_stream);
-template void UniformInt<int>(int seed, int seed2, curandState *globalState, int *input1, size_t input_size_1,
+template bool UniformInt<int>(int seed, int seed2, curandState *globalState, int *input1, size_t input_size_1,
                               int *input2, size_t input_size_2, int *output, size_t count,
                               cudaStream_t cuda_stream);
 template void UniformReal<float>(int seed, int seed2, curandState *globalState,

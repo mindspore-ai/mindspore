@@ -75,9 +75,13 @@ class RandomOpGpuKernel : public GpuKernel {
       case RANDOM_OP_UNIFORM_INT: {
         T *input_addr_1 = GetDeviceAddress<T>(inputs, 1);
         T *input_addr_2 = GetDeviceAddress<T>(inputs, 2);
-        UniformInt(seed_, seed2_, devStates, input_addr_1, inputs[1]->size / sizeof(T), input_addr_2,
-                   inputs[2]->size / sizeof(T), output_addr, outputs[0]->size / sizeof(T),
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+        bool ret = UniformInt(seed_, seed2_, devStates, input_addr_1, inputs[1]->size / sizeof(T), input_addr_2,
+                              inputs[2]->size / sizeof(T), output_addr, outputs[0]->size / sizeof(T),
+                              reinterpret_cast<cudaStream_t>(stream_ptr));
+        if (!ret) {
+          MS_LOG(ERROR) << "For UniformInt op, `minval` should be strictly less than `maxval`";
+          return false;
+        }
         break;
       }
       case RANDOM_OP_UNIFORM_REAL: {
