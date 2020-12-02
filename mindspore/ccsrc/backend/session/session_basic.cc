@@ -1593,17 +1593,11 @@ void SessionBasic::BuildGraph(GraphId graph_id) {
   executor_->BuildGraph(shared_from_this(), graph_id);
 }
 
-void SessionBasic::BuildOp(OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                           const std::vector<tensor::TensorPtr> &input_tensors,
-                           const std::vector<int64_t> &tensors_mask) {
-  MS_EXCEPTION_IF_NULL(executor_);
-  executor_->BuildOp(shared_from_this(), op_run_info, graph_info, input_tensors, tensors_mask);
-}
-
 void SessionBasic::RunOp(OpRunInfo *op_run_info, const GraphInfo &graph_info,
-                         const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
+                         std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                         const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(executor_);
-  executor_->RunOp(shared_from_this(), op_run_info, graph_info, input_tensors, outputs);
+  executor_->RunOp(shared_from_this(), op_run_info, graph_info, input_tensors, outputs, tensors_mask);
 }
 
 void SessionBasic::RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
@@ -1621,6 +1615,22 @@ void SessionBasic::RunGraphAsync(const GraphId &graph_id, const std::vector<tens
                                  VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
   executor_->RunGraphAsync(shared_from_this(), graph_id, inputs, outputs);
+}
+
+void SessionBasic::EraseValueNodeTensor(const std::vector<int64_t> &tensors_mask,
+                                        std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  if (input_tensors->size() != tensors_mask.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size() << " should be equal to tensors mask size "
+                      << tensors_mask.size();
+  }
+  std::vector<tensor::TensorPtr> new_input_tensors;
+  for (size_t index = 0; index < tensors_mask.size(); ++index) {
+    if (tensors_mask[index] != kValueNodeTensorMask) {
+      new_input_tensors.emplace_back(input_tensors->at(index));
+    }
+  }
+  *input_tensors = new_input_tensors;
 }
 
 void SessionBasic::UpdateAllGraphDynamicShapeAttr(const std::vector<KernelGraphPtr> &all_graphs) {

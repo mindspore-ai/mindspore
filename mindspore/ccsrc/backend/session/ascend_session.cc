@@ -691,22 +691,27 @@ void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &g
 }
 
 void AscendSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                              const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs) {
+                              std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+                              const std::vector<int64_t> &tensors_mask) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
+  EraseValueNodeTensor(tensors_mask, input_tensors);
+
   auto graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " start!";
   // malloc mem
-  RunOpMemoryAlloc(input_tensors, graph.get());
+  RunOpMemoryAlloc(*input_tensors, graph.get());
   // Build dynamic kernel
   if (op_run_info.is_dynamic_shape) {
     BuildDynamicKernel(graph);
   }
   // load input data to device
-  LoadInputData(graph, input_tensors);
+  LoadInputData(graph, *input_tensors);
   // run op
   Execute(graph, false);
   // get output
-  UpdateOutputs(graph, outputs, input_tensors);
+  UpdateOutputs(graph, outputs, *input_tensors);
   RunOpMemoryClear(graph.get());
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " finish!";
 }
@@ -736,7 +741,8 @@ void AscendSession::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector
     // Build and run current single op
     BuildOpImpl(run_info, graph_info, input_tensor_info.input_tensors, input_tensor_info.input_tensors_mask);
     VectorRef op_outputs;
-    RunOpImpl(run_info, graph_info, input_tensor_info.input_tensors, &op_outputs);
+    RunOpImpl(run_info, graph_info, &input_tensor_info.input_tensors, &op_outputs,
+              input_tensor_info.input_tensors_mask);
 
     // Handle inputs and outputs of current op
     HandleOpInputs(input_tensor_info.input_kernel, &cnode_ref, &op_output_map);

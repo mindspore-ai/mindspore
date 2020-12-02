@@ -110,17 +110,6 @@ class RunOpsInGraphTask : public Task {
   GraphId graph_id_{0};
 };
 
-class BuildOpTask : public Task {
- public:
-  BuildOpTask() { type_ = kBuildOp; }
-  ~BuildOpTask() override = default;
-  void Run() override;
-  OpRunInfo *op_run_info_{nullptr};
-  GraphInfo graph_info_;
-  std::vector<tensor::TensorPtr> input_tensors_;
-  std::vector<int64_t> tensors_mask_;
-};
-
 class RunOpTask : public Task {
  public:
   RunOpTask() { type_ = kRunOp; }
@@ -128,8 +117,9 @@ class RunOpTask : public Task {
   void Run() override;
   OpRunInfo *op_run_info_{nullptr};
   GraphInfo graph_info_;
-  std::vector<tensor::TensorPtr> input_tensors_;
+  std::vector<tensor::TensorPtr> *input_tensors_;
   VectorRef outputs_;
+  std::vector<int64_t> tensors_mask_;
 };
 
 class CreateCommGroupTask : public Task {
@@ -170,10 +160,9 @@ class Executor {
                 VectorRef *outputs);
   void RunGraphAsync(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                      VectorRef *outputs);
-  void BuildOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
-               const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<int64_t> &tensors_mask);
   void RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
-             const std::vector<tensor::TensorPtr> &input_tensors, VectorRef *outputs);
+             std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
+             const std::vector<int64_t> &tensors_mask);
   void RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                      VectorRef *outputs);
   void OnRunGraphFinished();
