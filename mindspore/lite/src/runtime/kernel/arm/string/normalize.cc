@@ -49,12 +49,13 @@ int NormalizeCPUKernel::Init() {
 
 int NormalizeCPUKernel::ReSize() { return RET_OK; }
 
-std::string NormalizeCPUKernel::Trim(const std::string &str, const std::string &whitespace /*= " \t\n\v\f\r"*/) {
-  if (str.empty()) {
+std::string NormalizeCPUKernel::Trim(const std::string &str, const std::string &pattern /*= " \t\n\v\f\r"*/) {
+  auto begin = str.find_first_not_of(pattern);
+  if (begin == std::string::npos) {
+    MS_LOG(WARNING) << "Meaningless input string!";
     return "";
   }
-  auto begin = str.find_first_not_of(whitespace);
-  auto end = str.find_last_not_of(whitespace);
+  auto end = str.find_last_not_of(pattern);
   const auto range = end - begin + 1;
   return str.substr(begin, range);
 }
