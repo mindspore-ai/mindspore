@@ -241,6 +241,30 @@ Status DEPipeline::GetNextAsList(py::list *output) {
   return Status::OK();
 }
 
+Status DEPipeline::GetDataInfo(py::list *types, py::list *shapes) {
+  Status s;
+  DATA_INFO data_info;
+  // tree_.root() must be DeviceQueueOp
+  DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(tree_->root().get());
+  if (op == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "GetDataInfo only supported by DeviceQueueOp");
+  }
+  {
+    py::gil_scoped_release gil_release;
+    s = op->GetDataInfo(&data_info);
+  }
+  RETURN_IF_NOT_OK(s);
+  for (auto el : data_info) {
+    types->append(el.first.AsNumpyType());
+    py::list shape;
+    for (auto dim : el.second.AsVector()) {
+      shape.append(dim);
+    }
+    shapes->append(shape);
+  }
+  return Status::OK();
+}
+
 Status DEPipeline::GetOutputShapes(py::list *output) {
   std::vector<TensorShape> shapes;
   Status s;
@@ -1052,6 +1076,8 @@ Status DEPipeline::ParseDeviceQueueOp(const py::dict &args, std::shared_ptr<Data
         (void)builder->SetDeviceId(ToInt(value));
       } else if (key == "send_epoch_end") {
         (void)builder->SetSendEpochEnd(ToBool(value));
+      } else if (key == "create_data_info_queue") {
+        (void)builder->SetCreateDataInfoQueue(ToBool(value));
       }
     }
   }

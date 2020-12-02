@@ -76,6 +76,12 @@ PYBIND_REGISTER(
              THROW_IF_ERROR(de.GetOutputTypes(&out));
              return out;
            })
+      .def("GetDataInfo",
+           [](DEPipeline &de) {
+             py::list types, shapes;
+             THROW_IF_ERROR(de.GetDataInfo(&types, &shapes));
+             return py::make_tuple(types, shapes);
+           })
       .def("GetDatasetSize", &DEPipeline::GetDatasetSize)
       .def("GetBatchSize", &DEPipeline::GetBatchSize)
       .def("GetNumClasses", &DEPipeline::GetNumClasses)
