@@ -293,11 +293,11 @@ class Tensor(Tensor_):
 
 
     def view(self, *shape):
-        """
+        r"""
         Reshape the tensor according to the input shape.
 
         Args:
-            shape (Union(list(int), *int)): Dimension of the output tensor.
+            shape (Union(list[int], \*int)): Dimension of the output tensor.
 
         Returns:
             Tensor, has the same dimension as the input shape.

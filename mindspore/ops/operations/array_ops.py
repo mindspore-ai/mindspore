@@ -2610,6 +2610,7 @@ class StridedSlice(PrimitiveWithInfer):
     Outputs:
         Tensor.
         The output is explained by following example.
+
             - In the 0th dimension, begin is 1, end is 2, and strides is 1,
               because :math:`1+1=2\geq2`, the interval is :math:`[1,2)`.
               Thus, return the element with :math:`index = 1` in 0th dimension, i.e., [[3, 3, 3], [4, 4, 4]].
@@ -2624,7 +2625,7 @@ class StridedSlice(PrimitiveWithInfer):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Examples
+    Examples:
         >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
         ...                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
         >>> slice = ops.StridedSlice()

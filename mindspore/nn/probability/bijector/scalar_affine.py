@@ -25,6 +25,7 @@ class ScalarAffine(Bijector):
 
     .. math::
         Y = a * X + b
+
     where a is the scale factor and b is the shift factor.
 
     Args:

@@ -91,7 +91,8 @@ class MSE(Metric):
     norm) between each element in the input: :math:`x` and the target: :math:`y`.
 
     .. math::
-        \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n(y_i - x_i)^2}{n},
+        \text{MSE}(x,\ y) = \frac{\sum_{i=1}^n(y_i - x_i)^2}{n}
+
     where :math:`n` is batch size.
 
     Examples:

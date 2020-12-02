@@ -26,6 +26,7 @@ class PowerTransform(Bijector):
 
     .. math::
         Y = g(X) = (1 + X * c)^{1 / c}, X >= -1 / c
+
     where c >= 0 is the power.
 
     The power transform maps inputs from `[-1/c, inf]` to `[0, inf]`.

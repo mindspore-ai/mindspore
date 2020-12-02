@@ -221,7 +221,8 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
 
     .. math::
         \ell(x_i, t_i) = - \log\left(\frac{\exp(x_{t_i})}{\sum_j \exp(x_j)}\right)
-        =  -x_{t_i} + \log\left(\sum_j \exp(x_j)\right),
+        =  -x_{t_i} + \log\left(\sum_j \exp(x_j)\right)
+
     where :math:`x_i` is a 1D score Tensor, :math:`t_i` is a scalar.
 
     Note:
