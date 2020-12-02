@@ -89,14 +89,15 @@ class SummaryRecord:
 
     Examples:
         >>> # use in with statement to auto close
+        >>> from mindspore.train.summary import SummaryRecord
         >>> with SummaryRecord(log_dir="./summary_dir") as summary_record:
-        >>>     pass
+        ...     pass
         >>>
         >>> # use in try .. finally .. to ensure closing
         >>> try:
-        >>>     summary_record = SummaryRecord(log_dir="./summary_dir")
-        >>> finally:
-        >>>     summary_record.close()
+        ...     summary_record = SummaryRecord(log_dir="./summary_dir")
+        ... finally:
+        ...     summary_record.close()
     """
 
     def __init__(self, log_dir, file_prefix="events", file_suffix="_MS", network=None, max_file_size=None):
@@ -162,7 +163,7 @@ class SummaryRecord:
 
         Examples:
             >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            >>>     summary_record.set_mode('eval')
+            ...     summary_record.set_mode('eval')
         """
         mode_spec = 'train', 'eval'
         if mode not in mode_spec:
@@ -199,7 +200,7 @@ class SummaryRecord:
 
         Examples:
             >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            >>>     summary_record.add_value('scalar', 'loss', Tensor(0.1))
+            ...     summary_record.add_value('scalar', 'loss', Tensor(0.1))
         """
         if plugin in ('tensor', 'scalar', 'image', 'histogram'):
             if not name or not isinstance(name, str):
@@ -239,7 +240,9 @@ class SummaryRecord:
 
         Examples:
             >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            >>>     summary_record.record(step=2)
+            ...     summary_record.record(step=2)
+            ...
+            True
         """
         logger.debug("SummaryRecord step is %r.", step)
         if self._closed:
@@ -303,7 +306,7 @@ class SummaryRecord:
 
         Examples:
             >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            >>>     print(summary_record.log_dir)
+            ...     log_dir = summary_record.log_dir
         """
         return self.full_file_name
 
@@ -315,7 +318,7 @@ class SummaryRecord:
 
         Examples:
             >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            >>>     summary_record.flush()
+            ...     summary_record.flush()
         """
         if self._closed:
             logger.error("The record writer is closed and can not flush.")
@@ -328,9 +331,9 @@ class SummaryRecord:
 
         Examples:
             >>> try:
-            >>>     summary_record = SummaryRecord(log_dir="./summary_dir")
-            >>> finally:
-            >>>     summary_record.close()
+            ...     summary_record = SummaryRecord(log_dir="./summary_dir")
+            ... finally:
+            ...     summary_record.close()
         """
         if not self._closed and self._event_writer:
             # event writer flush and close
