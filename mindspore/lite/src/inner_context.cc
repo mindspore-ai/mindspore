@@ -64,6 +64,10 @@ int InnerContext::IsValid() {
     MS_LOG(ERROR) << "Device list is empty.";
     return RET_NOT_SUPPORT;
   }
+  if (!IsCpuEnabled()) {
+    MS_LOG(ERROR) << "CPU is not supported.";
+    return RET_NOT_SUPPORT;
+  }
 #ifndef SUPPORT_GPU
   if (IsGpuEnabled()) {
     MS_LOG(ERROR) << "GPU is not supported.";

@@ -100,7 +100,7 @@ STATUS OnnxPReluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
     } else {
       attr->slope.resize(slope_size);
       attr->channelShared = false;
-      if (memcpy_s(attr->slope.data(), slope_size * sizeof(float), slope_raw_data, slope_size * sizeof(float)) != 0) {
+      if (memcpy_s(attr->slope.data(), slope_size * sizeof(float), slope_raw_data, slope_size * sizeof(float)) != EOK) {
         MS_LOG(ERROR) << "memcpy_s failed";
         return RET_ERROR;
       }
