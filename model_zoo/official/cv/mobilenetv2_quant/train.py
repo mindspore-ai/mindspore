@@ -166,8 +166,7 @@ def train_on_gpu():
                                           per_channel=[True, False],
                                           symmetric=[True, False],
                                           freeze_bn=1000000,
-                                          quant_delay=step_size * 2,
-                                          use_oneconv_fold=True)
+                                          quant_delay=step_size * 2)
     network = quantizer.quantize(network)
 
     # get learning rate
