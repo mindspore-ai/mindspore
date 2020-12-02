@@ -748,8 +748,8 @@ class Triu(Cell):
         >>> triu = nn.Triu()
         >>> result = triu(x)
         >>> print(result)
-        [[1   2]
-         [0   4]]
+        [[1 0]
+         [3 4]]
     """
     def __init__(self):
         super(Triu, self).__init__()
@@ -796,8 +796,8 @@ class MatrixDiag(Cell):
         >>> matrix_diag = nn.MatrixDiag()
         >>> output = matrix_diag(x)
         >>> print(output)
-        [[1.   0.]
-         [0.  -1.]]
+        [[ 1.  0.]
+         [ 0. -1.]]
     """
     def __init__(self):
         super(MatrixDiag, self).__init__()

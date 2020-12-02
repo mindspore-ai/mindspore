@@ -63,7 +63,7 @@ class ScalarSummary(PrimitiveWithInfer):
         ...         self.summary(name, x)
         ...         x = self.add(x, y)
         ...         return x
-		...
+        ...
     """
 
     @prim_attr_register

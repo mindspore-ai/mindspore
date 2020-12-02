@@ -420,7 +420,7 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         >>> print(result)
         (256, 2)
         >>> result = output_mask.shape
-        >>> print(reuslt)
+        >>> print(result)
         (256,)
     """
 
@@ -474,16 +474,16 @@ class RandomCategorical(PrimitiveWithInfer):
         >>> net = Net(8)
         >>> output = net(Tensor(x))
         >>> print(output)
-        [[0 2 1 3 4 2 0 2]
+        [[0 2 0 3 4 2 0 2]
+         [0 2 1 3 4 2 0 2]
+         [0 2 0 3 4 2 0 2]
          [0 2 1 3 4 2 0 2]
          [0 2 1 3 4 2 0 2]
          [0 2 1 3 4 2 0 2]
          [0 2 0 3 4 2 0 2]
+         [0 2 0 3 4 2 0 2]
          [0 2 1 3 4 3 0 3]
-         [0 2 1 3 4 2 0 2]
-         [0 2 1 3 4 2 0 2]
-         [0 2 1 3 4 2 0 2]
-         [0 2 0 3 4 2 0 2]]
+         [0 2 1 3 4 2 0 2]]
     """
 
     @prim_attr_register

@@ -318,9 +318,9 @@ class IOU(PrimitiveWithInfer):
         >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> output = iou(anchor_boxes, gt_boxes)
         >>> print(output)
-        [[65000. 65500.    -0.]
-         [65000. 65500.    -0.]
-         [    0.     0.     0.]]
+        [[65500. 65500. 65500.]
+         [   -0.    -0.    -0.]
+         [   -0.    -0.    -0.]]
 
     """
 
@@ -524,7 +524,7 @@ class ConfusionMatrix(PrimitiveWithInfer):
         >>> predictions = Tensor([1, 2, 1, 3], mindspore.int32)
         >>> output = confusion_matrix(labels, predictions)
         >>> print(output)
-        [[0 1 0 0
+        [[0 1 0 0]
          [0 1 1 0]
          [0 0 0 0]
          [0 0 0 1]]

@@ -264,7 +264,7 @@ class LeakyReLU(Cell):
         >>> output = leaky_relu(input_x)
         >>> print(output)
         [[-0.2  4.  -1.6]
-         [ 2   -1.   9. ]]
+         [ 2.  -1.   9. ]]
     """
 
     def __init__(self, alpha=0.2):
