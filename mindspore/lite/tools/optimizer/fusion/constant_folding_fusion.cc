@@ -133,6 +133,10 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
   if (output_tensors.size() != 1) {
     for (size_t k = 0; k < output_tensors.size(); k++) {
       auto used_node_list = GetRealNodeUsedListByOutputIdx(func_graph, input_node, k);
+      if (used_node_list->empty()) {
+        MS_LOG(DEBUG) << "this output don't be used by other node.";
+        continue;
+      }
       if (used_node_list->size() != 1) {
         MS_LOG(ERROR) << " output must tuple_getitem";
         return lite::RET_ERROR;

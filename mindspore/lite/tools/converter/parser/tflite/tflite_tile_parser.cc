@@ -23,7 +23,6 @@ namespace mindspore {
 namespace lite {
 PrimitiveC *TfliteTileParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
   auto primitive = std::make_unique<schema::PrimitiveT>();
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is null";
@@ -35,16 +34,6 @@ PrimitiveC *TfliteTileParser::ParseLitePrimitive(const std::unique_ptr<tflite::O
     MS_LOG(ERROR) << "new op failed";
     return nullptr;
   }
-
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->multiples)) {
-    MS_LOG(ERROR) << "get tile -> multiples failed";
-    return nullptr;
-  }
-  std::vector<int> dims(attr->multiples.size(), 0);
-  for (size_t i = 0; i < dims.size(); ++i) {
-    dims[i] = i;
-  }
-  attr->dims = dims;
   primitive->value.type = schema::PrimitiveType_Tile;
   primitive->value.value = attr.release();
   return PrimitiveC::Create(primitive.release());

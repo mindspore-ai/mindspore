@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 
 // abs:
@@ -125,6 +126,14 @@ int ElementCeil(const float *input, float *output, const int number) {
 int ElementNegative(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; ++i) {
     output[i] = -input[i];
+  }
+  return NNACL_OK;
+}
+
+int ElementReciprocal(const float *input, float *output, const int element_size) {
+  for (int i = 0; i < element_size; ++i) {
+    assert(input[i] != 0.0f);
+    output[i] = 1.f / input[i];
   }
   return NNACL_OK;
 }

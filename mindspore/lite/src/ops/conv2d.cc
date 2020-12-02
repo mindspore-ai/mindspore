@@ -375,11 +375,11 @@ void Conv2D::ConvInferShape(int input_h, int input_w, int *output_h, int *output
 
 int Conv2D::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   if (inputs_.size() != 2 && inputs_.size() != 3) {
-    MS_LOG(ERROR) << "Add should has two or three inputs";
+    MS_LOG(ERROR) << "Conv2d should has two or three inputs";
     return RET_ERROR;
   }
   if (outputs_.size() != 1) {
-    MS_LOG(ERROR) << "Add should has one outputs";
+    MS_LOG(ERROR) << "Conv2d should has one outputs";
     return RET_ERROR;
   }
   auto *input_tensor = inputs_.front();

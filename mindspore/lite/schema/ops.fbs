@@ -1203,3 +1203,6 @@ table All {
 table Assert {
     summarize : int;
 }
+
+table Reciprocal {
+}

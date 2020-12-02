@@ -15,7 +15,9 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_slice_parser.h"
+#include <functional>
 #include <memory>
+#include <numeric>
 #include <vector>
 #include <string>
 
@@ -43,6 +45,35 @@ STATUS OnnxSliceParser::InsertTensor(const std::vector<int> &onnx_val, const std
   std::string tensor_name = name + std::to_string(tensor_num);
   OnnxTensorParser::GetInstance()->GetTensorCache()->AddTensor(tensor_name, tensor.release(), GRAPH_INPUT);
   onnx_node->add_input(tensor_name);
+  return RET_OK;
+}
+
+STATUS OnnxSliceParser::GetInputTensor(std::vector<int> *onnx_val, const std::string &name) {
+  if (onnx_val == nullptr) {
+    MS_LOG(ERROR) << "input vector is nullptr.";
+    return RET_ERROR;
+  }
+  if (OnnxTensorParser::GetInstance() == nullptr || OnnxTensorParser::GetInstance()->GetTensorCache() == nullptr) {
+    MS_LOG(ERROR) << "cannot get tensorcache.";
+    return RET_ERROR;
+  }
+  int index = OnnxTensorParser::GetInstance()->GetTensorCache()->FindTensor(name);
+  if (index == -1) {
+    MS_LOG(ERROR) << "can not find node: " << name;
+    return RET_ERROR;
+  }
+  auto input_tensor = OnnxTensorParser::GetInstance()->GetTensorCache()->GetCachedTensor()[index];
+  if (input_tensor->data.empty()) {
+    MS_LOG(DEBUG) << "data is empty.";
+    return RET_NO_CHANGE;
+  }
+  int data_num = std::accumulate(input_tensor->dims.begin(), input_tensor->dims.end(), 1, std::multiplies<int>());
+  onnx_val->resize(data_num);
+  if (memcpy_s(onnx_val->data(), data_num * sizeof(int32_t), input_tensor->data.data(), data_num * sizeof(int32_t)) !=
+      EOK) {
+    MS_LOG(ERROR) << "memcpy_s failed";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -97,6 +128,36 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
       }
     }
   }
+  int status = RET_OK;
+  switch (onnx_node.input_size()) {
+    case 5: {
+      if (steps.empty()) {
+        status = GetInputTensor(&steps, onnx_node.input(4));
+      }
+    }
+    case 4: {
+      if (status != RET_ERROR && axes.empty()) {
+        status = GetInputTensor(&axes, onnx_node.input(3));
+      }
+    }
+    case 3: {
+      if (status != RET_ERROR && ends.empty()) {
+        status = GetInputTensor(&ends, onnx_node.input(2));
+      }
+    }
+    case 2: {
+      if (status != RET_ERROR && starts.empty()) {
+        status = GetInputTensor(&starts, onnx_node.input(1));
+      }
+    }
+    default: {
+      if (status == RET_ERROR) {
+        MS_LOG(ERROR) << "onnx slice inputs are invalid.";
+        return RET_INPUT_TENSOR_ERROR;
+      }
+    }
+  }
+
   if (axes.empty()) {
     for (size_t i = 0; i < starts.size(); ++i) {
       axes.push_back(i);
@@ -112,7 +173,6 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
     }
   }
   int insert_num = 5 - onnx_node.input_size();
-  int status = RET_OK;
   switch (insert_num) {
     case 4: {
       std::string name = "slice/starts/";

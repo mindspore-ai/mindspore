@@ -41,7 +41,8 @@ ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_t
                                       {mindspore::schema::PrimitiveType_Floor, ElementFloor},
                                       {mindspore::schema::PrimitiveType_Ceil, ElementCeil},
                                       {mindspore::schema::PrimitiveType_Round, ElementRound},
-                                      {mindspore::schema::PrimitiveType_Neg, ElementNegative}};
+                                      {mindspore::schema::PrimitiveType_Neg, ElementNegative},
+                                      {mindspore::schema::PrimitiveType_Reciprocal, ElementReciprocal}};
   for (size_t i = 0; i < sizeof(type_func_table) / sizeof(TYPE_FUNC_INFO); i++) {
     if (type_func_table[i].primitive_type_ == primitive_type) {
       return type_func_table[i].func_;
@@ -152,4 +153,5 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Floor, CpuArithmeticSelfFp32K
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Ceil, CpuArithmeticSelfFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Round, CpuArithmeticSelfFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Neg, CpuArithmeticSelfFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reciprocal, CpuArithmeticSelfFp32KernelCreator)
 }  // namespace mindspore::kernel

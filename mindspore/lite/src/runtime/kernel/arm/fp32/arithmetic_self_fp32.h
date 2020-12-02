@@ -26,6 +26,7 @@ using mindspore::schema::PrimitiveType_Floor;
 using mindspore::schema::PrimitiveType_Log;
 using mindspore::schema::PrimitiveType_LogicalNot;
 using mindspore::schema::PrimitiveType_Neg;
+using mindspore::schema::PrimitiveType_Reciprocal;
 using mindspore::schema::PrimitiveType_Round;
 using mindspore::schema::PrimitiveType_Rsqrt;
 using mindspore::schema::PrimitiveType_Sin;

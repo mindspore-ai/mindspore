@@ -690,6 +690,29 @@ STATUS OnnxRoundParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
   op->primitive->value.value = attr.release();
   return RET_OK;
 }
+
+STATUS OnnxReciprocalParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
+                                   schema::CNodeT *op) {
+  MS_LOG(DEBUG) << "onnx ReciprocalParser";
+  if (op == nullptr) {
+    MS_LOG(ERROR) << "op is null";
+    return RET_NULL_PTR;
+  }
+  op->primitive = std::make_unique<schema::PrimitiveT>();
+  if (op->primitive == nullptr) {
+    MS_LOG(ERROR) << "op->primitive is null";
+    return RET_NULL_PTR;
+  }
+
+  auto attr = std::make_unique<schema::ReciprocalT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
+  op->primitive->value.type = schema::PrimitiveType_Reciprocal;
+  op->primitive->value.value = attr.release();
+  return RET_OK;
+}
 OnnxNodeRegistrar g_onnxAddParser("Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxInt8AddParser("Int8Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxSubParser("Sub", new OnnxSubParser());
@@ -720,5 +743,6 @@ OnnxNodeRegistrar g_onnxAndParser("And", new OnnxAndParser());
 OnnxNodeRegistrar g_onnxOrParser("Or", new OnnxOrParser());
 OnnxNodeRegistrar g_onnxNotParser("Not", new OnnxNotParser());
 OnnxNodeRegistrar g_onnxRoundParser("Round", new OnnxRoundParser());
+OnnxNodeRegistrar g_onnxReciprocalParser("Reciprocal", new OnnxReciprocalParser());
 }  // namespace lite
 }  // namespace mindspore

@@ -139,8 +139,22 @@ int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   }
 
   std::vector<int> out_shape;
-  std::vector<int> multiples = GetMultiples();
-
+  std::vector<int> multiples;
+  if (inputs_.size() == 2) {
+    if (inputs_[1]->data_c() == nullptr) {
+      MS_LOG(INFO) << "Do infer shape in runtime.";
+      return RET_INFER_INVALID;
+    }
+    int data_num = inputs_[1]->ElementsNum();
+    if (data_num > static_cast<int>(input->shape().size())) {
+      MS_LOG(ERROR) << "multiples data num cannot be larger than input shape size.";
+      return RET_INPUT_TENSOR_ERROR;
+    }
+    multiples.resize(data_num);
+    memcpy(multiples.data(), inputs_[1]->data_c(), inputs_[1]->Size());
+  } else {
+    multiples = GetMultiples();
+  }
 #ifdef SUPPORT_TRAIN
   const size_t in_dims = input->shape().size();
   const size_t delta_dims = in_dims - multiples.size();
@@ -156,6 +170,11 @@ int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   }
 #else
   std::vector<int> dims = GetDims();
+  if (inputs_.size() == 2 && dims.empty()) {
+    for (int dim = 0; dim < inputs_[1]->ElementsNum(); ++dim) {
+      dims.push_back(dim);
+    }
+  }
   const size_t in_dims = input->shape().size();
 
   MS_ASSERT(multiples.size() == dims.size());

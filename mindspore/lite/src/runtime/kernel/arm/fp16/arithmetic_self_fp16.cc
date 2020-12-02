@@ -43,7 +43,8 @@ ArithmeticSelfFp16Func ArithmeticSelfFp16CPUKernel::GetArithmeticSelfFp16Fun(int
                                       {mindspore::schema::PrimitiveType_Floor, ElementFloorFp16},
                                       {mindspore::schema::PrimitiveType_Ceil, ElementCeilFp16},
                                       {mindspore::schema::PrimitiveType_Round, ElementRoundFp16},
-                                      {mindspore::schema::PrimitiveType_Neg, ElementNegativeFp16}};
+                                      {mindspore::schema::PrimitiveType_Neg, ElementNegativeFp16},
+                                      {mindspore::schema::PrimitiveType_Reciprocal, ElementReciprocalFp16}};
   for (size_t i = 0; i < sizeof(type_func_table) / sizeof(TYPE_FUNC_INFO); i++) {
     if (type_func_table[i].primitive_type_ == primitive_type) {
       return type_func_table[i].func_;
@@ -139,4 +140,5 @@ REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Floor, CpuArithmeticSelfFp16K
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Ceil, CpuArithmeticSelfFp16KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Round, CpuArithmeticSelfFp16KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Neg, CpuArithmeticSelfFp16KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reciprocal, CpuArithmeticSelfFp16KernelCreator)
 }  // namespace mindspore::kernel

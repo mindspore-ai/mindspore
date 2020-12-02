@@ -149,6 +149,7 @@
 #include "src/ops/while.h"
 #include "src/ops/oneslike.h"
 #include "src/ops/unsorted_segment_sum.h"
+#include "src/ops/reciprocal.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -891,6 +892,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) Quant(primitive);
     case schema::PrimitiveType_OnnxInt8Dequantize:
       return new (std::nothrow) Dequant(primitive);
+    case schema::PrimitiveType_Reciprocal:
+      return new (std::nothrow) Reciprocal(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:

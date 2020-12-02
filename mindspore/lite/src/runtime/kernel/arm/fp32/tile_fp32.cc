@@ -24,6 +24,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Tile;
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t kDoubleInputsSize = 2;
+}
 int TileCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -42,6 +45,17 @@ void TileCPUKernel::ComputeStrides(const int *shape, int *strides, int ndim) {
 int TileCPUKernel::ReSize() {
   auto tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
   MS_ASSERT(tile_parameter_);
+  if (in_tensors_.size() == kDoubleInputsSize) {
+    if (in_tensors_[1]->ElementsNum() > static_cast<int>(in_tensors_[0]->shape().size())) {
+      MS_LOG(ERROR) << "tile's input1 data_num cannot be larger than input0's shape_size.";
+      return false;
+    }
+    auto input1_addr = reinterpret_cast<int *>(in_tensors_[1]->data_c());
+    for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
+      tile_parameter_->dims_[i] = i;
+      tile_parameter_->multiples_[i] = input1_addr[i];
+    }
+  }
   tile_parameter_->in_dim_ = in_tensors_.at(0)->shape().size();
   for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
     tile_parameter_->in_shape_[i] = in_tensors_.at(0)->shape().at(i);
@@ -93,4 +107,5 @@ kernel::LiteKernel *CpuTileFp32KernelCreator(const std::vector<lite::Tensor *> &
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Tile, CpuTileFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Tile, CpuTileFp32KernelCreator)
 }  // namespace mindspore::kernel

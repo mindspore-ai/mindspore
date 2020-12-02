@@ -51,6 +51,8 @@ int ElementFloor(const float *input, float *output, const int element_size);
 int ElementCeil(const float *input, float *output, const int number);
 
 int ElementNegative(const float *input, float *output, const int element_size);
+
+int ElementReciprocal(const float *input, float *output, const int element_size);
 #ifdef __cplusplus
 }
 #endif
