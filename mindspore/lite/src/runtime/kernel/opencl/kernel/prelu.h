@@ -32,16 +32,20 @@ class PReluOpenCLKernel : public OpenCLKernel {
       : OpenCLKernel(parameter, inputs, outputs) {}
   ~PReluOpenCLKernel() override = default;
 
-  int Init() override;
+  int Prepare() override;
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
   int Run() override;
   int InitWeights() override;
 
  private:
   bool enable_fp16_{false};
-  int batch_size_{};
-  int C_{};
-  int H_{};
-  int W_{};
+  uint32_t OH = {1};
+  uint32_t OW = {1};
+  uint32_t OC = {1};
+  cl_int4 weight_shape_{};
+  cl_int4 out_shape_{};
   void *weight_vector_{nullptr};
   float weight_scalar_{0.f};
   bool weight_is_scalar{false};

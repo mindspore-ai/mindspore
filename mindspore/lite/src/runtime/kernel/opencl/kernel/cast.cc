@@ -48,6 +48,10 @@ int CastOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
+  if (in_tensors_.at(0)->shape().size() == 4) {
+    MS_LOG(ERROR) << "The dim of in_tensors->shape must be 4 but your dim is : " << in_tensors_.at(0)->shape().size();
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

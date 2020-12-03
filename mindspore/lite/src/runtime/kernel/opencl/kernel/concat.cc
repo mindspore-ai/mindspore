@@ -69,11 +69,18 @@ int ConcatOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto param = reinterpret_cast<ConcatParameter *>(this->op_parameter_);
+  auto out_tensors_shape_size = out_tensors_[0]->shape().size();
   MS_LOG(DEBUG) << " concat at axis=:  " << param->axis_;
-  if (out_tensors_[0]->shape().size() > 4) {
-    MS_LOG(ERROR) << " GPU Unsupported shape.size > 4 "
-                  << "your shape().size()=:  " << out_tensors_[0]->shape().size();
+  if (out_tensors_shape_size > 4) {
+    MS_LOG(ERROR) << " GPU Unsupported shape.size > 4 ";
     return RET_ERROR;
+  }
+  for (int i = 0; i < in_tensors_.size(); ++i) {
+    auto in_tensors_shape_size = in_tensors_[i]->shape().size();
+    if (in_tensors_shape_size > 4) {
+      MS_LOG(ERROR) << " GPU Unsupported in_tensor shape.size > 4 ";
+      return RET_ERROR;
+    }
   }
   axis_ = param->axis_;
   if (axis_ < 0) {
@@ -83,15 +90,19 @@ int ConcatOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << " only support axis >= 0 and axis <= 3 ";
     return RET_ERROR;
   }
-  if (out_tensors_[0]->shape().size() < 4 && op_parameter_->type_ == PrimitiveType_Concat && axis_ != 0) {
-    if (out_tensors_[0]->shape().size() == 2) {
+  if (out_tensors_shape_size < 4 && Type() == PrimitiveType_Concat && axis_ != 0) {
+    if (out_tensors_shape_size == 2) {
       axis_ = axis_ + 2;
-    } else if (out_tensors_[0]->shape().size() == 3) {
+    } else if (out_tensors_shape_size == 3) {
       axis_ = axis_ + 1;
     } else {
-      MS_LOG(ERROR) << " Unsupported axis =:  " << axis_ << "  shape().size()=:  " << out_tensors_[0]->shape().size();
+      MS_LOG(ERROR) << " Unsupported axis =:  " << axis_ << "  shape().size()=:  " << out_tensors_shape_size;
       return RET_ERROR;
     }
+  }
+  if (in_tensors_.size() < 2 || in_tensors_.size() > 6) {
+    MS_LOG(ERROR) << "unsupported input size :" << in_tensors_.size();
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -161,12 +172,7 @@ int ConcatOpenCLKernel::Prepare() {
   if (axis_ == 3 && !Align_) {
     kernel_name += "Input" + std::to_string(in_tensors_.size()) + "UnAlign";
   } else {
-    if (2 <= in_tensors_.size() && in_tensors_.size() <= 6) {
-      kernel_name += std::to_string(in_tensors_.size()) + "inputaxis" + std::to_string(axis_);
-    } else {
-      MS_LOG(ERROR) << " input must be less than 6 and more than 2 ";
-      return RET_ERROR;
-    }
+    kernel_name += std::to_string(in_tensors_.size()) + "inputaxis" + std::to_string(axis_);
   }
 
   kernel_name += "_NHWC4";
@@ -186,19 +192,14 @@ int ConcatOpenCLKernel::Run() {
   if (axis_ == 0) {
     return RunAxis0();
   }
-  if (2 <= in_tensors_.size() && in_tensors_.size() <= 6) {
-    int arg_cn = 0;
-    for (int i = 0; i < in_tensors_.size(); ++i) {
-      ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c());
-    }
-    if (axis_ == 3 && !Align_) {
-      ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
-    } else {
-      ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
-    }
+  int arg_cn = 0;
+  for (int i = 0; i < in_tensors_.size(); ++i) {
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c());
+  }
+  if (axis_ == 3 && !Align_) {
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);
   } else {
-    MS_LOG(ERROR) << "unsupported input size :" << in_tensors_.size();
-    return RET_ERROR;
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
   }
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;

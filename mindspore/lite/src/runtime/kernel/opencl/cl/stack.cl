@@ -23,7 +23,7 @@ __kernel void stack_2input_3axis_1inshape(__read_only image2d_t input0, __read_o
   FLT4 result1 = READ_IMAGE(input0, smp_none, (int2)(0, (X)));
   FLT4 result2 = READ_IMAGE(input1, smp_none, (int2)(0, (X)));
   FLT4 result = {result1.x, result2.x, 0, 0};
-  WRITE_IMAGE(output, (int2)(coordinate_x_out, (X)), result);
+  WRITE_IMAGE(output, (int2)(Y, (X)), result);
 }
 
 // input -2D -axis = 1
