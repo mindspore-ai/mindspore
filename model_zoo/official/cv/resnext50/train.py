@@ -131,7 +131,6 @@ def parse_args(cloud_args=None):
     args.eta_min = config.eta_min
     args.T_max = config.T_max
     args.max_epoch = config.max_epoch
-    args.backbone = config.backbone
     args.warmup_epochs = config.warmup_epochs
     args.weight_decay = config.weight_decay
     args.momentum = config.momentum
@@ -213,9 +212,7 @@ def train(cloud_args=None):
     # network
     args.logger.important_info('start create network')
     # get network and init
-    network = get_network(args.backbone, num_classes=args.num_classes, platform=args.platform)
-    if network is None:
-        raise NotImplementedError('not implement {}'.format(args.backbone))
+    network = get_network(num_classes=args.num_classes, platform=args.platform)
 
     load_pretrain_model(args.pretrained, network, args)
 

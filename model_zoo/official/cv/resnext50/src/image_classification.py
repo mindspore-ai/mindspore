@@ -94,7 +94,5 @@ class Resnet(ImageClassificationNetwork):
 
 
 
-def get_network(backbone_name, **kwargs):
-    if backbone_name in ['resnext50']:
-        return Resnet(backbone_name, **kwargs)
-    return None
+def get_network(**kwargs):
+    return Resnet('resnext50', **kwargs)

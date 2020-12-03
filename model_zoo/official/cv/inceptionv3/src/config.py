@@ -20,8 +20,6 @@ from easydict import EasyDict as edict
 
 config_gpu = edict({
     'random_seed': 1,
-    'rank': 0,
-    'group_size': 1,
     'work_nums': 8,
     'decay_method': 'cosine',
     "loss_scale": 1,
@@ -47,8 +45,6 @@ config_gpu = edict({
 
 config_ascend = edict({
     'random_seed': 1,
-    'rank': 0,
-    'group_size': 1,
     'work_nums': 8,
     'decay_method': 'cosine',
     "loss_scale": 1024,
