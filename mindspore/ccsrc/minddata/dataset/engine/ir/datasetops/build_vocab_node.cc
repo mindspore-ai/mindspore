@@ -50,15 +50,12 @@ void BuildVocabNode::Print(std::ostream &out) const {
 }
 
 // Function to build BuildVocabNode
-std::vector<std::shared_ptr<DatasetOp>> BuildVocabNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status BuildVocabNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   std::shared_ptr<BuildVocabOp> build_vocab_op;
   build_vocab_op = std::make_shared<BuildVocabOp>(vocab_, columns_, freq_range_, top_k_, special_tokens_,
                                                   special_first_, num_workers_, connector_que_size_);
-  node_ops.push_back(build_vocab_op);
-  return node_ops;
+  node_ops->push_back(build_vocab_op);
+  return Status::OK();
 }
 
 Status BuildVocabNode::ValidateParams() {

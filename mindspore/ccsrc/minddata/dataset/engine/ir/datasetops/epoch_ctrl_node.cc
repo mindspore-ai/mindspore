@@ -40,11 +40,9 @@ std::shared_ptr<DatasetNode> EpochCtrlNode::Copy() {
 void EpochCtrlNode::Print(std::ostream &out) const { out << Name() + "(epoch:" + std::to_string(num_epochs_) + ")"; }
 
 // Function to build the EpochCtrlOp
-std::vector<std::shared_ptr<DatasetOp>> EpochCtrlNode::Build() {
-  // A dummy vector
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-  node_ops.push_back(std::make_shared<EpochCtrlOp>(num_epochs_));
-  return node_ops;
+Status EpochCtrlNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+  node_ops->push_back(std::make_shared<EpochCtrlOp>(num_epochs_));
+  return Status::OK();
 }
 
 // Function to validate the parameters for EpochCtrlNode

@@ -39,9 +39,11 @@ std::shared_ptr<DatasetNode> RootNode::Copy() {
 
 void RootNode::Print(std::ostream &out) const { out << Name(); }
 
-std::vector<std::shared_ptr<DatasetOp>> RootNode::Build() {
+Status RootNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   // root node doesn't build a runtime Op. this function should return Status::Error when called.
-  return {};
+  std::string err_msg = "Root node doesn't build a runtime Op";
+  MS_LOG(ERROR) << err_msg;
+  RETURN_STATUS_UNEXPECTED(err_msg);
 }
 
 // Function to validate the parameters for RootNode

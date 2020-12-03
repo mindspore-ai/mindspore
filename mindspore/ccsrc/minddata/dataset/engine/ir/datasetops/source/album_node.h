@@ -48,9 +48,10 @@ class AlbumNode : public MappableSourceNode {
   /// \return A shared pointer to the new copy
   std::shared_ptr<DatasetNode> Copy() override;
 
-  /// \brief a base class override function to create a runtime dataset op object from this class
-  /// \return shared pointer to the newly created DatasetOp
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+  /// \brief a base class override function to create the required runtime dataset op objects for this class
+  /// \param node_ops - A vector containing shared pointer to the Dataset Ops that this object will create
+  /// \return Status Status::OK() if build successfully
+  Status Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) override;
 
   /// \brief Parameters validation
   /// \return Status Status::OK() if all the parameters are valid

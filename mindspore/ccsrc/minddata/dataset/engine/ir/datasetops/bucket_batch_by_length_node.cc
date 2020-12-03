@@ -54,17 +54,15 @@ void BucketBatchByLengthNode::Print(std::ostream &out) const {
   out << Name() + "(columns:" + PrintColumns(column_names_) + ",...)";
 }
 
-std::vector<std::shared_ptr<DatasetOp>> BucketBatchByLengthNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+Status BucketBatchByLengthNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   bucket_boundaries_.insert(bucket_boundaries_.begin(), 0);
-  node_ops.push_back(std::make_shared<BucketBatchByLengthOp>(
+  node_ops->push_back(std::make_shared<BucketBatchByLengthOp>(
     column_names_, bucket_boundaries_, bucket_batch_sizes_, element_length_function_, pad_info_,
     pad_to_bucket_boundary_, drop_remainder_, connector_que_size_));
   if (bucket_boundaries_[0] == 0) {
     bucket_boundaries_.erase(bucket_boundaries_.begin());
   }
-  return node_ops;
+  return Status::OK();
 }
 
 Status BucketBatchByLengthNode::ValidateParams() {

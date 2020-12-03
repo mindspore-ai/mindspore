@@ -68,17 +68,15 @@ Status ConcatNode::ValidateParams() {
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> ConcatNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
+Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   if (children_flag_and_nums_.empty() || children_start_end_index_.empty()) {
-    node_ops.push_back(std::make_shared<ConcatOp>(connector_que_size_));
+    node_ops->push_back(std::make_shared<ConcatOp>(connector_que_size_));
   } else {
-    node_ops.push_back(std::make_shared<ConcatOp>(connector_que_size_, sampler_->Build(), children_flag_and_nums_,
-                                                  children_start_end_index_));
+    node_ops->push_back(std::make_shared<ConcatOp>(connector_que_size_, sampler_->Build(), children_flag_and_nums_,
+                                                   children_start_end_index_));
   }
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Visitor accepting method for NodePass

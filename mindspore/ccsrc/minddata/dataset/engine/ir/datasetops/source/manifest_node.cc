@@ -81,27 +81,23 @@ Status ManifestNode::ValidateParams() {
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> ManifestNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status ManifestNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   // Do internal Schema generation.
   auto schema = std::make_unique<DataSchema>();
-  RETURN_EMPTY_IF_ERROR(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
+  RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
   TensorShape scalar = TensorShape::CreateScalar();
-  RETURN_EMPTY_IF_ERROR(
+  RETURN_IF_NOT_OK(
     schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
 
   std::shared_ptr<ManifestOp> manifest_op;
   manifest_op =
     std::make_shared<ManifestOp>(num_workers_, rows_per_buffer_, dataset_file_, connector_que_size_, decode_,
                                  class_index_, std::move(schema), std::move(sampler_->Build()), usage_);
-  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
-  node_ops.push_back(manifest_op);
+  node_ops->push_back(manifest_op);
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Get the shard id of node

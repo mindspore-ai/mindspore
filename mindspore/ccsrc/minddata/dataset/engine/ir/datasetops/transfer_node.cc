@@ -66,7 +66,7 @@ Status TransferNode::ValidateParams() {
 }
 
 // Function to build TransferNode
-std::vector<std::shared_ptr<DatasetOp>> TransferNode::Build() {
+Status TransferNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   if (queue_name_.empty()) {
     // Get a uuid for queue name
     queue_name_ = Services::GetUniqueID();
@@ -90,21 +90,18 @@ std::vector<std::shared_ptr<DatasetOp>> TransferNode::Build() {
   } else if (device_type_ == kAscendDevice) {
     type = DeviceQueueOp::DeviceType::Ascend;
   } else {
-    MS_LOG(ERROR) << "Unknown device target.";
-    return {};
+    std::string err_msg = "Unknown device target.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
   // Get device ID (shard ID) from children
   device_id_ = 0;
-  build_status = this->GetShardId(&device_id_);  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(this->GetShardId(&device_id_));
 
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  node_ops.push_back(std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, prefetch_size_, send_epoch_end_,
-                                                     total_batch_, create_data_info_queue_));
-  return node_ops;
+  node_ops->push_back(std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, prefetch_size_, send_epoch_end_,
+                                                      total_batch_, create_data_info_queue_));
+  return Status::OK();
 }
 
 // Visitor accepting method for NodePass

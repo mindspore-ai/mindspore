@@ -45,14 +45,14 @@ void GeneratorNode::Print(std::ostream &out) const {
 GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema)
     : generator_function_(generator_function), schema_(schema) {}
 
-std::vector<std::shared_ptr<DatasetOp>> GeneratorNode::Build() {
+Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   std::unique_ptr<DataSchema> data_schema = std::make_unique<DataSchema>();
 
   if (schema_ != nullptr) {
     column_names_.clear();
     column_types_.clear();
     std::string schema_json_string = schema_->to_json();
-    RETURN_EMPTY_IF_ERROR(data_schema->LoadSchemaString(schema_json_string, {}));
+    RETURN_IF_NOT_OK(data_schema->LoadSchemaString(schema_json_string, {}));
 
     for (int32_t i = 0; i < data_schema->NumColumns(); i++) {
       ColDescriptor col = data_schema->column(i);
@@ -61,8 +61,6 @@ std::vector<std::shared_ptr<DatasetOp>> GeneratorNode::Build() {
     }
   }
 
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
   // GeneratorOp's constructor takes in a prefetch_size, which isn't being set by user nor is it being used by
   // GeneratorOp internally. Here it is given a zero which is the default in generator builder
   std::shared_ptr<GeneratorOp> op = std::make_shared<GeneratorOp>(generator_function_, column_names_, column_types_, 0,
@@ -72,17 +70,11 @@ std::vector<std::shared_ptr<DatasetOp>> GeneratorNode::Build() {
   // needs to be called when the op is built. The caveat is that Init needs to be made public (before it is private).
   // This method can be privatized once we move Init() to Generator's functor. However, that is a bigger change which
   // best be delivered when the test cases for this api is ready.
-  Status rc = op->Init();
-  build_status = rc;  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(op->Init());
 
-  if (rc.IsOk()) {
-    node_ops.push_back(op);
-  } else {
-    MS_LOG(ERROR) << "Fail to Init GeneratorOp : " << rc.ToString();
-  }
+  node_ops->push_back(op);
 
-  return node_ops;
+  return Status::OK();
 }
 
 // no validation is needed for generator op.

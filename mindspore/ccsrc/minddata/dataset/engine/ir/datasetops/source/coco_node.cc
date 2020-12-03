@@ -63,10 +63,7 @@ Status CocoNode::ValidateParams() {
 }
 
 // Function to build CocoNode
-std::vector<std::shared_ptr<DatasetOp>> CocoNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   CocoOp::TaskType task_type;
   if (task_ == "Detection") {
     task_type = CocoOp::TaskType::Detection;
@@ -79,52 +76,52 @@ std::vector<std::shared_ptr<DatasetOp>> CocoNode::Build() {
   }
 
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
-  RETURN_EMPTY_IF_ERROR(
+  RETURN_IF_NOT_OK(
     schema->AddColumn(ColDescriptor(std::string("image"), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
   switch (task_type) {
     case CocoOp::TaskType::Detection:
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("bbox"), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("category_id"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("iscrowd"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       break;
     case CocoOp::TaskType::Stuff:
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("segmentation"), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("iscrowd"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       break;
     case CocoOp::TaskType::Keypoint:
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("keypoints"), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("num_keypoints"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       break;
     case CocoOp::TaskType::Panoptic:
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("bbox"), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("category_id"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+      RETURN_IF_NOT_OK(schema->AddColumn(
         ColDescriptor(std::string("iscrowd"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-      RETURN_EMPTY_IF_ERROR(
+      RETURN_IF_NOT_OK(
         schema->AddColumn(ColDescriptor(std::string("area"), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       break;
     default:
-      MS_LOG(ERROR) << "CocoNode::Build : Invalid task type";
-      return {};
+      std::string err_msg = "CocoNode::Build : Invalid task type";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_UNEXPECTED(err_msg);
   }
   std::shared_ptr<CocoOp> op =
     std::make_shared<CocoOp>(task_type, dataset_dir_, annotation_file_, num_workers_, rows_per_buffer_,
                              connector_que_size_, decode_, std::move(schema), std::move(sampler_->Build()));
-  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
-  node_ops.push_back(op);
+  node_ops->push_back(op);
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Get the shard id of node

@@ -35,7 +35,8 @@ class MindDataTestOptimizationPass : public UT::DatasetOpTesting {
 
   // this recursive function helps build a ExecutionTree from a IR node, it is copied from TreeAdapter
   Status DFSBuild(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op, ExecutionTree *tree) {
-    std::vector<std::shared_ptr<DatasetOp>> ops = ir->Build();
+    std::vector<std::shared_ptr<DatasetOp>> ops;
+    RETURN_IF_NOT_OK(ir->Build(&ops));
     CHECK_FAIL_RETURN_UNEXPECTED(!ops.empty() && tree != nullptr && op != nullptr, "Fail To Build Tree.");
     (*op) = ops.front();
     RETURN_IF_NOT_OK(tree->AssociateNode(*op));

@@ -85,10 +85,7 @@ Status CSVNode::ValidateParams() {
 }
 
 // Function to build CSVNode
-std::vector<std::shared_ptr<DatasetOp>> CSVNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
   // CSVOp by itself is a non-mappable dataset that does not support sampling.
@@ -120,8 +117,7 @@ std::vector<std::shared_ptr<DatasetOp>> CSVNode::Build() {
                             rows_per_buffer_, num_samples_, worker_connector_size_, connector_que_size_, shuffle_files,
                             num_shards_, shard_id_, std::move(sampler_->Build()));
 
-  build_status = csv_op->Init();  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(csv_op->Init());
 
   if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
@@ -129,21 +125,19 @@ std::vector<std::shared_ptr<DatasetOp>> CSVNode::Build() {
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    build_status = CsvOp::CountAllFileRows(sorted_dataset_files, column_names_.empty(), &num_rows);
-    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
+    RETURN_IF_NOT_OK(CsvOp::CountAllFileRows(sorted_dataset_files, column_names_.empty(), &num_rows));
 
     // Add the shuffle op after this op
-    build_status = AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
-                                rows_per_buffer_, &shuffle_op);
-    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
+    RETURN_IF_NOT_OK(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
+                                  rows_per_buffer_, &shuffle_op));
 
-    node_ops.push_back(shuffle_op);
+    node_ops->push_back(shuffle_op);
   }
-  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
-  node_ops.push_back(csv_op);
+  node_ops->push_back(csv_op);
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Get the shard id of node

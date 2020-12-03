@@ -312,6 +312,15 @@ def test_tf_wrong_schema():
     assert exception_occurred, "test_tf_wrong_schema failed."
 
 
+def test_tfrecord_invalid_columns():
+    logger.info("test_tfrecord_columns_list")
+    invalid_columns_list = ["not_exist"]
+    data = ds.TFRecordDataset(FILES, columns_list=invalid_columns_list)
+    with pytest.raises(RuntimeError) as info:
+        _ = data.create_dict_iterator(num_epochs=1, output_numpy=True).__next__()
+    assert "Invalid data, failed to find column name: not_exist" in str(info.value)
+
+
 if __name__ == '__main__':
     test_tfrecord_shape()
     test_tfrecord_read_all_dataset()
@@ -331,3 +340,4 @@ if __name__ == '__main__':
     test_tfrecord_schema_columns_list()
     test_tfrecord_invalid_files()
     test_tf_wrong_schema()
+    test_tfrecord_invalid_columns()

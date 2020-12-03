@@ -63,10 +63,7 @@ Status TextFileNode::ValidateParams() {
 }
 
 // Function to build TextFileNode
-std::vector<std::shared_ptr<DatasetOp>> TextFileNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
   // TextFileOp by itself is a non-mappable dataset that does not support sampling.
@@ -81,15 +78,13 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileNode::Build() {
 
   // Do internal Schema generation.
   auto schema = std::make_unique<DataSchema>();
-  RETURN_EMPTY_IF_ERROR(
-    schema->AddColumn(ColDescriptor("text", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+  RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("text", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
 
   // Create and initalize TextFileOp
   std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
     num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, std::move(schema), sorted_dataset_files,
     connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(sampler_->Build()));
-  build_status = text_file_op->Init();  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(text_file_op->Init());
 
   if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
@@ -97,22 +92,19 @@ std::vector<std::shared_ptr<DatasetOp>> TextFileNode::Build() {
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    build_status = TextFileOp::CountAllFileRows(sorted_dataset_files, &num_rows);
-    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
+    RETURN_IF_NOT_OK(TextFileOp::CountAllFileRows(sorted_dataset_files, &num_rows));
 
     // Add the shuffle op after this op
-    build_status = AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
-                                rows_per_buffer_, &shuffle_op);
-    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
-    node_ops.push_back(shuffle_op);
+    RETURN_IF_NOT_OK(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
+                                  rows_per_buffer_, &shuffle_op));
+    node_ops->push_back(shuffle_op);
   }
-  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   // Add TextFileOp
-  node_ops.push_back(text_file_op);
+  node_ops->push_back(text_file_op);
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Get the shard id of node

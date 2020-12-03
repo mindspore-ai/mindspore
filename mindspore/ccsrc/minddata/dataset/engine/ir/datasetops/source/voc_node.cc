@@ -84,41 +84,37 @@ Status VOCNode::ValidateParams() {
 }
 
 // Function to build VOCNode
-std::vector<std::shared_ptr<DatasetOp>> VOCNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status VOCNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   auto schema = std::make_unique<DataSchema>();
   VOCOp::TaskType task_type_;
 
   if (task_ == "Segmentation") {
     task_type_ = VOCOp::TaskType::Segmentation;
-    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+    RETURN_IF_NOT_OK(schema->AddColumn(
       ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+    RETURN_IF_NOT_OK(schema->AddColumn(
       ColDescriptor(std::string(kColumnTarget), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
   } else if (task_ == "Detection") {
     task_type_ = VOCOp::TaskType::Detection;
-    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+    RETURN_IF_NOT_OK(schema->AddColumn(
       ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+    RETURN_IF_NOT_OK(schema->AddColumn(
       ColDescriptor(std::string(kColumnBbox), DataType(DataType::DE_FLOAT32), TensorImpl::kFlexible, 1)));
-    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+    RETURN_IF_NOT_OK(schema->AddColumn(
       ColDescriptor(std::string(kColumnLabel), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+    RETURN_IF_NOT_OK(schema->AddColumn(
       ColDescriptor(std::string(kColumnDifficult), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-    RETURN_EMPTY_IF_ERROR(schema->AddColumn(
+    RETURN_IF_NOT_OK(schema->AddColumn(
       ColDescriptor(std::string(kColumnTruncate), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
   }
 
   std::shared_ptr<VOCOp> voc_op;
   voc_op = std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, rows_per_buffer_,
                                    connector_que_size_, decode_, std::move(schema), std::move(sampler_->Build()));
-  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
-  node_ops.push_back(voc_op);
-  return node_ops;
+  node_ops->push_back(voc_op);
+  return Status::OK();
 }
 
 // Get the shard id of node
