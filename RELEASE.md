@@ -1,17 +1,26 @@
-# MindSpore x.x.x Release Notes
-
+# MindSpore 1.1.0 Release Notes
 ## MindSpore
-
 ### Major Features and Improvements
+#### NewModels
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### FrontEnd
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### Auto Parallel
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### Executor
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### MDP
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### DataSet
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### Profiling & Debugger
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+### API Change
+#### Backwards Incompatible Change
+##### Python API
 
-### Backwards Incompatible Change
-
-#### Python API
-
-##### `API name` xxx ([!id](PR_link))
-
+###### `API name` xxx ([!id](PR_link))
 Description.
-
 > - This section is an example.
 > - The interface name should be enclosed by grave accent characters, such as `API name`.
 > - Fenced code blocks should be surrounded by blank lines.
@@ -53,65 +62,49 @@ Description.
 </tr>
 </table>
 
-#### C++ API
+##### C++ API
 
-### Deprecations
+#### Deprecations
 
-#### Python API
+##### Python API
 
-#### C++ API
-
-### New Features
-
-#### Python API
-
-#### C++ API
-
-### Improvements
-
-#### Python API
-
-#### C++ API
+##### C++ API
 
 ### Bug fixes
-
-#### Python API
-
-#### C++ API
-
+#### NewModels
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### FrontEnd
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### Auto Parallel
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### Executor
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### MDP
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### DataSet
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+#### Profiling & Debugger
+  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
 ## MindSpore Lite
 
 ### Major Features and Improvements
 
-### Backwards Incompatible Change
+### API Change
 
-#### C++ API
+#### API Incompatible Change
 
-#### Java API
+##### C++ API
 
-### Deprecations
+##### Java API
 
-#### C++ API
+#### Deprecations
 
-#### Java API
+##### C++ API
 
-### New Features
-
-#### C++ API
-
-#### Java API
-
-### Improvements
-
-#### C++ API
-
-#### Java API
+##### Java API
 
 ### Bug fixes
 
-#### C++ API
-
-#### Java API
 
 # MindSpore 1.0.0 Release Notes
 
