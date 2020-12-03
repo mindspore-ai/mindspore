@@ -15,9 +15,8 @@
  */
 
 #include "tools/converter/parser/caffe/caffe_converter.h"
+#include "tools/converter/parser/caffe/caffe_model_parser.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 CaffeConverter::CaffeConverter() { modelParser = new CaffeModelParser(); }
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

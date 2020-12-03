@@ -19,33 +19,18 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                               schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffeScaleParser";
-  if (weightVec == nullptr) {
-    MS_LOG(ERROR) << "weightVec is null";
-    return RET_NULL_PTR;
-  }
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
+PrimitiveC *CaffeScaleParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                 const caffe::LayerParameter &weight) {
   std::unique_ptr<schema::ScaleT> attr = std::make_unique<schema::ScaleT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   if (weight.blobs_size() + weight.bottom_size() < 2) {
     MS_LOG(ERROR) << "Scale bottom size:" << weight.bottom_size() << ", blobs size:" << weight.blobs_size()
                   << " invalid in layer " << weight.name().c_str();
-    return RET_ERROR;
+    return nullptr;
   }
 
   const caffe::ScaleParameter &scaleParam = weight.scale_param();
@@ -53,43 +38,14 @@ STATUS CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::
     uint32_t axis_index = 1;
     if (GetAxisIndex(scaleParam.axis(), &axis_index)) {
       MS_LOG(ERROR) << "scale get axis failed for layer " << weight.name().c_str();
-      return RET_ERROR;
+      return nullptr;
     }
   }
   attr->axis = 1;
-
-  // parse scale
-  if (weight.blobs().size() == 1) {
-    auto scale = ConvertWeight(weight.blobs(0));
-    if (scale == nullptr) {
-      MS_LOG(ERROR) << "Scale Convert blobs(0) for layer " << weight.name().c_str() << " failed.";
-      return RET_ERROR;
-    }
-    weightVec->push_back(scale);
-  } else if (weight.blobs().size() >= 2) {
-    auto scale = ConvertWeight(weight.blobs(0));
-    if (scale == nullptr) {
-      MS_LOG(ERROR) << "Scale Convert blobs(0) for layer " << weight.name().c_str() << " failed.";
-      return RET_ERROR;
-    }
-    weightVec->push_back(scale);
-
-    // parse bias
-    bool scaleBias = scaleParam.bias_term();
-    if (scaleBias) {
-      auto bias = ConvertWeight(weight.blobs_size() > 1 ? weight.blobs(1) : weight.blobs(0));
-      if (bias == nullptr) {
-        MS_LOG(ERROR) << "Scale Convert blobs(1) for layer " << weight.name().c_str() << " failed.";
-        return RET_ERROR;
-      }
-      weightVec->push_back(bias);
-    }
-  }
-
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_Scale;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Scale;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index) {

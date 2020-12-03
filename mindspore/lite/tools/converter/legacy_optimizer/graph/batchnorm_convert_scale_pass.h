@@ -23,6 +23,7 @@
 #include <utility>
 #include "tools/common/graph_util.h"
 #include "tools/converter/optimizer.h"
+#include "tools/converter/converter_flags.h"
 
 using mindspore::schema::TensorT;
 namespace mindspore {
@@ -40,6 +41,8 @@ class BatchNormConvertScalePass : public GraphPass {
   ~BatchNormConvertScalePass() = default;
 
   STATUS Run(MetaGraphT *graph) override;
+
+  void SetFmk(converter::FmkType fmk) { this->fmkType = fmk; }
 
  protected:
   STATUS GetTransParam(MetaGraphT *graph, const std::unique_ptr<CNodeT> &bnNode);
@@ -60,6 +63,7 @@ class BatchNormConvertScalePass : public GraphPass {
   float *transBias = nullptr;
   std::unique_ptr<TensorT> newScaleWeightTensor = nullptr;
   std::unique_ptr<TensorT> newScaleBiasTensor = nullptr;
+  converter::FmkType fmkType = converter::FmkType_TF;
 };
 }  // namespace lite
 }  // namespace mindspore

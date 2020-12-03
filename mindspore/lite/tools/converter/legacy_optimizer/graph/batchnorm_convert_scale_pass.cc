@@ -19,6 +19,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "tools/converter/converter_flags.h"
 #include "third_party/securec/include/securec.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/tensor_util.h"
@@ -27,10 +28,9 @@
 
 namespace mindspore {
 namespace lite {
-#define CAFFE_BATCHNORM_OP_WEIGHT_NUM 2
-#define TF_BATCHNORM_OP_WEIGHT_NUM 4
 #define CAFFE_BATCHNORM_MEAN_INDEX 0
 #define CAFFE_BATCHNORM_VARIANCE_INDEX 1
+#define CAFFE_BATCHNORM_SCALE_INDEX 2
 #define TF_BATCHNORM_SCALE_INDEX 0
 #define TF_BATCHNORM_BIAS_INDEX 1
 #define TF_BATCHNORM_MEAN_INDEX 2
@@ -237,18 +237,27 @@ STATUS BatchNormConvertScalePass::GetBnWeightTensors(MetaGraphT *graph, BNWeight
   MS_ASSERT(graph->allTensors.size() > bnNode->inputIndex.at(1));
   auto bnWeightTensorIdxes = bnNode->inputIndex;
   bnWeightTensorIdxes.erase(bnWeightTensorIdxes.begin());
-  if (bnWeightTensorIdxes.size() == CAFFE_BATCHNORM_OP_WEIGHT_NUM) {
+  if (fmkType == converter::FmkType_CAFFE) {
     bnWeightTensors->meanTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_MEAN_INDEX]).get();
     bnWeightTensors->varianceTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_VARIANCE_INDEX]).get();
-  } else if (bnWeightTensorIdxes.size() == TF_BATCHNORM_OP_WEIGHT_NUM) {
+    auto scaleTensor = graph->allTensors.at(bnWeightTensorIdxes[CAFFE_BATCHNORM_SCALE_INDEX]).get();
+
+    // calibrate mean and variance
+    float scale_factor_data = (reinterpret_cast<float *>(scaleTensor->data.data()))[0];
+    float scale_factor = scale_factor_data == 0 ? 0 : 1 / scale_factor_data;
+    auto mean_data = reinterpret_cast<float *>(bnWeightTensors->meanTensor->data.data());
+    auto variance_data = reinterpret_cast<float *>(bnWeightTensors->varianceTensor->data.data());
+    for (size_t i = 0; i < GetShapeSize(*bnWeightTensors->meanTensor); i++) {
+      mean_data[i] *= scale_factor;
+    }
+    for (size_t i = 0; i < GetShapeSize(*bnWeightTensors->varianceTensor); i++) {
+      variance_data[i] *= scale_factor;
+    }
+  } else {
     bnWeightTensors->scaleTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_SCALE_INDEX]).get();
     bnWeightTensors->biasTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_BIAS_INDEX]).get();
     bnWeightTensors->meanTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_MEAN_INDEX]).get();
     bnWeightTensors->varianceTensor = graph->allTensors.at(bnWeightTensorIdxes[TF_BATCHNORM_VARIANCE_INDEX]).get();
-  } else {
-    MS_LOG(ERROR) << "BatchNorm should has 2 or 4 weight tensors, current number of weight tensors: "
-                  << bnWeightTensorIdxes.size();
-    return RET_ERROR;
   }
 
   if (bnWeightTensors->meanTensor == nullptr) {

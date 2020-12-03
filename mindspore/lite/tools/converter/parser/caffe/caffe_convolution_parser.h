@@ -29,11 +29,10 @@ class CaffeConvolutionParser : public CaffeNodeParser {
   CaffeConvolutionParser() : CaffeNodeParser("convolution") {}
   ~CaffeConvolutionParser() override = default;
 
-  STATUS Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight, schema::CNodeT *op,
-               std::vector<schema::TensorT *> *weightVec) override;
+  PrimitiveC *ParseLitePrimitive(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 
  private:
-  static STATUS ParseGroupConvolution(schema::CNodeT *op, schema::Conv2DT *attr);
+  static STATUS ParseGroupConvolution(schema::PrimitiveT *primitiveT, schema::Conv2DT *attr);
 };
 }  // namespace lite
 }  // namespace mindspore

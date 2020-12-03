@@ -19,27 +19,12 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight,
-                              schema::CNodeT *op, std::vector<schema::TensorT *> *weightVec) {
-  MS_LOG(DEBUG) << "parse CaffeCropParser";
-  if (weightVec == nullptr) {
-    MS_LOG(ERROR) << "weightVec is null";
-    return RET_NULL_PTR;
-  }
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
+PrimitiveC *CaffeCropParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
+                                                const caffe::LayerParameter &weight) {
   std::unique_ptr<schema::CropT> attr = std::make_unique<schema::CropT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   if (!proto.has_crop_param()) {
@@ -66,11 +51,10 @@ STATUS CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::L
       attr->offsets = offsets;
     }
   }
-
-  op->name = proto.name();
-  op->primitive->value.type = schema::PrimitiveType_Crop;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  primitive->value.type = schema::PrimitiveType_Crop;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 CaffeNodeRegistrar g_caffeCropParser("Crop", new CaffeCropParser());

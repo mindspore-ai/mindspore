@@ -51,7 +51,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   {
     Optimizer unusedOpRemoveOptimizer;
     unusedOpRemoveOptimizer.AddPass(new UnusedNodeRemovePass());
-    if (ctx.trainModel == false) {
+    if (!ctx.trainModel) {
       unusedOpRemoveOptimizer.AddPass(new DropoutNodeRemovePass());
     }
     unusedOpRemoveOptimizer.AddPass(new IsolatedNodeRemovePass());
@@ -87,8 +87,14 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   // postconvert pass
   {
     Optimizer fusionOptimizer;
-    if (ctx.trainModel == false) {
-      fusionOptimizer.AddPass(new (std::nothrow) BatchNormConvertScalePass());
+    if (!ctx.trainModel) {
+      auto batch_norm_scale_pass = new (std::nothrow) BatchNormConvertScalePass();
+      if (batch_norm_scale_pass == nullptr) {
+        MS_LOG(ERROR) << "new batch_norm_scale_pass failed.";
+        return RET_ERROR;
+      }
+      batch_norm_scale_pass->SetFmk(ctx.fmk);
+      fusionOptimizer.AddPass(batch_norm_scale_pass);
     }
     fusionOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     status = fusionOptimizer.Run(graphDefT);
@@ -116,7 +122,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     formatTransOptimizer.AddPass(new (std::nothrow) TransOpInsertPass());
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    if (ctx.trainModel == false && ctx.fmk != converter::FmkType_ONNX) {
+    if (!ctx.trainModel && ctx.fmk != converter::FmkType_ONNX) {
       formatTransOptimizer.AddPass(new (std::nothrow) GlobalFormatTransformPass());
       formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     }
