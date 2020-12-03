@@ -53,6 +53,25 @@ void ConvDw3x3Pad(float *output_data, const float *input_data, const float *weig
 void ConvDw3x3(float *output_data, float *buffer, const float *input_data, const float *weight_data,
                const float *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 
+bool CheckConvDwUseIndirectBuffer(const ConvParameter *conv_param);
+
+void ConvDwInitIndirection(float **indirect_buffer, float *src, float *zero_ptr, const ConvParameter *conv_param,
+                           int step_h, int step_w);
+
+#ifdef ENABLE_ARM64
+void ConvDwFp32Indirect3x3(float *output, float **input, const float *weights, const float *bias, int channels,
+                           int output_width, size_t input_stride, size_t relu, size_t relu6);
+
+void ConvDwFp32Indirect5x5(float *output, float **input, const float *weights, const float *bias, int channels,
+                           int output_width, size_t input_stride, size_t relu, size_t relu6);
+#endif
+
+void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,
+                           int output_width, int input_stride, bool relu, bool relu6, int kernel);
+
+void ConvDwIndirection(float *output_data, float **indirect_buffer, const float *weight_data, const float *bias_data,
+                       float *zero_ptr, const ConvParameter *conv_param, int task_id);
+
 void DeconvDwSWFp32(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
                     const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
 

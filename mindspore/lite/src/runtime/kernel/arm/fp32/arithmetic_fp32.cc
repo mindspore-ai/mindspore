@@ -74,6 +74,9 @@ int ArithmeticCPUKernel::PreProcess() {
 }
 
 int ArithmeticCPUKernel::ReSize() {
+  auto arithmetic_lite_primitive = (lite::Arithmetic *)primitive_;
+  arithmeticParameter_->broadcasting_ = arithmetic_lite_primitive->Broadcasting();
+  arithmeticParameter_->ndim_ = arithmetic_lite_primitive->NDims();
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat16) {
     data_type_ = kDataTypeFloat;
   } else {
