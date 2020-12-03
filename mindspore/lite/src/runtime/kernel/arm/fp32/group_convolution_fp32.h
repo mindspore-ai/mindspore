@@ -41,15 +41,17 @@ class GroupConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int ReSize() override;
   int Run() override;
   int PreProcess() override;
-  void SeparateInput(int group_id);
-  void PostConcat(int group_id);
+  virtual void SeparateInput(int group_id);
+  virtual void PostConcat(int group_id);
   void FreeSubKernel();
 
- private:
+ protected:
   std::vector<kernel::LiteKernel *> group_convs_;
+  const int group_num_;
+
+ private:
   float *ori_in_data_ = nullptr;   // do not free
   float *ori_out_data_ = nullptr;  // do not free
-  const int group_num_;
 };
 }  // namespace mindspore::kernel
 

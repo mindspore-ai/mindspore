@@ -221,7 +221,7 @@ void FreeMemoryFp16(const std::vector<kernel::LiteKernel *> &group_convs, const 
   }
 }
 
-lite::Tensor *CreateInputTensor(TypeId data_type, std::vector<int> in_shape, bool infered_flag) {
+lite::Tensor *CreateInputTensorFp16(TypeId data_type, std::vector<int> in_shape, bool infered_flag) {
   auto in_tensor = new (std::nothrow) lite::Tensor(data_type, in_shape, Format_NHWC, lite::Tensor::Category::VAR);
   if (in_tensor == nullptr) {
     MS_LOG(ERROR) << "new in_tensor failed.";
@@ -238,8 +238,8 @@ lite::Tensor *CreateInputTensor(TypeId data_type, std::vector<int> in_shape, boo
   return in_tensor;
 }
 
-lite::Tensor *CreateFilterTensor(TypeId data_type, std::vector<int> filter_shape,
-                                 const std::vector<lite::Tensor *> &inputs, int copy_length, int index) {
+lite::Tensor *CreateFilterTensorFp16(TypeId data_type, std::vector<int> filter_shape,
+                                     const std::vector<lite::Tensor *> &inputs, int copy_length, int index) {
   auto filter_tensor =
     new (std::nothrow) lite::Tensor(data_type, filter_shape, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
   if (filter_tensor == nullptr) {
@@ -263,8 +263,8 @@ lite::Tensor *CreateFilterTensor(TypeId data_type, std::vector<int> filter_shape
   return filter_tensor;
 }
 
-lite::Tensor *CreateBiasTensor(TypeId data_type, std::vector<int> bias_shape, const std::vector<lite::Tensor *> &inputs,
-                               int new_out_channel, int index) {
+lite::Tensor *CreateBiasTensorFp16(TypeId data_type, std::vector<int> bias_shape,
+                                   const std::vector<lite::Tensor *> &inputs, int new_out_channel, int index) {
   auto *origin_bias = inputs.at(kBiasIndex)->data_c();
   auto bias_tensor =
     new (std::nothrow) lite::Tensor(data_type, bias_shape, Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
@@ -289,8 +289,8 @@ lite::Tensor *CreateBiasTensor(TypeId data_type, std::vector<int> bias_shape, co
   return bias_tensor;
 }
 
-lite::Tensor *CreateOutputTensor(std::vector<int> out_shape, const std::vector<lite::Tensor *> &outputs,
-                                 bool infered_flag, int index) {
+lite::Tensor *CreateOutputTensorFp16(std::vector<int> out_shape, const std::vector<lite::Tensor *> &outputs,
+                                     bool infered_flag, int index) {
   auto out_tensor = new (std::nothrow) lite::Tensor();
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "new tmp_out_tensor failed.";
@@ -356,7 +356,7 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
       return nullptr;
     }
     // create new input for each group
-    auto in_tensor = CreateInputTensor(mindspore::kNumberTypeFloat16, in_shape, infered_flag);
+    auto in_tensor = CreateInputTensorFp16(mindspore::kNumberTypeFloat16, in_shape, infered_flag);
     if (in_tensor == nullptr) {
       delete new_conv_parameter;
       FreeMemoryFp16(group_convs, new_inputs, new_outputs);
@@ -367,7 +367,8 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
 
     // create new weight
     int copy_length = conv_param->kernel_h_ * conv_param->kernel_w_ * new_in_channel * new_out_channel;
-    auto filter_tensor = CreateFilterTensor(inputs.at(kWeightIndex)->data_type(), filter_shape, inputs, copy_length, i);
+    auto filter_tensor =
+      CreateFilterTensorFp16(inputs.at(kWeightIndex)->data_type(), filter_shape, inputs, copy_length, i);
     if (filter_tensor == nullptr) {
       delete new_conv_parameter;
       FreeMemoryFp16(group_convs, new_inputs, new_outputs);
@@ -378,7 +379,8 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
 
     // if has bias, create new bias
     if (has_bias) {
-      auto bias_tensor = CreateBiasTensor(inputs.at(kBiasIndex)->data_type(), bias_shape, inputs, new_out_channel, i);
+      auto bias_tensor =
+        CreateBiasTensorFp16(inputs.at(kBiasIndex)->data_type(), bias_shape, inputs, new_out_channel, i);
       if (bias_tensor == nullptr) {
         delete new_conv_parameter;
         FreeMemoryFp16(group_convs, new_inputs, new_outputs);
@@ -390,7 +392,7 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
 
     // create new output tensors
     for (size_t j = 0; j < outputs.size(); ++j) {
-      auto out_tensor = CreateOutputTensor(out_shape, outputs, infered_flag, j);
+      auto out_tensor = CreateOutputTensorFp16(out_shape, outputs, infered_flag, j);
       if (out_tensor == nullptr) {
         delete new_conv_parameter;
         FreeMemoryFp16(group_convs, new_inputs, new_outputs);

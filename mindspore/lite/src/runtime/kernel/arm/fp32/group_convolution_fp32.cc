@@ -28,6 +28,11 @@ using mindspore::schema::PrimitiveType_Conv2D;
 namespace mindspore::kernel {
 int GroupConvolutionCPUKernel::Init() {
   for (int i = 0; i < group_num_; ++i) {
+    auto sub_conv = group_convs_.at(i);
+    if (sub_conv == nullptr) {
+      MS_LOG(ERROR) << "sub con " << i << " is null.";
+      return RET_ERROR;
+    }
     auto ret = group_convs_.at(i)->Init();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Sub kernel init failed.";
@@ -127,7 +132,7 @@ int GroupConvolutionCPUKernel::PreProcess() {
     auto ret = output->MallocData();
     if (ret != RET_OK) {
       FreeSubKernel();
-      MS_LOG(ERROR) << "fp32 group conv out tensor malloc data failed.";
+      MS_LOG(ERROR) << "group conv out tensor malloc data failed.";
       return ret;
     }
   }
