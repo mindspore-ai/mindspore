@@ -55,12 +55,12 @@ class ClassSensitivity(LabelAgnosticMetric):
             >>> # prepare your explainer to be evaluated, e.g., Gradient.
             >>> gradient = Gradient(network)
             >>> input_x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
-            >>> class_sensitivity = ClassSensitivity()
+            >>> # class_sensitivity is a ClassSensitivity instance
             >>> res = class_sensitivity.evaluate(gradient, input_x)
         """
         self._check_evaluate_param(explainer, inputs)
 
-        outputs = explainer.model(inputs)
+        outputs = explainer.network(inputs)
 
         max_confidence_label = ops.argmax(outputs)
         min_confidence_label = ops.argmin(outputs)

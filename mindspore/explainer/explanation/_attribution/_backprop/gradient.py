@@ -59,7 +59,17 @@ class Gradient(Attribution):
     Args:
         network (Cell): The black-box model to be explained.
 
+    Inputs:
+        - **inputs** (Tensor) - The input data to be explained, a 4D tensor of shape :math:`(N, C, H, W)`.
+        - **targets** (Tensor, int) - The label of interest. It should be a 1D or 0D tensor, or an integer.
+          If it is a 1D tensor, its length should be the same as `inputs`.
+
+    Outputs:
+        Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
+
     Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
         >>> from mindspore.explainer.explanation import Gradient
         >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
         >>> # init Gradient with a trained network
@@ -67,6 +77,9 @@ class Gradient(Attribution):
         >>> param_dict = load_checkpoint("resnet50.ckpt")
         >>> load_param_into_net(net, param_dict)
         >>> gradient = Gradient(net)
+        >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
+        >>> label = 5
+        >>> saliency = gradient(inputs, label)
     """
 
     def __init__(self, network):
@@ -79,25 +92,7 @@ class Gradient(Attribution):
         self._aggregation_fn = abs_max
 
     def __call__(self, inputs, targets):
-        """
-        Call function for `Gradient`.
-
-        Args:
-            inputs (Tensor): The input data to be explained, a 4D tensor of shape :math:`(N, C, H, W)`.
-            targets (Tensor, int): The label of interest. It should be a 1D or 0D tensor, or an integer.
-                If it is a 1D tensor, its length should be the same as `inputs`.
-
-        Returns:
-            Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> import numpy as np
-            >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
-            >>> label = 5
-            >>> # gradient is a Gradient object, parse data and the target label to be explained and get the attribution
-            >>> saliency = gradient(inputs, label)
-        """
+        """Call function for `Gradient`."""
         self._verify_data(inputs, targets)
         inputs = unify_inputs(inputs)
         targets = unify_targets(targets)

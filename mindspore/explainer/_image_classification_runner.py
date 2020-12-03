@@ -64,7 +64,10 @@ class ImageClassificationRunner:
             should provides [images], [images, labels] or [images, labels, bboxes] as columns. The label list must
             share the exact same length and order of the network outputs.
         network (Cell): The network(with logit outputs) to be explained.
-        activation_fn (Cell): The activation function for converting network's output to probabilities.
+        activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
+            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
+            `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
+            when combining this function with network, the final output is the probability of the input.
 
     Examples:
         >>> from mindspore.explainer import ImageClassificationRunner
@@ -302,6 +305,8 @@ class ImageClassificationRunner:
                 ds.config.set_seed(self._DATASET_SEED)
                 for idx, next_element in enumerate(self._dataset):
                     now = time()
+                    self._spaced_print("Start running {}-th explanation data for {}......".format(
+                        idx, exp.__class__.__name__), end='')
                     self._run_exp_step(next_element, exp, sample_id_labels, summary)
                     self._spaced_print("Finish writing {}-th explanation data for {}. Time elapsed: "
                                        "{:.3f} s".format(idx, exp.__class__.__name__, time() - now), end='')
@@ -320,12 +325,17 @@ class ImageClassificationRunner:
                 ds.config.set_seed(self._DATASET_SEED)
                 for idx, next_element in enumerate(self._dataset):
                     now = time()
+                    self._spaced_print("Start running {}-th explanation data for {}......".format(
+                        idx, exp.__class__.__name__), end='')
                     saliency_dict_lst = self._run_exp_step(next_element, exp, sample_id_labels, summary)
                     self._spaced_print(
                         "Finish writing {}-th batch explanation data for {}. Time elapsed: {:.3f} s".format(
                             idx, exp.__class__.__name__, time() - now), end='')
                     for bench in self._benchmarkers:
                         now = time()
+                        self._spaced_print(
+                            "Start running {}-th batch {} data for {}......".format(
+                                idx, bench.__class__.__name__, exp.__class__.__name__), end='')
                         self._run_exp_benchmark_step(next_element, exp, bench, saliency_dict_lst)
                         self._spaced_print(
                             "Finish running {}-th batch {} data for {}. Time elapsed: {:.3f} s".format(
@@ -496,7 +506,7 @@ class ImageClassificationRunner:
                 if explainer.__class__ in explainer_classes:
                     raise ValueError(f"Repeated {explainer.__class__.__name__} explainer! "
                                      "Please make sure all explainers' class is distinct.")
-                if explainer.model != self._network:
+                if explainer.network is not self._network:
                     raise ValueError(f"The network of {explainer.__class__.__name__} explainer is different "
                                      "instance from network of runner. Please make sure they are the same "
                                      "instance.")
@@ -717,4 +727,5 @@ class ImageClassificationRunner:
     @classmethod
     def _spaced_print(cls, message, *args, **kwargs):
         """Spaced message printing."""
-        print(cls._SPACER.format(message), *args, **kwargs)
+        # workaround to print logs starting new line in case line width mismatch.
+        print(cls._SPACER.format(message))

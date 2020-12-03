@@ -18,9 +18,9 @@ from typing import Callable, Optional, Union
 
 import numpy as np
 
-from mindspore import log
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import log, nn
+from mindspore.train._utils import check_value_type
 from .metric import LabelSensitiveMetric
 from ..._utils import calc_auc, format_tensor_to_ndarray
 from ...explanation._attribution import Attribution as _Attribution
@@ -358,22 +358,26 @@ class Faithfulness(LabelSensitiveMetric):
 
     Args:
         num_labels (int): Number of labels.
+        activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
+            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
+            `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
+            when combining this function with network, the final output is the probability of the input.
         metric (str, optional): The specifi metric to quantify faithfulness.
             Options: "DeletionAUC", "InsertionAUC", "NaiveFaithfulness".
             Default: 'NaiveFaithfulness'.
-        activation_fn (Cell, optional): The activation function that transforms the network output to a probability.
-            Default: nn.Softmax().
 
     Examples:
+        >>> from mindspore import nn
         >>> from mindspore.explainer.benchmark import Faithfulness
         >>> # init a `Faithfulness` object
         >>> num_labels = 10
         >>> metric = "InsertionAUC"
-        >>> faithfulness = Faithfulness(num_labels, metric)
+        >>> activation_fn = nn.Softmax()
+        >>> faithfulness = Faithfulness(num_labels, activation_fn, metric)
     """
     _methods = [NaiveFaithfulness, DeletionAUC, InsertionAUC]
 
-    def __init__(self, num_labels: int, metric: str = "NaiveFaithfulness", activation_fn=nn.Softmax()):
+    def __init__(self, num_labels, activation_fn, metric="NaiveFaithfulness"):
         super(Faithfulness, self).__init__(num_labels)
 
         perturb_percent = 0.5  # ratio of pixels to be perturbed, future argument
@@ -382,7 +386,9 @@ class Faithfulness(LabelSensitiveMetric):
         num_perturb_steps = 100  # separate the perturbation progress in to 100 steps.
         base_value = 0.0  # the pixel value set for the perturbed pixels
 
+        check_value_type("activation_fn", activation_fn, nn.Cell)
         self._activation_fn = activation_fn
+
         self._verify_metrics(metric)
         for method in self._methods:
             if metric == method.__name__:
@@ -437,8 +443,8 @@ class Faithfulness(LabelSensitiveMetric):
         inputs = format_tensor_to_ndarray(inputs)
         saliency = format_tensor_to_ndarray(saliency)
 
-        model = nn.SequentialCell([explainer.model, self._activation_fn])
-        faithfulness = self._faithfulness_helper.calc_faithfulness(inputs=inputs, model=model,
+        full_network = nn.SequentialCell([explainer.network, self._activation_fn])
+        faithfulness = self._faithfulness_helper.calc_faithfulness(inputs=inputs, model=full_network,
                                                                    targets=targets, saliency=saliency)
         return (1 + faithfulness) / 2
 

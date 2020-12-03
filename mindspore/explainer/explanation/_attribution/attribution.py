@@ -28,19 +28,19 @@ class Attribution:
     The explainers which explanation through attributing the relevance scores should inherit this class.
 
     Args:
-        network (nn.Cell): The black-box model to explanation.
+        network (nn.Cell): The black-box model to be explained.
     """
 
     def __init__(self, network):
         check_value_type("network", network, nn.Cell)
-        self._model = network
-        self._model.set_train(False)
-        self._model.set_grad(False)
+        self._network = network
+        self._network.set_train(False)
+        self._network.set_grad(False)
 
     @staticmethod
-    def _verify_model(model):
+    def _verify_network(network):
         """Verify the input `network` for __init__ function."""
-        if not isinstance(model, nn.Cell):
+        if not isinstance(network, nn.Cell):
             raise TypeError("The parsed `network` must be a `mindspore.nn.Cell` object.")
 
     __call__: Callable
@@ -57,9 +57,9 @@ class Attribution:
     """
 
     @property
-    def model(self):
+    def network(self):
         """Return the model."""
-        return self._model
+        return self._network
 
     @staticmethod
     def _verify_data(inputs, targets):
