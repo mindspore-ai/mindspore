@@ -29,6 +29,7 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "backend/kernel_compiler/tbe/tbe_dynaminc_shape_util.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "common/trans.h"
 #include "debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
 #include "utils/ms_context.h"
@@ -382,14 +383,15 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
       continue;
     }
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-    std::vector<std::string> output_format = {AnfAlgo::GetOutputFormat(real_input_node, 0)};
+    auto refresh_format = selected_kernel_info->GetInputFormat(input_index);
+    std::vector<std::string> output_format = {refresh_format};
+    // if not find in host convert format map means the host has not registered the convert function of this format
+    if (trans::kTransFormatMapOfHostToDevice.find(refresh_format) == trans::kTransFormatMapOfHostToDevice.end() &&
+        refresh_format != kOpFormat_DEFAULT) {
+      output_format = {AnfAlgo::GetOutputFormat(real_input_node, 0)};
+    }
     if (IsValueNode<tensor::Tensor>(input_kernel_node) &&
         AnfAlgo::GetOutputDeviceDataType(input_kernel_node, 0) == kTypeUnknown) {
-      if (selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_ZN_LSTM ||
-          selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_Z_3D ||
-          selected_kernel_info->GetInputFormat(input_index) != kOpFormat_NDC1HWC0) {
-        output_format = {selected_kernel_info->GetInputFormat(input_index)};
-      }
       builder->SetOutputsFormat(output_format);
       std::vector<TypeId> output_type = {selected_kernel_info->GetInputDeviceType(input_index)};
       builder->SetOutputsDeviceType(output_type);
@@ -397,11 +399,6 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
       continue;
     }
     if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
-      if (selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_ZN_LSTM ||
-          selected_kernel_info->GetInputFormat(input_index) != kOpFormat_FRACTAL_Z_3D ||
-          selected_kernel_info->GetInputFormat(input_index) != kOpFormat_NDC1HWC0) {
-        output_format = {selected_kernel_info->GetInputFormat(input_index)};
-      }
       builder->SetOutputsFormat(output_format);
       std::vector<TypeId> output_type = {selected_kernel_info->GetInputDeviceType(input_index)};
       builder->SetOutputsDeviceType(output_type);
