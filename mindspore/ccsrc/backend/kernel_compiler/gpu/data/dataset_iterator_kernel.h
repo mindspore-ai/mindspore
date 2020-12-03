@@ -43,6 +43,7 @@ class DatasetIteratorKernel : public GpuKernel {
   void InitSizeLists() override;
 
  private:
+  bool ReadDevice(void **addr, size_t *len);
   std::string queue_name_;
   unsigned int handle_;
   size_t total_bytes_;

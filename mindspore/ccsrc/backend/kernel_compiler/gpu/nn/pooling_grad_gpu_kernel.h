@@ -76,11 +76,9 @@ class PoolingGradGpuKernel : public GpuKernel {
       "cudnnPoolingBackward failed");
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) override {
-    InitResource();
-    if (!CheckParam(kernel_node)) {
-      return false;
-    }
+
+  bool InitShape(const CNodePtr &kernel_node, int *dimA, int *strideAin, int *dimAy, int *strideAiny, int *dimAdy,
+                 int *strideAdy, int *dimAout, int *strideAout) {
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto input_mask = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     auto dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
@@ -95,9 +93,25 @@ class PoolingGradGpuKernel : public GpuKernel {
     if (is_null_input_) {
       MS_LOG(WARNING) << "PoolingGradGpuKernel input is null.";
       InitSizeLists();
-      return true;
+      return false;
     }
     SetNCHW(input_shape, &n_, &c_, &old_height_, &old_width_, data_format);
+    SetDimA(input_shape, dimA, 4, data_format);
+    SetStrideA(input_shape, strideAin, 4, data_format);
+    SetDimA(input_mask, dimAy, 4, data_format);
+    SetStrideA(input_mask, strideAiny, 4, data_format);
+    SetDimA(dout_shape, dimAdy, 4, data_format);
+    SetStrideA(dout_shape, strideAdy, 4, data_format);
+    SetDimA(output_shape, dimAout, 4, data_format);
+    SetStrideA(output_shape, strideAout, 4, data_format);
+    return true;
+  }
+
+  bool Init(const CNodePtr &kernel_node) override {
+    InitResource();
+    if (!CheckParam(kernel_node)) {
+      return false;
+    }
     const int nbDims = 4;
     int dimA[4];
     int strideAin[4];
@@ -107,14 +121,9 @@ class PoolingGradGpuKernel : public GpuKernel {
     int strideAdy[4];
     int dimAout[4];
     int strideAout[4];
-    SetDimA(input_shape, dimA, 4, data_format);
-    SetStrideA(input_shape, strideAin, 4, data_format);
-    SetDimA(input_mask, dimAy, 4, data_format);
-    SetStrideA(input_mask, strideAiny, 4, data_format);
-    SetDimA(dout_shape, dimAdy, 4, data_format);
-    SetStrideA(dout_shape, strideAdy, 4, data_format);
-    SetDimA(output_shape, dimAout, 4, data_format);
-    SetStrideA(output_shape, strideAout, 4, data_format);
+    if (!InitShape(kernel_node, dimA, strideAin, dimAy, strideAiny, dimAdy, strideAdy, dimAout, strideAout)) {
+      return true;
+    }
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptor(y_descriptor_, cudnn_data_type_, nbDims, dimAy, strideAiny),
                                 "cudnnSetTensor4dDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptor(dy_descriptor_, cudnn_data_type_, nbDims, dimAdy, strideAdy),
@@ -129,6 +138,7 @@ class PoolingGradGpuKernel : public GpuKernel {
     InitSizeLists();
     return true;
   }
+
   void DestroyResource() noexcept override {
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyPoolingDescriptor(pooling_descriptor_),
                                "cudnnDestroyPoolingDescriptor failed");

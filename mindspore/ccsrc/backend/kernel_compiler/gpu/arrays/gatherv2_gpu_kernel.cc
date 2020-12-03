@@ -22,10 +22,12 @@ MS_REG_GPU_KERNEL_TWO(
   GatherV2,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
   GatherV2GpuFwdKernel, float, int)
+
 MS_REG_GPU_KERNEL_TWO(
   GatherV2,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
   GatherV2GpuFwdKernel, half, int)
+
 MS_REG_GPU_KERNEL_TWO(GatherV2,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
@@ -33,6 +35,7 @@ MS_REG_GPU_KERNEL_TWO(GatherV2,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat32),
                       GatherV2GpuFwdKernel, float, int)
+
 MS_REG_GPU_KERNEL_TWO(GatherV2,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
@@ -40,14 +43,17 @@ MS_REG_GPU_KERNEL_TWO(GatherV2,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat16),
                       GatherV2GpuFwdKernel, half, int)
+
 MS_REG_GPU_KERNEL_TWO(
   SparseGatherV2,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
   GatherV2GpuFwdKernel, float, int)
+
 MS_REG_GPU_KERNEL_TWO(
   SparseGatherV2,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
   GatherV2GpuFwdKernel, half, int)
+
 MS_REG_GPU_KERNEL_TWO(SparseGatherV2,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
@@ -55,6 +61,7 @@ MS_REG_GPU_KERNEL_TWO(SparseGatherV2,
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat32),
                       GatherV2GpuFwdKernel, float, int)
+
 MS_REG_GPU_KERNEL_TWO(SparseGatherV2,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)

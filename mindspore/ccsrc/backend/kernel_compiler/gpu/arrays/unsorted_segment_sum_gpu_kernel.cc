@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),

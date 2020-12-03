@@ -107,10 +107,23 @@ bool GpuKernelFactory::ReducePrecision(
   return GpuKernelFactory::SearchRegistered(kernel_name, builder->Build());
 }
 
+void GpuKernelFactory::CheckSM(const KernelBuildInfo *kernel_info, const size_t &input_index) {
+  const int major_sm = GET_MAJOR_SM;
+  const bool check_sm = mindspore::device::gpu::CudaCommon::GetInstance().check_sm();
+  if (check_sm && major_sm < RECOMMEND_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
+    if (major_sm < MINIUM_SM) {
+      MS_LOG(EXCEPTION) << "Half precision ops can be used on Devices which computing capacity is >= " << MINIUM_SM
+                        << ", but the current device's computing capacity is " << major_sm;
+    }
+    MS_LOG(WARNING) << "It is recommended to use devices with a computing capacity >= " << RECOMMEND_SM
+                    << ", but the current device's computing capacity is " << major_sm;
+    mindspore::device::gpu::CudaCommon::GetInstance().set_check_sm(false);
+  }
+}
+
 std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &kernel_name,
                                                              const KernelBuildInfo *kernel_info) {
   auto iter = map_kernel_name_to_creater_.find(kernel_name);
-  const int marjor_sm = GET_MAJOR_SM;
   if (map_kernel_name_to_creater_.end() == iter) {
     MS_LOG(INFO) << "Not registered GPU kernel: op[" << kernel_name << "]!";
     return std::make_pair(false, 0);
@@ -127,16 +140,7 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
     auto attr_size = (&(iter->second))->at(attr_index).first.GetInputSize();
     // data type matching check of all input parameters of kernel
     for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
-      const bool check_sm = mindspore::device::gpu::CudaCommon::GetInstance().check_sm();
-      if (check_sm && marjor_sm < RECOMMEND_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
-        if (marjor_sm < MINIUM_SM) {
-          MS_LOG(EXCEPTION) << "Half precision ops can be used on Devices which computing capacity is >= " << MINIUM_SM
-                            << ", but the current device's computing capacity is " << marjor_sm;
-        }
-        MS_LOG(WARNING) << "It is recommended to use devices with a computing capacity >= " << RECOMMEND_SM
-                        << ", but the current device's computing capacity is " << marjor_sm;
-        mindspore::device::gpu::CudaCommon::GetInstance().set_check_sm(false);
-      }
+      GpuKernelFactory::CheckSM(kernel_info, input_index);
       if (kernel_info->GetInputDeviceType(input_index) !=
           (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).first) {
         flag = false;

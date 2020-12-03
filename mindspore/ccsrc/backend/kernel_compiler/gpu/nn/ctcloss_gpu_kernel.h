@@ -44,86 +44,9 @@ class CtcLossGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-    const T *probs = GetDeviceAddress<T>(inputs, 0);
-    const int64_t *label_indices = GetDeviceAddress<int64_t>(inputs, 1);
-    const int *label_values = GetDeviceAddress<int>(inputs, 2);
-    const int *sequence_length = GetDeviceAddress<int>(inputs, 3);
-    T *costs = GetDeviceAddress<T>(outputs, 0);
-    T *grads = GetDeviceAddress<T>(outputs, 1);
-    T *softmax_probs = GetDeviceAddress<T>(workspace, 0);
-    int *cum_labels_length = GetDeviceAddress<int>(workspace, 1);
-    int *label_squence_length = GetDeviceAddress<int>(workspace, 2);
-    int *label_value_sp = GetDeviceAddress<int>(workspace, 3);
-    int *label_value_pcr = GetDeviceAddress<int>(workspace, 4);
-    T *prob_num = GetDeviceAddress<T>(workspace, 5);
-    int *precum_labels_length = GetDeviceAddress<int>(workspace, 6);
-    int *max_labels_length = GetDeviceAddress<int>(workspace, 7);
-    int numclass = SizeToInt(probs_dims_[2]);
-    int batch = SizeToInt(probs_dims_[1]);
-    int max_time = SizeToInt(probs_dims_[0]);
-    int max_sequence = 0;
-    CalculateMaxSequence(sequence_length, max_labels_length, batch, stream);
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpyAsync(&max_sequence, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
-      "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
-    if (max_time < max_sequence) {
-      MS_LOG(EXCEPTION) << "max_time should be greater than sequence length.";
-    }
-    InnerSoftMax(probs, softmax_probs, sequence_length, max_time, batch, numclass, stream);
-    MemsetForWS(label_value_pcr, cum_labels_length, label_squence_length, costs, grads, stream);
-    int max_labels_length_host = 0;
-    int batch_label = 0;
-    int *label_value_with_blank = nullptr;
-    T *log_alpha_b = nullptr;
-    T *log_beta_b = nullptr;
-    CalculatePreLength(label_squence_length, precum_labels_length, cum_labels_length, max_labels_length, label_indices,
-                       batch, label_size_ / sizeof(int), stream);
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpyAsync(&batch_label, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
-      "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
-    if (batch != batch_label + 1) {
-      MS_LOG(EXCEPTION) << "label batch should be equal to input batch.";
-    }
-    GenLabelValue(label_value_sp, label_indices, label_values, label_squence_length, cum_labels_length,
-                  max_labels_length, label_size_ / sizeof(int), numclass - 1, batch, stream);
-    if (preprocess_collapse_repeated_) {
-      GenLabelValuePCR(label_value_sp, label_value_pcr, label_squence_length, cum_labels_length, max_labels_length,
-                       batch, stream);
-    }
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpyAsync(&max_labels_length_host, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
-      "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
-    int SOffSet = 2 * max_labels_length_host + 1;
-    int log_prob_size = batch * SOffSet * max_time;
-    if (!ignore_longer_outputs_than_inputs_ && max_labels_length_host > max_time) {
-      MS_LOG(EXCEPTION) << "output size is greater than input size.";
-    }
-    MemManageForCus(&log_alpha_b, &log_beta_b, &label_value_with_blank, cum_labels_length, log_prob_size, batch,
-                    stream);
-
-    if (preprocess_collapse_repeated_) {
-      GenLabelWithBlank(label_value_pcr, label_value_with_blank, label_squence_length, precum_labels_length,
-                        cum_labels_length, batch, numclass - 1, stream);
-    } else {
-      GenLabelWithBlank(label_value_sp, label_value_with_blank, label_squence_length, precum_labels_length,
-                        cum_labels_length, batch, numclass - 1, stream);
-    }
-
-    CalculateFwdVar(log_alpha_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_, batch,
-                    SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
-                    ignore_longer_outputs_than_inputs_, stream);
-    CalculateBwdVar(log_beta_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_, batch,
-                    SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
-                    ignore_longer_outputs_than_inputs_, stream);
-    CTCLoss(log_alpha_b, log_beta_b, softmax_probs, label_value_with_blank, batch, SOffSet, max_time, numclass,
-            sequence_length, label_squence_length, cum_labels_length, costs, grads, prob_num,
-            ignore_longer_outputs_than_inputs_, stream);
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
-    FreeMem(label_value_with_blank, log_alpha_b, log_beta_b);
+    LaunchInit(inputs, workspace, outputs);
+    LaunchFirstHalf(inputs, workspace, outputs, stream_ptr);
+    LaunchSecondHalf(inputs, workspace, outputs, stream_ptr);
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
@@ -161,6 +84,101 @@ class CtcLossGpuKernel : public GpuKernel {
   }
 
  protected:
+  void LaunchInit(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                  const std::vector<AddressPtr> &outputs) {
+    probs = GetDeviceAddress<T>(inputs, 0);
+    label_indices = GetDeviceAddress<int64_t>(inputs, 1);
+    label_values = GetDeviceAddress<int>(inputs, 2);
+    sequence_length = GetDeviceAddress<int>(inputs, 3);
+    costs = GetDeviceAddress<T>(outputs, 0);
+    grads = GetDeviceAddress<T>(outputs, 1);
+    softmax_probs = GetDeviceAddress<T>(workspace, 0);
+    cum_labels_length = GetDeviceAddress<int>(workspace, 1);
+    label_squence_length = GetDeviceAddress<int>(workspace, 2);
+    label_value_sp = GetDeviceAddress<int>(workspace, 3);
+    label_value_pcr = GetDeviceAddress<int>(workspace, 4);
+    prob_num = GetDeviceAddress<T>(workspace, 5);
+    precum_labels_length = GetDeviceAddress<int>(workspace, 6);
+    max_labels_length = GetDeviceAddress<int>(workspace, 7);
+    numclass = SizeToInt(probs_dims_[2]);
+    batch = SizeToInt(probs_dims_[1]);
+    max_time = SizeToInt(probs_dims_[0]);
+    max_sequence = 0;
+    max_labels_length_host = 0;
+    batch_label = 0;
+    label_value_with_blank = nullptr;
+    log_alpha_b = nullptr;
+    log_beta_b = nullptr;
+  }
+
+  void LaunchFirstHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+    cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
+    CalculateMaxSequence(sequence_length, max_labels_length, batch, stream);
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      cudaMemcpyAsync(&max_sequence, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+      "cudaMemcpyAsync failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    if (max_time < max_sequence) {
+      MS_LOG(EXCEPTION) << "max_time should be greater than sequence length.";
+    }
+    InnerSoftMax(probs, softmax_probs, sequence_length, max_time, batch, numclass, stream);
+    MemsetForWS(label_value_pcr, cum_labels_length, label_squence_length, costs, grads, stream);
+
+    CalculatePreLength(label_squence_length, precum_labels_length, cum_labels_length, max_labels_length, label_indices,
+                       batch, label_size_ / sizeof(int), stream);
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      cudaMemcpyAsync(&batch_label, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+      "cudaMemcpyAsync failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    if (batch != batch_label + 1) {
+      MS_LOG(EXCEPTION) << "label batch should be equal to input batch.";
+    }
+    GenLabelValue(label_value_sp, label_indices, label_values, label_squence_length, cum_labels_length,
+                  max_labels_length, label_size_ / sizeof(int), numclass - 1, batch, stream);
+    if (preprocess_collapse_repeated_) {
+      GenLabelValuePCR(label_value_sp, label_value_pcr, label_squence_length, cum_labels_length, max_labels_length,
+                       batch, stream);
+    }
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      cudaMemcpyAsync(&max_labels_length_host, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+      "cudaMemcpyAsync failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+  }
+
+  void LaunchSecondHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+    cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
+    int SOffSet = 2 * max_labels_length_host + 1;
+    int log_prob_size = batch * SOffSet * max_time;
+
+    if (!ignore_longer_outputs_than_inputs_ && max_labels_length_host > max_time) {
+      MS_LOG(EXCEPTION) << "output size is greater than input size.";
+    }
+    MemManageForCus(&log_alpha_b, &log_beta_b, &label_value_with_blank, cum_labels_length, log_prob_size, batch,
+                    stream);
+
+    if (preprocess_collapse_repeated_) {
+      GenLabelWithBlank(label_value_pcr, label_value_with_blank, label_squence_length, precum_labels_length,
+                        cum_labels_length, batch, numclass - 1, stream);
+    } else {
+      GenLabelWithBlank(label_value_sp, label_value_with_blank, label_squence_length, precum_labels_length,
+                        cum_labels_length, batch, numclass - 1, stream);
+    }
+
+    CalculateFwdVar(log_alpha_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_, batch,
+                    SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
+                    ignore_longer_outputs_than_inputs_, stream);
+    CalculateBwdVar(log_beta_b, label_value_with_blank, softmax_probs, sequence_length, ctc_merge_repeated_, batch,
+                    SOffSet, max_time, numclass - 1, label_squence_length, cum_labels_length,
+                    ignore_longer_outputs_than_inputs_, stream);
+    CTCLoss(log_alpha_b, log_beta_b, softmax_probs, label_value_with_blank, batch, SOffSet, max_time, numclass,
+            sequence_length, label_squence_length, cum_labels_length, costs, grads, prob_num,
+            ignore_longer_outputs_than_inputs_, stream);
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    FreeMem(label_value_with_blank, log_alpha_b, log_beta_b);
+  }
+
   void InitSizeLists() override {
     input_size_list_.push_back(probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T));
     input_size_list_.push_back(label_indice_size_);
@@ -226,6 +244,31 @@ class CtcLossGpuKernel : public GpuKernel {
   bool ctc_merge_repeated_;
   bool ignore_longer_outputs_than_inputs_;
   T kLogZero_ = -std::numeric_limits<T>::infinity();
+
+  // Heap parameter
+  T *probs;
+  int64_t *label_indices;
+  int *label_values;
+  int *sequence_length;
+  T *costs;
+  T *grads;
+  T *softmax_probs;
+  int *cum_labels_length;
+  int *label_squence_length;
+  int *label_value_sp;
+  int *label_value_pcr;
+  T *prob_num;
+  int *precum_labels_length;
+  int *max_labels_length;
+  int numclass;
+  int batch;
+  int max_time;
+  int max_sequence;
+  int max_labels_length_host;
+  int batch_label;
+  int *label_value_with_blank;
+  T *log_alpha_b;
+  T *log_beta_b;
 };  // namespace kernel
 }  // namespace kernel
 }  // namespace mindspore
