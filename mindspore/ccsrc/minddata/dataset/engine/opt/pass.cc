@@ -258,6 +258,15 @@ Status IRNodePass::VisitAfter(std::shared_ptr<BuildSentenceVocabNode> node, bool
 }
 #endif
 
+// leaf-IR Node
+Status IRNodePass::Visit(std::shared_ptr<MappableSourceNode> node, bool *modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+
+Status IRNodePass::Visit(std::shared_ptr<NonMappableSourceNode> node, bool *modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+
 //////////////////////////////////
 // This section of code will be removed once the migration of optimizer from DatasetOp to DatasetNode is done.
 // Driver method for TreePass

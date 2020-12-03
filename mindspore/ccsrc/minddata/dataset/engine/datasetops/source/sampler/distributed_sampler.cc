@@ -34,7 +34,13 @@ DistributedSamplerRT::DistributedSamplerRT(int64_t num_samples, int64_t num_dev,
       shuffle_(shuffle),
       even_dist_(even_dist),
       offset_(offset),
-      non_empty_(true) {}
+      non_empty_(true) {
+  // Update the num_shards_ in global context. this number is only used for now by auto_num_worker_pass. User discretion
+  // is advised. Auto_num_worker_pass is currently an experimental feature which can still work if the num_shards_ isn't
+  // 100% correct. The reason behind is for now, PreBuildSampler doesn't offer a way to return num_shards. Once
+  // PreBuildSampler is phased out, this can be cleaned up.
+  GlobalContext::config_manager()->set_num_shards_for_auto_num_workers(num_devices_);
+}
 
 Status DistributedSamplerRT::InitSampler() {
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.

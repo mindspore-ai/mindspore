@@ -123,7 +123,13 @@ DistributedSamplerObj::DistributedSamplerObj(int64_t num_shards, int64_t shard_i
       num_samples_(num_samples),
       seed_(seed),
       offset_(offset),
-      even_dist_(even_dist) {}
+      even_dist_(even_dist) {
+  // Update the num_shards_ in global context. this number is only used for now by auto_num_worker_pass. User discretion
+  // is advised. Auto_num_worker_pass is currently an experimental feature which can still work if the num_shards_ isn't
+  // 100% correct. The reason behind is for now, PreBuildSampler doesn't offer a way to return num_shards. Once
+  // PreBuildSampler is phased out, this can be cleaned up.
+  GlobalContext::config_manager()->set_num_shards_for_auto_num_workers(num_shards_);
+}
 
 bool DistributedSamplerObj::ValidateParams() {
   if (num_shards_ <= 0) {

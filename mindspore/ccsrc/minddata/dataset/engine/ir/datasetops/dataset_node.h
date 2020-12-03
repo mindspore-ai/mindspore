@@ -41,7 +41,6 @@ constexpr char kBucketBatchByLengthNode[] = "BucketBatchByLength";
 constexpr char kBuildSentencePieceVocabNode[] = "BuildSentencePieceVocab";
 constexpr char kBuildVocabNode[] = "BuildVocab";
 constexpr char kConcatNode[] = "Concat";
-constexpr char kDatasetNode[] = "Dataset";
 constexpr char kEpochCtrlNode[] = "EpochCtrl";
 constexpr char kFilterNode[] = "Filter";
 constexpr char kMapNode[] = "Map";
@@ -290,6 +289,8 @@ class MappableSourceNode : public DatasetNode {
     descendant_of_cache_ = false;
   }
 
+  Status Accept(IRNodePass *p, bool *modified) override;
+
   /// \brief Destructor
   ~MappableSourceNode() = default;
 
@@ -311,6 +312,8 @@ class NonMappableSourceNode : public DatasetNode {
     // Initially set to false, and set to true by the optimizer when conditions are met.
     descendant_of_cache_ = false;
   }
+
+  Status Accept(IRNodePass *p, bool *modified) override;
 
   /// \brief Destructor
   ~NonMappableSourceNode() = default;

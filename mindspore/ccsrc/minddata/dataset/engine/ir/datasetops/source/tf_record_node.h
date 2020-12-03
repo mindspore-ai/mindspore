@@ -44,7 +44,13 @@ class TFRecordNode : public NonMappableSourceNode {
         shuffle_(shuffle),
         num_shards_(num_shards),
         shard_id_(shard_id),
-        shard_equal_rows_(shard_equal_rows) {}
+        shard_equal_rows_(shard_equal_rows) {
+    // Update the num_shards_ in global context. this number is only used for now by auto_num_worker_pass. User
+    // discretion is advised. Auto_num_worker_pass is currently an experimental feature which can still work if the
+    // num_shards_ isn't 100% correct. The reason behind is for now, PreBuildSampler doesn't offer a way to return
+    // num_shards. Once PreBuildSampler is phased out, this can be cleaned up.
+    GlobalContext::config_manager()->set_num_shards_for_auto_num_workers(num_shards_);
+  }
 
   /// \brief Constructor
   /// \note Parameter 'schema' is shared pointer to Schema object

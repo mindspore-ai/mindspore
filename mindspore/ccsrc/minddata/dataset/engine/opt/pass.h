@@ -229,6 +229,10 @@ class IRNodePass : public IRPass {
   virtual Status VisitAfter(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified);
 #endif
 
+  // leaf-IR Node
+  virtual Status Visit(std::shared_ptr<MappableSourceNode> node, bool *modified);
+  virtual Status Visit(std::shared_ptr<NonMappableSourceNode> node, bool *modified);
+
  private:
   // Helper function to perform DFS visit
   Status DFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modified);

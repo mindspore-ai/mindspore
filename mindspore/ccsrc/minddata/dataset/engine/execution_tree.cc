@@ -204,7 +204,16 @@ ExecutionTree::Iterator::Iterator(const std::shared_ptr<DatasetOp> &root) : ind_
 // Given the number of workers, launches the worker entry function for each. Essentially a
 // wrapper for the TaskGroup handling that is stored inside the execution tree.
 Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name) {
+  int32_t num_cpu_threads = GlobalContext::Instance()->config_manager()->num_cpu_threads();
+  // this performs check that num_workers is positive and not unreasonably large which could happen
+  // for example, un-initialized variable. uint16 max is 65536 which is large enough to cover everything
+  CHECK_FAIL_RETURN_UNEXPECTED(num_workers > 0 && num_workers < std::numeric_limits<uint16_t>::max(),
+                               name + "'s num_worker=" + std::to_string(num_workers) + ", is negative or too large.");
   // Launch the workers
+  if (num_workers > num_cpu_threads) {
+    MS_LOG(WARNING) << name + " is launched with " << std::to_string(num_workers) << " worker threads which exceeds "
+                    << std::to_string(num_cpu_threads) << ", the maximum number of threads on this CPU.";
+  }
   for (int32_t i = 0; i < num_workers; ++i) {
     RETURN_IF_NOT_OK(tg_->CreateAsyncTask(name, std::bind(func, i)));
   }
