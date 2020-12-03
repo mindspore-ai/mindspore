@@ -2,7 +2,6 @@
 
 本示例程序演示了如何在端侧利用MindSpore Lite C++ API（Android JNI）以及MindSpore Lite 目标检测模型完成端侧推理，实现对图库或者设备摄像头捕获的内容进行检测，并在App图像预览界面中显示连续目标检测结果。
 
-
 ### 运行依赖
 
 - Android Studio >= 3.2 (推荐4.0以上版本)
@@ -12,7 +11,7 @@
 
 ### 构建与运行
 
-1. 在Android Studio中加载本示例源码，并安装相应的SDK（指定SDK版本后，由Android Studio自动安装）。 
+1. 在Android Studio中加载本示例源码，并安装相应的SDK（指定SDK版本后，由Android Studio自动安装）。
 
     ![start_home](images/home.png)
 
@@ -20,14 +19,12 @@
 
     ![start_sdk](images/sdk_management.png)
 
-    （可选）若安装时出现NDK版本问题，可手动下载相应的[NDK版本](https://developer.android.com/ndk/downloads?hl=zh-cn)（本示例代码使用的NDK版本为21.3），并在`Project Structure`的`Android NDK location`设置中指定SDK的位置。
-
-    ![project_structure](images/project_structure.png)
+    使用过程中若出现Android Studio配置问题，可参考第5项解决。
 
 2. 连接Android设备，运行目标检测示例应用程序。
 
     通过USB连接Android设备调试，点击`Run 'app'`即可在你的设备上运行本示例项目。
-    * 注：编译过程中Android Studio会自动下载MindSpore Lite、模型文件等相关依赖项，编译过程需做耐心等待。
+   > 编译过程中Android Studio会自动下载MindSpore Lite、模型文件等相关依赖项，编译过程需做耐心等待。
 
     ![run_app](images/run_app.PNG)
 
@@ -41,6 +38,16 @@
 
     ![result](images/object_detection.png)
 
+4. Android Studio 配置问题解决方案可参考下表：
+
+    |      | 报错                                                         | 解决方案                                                     |
+    | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+    | 1    | Gradle sync failed: NDK not configured.                      | 在local.properties中指定安装的ndk目录：ndk.dir={ndk的安装目录} |
+    | 2    | Requested NDK version did not match the version requested by ndk.dir | 可手动下载相应的[NDK版本](https://developer.android.com/ndk/downloads?hl=zh-cn)，并在Project Structure - Android NDK location设置中指定SDK的位置（可参考下图完成） |
+    | 3    | This version of Android Studio cannot open this project, please retry with Android Studio or newer. | 在工具栏-help-Checkout for Updates中更新版本                 |
+    | 4    | SSL peer shut down incorrectly                               | 重新构建                                                     |
+
+    ![project_structure](images/project_structure.png)
 
 ## 示例程序详细说明  
 
@@ -50,7 +57,7 @@
 
 ### 示例程序结构
 
-```
+```text
 app
 |
 ├── libs # 存放demo jni层编译出的库文件
@@ -67,12 +74,12 @@ app
 │   |   |
 |   |   ├── MindSporeNetnative.cpp # MindSpore调用相关的JNI方法
 │   ├── java # java层应用代码
-│   │   └── com.huawei.himindsporedemo 
+│   │   └── com.huawei.himindsporedemo
 │   │       ├── help # 图像处理及MindSpore JNI调用相关实现
 │   │       │   └── ...
 │   │       └── obejctdetect # 开启摄像头及绘制相关实现
 │   │           └── ...
-│   │   
+│   │
 │   ├── res # 存放Android相关的资源文件
 │   └── AndroidManifest.xml # Android配置文件
 │
@@ -95,13 +102,13 @@ Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通�
 
 本示例中，build过程由download.gradle文件自动下载MindSpore Lite 版本文件，并放置在`app/src/main/cpp/`目录下。
 
-* 注：若自动下载失败，请手动下载相关库文件，解压并放在对应位置：
+> 若自动下载失败，请手动下载相关库文件，解压并放在对应位置：
 
   mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz [下载链接](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/android_aarch64/mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz)
 
 在app的`build.gradle`文件中配置CMake编译支持，以及`arm64-v8a`的编译支持，如下所示：
 
-```
+```text
 android{
     defaultConfig{
         externalNativeBuild{
@@ -110,7 +117,7 @@ android{
             }
         }
 
-        ndk{ 
+        ndk{
             abiFilters 'arm64-v8a'
         }
     }
@@ -119,7 +126,7 @@ android{
 
 在`app/CMakeLists.txt`文件中建立`.so`库文件链接，如下所示。
 
-```
+```text
 # Set MindSpore Lite Dependencies.
 set(MINDSPORELITE_VERSION  mindspore-lite-1.0.1-runtime-arm64-cpu)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION})
@@ -130,7 +137,7 @@ set_target_properties(mindspore-lite PROPERTIES IMPORTED_LOCATION
 set_target_properties(minddata-lite PROPERTIES IMPORTED_LOCATION
         ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libminddata-lite.so)
 
-# Link target library.       
+# Link target library.
 target_link_libraries(
     ...
     mindspore-lite
@@ -143,61 +150,63 @@ target_link_libraries(
 
 从MindSpore Model Hub中下载模型文件，本示例程序中使用的目标检测模型文件为`ssd.ms`，同样通过`download.gradle`脚本在APP构建时自动下载，并放置在`app/src/main/assets`工程目录下。
 
-* 注：若下载失败请手动下载模型文件，ssd.ms [下载链接](https://download.mindspore.cn/model_zoo/official/lite/ssd_mobilenetv2_lite/ssd.ms)。
-
+> 若下载失败请手动下载模型文件，ssd.ms [下载链接](https://download.mindspore.cn/model_zoo/official/lite/ssd_mobilenetv2_lite/ssd.ms)。
 
 ### 编写端侧推理代码
 
 在JNI层调用MindSpore Lite C++ API实现端测推理。
 
-推理代码流程如下，完整代码请参见`src/cpp/MindSporeNetnative.cpp`。 
+推理代码流程如下，完整代码请参见`src/cpp/MindSporeNetnative.cpp`。
 
 1. 加载MindSpore Lite模型文件，构建上下文、会话以及用于推理的计算图。  
 
     - 加载模型文件：创建并配置用于模型推理的上下文
+
         ```cpp
         // Buffer is the model data passed in by the Java layer
         jlong bufferLen = env->GetDirectBufferCapacity(buffer);
         char *modelBuffer = CreateLocalModelBuffer(env, buffer);  
         ```
-        
+
     - 创建会话
+
         ```cpp
         void **labelEnv = new void *;
         MSNetWork *labelNet = new MSNetWork;
         *labelEnv = labelNet;
-        
+
         // Create context.
         lite::Context *context = new lite::Context;
         context->cpu_bind_mode_ = lite::NO_BIND;
         context->device_ctx_.type = lite::DT_CPU;
         context->thread_num_ = numThread;  //Specify the number of threads to run inference
-        
+
         // Create the mindspore session.
         labelNet->CreateSessionMS(modelBuffer, bufferLen, "device label", context);
         delete context;
-        
+
         ```
-        
+
     - 加载模型文件并构建用于推理的计算图
+
         ```cpp
         void MSNetWork::CreateSessionMS(char* modelBuffer, size_t bufferLen, std::string name, mindspore::lite::Context* ctx)
         {
             CreateSession(modelBuffer, bufferLen, ctx);  
             session = mindspore::session::LiteSession::CreateSession(ctx);
             auto model = mindspore::lite::Model::Import(modelBuffer, bufferLen);
-            int ret = session->CompileGraph(model); // Compile Graph 
+            int ret = session->CompileGraph(model); // Compile Graph
         }
         ```
-    
-2. 将输入图片转换为传入MindSpore模型的Tensor格式。 
+
+2. 将输入图片转换为传入MindSpore模型的Tensor格式。
 
     将待检测图片数据转换为输入MindSpore模型的Tensor。
 
     ```cpp
     // Convert the Bitmap image passed in from the JAVA layer to Mat for OpenCV processing
         LiteMat lite_mat_bgr,lite_norm_mat_cut;
-   
+
        if (!BitmapToLiteMat(env, srcBitmap, lite_mat_bgr)){
         MS_PRINT("BitmapToLiteMat error");
            return NULL;
@@ -220,24 +229,24 @@ target_link_libraries(
            return NULL;
        }
        MSNetWork *labelNet = static_cast<MSNetWork *>(*labelEnv);
-   
+
        auto mSession = labelNet->session;
        if (mSession == nullptr) {
            MS_PRINT("MindSpore error, Session is a nullptr.");
            return NULL;
        }
        MS_PRINT("MindSpore get session.");
-   
+
        auto msInputs = mSession->GetInputs();
        auto inTensor = msInputs.front();
-   
+
        float *dataHWC = reinterpret_cast<float *>(lite_norm_mat_cut.data_ptr_);
        // copy input Tensor
        memcpy(inTensor->MutableData(), dataHWC,
               inputDims.channel * inputDims.width * inputDims.height * sizeof(float));
        delete[] (dataHWC);
    ```
-   
+
 3. 进行模型推理前，输入tensor格式为 NHWC，shape为1:300:300:3，格式为RGB,  并对输入tensor做标准化处理.
 
    ```cpp
@@ -255,15 +264,15 @@ target_link_libraries(
            MS_PRINT("ConvertTo error");
            return false;
        }
-   
+
        float means[3] = {0.485, 0.456, 0.406};
        float vars[3] = {1.0 / 0.229, 1.0 / 0.224, 1.0 / 0.225};
        SubStractMeanNormalize(lite_mat_convert_float, lite_norm_mat_cut, means, vars);
        return true;
    }
    ```
-   
-4. 对输入Tensor按照模型进行推理，获取输出Tensor，并进行后处理。    
+
+4. 对输入Tensor按照模型进行推理，获取输出Tensor，并进行后处理。
 
    - 图执行，端测推理。
 
@@ -273,6 +282,7 @@ target_link_libraries(
         ```
 
    - 获取输出数据。
+
         ```cpp
         auto names = mSession->GetOutputTensorNames();
             typedef std::unordered_map<std::string,
@@ -285,15 +295,15 @@ target_link_libraries(
             }
         std::string retStr = ProcessRunnetResult(msOutputs, ret);
         ```
-     
-   - 模型有2个输出，输出1是目标的类别置信度，维度为1：1917: 81； 输出2是目标的矩形框坐标偏移量，维度为1:1917:4。 为了得出目标的实际矩形框，需要根据偏移量计算出矩形框的位置。这部分在 getDefaultBoxes中实现。 
-   
+
+   - 模型有2个输出，输出1是目标的类别置信度，维度为1：1917: 81； 输出2是目标的矩形框坐标偏移量，维度为1:1917:4。 为了得出目标的实际矩形框，需要根据偏移量计算出矩形框的位置。这部分在 getDefaultBoxes中实现。
+
         ```cpp
         void SSDModelUtil::getDefaultBoxes() {
             float fk[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
             std::vector<struct WHBox> all_sizes;
             struct Product mProductData[19 * 19] = {0};
-        
+
             for (int i = 0; i < 6; i++) {
                 fk[i] = config.model_input_height / config.steps[i];
             }
@@ -303,36 +313,36 @@ target_link_libraries(
             for (int i = 0; i < sizeof(config.num_default) / sizeof(int); i++) {
                 scales[i] = config.min_scale + scale_rate * i;
             }
-        
+
             for (int idex = 0; idex < sizeof(config.feature_size) / sizeof(int); idex++) {
                 float sk1 = scales[idex];
                 float sk2 = scales[idex + 1];
                 float sk3 = sqrt(sk1 * sk2);
                 struct WHBox tempWHBox;
-        
+
                 all_sizes.clear();
-        
+
                 if (idex == 0) {
                     float w = sk1 * sqrt(2);
                     float h = sk1 / sqrt(2);
-        
+
                     tempWHBox.boxw = 0.1;
                     tempWHBox.boxh = 0.1;
                     all_sizes.push_back(tempWHBox);
-        
+
                     tempWHBox.boxw = w;
                     tempWHBox.boxh = h;
                     all_sizes.push_back(tempWHBox);
-        
+
                     tempWHBox.boxw = h;
                     tempWHBox.boxh = w;
                     all_sizes.push_back(tempWHBox);
-        
-                } else { 
+
+                } else {
                     tempWHBox.boxw = sk1;
                     tempWHBox.boxh = sk1;
                     all_sizes.push_back(tempWHBox);
-        
+
                     for (int j = 0; j < sizeof(config.aspect_ratios[idex]) / sizeof(int); j++) {
                         float w = sk1 * sqrt(config.aspect_ratios[idex][j]);
                         float h = sk1 / sqrt(config.aspect_ratios[idex][j]);
@@ -343,21 +353,21 @@ target_link_libraries(
                         tempWHBox.boxh = w;
                         all_sizes.push_back(tempWHBox);
                     }
-        
+
                     tempWHBox.boxw = sk3;
                     tempWHBox.boxh = sk3;
                     all_sizes.push_back(tempWHBox);
                 }
-        
+
                 for (int i = 0; i < config.feature_size[idex]; i++) {
                     for (int j = 0; j < config.feature_size[idex]; j++) {
                         mProductData[i * config.feature_size[idex] + j].x = i;
                         mProductData[i * config.feature_size[idex] + j].y = j;
                     }
                 }
-        
+
                 int productLen = config.feature_size[idex] * config.feature_size[idex];
-        
+
                 for (int i = 0; i < productLen; i++) {
                     for (int j = 0; j < all_sizes.size(); j++) {
                         struct NormalBox tempBox;
@@ -373,9 +383,9 @@ target_link_libraries(
             }
         }
         ```
-   
-   -  通过最大值抑制将目标类型置信度较高的输出筛选出来。
-   
+
+   - 通过最大值抑制将目标类型置信度较高的输出筛选出来。
+
         ```cpp
         void SSDModelUtil::nonMaximumSuppression(const YXBoxes *const decoded_boxes,
                                                  const float *const scores,
@@ -402,9 +412,9 @@ target_link_libraries(
             }
         }
         ```
-   
+
    - 对每类的概率大于阈值，通过NMS算法筛选出矩形框后， 还需要将输出的矩形框恢复到原图尺寸。
-     
+
         ```cpp
         std::string SSDModelUtil::getDecodeResult(float *branchScores, float *branchBoxData) {
             std::string result = "";
@@ -414,7 +424,7 @@ target_link_libraries(
             float scoreWithOneClass[1917] = {0};
             int outBoxNum = 0;
             YXBoxes decodedBoxes[1917] = {0};
-        
+
             // Copy branch outputs box data to tmpBox.
             for (int i = 0; i < 1917; ++i) {
                 tmpBox[i].y = branchBoxData[i * 4 + 0];
@@ -422,14 +432,14 @@ target_link_libraries(
                 tmpBox[i].h = branchBoxData[i * 4 + 2];
                 tmpBox[i].w = branchBoxData[i * 4 + 3];
             }
-        
+
             // Copy branch outputs score to mScores.
             for (int i = 0; i < 1917; ++i) {
                 for (int j = 0; j < 81; ++j) {
                     mScores[i][j] = branchScores[i * 81 + j];
                 }
             }
-   
+
              ssd_boxes_decode(tmpBox, decodedBoxes);
              const float nms_threshold = 0.3;
              for (int i = 1; i < 81; i++) {
@@ -496,5 +506,3 @@ target_link_libraries(
             return result;
         }
         ```
-
-​              
