@@ -233,7 +233,7 @@ std::shared_ptr<DatasetNode> DatasetNode::SetNumWorkers(int32_t num_workers) {
   return shared_from_this();
 }
 
-DatasetNode::DatasetNode() : cache_(nullptr), parent_(nullptr), children_({}) {
+DatasetNode::DatasetNode() : cache_(nullptr), parent_({}), children_({}) {
   // Fetch some default value from config manager
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   num_workers_ = cfg->num_parallel_workers();
@@ -294,30 +294,33 @@ void DatasetNode::PrintNode(std::ostream &out, int *level) const {
 // Add a node as a child, node's parent needs to be nullptr
 // this function will allow child to be a nullptr, in which case it will simply skip
 void DatasetNode::AddChild(std::shared_ptr<DatasetNode> child) {
-  if (child != nullptr && child->parent_ == nullptr) {
+  if (child != nullptr && !child->parent_.size()) {
     children_.push_back(child);
-    child->parent_ = this;
+    child->parent_.push_back(this);
   } else if (child != nullptr) {
-    MS_LOG(WARNING) << "DatasetNode::AddChild() Fail" + child->Name() + "'s parent isn't a nullptr.";
+    MS_LOG(WARNING) << "DatasetNode::AddChild() failed: " + child->Name() + "'s parent isn't a nullptr.";
+    children_.push_back(child);
+    child->parent_.push_back(this);
   }
 }
 
 // Remove this node from its parent. Add the child of this node to its parent.
 // for now, this remove is limited to node with a single child or no child
 Status DatasetNode::Remove() {
-  CHECK_FAIL_RETURN_UNEXPECTED(parent_ != nullptr, "Cannot remove root or a node without parent.");
+  CHECK_FAIL_RETURN_UNEXPECTED(parent_.size() != 0, "Cannot remove root or a node without parent.");
   CHECK_FAIL_RETURN_UNEXPECTED(children_.size() < 2, "Cannot remove node with more than 1 child.");
   if (children_.empty()) {  // I am a leaf node, remove me from my parent's children list
-    parent_->children_.erase(std::remove(parent_->children_.begin(), parent_->children_.end(), shared_from_this()),
-                             parent_->children_.end());  // removal using "erase remove idiom"
-  } else {  // replace my position in my parent's children list with my single child
-    auto itr = std::find(parent_->children_.begin(), parent_->children_.end(), shared_from_this());
-    CHECK_FAIL_RETURN_UNEXPECTED(itr != parent_->children_.end(), "I am not in my parent's children list.");
+    parent_[0]->children_.erase(
+      std::remove(parent_[0]->children_.begin(), parent_[0]->children_.end(), shared_from_this()),
+      parent_[0]->children_.end());  // removal using "erase remove idiom"
+  } else {                           // replace my position in my parent's children list with my single child
+    auto itr = std::find(parent_[0]->children_.begin(), parent_[0]->children_.end(), shared_from_this());
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != parent_[0]->children_.end(), "I am not in my parent's children list.");
     children_[0]->parent_ = parent_;  // set my single child's parent ptr to my parent
     *itr = std::move(children_[0]);   // replace me in my parent's children list with my single child
     children_.clear();                //  release my single child from my children list
   }
-  parent_ = nullptr;
+  parent_[0] = nullptr;
   return Status::OK();
 }
 

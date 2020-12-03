@@ -415,6 +415,35 @@ TEST_F(MindDataTestPipeline, TestConcatFail4) {
   EXPECT_EQ(iter, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestConcatFail5) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatFail5.";
+  // This case is expected to fail because the dataset concat itself which causes ProjectNode has two parent nodes
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds1, nullptr);
+
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Project operation on ds
+  ds1 = ds1->Project({"image"});
+  EXPECT_NE(ds1, nullptr);
+  ds2 = ds2->Project({"image"});
+  EXPECT_NE(ds2, nullptr);
+
+  // Create a Concat operation on the ds
+  // Input dataset is the dataset itself
+  ds1 = ds1 + ds1 + ds2;
+  EXPECT_NE(ds1, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds1->CreateIterator();
+  // Expect failure: The data pipeline is not a tree
+  EXPECT_EQ(iter, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestConcatSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConcatSuccess.";
 

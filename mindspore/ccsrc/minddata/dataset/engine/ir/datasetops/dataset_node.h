@@ -183,6 +183,10 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return Child nodes
   const std::vector<std::shared_ptr<DatasetNode>> Children() const { return children_; }
 
+  /// \brief Getter function for parents nodes
+  /// \return Parent nodes
+  const std::vector<DatasetNode *> Parent() const { return parent_; }
+
   /// \brief Establish the parent-child relationship between this node and its child.
   void AddChild(std::shared_ptr<DatasetNode> child);
 
@@ -233,7 +237,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
 
  protected:
   std::vector<std::shared_ptr<DatasetNode>> children_;
-  DatasetNode *parent_;
+  std::vector<DatasetNode *> parent_;
   std::shared_ptr<DatasetCache> cache_;
   int64_t dataset_size_ = -1;
   int32_t num_workers_;
