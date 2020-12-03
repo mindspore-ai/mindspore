@@ -117,8 +117,6 @@
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "utils/ms_context.h"
-#include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
-#include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"

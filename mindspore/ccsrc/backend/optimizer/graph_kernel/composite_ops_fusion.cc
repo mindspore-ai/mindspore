@@ -50,52 +50,7 @@ std::vector<AnfNodePtr> DeepLinkedGraphSearch(const std::vector<AnfNodePtr> &roo
   }
   return inputs;
 }
-
-std::vector<AnfNodePtr> DeepUsersSearch(const std::vector<AnfNodePtr> &roots, const IncludeFunc &include,
-                                        const FuncGraphManagerPtr &mng) {
-  std::vector<AnfNodePtr> users;
-  for (auto &root : roots) {
-    auto tmp = DeepUsersSearch(root, include, mng);
-    users.insert(users.end(), tmp.begin(), tmp.end());
-  }
-  return users;
-}
 }  // namespace
-
-IncludeType IncludeFusedBasicOpForward(const AnfNodePtr &cur_node, const AnfNodePtr &node) {
-  if (cur_node == node) {
-    return FOLLOW;
-  }
-  if (AnfAlgo::IsGraphKernel(node) || IsBasicFuseOp(node)) {
-    return FOLLOW;
-  }
-  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
-    auto prev_node = node->cast<CNodePtr>()->input(kRealInputNodeIndexInTupleGetItem);
-    if (AnfAlgo::IsGraphKernel(prev_node)) {
-      return FOLLOW;
-    }
-  }
-  return EXCLUDE;
-}
-
-IncludeType IncludeFusedBasicOpBackward(const AnfNodePtr &cur_node, const AnfNodePtr &node) {
-  if (cur_node == node) {
-    return FOLLOW;
-  }
-  if (AnfAlgo::IsGraphKernel(node)) {
-    auto cnode = node->cast<CNodePtr>();
-    auto fg = GetValueNode<FuncGraphPtr>(cnode->input(kAnfPrimitiveIndex));
-    auto fg_attr_val = fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
-    MS_EXCEPTION_IF_NULL(fg_attr_val);
-    auto fg_attr = GetValue<std::string>(fg_attr_val);
-    if (fg_attr == kApplyMomentumOpName) {
-      return FOLLOW;
-    }
-    return EXCLUDE;
-  }
-  bool is_fusable = IsBasicFuseOp(node);
-  return is_fusable ? FOLLOW : EXCLUDE;
-}
 
 bool CheckCircle(const std::set<AnfNodePtr> &fused_op_set, const AnfNodePtr &check_node,
                  std::set<AnfNodePtr> *cached_unconnected_set, std::vector<AnfNodePtr> *circle_nodes,
@@ -163,9 +118,8 @@ bool CheckCircle(const std::set<AnfNodePtr> &fused_op_set, const AnfNodePtr &che
   return !circle_nodes->empty();
 }
 
-std::vector<AnfNodePtr> RemoveCircle(const std::vector<AnfNodePtr> &fused_op,
-                                     const std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> &depend_prior,
-                                     bool is_backward) {
+AnfNodePtrList RemoveCircle(const std::vector<AnfNodePtr> &fused_op,
+                            const std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> &depend_prior) {
   std::set<AnfNodePtr> cached_unconnected_set;
   std::set<AnfNodePtr> fused_op_set(fused_op.begin(), fused_op.end());
   auto include = [&fused_op_set](const AnfNodePtr &node) {
@@ -181,13 +135,8 @@ std::vector<AnfNodePtr> RemoveCircle(const std::vector<AnfNodePtr> &fused_op,
     bool has_circle = CheckCircle(fused_op_set, *iter, &cached_unconnected_set, &circle_nodes, depend_prior);
     // delete the circle node and the node which depend on the circle node in fused op
     if (has_circle) {
-      auto mng = (*iter)->func_graph()->manager();
       std::vector<AnfNodePtr> erase_nodes;
-      if (is_backward) {
-        erase_nodes = DeepUsersSearch(circle_nodes, include, mng);
-      } else {
-        erase_nodes = DeepLinkedGraphSearch(circle_nodes, include);
-      }
+      erase_nodes = DeepLinkedGraphSearch(circle_nodes, include);
       for (auto erase_node : erase_nodes) {
         fused_op_set.erase(erase_node);
       }
@@ -201,60 +150,6 @@ std::vector<AnfNodePtr> RemoveCircle(const std::vector<AnfNodePtr> &fused_op,
     }
   }
   return res;
-}
-
-// The GetItem node should be fused with its real input and users.
-// If its real input is not in the fuse_list, the GetItem should be excluded.
-AnfNodePtrList RemoveWildGetitem(const AnfNodePtrList &fused_op) {
-  if (fused_op.empty()) return AnfNodePtrList();
-  std::set<AnfNodePtr> fused_op_set(fused_op.begin(), fused_op.end());
-  auto check_include = [&fused_op_set](const AnfNodePtr &node) { return fused_op_set.count(node) ? FOLLOW : EXCLUDE; };
-
-  auto mng = fused_op[0]->func_graph()->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  bool changed = true;
-  while (changed) {
-    changed = false;
-    AnfNodePtrList remove_list;
-    for (auto node : fused_op_set) {
-      if (!AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) continue;
-      // GetItem should be fused with its real input.
-      auto prev_node = node->cast<CNodePtr>()->input(kRealInputNodeIndexInTupleGetItem);
-      if (check_include(prev_node) == EXCLUDE) {
-        remove_list.push_back(node);
-        break;
-      }
-
-      // GetItem should be fused with its all users.
-      auto &users = mng->node_users()[node];
-      bool outside_user_found = false;
-      for (auto iter = users.begin(); iter != users.end(); ++iter) {
-        if (check_include(iter->first) == EXCLUDE) {
-          outside_user_found = true;
-          break;
-        }
-      }
-      if (outside_user_found) {
-        remove_list = DeepUsersSearch(node, check_include, mng);
-        break;
-      }
-    }
-    if (!remove_list.empty()) {
-      for (auto node : remove_list) {
-        fused_op_set.erase(node);
-      }
-      changed = true;
-    }
-  }
-
-  // keep the original order of fused_op.
-  AnfNodePtrList result;
-  for (auto node : fused_op) {
-    if (fused_op_set.count(node)) {
-      result.push_back(node);
-    }
-  }
-  return result;
 }
 
 void TopoSortForNodeList(std::vector<AnfNodePtr> *lst) {
@@ -309,88 +204,6 @@ void TopoSortForNodeList(std::vector<AnfNodePtr> *lst) {
   }
 
   lst->assign(res.begin(), res.end());
-}
-
-std::vector<AnfNodePtr> FindFuseCNodes(const CNodePtr &cnode,
-                                       const std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> &dep_pri) {
-  auto func_graph = cnode->func_graph();
-  auto mng = func_graph->manager();
-  // Search fusable nodes according input direction.
-  auto include_func_forward = std::bind(IncludeFusedBasicOpForward, cnode, std::placeholders::_1);
-  auto used_nodes = DeepLinkedGraphSearch(cnode, include_func_forward);
-  std::reverse(used_nodes.begin(), used_nodes.end());
-  // Search fusable nodes according output direction.
-  auto include_func_backward = std::bind(IncludeFusedBasicOpBackward, cnode, std::placeholders::_1);
-  auto user_nodes = DeepUsersSearch(cnode, include_func_backward, mng);
-
-  used_nodes.insert(used_nodes.end(), user_nodes.begin() + 1, user_nodes.end());
-  if (used_nodes.size() > 1) {
-    used_nodes = RemoveCircle(used_nodes, dep_pri);
-  }
-  used_nodes = RemoveWildGetitem(used_nodes);
-  TopoSortForNodeList(&used_nodes);
-  return used_nodes;
-}
-
-bool FuseCompositeOps(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto mng = kernel_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(kernel_graph, true);
-    kernel_graph->set_manager(mng);
-  }
-  auto todos = TopoSort(kernel_graph->get_return());
-  std::reverse(todos.begin(), todos.end());
-
-  std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> depend_prior;
-  InitDependPrior(todos, &depend_prior);
-
-  bool changed = false;
-  for (auto iter = todos.cbegin(); iter != todos.cend(); ++iter) {
-    auto node = *iter;
-    if (!AnfAlgo::IsGraphKernel(node) || !kernel_graph->nodes().contains(node)) {
-      continue;
-    }
-
-    auto origin_fg = AnfAlgo::GetCNodeFuncGraphPtr(node);
-    auto fg_attr = origin_fg->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL);
-    if (fg_attr != nullptr) {
-      auto fg_name = GetValue<std::string>(fg_attr);
-      if (graph_kernel_black_list.count(fg_name) != 0) {
-        continue;
-      }
-    }
-
-    auto fuse_nodes = FindFuseCNodes(node->cast<CNodePtr>(), depend_prior);
-    if (fuse_nodes.size() <= 1) {
-      continue;
-    }
-    changed = true;
-
-    AnfNodePtr fused_new_node;
-    AnfNodePtrList old_outputs;
-    std::tie(fused_new_node, old_outputs) = FuseNodesToSubGraph(fuse_nodes, kernel_graph, "");
-    ReplaceNewFuseCNodeForDependPrior(&depend_prior, fused_new_node, old_outputs);
-  }
-  return changed;
-}
-
-void EliminateGetItem(const FuncGraphPtr &func_graph) {
-  std::shared_ptr<Pass> eliminate_getitem_pass = std::make_shared<opt::GetitemTuple>();
-  auto todos = TopoSort(func_graph->get_return());
-  for (auto node : todos) {
-    if (AnfAlgo::IsGraphKernel(node)) {
-      eliminate_getitem_pass->Run(AnfAlgo::GetCNodeFuncGraphPtr(node));
-    }
-  }
-}
-
-bool CompositeOpsFusion::Run(const FuncGraphPtr &func_graph) {
-  auto changed = FuseCompositeOps(std::dynamic_pointer_cast<session::KernelGraph>(func_graph));
-  if (changed) {
-    EliminateGetItem(func_graph);
-  }
-  return changed;
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -42,7 +42,7 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/tensor_load.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
-#include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
+#include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
@@ -822,7 +822,7 @@ void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kern
   auto pm = std::make_shared<opt::PassManager>("graph_kernel_pm");
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
-  pm->AddPass(std::make_shared<opt::CompositeOpsFusion>());
+  pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
   pm->AddPass(std::make_shared<opt::TensorPromotion>());
   pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());

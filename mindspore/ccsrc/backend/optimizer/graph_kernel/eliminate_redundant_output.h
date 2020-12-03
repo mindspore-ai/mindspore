@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_COMPOSITE_OPS_FUSION_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_COMPOSITE_OPS_FUSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ELIMINATE_REDUNDANT_OUTPUT_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ELIMINATE_REDUNDANT_OUTPUT_H_
 
-#include <limits>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
 #include "backend/optimizer/common/optimizer.h"
-#include "backend/session/kernel_graph.h"
 
 namespace mindspore {
 namespace opt {
-AnfNodePtrList RemoveCircle(const std::vector<AnfNodePtr> &fused_op,
-                            const std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> &depend_prior);
+class EliminateRedundantOutput : public Pass {
+ public:
+  EliminateRedundantOutput() : Pass("eliminate_redundant_output") {}
+  ~EliminateRedundantOutput() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
 
-void TopoSortForNodeList(std::vector<AnfNodePtr> *lst);
+ private:
+  bool Process(const FuncGraphPtr &func_graph);
+  void UpdateGetitemIndex(const CNodePtr &getitem, int64_t offset);
+  AnfNodePtr ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems);
+};
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_COMPOSITE_OPS_FUSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ELIMINATE_REDUNDANT_OUTPUT_H_

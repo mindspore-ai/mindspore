@@ -65,8 +65,8 @@ AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &kernel_graph, const FuncGraphP
 void ReplaceNewFuseCNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &new_fuse_cnode,
                          const AnfNodePtrList &outputs);
 std::tuple<AnfNodePtr, AnfNodePtrList> FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
-                                                           const std::shared_ptr<session::KernelGraph> &kernel_graph,
-                                                           const std::string &postfix);
+                                                           const FuncGraphPtr &kernel_graph,
+                                                           const std::string &postfix = "");
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc);
 bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, nlohmann::json *op_desc,
                    std::map<std::string, AnfNodePtr> *address_node_map);
@@ -79,8 +79,6 @@ bool IsBasicFuseOp(const AnfNodePtr &node);
 void ResetKernelInfo(const AnfNodePtr &node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 void InitDependPrior(const std::vector<AnfNodePtr> &todos,
                      std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior);
-void UpdateControlDependNode(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior,
-                             const AnfNodePtr &control_depend_node, const AnfNodePtr &new_control_depend);
 void ReplaceNewFuseCNodeForDependPrior(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior,
                                        const AnfNodePtr &new_fuse_cnode, const AnfNodePtrList &outputs);
 

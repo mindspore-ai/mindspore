@@ -38,7 +38,7 @@
 #include "backend/optimizer/graph_kernel/add_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
-#include "backend/optimizer/graph_kernel/composite_ops_fusion.h"
+#include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
@@ -171,7 +171,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
   pm->AddPass(std::make_shared<opt::ShapeOpsSplitter>());
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
-  pm->AddPass(std::make_shared<opt::CompositeOpsFusion>());
+  pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>(black_list));
   pm->AddPass(std::make_shared<opt::ArithmeticSimplify>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>(black_list));
