@@ -42,15 +42,39 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "fullconnection only support a_transpose_=false yet.";
     return RET_ERROR;
   }
-  if ((in_tensors_[0]->shape().size() != 4 && in_tensors_[0]->shape().size() != 2) ||
-      (out_tensors_[0]->shape().size() != 4 && out_tensors_[0]->shape().size() != 2)) {
-    MS_LOG(ERROR) << "fullconnection only support input output shape size = 2 or 4";
+  auto out_gpu_info = GpuTensorInfo(out_tensors_[0]);
+  if (out_gpu_info.H != 1 || out_gpu_info.W != 1) {
+    MS_LOG(ERROR) << "fullconnection only support 2d output shape or 4d output but H=W=1";
     return RET_ERROR;
   }
   if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6) {
     MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
     return RET_ERROR;
   }
+  N_ = out_gpu_info.N;
+  CO_ = out_gpu_info.C;
+  auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
+  int input_nhw = intensor_shape.N * intensor_shape.H * intensor_shape.W;
+  if (input_nhw < N_) {
+    MS_LOG(ERROR) << "Unsupported fullconnection shape";
+  }
+  if (!in_tensors_.at(kWeightIndex)->IsConst()) {
+    weight_var_ = true;
+    if (!param->b_transpose_) {
+      MS_LOG(ERROR) << "If fullconnection input weight is not constant, b_transpose_ should be true.";
+      return RET_ERROR;
+    }
+    if (in_tensors_.at(kWeightIndex)->shape().size() != 2) {
+      MS_LOG(ERROR) << "If fullconnection input weight is not constant, it should be 2d.";
+      return RET_ERROR;
+    }
+    if (intensor_shape.C != in_tensors_.at(kWeightIndex)->shape()[1]) {
+      MS_LOG(ERROR)
+        << "If fullconnection input weight is not constant, input channel should equal to weight in_channel.";
+      return RET_ERROR;
+    }
+  }
+  CI_remainder_ = input_nhw / N_;
   return RET_OK;
 }
 
@@ -61,8 +85,9 @@ int FullConnectionOpenCLKernel::Prepare() {
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
 
   std::string kernel_name = "FullConnection";
-  inShape = GpuTensorInfo(in_tensors_[0]);
-  outShape = GpuTensorInfo(out_tensors_[0]);
+  if (weight_var_) {
+    kernel_name = "FullConnectionWeightVar";
+  }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
@@ -82,23 +107,26 @@ int FullConnectionOpenCLKernel::Prepare() {
 }
 
 int FullConnectionOpenCLKernel::InitWeights() {
-  if (!in_tensors_.at(kWeightIndex)->IsConst()) {
-    MS_LOG(ERROR) << "FullConnection don't support non-constant filter yet.";
-    return RET_ERROR;
+  if (!weight_var_) {
+    auto ret = InitFilter();
+    if (ret != RET_OK) {
+      return ret;
+    }
   }
+  return InitBias();
+}  // namespace mindspore::kernel
+
+int FullConnectionOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
-  int ci = inShape.C;
-  int ci4 = UP_DIV(ci, C4NUM);
-  int co = outShape.C;
-  int co4 = UP_DIV(co, C4NUM);
-  int h = inShape.H;
-  int w = inShape.W;
+  auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
+  int co4 = UP_DIV(CO_, C4NUM);
+  int nhw_remainder = intensor_shape.N * intensor_shape.H * intensor_shape.W / N_;
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
-  padWeight_ = allocator->Malloc(h * w * ci4 * co4 * C4NUM * C4NUM * dtype_size);
+  padWeight_ = allocator->Malloc(nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size);
   padWeight_ = allocator->MapBuffer(padWeight_, CL_MAP_WRITE, nullptr, true);
   auto padWeightFp32 = reinterpret_cast<float *>(padWeight_);
   auto padWeightFp16 = reinterpret_cast<float16_t *>(padWeight_);
-  memset(padWeight_, 0x00, h * w * ci4 * co4 * C4NUM * C4NUM * dtype_size);
+  memset(padWeight_, 0x00, nhw_remainder * intensor_shape.Slice * co4 * C4NUM * C4NUM * dtype_size);
   auto originWeightFp32 = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->data_c());
   auto originWeightFp16 = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->data_c());
   bool isModelFp16 = in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16;
@@ -107,36 +135,33 @@ int FullConnectionOpenCLKernel::InitWeights() {
   // HWCICO -> (HWCI4)(CO4)(4 from CO)(4 from CI)
   // if tranposeB, COHWCI -> (HWCI4)(CO4)(4 from CO)(4 from CI)
   int index = 0;
-  for (int hh = 0; hh < h; hh++) {
-    for (int ww = 0; ww < w; ww++) {
-      int baseHW = hh * w + ww;
-      for (int i = 0; i < ci4; ++i) {
-        for (int j = 0; j < co4; ++j) {
-          for (int k = 0; k < C4NUM; ++k) {
-            for (int l = 0; l < C4NUM; ++l) {
-              int src_ci = i * C4NUM + l;
-              int src_co = j * C4NUM + k;
-              if (src_ci < ci && src_co < co) {
-                int originId = baseHW * ci * co + src_ci * co + src_co;
-                if (transposeB) {
-                  originId = src_co * ci * h * w + baseHW * ci + src_ci;
-                }
-                if (enable_fp16_) {
-                  if (!isModelFp16) {
-                    padWeightFp16[index++] = originWeightFp32[originId];
-                  } else {
-                    padWeightFp16[index++] = originWeightFp16[originId];
-                  }
+  for (int nhw = 0; nhw < nhw_remainder; nhw++) {
+    for (int i = 0; i < intensor_shape.Slice; ++i) {
+      for (int j = 0; j < co4; ++j) {
+        for (int k = 0; k < C4NUM; ++k) {
+          for (int l = 0; l < C4NUM; ++l) {
+            int src_ci = i * C4NUM + l;
+            int src_co = j * C4NUM + k;
+            if (src_ci < intensor_shape.C && src_co < CO_) {
+              int originId = (nhw * intensor_shape.C + src_ci) * CO_ + src_co;
+              if (transposeB) {
+                originId = src_co * intensor_shape.C * nhw_remainder + nhw * intensor_shape.C + src_ci;
+              }
+              if (enable_fp16_) {
+                if (!isModelFp16) {
+                  padWeightFp16[index++] = originWeightFp32[originId];
                 } else {
-                  if (!isModelFp16) {
-                    padWeightFp32[index++] = originWeightFp32[originId];
-                  } else {
-                    padWeightFp32[index++] = originWeightFp16[originId];
-                  }
+                  padWeightFp16[index++] = originWeightFp16[originId];
                 }
               } else {
-                index++;
+                if (!isModelFp16) {
+                  padWeightFp32[index++] = originWeightFp32[originId];
+                } else {
+                  padWeightFp32[index++] = originWeightFp16[originId];
+                }
               }
+            } else {
+              index++;
             }
           }
         }
@@ -144,8 +169,14 @@ int FullConnectionOpenCLKernel::InitWeights() {
     }
   }
   allocator->UnmapBuffer(padWeight_);
+  return RET_OK;
+}
 
+int FullConnectionOpenCLKernel::InitBias() {
   // pad FC Bias
+  auto allocator = ocl_runtime_->GetAllocator();
+  int co4 = UP_DIV(CO_, C4NUM);
+  size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   size_t im_dst_x, im_dst_y;
   im_dst_x = co4;
   im_dst_y = 1;
@@ -163,15 +194,15 @@ int FullConnectionOpenCLKernel::InitWeights() {
       return RET_ERROR;
     }
     if (in_tensors_[2]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
-      for (int i = 0; i < co; i++) {
+      for (int i = 0; i < CO_; i++) {
         reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->data_c())[i];
       }
     } else if (in_tensors_[2]->data_type() == kNumberTypeFloat16 && !enable_fp16_) {
-      for (int i = 0; i < co; i++) {
+      for (int i = 0; i < CO_; i++) {
         reinterpret_cast<float *>(bias_)[i] = reinterpret_cast<float16_t *>(in_tensors_[2]->data_c())[i];
       }
     } else {
-      memcpy(bias_, in_tensors_[2]->data_c(), co * dtype_size);
+      memcpy(bias_, in_tensors_[2]->data_c(), CO_ * dtype_size);
     }
   }
   allocator->UnmapBuffer(bias_);
@@ -180,20 +211,27 @@ int FullConnectionOpenCLKernel::InitWeights() {
 
 void FullConnectionOpenCLKernel::SetGlobalLocal() {
   local_size_ = {32, 4, 1};
-  global_size_ = {UP_DIV(outShape.C, C4NUM), 4, outShape.N};
+  size_t CO = CO_;
+  size_t N = N_;
+  global_size_ = {UP_DIV(CO, C4NUM), 4, N};
   AlignGlobalLocal(global_size_, local_size_);
 }
 
 void FullConnectionOpenCLKernel::SetConstArgs() {
-  int arg_count = 2;
-  cl_int4 in_shape = {static_cast<int>(inShape.N), static_cast<int>(inShape.H), static_cast<int>(inShape.W),
-                      static_cast<int>(inShape.C)};
-  cl_int2 out_shape = {static_cast<int>(outShape.N), static_cast<int>(outShape.C)};
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
-  auto *param = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  if (!weight_var_) {
+    ocl_runtime_->SetKernelArg(kernel_, 2, padWeight_, lite::opencl::MemType::BUF);
+  }
+  int arg_count = 3;
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, bias_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, N_);
+  auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
+  int CI4 = CI_remainder_ * intensor_shape.Slice;
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, CI4);
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, UP_DIV(CO_, C4NUM));
+  auto in_shape_info = GpuTensorInfo(in_tensors_[0]);
+  cl_int2 in_img_shape = {static_cast<int>(in_shape_info.height), static_cast<int>(in_shape_info.width)};
+  ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_img_shape);
+  auto *param = reinterpret_cast<MatMulParameter *>(op_parameter_);
   ocl_runtime_->SetKernelArg(kernel_, arg_count, static_cast<cl_int>(param->act_type_));
 }
 
@@ -202,6 +240,9 @@ int FullConnectionOpenCLKernel::Run() {
   int arg_count = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
+  if (weight_var_) {
+    ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[1]->data_c());
+  }
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }

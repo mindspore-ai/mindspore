@@ -68,13 +68,17 @@ cl_float4 ReduceOpenCLKernel::GenC4Mask() {
 
 int ReduceOpenCLKernel::CheckSpecs() {
   if (in_tensors_[0]->shape()[0] > 1) {
-    MS_LOG(ERROR) << "reduce op only support n=2";
+    MS_LOG(ERROR) << "reduce op only support n = 1";
     return RET_PARAM_INVALID;
   }
   auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
   if (GetReduceTypeStr(reduce_param->mode_).empty()) {
     MS_LOG(ERROR) << "not supported reduce type:" << reduce_param->mode_;
     return RET_PARAM_INVALID;
+  }
+  if (reduce_param->num_axes_ == 1 && reduce_param->axes_[0] == 3 && in_tensors_[0]->shape()[2] == 1) {
+    reduce_param->num_axes_ = 2;
+    reduce_param->axes_[1] = 2;
   }
   if (reduce_param->num_axes_ != 2) {
     MS_LOG(ERROR) << "reduce op only support axes=2";

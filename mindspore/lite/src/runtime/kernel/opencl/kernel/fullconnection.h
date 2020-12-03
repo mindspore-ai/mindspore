@@ -40,13 +40,17 @@ class FullConnectionOpenCLKernel : public OpenCLKernel {
   int Tune() override { return lite::RET_OK; }
 
  private:
+  int InitFilter();
+  int InitBias();
   void *padWeight_{nullptr};
   void *bias_{nullptr};
   bool enable_fp16_{false};
   bool transposeA{false};
   bool transposeB{true};
-  GpuTensorInfo inShape = GpuTensorInfo(nullptr);
-  GpuTensorInfo outShape = GpuTensorInfo(nullptr);
+  bool weight_var_{false};
+  int N_{1};
+  int CI_remainder_{1};
+  int CO_{1};
 };
 }  // namespace mindspore::kernel
 

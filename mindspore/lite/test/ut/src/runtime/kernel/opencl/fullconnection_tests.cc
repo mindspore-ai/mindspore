@@ -24,7 +24,7 @@ namespace {
 // PrimitiveType_FullConnection: src/ops/populate/full_connection_populate.cc
 OpParameter *CreateParameter(std::vector<int> *input_shape, std::vector<int> *weight_shape,
                              std::vector<int> *bias_shape, std::vector<int> *output_shape, int ndim, int ci, int co,
-                             int n = 1, int h = 1, int w = 1) {
+                             int n = 1, int h = 1, int w = 1, int in_n = 1) {
   auto *param = test::CreateParameter<MatMulParameter>(schema::PrimitiveType_FullConnection);
   param->a_transpose_ = false;
   param->b_transpose_ = true;
@@ -40,6 +40,11 @@ OpParameter *CreateParameter(std::vector<int> *input_shape, std::vector<int> *we
     *input_shape = {n, h, w, ci};
     *output_shape = {n, co};
     *weight_shape = {co, h * w * ci};
+    *bias_shape = {co};
+  } else if (ndim == 3) {
+    *input_shape = {in_n, w, ci};
+    *output_shape = {n, co};
+    *weight_shape = {co, in_n * w * ci / n};
     *bias_shape = {co};
   }
   return reinterpret_cast<OpParameter *>(param);
@@ -87,4 +92,47 @@ TEST_F(TestOpenCL_FullConnection, 4D) {
   }
 }
 
+TEST_F(TestOpenCL_FullConnection, 3D) {
+  int ndim = 3;
+  int ci = 3;
+  int co = 4;
+  int n = 2;
+  int h = 1;
+  int w = 4;
+  int in_n = 1;
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  float weight_data[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  float bias_data[] = {1, 1, 1, 1};
+  float output_data[] = {16, 16, 16, 16, 52, 52, 52, 52};
+
+  for (auto fp16_enable : {false, true}) {
+    std::vector<int> input_shape, weight_shape, bias_shape, output_shape;
+    auto *param = CreateParameter(&input_shape, &weight_shape, &bias_shape, &output_shape, ndim, ci, co, n, h, w, in_n);
+    TestMain({{input_shape, input_data, VAR},
+              {weight_shape, weight_data, CONST_TENSOR},
+              {bias_shape, bias_data, CONST_TENSOR}},
+             {output_shape, output_data}, param, fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_FullConnection, 3DWeightVar) {
+  int ndim = 3;
+  int ci = 6;
+  int co = 4;
+  int n = 2;
+  int h = 1;
+  int w = 2;
+  int in_n = 1;
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  float weight_data[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  float bias_data[] = {1, 1, 1, 1};
+  float output_data[] = {16, 16, 16, 16, 52, 52, 52, 52};
+
+  for (auto fp16_enable : {false, true}) {
+    std::vector<int> input_shape, weight_shape, bias_shape, output_shape;
+    auto *param = CreateParameter(&input_shape, &weight_shape, &bias_shape, &output_shape, ndim, ci, co, n, h, w, in_n);
+    TestMain({{input_shape, input_data, VAR}, {weight_shape, weight_data, VAR}, {bias_shape, bias_data, CONST_TENSOR}},
+             {output_shape, output_data}, param, fp16_enable);
+  }
+}
 }  // namespace mindspore::lite::opencl::test
