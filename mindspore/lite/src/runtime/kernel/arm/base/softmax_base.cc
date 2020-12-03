@@ -48,8 +48,8 @@ int SoftmaxBaseCPUKernel::ReSize() {
     softmax_param_->axis_ += in_dims;
   }
   for (size_t i = 0; i < in_dims; i++) {
-    softmax_param_->input_shape_[i] = in_shape[i];
-    ele_size *= in_shape[i];
+    softmax_param_->input_shape_[i] = in_shape.at(i);
+    ele_size *= in_shape.at(i);
   }
   softmax_param_->element_size_ = ele_size;
   return RET_OK;

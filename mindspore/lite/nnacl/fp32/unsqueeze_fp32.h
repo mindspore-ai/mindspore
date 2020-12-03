@@ -22,8 +22,11 @@
 #define UNSQUEEZE_DIMS_MAX_SIZE 4
 
 typedef struct UnsqueezeParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   int dims_[UNSQUEEZE_DIMS_MAX_SIZE];
+
+  // other parameter
   int num_dim_;
 } UnsqueezeParameter;
 

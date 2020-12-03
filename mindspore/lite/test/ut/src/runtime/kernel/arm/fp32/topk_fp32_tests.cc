@@ -30,6 +30,7 @@ TEST_F(TestTopKFp32, TopK) {
   lite::Tensor in_tensor(kNumberTypeFloat32, {2, 2, 3});
   lite::Tensor out_tensor0(kNumberTypeFloat32, {2, 2, 2});
   lite::Tensor out_tensor1(kNumberTypeInt32, {2, 2, 2});
+
   float input_data[] = {1, 2, 3, 6, 5, 4, 9, 8, 7, 10, 12, 11};
   float output_data0[8] = {0};
   int32_t output_data1[8] = {0};
@@ -39,7 +40,7 @@ TEST_F(TestTopKFp32, TopK) {
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
-  TopkParameter parameter = {{}, 3, 4, 2, true};
+  TopkParameter parameter = {{}, 2, true, 3, 4};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_TopK};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);

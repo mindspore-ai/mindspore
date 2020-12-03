@@ -39,7 +39,7 @@ int TransposeFp16CPUKernel::Init() {
 
 int TransposeFp16CPUKernel::ReSize() {
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
-  num_unit_ = static_cast<int>(in_tensors_[kInputIndex]->shape().at(param->perm_[kNHWC_H]));
+  num_unit_ = static_cast<int>(in_tensors_.at(kInputIndex)->shape().at(param->perm_[kNHWC_H]));
   thread_h_num_ = MSMIN(thread_num_, num_unit_);
   thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
   auto &in_tensor = in_tensors_.front();
@@ -50,8 +50,8 @@ int TransposeFp16CPUKernel::ReSize() {
   param->out_strides_[param->num_axes_ - 1] = 1;
   param->data_size_ = in_tensor->Size();
   for (int i = param->num_axes_ - 2; i >= 0; i--) {
-    param->strides_[i] = in_shape[i + 1] * param->strides_[i + 1];
-    param->out_strides_[i] = out_shape[i + 1] * param->out_strides_[i + 1];
+    param->strides_[i] = in_shape.at(i + 1) * param->strides_[i + 1];
+    param->out_strides_[i] = out_shape.at(i + 1) * param->out_strides_[i + 1];
   }
 
   return RET_OK;

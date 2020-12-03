@@ -21,9 +21,12 @@
 #include "ir/dtype/type_id.h"
 
 typedef struct TensorListParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   mindspore::TypeId shape_type_;
   mindspore::TypeId element_dtype_;
+
+  // other parameter
   int num_element_;
 } TensorListParameter;
 

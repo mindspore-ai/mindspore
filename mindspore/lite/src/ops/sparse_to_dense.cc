@@ -51,8 +51,8 @@ int SparseToDense::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor 
     return RET_ERROR;
   }
   auto input2 = inputs_.at(2);
-  outputs_[0]->set_data_type(input2->data_type());
-  outputs_[0]->set_format(input2->format());
+  outputs_.at(0)->set_data_type(input2->data_type());
+  outputs_.at(0)->set_format(input2->format());
 
   if (!infer_flag()) {
     return RET_OK;
@@ -67,7 +67,7 @@ int SparseToDense::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor 
   for (int i = 0; i < input1->ElementsNum(); i++) {
     output_shape.push_back(input1_data[i]);
   }
-  outputs_[0]->set_shape(output_shape);
+  outputs_.at(0)->set_shape(output_shape);
   return RET_OK;
 }
 }  // namespace lite

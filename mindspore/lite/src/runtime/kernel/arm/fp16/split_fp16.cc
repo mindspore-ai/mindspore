@@ -39,7 +39,7 @@ int SplitFp16CPUKernel::Init() {
   }
   output_ptr_.resize(param->num_split_);
   for (size_t i = 0; i < output_ptr_.size(); i++) {
-    output_ptr_[i] = nullptr;
+    output_ptr_.at(i) = nullptr;
   }
   if (!InferShapeDone()) {
     return RET_OK;
@@ -82,8 +82,8 @@ int SplitFp16CPUKernel::Run() {
     return RET_ERROR;
   }
   for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_[i] = MallocOutputFp16(out_tensors_.at(i), context_);
-    if (output_ptr_[i] == nullptr) {
+    output_ptr_.at(i) = MallocOutputFp16(out_tensors_.at(i), context_);
+    if (output_ptr_.at(i) == nullptr) {
       FreeInputAndOutput();
       MS_LOG(ERROR) << "input or output is nullptr";
       return RET_ERROR;
@@ -92,7 +92,7 @@ int SplitFp16CPUKernel::Run() {
   auto ret = ParallelLaunch(this->context_->thread_pool_, SplitFp16Run, this, thread_n_num_);
   for (int i = 0; i < param->num_split_; i++) {
     if (out_tensors_.at(i)->data_type() == kNumberTypeFloat32) {
-      Float16ToFloat32(output_ptr_[i], reinterpret_cast<float *>(out_tensors_.at(i)->MutableData()),
+      Float16ToFloat32(output_ptr_.at(i), reinterpret_cast<float *>(out_tensors_.at(i)->MutableData()),
                        out_tensors_.at(i)->ElementsNum());
     }
   }
@@ -110,8 +110,8 @@ void SplitFp16CPUKernel::FreeInputAndOutput() {
   }
   for (int i = 0; i < param->num_split_; i++) {
     if (out_tensors_.at(i)->data_type() == kNumberTypeFloat32) {
-      context_->allocator->Free(output_ptr_[i]);
-      output_ptr_[i] = nullptr;
+      context_->allocator->Free(output_ptr_.at(i));
+      output_ptr_.at(i) = nullptr;
     }
   }
 }

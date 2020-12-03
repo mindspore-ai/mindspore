@@ -19,14 +19,19 @@
 #include "nnacl/op_base.h"
 
 typedef struct StridedSliceParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   int begins_[8];
   int ends_[8];
   int strides_[8];
   int isScale;
-  int num_axes_;
+
+  // shape correlative
   int in_shape_length_;
   int in_shape_[8];
+
+  // other parameter
+  int num_axes_;
   LiteDataType data_type;
 } StridedSliceParameter;
 

@@ -18,6 +18,7 @@
 
 #include "nnacl/op_base.h"
 typedef struct ResizeParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   int method_;
   int64_t new_height_;

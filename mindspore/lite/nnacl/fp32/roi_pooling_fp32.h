@@ -19,10 +19,15 @@
 #include "nnacl/op_base.h"
 
 typedef struct ROIPoolingParameter {
+  // primitive parameter
   OpParameter op_parameter_;
+  int pooledW_;
+  int pooledH_;
+  float scale_;
+
+  // shape correlative
   int in_strides_[DIMENSION_4D];
   int out_strides_[DIMENSION_4D];
-  float scale_;
   int ndim_;
   int input_w_;
   int input_h_;
@@ -32,9 +37,9 @@ typedef struct ROIPoolingParameter {
   int output_h_;
   int output_n_;
   int output_c_;
+
+  // other parameter
   int thread_num_;
-  int pooledW_;
-  int pooledH_;
 } ROIPoolingParameter;
 
 #ifdef __cplusplus

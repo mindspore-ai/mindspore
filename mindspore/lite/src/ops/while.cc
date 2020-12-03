@@ -96,9 +96,9 @@ int While::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
     return RET_ERROR;
   }
   for (size_t i = 0; i < inputs_.size(); i++) {
-    outputs_[i]->set_data_type(inputs_[i]->data_type());
-    outputs_[i]->set_format(inputs_[i]->format());
-    outputs_[i]->set_shape(inputs_[i]->shape());
+    outputs_.at(i)->set_data_type(inputs_.at(i)->data_type());
+    outputs_.at(i)->set_format(inputs_.at(i)->format());
+    outputs_.at(i)->set_shape(inputs_.at(i)->shape());
   }
 
   return RET_OK;

@@ -30,10 +30,10 @@ namespace mindspore::kernel {
 int TensorListReserveCPUKernel::Init() { return RET_OK; }
 
 int TensorListReserveCPUKernel::Run() {
-  auto out0_ptr = reinterpret_cast<int *>(out_tensors_[0]->MutableData());  // tensorlist size() and dtype
-  out0_ptr[0] = reinterpret_cast<int *>(in_tensors_[0]->data_c())[0];       // num_elements
+  auto out0_ptr = reinterpret_cast<int *>(out_tensors_.at(0)->MutableData());  // tensorlist size() and dtype
+  out0_ptr[0] = reinterpret_cast<int *>(in_tensors_.at(0)->data_c())[0];       // num_elements
   out0_ptr[1] = element_dtype_;
-  auto status = out_tensors_[1]->CopyTensorData(*in_tensors_[1]);  // elements_shape
+  auto status = out_tensors_.at(1)->CopyTensorData(*in_tensors_.at(1));  // elements_shape
   if (status == RET_ERROR) {
     MS_LOG(ERROR) << "copy tensor data failed!";
     return RET_ERROR;

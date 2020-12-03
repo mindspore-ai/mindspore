@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct UniqueParameter {
+  // primitive parameter
   OpParameter op_parameter_;
 } UniqueParameter;
 

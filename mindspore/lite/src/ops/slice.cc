@@ -77,7 +77,7 @@ int Slice::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
           }
         }
       }
-      auto sizeNode = inputs[kAnfPopulaterInputNumTwo];
+      auto sizeNode = inputs.at(kAnfPopulaterInputNumTwo);
       MS_ASSERT(sizeNode != nullptr);
       if (sizeNode->isa<ValueNode>()) {
         auto valueNode = sizeNode->cast<ValueNodePtr>();
@@ -172,8 +172,8 @@ int Slice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tens
     return RET_PARAM_INVALID;
   }
   auto input = inputs.at(0);
-  outputs[0]->set_data_type(input->data_type());
-  outputs[0]->set_format(input->format());
+  outputs.at(0)->set_data_type(input->data_type());
+  outputs.at(0)->set_format(input->format());
   if (!infer_flag()) {
     return RET_OK;
   }
@@ -191,7 +191,7 @@ int Slice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tens
     if (slice_size.empty() && inputs.at(2)->data_c() != nullptr) {
       for (int i = 0; i < inputs.at(2)->ElementsNum(); i++) {
         auto end = static_cast<int *>(inputs.at(2)->data_c())[i];
-        auto size = end < 0 ? end : (end == INT32_MAX ? -1 : end - slice_begin[i]);
+        auto size = end < 0 ? end : (end == INT32_MAX ? -1 : end - slice_begin.at(i));
         slice_size.emplace_back(size);
       }
     }
@@ -208,32 +208,32 @@ int Slice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tens
   begin.assign(input_shape.size(), 0);
   size.assign(input_shape.size(), -1);
   for (size_t i = 0; i < slice_axes.size(); ++i) {
-    begin[slice_axes[i]] = slice_begin[i];
-    size[slice_axes[i]] = slice_size[i];
+    begin.at(slice_axes.at(i)) = slice_begin.at(i);
+    size.at(slice_axes.at(i)) = slice_size.at(i);
   }
   for (size_t i = 0; i < input_shape.size(); ++i) {
-    if (size[i] < 0 && size[i] != -1) {
-      MS_LOG(ERROR) << "Invalid size input!size[" << i << "]=" << size[i];
+    if (size.at(i) < 0 && size.at(i) != -1) {
+      MS_LOG(ERROR) << "Invalid size input!size[" << i << "]=" << size.at(i);
       return RET_PARAM_INVALID;
     }
-    if (begin[i] < 0) {
-      MS_LOG(ERROR) << "Invalid begin input " << begin[i] << " which should be >= 0";
+    if (begin.at(i) < 0) {
+      MS_LOG(ERROR) << "Invalid begin input " << begin.at(i) << " which should be >= 0";
       return RET_PARAM_INVALID;
     }
-    if (input_shape[i] <= begin[i]) {
-      MS_LOG(ERROR) << "Invalid begin input!begin[" << i << "]=" << begin[i]
-                    << " which should be <= " << input_shape[i];
+    if (input_shape.at(i) <= begin.at(i)) {
+      MS_LOG(ERROR) << "Invalid begin input!begin[" << i << "]=" << begin.at(i)
+                    << " which should be <= " << input_shape.at(i);
       return RET_PARAM_INVALID;
     }
-    if (size[i] > (input_shape[i] - begin[i])) {
-      MS_LOG(ERROR) << "Invalid size input " << size[i] << " which should be <= " << input_shape[i] - begin[i];
+    if (size.at(i) > (input_shape.at(i) - begin.at(i))) {
+      MS_LOG(ERROR) << "Invalid size input " << size.at(i) << " which should be <= " << input_shape.at(i) - begin.at(i);
       return RET_PARAM_INVALID;
     }
 
-    output_shape[i] = size[i] < 0 ? input_shape[i] - begin[i] : size[i];
+    output_shape.at(i) = size.at(i) < 0 ? input_shape.at(i) - begin.at(i) : size.at(i);
   }
 
-  outputs[0]->set_shape(output_shape);
+  outputs.at(0)->set_shape(output_shape);
   return RET_OK;
 }
 }  // namespace lite

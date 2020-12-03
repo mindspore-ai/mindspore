@@ -19,11 +19,12 @@
 
 #include "nnacl/op_base.h"
 
-typedef struct {
+typedef struct SkipGramParameter {
+  // primitive parameter
   OpParameter op_parameter_;
-  int ngram_size;
-  int max_skip_size;
   bool include_all_ngrams;
+  int max_skip_size;
+  int ngram_size;
 } SkipGramParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_FP32_SKIP_GRAM_H_

@@ -25,11 +25,16 @@ extern "C" {
 #endif
 
 typedef struct SoftmaxCrossEntropyParameter {
+  // primitive parameter
   OpParameter op_parameter_;
+  int n_dim_;
+
+  // shape correlative
+  int input_shape_[5];
+
+  // other parameter
   int32_t batch_size_;
   unsigned int number_of_classes_;
-  int n_dim_;
-  int input_shape_[5];
   int is_grad;
 } SoftmaxCrossEntropyParameter;
 

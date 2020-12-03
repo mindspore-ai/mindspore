@@ -20,14 +20,19 @@
 #include "nnacl/op_base.h"
 
 typedef struct TileParameter {
+  // primitive parameter
   OpParameter op_parameter_;
-  int in_dim_;
+  int multiples_[5];
+  int dims_[5];
+
+  // shape correlative
   int in_shape_[5];
   int out_shape_[5];
-  int dims_[5];
-  int multiples_[5];
   int in_strides_[5];
   int out_strides_[5];
+
+  // other parameter
+  int in_dim_;
 } TileParameter;
 
 #ifdef __cplusplus

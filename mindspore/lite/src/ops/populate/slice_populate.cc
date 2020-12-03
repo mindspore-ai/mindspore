@@ -41,8 +41,8 @@ OpParameter *PopulateSliceParameter(const mindspore::lite::PrimitiveC *primitive
   }
   slice_param->param_length_ = static_cast<int32_t>(param_begin.size());
   for (int32_t i = 0; i < slice_param->param_length_; ++i) {
-    slice_param->begin_[i] = param_begin[i];
-    slice_param->size_[i] = param_size[i];
+    slice_param->begin_[i] = param_begin.at(i);
+    slice_param->size_[i] = param_size.at(i);
   }
   return reinterpret_cast<OpParameter *>(slice_param);
 }

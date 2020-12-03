@@ -19,7 +19,10 @@
 
 #include "nnacl/op_base.h"
 typedef struct {
+  // primitive parameter
   OpParameter op_parameter_;
+
+  // other parameter
   int method_;  // 0 for bilinear; 1 for nearest
 } UpsampleParameter;
 

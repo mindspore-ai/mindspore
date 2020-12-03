@@ -57,7 +57,7 @@ int Rfft::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
     return RET_OK;
   }
   auto input_shape = input->shape();
-  input_shape[input_shape.size() - 1] = GetFftLength() / 2 + 1;
+  input_shape.at(input_shape.size() - 1) = GetFftLength() / 2 + 1;
   input_shape.push_back(2);
   outputs_.front()->set_shape(input_shape);
   return RET_OK;

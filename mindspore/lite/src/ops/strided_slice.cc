@@ -179,7 +179,7 @@ constexpr size_t kStridedSliceMultiInputNumMax = 5;
 }  // namespace
 bool StridedSlice::CheckInputs(std::vector<lite::Tensor *> inputs_) {
   for (size_t i = 1; i < inputs_.size(); ++i) {
-    if (inputs_[i]->data_c() == nullptr) {
+    if (inputs_.at(i)->data_c() == nullptr) {
       MS_LOG(DEBUG) << "strided_slice has input from other node, which only can be obtained when running.";
       return false;
     }
@@ -309,8 +309,8 @@ int StridedSlice::HandleAxesInputExist(const std::vector<lite::Tensor *> &inputs
   } else {
     axes.assign(axes_data, axes_data + begin_ndim);
     for (int i = 0; i < begin_ndim; ++i) {
-      if (axes[i] < 0) {
-        axes[i] += ndim_;
+      if (axes.at(i) < 0) {
+        axes.at(i) += ndim_;
       }
     }
   }
@@ -321,20 +321,20 @@ int StridedSlice::HandleAxesInputExist(const std::vector<lite::Tensor *> &inputs
   strides_.assign(ndim_, 0);
   auto input_shape = input_tensor->shape();
   for (int i = 0; i < ndim_; ++i) {
-    in_shape_[i] = input_shape.at(i);
+    in_shape_.at(i) = input_shape.at(i);
   }
   for (int i = 0; i < ndim_; ++i) {
     auto axes_it = std::find(axes.begin(), axes.end(), i);
     if (axes_it != axes.end()) {
       auto axis = axes_it - axes.begin();
       // begins or ends exceed limit will be set to limit
-      begins_[i] = std::max(std::min(begin_data[axis], input_shape[i] - 1), -input_shape[i]);
-      ends_[i] = std::max(std::min(end_data[axis], input_shape[i]), -input_shape[i] - 1);
-      strides_[i] = stride_data[axis];
+      begins_.at(i) = std::max(std::min(begin_data[axis], input_shape.at(i) - 1), -input_shape.at(i));
+      ends_.at(i) = std::max(std::min(end_data[axis], input_shape.at(i)), -input_shape.at(i) - 1);
+      strides_.at(i) = stride_data[axis];
     } else {
-      begins_[i] = 0;
-      ends_[i] = input_shape[i];
-      strides_[i] = 1;
+      begins_.at(i) = 0;
+      ends_.at(i) = input_shape.at(i);
+      strides_.at(i) = 1;
     }
   }
   return RET_OK;
@@ -353,7 +353,7 @@ int StridedSlice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   }
   auto input = inputs.at(0);
   outputs.front()->set_data_type(input->data_type());
-  outputs[0]->set_format(input->format());
+  outputs.at(0)->set_format(input->format());
   MS_ASSERT(input != nullptr);
   auto input_shape = input->shape();
   auto inferflag = infer_flag();
@@ -369,9 +369,9 @@ int StridedSlice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
       if (inferflag) {
         in_shape_.emplace_back(input_shape.at(i));
       }
-      begins_.emplace_back((GetBegin())[i]);
-      ends_.emplace_back((GetEnd())[i]);
-      strides_.emplace_back((GetStride())[i]);
+      begins_.emplace_back((GetBegin()).at(i));
+      ends_.emplace_back((GetEnd()).at(i));
+      strides_.emplace_back((GetStride()).at(i));
     }
   }
   if (!CheckInputs(inputs)) {

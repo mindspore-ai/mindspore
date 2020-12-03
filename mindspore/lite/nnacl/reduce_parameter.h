@@ -20,13 +20,16 @@
 #define REDUCE_MAX_AXES_NUM 8
 
 typedef struct ReduceParameter {
+  // primitive parameter
   OpParameter op_parameter_;
+  int axes_[REDUCE_MAX_AXES_NUM];
   bool keep_dims_;
+  int mode_;
   bool reduce_to_end_;
   float coeff;
-  int axes_[REDUCE_MAX_AXES_NUM];
+
+  // other parameter
   int num_axes_;
-  int mode_;
 } ReduceParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_REDUCE_PARAMETER_H_

@@ -101,17 +101,17 @@ int ScaleCPUKernel::CalculateParameter() {
   scale_param_->axis_size_ = 1;
   scale_param_->inner_size_ = 1;
   for (int i = 0; i < scale_param_->axis_; i++) {
-    scale_param_->outer_size_ *= in_shape[i];
+    scale_param_->outer_size_ *= in_shape.at(i);
   }
   for (size_t i = 0; i < scale_shape.size(); i++) {
-    if (in_shape[i + scale_param_->axis_] != scale_shape[i]) {
+    if (in_shape.at(i + scale_param_->axis_) != scale_shape.at(i)) {
       MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
       return RET_ERROR;
     }
-    scale_param_->axis_size_ *= in_shape[i + scale_param_->axis_];
+    scale_param_->axis_size_ *= in_shape.at(i + scale_param_->axis_);
   }
   for (size_t i = scale_param_->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
-    scale_param_->inner_size_ *= in_shape[i];
+    scale_param_->inner_size_ *= in_shape.at(i);
   }
   scale_param_->op_parameter_.thread_num_ = MSMIN(scale_param_->op_parameter_.thread_num_, scale_param_->outer_size_);
   return RET_OK;
@@ -177,7 +177,7 @@ int ScaleCPUKernel::Run() {
   auto in_tensor = in_tensors_.front();
   input_ptr_ = reinterpret_cast<float *>(in_tensor->data_c());
   if (!scale_param_->const_scale_) {
-    auto scale_tensor = in_tensors_[1];
+    auto scale_tensor = in_tensors_.at(1);
     scale_ = reinterpret_cast<float *>(scale_tensor->data_c());
   }
   if (!scale_param_->const_offset_) {

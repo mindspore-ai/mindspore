@@ -23,12 +23,17 @@
 #define SLICE_SHAPE_MAX_SIZE 4
 
 typedef struct SliceParameter {
+  // primitive parameter
   OpParameter op_parameter_;
-  SliceQuantArg quant_arg_;
+
+  // shape correlative
+  int32_t shape_[SLICE_SHAPE_MAX_SIZE];
   int32_t begin_[SLICE_SHAPE_MAX_SIZE];
   int32_t end_[SLICE_SHAPE_MAX_SIZE];
   int32_t size_[SLICE_SHAPE_MAX_SIZE];
-  int32_t shape_[SLICE_SHAPE_MAX_SIZE];
+
+  // other parameter
+  SliceQuantArg quant_arg_;
   int32_t param_length_;
 } SliceParameter;
 

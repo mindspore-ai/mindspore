@@ -91,7 +91,7 @@ int SparseToDenseRun(void *cdata, int task_id) {
 
 int SparseToDenseCPUKernel::GenerateIndices() {
   auto input0 = in_tensors_.at(0);
-  index_num = input0->shape()[0];
+  index_num = input0->shape().at(0);
   if (index_num >= std::numeric_limits<int>::max() / static_cast<int>(sizeof(int *))) {
     MS_LOG(ERROR) << "Input dim is invalid, dim: " << index_num;
     return RET_ERROR;
@@ -120,7 +120,7 @@ int SparseToDenseCPUKernel::GenerateIndices() {
       break;
     }
     case 2: {
-      int true_dims = input0->shape()[1];
+      int true_dims = input0->shape().at(1);
       MS_ASSERT(true_dims <= DIMENSION_4D);
       for (int i = 0; i < index_num; i++) {
         sparse_indices_vect[i] = new int[DIMENSION_4D];

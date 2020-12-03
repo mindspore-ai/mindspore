@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_Stack;
 namespace mindspore::kernel {
 int StackCPUKernel::ReSize() {
   StackParameter *param = reinterpret_cast<StackParameter *>(op_parameter_);
-  auto input0_shape = in_tensors_[0]->shape();
+  auto input0_shape = in_tensors_.at(0)->shape();
   axis_ = param->axis_ < 0 ? param->axis_ + input0_shape.size() + 1 : param->axis_;
   return RET_OK;
 }
@@ -44,31 +44,31 @@ int StackCPUKernel::Init() {
 
 int StackCPUKernel::Run() {
   size_t inputs_num = in_tensors_.size();
-  auto input0 = in_tensors_[0];
+  auto input0 = in_tensors_.at(0);
   if (inputs_num == 1) {
-    auto *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
+    auto *output_data = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
     MS_ASSERT(output_data);
     auto *input_data = reinterpret_cast<const int8_t *>(input0->MutableData());
     MS_ASSERT(input_data);
     DoStackOneInput(input_data, output_data, input0->Size());
     return RET_OK;
   }
-  auto input0_shape = in_tensors_[0]->shape();
-  if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat) {
-    auto *output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
+  auto input0_shape = in_tensors_.at(0)->shape();
+  if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32 || in_tensors_.at(0)->data_type() == kNumberTypeFloat) {
+    auto *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
     MS_ASSERT(output_data);
     float *inputs[inputs_num];
     for (size_t i = 0; i < inputs_num; ++i) {
-      inputs[i] = reinterpret_cast<float *>(in_tensors_[i]->MutableData());
+      inputs[i] = reinterpret_cast<float *>(in_tensors_.at(i)->MutableData());
       MS_ASSERT(inputs[i]);
     }
     DoStack(inputs, inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);
   } else {
-    auto *output_data = reinterpret_cast<int32_t *>(out_tensors_[0]->MutableData());
+    auto *output_data = reinterpret_cast<int32_t *>(out_tensors_.at(0)->MutableData());
     MS_ASSERT(output_data);
     int32_t *inputs[inputs_num];
     for (size_t i = 0; i < inputs_num; ++i) {
-      inputs[i] = reinterpret_cast<int32_t *>(in_tensors_[i]->MutableData());
+      inputs[i] = reinterpret_cast<int32_t *>(in_tensors_.at(i)->MutableData());
       MS_ASSERT(inputs[i]);
     }
     DoStackInt32(inputs, inputs_num, input0_shape.data(), input0_shape.size(), axis_, output_data);

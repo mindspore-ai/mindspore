@@ -18,16 +18,21 @@
 #include "nnacl/op_base.h"
 
 typedef struct SpaceToBatchParameter {
+  // primitive parameter
   OpParameter op_parameter_;
-  bool need_paddings_;
-  int m_;
   int block_sizes_[4];
   int paddings_[4];
+
+  // shape correlative
   int input_shape_[4];
   int output_shape_[4];
   int in_stride_[4];
   int out_stride_[4];
   int padded_in_shape_[4];
+
+  // other parameter
+  bool need_paddings_;
+  int m_;
 } SpaceToBatchParameter;
 #ifdef __cplusplus
 extern "C" {

@@ -34,7 +34,7 @@ TEST_F(SpaceToBatchTestInt8, test1) {
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
-  SpaceToBatchParameter parameter = {{}, false, 2, {2, 2}, {1, 1, 1, 1}};
+  SpaceToBatchParameter parameter = {{}, {2, 2}, {1, 1, 1, 1}, false, 2};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SpaceToBatchND};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);

@@ -50,21 +50,21 @@ int ROIPoolingCPUKernel::ReSize() {
     return RET_ERROR;
   }
   param_->ndim_ = ndims;
-  param_->input_n_ = in_shape[0];
-  param_->input_h_ = in_shape[1];
-  param_->input_w_ = in_shape[2];
-  param_->input_c_ = in_shape[3];
-  param_->output_n_ = out_shape[0];
-  param_->output_h_ = out_shape[1];
-  param_->output_w_ = out_shape[2];
-  param_->output_c_ = out_shape[3];
+  param_->input_n_ = in_shape.at(0);
+  param_->input_h_ = in_shape.at(1);
+  param_->input_w_ = in_shape.at(2);
+  param_->input_c_ = in_shape.at(3);
+  param_->output_n_ = out_shape.at(0);
+  param_->output_h_ = out_shape.at(1);
+  param_->output_w_ = out_shape.at(2);
+  param_->output_c_ = out_shape.at(3);
   param_->in_strides_[ndims - 1] = 1;
   param_->out_strides_[ndims - 1] = 1;
   for (int i = ndims - 2; i >= 0; --i) {
-    param_->in_strides_[i] = in_shape[i + 1] * param_->in_strides_[i + 1];
-    param_->out_strides_[i] = out_shape[i + 1] * param_->out_strides_[i + 1];
+    param_->in_strides_[i] = in_shape.at(i + 1) * param_->in_strides_[i + 1];
+    param_->out_strides_[i] = out_shape.at(i + 1) * param_->out_strides_[i + 1];
   }
-  param_->thread_num_ = MSMIN(param_->op_parameter_.thread_num_, out_shape[0]);
+  param_->thread_num_ = MSMIN(param_->op_parameter_.thread_num_, out_shape.at(0));
   max_c_ = reinterpret_cast<float *>(malloc(param_->input_c_ * sizeof(float)));
   if (max_c_ == nullptr) {
     MS_LOG(ERROR) << "malloc max_c failed.";

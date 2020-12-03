@@ -29,12 +29,12 @@ using mindspore::schema::PrimitiveType_TensorListStack;
 namespace mindspore::kernel {
 
 int TensorListStackCPUKernel::CheckParam() {
-  auto in0_dtype = in_tensors_[0]->data_type();
+  auto in0_dtype = in_tensors_.at(0)->data_type();
   if (in0_dtype != kNumberTypeInt) {
     MS_LOG(ERROR) << "in_tensors_[0]->data_type():" << in0_dtype
                   << " must be equal \"kNumberTypeInt\":" << kNumberTypeInt;
   }
-  auto in0_ptr = reinterpret_cast<int *>(in_tensors_[0]->data_c());
+  auto in0_ptr = reinterpret_cast<int *>(in_tensors_.at(0)->data_c());
   if (in0_ptr[1] != dtype_) {
     MS_LOG(ERROR) << "in_tensors_[0].data_type:[" << in0_ptr[1] << "] must be equal "
                   << "param.data_type:[" << dtype_ << "]";
@@ -50,12 +50,12 @@ int TensorListStackCPUKernel::CheckParam() {
 }
 
 int TensorListStackCPUKernel::Init() {
-  output0_ = out_tensors_[0];
+  output0_ = out_tensors_.at(0);
   if (output0_->format() != schema::Format_NC) {  // shape().size() = 2
     MS_LOG(ERROR) << "out_tensor_[0] format must be \"Format:NC\", but now is:" << output0_->format();
     return RET_ERROR;
   }
-  int dim0 = output0_->shape()[0];
+  int dim0 = output0_->shape().at(0);
   if (dim0 != 1) {  // dim0 must be 1
     MS_LOG(ERROR) << "out_tensor_[0] dim0 must be 1, but now is:" << dim0;
     return RET_ERROR;
@@ -66,19 +66,19 @@ int TensorListStackCPUKernel::Init() {
 int TensorListStackCPUKernel::Run() {
   size_t in_ele_num = 0;
   for (int i = 0; i < num_element_; ++i) {
-    in_ele_num += in_tensors_[i + 2]->ElementsNum();
+    in_ele_num += in_tensors_.at(i + 2)->ElementsNum();
   }
-  size_t out_ele_num = out_tensors_[0]->ElementsNum();
+  size_t out_ele_num = out_tensors_.at(0)->ElementsNum();
   if (in_ele_num > out_ele_num) {
     MS_LOG(ERROR) << "out_tensors_[0]->ElementsNum():" << out_ele_num << "must greater than or equal to in_ele_num"
                   << in_ele_num;
     return RET_ERROR;
   }
   size_t index = 0;
-  auto out_ptr = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
+  auto out_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   for (int i = 0; i < num_element_; ++i) {
-    auto in_ptr = reinterpret_cast<float *>(in_tensors_[i + 2]->data_c());
-    size_t in_size = in_tensors_[i + 2]->ElementsNum();
+    auto in_ptr = reinterpret_cast<float *>(in_tensors_.at(i + 2)->data_c());
+    size_t in_size = in_tensors_.at(i + 2)->ElementsNum();
     memcpy(out_ptr + index, in_ptr, in_size * sizeof(float));
     index += in_size;
   }

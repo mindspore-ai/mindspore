@@ -20,8 +20,11 @@
 #include "nnacl/op_base.h"
 
 typedef struct SparseToDenseParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   bool validate_indices_;
+
+  // other parameter
   int thread_num_;
 } SparseToDenseParameter;
 

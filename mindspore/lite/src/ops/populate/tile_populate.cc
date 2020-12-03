@@ -44,7 +44,7 @@ OpParameter *PopulateTileParameter(const mindspore::lite::PrimitiveC *primitive)
     tile_param->multiples_[i] = 1;
   }
   for (size_t i = 0; i < dims.size(); ++i) {
-    tile_param->multiples_[dims[i]] = multiples[i];
+    tile_param->multiples_[dims.at(i)] = multiples.at(i);
   }
 #endif
   return reinterpret_cast<OpParameter *>(tile_param);

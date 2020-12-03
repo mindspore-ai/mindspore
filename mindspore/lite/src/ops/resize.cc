@@ -68,8 +68,8 @@ int Resize::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
       return RET_ERROR;
     }
     std::vector<int> targetSize = CastToInt(prim.GetAttr("size"));
-    attr->newHeight = targetSize[0];
-    attr->newWidth = targetSize[1];
+    attr->newHeight = targetSize.at(0);
+    attr->newWidth = targetSize.at(1);
     attr->alignCorners = GetValue<bool>(prim.GetAttr("align_corners"));
 
     this->primitive_->value.value = attr;

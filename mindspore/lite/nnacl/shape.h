@@ -20,6 +20,7 @@
 #include "nnacl/op_base.h"
 
 typedef struct ShapeParameter {
+  // primitive parameter
   OpParameter op_parameter_;
 } ShapeParameter;
 

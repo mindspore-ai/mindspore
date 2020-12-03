@@ -21,15 +21,20 @@
 #define SIGMOID_OFFSET_MAX_SIZE 4
 
 typedef struct SigmoidParameter {
+  // primitive parameter
   OpParameter op_parameter_;
+
+  // shape correlative
+  const int *in_shape_;
+  const int *out_shape_;
+
+  // other parameter
   SigmoidQuantArg quant_arg;
   double alpha_;
   int thread_count_;
   int64_t offset_[PRELU_OFFSET_MAX_SIZE];
   int64_t in_offset_[PRELU_OFFSET_MAX_SIZE];
   int64_t axis_;
-  const int *in_shape_;
-  const int *out_shape_;
   int input_dim_;
   int element_num;
 } SigmoidParameter;

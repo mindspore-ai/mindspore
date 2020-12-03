@@ -140,13 +140,13 @@ int ReduceCPUKernel::Run() {
   HandleASumAndSumSquare();
   for (size_t i = 0; i < static_cast<size_t>(num_axes_); ++i) {
     if (i != static_cast<size_t>(num_axes_ - 1)) {
-      dst_data_ = data_buffers_[i];
+      dst_data_ = data_buffers_.at(i);
     } else {
       dst_data_ = out_tensors_.at(0)->MutableData();
     }
-    outer_size_ = outer_sizes_[i];
-    inner_size_ = inner_sizes_[i];
-    axis_size_ = axis_sizes_[i];
+    outer_size_ = outer_sizes_.at(i);
+    inner_size_ = inner_sizes_.at(i);
+    axis_size_ = axis_sizes_.at(i);
     auto error_code = ParallelLaunch(this->context_->thread_pool_, ReduceImpl, this, context_->thread_num_);
     if (error_code != RET_OK) {
       MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";

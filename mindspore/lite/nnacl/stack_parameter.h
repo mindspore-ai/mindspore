@@ -19,6 +19,7 @@
 
 #include "nnacl/op_base.h"
 typedef struct StackParameter {
+  // primitive parameter
   OpParameter op_parameter_;
   int32_t axis_;
 } StackParameter;

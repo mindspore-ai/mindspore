@@ -45,8 +45,8 @@ int SliceCPUKernel::ReSize() {
   }
   for (int i = 0; i < param_->param_length_; ++i) {
     param_->shape_[i] = in_tensors_.at(0)->DimensionSize(i);
-    param_->begin_[i] = begin[i];
-    param_->size_[i] = size[i] < 0 ? param_->shape_[i] - param_->begin_[i] : size[i];
+    param_->begin_[i] = begin.at(i);
+    param_->size_[i] = size.at(i) < 0 ? param_->shape_[i] - param_->begin_[i] : size.at(i);
     param_->end_[i] = param_->begin_[i] + param_->size_[i];
   }
   if (param_->param_length_ < DIMENSION_4D) {
@@ -63,8 +63,8 @@ int SliceCPUKernel::Init() {
 }
 
 int SliceCPUKernel::SliceParallelRun(int thread_id) {
-  const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->MutableData());
-  float *output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
+  const float *input_data = reinterpret_cast<const float *>(in_tensors_.at(0)->MutableData());
+  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   MS_ASSERT(input_data);
   MS_ASSERT(output_data);
   DoSlice(input_data, output_data, param_, thread_id);
@@ -77,8 +77,8 @@ int SliceCPUKernel::Run() {
     MS_LOG(ERROR) << "PreProcess fail!ret: " << ret;
     return ret;
   }
-  const float *input_data = reinterpret_cast<const float *>(in_tensors_[0]->MutableData());
-  float *output_data = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
+  const float *input_data = reinterpret_cast<const float *>(in_tensors_.at(0)->MutableData());
+  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   if (param_->size_[1] < op_parameter_->thread_num_) {
     DoSliceNoParallel(input_data, output_data, param_);
     return RET_OK;

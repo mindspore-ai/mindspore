@@ -41,21 +41,21 @@ int SplitBaseCPUKernel::ReSize() {
   MS_ASSERT(input_shape.size() >= 2 && input_shape.size() <= SPLIT_STRIDES_SIZE);
   param->strides_[input_shape.size() - 1] = 1;
   for (int i = input_shape.size() - 2; i >= 0; i--) {
-    param->strides_[i] = param->strides_[i + 1] * input_shape[i + 1];
+    param->strides_[i] = param->strides_[i + 1] * input_shape.at(i + 1);
   }
 
   MS_ASSERT(static_cast<size_t>(param->split_dim_) < input_shape.size());
   param->split_count_ =
-    param->strides_[0] * input_shape[0] / (input_shape[param->split_dim_] * param->strides_[param->split_dim_]);
+    param->strides_[0] * input_shape.at(0) / (input_shape.at(param->split_dim_) * param->strides_[param->split_dim_]);
   param->n_dims_ = input_shape.size();
 
   if (param->split_sizes_[0] == 0) {
     MS_ASSERT(param->num_split_ > 0 && static_cast<int>(param->num_split_) < input_shape.size());
-    if (input_shape[param->split_dim_] % param->num_split_ != 0) {
+    if (input_shape.at(param->split_dim_) % param->num_split_ != 0) {
       MS_LOG(ERROR) << "Default split size is not usable.";
       return RET_ERROR;
     }
-    int split_size = input_shape[param->split_dim_] / param->num_split_;
+    int split_size = input_shape.at(param->split_dim_) / param->num_split_;
     for (int i = 0; i < param->num_split_; i++) {
       param->split_sizes_[i] = split_size;
     }
@@ -63,7 +63,7 @@ int SplitBaseCPUKernel::ReSize() {
 
   MS_ASSERT(param->num_split_ >= 1 && param->num_split_ <= SPLIT_STRIDES_SIZE);
   if (param->split_sizes_[param->num_split_ - 1] == -1) {
-    int split_shape_end = input_shape[param->split_dim_];
+    int split_shape_end = input_shape.at(param->split_dim_);
     for (int i = 0; i < param->num_split_ - 1; i++) {
       split_shape_end -= param->split_sizes_[i];
     }

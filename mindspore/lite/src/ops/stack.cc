@@ -80,8 +80,8 @@ int Stack::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> output
   }
   auto input = inputs.at(0);
   auto input0_data_type = input->data_type();
-  outputs[0]->set_data_type(input0_data_type);
-  outputs[0]->set_format(input->format());
+  outputs.at(0)->set_data_type(input0_data_type);
+  outputs.at(0)->set_format(input->format());
   if (!infer_flag()) {
     return RET_OK;
   }
@@ -95,25 +95,25 @@ int Stack::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> output
   }
 
   for (size_t i = 1; i < inputs.size(); ++i) {
-    auto input_shape_tmp = inputs[i]->shape();
+    auto input_shape_tmp = inputs.at(i)->shape();
     if (input_shape_tmp.size() != input_shape.size()) {
       MS_LOG(ERROR) << "All input shape size should be the same!";
       return RET_PARAM_INVALID;
     }
     for (size_t j = 0; j < input_shape.size(); ++j) {
-      if (input_shape_tmp[j] != input_shape[j]) {
+      if (input_shape_tmp.at(j) != input_shape.at(j)) {
         MS_LOG(ERROR) << "All input shape should be the same!";
         return RET_PARAM_INVALID;
       }
     }
-    if (inputs[i]->data_type() != input0_data_type) {
+    if (inputs.at(i)->data_type() != input0_data_type) {
       MS_LOG(ERROR) << "All input shuld have the same data type!input[" << i
-                    << "] data type = " << inputs[i]->data_type();
+                    << "] data type = " << inputs.at(i)->data_type();
       return RET_PARAM_INVALID;
     }
   }
   output_shape.insert(output_shape.begin() + axis, inputs.size());
-  outputs[0]->set_shape(output_shape);
+  outputs.at(0)->set_shape(output_shape);
   return RET_OK;
 }
 }  // namespace lite

@@ -19,7 +19,10 @@
 #include "nnacl/op_base.h"
 
 typedef struct WhereParameter {
+  // primitive parameter
   OpParameter op_parameter_;
+
+  // other parameter
   int num_;
   int num1_;
   int num2_;

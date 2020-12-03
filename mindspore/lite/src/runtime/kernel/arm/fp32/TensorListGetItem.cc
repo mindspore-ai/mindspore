@@ -29,14 +29,14 @@ using mindspore::schema::PrimitiveType_TensorListGetItem;
 namespace mindspore::kernel {
 
 int TensorListGetItemCPUKernel::Init() {
-  auto input0 = reinterpret_cast<int *>(in_tensors_[0]->data_c());
+  auto input0 = reinterpret_cast<int *>(in_tensors_.at(0)->data_c());
   size_t dim0 = *input0;
   int in_dtype = *(input0 + 1);
   if (dtype_ != in_dtype) {
     MS_LOG(ERROR) << "op dtype:" << dtype_ << " is not equal in_tensors dtype:" << in_dtype;
     return RET_ERROR;
   }
-  index_ = *(reinterpret_cast<int *>(in_tensors_[dim0 + 2]->data_c()));
+  index_ = *(reinterpret_cast<int *>(in_tensors_.at(dim0 + 2)->data_c()));
   if (index_ < 0) {
     MS_LOG(ERROR) << "index tensor:[" << index_ << "] must be greater than or equal to 0";
     return RET_ERROR;
@@ -50,16 +50,16 @@ int TensorListGetItemCPUKernel::Init() {
 }
 
 int TensorListGetItemCPUKernel::Run() {
-  if (in_tensors_[index_]->data_type() != kTypeUnknown) {
-    auto status = out_tensors_[0]->CopyTensorData(*in_tensors_[index_]);  // tensorlist shape
+  if (in_tensors_.at(index_)->data_type() != kTypeUnknown) {
+    auto status = out_tensors_.at(0)->CopyTensorData(*in_tensors_.at(index_));  // tensorlist shape
     if (status == RET_ERROR) {
       MS_LOG(ERROR) << "copy tensor data failed!";
       return RET_ERROR;
     }
   } else {
     // reset 0 and dtype = dtype_
-    auto out_ptr = reinterpret_cast<char *>(out_tensors_[0]->MutableData());
-    memset(out_ptr, 0, lite::DataTypeSize(dtype_) * out_tensors_[0]->ElementsNum());
+    auto out_ptr = reinterpret_cast<char *>(out_tensors_.at(0)->MutableData());
+    memset(out_ptr, 0, lite::DataTypeSize(dtype_) * out_tensors_.at(0)->ElementsNum());
   }
   return RET_OK;
 }

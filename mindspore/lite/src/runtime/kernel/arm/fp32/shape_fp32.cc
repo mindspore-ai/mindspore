@@ -43,7 +43,7 @@ int ShapeCPUKernel::Run() {
   }
 
   for (size_t i = 0; i < in_tensor->shape().size(); i++) {
-    reinterpret_cast<int *>(out_tensor->MutableData())[i] = in_tensor->shape()[i];
+    reinterpret_cast<int *>(out_tensor->MutableData())[i] = in_tensor->shape().at(i);
   }
 
   return RET_OK;

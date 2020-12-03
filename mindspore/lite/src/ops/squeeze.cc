@@ -117,19 +117,19 @@ int Squeeze::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   }
   if (axes_.size() == 0) {
     for (size_t i = 0; i < in_shape.size(); i++) {
-      if (in_shape[i] != 1) {
-        out_shape.push_back(in_shape[i]);
+      if (in_shape.at(i) != 1) {
+        out_shape.push_back(in_shape.at(i));
       }
     }
   } else {
     size_t axisIdx = 0;
     for (size_t i = 0; i < in_shape.size(); i++) {
-      if (axisIdx < axes_.size() && axes_[axisIdx] == static_cast<int>(i)) {
-        MS_ASSERT(in_shape[i] == 1);
+      if (axisIdx < axes_.size() && axes_.at(axisIdx) == static_cast<int>(i)) {
+        MS_ASSERT(in_shape.at(i) == 1);
         axisIdx++;
         continue;
       } else {
-        out_shape.push_back(in_shape[i]);
+        out_shape.push_back(in_shape.at(i));
       }
     }
   }

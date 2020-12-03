@@ -36,10 +36,10 @@ int TopKInt8CPUKernel::ReSize() {
   MS_ASSERT(parameter);
   lite::Tensor *input = in_tensors_.at(0);
   MS_ASSERT(input);
-  parameter->last_dim_size_ = input->shape()[input->shape().size() - 1];
+  parameter->last_dim_size_ = input->shape().at(input->shape().size() - 1);
   parameter->loop_num_ = 1;
   for (size_t i = 0; i < input->shape().size() - 1; ++i) {
-    parameter->loop_num_ *= input->shape()[i];
+    parameter->loop_num_ *= input->shape().at(i);
   }
   return RET_OK;
 }

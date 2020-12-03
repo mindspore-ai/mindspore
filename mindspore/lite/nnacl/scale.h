@@ -20,11 +20,17 @@
 #include <mindspore/lite/nnacl/quantization/quantize.h>
 #include "nnacl/op_base.h"
 typedef struct ScaleParameter {
+  // primitive parameter
   OpParameter op_parameter_;
+  int axis_;
+  int activation_type_;
+
+  // shape correlative
   int outer_size_;
   int axis_size_;
   int inner_size_;
-  int axis_;
+
+  // other parameter
   bool const_scale_;
   bool const_offset_;
   QuantMulArg scale_mul_arg_;
@@ -33,7 +39,6 @@ typedef struct ScaleParameter {
   int scale_zp_;
   int offset_zp_;
   int output_zp_;
-  int activation_type_;
   int output_activation_min_;
   int output_activation_max_;
 } ScaleParameter;

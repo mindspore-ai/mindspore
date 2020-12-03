@@ -48,7 +48,7 @@ int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
   if (this->primitive_->value.value == nullptr) {
     auto attr = new (std::nothrow) schema::ReshapeT();
     MS_ASSERT(inputs.size() == kAnfPopulaterInputNumThree - 1);
-    auto inputNode = inputs[kAnfPopulaterInputNumTwo - 1];
+    auto inputNode = inputs.at(kAnfPopulaterInputNumTwo - 1);
     if (inputNode->isa<ValueNode>()) {
       auto valueNode = inputNode->cast<ValueNodePtr>();
       MS_ASSERT(valueNode != nullptr);
@@ -58,7 +58,7 @@ int Reshape::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
         auto tuple = val->cast<ValueTuplePtr>();
         MS_ASSERT(tuple != nullptr);
         for (size_t i = 0; i < tuple->size(); ++i) {
-          auto elem = tuple->value()[i];
+          auto elem = tuple->value().at(i);
           MS_ASSERT(elem != nullptr);
           attr->shape.emplace_back(CastToInt(elem).front());
         }
@@ -114,7 +114,7 @@ Registry ReshapeRegistry(schema::PrimitiveType_Reshape, ReshapeCreator);
 int Reshape::CalNewShape(const Tensor *in_tensor, std::vector<int> *out_shape) const {
   size_t in_shape_size = 1;
   for (size_t i = 0; i < in_tensor->shape().size(); i++) {
-    in_shape_size *= in_tensor->shape()[i];
+    in_shape_size *= in_tensor->shape().at(i);
   }
   int64_t inferIndex = -1;
   size_t out_shapeSize = 1;
@@ -154,14 +154,14 @@ void CalShape(const T *data, const std::vector<Tensor *> &inputs, std::vector<in
     if (static_cast<int>(data[i]) == -1) {
       index = i;
     } else if (static_cast<int>(data[i]) == 0) {
-      size *= inputs[0]->shape()[i];
+      size *= inputs[0]->shape().at(i);
     } else {
       size *= data[i];
     }
     out_shape->push_back(data[i]);
   }
   if (static_cast<int>(data[index]) == -1) {
-    (*out_shape)[index] = input_count / size;
+    (*out_shape).at(index) = input_count / size;
   }
 }
 int Reshape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
@@ -219,7 +219,7 @@ int Reshape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
     }
   } else if (inputs_.size() == kSingleNum) {
     for (size_t i = 0; i < GetShape().size(); ++i) {
-      out_shape.push_back(GetShape()[i]);
+      out_shape.push_back(GetShape().at(i));
     }
   } else {
     MS_LOG(ERROR) << "inputs tensor size invalid.";

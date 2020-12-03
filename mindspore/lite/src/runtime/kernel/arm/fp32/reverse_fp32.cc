@@ -31,8 +31,8 @@ namespace mindspore::kernel {
 
 int ReverseCPUKernel::Stride(int index) {
   int stride = 1;
-  for (size_t i = index + 1; i < in_tensors_[0]->shape().size(); ++i) {
-    stride *= in_tensors_[0]->shape()[i];
+  for (size_t i = index + 1; i < in_tensors_.at(0)->shape().size(); ++i) {
+    stride *= in_tensors_.at(0)->shape().at(i);
   }
   return stride;
 }
@@ -43,7 +43,7 @@ int ReverseCPUKernel::ReSize() {
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
 
   auto *param = reinterpret_cast<ReverseParameter *>(op_parameter_);
-  auto input_shape = in_tensors_[0]->shape();
+  auto input_shape = in_tensors_.at(0)->shape();
   if (param->num_axis_ > static_cast<int>(input_shape.size())) {
     MS_LOG(ERROR) << "Reverse dims : " << param->num_axis_
                   << "is greater than input shape size :" << input_shape.size();
@@ -72,7 +72,7 @@ int ReverseCPUKernel::ReSize() {
     inCount_[i] = input_shape[axis];
     outCount_[i] = 1;
     for (int j = 0; j < axis; j++) {
-      outCount_[i] *= input_shape[j];
+      outCount_[i] *= input_shape.at(j);
     }
   }
 

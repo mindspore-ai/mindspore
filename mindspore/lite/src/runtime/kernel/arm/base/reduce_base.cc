@@ -131,16 +131,16 @@ void ReduceBaseCPUKernel::CalculateInnerOuterSize() {
     int axis = axes_[i];
     auto outer_size = 1;
     for (int j = 0; j < axis; j++) {
-      outer_size *= tmp_shape[j];
+      outer_size *= tmp_shape.at(j);
     }
     outer_sizes_.emplace_back(outer_size);
     auto inner_size = 1;
     for (int k = axis + 1; k < static_cast<int>(tmp_shape.size()); k++) {
-      inner_size *= tmp_shape[k];
+      inner_size *= tmp_shape.at(k);
     }
     inner_sizes_.emplace_back(inner_size);
-    axis_sizes_.emplace_back(tmp_shape[axis]);
-    tmp_shape[axis] = 1;
+    axis_sizes_.emplace_back(tmp_shape.at(axis));
+    tmp_shape.at(axis) = 1;
   }
 }
 
@@ -152,12 +152,12 @@ void ReduceBaseCPUKernel::CalculateTmpBufferSize() {
     size_t size = 1;
     for (size_t j = 0; j < input_shape.size(); j++) {
       if (axis != static_cast<int>(j)) {
-        size *= input_shape[j];
+        size *= input_shape.at(j);
       }
     }
     MS_ASSERT(context_->allocator != nullptr);
     buffer_sizes_.emplace_back(size);
-    input_shape[axis] = 1;
+    input_shape.at(axis) = 1;
   }
 }
 
