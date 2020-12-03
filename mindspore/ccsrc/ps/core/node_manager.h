@@ -1,0 +1,86 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef RPC_CLUSTER_MANAGER_H
+#define RPC_CLUSTER_MANAGER_H
+
+#include <atomic>
+#include <cstdlib>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
+#include <condition_variable>
+#include <unordered_set>
+
+#include "proto/comm.pb.h"
+#include "proto/ps.pb.h"
+#include "ps/core/node.h"
+#include "utils/log_adapter.h"
+
+namespace mindspore {
+namespace ps {
+namespace core {
+class NodeManager {
+ public:
+  NodeManager()
+      : is_cluster_ready_(false),
+        is_cluster_finish_(false),
+        is_cluster_timeout_(false),
+        total_node_num_(0),
+        next_worker_rank_id_(-1),
+        next_server_rank_id_(-1) {}
+  virtual ~NodeManager() = default;
+
+  enum ClusterState { STARTING, STARTED, FAILED, STOPPING, STOPPED };
+
+  void InitNodeNum();
+  int NextRankId(const RegisterMessage &register_message);
+  void UpdateHeartbeat(const std::string &node_id);
+  std::vector<ServersMeta> FetchServersMeta();
+  void UpdateClusterState();
+  void CheckClusterTimeout();
+  void AddFinishNode(const FinishMessage &finish_message);
+  std::unordered_map<std::string, NodeInfo> nodes_info();
+  bool is_cluster_ready();
+  bool is_cluster_finish();
+  bool is_cluster_timeout();
+
+ private:
+  std::atomic<bool> is_cluster_ready_;
+  std::atomic<bool> is_cluster_finish_;
+  std::atomic<bool> is_cluster_timeout_;
+  uint32_t total_node_num_;
+  std::atomic<int> next_worker_rank_id_;
+  std::atomic<int> next_server_rank_id_;
+  // worker nodes and server nodes
+  std::unordered_map<std::string, NodeInfo> nodes_info_;
+  std::mutex assign_rank_id_mutex_;
+  std::mutex heartbeat_mutex_;
+  std::unordered_map<std::string, timeval> heartbeats_;
+  // timeout nodes
+  std::unordered_map<std::string, NodeInfo> timeout_nodes_info_;
+  std::unordered_set<std::string> finish_nodes_id_;
+};
+}  // namespace core
+}  // namespace ps
+}  // namespace mindspore
+#endif  // RPC_CLUSTER_MANAGER_H

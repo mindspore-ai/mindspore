@@ -85,6 +85,8 @@ void TcpServer::SetServerCallback(const OnConnected &client_conn, const OnDiscon
   this->client_accept_ = client_accept;
 }
 
+void TcpServer::set_timer_once_callback(const OnTimerOnce &timer) { on_timer_once_callback_ = timer; }
+
 void TcpServer::set_timer_callback(const OnTimer &timer) { on_timer_callback_ = timer; }
 
 void TcpServer::Init() {
@@ -165,7 +167,21 @@ void TcpServer::StartTimerOnlyOnce(const uint32_t &time) {
   struct timeval timeout {};
   timeout.tv_sec = time;
   timeout.tv_usec = 0;
-  ev = evtimer_new(base_, TimerCallback, this);
+  ev = evtimer_new(base_, TimerOnceCallback, this);
+  MS_EXCEPTION_IF_NULL(ev);
+  evtimer_add(ev, &timeout);
+}
+
+void TcpServer::StartTimer(const uint32_t &time) {
+  MS_EXCEPTION_IF_NULL(base_);
+  struct event *ev = nullptr;
+  if (time == 0) {
+    MS_LOG(EXCEPTION) << "The time should not be 0!";
+  }
+  struct timeval timeout {};
+  timeout.tv_sec = time;
+  timeout.tv_usec = 0;
+  ev = event_new(base_, -1, EV_PERSIST, TimerCallback, this);
   MS_EXCEPTION_IF_NULL(ev);
   evtimer_add(ev, &timeout);
 }
@@ -321,7 +337,15 @@ void TcpServer::TimerCallback(evutil_socket_t, int16_t, void *arg) {
   MS_EXCEPTION_IF_NULL(arg);
   auto tcp_server = reinterpret_cast<TcpServer *>(arg);
   if (tcp_server->on_timer_callback_) {
-    tcp_server->on_timer_callback_(*tcp_server);
+    tcp_server->on_timer_callback_();
+  }
+}
+
+void TcpServer::TimerOnceCallback(evutil_socket_t, int16_t, void *arg) {
+  MS_EXCEPTION_IF_NULL(arg);
+  auto tcp_server = reinterpret_cast<TcpServer *>(arg);
+  if (tcp_server->on_timer_once_callback_) {
+    tcp_server->on_timer_once_callback_(*tcp_server);
   }
 }
 
@@ -336,6 +360,8 @@ void TcpServer::SendMessage(const CommMessage &message) {
 }
 
 uint16_t TcpServer::BoundPort() const { return server_port_; }
+
+std::string TcpServer::BoundIp() const { return server_address_; }
 
 int TcpServer::ConnectionNum() const { return connections_.size(); }
 

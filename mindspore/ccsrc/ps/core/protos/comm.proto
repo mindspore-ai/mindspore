@@ -25,6 +25,7 @@ enum NodeCommand {
   HEARTBEAT = 2;
   SEND_DATA = 3;
   FETCH_SERVER = 4;
+  FINISH = 5;
 }
 
 enum NodeRole {
@@ -65,6 +66,7 @@ message HeartbeatRespMessage {
   // Is the entire system ready to use.
   bool is_cluster_ready = 1;
   bool is_cluster_finish = 2;
+  bool is_cluster_timeout = 3;
 }
 
 message FetchServersRespMessage {
@@ -76,6 +78,11 @@ message ServersMeta {
   string ip = 2;
   int32 port = 3;
 
+}
+
+message FinishMessage {
+  // the current Node unique id:0,1,2...
+  string node_id = 1;
 }
 
 message CommMessage {

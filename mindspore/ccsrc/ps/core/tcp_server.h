@@ -35,6 +35,7 @@
 #include <atomic>
 
 #include "proto/comm.pb.h"
+#include "proto/ps.pb.h"
 #include "ps/core/tcp_message_handler.h"
 #include "ps/core/cluster_config.h"
 #include "utils/log_adapter.h"
@@ -71,18 +72,21 @@ class TcpServer {
   using OnConnected = std::function<void(const TcpServer &, const TcpConnection &)>;
   using OnDisconnected = std::function<void(const TcpServer &, const TcpConnection &)>;
   using OnAccepted = std::function<const TcpConnection *(const TcpServer &)>;
-  using OnTimer = std::function<void(const TcpServer &)>;
+  using OnTimerOnce = std::function<void(const TcpServer &)>;
+  using OnTimer = std::function<void()>;
 
   explicit TcpServer(const std::string &address, std::uint16_t port);
   virtual ~TcpServer();
 
   void SetServerCallback(const OnConnected &client_conn, const OnDisconnected &client_disconn,
                          const OnAccepted &client_accept);
+  void set_timer_once_callback(const OnTimerOnce &timer);
   void set_timer_callback(const OnTimer &timer);
   void Init();
   void Start();
   void StartWithNoBlock();
   void StartTimerOnlyOnce(const uint32_t &time);
+  void StartTimer(const uint32_t &time);
   void Stop();
   void SendToAllClients(const char *data, size_t len);
   void AddConnection(const evutil_socket_t &fd, const TcpConnection *connection);
@@ -92,6 +96,7 @@ class TcpServer {
   void SendMessage(const TcpConnection &conn, const CommMessage &message);
   void SendMessage(const CommMessage &message);
   uint16_t BoundPort() const;
+  std::string BoundIp() const;
   int ConnectionNum() const;
   const std::map<evutil_socket_t, const TcpConnection *> &Connections() const;
 
@@ -102,6 +107,7 @@ class TcpServer {
   static void ReadCallback(struct bufferevent *, void *connection);
   static void EventCallback(struct bufferevent *, std::int16_t events, void *server);
   static void TimerCallback(evutil_socket_t fd, int16_t event, void *arg);
+  static void TimerOnceCallback(evutil_socket_t fd, int16_t event, void *arg);
   virtual TcpConnection *onCreateConnection(struct bufferevent *bev, const evutil_socket_t &fd);
 
   struct event_base *base_;
@@ -117,6 +123,7 @@ class TcpServer {
   OnAccepted client_accept_;
   std::recursive_mutex connection_mutex_;
   OnServerReceiveMessage message_callback_;
+  OnTimerOnce on_timer_once_callback_;
   OnTimer on_timer_callback_;
 };
 }  // namespace core
