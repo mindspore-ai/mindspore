@@ -36,7 +36,7 @@ class NormalizeCPUKernel : public LiteKernel {
   int Run() override;
 
  private:
-  std::string Trim(const std::string &str, const std::string &whitespace = " \t\n\v\f\r");
+  std::string Trim(const std::string &str, const std::string &pattern = " \t\n\v\f\r");
   std::string GlobalReplace(const std::string &str, const std::string &reg, const std::string &replace);
   std::string Normalize(const std::string &str);
   std::vector<char *> normalized_strs;
