@@ -38,7 +38,7 @@ OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC 
   if (value.empty() || value.size() > 1) {
     MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
   } else {
-    param->value_ = attr->GetValue()[0];
+    param->value_ = attr->GetValue().at(0);
   }
   param->data_type_ = attr->GetDataType();
   return reinterpret_cast<OpParameter *>(param);

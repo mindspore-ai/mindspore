@@ -19,13 +19,16 @@
 
 typedef struct DepthToSpaceParameter {
   OpParameter op_parameter_;
+  // primitive parameter
   int32_t block_size_;
+  // shape correlative
   int32_t in_stride_dim0_;
   int32_t in_stride_dim1_;
   int32_t in_stride_dim2_;
   int32_t out_stride_dim0_;
   int32_t out_stride_dim1_;
   int32_t out_stride_dim2_;
+  // other parameter
   uint8_t data_type_size_;
 } DepthToSpaceParameter;
 

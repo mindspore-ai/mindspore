@@ -100,8 +100,8 @@ PrimitiveC *BinaryCrossEntropyCreator(const schema::Primitive *primitive) {
 Registry BinaryCrossEntropyRegistry(schema::PrimitiveType_BinaryCrossEntropy, BinaryCrossEntropyCreator);
 #endif
 int BinaryCrossEntropy::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  Tensor *x = inputs_[0];
-  Tensor *out = outputs_[0];
+  Tensor *x = inputs_.at(0);
+  Tensor *out = outputs_.at(0);
   out->set_format(x->format());
   out->set_data_type(x->data_type());
   int reduction = GetReduction();

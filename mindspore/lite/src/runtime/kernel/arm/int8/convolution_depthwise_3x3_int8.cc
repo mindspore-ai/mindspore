@@ -42,7 +42,7 @@ ConvolutionDepthwise3x3Int8CPUKernel::~ConvolutionDepthwise3x3Int8CPUKernel() {
 
 int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
-  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
   if (channel % 8 != 0) {

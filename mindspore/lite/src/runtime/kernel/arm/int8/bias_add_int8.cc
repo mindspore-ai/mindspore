@@ -21,6 +21,7 @@
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BiasAdd;
 
@@ -34,14 +35,18 @@ int BiasAddInt8CPUKernel::Init() {
 
 int BiasAddInt8CPUKernel::ReSize() {
   auto bias_param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
-  auto dims = in_tensors_[0]->shape();
+  auto dims = in_tensors_.at(0)->shape();
   bias_param->ndim_ = dims.size();
+  if (bias_param->ndim_ < 1 || bias_param->ndim_ > 5) {
+    MS_LOG(ERROR) << "input shape is invalid";
+    return RET_ERROR;
+  }
   for (size_t i = 0; i < bias_param->ndim_; i++) {
     bias_param->in_shape0_[i] = dims[i];
     bias_param->in_shape1_[i] = 1;
     bias_param->out_shape_[i] = dims[i];
   }
-  bias_param->in_shape1_[3] = dims[3];
+  bias_param->in_shape1_[bias_param->ndim_ - 1] = dims[bias_param->ndim_ - 1];
   return RET_OK;
 }
 

@@ -42,7 +42,7 @@ ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_t
                                       {mindspore::schema::PrimitiveType_Ceil, ElementCeil},
                                       {mindspore::schema::PrimitiveType_Round, ElementRound},
                                       {mindspore::schema::PrimitiveType_Neg, ElementNegative}};
-  for (size_t i = 0; i < sizeof(type_func_table); i++) {
+  for (size_t i = 0; i < sizeof(type_func_table) / sizeof(TYPE_FUNC_INFO); i++) {
     if (type_func_table[i].primitive_type_ == primitive_type) {
       return type_func_table[i].func_;
     }

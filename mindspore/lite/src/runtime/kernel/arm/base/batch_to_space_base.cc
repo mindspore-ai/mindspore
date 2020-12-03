@@ -30,7 +30,7 @@ using mindspore::schema::PrimitiveType_BatchToSpaceND;
 
 namespace mindspore::kernel {
 int BatchToSpaceBaseCPUKernel::Init() {
-  if (in_tensors_[0]->format() != schema::Format::Format_NHWC) {
+  if (in_tensors_.at(0)->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "batch_to_space only support NHWC now!";
     return RET_FORMAT_ERR;
   }
@@ -44,7 +44,7 @@ int BatchToSpaceBaseCPUKernel::Init() {
 }
 
 int BatchToSpaceBaseCPUKernel::ReSize() {
-  auto shape = in_tensors_[0]->shape();
+  auto shape = in_tensors_.at(0)->shape();
   if (shape.size() != 4) {
     MS_LOG(ERROR) << "Unsupport shape size: " << shape.size();
     return RET_ERROR;

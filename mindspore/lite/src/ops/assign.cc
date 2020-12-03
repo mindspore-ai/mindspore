@@ -71,7 +71,7 @@ int Assign::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Ten
     return RET_ERROR;
   }
 
-  if (inputs[0]->ElementsNum() != inputs[1]->ElementsNum()) {
+  if (inputs.at(0)->ElementsNum() != inputs.at(1)->ElementsNum()) {
     MS_LOG(ERROR) << "error input data size!";
     return RET_ERROR;
   }
@@ -79,8 +79,8 @@ int Assign::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Ten
   if (!outputs.empty()) {
     auto *out = outputs.front();
     MS_ASSERT(out != nullptr);
-    out->set_data_type(inputs[0]->data_type());
-    out->set_format(inputs[0]->format());
+    out->set_data_type(inputs.at(0)->data_type());
+    out->set_format(inputs.at(0)->format());
     out->set_shape({1});
   }
   return RET_OK;

@@ -54,7 +54,7 @@ int DeconvolutionDepthwiseCPUKernel::InitSlideParam() {
 
 int DeconvolutionDepthwiseCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
-  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
   int OC4 = UP_DIV(weight_tensor->Batch(), C4NUM);
   int pack_weight_size = C4NUM * OC4 * weight_tensor->Height() * weight_tensor->Width();

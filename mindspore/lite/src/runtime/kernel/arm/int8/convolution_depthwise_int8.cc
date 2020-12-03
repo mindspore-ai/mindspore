@@ -40,7 +40,7 @@ ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
 
 int ConvolutionDepthwiseInt8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
-  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
@@ -171,7 +171,8 @@ kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *>
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
   kernel::LiteKernel *kernel = nullptr;
-  auto act_quant_size = MSMAX(inputs[kInputIndex]->quant_params().size(), outputs[kOutputIndex]->quant_params().size());
+  auto act_quant_size =
+    MSMAX(inputs.at(kInputIndex)->quant_params().size(), outputs.at(kOutputIndex)->quant_params().size());
   if (act_quant_size == 1) {  // per tensor
     auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
     if (primitive != nullptr && primitive->infer_flag()) {

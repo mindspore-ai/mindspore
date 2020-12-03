@@ -44,7 +44,7 @@ ConvolutionDepthwiseSWInt8CPUKernel::~ConvolutionDepthwiseSWInt8CPUKernel() {
 int ConvolutionDepthwiseSWInt8CPUKernel::InitWeightBias() {
   // init weight, int8 -> int16
   // o, h, w, i -> o/8, h, w, i, 8; o == group, i == 1
-  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();

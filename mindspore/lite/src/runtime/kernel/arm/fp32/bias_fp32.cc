@@ -29,9 +29,12 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
 int BiasCPUKernel::ReSize() {
-  auto dims = in_tensors_[0]->shape();
-  MS_ASSERT(dims.size() <= 5);
+  auto dims = in_tensors_.at(0)->shape();
   bias_param_->ndim_ = dims.size();
+  if (bias_param_->ndim_ < 1 || bias_param_->ndim_ > 5) {
+    MS_LOG(ERROR) << "input shape is invalid";
+    return RET_ERROR;
+  }
   for (size_t i = 0; i < bias_param_->ndim_; i++) {
     bias_param_->in_shape0_[i] = dims[i];
     bias_param_->in_shape1_[i] = 1;

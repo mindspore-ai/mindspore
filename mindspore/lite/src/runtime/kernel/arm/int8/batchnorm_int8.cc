@@ -42,10 +42,10 @@ BatchnormInt8CPUKernel::~BatchnormInt8CPUKernel() {
 }
 
 int BatchnormInt8CPUKernel::InitConstTensor() {
-  auto input = in_tensors_[0];
-  auto mean = in_tensors_[1];
-  auto variance = in_tensors_[2];
-  auto output = out_tensors_[0];
+  auto input = in_tensors_.at(0);
+  auto mean = in_tensors_.at(1);
+  auto variance = in_tensors_.at(2);
+  auto output = out_tensors_.at(0);
 
   auto mean_ptr = reinterpret_cast<int8_t *>(mean->MutableData());
   auto var_ptr = reinterpret_cast<int8_t *>(variance->MutableData());
@@ -81,12 +81,12 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
 }
 
 int BatchnormInt8CPUKernel::InitFusedConstTensor() {
-  auto input = in_tensors_[0];
-  auto scale = in_tensors_[1];
-  auto offset = in_tensors_[2];
-  auto mean = in_tensors_[3];
-  auto variance = in_tensors_[4];
-  auto output = out_tensors_[0];
+  auto input = in_tensors_.at(0);
+  auto scale = in_tensors_.at(1);
+  auto offset = in_tensors_.at(2);
+  auto mean = in_tensors_.at(3);
+  auto variance = in_tensors_.at(4);
+  auto output = out_tensors_.at(0);
 
   auto scale_ptr = reinterpret_cast<int8_t *>(scale->MutableData());
   auto offset_ptr = reinterpret_cast<int8_t *>(offset->MutableData());
@@ -133,7 +133,7 @@ int BatchnormInt8CPUKernel::InitFusedConstTensor() {
 }
 
 int BatchnormInt8CPUKernel::Init() {
-  auto input_shapes = in_tensors_[0]->shape();
+  auto input_shapes = in_tensors_.at(0)->shape();
   auto n_dim = input_shapes.size();
   batchnorm_param_->channel_ = input_shapes[n_dim - 1];
   batchnorm_param_->units_ = 1;
@@ -161,7 +161,7 @@ int BatchnormInt8CPUKernel::Init() {
 }
 
 int BatchnormInt8CPUKernel::ReSize() {
-  auto input_shapes = in_tensors_[0]->shape();
+  auto input_shapes = in_tensors_.at(0)->shape();
   batchnorm_param_->unit_ = 1;
   for (size_t i = 0; i < input_shapes.size() - 1; i++) {
     batchnorm_param_->unit_ *= input_shapes[i];

@@ -73,16 +73,16 @@ Registry AssignAddRegistry(schema::PrimitiveType_AssignAdd, AssignAddCreator);
 #endif
 
 int AssignAdd::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  Tensor *x = inputs_[0];
-  Tensor *y = inputs_[1];
-  Tensor *out = outputs_[0];
+  Tensor *x = inputs_.at(0);
+  Tensor *y = inputs_.at(1);
+  Tensor *out = outputs_.at(0);
   std::vector<int> x_shape = x->shape();
   if (x->data_type() != y->data_type()) {
     MS_LOG(ERROR) << "no matched shape of x and y";
     return RET_ERROR;
   }
   std::vector<int> output_shape(x_shape.size());
-  for (int i = 0; i < static_cast<int>(x_shape.size()); i++) {
+  for (size_t i = 0; i < x_shape.size(); i++) {
     output_shape[i] = x_shape[i];
   }
   out->set_shape(output_shape);

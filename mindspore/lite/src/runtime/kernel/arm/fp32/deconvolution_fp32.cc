@@ -63,7 +63,7 @@ int DeConvolutionCPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, UP_ROUND(output_channel, C4NUM) * sizeof(float));
   if (in_tensors_.size() == 3) {
-    memcpy(bias_data_, in_tensors_[2]->MutableData(), output_channel * sizeof(float));
+    memcpy(bias_data_, in_tensors_.at(2)->MutableData(), output_channel * sizeof(float));
   }
 
   size_t weight_pack_size = input_channel * kernel_w_ * kernel_h_ * UP_ROUND(output_channel, C8NUM) * sizeof(float);
@@ -73,7 +73,7 @@ int DeConvolutionCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(weight_ptr_, 0, weight_pack_size);
-  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(in_tensors_[1]->MutableData()), weight_ptr_, input_channel,
+  PackNHWCToC8HWN8Fp32(reinterpret_cast<float *>(in_tensors_.at(1)->MutableData()), weight_ptr_, input_channel,
                        kernel_w_ * kernel_h_, output_channel);
   return RET_OK;
 }

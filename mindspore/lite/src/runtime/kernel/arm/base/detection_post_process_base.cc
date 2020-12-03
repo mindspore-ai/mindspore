@@ -156,8 +156,8 @@ int DetectionPostProcessBaseCPUKernel::Run() {
   auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->MutableData());
   auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->MutableData());
 
-  num_boxes_ = in_tensors_.at(0)->shape()[1];
-  num_classes_with_bg_ = in_tensors_.at(1)->shape()[2];
+  num_boxes_ = in_tensors_.at(0)->shape().at(1);
+  num_classes_with_bg_ = in_tensors_.at(1)->shape().at(2);
   params_->decoded_boxes_ = context_->allocator->Malloc(num_boxes_ * 4 * sizeof(float));
   if (params_->decoded_boxes_ == nullptr) {
     MS_LOG(ERROR) << "malloc params->decoded_boxes_ failed.";
