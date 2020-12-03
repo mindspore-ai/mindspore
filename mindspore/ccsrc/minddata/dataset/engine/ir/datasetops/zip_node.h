@@ -64,19 +64,20 @@ class ZipNode : public DatasetNode {
   Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                         int64_t *dataset_size) override;
 
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status Accept(IRNodePass *p, bool *modified) override;
+
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status AcceptAfter(IRNodePass *p, bool *modified) override;
+
  private:
   std::vector<std::shared_ptr<DatasetNode>> datasets_;
-  /// \brief Base-class override for accepting NodePass visitor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status Accept(NodePass *p, bool *modified) override;
-
-  /// \brief Base-class override for accepting NodePass visitor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status AcceptAfter(NodePass *p, bool *modified) override;
 };
 
 }  // namespace dataset

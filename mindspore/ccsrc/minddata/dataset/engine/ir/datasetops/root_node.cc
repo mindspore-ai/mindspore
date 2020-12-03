@@ -72,14 +72,14 @@ Status RootNode::ValidateParams() {
   return Status::OK();
 }
 
-// Visitor accepting method for NodePass
-Status RootNode::Accept(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status RootNode::Accept(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<RootNode>(), modified);
 }
 
-// Visitor accepting method for NodePass
-Status RootNode::AcceptAfter(NodePass *p, bool *modified) {
+// Visitor accepting method for IRNodePass
+Status RootNode::AcceptAfter(IRNodePass *p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<RootNode>(), modified);
 }

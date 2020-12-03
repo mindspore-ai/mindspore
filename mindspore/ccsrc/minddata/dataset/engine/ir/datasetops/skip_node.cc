@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/skip_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -70,5 +71,16 @@ Status SkipNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
   return Status::OK();
 }
 
+// Visitor accepting method for IRNodePass
+Status SkipNode::Accept(IRNodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<SkipNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status SkipNode::AcceptAfter(IRNodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<SkipNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

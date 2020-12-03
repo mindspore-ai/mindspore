@@ -54,12 +54,13 @@ MindDataNode::MindDataNode(const std::string &dataset_file, const std::vector<st
 
 std::shared_ptr<DatasetNode> MindDataNode::Copy() {
   std::shared_ptr<MindDataNode> node;
-  std::shared_ptr<SamplerObj> sampler = sampler_ == nullptr ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
   if (dataset_files_.empty()) {
     node = std::make_shared<MindDataNode>(dataset_file_, columns_list_, sampler, padded_sample_, num_padded_);
   } else {
     node = std::make_shared<MindDataNode>(dataset_files_, columns_list_, sampler, padded_sample_, num_padded_);
   }
+  node->SetSampleBytes(&sample_bytes_);
   return node;
 }
 

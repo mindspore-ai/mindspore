@@ -58,17 +58,17 @@ class TransferNode : public DatasetNode {
 
   static Status get_distribution(std::shared_ptr<DatasetNode> ds, int32_t *device_id);
 
-  /// \brief Base-class override for accepting NodePass visitor
+  /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status Accept(NodePass *p, bool *modified) override;
+  Status Accept(IRNodePass *p, bool *modified) override;
 
-  /// \brief Base-class override for accepting NodePass visitor
+  /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status AcceptAfter(NodePass *p, bool *modified) override;
+  Status AcceptAfter(IRNodePass *p, bool *modified) override;
 
  private:
   std::string queue_name_;

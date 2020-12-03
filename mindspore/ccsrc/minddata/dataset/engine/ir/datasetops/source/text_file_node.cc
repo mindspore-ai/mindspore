@@ -86,7 +86,7 @@ Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
     connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(sampler_->Build()));
   RETURN_IF_NOT_OK(text_file_op->Init());
 
-  if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
+  if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal && !IsDescendantOfCache()) {
     // Inject ShuffleOp
     std::shared_ptr<DatasetOp> shuffle_op = nullptr;
     int64_t num_rows = 0;

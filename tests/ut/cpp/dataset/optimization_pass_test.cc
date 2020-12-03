@@ -83,7 +83,7 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestOutputShapeAndTypePass) {
   };
 
   exe_tree->SetPrePassOverride(pass);
-  ASSERT_OK(exe_tree->PrepareTreePreAction());
+  ASSERT_OK(exe_tree->PreAction());
   std::stringstream ss;
 
   // print the tree in std::string as a way to verify that nodes are indeed removed
@@ -124,7 +124,7 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestDatasetSizePass) {
   };
 
   exe_tree->SetPrePassOverride(pass);
-  ASSERT_OK(exe_tree->PrepareTreePreAction());
+  ASSERT_OK(exe_tree->PreAction());
   std::stringstream ss;
   // print the tree in std::string as a way to verify that nodes are indeed removed
   exe_tree->Print(ss);

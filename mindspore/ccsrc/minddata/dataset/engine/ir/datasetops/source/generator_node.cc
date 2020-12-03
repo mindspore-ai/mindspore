@@ -33,17 +33,22 @@ GeneratorNode::GeneratorNode(py::function generator_function, const std::vector<
       column_names_(column_names),
       column_types_(column_types) {}
 
+GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema)
+    : generator_function_(generator_function), schema_(schema) {}
+
 std::shared_ptr<DatasetNode> GeneratorNode::Copy() {
-  auto node = std::make_shared<GeneratorNode>(generator_function_, column_names_, column_types_);
+  std::shared_ptr<GeneratorNode> node;
+  if (schema_ == nullptr) {
+    node = std::make_shared<GeneratorNode>(generator_function_, column_names_, column_types_);
+  } else {
+    node = std::make_shared<GeneratorNode>(generator_function_, schema_);
+  }
   return node;
 }
 
 void GeneratorNode::Print(std::ostream &out) const {
   out << Name() + "(<func>:" + ",columns:" + PrintColumns(column_names_) + ",<col_types>)";
 }
-
-GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema)
-    : generator_function_(generator_function), schema_(schema) {}
 
 Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   std::unique_ptr<DataSchema> data_schema = std::make_unique<DataSchema>();
