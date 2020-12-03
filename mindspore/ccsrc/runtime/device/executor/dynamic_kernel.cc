@@ -16,8 +16,10 @@
 
 #include "runtime/device/executor/dynamic_kernel.h"
 #include <vector>
+#include <stack>
 #include <algorithm>
 #include "backend/session/anf_runtime_algorithm.h"
+#include "backend/optimizer/common/helper.h"
 #include "common/trans.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "abstract/dshape.h"
@@ -73,6 +75,7 @@ void DynamicKernel::InferShape() {
   }
   MS_EXCEPTION_IF_NULL(cnode_ptr_);
   MS_LOG(INFO) << "InferShape start, node:" << cnode_ptr_->fullname_with_scope();
+  InferShapeRecursive();
 
   auto inputs = cnode_ptr_->inputs();
   if (inputs.empty()) {
@@ -123,6 +126,44 @@ void DynamicKernel::InferShape() {
 
   auto eval_result = abstract::CppInferShape(primitive, args_spec_list);
   cnode_ptr_->set_abstract(eval_result);
+}
+
+void DynamicKernel::InferShapeRecursive() {
+  auto input_size = AnfAlgo::GetInputTensorNum(cnode_ptr_);
+  for (size_t i = 0; i < input_size; i++) {
+    auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode_ptr_, i);
+    auto input_node = input_node_with_index.first;
+    MS_EXCEPTION_IF_NULL(input_node);
+    InferShapeForNopNode(&input_node);
+  }
+}
+
+void DynamicKernel::InferShapeForNopNode(AnfNodePtr *input_node) {
+  MS_EXCEPTION_IF_NULL(*input_node);
+  if (!opt::IsNopNode(*input_node) || !AnfAlgo::IsDynamicShape(*input_node)) {
+    MS_LOG(INFO) << "Input node is not a nop node, no need infer.";
+    return;
+  }
+  MS_LOG(INFO) << "Infer shape for nop node.";
+  std::stack<AnfNodePtr> nop_road;
+  nop_road.push(*input_node);
+
+  while (true) {
+    auto input_node_with_idx = AnfAlgo::GetPrevNodeOutput(*input_node, 0);
+    auto in_node = input_node_with_idx.first;
+    MS_EXCEPTION_IF_NULL(in_node);
+    if (opt::IsNopNode(in_node)) {
+      nop_road.push(in_node);
+      *input_node = in_node;
+    } else {
+      break;
+    }
+  }
+  while (!nop_road.empty()) {
+    auto nop_node = nop_road.top();
+    AnfAlgo::InferShape(nop_node->cast<CNodePtr>());
+    nop_road.pop();
+  }
 }
 }  // namespace device
 }  // namespace mindspore
