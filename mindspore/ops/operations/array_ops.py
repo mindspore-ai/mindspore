@@ -73,13 +73,23 @@ class _ScatterOp_Dynamic(PrimitiveWithCheck):
     """
     Defines Scatter operators with dynamic shape
     """
+    __mindspore_signature__ = (
+        sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('updates', dtype=sig.sig_dtype.T)
+    )
 
     def _check_scatter_shape(self, x_shape, indices_shape, updates_shape, prim_name):
-        if np.all(np.array(x_shape) != -1):
-            if indices_shape != [-1] and updates_shape and updates_shape != indices_shape + x_shape[1:]:
-                raise ValueError(f"For '{prim_name}', "
-                                 f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
-                                 f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
+        # x_shape cannot be dynamic
+        if np.any(np.array(x_shape) == -1):
+            raise ValueError(f"x does not support dynamic shape")
+        # support indices and updates dynamic
+        if np.any(np.array(indices_shape) == -1) or np.any(np.array(updates_shape) == -1):
+            pass
+        elif indices_shape != [-1] and updates_shape and updates_shape != indices_shape + x_shape[1:]:
+            raise ValueError(f"For '{prim_name}', "
+                             f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
+                             f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
 
     @prim_attr_register
     def __init__(self, use_locking=False):
@@ -3113,7 +3123,7 @@ class ScatterUpdate(_ScatterOp_Dynamic):
         Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
