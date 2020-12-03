@@ -80,24 +80,6 @@ public class MSTensor {
         return tensorPtr;
     }
 
-    private float[] decodeBytes(byte[] bytes) {
-        if (bytes.length % 4 != 0) {
-            Log.e("MS_LITE", "Length of bytes should be multi of 4 ");
-            return null;
-        }
-        int size = bytes.length / 4;
-        float[] ret = new float[size];
-        for (int i = 0; i < size; i = i + 4) {
-            int accNum = 0;
-            accNum = accNum | (bytes[i] & 0xff) << 0;
-            accNum = accNum | (bytes[i + 1] & 0xff) << 8;
-            accNum = accNum | (bytes[i + 2] & 0xff) << 16;
-            accNum = accNum | (bytes[i + 3] & 0xff) << 24;
-            ret[i / 4] = Float.intBitsToFloat(accNum);
-        }
-        return ret;
-    }
-
     private native int[] getShape(long tensorPtr);
 
     private native int getDataType(long tensorPtr);
