@@ -869,6 +869,9 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
         return FindParameter(cnode->input(index), func_graph);
       }
     } else {
+      if (IsSomePrimitive(cnode, RECEIVE) && !cnode->has_user_data<OperatorInfo>()) {
+        return std::make_pair(node, false);
+      }
       if (IsParallelCareNode(cnode)) {
         return std::make_pair(nullptr, false);
       } else {
