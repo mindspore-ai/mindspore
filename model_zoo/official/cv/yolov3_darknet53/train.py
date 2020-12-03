@@ -218,7 +218,7 @@ def train():
                                           level="O2", keep_batchnorm_fp32=False)
         keep_loss_fp32(network)
     else:
-        network = TrainingWrapper(network, opt)
+        network = TrainingWrapper(network, opt, sens=args.loss_scale)
         network.set_train()
 
     if args.rank_save_ckpt_flag:
