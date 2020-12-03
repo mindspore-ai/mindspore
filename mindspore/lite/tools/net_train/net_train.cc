@@ -472,9 +472,8 @@ void NetTrainFlags::InitInputDataList() {
   char *saveptr1 = nullptr;
   char *input_list = new char[this->in_data_file_.length() + 1];
   snprintf(input_list, this->in_data_file_.length() + 1, "%s", this->in_data_file_.c_str());
-  char *cur_input;
   const char *split_c = ",";
-  cur_input = strtok_r(input_list, split_c, &saveptr1);
+  char *cur_input = strtok_r(input_list, split_c, &saveptr1);
   while (cur_input != nullptr) {
     input_data_list_.emplace_back(cur_input);
     cur_input = strtok_r(nullptr, split_c, &saveptr1);
