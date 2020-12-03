@@ -275,6 +275,39 @@ Any Resource::GetAttrPtr(const TypeId &type, const std::string &name) {
   return GetMethodOrAttr(name, type_id, attr_map);
 }
 
+std::unordered_map<PrimitivePy *, bool> Resource::py_objs_ = std::unordered_map<PrimitivePy *, bool>();
+void Resource::RecordPrimitivePy(PrimitivePy *prim) {
+  if (prim == nullptr) {
+    return;
+  }
+  py_objs_[prim] = true;
+}
+
+void Resource::ErasePrimitivePy(PrimitivePy *prim) {
+  if (prim == nullptr) {
+    return;
+  }
+  auto it = py_objs_.find(prim);
+  if (it == py_objs_.end()) {
+    return;
+  }
+  // If flag is false,the pointer hased been released, so it can't be visited.
+  if (!it->second) {
+    return;
+  }
+  py_objs_[prim] = false;
+  prim->SetPyObj(py::none());
+}
+
+void Resource::ClearPrimitivePyPythonObj() {
+  for (auto &it : py_objs_) {
+    if (it.second) {
+      it.first->SetPyObj(py::none());
+    }
+  }
+  py_objs_.clear();
+}
+
 void Resource::Clean() {
   // AbstractTensor->elements() will be saved in AbstractBasePtrList
   args_spec_.clear();
