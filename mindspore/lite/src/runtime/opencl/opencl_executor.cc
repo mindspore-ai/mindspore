@@ -31,8 +31,11 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
                               std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                               const KernelCallBack &before, const KernelCallBack &after, bool is_tune) {
   int ret{RET_OK};
-  ocl_runtime.GetInstance()->SetProfiling(is_tune);
-
+  auto opencl_runtime_ins = ocl_runtime.GetInstance();
+  auto profiling_tmp = opencl_runtime_ins->isProfiling();
+  if (is_tune) {
+    opencl_runtime_ins->SetProfiling(true);
+  }
   kernel::LiteKernelUtil::InitTensorRefCount(kernels);
   for (auto *kernel : kernels) {
     MS_ASSERT(kernel);
@@ -79,6 +82,10 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
         MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
         return ret;
       }
+      if (profiling_tmp) {
+        MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
+                     << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
+      }
     }
     if (after != nullptr) {
       if (!after(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()), callbackParam)) {
@@ -92,16 +99,8 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
         MS_LOG(WARNING) << "DecOutTensorRefCount for kernel" << kernel->name() << " failed";
       }
     }
-#ifdef Debug
-    MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
-                 << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
-#endif
   }
-#ifdef Debug
-  ocl_runtime.GetInstance()->SetProfiling(true);
-#else
-  ocl_runtime.GetInstance()->SetProfiling(false);
-#endif
+  opencl_runtime_ins->SetProfiling(profiling_tmp);
   return ret;
 }
 }  // namespace mindspore::lite::opencl

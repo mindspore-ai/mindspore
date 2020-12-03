@@ -30,11 +30,11 @@ __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP 
   exp1 = exp(-data);  \
   data = (exp0 - exp1) / (exp0 + exp1);
 
-#define DO_LEAKY_RELU(data)        \
-  if (data.x < 0) data.x *= alpha; \
-  if (data.y < 0) data.y *= alpha; \
-  if (data.z < 0) data.z *= alpha; \
-  if (data.w < 0) data.w *= alpha;
+#define DO_LEAKY_RELU(data)                      \
+  data.x = data.x > 0 ? data.x : data.x * alpha; \
+  data.y = data.y > 0 ? data.y : data.y * alpha; \
+  data.z = data.z > 0 ? data.z : data.z * alpha; \
+  data.w = data.w > 0 ? data.w : data.w * alpha;
 
 __kernel void Conv2D_H1W1C1(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
                             __global FLT4 *bias, int4 input_shape, int4 output_shape, int4 kernel_stride, int4 pad,

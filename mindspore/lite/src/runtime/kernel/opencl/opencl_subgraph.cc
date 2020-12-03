@@ -229,6 +229,7 @@ int OpenCLSubGraph::Init() {
     return ret;
   }
   auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
+  // If tuning_mode is DEFAULT, just malloc memory for reuse.
   ret = opencl_exec->RunOrTune(in_tensors_, out_tensors_, nodes_, allocator_, nullptr, nullptr, true);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
