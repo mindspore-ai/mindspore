@@ -228,10 +228,11 @@ def check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
     if ratio is not None:
         type_check(ratio, (tuple,), "ratio")
         type_check_list(ratio, (float, int), "ratio")
-        check_positive(ratio[0], "ratio[0]")
-        check_positive(ratio[1], "ratio[1]")
         if ratio[0] > ratio[1]:
             raise ValueError("ratio should be in (min,max) format. Got (max,min).")
+        check_range(ratio, [0, FLOAT_MAX_INTEGER])
+        check_positive(ratio[0], "ratio[0]")
+        check_positive(ratio[1], "ratio[1]")
     if max_attempts is not None:
         check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
 
@@ -440,10 +441,11 @@ def check_random_erasing(method):
             raise ValueError("scale should be in (min,max) format. Got (max,min).")
         check_range(scale, [0, FLOAT_MAX_INTEGER])
         check_positive(scale[1], "scale[1]")
-        check_positive(ratio[0], "ratio[0]")
-        check_positive(ratio[1], "ratio[1]")
         if ratio[0] > ratio[1]:
             raise ValueError("ratio should be in (min,max) format. Got (max,min).")
+        check_range(ratio, [0, FLOAT_MAX_INTEGER])
+        check_positive(ratio[0], "ratio[0]")
+        check_positive(ratio[1], "ratio[1]")
         check_erasing_value(value)
         type_check(inplace, (bool,), "inplace")
         check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
