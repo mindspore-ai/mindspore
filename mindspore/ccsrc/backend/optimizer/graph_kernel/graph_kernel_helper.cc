@@ -908,5 +908,126 @@ void ReplaceNewFuseCNodeForDependPrior(std::multimap<AnfNodePtr, std::pair<AnfNo
     depend_prior->insert(item);
   }
 }
+
+std::string GetFormat(const AnfNodePtr &node) {
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto kernel_build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(kernel_build_info);
+  return kernel_build_info->GetOutputFormat(0);
+}
+
+TypePtr GetType(const AnfNodePtr &node) {
+  const auto &abstract = node->abstract();
+  auto type = abstract->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  return type;
+}
+
+ShapeVector GetShape(const AnfNodePtr &node) {
+  auto abstract = node->abstract();
+  MS_EXCEPTION_IF_NULL(abstract);
+  auto shape = abstract->GetShapeTrack();
+  if (shape == nullptr || !shape->isa<abstract::Shape>()) {
+    MS_LOG(EXCEPTION) << "Cannot get shape from " << node->fullname_with_scope();
+  }
+  return shape->cast<abstract::ShapePtr>()->shape();
+}
+
+std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
+  auto prim = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(prim);
+  const auto &attrs = prim->attrs();
+  auto iter = attrs.find("axis");
+  if (iter == attrs.end()) {
+    MS_LOG(EXCEPTION) << "Origin node have no attributes!";
+  }
+
+  std::vector<int64_t> axis;
+
+  auto &v = iter->second;
+  if (v->isa<ValueList>() || v->isa<ValueTuple>()) {
+    auto vec = v->isa<ValueList>() ? v->cast<ValueListPtr>()->value() : v->cast<ValueTuplePtr>()->value();
+    for (auto value : vec) {
+      if (value->isa<Int64Imm>()) {
+        axis.push_back(GetValue<int64_t>(value));
+      } else {
+        MS_LOG(EXCEPTION) << "Reduce axis type should be int64!";
+      }
+    }
+  } else if (v->isa<Int64Imm>()) {
+    axis.push_back(GetValue<int64_t>(v));
+  } else {
+    MS_LOG(EXCEPTION) << "Reduce axis should be a list or tuple!";
+  }
+
+  return axis;
+}
+
+CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info) {
+  // Limitation: 1. Node's attributes should be set out of this function; 2. only one output.
+  MS_EXCEPTION_IF_NULL(out_info.type);
+  auto out_type = out_info.type;
+  if (auto otype = out_info.type->cast<TensorTypePtr>(); otype != nullptr) {
+    out_type = otype->element();
+  }
+
+  // Create CNode.
+  auto cnode = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  // Setup abstract.
+  auto abs_tensor = std::make_shared<abstract::AbstractTensor>(out_type, out_info.shape);
+  cnode->set_abstract(abs_tensor);
+
+  // Setup kernel info.
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  cnode->set_kernel_info(kernel_info);
+  std::vector<size_t> feature_map_input_indexs;
+  kernel_info->set_feature_map_flag(false);
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    if (AnfAlgo::IsFeatureMapOutput(inputs[i])) {
+      kernel_info->set_feature_map_flag(true);
+      feature_map_input_indexs.push_back(i);
+    }
+  }
+  if (inputs.size() == 1) {
+    kernel_info->set_feature_map_flag(true);
+  }
+  if (AnfAlgo::IsRealKernel(cnode)) {
+    // if the node only has the primitive(such as getNext) or the node's input has a feature map input
+    // then the node's output is a feature map output
+    AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode);
+    AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode);
+  }
+
+  // Setup kernel build info.
+  std::vector<std::string> input_formats;
+  std::vector<TypeId> input_types;
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    auto kernel_with_index = AnfAlgo::VisitKernel(inputs[i], 0);
+    auto input_format = AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
+    input_formats.push_back(input_format);
+    auto input_type = AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second);
+    input_types.push_back(input_type);
+  }
+
+  std::vector<std::string> output_formats = {out_info.format};
+  std::vector<TypeId> output_types = {out_type->type_id()};
+
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder info_builder;
+  info_builder.SetInputsFormat(input_formats);
+  info_builder.SetInputsDeviceType(input_types);
+  info_builder.SetOutputsFormat(output_formats);
+  info_builder.SetOutputsDeviceType(output_types);
+  info_builder.SetProcessor(kernel::Processor::CUDA);
+  info_builder.SetKernelType(KernelType::AKG_KERNEL);
+  info_builder.SetFusionType(kernel::FusionType::OPAQUE);
+  auto selected_info = info_builder.Build();
+  AnfAlgo::SetSelectKernelBuildInfo(selected_info, cnode.get());
+
+  func_graph->AddNode(cnode);
+  return cnode;
+}
 }  // namespace opt
 }  // namespace mindspore

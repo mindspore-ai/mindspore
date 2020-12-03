@@ -37,7 +37,9 @@ def expand_gkdropout(expand_info):
         keep_prob_v = graph_builder.value(input_x.dtype, keep_prob, "DefaultFormat")
         r_keep_prob = graph_builder.value(input_x.dtype, 1.0 / keep_prob, "DefaultFormat")
 
-        mask = graph_builder.emit('LessEqual', [input_mask, keep_prob_v])
+        if input_mask.dtype != input_x.dtype:
+            input_mask = graph_builder.emit('Cast', [input_mask], attrs={'dst_type': input_x.dtype})
+        mask = graph_builder.emit('LessEqual', [input_mask, keep_prob_v]) # output is bool type
         mask = graph_builder.emit('Cast', [mask], attrs={'dst_type': input_x.dtype})
 
         # compute result

@@ -27,6 +27,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/primitive.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include <nlohmann/json.hpp>
@@ -38,12 +39,20 @@ inline const PrimitivePtr kPrimGkDropout = std::make_shared<Primitive>("GkDropou
 namespace opt {
 using kernel::DumpOption;
 
+constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
+constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 constexpr auto kGraphKernelModule = "mindspore._extends.graph_kernel";
 constexpr auto kGraphKernelSplitFunc = "split_with_json";
 constexpr auto kGetGraphKernelOpExpander = "get_op_expander";
 constexpr auto kJsonKeyMultiGraph = "multi_graph";
 constexpr auto kJsonKeyGraphDesc = "graph_desc";
 constexpr auto kJsonKeyGraphMode = "graph_mode";
+
+struct DataInfo {
+  std::string format{kOpFormat_DEFAULT};
+  ShapeVector shape{1};
+  TypePtr type{nullptr};
+};
 
 bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *inputs_ptr);
 std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(const AnfNodePtrList &fuse_nodes,
@@ -74,6 +83,49 @@ void UpdateControlDependNode(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, Anf
                              const AnfNodePtr &control_depend_node, const AnfNodePtr &new_control_depend);
 void ReplaceNewFuseCNodeForDependPrior(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior,
                                        const AnfNodePtr &new_fuse_cnode, const AnfNodePtrList &outputs);
+
+std::string GetFormat(const AnfNodePtr &node);
+TypePtr GetType(const AnfNodePtr &node);
+ShapeVector GetShape(const AnfNodePtr &node);
+std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node);
+
+CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info);
+
+template <typename T>
+ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t data_length) {
+  // Create tensor value.
+  if (info.shape.size() != 1 && info.shape[0] != 1) {
+    MS_LOG(EXCEPTION) << "Only support create scalar tensor value node!!!";
+  }
+
+  if (info.type == nullptr) {
+    MS_LOG(EXCEPTION) << "Data type is needed!!!";
+  }
+
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(info.type->type_id(), info.shape);
+  MS_EXCEPTION_IF_NULL(tensor);
+  tensor::DeviceInfo device_info{info.format, info.type};
+  tensor->set_device_info(device_info);
+  auto data_ptr = tensor->data_c();
+  MS_EXCEPTION_IF_NULL(data_ptr);
+  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), &value, data_length);
+  if (ret_code != 0) {
+    MS_LOG(EXCEPTION) << "Failed to copy data into scalar tensor.";
+  }
+
+  // Create value node.
+  ValueNodePtr new_value_node = std::make_shared<ValueNode>(tensor);
+  new_value_node->set_abstract(tensor->ToAbstract());
+  auto kernel_info = std::make_shared<device::KernelInfo>();
+  new_value_node->set_kernel_info(kernel_info);
+  auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{info.format});
+  std::vector<TypeId> types = {info.type->type_id()};
+  kernel_build_info_builder->SetOutputsDeviceType(types);
+  AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
+
+  return new_value_node;
+}
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_HELPER_H_

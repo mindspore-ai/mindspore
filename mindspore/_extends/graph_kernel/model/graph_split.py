@@ -16,7 +16,7 @@
 
 from .model import PrimLib, Graph, Tensor
 
-use_poly_reduce = False
+use_poly_reduce = True
 
 class GraphSplitByPattern:
     """Graph splitter"""
