@@ -61,6 +61,16 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   float *packed_input_ = nullptr;
   float *col_major_input_ = nullptr;
 };
+
+void FreeMemory(const std::vector<kernel::LiteKernel *> &group_convs, const std::vector<lite::Tensor *> &new_inputs,
+                const std::vector<lite::Tensor *> &new_outputs);
+
+ConvParameter *CreateNewConvParameter(ConvParameter *parameter);
+
+lite::Tensor *CreateInputTensor(TypeId data_type, std::vector<int> in_shape, bool infered_flag);
+
+lite::Tensor *CreateOutputTensor(std::vector<int> out_shape, const std::vector<lite::Tensor *> &outputs,
+                                 bool infered_flag, int index);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_H_

@@ -168,8 +168,8 @@ ConvParameter *CreateNewConvParameter(ConvParameter *parameter) {
   return conv_parameter;
 }
 
-void FreeMemoryFp32(const std::vector<kernel::LiteKernel *> &group_convs, const std::vector<lite::Tensor *> &new_inputs,
-                    const std::vector<lite::Tensor *> &new_outputs) {
+void FreeMemory(const std::vector<kernel::LiteKernel *> &group_convs, const std::vector<lite::Tensor *> &new_inputs,
+                const std::vector<lite::Tensor *> &new_outputs) {
   for (auto sub_conv : group_convs) {
     if (sub_conv != nullptr) {
       delete sub_conv;
@@ -187,7 +187,7 @@ void FreeMemoryFp32(const std::vector<kernel::LiteKernel *> &group_convs, const 
   }
 }
 
-lite::Tensor *CreateInputTensorFp32(TypeId data_type, std::vector<int> in_shape, bool infered_flag) {
+lite::Tensor *CreateInputTensor(TypeId data_type, std::vector<int> in_shape, bool infered_flag) {
   auto in_tensor = new (std::nothrow) lite::Tensor(data_type, in_shape, Format_NHWC, lite::Tensor::Category::VAR);
   if (in_tensor == nullptr) {
     MS_LOG(ERROR) << "new in_tensor failed.";
@@ -247,8 +247,8 @@ lite::Tensor *CreateBiasTensorFp32(TypeId data_type, std::vector<int> bias_shape
   return bias_tensor;
 }
 
-lite::Tensor *CreateOutputTensorFp32(std::vector<int> out_shape, const std::vector<lite::Tensor *> &outputs,
-                                     bool infered_flag, int index) {
+lite::Tensor *CreateOutputTensor(std::vector<int> out_shape, const std::vector<lite::Tensor *> &outputs,
+                                 bool infered_flag, int index) {
   auto out_tensor = new (std::nothrow) lite::Tensor();
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "new tmp_out_tensor failed.";
@@ -324,16 +324,16 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
     std::vector<lite::Tensor *> new_outputs;
     auto new_conv_parameter = CreateNewConvParameter(conv_param);
     if (new_conv_parameter == nullptr) {
-      FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+      FreeMemory(group_convs, new_inputs, new_outputs);
       MS_LOG(ERROR) << "Get new conv parameter failed.";
       return nullptr;
     }
 
     // create new input for each group
-    auto in_tensor = CreateInputTensorFp32(inputs.front()->data_type(), in_shape, infered_flag);
+    auto in_tensor = CreateInputTensor(inputs.front()->data_type(), in_shape, infered_flag);
     if (in_tensor == nullptr) {
       delete new_conv_parameter;
-      FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+      FreeMemory(group_convs, new_inputs, new_outputs);
       MS_LOG(ERROR) << "create input tensor failed.";
       return nullptr;
     }
@@ -345,7 +345,7 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
       CreateFilterTensorFp32(inputs.at(kWeightIndex)->data_type(), filter_shape, inputs, copy_length, i);
     if (filter_tensor == nullptr) {
       delete new_conv_parameter;
-      FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+      FreeMemory(group_convs, new_inputs, new_outputs);
       MS_LOG(ERROR) << "create filter tensor failed.";
       return nullptr;
     }
@@ -357,7 +357,7 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
         CreateBiasTensorFp32(inputs.at(kBiasIndex)->data_type(), bias_shape, inputs, new_out_channel, i);
       if (bias_tensor == nullptr) {
         delete new_conv_parameter;
-        FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+        FreeMemory(group_convs, new_inputs, new_outputs);
         MS_LOG(ERROR) << "create bias_tensor failed.";
         return nullptr;
       }
@@ -366,10 +366,10 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
 
     // create new output tensor
     for (size_t j = 0; j < outputs.size(); ++j) {
-      auto out_tensor = CreateOutputTensorFp32(out_shape, outputs, infered_flag, j);
+      auto out_tensor = CreateOutputTensor(out_shape, outputs, infered_flag, j);
       if (out_tensor == nullptr) {
         delete new_conv_parameter;
-        FreeMemoryFp32(group_convs, new_inputs, new_outputs);
+        FreeMemory(group_convs, new_inputs, new_outputs);
         MS_LOG(ERROR) << "new out_tensor failed.";
         return nullptr;
       }
