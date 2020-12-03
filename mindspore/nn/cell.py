@@ -87,6 +87,7 @@ class Cell(Cell_):
         self._phase = 'train'
         self._parameter_layout_dict = {}
         self._create_time = int(time.time() * 1e9)
+        self.phase_prefix = ""
         init_backend()
 
         # call gc to release GE session resources used by non-used cell objects
@@ -237,7 +238,7 @@ class Cell(Cell_):
 
     def get_func_graph_proto(self):
         """Return graph binary proto."""
-        return _executor._get_func_graph_proto(self.phase + "." + str(self.create_time), "anf_ir", True)
+        return _executor._get_func_graph_proto(self, self.phase + "." + str(self.create_time), "anf_ir", True)
 
     def __getattr__(self, name):
         if '_params' in self.__dict__:
