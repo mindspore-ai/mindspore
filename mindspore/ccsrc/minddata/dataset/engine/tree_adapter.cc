@@ -191,8 +191,6 @@ Status TreeAdapter::GetNext(TensorRow *row) {
     Status s = tree_->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
     if (s.IsOk()) {
       tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
-    }
-    if (tracing_ != nullptr) {
       cur_connector_size_ = tree_->root()->ConnectorSize();
       cur_connector_capacity_ = tree_->root()->ConnectorCapacity();
     }
