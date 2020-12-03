@@ -156,7 +156,7 @@ static std::vector<CNodePtr> GetTargetLabelSetNodes(NotNull<CNodePtr> jump_node,
   for (auto label_id : target_label_list) {
     auto iter = label_id_to_label_set.find(label_id);
     if (iter == label_id_to_label_set.end()) {
-      MS_LOG(EXCEPTION) << "Connot find LabelSet node has label id " << label_id;
+      MS_LOG(EXCEPTION) << "Cannot find LabelSet node has label id " << label_id;
     }
     target_labelset_nodes.push_back(iter->second);
   }
@@ -413,6 +413,16 @@ std::vector<std::pair<KernelGraphPtr, std::vector<AnfNodePtr>>> AscendControlPar
       const auto &[target_graph, args] = ParsePartial(NOT_NULL(*iter));
       ret.emplace_back(target_graph, args);
     }
+  } else if (IsPrimitiveCNode(cnode.get(), prim::kPrimSwitchLayer)) {
+    const std::vector<AnfNodePtr> &switch_layer_inputs = cnode->inputs();
+    if (switch_layer_inputs.size() <= kCNodeSwitchLayerBranch) {
+      MS_LOG(EXCEPTION) << "Switch layer node " << cnode->DebugString() << " has invalid inputs size "
+                        << switch_layer_inputs.size();
+    }
+    for (auto iter = switch_layer_inputs.begin() + kCNodeSwitchLayerBranch; iter != switch_layer_inputs.end(); ++iter) {
+      const auto &[target_graph, args] = ParsePartial(NOT_NULL(*iter));
+      ret.emplace_back(target_graph, args);
+    }
   } else {
     MS_LOG(EXCEPTION) << "Unsupported call node: " << cnode->DebugString(5);
   }
@@ -431,7 +441,8 @@ void AscendControlParser::ChildGraphDataAssign(
   const std::vector<CNodePtr> &nodes = kg->execution_order();
 
   for (auto &node : nodes) {
-    if (!(IsPrimitiveCNode(node, prim::kPrimCall) || IsPrimitiveCNode(node, prim::kPrimSwitch))) {
+    if (!(IsPrimitiveCNode(node, prim::kPrimCall) || IsPrimitiveCNode(node, prim::kPrimSwitch) ||
+          IsPrimitiveCNode(node, prim::kPrimSwitchLayer))) {
       continue;
     }
 
@@ -647,12 +658,10 @@ void AscendControlParser::RecurseSwitchLayer(NotNull<KernelGraphPtr> kg, NotNull
     MS_LOG(EXCEPTION) << "Inputs of apply node must more than " << kCNodeSwitchLayerLength;
   }
 
-  auto branch_tuple = cur_node->input(kCNodeSwitchLayerBranch);
-  MS_EXCEPTION_IF_NULL(branch_tuple);
-  if (!branch_tuple->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << branch_tuple->DebugString() << " is not a CNode";
+  std::vector<AnfNodePtr> branch_partial;
+  for (size_t idx = kCNodeSwitchLayerBranch; idx < cur_node->inputs().size(); idx++) {
+    branch_partial.emplace_back(cur_node->input(idx));
   }
-  const std::vector<AnfNodePtr> &branch_partial = utils::cast<CNodePtr>(branch_tuple)->inputs();
   // 1 return label
   auto back_label = kg->NewCNode({std::make_shared<ValueNode>(std::make_shared<Primitive>(kLabelSetOpName))});
   // 2 add depend relationship
@@ -673,16 +682,17 @@ void AscendControlParser::RecurseSwitchLayer(NotNull<KernelGraphPtr> kg, NotNull
     // 3.1 branch kernel graph and args
     KernelGraphPtr branch_fg;
     std::vector<AnfNodePtr> origin_inputs;
-    std::tie(branch_fg, origin_inputs) = ParsePartial(NOT_NULL(origin_switch_inputs[i]));
+    std::tie(branch_fg, origin_inputs) = ParsePartial(NOT_NULL(origin_switch_inputs[i + kCNodeSwitchLayerBranch]));
     child_graphs.push_back(branch_fg);
     // 3.2 recurse sub graph
     CNodePtr branch_label = ProcessKernelGraph(NOT_NULL(branch_fg), cur_node, back_label, memo);
     new_switch_inputs.push_back(branch_label);
     AttachOriginalInputsToGraph(kg, origin_inputs);
   }
-  new_switch_inputs.insert(new_switch_inputs.end(), branch_partial.begin(), branch_partial.end());
   cur_node->set_inputs(new_switch_inputs);
-  cur_node->set_abstract(nullptr);
+  cur_node->set_abstract(std::make_shared<abstract::AbstractNone>());
+  // To adapt to the true and false branches of the switch, the sequence of the branches is reversed.
+  std::reverse(child_graphs.begin(), child_graphs.end());
   AnfAlgo::SetNodeAttr(kAttrChildGraph, MakeValue<std::vector<KernelGraphPtr>>(child_graphs), cur_node.get());
   MS_LOG(INFO) << "Succeed processing switch layer " << cur_node->DebugString();
 }
