@@ -55,7 +55,7 @@ class ImageGradients(Cell):
 
     Examples:
         >>> net = nn.ImageGradients()
-        >>> image = Tensor(np.array([[[[1,2],[3,4]]]]), dtype=mindspore.int32)
+        >>> image = Tensor(np.array([[[[1, 2], [3, 4]]]]), dtype=mindspore.int32)
         >>> output = net(image)
         >>> print(output)
         (Tensor(shape=[1, 1, 2, 2], dtype=Int32, value=
@@ -219,8 +219,8 @@ class SSIM(Cell):
 
     Examples:
         >>> net = nn.SSIM()
-        >>> img1 = Tensor(np.random.random((1,3,16,16)), mindspore.float32)
-        >>> img2 = Tensor(np.random.random((1,3,16,16)), mindspore.float32)
+        >>> img1 = Tensor(np.random.random((1, 3, 16, 16)), mindspore.float32)
+        >>> img2 = Tensor(np.random.random((1, 3, 16, 16)), mindspore.float32)
         >>> output = net(img1, img2)
         >>> print(output)
         [0.12174469]
@@ -394,8 +394,8 @@ class PSNR(Cell):
 
     Examples:
         >>> net = nn.PSNR()
-        >>> img1 = Tensor(np.random.random((1,3,16,16)))
-        >>> img2 = Tensor(np.random.random((1,3,16,16)))
+        >>> img1 = Tensor(np.random.random((1, 3, 16, 16)))
+        >>> img2 = Tensor(np.random.random((1, 3, 16, 16)))
         >>> output = net(img1, img2)
         >>> print(output)
         [7.915369]
