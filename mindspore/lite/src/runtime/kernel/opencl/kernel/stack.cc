@@ -134,7 +134,9 @@ void StackOpenCLKernel::SetGlobalLocal() {
 
 int StackOpenCLKernel::Prepare() {
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
-
+  if (axis_ == 0) {
+    return RET_OK;
+  }
   if (in_tensors_[0]->shape().size() == 1 && axis_ == 1) {
     axis_ += 2;
   } else if (in_tensors_[0]->shape().size() == axis_) {

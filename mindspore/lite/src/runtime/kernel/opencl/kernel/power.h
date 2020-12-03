@@ -31,20 +31,20 @@ class PowerOpenCLKernel : public OpenCLKernel {
 
   ~PowerOpenCLKernel() override = default;
 
-  int Init() override;
-
+  int Prepare() override;
+  int CheckSpecs() override;
+  void SetConstArgs() override;
+  void SetGlobalLocal() override;
   int Run() override;
 
  private:
-  int InferShapeTo4D();
+  int Initweight();
 
  private:
-  size_t N_{1};
-  size_t H_{1};
-  size_t W_{1};
-  size_t C_{1};
+  cl_int4 out_shape_{};
   bool broadcast_{false};
   bool use_fp16_enable_{false};
+  void *weight_{nullptr};
   float power_{1.0};
   float scale_{0.0};
   float shift_{1.0};

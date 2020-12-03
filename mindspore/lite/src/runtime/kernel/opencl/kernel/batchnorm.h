@@ -39,6 +39,14 @@ class BatchNormOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
+  int Initweight();
+
+ private:
+  bool use_fp16_enable_{false};
+  void *scale_{nullptr};
+  void *offset_{nullptr};
+  void *mean_{nullptr};
+  void *variance_{nullptr};
   cl::Kernel kernel_;
 };
 

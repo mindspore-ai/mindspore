@@ -31,31 +31,54 @@ using mindspore::schema::PrimitiveType_Power;
 
 namespace mindspore::kernel {
 
-int PowerOpenCLKernel::Init() {
-  use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
+int PowerOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<PowerParameter *>(this->op_parameter_);
-  std::string kernel_name = "power";
-  std::string source = power_source;
-  std::string program_name = "power";
   broadcast_ = param->broadcast_;
-
-  if (in_tensors_.size() == 2 && in_tensors_[0]->shape().size() != in_tensors_[1]->shape().size()) {
-    MS_LOG(ERROR) << "Unsupported input0->shape.size " << in_tensors_[0]->shape().size()
-                  << "!=" << in_tensors_[1]->shape().size();
-    return RET_ERROR;
-  } else if (in_tensors_.size() > 2 || in_tensors_[0]->shape().size() > 4) {
-    MS_LOG(ERROR) << "Unsupported in_tensors_->shape.size " << in_tensors_.size() << "  or "
-                  << "in_tensors_[0]->shape().size(): " << in_tensors_[0]->shape().size();
-    return RET_ERROR;
-  } else if (broadcast_ && in_tensors_.size() == 1) {
-    power_ = param->power_;
-    kernel_name += "_broadcast";
+  if (!(broadcast_ && in_tensors_.size() == 1)) {
+    if (in_tensors_.size() == 2 && in_tensors_.at(0)->shape().size() != in_tensors_.at(1)->shape().size()) {
+      MS_LOG(ERROR) << "Unsupported input->shape.size " << in_tensors_.at(0)->shape().size()
+                    << "!=" << in_tensors_.at(1)->shape().size();
+      return RET_ERROR;
+    } else if (in_tensors_.size() > 2 || in_tensors_.at(0)->shape().size() > 4) {
+      MS_LOG(ERROR) << "Unsupported in_tensors_->shape.size " << in_tensors_.size() << "  or "
+                    << "in_tensors_[0]->shape().size(): " << in_tensors_.at(0)->shape().size();
+      return RET_ERROR;
+    }
   }
-  scale_ = param->scale_;
-  shift_ = param->shift_;
-  ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
-  MS_LOG(DEBUG) << kernel_name << " Init Done!";
+  return RET_OK;
+}
+
+int PowerOpenCLKernel::Initweight() {
+  auto allocator = ocl_runtime_->GetAllocator();
+  GpuTensorInfo img_info(in_tensors_.at(1));
+  auto weight_tensor = in_tensors_.at(1);
+  size_t weight_size = img_info.OriginSize;
+  weight_ = allocator->Malloc(weight_size);
+  allocator->MapBuffer(weight_, CL_MAP_WRITE, nullptr, true);
+  memset(weight_, 0x00, weight_size);
+
+  if (weight_tensor->data_type() == kNumberTypeFloat16) {
+    if (use_fp16_enable_) {
+      memcpy(weight_, weight_tensor->data_c(), weight_size);
+    } else {
+      auto weight_fp32 = reinterpret_cast<float *>(weight_);
+      auto origin_bias_fp16 = reinterpret_cast<float16_t *>(weight_tensor->data_c());
+      for (int i = 0; i < img_info.ElementsNum; ++i) {
+        weight_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
+      }
+    }
+  } else {
+    if (use_fp16_enable_) {
+      auto weight_fp16 = reinterpret_cast<float16_t *>(weight_);
+      auto origin_bias_fp32 = reinterpret_cast<float *>(weight_tensor->data_c());
+      for (int i = 0; i < img_info.ElementsNum; ++i) {
+        weight_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
+      }
+    } else {
+      memcpy(weight_, weight_tensor->data_c(), weight_size);
+    }
+  }
+  allocator->UnmapBuffer(weight_);
   return RET_OK;
 }
 
@@ -73,87 +96,83 @@ void PowerGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *l
   local->push_back(z);
 }
 
-int PowerOpenCLKernel::InferShapeTo4D() {
-  if (in_tensors_[0]->shape().size() <= 4) {
-    if (in_tensors_[0]->shape().size() == 1) {
-      N_ = in_tensors_[0]->shape()[0];
-    } else if (in_tensors_[0]->shape().size() == 2) {
-      N_ = in_tensors_[0]->shape()[0];
-      C_ = in_tensors_[0]->shape()[1];
-    } else if (in_tensors_[0]->shape().size() == 3) {
-      N_ = in_tensors_[0]->shape()[0];
-      W_ = in_tensors_[0]->shape()[1];
-      C_ = in_tensors_[0]->shape()[2];
-    } else {
-      N_ = in_tensors_[0]->shape()[0];
-      H_ = in_tensors_[0]->shape()[1];
-      W_ = in_tensors_[0]->shape()[2];
-      C_ = in_tensors_[0]->shape()[3];
-    }
+void PowerOpenCLKernel::SetConstArgs() {
+  float unalign_w = static_cast<float>(out_shape_.s[3]);
+  out_shape_.s[3] = UP_DIV(out_shape_.s[3], C4NUM);
+  int arg_cn = 2;
+  if (!broadcast_) {
+    arg_cn++;
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
   } else {
-    MS_LOG(ERROR) << "Unsupported inputdim: " << in_tensors_[0]->shape().size();
-    return RET_ERROR;
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
   }
+  if (use_fp16_enable_) {
+    auto x = static_cast<float16_t>(power_);
+    auto y = static_cast<float16_t>(shift_);
+    auto z = static_cast<float16_t>(scale_);
+    auto w = static_cast<float16_t>(unalign_w);
+    cl_half4 parameter = {*(reinterpret_cast<uint16_t *>(&x)), *(reinterpret_cast<uint16_t *>(&y)),
+                          *(reinterpret_cast<uint16_t *>(&z)), *(reinterpret_cast<uint16_t *>(&w))};
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter);
+  } else {
+    cl_float4 parameter = {power_, shift_, scale_, unalign_w};
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter);
+  }
+}
+
+void PowerOpenCLKernel::SetGlobalLocal() {
+  cl_int4 output_shape = {};
+  for (int i = 0; i < out_tensors_.at(0)->shape().size(); ++i) {
+    output_shape.s[i] = out_tensors_.at(0)->shape()[i];
+  }
+  Broadcast2GpuShape(out_shape_.s, output_shape.s, out_tensors_.at(0)->shape().size(), 1);
+  const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
+  std::vector<size_t> local_size_ = {1, 1, 1};
+  uint32_t OH = out_shape_.s[0] * out_shape_.s[1];
+  uint32_t OW = out_shape_.s[2];
+  uint32_t OC = UP_DIV(out_shape_.s[3], C4NUM);
+  std::vector<size_t> global_size_ = {OH, OW, OC};
+  PowerGetWorkGroup(global_size_, &local_size_, max_global[0]);
+  OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
+}
+
+int PowerOpenCLKernel::Prepare() {
+  use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
+  auto param = reinterpret_cast<PowerParameter *>(this->op_parameter_);
+  std::string kernel_name = "power";
+  std::string source = power_source;
+  std::string program_name = "power";
+  broadcast_ = param->broadcast_;
+  if (broadcast_ && in_tensors_.size() == 1) {
+    power_ = param->power_;
+    kernel_name += "_broadcast";
+  } else {
+    Initweight();
+  }
+  scale_ = param->scale_;
+  shift_ = param->shift_;
+  ocl_runtime_->LoadSource(program_name, source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
+  SetGlobalLocal();
+  SetConstArgs();
   return RET_OK;
 }
 
 int PowerOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  auto output_shape = out_tensors_[0]->shape();
-  InferShapeTo4D();
-  cl_int4 output_shape_ = {static_cast<cl_int>(N_), static_cast<cl_int>(H_), static_cast<cl_int>(W_),
-                           static_cast<cl_int>(UP_DIV(C_, C4NUM))};
-  const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
-  std::vector<size_t> local = {1, 1, 1};
-  uint32_t OH = N_ * H_;
-  uint32_t OW = W_;
-  uint32_t OC = UP_DIV(C_, C4NUM);
-  std::vector<size_t> global = {OH, OW, OC};
-  PowerGetWorkGroup(global, &local, max_global[0]);
   int arg_cn = 0;
   if (broadcast_) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());
   } else {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[0]->data_c());
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[1]->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_, lite::opencl::MemType::BUF);
   }
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape_);
-
-  if (use_fp16_enable_) {
-    auto x = static_cast<float16_t>(power_);
-    auto y = static_cast<float16_t>(shift_);
-    auto z = static_cast<float16_t>(scale_);
-    cl_half4 parameter = {*(reinterpret_cast<uint16_t *>(&x)), *(reinterpret_cast<uint16_t *>(&y)),
-                          *(reinterpret_cast<uint16_t *>(&z)), 1};
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter);
-  } else {
-    cl_float4 parameter = {power_, shift_, scale_, 1};
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, parameter);
-  }
-  AlignGlobalLocal(global, local);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
   return RET_OK;
 }
 
-kernel::LiteKernel *PowerOpenCLKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                             const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) PowerOpenCLKernel(opParameter, inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << " new PowerOpenCLKernel failed ";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << " Init kernel failed, name: Power ";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Power, PowerOpenCLKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Power, PowerOpenCLKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Power, OpenCLKernelCreator<PowerOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Power, OpenCLKernelCreator<PowerOpenCLKernel>)
 }  // namespace mindspore::kernel
