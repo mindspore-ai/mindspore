@@ -134,6 +134,8 @@ int OneHotCPUKernel::GetParams() {
   one_hot_param->depth_ = *depth;
 
   if (in_tensors_.size() == kInputNum) {
+    // 4 inputs: indices, depth, on_value, off_value
+    one_hot_param->support_neg_index_ = false;
     auto on_value_tensor = in_tensors_.at(2);
     if (on_value_tensor == nullptr) {
       MS_LOG(ERROR) << "OneHot inputs[2] on_value nullptr";
@@ -156,12 +158,14 @@ int OneHotCPUKernel::GetParams() {
     }
     one_hot_param->off_value_ = *off_value;
   } else {
+    // 3 inputs: indices, depth, off_on_value
+    one_hot_param->support_neg_index_ = true;
     auto off_on_tensor = in_tensors_.at(2);
     if (off_on_tensor == nullptr) {
       MS_LOG(ERROR) << "OneHot inputs[2] on_value nullptr";
       return RET_NULL_PTR;
     }
-    const int64_t *off_on_values = static_cast<int64_t *>(off_on_tensor->MutableData());
+    const float *off_on_values = static_cast<float *>(off_on_tensor->MutableData());  // need to support int type
     if (off_on_values == nullptr) {
       MS_LOG(ERROR) << "OneHot input[2] data is nullptr";
       return RET_NULL_PTR;
