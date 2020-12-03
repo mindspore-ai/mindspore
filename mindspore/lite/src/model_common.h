@@ -33,9 +33,8 @@ int ConvertSubGraph(const schema::SubGraph &sub_graph, Model *model);
 
 template <typename T = schema::MetaGraph, typename U = schema::CNode>
 bool ConvertNodes(const T &meta_graph, Model *model, int schema_version = SCHEMA_CUR) {
-  MS_ASSERT(model != nullptr);
-  if (meta_graph.nodes() == nullptr) {
-    MS_LOG(ERROR) << "meta_graph is invalid, please check your model file.";
+  if (model == nullptr || meta_graph.nodes() == nullptr) {
+    MS_LOG(ERROR) << "model or meta_graph is invalid, please check your model file.";
     return false;
   }
   for (size_t i = 0; i < meta_graph.nodes()->size(); ++i) {
@@ -84,9 +83,8 @@ bool ConvertNodes(const T &meta_graph, Model *model, int schema_version = SCHEMA
 
 template <typename T = schema::MetaGraph>
 bool ConvertTensors(const T &meta_graph, Model *model) {
-  MS_ASSERT(model != nullptr);
-  if (meta_graph.allTensors() == nullptr) {
-    MS_LOG(ERROR) << "meta_graph is invalid, please check your model file.";
+  if (model == nullptr || meta_graph.allTensors() == nullptr) {
+    MS_LOG(ERROR) << "model or meta_graph is invalid, please check your model file.";
     return false;
   }
   auto tensor_count = meta_graph.allTensors()->size();
@@ -103,10 +101,9 @@ bool ConvertTensors(const T &meta_graph, Model *model) {
 
 template <typename T = schema::MetaGraph>
 int MetaGraphMappingSubGraph(const T &meta_graph, Model *model) {
-  MS_ASSERT(model != nullptr);
-  if (meta_graph.inputIndex() == nullptr || meta_graph.outputIndex() == nullptr || meta_graph.nodes() == nullptr ||
-      meta_graph.allTensors() == nullptr) {
-    MS_LOG(ERROR) << "meta_graph is invalid, please check your model file.";
+  if (model == nullptr || meta_graph.inputIndex() == nullptr || meta_graph.outputIndex() == nullptr ||
+      meta_graph.nodes() == nullptr || meta_graph.allTensors() == nullptr) {
+    MS_LOG(ERROR) << "model or meta_graph is invalid, please check your model file.";
     return RET_ERROR;
   }
   auto *subgraph = new (std::nothrow) Model::SubGraph();
@@ -139,7 +136,10 @@ int MetaGraphMappingSubGraph(const T &meta_graph, Model *model) {
 
 template <typename T = schema::MetaGraph, typename U = schema::CNode>
 int GenerateModel(const T &meta_graph, Model *model, int schema_version = 0) {
-  MS_ASSERT(model != nullptr);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "model is nullptr.";
+    return RET_ERROR;
+  }
   if (meta_graph.name() != nullptr) {
     model->name_ = meta_graph.name()->c_str();
   }
@@ -176,6 +176,12 @@ int GenerateModel(const T &meta_graph, Model *model, int schema_version = 0) {
 }
 
 int VersionVerify(flatbuffers::Verifier *verify);
+
+int NodeVerify(const Model &model);
+
+int SubGraphVerify(const Model &model);
+
+int ModelVerify(const Model &model, const int &schema_version);
 
 const void *GetMetaGraphByVerison(const char *buf, const int &schema_version);
 

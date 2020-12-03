@@ -123,6 +123,13 @@ int Scheduler::InferShape(const lite::Model *model, std::vector<Tensor *> *tenso
       MS_LOG(ERROR) << "InferShape failed, name: " << node->name_ << ", type: "
                     << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
       return RET_INFER_ERR;
+    } else {
+      for (auto &output : outputs) {
+        if (output->ElementsNum() >= MAX_MALLOC_SIZE / static_cast<int>(sizeof(int64_t))) {
+          MS_LOG(ERROR) << "The size of output tensor is too big";
+          return RET_ERROR;
+        }
+      }
     }
   }
 
