@@ -92,15 +92,15 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   mindspore::lite::Allocator *allocator() const { return this->allocator_; }
 
-  int MallocData(const mindspore::lite::Allocator *allocator = nullptr);
+  virtual int MallocData(const mindspore::lite::Allocator *allocator = nullptr);
 
-  int FreeData();
+  virtual int FreeData();
 
   void *MutableData() override;
 
-  void *data_c() const { return data_; }
+  virtual void *data_c() const { return data_; }
 
-  void set_data(void *data) { this->data_ = data; }
+  virtual void set_data(void *data) { this->data_ = data; }
 
   Category category() { return this->category_; }
 
@@ -189,6 +189,8 @@ inline size_t DataTypeSize(const TypeId type) {
       return sizeof(bool);
     case kObjectTypeString:
       return sizeof(char);
+    case kObjectTypeTensorType:
+      return 0;
     default:
       MS_LOG(ERROR) << "Not support the type: " << type;
       return 0;

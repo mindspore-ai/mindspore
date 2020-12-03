@@ -19,18 +19,12 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "src/tensorlist.h"
 #include "schema/model_generated.h"
 
 namespace mindspore::kernel {
 class TensorListFromTensorCPUKernel : public LiteKernel {
  public:
-  /*
-   * input0:tensor
-   * input1:element_shape
-   * output0:tensorlist.size() and dty  pe
-   * output2~n:tensor
-   * output1:element_shape(tensorlist shape)
-   */
   TensorListFromTensorCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                 const mindspore::lite::PrimitiveC *primitive)
@@ -40,12 +34,11 @@ class TensorListFromTensorCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  bool IsCompatibleShape();
+  int IsCompatibleShape();
 
  private:
   std::vector<int> output_shape_;
   lite::Tensor *output0_ = nullptr;
-  lite::Tensor *output1_ = nullptr;
   lite::Tensor *input0_ = nullptr;
   lite::Tensor *input1_ = nullptr;
 };

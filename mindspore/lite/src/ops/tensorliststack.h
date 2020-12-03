@@ -16,49 +16,27 @@
 #include <vector>
 #include <functional>
 #include "src/ops/primitive_c.h"
+#include "src/tensorlist.h"
 #include "ir/dtype/type_id.h"
 
-using mindspore::schema::Format;
-using mindspore::schema::Format_NC;
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_TENSORLISTFROMTENSOR_H_
-#define LITE_MINDSPORE_LITE_C_OPS_TENSORLISTFROMTENSOR_H_
+#ifndef LITE_MINDSPORE_LITE_C_OPS_TENSORLISTSTACK_H_
+#define LITE_MINDSPORE_LITE_C_OPS_TENSORLISTSTACK_H_
 namespace mindspore {
 namespace lite {
-
-class TensorListFromTensor : public PrimitiveC {
- public:
-  TypeId GetElementDType() const;
-  TypeId GetShapeType() const;
-  TensorListFromTensor() = default;
-  bool IsCompatibleShape(std::vector<lite::Tensor *> inputs_);
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-};
-
-class TensorListReserve : public PrimitiveC {
- public:
-  TensorListReserve() = default;
-  TypeId GetElementDType() const;
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-};
-
-class TensorListGetItem : public PrimitiveC {
- public:
-  TensorListGetItem() = default;
-  TypeId GetElementDType() const;
-  bool IsFullyDefined(const std::vector<int> &shape) const;
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-
- private:
-  int index_ = -1;
-  TypeId element_dtype_ = kTypeUnknown;
-  std::vector<int> element_shape_;
-};
-
 class TensorListStack : public PrimitiveC {
  public:
   // tensor:input, element_dtype, num_elements(default=-1:reprent any tensor dim0), element_shape
   TensorListStack() = default;
+  ~TensorListStack() = default;
+#ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(TensorListStack, PrimitiveC);
+  void SetElementDType(int type);
+  void SetNumElements(int num_elements);
+  explicit TensorListStack(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+#else
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
+#endif
   TypeId GetElementDType() const;
   int GetNumElements() const;
   bool IsFullyDefined(const std::vector<int> &shape) const;
@@ -72,4 +50,4 @@ class TensorListStack : public PrimitiveC {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_TENSORLISTFROMTENSOR_H_
+#endif  // LITE_MINDSPORE_LITE_C_OPS_TENSORLISTSTACK_H_

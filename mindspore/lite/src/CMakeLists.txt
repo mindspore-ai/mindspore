@@ -26,6 +26,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool.c
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/inner_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/model_common.cc

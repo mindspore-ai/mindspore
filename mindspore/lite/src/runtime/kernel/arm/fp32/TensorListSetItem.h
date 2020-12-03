@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TENSORLISTGETITEM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TENSORLISTGETITEM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TENSORLISTSETITEM_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TENSORLISTSETITEM_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -24,23 +24,26 @@
 #include "nnacl/tensorlist_parameter.h"
 
 namespace mindspore::kernel {
-class TensorListGetItemCPUKernel : public LiteKernel {
+class TensorListSetItemCPUKernel : public LiteKernel {
  public:
-  TensorListGetItemCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+  TensorListSetItemCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                              const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive),
         dtype_(reinterpret_cast<TensorListParameter *>(parameter)->element_dtype_) {}
-  ~TensorListGetItemCPUKernel() = default;
+  ~TensorListSetItemCPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
 
  private:
+  lite::TensorList *input0_ = nullptr;
+  lite::Tensor *input2_ = nullptr;
+  lite::TensorList *output0_ = nullptr;
   int index_ = 0;
   TypeId dtype_ = kTypeUnknown;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TENSORLISTGETITEM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TENSORLISTSETITEM_H_

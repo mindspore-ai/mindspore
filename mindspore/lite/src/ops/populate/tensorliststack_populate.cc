@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/ops/tensor_list.h"
+#include "src/ops/tensorliststack.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/tensorlist_parameter.h"

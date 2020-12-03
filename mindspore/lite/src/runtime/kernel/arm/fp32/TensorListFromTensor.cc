@@ -27,63 +27,67 @@ using mindspore::schema::PrimitiveType_TensorListFromTensor;
 
 namespace mindspore::kernel {
 
-bool TensorListFromTensorCPUKernel::IsCompatibleShape() {
+int TensorListFromTensorCPUKernel::IsCompatibleShape() {
   if (input1_->data_type() != kNumberTypeInt) {  // element_shape
     MS_LOG(ERROR) << "in_tensors_[1] data type is must be \"kNumberTypeInt\", but now is:" << input1_->data_type();
-    return false;
+    return RET_ERROR;
   }
   int in1_ele_num = input1_->ElementsNum();
   std::vector<int> tensor_shape = input0_->shape();
   if (static_cast<int>(tensor_shape.size() - 1) != in1_ele_num) {
-    MS_LOG(ERROR) << "in_tensors_[0].shape() - 1:" << tensor_shape.size() - 1
+    MS_LOG(ERROR) << "in_tensors_[0].shape().size() - 1:" << tensor_shape.size() - 1
                   << " must be equal in_tensors_[1].ElementsNum():" << in1_ele_num;
-    return false;
+    return RET_ERROR;
   }
   int *elements_shape = reinterpret_cast<int *>(input1_->data_c());  // element shape in tensor data
   for (int i = 0; i < in1_ele_num; ++i) {
-    const int dim0 = tensor_shape.at(i + 1);
-    const int dim1 = *(elements_shape + i);
+    int dim0 = tensor_shape[i + 1];
+    int dim1 = elements_shape[i];
     if (dim0 >= 0 && dim1 >= 0 && dim0 != dim1) {
       MS_LOG(ERROR) << "input0_->shape()[" << i + 1 << "]:" << dim0 << " is not equal input1_->data_c()[" << i
                     << "]:" << dim1;
-      return false;
+      return RET_ERROR;
     }
   }
-  return true;
+  return RET_OK;
 }
 
 int TensorListFromTensorCPUKernel::Init() {
-  input0_ = in_tensors_.at(0);  // row tensor
-  input1_ = in_tensors_.at(1);  // element_shape tensor
-  output0_ = out_tensors_.at(0);
-  output1_ = out_tensors_.at(1);
+  input0_ = in_tensors_[0];  // row tensor
+  input1_ = in_tensors_[1];  // element_shape tensor
+  output0_ = out_tensors_[0];
   return IsCompatibleShape();
 }
 
 int TensorListFromTensorCPUKernel::ReSize() { return RET_OK; }
 
 int TensorListFromTensorCPUKernel::Run() {
-  int dim0 = input0_->shape().at(0);
-  size_t devision_dim0 = input0_->ElementsNum() / dim0;
-  auto out0_ptr = reinterpret_cast<int *>(output0_->MutableData());
-  *out0_ptr = dim0;
-  *(out0_ptr + 1) = input0_->data_type();
-  auto status = output1_->CopyTensorData(*input1_);
-  if (status == RET_ERROR) {
-    MS_LOG(ERROR) << "copy tensor data failed!";
+  if (input0_->shape().size() == 0) {
+    MS_LOG(ERROR) << "input0_->shape().size():" << input0_->shape().size() << " must be greater than 0";
+  }
+  int dim0 = input0_->shape()[0];
+  if (dim0 <= 0) {
+    MS_LOG(ERROR) << "input0_->shape()[0]:" << dim0 << " must be greater than 0!";
     return RET_ERROR;
   }
-  if (dim0 != static_cast<int>(out_tensors_.size() - 2)) {
-    MS_LOG(ERROR) << "out_tensors_.size() - 2:[" << out_tensors_.size() - 2
-                  << "] must be equal in_tensors_[0].shape()[0]:[" << dim0 << "]";
+  auto output0 = reinterpret_cast<lite::TensorList *>(output0_);
+  if (dim0 != output0->ElementsNum()) {
+    MS_LOG(ERROR) << "output0_->ElementsNum():" << output0->ElementsNum() << " must be equal to dim0:" << dim0;
     return RET_ERROR;
   }
-  auto in_ptr = reinterpret_cast<float *>(input0_);
-  size_t index = 0;
+  int devision_dim0 = input0_->ElementsNum() / dim0;
+  auto in_ptr = reinterpret_cast<float *>(input0_->data_c());
+  // copy data from input0(tensor) to output(tensorlist) vector<*tensor>
   for (int i = 0; i < dim0; ++i) {
-    auto out_ptr = reinterpret_cast<float *>(out_tensors_.at(i + 2)->MutableData());
-    memcpy(out_ptr, in_ptr + index, devision_dim0 * sizeof(float));
-    index += devision_dim0;
+    auto out_ptr = output0->GetTensorIndex(i);
+    MS_ASSERT(out_ptr != nullptr);
+    if (out_ptr->ElementsNum() != devision_dim0) {
+      MS_LOG(ERROR) << "tensors_[" << i << "].ElementsNum():" << out_ptr->ElementsNum()
+                    << " must be euqal to devision_dim0:" << devision_dim0;
+      return RET_ERROR;
+    }
+    memcpy(reinterpret_cast<float *>(out_ptr->MutableData()), in_ptr, devision_dim0 * sizeof(float));
+    in_ptr += devision_dim0;
   }
   return RET_OK;
 }
