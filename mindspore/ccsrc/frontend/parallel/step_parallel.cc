@@ -1408,7 +1408,7 @@ void InsertAllGatherOp(const std::string &group, const std::pair<AnfNodePtr, int
   auto prim = GetValueNode<PrimitivePtr>(allgather->input(0));
   auto attrs = prim->attrs();
   // enable fusion flag later when it's supported in backend
-  attrs["fusion"] = MakeValue<int64_t>(0);
+  attrs["fusion"] = MakeValue<int64_t>(1);
   prim->SetAttrs(attrs);
 }
 
