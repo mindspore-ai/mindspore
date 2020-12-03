@@ -28,6 +28,8 @@
 #include "mindspore/core/base/core_ops.h"
 #include "transform/graph_ir/util.h"
 
+static constexpr char kGeOpNameHcclSend[] = "HcomSend";
+static constexpr char kGeOpNameHcclReceive[] = "HcomReceive";
 static constexpr char kGeOpNameHcclAllRudece[] = "HcomAllReduce";
 static constexpr char kGeOpNameHcclAllGather[] = "HcomAllGather";
 static constexpr char kGeOpNameHcclBroadcast[] = "HcomBroadcast";
@@ -63,6 +65,18 @@ struct IsString<std::string> {
   static constexpr bool value = true;
 };
 
+template <class T>
+struct IsVector {
+  // cppcheck-suppress unusedStructMember
+  static constexpr bool value = false;
+};
+
+template <>
+struct IsVector<std::vector<int64_t>> {
+  // cppcheck-suppress unusedStructMember
+  static constexpr bool value = true;
+};
+
 namespace mindspore::hccl {
 template <class T>
 static T ConvertAttr(const CNodePtr &cnode, const ge::OpDescPtr &ge_op, const std::string &anf_attr_name,
@@ -78,6 +92,8 @@ static T ConvertAttr(const CNodePtr &cnode, const ge::OpDescPtr &ge_op, const st
   auto attr = AnfAlgo::GetNodeAttr<T>(cnode, anf_attr_name);
   if constexpr (IsString<T>::value) {
     ret = ge::AttrUtils::SetStr(*ge_op, ge_attr_name, attr);
+  } else if constexpr (IsVector<T>::value) {
+    ret = ge::AttrUtils::SetListInt(*ge_op, ge_attr_name, attr);
   } else {
     ret = ge::AttrUtils::SetInt(*ge_op, ge_attr_name, attr);
   }
@@ -99,6 +115,10 @@ std::string GetGeNodeName(const CNodePtr &cnode) {
     return kGeOpNameHcclBroadcast;
   } else if (IsPrimitiveCNode(cnode, prim::kPrimReduceScatter)) {
     return kGeOpNameHcclReduceScatter;
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimSend)) {
+    return kGeOpNameHcclSend;
+  } else if (IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
+    return kGeOpNameHcclReceive;
   }
 
   MS_LOG(EXCEPTION) << "Unknown hccl node type " << cnode->DebugString();
@@ -133,6 +153,10 @@ std::tuple<ge::NodePtr, ge::ComputeGraphPtr> GenerateStubGeNode(const AnfNodePtr
   // set node attr
   (void)ConvertAttr<int64_t>(cnode, op_desc, kAttrRankSize, ge::HCOM_ATTR_RANK_SIZE);
   (void)ConvertAttr<std::string>(cnode, op_desc, kAttrGroup, ge::HCOM_ATTR_GROUP);
+  (void)ConvertAttr<int64_t>(cnode, op_desc, kAttrSrcRank, ge::HCOM_ATTR_SRC_RANK);
+  (void)ConvertAttr<int64_t>(cnode, op_desc, kAttrDestRank, ge::HCOM_ATTR_DEST_RANK);
+  (void)ConvertAttr<int64_t>(cnode, op_desc, kAttrSrTag, ge::HCOM_ATTR_SR_TAG);
+  (void)ConvertAttr<std::vector<int64_t>>(cnode, op_desc, kAttrShape, ge::HCOM_ATTR_SHAPE);
 
   ge::ComputeGraphPtr ge_graph = std::make_shared<ge::ComputeGraph>(kStubDataStructureName);
   MS_EXCEPTION_IF_NULL(ge_graph);

@@ -1132,7 +1132,7 @@ bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
   }
   auto kernel_name = AnfAlgo::GetCNodeName(node);
   if (kernel_name == kAllReduceOpName || kernel_name == kAllGatherOpName || kernel_name == kBroadcastOpName ||
-      kernel_name == kReduceScatterOpName) {
+      kernel_name == kReduceScatterOpName || kernel_name == kHcomSendOpName || kernel_name == kReceiveOpName) {
     return true;
   }
   return false;

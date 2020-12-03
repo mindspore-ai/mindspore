@@ -39,7 +39,7 @@ class RecvKernel : public RtKernel {
   uint32_t event_id_;
 };
 
-MS_REG_RTKERNEL(recv, RecvKernel);
+MS_REG_RTKERNEL(streamrecv, RecvKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

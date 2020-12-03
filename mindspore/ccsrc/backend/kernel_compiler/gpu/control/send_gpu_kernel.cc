@@ -18,6 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_REGULAR(Send, KernelAttr(), SendGpuKernel)
+MS_REG_GPU_KERNEL_REGULAR(StreamSend, KernelAttr(), SendGpuKernel)
 }  // namespace kernel
 }  // namespace mindspore

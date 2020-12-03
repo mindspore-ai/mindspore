@@ -102,8 +102,11 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
   uint64_t block_size;
   size_t input_size;
   uint32_t type_size = 4;
-
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_node); ++i) {
+  size_t size = AnfAlgo::GetInputTensorNum(anf_node);
+  if (AnfAlgo::GetCNodeName(anf_node) == kReceiveOpName) {
+    size = AnfAlgo::GetOutputTensorNum(anf_node);
+  }
+  for (size_t i = 0; i < size; ++i) {
     if (!GetHcomTypeSize(data_type_list[i], &type_size)) {
       return false;
     }
@@ -183,6 +186,20 @@ bool HcomUtil::GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id) {
     *root_id = (uint32_t)GetValue<int64_t>(primitive->GetAttr("root_rank"));
   } else {
     MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_ROOT_INDEX fail, not support!";
+    return false;
+  }
+  return true;
+}
+
+bool HcomUtil::GetHcomReceiveType(const AnfNodePtr &anf_node, int64_t *receive_type) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(receive_type);
+  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  if (primitive->GetAttr("dtype") != nullptr) {
+    *receive_type = (int64_t)(GetValue<NumberPtr>(primitive->GetAttr("dtype"))->type_id());
+  } else {
+    MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_SRTAG_INDEX fail, not support!";
     return false;
   }
   return true;

@@ -29,8 +29,6 @@
 #include "backend/optimizer/mem_reuse/mem_reuse_allocator.h"
 namespace mindspore {
 namespace memreuse {
-constexpr auto kSend = "Send";
-constexpr auto kRecv = "Recv";
 constexpr auto kSplitC = '/';
 class MemReuseChecker {
  public:
