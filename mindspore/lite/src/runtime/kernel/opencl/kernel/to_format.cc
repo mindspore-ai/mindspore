@@ -33,6 +33,10 @@ using mindspore::schema::PrimitiveType_ToFormat;
 namespace mindspore::kernel {
 
 int ToFormatOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   auto data_type = in_tensors_.front()->data_type();
   if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16 && data_type != kNumberTypeInt32) {
     MS_LOG(ERROR) << "Unsupported data type " << data_type;

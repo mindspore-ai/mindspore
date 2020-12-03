@@ -31,12 +31,20 @@ using mindspore::schema::PrimitiveType_Squeeze;
 namespace mindspore::kernel {
 
 int ReshapeOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 1 && out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "Reshape in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) {
     MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[0]->data_type();
     return RET_ERROR;
   }
-  if (out_tensors_[0]->shape().size() != 2 && out_tensors_[0]->shape().size() != 4) {
-    MS_LOG(ERROR) << "Reshape output size should in 2,4";
+  if (in_tensors_[0]->shape().size() == 0 || in_tensors_[0]->shape().size() > 4) {
+    MS_LOG(ERROR) << "Reshape input size should in 1-4, actual: " << in_tensors_[0]->shape();
+    return RET_ERROR;
+  }
+  if (out_tensors_[0]->shape().size() == 0 || out_tensors_[0]->shape().size() > 4) {
+    MS_LOG(ERROR) << "Reshape output size should in 1-4, actual: " << out_tensors_[0]->shape();
     return RET_ERROR;
   }
   return RET_OK;

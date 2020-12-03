@@ -56,6 +56,10 @@ std::string ActivationOpenCLKernel::GetActTypeString(int act_type) {
 }
 
 int ActivationOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   if (GetActTypeString(type_).empty()) {
     MS_LOG(ERROR) << "schema::ActivationType:" << type_ << "not found";
     return RET_ERROR;

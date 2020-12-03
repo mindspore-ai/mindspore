@@ -67,6 +67,10 @@ cl_float4 ReduceOpenCLKernel::GenC4Mask() {
 }
 
 int ReduceOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   if (in_tensors_[0]->shape()[0] > 1) {
     MS_LOG(ERROR) << "reduce op only support n = 1";
     return RET_PARAM_INVALID;

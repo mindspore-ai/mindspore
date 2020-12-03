@@ -43,6 +43,10 @@ std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
 }
 
 int SoftmaxOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   axis_ = parameter_->axis_;
   auto in_shape = in_tensors_[0]->shape();
   if (in_shape.size() > 4) {

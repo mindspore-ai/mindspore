@@ -90,6 +90,10 @@ void ArithmeticSelfOpenCLKernel::GetKernelName(std::string *kernel_name, Arithme
 }
 
 int ArithmeticSelfOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   if (in_tensors_[0]->shape().size() != 4 && in_tensors_[0]->shape().size() != 2) {
     MS_LOG(ERROR) << " only support dim = 4 or 2 but your dim = " << in_tensors_[0]->shape().size();
     return RET_ERROR;

@@ -67,6 +67,10 @@ void FillOpenCLKernel::SetConstArgs() {}
 void FillOpenCLKernel::SetGlobalLocal() {}
 
 int FillOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   auto param = this->op_parameter_;
 
   if (out_tensors_[0]->shape().size() > 4) {

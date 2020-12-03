@@ -58,6 +58,10 @@ std::set<schema::PrimitiveType> SupportedOpenCLArithmetics = {PrimitiveType_Mul,
                                                               PrimitiveType_Eltwise};
 
 int ArithmeticOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
   if (param->broadcasting_ && out_tensors_[0]->shape()[0] > 1) {
     MS_LOG(ERROR) << "Broadcasting don't support  N > 1";

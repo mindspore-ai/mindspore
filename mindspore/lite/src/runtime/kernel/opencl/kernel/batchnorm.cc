@@ -31,6 +31,10 @@ using mindspore::schema::PrimitiveType_BatchNorm;
 namespace mindspore::kernel {
 
 int BatchNormOpenCLKernel::CheckSpecs() {
+  if (in_tensors_.size() != 5 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
   if (in_tensors_.at(0)->shape()[0] > 1) {
     MS_LOG(ERROR) << "  Unsupported batch_size >1 ";
     return RET_ERROR;
