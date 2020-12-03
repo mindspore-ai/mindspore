@@ -106,23 +106,26 @@ void BuildGraphTask::Run() {
 
 void RunGraphTask::Run() {
   MS_EXCEPTION_IF_NULL(session_);
+  MS_LOG(INFO) << "Start run graph " << graph_id_;
+  auto graph = session_->GetGraph(graph_id_);
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Invalid graph id " << graph_id_;
+    return;
+  }
+  graph->ResetGraphRunningStatus();
   try {
-    MS_LOG(INFO) << "Start run graph " << graph_id_;
-    auto graph = session_->GetGraph(graph_id_);
-    MS_EXCEPTION_IF_NULL(graph);
-    graph->ResetGraphRunningStatus();
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
-    graph->OnRunGraphFinished();
     UpdateOutputTensors(&outputs_, tensor_to_node_);
-    MS_LOG(INFO) << "End run graph " << graph_id_;
   } catch (const std::exception &e) {
     MsException::GetInstance().SetException();
   }
+  graph->OnRunGraphFinished();
   for (auto &tensor : input_need_lock_tensors_) {
     tensor->SetNeedWait(false);
   }
   NotifyOutputTensors(&outputs_);
   ExecutorManager::Instance().OnRunGraphFinished();
+  MS_LOG(INFO) << "End run graph " << graph_id_;
 }
 
 void RunOpTask::Run() {
@@ -300,6 +303,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
       }
     }
   }
+  MsException::GetInstance().CheckException();
   for (auto &tensor : task->input_need_lock_tensors_) {
     tensor->SetNeedWait(true);
   }
@@ -320,6 +324,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
       mindspore::ScopedLongRunning long_running;
       std::unique_lock<std::mutex> lock(reenter_mutex_);
       reenter_cond_var_.wait(lock, [graph] { return graph->IsPostGraphFinished(); });
+      MsException::GetInstance().CheckException();
     }
   }
 
