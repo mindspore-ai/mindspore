@@ -20,9 +20,10 @@ from .. import operations as P
 from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.comm_ops import (AllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
-                                   _GetTensorSlice, _MirrorOperator, ReduceOp, Send, Receive,
+                                   _GetTensorSlice, _MirrorOperator, ReduceOp,
                                    ReduceScatter, _HostReduceScatter, _VirtualDiv, AllSwap)
 from .grad_base import bprop_getters
+from ..operations._inner_ops import Send, Receive
 
 
 @bprop_getters.register(AllReduce)

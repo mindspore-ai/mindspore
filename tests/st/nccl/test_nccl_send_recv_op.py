@@ -21,6 +21,7 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
 from mindspore.ops import operations as P
+from mindspore.ops.operations._inner_ops import Send, Receive
 from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
@@ -38,7 +39,7 @@ class SendNet(nn.Cell):
         super(SendNet, self).__init__()
         self.x = Parameter(initializer(Tensor(x), x.shape), name='x')
         self.depend = P.Depend()
-        self.send = P.Send(sr_tag=0, dest_rank=rank+size//2, group=NCCL_WORLD_COMM_GROUP)
+        self.send = Send(sr_tag=0, dest_rank=rank+size//2, group=NCCL_WORLD_COMM_GROUP)
 
     def construct(self):
         out = self.depend(self.x, self.send(self.x))
@@ -47,8 +48,8 @@ class SendNet(nn.Cell):
 class RecvNet(nn.Cell):
     def __init__(self):
         super(RecvNet, self).__init__()
-        self.recv = P.Receive(sr_tag=0, src_rank=rank-size//2, shape=[3, 3, 3, 3], dtype=mstype.float32,
-                              group=NCCL_WORLD_COMM_GROUP)
+        self.recv = Receive(sr_tag=0, src_rank=rank-size//2, shape=[3, 3, 3, 3], dtype=mstype.float32,
+                            group=NCCL_WORLD_COMM_GROUP)
 
     def construct(self):
         out = self.recv()

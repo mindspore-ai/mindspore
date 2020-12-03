@@ -26,6 +26,8 @@
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/group_manager.h"
 #include "frontend/parallel/context.h"
+#include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/node_check.h"
 #include "utils/comm_manager.h"
 #include "utils/ms_context.h"
 
@@ -37,6 +39,7 @@ static int recv_tag = 0;
 
 void PipelineTransformer::Coloring() {
   auto need_coloring = true;
+  std::set<int64_t> stage_set;
   while (need_coloring) {
     need_coloring = false;
     for (auto &fg : manager_->func_graphs()) {
@@ -52,6 +55,9 @@ void PipelineTransformer::Coloring() {
           auto user_node = user_pair.first->cast<CNodePtr>();
           user_node->set_stage(graph->stage());
           auto user_node_graph = user_node->func_graph();
+          if (graph->stage() != -1) {
+            stage_set.insert(graph->stage());
+          }
           if (graph->stage() == stage_ && user_node_graph->stage() == -1) {
             user_node_graph->set_stage(graph->stage());
             need_coloring = true;
@@ -60,12 +66,108 @@ void PipelineTransformer::Coloring() {
       }
     }
   }
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto stage_num = g_device_manager->stage_num();
+  if (SizeToInt(stage_set.size()) != stage_num) {
+    MS_LOG(EXCEPTION) << "Stage num is " << stage_num << " is not equal to stage used: " << stage_set.size();
+  }
+  return;
 }
 
 void PipelineTransformer::BroadCastColoring() {
   for (auto &fg : manager_->func_graphs()) {
     DoBroadCast(fg);
   }
+}
+
+bool PipelineTransformer::IsPipelineCareNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (prim == nullptr) {
+    return false;
+  }
+  if (IsInBlackList(prim)) {
+    MS_LOG(INFO) << "PipelineSplit don't care node:" << prim->name();
+    return false;
+  }
+  return true;
+}
+
+OperatorInfoPtr PipelineTransformer::CreateOpInfo(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!IsPipelineCareNode(cnode)) {
+    MS_LOG(EXCEPTION) << "Node: " << cnode->ToString() << " is not a Pipeline Care Node.";
+  }
+  auto shape_list = ExtractShape(cnode);
+  if (shape_list.empty()) {
+    MS_LOG(EXCEPTION) << "Node: " << cnode->ToString() << " failed to extract shape.";
+  }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_EXCEPTION_IF_NULL(prim);
+  if (prim->name() == RESHAPE) {
+    MS_LOG(EXCEPTION) << "Reshape op can't be a border.";
+  }
+  auto attrs = prim->attrs();
+  auto op_info = OperatorInstance(prim, attrs, shape_list);
+  auto &inputs = cnode->inputs();
+  std::vector<ValuePtr> input_value;
+  for (size_t index = 1; index < inputs.size(); ++index) {
+    if (inputs[index]->isa<ValueNode>()) {
+      input_value.push_back(GetValueNode(inputs[index]));
+    } else {
+      input_value.emplace_back(nullptr);
+    }
+  }
+  op_info->set_input_value(input_value);
+  op_info->set_outputs_dtype(cnode->Type());
+  op_info->set_cnode(cnode);
+  StrategyPtr strategy = nullptr;
+  if (!StrategyFound(attrs)) {
+    strategy = GenerateBatchParallelStrategy(op_info, prim);
+  } else {
+    strategy = ExtractStrategy(attrs);
+  }
+  MS_EXCEPTION_IF_NULL(strategy);
+  if (op_info->Init(strategy) == FAILED) {
+    MS_LOG(EXCEPTION) << "operator: " << prim->name() << " init failed.";
+  }
+  return op_info;
+}
+
+std::pair<OperatorInfoPtr, TensorInfoPtr> PipelineTransformer::GetOpInfo(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  OperatorInfoPtr op_info = nullptr;
+  TensorInfo tensor_info;
+  // op1(stage1)->op2(stage2)
+  if (IsValueNode<Primitive>(cnode->input(0))) {
+    op_info = CreateOpInfo(cnode);
+    MS_EXCEPTION_IF_NULL(op_info);
+    tensor_info = op_info->outputs_tensor_info()[0];
+  } else if (IsValueNode<FuncGraph>(cnode->input(0))) {
+    auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+    MS_EXCEPTION_IF_NULL(graph);
+    auto output = graph->output();
+    MS_EXCEPTION_IF_NULL(output);
+    auto output_cnode = output->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(output_cnode);
+    auto prim = GetValueNode<PrimitivePtr>(output_cnode->input(0));
+    MS_EXCEPTION_IF_NULL(prim);
+    if (prim->name() == TUPLE_GETITEM) {
+      auto index = GetTupleGetItemIndex(output_cnode);
+      auto pre_getitem_node = output_cnode->input(1)->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(pre_getitem_node);
+      op_info = CreateOpInfo(pre_getitem_node);
+      MS_EXCEPTION_IF_NULL(op_info);
+      tensor_info = op_info->outputs_tensor_info()[index];
+    } else {
+      op_info = CreateOpInfo(output_cnode);
+      MS_EXCEPTION_IF_NULL(op_info);
+      tensor_info = op_info->outputs_tensor_info()[0];
+    }
+  }
+  return std::make_pair(op_info, std::make_shared<TensorInfo>(tensor_info));
 }
 
 void PipelineTransformer::DoBroadCast(const FuncGraphPtr &func) {
@@ -168,26 +270,19 @@ void PipelineTransformer::ParameterColoring() {
   }
 }
 
-static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node) {
-  abstract::ShapePtr shape_ptr;
+static std::pair<ValueListPtr, TypePtr> GetShapeType(const AnfNodePtr &node, const Shape &shape) {
   TypePtr type;
-  std::vector<int64_t> shape;
   auto cnode = node->cast<CNodePtr>();
   if (cnode != nullptr && IsValueNode<FuncGraph>(cnode->input(0))) {
     auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
     auto graph_return = graph->get_return();
-    shape_ptr = dyn_cast<abstract::Shape>(graph_return->Shape());
     type = graph_return->Type();
   } else {
-    shape_ptr = dyn_cast<abstract::Shape>(node->Shape());
     type = node->Type();
   }
-  MS_EXCEPTION_IF_NULL(shape_ptr);
   MS_EXCEPTION_IF_NULL(type);
-  auto shape_int = shape_ptr->shape();
   std::vector<ValuePtr> element;
-  std::transform(shape_int.begin(), shape_int.end(), std::back_inserter(element),
-                 [](int elem) { return MakeValue(elem); });
+  std::transform(shape.begin(), shape.end(), std::back_inserter(element), [](int elem) { return MakeValue(elem); });
   auto shape_list = std::make_shared<ValueList>(element);
   auto tensor_type = type->cast<mindspore::TensorTypePtr>();
   MS_EXCEPTION_IF_NULL(tensor_type);
@@ -203,16 +298,20 @@ SendAttr PipelineTransformer::InsertSend(const FuncGraphPtr &graph, const AnfNod
   auto dest_rank = global_rank_ + (user_node_stage - node_stage) * per_stage_rank_num_;
   Attr attr_rank = std::make_pair("dest_rank", MakeValue(dest_rank));
   OperatorAttrs attrs = {attr_tag, attr_rank};
-  auto send_op = CreatOpInstance(attrs, "Send", "send");
+  auto send_op = CreatOpInstance(attrs, SEND, "send");
   auto send_node = NewValueNode(send_op);
   auto prim = GetValueNode<PrimitivePtr>(send_node);
-  auto shape_type_pair = GetShapeType(parameter);
+  auto op_info_pair = GetOpInfo(parameter);
+  auto tensor_info = op_info_pair.second;
+  MS_EXCEPTION_IF_NULL(tensor_info);
+  auto slice_shape = tensor_info->slice_shape();
+  auto shape_type_pair = GetShapeType(parameter, slice_shape);
   prim->set_attr("shape", shape_type_pair.first);
   prim->set_attr("dtype", shape_type_pair.second);
   std::vector<AnfNodePtr> send_input = {send_node, parameter};
   auto send = graph->NewCNode(send_input);
   OperatorAttrs depend_attrs;
-  auto depend_op = CreatOpInstance(depend_attrs, "Depend", "depend");
+  auto depend_op = CreatOpInstance(depend_attrs, DEPEND, "depend");
   std::vector<AnfNodePtr> depend_input = {NewValueNode(depend_op), parameter, send};
   auto depend = graph->NewCNode(depend_input);
   SendAttr send_out = {shape_type_pair.first, shape_type_pair.second, depend};
@@ -223,15 +322,23 @@ void PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const AnfNode
                                         int index, int user_node_stage, int node_stage) {
   Attr attr_tag = std::make_pair("sr_tag", MakeValue(recv_tag));
   recv_tag += 1;
-  auto src_rank = global_rank_ + (user_node_stage - node_stage) * per_stage_rank_num_;
+  auto src_rank = global_rank_ - (user_node_stage - node_stage) * per_stage_rank_num_;
   Attr attr_rank = std::make_pair("src_rank", MakeValue(src_rank));
-  auto shape_type_pair = GetShapeType(node);
+  auto op_info_pair = GetOpInfo(node);
+  auto tensor_info = op_info_pair.second;
+  MS_EXCEPTION_IF_NULL(tensor_info);
+  auto slice_shape = tensor_info->slice_shape();
+  auto shape_type_pair = GetShapeType(node, slice_shape);
   Attr attr_shape = std::make_pair("shape", shape_type_pair.first);
   Attr attr_dtype = std::make_pair("dtype", shape_type_pair.second);
   OperatorAttrs attrs = {attr_tag, attr_rank, attr_shape, attr_dtype};
-  auto recv_op = CreatOpInstance(attrs, "Receive", "recv");
+  auto recv_op = CreatOpInstance(attrs, RECEIVE, "recv");
   std::vector<AnfNodePtr> recv_input = {NewValueNode(recv_op), virtual_param_};
   auto recv = graph->NewCNode(recv_input);
+  auto node_abstract = node->abstract();
+  recv->set_abstract(node_abstract);
+  recv->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_info->tensor_layout()));
+  recv->set_user_data<OperatorInfo>(op_info_pair.first);
   manager_->SetEdge(use_node, index, recv);
 }
 
@@ -317,33 +424,7 @@ void PipelineTransformer::CutBorder(const FuncGraphPtr &graph) {
 
 void PipelineTransformer::CutGraph() {
   for (auto &fg : manager_->func_graphs()) {
-    if (fg == root_) {
-      ElimRootParameter();
-      continue;
-    }
     CutBorder(fg);
-  }
-}
-
-void PipelineTransformer::ElimRootParameter() {
-  auto output = root_->output()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(output);
-  auto prim = GetValueNode<PrimitivePtr>(output->input(0));
-  if (prim->name() == DEPEND) {
-    auto opt_cnode = output->input(2)->cast<CNodePtr>();
-    auto prim_make_tuple = GetValueNode<PrimitivePtr>(opt_cnode->input(0));
-    if (prim_make_tuple->name() == MAKE_TUPLE) {
-      std::vector<AnfNodePtr> new_node_input = {opt_cnode->input(0)};
-      for (auto &input : opt_cnode->inputs()) {
-        if (input->isa<CNode>()) {
-          if (IsStageNode(input->cast<CNodePtr>())) {
-            new_node_input.push_back(input);
-          }
-        }
-      }
-      auto new_node = root_->NewCNode(new_node_input);
-      manager_->Replace(opt_cnode, new_node);
-    }
   }
 }
 
@@ -414,11 +495,16 @@ std::pair<CNodePtr, FuncGraphPtr> PipelineTransformer::FindSensNode() {
 }
 
 void PipelineTransformer::CoverSensShape() {
+  if (IsLastStage()) {
+    return;
+  }
   auto sens_graph_pair = FindSensNode();
   auto sens_cnode = sens_graph_pair.first;
   MS_EXCEPTION_IF_NULL(sens_cnode);
   OperatorAttrs attrs;
   auto fill_op = CreatOpInstance(attrs, "Fill", "");
+  MS_EXCEPTION_IF_NULL(type_ptr_);
+  MS_EXCEPTION_IF_NULL(shape_);
   std::vector<AnfNodePtr> fill_input = {NewValueNode(fill_op), NewValueNode(type_ptr_),
                                         NewValueNode(MakeValue(shape_->value())), NewValueNode(0)};
   auto fill = root_->NewCNode(fill_input);

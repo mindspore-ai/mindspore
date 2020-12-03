@@ -75,7 +75,8 @@ const std::set<std::string> BLACK_LIST = {TUPLE_GETITEM,
                                           EMBED,
                                           CREATINSTANCE,
                                           REF_TO_EMBED,
-                                          STOP_GRADIENT};
+                                          STOP_GRADIENT,
+                                          SEND};
 
 const std::set<std::string> BATCH_PARALLEL_BLACK_LIST = {PACK, TENSOR_SCATTER_UPDATE, MIN_MAX_UPDATE_PER_LAYER};
 

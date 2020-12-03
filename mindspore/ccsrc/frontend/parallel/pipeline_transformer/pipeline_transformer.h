@@ -19,13 +19,18 @@
 
 #include <utility>
 #include <string>
+#include <memory>
 #include "ir/value.h"
 #include "ir/graph_utils.h"
 #include "base/base.h"
+#include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 
 namespace mindspore {
 namespace parallel {
+using TensorLayoutPtr = std::shared_ptr<TensorLayout>;
+using TensorInfoPtr = std::shared_ptr<TensorInfo>;
+
 typedef struct {
   ValueListPtr shape;
   TypePtr type;
@@ -59,8 +64,10 @@ class PipelineTransformer {
   void InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
                      int user_node_stage, int node_stage);
   void CutBorder(const FuncGraphPtr &graph);
-  void ElimRootParameter();
   bool IsStageNode(const CNodePtr &node);
+  std::pair<OperatorInfoPtr, TensorInfoPtr> GetOpInfo(const AnfNodePtr &node);
+  OperatorInfoPtr CreateOpInfo(const CNodePtr &cnode);
+  bool IsPipelineCareNode(const CNodePtr &cnode);
   std::pair<CNodePtr, FuncGraphPtr> FindSensNode();
   FuncGraphManagerPtr manager_;
   int64_t stage_;

@@ -1752,7 +1752,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
     SetVirtualDatasetStrategy(cnode);
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-    if (prim->name() == MAKE_TUPLE || prim->name() == MAKE_LIST) {
+    if (prim->name() == MAKE_TUPLE || prim->name() == MAKE_LIST || prim->name() == RECEIVE) {
       continue;
     }
     auto attrs = prim->attrs();
@@ -2420,6 +2420,13 @@ std::vector<std::pair<CNodePtr, LossNodeInfo>> GetSensLossPairs(const FuncGraphP
   return sens_loss_pairs;
 }
 
+bool IsLastStage() {
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto stage_num = g_device_manager->stage_num();
+  auto stage_id = g_device_manager->stage_id();
+  return ((stage_num - 1) == stage_id);
+}
+
 void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                            const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(root);
@@ -2432,7 +2439,9 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
   for (auto &pair : sens_loss_pairs) {
     // If the shape of grad-sens tensor is not [] or [1], use get tensor slice to handel it.
     // If the type of sens node is not Tensor, it is unsupported now, do nothing default.
-    StepSplitSens(pair);
+    if (IsLastStage()) {
+      StepSplitSens(pair);
+    }
   }
 
   for (auto &node : all_nodes) {
@@ -2448,13 +2457,15 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
       MS_EXCEPTION_IF_NULL(distribute_operator);
 
       // insert forward ops
-      InsertForwardOps(distribute_operator, cnode);
+      if (!IsSomePrimitive(cnode, RECEIVE)) {
+        InsertForwardOps(distribute_operator, cnode);
+      }
 
       // insert redistribution ops
       StepRedistribution(cnode, distribute_operator, cnode, tensor_redistribution, cnode);
 
       // insert backward ops
-      if (has_backward) {
+      if (has_backward && !IsSomePrimitive(cnode, RECEIVE)) {
         BackwardCommunication(distribute_operator, cnode, sens_loss_pairs);
       }
 
@@ -2468,7 +2479,7 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
-      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>()) {
+      if (!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE)) {
         continue;
       }
 
@@ -2895,7 +2906,7 @@ ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, bool (*IsCareN
   for (auto &candidate : candidate_set) {
     auto candidate_node = candidate.first;
     auto c = candidate_node->cast<CNodePtr>();
-    if (c == nullptr || !c->has_user_data<OperatorInfo>()) {
+    if (c == nullptr || !c->has_user_data<OperatorInfo>() || IsSomePrimitive(c, RECEIVE)) {
       continue;
     }
     (void)parameter_user_info.second.second.insert(candidate);

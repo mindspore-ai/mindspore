@@ -21,6 +21,7 @@ from ... import context
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from ..operations.math_ops import _infer_shape_reduce
+from ...communication.management import get_rank, GlobalComm, _get_group
 
 
 class ExtractImagePatches(PrimitiveWithInfer):
@@ -369,6 +370,116 @@ class MatrixDiagPart(PrimitiveWithInfer):
         else:
             out_shape = assist_shape[:-2] + assist_shape[-1:]
         return out_shape
+
+
+class Send(PrimitiveWithInfer):
+    """
+    Send tensors from src_rank to the specified dest_rank.
+
+    Note:
+        Send and Recveive must be used in combination and have same sr_tag.
+        Send must be used between servers.
+
+    Args:
+        sr_tag (int): A required integer identifying the send/recv message tag. The message will
+                      will be received by the Receive op with the same "sr_tag".
+        dest_rank (int): A required integer identifying the destination rank.
+        group (str): The communication group to work on. Default: "hccl_world_group/nccl_world_group".
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Examples:
+        >>> import mindspore.ops.operations as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>>
+        >>> init()
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.depend = ops.Depend()
+        >>>         self.send = ops.Send(st_tag=0, dest_rank=8, group="hccl_world_group")
+        >>>
+        >>>     def construct(self, x):
+        >>>         out = self.depend(x, self.send(x))
+        >>>         return out
+        >>>
+        >>> input_ = Tensor(np.ones([2, 8]).astype(np.float32))
+        >>> net = Net()
+        >>> output = net(input_)
+    """
+    @prim_attr_register
+    def __init__(self, sr_tag, dest_rank, group=GlobalComm.WORLD_COMM_GROUP):
+        self.rank = get_rank(_get_group(group))
+        self.sr_tag = sr_tag
+        self.group = group
+
+    def infer_shape(self, x_shape):
+        self.add_prim_attr("shape", x_shape)
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        self.add_prim_attr("dtype", x_dtype)
+        return x_dtype
+
+
+class Receive(PrimitiveWithInfer):
+    """
+    receive tensors from src_rank.
+
+    Note:
+        Send and Recveive must be used in combination and have same sr_tag.
+        Receive must be used between servers.
+
+    Args:
+        sr_tag (int): A required integer identifying the send/recv message tag. The message will
+                      will be send by the Send op with the same "sr_tag".
+        src_rank (int): A required integer identifying the source rank.
+        shape (list[int]): A required list identifying the shape of the tensor to be received.
+        dtype (Type): A required Type indentifying the type of the tensor to be received. The supported types:
+                       int8, int16, int32, float16, float32.
+        group (str): The communication group to work on. Default: "hccl_world_group/nccl_world_group".
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Examples:
+        >>> import mindspore.ops.operations as ops
+        >>> import mindspore.nn as nn
+        >>> from mindspore.communication import init
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>>
+        >>> init()
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.recv = ops.Receive(st_tag=0, src_rank=0, shape=[2, 8], dtype=np.float32,
+        >>>                               group="hccl_world_group")
+        >>>
+        >>>     def construct(self):
+        >>>         out = self.recv()
+        >>>         return out
+        >>>
+        >>> net = Net()
+        >>> output = net()
+    """
+    @prim_attr_register
+    def __init__(self, sr_tag, src_rank, shape, dtype, group=GlobalComm.WORLD_COMM_GROUP):
+        self.rank = get_rank(_get_group(group))
+        self.tag = sr_tag
+        self.shape = shape
+        self.dtype = dtype
+        self.group = group
+
+    def infer_shape(self, x_shape=None):
+        return self.shape
+
+    def infer_dtype(self, x_dtype=None):
+        return self.dtype
 
 
 class MatrixSetDiag(PrimitiveWithInfer):
