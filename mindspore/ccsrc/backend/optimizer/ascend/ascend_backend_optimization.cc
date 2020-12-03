@@ -64,6 +64,7 @@
 #include "backend/optimizer/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
+#include "backend/optimizer/ascend/format_type/add_attr_for_3d_graph.h"
 #include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_basiclstm_op.h"
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_dyanmic_gru_v2.h"
@@ -228,6 +229,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   auto data_layout_pm = std::make_shared<PassManager>("transop_pm");
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<DynamicRNNGradReformat>());
+  data_layout_pm->AddPass(std::make_shared<AddIoFormatAttrFor3DGraph>());
   data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
