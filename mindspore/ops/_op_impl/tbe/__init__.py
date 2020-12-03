@@ -25,6 +25,7 @@ from .acosh_grad import _acosh_grad_tbe
 from .adam_apply_one_with_decay import _adam_apply_one_with_decay_tbe
 from .apply_centered_rms_prop import _apply_centered_rms_prop_tbe
 from .add_n import _add_n_tbe
+from .add_n_ds import _add_n_ds_tbe
 from .accumulate_n_v2 import _accumulate_n_v2_tbe
 from .apply_ftrl import _apply_ftrl_tbe
 from .apply_momentum import _apply_momentum_tbe
@@ -204,6 +205,7 @@ from .fused_mul_add import _fused_mul_add_tbe
 from .fused_mul_add_n import _fused_mul_add_n_tbe
 from .fused_mul_apply_momentum import _fused_mul_apply_momentum_tbe
 from .fill import _fill_op_tbe
+from .fill_ds import _fill_ds_op_tbe
 from .erf import _erf_op_tbe
 from .erfc import _erfc_op_tbe
 from .depthwise_conv2d import _depthwise_conv2d_tbe

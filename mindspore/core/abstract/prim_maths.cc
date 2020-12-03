@@ -229,5 +229,14 @@ AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr 
     std::make_shared<AbstractTensor>(start->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
   return ret;
 }
+AbstractBasePtr InferImplAddN(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  if (args_spec_list.size() < 1) {
+    MS_LOG(EXCEPTION) << "AddN operation must have at least one input.";
+  }
+  auto input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  return input->Broaden();
+}
 }  // namespace abstract
 }  // namespace mindspore
