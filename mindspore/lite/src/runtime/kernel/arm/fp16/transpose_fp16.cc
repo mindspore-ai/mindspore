@@ -153,8 +153,8 @@ int TransposeFp16CPUKernel::Run() {
     fp16_out_data_ = reinterpret_cast<float16_t *>(out_tensor->MutableData());
   }
 
-  in_shape_ = const_cast<int *>(in_tensor->shape().data());
-  out_shape_ = const_cast<int *>(out_tensor->shape().data());
+  memcpy(in_shape_, in_tensor->shape().data(), in_tensor->shape().size() * sizeof(int));
+  memcpy(out_shape_, out_tensor->shape().data(), out_tensor->shape().size() * sizeof(int));
 
   ret = ParallelLaunch(this->context_->thread_pool_, TransposeFp16Run, this, thread_h_num_);
   if (ret != RET_OK) {

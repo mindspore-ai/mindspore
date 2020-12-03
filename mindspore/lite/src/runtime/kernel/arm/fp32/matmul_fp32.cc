@@ -263,7 +263,6 @@ int MatmulCPUKernel::RunImpl(int task_id) {
   MS_ASSERT(cur_a_ptr_);
   MS_ASSERT(b);
   MS_ASSERT(c);
-  MS_ASSERT(bias);
   if (is_vector_a_) {
     MatVecMul(cur_a_ptr_, b, c, bias, ActType_No, params_->deep_, cur_oc);
   } else {

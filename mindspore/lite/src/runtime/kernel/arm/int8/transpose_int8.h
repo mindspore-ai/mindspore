@@ -48,8 +48,6 @@ class TransposeInt8CPUKernel : public LiteKernel {
   TransposeParameter *transpose_param_;
   int8_t *in_ptr_ = nullptr;
   int8_t *out_ptr_ = nullptr;
-  int *in_shape_ = nullptr;
-  int *out_shape_ = nullptr;
   int *dim_size_ = nullptr;
   int *position_ = nullptr;
   bool extra_dims_ = false;
@@ -57,6 +55,8 @@ class TransposeInt8CPUKernel : public LiteKernel {
   int thread_h_stride_ = 0;
   int thread_h_num_ = 0;
   int num_unit_ = 0;
+  int in_shape_[8];
+  int out_shape_[8];
 };
 }  // namespace mindspore::kernel
 
