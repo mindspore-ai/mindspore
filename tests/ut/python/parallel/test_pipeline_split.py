@@ -56,9 +56,11 @@ class DatasetLenet():
 
 
 class MatMulCell(nn.Cell):
-    def __init__(self, strategy1, strategy2):
+    def __init__(self, strategy1, strategy2, param=None):
         super().__init__()
         self.param = Parameter(initializer("zeros", [64, 64]), name="param")
+        if param is not None:
+            self.param = param
         self.param1 = Parameter(initializer("zeros", [64, 64]), name="param1")
         self.matmul = P.MatMul().shard(strategy1)
         self.matmul1 = P.MatMul().shard(strategy2)
@@ -70,11 +72,11 @@ class MatMulCell(nn.Cell):
 
 
 class Net(nn.Cell):
-    def __init__(self, strategy1, strategy2):
+    def __init__(self, strategy1, strategy2, param=None):
         super().__init__()
         self.block = nn.CellList()
         for i in range(2):
-            cell = MatMulCell(strategy1, strategy2)
+            cell = MatMulCell(strategy1, strategy2, param)
             cell.stage = i
             self.block.append(cell)
 
@@ -94,7 +96,33 @@ class PipelineSplit(nn.Cell):
         return x
 
 
-def test_pipeline_split():
+class PipelineSplit2(nn.Cell):
+    def __init__(self, strategy1, strategy2):
+        super().__init__()
+        self.param = Parameter(initializer("zeros", [64, 64]), name="param")
+        self.cell = Net(strategy1, strategy2, self.param)
+
+    def construct(self, x, label):
+        x = self.cell(x)
+        return x
+
+
+def test_pipeline_split_stage0():
+    context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    strategy1 = ((4, 1), (1, 1))
+    strategy2 = ((2, 1), (1, 1))
+    net = PipelineSplit(strategy1, strategy2)
+    params = net.cell.block[0].trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optimizer)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_split_stage1():
     context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     data = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -102,6 +130,36 @@ def test_pipeline_split():
     strategy1 = ((4, 1), (1, 1))
     strategy2 = ((2, 1), (1, 1))
     net = PipelineSplit(strategy1, strategy2)
+    params = net.cell.block[1].trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optimizer)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_split_shared_parameter_stage0():
+    context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    strategy1 = ((4, 1), (1, 1))
+    strategy2 = ((2, 1), (1, 1))
+    net = PipelineSplit2(strategy1, strategy2)
+    params = net.cell.block[0].trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optimizer = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optimizer)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_split_shared_parameter_stage1():
+    context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    strategy1 = ((4, 1), (1, 1))
+    strategy2 = ((2, 1), (1, 1))
+    net = PipelineSplit2(strategy1, strategy2)
     params = net.cell.block[1].trainable_params()
     dataset = DatasetLenet(data, label, 3)
     optimizer = nn.Lamb(params, learning_rate=0.01)
