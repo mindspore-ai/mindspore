@@ -100,7 +100,9 @@ class ImageClassificationRunner:
     _DATASET_SEED = 58
     # printing spacer
     _SPACER = "{:120}\r"
-    # file permission for writing files
+    # datafile directory's permission
+    _DIR_MODE = 0o750
+    # datafile's permission
     _FILE_MODE = 0o600
 
     def __init__(self,
@@ -654,31 +656,50 @@ class ImageClassificationRunner:
     def _save_original_image(self, sample_id, image):
         """Save an image to summary directory."""
         id_dirname = self._get_sample_dirname(sample_id)
-        relative_dir = os.path.join(self._DATAFILE_DIRNAME_PREFIX + str(self._summary_timestamp),
-                                    self._ORIGINAL_IMAGE_DIRNAME,
-                                    id_dirname)
-        abs_dir_path = os.path.abspath(os.path.join(self._summary_dir, relative_dir))
-        os.makedirs(abs_dir_path, mode=self._FILE_MODE, exist_ok=True)
+        path_tokens = [self._summary_dir,
+                       self._DATAFILE_DIRNAME_PREFIX + str(self._summary_timestamp),
+                       self._ORIGINAL_IMAGE_DIRNAME,
+                       id_dirname]
+
+        abs_dir_path = self._create_subdir(*path_tokens)
         filename = f"{sample_id}.jpg"
         save_path = os.path.join(abs_dir_path, filename)
         image.save(save_path)
         os.chmod(save_path, self._FILE_MODE)
-        return os.path.join(relative_dir, filename)
+        return os.path.join(*path_tokens[1:], filename)
 
     def _save_heatmap(self, explain_method, class_id, sample_id, image):
         """Save heatmap image to summary directory."""
         id_dirname = self._get_sample_dirname(sample_id)
-        relative_dir = os.path.join(self._DATAFILE_DIRNAME_PREFIX + str(self._summary_timestamp),
-                                    self._HEATMAP_DIRNAME,
-                                    explain_method,
-                                    id_dirname)
-        abs_dir_path = os.path.abspath(os.path.join(self._summary_dir, relative_dir))
-        os.makedirs(abs_dir_path, mode=self._FILE_MODE, exist_ok=True)
+        path_tokens = [self._summary_dir,
+                       self._DATAFILE_DIRNAME_PREFIX + str(self._summary_timestamp),
+                       self._HEATMAP_DIRNAME,
+                       explain_method,
+                       id_dirname]
+
+        abs_dir_path = self._create_subdir(*path_tokens)
         filename = f"{sample_id}_{class_id}.jpg"
         save_path = os.path.join(abs_dir_path, filename)
-        image.save(save_path)
+        image.save(save_path, optimize=True)
         os.chmod(save_path, self._FILE_MODE)
-        return os.path.join(relative_dir, filename)
+        return os.path.join(*path_tokens[1:], filename)
+
+    def _create_subdir(self, *args):
+        """Recursively create subdirectories."""
+        abs_path = None
+        for token in args:
+            if abs_path is None:
+                abs_path = os.path.realpath(token)
+            else:
+                abs_path = os.path.join(abs_path, token)
+            # os.makedirs() don't set intermediate dir permission properly, we mkdir() one by one
+            try:
+                os.mkdir(abs_path, mode=self._DIR_MODE)
+                # In some platform, mode may be ignored in os.mkdir(), we have to chmod() again to make sure
+                os.chmod(abs_path, mode=self._DIR_MODE)
+            except FileExistsError:
+                pass
+        return abs_path
 
     @classmethod
     def _get_sample_dirname(cls, sample_id):
