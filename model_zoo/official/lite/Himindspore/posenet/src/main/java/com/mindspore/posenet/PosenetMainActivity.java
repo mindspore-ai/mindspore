@@ -52,7 +52,14 @@ import static com.mindspore.posenet.Posenet.BodyPart.RIGHT_WRIST;
 @Route(path = "/posenet/PosenetMainActivity")
 public class PosenetMainActivity extends AppCompatActivity implements CameraDataDealListener {
 
-    private final List bodyJoints;
+    private final List bodyJoints = Arrays.asList(
+            new Pair(LEFT_WRIST, LEFT_ELBOW), new Pair(LEFT_ELBOW, LEFT_SHOULDER),
+            new Pair(LEFT_SHOULDER, RIGHT_SHOULDER), new Pair(RIGHT_SHOULDER, RIGHT_ELBOW),
+            new Pair(RIGHT_ELBOW, RIGHT_WRIST), new Pair(LEFT_SHOULDER, LEFT_HIP),
+            new Pair(LEFT_HIP, RIGHT_HIP), new Pair(RIGHT_HIP, RIGHT_SHOULDER),
+            new Pair(LEFT_HIP, LEFT_KNEE), new Pair(LEFT_KNEE, LEFT_ANKLE),
+            new Pair(RIGHT_HIP, RIGHT_KNEE), new Pair(RIGHT_KNEE, RIGHT_ANKLE));
+    ;
 
 
     /**
@@ -73,16 +80,6 @@ public class PosenetMainActivity extends AppCompatActivity implements CameraData
 
     private int lensFacing = CameraCharacteristics.LENS_FACING_BACK;
     private PoseNetFragment poseNetFragment;
-
-    public PosenetMainActivity() {
-        bodyJoints = Arrays.asList(
-                new Pair(LEFT_WRIST, LEFT_ELBOW), new Pair(LEFT_ELBOW, LEFT_SHOULDER),
-                new Pair(LEFT_SHOULDER, RIGHT_SHOULDER), new Pair(RIGHT_SHOULDER, RIGHT_ELBOW),
-                new Pair(RIGHT_ELBOW, RIGHT_WRIST), new Pair(LEFT_SHOULDER, LEFT_HIP),
-                new Pair(LEFT_HIP, RIGHT_HIP), new Pair(RIGHT_HIP, RIGHT_SHOULDER),
-                new Pair(LEFT_HIP, LEFT_KNEE), new Pair(LEFT_KNEE, LEFT_ANKLE),
-                new Pair(RIGHT_HIP, RIGHT_KNEE), new Pair(RIGHT_KNEE, RIGHT_ANKLE));
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -211,8 +208,8 @@ public class PosenetMainActivity extends AppCompatActivity implements CameraData
                 new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight()),
                 new Rect(left, top, right, bottom), paint);
 
-        float widthRatio = screenWidth / MODEL_WIDTH;
-        float heightRatio = screenHeight / MODEL_HEIGHT;
+        float widthRatio = (float) screenWidth / MODEL_WIDTH;
+        float heightRatio = (float) screenHeight / MODEL_HEIGHT;
 
         for (Posenet.KeyPoint keyPoint : person.keyPoints) {
             if (keyPoint.score > minConfidence) {

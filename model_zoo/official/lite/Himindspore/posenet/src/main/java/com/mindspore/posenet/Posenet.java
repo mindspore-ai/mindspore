@@ -60,8 +60,8 @@ public class Posenet {
     }
 
     public class Position {
-        int x;
-        int y;
+        float x;
+        float y;
     }
 
     public class KeyPoint {
@@ -150,7 +150,6 @@ public class Posenet {
         final float std = 128.0f;
         int[] intValues = new int[bitmap.getWidth() * bitmap.getHeight()];
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-
 
         int pixel = 0;
         for (int y = 0; y < bitmap.getHeight(); y++) {
@@ -281,16 +280,16 @@ public class Posenet {
         }
 
         // Calculating the x and y coordinates of the keypoints with offset adjustment.
-        int[] xCoords = new int[numKeypoints];
-        int[] yCoords = new int[numKeypoints];
+        float[] xCoords = new float[numKeypoints];
+        float[] yCoords = new float[numKeypoints];
         float[] confidenceScores = new float[numKeypoints];
         for (int i = 0; i < keypointPositions.length; i++) {
             Pair position = keypointPositions[i];
             int positionY = (int) position.first;
             int positionX = (int) position.second;
 
-            yCoords[i] = (int) ((float) positionY / (float) (height - 1) * bitmap.getHeight() + offsets[0][positionY][positionX][i]);
-            xCoords[i] = (int) ((float) positionX / (float) (width - 1) * bitmap.getWidth() + offsets[0][positionY][positionX][i + numKeypoints]);
+            yCoords[i] =  ((float) positionY / (float) (height - 1) * bitmap.getHeight() + offsets[0][positionY][positionX][i]);
+            xCoords[i] =  ((float) positionX / (float) (width - 1) * bitmap.getWidth() + offsets[0][positionY][positionX][i + numKeypoints]);
             confidenceScores[i] = sigmoid(heatmaps[0][positionY][positionX][i]);
         }
 

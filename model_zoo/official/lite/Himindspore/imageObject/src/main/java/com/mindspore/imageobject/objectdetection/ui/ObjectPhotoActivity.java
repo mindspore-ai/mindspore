@@ -87,10 +87,8 @@ public class ObjectPhotoActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (RC_CHOOSE_PHOTO == requestCode && null != data && null != data.getData()) {
-            if (data != null) {
                 this.imageUri = data.getData();
                 showOriginImage();
-            }
         } else {
             finish();
         }
@@ -204,7 +202,7 @@ public class ObjectPhotoActivity extends AppCompatActivity {
         Integer maxHeight = this.getMaxHeightOfImage();
         targetWidth = this.isLandScape ? maxHeight : maxWidth;
         targetHeight = this.isLandScape ? maxWidth : maxHeight;
-        Log.i(ObjectPhotoActivity.TAG, "height:" + targetHeight + ",width:" + targetWidth);
+        Log.i(TAG, "height:" + targetHeight + ",width:" + targetWidth);
         return new Pair<>(targetWidth, targetHeight);
     }
 }

@@ -204,8 +204,8 @@ public class MainActivity extends AppCompatActivity implements CameraDataDealLis
                 new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight()),
                 new Rect(left, top, right, bottom), paint);
 
-        float widthRatio = screenWidth / MODEL_WIDTH;
-        float heightRatio = screenHeight / MODEL_HEIGHT;
+        float widthRatio = (float) screenWidth / MODEL_WIDTH;
+        float heightRatio = (float) screenHeight / MODEL_HEIGHT;
 
         for (Posenet.KeyPoint keyPoint : person.keyPoints) {
             if (keyPoint.score > minConfidence) {
