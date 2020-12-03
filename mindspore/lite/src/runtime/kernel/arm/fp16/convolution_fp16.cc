@@ -296,7 +296,7 @@ lite::Tensor *CreateOutputTensor(std::vector<int> out_shape, const std::vector<l
     MS_LOG(ERROR) << "new tmp_out_tensor failed.";
     return nullptr;
   }
-  out_tensor->set_data_type(outputs.at(index)->data_type());
+  out_tensor->set_data_type(mindspore::kNumberTypeFloat16);
   out_tensor->set_format(outputs.at(index)->format());
   if (infered_flag) {
     out_tensor->set_shape(out_shape);
@@ -356,7 +356,7 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
       return nullptr;
     }
     // create new input for each group
-    auto in_tensor = CreateInputTensor(inputs.front()->data_type(), in_shape, infered_flag);
+    auto in_tensor = CreateInputTensor(mindspore::kNumberTypeFloat16, in_shape, infered_flag);
     if (in_tensor == nullptr) {
       delete new_conv_parameter;
       FreeMemoryFp16(group_convs, new_inputs, new_outputs);
