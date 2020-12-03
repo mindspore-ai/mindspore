@@ -35,7 +35,7 @@ class MultiLayerDense(nn.Cell):
     def __init__(self):
         super(MultiLayerDense, self).__init__()
         self.dense1 = nn.Dense(in_channels=256, out_channels=512)
-        self.dense1 = nn.Dense(in_channels=512, out_channels=1024)
+        self.dense2 = nn.Dense(in_channels=512, out_channels=1024)
 
     @ms_function
     def construct(self, x):

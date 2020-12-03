@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class MultiLayerDense(nn.Cell):
     def __init__(self):
         super(MultiLayerDense, self).__init__()
         self.dense1 = nn.Dense(in_channels=256, out_channels=512)
-        self.dense1 = nn.Dense(in_channels=512, out_channels=1024)
+        self.dense2 = nn.Dense(in_channels=512, out_channels=1024)
 
     def construct(self, x):
         x = self.dense1(x)
