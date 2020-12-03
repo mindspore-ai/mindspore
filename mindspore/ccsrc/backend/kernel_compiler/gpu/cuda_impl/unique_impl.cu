@@ -72,3 +72,5 @@ template int CalUnique<half, int>(const half *input, int num_elements, int *inpu
                                    half *output, int *index, cudaStream_t cuda_stream);
 template int CalUnique<int, int>(const int *input, int num_elements, int *input_index, int *sorted_index,
                                   int *output, int *index, cudaStream_t cuda_stream);
+template int CalUnique<int64_t, int64_t>(const int64_t *input, int num_elements, int64_t *input_index,
+  int64_t *sorted_index, int64_t *output, int64_t *index, cudaStream_t cuda_stream);
