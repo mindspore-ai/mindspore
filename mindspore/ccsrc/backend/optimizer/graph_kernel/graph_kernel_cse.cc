@@ -16,6 +16,7 @@
 
 #include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -26,13 +27,15 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool IsCNodePrimitveEqual(const CNodePtr &main, const CNodePtr &node) {
+bool IsCNodePrimitveEqual(const CNodePtr &main, const CNodePtr &node, const std::vector<PrimitivePtr> &black_list) {
   auto main_primitive = AnfAlgo::GetCNodePrimitive(main);
   auto node_primitive = AnfAlgo::GetCNodePrimitive(node);
   if (main_primitive != nullptr && node_primitive != nullptr) {
     // Some ops such as Reshape is not real op, cse these type will not get gain. And for ops fusion, keep these op
     // alone can prevent some redundant output case (input -> reshape -> output).
-    if (main_primitive->name() != node_primitive->name() || IsPrimitiveCNode(node, prim::kPrimReshape)) {
+    if (main_primitive->name() != node_primitive->name() ||
+        std::any_of(black_list.begin(), black_list.end(),
+                    [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); })) {
       return false;
     }
 
@@ -125,12 +128,12 @@ bool GraphKernelBackendCSE::CheckEqualCnodeInputs(const AnfNodePtr &main, const 
       return false;
     }
   }
-  return IsCNodePrimitveEqual(c_main, c_node);
+  return IsCNodePrimitveEqual(c_main, c_node, black_list_);
 }
 
 bool GraphKernelCSE::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto graphkernel_backend_cse = std::make_shared<GraphKernelBackendCSE>();
+  auto graphkernel_backend_cse = std::make_shared<GraphKernelBackendCSE>(black_list_);
   return graphkernel_backend_cse->Cse(func_graph, func_graph->manager());
 }
 }  // namespace opt

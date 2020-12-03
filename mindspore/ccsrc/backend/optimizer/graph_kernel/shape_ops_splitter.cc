@@ -34,7 +34,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 bool IsMultiUserShapeOps(AnfNodePtr node, const FuncGraphManagerPtr &mng) {
-  std::vector<PrimitivePtr> shape_ops = {prim::kPrimReshape};
+  std::vector<PrimitivePtr> shape_ops = {prim::kPrimReshape, prim::kPrimCast};
   auto &users = mng->node_users();
   return std::any_of(shape_ops.begin(), shape_ops.end(),
                      [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); }) &&
