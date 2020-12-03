@@ -29,16 +29,16 @@ class Gamma(Distribution):
     Gamma distribution.
 
     Args:
-        concentration (int, float, list, numpy.ndarray, Tensor, Parameter): The concentration,
+        concentration (list, numpy.ndarray, Tensor, Parameter): The concentration,
           also know as alpha of the Gamma distribution.
-        rate (int, float, list, numpy.ndarray, Tensor, Parameter): The rate, also know as
+        rate (list, numpy.ndarray, Tensor, Parameter): The rate, also know as
           beta of the Gamma distribution.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Gamma'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Note:
         `concentration` and `rate` must be greater than zero.
@@ -147,6 +147,13 @@ class Gamma(Distribution):
         param['param_dict'] = {'concentration': concentration, 'rate': rate}
         valid_dtype = mstype.float_type
         Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+
+        # As some operators can't accept scalar input, check the type here
+        if isinstance(concentration, (int, float)):
+            raise TypeError("Parameter concentration can't be scalar")
+        if isinstance(rate, (int, float)):
+            raise TypeError("Parameter rate can't be scalar")
+
         super(Gamma, self).__init__(seed, dtype, name, param)
 
         self._concentration = self._add_parameter(concentration, 'concentration')
@@ -248,7 +255,7 @@ class Gamma(Distribution):
         return concentration - self.log(rate) + self.lgamma(concentration) \
                + (1. - concentration) * self.digamma(concentration)
 
-    def _cross_entropy(self, dist, concentration_b, rate_b, concentration=None, rate=None):
+    def _cross_entropy(self, dist, concentration_b, rate_b, concentration_a=None, rate_a=None):
         r"""
         Evaluate cross entropy between Gamma distributions.
 
@@ -260,7 +267,8 @@ class Gamma(Distribution):
             rate_a (Tensor): rate of distribution a. Default: self._rate.
         """
         check_distribution_name(dist, 'Gamma')
-        return self._entropy(concentration, rate) + self._kl_loss(dist, concentration_b, rate_b, concentration, rate)
+        return self._entropy(concentration_a, rate_a) +\
+               self._kl_loss(dist, concentration_b, rate_b, concentration_a, rate_a)
 
     def _log_prob(self, value, concentration=None, rate=None):
         r"""
@@ -299,7 +307,7 @@ class Gamma(Distribution):
         concentration, rate = self._check_param_type(concentration, rate)
         return self.igamma(concentration, rate * value)
 
-    def _kl_loss(self, dist, concentration_b, rate_b, concentration=None, rate=None):
+    def _kl_loss(self, dist, concentration_b, rate_b, concentration_a=None, rate_a=None):
         r"""
         Evaluate Gamma-Gamma KL divergence, i.e. KL(a||b).
 
@@ -320,7 +328,7 @@ class Gamma(Distribution):
         rate_b = self._check_value(rate_b, 'rate_b')
         concentration_b = self.cast(concentration_b, self.parameter_type)
         rate_b = self.cast(rate_b, self.parameter_type)
-        concentration_a, rate_a = self._check_param_type(concentration, rate)
+        concentration_a, rate_a = self._check_param_type(concentration_a, rate_a)
         return (concentration_a - concentration_b) * self.digamma(concentration_a) \
                + self.lgamma(concentration_b)  - self.lgamma(concentration_a) \
                + concentration_b * self.log(rate_a) - concentration_b * self.log(rate_b) \

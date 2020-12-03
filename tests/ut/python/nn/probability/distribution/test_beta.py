@@ -32,27 +32,33 @@ def test_gamma_shape_errpr():
 
 def test_type():
     with pytest.raises(TypeError):
-        msd.Gamma(0., 1., dtype=dtype.int32)
+        msd.Gamma([0.], [1.], dtype=dtype.int32)
 
 def test_name():
     with pytest.raises(TypeError):
-        msd.Gamma(0., 1., name=1.0)
+        msd.Gamma([0.], [1.], name=1.0)
 
 def test_seed():
     with pytest.raises(TypeError):
-        msd.Gamma(0., 1., seed='seed')
+        msd.Gamma([0.], [1.], seed='seed')
 
 def test_concentration1():
     with pytest.raises(ValueError):
-        msd.Gamma(0., 1.)
+        msd.Gamma([0.], [1.])
     with pytest.raises(ValueError):
-        msd.Gamma(-1., 1.)
+        msd.Gamma([-1.], [1.])
 
 def test_concentration0():
     with pytest.raises(ValueError):
-        msd.Gamma(1., 0.)
+        msd.Gamma([1.], [0.])
     with pytest.raises(ValueError):
-        msd.Gamma(1., -1.)
+        msd.Gamma([1.], [-1.])
+
+def test_scalar():
+    with pytest.raises(TypeError):
+        msd.Gamma(3., [4.])
+    with pytest.raises(TypeError):
+        msd.Gamma([3.], -4.)
 
 def test_arguments():
     """
