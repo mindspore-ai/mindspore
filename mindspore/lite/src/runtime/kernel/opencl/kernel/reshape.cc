@@ -31,8 +31,8 @@ using mindspore::schema::PrimitiveType_Squeeze;
 namespace mindspore::kernel {
 
 int ReshapeOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 1 && out_tensors_.size() != 1) {
-    MS_LOG(ERROR) << "Reshape in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
+  if ((in_tensors_.size() != 1 && in_tensors_.size() != 2) || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "Reshape input output size unsupported.";
     return RET_ERROR;
   }
   if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16) {
