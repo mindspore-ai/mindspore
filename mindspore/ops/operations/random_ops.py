@@ -401,7 +401,7 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor[bool]) - The input tensor.
-            The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
+          The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
 
     Outputs:
         Two tensors, the first one is the index tensor and the other one is the mask tensor.
@@ -530,7 +530,7 @@ class Multinomial(PrimitiveWithInfer):
         seed2 (int): Random seed2, must be non-negative. Default: 0.
     Inputs:
         - **input** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2
-            dimensions.
+          dimensions.
         - **num_samples** (int32) - number of samples to draw.
 
     Outputs:
@@ -594,11 +594,11 @@ class UniformCandidateSampler(PrimitiveWithInfer):
 
     Outputs:
         - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
-            Shape: (num_sampled, ).
+          Shape: (num_sampled, ).
         - **true_expected_count** (Tensor) - The expected counts under the sampling distribution of each
-            of true_classes. Shape: (batch_size, num_true).
+          of true_classes. Shape: (batch_size, num_true).
         - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
-            each of sampled_candidates. Shape: (num_sampled, ).
+          each of sampled_candidates. Shape: (num_sampled, ).
 
     Supported Platforms:
         ``GPU``
