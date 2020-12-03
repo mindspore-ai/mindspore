@@ -81,11 +81,11 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/util MINDDATA_UTIL_SRC_FILES)
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/image/lite_cv  MINDDATA_KERNELS_IMAGE_LITE_CV_FILES)
 
 
-if (PLATFORM_ARM32 OR PLATFORM_ARM64)
-    if (BUILD_MINDDATA STREQUAL "full")
-        set(BUILD_MINDDATA "wrapper")
-    endif ()
+
+if (BUILD_MINDDATA STREQUAL "full")
+    set(BUILD_MINDDATA "wrapper")
 endif ()
+
 
 if (BUILD_MINDDATA STREQUAL "full")
     include_directories("${CMAKE_SOURCE_DIR}/../ccsrc/minddata/dataset/kernels/image")
@@ -334,6 +334,7 @@ elseif (BUILD_MINDDATA STREQUAL "wrapper")
             ${MINDDATA_DIR}/kernels/data/random_choice_op.cc
             ${MINDDATA_DIR}/kernels/data/type_cast_op.cc
             ${MINDDATA_DIR}/kernels/data/data_utils.cc
+            ${MINDDATA_DIR}/kernels/image/exif_utils.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/MDToDApi.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/album_op_android.cc
             )

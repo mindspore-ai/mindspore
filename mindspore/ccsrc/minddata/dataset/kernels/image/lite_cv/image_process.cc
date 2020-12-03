@@ -16,6 +16,7 @@
 
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 
+#include <limits.h>
 #include <string.h>
 #include <cmath>
 #include <vector>
@@ -61,6 +62,9 @@ static void ResizeBilinear3C(const unsigned char *src, int src_width, int src_he
   double scale_width = static_cast<double>(src_width) / dst_width;
   double scale_height = static_cast<double>(src_height) / dst_height;
 
+  if (dst_height >= (INT_MAX / 2 - dst_width)) {
+    return;
+  }
   int *data_buf = new int[2 * dst_width + 2 * dst_height];
 
   int *x_offset = data_buf;
@@ -140,6 +144,9 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
   double scale_width = static_cast<double>(src_width) / dst_width;
   double scale_height = static_cast<double>(src_height) / dst_height;
 
+  if (dst_height >= (INT_MAX / 2 - dst_width)) {
+    return;
+  }
   int *data_buf = new int[2 * dst_width + 2 * dst_height];
 
   int *x_offset = data_buf;
@@ -408,7 +415,9 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
   if (src.data_type_ != LDataType::UINT8) {
     return false;
   }
-
+  if (scale < 0.0 || scale > 100) {
+    return false;
+  }
   (void)dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
   const unsigned char *src_start_p = src;
   float *dst_start_p = dst;
@@ -442,7 +451,7 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
   if (x < 0 || y < 0 || w <= 0 || h <= 0) {
     return false;
   }
-  if (y + h > src.height_ || x + w > src.width_) {
+  if (y > src.height_ - h || x > src.width_ - w) {
     return false;
   }
 
