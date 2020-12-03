@@ -170,10 +170,10 @@ int64_t DistributedSamplerRT::CalculateNumSamples(int64_t num_rows) {
   return std::ceil(num_samples * 1.0 / num_devices_);
 }
 
-void DistributedSamplerRT::Print(std::ostream &out, bool show_all) const {
+void DistributedSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
   out << "\nSampler: DistributedSampler";
   if (show_all) {
-    SamplerRT::Print(out, show_all);
+    SamplerRT::SamplerPrint(out, show_all);
     out << "\nseed: " << seed_ << "\ndevice_id: " << device_id_ << "\nnum_devices: " << num_devices_
         << "\nshuffle: " << shuffle_;
   }

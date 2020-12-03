@@ -99,6 +99,7 @@ class CacheLookupOp : public CacheBase, public SamplerRT {
   Status InitSampler() override;
   Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
   void Print(std::ostream &out, bool show_all) const override;
+  void SamplerPrint(std::ostream &out, bool show_all) const override;
   bool AllowCacheMiss() override { return true; }
   std::string Name() const override { return kCacheLookupOp; }
 

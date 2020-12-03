@@ -89,6 +89,14 @@ Status CacheLookupOp::HandshakeRandomAccessOp(const RandomAccessOp *op) {
 }
 Status CacheLookupOp::InitSampler() { return SamplerRT::InitSampler(); }
 void CacheLookupOp::Print(std::ostream &out, bool show_all) const { CacheBase::Print(out, show_all); }
+void CacheLookupOp::SamplerPrint(std::ostream &out, bool show_all) const {
+  out << "\nSampler: CacheLookupOp";
+  if (show_all) {
+    // Call the super class for displaying any common detailed info
+    SamplerRT::SamplerPrint(out, show_all);
+    // Then add our own info if any
+  }
+}
 Status CacheLookupOp::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   std::vector<row_id_type> cache_miss;
   RETURN_IF_NOT_OK(keys_miss_->Pop(0, &cache_miss));

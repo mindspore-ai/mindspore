@@ -119,11 +119,11 @@ Status SubsetRandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buf
   return Status::OK();
 }
 
-void SubsetRandomSamplerRT::Print(std::ostream &out, bool show_all) const {
+void SubsetRandomSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
   out << "\nSampler: SubsetRandomSampler";
   if (show_all) {
     // Call the super class for displaying any common detailed info
-    SamplerRT::Print(out, show_all);
+    SamplerRT::SamplerPrint(out, show_all);
     // Then add our own info if any
   }
 }
