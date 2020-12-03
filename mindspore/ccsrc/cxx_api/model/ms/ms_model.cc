@@ -41,7 +41,6 @@ using std::vector;
 namespace py = pybind11;
 namespace mindspore {
 namespace api {
-
 MsModel::MsModel(uint32_t device_id) : device_id_(device_id) {}
 MsModel::~MsModel() = default;
 
@@ -320,7 +319,7 @@ void MsModel::RegAllOp() {
     }
     py::module c_expression = py::module::import("mindspore._c_expression");
     size_t ops_info_long = c_expression.attr("OpInfoLoaderPy")().attr("get_all_ops_info")().cast<size_t>();
-    auto all_ops_info = reinterpret_cast<std::vector<kernel::OpInfo *> *>(ops_info_long);
+    auto all_ops_info = reinterpret_cast<std::vector<kernel::OpInfo *> *>(static_cast<uintptr_t>(ops_info_long));
     for (auto op_info : *all_ops_info) {
       kernel::OpLib::RegOpInfo(std::shared_ptr<kernel::OpInfo>(op_info));
     }
@@ -414,6 +413,5 @@ Status MsModel::GetOutputsInfo(std::vector<Tensor> *tensor_list) const {
   }
   return SUCCESS;
 }
-
 }  // namespace api
 }  // namespace mindspore

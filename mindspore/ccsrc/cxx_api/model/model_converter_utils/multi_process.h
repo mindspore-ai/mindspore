@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace api {
-
 struct MessageFlag {
   uint64_t heartbeat = 0;
   uint64_t stop = false;
@@ -61,7 +60,6 @@ class MultiProcess {
   Status ParentProcess(ProcessFuncCall parent_process);
   void ChildProcess(ProcessFuncCall child_process);
 };
-
 }  // namespace api
 }  // namespace mindspore
 

@@ -17,8 +17,8 @@
 #include "nnacl/fp16/batchnorm_fp16.h"
 #include <math.h>
 
-void BatchNormFp16(const float16_t *input, const void *mean, const void *variance,
-                   BatchNormParameter *param, int task_id, float16_t *output) {
+void BatchNormFp16(const float16_t *input, const void *mean, const void *variance, BatchNormParameter *param,
+                   int task_id, float16_t *output) {
   int units_per_thread = UP_DIV(param->unit_, param->op_parameter_.thread_num_);
   int completed_units = task_id * units_per_thread;
   int cur_unit = MSMIN(units_per_thread, param->unit_ - completed_units);
@@ -47,9 +47,9 @@ void FusedBatchNormFp16(const void *input, const void *scale, const void *offset
       float16_t variance_sqrt = sqrt(((const float16_t *)variance)[c] + param->epsilon_);
       if (variance_sqrt != 0) {
         float16_t norm_val =
-                (((const float16_t *)input)[cur_offset + c] - ((const float16_t *)mean)[c]) / variance_sqrt;
+          (((const float16_t *)input)[cur_offset + c] - ((const float16_t *)mean)[c]) / variance_sqrt;
         ((float16_t *)output)[cur_offset + c] =
-                norm_val * ((const float16_t *)scale)[c] + ((const float16_t *)offset)[c];
+          norm_val * ((const float16_t *)scale)[c] + ((const float16_t *)offset)[c];
       }
     }
     cur_offset += param->channel_;

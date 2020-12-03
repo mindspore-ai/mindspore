@@ -307,7 +307,7 @@ Status ModelProcess::CheckAndInitInput(const std::map<std::string, Buffer> &inpu
     const auto &input = iter->second;
     const void *data = input.Data();
 
-    void *input_buffer;
+    void *input_buffer = nullptr;
     if (!is_run_on_device_) {
       ret = aclrtMemcpy(info.device_data, info.buffer_size, data, input.DataSize(), ACL_MEMCPY_HOST_TO_DEVICE);
       if (ret != ACL_ERROR_NONE) {

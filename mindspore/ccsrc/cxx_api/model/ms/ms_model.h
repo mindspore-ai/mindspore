@@ -79,7 +79,6 @@ class MsModel : public ModelImpl {
 };
 
 API_REG_MODEL(AscendMS, MsModel);
-
 }  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H
