@@ -63,6 +63,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUnsortedSegmentMax, {InferImplUnsortedSegmentMax, true}},
     {prim::kPrimUnsortedSegmentMin, {InferImplUnsortedSegmentMin, true}},
     {prim::kPrimScatterAdd, {InferImplScatterAdd, true}},
+    {prim::kPrimSubAndFilter, {InferImplSubAndFilter, true}},
     {prim::kPrimScatterUpdate, {InferImplScatterUpdate, true}},
     {prim::kPrimMapCacheIdx, {InferImplMapCacheIdx, true}},
     {prim::kPrimCacheSwapTable, {InferImplCacheSwapTable, true}},

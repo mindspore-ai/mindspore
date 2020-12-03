@@ -568,6 +568,34 @@ AbstractBasePtr InferImplUpdateCache(const AnalysisEnginePtr &, const PrimitiveP
   return ret;
 }
 
+AbstractBasePtr InferImplSubAndFilter(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto input_x_shp = input_x->shape();
+  MS_EXCEPTION_IF_NULL(input_x);
+  MS_EXCEPTION_IF_NULL(input_x_shp);
+
+  ShapeVector shape;
+  ShapeVector min_shape;
+  ShapeVector max_shape;
+  if (!input_x_shp->max_shape().empty()) {
+    max_shape = input_x_shp->max_shape();
+  } else {
+    max_shape = input_x_shp->shape();
+  }
+  for (size_t i = 0; i < max_shape.size(); i++) {
+    shape.emplace_back(Shape::SHP_ANY);
+    min_shape.emplace_back(1);
+  }
+  auto filter_res =
+    std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  auto filter_idx =
+    std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  AbstractBasePtrList elements = {filter_res, filter_idx};
+  return std::make_shared<AbstractTuple>(elements);
+}
+
 AbstractBasePtr InferImplDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
