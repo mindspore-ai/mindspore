@@ -199,7 +199,6 @@ STATUS TfliteCustomParser::BatchMatMul(const std::vector<uint8_t> &custom_attr, 
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
-  attr->broadcast = false;
   attr->transposeA = false;
   attr->transposeB = false;
   op->primitive->value.type = schema::PrimitiveType_MatMul;

@@ -189,7 +189,7 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
   attr->channelMultiplier = channel_mutiplier;
 
   MS_ASSERT(inputs.size() == kAnfPopulaterInputNumTwo);
-  auto input_node = inputs[kAnfPopulaterInputNumOne];
+  auto input_node = inputs.at(kAnfPopulaterInputNumOne);
   MS_ASSERT(input_node != nullptr);
   if (input_node->isa<Parameter>()) {
     auto param_node = input_node->cast<ParameterPtr>();
@@ -201,7 +201,7 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
       MS_ASSERT(abstractTensor != nullptr);
       if (utils::isa<abstract::ShapePtr>(abstractTensor->BuildShape())) {
         auto dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
-        attr->channelIn = dims[kAnfPopulaterInputNumOne];
+        attr->channelIn = dims.at(kAnfPopulaterInputNumOne);
       }
     }
   } else if (input_node->isa<CNode>()) {
