@@ -1821,6 +1821,43 @@ def test_cache_map_cifar2():
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_cifar3():
+    """
+    Test mappable cifar10 leaf with the cache op later in the tree above the map(resize)
+    In this case, we set a extra-small size for cache (size=1) and there are 10000 rows in the dataset.
+
+       cache
+         |
+     Map(resize)
+         |
+      Cifar100
+    """
+
+    logger.info("Test cache map cifar3")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=1, spilling=False)
+
+    ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR)
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+
+    num_epoch = 2
+    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
+
+    epoch_count = 0
+    for _ in range(num_epoch):
+        assert sum([1 for _ in iter1]) == 10000
+        epoch_count += 1
+    assert epoch_count == num_epoch
+
+    logger.info("test_cache_map_cifar3 Ended.\n")
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_map_voc1():
     """
     Test mappable voc leaf with cache op right over the leaf

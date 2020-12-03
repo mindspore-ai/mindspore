@@ -204,7 +204,7 @@ class CacheServer : public Service {
   /// \brief How a request is handled.
   /// \note that it can be process immediately by a grpc thread or routed to a server thread
   /// which is pinned to some numa node core.
-  void ProcessRequest(CacheServerRequest *cache_req);
+  Status ProcessRequest(CacheServerRequest *cache_req);
 
   void GlobalShutdown();
 
@@ -350,6 +350,52 @@ class CacheServer : public Service {
 
   /// \brief Connect request by a pipeline
   Status ConnectReset(CacheRequest *rq);
+
+  /// \brief This is an internal structure used by Batch processing.
+  /// This is how it works internally. For batch fetch/cache, the grpc thread
+  /// will intercept the request and breaks it down into multiple internal requests
+  /// and spread over all the server workers. But each internal request consumes
+  /// one free tag and we may run out of free tags if they don't return promptly.
+  /// So we will let the server thread return the free tag immediately but the put
+  /// the return code in this following structure. GRPC thread must wait until all
+  /// the rc come back.
+  class BatchWait {
+   public:
+    explicit BatchWait(int n) : expected_(n), num_back_(0) {
+      expected_ = n;
+      rc_lists_.reserve(expected_);
+    }
+
+    Status Set(Status rc) {
+      CHECK_FAIL_RETURN_UNEXPECTED(expected_ > num_back_, "Programming error");
+      std::unique_lock<std::mutex> lck(mux_);
+      rc_lists_.push_back(std::move(rc));
+      ++num_back_;
+      if (num_back_ == expected_) {
+        wp_.Set();
+      }
+      return Status::OK();
+    }
+
+    Status Wait() { return wp_.Wait(); }
+
+    Status GetRc() {
+      Status rc;
+      for (auto &cache_rc : rc_lists_) {
+        if (cache_rc.IsError() && !cache_rc.IsInterrupted() && rc.IsOk()) {
+          rc = cache_rc;
+        }
+      }
+      return rc;
+    }
+
+   private:
+    std::mutex mux_;
+    WaitPost wp_;
+    int64_t expected_;
+    int64_t num_back_;
+    std::vector<Status> rc_lists_;
+  };
 
   /// \brief Internal function to do row batch fetch
   /// \param rq Request
