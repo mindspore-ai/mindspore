@@ -73,10 +73,14 @@ void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
     if (IsPrimitiveCNode(dependNode, schema::PrimitiveType_Depend) ||
         IsPrimitiveCNode(dependNode, schema::PrimitiveType_ControlDepend)) {
       hasDepend = true;
+      bool maskOut = (dependNode->inputs().size() == 3) ? true : false;
       for (size_t j = 1; j < dependNode->inputs().size(); ++j) {
         AnfNodePtr dependInputNode = dependNode->input(j);
         if (dependInputNode->isa<CNode>()) {
           inputs.emplace_back(dependInputNode);
+          if (maskOut) {
+            break;
+          }
         }
       }
     } else {
@@ -220,6 +224,11 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
       ret = RET_MEMORY_FAILED;
       break;
     }
+#ifdef SUPPORT_TRAIN
+    RemoveIfMakeTuple(cnode);
+    RemoveIfDepend(cnode);
+#endif
+
     if ((primitive_c->Type() == schema::PrimitiveType_TupleGetItem) ||
 #ifdef SUPPORT_TRAIN
         (primitive_c->Type() == schema::PrimitiveType_Depend) ||
@@ -228,9 +237,8 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
         (primitive_c->Type() == schema::PrimitiveType_MakeTuple)) {
       continue;
     }
+#ifndef SUPPORT_TRAIN
     RemoveIfMakeTuple(cnode);
-#ifdef SUPPORT_TRAIN
-    RemoveIfDepend(cnode);
 #endif
     auto primT = primitive_c->primitiveT();
     auto node = std::make_unique<schema::CNodeT>();
@@ -489,6 +497,11 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
     paramTensor->format = schema::Format(valueLite->format());
     paramTensor->dataType = valueLite->tensor_type();
     paramTensor->dims = valueLite->tensor_shape();
+#ifdef SUPPORT_TRAIN
+    if (paramTensor->dims.size() == 0) {
+      paramTensor->dims = {1};
+    }
+#endif
     auto ret = memcpy_s(paramTensor->data.data(), valueLite->tensor_size() * sizeof(uint8_t), valueLite->tensor_addr(),
                         valueLite->tensor_size());
     if (ret != EOK) {

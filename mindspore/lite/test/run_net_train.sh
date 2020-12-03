@@ -16,7 +16,7 @@ function Run_Export(){
         echo ${model_name}'_train_export.py' >> "${export_log_file}"
         echo 'exporting' ${model_name}
         echo 'docker run --user $(id -u):$(id -g) --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true mindspore_dev:5 python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
-        docker run --user $(id -u):$(id -g) --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true mindspore_dev:5 python ${models_path}'/'${model_name}_train_export.py
+        docker run --user $(id -u):$(id -g) --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true mindspore_dev:5 python ${models_path}'/'${model_name}_train_export.py ${epoch_num}
         if [ $? = 0 ]; then
             export_result='export mindspore '${model_name}'_train_export pass';echo ${export_result} >> ${export_result_file}
         else
@@ -74,18 +74,19 @@ function Run_x86() {
         echo ${model_name}'_train' >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86}-train >> "${run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86}-train || return 1
-        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./net_train/net_train --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${input_path}'/'${model_name}'_input1.bin,'${train_io_path}'/'${model_name}'_input2.bin --expectedDataFile='${train_io_path}'/'${model_name}'_outputs.bin --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms' >> "${run_x86_log_file}"
+        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./net_train/net_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${input_path}'/'${model_name}'_input1.bin,'${train_io_path}'/'${model_name}'_input2.bin --expectedDataFile='${train_io_path}'/'${model_name}'_outputs.bin --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
         echo '-------------------------------------------------------------------------------' >> "${run_x86_log_file}"
         LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib \
         ${run_valgrind}./net_train/net_train \
         --modelFile=${ms_models_path}/${model_name}_train.ms \
         --inDataFile=${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin \
         --expectedDataFile=${train_io_path}/${model_name}_outputs.bin \
-        --exportFile=${ms_models_path}/${model_name}_train_exported.ms >> "${run_x86_log_file}"
+        --exportFile=${ms_models_path}/${model_name}_train_exported.ms >> "${run_x86_log_file}" \
+        --epochs=${epoch_num}
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_net_train_result_file}
         else
-            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_net_train_result_file}; return 1
+            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_net_train_result_file}
         fi
     done < ${models_mindspore_train_config}
 }
@@ -160,12 +161,12 @@ function Run_arm() {
         echo 'chmod 777 net_train' >> ${adb_cmd_run_file}
         if [ "$1" == arm64 ]; then
             echo 'cp  /data/local/tmp/libc++_shared.so ./' >> ${adb_cmd_run_file}
-            echo 'export LD_LIBRARY_PATH=/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${run_arm_log_file}"
-            echo 'export LD_LIBRARY_PATH=/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${adb_cmd_run_file}"
+            echo 'export LD_LIBRARY_PATH=./:/data/local/tmp/net_train_test;./net_train --epochs='${epoch_num}' --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin' >> "${run_arm_log_file}"
+            echo 'export LD_LIBRARY_PATH=./:/data/local/tmp/net_train_test;./net_train --epochs='${epoch_num}' --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin' >> "${adb_cmd_run_file}"
         elif [ "$1" == arm32 ]; then
             echo 'cp  /data/local/tmp/arm32/libc++_shared.so ./' >> ${adb_cmd_run_file}
-            echo 'export LD_LIBRARY_PATH=/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${run_arm_log_file}"
-            echo 'export LD_LIBRARY_PATH=/data/local/tmp/net_train_test;./net_train --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin --exportFile='${model_name}'_train_exported.ms' >> "${adb_cmd_run_file}"
+            echo 'export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/net_train_test;./net_train --epochs='${epoch_num}' --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin'  >> "${run_arm_log_file}"
+            echo 'export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/net_train_test;./net_train --epochs='${epoch_num}' --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/net_train_test/'${model_name}'_input1.bin,/data/local/tmp/net_train_test/'${model_name}'_input2.bin --expectedDataFile=/data/local/tmp/net_train_test/'${model_name}'_outputs.bin'  >> "${adb_cmd_run_file}"
         fi    
 
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
@@ -203,16 +204,18 @@ function Print_Result() {
 basepath=$(pwd)
 echo ${basepath}
 
-train_io_path=""
 # Example:run_net_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
-while getopts "r:m:d:i:e:v" opt; do
+epoch_num=1
+train_io_path=""
+while getopts "r:m:d:i:e:vt:" opt; do
     case ${opt} in
         r)
 	    release_path=${OPTARG}
             echo "release_path is ${OPTARG}"
             ;;
         m)
+
 	    models_path=${OPTARG}"/models_train"
             echo "models_path is ${OPTARG}"
             ;;
@@ -229,9 +232,13 @@ while getopts "r:m:d:i:e:v" opt; do
             echo "enable_export = ${OPTARG}"
             ;;          
         v)
-	    run_valgrind="valgrind "
+	    run_valgrind="valgrind --log-file=valgrind.log "
             echo "Run x86 with valgrind"
-            ;;            
+            ;;
+        t)
+	    epoch_num=${OPTARG}
+            echo "train epoch num is ${OPTARG}"
+            ;;                          
         ?)
             echo "unknown para"
             exit 1;;

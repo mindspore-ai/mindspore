@@ -76,7 +76,7 @@ void ConvertConvWeight(const ParameterPtr &param_node) {
   auto weight = std::dynamic_pointer_cast<ParamValueLite>(param);
   MS_ASSERT(weight != nullptr);
 
-  std::unique_ptr<T> buf(new (std::nothrow) T[weight->tensor_shape_size()]);
+  std::unique_ptr<T[]> buf(new (std::nothrow) T[weight->tensor_shape_size()]);
   if (buf == nullptr) {
     MS_LOG(ERROR) << "new buf failed";
     return;

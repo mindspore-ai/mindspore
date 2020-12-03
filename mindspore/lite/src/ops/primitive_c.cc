@@ -161,6 +161,7 @@
 #include "src/ops/group_conv2d_grad_input.h"
 #include "src/ops/power_grad.h"
 #include "src/ops/softmax_cross_entropy.h"
+#include "src/ops/sparse_softmax_cross_entropy.h"
 #include "src/ops/bn_grad.h"
 #include "src/ops/arithmetic_grad.h"
 #include "src/ops/depend.h"
@@ -578,6 +579,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
     return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
+  } else if (op_type == "SparseSoftmaxCrossEntropyWithLogits") {
+    return NewPrimitiveC<SparseSoftmaxCrossEntropy>(prim, inputs, quantType);
   } else if (op_type == "BiasAddGrad") {
     return NewPrimitiveC<BiasGrad>(prim, inputs, quantType);
   } else if (op_type == "ApplyMomentum") {
@@ -916,6 +919,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) ArithmeticGrad(primitive);
     case schema::PrimitiveType_SoftmaxCrossEntropy:
       return new (std::nothrow) SoftmaxCrossEntropy(primitive);
+    case schema::PrimitiveType_SparseSoftmaxCrossEntropy:
+      return new (std::nothrow) SparseSoftmaxCrossEntropy(primitive);
     case schema::PrimitiveType_PowerGrad:
       return new (std::nothrow) PowerGrad(primitive);
     case schema::PrimitiveType_Depend:

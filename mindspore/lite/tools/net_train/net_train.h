@@ -29,7 +29,6 @@
 #include <memory>
 #include <cfloat>
 #include <utility>
-#include "include/train_model.h"
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
@@ -129,8 +128,10 @@ class MS_API NetTrain {
     MS_ASSERT(input != nullptr);
     static int i = 0;
     auto inData = reinterpret_cast<T *>(input->MutableData());
+    size_t tensorSize = input->ElementsNum();
+    size_t len = (tensorSize < 20) ? tensorSize : 20;
     std::cout << "InData" << i++ << ": ";
-    for (size_t j = 0; j < 20; j++) {
+    for (size_t j = 0; j < len; j++) {
       std::cout << inData[j] << " ";
     }
     std::cout << std::endl;
@@ -190,10 +191,8 @@ class MS_API NetTrain {
             }
           } else {
             // just assume that atol = rtol
-            if (absoluteError > 1e-5) {
-              meanError += absoluteError / (fabs(calibTensor->data.at(j)) + FLT_MIN);
-              errorCount++;
-            }
+            meanError += absoluteError / (fabs(calibTensor->data.at(j)) + FLT_MIN);
+            errorCount++;
           }
         }
       }

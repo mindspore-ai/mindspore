@@ -733,13 +733,6 @@ bool AnfImporterFromProtobuf::BuildReturnForFuncGraph(const FuncGraphPtr &output
     outputFuncGraph->set_return(return_node);
     MS_LOG(INFO) << "Construct funcgraph finined, all success.";
   } else {
-#ifdef SUPPORT_TRAIN
-    auto ret_node = outputFuncGraph->get_return();
-    if (ret_node) {
-      ret_node->add_input(cnode_ptr);
-      return true;
-    }
-#endif
     const onnx::ValueInfoProto &output_node = importProto.output(0);
     const onnx::TypeProto &output_typeproto = output_node.type();
     int output_type = output_typeproto.tensor_type().elem_type();
@@ -805,29 +798,13 @@ int AnfImporterFromProtobuf::ImportNodesForGraph(const FuncGraphPtr &outputFuncG
       MS_LOG(ERROR) << "primitive_c is nullptr";
       return RET_ERROR;
     }
-
-#ifdef SUPPORT_TRAIN
-    if (primitive_c->Type() == schema::PrimitiveType_MakeTuple) {
-      last_cnode_ptr = cnode_ptr;
-      if (!BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr)) {
-        MS_LOG(ERROR) << "Build ReturnNode for funcgraph failed";
-        status = RET_ERROR;
-      }
-    }
-#endif
   }
   if (status != RET_OK) {
     return status;
   }
-#ifdef SUPPORT_TRAIN
-  if (last_cnode_ptr != cnode_ptr) {
-#else
-  {
-#endif
-    if (!BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr)) {
-      MS_LOG(ERROR) << "Build ReturnNode for funcgraph failed";
-      status = RET_ERROR;
-    }
+  if (!BuildReturnForFuncGraph(outputFuncGraph, importProto, cnode_ptr)) {
+    MS_LOG(ERROR) << "Build ReturnNode for funcgraph failed";
+    status = RET_ERROR;
   }
   return status;
 }

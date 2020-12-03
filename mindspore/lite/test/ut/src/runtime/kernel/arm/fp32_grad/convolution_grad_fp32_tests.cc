@@ -273,10 +273,7 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
-  // warm up loop
-  for (int i = 0; i < 3; i++) {
-    kernel->Run();
-  }
+  kernel->Run();
 
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/primitive_c.h"
-#include "include/train_model.h"
+#include "src/train/train_model.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"

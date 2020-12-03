@@ -82,7 +82,8 @@ void ConvertConvWeight(const ParameterPtr &param_node) {
   auto weight = std::dynamic_pointer_cast<ParamValueLite>(param);
   MS_ASSERT(weight != nullptr);
 
-  std::unique_ptr<T> buf(new (std::nothrow) T[weight->tensor_shape_size()]);
+  std::unique_ptr<T[]> buf(new (std::nothrow) T[weight->tensor_shape_size()]);
+
   if (buf == nullptr) {
     MS_LOG(ERROR) << "new buf failed";
     return;
@@ -150,9 +151,13 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
   attr->padRight = pad_list[3];
 
   auto dilation = CastToInt(prim.GetAttr("dilation"));
+#ifdef SUPPORT_TRAIN
+  attr->dilateH = dilation[2];
+  attr->dilateW = dilation[3];
+#else
   attr->dilateH = dilation[0];
   attr->dilateW = dilation[1];
-
+#endif
   auto kernel_size = CastToInt(prim.GetAttr("kernel_size"));
   attr->kernelH = kernel_size[0];
   attr->kernelW = kernel_size[1];

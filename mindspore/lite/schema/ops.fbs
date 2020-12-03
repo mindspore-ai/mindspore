@@ -301,12 +301,14 @@ table BatchNorm {
 }
 
 table BiasGrad {
-    axis: [int];
 }
 
 
 table SoftmaxCrossEntropy {
-    axis: [int];
+}
+
+table SparseSoftmaxCrossEntropy {
+    isGrad: int;
 }
 
 table make_tuple {

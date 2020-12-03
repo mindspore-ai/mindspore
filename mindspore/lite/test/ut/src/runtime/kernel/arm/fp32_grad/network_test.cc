@@ -23,7 +23,6 @@
 #include <functional>
 
 #include "schema/inner/model_generated.h"
-#include "mindspore/lite/include/train_model.h"
 #include "common/common_test.h"
 #include "include/train_session.h"
 #include "include/context.h"
@@ -131,7 +130,6 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive->value.type = schema::PrimitiveType_SoftmaxCrossEntropy;
     auto primitive = new schema::SoftmaxCrossEntropyT;
     ASSERT_NE(primitive, nullptr);
-    primitive->axis.push_back(0);
     node->primitive->value.value = primitive;
     node->name = "SoftmaxCrossEntropy";
     meta_graph->nodes.emplace_back(std::move(node));
@@ -144,7 +142,6 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive->value.type = schema::PrimitiveType_BiasGrad;
     auto primitive = new schema::BiasGradT;
     ASSERT_NE(primitive, nullptr);
-    primitive->axis.push_back(0);
     node->primitive->value.value = primitive;
     node->name = "BiasGrad";
     meta_graph->nodes.emplace_back(std::move(node));
@@ -360,17 +357,13 @@ TEST_F(NetworkTest, tuning_layer) {
   const char *content = reinterpret_cast<char *>(builder.GetBufferPointer());
   std::cout << "build fb size= " << size << std::endl;
 
-  auto model = lite::TrainModel::Import(content, size);
-  ASSERT_NE(nullptr, model);
   meta_graph.reset();
   content = nullptr;
   lite::Context context;
   context.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context.thread_num_ = 1;
-  auto session = session::TrainSession::CreateSession(&context);
+  auto session = session::TrainSession::CreateSession(content, size, &context);
   ASSERT_NE(nullptr, session);
-  auto ret = session->CompileTrainGraph(model);
-  ASSERT_EQ(lite::RET_OK, ret);
   session->Train();
   session->Train();  // Just double check that calling Train twice does not cause a problem
 
@@ -398,7 +391,7 @@ TEST_F(NetworkTest, tuning_layer) {
   std::fill(labels, labels + labelTensor->ElementsNum(), 0.f);
   for (int i = 0; i < BATCH_SIZE; i++) labels[i * NUM_CLASSES + (i * 97) % NUM_CLASSES] = 1.0;
 
-  ret = session->RunGraph();
+  auto ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
   auto outputs = session->GetOutputsByNodeName("SoftmaxCrossEntropy");
   ASSERT_EQ(outputs.size(), 1);
@@ -514,23 +507,14 @@ int32_t runNet(mindspore::session::LiteSession *session, const std::string &in, 
 }
 
 TEST_F(NetworkTest, efficient_net) {
-  char *buf = nullptr;
-  size_t net_size = 0;
-
-  std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
-  ReadFile(net.c_str(), &net_size, &buf);
-  auto model = lite::TrainModel::Import(buf, net_size);
-  delete[] buf;
   auto context = new lite::Context;
   ASSERT_NE(context, nullptr);
   context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
   context->thread_num_ = 1;
 
-  auto session = session::TrainSession::CreateSession(context);
+  std::string net = "./test_data/nets/effnetb0_fwd_nofuse.ms";
+  auto session = session::TrainSession::CreateSession(net, context, false);
   ASSERT_NE(session, nullptr);
-  auto ret = session->CompileTrainGraph(model);
-  ASSERT_EQ(lite::RET_OK, ret);
-  session->Eval();
 
   std::string in = "./test_data/nets/effNet_input_x_1_3_224_224.bin";
   std::string out = "./test_data/nets/effNet_output_y_1_1000.bin";
@@ -538,58 +522,6 @@ TEST_F(NetworkTest, efficient_net) {
   delete session;
   delete context;
   ASSERT_EQ(res, 0);
-}
-
-TEST_F(NetworkTest, retina_net) {
-  char *buf = nullptr;
-  size_t net_size = 0;
-
-  std::string net = "./test_data/nets/retinaface1.ms";
-  ReadFile(net.c_str(), &net_size, &buf);
-  // auto model = lite::TrainModel::Import(buf, net_size);
-  auto model = lite::Model::Import(buf, net_size);
-  delete[] buf;
-  auto context = new lite::Context;
-  ASSERT_NE(context, nullptr);
-  context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = lite::NO_BIND;
-  context->thread_num_ = 1;
-
-  // auto session = session::TrainSession::CreateSession(context);
-  auto session = session::LiteSession::CreateSession(context);
-  ASSERT_NE(session, nullptr);
-  auto ret = session->CompileGraph(model);
-  EXPECT_EQ(lite::RET_OK, ret);
-  // session->Eval();
-
-  std::string in = "./test_data/nets/test1.hwc_normalized_f32";
-  std::cout << "----- Output 0 -----" << std::endl;
-  std::string out = "./test_data/nets/test1_loc.f32";
-  int final_res = 0;
-  auto res = runNet(session, in, out, "448", true);
-  // ASSERT_EQ(res, 0);
-  if (res != 0) {
-    final_res = res;
-  }
-
-  std::cout << "----- Output 1 -----" << std::endl;
-  out = "./test_data/nets/test1_conf.f32";
-  res = runNet(session, in, out, "435", true);
-  // ASSERT_EQ(res, 0);
-  if (res != 0) {
-    final_res |= res;
-  }
-  std::cout << "----- Output 2 -----" << std::endl;
-  out = "./test_data/nets/test1_landms.f32";
-  res = runNet(session, in, out, "421", true);
-  if (res != 0) {
-    final_res |= res;
-  }
-
-  EXPECT_EQ(final_res, 0);
-
-  delete model;
-  delete session;
-  delete context;
 }
 
 TEST_F(NetworkTest, mobileface_net) {

@@ -32,16 +32,6 @@ static const char *DELIM_COLON = ":";
 static const char *DELIM_COMMA = ",";
 static const char *DELIM_SLASH = "/";
 
-void SaveFile(std::string path, void *buf, size_t size) {
-  std::ofstream ofs(path);
-  MS_ASSERT(ofs.good() == true);
-  MS_ASSERT(ofs.is_open() == true);
-
-  ofs.seekp(0, std::ios::beg);
-  ofs.write((const char *)buf, size);
-  ofs.close();
-}
-
 int NetTrain::GenerateRandomData(size_t size, void *data) {
   MS_ASSERT(data != nullptr);
   char *casted_data = static_cast<char *>(data);
@@ -61,7 +51,7 @@ int NetTrain::GenerateInputData() {
     }
     auto tensor_byte_size = tensor->Size();
     auto status = GenerateRandomData(tensor_byte_size, input_data);
-    if (status != 0) {
+    if (status != RET_OK) {
       std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
       MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
       return status;
@@ -73,14 +63,14 @@ int NetTrain::GenerateInputData() {
 int NetTrain::LoadInput() {
   if (flags_->in_data_file_.empty()) {
     auto status = GenerateInputData();
-    if (status != 0) {
+    if (status != RET_OK) {
       std::cerr << "Generate input data error " << status << std::endl;
       MS_LOG(ERROR) << "Generate input data error " << status;
       return status;
     }
   } else {
     auto status = ReadInputFile();
-    if (status != 0) {
+    if (status != RET_OK) {
       std::cerr << "ReadInputFile error, " << status << std::endl;
       MS_LOG(ERROR) << "ReadInputFile error, " << status;
       return status;
@@ -331,20 +321,6 @@ int NetTrain::RunExportedNet() {
 
   MS_LOG(INFO) << "start reading exported model file";
   std::cout << "start reading exported model file" << std::endl;
-  size_t size = 0;
-  char *graph_buf = ReadFile(flags_->export_file_.c_str(), &size);
-  if (graph_buf == nullptr) {
-    MS_LOG(ERROR) << "Read exported model file failed while running " << model_name.c_str();
-    std::cerr << "Read exported model file failed while running " << model_name.c_str() << std::endl;
-    return RET_ERROR;
-  }
-  auto model = lite::TrainModel::Import(graph_buf, size);
-  delete[](graph_buf);
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Import exported model file failed while running " << model_name.c_str();
-    std::cerr << "Import exported model file failed while running " << model_name.c_str() << std::endl;
-    return RET_ERROR;
-  }
   auto context = std::make_shared<Context>();
   if (context == nullptr) {
     MS_LOG(ERROR) << "New context failed while running " << model_name.c_str();
@@ -362,17 +338,11 @@ int NetTrain::RunExportedNet() {
 
   context->thread_num_ = flags_->num_threads_;
   // context->enable_float16_ = flags_->enable_fp16_;
-  session_ = session::TrainSession::CreateSession(context.get());
+  session_ = session::TrainSession::CreateSession(flags_->export_file_.c_str(), context.get());
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();
     std::cout << "CreateSession failed while running ", model_name.c_str();
     return RET_ERROR;
-  }
-  auto ret = session_->CompileTrainGraph(model);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CompileGraph failed while running ", model_name.c_str();
-    std::cout << "CompileGraph failed while running ", model_name.c_str();
-    return ret;
   }
 
   ms_inputs_ = session_->GetInputs();
@@ -383,13 +353,13 @@ int NetTrain::RunExportedNet() {
   // Load input
   MS_LOG(INFO) << "start generate input data";
   auto status = LoadInput();
-  if (status != 0) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Generate input data error";
     return status;
   }
 
   status = session_->RunGraph();
-  if (status != 0) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Inference error " << status;
     std::cerr << "Inference error " << status << std::endl;
     return status;
@@ -405,7 +375,7 @@ int NetTrain::RunExportedNet() {
       delete data.second;
     }
     data_.clear();
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkAccuracy on exported model error: " << status;
       std::cout << "Run MarkAccuracy on exported model error: " << status << std::endl;
       return status;
@@ -421,20 +391,6 @@ int NetTrain::RunNetTrain() {
 
   MS_LOG(INFO) << "start reading model file";
   std::cout << "start reading model file" << std::endl;
-  size_t size = 0;
-  char *graph_buf = ReadFile(flags_->model_file_.c_str(), &size);
-  if (graph_buf == nullptr) {
-    MS_LOG(ERROR) << "Read model file failed while running " << model_name.c_str();
-    std::cerr << "Read model file failed while running " << model_name.c_str() << std::endl;
-    return RET_ERROR;
-  }
-  auto model = lite::TrainModel::Import(graph_buf, size);
-  delete[](graph_buf);
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Import model file failed while running " << model_name.c_str();
-    std::cerr << "Import model file failed while running " << model_name.c_str() << std::endl;
-    return RET_ERROR;
-  }
   auto context = std::make_shared<Context>();
   if (context == nullptr) {
     MS_LOG(ERROR) << "New context failed while running " << model_name.c_str();
@@ -451,17 +407,11 @@ int NetTrain::RunNetTrain() {
   }
   context->thread_num_ = flags_->num_threads_;
   // context->enable_float16_ = flags_->enable_fp16_;
-  session_ = session::TrainSession::CreateSession(context.get());
+  session_ = session::TrainSession::CreateSession(flags_->model_file_.c_str(), context.get());
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();
     std::cout << "CreateSession failed while running ", model_name.c_str();
     return RET_ERROR;
-  }
-  auto ret = session_->CompileTrainGraph(model);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "CompileGraph failed while running ", model_name.c_str();
-    std::cout << "CompileGraph failed while running ", model_name.c_str();
-    return ret;
   }
 
   session_->Train();
@@ -474,13 +424,13 @@ int NetTrain::RunNetTrain() {
   // Load input
   MS_LOG(INFO) << "start generate input data";
   auto status = LoadInput();
-  if (status != 0) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Generate input data error";
     return status;
   }
   if (flags_->epochs_ > 0) {
     status = MarkPerformance();
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkPerformance error: " << status;
       std::cout << "Run MarkPerformance error: " << status << std::endl;
       return status;
@@ -494,24 +444,22 @@ int NetTrain::RunNetTrain() {
       delete data.second;
     }
     data_.clear();
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Run MarkAccuracy error: " << status;
       std::cout << "Run MarkAccuracy error: " << status << std::endl;
       return status;
     }
   }
   if (!flags_->export_file_.empty()) {
-    size_t tsize = 0;
-    auto buf = session_->ExportToBuf(nullptr, &tsize);
-    if (buf == nullptr) {
-      MS_LOG(ERROR) << "Run ExportToBuf error";
-      std::cout << "Run ExportToBuf error";
+    auto ret = session_->SaveToFile(flags_->export_file_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "SaveToFile error";
+      std::cout << "Run SaveToFile error";
       return RET_ERROR;
     }
-    SaveFile(flags_->export_file_, buf, size);
 
     status = RunExportedNet();
-    if (status != 0) {
+    if (status != RET_OK) {
       MS_LOG(ERROR) << "Run Exported model error: " << status;
       std::cout << "Run Exported model error: " << status << std::endl;
       return status;
@@ -754,14 +702,14 @@ int RunNetTrain(int argc, const char **argv) {
 
   NetTrain net_trainer(&flags);
   auto status = net_trainer.Init();
-  if (status != 0) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "NetTrain init Error : " << status;
     std::cerr << "NetTrain init Error : " << status << std::endl;
     return RET_ERROR;
   }
 
   status = net_trainer.RunNetTrain();
-  if (status != 0) {
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "Run NetTrain "
                   << flags.model_file_.substr(flags.model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
                   << " Failed : " << status;
