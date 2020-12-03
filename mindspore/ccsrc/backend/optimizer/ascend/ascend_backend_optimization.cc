@@ -105,6 +105,7 @@
 #include "backend/optimizer/ascend/enhancer/insert_memcpy_async_for_getnext.h"
 #include "backend/optimizer/ascend/ir_fission/batch_norm_grad_infer_fission.h"
 #include "backend/optimizer/ascend/ir_fission/split_fission.h"
+#include "backend/optimizer/ascend/ir_fission/splitv_fission.h"
 #include "backend/optimizer/ascend/format_type/modify_ops_attrs.h"
 #include "backend/optimizer/ascend/format_type/remove_no_use_reshape_op.h"
 #include "backend/optimizer/ascend/ir_fusion/add_input_to_output.h"
@@ -175,7 +176,10 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<DereluFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
+  ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
@@ -289,8 +293,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
-  ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
-  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
 
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) &&
       ConfigManager::GetInstance().iter_num() > 1) {
@@ -326,6 +328,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
+  ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
