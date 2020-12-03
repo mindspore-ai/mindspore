@@ -85,10 +85,7 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
 
 void DatasetIteratorKernel::InitSizeLists() { return; }
 
-bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs, void *stream) {
-  void *addr = nullptr;
-  size_t len = 0;
+bool DatasetIteratorKernel::ReadDevice(void **addr, size_t *len) {
   uint64_t start_time_stamp = 0;
   uint32_t queue_size = 0;
 
@@ -98,7 +95,7 @@ bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::v
       start_time_stamp = profiling_op_->GetTimeStamp();
       queue_size = GpuBufferMgr::GetInstance().Size(handle_);
     }
-    auto ret = GpuBufferMgr::GetInstance().Front(handle_, &addr, &len);
+    auto ret = GpuBufferMgr::GetInstance().Front(handle_, addr, len);
     if (ret == device::SUCCESS) {
       if (profiling_enable_) {
         uint64_t end_time_stamp = profiling_op_->GetTimeStamp();
@@ -129,7 +126,16 @@ bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::v
     MS_LOG(ERROR) << "Get data failed, errcode " << ret;
     return false;
   }
+  return true;
+}
 
+bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &outputs, void *stream) {
+  void *addr = nullptr;
+  size_t len = 0;
+  if (!ReadDevice(&addr, &len)) {
+    return false;
+  }
   if (total_bytes_ != len) {
     MS_LOG(ERROR) << "Dataset front error. read: " << len << ", expect: " << total_bytes_ << ", ";
     return false;

@@ -104,20 +104,31 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
 
     return true;
   }
+
+  bool CheckInputShape(const std::vector<size_t> &output_shape) {
+    for (auto &shape : input_shape_list_) {
+      if (output_shape != shape) {
+        MS_LOG(EXCEPTION) << "Input shape and output shape should be same!";
+      }
+    }
+    is_null_input_ = CHECK_NULL_INPUT(input_shape_list_[0]);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "L2NormalizeGPUKernel input is null";
+      InitSizeLists();
+      return false;
+    }
+    if (input_shape_list_[0].size() > MAX_DIMS) {
+      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
+    }
+    return true;
+  }
+
   bool Init(const CNodePtr &kernel_node) override {
     InitResource();
     data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != INPUT_SIZE) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but l2normalize op needs 3 inputs.";
+    if (!CheckIONumber(kernel_node)) {
       return false;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but l2normalize op needs 1 output.";
-      return false;
-    }
-
     int input_dim_length = SizeToInt(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0).size());
     int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     axis_ = axis < 0 ? (axis + input_dim_length) : axis;
@@ -128,25 +139,13 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
       input_shape_list_.emplace_back(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
     }
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    for (auto &shape : input_shape_list_) {
-      if (output_shape != shape) {
-        MS_LOG(EXCEPTION) << "Input shape and output shape should be same!";
-      }
+    if (!CheckInputShape(output_shape)) {
+      return true;
     }
 
     output_size_ = sizeof(T);
     for (auto dim : output_shape) {
       output_size_ *= dim;
-    }
-
-    is_null_input_ = CHECK_NULL_INPUT(input_shape_list_[0]);
-    if (is_null_input_) {
-      MS_LOG(WARNING) << "L2NormalizeGPUKernel input is null";
-      InitSizeLists();
-      return true;
-    }
-    if (input_shape_list_[0].size() > MAX_DIMS) {
-      MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 7";
     }
 
     std::vector<size_t> output_reduce_shape = output_shape;
@@ -173,6 +172,19 @@ class L2NormalizeGradGpuKernel : public GpuKernel {
   }
 
  protected:
+  bool CheckIONumber(const CNodePtr &kernel_node) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num != INPUT_SIZE) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but l2normalize op needs 3 inputs.";
+      return false;
+    }
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    if (output_num != 1) {
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but l2normalize op needs 1 output.";
+      return false;
+    }
+    return true;
+  }
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor_),

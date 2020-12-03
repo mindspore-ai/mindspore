@@ -159,8 +159,8 @@ class UpdateThorGradientGpuKernel : public GpuKernel {
     size_t output_size = gradient_size.ori_h * gradient_size.ori_w * unit_size;
     output_size_list_.push_back(output_size);
 
-    size_t workspace_size_ = 0;
-    workspace_size_ = gradient_size.w * gradient_size.h * gradient_size.batch_w * gradient_size.batch_h * unit_size;
+    size_t workspace_size_ =
+      gradient_size.w * gradient_size.h * gradient_size.batch_w * gradient_size.batch_h * unit_size;
     workspace_size_list_.push_back(workspace_size_);
 
     if (gradient_size.need_convert) {

@@ -82,17 +82,11 @@ class L2NormalizeGpuKernel : public GpuKernel {
 
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     InitResource();
     data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but l2normalize op needs 1 inputs.";
-      return false;
-    }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but l2normalize op needs 1 output.";
+    if (!CheckIONumber(kernel_node)) {
       return false;
     }
     int input_dim_length = SizeToInt(AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0).size());
@@ -176,6 +170,19 @@ class L2NormalizeGpuKernel : public GpuKernel {
   }
 
  private:
+  bool CheckIONumber(const CNodePtr &kernel_node) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num != 1) {
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but l2normalize op needs 1 inputs.";
+      return false;
+    }
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    if (output_num != 1) {
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but l2normalize op needs 1 output.";
+      return false;
+    }
+    return true;
+  }
   void DestroyResource() noexcept {
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor_),
                                "cudnnDestroyReduceTensorDescriptor failed.");
