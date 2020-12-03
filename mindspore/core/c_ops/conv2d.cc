@@ -107,7 +107,7 @@ TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   return TypeIdToType(infer_type);
 }
 }  // namespace
-Conv2D::Conv2D() : PrimitiveC(kConv2DName) { InitIOName({"x", "w"}, {"output"}); }
+Conv2D::Conv2D() : PrimitiveC(kNameConv2D) { InitIOName({"x", "w"}, {"output"}); }
 
 void Conv2D::Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode,
                   const std::string &pad_mode, const std::vector<int64_t> &pad, const std::vector<int64_t> &stride,
@@ -193,5 +193,5 @@ AbstractBasePtr Conv2dInfer(const abstract::AnalysisEnginePtr &, const Primitive
                                                     Conv2dInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Conv2D, prim::kPrimConv2D, Conv2dInfer);
-REGISTER_PRIMITIVE_C(Conv2D);
+REGISTER_PRIMITIVE_C(kNameConv2D, Conv2D);
 }  // namespace mindspore

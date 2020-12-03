@@ -26,7 +26,7 @@
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 namespace mindspore {
-constexpr auto kConv2DName = "Conv2D";
+constexpr auto kNameConv2D = "Conv2D";
 class Conv2D : public PrimitiveC {
  public:
   Conv2D();

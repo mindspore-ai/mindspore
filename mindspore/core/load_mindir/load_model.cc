@@ -71,7 +71,7 @@ std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file) {
   return buf;
 }
 
-std::shared_ptr<FuncGraph> RunLoadMindIR(const std::string &file_name) {
+std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name) {
   auto graphBuf = ReadProtoFile(file_name);
   if (graphBuf == nullptr) {
     MS_LOG(ERROR) << "Read Mind IR failed, file name is " << file_name.c_str();

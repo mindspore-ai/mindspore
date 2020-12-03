@@ -76,5 +76,5 @@ AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(Squeeze, prim::kPrimSqueeze, SqueezeInfer);
-REGISTER_PRIMITIVE_C(Squeeze);
+REGISTER_PRIMITIVE_C(kNameSqueeze, Squeeze);
 }  // namespace mindspore

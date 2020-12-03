@@ -206,4 +206,5 @@ AbstractBasePtr DepthWiseConv2DInfer(const abstract::AnalysisEnginePtr &, const 
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
+REGISTER_PRIMITIVE_C(kNameDepthWiseConv2D, DepthWiseConv2D);
 }  // namespace mindspore
