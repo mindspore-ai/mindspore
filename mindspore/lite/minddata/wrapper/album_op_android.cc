@@ -24,7 +24,7 @@ namespace mindspore {
 namespace dataset {
 
 AlbumOp::AlbumOp(const std::string &file_dir, bool do_decode, const std::string &schema_file,
-                 const std::set<std::string> &exts)
+                 const std::vector<std::string> &column_names, const std::set<std::string> &exts)
     : folder_path_(file_dir),
       decode_(do_decode),
       extensions_(exts),
@@ -35,12 +35,13 @@ AlbumOp::AlbumOp(const std::string &file_dir, bool do_decode, const std::string 
       dirname_offset_(0),
       sampler_(false),
       sampler_index_(0),
-      rotate_(true) {
+      rotate_(true),
+      column_names_(column_names) {
   PrescanEntry();
 }
 
 AlbumOp::AlbumOp(const std::string &file_dir, bool do_decode, const std::string &schema_file,
-                 const std::set<std::string> &exts, uint32_t index)
+                 const std::vector<std::string> &column_names, const std::set<std::string> &exts, uint32_t index)
     : folder_path_(file_dir),
       decode_(do_decode),
       extensions_(exts),
@@ -51,7 +52,8 @@ AlbumOp::AlbumOp(const std::string &file_dir, bool do_decode, const std::string 
       dirname_offset_(0),
       sampler_(true),
       sampler_index_(index),
-      rotate_(true) {
+      rotate_(true),
+      column_names_(column_names) {
   PrescanEntry();
 }
 
@@ -76,10 +78,6 @@ Status AlbumOp::PrescanEntry() {
   } else {
     MS_LOG(WARNING) << "Schema file provided: " << schema_file_ << ".";
     data_schema_->LoadSchemaFile(schema_file_, columns_to_load_);
-  }
-
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_id_map_[data_schema_->column(i).name()] = i;
   }
 
   Path folder(folder_path_);
@@ -169,6 +167,15 @@ bool AlbumOp::CheckImageType(const std::string &file_name, bool *valid) {
   return true;
 }
 
+bool AlbumOp::IsReadColumn(const std::string &column_name) {
+  for (uint32_t i = 0; i < this->column_names_.size(); i++) {
+    if (this->column_names_[i] == column_name) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col_num, TensorPtr *tensor) {
   TensorPtr image;
   TensorPtr rotate_tensor;
@@ -210,25 +217,10 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_file_path, &image));
   Status rc;
   if (decode_ && valid) {
-    int orientation = GetOrientation(image_file_path);
-    if (orientation > 1 && this->rotate_) {
-      rc = Decode(image, &rotate_tensor);
-      if (rc.IsError()) {
-        RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, tensor));
-        return Status::OK();
-      }
-
-      rc = Rotate(rotate_tensor, tensor, orientation);
-      if (rc.IsError()) {
-        RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, tensor));
-        return Status::OK();
-      }
-    } else {
-      rc = Decode(image, tensor);
-      if (rc.IsError()) {
-        RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, tensor));
-        return Status::OK();
-      }
+    rc = Decode(image, tensor);
+    if (rc.IsError()) {
+      RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, tensor));
+      return Status::OK();
     }
   }
   return Status::OK();
@@ -244,6 +236,10 @@ int AlbumOp::GetOrientation(const std::string &folder_path) {
   fseek(fp, 0, SEEK_END);
   int64_t fsize = ftell(fp);
   rewind(fp);
+  if (fsize > INT_MAX) {
+    fclose(fp);
+    return 0;
+  }
   unsigned char *buf = new unsigned char[fsize];
   if (fread(buf, 1, fsize, fp) != fsize) {
     MS_LOG(WARNING) << "read file size error for EXIF:  file = " << folder_path;
@@ -257,10 +253,7 @@ int AlbumOp::GetOrientation(const std::string &folder_path) {
   mindspore::dataset::ExifInfo result;
   int code = result.parseOrientation(buf, fsize);
   delete[] buf;
-  if (code == 0) {
-    MS_LOG(WARNING) << "Error parsing EXIF, use default code = " << code << ".";
-  }
-
+  MS_LOG(WARNING) << "AlbumOp::GetOrientation:  orientation= " << code << ".";
   return code;
 }
 
@@ -429,6 +422,9 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, const std::string &file,
 
       // loop over each column descriptor, this can optimized by switch cases
       for (int32_t i = 0; i < columns; i++) {
+        if (!IsReadColumn(data_schema_->column(i).name())) {
+          continue;
+        }
         // special case to handle
         if (data_schema_->column(i).name() == "id") {
           // id is internal, special case to load from file
@@ -469,6 +465,10 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, const std::string &file,
           TensorPtr tensor;
           RETURN_IF_NOT_OK(LoadImageTensor(image_file_path, i, &tensor));
           (*map_row)[data_schema_->column(i).name()] = tensor;
+          uint32_t orientation = GetOrientation(image_file_path);
+          TensorPtr scalar_tensor;
+          RETURN_IF_NOT_OK(Tensor::CreateScalar<uint32_t>(orientation, &scalar_tensor));
+          (*map_row)["orientation"] = scalar_tensor;
           continue;
         }
         // load float value

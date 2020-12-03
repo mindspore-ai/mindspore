@@ -37,6 +37,7 @@ using mindspore::dataset::Path;
 using mindspore::dataset::Tensor;
 
 using TensorOperation = mindspore::dataset::TensorOperation;
+using RotateOperation = mindspore::dataset::vision::RotateOperation;
 
 using mindspore::LogStream;
 using mindspore::MsLogLevel::DEBUG;
@@ -114,18 +115,21 @@ extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
     MS_LOG(WARNING) << "MEAN: { " << MDConf.MEAN[0] << ", " << MDConf.MEAN[1] << ", " << MDConf.MEAN[2] << " }";
     MS_LOG(WARNING) << "STD: { " << MDConf.STD[0] << ", " << MDConf.STD[1] << ", " << MDConf.STD[2] << " }";
 
+    MDConf.ResizeSizeWH[0] = 224;
+    MDConf.ResizeSizeWH[1] = 224;
     if ((MDConf.ResizeSizeWH[0] != 0) && (MDConf.ResizeSizeWH[1] != 0)) {
-      std::vector<int> Resize(MDConf.ResizeSizeWH, MDConf.ResizeSizeWH + 2);
-      std::shared_ptr<TensorOperation> resize_op = mindspore::dataset::vision::Resize(Resize);
-      assert(resize_op != nullptr);
+      std::shared_ptr<TensorOperation> resize_op =
+        mindspore::dataset::vision::Resize({MDConf.ResizeSizeWH[0], MDConf.ResizeSizeWH[1]});
       MS_LOG(WARNING) << "Push back resize";
       mapOperations.push_back(resize_op);
+      std::shared_ptr<TensorOperation> rotate_op = mindspore::dataset::vision::Rotate();
+      MS_LOG(WARNING) << "Push back rotate";
+      mapOperations.push_back(rotate_op);
       // hasBatch = true;  Batch not currently supported inMInddata-Lite
     }
     if ((MDConf.CropSizeWH[0] != 0) && (MDConf.CropSizeWH[1] != 0)) {
       std::vector<int> Crop(MDConf.CropSizeWH, MDConf.CropSizeWH + 2);
       std::shared_ptr<TensorOperation> center_crop_op = mindspore::dataset::vision::CenterCrop(Crop);
-      assert(center_crop_op != nullptr);
       MS_LOG(WARNING) << "Push back crop";
       mapOperations.push_back(center_crop_op);
       // hasBatch = true;  Batch not currently supported inMInddata-Lite
@@ -137,9 +141,10 @@ extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
   const std::set<std::string> exts = {};
   if (MDConf.fileid > -1) {
     // read specific image using SequentialSampler witn
-    iter = std::make_shared<mindspore::dataset::AlbumOp>(folder_path, true, schema_file, exts, MDConf.fileid);
+    iter =
+      std::make_shared<mindspore::dataset::AlbumOp>(folder_path, true, schema_file, column_names, exts, MDConf.fileid);
   } else {
-    iter = std::make_shared<mindspore::dataset::AlbumOp>(folder_path, true, schema_file, exts);
+    iter = std::make_shared<mindspore::dataset::AlbumOp>(folder_path, true, schema_file, column_names, exts);
   }
 
   // Create objects for the tensor ops
@@ -246,9 +251,9 @@ void GetTensorToBuff(std::unordered_map<std::string, std::shared_ptr<Tensor>> ro
 
 extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
   MS_LOG(INFO) << "Start GetNext";
-  if (pMDToDApi == nullptr) {
+  if (pMDToDApi == nullptr || pMDToDApi->_iter == nullptr) {
     MS_LOG(ERROR) << "GetNext called with null ptr. abort";
-    assert(pMDToDApi != nullptr);
+    return -1;
   }
 
   // Set defualt
@@ -268,12 +273,22 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
   if (row.size() != 0 && ret) {
     if ((pMDToDApi->_augs).size() > 0) {
       // String and Tensors
-      GetTensorToBuff(row, "image_filename", pMDToDApi->_hasBatch, &results->fileNameBuff);
+      uint32_t orientation;
+      row["orientation"]->GetItemAt(&orientation, {});
+      MS_LOG(WARNING) << "get orientation from row = " << orientation;
       // for each operation, run eager mode, single threaded operation, will have to memcpy
       // regardless
       for (int i = 0; i < (pMDToDApi->_augs).size(); i++) {
         // each Execute call will invoke a memcpy, this cannot really be optimized further
         // for this use case, std move is added for fail save.
+        if (pMDToDApi->_augs[i]->Name() == "Rotate") {
+          if (orientation > 1) {
+            RotateOperation *p = static_cast<RotateOperation *>(pMDToDApi->_augs[i].get());
+            p->setAngle(orientation);
+          } else {
+            continue;
+          }
+        }
         row["image"] = mindspore::dataset::Execute((pMDToDApi->_augs)[i])(std::move(row["image"]));
         if (row["image"] == nullptr) {
           // nullptr means that the eager mode image processing failed, we fail in this case
