@@ -51,7 +51,7 @@ class AddNGpuFwdKernel : public GpuKernel {
     }
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     auto work_addr = output_addr;
-    for (size_t i = 0; i < IntToSize(num_input_); i++) {
+    for (size_t i = 0; i < num_input_; i++) {
       if (output_addr == GetDeviceAddress<T>(inputs, i)) {
         work_addr = GetDeviceAddress<T>(workspace, 0);
         break;
@@ -63,7 +63,7 @@ class AddNGpuFwdKernel : public GpuKernel {
     }
     const float alpha = 1;
     const float beta = 0;
-    for (size_t i = 0; i < IntToSize(num_input_); i++) {
+    for (size_t i = 0; i < num_input_; i++) {
       T *input_addr = GetDeviceAddress<T>(inputs, i);
       if (cudnn_data_type_ == CUDNN_DATA_INT32) {
         ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
@@ -85,8 +85,8 @@ class AddNGpuFwdKernel : public GpuKernel {
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    num_input_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "n"));
-    if (IntToSize(num_input_) != input_num) {
+    num_input_ = GetAttr<int64_t>(kernel_node, "n");
+    if (num_input_ != input_num) {
       MS_LOG(ERROR) << "Input number is " << num_input_ << " in attr, but got " << input_num << "input.";
       return false;
     }
@@ -137,7 +137,7 @@ class AddNGpuFwdKernel : public GpuKernel {
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(input_descriptor_, &input_size_),
                                   "cudnnGetTensorSizeInBytes failed");
     }
-    for (int i = 0; i < num_input_; i++) {
+    for (size_t i = 0; i < num_input_; i++) {
       input_size_list_.push_back(input_size_);
     }
     output_size_list_.push_back(input_size_);
@@ -157,7 +157,7 @@ class AddNGpuFwdKernel : public GpuKernel {
   size_t output_size_;
   size_t workspace_size_;
   bool is_null_input_;
-  int num_input_;
+  size_t num_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

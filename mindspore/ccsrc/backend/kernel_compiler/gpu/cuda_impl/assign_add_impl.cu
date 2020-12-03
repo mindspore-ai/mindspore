@@ -38,3 +38,5 @@ template void CalAssignAdd<float>(const size_t size, float* ref, const float* va
 template void CalAssignAdd<half>(const size_t size, half* ref, const half* value, half* output,
                                  cudaStream_t cuda_stream);
 template void CalAssignAdd<int>(const size_t size, int* ref, const int* value, int* output, cudaStream_t cuda_stream);
+template void CalAssignAdd<int64_t>(const size_t size, int64_t* ref, const int64_t* value, int64_t* output,
+                                    cudaStream_t cuda_stream);

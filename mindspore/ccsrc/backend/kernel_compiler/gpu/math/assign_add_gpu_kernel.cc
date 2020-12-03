@@ -22,6 +22,9 @@ MS_REG_GPU_KERNEL_ONE(
   AssignAdd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   AssignAddGpuFwdKernel, int)
 MS_REG_GPU_KERNEL_ONE(
+  AssignAdd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  AssignAddGpuFwdKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
   AssignAdd,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   AssignAddGpuFwdKernel, float)

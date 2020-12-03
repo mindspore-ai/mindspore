@@ -203,6 +203,8 @@ template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int8_t 
                          cudaStream_t stream);
 template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const uint8_t *x0, const uint8_t *x1, bool *y,
                          cudaStream_t stream);
+template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const int64_t *x0, const int64_t *x1, bool *y,
+                         cudaStream_t stream);
 
 // Element-wise ArithMetic
 template <typename T, typename Func>
@@ -268,6 +270,8 @@ template void ElewiseArith(const int &nums, enum BroadcastOpType op, const int *
 template void ElewiseArith(const int &nums, enum BroadcastOpType op, const int8_t *x0, const int8_t *x1, int8_t *y,
                            cudaStream_t stream);
 template void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint8_t *x0, const uint8_t *x1, uint8_t *y,
+                           cudaStream_t stream);
+template void ElewiseArith(const int &nums, enum BroadcastOpType op, const int64_t *x0, const int64_t *x1, int64_t *y,
                            cudaStream_t stream);
 
 // Broadcast comparation
@@ -347,6 +351,9 @@ template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector
 template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                            const std::vector<size_t> &y_dims, enum BroadcastOpType op, const uint8_t *x0,
                            const uint8_t *x1, bool *y, cudaStream_t stream);
+template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const int64_t *x0,
+                           const int64_t *x1, bool *y, cudaStream_t stream);
 
 // Broadcast Arithmetic
 template <typename T, typename Func>
@@ -468,6 +475,9 @@ template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vect
 template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                              const std::vector<size_t> &y_dims, enum BroadcastOpType op, const uint8_t *x0,
                              const uint8_t *x1, uint8_t *y, cudaStream_t stream);
+template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const int64_t *x0,
+                             const int64_t *x1, int64_t *y, cudaStream_t stream);
 
 // BroadcastTo
 template <typename T>
@@ -500,3 +510,6 @@ template void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, 
 template void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,
                           const size_t &o1, const size_t &o2, const size_t &o3, const half *input_addr,
                           half *output_addr, cudaStream_t stream);
+template void BroadcastTo(const size_t &i0, const size_t &i1, const size_t &i2, const size_t &i3, const size_t &o0,
+                          const size_t &o1, const size_t &o2, const size_t &o3, const int64_t *input_addr,
+                          int64_t *output_addr, cudaStream_t stream);

@@ -148,6 +148,39 @@ MS_REG_GPU_KERNEL_ONE(
   DivNoNan, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
   BroadcastOpGpuKernel, int)
 
+// int64
+// int32
+MS_REG_GPU_KERNEL_ONE(
+  Greater, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  Less, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  TensorAdd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  Minimum, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  Maximum, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  Mul, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  FloorDiv, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  AbsGrad, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  Div, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  BroadcastOpGpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  DivNoNan, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+  BroadcastOpGpuKernel, int64_t)
+
 // int8
 MS_REG_GPU_KERNEL_ONE(
   DivNoNan, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
