@@ -51,9 +51,6 @@
 #include "runtime/device/ascend/executor/tiling/op_tiling_calculater.h"
 #include "runtime/device/executor/executor_callback.h"
 #include "runtime/device/ascend/executor/hccl_dynamic_kernel.h"
-#include "profiler/device/ascend/ascend_profiling.h"
-#include "profiler/device/ascend/profiling_context.h"
-#include "profiler/device/ascend/rt_callback_manager.h"
 #include "utils/config_manager.h"
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
 #include "runtime/hccl_adapter/hccl_adapter.h"
@@ -64,10 +61,6 @@ using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
 using mindspore::device::ascend::tasksink::TaskGenerator;
 using mindspore::kernel::tbe::TbeUtils;
-using mindspore::profiler::ascend::AscendProfiler;
-using mindspore::profiler::ascend::CallbackManager;
-using mindspore::profiler::ascend::GetTid;
-using mindspore::profiler::ascend::kCallback;
 using std::vector;
 
 constexpr uint32_t kTupleTaskId = 0;
@@ -618,11 +611,6 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
     return false;
   }
 
-  // Profiling Init
-  auto &async_profiler = AscendProfiler::GetInstance();
-  auto &rt_callback = CallbackManager::GetInstance(stream_);
-  rt_callback.Init();
-
   auto dynamic_kernels = iter->second;
   for (const auto &dynamic_kernel : dynamic_kernels) {
     if (dynamic_kernel->have_depends() || dynamic_kernel->GetKernelType() == KernelType::HCCL_KERNEL) {
@@ -638,15 +626,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
       dynamic_kernel->UpdateArgs();
     }
 
-    // Enable profiling trace point start
-    rt_callback.RegisterCallback(
-      [&]() { RECORD_CALLBACK_EVENT(&async_profiler, dynamic_kernel->GetKernelName().c_str(), "[Callback] start"); });
-
     dynamic_kernel->Execute();
-
-    // Enable profiling trace point end
-    rt_callback.RegisterCallback(
-      [&]() { RECORD_CALLBACK_EVENT(&async_profiler, dynamic_kernel->GetKernelName().c_str(), "[Callback] end"); });
     dynamic_kernel->PostExecute();
   }
 
@@ -655,9 +635,6 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph *grap
     return false;
   }
 
-  rt_callback.Destroy();
-  async_profiler.Dump(std::cout);
-  async_profiler.Reset();
   return true;
 }
 
