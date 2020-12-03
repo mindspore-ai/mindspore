@@ -159,7 +159,7 @@ class ELU(Cell):
         >>> elu = nn.ELU()
         >>> result = elu(input_x)
         >>> print(result)
-        [-0.63212055  -0.86466473  0  2  1]
+        [-0.63212055  -0.86466473  0.  2.  1.]
     """
 
     def __init__(self, alpha=1.0):
@@ -389,8 +389,8 @@ class FastGelu(Cell):
         >>> fast_gelu = nn.FastGelu()
         >>> output = fast_gelu(input_x)
         >>> print(output)
-        [[-1.5420423e-01  3.9955849e+00 -9.7664278e-06]
-         [ 1.9356585e+00 -1.0070159e-03  8.9999981e+00]]
+        [[-1.5420423e-01  3.9955850e+00 -9.7664279e-06]
+         [ 1.9356586e+00 -1.0070159e-03  8.9999981e+00]]
     """
 
     def __init__(self):

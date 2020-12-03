@@ -186,9 +186,9 @@ def tensor_dot(x1, x2, axes):
         >>> input_x2 = Tensor(np.ones(shape=[3, 1, 2]), mindspore.float32)
         >>> output = C.tensor_dot(input_x1, input_x2, ((0,1),(1,2)))
         >>> print(output)
-        [[2,2,2],
-         [2,2,2],
-         [2,2,2]]
+        [[2. 2. 2]
+         [2. 2. 2]
+         [2. 2. 2]]
     """
     shape_op = P.Shape()
     reshape_op = P.Reshape()

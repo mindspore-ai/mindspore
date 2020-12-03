@@ -64,7 +64,7 @@ class Gumbel(TransformedDistribution):
         >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
         >>> ans = gumbel.prob(value)
         >>> print(ans)
-        [0.07926048 0.08889321 0.09196986]
+        [0.07926048 0.08889319 0.09196986]
         >>> # Functions `mean`, `mode`, sd`, `var`, and `entropy` do not take in any argument.
         >>> ans = gumbel.mean()
         >>> print(ans)

@@ -712,7 +712,7 @@ class LBeta(Cell):
         >>> input_x = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
         >>> input_y = Tensor(np.array([2.0, 3.0, 14.0, 15.0]).astype(np.float32))
         >>> lbeta = nn.LBeta()
-        >>> output = lbeta(input_a, input_x)
+        >>> output = lbeta(input_y, input_x)
         >>> print (output)
         [-1.7917596  -4.094345  -12.000229  -14.754799]
     """

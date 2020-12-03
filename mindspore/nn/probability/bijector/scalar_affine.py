@@ -64,7 +64,7 @@ class ScalarAffine(Bijector):
         0.0
         >>> ans4 = scalaraffine.inverse_log_jacobian(value)
         >>> print(ans4)
-        -0.0
+        0.0
         ...
     """
 

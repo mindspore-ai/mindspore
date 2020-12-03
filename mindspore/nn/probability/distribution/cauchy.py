@@ -70,7 +70,7 @@ class Cauchy(Distribution):
         >>> # by replacing 'prob' by the name of the function
         >>> ans = cauchy1.prob(value)
         >>> print(ans)
-        [0.06366198 0.07489645 0.07957747]
+        [0.06366198 0.07489645 0.07957748]
         >>> # Evaluate with respect to distribution b.
         >>> ans = cauchy1.prob(value, loc_b, scale_b)
         >>> print(ans)

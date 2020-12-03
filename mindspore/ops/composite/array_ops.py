@@ -71,10 +71,10 @@ def repeat_elements(x, rep, axis=0):
         >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
         >>> output = C.repeat_elements(x, rep = 2, axis = 0)
         >>> print(output)
-        [[0, 1, 2],
-         [0, 1, 2],
-         [3, 4, 5],
-         [3, 4, 5]],
+        [[0 1 2]
+         [0 1 2]
+         [3 4 5]
+         [3 4 5]]
     """
     const_utils.check_valid_type(F.dtype(x), mstype.number_type, 'input x')
     rep = _check_positive_int(rep, "rep", "repeat_elements")
