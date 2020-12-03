@@ -63,7 +63,7 @@ class IteratorBase {
   // @return A unordered map from column name to shared pointer to Tensor.
   Status GetNextAsMap(TensorMap *out_map);
 
-  /// \breif return column_name, tensor pair in the order of its column id.
+  /// \brief return column_name, tensor pair in the order of its column id.
   /// \param[out] vec
   /// \return Error code
   Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec);

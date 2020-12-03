@@ -31,7 +31,7 @@ PYBIND_REGISTER(
     (void)py::class_<SchemaObj, std::shared_ptr<SchemaObj>>(*m, "SchemaObj", "to create a SchemaObj")
       .def(py::init([](std::string schema_file) {
         auto schema = std::make_shared<SchemaObj>(schema_file);
-        THROW_IF_ERROR(schema->init());
+        THROW_IF_ERROR(schema->Init());
         return schema;
       }))
       .def("add_column", [](SchemaObj &self, std::string name, TypeId de_type,

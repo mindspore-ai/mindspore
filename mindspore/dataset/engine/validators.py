@@ -1306,7 +1306,7 @@ def check_cache_option(cache):
 
 
 def check_to_device_send(method):
-    """A wrapper that wraps a parameter checker around the check_to_device_send."""
+    """Check the input arguments of send function for TransferDataset."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

@@ -41,6 +41,8 @@ class TreeConsumer {
   /// \return Status error code.
   virtual Status Init(std::shared_ptr<DatasetNode> d);
 
+  /// Internal function to perform the termination
+  /// \return Status error code
   virtual Status Terminate();
 
  protected:
@@ -72,8 +74,8 @@ class IteratorConsumer : public TreeConsumer {
   /// \return Status error code
   Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *out);
 
-  /// Returns the next row in as a map
-  /// \param[out] out std::map of string to Tensor
+  /// Returns the next row in as a vector
+  /// \param[out] out std::vector of pairs of string to Tensor
   /// \return Status error code
   Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec);
 

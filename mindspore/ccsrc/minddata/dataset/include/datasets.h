@@ -269,7 +269,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] input_columns List of names of the input columns to filter
   /// \return Shared pointer to the current FilterNode
   std::shared_ptr<FilterDataset> Filter(std::function<TensorRow(TensorRow)> predicate,
-                                        std::vector<std::string> input_columns = {}) {
+                                        const std::vector<std::string> &input_columns = {}) {
     return std::make_shared<FilterDataset>(shared_from_this(), predicate, input_columns);
   }
 #endif
@@ -291,8 +291,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
   /// \return Shared pointer to the current MapDataset
   std::shared_ptr<MapDataset> Map(std::vector<std::shared_ptr<TensorOperation>> operations,
-                                  std::vector<std::string> input_columns = {},
-                                  std::vector<std::string> output_columns = {},
+                                  const std::vector<std::string> &input_columns = {},
+                                  const std::vector<std::string> &output_columns = {},
                                   const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
                                   std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
@@ -377,36 +377,36 @@ class SchemaObj {
   /// \brief Destructor
   ~SchemaObj() = default;
 
-  /// \brief SchemaObj init function
-  /// \return bool true if schema init success
-  Status init();
+  /// \brief SchemaObj Init function
+  /// \return bool true if schema initialization is successful
+  Status Init();
 
   /// \brief Add new column to the schema with unknown shape of rank 1
   /// \param[in] name name of the column.
   /// \param[in] de_type data type of the column(TypeId).
   /// \return bool true if schema init success
-  Status add_column(std::string name, TypeId de_type);
+  Status add_column(const std::string &name, TypeId de_type);
 
   /// \brief Add new column to the schema with unknown shape of rank 1
   /// \param[in] name name of the column.
   /// \param[in] de_type data type of the column(std::string).
   /// \param[in] shape shape of the column.
   /// \return bool true if schema init success
-  Status add_column(std::string name, std::string de_type);
+  Status add_column(const std::string &name, const std::string &de_type);
 
   /// \brief Add new column to the schema
   /// \param[in] name name of the column.
   /// \param[in] de_type data type of the column(TypeId).
   /// \param[in] shape shape of the column.
   /// \return bool true if schema init success
-  Status add_column(std::string name, TypeId de_type, std::vector<int32_t> shape);
+  Status add_column(const std::string &name, TypeId de_type, const std::vector<int32_t> &shape);
 
   /// \brief Add new column to the schema
   /// \param[in] name name of the column.
   /// \param[in] de_type data type of the column(std::string).
   /// \param[in] shape shape of the column.
   /// \return bool true if schema init success
-  Status add_column(std::string name, std::string de_type, std::vector<int32_t> shape);
+  Status add_column(const std::string &name, const std::string &de_type, const std::vector<int32_t> &shape);
 
   /// \brief Get a JSON string of the schema
   /// \return JSON string of the schema
@@ -473,7 +473,7 @@ class ConcatDataset : public Dataset {
 class FilterDataset : public Dataset {
  public:
   FilterDataset(std::shared_ptr<Dataset> input, std::function<TensorRow(TensorRow)> predicate,
-                std::vector<std::string> input_columns);
+                const std::vector<std::string> &input_columns);
   ~FilterDataset() = default;
 };
 #endif
@@ -481,7 +481,7 @@ class FilterDataset : public Dataset {
 class MapDataset : public Dataset {
  public:
   MapDataset(std::shared_ptr<Dataset> input, std::vector<std::shared_ptr<TensorOperation>> operations,
-             std::vector<std::string> input_columns, std::vector<std::string> output_columns,
+             const std::vector<std::string> &input_columns, const std::vector<std::string> &output_columns,
              const std::vector<std::string> &project_columns, const std::shared_ptr<DatasetCache> &cache,
              std::vector<std::shared_ptr<DSCallback>> callbacks);
   ~MapDataset() = default;
