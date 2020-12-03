@@ -207,8 +207,6 @@ class WideDeepModel(nn.Cell):
                 target = 'CPU'
             self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1, target=target,
                                                            slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE)
-            if target == 'DEVICE':
-                self.wide_mul.shard(((1, 1, 1), (1, 1, 1)))
             if config.deep_table_slice_mode == "column_slice":
                 self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target=target,
                                                                slice_mode=nn.EmbeddingLookup.TABLE_COLUMN_SLICE)
