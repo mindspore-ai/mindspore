@@ -55,12 +55,9 @@ Status ZipNode::ValidateParams() {
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> ZipNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  node_ops.push_back(std::make_shared<ZipOp>(rows_per_buffer_, connector_que_size_));
-  return node_ops;
+Status ZipNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+  node_ops->push_back(std::make_shared<ZipOp>(rows_per_buffer_, connector_que_size_));
+  return Status::OK();
 }
 
 // Get Dataset size

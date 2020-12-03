@@ -64,22 +64,18 @@ Status AlbumNode::ValidateParams() {
 }
 
 // Function to build AlbumNode
-std::vector<std::shared_ptr<DatasetOp>> AlbumNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   auto schema = std::make_unique<DataSchema>();
-  build_status = schema->LoadSchemaFile(schema_path_, column_names_);
-  RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
+  RETURN_IF_NOT_OK(schema->LoadSchemaFile(schema_path_, column_names_));
 
   // Argument that is not exposed to user in the API.
   std::set<std::string> extensions = {};
 
-  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
-  node_ops.push_back(std::make_shared<AlbumOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
-                                               decode_, extensions, std::move(schema), std::move(sampler_->Build())));
-  return node_ops;
+  node_ops->push_back(std::make_shared<AlbumOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
+                                                decode_, extensions, std::move(schema), std::move(sampler_->Build())));
+  return Status::OK();
 }
 
 // Get the shard id of node

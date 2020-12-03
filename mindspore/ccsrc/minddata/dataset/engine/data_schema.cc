@@ -219,7 +219,7 @@ Status DataSchema::ColumnOrderLoad(nlohmann::json column_tree, const std::vector
       // Find the column in the json document
       auto column_info = column_tree.find(common::SafeCStr(curr_col_name));
       if (column_info == column_tree.end()) {
-        RETURN_STATUS_UNEXPECTED("Failed to find column " + curr_col_name);
+        RETURN_STATUS_UNEXPECTED("Invalid data, failed to find column name: " + curr_col_name);
       }
       // At this point, columnInfo.value() is the subtree in the json document that contains
       // all of the data for a given column.  This data will formulate our schema column.
@@ -246,7 +246,7 @@ Status DataSchema::ColumnOrderLoad(nlohmann::json column_tree, const std::vector
         i++;
       }
       if (index == -1) {
-        RETURN_STATUS_UNEXPECTED("Failed to find column " + curr_col_name);
+        RETURN_STATUS_UNEXPECTED("Invalid data, failed to find column name: " + curr_col_name);
       }
       nlohmann::json column_child_tree = column_tree[index];
       RETURN_IF_NOT_OK(ColumnLoad(column_child_tree, curr_col_name));

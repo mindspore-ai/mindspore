@@ -53,27 +53,23 @@ Status Cifar100Node::ValidateParams() {
 }
 
 // Function to build CifarOp for Cifar100
-std::vector<std::shared_ptr<DatasetOp>> Cifar100Node::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status Cifar100Node::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   // Do internal Schema generation.
   auto schema = std::make_unique<DataSchema>();
-  RETURN_EMPTY_IF_ERROR(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
+  RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
   TensorShape scalar = TensorShape::CreateScalar();
-  RETURN_EMPTY_IF_ERROR(
+  RETURN_IF_NOT_OK(
     schema->AddColumn(ColDescriptor("coarse_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
-  RETURN_EMPTY_IF_ERROR(
+  RETURN_IF_NOT_OK(
     schema->AddColumn(ColDescriptor("fine_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
 
-  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
-  node_ops.push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar100, usage_, num_workers_, rows_per_buffer_,
-                                               dataset_dir_, connector_que_size_, std::move(schema),
-                                               std::move(sampler_->Build())));
+  node_ops->push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar100, usage_, num_workers_, rows_per_buffer_,
+                                                dataset_dir_, connector_que_size_, std::move(schema),
+                                                std::move(sampler_->Build())));
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Get the shard id of node

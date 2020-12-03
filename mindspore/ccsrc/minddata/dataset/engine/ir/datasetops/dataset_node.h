@@ -35,15 +35,6 @@ class SamplerObj;
 class NodePass;
 class DatasetSizeGetter;
 
-#define RETURN_EMPTY_IF_ERROR(_s) \
-  do {                            \
-    Status __rc = (_s);           \
-    if (__rc.IsError()) {         \
-      MS_LOG(ERROR) << __rc;      \
-      return {};                  \
-    }                             \
-  } while (false)
-
 // Names for non-leaf IR node
 constexpr char kBatchNode[] = "Batch";
 constexpr char kBucketBatchByLengthNode[] = "BucketBatchByLength";
@@ -148,7 +139,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \brief << Stream output operator overload
   /// \notes This allows you to write the debug print info using stream operators
   /// \param out - reference to the output stream being overloaded
-  /// \param dO - reference to the DatasetOp to display
+  /// \param node - reference to the DatasetNode to display
   /// \return - the output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, const DatasetNode &node) {
     node.PrintTree(out);
@@ -160,8 +151,9 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   std::shared_ptr<DatasetNode> DeepCopy();
 
   /// \brief Pure virtual function to convert a DatasetNode class into a runtime dataset object
-  /// \return The list of shared pointers to the newly created DatasetOps
-  virtual std::vector<std::shared_ptr<DatasetOp>> Build() = 0;
+  /// \param node_ops - A vector containing shared pointer to the Dataset Ops that this object will create
+  /// \return Status Status::OK() if build successfully
+  virtual Status Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) = 0;
 
   /// \brief Pure virtual function for derived class to implement parameters validation
   /// \return Status Status::OK() if all the parameters are valid
@@ -229,10 +221,6 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return Status of the node visit
   virtual Status AcceptAfter(NodePass *p, bool *modified);
 
-  /// \brief Method to get status from Node.Build()
-  /// \notes Remove me after changing return val of Build()
-  Status BuildStatus() { return build_status; }
-
   virtual bool IsSizeDefined() { return true; }
 
  protected:
@@ -244,7 +232,6 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   int32_t rows_per_buffer_;
   int32_t connector_que_size_;
   int32_t worker_connector_size_;
-  Status build_status;  // remove me after changing return val of Build()
   std::string PrintColumns(const std::vector<std::string> &columns) const;
   Status AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops);
   void PrintNode(std::ostream &out, int *level) const;

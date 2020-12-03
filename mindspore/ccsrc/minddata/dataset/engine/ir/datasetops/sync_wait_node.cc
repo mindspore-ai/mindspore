@@ -42,16 +42,13 @@ void SyncWaitNode::Print(std::ostream &out) const {
 }
 
 // Function to build the BarrierOp
-std::vector<std::shared_ptr<DatasetOp>> SyncWaitNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status SyncWaitNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   // Right now barrier should only take num_rows_per_buffer = 1
   // The reason for this is because having it otherwise can lead to blocking issues
   // See barrier_op.h for more details
   int32_t rows_per_buffer = 1;
-  node_ops.push_back(std::make_shared<BarrierOp>(rows_per_buffer, connector_que_size_, condition_name_, callback_));
-  return node_ops;
+  node_ops->push_back(std::make_shared<BarrierOp>(rows_per_buffer, connector_que_size_, condition_name_, callback_));
+  return Status::OK();
 }
 
 // Function to validate the parameters for SyncWaitNode

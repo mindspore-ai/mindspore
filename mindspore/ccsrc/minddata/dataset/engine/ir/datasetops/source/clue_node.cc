@@ -83,10 +83,7 @@ std::vector<std::string> CLUENode::split(const std::string &s, char delim) {
 }
 
 // Function to build CLUENode
-std::vector<std::shared_ptr<DatasetOp>> CLUENode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status CLUENode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   std::map<std::string, std::string> key_map;
   if (task_ == "AFQMC") {
     if (usage_ == "train") {
@@ -209,8 +206,7 @@ std::vector<std::shared_ptr<DatasetOp>> CLUENode::Build() {
     num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, ck_map, sorted_dataset_files,
     connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(sampler_->Build()));
 
-  build_status = clue_op->Init();  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(clue_op->Init());
 
   if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal) {
     // Inject ShuffleOp
@@ -218,20 +214,18 @@ std::vector<std::shared_ptr<DatasetOp>> CLUENode::Build() {
     int64_t num_rows = 0;
 
     // First, get the number of rows in the dataset
-    build_status = ClueOp::CountAllFileRows(sorted_dataset_files, &num_rows);
-    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
+    RETURN_IF_NOT_OK(ClueOp::CountAllFileRows(sorted_dataset_files, &num_rows));
 
     // Add the shuffle op after this op
-    build_status = AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
-                                rows_per_buffer_, &shuffle_op);
-    RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
-    node_ops.push_back(shuffle_op);
+    RETURN_IF_NOT_OK(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
+                                  rows_per_buffer_, &shuffle_op));
+    node_ops->push_back(shuffle_op);
   }
-  RETURN_EMPTY_IF_ERROR(AddCacheOp(&node_ops));
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
-  node_ops.push_back(clue_op);
+  node_ops->push_back(clue_op);
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Get the shard id of node

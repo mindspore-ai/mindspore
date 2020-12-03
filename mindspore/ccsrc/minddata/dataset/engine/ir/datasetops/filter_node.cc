@@ -43,12 +43,9 @@ void FilterNode::Print(std::ostream &out) const {
   out << Name() + "(<predicate>," + "input_cols:" + PrintColumns(input_columns_) + ")";
 }
 
-std::vector<std::shared_ptr<DatasetOp>> FilterNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  node_ops.push_back(std::make_shared<FilterOp>(input_columns_, num_workers_, connector_que_size_, predicate_));
-  return node_ops;
+Status FilterNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+  node_ops->push_back(std::make_shared<FilterOp>(input_columns_, num_workers_, connector_que_size_, predicate_));
+  return Status::OK();
 }
 
 Status FilterNode::ValidateParams() {

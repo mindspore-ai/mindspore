@@ -51,12 +51,9 @@ Status ProjectNode::ValidateParams() {
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> ProjectNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  node_ops.push_back(std::make_shared<ProjectOp>(columns_));
-  return node_ops;
+Status ProjectNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+  node_ops->push_back(std::make_shared<ProjectOp>(columns_));
+  return Status::OK();
 }
 
 }  // namespace dataset

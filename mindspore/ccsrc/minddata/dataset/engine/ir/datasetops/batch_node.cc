@@ -91,27 +91,24 @@ Status BatchNode::ValidateParams() {
   return Status::OK();
 }
 
-std::vector<std::shared_ptr<DatasetOp>> BatchNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status BatchNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 #ifdef ENABLE_PYTHON
   // if col_order_ isn't empty, then a project node needs to be attached after batch node. (same as map)
-  // this means project_node needs to be the parent of batch_node. this means node_ops = [project_node, batch_node]
+  // this means project_node needs to be the parent of batch_node. this means *node_ops = [project_node, batch_node]
   if (!col_order_.empty()) {
     auto project_op = std::make_shared<ProjectOp>(col_order_);
-    node_ops.push_back(project_op);
+    node_ops->push_back(project_op);
   }
 
-  node_ops.push_back(std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,
-                                               in_col_names_, out_col_names_, batch_size_func_, batch_map_func_,
-                                               pad_map_));
+  node_ops->push_back(std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,
+                                                in_col_names_, out_col_names_, batch_size_func_, batch_map_func_,
+                                                pad_map_));
 #else
-  node_ops.push_back(std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,
-                                               in_col_names_, pad_map_));
+  node_ops->push_back(std::make_shared<BatchOp>(batch_size_, drop_remainder_, pad_, connector_que_size_, num_workers_,
+                                                in_col_names_, pad_map_));
 #endif
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Get Dataset size

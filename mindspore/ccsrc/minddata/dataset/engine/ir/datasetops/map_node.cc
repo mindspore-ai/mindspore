@@ -52,10 +52,7 @@ void MapNode::Print(std::ostream &out) const {
            ",<project_cols>" + ",...)";
 }
 
-std::vector<std::shared_ptr<DatasetOp>> MapNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
 
   // Build tensorOp from tensorOperation vector
@@ -74,13 +71,12 @@ std::vector<std::shared_ptr<DatasetOp>> MapNode::Build() {
 
   if (!project_columns_.empty()) {
     auto project_op = std::make_shared<ProjectOp>(project_columns_);
-    node_ops.push_back(project_op);
+    node_ops->push_back(project_op);
   }
-  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
-  node_ops.push_back(map_op);
-  return node_ops;
+  node_ops->push_back(map_op);
+  return Status::OK();
 }
 
 Status MapNode::ValidateParams() {

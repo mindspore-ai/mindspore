@@ -148,12 +148,8 @@ Status MindDataNode::BuildMindDatasetSamplerChain(const std::shared_ptr<SamplerO
 // Helper function to set sample_bytes from py::byte type
 void MindDataNode::SetSampleBytes(std::map<std::string, std::string> *sample_bytes) { sample_bytes_ = *sample_bytes; }
 
-std::vector<std::shared_ptr<DatasetOp>> MindDataNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  build_status = BuildMindDatasetSamplerChain(sampler_, &operators_, num_padded_);
-  RETURN_EMPTY_IF_ERROR(build_status);  // remove me after changing return val of Build()
+Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+  RETURN_IF_NOT_OK(BuildMindDatasetSamplerChain(sampler_, &operators_, num_padded_));
 
   std::shared_ptr<MindRecordOp> mindrecord_op;
   // If pass a string to MindData(), it will be treated as a pattern to search for matched files,
@@ -169,11 +165,10 @@ std::vector<std::shared_ptr<DatasetOp>> MindDataNode::Build() {
                                                    padded_sample_, sample_bytes_);
   }
 
-  build_status = mindrecord_op->Init();  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
-  node_ops.push_back(mindrecord_op);
+  RETURN_IF_NOT_OK(mindrecord_op->Init());
+  node_ops->push_back(mindrecord_op);
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Get the shard id of node

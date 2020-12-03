@@ -61,17 +61,16 @@ int32_t RandomNode::GenRandomInt(int32_t min, int32_t max) {
 }
 
 // Build for RandomNode
-std::vector<std::shared_ptr<DatasetOp>> RandomNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
+Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   rand_gen_.seed(GetSeed());  // seed the random generator
   // If total rows was not given, then randomly pick a number
   std::shared_ptr<SchemaObj> schema_obj;
   if (!schema_path_.empty()) {
     schema_obj = Schema(schema_path_);
     if (schema_obj == nullptr) {
-      return {};
+      std::string err_msg = "RandomNode::Build : Invalid schema path";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
 
@@ -109,12 +108,11 @@ std::vector<std::shared_ptr<DatasetOp>> RandomNode::Build() {
   std::shared_ptr<RandomDataOp> op;
   op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, rows_per_buffer_, total_rows_,
                                       std::move(data_schema_), std::move(sampler_->Build()));
-  build_status = AddCacheOp(&node_ops);  // remove me after changing return val of Build()
-  RETURN_EMPTY_IF_ERROR(build_status);
+  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
-  node_ops.push_back(op);
+  node_ops->push_back(op);
 
-  return node_ops;
+  return Status::OK();
 }
 
 // Get the shard id of node

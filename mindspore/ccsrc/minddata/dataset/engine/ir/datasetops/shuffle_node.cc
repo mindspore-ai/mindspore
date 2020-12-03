@@ -43,13 +43,10 @@ void ShuffleNode::Print(std::ostream &out) const {
 }
 
 // Function to build the ShuffleOp
-std::vector<std::shared_ptr<DatasetOp>> ShuffleNode::Build() {
-  // A vector containing shared pointer to the Dataset Ops that this object will create
-  std::vector<std::shared_ptr<DatasetOp>> node_ops;
-
-  node_ops.push_back(std::make_shared<ShuffleOp>(shuffle_size_, shuffle_seed_, connector_que_size_, reset_every_epoch_,
-                                                 rows_per_buffer_));
-  return node_ops;
+Status ShuffleNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+  node_ops->push_back(std::make_shared<ShuffleOp>(shuffle_size_, shuffle_seed_, connector_que_size_, reset_every_epoch_,
+                                                  rows_per_buffer_));
+  return Status::OK();
 }
 
 // Function to validate the parameters for ShuffleNode

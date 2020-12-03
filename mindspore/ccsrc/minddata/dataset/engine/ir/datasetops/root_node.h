@@ -47,8 +47,9 @@ class RootNode : public DatasetNode {
   std::shared_ptr<DatasetNode> Copy() override;
 
   /// \brief a base class override function to create the required runtime dataset op objects for this class
-  /// \return shared pointer to the list of newly created DatasetOps
-  std::vector<std::shared_ptr<DatasetOp>> Build() override;
+  /// \param node_ops - A vector containing shared pointer to the Dataset Ops that this object will create
+  /// \return Status Status::OK() if build successfully
+  Status Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) override;
 
   /// \brief Getter of number of epochs
   int32_t num_epochs() { return num_epochs_; }
