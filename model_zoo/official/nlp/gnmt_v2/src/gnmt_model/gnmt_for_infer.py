@@ -189,7 +189,6 @@ def infer(config):
     eval_dataset = load_dataset(data_files=config.test_dataset,
                                 schema=config.dataset_schema,
                                 batch_size=config.batch_size,
-                                epoch_count=1,
                                 sink_mode=config.dataset_sink_mode,
                                 drop_remainder=False,
                                 is_translate=True,

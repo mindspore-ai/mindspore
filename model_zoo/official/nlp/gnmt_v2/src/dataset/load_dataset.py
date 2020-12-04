@@ -19,9 +19,9 @@ import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.c_transforms as deC
 
 
-def _load_dataset(input_files, schema_file, batch_size, epoch_count=1,
-                  sink_mode=False, sink_step=1, rank_size=1, rank_id=0, shuffle=True,
-                  drop_remainder=True, is_translate=False):
+def _load_dataset(input_files, schema_file, batch_size, sink_mode=False,
+                  rank_size=1, rank_id=0, shuffle=True, drop_remainder=True,
+                  is_translate=False):
     """
     Load dataset according to passed in params.
 
@@ -29,9 +29,7 @@ def _load_dataset(input_files, schema_file, batch_size, epoch_count=1,
         input_files (list): Data files.
         schema_file (str): Schema file path.
         batch_size (int): Batch size.
-        epoch_count (int): Epoch count.
         sink_mode (bool): Whether enable sink mode.
-        sink_step (int): Step to sink.
         rank_size (int): Rank size.
         rank_id (int): Rank id.
         shuffle (bool): Whether shuffle dataset.
@@ -57,15 +55,14 @@ def _load_dataset(input_files, schema_file, batch_size, epoch_count=1,
         print(f" | Loading {datafile}.")
 
     if not is_translate:
-        ds = de.TFRecordDataset(
-            input_files, schema_file,
-            columns_list=[
+        ds = de.MindDataset(
+            input_files, columns_list=[
                 "src", "src_padding",
                 "prev_opt",
                 "target", "tgt_padding"
-            ],
-            shuffle=False, num_shards=rank_size, shard_id=rank_id,
-            shard_equal_rows=True, num_parallel_workers=8)
+            ], shuffle=False, num_shards=rank_size, shard_id=rank_id,
+            num_parallel_workers=8
+        )
 
         ori_dataset_size = ds.get_dataset_size()
         print(f" | Dataset size: {ori_dataset_size}.")
@@ -92,13 +89,13 @@ def _load_dataset(input_files, schema_file, batch_size, epoch_count=1,
         )
         ds = ds.batch(batch_size, drop_remainder=drop_remainder)
     else:
-        ds = de.TFRecordDataset(
-            input_files, schema_file,
-            columns_list=[
+        ds = de.MindDataset(
+            input_files, columns_list=[
                 "src", "src_padding"
             ],
             shuffle=False, num_shards=rank_size, shard_id=rank_id,
-            shard_equal_rows=True, num_parallel_workers=8)
+            num_parallel_workers=8
+        )
 
         ori_dataset_size = ds.get_dataset_size()
         print(f" | Dataset size: {ori_dataset_size}.")
@@ -119,7 +116,7 @@ def _load_dataset(input_files, schema_file, batch_size, epoch_count=1,
     return ds
 
 
-def load_dataset(data_files: list, schema: str, batch_size: int, epoch_count: int, sink_mode: bool, sink_step: int = 1,
+def load_dataset(data_files: list, schema: str, batch_size: int, sink_mode: bool,
                  rank_size: int = 1, rank_id: int = 0, shuffle=True, drop_remainder=True, is_translate=False):
     """
     Load dataset.
@@ -128,9 +125,7 @@ def load_dataset(data_files: list, schema: str, batch_size: int, epoch_count: in
         data_files (list): Data files.
         schema (str): Schema file path.
         batch_size (int): Batch size.
-        epoch_count (int): Epoch count.
         sink_mode (bool): Whether enable sink mode.
-        sink_step (int): Step to sink.
         rank_size (int): Rank size.
         rank_id (int): Rank id.
         shuffle (bool): Whether shuffle dataset.
@@ -138,6 +133,5 @@ def load_dataset(data_files: list, schema: str, batch_size: int, epoch_count: in
     Returns:
         Dataset, dataset instance.
     """
-    return _load_dataset(data_files, schema, batch_size, epoch_count, sink_mode,
-                         sink_step, rank_size, rank_id, shuffle=shuffle,
+    return _load_dataset(data_files, schema, batch_size, sink_mode, rank_size, rank_id, shuffle=shuffle,
                          drop_remainder=drop_remainder, is_translate=is_translate)

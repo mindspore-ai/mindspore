@@ -53,7 +53,6 @@ def get_source_list(folder: str) -> List:
 
 
 PARAM_NODES = {"dataset_config",
-               "training_platform",
                "model_config",
                "loss_scale_config",
                "learn_rate_config",
@@ -65,88 +64,99 @@ class GNMTConfig:
     Configuration for `GNMT`.
 
     Args:
-        random_seed (int): Random seed.
-        batch_size (int): Batch size of input dataset.
+        random_seed (int): Random seed, it can be changed.
         epochs (int): Epoch number.
-        dataset_sink_mode (bool): Whether enable dataset sink mode.
-        dataset_sink_step (int): Dataset sink step.
-        lr_scheduler (str): Whether use lr_scheduler, only support "ISR" now.
-        lr (float): Initial learning rate.
-        min_lr (float): Minimum learning rate.
-        decay_start_step (int): Step to decay.
-        warmup_steps (int): Warm up steps.
+        batch_size (int): Batch size of input dataset.
         dataset_schema (str): Path of dataset schema file.
         pre_train_dataset (str): Path of pre-training dataset file or folder.
         fine_tune_dataset (str): Path of fine-tune dataset file or folder.
         test_dataset (str): Path of test dataset file or folder.
         valid_dataset (str): Path of validation dataset file or folder.
-        ckpt_path (str): Checkpoints save path.
-        save_ckpt_steps (int): Interval of saving ckpt.
-        ckpt_prefix (str): Prefix of ckpt file.
-        keep_ckpt_max (int): Max ckpt files number.
-        seq_length (int): Length of input sequence. Default: 64.
-        vocab_size (int): The shape of each embedding vector. Default: 46192.
-        hidden_size (int): Size of embedding, attention, dim. Default: 512.
+        dataset_sink_mode (bool): Whether enable dataset sink mode.
+        seq_length (int): Length of input sequence.
+        vocab_size (int): The shape of each embedding vector.
+        hidden_size (int): Size of embedding, attention, dim.
         num_hidden_layers (int): Encoder, Decoder layers.
-
         intermediate_size (int): Size of intermediate layer in the Transformer
-            encoder/decoder cell. Default: 4096.
+            encoder/decoder cell.
         hidden_act (str): Activation function used in the Transformer encoder/decoder
-            cell. Default: "relu".
+            cell.
+        hidden_dropout_prob (float): The dropout probability for hidden outputs.
+        attention_dropout_prob (float): The dropout probability for Attention module.
+        initializer_range (float): Initialization value of TruncatedNormal.
+        label_smoothing (float): Label smoothing setting.
+        beam_width (int): Beam width for beam search in inferring.
+        length_penalty_weight (float): Penalty for sentence length.
+        max_decode_length (int): Max decode length for inferring.
+        input_mask_from_dataset (bool): Specifies whether to use the input mask that loaded from
+            dataset.
         init_loss_scale (int): Initialized loss scale.
         loss_scale_factor (int): Loss scale factor.
         scale_window (int): Window size of loss scale.
-        beam_width (int): Beam width for beam search in inferring. Default: 4.
-        length_penalty_weight (float): Penalty for sentence length. Default: 1.0.
-        label_smoothing (float): Label smoothing setting. Default: 0.1.
-        input_mask_from_dataset (bool): Specifies whether to use the input mask that loaded from
-            dataset. Default: True.
+        lr_scheduler (str): Whether use lr_scheduler, only support "ISR" now.
+        optimizer (str): Optimizer for training, e.g. Adam, Lamb, momentum. Default: Adam.
+        lr (float): Initial learning rate.
+        min_lr (float): Minimum learning rate.
+        decay_steps (int): Decay steps.
+        lr_scheduler_power(float): A value used to calculate decayed learning rate.
+        warmup_lr_remain_steps (int or float): Start decay at 'remain_steps' iteration.
+        warmup_lr_decay_interval (int):interval between LR decay steps.
+        decay_start_step (int): Step to decay.
+        warmup_steps (int): Warm up steps.
+        existed_ckpt (str): Using existed checkpoint to keep training or not.
+        save_ckpt_steps (int): Interval of saving ckpt.
+        keep_ckpt_max (int): Max ckpt files number.
+        ckpt_prefix (str): Prefix of ckpt file.
+        ckpt_path (str): Checkpoints save path.
         save_graphs (bool): Whether to save graphs, please set to True if mindinsight
             is wanted.
-        dtype (mstype): Data type of the input. Default: mstype.float32.
-        max_decode_length (int): Max decode length for inferring. Default: 64.
-        hidden_dropout_prob (float): The dropout probability for hidden outputs. Default: 0.1.
-        attention_dropout_prob (float): The dropout probability for
-            Multi-head Self-Attention. Default: 0.1.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
+        dtype (mstype): Data type of the input.
+
+    Note:
+        There are three types of learning rate scheduler, square root scheduler, polynomial
+        decay scheduler and warmup multistep learning rate scheduler.
+        In square root scheduler, the following parameters can be used, lr, decay_start_step,
+            warmup_steps and min_lr.
+        In polynomial decay scheduler, the following parameters can be used, lr, min_lr, decay_steps,
+            warmup_steps, lr_scheduler_power.
+        In warmmup multistep learning rate scheduler, the following parameters can be used, lr, warmup_steps,
+            warmup_lr_remain_steps, warmup_lr_decay_interval, decay_steps, lr_scheduler_power.
     """
 
     def __init__(self,
-                 modelarts=False, random_seed=74,
-                 epochs=6, batch_size=64,
+                 random_seed=50,
+                 epochs=6, batch_size=128,
                  dataset_schema: str = None,
                  pre_train_dataset: str = None,
                  fine_tune_dataset: str = None,
                  test_dataset: str = None,
                  valid_dataset: str = None,
-                 dataset_sink_mode=True, dataset_sink_step=1,
+                 dataset_sink_mode=True,
                  seq_length=51, vocab_size=32320, hidden_size=1024,
                  num_hidden_layers=4, intermediate_size=4096,
                  hidden_act="tanh",
                  hidden_dropout_prob=0.2, attention_dropout_prob=0.2,
                  initializer_range=0.1,
                  label_smoothing=0.1,
-                 beam_width=5,
-                 length_penalty_weight=1.0,
+                 beam_width=2,
+                 length_penalty_weight=0.6,
                  max_decode_length=50,
                  input_mask_from_dataset=False,
-                 init_loss_scale=2 ** 10,
-                 loss_scale_factor=2, scale_window=128,
-                 lr_scheduler="", optimizer="adam",
-                 lr=1e-4, min_lr=1e-6,
-                 decay_steps=4, lr_scheduler_power=1,
+                 init_loss_scale=65536,
+                 loss_scale_factor=2, scale_window=1000,
+                 lr_scheduler="WarmupMultiStepLR",
+                 optimizer="adam",
+                 lr=2e-3, min_lr=1e-6,
+                 decay_steps=4, lr_scheduler_power=0.5,
                  warmup_lr_remain_steps=0.666, warmup_lr_decay_interval=-1,
                  decay_start_step=-1, warmup_steps=200,
-                 existed_ckpt="", save_ckpt_steps=2000, keep_ckpt_max=20,
+                 existed_ckpt="", save_ckpt_steps=3452, keep_ckpt_max=6,
                  ckpt_prefix="gnmt", ckpt_path: str = None,
-                 save_step=10000,
                  save_graphs=False,
                  dtype=mstype.float32):
 
         self.save_graphs = save_graphs
         self.random_seed = random_seed
-        self.modelarts = modelarts
-        self.save_step = save_step
         self.dataset_schema = dataset_schema
         self.pre_train_dataset = get_source_list(pre_train_dataset)  # type: List[str]
         self.fine_tune_dataset = get_source_list(fine_tune_dataset)  # type: List[str]
@@ -158,7 +168,6 @@ class GNMTConfig:
 
         self.epochs = epochs
         self.dataset_sink_mode = dataset_sink_mode
-        self.dataset_sink_step = dataset_sink_step
 
         self.ckpt_path = ckpt_path
         self.keep_ckpt_max = keep_ckpt_max
@@ -200,8 +209,6 @@ class GNMTConfig:
         self.decay_steps = decay_steps
         self.decay_start_step = decay_start_step
         self.warmup_steps = warmup_steps
-
-        self.train_url = ""
 
     @classmethod
     def from_dict(cls, json_object: dict):

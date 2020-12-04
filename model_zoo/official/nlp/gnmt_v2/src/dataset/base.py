@@ -14,16 +14,16 @@
 # ============================================================================
 """Base class of data loader."""
 import os
-import collections
 import numpy as np
 
 from mindspore.mindrecord import FileWriter
-from .schema import SCHEMA
+from .schema import SCHEMA, TEST_SCHEMA
 
 
 class DataLoader:
     """Data loader for dataset."""
     _SCHEMA = SCHEMA
+    _TEST_SCHEMA = TEST_SCHEMA
 
     def __init__(self):
         self._examples = []
@@ -41,7 +41,7 @@ class DataLoader:
         new_sen[:sen.shape[0]] = sen[:]
         return new_sen
 
-    def write_to_mindrecord(self, path, shard_num=1, desc=""):
+    def write_to_mindrecord(self, path, train_mode, shard_num=1, desc="gnmt"):
         """
         Write mindrecord file.
 
@@ -54,49 +54,16 @@ class DataLoader:
             path = os.path.abspath(path)
 
         writer = FileWriter(file_name=path, shard_num=shard_num)
-        writer.add_schema(self._SCHEMA, desc)
+        if train_mode:
+            writer.add_schema(self._SCHEMA, desc)
+        else:
+            writer.add_schema(self._TEST_SCHEMA, desc)
         if not self._examples:
             self._load()
 
         writer.write_raw_data(self._examples)
         writer.commit()
         print(f"| Wrote to {path}.")
-
-    def write_to_tfrecord(self, path, shard_num=1):
-        """
-        Write to tfrecord.
-
-        Args:
-            path (str): Output file path.
-            shard_num (int): Shard num.
-        """
-        import tensorflow as tf
-        if not os.path.isabs(path):
-            path = os.path.abspath(path)
-        output_files = []
-        for i in range(shard_num):
-            output_file = path + "-%03d-of-%03d" % (i + 1, shard_num)
-            output_files.append(output_file)
-        # create writers
-        writers = []
-        for output_file in output_files:
-            writers.append(tf.io.TFRecordWriter(output_file))
-
-        if not self._examples:
-            self._load()
-
-        # create feature
-        features = collections.OrderedDict()
-        for example in self._examples:
-            for key in example:
-                features[key] = tf.train.Feature(int64_list=tf.train.Int64List(value=example[key].tolist()))
-            tf_example = tf.train.Example(features=tf.train.Features(feature=features))
-            for writer in writers:
-                writer.write(tf_example.SerializeToString())
-        for writer in writers:
-            writer.close()
-        for p in output_files:
-            print(f" | Write to {p}.")
 
     def _add_example(self, example):
         self._examples.append(example)
