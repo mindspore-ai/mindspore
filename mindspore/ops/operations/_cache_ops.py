@@ -187,6 +187,46 @@ class SearchCacheIdx(PrimitiveWithInfer):
         return out_dtype
 
 
+class MapUniform(PrimitiveWithCheck):
+    """
+    Map a tensor by using fomula : value = key % `group_num` * `per_group_size` + key // `group_num`.
+
+    Inputs:
+        - **input** (Tensor) - Input Tensor.
+        - **per_group_size** (int) - The size of each group.
+        - **group_num** (int) - The number of group.
+
+    Outputs:
+        Tensor, has the same dtype and shape as the `input`.
+
+    Supported Platforms:
+        `CPU`
+
+    Examples:
+        >>> input_x = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7]))
+        >>> per_group_size = 4
+        >>> group_num = 2
+        >>> map_uniform = ops.MapUniform()
+        >>> output = map_uniform(input_x, per_group_size, group_num)
+        >>> print(output)
+        [0, 4, 1, 5, 2, 6, 3, 7]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init MapUniform"""
+        self.init_prim_io_names(inputs=['input', 'per_group_size', 'group_num'],
+                                outputs=['output'])
+
+    def check_dtype(self, input_dtype, per_group_size_dtype, group_num_dtype):
+        validator.check_tensor_dtype_valid(
+            "input", input_dtype, mstype.int_type, self.name)
+        validator.check_value_type(
+            'per_group_size', per_group_size_dtype, [mstype.Int], self.name)
+        validator.check_value_type(
+            'group_num', group_num_dtype, [mstype.Int], self.name)
+
+
 class CacheSwapHashmap(PrimitiveWithInfer):
     """
     Delete a hashmap entry,and insert a new key to hashmap, return the key and value of delete entry.
