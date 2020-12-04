@@ -44,6 +44,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSqrtGrad, {InferImplSqrtGrad, true}},
     {prim::kPrimSub, {InferImplSub, true}},
     {prim::kPrimEqual, {InferImplEqual, true}},
+    {prim::kPrimReduceSum, {InferImplReduceSum, true}},
     {prim::kPrimMinimum, {InferImplMinimum, true}},
     {prim::kPrimDivNoNan, {InferImplDivNoNan, true}},
     {prim::kPrimLinSpace, {InferImplLinSpace, true}},

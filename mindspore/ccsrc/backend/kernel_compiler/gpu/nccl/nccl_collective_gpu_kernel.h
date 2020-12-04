@@ -43,14 +43,7 @@ const std::map<std::string, NcclKernelType> kNcclTypeMap = {
 template <typename T>
 class NcclCollectiveGpuKernel : public NcclGpuKernel {
  public:
-  NcclCollectiveGpuKernel()
-      : nccl_kernel_type_(NCCL_INVALID_TYPE),
-        nccl_reduce_type_(ncclSum),
-        input_size_(0),
-        output_size_(0),
-        root_(0),
-        collective_handle_(nullptr),
-        comm_stream_(nullptr) {}
+  NcclCollectiveGpuKernel() { ResetResource(); }
   ~NcclCollectiveGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -82,6 +75,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     }
     return true;
   }
+
   bool Init(const CNodePtr &kernel_node) override {
     nccl_data_type_ = nccl_dtype(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
     InferCommType(kernel_node);
@@ -89,7 +83,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; ++i) {
-      auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+      auto shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, i);
       size_t size = sizeof(T);
       for (size_t j = 0; j < shape.size(); j++) {
         size *= IntToSize(shape[j]);
@@ -99,7 +93,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
       input_size_ += aligned_size;
     }
     for (size_t i = 0; i < output_num; ++i) {
-      auto shape = AnfAlgo::GetOutputInferShape(kernel_node, i);
+      auto shape = AnfAlgo::GetOutputRealDeviceShapeIfExist(kernel_node, i);
       size_t size = sizeof(T);
       for (size_t j = 0; j < shape.size(); j++) {
         size *= IntToSize(shape[j]);
@@ -120,6 +114,19 @@ class NcclCollectiveGpuKernel : public NcclGpuKernel {
     collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
     MS_EXCEPTION_IF_NULL(collective_handle_);
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    nccl_kernel_type_ = NCCL_INVALID_TYPE;
+    nccl_reduce_type_ = ncclSum;
+    input_size_ = 0;
+    output_size_ = 0;
+    root_ = 0;
+    collective_handle_ = nullptr;
+    comm_stream_ = nullptr;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

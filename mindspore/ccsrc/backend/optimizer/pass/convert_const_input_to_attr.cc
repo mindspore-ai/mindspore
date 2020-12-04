@@ -43,8 +43,8 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
     todos.push_back(node);
   }
 
-  std::set<string> DynamicShapeConstInputToAttr = {kCastOpName, kExpandDimsOpName, kReshapeOpName,
-                                                   kEmbeddingLookupOpName, kTransposeOpName};
+  std::set<string> DynamicShapeConstInputToAttr = {
+    kCastOpName, kExpandDimsOpName, kReshapeOpName, kEmbeddingLookupOpName, kTransposeOpName, kReduceSumOpName};
   for (auto &t : todos) {
     CNodePtr cnode = t->cast<CNodePtr>();
     ConstInputToAttrInfoRegister reg;
