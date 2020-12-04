@@ -38,22 +38,17 @@ STATUS OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx:
     return RET_NULL_PTR;
   }
 
+  attr->method = schema::ResizeMethod_NEAREST;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "mode") {
-      if ("nearest" == onnx_node_attr.s()) {
-        attr->method = schema::ResizeMethod_NEAREST;
-      } else if ("bilinear" == onnx_node_attr.s()) {
-        attr->method = schema::ResizeMethod_LINEAR;
-      } else {
-        MS_LOG(ERROR) << "Resize do not support upsample mode";
-        return RET_ERROR;
+      if (onnx_node_attr.s() != "nearest" && onnx_node_attr.s() != "linear") {
+        MS_LOG(ERROR) << "the upsample mode don't support now.";
+        return RET_NOT_SUPPORT;
       }
+      attr->method = onnx_node_attr.s() == "nearest" ? schema::ResizeMethod_NEAREST : schema::ResizeMethod_LINEAR;
     }
   }
-  attr->newWidth = 1;
-  attr->newHeight = 1;
-  attr->alignCorners = false;
   op->primitive->value.type = schema::PrimitiveType_Resize;
   op->primitive->value.value = attr.release();
   return RET_OK;
