@@ -140,7 +140,7 @@ Status Task::Join(WaitFlag blocking) {
           // to interrupt everything one more time.
           std::stringstream ss;
           ss << get_id();
-          MS_LOG(ERROR) << MyName() << " Thread ID " << ss.str() << " is not responding. Interrupt again";
+          MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str() << " is not responding. Interrupt again";
           interrupt_svc->InterruptAll();
         }
       } else {
