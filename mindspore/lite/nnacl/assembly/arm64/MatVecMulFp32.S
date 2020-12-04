@@ -1,12 +1,12 @@
 #ifdef __aarch64__
     .text
     .align 5
-    .global MatVecMulFp32Neon64
+    .global MatVecMulFp32
 #ifndef __APPLE__
-    .type MatVecMulFp32Neon64, %function
+    .type MatVecMulFp32, %function
 #endif
 
-// void MatVecMulFp32Neon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col)
+// void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col)
 // x0: a
 // x1: b
 // x2: c
@@ -15,7 +15,7 @@
 // w5: depth
 // w6: col
 
-MatVecMulFp32Neon64:
+MatVecMulFp32:
   sub sp, sp, #128
   st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
   st1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64

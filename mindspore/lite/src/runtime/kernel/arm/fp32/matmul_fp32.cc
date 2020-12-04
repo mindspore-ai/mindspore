@@ -66,9 +66,11 @@ int MatmulCPUKernel::MallocMatrixABuffer() {
   }
   params_->batch = batch;
   params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - 2];
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
   if (params_->a_init_shape_ && params_->row_ == 1) {
     is_vector_a_ = true;
+  } else {
+    is_vector_a_ = false;
   }
 #endif
   params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
@@ -76,18 +78,10 @@ int MatmulCPUKernel::MallocMatrixABuffer() {
   params_->row_12_ = UP_ROUND(params_->row_, C12NUM);
 
 #if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
-  if (params_->a_const_) {
-    a_pack_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * params_->row_4_ * params_->deep_ * sizeof(float)));
-  } else {
-    a_pack_ptr_ = reinterpret_cast<float *>(
-      context_->allocator->Malloc(params_->batch * params_->row_4_ * params_->deep_ * sizeof(float)));
-  }
-  if (a_pack_ptr_ == nullptr) {
-    FreeTmpBuffer();
-    return RET_MEMORY_FAILED;
-  }
+  int row_tmp = is_vector_a_ ? 1 : params_->row_4_;
 #else
   int row_tmp = is_vector_a_ ? 1 : params_->row_12_;
+#endif
   if (params_->a_const_) {
     a_pack_ptr_ = reinterpret_cast<float *>(malloc(params_->batch * row_tmp * params_->deep_ * sizeof(float)));
   } else {
@@ -98,7 +92,7 @@ int MatmulCPUKernel::MallocMatrixABuffer() {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
-#endif
+
   return RET_OK;
 }
 

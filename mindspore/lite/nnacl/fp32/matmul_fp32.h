@@ -36,12 +36,14 @@ void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col)
 void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
 void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
 void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
+#ifdef ENABLE_ARM
+void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
+#endif
 #ifdef ENABLE_ARM64
 void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                        int col, size_t stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatNeon64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                           int col, size_t stride, size_t write_mode);
-void MatVecMulFp32Neon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
 #elif ENABLE_ARM32
 void MatmulFloatNeon32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                        int col, int stride, size_t writeNhwc, size_t WriteWino);

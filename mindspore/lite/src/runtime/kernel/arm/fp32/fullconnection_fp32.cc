@@ -58,7 +58,7 @@ int FullconnectionCPUKernel::ReSize() {
   thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_8_, 8));
   thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_8_, 8), thread_count_);
 
-#ifdef ENABLE_ARM64
+#ifdef ENABLE_ARM
   if (fc_param_->row_ == 1) {
     is_vector_input_ = true;
   } else {
@@ -76,19 +76,15 @@ int FullconnectionCPUKernel::ReSize() {
   }
 
 #if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
-  a_pack_ptr_ = reinterpret_cast<float *>(malloc(fc_param_->row_4_ * fc_param_->deep_ * sizeof(float)));
-  if (a_pack_ptr_ == nullptr) {
-    return RET_MEMORY_FAILED;
-  }
-  memset(a_pack_ptr_, 0, fc_param_->row_4_ * fc_param_->deep_ * sizeof(float));
+  int row_tmp = is_vector_input_ ? 1 : fc_param_->row_4_;
 #else
   int row_tmp = is_vector_input_ ? 1 : fc_param_->row_12_;
+#endif
   a_pack_ptr_ = reinterpret_cast<float *>(malloc(row_tmp * fc_param_->deep_ * sizeof(float)));
   if (a_pack_ptr_ == nullptr) {
     return RET_MEMORY_FAILED;
   }
   memset(a_pack_ptr_, 0, row_tmp * fc_param_->deep_ * sizeof(float));
-#endif
 
   int col_tmp = is_vector_input_ ? fc_param_->col_ : fc_param_->col_8_;
   b_pack_ptr_ = reinterpret_cast<float *>(malloc(col_tmp * fc_param_->deep_ * sizeof(float)));
