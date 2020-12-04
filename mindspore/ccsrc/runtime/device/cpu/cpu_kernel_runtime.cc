@@ -257,7 +257,8 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
       MS_EXCEPTION_IF_NULL(address);
       MS_EXCEPTION_IF_NULL(tensor);
       if (tensor_address != nullptr && tensor_address != address &&
-          std::dynamic_pointer_cast<device::DeviceAddress>(tensor_address)->DeviceType() != DeviceAddressType::kCPU) {
+          (std::dynamic_pointer_cast<device::DeviceAddress>(tensor_address)->DeviceType() != DeviceAddressType::kCPU ||
+           AnfAlgo::IsParameterWeight(item->cast<ParameterPtr>()))) {
         tensor->data_sync(false);
       }
       if (GetTypeByte(TypeIdToType(tensor->data_type())) == GetTypeByte(TypeIdToType(address->type_id_))) {

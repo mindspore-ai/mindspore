@@ -21,7 +21,7 @@ Examples:
     >>> import mindspore.ops as ops
 """
 
-from .primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from .primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
 from .vm_impl_registry import get_vm_impl_fn, vm_impl_registry
 from .op_info_register import op_info_register, AkgGpuRegOp, AkgAscendRegOp, AiCPURegOp, TBERegOp, DataType
 from .primitive import constexpr
@@ -32,7 +32,7 @@ from .operations import *
 from .functional import *
 
 __primitive__ = [
-    "prim_attr_register", "Primitive", "PrimitiveWithInfer", "signature"
+    "prim_attr_register", "Primitive", "PrimitiveWithInfer", "PrimitiveWithCheck", "signature"
 ]
 
 __all__ = ["get_vm_impl_fn", "vm_impl_registry",

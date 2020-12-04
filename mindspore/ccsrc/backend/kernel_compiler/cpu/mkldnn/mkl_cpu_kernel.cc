@@ -38,16 +38,15 @@ void MKLCPUKernel::GetPadding(const CNodePtr &kernel_node, const std::string &pa
     for (size_t i = 0; i < weight_height.size(); ++i) {
       auto wh = weight_height[i];
       int re = wh % stride;
+      int pad_along;
       if (re == 0) {
-        re = stride;
-      }
-      int pad = kernel_size[i] - re;
-      padding_l->emplace_back(pad / 2);
-      if (pad % 2 == 0) {
-        padding_r->emplace_back(pad / 2);
+        pad_along = std::max(SizeToInt(kernel_size[i]) - stride, 0);
       } else {
-        padding_r->emplace_back(pad / 2 + 1);
+        pad_along = std::max(SizeToInt(kernel_size[i]) - re, 0);
       }
+      int pad = pad_along / 2;
+      padding_l->emplace_back(pad);
+      padding_r->emplace_back(pad_along - pad);
     }
   } else if (pad_mode == PAD_MODE_LOWER_VALID || pad_mode == PAD_MODE_UPPER_VALID) {
     MS_LOG(INFO) << "pad valid";
