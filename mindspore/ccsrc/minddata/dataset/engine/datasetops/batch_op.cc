@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -129,6 +130,15 @@ Status BatchOp::operator()() {
       worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOE))));
     RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(epoch_num, batch_num, cnt - epoch_num)));
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+
+#if !defined(_WIN32) && !defined(_WIN64)
+    if (batch_num % 10 == 0 && (num_workers_ > 1 || batch_map_func_) && GetMemoryUsage() > MAX_MEMORY_USAGE_THRESHOLD) {
+      MS_LOG(WARNING) << "Memory consumption is more than " << MAX_MEMORY_USAGE_THRESHOLD * 100 << "%, "
+                      << "which may cause oom error. Please reduce num_parallel_workers size / "
+                      << "optimize per_batch_map function / other python data preprocess function to "
+                      << "reduce memory usage.";
+    }
+#endif
   }  // end of eof_handled() == false
   RETURN_IF_NOT_OK(
     worker_queues_[cnt++ % num_workers_]->EmplaceBack(std::make_pair(nullptr, CBatchInfo(batchCtrl::kEOF))));
