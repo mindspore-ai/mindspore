@@ -17,25 +17,26 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <map>
 #include "backend/kernel_compiler/cpu/reduce_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
-const size_t kReduceTypeMax = 0;
-const size_t kReduceTypeMean = 1;
-const size_t kReduceTypeSum = 2;
+const size_t kReduceTypeMax = 1;
+const size_t kReduceTypeMean = 2;
+const size_t kReduceTypeSum = 3;
+const size_t kReduceTypeMin = 4;
 const size_t kMaxDim = 100;
+static std::map<std::string, int> reduce_types_map_ = {
+  {"ReduceMax", 1}, {"ReduceMean", 2}, {"ReduceSum", 3}, {"ReduceMin", 4}};
+
 void ReduceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == "ReduceMax") {
-    reduce_type_ = kReduceTypeMax;
-  } else if (kernel_name == "ReduceMean") {
-    reduce_type_ = kReduceTypeMean;
-  } else if (kernel_name == "ReduceSum") {
-    reduce_type_ = kReduceTypeSum;
-  } else {
+
+  reduce_type_ = reduce_types_map_[kernel_name];
+  if (reduce_type_ == 0) {
     MS_LOG(EXCEPTION) << "Array reduce kernel type " << kernel_name << " is not supported.";
   }
   shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -57,6 +58,7 @@ void ReduceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   left_dims_ = left_dims_ / stride_;
 }
+
 bool ReduceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                              const std::vector<kernel::AddressPtr> & /*workspaces*/,
                              const std::vector<kernel::AddressPtr> &outputs) {
@@ -127,17 +129,23 @@ void ReduceCPUKernel::CheckAxis(const CNodePtr &kernel_node) {
 }
 
 void ReduceCPUKernel::ConvertDataToOutput(const float *new_input, float *output) {
-  if (reduce_type_ == kReduceTypeMax) {
+  if (reduce_type_ == kReduceTypeMax || reduce_type_ == kReduceTypeMin) {
     for (size_t i = 0; i < left_dims_; ++i) {
       float value = new_input[i * stride_];
       for (size_t k = 0; k < stride_; ++k) {
-        if (value < new_input[i * stride_ + k]) {
-          value = new_input[i * stride_ + k];
+        if (reduce_type_ == kReduceTypeMax) {
+          if (value < new_input[i * stride_ + k]) {
+            value = new_input[i * stride_ + k];
+          }
+        } else {
+          if (value > new_input[i * stride_ + k]) {
+            value = new_input[i * stride_ + k];
+          }
         }
       }
       output[i] = value;
     }
-  } else {
+  } else if (reduce_type_ == kReduceTypeMean || reduce_type_ == kReduceTypeSum) {
     for (size_t i = 0; i < left_dims_; ++i) {
       float value = 0.0;
       for (size_t k = 0; k < stride_; ++k) {
@@ -149,20 +157,23 @@ void ReduceCPUKernel::ConvertDataToOutput(const float *new_input, float *output)
         output[i] = value;
       }
     }
+  } else {
+    MS_LOG(EXCEPTION) << "Array reduce kernel type " << reduce_type_ << " is not supported.";
   }
 }
+
 void ReduceCPUKernel::Transpose(const int size, const float *input, const std::vector<size_t> &input_shape,
                                 const std::vector<size_t> &input_axis, const int shape_size, float *output) {
   int pos_array[kMaxDim];
   int size_offset[kMaxDim];
   size_offset[0] = size / SizeToInt(input_shape[0]);
-  for (int i = 1; i < shape_size; i++) {
+  for (int i = 1; i < shape_size; ++i) {
     size_offset[i] = size_offset[i - 1] / SizeToInt(input_shape[i]);
   }
   for (int position = 0; position < size; position += 1) {
     int temp_position = position;
     pos_array[0] = temp_position / size_offset[0];
-    for (int i = 1; i < shape_size; i++) {
+    for (int i = 1; i < shape_size; ++i) {
       temp_position -= pos_array[i - 1] * size_offset[i - 1];
       pos_array[i] = temp_position / size_offset[i];
     }

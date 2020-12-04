@@ -37,6 +37,7 @@ class NetReduce(nn.Cell):
         self.reduce_mean = P.ReduceMean(False)
         self.reduce_sum = P.ReduceSum(False)
         self.reduce_max = P.ReduceMax(False)
+        self.reduce_min = P.ReduceMin(False)
 
     @ms_function
     def construct(self, indice):
@@ -50,7 +51,14 @@ class NetReduce(nn.Cell):
                 self.reduce_max(indice, self.axis0),
                 self.reduce_max(indice, self.axis2),
                 self.reduce_max(indice, self.axis5),
-                self.reduce_max(indice, self.axis6))
+                self.reduce_max(indice, self.axis6),
+                self.reduce_min(indice, self.axis0),
+                self.reduce_min(indice, self.axis1),
+                self.reduce_min(indice, self.axis2),
+                self.reduce_min(indice, self.axis3),
+                self.reduce_min(indice, self.axis4),
+                self.reduce_min(indice, self.axis5),
+                self.reduce_min(indice, self.axis6))
 
 
 
@@ -76,6 +84,13 @@ def test_reduce():
     print(output[8])
     print(output[9])
     print(output[10])
+    print(output[11])
+    print(output[12])
+    print(output[13])
+    print(output[14])
+    print(output[15])
+    print(output[16])
+    print(output[17])
     expect_0 = np.array([[2., 1., 2., 3., 0., 1], [2., 2., 1., 2., 3., 2.]]).astype(np.float32)
     expect_1 = np.array([[1.5, 1.5, 1.5, 3., 2., 1.], [1.5, 0., 0.5, 4.5, 2., 2.], [3., 3., 2.5, 0., 0.5, 1.5]]).astype(
         np.float32)
@@ -86,6 +101,11 @@ def test_reduce():
     expect_6 = np.array([[9., 12.], [9., 12.], [9., 12.]]).astype(np.float32)
     expect_7 = np.array([[4., 2., 4., 5., 0., 2.], [3., 5., 2., 4., 4., 3.]]).astype(np.float32)
     expect_8 = np.array([[4., 4.], [5., 4.], [4., 5.]]).astype(np.float32)
+    expect_9 = np.array([[0., 0., 1., 0., 0., 0.], [1., 0., 0., 0., 1., 0.]]).astype(np.float32)
+    expect_10 = np.array([[0., 1., 1., 2., 0., 0.], [1., 0., 0., 4., 0., 1.], [2., 1., 1., 0., 0., 0.]]).astype(
+        np.float32)
+    expect_11 = np.array([[0., 0.], [0., 0.], [0., 0.]]).astype(np.float32)
+    expect_12 = np.array([0., 0., 0., 0., 0., 0.]).astype(np.float32)
     assert (output[0].asnumpy() == expect_0).all()
     assert (output[1].asnumpy() == expect_1).all()
     assert (output[2].asnumpy() == expect_2).all()
@@ -97,5 +117,12 @@ def test_reduce():
     assert (output[8].asnumpy() == expect_8).all()
     assert (output[9].asnumpy() == expect_8).all()
     assert (output[10].asnumpy() == 5.0).all()
+    assert (output[11].asnumpy() == expect_9).all()
+    assert (output[12].asnumpy() == expect_10).all()
+    assert (output[13].asnumpy() == expect_11).all()
+    assert (output[14].asnumpy() == expect_12).all()
+    assert (output[15].asnumpy() == 0.0).all()
+    assert (output[16].asnumpy() == expect_11).all()
+    assert (output[17].asnumpy() == 0.0).all()
 
 test_reduce()
