@@ -88,6 +88,7 @@ class Tensor(Tensor_):
         self._virtual_flag = False
 
     def __repr__(self):
+        Tensor_.data_sync(self, False)
         return Tensor_.__repr__(self)
 
     def __add__(self, other):
@@ -293,7 +294,6 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
 
-
     def view(self, *shape):
         r"""
         Reshape the tensor according to the input shape.
@@ -312,7 +312,6 @@ class Tensor(Tensor_):
             shape = shape[0]
         return tensor_operator_registry.get('reshape')()(self, shape)
 
-
     def expand_as(self, x):
         """
         Expand the dimension of target tensor to the dimension of input tensor.
@@ -326,7 +325,6 @@ class Tensor(Tensor_):
         """
         return tensor_operator_registry.get('broadcast_to')(x.shape)(self)
 
-
     def abs(self):
         """
         Return absolute value element-wisely.
@@ -335,7 +333,6 @@ class Tensor(Tensor_):
             Tensor, has the same data type as x.
         """
         return tensor_operator_registry.get('abs')()(self)
-
 
     def mean(self, axis=(), keep_dims=False):
         """
