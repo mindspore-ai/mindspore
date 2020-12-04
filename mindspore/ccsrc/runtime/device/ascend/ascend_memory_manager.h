@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_MEMORY_MANAGER_H_
 #include "runtime/device/memory_manager.h"
+#include "graphengine/inc/external/runtime/rt_error_codes.h"
 namespace mindspore {
 namespace device {
 namespace ascend {
