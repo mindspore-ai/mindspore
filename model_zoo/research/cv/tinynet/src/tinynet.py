@@ -18,10 +18,12 @@ import re
 from copy import deepcopy
 
 import mindspore.nn as nn
+import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.common.initializer import Normal, Zero, One, initializer, Uniform
 from mindspore import context, ms_function
 from mindspore.common.parameter import Parameter
+from mindspore import Tensor
 
 # Imagenet constant values
 IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
@@ -29,12 +31,14 @@ IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
 
 # model structure configurations for TinyNets, values are
 # (resolution multiplier, channel multiplier, depth multiplier)
-# only tinynet-c is availiable for now, we will release other tinynet
-# models soon
 # codes are inspired and partially adapted from
 # https://github.com/rwightman/gen-efficientnet-pytorch
 
-TINYNET_CFG = {"c": (0.825, 0.54, 0.85)}
+TINYNET_CFG = {"a": (0.86, 1.0, 1.2),
+               "b": (0.84, 0.75, 1.1),
+               "c": (0.825, 0.54, 0.85),
+               "d": (0.68, 0.54, 0.695),
+               "e": (0.475, 0.51, 0.60)}
 
 relu = P.ReLU()
 sigmoid = P.Sigmoid()
@@ -524,13 +528,15 @@ class DropConnect(nn.Cell):
         self.dtype = P.DType()
         self.keep_prob = 1 - drop_connect_rate
         self.dropout = P.Dropout(keep_prob=self.keep_prob)
+        self.keep_prob_tensor = Tensor(self.keep_prob, dtype=mstype.float32)
 
     def construct(self, x):
         shape = self.shape(x)
         dtype = self.dtype(x)
         ones_tensor = P.Fill()(dtype, (shape[0], 1, 1, 1), 1)
-        _, mask_ = self.dropout(ones_tensor)
-        x = x * mask_
+        _, mask = self.dropout(ones_tensor)
+        x = x * mask
+        x = x / self.keep_prob_tensor
         return x
 
 
