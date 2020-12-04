@@ -88,12 +88,12 @@ public class ObjectRectView extends View {
 
         mRecognitions.clear();
         mRecognitions.addAll(recognitions);
-        invalidate();
+        postInvalidate();
     }
 
     public void clearCanvas() {
         mRecognitions.clear();
-        invalidate();
+        postInvalidate();
     }
 
     @Override
