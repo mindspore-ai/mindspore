@@ -107,6 +107,10 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 
+  const PrimitivePtr kPrimProdForceSeA = std::make_shared<Primitive>("ProdForceSeA");
+  if (IsPrimitiveCNode(kernel_node, kPrimProdForceSeA)) {
+    kernel_type = KernelType::AKG_KERNEL;
+  }
   switch (kernel_type) {
     case KernelType::AKG_KERNEL:
       AkgMetadataInfo(kernel_node, kernel_info_list);
