@@ -42,7 +42,7 @@ uint32_t RandomChoiceOp::NumOutput() {
   for (auto &op : ops_) {
     uint32_t cur_num = op->NumOutput();
     if (num_output != cur_num) {
-      MS_LOG(WARNING) << "Unable to determine NumInput, ops in RandomChoice don't have the same number of input.";
+      MS_LOG(WARNING) << "Unable to determine NumOutput, ops in RandomChoice don't have the same number of output.";
       return 0;
     }
   }
