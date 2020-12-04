@@ -674,8 +674,6 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
                                         const std::string &host_fmt, const ShapeVector &host_shape, TypeId host_type,
                                         size_t slot, bool keep_prev) const {
   bool ret = false;
-  TensorLoader *tensor_loader = Debugger::GetInstance()->debug_services()->tensor_loader();
-  MS_EXCEPTION_IF_NULL(tensor_loader);
   // TensorData is freed up in AscendSession class
   auto tensor_data = std::make_shared<mindspore::TensorData>();
   tensor_data->SetName(tensor_name);
@@ -689,7 +687,7 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   }
   MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
   tensor_data->SetTensor(out_tensor);
-  ret = tensor_loader->LoadNewTensor(tensor_data, keep_prev);
+  ret = Debugger::GetInstance()->LoadNewTensor(tensor_data, keep_prev);
   return ret;
 }
 #endif

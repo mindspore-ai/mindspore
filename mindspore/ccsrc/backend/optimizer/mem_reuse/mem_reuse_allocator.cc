@@ -81,9 +81,8 @@ bool BestFitMemReuse::IsUsable(const KernelDefPtr &kernel_curr, const MembufPtr 
 #ifdef ENABLE_DEBUGGER
   auto debugger_ = mindspore::Debugger::GetInstance();
   if (debugger_->DebuggerBackendEnabled()) {
-    DebugServices *debug_services = debugger_->debug_services();
     std::string current_kernel_name = kernel_curr->scope_full_name();
-    if (debug_services->IsWatchPoint(current_kernel_name)) {
+    if (debugger_->DebugServicesIsWatchPoint(current_kernel_name)) {
       return false;
     }
   }

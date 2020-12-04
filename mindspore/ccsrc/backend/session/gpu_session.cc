@@ -462,11 +462,9 @@ void GPUSession::PreLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph)
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  DebugServices *debug_services = debugger_->debug_services();
-  TensorLoader *tensor_loader = debug_services->tensor_loader();
-  tensor_loader->EmptyTensor();
-  uint32_t iter_num = tensor_loader->GetIterNum();
-  tensor_loader->set_iter_num(++iter_num);
+  debugger_->EmptyTensor();
+  uint32_t iter_num = debugger_->GetTensorLoaderIterNum();
+  debugger_->SetTensorLoaderIterNum(++iter_num);
 }
 
 void GPUSession::PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -477,9 +475,7 @@ void GPUSession::PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
-  DebugServices *debug_services = debugger_->debug_services();
-  TensorLoader *tensor_loader = debug_services->tensor_loader();
-  tensor_loader->EmptyPrevTensor();
+  debugger_->EmptyPrevTensor();
 }
 
 void GPUSession::SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const {

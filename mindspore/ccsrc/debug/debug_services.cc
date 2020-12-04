@@ -205,7 +205,7 @@ void DebugServices::ReadNodesTensors(std::vector<std::string> name, std::vector<
   }
 }
 
-bool DebugServices::IsWatchPoint(std::string kernel_name, const CNodePtr &kernel) {
+bool DebugServices::IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel) const {
   bool ret = false;
   for (auto w_table_item : watchpoint_table) {
     auto check_node_list = std::get<1>(w_table_item).check_node_list;
@@ -223,7 +223,7 @@ bool DebugServices::IsWatchPoint(std::string kernel_name, const CNodePtr &kernel
   return ret;
 }
 
-bool DebugServices::IsWatchPointNodeInput(std::string w_name, const CNodePtr &kernel) {
+bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const {
   if (kernel) {
     auto input_size = AnfAlgo::GetInputTensorNum(kernel);
     for (size_t j = 0; j < input_size; ++j) {
@@ -260,7 +260,34 @@ void DebugServices::AddWeightsBiasInputs(std::vector<std::shared_ptr<TensorData>
   }
 }
 
-TensorLoader *DebugServices::tensor_loader() const { return tensor_loader_; }
+void DebugServices::EmptyTensor() { tensor_loader_->EmptyTensor(); }
+
+std::vector<std::shared_ptr<TensorData>> DebugServices::GetTensor() const { return tensor_loader_->GetTensor(); }
+
+std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensorMap(const std::string &node_name) const {
+  return tensor_loader_->GetNodeTensorMap(node_name);
+}
+
+uint32_t DebugServices::GetTensorLoaderIterNum() const { return tensor_loader_->GetIterNum(); }
+
+void DebugServices::SetTensorLoaderIterNum(uint32_t iter_num) { tensor_loader_->set_iter_num(iter_num); }
+
+void DebugServices::EmptyPrevTensor() { tensor_loader_->EmptyPrevTensor(); }
+
+void DebugServices::EmptyCurrentTensor() { tensor_loader_->EmptyCurrentTensor(); }
+
+bool DebugServices::DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
+                                     const std::string &host_fmt, const std::vector<int64_t> &host_shape,
+                                     TypeId host_type, TypeId addr_type_id, const std::string &addr_format,
+                                     size_t slot) const {
+  return tensor_loader_->DumpTensorToFile(tensor_name, trans_flag, filepath, host_fmt, host_shape, host_type,
+                                          addr_type_id, addr_format, slot);
+}
+
+bool DebugServices::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
+  return tensor_loader_->LoadNewTensor(tensor, keep_prev);
+}
+
 std::unordered_map<unsigned int, DebugServices::watchpoint_t> DebugServices::GetWatchpointTable() {
   return watchpoint_table;
 }
