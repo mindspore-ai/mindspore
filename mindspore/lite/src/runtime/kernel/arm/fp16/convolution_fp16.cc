@@ -40,15 +40,13 @@ using mindspore::schema::Format::Format_NHWC;
 namespace mindspore::kernel {
 int ConvolutionFP16CPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
-  int kernel_h = filter_tensor->Height();
-  int kernel_w = filter_tensor->Width();
   int in_channel = filter_tensor->Channel();
   int out_channel = filter_tensor->Batch();
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
-  int oc8 = UP_DIV(out_channel, C8NUM);
-  int kernel_plane = kernel_h * kernel_w;
-  int pack_weight_size = oc8 * C8NUM * in_channel * kernel_plane;
+  int oc8 = UP_ROUND(out_channel, C8NUM);
+  int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+  int pack_weight_size = oc8 * in_channel * kernel_plane;
 
   // init weight
   auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
@@ -69,15 +67,15 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   }
 
   // init bias
-  bias_data_ = malloc(oc8 * C8NUM * sizeof(float16_t));
+  bias_data_ = malloc(oc8 * sizeof(float16_t));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias_data_ failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, oc8 * C8NUM * sizeof(float16_t));
+  memset(bias_data_, 0, oc8 * sizeof(float16_t));
   auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->data_c());
     for (int i = 0; i < out_channel; ++i) {
       fp16_bias_data[i] = (float16_t)ori_bias[i];
     }
@@ -89,9 +87,8 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
 
 int ConvolutionFP16CPUKernel::InitTmpBuffer() {
   const int cal_num = 16;
-  int in_channel = conv_param_->input_channel_;
-  int kernel_plane = conv_param_->kernel_h_ * conv_param_->kernel_w_;
-  int unit_size = kernel_plane * in_channel * cal_num * thread_count_;
+  int unit_size =
+    conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * cal_num * thread_count_;
 
   packed_input_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(unit_size * sizeof(float16_t)));
   if (packed_input_ == nullptr) {
@@ -205,19 +202,13 @@ kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &i
 void FreeMemoryFp16(const std::vector<kernel::LiteKernel *> &group_convs, const std::vector<lite::Tensor *> &new_inputs,
                     const std::vector<lite::Tensor *> &new_outputs) {
   for (auto sub_conv : group_convs) {
-    if (sub_conv != nullptr) {
-      delete sub_conv;
-    }
+    delete sub_conv;
   }
   for (auto in_tensor : new_inputs) {
-    if (in_tensor != nullptr) {
-      delete in_tensor;
-    }
+    delete in_tensor;
   }
   for (auto out_tensor : new_outputs) {
-    if (out_tensor != nullptr) {
-      delete out_tensor;
-    }
+    delete out_tensor;
   }
 }
 
@@ -332,8 +323,10 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
 
   std::vector<int> in_shape;
   std::vector<int> out_shape;
+  int batch = inputs.front()->Batch();
+  conv_param->input_batch_ = batch;
+  conv_param->output_batch_ = batch;
   if (infered_flag) {
-    int batch = inputs.front()->Batch();
     conv_param->input_channel_ = new_in_channel;
     conv_param->output_channel_ = new_out_channel;
     CheckIfUseWinogradFp16(&use_winograd, &out_unit, conv_param);

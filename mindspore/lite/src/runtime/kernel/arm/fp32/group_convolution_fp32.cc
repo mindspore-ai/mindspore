@@ -82,11 +82,6 @@ int GroupConvolutionCPUKernel::PreProcess() {
       return ret;
     }
     (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
-    ret = ReSize();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "ReSize fail!ret: " << ret;
-      return ret;
-    }
 
     // if infershape func is called in runtime stage, we should malloc memory and set shape info for outputs of sub
     // kernels here.
@@ -124,6 +119,11 @@ int GroupConvolutionCPUKernel::PreProcess() {
         }
       }
     }
+    ret = ReSize();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ReSize fail!ret: " << ret;
+      return ret;
+    }
   }
 
   auto outputs = this->out_tensors();
@@ -140,9 +140,7 @@ int GroupConvolutionCPUKernel::PreProcess() {
 }
 
 void GroupConvolutionCPUKernel::SeparateInput(int group_id) {
-  int in_h = conv_param_->input_h_;
-  int in_w = conv_param_->input_w_;
-  int in_plane = in_h * in_w;
+  int in_plane = conv_param_->input_h_ * conv_param_->input_w_ * conv_param_->input_batch_;
   int sub_in_channel = conv_param_->input_channel_;
   int ori_in_channel = sub_in_channel * group_num_;
   auto sub_in_data = reinterpret_cast<float *>(group_convs_.at(group_id)->in_tensors().front()->data_c());
@@ -156,9 +154,7 @@ void GroupConvolutionCPUKernel::SeparateInput(int group_id) {
 }
 
 void GroupConvolutionCPUKernel::PostConcat(int group_id) {
-  int out_h = conv_param_->output_h_;
-  int out_w = conv_param_->output_w_;
-  int out_plane = out_h * out_w;
+  int out_plane = conv_param_->output_h_ * conv_param_->output_w_ * conv_param_->output_batch_;
   int sub_out_channel = conv_param_->output_channel_;
   int ori_out_channel = sub_out_channel * group_num_;
   auto sub_out_data = reinterpret_cast<float *>(group_convs_.at(group_id)->out_tensors().front()->data_c());

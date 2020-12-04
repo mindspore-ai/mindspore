@@ -37,18 +37,15 @@ using mindspore::schema::Format::Format_NHWC;
 namespace mindspore::kernel {
 int ConvolutionCPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
-  int kernel_h = filter_tensor->Height();
-  int kernel_w = filter_tensor->Width();
   int in_channel = filter_tensor->Channel();
   int out_channel = filter_tensor->Batch();
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
-  int kernel_plane = kernel_h * kernel_w;
-  const int oc_block = C8NUM;
-  int oc_block_num = UP_DIV(out_channel, C8NUM);
-  int pack_weight_size = oc_block_num * oc_block * in_channel * kernel_plane;
+  int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+  int oc_block_num = UP_ROUND(out_channel, C8NUM);
+  int pack_weight_size = oc_block_num * in_channel * kernel_plane;
 
-  auto origin_weight = reinterpret_cast<float *>(filter_tensor->MutableData());
+  auto origin_weight = reinterpret_cast<float *>(filter_tensor->data_c());
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed weight failed.";
@@ -57,15 +54,15 @@ int ConvolutionCPUKernel::InitWeightBias() {
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   RowMajor2Col8Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
 
-  bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
+  bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "malloc bias failed.";
     return RET_ERROR;
   }
-  memset(bias_data_, 0, oc_block_num * oc_block * sizeof(float));
+  memset(bias_data_, 0, oc_block_num * sizeof(float));
 
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
+    auto ori_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->data_c());
     memcpy(bias_data_, ori_bias, out_channel * sizeof(float));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -74,13 +71,12 @@ int ConvolutionCPUKernel::InitWeightBias() {
 }
 
 int ConvolutionCPUKernel::InitTmpBuffer() {
-  int in_channel = conv_param_->input_channel_;
   MS_ASSERT(ctx_->allocator != nullptr);
-
 #ifdef ENABLE_ARM32
-  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * in_channel * C4NUM * thread_count_;
+  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C4NUM * thread_count_;
 #else
-  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * in_channel * C12NUM * thread_count_;
+  int unit_size =
+    conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C12NUM * thread_count_;
 #endif
   packed_input_ = reinterpret_cast<float *>(ctx_->allocator->Malloc(unit_size * sizeof(float)));
   if (packed_input_ == nullptr) {
@@ -124,9 +120,8 @@ int ConvolutionCPUKernel::ReSize() {
 }
 
 int ConvolutionCPUKernel::RunImpl(int task_id) {
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = reinterpret_cast<float *>(input_tensor->MutableData());
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  auto ori_input_data = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->data_c());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
   ConvFp32(ori_input_data, packed_input_, packed_weight_, reinterpret_cast<float *>(bias_data_), col_major_input_,
            output_addr, task_id, conv_param_);
   return RET_OK;
@@ -171,19 +166,13 @@ ConvParameter *CreateNewConvParameter(ConvParameter *parameter) {
 void FreeMemory(const std::vector<kernel::LiteKernel *> &group_convs, const std::vector<lite::Tensor *> &new_inputs,
                 const std::vector<lite::Tensor *> &new_outputs) {
   for (auto sub_conv : group_convs) {
-    if (sub_conv != nullptr) {
-      delete sub_conv;
-    }
+    delete sub_conv;
   }
   for (auto in_tensor : new_inputs) {
-    if (in_tensor != nullptr) {
-      delete in_tensor;
-    }
+    delete in_tensor;
   }
   for (auto out_tensor : new_outputs) {
-    if (out_tensor != nullptr) {
-      delete out_tensor;
-    }
+    delete out_tensor;
   }
 }
 
@@ -304,8 +293,10 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
   } else {
     new_out_channel = inputs.at(kWeightIndex)->Batch() / group;
   }
+  int batch = inputs.front()->Batch();
+  conv_param->input_batch_ = batch;
+  conv_param->output_batch_ = batch;
   if (infered_flag) {
-    int batch = inputs.front()->Batch();
     int in_h = inputs.front()->Height();
     int in_w = inputs.front()->Width();
     conv_param->input_channel_ = new_in_channel;
