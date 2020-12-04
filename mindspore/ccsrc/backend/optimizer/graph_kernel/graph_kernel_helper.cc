@@ -531,7 +531,7 @@ void ReplaceNewFuseCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &new_f
 }
 
 std::tuple<AnfNodePtr, AnfNodePtrList> FuseNodesToSubGraph(const std::vector<AnfNodePtr> &fuse_nodes,
-                                                           const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                                                           const FuncGraphPtr &kernel_graph,
                                                            const std::string &postfix) {
   auto mng = kernel_graph->manager();
   if (mng == nullptr) {
@@ -858,23 +858,6 @@ void InitDependPrior(const std::vector<AnfNodePtr> &todos,
     }
     real_prior_nodes.clear();
     real_depend_nodes.clear();
-  }
-}
-
-void UpdateControlDependNode(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior,
-                             const AnfNodePtr &control_depend_node, const AnfNodePtr &new_control_depend) {
-  for (auto iter = (*depend_prior).begin(); iter != (*depend_prior).end();) {
-    if (iter->second.second == control_depend_node) {
-      iter = depend_prior->erase(iter);
-      continue;
-    }
-    ++iter;
-  }
-
-  std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> new_depend_prior;
-  InitDependPrior(std::vector<AnfNodePtr>{new_control_depend}, &new_depend_prior);
-  for (auto item : new_depend_prior) {
-    depend_prior->insert(item);
   }
 }
 

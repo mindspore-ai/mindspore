@@ -66,11 +66,11 @@ def expand_fusedadamweightdecay(expand_info):
         next_para = graph_builder.emit('Sub', [param, update_with_lr])
 
         para_result = graph_builder.emit('InplaceAssign', [param, next_para, next_para], attrs={'fake_output': True})
-        m_result = graph_builder.emit('InplaceAssign', [m, next_m, next_m], attrs={'fake_output': True})
-        v_result = graph_builder.emit('InplaceAssign', [v, next_v, next_v], attrs={'fake_output': True})
+        para_result = graph_builder.emit('InplaceAssign', [m, next_m, para_result], attrs={'fake_output': True})
+        para_result = graph_builder.emit('InplaceAssign', [v, next_v, para_result], attrs={'fake_output': True})
 
         # set graph output.
-        graph_scope.set_output(para_result, m_result, v_result)
+        graph_scope.set_output(para_result)
 
     graph = graph_builder.get()[0]
     return graph
