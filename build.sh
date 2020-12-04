@@ -23,8 +23,8 @@ usage()
 {
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
-  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu|ascend310] \\"
-  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I arm64|arm32|x86_64] [-K] \\"
+  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu] \\"
+  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1|310|910] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
   echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|off] \\"
   echo ""
@@ -45,13 +45,13 @@ usage()
   echo "    -i Enable increment building, default off"
   echo "    -L Enable load ANF-IR as input of 'infer', default off"
   echo "    -j[n] Set the threads when building (Default: -j8)"
-  echo "    -e Use cpu, gpu, ascend or ascend310"
+  echo "    -e Use cpu, gpu, ascend"
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
   echo "    -n Compile minddata with mindspore lite, available: off, lite, full, lite_cv, full mode in lite train and lite_cv, wrapper mode in lite predict"
   echo "    -M Enable MPI and NCCL for GPU training, gpu default on"
-  echo "    -V Specify the minimum required cuda version, default CUDA 10.1"
+  echo "    -V Specify the device version, if -e gpu, default CUDA 10.1, if -e ascend, default Ascend 910"
   echo "    -I Enable compiling mindspore lite for arm64, arm32 or x86_64, default disable mindspore lite compilation"
   echo "    -K Compile with AKG, default on"
   echo "    -s Enable serving module, default off"
@@ -119,6 +119,8 @@ checkopts()
   ANDROID_STL="c++_shared"
   ENABLE_MAKE_CLEAN="off"
   X86_64_SIMD="off"
+  DEVICE_VERSION=""
+  DEVICE=""
 
   # Process the options
   while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:S:k:W:' opt
@@ -216,40 +218,14 @@ checkopts()
         echo "enable make clean"
         ;;
       e)
-        if [[ "X$OPTARG" == "Xgpu" ]]; then
-          ENABLE_GPU="on"
-          ENABLE_CPU="on"
-          ENABLE_MPI="on"
-        elif [[ "X$OPTARG" == "Xd" || "X$OPTARG" == "Xascend" ]]; then
-          ENABLE_D="on"
-          ENABLE_CPU="on"
-          ENABLE_SERVING="on"
-        elif [[ "X$OPTARG" == "Xascend310" ]]; then
-          ENABLE_SERVING="on"
-          ENABLE_ACL="on"
-        elif [[ "X$OPTARG" == "Xcpu" ]]; then
-          ENABLE_CPU="on"
-        else
-          echo "Invalid value ${OPTARG} for option -e"
-          usage
-          exit 1
-        fi
+        DEVICE=$OPTARG
         ;;
       M)
         check_on_off $OPTARG M
         ENABLE_MPI="$OPTARG"
         ;;
       V)
-        if [[ "X$OPTARG" != "X9.2" && "X$OPTARG" != "X10.1" ]]; then
-          echo "Invalid value ${OPTARG} for option -V"
-          usage
-          exit 1
-        fi
-        if [[ "X$OPTARG" == "X9.2" ]]; then
-          echo "Unsupported CUDA version 9.2"
-          exit 1
-        fi
-        CUDA_VERSION="$OPTARG"
+        DEVICE_VERSION=$OPTARG
         ;;
       P)
         check_on_off $OPTARG p
@@ -382,6 +358,52 @@ build_exit()
 # Create building path
 build_mindspore()
 {
+    # Process build option
+    if [[ "X$DEVICE" == "Xgpu" ]]; then
+      ENABLE_GPU="on"
+      ENABLE_CPU="on"
+      ENABLE_MPI="on"
+      # version default 10.1
+      if [[ "X$DEVICE_VERSION" == "X" ]]; then
+        DEVICE_VERSION=10.1
+      fi
+      if [[ "X$DEVICE_VERSION" != "X9.2" && "X$DEVICE_VERSION" != "X10.1" ]]; then
+        echo "Invalid value ${DEVICE_VERSION} for option -V"
+        usage
+        exit 1
+      fi
+      if [[ "X$DEVICE_VERSION" == "X9.2" ]]; then
+        echo "Unsupported CUDA version 9.2"
+        exit 1
+      fi
+      CUDA_VERSION="$DEVICE_VERSION"
+    elif [[ "X$DEVICE" == "Xd" || "X$DEVICE" == "Xascend" ]]; then
+      # version default 910
+      if [[ "X$DEVICE_VERSION" == "X" ]]; then
+        DEVICE_VERSION=910
+      fi
+      if [[ "X$DEVICE_VERSION" == "X310" ]]; then
+        ENABLE_SERVING="on"
+        ENABLE_ACL="on"
+      elif [[ "X$DEVICE_VERSION" == "X910" ]]; then
+        ENABLE_D="on"
+        ENABLE_CPU="on"
+        ENABLE_SERVING="on"
+      else
+        echo "Invalid value ${DEVICE_VERSION} for option -V"
+        usage
+        exit 1
+      fi
+    elif [[ "X$DEVICE" == "Xcpu" ]]; then
+      ENABLE_CPU="on"
+    elif [[ "X$DEVICE" == "X" ]]; then
+      :
+    else
+      echo "Invalid value ${DEVICE} for option -e"
+      usage
+      exit 1
+    fi
+
     echo "start build mindspore project."
     mkdir -pv "${BUILD_PATH}/mindspore"
     cd "${BUILD_PATH}/mindspore"
@@ -670,6 +692,9 @@ build_lite()
 {
     get_version
     echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
+    if [[ "X$DEVICE" == "Xgpu" ]]; then
+      ENABLE_GPU="on"
+    fi
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
       echo "start build opencl"
       build_opencl
