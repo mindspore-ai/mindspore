@@ -22,7 +22,10 @@
 #include <memory>
 #include <utility>
 #include "include/api/model.h"
+#include "include/api/graph.h"
+#include "cxx_api/graph/graph_data.h"
 #include "utils/utils.h"
+#include "ir/func_graph.h"
 
 namespace mindspore::api {
 class ModelImpl {
@@ -30,70 +33,39 @@ class ModelImpl {
   ModelImpl() = default;
   virtual ~ModelImpl() = default;
 
-  virtual Status LoadModel(const Buffer &model_data, ModelType type,
-                           const std::map<std::string, std::string> &options) = 0;
-  virtual Status LoadModel(const std::string &file_name, ModelType type,
-                           const std::map<std::string, std::string> &options) = 0;
-  virtual Status UnloadModel() = 0;
+  virtual Status Build(const std::map<std::string, std::string> &options) = 0;
 
   virtual Status Train(const DataSet &dataset, std::map<std::string, Buffer> *outputs) = 0;
   virtual Status Eval(const DataSet &dataset, std::map<std::string, Buffer> *outputs) = 0;
-  virtual Status Predict(const std::map<std::string, Buffer> &inputs, std::map<std::string, Buffer> *outputs) = 0;
+  virtual Status Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) = 0;
 
-  virtual Status GetInputsInfo(std::vector<Tensor> *tensor_list) const = 0;
-  virtual Status GetOutputsInfo(std::vector<Tensor> *tensor_list) const = 0;
-};
+  virtual Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                               std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const = 0;
+  virtual Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                                std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const = 0;
 
-using ModelCreator = std::function<std::shared_ptr<ModelImpl>(uint32_t device_id)>;
-class ModelFactory {
- public:
-  ModelFactory(const ModelFactory &) = delete;
-  void operator=(const ModelFactory &) = delete;
-
-  static ModelFactory &Instance() {
-    static ModelFactory instance;
-    return instance;
+ protected:
+  Status Load(const std::shared_ptr<GraphCell> &graph_cell) {
+    MS_EXCEPTION_IF_NULL(graph_cell);
+    return graph_cell->Load();
   }
 
-  void Register(const std::string &device_name, ModelCreator &&model_creator) {
-    if (model_creators_.find(device_name) == model_creators_.end()) {
-      (void)model_creators_.emplace(device_name, model_creator);
+  FuncGraphPtr GetFuncGraph() const {
+    if (graph_->ModelType() != ModelType::kMindIR) {
+      return nullptr;
     }
+
+    auto graph_data = graph_->graph_data_;
+    MS_EXCEPTION_IF_NULL(graph_data);
+    return graph_data->GetFuncGraph();
   }
 
-  std::shared_ptr<ModelImpl> Create(const std::string &device_name, uint32_t device_id) {
-    auto iter = model_creators_.find(device_name);
-    if (model_creators_.end() != iter) {
-      MS_EXCEPTION_IF_NULL(iter->second);
-      return (iter->second)(device_id);
-    }
-    return nullptr;
-  }
-
-  bool CheckModelSupport(const std::string &device_type, ModelType /*model_type*/) {
-    return std::any_of(
-      model_creators_.begin(), model_creators_.end(),
-      [&device_type](const std::pair<std::string, ModelCreator> &item) { return item.first == device_type; });
-  }
+  std::shared_ptr<Graph> graph_;
 
  private:
-  ModelFactory() = default;
-  ~ModelFactory() = default;
-  std::map<std::string, ModelCreator> model_creators_;
+  friend class Model;
+  void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
 };
-
-class ModelRegistrar {
- public:
-  ModelRegistrar(const std::string &device_name, ModelCreator model_creator) {
-    ModelFactory::Instance().Register(device_name, std::move(model_creator));
-  }
-  ~ModelRegistrar() = default;
-};
-
-#define API_REG_MODEL(DEVICE_NAME, MODEL_CLASS)                              \
-  static const ModelRegistrar g_api_model_registrar__##DEVICE_NAME##_##_reg( \
-    kDeviceType##DEVICE_NAME, [](uint32_t device_id) { return std::make_shared<MODEL_CLASS>(device_id); });
-
 }  // namespace mindspore::api
 
 #endif  // MINDSPORE_CCSRC_CXX_API_MODEL_MODEL_IMPL_H

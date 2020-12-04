@@ -16,17 +16,13 @@
 
 #include "cxx_api/model/acl/model_converter.h"
 #include <memory>
-#include "pybind11/pybind11.h"
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/graph_runner.h"
-#include "core/load_mindir/load_model.h"
 #include "mindspore/core/utils/ms_context.h"
-#include "backend/kernel_compiler/oplib/oplib.h"
-
+#include "include/api/serialization.h"
 #include "graph/model.h"
 #include "cxx_api/model/model_converter_utils/multi_process.h"
-
-namespace py = pybind11;
+#include "cxx_api/python_utils.h"
 
 namespace mindspore::api {
 namespace {
@@ -74,18 +70,7 @@ bool CreateSessionAndGraphRunner() {
 
   return true;
 }
-
 }  // namespace
-
-std::shared_ptr<FuncGraph> ModelConverter::ConvertMindIrToFuncGraph(const Buffer &model_data) {
-  try {
-    auto anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(model_data.Data()), model_data.DataSize());
-    return anf_graph;
-  } catch (std::exception &e) {
-    MS_LOG(ERROR) << "Load MindIR failed.";
-    return nullptr;
-  }
-}
 
 transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) {
   for (auto &anf_node : anf_graph->parameters()) {
@@ -166,88 +151,31 @@ Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
   return Buffer(model.data.get(), model.length);
 }
 
-void ModelConverter::RegAllOp() {
-  static std::mutex init_mutex;
-  static bool Initialized = false;
-
-  std::lock_guard<std::mutex> lock(init_mutex);
-  if (Initialized) {
-    return;
-  }
-  Initialized = true;
-  MsContext::GetInstance()->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-  Py_Initialize();
-  auto c_expression = PyImport_ImportModule("mindspore._c_expression");
-  MS_EXCEPTION_IF_NULL(c_expression);
-  PyObject *c_expression_dict = PyModule_GetDict(c_expression);
-  MS_EXCEPTION_IF_NULL(c_expression_dict);
-
-  PyObject *op_info_loader_class = PyDict_GetItemString(c_expression_dict, "OpInfoLoaderPy");
-  MS_EXCEPTION_IF_NULL(op_info_loader_class);
-  PyObject *op_info_loader = PyInstanceMethod_New(op_info_loader_class);
-  MS_EXCEPTION_IF_NULL(op_info_loader);
-  PyObject *op_info_loader_ins = PyObject_CallObject(op_info_loader, nullptr);
-  MS_EXCEPTION_IF_NULL(op_info_loader_ins);
-  auto all_ops_info_vector_addr_ul = PyObject_CallMethod(op_info_loader_ins, "get_all_ops_info", nullptr);
-  MS_EXCEPTION_IF_NULL(all_ops_info_vector_addr_ul);
-  auto all_ops_info_vector_addr = PyLong_AsVoidPtr(all_ops_info_vector_addr_ul);
-  auto all_ops_info = static_cast<std::vector<kernel::OpInfo *> *>(all_ops_info_vector_addr);
-  for (auto op_info : *all_ops_info) {
-    kernel::OpLib::RegOpInfo(std::shared_ptr<kernel::OpInfo>(op_info));
-  }
-  all_ops_info->clear();
-  delete all_ops_info;
-  Py_DECREF(op_info_loader);
-  Py_DECREF(op_info_loader_class);
-  Py_DECREF(c_expression_dict);
-  Py_DECREF(c_expression);
-}
-
-Buffer ModelConverter::ReadFile(const std::string &file) {
-  Buffer buffer;
-  if (file.empty()) {
-    MS_LOG(ERROR) << "Pointer file is nullptr";
-    return buffer;
-  }
-  std::string realPath = file;
-  std::ifstream ifs(realPath);
-  if (!ifs.good()) {
-    MS_LOG(ERROR) << "File: " << realPath << " is not exist";
-    return buffer;
-  }
-
-  if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "File: " << realPath << "open failed";
-    return buffer;
-  }
-
-  ifs.seekg(0, std::ios::end);
-  size_t size = ifs.tellg();
-  buffer.ResizeData(size);
-  if (buffer.DataSize() != size) {
-    MS_LOG(ERROR) << "Malloc buf failed, file: " << realPath;
-    ifs.close();
-    return buffer;
-  }
-
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(reinterpret_cast<char *>(buffer.MutableData()), size);
-  ifs.close();
-
-  return buffer;
-}
-
-Buffer ModelConverter::LoadMindIR(const Buffer &model_data) {
-  if (Py_IsInitialized() == 0) {
+Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
+  if (!PythonIsInited()) {
     MS_LOG_INFO << "Call LoadMindIRInner directly";
-    return LoadMindIRInner(model_data);
+    return LoadMindIRInner(func_graph);
   }
   MultiProcess multi_process;
   Buffer buffer_ret;
-  auto parent_process = [&model_data, &buffer_ret](MultiProcess *multi_process) -> Status {
+  auto parent_process = [&func_graph, &buffer_ret, this](MultiProcess *multi_process) -> Status {
     MS_EXCEPTION_IF_NULL(multi_process);
+    auto df_graph = ConvertFuncGraphToAIR(func_graph);
+    if (df_graph == nullptr) {
+      MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
+      return FAILED;
+    }
+    ge::Model model;
+    ge::Buffer model_data;
+    model.SetGraph(*df_graph);
+    auto ge_ret = model.Save(model_data);
+    if (ge_ret != ge::SUCCESS) {
+      MS_LOG(ERROR) << "Save ge model to buffer failed.";
+      return FAILED;
+    }
+
     // send original model to child
-    auto status = multi_process->SendMsg(model_data.Data(), model_data.DataSize());
+    auto status = multi_process->SendMsg(model_data.data(), model_data.size());
     if (!status.IsSuccess()) {
       MS_LOG_ERROR << "Send original model to child process failed";
       return FAILED;
@@ -277,7 +205,7 @@ Buffer ModelConverter::LoadMindIR(const Buffer &model_data) {
       MS_LOG_ERROR << "Receive original model from parent process failed";
       return FAILED;
     }
-    Buffer model_result = LoadMindIRInner(model);
+    Buffer model_result = LoadAscendIRInner(model);
     if (model_result.DataSize() == 0) {
       MS_LOG_ERROR << "Convert model from MindIR to OM failed";
       return FAILED;
@@ -300,7 +228,7 @@ Buffer ModelConverter::LoadMindIR(const Buffer &model_data) {
 }
 
 Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
-  if (Py_IsInitialized() == 0) {
+  if (!PythonIsInited()) {
     MS_LOG_INFO << "Call LoadAscendIRInner directly";
     return LoadAscendIRInner(model_data);
   }
@@ -361,10 +289,8 @@ Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
   return buffer_ret;
 }
 
-Buffer ModelConverter::LoadMindIRInner(const Buffer &model_data) {
-  RegAllOp();
-  Py_Initialize();
-  auto func_graph = ConvertMindIrToFuncGraph(model_data);
+Buffer ModelConverter::LoadMindIRInner(const FuncGraphPtr &func_graph) {
+  RegAllOpFromPython();
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Convert MindIR to FuncGraph failed.";
     return Buffer();
@@ -386,7 +312,7 @@ Buffer ModelConverter::LoadMindIRInner(const Buffer &model_data) {
 }
 
 Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
-  RegAllOp();
+  RegAllOpFromPython();
   ge::Model load_model = ge::Model("loadmodel", "version2");
   ge::Status ret =
     ge::Model::Load(reinterpret_cast<const uint8_t *>(model_data.Data()), model_data.DataSize(), load_model);

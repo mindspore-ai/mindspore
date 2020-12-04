@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_CXXAPI_SESSION_ACL_MODEL_PROCESS_H
-#define MINDSPORE_CCSRC_CXXAPI_SESSION_ACL_MODEL_PROCESS_H
+#ifndef MINDSPORE_CCSRC_CXXAPI_GRAPH_ACL_MODEL_PROCESS_H
+#define MINDSPORE_CCSRC_CXXAPI_GRAPH_ACL_MODEL_PROCESS_H
 #include <vector>
 #include <string>
 #include <map>
@@ -34,12 +34,6 @@ struct AclTensorInfo {
   std::string name;
 };
 
-struct ImagesDvppOutput {
-  void *buffer_device = nullptr;
-  size_t buffer_size = 0;
-  size_t input_index = 0;
-};
-
 class ModelProcess {
  public:
   ModelProcess()
@@ -53,24 +47,23 @@ class ModelProcess {
   ~ModelProcess() {}
   Status LoadModelFromFile(const std::string &file_name, uint32_t *model_id);
   Status UnLoad();
-  Status Predict(const std::map<std::string, Buffer> &inputs, std::map<std::string, Buffer> *outputs);
+  Status PredictFromHost(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs);
   Status PreInitModelResource();
-  Status GetInputsInfo(std::vector<Tensor> *tensor_list) const;
-  Status GetOutputsInfo(std::vector<Tensor> *tensor_list) const;
+  Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const;
+  Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                        std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const;
 
   // override this method to avoid request/reply data copy
   void SetIsDevice(bool is_device) { is_run_on_device_ = is_device; }
 
-  size_t GetBatchSize() const;
   void set_model_id(uint32_t model_id) { model_id_ = model_id; }
   uint32_t model_id() const { return model_id_; }
 
  private:
   Status CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
-  Status CheckAndInitInput(const std::map<std::string, Buffer> &inputs);
-  Status CheckAndInitDvppInput(const void *dvpp_outputs_buffer_dev, size_t dvpp_outputs_buffer_size,
-                               size_t input_index);
-  Status BuildOutputs(std::map<std::string, Buffer> *outputs);
+  Status CheckAndInitInput(const std::vector<Buffer> &inputs);
+  Status BuildOutputs(std::vector<Buffer> *outputs);
   Status InitInputsBuffer();
   Status InitOutputsBuffer();
 
@@ -90,4 +83,4 @@ class ModelProcess {
 };
 }  // namespace mindspore::api
 
-#endif  // MINDSPORE_CCSRC_CXXAPI_SESSION_ACL_MODEL_PROCESS_H
+#endif  // MINDSPORE_CCSRC_CXXAPI_GRAPH_ACL_MODEL_PROCESS_H

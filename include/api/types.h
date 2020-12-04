@@ -102,6 +102,9 @@ class MS_API Buffer {
   std::shared_ptr<Impl> impl_;
 };
 
+extern MS_API const char *kDeviceTypeAscend310;
+extern MS_API const char *kDeviceTypeAscend910;
+
 constexpr auto kModelOptionDumpCfgPath = "mindspore.option.dump_config_file_path";
 constexpr auto kModelOptionDvppCfgPath = "mindspore.option.dvpp_config_file_path";
 constexpr auto kModelOptionInsertOpCfgPath = "mindspore.option.insert_op_config_file_path";  // aipp config file
