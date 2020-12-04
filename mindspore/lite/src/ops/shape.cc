@@ -44,7 +44,7 @@ int Shape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   out_tensor->set_data_type(kNumberTypeInt32);
   out_tensor->set_format(schema::Format::Format_NHWC);
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   std::vector<int> out_shape;
   out_shape.push_back(static_cast<int>(in_tensor->shape().size()));

@@ -68,7 +68,7 @@ int Lstm::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
     outputs_.at(i)->set_format(input->format());
   }
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
 
   std::vector<int> in_shape = input->shape();

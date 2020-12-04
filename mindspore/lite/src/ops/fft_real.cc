@@ -43,7 +43,7 @@ int FftReal::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   output->set_data_type(TypeId::kNumberTypeFloat32);
   output->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto input_shape = input->shape();
   input_shape.pop_back();

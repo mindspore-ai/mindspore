@@ -49,7 +49,7 @@ int Nhwc2Nchw::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite:
   output->set_format(schema::Format::Format_NCHW);
   output->set_data_type(input->data_type());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   std::vector<int> nhwc_shape = input->shape();
   if (nhwc_shape.size() != 4) {

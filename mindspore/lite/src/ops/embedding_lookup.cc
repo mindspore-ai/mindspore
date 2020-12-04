@@ -70,7 +70,7 @@ int EmbeddingLookup::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
   output->set_format(params_->format());
   output->set_data_type(params_->data_type());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
 
   auto embedding_shape = params_->shape();

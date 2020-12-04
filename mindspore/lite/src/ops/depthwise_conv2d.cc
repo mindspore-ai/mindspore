@@ -219,7 +219,7 @@ int DepthwiseConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
   pad_r_ = GetPadRight();
 
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto in_shape = input->shape();
   int input_h = in_shape.at(1);

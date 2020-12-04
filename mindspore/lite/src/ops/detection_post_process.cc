@@ -190,7 +190,7 @@ int DetectionPostProcess::InferShape(std::vector<lite::Tensor *> inputs_, std::v
   num_det->set_format(boxes->format());
   num_det->set_data_type(kNumberTypeFloat32);
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   const auto max_detections = GetMaxDetections();
   const auto max_classes_per_detection = GetMaxClassesPerDetection();

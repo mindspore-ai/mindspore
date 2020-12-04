@@ -73,7 +73,7 @@ int DepthToSpace::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   outputs[0]->set_data_type(input->data_type());
   outputs[0]->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto input_shape = input->shape();
   if (input_shape.size() != kDimension_4d) {

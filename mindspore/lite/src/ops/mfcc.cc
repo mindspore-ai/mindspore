@@ -59,7 +59,7 @@ int Mfcc::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   output->set_data_type(input->data_type());
   output->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto input_shape = input->shape();
   if (input_shape.size() != 3) {

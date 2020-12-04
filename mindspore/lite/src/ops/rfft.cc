@@ -54,7 +54,7 @@ int Rfft::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   output->set_data_type(TypeId::kNumberTypeComplex64);
   output->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto input_shape = input->shape();
   input_shape.at(input_shape.size() - 1) = GetFftLength() / 2 + 1;

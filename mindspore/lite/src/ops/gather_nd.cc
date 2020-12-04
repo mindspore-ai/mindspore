@@ -66,7 +66,7 @@ int GatherNd::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> ou
   output->set_data_type(input->data_type());
   output->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto in_shape = input->shape();
   int in_rank = in_shape.size();

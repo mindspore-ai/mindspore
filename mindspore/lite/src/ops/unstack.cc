@@ -66,7 +66,7 @@ int Unstack::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outp
     out->set_format(input->format());
   }
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   std::vector<int> output_shape;
   for (size_t i = 0; i < input_shape.size(); ++i) {

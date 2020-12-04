@@ -123,7 +123,7 @@ int Split::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
     outputs_.at(i)->set_format(input->format());
   }
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   size_t split_dim = GetSplitDim() == -1 ? input->shape().size() - 1 : GetSplitDim();
   std::vector<int> input_shape = input->shape();
