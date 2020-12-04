@@ -689,6 +689,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
         cnode->set_user_data<OperatorInfo>(current_op_ptr);
         MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
                      << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
+                     << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
                      << " is set OperatorInfo: " << current_op_ptr->name() << ", Primitive: " << prim->name();
       }
     }

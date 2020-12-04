@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import numpy as np
 
 import mindspore as ms
@@ -155,6 +156,6 @@ def test_two_matmul():
     net.set_train()
     _executor.compile(net, x, y, b, phase='train')
     strategies = _executor._get_shard_strategy(net)
-    expected_strategies = {'Default/network-Net/MatMul-op0': [[16, 1], [1, 1]],
-                           'Default/network-Net/MatMul-op1': [[16, 1], [1, 1]]}
-    assert strategies == expected_strategies
+    for (k, v) in strategies.items():
+        if re.search('MatMul-op', k) is not None:
+            assert v == [[16, 1], [1, 1]]
