@@ -19,9 +19,9 @@
 
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
-void PackKernel(const int size,
-                const int input_num,
-                const int dims_behind_axis,
+void PackKernel(const size_t size,
+                const size_t input_num,
+                const size_t dims_behind_axis,
                 T** inputs,
                 T* output,
                 cudaStream_t cuda_stream);

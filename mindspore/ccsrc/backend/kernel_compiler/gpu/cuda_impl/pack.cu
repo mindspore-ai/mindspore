@@ -19,39 +19,55 @@
 #include <cuda_runtime.h>
 #include "backend/kernel_compiler/gpu/cuda_impl/pack.cuh"
 template <typename T>
-__global__ void Pack(const int size, const int input_num, const int dims_behind_axis, T** inputs, T* output) {
-  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
-      int cycle = pos / (input_num * dims_behind_axis);
-      int cur_input_index = pos % (input_num * dims_behind_axis) / dims_behind_axis;
-      int local_index = pos % (input_num * dims_behind_axis) % dims_behind_axis;
-      output[pos] = inputs[cur_input_index][cycle * dims_behind_axis + local_index];
+__global__ void Pack(const size_t size, const size_t input_num, const size_t dims_behind_axis, T** inputs, T* output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+      size_t cur_input_index = pos / dims_behind_axis % input_num;
+      size_t cycle_len = input_num * dims_behind_axis;
+      size_t local_index = pos / cycle_len * dims_behind_axis + pos % cycle_len % dims_behind_axis;
+      output[pos] = inputs[cur_input_index][local_index];
   }
   return;
 }
 
 template <typename T>
-void PackKernel(const int size, const int input_num,
-                const int dims_behind_axis, T** inputs, T* output,
+void PackKernel(const size_t size, const size_t input_num,
+                const size_t dims_behind_axis, T** inputs, T* output,
                 cudaStream_t cuda_stream) {
   Pack<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_num, dims_behind_axis, inputs, output);
   return;
 }
 
-template void PackKernel(const int size, const int input_num,
-                           const int dims_behind_axis, float** inputs, float* output,
+
+template void PackKernel(const size_t size, const size_t input_num,
+                           const size_t dims_behind_axis, int8_t** inputs, int8_t* output,
                            cudaStream_t cuda_stream);
-template void PackKernel(const int size, const int input_num,
-                           const int dims_behind_axis, int** inputs, int* output,
+template void PackKernel(const size_t size, const size_t input_num,
+                           const size_t dims_behind_axis, int16_t** inputs, int16_t* output,
                            cudaStream_t cuda_stream);
-template void PackKernel(const int size, const int input_num,
-                           const int dims_behind_axis, half** inputs, half* output,
+template void PackKernel(const size_t size, const size_t input_num,
+                           const size_t dims_behind_axis, int** inputs, int* output,
                            cudaStream_t cuda_stream);
-template void PackKernel(const int size, const int input_num,
-                           const int dims_behind_axis, short** inputs, short* output,  // NOLINT
+template void PackKernel(const size_t size, const size_t input_num,
+                           const size_t dims_behind_axis, int64_t** inputs, int64_t* output,
                            cudaStream_t cuda_stream);
-template void PackKernel(const int size, const int input_num,
-                           const int dims_behind_axis, unsigned char** inputs, unsigned char* output,
+template void PackKernel(const size_t size, const size_t input_num,
+                           const size_t dims_behind_axis, uint8_t** inputs, uint8_t* output,
                            cudaStream_t cuda_stream);
-template void PackKernel(const int size, const int input_num,
-                           const int dims_behind_axis, bool** inputs, bool* output,
+template void PackKernel(const size_t size, const size_t input_num,
+                           const size_t dims_behind_axis, uint16_t** inputs, uint16_t* output,
+                           cudaStream_t cuda_stream);
+template void PackKernel(const size_t size, const size_t input_num,
+                           const size_t dims_behind_axis, uint32_t** inputs, uint32_t* output,
+                           cudaStream_t cuda_stream);
+template void PackKernel(const size_t size, const size_t input_num,
+                           const size_t dims_behind_axis, uint64_t** inputs, uint64_t* output,
+                           cudaStream_t cuda_stream);
+template void PackKernel(const size_t size, const size_t input_num,
+                         const size_t dims_behind_axis, half** inputs, half* output,
+                         cudaStream_t cuda_stream);
+template void PackKernel(const size_t size, const size_t input_num,
+                         const size_t dims_behind_axis, float** inputs, float* output,
+                         cudaStream_t cuda_stream);
+template void PackKernel(const size_t size, const size_t input_num,
+                           const size_t dims_behind_axis, bool** inputs, bool* output,
                            cudaStream_t cuda_stream);

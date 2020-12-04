@@ -45,7 +45,7 @@ class PackGpuFwdKernel : public GpuKernel {
                                                inputs_host_.get(), sizeof(T *) * input_num_, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Pack opt cudaMemcpyAsync inputs failed");
-    PackKernel(SizeToInt(output_size_), input_num_, dims_behind_axis_, inputs_array, output,
+    PackKernel(output_size_, input_num_, dims_behind_axis_, inputs_array, output,
                reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -56,19 +56,22 @@ class PackGpuFwdKernel : public GpuKernel {
     axis_ = static_cast<int32_t>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-      axis_ += SizeToInt(input_shape.size());
+      axis_ += (SizeToInt(input_shape.size()) + 1);
     }
     auto origin_data_format = AnfAlgo::GetOriginDataFormat(kernel_node);
     auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     axis_ = AxisTransform(origin_data_format, input_format, axis_);
 
-    input_num_ = SizeToInt(AnfAlgo::GetInputTensorNum(kernel_node));
+    input_num_ = AnfAlgo::GetInputTensorNum(kernel_node);
     inputs_host_ = std::make_unique<T *[]>(input_num_);
-    for (int i = 0; i < input_num_; i++) {
+    for (size_t i = 0; i < input_num_; i++) {
       size_t input_size = 1;
       auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
       for (size_t j = 0; j < input_shape.size(); j++) {
         input_size *= input_shape[j];
+        if (i == 0 && j >= IntToSize(axis_)) {
+          dims_behind_axis_ *= input_shape[j];
+        }
       }
       input_size_list_.push_back(input_size * sizeof(T));
     }
@@ -76,11 +79,8 @@ class PackGpuFwdKernel : public GpuKernel {
 
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     output_size_ = 1;
-    for (int i = 0; i < SizeToInt(output_shape.size()); i++) {
+    for (size_t i = 0; i < output_shape.size(); i++) {
       output_size_ *= output_shape[i];
-      if (i > axis_ + 1) {
-        dims_behind_axis_ *= output_shape[i];
-      }
     }
     output_size_list_.push_back(output_size_ * sizeof(T));
     InitSizeLists();
@@ -100,9 +100,9 @@ class PackGpuFwdKernel : public GpuKernel {
     return true;
   }
   int axis_;
-  int input_num_;
+  size_t input_num_;
   size_t output_size_;
-  int dims_behind_axis_;
+  size_t dims_behind_axis_;
   std::unique_ptr<T *[]> inputs_host_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
