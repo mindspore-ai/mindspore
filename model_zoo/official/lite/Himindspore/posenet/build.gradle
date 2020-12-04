@@ -58,6 +58,7 @@ android {
 apply from: 'download.gradle'
 
 dependencies {
+    implementation project(':mindsporelibrary')
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
@@ -67,5 +68,4 @@ dependencies {
 
     implementation 'com.alibaba:arouter-api:1.2.1'
     annotationProcessor 'com.alibaba:arouter-compiler:1.1.2'
-    implementation(name: 'mindspore-lite-1.0.1', ext: 'aar')
 }
