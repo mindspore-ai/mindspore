@@ -5378,7 +5378,7 @@ class CSVDataset(SourceDataset):
         super().__init__(num_parallel_workers=num_parallel_workers)
         self.dataset_files = self._find_files(dataset_files)
         self.dataset_files.sort()
-        self.field_delim = replace_none(field_delim, '')
+        self.field_delim = replace_none(field_delim, ',')
         self.column_defaults = replace_none(column_defaults, [])
         self.column_names = replace_none(column_names, [])
         self.num_samples = num_samples

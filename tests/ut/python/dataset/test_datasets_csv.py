@@ -28,6 +28,7 @@ def test_csv_dataset_basic():
     buffer = []
     data = ds.CSVDataset(
         TRAIN_FILE,
+        field_delim=',',
         column_defaults=["0", 0, 0.0, "0"],
         column_names=['1', '2', '3', '4'],
         shuffle=False)
@@ -185,6 +186,26 @@ def test_csv_dataset_number():
     assert np.allclose(buffer, [3.0, 0.3, 4, 55.5])
 
 
+def test_csv_dataset_field_delim_none():
+    """
+    Test CSV with field_delim=None
+    """
+    TRAIN_FILE = '../data/dataset/testCSV/1.csv'
+
+    buffer = []
+    data = ds.CSVDataset(
+        TRAIN_FILE,
+        field_delim=None,
+        column_defaults=["0", 0, 0.0, "0"],
+        column_names=['1', '2', '3', '4'],
+        shuffle=False)
+    data = data.repeat(2)
+    data = data.skip(2)
+    for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        buffer.append(d)
+    assert len(buffer) == 4
+
+
 def test_csv_dataset_size():
     TEST_FILE = '../data/dataset/testCSV/size.csv'
     data = ds.CSVDataset(
@@ -245,6 +266,7 @@ if __name__ == "__main__":
     test_csv_dataset_chinese()
     test_csv_dataset_header()
     test_csv_dataset_number()
+    test_csv_dataset_field_delim_none()
     test_csv_dataset_size()
     test_csv_dataset_type_error()
     test_csv_dataset_exception()

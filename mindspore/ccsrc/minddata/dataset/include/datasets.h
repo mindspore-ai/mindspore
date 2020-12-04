@@ -382,30 +382,30 @@ class SchemaObj {
   Status Init();
 
   /// \brief Add new column to the schema with unknown shape of rank 1
-  /// \param[in] name name of the column.
-  /// \param[in] de_type data type of the column(TypeId).
-  /// \return bool true if schema init success
+  /// \param[in] name Name of the column.
+  /// \param[in] de_type Data type of the column(TypeId).
+  /// \return Status code
   Status add_column(const std::string &name, TypeId de_type);
 
   /// \brief Add new column to the schema with unknown shape of rank 1
-  /// \param[in] name name of the column.
-  /// \param[in] de_type data type of the column(std::string).
-  /// \param[in] shape shape of the column.
-  /// \return bool true if schema init success
+  /// \param[in] name Name of the column.
+  /// \param[in] de_type Data type of the column(std::string).
+  /// \param[in] shape Shape of the column.
+  /// \return Status code
   Status add_column(const std::string &name, const std::string &de_type);
 
   /// \brief Add new column to the schema
-  /// \param[in] name name of the column.
-  /// \param[in] de_type data type of the column(TypeId).
-  /// \param[in] shape shape of the column.
-  /// \return bool true if schema init success
+  /// \param[in] name Name of the column.
+  /// \param[in] de_type Data type of the column(TypeId).
+  /// \param[in] shape Shape of the column.
+  /// \return Status code
   Status add_column(const std::string &name, TypeId de_type, const std::vector<int32_t> &shape);
 
   /// \brief Add new column to the schema
-  /// \param[in] name name of the column.
-  /// \param[in] de_type data type of the column(std::string).
-  /// \param[in] shape shape of the column.
-  /// \return bool true if schema init success
+  /// \param[in] name Name of the column.
+  /// \param[in] de_type Data type of the column(std::string).
+  /// \param[in] shape Shape of the column.
+  /// \return Status code
   Status add_column(const std::string &name, const std::string &de_type, const std::vector<int32_t> &shape);
 
   /// \brief Get a JSON string of the schema
@@ -415,29 +415,35 @@ class SchemaObj {
   /// \brief Get a JSON string of the schema
   std::string to_string() { return to_json(); }
 
-  /// \brief set a new value to dataset_type
+  /// \brief Set a new value to dataset_type
   inline void set_dataset_type(std::string dataset_type) { dataset_type_ = std::move(dataset_type); }
 
-  /// \brief set a new value to num_rows
+  /// \brief Set a new value to num_rows
   inline void set_num_rows(int32_t num_rows) { num_rows_ = num_rows; }
 
-  /// \brief get the current num_rows
+  /// \brief Get the current num_rows
   inline int32_t get_num_rows() const { return num_rows_; }
 
+  /// \brief Get schema file from JSON file
+  /// \param[in] json_string Name of JSON file to be parsed.
+  /// \return Status code
   Status FromJSONString(const std::string &json_string);
 
+  /// \brief Parse and add column information
+  /// \param[in] json_string Name of JSON string for column dataset attribute information, decoded from schema file.
+  /// \return Status code
   Status ParseColumnString(const std::string &json_string);
 
  private:
-  /// \brief Parse the columns and add it to columns
-  /// \param[in] columns dataset attribution information, decoded from schema file.
-  ///    support both nlohmann::json::value_t::array and nlohmann::json::value_t::onject.
-  /// \return JSON string of the schema
+  /// \brief Parse the columns and add them to columns
+  /// \param[in] columns Dataset attribution information, decoded from schema file.
+  ///    Support both nlohmann::json::value_t::array and nlohmann::json::value_t::onject.
+  /// \return Status code
   Status parse_column(nlohmann::json columns);
 
-  /// \brief Get schema file from json file
-  /// \param[in] json_obj object of json parsed.
-  /// \return bool true if json dump success
+  /// \brief Get schema file from JSON file
+  /// \param[in] json_obj Object of JSON parsed.
+  /// \return Status code
   Status from_json(nlohmann::json json_obj);
 
   int32_t num_rows_;

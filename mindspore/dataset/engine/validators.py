@@ -927,9 +927,10 @@ def check_csvdataset(method):
 
         # check field_delim
         field_delim = param_dict.get('field_delim')
-        type_check(field_delim, (str,), 'field delim')
-        if field_delim in ['"', '\r', '\n'] or len(field_delim) > 1:
-            raise ValueError("field_delim is invalid.")
+        if field_delim is not None:
+            type_check(field_delim, (str,), 'field delim')
+            if field_delim in ['"', '\r', '\n'] or len(field_delim) > 1:
+                raise ValueError("field_delim is invalid.")
 
         # check column_defaults
         column_defaults = param_dict.get('column_defaults')
