@@ -18,6 +18,8 @@
 
 #include "minddata/dataset/include/text.h"
 #ifndef _WIN32
+#include "minddata/dataset/text/kernels/basic_tokenizer_op.h"
+#include "minddata/dataset/text/kernels/bert_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/case_fold_op.h"
 #endif
 #include "minddata/dataset/text/kernels/jieba_tokenizer_op.h"
@@ -45,6 +47,27 @@ namespace text {
 // (In alphabetical order)
 
 #ifndef _WIN32
+std::shared_ptr<BasicTokenizerOperation> BasicTokenizer(bool lower_case, bool keep_whitespace,
+                                                        const NormalizeForm normalize_form, bool preserve_unused_token,
+                                                        bool with_offsets) {
+  auto op = std::make_shared<BasicTokenizerOperation>(lower_case, keep_whitespace, normalize_form,
+                                                      preserve_unused_token, with_offsets);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
+std::shared_ptr<BertTokenizerOperation> BertTokenizer(const std::shared_ptr<Vocab> &vocab,
+                                                      const std::string &suffix_indicator, int32_t max_bytes_per_token,
+                                                      const std::string &unknown_token, bool lower_case,
+                                                      bool keep_whitespace, const NormalizeForm normalize_form,
+                                                      bool preserve_unused_token, bool with_offsets) {
+  auto op =
+    std::make_shared<BertTokenizerOperation>(vocab, suffix_indicator, max_bytes_per_token, unknown_token, lower_case,
+                                             keep_whitespace, normalize_form, preserve_unused_token, with_offsets);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
 std::shared_ptr<CaseFoldOperation> CaseFold() {
   auto op = std::make_shared<CaseFoldOperation>();
 
@@ -153,6 +176,64 @@ Status ValidateTokenizerDirParam(const std::string &tokenizer_name, const std::s
 // (In alphabetical order)
 
 #ifndef _WIN32
+// BasicTokenizerOperation
+BasicTokenizerOperation::BasicTokenizerOperation(bool lower_case, bool keep_whitespace,
+                                                 const NormalizeForm normalize_form, bool preserve_unused_token,
+                                                 bool with_offsets)
+    : lower_case_(lower_case),
+      keep_whitespace_(keep_whitespace),
+      normalize_form_(normalize_form),
+      preserve_unused_token_(preserve_unused_token),
+      with_offsets_(with_offsets) {}
+
+Status BasicTokenizerOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> BasicTokenizerOperation::Build() {
+  std::shared_ptr<BasicTokenizerOp> tensor_op = std::make_shared<BasicTokenizerOp>(
+    lower_case_, keep_whitespace_, normalize_form_, preserve_unused_token_, with_offsets_);
+  return tensor_op;
+}
+
+// BertTokenizerOperation
+BertTokenizerOperation::BertTokenizerOperation(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator,
+                                               int32_t max_bytes_per_token, const std::string &unknown_token,
+                                               bool lower_case, bool keep_whitespace,
+                                               const NormalizeForm normalize_form, bool preserve_unused_token,
+                                               bool with_offsets)
+    : vocab_(vocab),
+      suffix_indicator_(suffix_indicator),
+      max_bytes_per_token_(max_bytes_per_token),
+      unknown_token_(unknown_token),
+      lower_case_(lower_case),
+      keep_whitespace_(keep_whitespace),
+      normalize_form_(normalize_form),
+      preserve_unused_token_(preserve_unused_token),
+      with_offsets_(with_offsets) {}
+
+Status BertTokenizerOperation::ValidateParams() {
+  if (vocab_ == nullptr) {
+    std::string err_msg = "BertTokenizer: vocab object type is incorrect or null.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  if (max_bytes_per_token_ < 0) {
+    std::string err_msg = "BertTokenizer : The parameter max_bytes_per_token must be greater than or equal to 0: " +
+                          std::to_string(max_bytes_per_token_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> BertTokenizerOperation::Build() {
+  std::shared_ptr<BertTokenizerOp> tensor_op =
+    std::make_shared<BertTokenizerOp>(vocab_, suffix_indicator_, max_bytes_per_token_, unknown_token_, lower_case_,
+                                      keep_whitespace_, normalize_form_, preserve_unused_token_, with_offsets_);
+  return tensor_op;
+}
+
 // CaseFoldOperation
 Status CaseFoldOperation::ValidateParams() { return Status::OK(); }
 

@@ -38,6 +38,8 @@ namespace dataset {
 namespace text {
 
 // Char arrays storing name of corresponding classes (in alphabetical order)
+constexpr char kBasicTokenizerOperation[] = "BasicTokenizer";
+constexpr char kBertTokenizerOperation[] = "BertTokenizer";
 constexpr char kCaseFoldOperation[] = "CaseFold";
 constexpr char kJiebaTokenizerOperation[] = "JiebaTokenizer";
 constexpr char kLookupOperation[] = "Lookup";
@@ -51,6 +53,8 @@ constexpr char kWhitespaceTokenizerOperation[] = "WhitespaceTokenizer";
 
 // Text Op classes (in alphabetical order)
 #ifndef _WIN32
+class BasicTokenizerOperation;
+class BertTokenizerOperation;
 class CaseFoldOperation;
 #endif
 class JiebaTokenizerOperation;
@@ -68,6 +72,47 @@ class WhitespaceTokenizerOperation;
 #endif
 
 #ifndef _WIN32
+/// \brief Tokenize a scalar tensor of UTF-8 string by specific rules.
+/// \notes BasicTokenizer is not supported on Windows platform yet.
+/// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation on input text to
+///   fold the text to lower case and strip accents characters. If false, only apply NormalizeUTF8('normalization_form'
+///   mode) operation on input text (default=false).
+/// \param[in] keep_whitespace If true, the whitespace will be kept in out tokens (default=false).
+/// \param[in] normalize_form Used to specify a specific normalize mode. This is only effective when 'lower_case' is
+///   false. See NormalizeUTF8 for details (default=NormalizeForm::kNone).
+/// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]',
+///   '[MASK]' (default=true).
+/// \param[in] with_offsets If or not output offsets of tokens (default=false).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<BasicTokenizerOperation> BasicTokenizer(bool lower_case = false, bool keep_whitespace = false,
+                                                        const NormalizeForm normalize_form = NormalizeForm::kNone,
+                                                        bool preserve_unused_token = true, bool with_offsets = false);
+
+/// \brief Tokenizer used for Bert text process.
+/// \notes BertTokenizer is not supported on Windows platform yet.
+/// \param[in] vocab A Vocab object.
+/// \param[in] suffix_indicator Used to show that the subword is the last part of a word (default='##').
+/// \param[in] max_bytes_per_token Tokens exceeding this length will not be further split (default=100).
+/// \param[in] unknown_token When a token cannot be found, return the token directly if 'unknown_token' is an empty
+///   string, else return the string specified(default='[UNK]').
+/// \param[in] lower_case If true, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation on input text to
+///   fold the text to lower case and strip accents characters. If false, only apply NormalizeUTF8('normalization_form'
+///   mode) operation on input text (default=false).
+/// \param[in] keep_whitespace If true, the whitespace will be kept in out tokens (default=false).
+/// \param[in] normalize_form Used to specify a specific normalize mode. This is only effective when 'lower_case' is
+///   false. See NormalizeUTF8 for details (default=NormalizeForm::kNone).
+/// \param[in] preserve_unused_token If true, do not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]',
+///   '[MASK]' (default=true).
+/// \param[in] with_offsets If or not output offsets of tokens (default=false).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<BertTokenizerOperation> BertTokenizer(const std::shared_ptr<Vocab> &vocab,
+                                                      const std::string &suffix_indicator = "##",
+                                                      int32_t max_bytes_per_token = 100,
+                                                      const std::string &unknown_token = "[UNK]",
+                                                      bool lower_case = false, bool keep_whitespace = false,
+                                                      const NormalizeForm normalize_form = NormalizeForm::kNone,
+                                                      bool preserve_unused_token = true, bool with_offsets = false);
+
 /// \brief Apply case fold operation on UTF-8 string tensor.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<CaseFoldOperation> CaseFold();
@@ -171,6 +216,54 @@ std::shared_ptr<WhitespaceTokenizerOperation> WhitespaceTokenizer(bool with_offs
 /* ####################################### Derived TensorOperation classes ################################# */
 
 #ifndef _WIN32
+class BasicTokenizerOperation : public TensorOperation {
+ public:
+  BasicTokenizerOperation(bool lower_case, bool keep_whitespace, const NormalizeForm normalize_form,
+                          bool preserve_unused_token, bool with_offsets);
+
+  ~BasicTokenizerOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kBasicTokenizerOperation; }
+
+ private:
+  bool lower_case_;
+  bool keep_whitespace_;
+  NormalizeForm normalize_form_;
+  bool preserve_unused_token_;
+  bool with_offsets_;
+};
+
+class BertTokenizerOperation : public TensorOperation {
+ public:
+  BertTokenizerOperation(const std::shared_ptr<Vocab> &vocab, const std::string &suffix_indicator,
+                         int32_t max_bytes_per_token, const std::string &unknown_token, bool lower_case,
+                         bool keep_whitespace, const NormalizeForm normalize_form, bool preserve_unused_token,
+                         bool with_offsets);
+
+  ~BertTokenizerOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kBertTokenizerOperation; }
+
+ private:
+  std::shared_ptr<Vocab> vocab_;
+  std::string suffix_indicator_;
+  int32_t max_bytes_per_token_;
+  std::string unknown_token_;
+  bool lower_case_;
+  bool keep_whitespace_;
+  NormalizeForm normalize_form_;
+  bool preserve_unused_token_;
+  bool with_offsets_;
+};
+
 class CaseFoldOperation : public TensorOperation {
  public:
   CaseFoldOperation() = default;

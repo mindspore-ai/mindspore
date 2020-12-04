@@ -34,6 +34,627 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBasicTokenizerSuccess1.";
+  // Test BasicTokenizer with default parameters
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/basic_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(6);
+  EXPECT_NE(ds, nullptr);
+
+  // Create BasicTokenizer operation on ds
+  std::shared_ptr<TensorOperation> basic_tokenizer = text::BasicTokenizer();
+  EXPECT_NE(basic_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({basic_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {
+    {"Welcome", "to", "Beijing", "北", "京", "欢", "迎", "您"},
+    {"長", "風", "破", "浪", "會", "有", "時", "，", "直", "掛", "雲", "帆", "濟", "滄", "海"},
+    {"😀", "嘿", "嘿", "😃", "哈", "哈", "😄", "大", "笑", "😁", "嘻", "嘻"},
+    {"明", "朝", "（", "1368", "—",  "1644", "年", "）", "和", "清", "朝", "（", "1644", "—",  "1911", "年", "）",
+     "，", "是", "中", "国",   "封", "建",   "王", "朝", "史", "上", "最", "后", "两",   "个", "朝",   "代"},
+    {"明", "代",   "（", "1368",     "-",  "1644", "）",      "と", "清", "代",    "（", "1644",
+     "-",  "1911", "）", "は",       "、", "中",   "国",      "の", "封", "建",    "王", "朝",
+     "の", "歴",   "史", "における", "最", "後",   "の2つの", "王", "朝", "でした"},
+    {"명나라", "(", "1368", "-",    "1644", ")",      "와",       "청나라", "(",  "1644",    "-",
+     "1911",   ")", "는",   "중국", "봉건", "왕조의", "역사에서", "마지막", "두", "왕조였다"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected[i], &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBasicTokenizerSuccess2.";
+  // Test BasicTokenizer with lower_case true
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/basic_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(6);
+  EXPECT_NE(ds, nullptr);
+
+  // Create BasicTokenizer operation on ds
+  std::shared_ptr<TensorOperation> basic_tokenizer = text::BasicTokenizer(true);
+  EXPECT_NE(basic_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({basic_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"this", "is", "a", "funky", "string"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected, &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBasicTokenizerSuccess3.";
+  // Test BasicTokenizer with with_offsets true and lower_case true
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/basic_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(6);
+  EXPECT_NE(ds, nullptr);
+
+  // Create BasicTokenizer operation on ds
+  std::shared_ptr<TensorOperation> basic_tokenizer =
+    text::BasicTokenizer(true, false, NormalizeForm::kNone, true, true);
+  EXPECT_NE(basic_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({basic_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected_tokens = {"this", "is", "a", "funky", "string"};
+  std::vector<uint32_t> expected_offsets_start = {0, 5, 8, 10, 16};
+  std::vector<uint32_t> expected_offsets_limit = {4, 7, 9, 15, 22};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["token"];
+    std::shared_ptr<Tensor> expected_token_tensor;
+    Tensor::CreateFromVector(expected_tokens, &expected_token_tensor);
+    EXPECT_EQ(*ind, *expected_token_tensor);
+    auto start = row["offsets_start"];
+    std::shared_ptr<Tensor> expected_start_tensor;
+    Tensor::CreateFromVector(expected_offsets_start, &expected_start_tensor);
+    EXPECT_EQ(*start, *expected_start_tensor);
+    auto limit = row["offsets_limit"];
+    std::shared_ptr<Tensor> expected_limit_tensor;
+    Tensor::CreateFromVector(expected_offsets_limit, &expected_limit_tensor);
+    EXPECT_EQ(*limit, *expected_limit_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+std::vector<std::string> list = {
+  "床", "前", "明",    "月",    "光",    "疑",    "是",      "地",        "上",        "霜",   "举",    "头",
+  "望", "低", "思",    "故",    "乡",    "繁",    "體",      "字",        "嘿",        "哈",   "大",    "笑",
+  "嘻", "i",  "am",    "mak",   "make",  "small", "mistake", "##s",       "during",    "work", "##ing", "hour",
+  "😀",  "😃",  "😄",     "😁",     "+",     "/",     "-",       "=",         "12",        "28",   "40",    "16",
+  " ",  "I",  "[CLS]", "[SEP]", "[UNK]", "[PAD]", "[MASK]",  "[unused1]", "[unused10]"};
+
+TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess1.";
+  // Test BertTokenizer with default parameters
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(4);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create BertTokenizer operation on ds
+  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab);
+  EXPECT_NE(bert_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({bert_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {{"床", "前", "明", "月", "光"},
+                                                    {"疑", "是", "地", "上", "霜"},
+                                                    {"举", "头", "望", "明", "月"},
+                                                    {"低", "头", "思", "故", "乡"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected[i], &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess2.";
+  // Test BertTokenizer with lower_case true
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(4);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(1);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create BertTokenizer operation on ds
+  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab, "##", 100, "[UNK]", true);
+  EXPECT_NE(bert_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({bert_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"i",   "am",     "mak",  "##ing", "small", "mistake",
+                                       "##s", "during", "work", "##ing", "hour",  "##s"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected, &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess3.";
+  // Test BertTokenizer with normalization_form NFKC
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(5);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create BertTokenizer operation on ds
+  std::shared_ptr<TensorOperation> bert_tokenizer =
+    text::BertTokenizer(vocab, "##", 100, "[UNK]", false, false, NormalizeForm::kNfc);
+  EXPECT_NE(bert_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({bert_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {
+    {"😀", "嘿", "嘿", "😃", "哈", "哈", "😄", "大", "笑", "😁", "嘻", "嘻"}, {"繁", "體", "字"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected[i], &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess4.";
+  // Test BertTokenizer with keep_whitespace true
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(7);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(1);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create BertTokenizer operation on ds
+  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab, "##", 100, "[UNK]", false, true);
+  EXPECT_NE(bert_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({bert_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"[UNK]", " ", "[CLS]"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected, &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess5) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess5.";
+  // Test BertTokenizer with unknown_token empty and keep_whitespace true
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(7);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(1);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create BertTokenizer operation on ds
+  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab, "##", 100, "", false, true);
+  EXPECT_NE(bert_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({bert_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"unused", " ", "[CLS]"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected, &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess6) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess6.";
+  // Test BertTokenizer with preserve_unused_token false, unknown_token empty and keep_whitespace true
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(7);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(1);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create BertTokenizer operation on ds
+  std::shared_ptr<TensorOperation> bert_tokenizer =
+    text::BertTokenizer(vocab, "##", 100, "", false, true, NormalizeForm::kNone, false);
+  EXPECT_NE(bert_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({bert_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"unused", " ", "[", "CLS", "]"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected, &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess7) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerSuccess7.";
+  // Test BertTokenizer with with_offsets true and lower_case true
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Skip operation on ds
+  ds = ds->Skip(4);
+  EXPECT_NE(ds, nullptr);
+
+  // Create Take operation on ds
+  ds = ds->Take(1);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create BertTokenizer operation on ds
+  std::shared_ptr<TensorOperation> bert_tokenizer =
+    text::BertTokenizer(vocab, "##", 100, "[UNK]", true, false, NormalizeForm::kNone, true, true);
+  EXPECT_NE(bert_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({bert_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected_tokens = {"i",   "am",     "mak",  "##ing", "small", "mistake",
+                                              "##s", "during", "work", "##ing", "hour",  "##s"};
+  std::vector<uint32_t> expected_offsets_start = {0, 2, 5, 8, 12, 18, 25, 27, 34, 38, 42, 46};
+  std::vector<uint32_t> expected_offsets_limit = {1, 4, 8, 11, 17, 25, 26, 33, 38, 41, 46, 47};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["token"];
+    std::shared_ptr<Tensor> expected_token_tensor;
+    Tensor::CreateFromVector(expected_tokens, &expected_token_tensor);
+    EXPECT_EQ(*ind, *expected_token_tensor);
+    auto start = row["offsets_start"];
+    std::shared_ptr<Tensor> expected_start_tensor;
+    Tensor::CreateFromVector(expected_offsets_start, &expected_start_tensor);
+    EXPECT_EQ(*start, *expected_start_tensor);
+    auto limit = row["offsets_limit"];
+    std::shared_ptr<Tensor> expected_limit_tensor;
+    Tensor::CreateFromVector(expected_offsets_limit, &expected_limit_tensor);
+    EXPECT_EQ(*limit, *expected_limit_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestBertTokenizerFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerFail1.";
+  // Test BertTokenizer with nullptr vocab
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create BertTokenizer operation on ds
+  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(nullptr);
+  // Expect failure: invalid BertTokenizer input with nullptr vocab
+  EXPECT_EQ(bert_tokenizer, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestBertTokenizerFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBertTokenizerFail2.";
+  // Test BertTokenizer with negative max_bytes_per_token
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/bert_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a vocab from vector
+  std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
+  Status s = Vocab::BuildFromVector(list, {}, true, &vocab);
+  EXPECT_EQ(s, Status::OK());
+
+  // Create BertTokenizer operation on ds
+  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab, "##", -1);
+  // Expect failure: invalid BertTokenizer input with nullptr vocab
+  EXPECT_EQ(bert_tokenizer, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestCaseFoldSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCaseFoldSuccess.";
 
