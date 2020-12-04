@@ -682,8 +682,8 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
 }
 
 void MatVecMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int col) {
-#ifdef ENABLE_ARM64
-  MatVecMulFp32Neon64(a, b, c, bias, (int)act_type, depth, col);
+#ifdef ENABLE_ARM
+  MatVecMulFp32(a, b, c, bias, (int)act_type, depth, col);
 #endif
 }
 
