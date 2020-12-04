@@ -47,7 +47,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.mindspore.imagesegmentation.help.ImageUtils;
+import com.mindspore.imagesegmentation.help.BitmapUtils;
 import com.mindspore.imagesegmentation.help.ModelTrackingResult;
 import com.mindspore.imagesegmentation.help.TrackingMobile;
 
@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements OnBackgroundImage
             Log.e(TAG, "null processed image");
             Toast.makeText(this.getApplicationContext(), R.string.no_pic_neededSave, Toast.LENGTH_SHORT).show();
         } else {
-            ImageUtils.saveToAlbum(getApplicationContext(), this.processedImage);
+            BitmapUtils.saveToAlbum(getApplicationContext(), this.processedImage);
             Toast.makeText(this.getApplicationContext(), R.string.save_success, Toast.LENGTH_SHORT).show();
         }
     }

@@ -11,6 +11,7 @@
     <string name="title_style_transfer">Style Transfer</string>
     <string name="title_source">Source Code</string>
     <string name="title_help">Help And FeedBack</string>
+    <string name="title_segmentation">Image Segmentation</string>
 
     <string name="title_photo">Photo</string>
     <string name="title_camera">Camera</string>

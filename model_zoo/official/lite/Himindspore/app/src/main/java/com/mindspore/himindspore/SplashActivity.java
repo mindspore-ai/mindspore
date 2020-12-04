@@ -206,6 +206,14 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
         }
     }
 
+    public void onClickSegmentation(View view) {
+        if (isAllGranted) {
+            ARouter.getInstance().build("/segmentation/SegmentationMainActivity").navigation(this);
+        } else {
+            requestPermissions();
+        }
+    }
+
     public void onClickSouceCode(View view) {
         openBrowser(CODE_URL);
     }
@@ -341,6 +349,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
         }
         return directoryPath;
     }
+
 
 
 }

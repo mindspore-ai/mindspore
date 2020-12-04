@@ -15,21 +15,21 @@
  */
 package com.mindspore.imagesegmentation.help;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
+import android.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
-
-import androidx.annotation.NonNull;
-import androidx.exifinterface.media.ExifInterface;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,37 +39,154 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class ImageUtils {
+public class BitmapUtils {
+    private static final String TAG = "BitmapUtils";
 
-    private static final String TAG = "ImageUtils";
+    public static void recycleBitmap(Bitmap... bitmaps) {
+        for (Bitmap bitmap : bitmaps) {
+            if (bitmap != null && !bitmap.isRecycled()) {
+                bitmap.recycle();
+                bitmap = null;
+            }
+        }
+    }
+
+    private static String getImagePath(Activity activity, Uri uri) {
+        String[] projection = {MediaStore.Images.Media.DATA};
+        Cursor cursor = activity.managedQuery(uri, projection, null, null, null);
+        int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(columnIndex);
+    }
+
+    public static Bitmap loadFromPath(Activity activity, int id, int width, int height) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        InputStream is = activity.getResources().openRawResource(id);
+        int sampleSize = calculateInSampleSize(options, width, height);
+        options.inSampleSize = sampleSize;
+        options.inJustDecodeBounds = false;
+        return zoomImage(BitmapFactory.decodeStream(is), width, height);
+    }
+
+    public static Bitmap loadFromPath(Activity activity, Uri uri, int width, int height) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+
+        String path = getImagePath(activity, uri);
+        BitmapFactory.decodeFile(path, options);
+        int sampleSize = calculateInSampleSize(options, width, height);
+        options.inSampleSize = sampleSize;
+        options.inJustDecodeBounds = false;
+
+        Bitmap bitmap = zoomImage(BitmapFactory.decodeFile(path, options), width, height);
+        return rotateBitmap(bitmap, getRotationAngle(path));
+    }
+
+    private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        final int width = options.outWidth;
+        final int height = options.outHeight;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+            // Calculate height and required height scale.
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            // Calculate width and required width scale.
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+            // Take the larger of the values.
+            inSampleSize = heightRatio > widthRatio ? heightRatio : widthRatio;
+        }
+        return inSampleSize;
+    }
+
+    // Scale pictures to screen width.
+    private static Bitmap zoomImage(Bitmap imageBitmap, int targetWidth, int maxHeight) {
+        float scaleFactor =
+                Math.max(
+                        (float) imageBitmap.getWidth() / (float) targetWidth,
+                        (float) imageBitmap.getHeight() / (float) maxHeight);
+        Bitmap resizedBitmap =
+                Bitmap.createScaledBitmap(
+                        imageBitmap,
+                        (int) (imageBitmap.getWidth() / scaleFactor),
+                        (int) (imageBitmap.getHeight() / scaleFactor),
+                        true);
+
+        return resizedBitmap;
+    }
+
+    /**
+     * Get the rotation angle of the photo.
+     *
+     * @param path photo path.
+     * @return angle.
+     */
+    public static int getRotationAngle(String path) {
+        int rotation = 0;
+        try {
+            ExifInterface exifInterface = new ExifInterface(path);
+            int orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    rotation = 90;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    rotation = 180;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    rotation = 270;
+                    break;
+                default:
+                    break;
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to get rotation: " + e.getMessage());
+        }
+        return rotation;
+    }
+
+    public static Bitmap rotateBitmap(Bitmap bitmap, int angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        Bitmap result = null;
+        try {
+            result = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        } catch (OutOfMemoryError e) {
+            Log.e(TAG, "Failed to rotate bitmap: " + e.getMessage());
+        }
+        if (result == null) {
+            return bitmap;
+        }
+        return result;
+    }
 
     private static Matrix decodeExifOrientation(int orientation) {
         Matrix matrix = new Matrix();
 
         switch (orientation) {
-            case ExifInterface.ORIENTATION_NORMAL:
-            case ExifInterface.ORIENTATION_UNDEFINED:
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL:
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_UNDEFINED:
                 break;
-            case ExifInterface.ORIENTATION_ROTATE_90:
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90:
                 matrix.postRotate(90F);
                 break;
-            case ExifInterface.ORIENTATION_ROTATE_180:
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180:
                 matrix.postRotate(180F);
                 break;
-            case ExifInterface.ORIENTATION_ROTATE_270:
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270:
                 matrix.postRotate(270F);
                 break;
-            case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
                 matrix.postScale(-1F, 1F);
                 break;
-            case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_FLIP_VERTICAL:
                 matrix.postScale(1F, -1F);
                 break;
-            case ExifInterface.ORIENTATION_TRANSPOSE:
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_TRANSPOSE:
                 matrix.postScale(-1F, 1F);
                 matrix.postRotate(270F);
                 break;
-            case ExifInterface.ORIENTATION_TRANSVERSE:
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_TRANSVERSE:
                 matrix.postScale(-1F, 1F);
                 matrix.postRotate(90F);
                 break;
@@ -83,55 +200,6 @@ public class ImageUtils {
         }
         return matrix;
     }
-
-    public void setExifOrientation(@NonNull String filePath, @NonNull String value) {
-        try {
-            ExifInterface exif = new ExifInterface(filePath);
-            exif.setAttribute(ExifInterface.TAG_ORIENTATION, value);
-            exif.saveAttributes();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public int computeExifOrientation(int rotationDegrees, boolean mirrored) {
-        if (rotationDegrees == 0 && !mirrored) {
-            return ExifInterface.ORIENTATION_NORMAL;
-        } else if (rotationDegrees == 0 && mirrored) {
-            return ExifInterface.ORIENTATION_FLIP_HORIZONTAL;
-        } else if (rotationDegrees == 180 && !mirrored) {
-            return ExifInterface.ORIENTATION_ROTATE_180;
-        } else if (rotationDegrees == 180 && mirrored) {
-            return ExifInterface.ORIENTATION_FLIP_VERTICAL;
-        } else if (rotationDegrees == 90 && !mirrored) {
-            return ExifInterface.ORIENTATION_ROTATE_90;
-        } else if (rotationDegrees == 90 && mirrored) {
-            return ExifInterface.ORIENTATION_TRANSPOSE;
-        } else if (rotationDegrees == 270 && !mirrored) {
-            return ExifInterface.ORIENTATION_ROTATE_270;
-        } else if (rotationDegrees == 270 && mirrored) {
-            return ExifInterface.ORIENTATION_TRANSVERSE;
-        } else {
-            return ExifInterface.ORIENTATION_UNDEFINED;
-        }
-    }
-
-    public static Bitmap decodeBitmap(@NonNull File file) {
-        Bitmap finalBitmap = null;
-        try {
-            ExifInterface exif = new ExifInterface(file.getAbsolutePath());
-
-            Matrix transformation = decodeExifOrientation(exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_ROTATE_90));
-
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
-            finalBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), transformation, true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return finalBitmap;
-    }
-
 
     public static Bitmap scaleBitmapAndKeepRatio(Bitmap targetBmp, int reqHeightInPixels, int reqWidthInPixels) {
         if (targetBmp.getHeight() == reqHeightInPixels && targetBmp.getWidth() == reqWidthInPixels) {
@@ -154,16 +222,6 @@ public class ImageUtils {
         );
     }
 
-    public static Bitmap loadBitmapFromResources(Context context, String path) {
-        try {
-            InputStream inputStream = context.getAssets().open(path);
-            return BitmapFactory.decodeStream(inputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     public static ByteBuffer bitmapToByteBuffer(Bitmap bitmapIn, int width, int height, float mean, float std) {
         Bitmap bitmap = scaleBitmapAndKeepRatio(bitmapIn, width, height);
         ByteBuffer inputImage = ByteBuffer.allocateDirect(1 * width * height * 3 * 4);
@@ -182,31 +240,6 @@ public class ImageUtils {
         }
         inputImage.rewind();
         return inputImage;
-    }
-
-
-    public static Bitmap convertArrayToBitmap(float[][][][] imageArray, int imageWidth, int imageHeight) {
-        Bitmap styledImage = Bitmap.createBitmap(imageWidth, imageHeight, Bitmap.Config.ARGB_8888);
-
-        for (int x = 0; x < imageArray[0].length; x++) {
-            for (int y = 0; y < imageArray[0][0].length; y++) {
-
-                int color = Color.rgb((int) (imageArray[0][x][y][0] * (float) 255),
-                        (int) (imageArray[0][x][y][1] * (float) 255),
-                        (int) (imageArray[0][x][y][2] * (float) 255));
-                // this y, x is in the correct order!!!
-                styledImage.setPixel(y, x, color);
-            }
-        }
-        return styledImage;
-    }
-
-    public Bitmap createEmptyBitmap(int imageWidth, int imageHeigth, int color) {
-        Bitmap ret = Bitmap.createBitmap(imageWidth, imageHeigth, Bitmap.Config.RGB_565);
-        if (color != 0) {
-            ret.eraseColor(color);
-        }
-        return ret;
     }
 
     // Save the picture to the system album and refresh it.

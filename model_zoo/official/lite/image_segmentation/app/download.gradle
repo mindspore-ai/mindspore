@@ -4,8 +4,8 @@
  * The libraries can be downloaded manually.
  */
 def mindsporeLite_Version = "mindspore-lite-maven-1.0.1"
-def targetModelFile = "src/main/assets/mobile_segment.ms"
-def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobile_segment_lite/mobile_segment.ms"
+def targetModelFile = "src/main/assets/segment_model.ms"
+def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobile_segment_lite/segment_model.ms"
 def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/java/${mindsporeLite_Version}.zip"
 def mindSporeLibrary = "libs/${mindsporeLite_Version}.zip"
 def cleantargetMindSporeInclude = "libs"
@@ -50,7 +50,7 @@ if (file("libs/mindspore-lite-1.0.1.aar").exists()) {
 }
 
 
-if (file("src/main/assets/mobile_segment.ms").exists()) {
+if (file("src/main/assets/segment_model.ms").exists()) {
     downloadModelFile.enabled = false
 }
 
