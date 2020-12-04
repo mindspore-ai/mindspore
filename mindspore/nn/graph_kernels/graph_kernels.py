@@ -41,9 +41,9 @@ class InplaceAssign(PrimitiveWithInfer):
 
     Examples:
     >>> def construct(self, x):
-    >>> val = x - 1.0
-    >>> ret = x + 2.0
-    >>> return InplaceAssign()(x, val, ret)
+    ...     val = x - 1.0
+    ...     ret = x + 2.0
+    ...     return InplaceAssign()(x, val, ret)
     >>> x = Tensor([2.0], mindspore.float32)
     >>> net = Net()
     >>> net(x)
@@ -225,8 +225,8 @@ class BiasAdd(GraphKernel):
         Tensor, the sum of x and bias.
 
     Example:
-    >>> layer = BiasGrad()
-    >>> output = BiasAdd(Tensor([1, 2, 3]), Tensor([1,]))
+    >>> layer = BiasAdd()
+    >>> output = layer(Tensor([1, 2, 3]), Tensor([1,]))
     """
 
     def __init__(self):
@@ -286,7 +286,8 @@ class EqualCount(GraphKernel):
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> y = Tensor(np.array([1, 2, 4]), mindspore.int32)
         >>> equal_count = EqualCount()
-        >>> equal_count(x, y)
+        >>> print(equal_count(x, y))
+        2
     """
     def __init__(self):
         super(EqualCount, self).__init__()
@@ -744,7 +745,7 @@ class Tanh(GraphKernel):
         >>> tanh = Tanh()
         >>> result = tanh(input_x)
         >>> print(result)
-        [0.7615941  0.9640276  0.9950548  0.9993293  0.99990916]
+        [0.7615941 0.9640276 0.9950548 0.9993293 0.99990916]
     """
     def __init__(self):
         super(Tanh, self).__init__()

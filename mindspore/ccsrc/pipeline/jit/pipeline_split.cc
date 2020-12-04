@@ -49,6 +49,9 @@ static int64_t GetRank() {
 }
 
 static int64_t InferStage(int64_t rank_id, int64_t stage_num, int64_t device_num) {
+  if (stage_num == 0) {
+    MS_LOG(EXCEPTION) << "stage_num is zero";
+  }
   if (device_num % stage_num != 0) {
     MS_LOG(EXCEPTION) << "Device_num must be divisible by the stage_num, got device_num: " << device_num
                       << "stage_num: " << stage_num;

@@ -46,6 +46,8 @@ class Tensor(Tensor_):
         Tensor, with the same shape as `input_data`.
 
     Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
         >>> # initialize a tensor with input data
         >>> t1 = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
         >>> assert isinstance(t1, Tensor)
@@ -381,17 +383,25 @@ class RowTensor:
         RowTensor, composed of `indices`, `values`, and `dense_shape`.
 
     Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
         >>> class Net(nn.Cell):
-        >>>     def __init__(self, dense_shape):
-        >>>         super(Net, self).__init__()
-        >>>         self.dense_shape = dense_shape
-        >>>     def construct(self, indices, values):
-        >>>         x = RowTensor(indices, values, self.dense_shape)
-        >>>         return x.values, x.indices, x.dense_shape
+        ...     def __init__(self, dense_shape):
+        ...         super(Net, self).__init__()
+        ...         self.dense_shape = dense_shape
+        ...     def construct(self, indices, values):
+        ...         x = RowTensor(indices, values, self.dense_shape)
+        ...         return x.values, x.indices, x.dense_shape
         >>>
         >>> indices = Tensor([0])
         >>> values = Tensor([[1, 2]], dtype=ms.float32)
-        >>> Net((3, 2))(indices, values)
+        >>> out = Net((3, 2))(indices, values)
+        >>> print(out[0])
+        [[1. 2.]]
+        >>> print(out[1])
+        [0]
+        >>> print(out[2])
+        (3, 2)
     """
 
     def __init__(self, indices, values, dense_shape):
@@ -437,17 +447,26 @@ class SparseTensor:
         SparseTensor, composed of `indices`, `values`, and `dense_shape`.
 
     Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
         >>> class Net(nn.Cell):
-        >>>     def __init__(self, dense_shape):
-        >>>         super(Net, self).__init__()
-        >>>         self.dense_shape = dense_shape
-        >>>     def construct(self, indices, values):
-        >>>         x = SparseTensor(indices, values, self.dense_shape)
-        >>>         return x.values, x.indices, x.dense_shape
+        ...     def __init__(self, dense_shape):
+        ...         super(Net, self).__init__()
+        ...         self.dense_shape = dense_shape
+        ...     def construct(self, indices, values):
+        ...         x = SparseTensor(indices, values, self.dense_shape)
+        ...         return x.values, x.indices, x.dense_shape
         >>>
         >>> indices = Tensor([[0, 1], [1, 2]])
         >>> values = Tensor([1, 2], dtype=ms.float32)
-        >>> Net((3, 4))(indices, values)
+        >>> out = Net((3, 4))(indices, values)
+        >>> print(out[0])
+        [1. 2.]
+        >>> print(out[1])
+        [[0 1]
+         [1 2]]
+        >>> print(out[2])
+        (3, 4)
     """
 
     def __init__(self, indices, values, dense_shape):

@@ -72,21 +72,22 @@ class Parameter(MetaTensor_):
         >>> from mindspore import context
         >>>
         >>> class Net(Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.matmul = P.MatMul()
-        >>>         self.weight = Parameter(Tensor(np.ones((1,2))), requires_grad=True)
-        >>>
-        >>>     def construct(self, x):
-        >>>         out = self.matmul(self.weight, x)
-        >>>         return out
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.matmul = P.MatMul()
+        ...         self.weight = Parameter(Tensor(np.ones((1,2))), name="w", requires_grad=True)
+        ...
+        ...     def construct(self, x):
+        ...         out = self.matmul(self.weight, x)
+        ...         return out
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
         >>> net = Net()
         >>> x = Tensor(np.ones((2,1)))
-        >>> net(x)
+        >>> print(net(x))
         [[2.]]
         >>> net.weight.set_data(Tensor(np.zeros((1,2))))
-        >>> net(x)
+        Parameter (name=w)
+        >>> print(net(x))
         [[0.]]
     """
     __base_type__ = {}
