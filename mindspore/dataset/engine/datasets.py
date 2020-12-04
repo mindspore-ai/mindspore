@@ -2320,10 +2320,16 @@ class MapDataset(Dataset):
 
     def parse(self, children=None):
         column_order = replace_none(self.column_order, [])
+        operations = []
+        for op in self.operations:
+            if op and getattr(op, 'parse', None):
+                operations.append(op.parse())
+            else:
+                operations.append(op)
 
         cc = self.cache.cache_client if self.cache else None
         callbacks = [cb.create_runtime_obj() for cb in self.callbacks] if self.callbacks else []
-        return cde.MapNode(children[0], self.operations, self.input_columns, self.output_columns, column_order, cc,
+        return cde.MapNode(children[0], operations, self.input_columns, self.output_columns, column_order, cc,
                            callbacks).SetNumWorkers(self.num_parallel_workers)
 
     def get_args(self):

@@ -49,42 +49,5 @@ PYBIND_REGISTER(TensorOp, 0, ([](const py::module *m) {
                   (void)py::class_<TensorOp, std::shared_ptr<TensorOp>>(*m, "TensorOp")
                     .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
                 }));
-
-PYBIND_REGISTER(ComposeOp, 1, ([](const py::module *m) {
-                  (void)py::class_<ComposeOp, TensorOp, std::shared_ptr<ComposeOp>>(*m, "ComposeOp")
-                    .def(py::init([](const py::list &ops) {
-                      std::vector<std::shared_ptr<TensorOp>> t_ops;
-                      THROW_IF_ERROR(PyListToTensorOps(ops, &t_ops));
-                      return std::make_shared<ComposeOp>(t_ops);
-                    }));
-                }));
-
-PYBIND_REGISTER(NoOp, 1, ([](const py::module *m) {
-                  (void)py::class_<NoOp, TensorOp, std::shared_ptr<NoOp>>(
-                    *m, "NoOp", "TensorOp that does nothing, for testing purposes only.")
-                    .def(py::init<>());
-                }));
-
-PYBIND_REGISTER(RandomChoiceOp, 1, ([](const py::module *m) {
-                  (void)py::class_<RandomChoiceOp, TensorOp, std::shared_ptr<RandomChoiceOp>>(*m, "RandomChoiceOp")
-                    .def(py::init([](const py::list &ops) {
-                      std::vector<std::shared_ptr<TensorOp>> t_ops;
-                      THROW_IF_ERROR(PyListToTensorOps(ops, &t_ops));
-                      return std::make_shared<RandomChoiceOp>(t_ops);
-                    }));
-                }));
-
-PYBIND_REGISTER(RandomApplyOp, 1, ([](const py::module *m) {
-                  (void)py::class_<RandomApplyOp, TensorOp, std::shared_ptr<RandomApplyOp>>(*m, "RandomApplyOp")
-                    .def(py::init([](double prob, const py::list &ops) {
-                      std::vector<std::shared_ptr<TensorOp>> t_ops;
-                      THROW_IF_ERROR(PyListToTensorOps(ops, &t_ops));
-                      if (prob < 0 || prob > 1) {
-                        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "prob needs to be within [0,1]."));
-                      }
-                      return std::make_shared<RandomApplyOp>(prob, t_ops);
-                    }));
-                }));
-
 }  // namespace dataset
 }  // namespace mindspore

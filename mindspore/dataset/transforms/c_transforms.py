@@ -327,7 +327,7 @@ class Unique(cde.UniqueOp):
         >>> # +---------+-----------------+---------+
 
     """
-class Compose(cde.ComposeOp):
+class Compose():
     """
     Compose a list of transforms into a single transform.
 
@@ -344,10 +344,18 @@ class Compose(cde.ComposeOp):
 
     @check_random_transform_ops
     def __init__(self, transforms):
-        super().__init__(transforms)
+        self.transforms = transforms
 
+    def parse(self):
+        operations = []
+        for op in self.transforms:
+            if op and getattr(op, 'parse', None):
+                operations.append(op.parse())
+            else:
+                operations.append(op)
+        return cde.ComposeOperation(operations)
 
-class RandomApply(cde.RandomApplyOp):
+class RandomApply():
     """
     Randomly perform a series of transforms with a given probability.
 
@@ -365,10 +373,20 @@ class RandomApply(cde.RandomApplyOp):
 
     @check_random_transform_ops
     def __init__(self, transforms, prob=0.5):
-        super().__init__(prob, transforms)
+        self.transforms = transforms
+        self.prob = prob
+
+    def parse(self):
+        operations = []
+        for op in self.transforms:
+            if op and getattr(op, 'parse', None):
+                operations.append(op.parse())
+            else:
+                operations.append(op)
+        return cde.RandomApplyOperation(self.prob, operations)
 
 
-class RandomChoice(cde.RandomChoiceOp):
+class RandomChoice():
     """
     Randomly selects one transform from a list of transforms to perform operation.
 
@@ -385,4 +403,13 @@ class RandomChoice(cde.RandomChoiceOp):
 
     @check_random_transform_ops
     def __init__(self, transforms):
-        super().__init__(transforms)
+        self.transforms = transforms
+
+    def parse(self):
+        operations = []
+        for op in self.transforms:
+            if op and getattr(op, 'parse', None):
+                operations.append(op.parse())
+            else:
+                operations.append(op)
+        return cde.RandomChoiceOperation(operations)
