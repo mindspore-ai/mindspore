@@ -48,8 +48,8 @@ class TransposeFp16CPUKernel : public LiteKernel {
   float *out_data_;
   float16_t *fp16_in_data_ = nullptr;
   float16_t *fp16_out_data_ = nullptr;
-  int *in_shape_;
-  int *out_shape_;
+  int in_shape_[8];
+  int out_shape_[8];
 };
 }  // namespace mindspore::kernel
 

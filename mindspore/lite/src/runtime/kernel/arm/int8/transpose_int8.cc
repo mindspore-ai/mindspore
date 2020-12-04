@@ -143,8 +143,8 @@ int TransposeInt8CPUKernel::Run() {
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensor->data_c());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->data_c());
 
-  in_shape_ = in_dims.data();
-  out_shape_ = out_dims.data();
+  memcpy(in_shape_, in_dims.data(), in_dims.size() * sizeof(int));
+  memcpy(out_shape_, out_dims.data(), out_dims.size() * sizeof(int));
 
   int ret = MallocTmpBuf();
   if (ret != RET_OK) {
@@ -157,8 +157,6 @@ int TransposeInt8CPUKernel::Run() {
   }
 
   FreeTmpBuf();
-  in_shape_ = nullptr;
-  out_shape_ = nullptr;
   return ret;
 }
 
