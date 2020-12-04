@@ -309,10 +309,10 @@ void DatasetNode::PrintNode(std::ostream &out, int *level) const {
   }
 }
 
-// Add a node as a child, node's parent needs to be nullptr
+// Add a node as a child, node's parent needs to be empty
 // this function will allow child to be a nullptr, in which case it will simply skip
 void DatasetNode::AddChild(std::shared_ptr<DatasetNode> child) {
-  if (child != nullptr && !child->parent_.size()) {
+  if (child != nullptr && child->parent_.empty()) {
     children_.push_back(child);
     child->parent_.push_back(this);
   } else if (child != nullptr) {

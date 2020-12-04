@@ -25,6 +25,8 @@
 #include "minddata/dataset/text/kernels/ngram_op.h"
 #ifndef _WIN32
 #include "minddata/dataset/text/kernels/normalize_utf8_op.h"
+#include "minddata/dataset/text/kernels/regex_replace_op.h"
+#include "minddata/dataset/text/kernels/regex_tokenizer_op.h"
 #endif
 #include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/sliding_window_op.h"
@@ -77,6 +79,19 @@ std::shared_ptr<NgramOperation> Ngram(const std::vector<int32_t> &ngrams,
 #ifndef _WIN32
 std::shared_ptr<NormalizeUTF8Operation> NormalizeUTF8(NormalizeForm normalize_form) {
   auto op = std::make_shared<NormalizeUTF8Operation>(normalize_form);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
+std::shared_ptr<RegexReplaceOperation> RegexReplace(std::string pattern, std::string replace, bool replace_all) {
+  auto op = std::make_shared<RegexReplaceOperation>(pattern, replace, replace_all);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
+std::shared_ptr<RegexTokenizerOperation> RegexTokenizer(std::string delim_pattern, std::string keep_delim_pattern,
+                                                        bool with_offsets) {
+  auto op = std::make_shared<RegexTokenizerOperation>(delim_pattern, keep_delim_pattern, with_offsets);
 
   return op->ValidateParams() ? op : nullptr;
 }
@@ -274,6 +289,30 @@ Status NormalizeUTF8Operation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> NormalizeUTF8Operation::Build() {
   std::shared_ptr<NormalizeUTF8Op> tensor_op = std::make_shared<NormalizeUTF8Op>(normalize_form_);
+  return tensor_op;
+}
+
+// RegexReplaceOperation
+RegexReplaceOperation::RegexReplaceOperation(std::string pattern, std::string replace, bool replace_all)
+    : pattern_(pattern), replace_(replace), replace_all_(replace_all) {}
+
+Status RegexReplaceOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> RegexReplaceOperation::Build() {
+  std::shared_ptr<RegexReplaceOp> tensor_op = std::make_shared<RegexReplaceOp>(pattern_, replace_, replace_all_);
+  return tensor_op;
+}
+
+// RegexTokenizerOperation
+RegexTokenizerOperation::RegexTokenizerOperation(std::string delim_pattern, std::string keep_delim_pattern,
+                                                 bool with_offsets)
+    : delim_pattern_(delim_pattern), keep_delim_pattern_(keep_delim_pattern), with_offsets_(with_offsets) {}
+
+Status RegexTokenizerOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> RegexTokenizerOperation::Build() {
+  std::shared_ptr<RegexTokenizerOp> tensor_op =
+    std::make_shared<RegexTokenizerOp>(delim_pattern_, keep_delim_pattern_, with_offsets_);
   return tensor_op;
 }
 #endif
