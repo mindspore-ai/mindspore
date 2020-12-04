@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include <utility>
 #include "tools/anf_importer/anf_importer.h"
+#include <utility>
 #include "schema/model_generated.h"
 #include "ir/dtype.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 namespace mindspore {
 namespace lite {
-int AnfImporter::Import(const schema::QuantType &quantType) {
+int AnfImporter::Import(const converter::Flags *flag) {
   auto ret = ConverterConstTensor();
   if (RET_OK != ret) {
     MS_LOG(ERROR) << "ConverterConstTensor failed " << ret;

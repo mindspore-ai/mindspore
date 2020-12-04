@@ -29,6 +29,7 @@
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
+#include "tools/optimizer/graph/mindir_adjust_pass.h"
 #include "tools/optimizer/graph/identity_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
@@ -60,6 +61,18 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
   auto fusion_pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
+
+  // mindir pre adjustment
+  if (config->fmk == converter::FmkType_MS) {
+    auto mindir_adjust_pass = std::make_shared<opt::MindirAdjustPass>();
+    mindir_adjust_pass->SetFmkType(config->fmk);
+    mindir_adjust_pass->SetQuantType(config->quantType);
+    if (!mindir_adjust_pass->Run(old_graph)) {
+      MS_LOG(ERROR) << "mindir adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return nullptr;
+    }
+  }
 
   // for now - trainning is not supporting fuse operations
   if (!config->trainModel) {
