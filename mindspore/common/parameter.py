@@ -187,7 +187,7 @@ class Parameter(MetaTensor_):
 
         Args:
             init_in_server (bool): Whether trainable parameter updated by parameter server is
-            initialized on server. Default: False.
+                initialized on server. Default: False.
         """
         if _is_role_worker() or _is_role_pserver() or _is_role_sched():
             if init_in_server and (not self.name.endswith("embedding_table")):
