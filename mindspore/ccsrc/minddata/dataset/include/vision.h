@@ -22,8 +22,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/vision_lite.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -35,16 +37,12 @@ namespace vision {
 // Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kAutoContrastOperation[] = "AutoContrast";
 constexpr char kBoundingBoxAugmentOperation[] = "BoundingBoxAugment";
-constexpr char kCenterCropOperation[] = "CenterCrop";
 constexpr char kCutMixBatchOperation[] = "CutMixBatch";
 constexpr char kCutOutOperation[] = "CutOut";
-constexpr char kCropOperation[] = "Crop";
-constexpr char kDecodeOperation[] = "Decode";
 constexpr char kEqualizeOperation[] = "Equalize";
 constexpr char kHwcToChwOperation[] = "HwcToChw";
 constexpr char kInvertOperation[] = "Invert";
 constexpr char kMixUpBatchOperation[] = "MixUpBatch";
-constexpr char kNormalizeOperation[] = "Normalize";
 constexpr char kPadOperation[] = "Pad";
 constexpr char kRandomAffineOperation[] = "RandomAffine";
 constexpr char kRandomColorAdjustOperation[] = "RandomColorAdjust";
@@ -65,7 +63,6 @@ constexpr char kRandomSharpnessOperation[] = "RandomSharpness";
 constexpr char kRandomVerticalFlipOperation[] = "RandomVerticalFlip";
 constexpr char kRandomVerticalFlipWithBBoxOperation[] = "RandomVerticalFlipWithBBox";
 constexpr char kRescaleOperation[] = "Rescale";
-constexpr char kResizeOperation[] = "Resize";
 constexpr char kResizeWithBBoxOperation[] = "ResizeWithBBox";
 constexpr char kRgbaToBgrOperation[] = "RgbaToBgr";
 constexpr char kRgbaToRgbOperation[] = "RgbaToRgb";
@@ -75,25 +72,14 @@ constexpr char kSwapRedBlueOperation[] = "SwapRedBlue";
 constexpr char kUniformAugOperation[] = "UniformAug";
 
 // Transform Op classes (in alphabetical order)
-#ifndef ENABLE_ANDROID
 class AutoContrastOperation;
 class BoundingBoxAugmentOperation;
-#endif
-class CenterCropOperation;
-class CropOperation;
-#ifndef ENABLE_ANDROID
 class CutMixBatchOperation;
 class CutOutOperation;
-#endif
-class DecodeOperation;
-#ifndef ENABLE_ANDROID
 class EqualizeOperation;
 class HwcToChwOperation;
 class InvertOperation;
 class MixUpBatchOperation;
-#endif
-class NormalizeOperation;
-#ifndef ENABLE_ANDROID
 class PadOperation;
 class RandomAffineOperation;
 class RandomColorOperation;
@@ -115,9 +101,6 @@ class RandomSolarizeOperation;
 class RandomVerticalFlipOperation;
 class RandomVerticalFlipWithBBoxOperation;
 class RescaleOperation;
-#endif
-class ResizeOperation;
-#ifndef ENABLE_ANDROID
 class ResizeWithBBoxOperation;
 class RgbaToBgrOperation;
 class RgbaToRgbOperation;
@@ -140,23 +123,7 @@ std::shared_ptr<AutoContrastOperation> AutoContrast(float cutoff = 0.0, std::vec
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<BoundingBoxAugmentOperation> BoundingBoxAugment(std::shared_ptr<TensorOperation> transform,
                                                                 float ratio = 0.3);
-#endif
 
-/// \brief Function to create a CenterCrop TensorOperation.
-/// \notes Crops the input image at the center to the given size.
-/// \param[in] size A vector representing the output size of the cropped image.
-///     If size is a single value, a square crop of size (size, size) is returned.
-///     If size has 2 values, it should be (height, width).
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size);
-
-/// \brief Function to create a Crop TensorOp
-/// \notes Crop an image based on location and crop size
-/// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}
-/// \param[in] size Size of the cropped area. Must be a vector of two values, in the form of {height, width}
-/// \return Shared pointer to the current TensorOp
-std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
-#ifndef ENABLE_ANDROID
 /// \brief Function to apply CutMix on a batch of images
 /// \notes Masks a random section of each image with the corresponding part of another randomly
 ///     selected image in that batch
@@ -173,15 +140,6 @@ std::shared_ptr<CutMixBatchOperation> CutMixBatch(ImageBatchFormat image_batch_f
 /// \param[in] num_patches Integer representing the number of patches to be cut out of an image
 /// \return Shared pointer to the current TensorOp
 std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches = 1);
-
-#endif
-/// \brief Function to create a Decode TensorOperation.
-/// \notes Decode the input image in RGB mode.
-/// \param[in] rgb A boolean of whether to decode in RGB mode or not.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
-
-#ifndef ENABLE_ANDROID
 
 /// \brief Function to create a Equalize TensorOperation.
 /// \notes Apply histogram equalization on input image.
@@ -205,17 +163,6 @@ std::shared_ptr<InvertOperation> Invert();
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha = 1);
 
-#endif
-/// \brief Function to create a Normalize TensorOperation.
-/// \notes Normalize the input image with respect to mean and standard deviation.
-/// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
-///     The mean values must be in range (0.0, 255.0].
-/// \param[in] std A vector of standard deviations for each channel, w.r.t. channel order.
-///     The standard deviation values must be in range (0.0, 255.0]
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std);
-
-#ifndef ENABLE_ANDROID
 /// \brief Function to create a Pad TensorOp
 /// \notes Pads the image according to padding parameters
 /// \param[in] padding A vector representing the number of pixels to pad the image
@@ -458,18 +405,6 @@ std::shared_ptr<RandomVerticalFlipWithBBoxOperation> RandomVerticalFlipWithBBox(
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RescaleOperation> Rescale(float rescale, float shift);
 
-#endif
-/// \brief Function to create a Resize TensorOperation.
-/// \notes Resize the input image to the given size.
-/// \param[in] size A vector representing the output size of the resized image.
-///     If size is a single value, the image will be resized to this value with
-///     the same image aspect ratio. If size has 2 values, it should be (height, width).
-/// \param[in] interpolation An enum for the mode of interpolation
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size,
-                                        InterpolationMode interpolation = InterpolationMode::kLinear);
-
-#ifndef ENABLE_ANDROID
 /// \brief Function to create a ResizeWithBBox TensorOperation.
 /// \notes Resize the input image to the given size and adjust bounding boxes accordingly.
 /// \param[in] size The output size of the resized image.
@@ -568,41 +503,6 @@ class BoundingBoxAugmentOperation : public TensorOperation {
   float ratio_;
 };
 
-#endif
-
-class CenterCropOperation : public TensorOperation {
- public:
-  explicit CenterCropOperation(std::vector<int32_t> size);
-
-  ~CenterCropOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kCenterCropOperation; }
-
- private:
-  std::vector<int32_t> size_;
-};
-
-class CropOperation : public TensorOperation {
- public:
-  CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size);
-
-  ~CropOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kCropOperation; }
-
- private:
-  std::vector<int32_t> coordinates_;
-  std::vector<int32_t> size_;
-};
-#ifndef ENABLE_ANDROID
 class CutMixBatchOperation : public TensorOperation {
  public:
   explicit CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha = 1.0, float prob = 1.0);
@@ -639,24 +539,6 @@ class CutOutOperation : public TensorOperation {
   ImageBatchFormat image_batch_format_;
 };
 
-#endif
-class DecodeOperation : public TensorOperation {
- public:
-  explicit DecodeOperation(bool rgb = true);
-
-  ~DecodeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDecodeOperation; }
-
- private:
-  bool rgb_;
-};
-
-#ifndef ENABLE_ANDROID
 class EqualizeOperation : public TensorOperation {
  public:
   ~EqualizeOperation() = default;
@@ -706,25 +588,6 @@ class MixUpBatchOperation : public TensorOperation {
   float alpha_;
 };
 
-#endif
-class NormalizeOperation : public TensorOperation {
- public:
-  NormalizeOperation(std::vector<float> mean, std::vector<float> std);
-
-  ~NormalizeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kNormalizeOperation; }
-
- private:
-  std::vector<float> mean_;
-  std::vector<float> std_;
-};
-
-#ifndef ENABLE_ANDROID
 class PadOperation : public TensorOperation {
  public:
   PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value = {0},
@@ -1116,26 +979,6 @@ class RescaleOperation : public TensorOperation {
   float shift_;
 };
 
-#endif
-class ResizeOperation : public TensorOperation {
- public:
-  explicit ResizeOperation(std::vector<int32_t> size,
-                           InterpolationMode interpolation_mode = InterpolationMode::kLinear);
-
-  ~ResizeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kResizeOperation; }
-
- private:
-  std::vector<int32_t> size_;
-  InterpolationMode interpolation_;
-};
-
-#ifndef ENABLE_ANDROID
 class ResizeWithBBoxOperation : public TensorOperation {
  public:
   explicit ResizeWithBBoxOperation(std::vector<int32_t> size,
@@ -1245,7 +1088,6 @@ class UniformAugOperation : public TensorOperation {
   std::vector<std::shared_ptr<TensorOperation>> transforms_;
   int32_t num_ops_;
 };
-#endif
 
 }  // namespace vision
 }  // namespace dataset

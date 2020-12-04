@@ -21,7 +21,7 @@ set(PROTOBF_DIR_RUN_X86 ${MAIN_DIR}-${RUN_X86_COMPONENT_NAME}/third_party/protob
 set(FLATBF_DIR_RUN_X86 ${MAIN_DIR}-${RUN_X86_COMPONENT_NAME}/third_party/flatbuffers)
 
 if (BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper")
-    install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/ DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/ DESTINATION ${MIND_DATA_INC_DIR} COMPONENT ${COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "vision.h" EXCLUDE)
     if (PLATFORM_ARM64)
         install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION ${MIND_DATA_LIB_DIR} COMPONENT ${COMPONENT_NAME})
         install(FILES ${TOP_DIR}/third_party/libjpeg-turbo/lib/libjpeg.so DESTINATION ${TURBO_DIR}/lib COMPONENT ${COMPONENT_NAME})
