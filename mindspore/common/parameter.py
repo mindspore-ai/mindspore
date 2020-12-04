@@ -16,6 +16,7 @@
 """Parameter for cell."""
 from copy import copy
 import numbers
+import numpy as np
 from .._c_expression import ParamInfo
 from . import dtype as mstype
 from .initializer import initializer
@@ -154,12 +155,17 @@ class Parameter(Tensor_):
         self._cast_type = None
         self._unique = False
         self.is_in_parallel = _is_in_parallel_mode()
-        if isinstance(default_input, Tensor):
+        if isinstance(default_input, (Tensor_, Tensor)):
             Tensor_.__init__(self, default_input.dtype, default_input.shape)
         elif isinstance(default_input, int):
             Tensor_.__init__(self, mstype.int64, ())
         elif isinstance(default_input, float):
             Tensor_.__init__(self, mstype.float32, ())
+        elif isinstance(default_input, np.ndarray):
+            Tensor_.__init__(self, default_input)
+        else:
+            raise TypeError(f"Parameter input must be [`Tensor`, `Number`]."
+                            f"But with type {type(default_input)}.")
 
     def __deepcopy__(self, memodict):
         new_obj = Parameter(self)

@@ -395,7 +395,7 @@ def _clear_handler(logger):
         logger.removeHandler(handler)
 
 
-def _find_caller(stack_info=False):
+def _find_caller(stack_info=False, stacklevel=1):
     """
     Find the stack frame of the caller.
 
