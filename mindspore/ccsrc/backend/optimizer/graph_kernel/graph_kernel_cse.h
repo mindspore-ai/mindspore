@@ -13,27 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CSE_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CSE_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_CSE_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_CSE_H_
 
+#include <vector>
 #include "backend/optimizer/pass/common_subexpression_elimination.h"
 
 namespace mindspore {
 namespace opt {
 class GraphKernelCSE : public Pass {
  public:
-  GraphKernelCSE() : Pass("graph_kernel_cse") {}
+  explicit GraphKernelCSE(const std::vector<PrimitivePtr> &black_list = {})
+      : Pass("graph_kernel_cse"), black_list_(black_list) {}
   ~GraphKernelCSE() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
+
+ private:
+  std::vector<PrimitivePtr> black_list_;
 };
 
 class GraphKernelBackendCSE : public BackendCSE {
  public:
-  GraphKernelBackendCSE() = default;
+  explicit GraphKernelBackendCSE(const std::vector<PrimitivePtr> &black_list = {}) : black_list_(black_list) {}
   ~GraphKernelBackendCSE() override = default;
   bool CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) const override;
   bool CheckEqualCnodeInputs(const AnfNodePtr &main, const AnfNodePtr &node) const override;
+
+ private:
+  std::vector<PrimitivePtr> black_list_;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CSE_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_CSE_H_
