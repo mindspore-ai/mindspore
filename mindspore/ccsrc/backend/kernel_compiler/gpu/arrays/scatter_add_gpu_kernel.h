@@ -41,13 +41,15 @@ class ScatterAddKernel : public GpuKernel {
     T *updates = GetDeviceAddress<T>(inputs, 2);
     T *output = GetDeviceAddress<T>(outputs, 0);
     CalScatterAdd(inner_size_, indices_size_, indices, updates, input, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync output failed");
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but ScatterAdd needs 3 inputs.";

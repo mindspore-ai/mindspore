@@ -34,10 +34,12 @@ class RecvGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               void *) override {
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamWaitEvent(wait_stream_, wait_event_, 0), "Waiting cuda event failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamWaitEvent(wait_stream_, wait_event_, 0),
+                               "Waiting cuda event failed.");
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     wait_stream_ = reinterpret_cast<cudaStream_t>(GetAttr<uintptr_t>(kernel_node, "wait_event_stream"));
     wait_event_ = reinterpret_cast<cudaEvent_t>(GetAttr<uintptr_t>(kernel_node, "wait_event"));
     InitSizeLists();

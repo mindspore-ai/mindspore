@@ -39,7 +39,8 @@ class NcclSendGpuKernel : public NcclGpuKernel {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     auto nccl_send_func = reinterpret_cast<Send>(dlsym(const_cast<void *>(collective_handle_), "Send"));
     MS_EXCEPTION_IF_NULL(nccl_send_func);
-    CHECK_NCCL_RET_WITH_EXCEPT((*nccl_send_func)(input_addr, input_size_list_[0] / sizeof(T), nccl_data_type_,
+    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
+                               (*nccl_send_func)(input_addr, input_size_list_[0] / sizeof(T), nccl_data_type_,
                                                  dest_rank_, reinterpret_cast<cudaStream_t>(stream_ptr), group_name_),
                                "ncclSend failed");
     return true;
@@ -47,6 +48,7 @@ class NcclSendGpuKernel : public NcclGpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
+    kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but NCCL send needs 1 input.";

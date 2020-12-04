@@ -68,10 +68,12 @@ class BatchNormFold2GradGpuKernel : public GpuKernel {
 
     int32_t current_step_host[1];
     size_t x_size = batch_size_ * channel_ * height_ * width_ * sizeof(T);
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(current_step_host, global_step, sizeof(int32_t), cudaMemcpyDeviceToHost,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(current_step_host, global_step, sizeof(int32_t), cudaMemcpyDeviceToHost,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy gpu memory.");
     CHECK_CUDA_RET_WITH_ERROR(
+      kernel_node_,
       cudaMemcpyAsync(d_x, dout, x_size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "Failed to copy gpu memory.");
 
@@ -90,8 +92,8 @@ class BatchNormFold2GradGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
-
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 8) {
       MS_LOG(ERROR) << "Argument number is " << input_num << ", but BatchNormFold2GradGpuKernel needs 8.";

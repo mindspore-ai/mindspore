@@ -39,6 +39,7 @@ const std::vector<size_t> &FakeQuantPerChannelGradGpuKernel::GetWorkspaceSizeLis
 }
 
 bool FakeQuantPerChannelGradGpuKernel::Init(const CNodePtr &kernel_node) {
+  kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 4) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but FakeQuantGrad GpuKernel OP needs 4 output.";
@@ -123,7 +124,8 @@ bool FakeQuantPerChannelGradGpuKernel::Launch(const std::vector<AddressPtr> &inp
     CalFakeQuantPerChannelGrad(input, gradient, output, total_size, num_channels_, nudge_min, nudge_max,
                                reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, gradient, input_size_, cudaMemcpyDeviceToDevice,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(output, gradient, input_size_, cudaMemcpyDeviceToDevice,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memory failed.");
   }

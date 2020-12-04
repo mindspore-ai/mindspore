@@ -38,15 +38,18 @@ class AssignGpuKernel : public GpuKernel {
     T *value = GetDeviceAddress<T>(inputs, 1);
     T *output = GetDeviceAddress<T>(outputs, 0);
     CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
       cudaMemcpyAsync(var, value, input_size_, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemxcpyAsync failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
       cudaMemcpyAsync(output, value, input_size_, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemxcpyAsync failed.");
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     if (!CheckParam(kernel_node)) {
       return false;
     }

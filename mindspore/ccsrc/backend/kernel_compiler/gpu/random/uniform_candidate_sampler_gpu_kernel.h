@@ -47,7 +47,8 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
     if (remove_accidental_hits_) {
       T *input = GetDeviceAddress<T>(inputs, 0);
       array_input_ = std::vector<T>(input_size_, 0);
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(&array_input_[0], input, input_size_ * sizeof(T),
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(&array_input_[0], input, input_size_ * sizeof(T),
                                                  cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync sampled_candidates failed");
       for (const auto item : array_input_) {
@@ -58,7 +59,8 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
     float prob = Probability();
     size_t sampled_candidates_size = num_sampled_ * sizeof(T);
     S value = ApproximateExpectedCount(prob, num_sampled_, counter);
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(sampled_candidates, &sampled_candidates_[0], sampled_candidates_size,
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(sampled_candidates, &sampled_candidates_[0], sampled_candidates_size,
                                                cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync sampled_candidates failed");
     CalUniformCandidateSampler(static_cast<int>(input_size_), num_sampled_, value, true_expected_count,
@@ -67,6 +69,7 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but UniformCandidateSampler needs 1 input.";

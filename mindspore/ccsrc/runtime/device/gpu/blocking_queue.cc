@@ -16,7 +16,7 @@
 
 #include "runtime/device/gpu/blocking_queue.h"
 #include <chrono>
-#include "runtime/device/gpu/gpu_common.h"
+#include "runtime/device/gpu/queue_common.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {

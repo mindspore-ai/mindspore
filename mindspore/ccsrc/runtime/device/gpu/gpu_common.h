@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <map>
 #include "utils/log_adapter.h"
+#include "utils/trace_base.h"
 #include "include/curand.h"
 
 namespace mindspore {
@@ -43,25 +44,34 @@ namespace gpu {
     }                                                                             \
   }
 
-#define CHECK_CUDA_RET_WITH_ERROR(expression, message)                                   \
-  {                                                                                      \
-    cudaError_t status = (expression);                                                   \
-    if (status != cudaSuccess) {                                                         \
-      MS_LOG(ERROR) << "CUDA Error: " << message << " | Error Number: " << status << " " \
-                    << cudaGetErrorString(status);                                       \
-    }                                                                                    \
+#define CHECK_CUDA_RET_WITH_ERROR(node, expression, message)                                                           \
+  {                                                                                                                    \
+    cudaError_t status = (expression);                                                                                 \
+    if (status != cudaSuccess) {                                                                                       \
+      MS_LOG(ERROR) << "CUDA Error: " << message << " | Error Number: " << status << " " << cudaGetErrorString(status) \
+                    << trace::DumpSourceLines(node);                                                                   \
+    }                                                                                                                  \
   }
 
-#define CHECK_CUDA_RET_WITH_EXCEPT(expression, message)                                      \
+#define CHECK_CUDA_RET_WITH_EXCEPT(node, expression, message)                                \
   {                                                                                          \
     cudaError_t status = (expression);                                                       \
     if (status != cudaSuccess) {                                                             \
       MS_LOG(EXCEPTION) << "CUDA Error: " << message << " | Error Number: " << status << " " \
-                        << cudaGetErrorString(status);                                       \
+                        << cudaGetErrorString(status) << trace::DumpSourceLines(node);       \
     }                                                                                        \
   }
 
-#define CHECK_CUDNN_RET_WITH_EXCEPT(expression, message)                                      \
+#define CHECK_CUDNN_RET_WITH_EXCEPT(node, expression, message)                                \
+  {                                                                                           \
+    cudnnStatus_t status = (expression);                                                      \
+    if (status != CUDNN_STATUS_SUCCESS) {                                                     \
+      MS_LOG(EXCEPTION) << "cuDNN Error: " << message << " | Error Number: " << status << " " \
+                        << cudnnGetErrorString(status) << trace::DumpSourceLines(node);       \
+    }                                                                                         \
+  }
+
+#define CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(expression, message)                              \
   {                                                                                           \
     cudnnStatus_t status = (expression);                                                      \
     if (status != CUDNN_STATUS_SUCCESS) {                                                     \
@@ -70,7 +80,7 @@ namespace gpu {
     }                                                                                         \
   }
 
-#define CHECK_CUDNN_RET_WITH_ERROR(expression, message)                                   \
+#define CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(expression, message)                           \
   {                                                                                       \
     cudnnStatus_t status = (expression);                                                  \
     if (status != CUDNN_STATUS_SUCCESS) {                                                 \
@@ -79,12 +89,30 @@ namespace gpu {
     }                                                                                     \
   }
 
-#define CHECK_CUBLAS_RET_WITH_EXCEPT(expression, message)                                \
+#define CHECK_CUDNN_RET_WITH_ERROR(node, expression, message)                             \
+  {                                                                                       \
+    cudnnStatus_t status = (expression);                                                  \
+    if (status != CUDNN_STATUS_SUCCESS) {                                                 \
+      MS_LOG(ERROR) << "cuDNN Error: " << message << " | Error Number: " << status << " " \
+                    << cudnnGetErrorString(status) << trace::DumpSourceLines(node);       \
+    }                                                                                     \
+  }
+
+#define CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(expression, message)                        \
   {                                                                                      \
     cublasStatus_t status = (expression);                                                \
     if (status != CUBLAS_STATUS_SUCCESS) {                                               \
       MS_LOG(EXCEPTION) << "cuBLAS Error: " << message << " | Error Number: " << status; \
     }                                                                                    \
+  }
+
+#define CHECK_CUBLAS_RET_WITH_EXCEPT(node, expression, message)                         \
+  {                                                                                     \
+    cublasStatus_t status = (expression);                                               \
+    if (status != CUBLAS_STATUS_SUCCESS) {                                              \
+      MS_LOG(EXCEPTION) << "cuBLAS Error: " << message << " | Error Number: " << status \
+                        << trace::DumpSourceLines(node);                                \
+    }                                                                                   \
   }
 
 #define CHECK_CUBLAS_RET_WITH_ERROR(expression, message)                             \
@@ -95,12 +123,22 @@ namespace gpu {
     }                                                                                \
   }
 
-#define CHECK_CUSOLVER_RET_WITH_EXCEPT(expression, message)                                \
+#define CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(expression, message)                        \
   {                                                                                        \
     cusolverStatus_t status = (expression);                                                \
     if (status != CUSOLVER_STATUS_SUCCESS) {                                               \
       MS_LOG(EXCEPTION) << "cusolver Error: " << message << " | Error Number: " << status; \
     }                                                                                      \
+  }
+
+#define CHECK_CUSOLVER_RET_WITH_EXCEPT(node, expression, message)                         \
+  {                                                                                       \
+    cusolverStatus_t status = (expression);                                               \
+    if (status != CUSOLVER_STATUS_SUCCESS) {                                              \
+      MS_LOG(EXCEPTION) << "cusolver Error: " << message << " | Error Number: " << status \
+                        << trace::DumpSourceLines(node);                                  \
+      ;                                                                                   \
+    }                                                                                     \
   }
 
 #define CHECK_CUSOLVER_RET_WITH_ERROR(expression, message)                             \
@@ -111,12 +149,12 @@ namespace gpu {
     }                                                                                  \
   }
 
-#define CHECK_NCCL_RET_WITH_EXCEPT(expression, message)                                \
-  {                                                                                    \
-    int result = (expression);                                                         \
-    if (result != ncclSuccess) {                                                       \
-      MS_LOG(EXCEPTION) << "NCCL Error: " << message << " | Error Number: " << result; \
-    }                                                                                  \
+#define CHECK_NCCL_RET_WITH_EXCEPT(node, expression, message)                                                          \
+  {                                                                                                                    \
+    int result = (expression);                                                                                         \
+    if (result != ncclSuccess) {                                                                                       \
+      MS_LOG(EXCEPTION) << "NCCL Error: " << message << " | Error Number: " << result << trace::DumpSourceLines(node); \
+    }                                                                                                                  \
   }
 
 #define VARIABLE_NOT_USED(var) \

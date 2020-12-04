@@ -41,7 +41,8 @@ class SplitGpuFwdKernel : public GpuKernel {
     for (size_t i = 0; i < outputs.size(); i++) {
       outputs_host_[i] = GetDeviceAddress<T>(outputs, i);
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(outputs_device, outputs_host_.get(), sizeof(T *) * output_num_,
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(outputs_device, outputs_host_.get(), sizeof(T *) * output_num_,
                                                cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Split opt cudaMemcpyAsync outputs failed");
     SplitKernel(input_size_, axis_step_, all_size_before_axis_, all_size_axis_, input, outputs_device,
@@ -50,6 +51,7 @@ class SplitGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     axis_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < 0) {
       auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);

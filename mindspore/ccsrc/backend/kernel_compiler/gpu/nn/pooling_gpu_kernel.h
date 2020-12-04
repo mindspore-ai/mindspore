@@ -66,12 +66,14 @@ class PoolingGpuFwdKernel : public GpuKernel {
     const float alpha = 1;
     const float beta = 0;
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnPoolingForward(cudnn_handle_, pooling_descriptor_, &alpha, input_descriptor_,
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                cudnnPoolingForward(cudnn_handle_, pooling_descriptor_, &alpha, input_descriptor_,
                                                     input_addr, &beta, output_descriptor_, output_addr),
                                 "cudnnPoolingForward failed");
     return true;
   }
   bool Init(const CNodePtr &kernel_node) {
+    kernel_node_ = kernel_node;
     InitResource();
     if (!CheckParam(kernel_node)) {
       return false;
@@ -102,10 +104,10 @@ class PoolingGpuFwdKernel : public GpuKernel {
     SetDimA(output_shape, dimAout, 4, data_format_);
     SetStrideA(output_shape, strideAout, 4, data_format_);
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensorNdDescriptor(input_descriptor_, cudnn_data_type_, nbDims, dimA, strideAin),
+      kernel_node_, cudnnSetTensorNdDescriptor(input_descriptor_, cudnn_data_type_, nbDims, dimA, strideAin),
       "cudnnSetTensor4dDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensorNdDescriptor(output_descriptor_, cudnn_data_type_, nbDims, dimAout, strideAout),
+      kernel_node_, cudnnSetTensorNdDescriptor(output_descriptor_, cudnn_data_type_, nbDims, dimAout, strideAout),
       "cudnnSetTensor4dDescriptor failed");
     SetPoolingMode(kernel_node);
     SetPad(kernel_node);
@@ -114,27 +116,31 @@ class PoolingGpuFwdKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyPoolingDescriptor(pooling_descriptor_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyPoolingDescriptor(pooling_descriptor_),
                                "cudnnDestroyPoolingDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(output_descriptor_), "cudnnDestroyTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(input_descriptor_), "cudnnDestroyTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(output_descriptor_),
+                               "cudnnDestroyTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(input_descriptor_),
+                               "cudnnDestroyTensorDescriptor failed");
   }
 
  protected:
   void InitResource() {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&input_descriptor_), "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&output_descriptor_), "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreatePoolingDescriptor(&pooling_descriptor_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&input_descriptor_),
+                                "cudnnCreateTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&output_descriptor_),
+                                "cudnnCreateTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreatePoolingDescriptor(&pooling_descriptor_),
                                 "cudnnCreatePoolingDescriptor failed");
   }
   void InitSizeLists() {
     if (!is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        cudnnGetTensorSizeInBytes(input_descriptor_, reinterpret_cast<size_t *>(&input_size_)),
+        kernel_node_, cudnnGetTensorSizeInBytes(input_descriptor_, reinterpret_cast<size_t *>(&input_size_)),
         "cudnnGetTensorSizeInBytes failed");
       CHECK_CUDNN_RET_WITH_EXCEPT(
-        cudnnGetTensorSizeInBytes(output_descriptor_, reinterpret_cast<size_t *>(&output_size_)),
+        kernel_node_, cudnnGetTensorSizeInBytes(output_descriptor_, reinterpret_cast<size_t *>(&output_size_)),
         "cudnnGetTensorSizeInBytes failed");
     }
     input_size_list_.push_back(input_size_);
@@ -199,7 +205,8 @@ class PoolingGpuFwdKernel : public GpuKernel {
       pad_height_ = 0;
       pad_width_ = 0;
     }
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetPoolingNdDescriptor(pooling_descriptor_, pooling_mode_, CUDNN_NOT_PROPAGATE_NAN,
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                cudnnSetPoolingNdDescriptor(pooling_descriptor_, pooling_mode_, CUDNN_NOT_PROPAGATE_NAN,
                                                             2, windowDimA, paddingA, strideA),
                                 "cudnnSetPoolingNdDescriptor failed");
   }

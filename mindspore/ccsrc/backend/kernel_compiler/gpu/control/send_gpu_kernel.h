@@ -34,10 +34,12 @@ class SendGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               void *) override {
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaEventRecord(record_event_, record_stream_), "Recording cuda event failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaEventRecord(record_event_, record_stream_),
+                               "Recording cuda event failed.");
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     record_stream_ = reinterpret_cast<cudaStream_t>(GetAttr<uintptr_t>(kernel_node, "record_event_stream"));
     record_event_ = reinterpret_cast<cudaEvent_t>(GetAttr<uintptr_t>(kernel_node, "record_event"));
     InitSizeLists();

@@ -48,19 +48,22 @@ class CastAllGpuFwdKernel : public GpuKernel {
     S **outputs_dev = GetDeviceAddress<S *>(workspace, 1);
     size_t *size_dev = GetDeviceAddress<size_t>(workspace, 2);
     CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
       cudaMemcpyAsync(inputs_dev, in_addr.get(), sizeof(T *) * num_input_, cudaMemcpyHostToDevice, stream),
       "cudaMemCPY failed")
     CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
       cudaMemcpyAsync(outputs_dev, out_addr.get(), sizeof(S *) * num_input_, cudaMemcpyHostToDevice, stream),
       "cudaMemCPY failed")
     CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpyAsync(size_dev, size_.get(), sizeof(size_t) * num_input_, cudaMemcpyHostToDevice, stream),
+      kernel_node_, cudaMemcpyAsync(size_dev, size_.get(), sizeof(size_t) * num_input_, cudaMemcpyHostToDevice, stream),
       "cudaMemCPY failed")
     CastAllKernel(inputs_dev, outputs_dev, max_, num_input_, size_dev, stream);
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     num_input_ = GetAttr<size_t>(kernel_node, "n");
     size_ = std::make_unique<size_t[]>(num_input_);
     for (size_t i = 0; i < num_input_; i++) {

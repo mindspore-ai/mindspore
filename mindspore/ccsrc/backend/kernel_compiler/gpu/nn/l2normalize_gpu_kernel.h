@@ -66,11 +66,13 @@ class L2NormalizeGpuKernel : public GpuKernel {
     const float beta = 0;
 
     if (all_match_) {
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(reduce_workspace_addr, input_addr, input_size_list_[0],
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(reduce_workspace_addr, input_addr, input_size_list_[0],
                                                  cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync failed in L2Normalize::Launch.");
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
         cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                           inputA_descriptor_, input_addr, &beta, outputC_descriptor_, reduce_workspace_addr),
         "cudnnReduceTensor failed.");
@@ -84,6 +86,7 @@ class L2NormalizeGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     if (!CheckIONumber(kernel_node)) {
@@ -142,25 +145,26 @@ class L2NormalizeGpuKernel : public GpuKernel {
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor_),
                                 "cudnnCreateReduceTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&inputA_descriptor_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&inputA_descriptor_),
                                 "cudnnCreateTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&outputC_descriptor_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&outputC_descriptor_),
                                 "cudnnCreateTensorDescriptor failed.");
   }
   void InitSizeLists() override {
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(inputA_descriptor_, &input_size_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(inputA_descriptor_, &input_size_),
                                 "cudnnGetTensorSizeInBytes failed.");
     input_size_list_.push_back(input_size_);
 
     output_size_list_.push_back(output_size_);
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(outputC_descriptor_, &workspace_size_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(outputC_descriptor_, &workspace_size_),
                                 "cudnnGetTensorSizeInBytes failed.");
     workspace_size_list_.push_back(workspace_size_);
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnGetReductionWorkspaceSize(cudnn_handle_, reduce_tensor_descriptor_, inputA_descriptor_, outputC_descriptor_,
                                      &workspace_size_),
       "cudnnGetReductionWorkspaceSize failed.");
@@ -184,15 +188,16 @@ class L2NormalizeGpuKernel : public GpuKernel {
     return true;
   }
   void DestroyResource() noexcept {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor_),
                                "cudnnDestroyReduceTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(inputA_descriptor_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(inputA_descriptor_),
                                "cudnnDestroyTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(outputC_descriptor_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(outputC_descriptor_),
                                "cudnnDestroyTensorDescriptor failed.");
   }
   void InferArrayReduceType(const CNodePtr &kernel_node) {
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, CUDNN_REDUCE_TENSOR_NORM2, CUDNN_DATA_FLOAT, nan_prop_,
                                      reduce_indices_, CUDNN_32BIT_INDICES),
       "cudnnSetReduceTensorDescriptor failed");
@@ -205,11 +210,12 @@ class L2NormalizeGpuKernel : public GpuKernel {
 
     if (input_shape.size() <= split_dim) {
       ShapeNdTo4d(input_shape, &inputA);
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
                                                              inputA[0], inputA[1], inputA[2], inputA[3]),
                                   "cudnnSetTensor4dDescriptor failed");
     } else {
-      CudnnSetTensorNdDescriptor(input_shape, inputA_descriptor_, data_type_);
+      CudnnSetTensorNdDescriptor(input_shape, inputA_descriptor_, data_type_, kernel_node_);
       for (auto dim : input_shape) {
         inputA.emplace_back(dim);
       }
@@ -219,11 +225,12 @@ class L2NormalizeGpuKernel : public GpuKernel {
 
     if (outputC_shape.size() <= split_dim) {
       ShapeNdTo4d(outputC_shape, &outputC);
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
                                                              outputC[0], outputC[1], outputC[2], outputC[3]),
                                   "cudnnSetTensor4dDescriptor failed");
     } else {
-      CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_);
+      CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_, kernel_node_);
       for (auto dim : outputC_shape) {
         outputC.emplace_back(dim);
       }

@@ -63,7 +63,8 @@ class SoftmaxGpuKernel : public GpuKernel {
     const float beta = 0;
 
     if (axis_ == 1) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSoftmaxForward(cudnn_handle_, algo_, mode_, &alpha, input_descriptor_,
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnSoftmaxForward(cudnn_handle_, algo_, mode_, &alpha, input_descriptor_,
                                                       input_addr, &beta, output_descriptor_, output_addr),
                                   "cudnnSoftmaxForward failed");
     } else {
@@ -72,19 +73,23 @@ class SoftmaxGpuKernel : public GpuKernel {
       size_t *input_shape = GetDeviceAddress<size_t>(workspace, 2);
       size_t *transpose_shape = GetDeviceAddress<size_t>(workspace, 3);
       size_t *transpose_axis = GetDeviceAddress<size_t>(workspace, 4);
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync input_shape failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(transpose_shape, &transpose_shape_[0], workspace_size_,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(transpose_shape, &transpose_shape_[0], workspace_size_,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync input_shape failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(transpose_axis, &transpose_axis_[0], workspace_size_,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(transpose_axis, &transpose_axis_[0], workspace_size_,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync input_axis failed");
       size_t size = input_size_ / sizeof(T);
       CalTranspose(size, input_addr, input_shape, transpose_axis, shape_size_, transpose_input_addr,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
       CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
         cudnnSoftmaxForward(cudnn_handle_, algo_, mode_, &alpha, input_descriptor_, transpose_input_addr, &beta,
                             output_descriptor_, transpose_output_addr),
         "cudnnSoftmaxForward failed");
@@ -95,6 +100,7 @@ class SoftmaxGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -129,10 +135,12 @@ class SoftmaxGpuKernel : public GpuKernel {
       InitSizeByAxis(input_shape, axis[0]);
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetTensor4dDescriptor(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(batch_size_),
                                  SizeToInt(channel_size_), SizeToInt(height_), SizeToInt(width_)),
       "set input_descriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetTensor4dDescriptor(output_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(batch_size_),
                                  SizeToInt(channel_size_), SizeToInt(height_), SizeToInt(width_)),
       "set output_descriptor failed");
@@ -141,15 +149,19 @@ class SoftmaxGpuKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(output_descriptor_), "destroy output_descriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(input_descriptor_), "destroy input_descriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(output_descriptor_),
+                               "destroy output_descriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(input_descriptor_),
+                               "destroy input_descriptor failed");
   }
 
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&input_descriptor_), "create input_descriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&output_descriptor_), "create output_descriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&input_descriptor_),
+                                "create input_descriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&output_descriptor_),
+                                "create output_descriptor failed");
   }
 
   void InitSizeLists() override {

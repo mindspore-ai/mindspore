@@ -58,7 +58,8 @@ class BatchNormFoldGpuKernel : public GpuKernel {
     auto variance = GetDeviceAddress<T>(inputs, 2);
     int *current_step = GetDeviceAddress<int>(inputs, 3);
     int current_step_host[1];
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memoy failed.");
     if (x == nullptr) {
@@ -83,21 +84,24 @@ class BatchNormFoldGpuKernel : public GpuKernel {
     auto running_std = GetDeviceAddress<T>(outputs, 3);
     auto y = GetDeviceAddress<T>(workspace, 0);
 
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(running_mean, mean, output_size_, cudaMemcpyDeviceToDevice,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(running_mean, mean, output_size_, cudaMemcpyDeviceToDevice,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy gpu memory.");
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(running_std, variance, output_size_, cudaMemcpyDeviceToDevice,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(running_std, variance, output_size_, cudaMemcpyDeviceToDevice,
                                               reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy gpu memory.");
     CalUpdateRunningStd(channel_, epsilon_, running_std, reinterpret_cast<cudaStream_t>(stream_ptr));
     if (!is_training_ || current_step_host[0] >= freeze_bn_) {
-      CHECK_CUDA_RET_WITH_ERROR(cudaMemset(batch_mean, 0, output_size_), "Failed to set gpu memory.");
+      CHECK_CUDA_RET_WITH_ERROR(kernel_node_, cudaMemset(batch_mean, 0, output_size_), "Failed to set gpu memory.");
       ThrustFillWith(batch_std, channel_, 1.f, reinterpret_cast<cudaStream_t>(stream_ptr));
       return true;
     }
     const T alpha = 1;
     const T beta = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnBatchNormalizationForwardTraining(
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                cudnnBatchNormalizationForwardTraining(
                                   handle_, mode_, &alpha, &beta, x_desc_, x, x_desc_, y, scale_bias_mean_var_desc_,
                                   mean, mean, exp_avg_factor_, mean, variance, epsilon_, batch_mean, batch_std),
                                 "Failed to launch kernel.")
@@ -106,6 +110,7 @@ class BatchNormFoldGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 4) {
@@ -141,10 +146,12 @@ class BatchNormFoldGpuKernel : public GpuKernel {
 
     cudnnDataType_t cudnnDataType = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnnDataType, batch_, channel_, height_, width_),
       "Set x desc failed");
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetTensor4dDescriptor(scale_bias_mean_var_desc_, CUDNN_TENSOR_NCHW, cudnnDataType, 1, channel_, 1, 1),
       "Set para desc failed");
 
@@ -153,8 +160,9 @@ class BatchNormFoldGpuKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(scale_bias_mean_var_desc_), "Destroy para desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(scale_bias_mean_var_desc_),
+                               "Destroy para desc failed");
   }
 
  protected:
@@ -177,8 +185,9 @@ class BatchNormFoldGpuKernel : public GpuKernel {
 
   void InitResource() override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&x_desc_), "Create x desc failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&scale_bias_mean_var_desc_), "Create para desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&x_desc_), "Create x desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&scale_bias_mean_var_desc_),
+                                "Create para desc failed");
   }
 
  private:

@@ -41,6 +41,7 @@ class DynamicShapeGpuKernel : public GpuKernel {
     S *output_device_address = GetDeviceAddress<S>(outputs, 0);
     size_t prev_node_output_shape_size = prev_node_output_shape_.size() * sizeof(S);
     CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
       cudaMemcpyAsync(output_device_address, prev_node_output_shape_.data(), prev_node_output_shape_size,
                       cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemcpyAsync prev_node_output_shape failed");
@@ -49,6 +50,7 @@ class DynamicShapeGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
       MS_LOG(EXCEPTION) << input_count << " arguments were provided, but DynamicShapeGpuKernel expects 1.";

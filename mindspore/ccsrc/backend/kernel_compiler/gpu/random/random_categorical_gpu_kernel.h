@@ -47,7 +47,8 @@ class RandomCategoricalGpuKernel : public GpuKernel {
       host_cdf[i] = GetDeviceAddress<double>(workspaces, i);
     }
     double **dev_cdf = GetDeviceAddress<double *>(workspaces, batch_size_);
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_cdf,  // NOLINT
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(dev_cdf,  // NOLINT
                                                host_cdf.get(), sizeof(double *) * batch_size_, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Random_categorica cudaMemcpyAsync dev_cdf failed");
@@ -68,12 +69,14 @@ class RandomCategoricalGpuKernel : public GpuKernel {
       for (int j = 0; j < num_samples_; j++) {
         host_1d_rand[j] = dist(rng);
       }
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(host_rand[i],  // NOLINT
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(host_rand[i],  // NOLINT
                                                  host_1d_rand.get(), sizeof(double) * num_samples_,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "Random_categorica cudaMemcpyAsync host_1d_rand failed");
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_rand,  // NOLINT
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(dev_rand,  // NOLINT
                                                host_rand.get(), sizeof(double *) * batch_size_, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Random_categorica cudaMemcpyAsync dev_rand failed");
@@ -86,6 +89,7 @@ class RandomCategoricalGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but RandomCategorical needs 3 inputs.";

@@ -60,7 +60,7 @@ class UniqueGpuKernel : public GpuKernel {
   }
 
   void PostExecute() override {
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                "cudaStreamSynchronized failed");
     std::vector<TypeId> type_ids;
     std::vector<std::vector<size_t>> shapes;

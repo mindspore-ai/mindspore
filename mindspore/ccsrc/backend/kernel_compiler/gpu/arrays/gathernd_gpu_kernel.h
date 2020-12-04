@@ -51,10 +51,12 @@ class GatherNdGpuFwdKernel : public GpuKernel {
     if (!memcpy_flag_) {
       const size_t strides_len = sizeof(S) * batch_strides_.size();
       const size_t indices_len = sizeof(S) * batch_indices_.size();
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_batch_strides_, &batch_strides_[0], strides_len,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(dev_batch_strides_, &batch_strides_[0], strides_len,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync failed in GatherNdGpuFwdKernel::Launch.");
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(dev_batch_indices_, &batch_indices_[0], indices_len,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(dev_batch_indices_, &batch_indices_[0], indices_len,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync failed in GatherNdGpuFwdKernel::Launch.");
       memcpy_flag_ = true;
@@ -65,6 +67,7 @@ class GatherNdGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     memcpy_flag_ = false;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);

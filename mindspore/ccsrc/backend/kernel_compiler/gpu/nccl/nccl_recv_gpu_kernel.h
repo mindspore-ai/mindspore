@@ -39,7 +39,8 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     auto nccl_recv_func = reinterpret_cast<Recv>(dlsym(const_cast<void *>(collective_handle_), "Recv"));
     MS_EXCEPTION_IF_NULL(nccl_recv_func);
-    CHECK_NCCL_RET_WITH_EXCEPT((*nccl_recv_func)(output_addr, output_size_list_[0] / sizeof(T), nccl_data_type_,
+    CHECK_NCCL_RET_WITH_EXCEPT(kernel_node_,
+                               (*nccl_recv_func)(output_addr, output_size_list_[0] / sizeof(T), nccl_data_type_,
                                                  src_rank_, reinterpret_cast<cudaStream_t>(stream_ptr), group_name_),
                                "ncclRecv failed");
     return true;
@@ -47,6 +48,7 @@ class NcclRecvGpuKernel : public NcclGpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     MS_EXCEPTION_IF_NULL(kernel_node);
+    kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 0) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but NCCL receive needs 0 input.";
