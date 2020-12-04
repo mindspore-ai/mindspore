@@ -2270,13 +2270,13 @@ class MapDataset(Dataset):
                 if start_ind != end_ind:
                     new_ops.append(py_transforms.Compose(operations[start_ind:end_ind]))
                 operations = new_ops
-        self.operations = operations
+        self.operations = replace_none(operations, [])
         if input_columns is not None and not isinstance(input_columns, list):
             input_columns = [input_columns]
         self.input_columns = replace_none(input_columns, [])
         if output_columns is not None and not isinstance(output_columns, list):
             output_columns = [output_columns]
-        self.output_columns = replace_none(output_columns, input_columns)
+        self.output_columns = replace_none(output_columns, self.input_columns)
         self.cache = cache
         self.column_order = column_order
 
@@ -3026,8 +3026,9 @@ class ImageFolderDataset(MappableDataset):
             cc = self.cache.cache_client
         else:
             cc = None
+        class_indexing = replace_none(self.class_indexing, {})
         return cde.ImageFolderNode(self.dataset_dir, self.decode, self.sampler, self.extensions,
-                                   self.class_indexing, cc).SetNumWorkers(self.num_parallel_workers)
+                                   class_indexing, cc).SetNumWorkers(self.num_parallel_workers)
 
     def get_args(self):
         args = super().get_args()
@@ -4044,7 +4045,8 @@ class ManifestDataset(MappableDataset):
             cc = self.cache.cache_client
         else:
             cc = None
-        return cde.ManifestNode(self.dataset_file, self.usage, self.sampler, self.class_indexing,
+        class_indexing = replace_none(self.class_indexing, {})
+        return cde.ManifestNode(self.dataset_file, self.usage, self.sampler, class_indexing,
                                 self.decode, cc).SetNumWorkers(self.num_parallel_workers)
 
     @check_manifestdataset
@@ -4702,7 +4704,8 @@ class VOCDataset(MappableDataset):
             cc = self.cache.cache_client
         else:
             cc = None
-        return cde.VOCNode(self.dataset_dir, self.task, self.usage, self.class_indexing, self.decode,
+        class_indexing = replace_none(self.class_indexing, {})
+        return cde.VOCNode(self.dataset_dir, self.task, self.usage, class_indexing, self.decode,
                            self.sampler, cc).SetNumWorkers(self.num_parallel_workers)
 
     @check_vocdataset

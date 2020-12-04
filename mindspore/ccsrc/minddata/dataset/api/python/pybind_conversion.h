@@ -47,25 +47,25 @@ bool toBool(const py::handle &handle);
 
 std::string toString(const py::handle &handle);
 
-std::set<std::string> toStringSet(const std::optional<py::list> list);
+std::set<std::string> toStringSet(const py::list list);
 
-std::map<std::string, int32_t> toStringMap(const std::optional<py::dict> dict);
+std::map<std::string, int32_t> toStringMap(const py::dict dict);
 
-std::vector<std::string> toStringVector(const std::optional<py::list> list);
+std::vector<std::string> toStringVector(const py::list list);
 
-std::pair<int64_t, int64_t> toIntPair(const std::optional<py::tuple> tuple);
+std::pair<int64_t, int64_t> toIntPair(const py::tuple tuple);
 
 std::vector<std::pair<int, int>> toPairVector(const py::list list);
 
-std::vector<std::shared_ptr<TensorOperation>> toTensorOperations(std::optional<py::list> operations);
+std::vector<std::shared_ptr<TensorOperation>> toTensorOperations(py::list operations);
 
 std::shared_ptr<TensorOperation> toTensorOperation(py::handle operation);
 
 std::vector<std::shared_ptr<DatasetNode>> toDatasetNode(std::shared_ptr<DatasetNode> self, py::list datasets);
 
-std::shared_ptr<SamplerObj> toSamplerObj(std::optional<py::handle> py_sampler, bool isMindDataset = false);
+std::shared_ptr<SamplerObj> toSamplerObj(py::handle py_sampler, bool isMindDataset = false);
 
-std::shared_ptr<DatasetCache> toDatasetCache(std::optional<std::shared_ptr<CacheClient>> cc);
+std::shared_ptr<DatasetCache> toDatasetCache(std::shared_ptr<CacheClient> cc);
 
 ShuffleMode toShuffleMode(const int32_t shuffle);
 
