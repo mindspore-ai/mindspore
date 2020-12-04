@@ -847,7 +847,11 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
   auto pre_node = (cnode->inputs()[1])->cast<CNodePtr>();
   // set clean output address
   if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
+#if defined(__APPLE__)
+    auto clean_output_indexes = AnfAlgo::GetNodeAttr<std::vector<int>>(pre_node, kAttrAtomicOutputIndexs);
+#else
     auto clean_output_indexes = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
+#endif
     for (auto index : clean_output_indexes) {
       auto device_address = AnfAlgo::GetOutputAddr(pre_node, index);
       kernel::AddressPtr input = std::make_shared<kernel::Address>();
@@ -861,7 +865,11 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
   }
   // set clean workspace address
   if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
+#if defined(__APPLE__)
+    auto clean_workspaces_indexes = AnfAlgo::GetNodeAttr<std::vector<int>>(pre_node, kAttrAtomicWorkspaceIndexs);
+#else
     auto clean_workspaces_indexes = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
+#endif
     for (const auto &index : clean_workspaces_indexes) {
       auto device_address = AnfAlgo::GetWorkspaceAddr(pre_node, index);
       kernel::AddressPtr workspace = std::make_shared<kernel::Address>();

@@ -472,7 +472,11 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     if (kOpAssignKernelNameList.find(AnfAlgo::GetCNodeName(node)) != kOpAssignKernelNameList.end()) {
       ResetAssignInputFeaatureMapFlag(node->cast<CNodePtr>());
     }
+#ifdef __APPLE__
+    std::vector<int> feature_map_input_indexs;
+#else
     std::vector<size_t> feature_map_input_indexs;
+#endif
     kernel_info->set_feature_map_flag(false);
     for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(node); ++index) {
       if (AnfAlgo::IsFeatureMapInput(node, index)) {

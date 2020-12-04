@@ -71,6 +71,8 @@ Status StorageContainer::Read(WritableSlice *dest, off64_t offset) const noexcep
     RETURN_STATUS_UNEXPECTED(strerror(errno));
   }
   auto r_sz = read(fd_, dest->GetMutablePointer(), sz);
+#elif defined(__APPLE__)
+  auto r_sz = pread(fd_, dest->GetMutablePointer(), sz, offset);
 #else
   auto r_sz = pread64(fd_, dest->GetMutablePointer(), sz, offset);
 #endif
@@ -94,6 +96,8 @@ Status StorageContainer::Write(const ReadableSlice &dest, off64_t offset) const 
     RETURN_STATUS_UNEXPECTED(strerror(errno));
   }
   auto r_sz = write(fd_, dest.GetPointer(), sz);
+#elif defined(__APPLE__)
+  auto r_sz = pwrite(fd_, dest.GetPointer(), sz, offset);
 #else
   auto r_sz = pwrite64(fd_, dest.GetPointer(), sz, offset);
 #endif

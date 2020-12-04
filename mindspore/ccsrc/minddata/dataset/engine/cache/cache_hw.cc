@@ -154,6 +154,9 @@ Status CacheServerHW::GetNumaNodeInfo() {
 }
 
 Status CacheServerHW::SetAffinity(const Task &tk, numa_id_t numa_node) {
+#ifdef __APPLE__
+  return Status::OK();
+#else
   auto r = numa_cpuset_.find(numa_node);
   if (r != numa_cpuset_.end()) {
     auto err = pthread_setaffinity_np(tk.GetNativeHandle(), sizeof(r->second), &r->second);
@@ -165,6 +168,7 @@ Status CacheServerHW::SetAffinity(const Task &tk, numa_id_t numa_node) {
     RETURN_STATUS_UNEXPECTED("Numa node " + std::to_string(numa_node) + " not found");
   }
   return Status::OK();
+#endif
 }
 
 std::vector<cpu_id_t> CacheServerHW::GetCpuList(numa_id_t numa_id) {
@@ -182,6 +186,9 @@ std::vector<cpu_id_t> CacheServerHW::GetCpuList(numa_id_t numa_id) {
 }
 
 numa_id_t CacheServerHW::GetMyNode() const {
+#ifdef __APPLE__
+  numa_id_t node_id = -1;
+#else
   numa_id_t node_id = 0;
   auto cpu = sched_getcpu();
 #ifdef NUMA_ENABLED
@@ -197,7 +204,8 @@ numa_id_t CacheServerHW::GetMyNode() const {
     }
   }
   MS_LOG(DEBUG) << "cpu id " << cpu << " found : " << std::boolalpha << found;
-#endif
+#endif  // end NUMA_ENABLED
+#endif  // end __APPLE__
   return node_id;
 }
 

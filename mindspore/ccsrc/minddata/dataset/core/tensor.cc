@@ -695,13 +695,17 @@ Status Tensor::GetDataAsNumpy(py::array *data) {
 }
 Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   auto itr = begin<std::string_view>();
-  uint64_t max = 0;
+  uint64_t max_value = 0;
   for (; itr != end<std::string_view>(); itr++) {
-    max = std::max((*itr).length(), max);
+#ifdef __APPLE__
+    max_value = fmax((*itr).length(), max_value);
+#else
+    max_value = std::max((*itr).length(), max_value);
+#endif
   }
   // if all strings are empty, numpy stores a byte for each string |S1
-  max = (max == 0 ? 1 : max);
-  uint64_t total_size = shape_.NumOfElements() * max;
+  max_value = (max_value == 0 ? 1 : max_value);
+  uint64_t total_size = shape_.NumOfElements() * max_value;
   char *tmp_data = reinterpret_cast<char *>(data_allocator_->allocate(total_size));
   if (tmp_data == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create temp array.");
   int ret_code = memset_s(tmp_data, total_size, 0, total_size);
@@ -711,13 +715,14 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   uint64_t i = 0;
   for (; itr != end<std::string_view>(); itr++, i++) {
     if (!(*itr).empty()) {
-      ret_code = memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
+      ret_code = memcpy_s(tmp_data + i * max_value, total_size, (*itr).data(), (*itr).length());
       CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy string data.");
     }
   }
   auto strides = shape_.Strides();
-  std::transform(strides.begin(), strides.end(), strides.begin(), [&max](const auto &s) { return s * max; });
-  *data = py::array(py::dtype("S" + std::to_string(max)), shape_.AsVector(), strides, tmp_data);
+  std::transform(strides.begin(), strides.end(), strides.begin(),
+                 [&max_value](const auto &s) { return s * max_value; });
+  *data = py::array(py::dtype("S" + std::to_string(max_value)), shape_.AsVector(), strides, tmp_data);
   data_allocator_->deallocate(reinterpret_cast<uchar *>(tmp_data));
   return Status::OK();
 }

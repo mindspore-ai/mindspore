@@ -5,6 +5,10 @@ file(GLOB_RECURSE KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 	"oplib/*.cc"
 )
 
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-non-abstract-non-virtual-dtor")
+endif ()
+
 if (ENABLE_D)
 	file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 		"kernel_query.cc"

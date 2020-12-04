@@ -25,6 +25,9 @@
 #if defined(_WIN32) || defined(_WIN64)
 #undef HAVE_STDDEF_H
 #undef HAVE_STDLIB_H
+#elif __APPLE__
+#include <sys/param.h>
+#include <sys/mount.h>
 #endif
 #include "./jpeglib.h"
 #include "./jerror.h"

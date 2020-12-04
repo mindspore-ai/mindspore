@@ -136,7 +136,7 @@ void ExecutionTree::PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp
 Status ExecutionTree::Launch() {
   // opencv limit too many threads
 #ifndef ENABLE_ANDROID
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   int32_t thread_num = get_nprocs();
   if (thread_num == 0) {
     std::string err_msg = "Invalid thread number.";

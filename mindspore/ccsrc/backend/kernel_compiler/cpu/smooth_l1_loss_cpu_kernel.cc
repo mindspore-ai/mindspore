@@ -23,7 +23,7 @@ void SmoothL1LossCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   beta_ = AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
   CheckParam(kernel_node);
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
-  std::vector<uint64_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (const uint64_t &d : x_shape) {
     tensor_size_ *= d;
   }

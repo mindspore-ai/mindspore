@@ -164,7 +164,7 @@ bool IsLegalFile(const std::string &path) {
 }
 
 std::pair<MSRStatus, uint64_t> GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type) {
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
   return {SUCCESS, 100};
 #else
   uint64_t ll_count = 0;

@@ -2,7 +2,10 @@
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
-link_directories(${CMAKE_SOURCE_DIR}/build/mindspore/graphengine)
+
+if (NOT(CMAKE_SYSTEM_NAME MATCHES "Darwin"))
+    link_directories(${CMAKE_SOURCE_DIR}/build/mindspore/graphengine)
+endif ()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
@@ -252,9 +255,11 @@ if (ENABLE_D)
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece -Wl,--end-group)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    target_link_libraries(mindspore -Wl proto_input mindspore::protobuf mindspore::sentencepiece -Wl)
 else ()
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
-endif()
+endif ()
 
 # set c_expression building
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
@@ -296,6 +301,10 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore mindspore::pybind11_module)
     target_link_libraries(mindspore mindspore_gvar)
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    target_link_libraries(mindspore mindspore::pybind11_module)
+    target_link_libraries(mindspore mindspore_gvar)
+    target_link_libraries(_c_expression PRIVATE -Wl,-force_load mindspore -Wl,-noall_load)
 else ()
     if (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
         target_link_libraries(mindspore mindspore::pslite proto_input mindspore::protobuf mindspore::event mindspore::event_pthreads ${zeromq_DIRPATH}/zmq_install/lib/libzmq.a)
@@ -326,7 +335,7 @@ if (ENABLE_GPU)
                           ${CUDA_PATH}/lib64/libcusolver.so)
     if (ENABLE_MPI)
         set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
-    endif()
+    endif ()
 endif ()
 
 if (ENABLE_CPU)
@@ -349,8 +358,14 @@ add_library(inference SHARED
         )
 
 set_target_properties(inference PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
-target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-        -Wl,--whole-archive mindspore proto_input -Wl,--no-whole-archive mindspore_gvar)
+
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
+            -Wl,-force_load mindspore proto_input -Wl,-noall_load mindspore_gvar)
+else()
+    target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
+            -Wl,--whole-archive mindspore proto_input -Wl,--no-whole-archive mindspore_gvar)
+endif()
 
 if (ENABLE_D)
     find_library(adump_server libadump_server.a ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})

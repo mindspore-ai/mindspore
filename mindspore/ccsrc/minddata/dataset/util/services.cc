@@ -27,6 +27,10 @@
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/task_manager.h"
 
+#if defined(__APPLE__)
+#define LOGIN_NAME_MAX 256
+#endif
+
 namespace mindspore {
 namespace dataset {
 std::unique_ptr<Services> Services::instance_ = nullptr;
