@@ -72,7 +72,7 @@ int ArgMin::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
   output->set_format(input->format());
   output->set_data_type(input->data_type());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto input_shape_size = input->shape().size();
   auto axis = GetAxis() < 0 ? GetAxis() + input_shape_size : GetAxis();

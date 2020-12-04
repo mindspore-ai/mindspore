@@ -87,7 +87,7 @@ int DropoutGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   output->set_shape(input->shape());
   output->set_data_type(input->data_type());

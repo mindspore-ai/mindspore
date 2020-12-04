@@ -181,7 +181,7 @@ int Pooling::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   output->set_data_type(input->data_type());
   output->set_format(schema::Format::Format_NHWC);
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   int input_h = input->shape().at(1);
   int input_w = input->shape().at(2);

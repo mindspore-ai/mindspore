@@ -83,7 +83,7 @@ int ConstantOfShape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
   out_tensor->set_data_type(static_cast<TypeId>(GetDataType()));
   out_tensor->set_format(in_tensor->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto in_data = reinterpret_cast<int *>(in_tensor->data_c());
   if (in_data == nullptr) {

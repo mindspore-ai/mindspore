@@ -140,7 +140,7 @@ int PriorBox::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> ou
   output->set_data_type(kNumberTypeFloat32);
   output->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   std::vector<float> different_aspect_ratios{1.0f};
   auto aspect_ratios = GetAspectRatios();

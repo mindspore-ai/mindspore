@@ -98,7 +98,7 @@ int Concat::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   output->set_data_type(input0->data_type());
   output->set_format(input0->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
 
   auto input0_shape = inputs_.at(0)->shape();

@@ -80,7 +80,7 @@ int BroadcastTo::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> 
   outputs[0]->set_format(input->format());
   outputs[0]->set_data_type(input->data_type());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   std::vector<int32_t> dst_shape(GetDstShape());
   for (size_t i = 0; i < dst_shape.size(); ++i) {

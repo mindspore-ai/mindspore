@@ -71,7 +71,7 @@ int Range::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   }
   output->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
 
   int shape_size = 0;

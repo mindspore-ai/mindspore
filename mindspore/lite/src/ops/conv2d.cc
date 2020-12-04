@@ -391,7 +391,7 @@ int Conv2D::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   pad_r_ = GetPadRight();
 
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto in_shape = input_tensor->shape();
   int input_h = in_shape.at(1);

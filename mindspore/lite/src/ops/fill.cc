@@ -71,7 +71,7 @@ int Fill::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   output->set_data_type(input->data_type());
   output->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
 
   std::vector<int> output_shape;

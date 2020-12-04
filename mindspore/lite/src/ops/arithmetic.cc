@@ -45,7 +45,7 @@ int Arithmetic::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite
   output->set_format(format);
   output->set_data_type(input0->data_type());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   if (input_shape0.size() > 10 || input_shape1.size() > 10) {
     int wrong_dim = input_shape0.size() > input_shape1.size() ? input_shape0.size() : input_shape1.size();

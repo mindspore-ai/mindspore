@@ -115,7 +115,7 @@ int Power::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> output
   output_tensor->set_data_type(x_tensor->data_type());
   output_tensor->set_format(x_tensor->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   if (exp_tensor != nullptr) {
     if ((exp_tensor->shape().size() > 1 && exp_tensor->shape() != x_tensor->shape()) ||

@@ -65,7 +65,7 @@ int Unique::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   output1->set_format(input->format());
   output0->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   output0->set_shape(input->shape());
   output1->set_shape(input->shape());

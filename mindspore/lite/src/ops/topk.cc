@@ -69,7 +69,7 @@ int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   output1->set_data_type(kNumberTypeInt32);
   output1->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto out_shape = input->shape();
   out_shape[out_shape.size() - 1] = GetK();

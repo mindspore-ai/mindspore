@@ -84,7 +84,7 @@ int Dropout::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   auto output0 = outputs_.front();
   MS_ASSERT(output0 != nullptr);
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   output0->set_shape(input->shape());
   output0->set_data_type(input->data_type());

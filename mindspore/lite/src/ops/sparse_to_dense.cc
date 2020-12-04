@@ -64,7 +64,7 @@ int SparseToDense::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor 
   outputs_[0]->set_format(input2->format());
 
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   if (this->primitive_ == nullptr) {
     return RET_NULL_PTR;

@@ -175,7 +175,7 @@ int Slice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tens
   outputs[0]->set_data_type(input->data_type());
   outputs[0]->set_format(input->format());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   auto input_shape = input->shape();
   std::vector<int32_t> slice_begin(GetBegin());

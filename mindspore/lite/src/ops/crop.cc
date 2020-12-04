@@ -71,7 +71,7 @@ int Crop::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs
   outputs[0]->set_format(inputs[0]->format());
   outputs[0]->set_data_type(inputs[0]->data_type());
   if (!infer_flag()) {
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
   outputs[0]->set_shape(inputs[1]->shape());
   return RET_OK;
