@@ -75,8 +75,11 @@ class Parameter(MetaTensor_):
         default_input (Union[Tensor, MetaTensor, Number]): Parameter data, to be set initialized.
         name (str): Name of the child parameter. Default: None.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
-        layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in parallel mode,
+        layerwise_parallel (bool): When layerwise_parallel is true in data parallel mode,
             broadcast and gradients communication would not be applied to parameters. Default: False.
+        parallel_optimizer (bool): It is used to filter the weight shard operation in semi auto or auto parallel
+            mode. It works only when enable parallel optimizer in `mindspore.context.set_auto_parallel_context()`.
+            Default: True.
 
     Example:
         >>> from mindspore import Parameter, Tensor
@@ -132,19 +135,21 @@ class Parameter(MetaTensor_):
         return (
             Parameter, (data, self.name, self.requires_grad, self.layerwise_parallel))
 
-    def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False):
+    def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True):
         self._param_info = ParamInfo()
         self.init_in_server = False
         self.cache_enable = False
         self.name = name
         self.requires_grad = requires_grad
         self.layerwise_parallel = layerwise_parallel
+        self.parallel_optimizer = parallel_optimizer
         # this flag for tensor copy data.
         self.init_flag = False
         # this flag is for ge variable copy data.
         self._is_init = False
         self._inited_param = None
         self._sliced = False
+        self.comm_fusion = 1
         self.is_param_ps = False
         self._cast_type = None
         self._unique = False
@@ -210,14 +215,12 @@ class Parameter(MetaTensor_):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \
                                1. set_ps_context(enable_ps=True) \
                                2. export MS_ROLE environment variable.")
-
         if init_in_server and (not self.name.endswith("embedding_table")):
             raise RuntimeError("Can not initialize parameter '{}' in server, only parameters of "
                                "sparse operator support initialization in server.".format(self.name))
         self.is_param_ps = True
         self.init_in_server = init_in_server
         self._param_info.init_in_server = init_in_server
-
 
     @property
     def inited_param(self):
@@ -272,6 +275,16 @@ class Parameter(MetaTensor_):
     @sliced.setter
     def sliced(self, sliced_):
         self._sliced = sliced_
+
+    @property
+    def comm_fusion(self):
+        """Get the fusion type for communication operators corresponding to this parameter."""
+        return self._param_info.comm_fusion
+
+    @comm_fusion.setter
+    def comm_fusion(self, comm_fusion_):
+        """Set the fusion type for communication operators corresponding to this parameter."""
+        self._param_info.comm_fusion = comm_fusion_
 
     @property
     def unique(self):
@@ -337,6 +350,17 @@ class Parameter(MetaTensor_):
         if not isinstance(value, bool):
             raise TypeError("`layerwise_parallel` parameter must be bool type")
         self._param_info.layerwise_parallel = value
+
+    @property
+    def parallel_optimizer(self):
+        """Return whether the parameter requires weight shard for parallel optimizer."""
+        return self._param_info.parallel_optimizer
+
+    @parallel_optimizer.setter
+    def parallel_optimizer(self, value=True):
+        if not isinstance(value, bool):
+            raise TypeError("`parallel_optimizer` parameter must be bool type")
+        self._param_info.parallel_optimizer = value
 
     @property
     def requires_grad(self):

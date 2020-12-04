@@ -534,6 +534,7 @@ class _MirrorOperator(PrimitiveWithInfer):
         self.group = group
         self.dev_num = dev_num
         self.mean_flag = mean_flag
+        self.add_prim_attr("fusion", 1)
 
     def infer_shape(self, x_shape):
         return x_shape

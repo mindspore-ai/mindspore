@@ -29,6 +29,9 @@ REGISTER_PYBIND_DEFINE(ParamInfo, ([](const py::module *m) {
                            .def_property("init_in_server", &ParamInfo::init_in_server, &ParamInfo::set_init_in_server)
                            .def_property("layerwise_parallel", &ParamInfo::layerwise_parallel,
                                          &ParamInfo::set_layerwise_parallel)
+                           .def_property("parallel_optimizer", &ParamInfo::parallel_optimizer,
+                                         &ParamInfo::set_parallel_optimizer)
+                           .def_property("comm_fusion", &ParamInfo::comm_fusion, &ParamInfo::set_comm_fusion)
                            .def(py::pickle(
                              [](const ParamInfo &p) {  // __getstate__
                                return py::make_tuple(p.name(), p.requires_grad(), p.layerwise_parallel());

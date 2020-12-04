@@ -942,6 +942,29 @@ bool IsCastBeforMirror(const CNodePtr &node, size_t index) {
   return (type_id != kNumberTypeFloat32);
 }
 
+static void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node) {
+  MS_EXCEPTION_IF_NULL(comm_node);
+  MS_EXCEPTION_IF_NULL(param_node);
+  if (IsPrimitiveCNode(param_node, prim::kPrimReceive)) {
+    MS_LOG(WARNING) << "The mirror of Receive does not support fusion type now.";
+    return;
+  }
+  auto param = param_node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(param);
+  auto prim = GetValueNode<PrimitivePtr>(comm_node->input(0));
+  MS_EXCEPTION_IF_NULL(prim);
+  auto attrs = prim->attrs();
+  auto param_info = param->param_info();
+  if (!param_info) {
+    MS_LOG(WARNING) << param->ToString() << "does not have parameter info.";
+    return;
+  }
+  int32_t fusion_type = param_info->comm_fusion();
+  attrs[FUSION] = MakeValue<int64_t>(fusion_type);
+  prim->SetAttrs(attrs);
+  MS_LOG(INFO) << "Set comm fusion:" << param->param_info()->name() << "'s fusion type is " << fusion_type;
+}
+
 void InsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   size_t node_size = node->inputs().size();
@@ -1006,11 +1029,19 @@ void InsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node) {
         MS_EXCEPTION_IF_NULL(cnode);
         AnfNodePtr pre_node = cnode->input(1);
         InsertNode(op, cnode, size_t(1), pre_node, func_graph, instance_name);
+        auto comm_op = cnode->input(size_t(1))->cast<CNodePtr>();
+        // add fusion flag
+        // pipeline mirror would not be set, which should be supported later
+        AddCommOpFusionType(comm_op, param_node_pair.first);
       }
     } else {
       for (auto &op : backward_op) {
         AnfNodePtr pre_node = node->input(index);
         InsertNode(op, node, index, pre_node, func_graph, instance_name);
+        auto comm_op = node->input(index)->cast<CNodePtr>();
+        // add fusion flag
+        // pipeline mirror would not be set, which should be supported later
+        AddCommOpFusionType(comm_op, param_node_pair.first);
       }
     }
   }
@@ -1342,7 +1373,8 @@ std::pair<AnfNodePtr, int64_t> FindSubGraph(const FuncGraphPtr &graph, const Anf
   return std::make_pair(nullptr, 0);
 }
 
-void InsertAllGatherOp(const std::string &group, const std::pair<AnfNodePtr, int> &res, const AnfNodePtr &parameter) {
+static void InsertAllGatherOp(const std::string &group, const std::pair<AnfNodePtr, int> &res,
+                              const AnfNodePtr &parameter) {
   Operator op = CreateAllGatherOp(group);
   MS_EXCEPTION_IF_NULL(res.first);
   MS_EXCEPTION_IF_NULL(parameter);
@@ -1360,11 +1392,7 @@ void InsertAllGatherOp(const std::string &group, const std::pair<AnfNodePtr, int
   }
   // add fusion flag
   MS_EXCEPTION_IF_NULL(allgather);
-  auto prim = GetValueNode<PrimitivePtr>(allgather->input(0));
-  auto attrs = prim->attrs();
-  // enable fusion flag later when it's supported in backend
-  attrs["fusion"] = MakeValue<int64_t>(1);
-  prim->SetAttrs(attrs);
+  AddCommOpFusionType(allgather, parameter);
 }
 
 static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &parameter,
@@ -1419,6 +1447,9 @@ std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNod
     if (!ParameterRequireGrad(parameter)) {
       // only trainable parameters need parallel optimizer
       MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " is not trainable parameter.";
+    } else if (parameter->cast<ParameterPtr>()->param_info() &&
+               !parameter->cast<ParameterPtr>()->param_info()->parallel_optimizer()) {
+      MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " does not need weight shard.";
     } else if (tensor_layout.GenerateOptShardSliceShape() == Status::SUCCESS) {
       // get a totally shard tensor slice shape if the weight is repeated on devices
       // and the shape of the first dimension could be divided

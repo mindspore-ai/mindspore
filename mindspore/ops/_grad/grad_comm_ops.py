@@ -125,7 +125,7 @@ def get_bprop_all_gather(self):
             instance_name = "grad_" + self.instance_name
             reduce_scatter.set_prim_instance_name(instance_name)
     else:
-        all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", 1)
+        all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
         if self.instance_name:
             instance_name = "grad_" + self.instance_name
             all_reduce.set_prim_instance_name(instance_name)
@@ -240,9 +240,7 @@ def get_bprop_mirror_operator(self):
     mul = P.Mul()
     cast = P.Cast()
 
-    fusion = 1
-    if hasattr(self, 'fusion'):
-        fusion = self.fusion
+    fusion = self.get_attr_dict()["fusion"]
     all_reduce.add_prim_attr("fusion", fusion)
     if hasattr(self, 'parameter'):
         parameter = self.parameter
