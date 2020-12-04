@@ -950,9 +950,6 @@ class MaximumGrad(Primitive):
     def __init__(self, grad_x=True, grad_y=True):
         """Initialize MaximumGrad"""
 
-    def __call__(self, x, y, dout):
-        raise NotImplementedError
-
 
 class MaxPoolGradWithArgmax(_PoolGrad):
     """Computes the gradients of MaxPoolWithArgmax."""
