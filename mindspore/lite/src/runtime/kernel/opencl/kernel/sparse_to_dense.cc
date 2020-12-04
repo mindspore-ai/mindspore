@@ -91,13 +91,13 @@ int SparseToDenseOpenCLKernel::InitWeights() {
 }
 
 int SparseToDenseOpenCLKernel::CheckSpecs() {
-  if (in_tensors_[0]->shape().size() > 4 || out_tensors_[0]->shape().size() > 4) {
-    MS_LOG(ERROR) << "Unsupported inputdim: " << in_tensors_[0]->shape().size() << "outdim"
-                  << out_tensors_[0]->shape().size();
+  if (in_tensors_.size() < 3 || out_tensors_.at(0)->shape().size() > 4) {
+    MS_LOG(ERROR) << " only support out_tensors_ dim <= 4 and in_tensors_.size >= 3";
     return RET_ERROR;
   }
-  if (out_tensors_[0]->shape().size() > 3 || in_tensors_.size() < 3) {
-    MS_LOG(ERROR) << " only support dim <= 2 and in_tensors_.size >= 3";
+  if (in_tensors_.at(0)->shape().size() > 4 || out_tensors_.at(0)->shape().size() > 4) {
+    MS_LOG(ERROR) << "Unsupported inputdim: " << in_tensors_[0]->shape().size() << "outdim"
+                  << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   if (input_dim_ == 2) {

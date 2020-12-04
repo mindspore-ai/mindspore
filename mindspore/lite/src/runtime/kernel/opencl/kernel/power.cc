@@ -34,16 +34,22 @@ namespace mindspore::kernel {
 int PowerOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<PowerParameter *>(this->op_parameter_);
   broadcast_ = param->broadcast_;
-  if (!(broadcast_ && in_tensors_.size() == 1)) {
-    if (in_tensors_.size() == 2 && in_tensors_.at(0)->shape().size() != in_tensors_.at(1)->shape().size()) {
-      MS_LOG(ERROR) << "Unsupported input->shape.size " << in_tensors_.at(0)->shape().size()
-                    << "!=" << in_tensors_.at(1)->shape().size();
-      return RET_ERROR;
-    } else if (in_tensors_.size() > 2 || in_tensors_.at(0)->shape().size() > 4) {
-      MS_LOG(ERROR) << "Unsupported in_tensors_->shape.size " << in_tensors_.size() << "  or "
-                    << "in_tensors_[0]->shape().size(): " << in_tensors_.at(0)->shape().size();
-      return RET_ERROR;
-    }
+  if ((in_tensors_.size() != 1 && in_tensors_.size() != 2) || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << "out size: " << out_tensors_.size();
+    return RET_ERROR;
+  }
+  if (in_tensors_.size() == 1 && !broadcast_) {
+    MS_LOG(ERROR) << "broadcast is supported when in_tensors_.size() == 1  ";
+    return RET_ERROR;
+  }
+  if (in_tensors_.size() == 2 && in_tensors_.at(0)->shape().size() != in_tensors_.at(1)->shape().size()) {
+    MS_LOG(ERROR) << "Unsupported input->shape.size " << in_tensors_.at(0)->shape().size()
+                  << "!=" << in_tensors_.at(1)->shape().size();
+    return RET_ERROR;
+  }
+  if (in_tensors_.at(0)->shape().size() > 4) {
+    MS_LOG(ERROR) << "in_tensors_->shape.size must be less than 4";
+    return RET_ERROR;
   }
   return RET_OK;
 }

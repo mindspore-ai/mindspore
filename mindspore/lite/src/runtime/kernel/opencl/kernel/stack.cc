@@ -64,7 +64,9 @@ void StackGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *l
 }
 
 int StackOpenCLKernel::CheckSpecs() {
-  if (in_tensors_[0]->shape().size() > 2 && (axis_ != 0)) {
+  auto param = reinterpret_cast<StackParameter *>(this->op_parameter_);
+  axis_ = param->axis_;
+  if (in_tensors_.size() != 2 && (axis_ != 0)) {
     MS_LOG(ERROR) << " only support input size = 2 ";
     return RET_ERROR;
   }
@@ -72,8 +74,6 @@ int StackOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << " only support dim <= 4 ";
     return RET_ERROR;
   }
-  auto param = reinterpret_cast<StackParameter *>(this->op_parameter_);
-  axis_ = param->axis_;
   axis_ = axis_ < 0 ? axis_ + in_tensors_[0]->shape().size() : axis_;
   if (axis_ > 3) {
     MS_LOG(ERROR) << " only support  axis <= 3 ";
@@ -178,7 +178,7 @@ int StackOpenCLKernel::Run() {
     }
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c());
   }
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Stack, OpenCLKernelCreator<StackOpenCLKernel>);
