@@ -193,6 +193,11 @@ if (NOT ENABLE_GE)
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
+        install(
+            TARGETS ms_profile
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+        )
     elseif (ENABLE_TESTCASES)
         install(
             FILES
